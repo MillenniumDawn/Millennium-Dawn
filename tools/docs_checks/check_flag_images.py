@@ -22,7 +22,10 @@ def run() -> tuple[bool, str]:
     """Validate country flag_image references; return (passed, report)."""
     errors: list[str] = []
 
-    for country_file in sorted(COUNTRIES_DIR.glob("*.md")):
+    country_files = sorted(
+        set(COUNTRIES_DIR.glob("*.md")) | set(COUNTRIES_DIR.glob("*.mdx"))
+    )
+    for country_file in country_files:
         text = country_file.read_text(encoding="utf-8", errors="replace")
         for match in FLAG_IMAGE_RE.finditer(text):
             asset_path = match.group(1)

@@ -23,24 +23,97 @@ BASE_DIR = os.path.join(os.path.dirname(__file__), "..", "..")
 STATES_DIR = os.path.join(BASE_DIR, "history", "states")
 COUNTRIES_DIR = os.path.join(BASE_DIR, "history", "countries")
 IDEAS_DIR = os.path.join(BASE_DIR, "common", "ideas")
+MONEY_SYSTEM_FILE = os.path.join(
+    BASE_DIR, "common", "scripted_effects", "00_money_system.txt"
+)
+BUILDINGS_FILE = os.path.join(BASE_DIR, "common", "buildings", "00_buildings.txt")
 
-# Building GDP formula: base + bonus_rate * modifier@<building>_productivity
-# From 00_money_system.txt lines 4956-5005
-BUILDING_GDP_FORMULA = {
-    #                       (base, bonus_rate, modifier_key)
-    "industrial_complex": (17.5, 20, "civilian_factories_productivity"),
-    "arms_factory": (1.5, 1, "military_factories_productivity"),
-    "dockyard": (1.5, 1, "dockyard_productivity"),
-    "offices": (50, 50, "offices_productivity"),
-    "agriculture_district": (25, 25, "agricolture_productivity_modifier"),
-    "microchip_plant": (32, 35, "microchip_plant_productivity_modifier"),
-    "composite_plant": (28, 30, "composite_plant_productivity_modifier"),
-    "synthetic_refinery": (10, 10, "synthetic_refinery_productivity_modifier"),
-    "nuclear_reactor": (4, 0, None),
-    "fossil_powerplant": (1.7, 0, None),
-    "renewable_energy_infra": (2, 0, None),
-    "internet_station": (3.5, 0, None),
+# The game's @gdp_* constants are the single source of truth for every
+# per-building, resource, and healthcare GDP factor.
+GDP_CONSTANT_RE = re.compile(r"^@gdp_(\w+)\s*=\s*([-\d.]+)", re.MULTILINE)
+
+# building -> (@gdp_<prefix>_base_factor / _prod_factor, productivity modifier)
+SCALED_BUILDINGS = {
+    "industrial_complex": ("civ", "civilian_factories_productivity"),
+    "arms_factory": ("mil", "military_factories_productivity"),
+    "dockyard": ("dockyard", "dockyard_productivity"),
+    "offices": ("office", "offices_productivity"),
+    "agriculture_district": (
+        "agriculture_district",
+        "agricolture_productivity_modifier",
+    ),
+    "microchip_plant": ("microchip", "microchip_plant_productivity_modifier"),
+    "composite_plant": ("composite", "composite_plant_productivity_modifier"),
+    "synthetic_refinery": ("synthetic", "synthetic_refinery_productivity_modifier"),
 }
+
+# building -> @gdp_<name>_factor
+FLAT_BUILDINGS = {
+    "nuclear_reactor": "nuclear_reactor",
+    "fossil_powerplant": "fossil_powerplant",
+    "renewable_energy_infra": "renewable_energy",
+    "internet_station": "internet_station",
+    "rail_terminal": "rail_terminal",
+}
+
+# plant -> resource it produces, counted in the game's total_resource_amount
+PLANT_RESOURCES = {
+    "microchip_plant": "microchips",
+    "composite_plant": "composites",
+}
+
+
+def load_gdp_constants(path):
+    """Return {name: value} for every `@gdp_<name> = value` line in path."""
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    return {m.group(1): float(m.group(2)) for m in GDP_CONSTANT_RE.finditer(content)}
+
+
+def _require(constants, name, path):
+    if name not in constants:
+        raise SystemExit(f"error: @gdp_{name} is not defined in {path}")
+    return constants[name]
+
+
+def build_gdp_tables(constants, path=MONEY_SYSTEM_FILE):
+    """Turn the @gdp_* constants into (building formula, resource coeff, health mults)."""
+    formula = {}
+    for building, (prefix, mod_key) in SCALED_BUILDINGS.items():
+        formula[building] = (
+            _require(constants, f"{prefix}_base_factor", path),
+            _require(constants, f"{prefix}_prod_factor", path),
+            mod_key,
+        )
+    for building, name in FLAT_BUILDINGS.items():
+        formula[building] = (_require(constants, f"{name}_factor", path), 0, None)
+    resource_coeff = _require(constants, "resource_factor", path)
+    health = {
+        f"health_0{i}": _require(constants, f"health_0{i}_factor", path)
+        for i in range(1, 7)
+    }
+    return formula, resource_coeff, health
+
+
+def load_plant_resource_output(path):
+    """Return {plant: resource units per level} from the buildings file."""
+    with open(path, "r", encoding="utf-8") as f:
+        content = f.read()
+    output = {}
+    for plant, resource in PLANT_RESOURCES.items():
+        m = re.search(rf"local_resources_{resource}\s*=\s*([\d.]+)", content)
+        if not m:
+            raise SystemExit(
+                f"error: local_resources_{resource} is not defined in {path}"
+            )
+        output[plant] = float(m.group(1))
+    return output
+
+
+BUILDING_GDP_FORMULA, RESOURCE_GDP_COEFF, HEALTH_GDP_MULT = build_gdp_tables(
+    load_gdp_constants(MONEY_SYSTEM_FILE)
+)
+PLANT_RESOURCE_OUTPUT = load_plant_resource_output(BUILDINGS_FILE)
 
 ALL_BUILDING_TYPES = set(BUILDING_GDP_FORMULA.keys()) | {
     "infrastructure",
@@ -48,7 +121,6 @@ ALL_BUILDING_TYPES = set(BUILDING_GDP_FORMULA.keys()) | {
     "air_base",
 }
 
-RESOURCE_GDP_COEFF = 0.5
 RESOURCE_TYPES = {"oil", "aluminium", "rubber", "tungsten", "steel", "chromium"}
 
 # Per-resource modifier keys from environmental ideas
@@ -59,15 +131,6 @@ RESOURCE_FACTOR_KEYS = {
     "tungsten": "local_resources_tungsten_factor",
     "steel": "local_resources_steel_factor",
     "chromium": "local_resources_chromium_factor",
-}
-
-HEALTH_GDP_MULT = {
-    "health_01": 0.30,
-    "health_02": 0.60,
-    "health_03": 1.00,
-    "health_04": 1.40,
-    "health_05": 1.80,
-    "health_06": 2.20,
 }
 
 # All modifier keys we care about for GDP calculation
@@ -430,6 +493,8 @@ def calculate_gdp(states, modifier_stack=None):
         factor_key = RESOURCE_FACTOR_KEYS.get(rname)
         resource_factor = 1 + modifier_stack.get(factor_key, 0) if factor_key else 1
         total_resources += base_amount * resource_factor
+    for plant, per_level in PLANT_RESOURCE_OUTPUT.items():
+        total_resources += buildings.get(plant, 0) * per_level
 
     gdpc_converging = max(overall_productivity * 0.05, 2)
 
@@ -608,11 +673,35 @@ def main():
     top_n = None
     if "--top" in args:
         idx = args.index("--top")
-        top_n = int(args[idx + 1])
-        args = [a for a in args if a not in ("--top", args[idx + 1])]
+        if idx + 1 >= len(args):
+            print("error: --top requires an integer value", file=sys.stderr)
+            sys.exit(1)
+        val = args[idx + 1]
+        try:
+            top_n = int(val)
+        except ValueError:
+            print(f"error: --top expects an integer, got '{val}'", file=sys.stderr)
+            sys.exit(1)
+        if top_n < 0:
+            print(
+                f"error: --top expects a non-negative integer, got '{val}'",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        # Remove exactly the flag and its value (not every matching token).
+        args = args[:idx] + args[idx + 2 :]
 
     verbose = "-v" in args or "--verbose" in args
     args = [a for a in args if a not in ("-v", "--verbose")]
+
+    explicit_tags = [a.upper() for a in args if not a.startswith("--")]
+    if top_n is not None and explicit_tags:
+        print(
+            "error: --top ranks all countries and cannot be combined with "
+            "explicit tags",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     print("Loading idea definitions...", file=sys.stderr)
     idea_db = parse_all_ideas()
@@ -632,10 +721,10 @@ def main():
         file=sys.stderr,
     )
 
-    if show_all or top_n:
+    if show_all or top_n is not None:
         tags = sorted(country_states.keys())
     else:
-        tags = [a.upper() for a in args if not a.startswith("--")]
+        tags = explicit_tags
 
     results = []
     for tag in tags:
@@ -648,11 +737,13 @@ def main():
         if result:
             results.append(result)
 
-    if top_n:
+    if top_n is not None:
         results.sort(key=lambda r: r["gdp_total"], reverse=True)
-        results = results[:top_n]
+        # --top 0 means "all tags, ranked" — sort, but don't slice to nothing.
+        if top_n:
+            results = results[:top_n]
 
-    if show_all or top_n:
+    if show_all or top_n is not None:
         print(
             f"\n{'Rank':>4}  {'TAG':<5} {'GDP Total':>12} {'GDP/C':>8} "
             f"{'Pop (M)':>10} {'Productivity':>12} {'Health':>10} {'States':>6}"

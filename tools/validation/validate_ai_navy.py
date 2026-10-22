@@ -4,12 +4,17 @@
 # taskforces, mission types against valid HOI4 naval missions, and optimal
 # composition sizes against NAI define limits. Suggests the closest match for
 # likely typos.
+import collections
 import difflib
 import glob
 import os
 import re
+import sys
 from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import WORD_BLOCK_START_RE as TASKFORCE_DEF_RE
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Valid HOI4 naval mission types
@@ -62,9 +67,6 @@ MISSION_BLOCK_RE = re.compile(r"mission\s*=?\s*\{([^}]*)\}")
 
 # Taskforce name references in fleet templates
 TASKFORCE_REF_RE = re.compile(r"^\s+(\w+)\s*=\s*(\d+)")
-
-# Taskforce definition: top-level name = {
-TASKFORCE_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{")
 
 
 def parse_naval_units(mod_path: str) -> Set[str]:
@@ -195,7 +197,12 @@ def parse_taskforce_files(
                 match = SHIP_TYPE_RE.match(line)
                 if match:
                     name = match.group(1)
-                    if name not in ("amount", "min_composition", "optimal_composition"):
+                    if name not in (
+                        "amount",
+                        "min_composition",
+                        "optimal_composition",
+                        "mission",
+                    ):
                         ship_refs.append((name, filename, line_num))
                         current_ship_type = name
 
@@ -203,7 +210,12 @@ def parse_taskforce_files(
                 if in_optimal and current_ship_type:
                     amount_match = AMOUNT_RE.search(stripped)
                     if amount_match:
-                        current_optimal[current_ship_type] = int(amount_match.group(1))
+                        try:
+                            current_optimal[current_ship_type] = int(
+                                amount_match.group(1)
+                            )
+                        except (TypeError, ValueError):
+                            pass
                         current_ship_type = ""
 
             # Mission references
@@ -373,6 +385,22 @@ class Validator(BaseValidator):
             mission_results,
             "✓ All mission types in taskforce templates are valid",
             "Invalid mission types in taskforce templates:",
+        )
+
+        # The game allows one mission per template, asserts on more, and only uses the first.
+        per_line = collections.Counter(
+            (filename, line_num) for _m, filename, line_num in mission_refs
+        )
+        multi_results = [
+            f"{filename}:{line_num}: taskforce template lists {count} missions; "
+            f"the game allows one and only uses the first"
+            for (filename, line_num), count in sorted(per_line.items())
+            if count > 1
+        ]
+        self._report(
+            multi_results,
+            "✓ Every taskforce template has a single mission",
+            "Taskforce templates with more than one mission:",
         )
 
     def _validate_fleet_references(self):

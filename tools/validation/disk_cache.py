@@ -5,6 +5,10 @@
 only re-scans files that changed. `per_file_cached_by_content` keys on a content
 hash instead (survives git checkouts that reset mtimes). `aggregate_cached`
 invalidates a single merged result when any contributing file's stat changes.
+Files under the checkout are keyed relative to `mod_path` so a copied cache can
+hit at another root. Each stored payload records that root and rehomes embedded
+paths on restore. Paths outside the checkout (a live vanilla install) stay
+absolute and do not reuse across installations.
 
 Storage is a single SQLite database at `.validation_cache/v<N>/cache.db`
 (gitignored). One row per `(namespace, key)`; re-writing an entry overwrites the
@@ -25,10 +29,14 @@ import os
 import pickle
 import shutil
 import sqlite3
+import sys
 import threading
 import time
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -36,23 +44,219 @@ from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 # scripted_params token cache after the 3-tuple → 4-tuple token format change
 # (the cache keys on file content, not validator source, so a format change in
 # the token shape requires a version bump to avoid stale 3-tuple entries).
-CACHE_VERSION = 6
+# v9 stores checkout-relative keys and records the checkout root on each
+# payload so embedded paths rehome when the cache is restored at another root.
+CACHE_VERSION = 9
+
+
+# Cache entries include the owning validator and shared cache/parser code so a
+# change to one validator does not invalidate every unrelated namespace.
+_VALIDATOR_NAMESPACES = {
+    "agency": "validate_agency_upgrades.py",
+    "agency_upgrades": "validate_agency_upgrades.py",
+    "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
+    "building_guards_scan_v5": "validate_building_guards.py",
+    "country_graphical_cultures": "validate_graphical_cultures.py",
+    "cosmetic": "validate_cosmetic_tags.py",
+    "decisions": "validate_decisions.py",
+    "dlc_guards_scan": "validate_dlc_guards.py",
+    "dynamic_modifier_guards_scan_v1": "validate_dynamic_modifier_guards.py",
+    "events": "validate_events.py",
+    "focus_tree": "validate_focus_tree.py",
+    "gfx_ref": "validate_gfx_references.py",
+    "graphical_culture_registry": "validate_graphical_cultures.py",
+    "history_techs": "validate_history.py",
+    "ideas": "validate_ideas.py",
+    "influence_calls_scan_v2": "validate_influence_calls.py",
+    "loc": "validate_localisation.py",
+    "math_expr": "validate_math_expressions.py",
+    "modifiers": "validate_modifiers.py",
+    "oob_units": "validate_oob_units.py",
+    "on_actions": "validate_on_actions.py",
+    "party_loc": "validate_party_loc.py",
+    "scripted_gui": "validate_scripted_gui.py",
+    "sgui": "validate_scripted_gui.py",
+    "scripted_loc": "validate_scripted_localisation.py",
+    "scripted_params": "validate_scripted_params.py",
+    "set_variables": "validate_set_variables.py",
+    "simplifications": "validate_simplifications.py",
+    "sprite_index": "sprite_index.py",
+    "style": "validate_style.py",
+    "unused_scripted": "validate_unused_scripted.py",
+    "unused_textures": "validate_unused_textures.py",
+    "variables": "validate_variables.py",
+}
+
+_FINGERPRINT_CACHE: Dict[str, Tuple[Tuple[Tuple[str, int, int], ...], str]] = {}
+_TOOLS_ROOT = Path(__file__).resolve().parent.parent
+_CACHE_RECORD = "md.cache.v9"
+
+# These helpers are called inside cached computations, so their source changes
+# must invalidate the owning namespace without making unrelated namespaces cold.
+_HELPER_DEPENDENCIES = {
+    "ai_weight_order_scan_v1": ("guard_scan.py",),
+    "building_guards_scan_v5": ("guard_scan.py",),
+    "dlc_guards_scan": ("validate_history.py",),
+    "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "ideas": ("equipment_module_slots.py",),
+    "influence_calls_scan_v2": ("guard_scan.py",),
+    "math_expr": ("equipment_module_slots.py",),
+    "oob_units": ("equipment_module_slots.py",),
+    "sprite_index": ("validate_gfx_references.py",),
+    "variables": ("validate_focus_tree.py",),
+}
+
+
+def _fingerprint_identity(path: Path) -> str:
+    try:
+        resolved = path.resolve()
+    except OSError:
+        return path.name
+    try:
+        return resolved.relative_to(_TOOLS_ROOT).as_posix()
+    except ValueError:
+        return path.name
+
+
+def _source_key(mod_path: str, source_path: str) -> str:
+    if not source_path:
+        return source_path
+    if not os.path.isabs(source_path):
+        return source_path.replace("\\", "/")
+    try:
+        rel = os.path.relpath(source_path, mod_path)
+    except ValueError:
+        return os.path.normpath(source_path).replace("\\", "/")
+    if rel == ".":
+        return "."
+    if rel.startswith(".."):
+        return os.path.normpath(source_path).replace("\\", "/")
+    return rel.replace("\\", "/")
+
+
+def _rehome_str(value: str, old_root: str, new_root: str) -> str:
+    old = os.path.normpath(old_root).replace("\\", "/")
+    new = os.path.normpath(new_root).replace("\\", "/")
+    current = value.replace("\\", "/")
+    if current == old:
+        if "/" in value and "\\" not in value:
+            return new
+        return os.path.normpath(new_root)
+    prefix = old.rstrip("/") + "/"
+    if not current.startswith(prefix):
+        return value
+    tail = current[len(prefix) :]
+    rehoused = os.path.join(new_root, *tail.split("/"))
+    if "/" in value and "\\" not in value:
+        return rehoused.replace("\\", "/")
+    return rehoused
+
+
+def _rehome_mod_paths(
+    obj: Any, old_root: str, new_root: str, _seen: Optional[set] = None
+) -> Any:
+    if obj is None or isinstance(obj, (int, float, bool, bytes, complex)):
+        return obj
+    if isinstance(obj, str):
+        return _rehome_str(obj, old_root, new_root)
+    if _seen is None:
+        _seen = set()
+    obj_id = id(obj)
+    if obj_id in _seen:
+        return obj
+    _seen.add(obj_id)
+    if isinstance(obj, dict):
+        return {
+            _rehome_mod_paths(key, old_root, new_root, _seen): _rehome_mod_paths(
+                value, old_root, new_root, _seen
+            )
+            for key, value in obj.items()
+        }
+    if isinstance(obj, list):
+        return [_rehome_mod_paths(item, old_root, new_root, _seen) for item in obj]
+    if isinstance(obj, tuple):
+        rebuilt = tuple(
+            _rehome_mod_paths(item, old_root, new_root, _seen) for item in obj
+        )
+        if hasattr(obj, "_fields"):
+            return type(obj)(*rebuilt)
+        return rebuilt
+    if isinstance(obj, set):
+        return {_rehome_mod_paths(item, old_root, new_root, _seen) for item in obj}
+    if isinstance(obj, frozenset):
+        return frozenset(
+            _rehome_mod_paths(item, old_root, new_root, _seen) for item in obj
+        )
+    return obj
+
+
+def _pack(mod_path: str, result: Any) -> bytes:
+    return pickle.dumps(
+        (_CACHE_RECORD, mod_path, result), protocol=pickle.HIGHEST_PROTOCOL
+    )
+
+
+def _unpack(mod_path: str, blob: bytes) -> Any:
+    stored = pickle.loads(blob)
+    if not (
+        isinstance(stored, tuple) and len(stored) == 3 and stored[0] == _CACHE_RECORD
+    ):
+        raise pickle.UnpicklingError("not a v9 cache record")
+    old_root, payload = stored[1], stored[2]
+    if old_root == mod_path:
+        return payload
+    return _rehome_mod_paths(payload, old_root, mod_path)
+
+
+def _fingerprint_paths(namespace: str) -> list[Path]:
+    paths = [
+        Path(__file__),
+        Path(__file__).parent.parent / "shared_utils.py",
+        Path(__file__).parent / "validator_common.py",
+        Path(VALIDATION_CONFIG_PATH),
+    ]
+    prefix = namespace.split(".", 1)[0]
+    owner = _VALIDATOR_NAMESPACES.get(prefix)
+    if owner:
+        paths.append(Path(__file__).parent / owner)
+    else:
+        paths.extend(Path(__file__).parent.glob("*.py"))
+    for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
+        paths.append(Path(__file__).parent / dependency)
+    return sorted(set(paths))
+
+
+def _validator_code_fingerprint(namespace: str = "") -> str:
+    paths = _fingerprint_paths(namespace)
+    signatures = []
+    for path in paths:
+        try:
+            stat = path.stat()
+            signatures.append((str(path), stat.st_mtime_ns, stat.st_size))
+        except OSError:
+            signatures.append((str(path), 0, 0))
+    signature = tuple(signatures)
+    cached = _FINGERPRINT_CACHE.get(namespace)
+    if cached and cached[0] == signature:
+        return cached[1]
+    digest = hashlib.sha256()
+    for path in paths:
+        digest.update(_fingerprint_identity(path).encode("utf-8"))
+        digest.update(b"\0")
+        try:
+            digest.update(path.read_bytes())
+        except OSError:
+            continue
+    result = digest.hexdigest()
+    _FINGERPRINT_CACHE[namespace] = (signature, result)
+    return result
+
 
 _CACHE_DIR_NAME = ".validation_cache"
 # Records when the cache was created / last cleared (one unix timestamp), so the
 # suite can auto-reset a cache that has been accumulating orphaned rows for a
 # while. Lives at the cache root (version-independent), not inside a v<N> dir.
 _CREATED_MARKER = "created"
-
-_SCHEMA = (
-    "CREATE TABLE IF NOT EXISTS entries ("
-    " namespace TEXT NOT NULL,"
-    " key TEXT NOT NULL,"
-    " tag TEXT NOT NULL,"
-    " value BLOB NOT NULL,"
-    " PRIMARY KEY (namespace, key)"
-    ") WITHOUT ROWID"
-)
 
 # A SQLite connection cannot be shared across a fork, so each process (the main
 # validator and every pool worker) opens its own on first use, keyed by pid. The
@@ -100,8 +304,16 @@ def _connect(mod_path: str) -> Optional[sqlite3.Connection]:
             conn.execute("PRAGMA journal_mode=WAL")
             conn.execute("PRAGMA synchronous=NORMAL")
             conn.execute("PRAGMA busy_timeout=30000")
-            conn.execute(_SCHEMA)
-        except sqlite3.Error:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS entries ("
+                " namespace TEXT NOT NULL,"
+                " key TEXT NOT NULL,"
+                " tag TEXT NOT NULL,"
+                " value BLOB NOT NULL,"
+                " PRIMARY KEY (namespace, key)"
+                ") WITHOUT ROWID"
+            )
+        except (OSError, sqlite3.Error):
             return None
         _conns[key] = conn
         return conn
@@ -119,7 +331,7 @@ def _get(mod_path: str, namespace: str, key: str, tag: str) -> Tuple[bool, Any]:
                 (namespace, key),
             ).fetchone()
         if row is not None and row[0] == tag:
-            return (True, pickle.loads(row[1]))
+            return (True, _unpack(mod_path, row[1]))
     except _DB_ERRORS:
         return (False, None)
     return (False, None)
@@ -131,7 +343,7 @@ def _put(mod_path: str, namespace: str, key: str, tag: str, result: Any) -> None
     if conn is None:
         return
     try:
-        blob = pickle.dumps(result, protocol=pickle.HIGHEST_PROTOCOL)
+        blob = _pack(mod_path, result)
         with _conns_lock:
             conn.execute(
                 "INSERT OR REPLACE INTO entries (namespace, key, tag, value)"
@@ -161,12 +373,13 @@ def per_file_cached(
     current_stat = _file_stat(source_path)
     if current_stat is None:
         return compute_fn()
-    tag = f"s:{current_stat[0]}:{current_stat[1]}"
-    hit, result = _get(mod_path, namespace, source_path, tag)
+    tag = f"s:{_validator_code_fingerprint(namespace)}:{current_stat[0]}:{current_stat[1]}"
+    key = _source_key(mod_path, source_path)
+    hit, result = _get(mod_path, namespace, key, tag)
     if hit:
         return result
     result = compute_fn()
-    _put(mod_path, namespace, source_path, tag, result)
+    _put(mod_path, namespace, key, tag, result)
     return result
 
 
@@ -188,21 +401,32 @@ def per_file_cached_by_content(
     """
     if _cache_disabled():
         return compute_fn()
-    tag = f"c:{len(content)}:{hashlib.sha1(content.encode('utf-8')).hexdigest()}"
-    hit, result = _get(mod_path, namespace, source_path, tag)
+    tag = f"c:{_validator_code_fingerprint(namespace)}:{len(content)}:{hashlib.sha256(content.encode('utf-8')).hexdigest()}"
+    key = _source_key(mod_path, source_path)
+    hit, result = _get(mod_path, namespace, key, tag)
     if hit:
         return result
     result = compute_fn()
-    _put(mod_path, namespace, source_path, tag, result)
+    _put(mod_path, namespace, key, tag, result)
     return result
 
 
-def _stats_tag(stats: Dict[str, Optional[Tuple[int, int]]]) -> str:
+def _stats_tag(
+    stats: Dict[str, Optional[Tuple[int, int]]],
+    namespace: str = "",
+    mod_path: str = "",
+) -> str:
     parts = []
     for p in sorted(stats):
         v = stats[p]
-        parts.append(f"{p}={v[0]}:{v[1]}" if v else f"{p}=x")
-    return "a:" + hashlib.sha1("\n".join(parts).encode("utf-8")).hexdigest()
+        name = _source_key(mod_path, p) if mod_path else p
+        parts.append(f"{name}={v[0]}:{v[1]}" if v else f"{name}=x")
+    return (
+        "a:"
+        + _validator_code_fingerprint(namespace)
+        + ":"
+        + hashlib.sha256("\n".join(parts).encode("utf-8")).hexdigest()
+    )
 
 
 def aggregate_cached(
@@ -210,12 +434,14 @@ def aggregate_cached(
     key: str,
     tracked_files: Iterable[str],
     factory_fn: Callable[[], Any],
+    *,
+    namespace: str = "",
 ) -> Any:
     if _cache_disabled():
         return factory_fn()
     tracked: List[str] = list(tracked_files)
     current_stats = {p: _file_stat(p) for p in tracked}
-    tag = _stats_tag(current_stats)
+    tag = _stats_tag(current_stats, namespace, mod_path)
     hit, result = _get(mod_path, "__aggregate__", key, tag)
     if hit:
         return result
@@ -267,11 +493,14 @@ def clear(mod_path: str) -> None:
         for k in [k for k in _conns if k[1] == db]:
             try:
                 _conns.pop(k).close()
-            except sqlite3.Error:
+            except (OSError, sqlite3.Error):
                 pass
     root = Path(mod_path) / _CACHE_DIR_NAME
     if root.exists():
-        shutil.rmtree(root, ignore_errors=True)
+        try:
+            shutil.rmtree(root, ignore_errors=True)
+        except OSError:
+            pass
 
 
 def _marker_path(mod_path: str) -> Path:
@@ -290,8 +519,8 @@ def stamp_created(mod_path: str) -> None:
         return
     try:
         marker.parent.mkdir(parents=True, exist_ok=True)
-        marker.write_text(str(time.time()), encoding="utf-8")
-    except OSError:
+        write_text_under(str(marker), mod_path, str(time.time()))
+    except (OSError, ValueError):
         pass
 
 

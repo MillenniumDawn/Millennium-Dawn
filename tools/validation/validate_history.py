@@ -1,15 +1,23 @@
 #!/usr/bin/env python3
 """Validate technology prerequisites, equipment module unlocks, DLC gating,
-and special-project requirements in history files."""
+special-project requirements, and ruling_party seeding in history files."""
 
 import glob
 import os
 import re
 from collections import defaultdict
-from typing import Dict, List, Optional, Set, Tuple
+from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
-from validator_common import BaseValidator, run_validator_main, strip_comments
+from equipment_variant_context import branches, script_nodes
+from shared_utils import FileOpener
+from validator_common import (
+    BaseValidator,
+    Severity,
+    find_unquoted_block_end,
+    run_validator_main,
+    strip_comments,
+)
 
 # --- Module-level compiled patterns ---
 # Hoisted from per-line/per-file loops in the tech-graph and history-file
@@ -22,19 +30,18 @@ _LEADS_TO_TECH_RE = re.compile(r"leads_to_tech\s*=\s*(\S+)")
 _MODULE_NAME_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$")
 _ENABLE_MODULES_RE = re.compile(r"^enable_equipment_modules\s*=\s*\{")
 _ALLOW_BRANCH_RE = re.compile(r"^allow_branch\s*=\s*\{")
-# Reused with .match() on already-left-stripped lines, so the leading ^
-# behaves identically whether or not it's spelled out in the source pattern.
-_SET_TECHNOLOGY_BLOCK_RE = re.compile(r"^set_technology\s*=\s*\{")
-_IF_BLOCK_LINE_RE = re.compile(r"^if\s*=\s*\{")
-_SET_TECH_1_RE = re.compile(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$")
-_ELSE_BLOCK_RE = re.compile(r"else\s*=\s*\{")
+
+
+class _HistoryFrame(TypedDict):
+    name: Optional[str]
+    conds: List[Tuple[str, bool]]
+
+
 _HAS_DLC_RE = re.compile(r'has_dlc\s*=\s*"([^"]+)"')
 _NOT_HAS_DLC_BLOCK_RE = re.compile(
     r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}'
 )
 _STRIP_NOT_BLOCK_RE = re.compile(r"NOT\s*=\s*\{[^{}]*?\}")
-_NOT_HAS_DLC_PREFIX_RE = re.compile(r'NOT\s*=\s*\{[^}]*has_dlc\s*=\s*"([^"]+)"')
-_LIMIT_BLOCK_RE = re.compile(r"limit\s*=\s*\{(.*?)\}", re.DOTALL)
 _LIMIT_BLOCK_WORDBOUND_RE = re.compile(r"\blimit\s*=\s*\{(.*?)\}", re.DOTALL)
 _IF_BLOCK_START_RE = re.compile(r"\bif\s*=\s*\{")
 _CREATE_VARIANT_RE = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
@@ -43,17 +50,63 @@ _MODULES_BLOCK_RE = re.compile(r"\bmodules\s*=\s*\{")
 _MODULE_ENTRY_RE = re.compile(r"[a-zA-Z_][a-zA-Z0-9_]*\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 _STATE_OWNER_RE = re.compile(r"^\s*owner\s*=\s*(\S+)")
 _OOB_REF_RE = re.compile(r'(oob|set_oob|set_air_oob|set_naval_oob)\s*=\s*"([^"]+)"')
-_CAPITAL_RE = re.compile(r"^capital\s*=\s*\d+", re.MULTILINE)
-# `complete_special_project = sp:sp_X` lines grant a country the special project
-# at game start. Used to detect techs whose `allow` block requires an SP the
-# country has not completed.
-_COMPLETE_SP_RE = re.compile(r"^\s*complete_special_project\s*=\s*sp:([a-zA-Z0-9_]+)")
+# Anchored to line start (indent-tolerant for DLC-guarded blocks) so a
+# `capital = N` inside a quoted string mid-line can't count as a real capital.
+_CAPITAL_RE = re.compile(r"^\s*capital\s*=\s*\d+", re.MULTILINE)
+_DATE_BLOCK_RE = re.compile(r"^(\d{4}\.\d{1,2}\.\d{1,2})\s*=\s*\{", re.MULTILINE)
+_START_POLITICS_INPUT_RE = re.compile(
+    r"^\s*start_politics_input\s*=\s*yes\b", re.MULTILINE
+)
+# First key in the set_variable block so set_politics = { ruling_party = democratic }
+# does not count as the MD party index.
+_RULING_PARTY_VAR_RE = re.compile(
+    r"set_variable\s*=\s*\{\s*ruling_party\s*=\s*(-?\d+)\s*\}",
+    re.MULTILINE,
+)
 # `is_special_project_completed = sp:sp_X` inside a tech's `allow` block.
 _SP_REQUIRED_RE = re.compile(r"is_special_project_completed\s*=\s*sp:([a-zA-Z0-9_]+)")
 # A project's `project_output` unlock tooltip and the tech it advertises.
 _CUSTOM_TOOLTIP_RE = re.compile(r"\bcustom_effect_tooltip\s*=\s*\{")
 _SP_UNLOCK_TECH_KEY_RE = re.compile(r"localization_key\s*=\s*SP_UNLOCK_TECH\b")
 _TECH_PARAM_RE = re.compile(r"\bTECH\s*=\s*([a-zA-Z0-9_]+)")
+# Direct scalar building entries inside a state's `buildings = { ... }` block
+# (e.g. `nuclear_reactor = 2`). Province-keyed sub-blocks like
+# `6050 = { naval_base = 5 }` are excluded by brace depth in the caller.
+_BUILDINGS_BLOCK_RE = re.compile(r"^buildings\s*=\s*\{")
+_BUILDING_LEVEL_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*(\d+)\s*$")
+# `nuclear_status = { ... }` idea-group wrapper (nested under `ideas = { }`),
+# and a project's `set_building_level = { type = X ... }` reward grant.
+_NUCLEAR_STATUS_GROUP_RE = re.compile(r"(?m)^\s*nuclear_status\s*=\s*\{")
+_SET_BUILDING_LEVEL_RE = re.compile(r"set_building_level\s*=\s*\{")
+_BUILDING_TYPE_RE = re.compile(r"\btype\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
+
+
+def _iter_cleaned_text_files(directory: str):
+    """Yield each readable text file in *directory* with comments stripped."""
+    for filepath in glob.iglob(os.path.join(directory, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as input_file:
+                content = input_file.read()
+        except (OSError, UnicodeError):
+            continue
+        yield filepath, strip_comments(content)
+
+
+def _iter_project_blocks(projects_dir: str):
+    """Yield every top-level special-project name and block body."""
+    for _filepath, content in _iter_cleaned_text_files(projects_dir):
+        for match in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
+            end = _match_brace_end(content, match.end())
+            yield match.group(1), content[match.end() : end]
+
+
+def _iter_project_allowed_bodies(projects_dir: str):
+    """Yield projects that declare an ``allowed`` block and that block's body."""
+    for name, block in _iter_project_blocks(projects_dir):
+        allowed = re.search(r"allowed\s*=\s*\{", block)
+        if allowed:
+            end = _match_brace_end(block, allowed.end())
+            yield name, block[allowed.end() : end - 1]
 
 
 def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
@@ -73,19 +126,12 @@ def parse_tech_dependencies(mod_path: str) -> Tuple[Dict, Set, Dict, Dict]:
     files that grant A in a contradicting DLC branch can be flagged.
     """
     tech_dir = os.path.join(mod_path, "common", "technologies")
-    prerequisites = defaultdict(set)  # tech -> set of techs that lead to it
-    all_techs = set()
-    module_techs = defaultdict(set)  # module -> set of techs that enable it
-    tech_dlc_reqs = defaultdict(list)  # tech -> [(kind, dlc), ...]
+    prerequisites: DefaultDict[str, Set[str]] = defaultdict(set)
+    all_techs: Set[str] = set()
+    module_techs: DefaultDict[str, Set[str]] = defaultdict(set)
+    tech_dlc_reqs: DefaultDict[str, List[Tuple[str, str]]] = defaultdict(list)
 
-    for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
+    for _filepath, content in _iter_cleaned_text_files(tech_dir):
         _parse_tech_file(content, prerequisites, all_techs, module_techs, tech_dlc_reqs)
 
     return prerequisites, all_techs, module_techs, tech_dlc_reqs
@@ -101,7 +147,7 @@ def propagate_dlc_reqs(
     techs carries it: if all paths to a tech run through techs forbidden under
     DLC X, the tech itself cannot legitimately exist under X (and likewise for
     `require`). This extends a base-tech gate (e.g. SP_arty_0 forbidden under No
-    Step Back) to its whole upgrade chain (SP_arty_1..4, Arty_upgrade_*), so
+    Step Back) to its whole upgrade chain (SP_arty_1..4, arty_upgrade_*), so
     granting any tier of the legacy or NSB line in a contradicting branch is
     caught, not just the root.
     """
@@ -161,14 +207,7 @@ def parse_tech_sp_requirements(mod_path: str) -> Dict[str, Set[str]]:
     tech_dir = os.path.join(mod_path, "common", "technologies")
     sp_reqs: Dict[str, Set[str]] = defaultdict(set)
 
-    for filepath in glob.iglob(os.path.join(tech_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
+    for _filepath, content in _iter_cleaned_text_files(tech_dir):
         outer = re.search(r"^technologies\s*=\s*\{", content, re.MULTILINE)
         if not outer:
             continue
@@ -251,27 +290,10 @@ def parse_sp_allowed_dlc(mod_path: str) -> Dict[str, List[str]]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     allowed_dlc: Dict[str, List[str]] = {}
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            end = _match_brace_end(content, m.end())
-            block = content[m.end() : end]
-            allowed = re.search(r"allowed\s*=\s*\{", block)
-            if not allowed:
-                continue
-            # Brace-match the allowed block so a has_dlc nested inside (e.g. in
-            # an OR) is still seen; a flat `[^{}]*` capture would miss it.
-            allowed_end = _match_brace_end(block, allowed.end())
-            dlcs = _HAS_DLC_RE.findall(block[allowed.end() : allowed_end])
-            if dlcs:
-                allowed_dlc[name] = sorted(set(dlcs))
+    for name, body in _iter_project_allowed_bodies(projects_dir):
+        dlcs = _HAS_DLC_RE.findall(body)
+        if dlcs:
+            allowed_dlc[name] = sorted(set(dlcs))
 
     return allowed_dlc
 
@@ -289,27 +311,9 @@ def parse_sp_always_yes(mod_path: str) -> Set[str]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     always: Set[str] = set()
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as f:
-                content = f.read()
-        except Exception:
-            continue
-
-        content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            end = _match_brace_end(content, m.end())
-            block = content[m.end() : end]
-            allowed = re.search(r"allowed\s*=\s*\{", block)
-            if not allowed:
-                continue
-            allowed_end = _match_brace_end(block, allowed.end())
-            body = block[allowed.end() : allowed_end - 1]
-            if _HAS_DLC_RE.search(body):
-                continue
-            if re.search(r"\balways\s*=\s*yes\b", body):
-                always.add(name)
+    for name, body in _iter_project_allowed_bodies(projects_dir):
+        if not _HAS_DLC_RE.search(body) and re.search(r"\balways\s*=\s*yes\b", body):
+            always.add(name)
 
     return always
 
@@ -328,25 +332,269 @@ def parse_sp_output_claims(mod_path: str) -> Dict[str, List[str]]:
     projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
     claims: Dict[str, List[str]] = defaultdict(list)
 
-    for filepath in glob.iglob(os.path.join(projects_dir, "*.txt")):
+    for name, block in _iter_project_blocks(projects_dir):
+        for cet in _CUSTOM_TOOLTIP_RE.finditer(block):
+            body = block[cet.end() : _match_brace_end(block, cet.end()) - 1]
+            if not _SP_UNLOCK_TECH_KEY_RE.search(body):
+                continue
+            for tp in _TECH_PARAM_RE.finditer(body):
+                claims[name].append(tp.group(1))
+
+    return dict(claims)
+
+
+def parse_nuclear_status_ideas(mod_path: str) -> Set[str]:
+    """Derive the non-default member ideas of the `nuclear_status` idea group
+    from common/ideas/*.txt.
+
+    Finds the `nuclear_status = { ... }` group (nested under the outer
+    `ideas = { ... }` wrapper) and brace-matches its body, walking it one
+    nesting level at a time (mirrors the tech-block walk in
+    `parse_tech_sp_requirements`) so only direct-child ideas are collected,
+    not nested `available`/`modifier` sub-blocks. Ideas marked `default = yes`
+    are excluded — the default state is granted to every country and is never
+    a signal that one has gone nuclear. Returns an empty set when the group is
+    not found; callers must skip the check then, not treat every country as
+    non-compliant.
+    """
+    ideas_dir = os.path.join(mod_path, "common", "ideas")
+    for filepath in glob.iglob(os.path.join(ideas_dir, "*.txt")):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
                 content = f.read()
         except Exception:
             continue
-
         content = strip_comments(content)
-        for m in re.finditer(r"(?m)^([a-zA-Z0-9_]+)\s*=\s*\{", content):
-            name = m.group(1)
-            block = content[m.end() : _match_brace_end(content, m.end())]
-            for cet in _CUSTOM_TOOLTIP_RE.finditer(block):
-                body = block[cet.end() : _match_brace_end(block, cet.end()) - 1]
-                if not _SP_UNLOCK_TECH_KEY_RE.search(body):
-                    continue
-                for tp in _TECH_PARAM_RE.finditer(body):
-                    claims[name].append(tp.group(1))
 
-    return dict(claims)
+        m = _NUCLEAR_STATUS_GROUP_RE.search(content)
+        if not m:
+            continue
+        end = _match_brace_end(content, m.end())
+        body = content[m.end() : end - 1]
+
+        members: Set[str] = set()
+        i, n = 0, len(body)
+        depth = 0
+        while i < n:
+            ch = body[i]
+            if ch == "{":
+                depth += 1
+                i += 1
+                continue
+            if ch == "}":
+                depth -= 1
+                i += 1
+                continue
+            if ch in " \t\n":
+                i += 1
+                continue
+            line_end = body.find("\n", i)
+            if line_end < 0:
+                line_end = n
+            line = body[i:line_end].strip()
+            member_m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{", line)
+            if member_m and depth == 0:
+                name = member_m.group(1)
+                block_start = i + member_m.end()
+                block_end = _match_brace_end(body, block_start)
+                block_body = body[block_start : block_end - 1]
+                if not re.search(r"\bdefault\s*=\s*yes\b", block_body):
+                    members.add(name)
+                i = block_end
+                continue
+            i = line_end + 1 if line_end < n else n
+        return members
+
+    return set()
+
+
+def parse_state_building_owners(
+    mod_path: str, buildings: Set[str]
+) -> Dict[str, Set[str]]:
+    """One pass over history/states/*.txt mapping each building in *buildings*
+    to the set of tags that start a state with it at level >= 1.
+
+    Owner is the first `owner = TAG` line in the file. Buildings are only
+    recognized in scalar form (`nuclear_reactor = 2`) at the top level of the
+    `buildings = { ... }` block; province-keyed sub-blocks (`6050 = {
+    naval_base = 5 }`) are skipped by brace depth so a same-named building
+    nested under a province is never attributed to the state's owner. Shared
+    by the reactor/nuclear_status check and the project-granted-building
+    check — the state-file tree is parsed once, not once per check.
+    """
+    owners: Dict[str, Set[str]] = defaultdict(set)
+    states_dir = os.path.join(mod_path, "history", "states")
+
+    for filepath in glob.iglob(os.path.join(states_dir, "*.txt")):
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content = f.read()
+        except Exception:
+            continue
+        content = strip_comments(content)
+
+        owner: Optional[str] = None
+        in_buildings = False
+        depth = 0
+        found: Set[str] = set()
+
+        for line in content.split("\n"):
+            stripped = line.strip()
+            if owner is None:
+                om = _STATE_OWNER_RE.match(line)
+                if om:
+                    owner = om.group(1)
+
+            if not in_buildings:
+                if _BUILDINGS_BLOCK_RE.match(stripped):
+                    in_buildings = True
+                    depth = 1
+                continue
+
+            if depth == 1:
+                bm = _BUILDING_LEVEL_RE.match(stripped)
+                if bm and bm.group(1) in buildings:
+                    try:
+                        level = int(bm.group(2))
+                    except ValueError:
+                        continue
+                    if level >= 1:
+                        found.add(bm.group(1))
+
+            depth += stripped.count("{") - stripped.count("}")
+            if depth <= 0:
+                in_buildings = False
+
+        if owner:
+            for b in found:
+                owners[b].add(owner)
+
+    return dict(owners)
+
+
+def parse_project_granted_buildings(mod_path: str) -> Dict[str, Set[str]]:
+    """Map each building type to the special project(s) whose reward grants it.
+
+    Scans common/special_projects/projects/*.txt for top-level project
+    definitions containing `set_building_level = { type = X ... }` anywhere in
+    the body (typically inside `project_output.facility_state_effects`).
+    Returned map is building -> {granting project name, ...}; a building can
+    be granted by more than one project, and completing any one satisfies the
+    history check.
+    """
+    projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
+    granted: Dict[str, Set[str]] = defaultdict(set)
+
+    for name, block in _iter_project_blocks(projects_dir):
+        for sbl in _SET_BUILDING_LEVEL_RE.finditer(block):
+            sbl_end = _match_brace_end(block, sbl.end())
+            body = block[sbl.end() : sbl_end - 1]
+            tm = _BUILDING_TYPE_RE.search(body)
+            if tm:
+                granted[tm.group(1)].add(name)
+
+    return dict(granted)
+
+
+def _tag_country_file_map(mod_path: str) -> Dict[str, str]:
+    """Map each country tag to its history/countries/ file path, derived from
+    the `TAG - Name.txt` filename convention (same convention used inline in
+    `validate_oob_references`)."""
+    countries_dir = os.path.join(mod_path, "history", "countries")
+    mapping: Dict[str, str] = {}
+    for filepath in glob.iglob(os.path.join(countries_dir, "*.txt")):
+        filename = os.path.basename(filepath)
+        tag = (
+            filename.split(" - ")[0]
+            if " - " in filename
+            else os.path.splitext(filename)[0]
+        )
+        mapping[tag] = filepath
+    return mapping
+
+
+def _load_country_contents(tag_files: Dict[str, str], tags: Set[str]) -> Dict[str, str]:
+    """Read and comment-strip each tag's history/countries/ file, for exactly
+    the tags that need checking. Shared by both building-ownership checks so a
+    tag relevant to both is only read once."""
+    content: Dict[str, str] = {}
+    for tag in tags:
+        filepath = tag_files.get(tag)
+        if not filepath:
+            continue
+        try:
+            with open(filepath, "r", encoding="utf-8-sig") as f:
+                content[tag] = strip_comments(f.read())
+        except Exception:
+            continue
+    return content
+
+
+def _find_reactor_owners_without_nuclear_status(
+    reactor_owners: Set[str],
+    nuclear_status_ideas: Set[str],
+    tag_country_content: Dict[str, str],
+) -> List[str]:
+    """Validate that each tag owning a state with `nuclear_reactor >= 1` at
+    game start grants at least one non-default nuclear_status idea in its
+    country file (word-boundary token match on comment-stripped content).
+    Returns error strings. A tag absent from `tag_country_content` has no
+    country file.
+    """
+    results = []
+    for tag in sorted(reactor_owners):
+        content = tag_country_content.get(tag)
+        if content is None:
+            results.append(
+                f"{tag}: owns a state with a nuclear_reactor at game start "
+                f"but has no history/countries/ file"
+            )
+            continue
+        if not any(
+            re.search(rf"\b{re.escape(idea)}\b", content)
+            for idea in nuclear_status_ideas
+        ):
+            ideas_str = ", ".join(sorted(nuclear_status_ideas))
+            results.append(
+                f"{tag}: owns a state with a nuclear_reactor at game start "
+                f"but grants no nuclear_status idea ({ideas_str})"
+            )
+    return results
+
+
+def _find_buildings_without_granting_project(
+    building_owners: Dict[str, Set[str]],
+    project_granted_buildings: Dict[str, Set[str]],
+    tag_country_content: Dict[str, str],
+) -> List[str]:
+    """Validate that each tag owning a project-granted building at game start
+    completes at least one granting project in its country file. Returns error
+    strings. A tag absent from `tag_country_content` has no country file.
+    """
+    results = []
+    for building in sorted(project_granted_buildings):
+        owners = building_owners.get(building, set())
+        granting_projects = project_granted_buildings[building]
+        for tag in sorted(owners):
+            content = tag_country_content.get(tag)
+            if content is None:
+                results.append(
+                    f"{tag}: owns a state starting with {building} but has "
+                    f"no history/countries/ file"
+                )
+                continue
+            if not any(
+                re.search(
+                    rf"complete_special_project\s*=\s*sp:{re.escape(p)}\b", content
+                )
+                for p in granting_projects
+            ):
+                projects_str = ", ".join(f"sp:{p}" for p in sorted(granting_projects))
+                results.append(
+                    f"{tag}: owns a state starting with {building} but never "
+                    f"completes the granting special project ({projects_str})"
+                )
+    return results
 
 
 def validate_sp_output_consistency(
@@ -434,10 +682,8 @@ def _parse_tech_file(
                 tech_brace_depth = brace_depth
                 all_techs.add(current_tech)
         else:
-            leads_match = _LEADS_TO_TECH_RE.match(line)
-            if leads_match:
-                target = leads_match.group(1)
-                prerequisites[target].add(current_tech)
+            for leads_match in _LEADS_TO_TECH_RE.finditer(line):
+                prerequisites[leads_match.group(1)].add(current_tech)
 
             if module_techs is not None:
                 if in_enable:
@@ -448,8 +694,13 @@ def _parse_tech_file(
                     if brace_depth < enable_brace_depth:
                         in_enable = False
                 if not in_enable and _ENABLE_MODULES_RE.match(line):
-                    in_enable = True
-                    enable_brace_depth = brace_depth
+                    inner = line[line.index("{") + 1 :]
+                    if "}" in inner:
+                        for name in inner[: inner.index("}")].split():
+                            module_techs[name].add(current_tech)
+                    else:
+                        in_enable = True
+                        enable_brace_depth = brace_depth
 
             if tech_dlc_reqs is not None:
                 if in_allow:
@@ -460,9 +711,14 @@ def _parse_tech_file(
                             tech_dlc_reqs[current_tech].append((kind, dlc))
                         allow_buf = []
                 if not in_allow and _ALLOW_BRANCH_RE.match(line):
-                    in_allow = True
-                    allow_brace_depth = brace_depth
-                    allow_buf = [line]
+                    if line.count("{") == line.count("}"):
+                        tech_dlc_reqs[current_tech].extend(
+                            _extract_dlc_conditions(line)
+                        )
+                    else:
+                        in_allow = True
+                        allow_brace_depth = brace_depth
+                        allow_buf = [line]
 
             if brace_depth < tech_brace_depth:
                 current_tech = None
@@ -524,7 +780,6 @@ def parse_history_file(
 # already stripped before this runs.
 _HISTORY_TOKEN_RE = re.compile(r'"[^"]*"|[{}=]|[^\s{}=]+')
 _SP_VALUE_RE = re.compile(r"^sp:([a-zA-Z0-9_]+)$")
-_INT_VALUE_RE = re.compile(r"^\d+$")
 
 # A DLC guard maps each constraining DLC to whether it must be present (True) or
 # absent (False) for the tagged tech/SP to apply.
@@ -549,8 +804,8 @@ def _walk_history_tokens(
     constraints; because the enclosing `if` frame is still on the stack, deeper
     frames override shallower ones for the same DLC when the guard is resolved.
     """
-    root = {"name": None, "conds": []}
-    stack = [root]
+    root: _HistoryFrame = {"name": None, "conds": []}
+    stack: List[_HistoryFrame] = [root]
     techs: List[Tuple[str, Guard]] = []
     sps: List[Tuple[str, Guard]] = []
 
@@ -580,7 +835,7 @@ def _walk_history_tokens(
             key = t
             after = tokens[i + 2] if i + 2 < n else None
             if after == "{":
-                frame = {"name": key, "conds": []}
+                frame: _HistoryFrame = {"name": key, "conds": []}
                 if key in ("else", "else_if"):
                     frame["conds"] = [
                         (dlc, not present) for dlc, present in stack[-1]["conds"]
@@ -623,7 +878,7 @@ def _handle_history_assignment(stack, key, value, techs, sps, current_guard):
             sps.append((m.group(1), current_guard()))
         return
 
-    if stack[-1]["name"] == "set_technology" and _INT_VALUE_RE.match(value):
+    if stack[-1]["name"] == "set_technology" and value == "1":
         techs.append((key, current_guard()))
 
 
@@ -656,16 +911,7 @@ def _expand_dlc_configs(
 def _match_brace_end(text: str, pos: int) -> int:
     """Given pos pointing just past an opening `{`, return the index just past
     its matching `}`. Returns len(text) if the braces never balance."""
-    depth = 1
-    j = pos
-    while j < len(text) and depth > 0:
-        ch = text[j]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-        j += 1
-    return j
+    return find_unquoted_block_end(text, pos)[0]
 
 
 def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
@@ -825,7 +1071,7 @@ def validate_country_dlc_techs(
 
     A tech gated `NOT has_dlc = "X"` (the non-DLC fallback, e.g. SP_arty_0) must
     not be set in any reachable DLC configuration where X is active; a tech
-    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_0) must not be
+    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_1) must not be
     set where X is inactive. Granting it anyway force-enables equipment whose
     tech branch is disabled, duplicating the active-DLC designer's equipment.
 
@@ -1010,11 +1256,11 @@ def _get_oob_refs(filepath: str) -> List[Tuple[str, int, str]]:
     Returns all non-commented OOB references: oob, set_oob, set_air_oob,
     set_naval_oob. ref_type is the HOI4 key used (e.g. 'oob', 'set_oob').
     """
-    refs = []
+    refs: List[Tuple[str, int, str]] = []
     try:
-        with open(filepath, "r", encoding="utf-8-sig") as f:
-            lines = f.readlines()
-    except Exception:
+        with open(filepath, "r", encoding="utf-8-sig") as history_file:
+            lines = history_file.readlines()
+    except (OSError, UnicodeError):
         return refs
 
     for i, line in enumerate(lines, 1):
@@ -1079,9 +1325,54 @@ def validate_capital_defined(filepath: str) -> List[str]:
     except Exception:
         return [f"{filename}: could not read file"]
 
-    if not _CAPITAL_RE.search(content):
+    if not _CAPITAL_RE.search(strip_comments(content)):
         return [f"{filename}: no capital defined"]
     return []
+
+
+def validate_ruling_party_assigned(filepath: str) -> List[str]:
+    """start_politics_input clears ruling_party; the same date block must set it."""
+    filename = os.path.basename(filepath)
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as f:
+            content = strip_comments(f.read())
+    except Exception:
+        return [f"{filename}: could not read file"]
+
+    matches = list(_DATE_BLOCK_RE.finditer(content))
+    if matches:
+        blocks: List[Tuple[str, str]] = []
+        preamble = content[: matches[0].start()]
+        if preamble.strip():
+            blocks.append(("", preamble))
+        for m in matches:
+            body_end = _match_brace_end(content, m.end())
+            blocks.append((m.group(1), content[m.end() : body_end - 1]))
+    else:
+        blocks = [("", content)]
+
+    results = []
+    for label, body in blocks:
+        inputs = list(_START_POLITICS_INPUT_RE.finditer(body))
+        if not inputs:
+            continue
+        clear_at = inputs[-1].start()
+        for m in _RULING_PARTY_VAR_RE.finditer(body):
+            if m.start() <= clear_at:
+                continue
+            try:
+                idx = int(m.group(1))
+            except ValueError:
+                continue
+            if 0 <= idx <= 23:
+                break
+        else:
+            where = f"{label}: " if label else ""
+            results.append(
+                f"{filename}: {where}start_politics_input does not assign "
+                "ruling_party (0-23) after it"
+            )
+    return results
 
 
 def validate_country_file(
@@ -1126,6 +1417,115 @@ def validate_country_file(
     return results
 
 
+def check_influence_order(text, country):
+    """Check country-local execution paths, keeping dated setups independent."""
+    findings = set()
+
+    def join(outcomes):
+        result = {}
+        for owner in set().union(*(state.keys() for state in outcomes)):
+            values = [
+                state.get(owner, (False, set(), set(), set(), False))
+                for state in outcomes
+            ]
+            result[owner] = (
+                all(value[0] for value in values),
+                *(set().union(*(value[i] for value in values)) for i in range(1, 4)),
+                all(value[4] for value in values),
+            )
+        return result
+
+    def walk(nodes, state, scope):
+        state = state.copy()
+        for node in branches(nodes, {}):
+            if isinstance(node, list):
+                state = join([walk(arm, state, scope) for arm in node])
+                continue
+            if re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?", node.key):
+                finish(walk(node.children, {}, scope))
+                continue
+            if node.key in {"hidden_effect", "THIS", "ROOT", scope} or re.fullmatch(
+                r"[A-Z]{3}", node.key
+            ):
+                target = (
+                    country
+                    if node.key == "ROOT"
+                    else scope if node.key in {"hidden_effect", "THIS"} else node.key
+                )
+                state = walk(node.children, state, target)
+                continue
+            if node.key in {"random", "while"}:
+                state = join([state, walk(node.children, state, scope)])
+                continue
+            operations = []
+            if node.key == "add_to_array":
+                for entry in node.children:
+                    target, _, array = entry.key.rpartition(".")
+                    if array in {"influence_array", "influence_array_val"}:
+                        owner = (
+                            country
+                            if target == "ROOT"
+                            else scope if target in {"", "THIS"} else target
+                        )
+                        operations.append((owner, "write"))
+            elif (
+                node.key
+                in {"init_influence", "sort_influence", "recalculate_influence"}
+                and node.value == "yes"
+            ):
+                operations.append((scope, node.key))
+            for owner, operation in operations:
+                initialized, written, pending, sorted_at, warned = state.get(
+                    owner, (False, set(), set(), set(), False)
+                )
+                if operation == "write":
+                    if not initialized and not warned:
+                        warned = True
+                        findings.add(
+                            (
+                                f"{owner}: initialize influence with init_influence = yes before writing starting influence arrays",
+                                node.line,
+                            )
+                        )
+                    for line in sorted_at:
+                        findings.add(
+                            (
+                                f"{owner}: sort_influence runs before a later influence array write; move it after the setup",
+                                line,
+                            )
+                        )
+                    written = written | {node.line}
+                    pending = pending | {node.line}
+                    sorted_at = set()
+                elif operation == "init_influence":
+                    if written:
+                        findings.add(
+                            (
+                                f"{owner}: init_influence clears earlier influence array writes; move it before the setup",
+                                node.line,
+                            )
+                        )
+                    initialized = True
+                else:
+                    pending = set()
+                    sorted_at = sorted_at | {node.line}
+                state[owner] = initialized, written, pending, sorted_at, warned
+        return state
+
+    def finish(state):
+        for owner, (_, _, pending, _, _) in state.items():
+            if pending:
+                findings.add(
+                    (
+                        f"{owner}: add sort_influence = yes after the starting influence array writes",
+                        max(pending),
+                    )
+                )
+
+    finish(walk(script_nodes(text), {}, country))
+    return sorted(findings, key=lambda finding: (finding[1], finding[0]))
+
+
 class Validator(BaseValidator):
     TITLE = "HISTORY FILE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1140,6 +1540,10 @@ class Validator(BaseValidator):
         self.sp_allowed_dlc = {}
         self.sp_always_yes = set()
         self.sp_output_claims = {}
+        self.project_granted_buildings = {}
+        self.nuclear_status_ideas = set()
+        self.building_owners = {}
+        self.tag_country_contents = {}
 
     def _build_tech_graph(self):
         """Build the technology dependency graph from tech definition files."""
@@ -1173,6 +1577,38 @@ class Validator(BaseValidator):
         self.log(
             f"  Found {len(self.tech_sp_reqs)} technologies requiring special projects"
         )
+
+    def _build_building_ownership(self):
+        """Parse the special-project building-grant map and the nuclear_status
+        idea group, then do the single state-file building-ownership pass
+        shared by the two building checks."""
+        self._log_section("Building state building-ownership maps...")
+
+        self.project_granted_buildings = parse_project_granted_buildings(self.mod_path)
+        self.nuclear_status_ideas = parse_nuclear_status_ideas(self.mod_path)
+        tag_country_files = _tag_country_file_map(self.mod_path)
+
+        buildings_of_interest = {"nuclear_reactor"} | set(
+            self.project_granted_buildings
+        )
+        self.building_owners = parse_state_building_owners(
+            self.mod_path, buildings_of_interest
+        )
+
+        owner_tags: Set[str] = set()
+        for building in buildings_of_interest:
+            owner_tags |= self.building_owners.get(building, set())
+        self.tag_country_contents = _load_country_contents(
+            tag_country_files, owner_tags
+        )
+
+        self.log(
+            f"  Found {len(self.project_granted_buildings)} project-granted building types"
+        )
+        self.log(
+            f"  Found {len(self.nuclear_status_ideas)} non-default nuclear_status ideas"
+        )
+        self.log(f"  Found {len(owner_tags)} tags owning a tracked building")
 
     def _get_history_files(self) -> List[str]:
         """Get list of history country files to validate."""
@@ -1333,6 +1769,89 @@ class Validator(BaseValidator):
             "History files missing a capital definition:",
         )
 
+    def validate_ruling_party_assigned(self):
+        """Check that start_politics_input is followed by a ruling_party index."""
+        self._log_section("Checking ruling_party assignments in history files...")
+
+        files = self._get_history_files()
+        self.log(f"  Found {len(files)} history files to check")
+
+        results = []
+        for f in files:
+            results.extend(validate_ruling_party_assigned(f))
+
+        self._report(
+            results,
+            "✓ All start_politics_input blocks assign ruling_party after the clear",
+            "History files whose start_politics_input does not assign ruling_party:",
+        )
+
+    def validate_reactor_nuclear_status(self):
+        """Validate that every tag owning a nuclear_reactor at game start
+        grants a non-default nuclear_status idea in its country file."""
+        self._log_section(
+            "Checking nuclear-reactor owners for a nuclear_status idea..."
+        )
+        if not self.nuclear_status_ideas:
+            self.log(
+                "  Note: no non-default nuclear_status idea found in "
+                "common/ideas/*.txt; skipping check"
+            )
+            return
+
+        reactor_owners = self.building_owners.get("nuclear_reactor", set())
+        results = _find_reactor_owners_without_nuclear_status(
+            reactor_owners, self.nuclear_status_ideas, self.tag_country_contents
+        )
+        self._report(
+            results,
+            "✓ All nuclear-reactor owners grant a nuclear_status idea",
+            "Nuclear-reactor owners missing a nuclear_status idea:",
+        )
+
+    def validate_project_granted_buildings(self):
+        """Validate that every tag owning a project-granted building at game
+        start completes the granting special project in its country file."""
+        self._log_section(
+            "Checking project-granted buildings for the granting special project..."
+        )
+        if not self.project_granted_buildings:
+            self.log(
+                "  Note: no set_building_level grants found in "
+                "common/special_projects/projects/*.txt; skipping check"
+            )
+            return
+
+        results = _find_buildings_without_granting_project(
+            self.building_owners,
+            self.project_granted_buildings,
+            self.tag_country_contents,
+        )
+        self._report(
+            results,
+            "✓ All project-granted buildings are paired with the granting special project",
+            "States starting with a project-granted building whose owner never completes the project:",
+        )
+
+    def validate_influence_order(self):
+        results = []
+        for path in self._get_history_files():
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            country = os.path.basename(path).split(" ", 1)[0].split(".", 1)[0]
+            results.extend(
+                (message, relative, line)
+                for message, line in check_influence_order(
+                    FileOpener.open_text_file(path), country
+                )
+            )
+        self._report(
+            results,
+            "Starting influence setup is ordered correctly",
+            "Starting influence setup ordering problems:",
+            severity=Severity.WARNING,
+            category="history-influence-order",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
@@ -1343,10 +1862,15 @@ class Validator(BaseValidator):
         self.validate_sp_output_consistency()
         self.validate_oob_references()
         self.validate_capital_defined()
+        self.validate_ruling_party_assigned()
+        self.validate_influence_order()
+        self._build_building_ownership()
+        self.validate_reactor_nuclear_status()
+        self.validate_project_granted_buildings()
 
 
 if __name__ == "__main__":
     run_validator_main(
         Validator,
-        "Validate history files: technology dependencies, OOB references, capital definitions",
+        "Validate history files: technology dependencies, OOB references, capital and ruling_party",
     )

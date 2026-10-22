@@ -48,6 +48,7 @@ Effect snippets (treasury, debt, buildings, factions, influence, party managemen
 
 - [Scripted Effects Reference](/dev-resources/scripted-effects-reference/) - the full effects library and how-to guides
 - [Dynamic Modifiers](/dev-resources/dynamic-modifiers/) - applying modifiers through tooltips and dynamic systems
+- [Balance Decisions](/dev-resources/balance-decisions/) - why key balance values differ from vanilla, with history
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/) - formatting and code structure
 - [Search Filters](/dev-resources/search-filters/) - focus `search_filters` reference
 
@@ -334,6 +335,11 @@ These affect missile and satellite production.
 | `comsat_production_speed_modifier`       | Communications satellites                              |
 | `spysat_production_speed_modifier`       | Spy satellites                                         |
 | `killsat_production_speed_modifier`      | Kill satellites                                        |
+| `olv_production_cost_modifier`           | Orbital launch vehicle cost                            |
+| `gnss_production_cost_modifier`          | Navigation satellite cost                              |
+| `comsat_production_cost_modifier`        | Communications satellite cost                          |
+| `spysat_production_cost_modifier`        | Spy satellite cost                                     |
+| `killsat_production_cost_modifier`       | Kill satellite cost                                    |
 | `nuclear_reactor_fuel_production`        | Nuclear fuel production (base, kg/week)                |
 | `nuclear_reactor_fuel_production_factor` | Nuclear fuel production factor (percentage multiplier) |
 

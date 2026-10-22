@@ -88,11 +88,9 @@ scripted_diplomatic_actions = {
 		send_description = PROPOSE_TRADE_AGREEMENT_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_improved_trade_agreement"
 			ROOT = { set_variable = { pending_trade_offer_country = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_improved_trade_agreement"
 			set_country_flag = trade_agreement@ROOT
 			ROOT = {
 				clear_variable = pending_trade_offer_country
@@ -125,6 +123,7 @@ scripted_diplomatic_actions = {
 			if = {
 				limit = { original_tag = SIN }
 				add_to_array = { SIN_singaporean_trade_agreement = ROOT.id }
+				SIN_calculate_singaporean_trade_agreements = yes
 			}
 			ROOT = {
 				set_temp_variable = { percent_change = 1 }
@@ -140,7 +139,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_improved_trade_agreement"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_trade_offer_country
 				set_country_flag = { flag = rejected_trade_agreement_@PREV days = 180 value = 1 }
@@ -156,12 +155,54 @@ scripted_diplomatic_actions = {
 		reject_description = PROPOSE_TRADE_AGREEMENT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_trade_condition = {
 				base = -25
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 				modifier = {
 					ROOT = { has_country_flag = italy_china_trade_deal }
 					has_country_flag = italy_china_trade_deal
 					add = 50
+				}
+			}
+			trade_asean_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = ASEAN_Member }
+					has_idea = ASEAN_Member
+					add = 10
+				}
+			}
+			trade_singapore_hub_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_dynamic_modifier = { modifier = SIN_singaporean_trade_strength } }
+					add = 15
 				}
 			}
 			condition_two = {
@@ -233,6 +274,26 @@ scripted_diplomatic_actions = {
 		ai_desire = {
 			base = 25
 			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
+			modifier = {
 				add = 5
 				ROOT = { has_opinion = { target = PREV value > 0 } }
 			}
@@ -243,6 +304,11 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 10
 				ROOT = { has_opinion = { target = PREV value > 50 } }
+			}
+			# Singapore earns tariff income per agreement once its trade mechanic is active
+			modifier = {
+				add = 25
+				ROOT = { has_dynamic_modifier = { modifier = SIN_singaporean_trade_strength } }
 			}
 			modifier = {
 				ROOT = { original_tag = SOV }
@@ -407,7 +473,6 @@ scripted_diplomatic_actions = {
 		send_description = CANCEL_TRADE_AGREEMENT_DESC
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_trade_agreement"
 			remove_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
 			remove_opinion_modifier = { target = ROOT modifier = mutual_trade_opinion }
 			clr_country_flag = trade_agreement@ROOT
@@ -417,6 +482,11 @@ scripted_diplomatic_actions = {
 			change_influence_percentage = yes
 			add_to_variable = { signed_trade_agreements = -1 }
 			set_country_flag = { flag = has_recently_canceled_trade_agreement_@ROOT days = 90 value = 1 }
+			if = {
+				limit = { original_tag = SIN }
+				remove_from_array = { SIN_singaporean_trade_agreement = ROOT.id }
+				SIN_calculate_singaporean_trade_agreements = yes
+			}
 			ROOT = {
 				remove_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
 				remove_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
@@ -429,6 +499,7 @@ scripted_diplomatic_actions = {
 				add_to_variable = { signed_trade_agreements = -1 }
 				if = {
 					limit = { ROOT = { original_tag = SIN } }
+					remove_from_array = { SIN_singaporean_trade_agreement = PREV.id }
 					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
@@ -541,7 +612,6 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_ASSUME_DEBT_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect diplo_action_assume_debt"
 			set_variable = { ROOT.assuming_debt_value = THIS.debt }
 			multiply_variable = { ROOT.assuming_debt_value = 0.25 }
 
@@ -556,7 +626,6 @@ scripted_diplomatic_actions = {
 			}
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect diplo_action_assume_debt"
 			ROOT = {
 				clear_variable = pending_assume_debt_offer
 				subtract_from_variable = { treasury = assuming_debt_value }
@@ -569,7 +638,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect diplo_action_assume_debt"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_assume_debt_offer
 				clear_variable = assuming_debt_value
@@ -584,8 +653,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ASSUME_DEBT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_assume_debt_condition = {
 				base = -50
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -664,6 +760,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 20
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				ROOT = { has_opinion = { target = PREV value > 49 } }
 				add = 5
@@ -937,11 +1053,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_mutual_investment_treaty"
 			ROOT = { set_variable = { pending_mutual_investment_treaty_offer = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_mutual_investment_treaty"
 			set_country_flag = mutual_investment_treaty_@ROOT
 			ROOT = {
 				clear_variable = pending_mutual_investment_treaty_offer
@@ -984,7 +1098,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_mutual_investment_treaty"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_mutual_investment_treaty_offer
 			}
@@ -998,8 +1112,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_mutual_investment_treaty_condition = {
 				base = -25
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 				modifier = {
 					ROOT = { has_country_flag = italy_china_trade_deal }
 					has_country_flag = italy_china_trade_deal
@@ -1074,6 +1215,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 25
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				ROOT = { has_opinion = { target = PREV value > 0 } }
 				add = 5
@@ -1254,7 +1415,6 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_CANCEL_MUTUAL_INVESTMENT_TREATY
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_proposed_mutual_investment_treaty"
 			clr_country_flag = mutual_investment_treaty_@ROOT
 			remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
 			remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
@@ -1356,11 +1516,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_subsidies_to_subject"
 			ROOT = { set_variable = { pending_overlord_subsidization_offer = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_subsidies_to_subject"
 			set_country_flag = overlord_is_subsidizing_us_@ROOT
 			set_country_flag = overlord_subsidies
 			add_ideas = idea_overlord_subsidies
@@ -1373,7 +1531,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_subsidies_to_subject"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			set_country_flag = { flag = recently_rejected_overlord_subsidies_offer value = 1 days = 90 }
 			ROOT = {
 				clear_variable = pending_overlord_subsidization_offer
@@ -1386,8 +1544,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_propose_subsidies_to_subject_condition = {
 				base = -15
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_high_interest_rate = {
 				base = 0
@@ -1423,6 +1608,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 25
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				add = 10
 				check_variable = { ROOT.treasury_rate > 3.00 }
@@ -1486,7 +1691,6 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_CANCEL_OVERLORD_SUBSIDIES
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_subsidies_to_subject"
 			if = {
 				limit = { ROOT = { has_country_flag = overlord_subsidies } }
 				set_country_flag = { flag = canceled_overlord_subsidies_@ROOT value = 1 days = 30 }
@@ -1552,7 +1756,7 @@ scripted_diplomatic_actions = {
 	negotiate_operative_release = {
 		allowed = {
 			has_dlc = "La Resistance"
-			NOT = { MD_special_countries = yes }
+			ROOT = { NOT = { MD_special_countries = yes } }
 		}
 
 		visible = {
@@ -1572,11 +1776,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_NEGOTIATE_OPERATIVE_RELEASE_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect negotiate_operative_release"
 			ROOT = { set_variable = { pending_negotiate_operative_release_offer = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect negotiate_operative_release"
 			add_opinion_modifier = { target = ROOT modifier = negotiate_operative_release }
 			reverse_add_opinion_modifier = { target = ROOT modifier = negotiate_operative_release }
 
@@ -1590,7 +1792,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect negotiate_operative_release"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_negotiate_operative_release_offer
 				set_country_flag = { flag = recently_rejected_operative_release_@PREV days = 180 value = 1 }
@@ -1605,8 +1807,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_NEGOTIATE_OPERATIVE_RELEASE_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_negotiate_operative_release = {
 				base = -50
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -1694,6 +1923,26 @@ scripted_diplomatic_actions = {
 			base = 15
 			modifier = {
 				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
+			modifier = {
+				add = 10
 				ROOT = { has_opinion = { target = PREV value > 50 } }
 			}
 			modifier = {
@@ -1745,7 +1994,7 @@ scripted_diplomatic_actions = {
 	enforce_peace_option = {
 		allowed = {
 			has_game_rule = { rule = allow_forcing_a_white_peace option = yes }
-			NOT = { MD_special_countries = yes }
+			ROOT = { NOT = { MD_special_countries = yes } }
 		}
 
 		visible = {
@@ -1758,7 +2007,7 @@ scripted_diplomatic_actions = {
 		selectable = {
 			influence_higher_40 = yes
 			has_opinion = {
-				target = THIS
+				target = ROOT
 				value > 50
 			}
 			ERI_is_not_transitional_government = yes
@@ -1773,12 +2022,10 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_ENFORCE_PEACE_OPTION_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect enforce_peace_option"
 			ROOT = { set_variable = { pending_enforce_peace_pending_offer = PREV.id } }
 			add_opinion_modifier = { target = ROOT modifier = forced_a_ceasefire_during_our_conflict }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect enforce_peace_option"
 			for_each_scope_loop = {
 				array = enemies
 				every_owned_state = {
@@ -1800,7 +2047,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect enforce_peace_option"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_enforce_peace_pending_offer
 				set_country_flag = { flag = recently_demanded_enforce_peace_@PREV value = 1 days = 90 }
@@ -1814,8 +2061,35 @@ scripted_diplomatic_actions = {
 
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_enforce_peace_option = {
 				base = -50
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -1947,6 +2221,26 @@ scripted_diplomatic_actions = {
 		ai_desire = {
 			base = 1
 			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
+			modifier = {
 				add = 25
 				ROOT = {
 					OR = {
@@ -1990,7 +2284,7 @@ scripted_diplomatic_actions = {
 	propose_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			NOT = { MD_special_countries = yes }
+			ROOT = { NOT = { MD_special_countries = yes } }
 		}
 
 		visible = {
@@ -2015,11 +2309,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_PROPOSE_ENERGY_LOAD_SHARING_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect propose_energy_load_sharing"
 			ROOT = { set_variable = { pending_proposal_to_energy_load_share = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect propose_energy_load_sharing"
 			set_country_flag = energy_load_sharing_recipient
 			ROOT = {
 				add_to_array = { energy_load_sharing_nations = PREV.id }
@@ -2035,7 +2327,7 @@ scripted_diplomatic_actions = {
 			ingame_update_setup = yes
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect propose_energy_load_sharing"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_proposal_to_energy_load_share
 				set_country_flag = { flag = recently_rejected_propose_energy_load_sharing_@PREV value = 1 days = 270 }
@@ -2048,8 +2340,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ENERGY_LOAD_SHARING_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_energy_load_sharing = {
 				base = 15
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -2088,6 +2407,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				add = 20
 				ROOT = { NOT = { has_an_energy_deficit = yes } }
@@ -2149,7 +2488,7 @@ scripted_diplomatic_actions = {
 	request_energy_load_sharing = {
 		allowed = {
 			NOT = { has_global_flag = GAME_RULE_disable_energy_load_sharing }
-			NOT = { MD_special_countries = yes }
+			ROOT = { NOT = { MD_special_countries = yes } }
 		}
 
 		visible = {
@@ -2178,11 +2517,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_REQUEST_ENERGY_LOAD_SHARING_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect request_energy_load_sharing"
 			ROOT = { set_variable = { pending_request_to_energy_load_share = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect request_energy_load_sharing"
 			add_to_array = { energy_load_sharing_nations = ROOT.id }
 			calculate_energy_load_sharing = yes
 
@@ -2194,7 +2531,7 @@ scripted_diplomatic_actions = {
 			ingame_update_setup = yes
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect request_energy_load_sharing"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_request_to_energy_load_share
 				set_country_flag = { flag = recently_rejected_request_energy_load_sharing_@PREV value = 1 days = 270 }
@@ -2207,8 +2544,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ENERGY_LOAD_SHARING_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_energy_load_sharing = {
 				base = 15
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -2247,6 +2611,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 25
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				add = 20
 				is_in_faction_with = ROOT
@@ -2317,7 +2701,6 @@ scripted_diplomatic_actions = {
 		send_description = CANCEL_ENERGY_LOAD_SHARING_DESC
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action cancel_energy_load_sharing"
 			if = {
 				limit = { has_country_flag = energy_load_sharing_recipient }
 				clr_country_flag = energy_load_sharing_recipient
@@ -2394,7 +2777,10 @@ scripted_diplomatic_actions = {
 			}
 			modifier = {
 				add = -100
-				ROOT = { has_country_flag = recently_accepted_energy_load_sharing_@PREV }
+				OR = {
+					ROOT = { has_country_flag = recently_accepted_energy_load_sharing_@PREV }
+					PREV = { has_country_flag = recently_accepted_energy_load_sharing_@ROOT }
+				}
 			}
 		}
 	}
@@ -2402,7 +2788,7 @@ scripted_diplomatic_actions = {
 	# Purchase Reactor-Grade Material
 	purchase_reactor_grade_material = {
 		allowed = {
-			NOT = { MD_special_countries = yes }
+			ROOT = { NOT = { MD_special_countries = yes } }
 		}
 		visible = {
 			ROOT = {
@@ -2436,11 +2822,9 @@ scripted_diplomatic_actions = {
 		send_description = PURCHASE_REACTOR_GRADE_MATERIAL_DESC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect purchase_reactor_grade_material"
 			ROOT = { set_variable = { pending_reactor_material_purchase = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action purchase_reactor_grade_material"
 			set_temp_variable = { change_resource = -5000 }
 			change_reactor_grade_material_effect = yes
 			set_temp_variable = { treasury_change = 4 }
@@ -2456,7 +2840,7 @@ scripted_diplomatic_actions = {
 			update_money_dirty_variable = yes
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect purchase_reactor_grade_material"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_reactor_material_purchase
 				set_country_flag = { flag = recently_rejected_reactor_material_purchase_@PREV days = 180 value = 1 }
@@ -2469,8 +2853,35 @@ scripted_diplomatic_actions = {
 		reject_description = PURCHASE_REACTOR_GRADE_MATERIAL_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_purchase_reactor_grade = {
 				base = -10
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			surplus_production_condition = {
 				base = 0
@@ -2577,6 +2988,26 @@ scripted_diplomatic_actions = {
 
 		ai_desire = {
 			base = 0
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			# Don't buy if we have our own enrichment facilities
 			modifier = {
 				factor = 0
@@ -2688,6 +3119,11 @@ scripted_diplomatic_actions = {
 				factor = 0
 				ROOT = { has_country_flag = recently_rejected_reactor_material_purchase_@PREV }
 			}
+			modifier = {
+				factor = 0
+				is_ai = no
+				has_country_flag = MD_auto_reject_nuclear_fuel_offers
+			}
 		}
 	}
 
@@ -2710,9 +3146,6 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_CLOSE_EMBASSY_ACTION_DESC
 
 		complete_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect close_embassy_action"
-			}
 			add_opinion_modifier = { target = ROOT modifier = embassy_closed }
 			reverse_add_opinion_modifier = { target = ROOT modifier = embassy_closed }
 
@@ -2733,11 +3166,51 @@ scripted_diplomatic_actions = {
 		ai_acceptance = {
 			base_close_embassy = {
 				base = -50
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -5
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 		}
 
 		ai_desire = {
 			base = -100
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				add = 25
 				ROOT = { has_opinion = { target = PREV value < -25 } }
@@ -2799,15 +3272,9 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_REOPEN_EMBASSY_ACTION_DESC
 
 		on_sent_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect reopen_embassy_action"
-			}
 			ROOT = { set_variable = { pending_reopen_embassy_option = PREV.id } }
 		}
 		complete_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect reopen_embassy_action"
-			}
 			add_opinion_modifier = { target = ROOT modifier = embassy_recently_reopened }
 			reverse_add_opinion_modifier = { target = ROOT modifier = embassy_recently_reopened }
 
@@ -2820,9 +3287,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect reopen_embassy_action"
-			}
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = { clear_variable = pending_reopen_embassy_option }
 		}
 
@@ -2832,8 +3297,35 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_REOPEN_EMBASSY_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_reopen_embassy = {
-				base = -50
+				base = -40
+				modifier = {
+					add = 20
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 0 }
+				}
+				modifier = {
+					add = 10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 1 }
+				}
+				modifier = {
+					add = -10
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 3 }
+				}
+				modifier = {
+					add = -20
+					ROOT = { is_ai = no }
+					check_variable = { global.difficulty = 4 }
+				}
 			}
 			condition_two = {
 				base = 0
@@ -2843,7 +3335,10 @@ scripted_diplomatic_actions = {
 				}
 				modifier = {
 					add = -50
-					has_government = nationalist
+					OR = {
+						has_government = nationalist
+						has_government = fascism
+					}
 				}
 			}
 			condition_three = {
@@ -2853,10 +3348,52 @@ scripted_diplomatic_actions = {
 					add = opinion_calculator
 				}
 			}
+			condition_four = {
+				base = 0
+				modifier = {
+					add = -100
+					has_war_with = ROOT
+				}
+			}
+			condition_five = {
+				base = 0
+				modifier = {
+					add = 20
+					is_in_faction_with = ROOT
+				}
+				modifier = {
+					add = 25
+					is_subject_of = ROOT
+				}
+				modifier = {
+					add = 25
+					ROOT = { is_subject_of = PREV }
+				}
+			}
 		}
 
 		ai_desire = {
 			base = 20
+			modifier = {
+				add = 10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 0 }
+			}
+			modifier = {
+				add = 5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 1 }
+			}
+			modifier = {
+				add = -5
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 3 }
+			}
+			modifier = {
+				add = -10
+				ROOT = { is_ai = no }
+				check_variable = { global.difficulty = 4 }
+			}
 			modifier = {
 				ROOT = { has_opinion = { target = PREV value > 49 } }
 				add = 2
@@ -2872,6 +3409,14 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = -15
 				ROOT = { has_opinion = { target = PREV value < 0 } }
+			}
+			modifier = {
+				add = 5
+				is_in_faction_with = ROOT
+			}
+			modifier = {
+				add = 15
+				is_subject_of = ROOT
 			}
 			modifier = {
 				factor = 0

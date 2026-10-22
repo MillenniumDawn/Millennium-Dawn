@@ -9,28 +9,46 @@ import re
 import sys
 import time
 from dataclasses import dataclass
-from multiprocessing import Pool, cpu_count
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from itertools import chain
+from multiprocessing import cpu_count
+from multiprocessing.pool import Pool
+from pathlib import Path
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     Colors,
-    DataCleaner,
     FileOpener,
+    atomic_write_text,
     clean_filepath,
     compute_line_offsets,
+    cpu_budget,
     create_validation_parser,
+    drop_partial_matches,
+    extract_block_from_text,
     find_line_number,
+    find_unquoted_block_end,
+    find_unquoted_brace_close,
     get_staged_files,
     line_for_offset,
+    line_of,
     log_message,
+    normalize_path_separators,
     print_timing_summary,
     run_validator_main,
     should_skip_file,
     strip_comments,
     timing_enabled,
+)
+
+# Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
+T = TypeVar("T")
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]+m")
+BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
@@ -40,6 +58,13 @@ _META_TEMPLATE_RE = re.compile(
     r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+)"
 )
 
+# Quoted meta-substitution value carrying the constant anchor, where the
+# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
+# The `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives in
+# the quoted assignment, so a leading placeholder with only a trailing constant must
+# still resolve. The suffix anchor keeps the match from over-firing.
+_QUOTED_META_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
+
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
 
@@ -48,6 +73,13 @@ def _label_from_failmsg(fail_msg: str) -> str:
     codes and a trailing colon so 'Undefined idea references:' groups cleanly."""
     label = _ANSI_RE.sub("", fail_msg or "").strip().rstrip(":").strip()
     return label or "OTHER"
+
+
+def _safe_int(value) -> int:
+    try:
+        return int(value) if value else 0
+    except (TypeError, ValueError):
+        return 0
 
 
 # Loc keys that live in vanilla HOI4 (not the mod's localisation/ tree) and are
@@ -72,6 +104,122 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "recruit_in_asia",
         "recruit_in_australia",
         "recruit_in_india",
+        # resistance_and_occupation_l_english.yml: MD redefines the vanilla
+        # sabotaged_resources dynamic modifier and keeps its name string.
+        "sabotaged_resources",
+        # modifiers_l_english.yml — variable-effect tooltip rows inherited by
+        # MD focus, decision, event, and idea effects.
+        "acclimatization_cold_climate_gain_factor_tt",
+        "acclimatization_hot_climate_gain_factor_tt",
+        "ace_effectiveness_factor_tt",
+        "agency_upgrade_time_tt",
+        "air_ace_bonuses_factor_tt",
+        "air_bombing_targetting_tt",
+        "air_cas_efficiency_tt",
+        "air_chief_cost_factor_tt",
+        "air_fuel_consumption_factor_tt",
+        "air_home_defence_factor_tt",
+        "air_intercept_efficiency_tt",
+        "air_interception_detect_factor_tt",
+        "air_range_factor_tt",
+        "air_strategic_bomber_bombing_factor_tt",
+        "air_superiority_efficiency_tt",
+        "air_training_xp_gain_factor_tt",
+        "air_weather_penalty_tt",
+        "air_wing_xp_loss_when_killed_factor_tt",
+        "amphibious_invasion_tt",
+        "annex_cost_factor_tt",
+        "army_armor_speed_factor_tt",
+        "army_artillery_defence_factor_tt",
+        "army_attack_factor_tt",
+        "army_attack_speed_factor_tt",
+        "army_bonus_air_superiority_factor_tt",
+        "army_leader_start_attack_level_tt",
+        "army_leader_start_defense_level_tt",
+        "army_leader_start_logistics_level_tt",
+        "army_leader_start_planning_level_tt",
+        "army_org_factor_tt",
+        "attrition_tt",
+        "base_fuel_gain_factor_tt",
+        "cic_construction_boost_factor_tt",
+        "compliance_growth_on_our_occupied_states_tt",
+        "compliance_growth_tt",
+        "conversion_cost_civ_to_mil_factor_tt",
+        "convoy_escort_efficiency_tt",
+        "convoy_retreat_speed_tt",
+        "coordination_bonus_tt",
+        "democratic_drift_tt",
+        "enemy_justify_war_goal_time_tt",
+        "equipment_conversion_speed_tt",
+        "experience_gain_air_factor_tt",
+        "experience_gain_army_factor_tt",
+        "experience_gain_navy_factor_tt",
+        "experience_gain_navy_tt",
+        "fascism_drift_tt",
+        "fuel_gain_factor_tt",
+        "global_building_slots_factor_tt",
+        "heat_attrition_factor_tt",
+        "industry_free_repair_factor_tt",
+        "industry_repair_factor_tt",
+        "intel_from_combat_factor_tt",
+        "land_bunker_effectiveness_factor_tt",
+        "lend_lease_tension_tt",
+        "license_production_speed_tt",
+        "license_purchase_cost_tt",
+        "local_factories_tt",
+        "local_resource_gain_efficiency_per_infrastructure_tt",
+        "local_resources_factor_tt",
+        "master_ideology_drift_tt",
+        "max_dig_in_factor_tt",
+        "max_dig_in_tt",
+        "max_fuel_factor_tt",
+        "mechanized_attack_factor_tt",
+        "military_industrial_organization_funds_gain_tt",
+        "military_industrial_organization_research_bonus_tt",
+        "military_leader_cost_factor_tt",
+        "min_export_tt",
+        "minimum_training_level_tt",
+        "monthly_population_tt",
+        "motorized_attack_factor_tt",
+        "naval_critical_score_chance_factor_tt",
+        "naval_defense_factor_tt",
+        "naval_enemy_fleet_size_ratio_penalty_factor_tt",
+        "naval_mines_damage_factor_tt",
+        "naval_mines_effect_reduction_tt",
+        "naval_speed_factor_tt",
+        "naval_strike_targetting_factor_tt",
+        "naval_torpedo_reveal_chance_factor_tt",
+        "naval_torpedo_screen_penetration_factor_tt",
+        "navy_intel_factor_tt",
+        "navy_intel_to_others_tt",
+        "navy_max_range_factor_tt",
+        "navy_org_factor_tt",
+        "navy_screen_attack_factor_tt",
+        "navy_screen_defence_factor_tt",
+        "non_core_manpower_tt",
+        "planning_speed_factor_tt",
+        "production_factory_efficiency_gain_factor_tt",
+        "production_factory_max_efficiency_factor_tt",
+        "production_factory_start_efficiency_factor_tt",
+        "production_lack_of_resource_penalty_factor_tt",
+        "production_oil_factor_tt",
+        "production_speed_facility_factor_tt",
+        "production_speed_fuel_silo_factor_tt",
+        "production_speed_infrastructure_factor_tt",
+        "production_speed_rail_way_factor_tt",
+        "production_speed_supply_node_factor_tt",
+        "production_speed_synthetic_refinery_factor_tt",
+        "recruitable_population_tt",
+        "refit_speed_tt",
+        "research_speed_factor_tt",
+        "resistance_activity_tt",
+        "resistance_target_tt",
+        "screening_without_screens_tt",
+        "special_forces_min_tt",
+        "spotting_chance_tt",
+        "state_production_speed_supply_node_factor_tt",
+        "terrain_trait_xp_gain_factor_tt",
+        "training_time_factor_tt",
         # decisions_l_english.yml — shared cost-tooltip strings used as
         # custom_cost_text on MD decisions.
         "decision_cost_CP_15",
@@ -88,12 +236,24 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "USA_small_lobby_effort",
         "USA_special_measures",
         "USA_statehood_for_puerto_rico",
+        # game_rules_l_english.yml — vanilla game rule option name reused by MD.
+        "ETH_AI_BEHAVIOR",
+        # diplomacy_l_english.yml — vanilla opinion modifier names; MD redefines
+        # the modifiers in common/opinion_modifiers/generic_modifiers.txt but
+        # reuses the vanilla strings.
+        "same_ruling_party",
+        "unstable_alliance",
+        # military_raids_l_english.yml — vanilla raid kept in
+        # common/raids/land_infiltration_raids.txt.
+        "raid_type_rescue_captured_general",
+        "raid_type_rescue_captured_general_desc",
         # Vanilla focus names reused intact by MD focus trees (string fits the
         # in-game label — e.g. "Greater Finland", "Worker's Rights").
         "EST_new_economic_policy",  # ideas_l_english.yml
         "FIN_greater_finland",  # aat_focus_l_english.yml
         "GER_workers_rights",  # wuw_focus_l_english.yml
         "GER_workers_rights_desc",
+        "HOL_gateway_to_europe",  # mtg_focus_l_english.yml
         "ITA_all_roads_lead_to_rome",  # bba_focus_l_english.yml
         "ITA_all_roads_lead_to_rome_desc",
         "POL_armia_ludowa",  # focus_poland_l_english.yml
@@ -104,29 +264,33 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "RAJ_indian_national_congress_desc",
         "RAJ_industrial_expansion",
         "RAJ_industrial_expansion_desc",
-        # lar_events_l_english.yml — La Resistance operation events reused by
-        # MD's intel/raid systems.
-        "lar_bruneval_raid.1.a",
-        "lar_bruneval_raid.1.desc",
-        "lar_bruneval_raid.1.t",
-        "lar_bruneval_raid.2.desc",
-        "lar_bruneval_raid.2.t",
-        "lar_capture_tito.1.a",
-        "lar_capture_tito.1.desc",
-        "lar_capture_tito.1.t",
+        "SOV_raskovas_aviation_group",  # nsb_focus_l_english.yml
+        "SOV_raskovas_aviation_group_desc",
+        "SPA_a_great_spain",  # lar_focus_l_english.yml
+        "SPA_a_great_spain_desc",
+        "SPR_the_popular_front",  # lar_focus_l_english.yml
+        "SPR_the_popular_front_desc",
+        "SWI_armed_neutrality",  # bba_focus_l_english.yml
+        "SWI_swiss_neutrality",  # bba_ideas_l_english.yml
+        # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
-        "lar_heavy_water.1.a",
-        "lar_heavy_water.1.t",
-        "lar_heavy_water.2.a",
-        "lar_heavy_water.2.desc",
-        "lar_heavy_water.2.t",
-        "lar_rescue_mussolini.1.a",
-        "lar_rescue_mussolini.1.desc",
-        "lar_rescue_mussolini.1.t",
-        "lar_rescue_mussolini.2.a",
-        "lar_rescue_mussolini.2.desc",
-        "lar_rescue_mussolini.2.t",
+        # lar_events_l_english.yml — agent-loss events reused by LaR_agent_events.txt.
+        "lar_operative_event.1.a",
+        "lar_operative_event.1.desc",
+        "lar_operative_event.1.t",
+        "lar_operative_event.2.a",
+        "lar_operative_event.2.desc",
+        "lar_operative_event.2.t",
+        "lar_operative_event.3.a",
+        "lar_operative_event.3.desc",
+        "lar_operative_event.3.t",
+        "lar_operative_event.4.a",
+        "lar_operative_event.4.desc",
+        "lar_operative_event.4.t",
+        "lar_operative_event.5.a",
+        "lar_operative_event.5.desc",
+        "lar_operative_event.5.t",
         "occupied_countries.1.a",
         "occupied_countries.1.b",
         "occupied_countries.1.desc",
@@ -199,6 +363,31 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
     }
 )
 
+# Object header opening a `{` block. Numeric names so `random_list` weight
+# buckets (`50 = { ... }`) and state ids (`652 = { ... }`) parse as blocks.
+_BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
+
+
+def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
+    """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
+    blocks = []
+    i = start
+    while i < end:
+        match = _BLOCK_RE.search(text, i, end)
+        if not match:
+            break
+        close = find_unquoted_brace_close(text, match.end() - 1)
+        if close < 0 or close > end:
+            break
+        blocks.append((match.group(1), match.start(), match.end(), close))
+        i = close + 1
+    return blocks
+
+
+# Literal zero AI weights. The lookahead keeps `0.5` from reading as zero.
+FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
+
 
 def casefold_index(names) -> dict:
     """Return a dict mapping each name lowercased to its canonical form.
@@ -215,14 +404,65 @@ def case_mismatch(ref: str, ci_index: dict):
     return hit if (hit is not None and hit != ref) else None
 
 
+DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
+
+
+# Trait definitions sit at one tab of indent inside the `leader_traits = { }`
+# wrapper; `-` stays in the charset so a hyphenated name cannot truncate.
+LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
+
+
+def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
+    """Collect every trait defined in the ``common/<subdir>/`` trait files.
+
+    Covers both leader trait pools: ``country_leader`` (advisors and country
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen
+    stays in the name charset so a hyphenated trait name cannot truncate.
+    """
+    names: Set[str] = set()
+    trait_dir = os.path.join(mod_path, "common", subdir)
+    if not os.path.isdir(trait_dir):
+        return names
+
+    try:
+        trait_files = sorted(os.listdir(trait_dir))
+    except OSError:
+        return names
+
+    for fname in trait_files:
+        if not fname.endswith(".txt"):
+            continue
+        content = FileOpener.open_text_file(
+            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+        )
+        names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
+    return names
+
+
 def scan_meta_constructed_names(files, defined_names):
     """Return the subset of *defined_names* called via meta_effect/meta_trigger
     template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
 
     For every file containing ``meta_effect`` or ``meta_trigger``, extracts
-    identifier templates of the form ``prefix_[VAR]_suffix``, splits on ``[VAR]``
-    segments, and matches any defined name whose lower-cased form starts with
-    *prefix* and ends with *suffix*.
+    identifier templates of the form ``prefix_[VAR]_suffix`` — both bare
+    identifiers and quoted meta-substitution values (tooltips/templates such as
+    ``"[?var]_unlock_btn_enabled"``) — splits on ``[VAR]`` segments, and matches
+    any defined name whose lower-cased form starts with *prefix* and ends with
+    *suffix*.
     """
     defined_lower = {n.lower(): n for n in defined_names}
     used = set()
@@ -239,8 +479,12 @@ def scan_meta_constructed_names(files, defined_names):
 
         content_clean = strip_comments(content)
 
-        for m in _META_TEMPLATE_RE.finditer(content_clean):
-            template = m.group(1)
+        templates = {m.group(1) for m in _META_TEMPLATE_RE.finditer(content_clean)}
+        templates.update(
+            m.group(1) for m in _QUOTED_META_TEMPLATE_RE.finditer(content_clean)
+        )
+
+        for template in templates:
             parts = re.split(r"\[[^\]]+\]", template)
             prefix = parts[0].lower()
             suffix = parts[-1].lower() if len(parts) > 1 else ""
@@ -381,7 +625,7 @@ class BaseValidator:
 
     Common workflow in ``run_validations``:
       1. Iterate over ``files``.
-      2. Call ``should_skip_file(path, EXTRA_SKIP_PATTERNS)`` to filter.
+      2. Filter with ``should_skip_file(path, mod_path=self.mod_path)``.
       3. Use ``disk_cache.per_file_cached_by_content()`` for expensive per-file work.
       4. Call ``self.add_error(category, message, file, line)`` for each issue found.
 
@@ -390,6 +634,7 @@ class BaseValidator:
 
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
+    STAGED_INCLUDE_MISSING = False
 
     def __init__(
         self,
@@ -397,7 +642,7 @@ class BaseValidator:
         output_file: Optional[str] = None,
         use_colors: bool = True,
         staged_only: bool = False,
-        workers: int = None,
+        workers: Optional[int] = None,
         no_cache: bool = False,
         **kwargs,
     ):
@@ -409,10 +654,16 @@ class BaseValidator:
         self.output_file = output_file
         self.use_colors = use_colors
         self.staged_only = staged_only
-        self.workers = workers if workers else max(1, cpu_count() // 2)
+        # Half the cores by default, and never more than the shared budget:
+        # a caller that asks for more must not be able to take the whole box.
+        self.workers = min(workers or max(1, cpu_count() // 2), cpu_budget())
         self.no_cache = no_cache
+        # Pool workers call disk_cache at module level and never see `self`, so the
+        # env var is the only channel that reaches them (fork inherits it).
+        if no_cache:
+            os.environ["MD_NO_CACHE"] = "1"
         self.staged_files = None
-        self.output_lines = []
+        self.output_lines: List[str] = []
         self._pool: Optional[Pool] = None
         self._shared_cache: Dict[str, object] = {}
         self._issues: List[Issue] = []
@@ -424,16 +675,21 @@ class BaseValidator:
 
         if staged_only:
             self.staged_files = (
-                get_staged_files(mod_path, extensions=self.STAGED_EXTENSIONS) or []
+                get_staged_files(
+                    mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=self.STAGED_INCLUDE_MISSING,
+                )
+                or []
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
 
-    def cached(self, key: str, factory_fn):
+    def cached(self, key: str, factory_fn: Callable[[], T]) -> T:
         # Pool workers don't see this cache; populate from the main process.
         if key not in self._shared_cache:
             self._shared_cache[key] = factory_fn()
-        return self._shared_cache[key]
+        return cast(T, self._shared_cache[key])
 
     def parse_files_cached(
         self,
@@ -456,12 +712,16 @@ class BaseValidator:
             text = FileOpener.open_text_file(
                 path, lowercase=lowercase, strip_comments_flag=strip_comments_flag
             )
+
+            def parse_cached() -> Any:
+                return parse_fn(text, path)
+
             results[path] = disk_cache.per_file_cached_by_content(
                 self.mod_path,
                 namespace,
                 path,
                 text,
-                lambda t=text, p=path: parse_fn(t, p),
+                parse_cached,
             )
         return results
 
@@ -477,9 +737,8 @@ class BaseValidator:
         elif level == "warning" and _LOG_LEVEL == "ERROR":
             return
 
-        display_msg = (
-            message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
-        )
+        plain = _ANSI_RE.sub("", message)
+        display_msg = message if self.use_colors else plain
         if level == "always":
             # Bypass the logging threshold entirely; the root logger defaults to
             # WARNING, so logging.info would drop these. Same stream as logging.
@@ -490,8 +749,7 @@ class BaseValidator:
             logging.warning(display_msg)
         elif level == "error":
             logging.error(display_msg)
-        file_msg = re.sub(r"\033\[[0-9;]+m", "", message)
-        self.output_lines.append(file_msg)
+        self.output_lines.append(plain)
 
     def _log_section(self, title: str):
         """Emit the section header and start timing this section.
@@ -508,7 +766,7 @@ class BaseValidator:
         # progress is only useful when profiling, so show a one-line marker then.
         if self._show_timing:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}── {title}{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.CYAN}── {title}{Colors.ENDC}",
                 "always",
             )
 
@@ -549,9 +807,7 @@ class BaseValidator:
                 items = sorted(by_cat[cat], key=lambda i: (i.file or "", i.line))
                 n = len(items)
                 head = f"{cat}  ({n} {noun}{'s' if n != 1 else ''})"
-                c0 = sev_color if self.use_colors else ""
-                c1 = Colors.ENDC if self.use_colors else ""
-                self.log(f"\n{c0}{head}{c1}", "always")
+                self.log(f"\n{sev_color}{head}{Colors.ENDC}", "always")
                 shown = items[: self.MAX_RENDERED_PER_CATEGORY]
                 for issue in shown:
                     # "  file:line - message" matches report_lib's text-fallback
@@ -571,33 +827,25 @@ class BaseValidator:
                     )
 
     def save_output(self):
-        if self.output_file and self.output_lines:
-            try:
-                with open(self.output_file, "w", encoding="utf-8") as f:
-                    f.write("\n".join(self.output_lines))
-                logging.info(f"Results saved to: {self.output_file}")
-            except Exception as e:
-                logging.error(f"Failed to write results to {self.output_file}: {e}")
-
-        json_file = (
-            os.path.splitext(self.output_file)[0] + ".json"
-            if self.output_file
-            else None
-        )
-        if json_file and self._issues:
-            try:
-                with open(json_file, "w", encoding="utf-8") as f:
-                    f.write(self.get_issues_json())
-                logging.info(f"JSON results saved to: {json_file}")
-            except Exception as e:
-                logging.error(f"Failed to serialize JSON to {json_file}: {e}")
+        if not self.output_file:
+            return
+        atomic_write_text(self.output_file, "\n".join(self.output_lines))
+        logging.info(f"Results saved to: {self.output_file}")
+        # CI verifies the sidecar exists even on clean runs — always write it.
+        json_file = os.path.splitext(self.output_file)[0] + ".json"
+        atomic_write_text(json_file, self.get_issues_json())
+        logging.info(f"JSON results saved to: {json_file}")
 
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
     ):
         """Add an issue to the internal list for later deduplication and reporting."""
         issue = Issue(
-            severity=severity, category=category, message=message, file=file, line=line
+            severity=severity,
+            category=category,
+            message=message,
+            file=normalize_path_separators(file),
+            line=line,
         )
         self._issues.append(issue)
         if severity == Severity.ERROR:
@@ -648,7 +896,7 @@ class BaseValidator:
             if not m:
                 continue
             gd = m.groupdict()
-            line = int(gd["line"]) if gd.get("line") else 0
+            line = _safe_int(gd.get("line"))
             prefix = gd.get("prefix")
             msg = gd.get("msg", "")
             if prefix:
@@ -675,22 +923,29 @@ class BaseValidator:
         are progress noise at the default verbosity.
         """
         if not results:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}{ok_msg}{Colors.ENDC}")
             return
         group_label = category or _label_from_failmsg(fail_msg)
         for r in results:
             if isinstance(r, Issue):
-                issue = r
-                if not issue.category:
-                    issue.category = group_label
+                normalized_category = r.category or group_label
+                normalized_file = normalize_path_separators(r.file)
+                if normalized_category == r.category and normalized_file == r.file:
+                    issue = r
+                else:
+                    issue = Issue(
+                        severity=r.severity,
+                        category=normalized_category,
+                        message=r.message,
+                        file=normalized_file,
+                        line=r.line,
+                    )
                 actual_severity = issue.severity
             elif isinstance(r, tuple):
                 # (message, file, line)
                 msg_t = str(r[0]) if len(r) > 0 else ""
-                file_t = str(r[1]) if len(r) > 1 else ""
-                line_t = int(r[2]) if len(r) > 2 and r[2] else 0
+                file_t = normalize_path_separators(str(r[1])) if len(r) > 1 else ""
+                line_t = _safe_int(r[2]) if len(r) > 2 else 0
                 issue = Issue(
                     severity=severity,
                     category=group_label,
@@ -706,7 +961,7 @@ class BaseValidator:
                     severity=severity,
                     category=group_label,
                     message=msg_p,
-                    file=file_p,
+                    file=normalize_path_separators(file_p),
                     line=line_p,
                 )
                 actual_severity = severity
@@ -731,7 +986,7 @@ class BaseValidator:
         key = "_basename_index:" + "|".join(patterns)
         existing = self._shared_cache.get(key)
         if existing is not None:
-            return existing
+            return cast(Dict[str, List[str]], existing)
 
         tracked: List[str] = []
         seen: Set[str] = set()
@@ -746,7 +1001,7 @@ class BaseValidator:
         def _build():
             index: Dict[str, List[str]] = {}
             for filename in tracked:
-                if should_skip_file(filename):
+                if should_skip_file(filename, mod_path=self.mod_path):
                     continue
                 index.setdefault(os.path.basename(filename), []).append(filename)
             return index
@@ -773,8 +1028,8 @@ class BaseValidator:
         """Lazily create the shared worker pool on first parallel use.
 
         Tiny staged commits never reach a parallel code path, so the Pool is
-        never spawned and they don't pay the fork+teardown cost. Created once,
-        memoized, and torn down by run_all_validations().
+        never spawned and they don't pay the fork+teardown cost. Memoized, and
+        torn down by _close_pool().
         """
         if self.workers <= 1:
             return None
@@ -782,13 +1037,30 @@ class BaseValidator:
             self._pool = Pool(processes=self.workers)
         return self._pool
 
+    def _close_pool(self) -> None:
+        if self._pool is not None:
+            self._pool.terminate()
+            self._pool.join()
+            self._pool = None
+
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
         # Falls back to sequential when workers == 1 or the batch is small, so
         # low-end machines and tiny staged commits don't eat the Pool startup
         # cost. The Pool is created lazily on the first batch that uses it.
         if self.workers == 1 or len(args_list) < 10:
             return [func(a) for a in args_list]
-        return self._get_pool().map(func, args_list, chunksize=chunksize)
+        pool = self._get_pool()
+        if pool is None:
+            return [func(a) for a in args_list]
+        return pool.map(func, args_list, chunksize=chunksize)
+
+    def _pool_flat_map(
+        self, func: Callable, args_list: List, chunksize: int = 50
+    ) -> List:
+        """_pool_map for workers that each return a collection: every item, flat."""
+        return list(
+            chain.from_iterable(self._pool_map(func, args_list, chunksize=chunksize))
+        )
 
     def _pool_map_init(
         self,
@@ -806,10 +1078,27 @@ class BaseValidator:
         if self.workers == 1 or len(items) < 10:
             initializer(*initargs)
             return [func(it) for it in items]
+        # A live shared pool runs helper threads, and forking beside them can deadlock.
+        self._close_pool()
         with Pool(
             processes=self.workers, initializer=initializer, initargs=initargs
         ) as pool:
             return pool.map(func, items, chunksize=chunksize)
+
+    def staged_touches(self, dirs: Tuple[str, ...]) -> bool:
+        """True when any staged file sits under one of the mod-relative dirs."""
+        mod = Path(self.mod_path)
+        prefixes = tuple(d + "/" for d in dirs)
+        for f in self.staged_files or []:
+            p = Path(f)
+            abs_p = p if p.is_absolute() else mod / p
+            try:
+                rel = abs_p.resolve().relative_to(mod.resolve()).as_posix()
+            except ValueError:
+                continue
+            if rel.startswith(prefixes):
+                return True
+        return False
 
     def _collect_files(
         self,
@@ -863,11 +1152,15 @@ class BaseValidator:
                     normalized.startswith(hint) or ("/" + hint) in normalized
                 )
 
-            files = [
+            matched = [
                 f
                 for f in self.staged_files
                 if any(f.endswith(ext) for ext in extensions)
                 and any(_matches_hint(f, hint) for hint in dir_hints)
+            ]
+            files = [
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f)
+                for f in matched
             ]
         else:
             seen: Set[str] = set()
@@ -876,11 +1169,12 @@ class BaseValidator:
                 for f in glob.iglob(
                     os.path.join(self.mod_path, pattern), recursive=True
                 ):
+                    f = os.path.normpath(f)
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
 
-        result = [f for f in files if not should_skip_file(f)]
+        result = [f for f in files if not should_skip_file(f, mod_path=self.mod_path)]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result
@@ -901,18 +1195,29 @@ class BaseValidator:
         yml_files = self._collect_files(
             ["localisation/english/**/*.yml"], ignore_staged=True
         )
-        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
-        all_keys: set = set()
-        for filepath in yml_files:
-            try:
-                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
-                    text = f.read()
-            except Exception:
-                continue
-            all_keys.update(key_pattern.findall(text))
-        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        self._loc_keys_memo = frozenset(all_keys)
-        return self._loc_keys_memo
+
+        def _build() -> frozenset:
+            key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
+            all_keys: set = set()
+            for filepath in yml_files:
+                try:
+                    with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                        text = f.read()
+                except Exception:
+                    continue
+                all_keys.update(key_pattern.findall(text))
+            all_keys.update(KNOWN_VANILLA_LOC_KEYS)
+            return frozenset(all_keys)
+
+        keys = disk_cache.aggregate_cached(
+            self.mod_path,
+            "loc.english_keys",
+            yml_files,
+            _build,
+            namespace="loc",
+        )
+        self._loc_keys_memo = keys
+        return keys
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
@@ -920,7 +1225,7 @@ class BaseValidator:
     def run_all_validations(self):
         self.log(f"\n{'#' * 80}", "always")
         self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
+            f"{Colors.BOLD}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC}",
             "always",
         )
         self.log(f"{'#' * 80}", "always")
@@ -928,7 +1233,7 @@ class BaseValidator:
         self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.CYAN}Mode: Git staged files only{Colors.ENDC}",
                 "always",
             )
         if self.output_file:
@@ -938,17 +1243,14 @@ class BaseValidator:
             self.run_validations()
         finally:
             self._finish_sections()
-            if self._pool is not None:
-                self._pool.terminate()
-                self._pool.join()
-                self._pool = None
+            self._close_pool()
 
         self._render_issues()
 
         self.log(f"\n{'#' * 80}", "always")
         if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.GREEN}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC}",
                 "always",
             )
         else:
@@ -963,7 +1265,7 @@ class BaseValidator:
             if n_files:
                 error_msg += f" in {n_files} file{'s' if n_files != 1 else ''}"
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.RED}{error_msg}{Colors.ENDC}",
                 "always",
             )
         self.log(f"{'#' * 80}\n", "always")

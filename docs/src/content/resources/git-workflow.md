@@ -53,6 +53,32 @@ git branch -a
 
 > **Important**: Always check which branch you're on before committing. The current branch is shown in your Git GUI or at the terminal prompt. Committing to the wrong branch causes problems for other team members.
 
+## Outside Contributors (Fork)
+
+Outside contributors do not have write access to the main repository, so work from a personal fork.
+
+1. Fork the repository on GitHub (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo) for the UI steps).
+2. Clone your fork:
+
+   ```bash
+   git clone https://github.com/<your-username>/Millennium-Dawn.git
+   cd Millennium-Dawn
+   ```
+
+3. Add the upstream remote so you can pull in changes from the main repo:
+
+   ```bash
+   git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
+   ```
+
+4. Create a feature branch from `main`:
+
+   ```bash
+   git checkout -b my-feature main
+   ```
+
+For cloning with GitHub Desktop instead of the command line, see [Git & GitHub Desktop](/dev-resources/md-git-resources/).
+
 ---
 
 # Making Changes
@@ -64,6 +90,8 @@ git branch -a
 ## Staging and Committing
 
 ### GitHub Desktop
+
+For installing GitHub Desktop and cloning the repository, see [Git & GitHub Desktop](/dev-resources/md-git-resources/).
 
 1. Open GitHub Desktop, your changed files appear in the left panel.
 2. Select the files you want to include in this commit.
@@ -87,13 +115,6 @@ git add -A
 git commit -m "Add Serbian election focus tree"
 ```
 
-### GitKraken
-
-1. Click into the **//WIP** commit in the commit graph.
-2. Click **Stage All Changes**.
-3. Type your commit summary in the **Summary** field.
-4. Click **Commit Changes**.
-
 ## Commit Messages
 
 - Write a short summary (5-10 words) describing what changed.
@@ -113,7 +134,7 @@ After committing, your changes are only stored locally. Push them to GitHub so o
 git push origin my-feature
 ```
 
-In GitHub Desktop or GitKraken, click the **Push** button.
+In GitHub Desktop, click the **Push** button.
 
 ## Pulling
 
@@ -123,7 +144,7 @@ Pull downloads any changes others have made to your branch:
 git pull origin my-feature
 ```
 
-In GitHub Desktop or GitKraken, click the **Pull** button.
+In GitHub Desktop, click the **Pull** button.
 
 > **Pull before you push** if others are working on the same branch. This reduces merge conflicts.
 
@@ -157,8 +178,6 @@ git rebase main
 
 > **Rebase vs Merge**: Rebase replays your commits on top of `main`, giving a linear history. Merge creates a merge commit. Both work, use whichever your team prefers. If unsure, use merge.
 
-In GitKraken: right-click your branch → **Rebase on main** (or **Merge main into my-feature**).
-
 ---
 
 # Merge Conflicts
@@ -167,7 +186,6 @@ A merge conflict happens when Git can't automatically combine two changes to the
 
 ## How to Identify
 
-- GitKraken shows orange warning signs on conflicted files.
 - GitHub Desktop shows a **Resolve conflicts** button.
 - The command line shows `CONFLICT` in the merge output.
 
@@ -270,8 +288,8 @@ Yes. Switch to their branch, sync, and make changes. Be careful not to break the
 **What if my download speed is very slow?**
 The repo is large. If cloning fails, try a shallow clone: `git clone --depth 1 https://github.com/MillenniumDawn/Millennium-Dawn.git`
 
-**GitHub Desktop vs GitKraken?**
-Both work. GitHub Desktop is simpler and free. GitKraken has more features (commit graph, interactive rebase) but the free tier has limitations. Pick whichever you prefer.
+**GitHub Desktop?**
+[GitHub Desktop](/dev-resources/md-git-resources/) is the recommended Git GUI. It's free, simple, and integrates directly with GitHub.
 
 ---
 
@@ -280,4 +298,5 @@ Both work. GitHub Desktop is simpler and free. GitKraken has more features (comm
 - [Developer Setup](/dev-resources/developer-setup/), Environment setup, tools, pre-commit hooks
 - [Contributing Guide](/dev-resources/contributing/), What we accept, fork workflow, AI policy
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/), Formatting and code structure
+- [Git & GitHub Desktop](/dev-resources/md-git-resources/): install GitHub Desktop and clone the mod.
 - [GitHub Repository](https://github.com/MillenniumDawn/Millennium-Dawn)

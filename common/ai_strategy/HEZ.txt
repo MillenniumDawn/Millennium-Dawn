@@ -6,8 +6,8 @@ HEZ_support_shias = {
 		has_idea = shia
 		HEZ = {
 			OR = {
-				is_in_array = { ruling_party = 8 }
-				is_in_array = { ruling_party = 9 }
+				check_variable = { ruling_party = 8 }
+				check_variable = { ruling_party = 9 }
 			}
 		}
 	}
@@ -24,6 +24,7 @@ HEZ_support_lebanon = {
 	allowed = { original_tag = HEZ }
 	enable = {
 		NOT = { has_war_with = LEB }
+		NOT = { HEZ_ai_conquest_path = yes }
 		LEB = { NOT = { has_government = fascism } }
 	}
 	abort_when_not_enabled = yes
@@ -32,6 +33,19 @@ HEZ_support_lebanon = {
 	ai_strategy = { type = protect id = "LEB" value = 200 }
 	ai_strategy = { type = support id = "LEB" value = 200 }
 	ai_strategy = { type = send_volunteers_desire id = "LEB" value = 500 }
+}
+
+HEZ_take_lebanon = {
+	allowed = { original_tag = HEZ }
+	enable = {
+		HEZ_ai_conquest_path = yes
+		country_exists = LEB
+		NOT = { is_in_faction_with = LEB }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "LEB" value = 200 }
+	ai_strategy = { type = antagonize id = "LEB" value = 100 }
 }
 
 HEZ_kill_the_infidels = {
@@ -100,9 +114,11 @@ HEZ_do_no_volunteer_in_iraq_done_focus = {
 		OR = {
 			IRQ = { has_country_leader = { name = "Hadi al-Amiri" ruling_only = yes } }
 			NOT = {
-				has_completed_focus = HEZ_Badr_in_the_shadows
-				IRQ = { OR = { owns_state = 1142 owns_state = 14953 owns_state = 1124 } }
-				PER = { has_completed_focus = PER_descend_on_iraq }
+				OR = {
+					has_completed_focus = HEZ_Badr_in_the_shadows
+					IRQ = { OR = { owns_state = 1142 owns_state = 14953 owns_state = 1124 } }
+					PER = { has_completed_focus = PER_descend_on_iraq }
+				}
 			}
 		}
 	}
@@ -116,9 +132,11 @@ HEZ_rival_iran = {
 	enable = {
 		NOT = { has_war_with = PER }
 		PER = {
-			OR = {
-				emerging_moderate_shiite_are_in_power = no
-				emerging_hardline_shiite_are_in_power = no
+			NOT = {
+				OR = {
+					emerging_moderate_shiite_are_in_power = yes
+					emerging_hardline_shiite_are_in_power = yes
+				}
 			}
 		}
 	}
@@ -177,9 +195,9 @@ HEZ_texas_help = {
 # 	enable_reverse = {
 # 		HEZ = {
 # 			OR = {
-# 				is_in_array = { ruling_party = 8 }
-# 				is_in_array = { ruling_party = 9 }
-# 				is_in_array = { ruling_party = 22 } #IRCG
+# 				check_variable = { ruling_party = 8 }
+# 				check_variable = { ruling_party = 9 }
+# 				check_variable = { ruling_party = 22 } #IRCG
 # 			}
 # 		}
 # 	}

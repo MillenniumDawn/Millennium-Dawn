@@ -1,103 +1,94 @@
 # AGENTS.md
 
-**NOTE**: Non-English localisation files are **not** currently mirrored against English — full translation is deferred to a later translation project. Do **not** modify them, and do **not** flag non-English `.yml` files in reviews, audits, or branch checks for missing, stale, or diverging keys relative to English. They are expected to be out of sync; any absent key degrades gracefully to the English string or an empty value. Only English keys (and the script objects that reference them) are in scope for review.
+Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
+`common/`, `events/`, `history/`, `interface/`, and `gfx/`; Python tooling in `tools/`.
 
-Millennium Dawn is a Hearts of Iron IV mod (2000-present). Key directories: `common/` (game data), `events/`, `localisation/` (English `.yml`, UTF-8 BOM), `history/`, `interface/`, `gfx/`, `tools/` (Python dev scripts).
+## Guardrails
 
-**IMPORTANT**: The `resources/` directory is for reference material only. Do NOT modify files under `resources/` unless explicitly asked by the user.
+- Edit and review English localisation only. Non-English `.yml` files are expected
+  to diverge; do not modify them or flag missing, stale, or mismatched English keys.
+- `resources/` is reference-only. Do not modify it unless explicitly asked.
+- Keep edits within the requested scope.
+- Verify identifiers against their definitions before using them: exact case, caller
+  scope, and tooltip behavior. Existing usage is a clue, not proof.
+- Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
+  current version, in an existing category. Skills may define their own exception.
+- Do not add attribution trailers or tool-generated footers, or sign commits.
+- Keep the session working directory fixed. Use absolute paths or per-command flags.
+- Development builds may invalidate saves. Do not add legacy migration support.
 
-## Validation & Tools
+## KISS: Keep It Simple
 
-Validation runs on GitHub CI at PR time — don't run proactively. Standardization tools: `tools/standardization/` (see its README). Diff summary: `python3 tools/analysis/review_branch.py [base-branch]`.
+- Optimize for the next human reader. Use plain names, local logic, and existing patterns.
+- Build only what the current task needs. No speculative abstractions, configuration,
+  fallbacks, or compatibility layers.
+- Reuse existing code and state. Add a helper only when it removes meaningful duplication
+  or makes a required boundary clearer. A little clear duplication beats indirection.
+- Do not add flags that duplicate queryable game state. Record only otherwise unavailable
+  state or a historical transition.
+- Keep behavior-preserving cleanup separate from gameplay changes. Remove dead code
+  introduced or exposed by the change, without refactoring unrelated systems.
+- Default to no comments. Explain only a non-obvious reason, in one short line.
 
-**Never run `pre-commit run --all-files`.** The auto-fixers rewrite every matching file in the repo and leave hundreds of unrelated whitespace-only modifications in the worktree. Always scope runs to actually-modified files (`pre-commit run --files <path1> <path2>`) or rely on the normal `git commit` flow, which only feeds staged files to the hooks. If the branch already carries whitespace noise from a prior `--all-files` run, revert anything outside the task's scope before committing.
+## Validation
 
-Pre-commit and CI run **different hook sets** — passing locally does not guarantee passing CI, and vice versa. Before wiring, judging, or debugging any validator, read `.claude/docs/validation-pipeline.md` (CI-only validators, pre-commit-only fixers, strictness divergences, vanilla-manifest regeneration, deprecation watch).
+- Content validation runs in GitHub CI at PR time. Do not run it proactively.
+- Never run `pre-commit run --all-files`. Use normal staged-file hooks or
+  `pre-commit run --files <changed paths>`; do not include unrelated formatter edits.
+- Before changing or debugging validation, read
+  [Validation Pipeline](.claude/docs/validation-pipeline.md). CI and hooks differ.
+- For `tools/` changes, run `python -m pytest` before merge. Fix regressions in the
+  same change; never delete, skip, or weaken tests to pass.
+- For docs-site changes, follow [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+- Standardization: [tools/standardization/README.md](tools/standardization/README.md).
+  Branch summary: `python3 tools/analysis/review_branch.py [base-branch]`.
+- Per-building and resource GDP factors live only in the `@gdp_*` constants of
+  `common/scripted_effects/00_money_system.txt`.
 
 ## Formatting
 
-- Tabs for indentation; `{` on same line, `}` on own line at outer indent; 1 blank line between elements
-- Simple checks on one line: `available = { has_country_flag = some_flag }`
-- Comments are small, targeted, and load-bearing — comment policy: `.claude/rules/general-rules.md` (Python tooling: `tools/COMMENT_STYLE.md`)
-- Remove unused/commented-out code
-- `* 0.01` not `/ 100`; `if/else` not two `if` with complementary conditions
-- Prefix country-specific variables with tag (e.g., `ISR_operation_success`); **snake_case** for all identifiers
+- Script: tabs, opening brace on the same line, closing brace at the outer indent,
+  one blank line between elements. Keep simple checks on one line.
+- `.txt`: UTF-8 without BOM. English localisation `.yml`: UTF-8 with BOM.
+- Name new identifiers in lowercase after any `TAG_` prefix, even when they wrap a
+  mixed-case id (`cheat_party_western_autocracy`). Do not rename existing ids.
+- Match surrounding style. Naming and examples:
+  [Code Stylization Guide](docs/src/content/resources/code-stylization-guide.md).
+- Python writes and review rules: [tools/README.md](tools/README.md).
 
-## Performance
+## Output: BLUF (Bottom Line Up Front)
 
-- Always `is_triggered_only = yes`; use `on_daily_TAG` not global triggers
-- Replace `every_country`/`random_country` with array triggers
-- Use dynamic modifiers sparingly; avoid `force_update_dynamic_modifier`
+- Start replies, handoffs, reviews, and PR descriptions with the conclusion.
+- Give only supporting facts: findings, changed behavior, blockers, and verification.
+  Cite code as `path:line`. Say what failed or was not checked.
+- Skip preambles, praise, tool-by-tool narration, empty sections, and repeated summaries.
+  Trim words, not findings or caveats.
+- PR bodies start with `## Bottom line`. End chat replies, handoffs, and PR bodies
+  with `BLUF`. Do not put that marker in code, game strings, or player guides.
+- Docs lead with the answer or action where useful. Procedures keep their natural order.
+  Use plain American English, short sentences, and no em dashes.
 
-## Focus Trees
+## Read for the Task
 
-- ID: `TAG_focus_name`; use `relative_position_id`
-- Always: logging, `ai_will_do = { base = N }`, `search_filters` (two-layer pattern, see `.claude/docs/search-filters.md`)
-- Omit defaults: `cancel_if_invalid = yes`, `continue_if_invalid = no`, `available_if_capitulated = no`
-- No empty `mutually_exclusive`/`available` blocks; limit permanent effects to 5
-- Never `available = { always = no }` with a `bypass` — use matching condition
-- High-cost focuses (cost >= 8, or >= 5 for mil/econ/research): add the standard bankruptcy guard (`has_active_mission = bankruptcy_incoming_collapse` → `factor = 0`) inside `ai_will_do` — block in `.claude/docs/focus-tree-reference.md`
-- Ref: `.claude/docs/focus-tree-reference.md`
+Read the relevant references before editing, not the entire catalog. Bare filenames
+are under `.claude/docs/`.
 
-## Decisions
-
-- Logging in `complete_effect`: `log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"`
-- `ai_will_do = { base = N }` — `base` not `factor` at root
-- Ref: `.claude/docs/decision-reference.md`
-
-## Events
-
-- Always `is_triggered_only = yes`; log only if option has effects; `major = yes` for news only
-- Date-based events: owner-guard pattern in `common/scripted_effects/00_yearly_effects.txt`
-- `add_building_construction` for `naval_base` requires `province = XXXXX`
-- New subideology parties: register in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
-- Ref: `.claude/docs/event-reference.md`
-
-## Ideas
-
-- Always `picture = sprite_name` (no picture = blank icon); `original_tag` not `tag` in `allowed` blocks
-- Category-specific `allowed`-block scoping and removable defaults (`cancel`, `on_add`, `allowed_civil_war`): `.claude/docs/idea-reference.md`
-
-## MIOs
-
-- ID: `TAG_organization_name`; always `allowed = { original_tag = TAG }`; sizing, trait grid, and `initial_trait` rules: `.claude/docs/mio-reference.md`
-
-## Intelligence Agency Upgrades
-
-New upgrades require wiring across five files — read `common/intelligence_agency_upgrades/README.md` before touching them.
-
-## AI Strategies & Equipment
-
-Unit production has three layers — threat gate (`ai_is_threatened`), role ratios, templates: `.claude/docs/ai-strategy-reference.md`. Equipment variants (role coverage, `target_variant`, CV-plane `ai_type`s, penalty cascades): `.claude/docs/ai-equipment-reference.md`. Both dirs have pre-commit-validated naming (role_ratio ↔ ai_templates roles, case-sensitive unit names, nation coverage) — read the doc before editing `common/ai_strategy/`, `common/ai_equipment/`, or `common/ai_templates/`.
-
-## Shell Session
-
-**Never reset the working directory.** No `cd` to another repo, drive, or temp path — the cwd is fixed for the session, and relative paths, follow-up edits, and tool snapshots assume it. Use absolute paths or per-command flags (`git -C <dir>`, `grep <path>`, `pre-commit run --files <path>`).
-
-## Git Commits
-
-- Do NOT add `Co-Authored-By` or sign commits — the project does not use commit signing
-
-## Output Style
-
-Keep all output token-efficient: conversation replies, agent hand-back reports, PR/issue/Changelog text, and commit messages alike.
-
-- Lead with the conclusion (the answer, what changed, what was found). Cut preamble and restating the request.
-- Report facts, not process. Skip "I read X, then I...", tool-by-tool narration, and self-congratulation.
-- No padding confirmations ("As requested, I have successfully..."). State the result plainly.
-- Prefer terse bullets and `file:line` references over prose paragraphs. Drop empty sections rather than writing "N/A".
-- Be complete, not verbose: never drop a real finding, caveat, path, or identifier to save space. Trim words, not information.
-
-## Key Resources
-
-- [HOI4 Scripting](.claude/docs/hoi4-data-structures.md) | [Documentation Index](.claude/docs/documentation-references.md) (complete doc catalog)
-- [Focus Trees](.claude/docs/focus-tree-reference.md) | [Events](.claude/docs/event-reference.md) | [Decisions](.claude/docs/decision-reference.md)
-- [Ideas](.claude/docs/idea-reference.md) | [MIOs](.claude/docs/mio-reference.md) | [Search Filters](.claude/docs/search-filters.md)
-- [AI Strategy](.claude/docs/ai-strategy-reference.md) | [AI Equipment](.claude/docs/ai-equipment-reference.md)
-- [OOB & Equipment Variants](.claude/docs/oob-variants-reference.md) | [Namelists](.claude/docs/namelist-reference.md)
-- [Diplomatic Actions](.claude/docs/diplomatic-action-reference.md) | [Content Guidelines](.claude/docs/content-guidelines.md)
-- [UN System](.claude/docs/un-system-reference.md) (read before editing UN voting, elections, or recognition)
-- [Faction Rules](.claude/docs/faction-rules.md) | [Typo Watchlist](.claude/docs/typo-watchlist.md)
-- [Localisation Rules](.claude/docs/localisation-rules.md) (read when editing any `*_l_english.yml`)
-- [Scripted GUI Rules](.claude/docs/scripted-gui-rules.md) + [Patterns](.claude/docs/scripted-gui-patterns.md) (read when editing `interface/*.gui` or `common/scripted_guis/`)
-- [MD Custom Modifiers](.claude/docs/md-custom-modifiers.md) — non-vanilla modifier keys in `common/modifier_definitions/`
+- All scripting: `hoi4-data-structures.md` and `scripting-edge-cases.md`.
+- Focuses: `focus-tree-reference.md` and `search-filters.md`.
+- Events: `event-reference.md`. Decisions: `decision-reference.md`.
+- Ideas: `idea-reference.md`. MIOs: `mio-reference.md`.
+- AI strategies, templates, equipment: `ai-strategy-reference.md` and
+  `ai-equipment-reference.md`.
+- English strings: `localisation-rules.md`; party keys also need `party-loc-reference.md`.
+- GUI: `scripted-gui-rules.md` and `scripted-gui-patterns.md`.
+- Map modes and their colorblind palettes: `map-mode-reference.md`.
+- UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
+  UAR, union cosmetics: `formable-reference.md`.
+- Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
+  Loading and menu art: `loading-screen-system.md`.
+- 3D models, entities, landmarks: `entity-system.md`. Power plants, energy techs,
+  renewable balance: `energy-power-balance.md`.
+- Hot paths or repeated branches: `performance-patterns.md` and `simplification-patterns.md`.
+- Reviews: `known-false-positives.md` and `bug-patterns.md`. Renames: `refactor-checklist.md`.
+- Subagents: `agent-conventions.md`.
+- Other systems, art, OOBs, namelists, and content standards: `documentation-references.md`.

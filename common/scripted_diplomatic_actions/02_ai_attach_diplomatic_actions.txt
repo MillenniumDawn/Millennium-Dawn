@@ -32,11 +32,9 @@ scripted_diplomatic_actions = {
 		receive_description = AISEND_ATTACHE_RECIEVER_LOC
 
 		on_sent_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action on_sent_effect aisend_attache"
 			ROOT = { set_variable = { pending_ai_attache_country = PREV.id } }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect aisend_attache"
 			ROOT = {
 				clear_variable = pending_ai_attache_country
 				diplomatic_relation = {
@@ -58,7 +56,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action reject_effect aisend_attache"
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_ai_attache_country
 				set_country_flag = { flag = rejected_ai_attache_@PREV days = 180 value = 1 }
@@ -143,6 +141,13 @@ scripted_diplomatic_actions = {
 		}
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_attache_condition = {
 				base = -10
 				modifier = {
@@ -204,7 +209,6 @@ scripted_diplomatic_actions = {
 		accept_description = AIRECALL_ATTACHE_ACCEPTED_DESC
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: diplomatic action complete_effect airecall_attache"
 			ROOT = {
 				recall_attache = PREV
 				set_country_flag = { flag = recalled_attache_cooldown days = 90 value = 1 }

@@ -1,420 +1,162 @@
+# Author(s): crocomoth, MinisterHelam
+# Line segment rendering adapted from Flaxbeard's hoi4-scripted-graphs.
+# Slots 0 to current_gdp_graph_end of each series hold recorded months. Later slots are never read.
+# gdp_graph_tab: 0 closed, 1 GDP, 2 GDP/C, 3 productivity, 4 debt, 5 inflation, 6 population, 7 budget, 8 energy, 9 defense, 10 trade.
+# Only the open tab is drawn, so every tab shares the three line slots and the axis labels.
+
+# Matches @resource_sale_rate_constant in 00_money_system.txt
+@resource_sale_rate_constant = 0.00298
+
 graph_initial_setup = {
-	resize_array = {
-		array = gdp_graphx
-		value = 0
-		size = 120
-	}
+	resize_array = { array = gdp_array size = 120 }
+	resize_array = { array = gdpc_array size = 120 }
+	resize_array = { array = prod_array size = 120 }
+	resize_array = { array = debt_array size = 120 }
+	resize_array = { array = inflation_array size = 120 }
+	resize_array = { array = pop_array size = 120 }
+	resize_array = { array = workforce_array size = 120 }
+	resize_array = { array = employment_array size = 120 }
+	resize_array = { array = revenue_array size = 120 }
+	resize_array = { array = expense_array size = 120 }
+	resize_array = { array = budget_balance_array size = 120 }
+	resize_array = { array = energy_gen_array size = 120 }
+	resize_array = { array = energy_con_array size = 120 }
+	resize_array = { array = energy_bal_array size = 120 }
+	resize_array = { array = defense_spend_array size = 120 }
+	resize_array = { array = defense_pct_array size = 120 }
+	resize_array = { array = trade_exports_array size = 120 }
+	resize_array = { array = trade_imports_array size = 120 }
+	resize_array = { array = trade_balance_array size = 120 }
 
-	resize_array = {
-		array = gdp_graph
-		value = 0
-		size = 120
-	}
-
-	resize_array = {
-		array = gdp_array
-		value = gdp_total
-		size = 120
-	}
-
-	resize_array = {
-		array = gdpc_array
-		value = gdp_per_capita
-		size = 120
-	}
-
-	resize_array = {
-		array = prod_array
-		value = overall_productivity
-		size = 120
-	}
-
-	set_temp_variable = { tmp = global.year }
 	for_loop_effect = {
 		start = 0
-		end = 12
-
-		set_variable = { date_scale^v = tmp }
-		add_to_temp_variable = { tmp = 1 }
+		end = 10
+		set_variable = { date_scale^v = { value = global.year add = v } }
 	}
 
-	# as its incremented at the start
 	set_variable = { current_gdp_graph_end = 0 }
 	set_variable = { gdp_graph_dirty_var = 0 }
+
+	gdp_graph_record_current = yes
+}
+
+gdp_graph_record_current = {
+	set_variable = { gdp_graph_employment_rate = { value = 1 subtract = total_unemployed_percentage_display multiply = 100 } }
+	set_variable = { gdp_graph_monthly_revenue = { value = display_income multiply = 4.33 } }
+	set_variable = { gdp_graph_monthly_expense = { value = display_expense multiply = 4.33 } }
+	set_variable = { gdp_graph_monthly_balance = { value = treasury_rate multiply = 4.33 } }
+	# Idle fossil plants still feed the grid
+	set_variable = { gdp_graph_energy_generation = { value = energy_sum add = free_fossil_powerplants_power } }
+	set_variable = { gdp_graph_energy_balance = { value = gdp_graph_energy_generation subtract = energy_consumption } }
+	set_variable = { gdp_graph_defense_spending = { value = defence_gain multiply = 52 } }
+	set_variable = { gdp_graph_defense_pct = { value = gdp_graph_defense_spending divide = { value = gdp_total max = 0.01 } multiply = 100 } }
+	set_variable = { gdp_graph_monthly_exports = { value = resource_sale_rate multiply = 4.33 } }
+	# MD never charges the treasury for imports, so this is their value at market prices
+	set_variable = {
+		gdp_graph_monthly_imports = {
+			value = resource_imported@oil
+			multiply = global.oil_price
+			add = { value = resource_imported@steel multiply = global.steel_price }
+			add = { value = resource_imported@aluminium multiply = global.aluminium_price }
+			add = { value = resource_imported@tungsten multiply = global.tungsten_price }
+			add = { value = resource_imported@chromium multiply = global.chromium_price }
+			add = { value = resource_imported@rubber multiply = global.rubber_price }
+			add = { value = resource_imported@microchips multiply = global.microchip_price }
+			add = { value = resource_imported@composites multiply = global.composite_price }
+			multiply = 4.33
+			multiply = @resource_sale_rate_constant
+		}
+	}
+	set_variable = { gdp_graph_monthly_trade_balance = { value = gdp_graph_monthly_exports subtract = gdp_graph_monthly_imports } }
 
 	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
 	set_variable = { gdpc_array^current_gdp_graph_end = gdp_per_capita }
 	set_variable = { prod_array^current_gdp_graph_end = overall_productivity }
+	set_variable = { debt_array^current_gdp_graph_end = debt }
+	set_variable = { inflation_array^current_gdp_graph_end = { value = inflation_rate_var multiply = 100 } }
+	set_variable = { pop_array^current_gdp_graph_end = population_total_m }
+	set_variable = { workforce_array^current_gdp_graph_end = workforce_total_display }
+	set_variable = { employment_array^current_gdp_graph_end = gdp_graph_employment_rate }
+	set_variable = { revenue_array^current_gdp_graph_end = gdp_graph_monthly_revenue }
+	set_variable = { expense_array^current_gdp_graph_end = gdp_graph_monthly_expense }
+	set_variable = { budget_balance_array^current_gdp_graph_end = gdp_graph_monthly_balance }
+	set_variable = { energy_gen_array^current_gdp_graph_end = gdp_graph_energy_generation }
+	set_variable = { energy_con_array^current_gdp_graph_end = energy_consumption }
+	set_variable = { energy_bal_array^current_gdp_graph_end = gdp_graph_energy_balance }
+	set_variable = { defense_spend_array^current_gdp_graph_end = gdp_graph_defense_spending }
+	set_variable = { defense_pct_array^current_gdp_graph_end = gdp_graph_defense_pct }
+	set_variable = { trade_exports_array^current_gdp_graph_end = gdp_graph_monthly_exports }
+	set_variable = { trade_imports_array^current_gdp_graph_end = gdp_graph_monthly_imports }
+	set_variable = { trade_balance_array^current_gdp_graph_end = gdp_graph_monthly_trade_balance }
 }
 
-initialize_x_axis = {
-	set_temp_variable = { x_coord = 0 }
-
-	# sets up every X, we need to be precise here
-	for_loop_effect = {
-		start = 0
-		end = current_gdp_graph_end
-		compare = less_than_or_equals
-
-		set_variable = { gdp_graphx^v = x_coord }
-
-		add_to_temp_variable = { x_coord = 7.05 }
-	}
-
-	# now round to closest int value
-	for_loop_effect = {
-		start = 0
-		end = 120
-
-		round_variable = gdp_graphx^v
-	}
-}
-
-recalculate_gdp_display = {
-	initialize_x_axis = yes
-	set_temp_variable = { high = 0 }
-	set_temp_variable = { low = 0 }
-
-	set_temp_variable = { high = gdp_array^0 }
-	multiply_temp_variable = { high = 1.8 }
-	find_highest_in_array = {
-		array = gdp_array
-		value = max
-		index = max_index
-	}
-
-	if = {
-		limit = { check_variable = { max > high } }
-		set_temp_variable = { high = max }
-	}
-
-	set_temp_variable = { low = gdp_array^0 }
-	multiply_temp_variable = { low = 0.8 }
-
-	find_lowest_in_array = {
-		array = gdp_array
-		value = min
-		index = min_index
-	}
-
-	if = {
-		limit = { check_variable = { min < low } }
-		set_temp_variable = { low = min }
-	}
-
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-
-	# divide in 11 intervals
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 }
-
-	set_temp_variable = { buf = low }
-	# set up gdp scale
-	for_loop_effect = {
-		start = 0
-		end = 11
-
-		set_variable = { gdp_scale^v = buf }
-		round_variable = gdp_scale^v
-		add_to_temp_variable = { buf = step }
-	}
-
-	# y pixel hieght is 450 pixels
-	# x pixel width is 846 pixels = 7.46 pixels
-
-	# set up main graph
-	for_each_loop = {
-		array = gdp_array
-		value = v
-		index = i
-		break = break
-
-		if = {
-			limit = { check_variable = { i > current_gdp_graph_end } }
-			set_temp_variable = { break = 1 }
-		}
-		else = {
-			set_temp_variable = { y_coord = v }
-			subtract_from_temp_variable = { y_coord = low }
-			divide_temp_variable = { y_coord = diff }
-			multiply_temp_variable = { y_coord = 450 }
-			round_variable = y_coord
-
-			set_variable = { gdp_graph^i = y_coord }
-			# y offset
-			add_to_variable = { gdp_graph^i = -50 }
-			# mirror the value
-			set_temp_variable = { tmp = 450 }
-			subtract_from_temp_variable = { tmp = gdp_graph^i }
-
-			set_variable = { gdp_graph^i = tmp }
-		}
-	}
-
-	gdp_graph_update_dirty_var = yes
-}
-
-recalculate_gdp_c_display = {
-	initialize_x_axis = yes
-	set_temp_variable = { high = 0 }
-	set_temp_variable = { low = 0 }
-
-	set_temp_variable = { high = gdpc_array^0 }
-	multiply_temp_variable = { high = 1.8 }
-	find_highest_in_array = {
-		array = gdpc_array
-		value = max
-		index = max_index
-	}
-
-	if = {
-		limit = { check_variable = { max > high } }
-		set_temp_variable = { high = max }
-	}
-
-	set_temp_variable = { low = gdpc_array^0 }
-	multiply_temp_variable = { low = 0.8 }
-
-	find_lowest_in_array = {
-		array = gdpc_array
-		value = min
-		index = min_index
-	}
-
-	if = {
-		limit = { check_variable = { min < low } }
-		set_temp_variable = { low = min }
-	}
-
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-
-	# divide in 11 intervals
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 }
-
-	set_temp_variable = { buf = low }
-	# set up gdp scale
-	for_loop_effect = {
-		start = 0
-		end = 11
-
-		# since it is gdp/c
-		#multiply_temp_variable = { buf = 1000 }
-		set_variable = { gdp_scale^v = buf }
-		multiply_variable = { gdp_scale^v = 1000 }
-
-		round_variable = gdp_scale^v
-		add_to_temp_variable = { buf = step }
-	}
-
-	# y pixel hieght is 450 pixels
-	# x pixel width is 846 pixels = 7.46 pixels
-
-	# set up main graph
-	for_each_loop = {
-		array = gdpc_array
-		value = v
-		index = i
-		break = break
-
-		if = {
-			limit = { check_variable = { i > current_gdp_graph_end } }
-			set_temp_variable = { break = 1 }
-		}
-		else = {
-			set_temp_variable = { y_coord = v }
-			subtract_from_temp_variable = { y_coord = low }
-			divide_temp_variable = { y_coord = diff }
-			multiply_temp_variable = { y_coord = 450 }
-			round_variable = y_coord
-
-			set_variable = { gdp_graph^i = y_coord }
-			# y offset
-			add_to_variable = { gdp_graph^i = -50 }
-			# mirror the value
-			set_temp_variable = { tmp = 450 }
-			subtract_from_temp_variable = { tmp = gdp_graph^i }
-
-			set_variable = { gdp_graph^i = tmp }
-		}
-	}
-
-	gdp_graph_update_dirty_var = yes
-}
-
-recalculate_prod_display = {
-	initialize_x_axis = yes
-	set_temp_variable = { high = 0 }
-	set_temp_variable = { low = 0 }
-
-	set_temp_variable = { high = prod_array^0 }
-	multiply_temp_variable = { high = 1.8 }
-	find_highest_in_array = {
-		array = prod_array
-		value = max
-		index = max_index
-	}
-
-	if = {
-		limit = { check_variable = { max > high } }
-		set_temp_variable = { high = max }
-	}
-
-	set_temp_variable = { low = prod_array^0 }
-	multiply_temp_variable = { low = 0.8 }
-
-	find_lowest_in_array = {
-		array = prod_array
-		value = min
-		index = min_index
-	}
-
-	if = {
-		limit = { check_variable = { min < low } }
-		set_temp_variable = { low = min }
-	}
-
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-
-	# divide in 11 intervals
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 }
-
-	set_temp_variable = { buf = low }
-	# set up gdp scale
-	for_loop_effect = {
-		start = 0
-		end = 11
-
-		set_variable = { gdp_scale^v = buf }
-		round_variable = gdp_scale^v
-		add_to_temp_variable = { buf = step }
-	}
-
-	# y pixel hieght is 450 pixels
-	# x pixel width is 846 pixels = 7.46 pixels
-
-	# set up main graph
-	for_each_loop = {
-		array = prod_array
-		value = v
-		index = i
-		break = break
-
-		if = {
-			limit = { check_variable = { i > current_gdp_graph_end } }
-			set_temp_variable = { break = 1 }
-		}
-		else = {
-			set_temp_variable = { y_coord = v }
-			subtract_from_temp_variable = { y_coord = low }
-			divide_temp_variable = { y_coord = diff }
-			multiply_temp_variable = { y_coord = 450 }
-			round_variable = y_coord
-
-			set_variable = { gdp_graph^i = y_coord }
-			# y offset
-			add_to_variable = { gdp_graph^i = -50 }
-			# mirror the value
-			set_temp_variable = { tmp = 450 }
-			subtract_from_temp_variable = { tmp = gdp_graph^i }
-
-			set_variable = { gdp_graph^i = tmp }
-		}
-	}
-
-	gdp_graph_update_dirty_var = yes
-}
-
+# Moves months 12 to 107 down a year, which keeps January on the year pointers
 gdp_graph_shift_array = {
-	set_temp_variable = { new_index = 11 }
 	for_loop_effect = {
 		start = 0
-		end = 108
+		end = 96
+		set_temp_variable = { source = { value = v add = 12 } }
 
-		set_variable = { gdp_array^v = gdp_array^new_index }
-		set_variable = { gdpc_array^v = gdpc_array^new_index }
-		set_variable = { prod_array^v = prod_array^new_index }
-
-		add_to_temp_variable = { new_index = 1 }
+		set_variable = { gdp_array^v = gdp_array^source }
+		set_variable = { gdpc_array^v = gdpc_array^source }
+		set_variable = { prod_array^v = prod_array^source }
+		set_variable = { debt_array^v = debt_array^source }
+		set_variable = { inflation_array^v = inflation_array^source }
+		set_variable = { pop_array^v = pop_array^source }
+		set_variable = { workforce_array^v = workforce_array^source }
+		set_variable = { employment_array^v = employment_array^source }
+		set_variable = { revenue_array^v = revenue_array^source }
+		set_variable = { expense_array^v = expense_array^source }
+		set_variable = { budget_balance_array^v = budget_balance_array^source }
+		set_variable = { energy_gen_array^v = energy_gen_array^source }
+		set_variable = { energy_con_array^v = energy_con_array^source }
+		set_variable = { energy_bal_array^v = energy_bal_array^source }
+		set_variable = { defense_spend_array^v = defense_spend_array^source }
+		set_variable = { defense_pct_array^v = defense_pct_array^source }
+		set_variable = { trade_exports_array^v = trade_exports_array^source }
+		set_variable = { trade_imports_array^v = trade_imports_array^source }
+		set_variable = { trade_balance_array^v = trade_balance_array^source }
 	}
 
-	# set to 1st element so it scales correctly
-	for_loop_effect = {
-		start = 108
-		end = 120
-
-		set_variable = { gdp_array^v = gdp_array^0 }
-		set_variable = { gdpc_array^v = gdpc_array^0 }
-		set_variable = { prod_array^v = prod_array^0 }
-	}
-
-	set_variable = { current_gdp_graph_end = 108 }
-
-	set_temp_variable = { tmp = date_scale^0 }
-	add_to_temp_variable = { tmp = 1 }
 	for_loop_effect = {
 		start = 0
-		end = 12
-
-		set_variable = { date_scale^v = tmp }
-		add_to_temp_variable = { tmp = 1 }
+		end = 10
+		add_to_variable = { date_scale^v = 1 }
 	}
 
-	gdp_graph_update_dirty_var = yes
-}
-
-correct_gdp_graph = {
-	set_temp_variable = { old_index = current_gdp_graph_end }
-	subtract_from_temp_variable = { old_index = 3 }
-
-	set_temp_variable = { oldgdp = gdp_array^old_index }
-	set_temp_variable = { oldgdpc = gdpc_array^old_index }
-	set_temp_variable = { oldprod = prod_array^old_index }
-
-	set_temp_variable = { gdpdiff = gdp_total }
-	set_temp_variable = { gdpcdiff = gdp_per_capita }
-	set_temp_variable = { proddiff = overall_productivity }
-
-	subtract_from_temp_variable = { gdpdiff = oldgdp }
-	subtract_from_temp_variable = { gdpcdiff = oldgdpc }
-	subtract_from_temp_variable = { proddiff = oldprod }
-
-	multiply_temp_variable = { gdpdiff = 0.33 }
-	multiply_temp_variable = { gdpcdiff = 0.33 }
-	multiply_temp_variable = { proddiff = 0.33 }
-
-	add_to_temp_variable = { oldgdp = gdpdiff }
-	add_to_temp_variable = { oldgdpc = gdpcdiff }
-	add_to_temp_variable = { oldprod = proddiff }
-
-	add_to_variable = { old_index = 1 }
-	set_variable = { gdp_array^current_gdp_graph_end = oldgdp }
-	set_variable = { gdpc_array^current_gdp_graph_end = oldgdpc }
-	set_variable = { prod_array^current_gdp_graph_end = oldprod }
-
-	add_to_temp_variable = { oldgdp = gdpdiff }
-	add_to_temp_variable = { oldgdpc = gdpcdiff }
-	add_to_temp_variable = { oldprod = proddiff }
-
-	add_to_variable = { old_index = 1 }
-	set_variable = { gdp_array^current_gdp_graph_end = oldgdp }
-	set_variable = { gdpc_array^current_gdp_graph_end = oldgdpc }
-	set_variable = { prod_array^current_gdp_graph_end = oldprod }
+	set_variable = { current_gdp_graph_end = 96 }
 }
 
 gdp_graph_on_monthly = {
 	add_to_variable = { current_gdp_graph_end = 1 }
-	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
-	set_variable = { gdpc_array^current_gdp_graph_end = gdp_per_capita }
-	set_variable = { prod_array^current_gdp_graph_end = overall_productivity }
+	# Shift before recording so the new month lands in the slot the shift frees
 	if = {
-		limit = { check_variable = { current_gdp_graph_end = 119 } }
+		limit = { check_variable = { current_gdp_graph_end > 107 } }
 		gdp_graph_shift_array = yes
 	}
+	gdp_graph_refresh = yes
+}
+
+gdp_graph_refresh = {
+	gdp_graph_record_current = yes
+
+	if = { limit = { check_variable = { gdp_graph_tab = 1 } } gdp_graph_draw_gdp = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 2 } } gdp_graph_draw_gdpc = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 3 } } gdp_graph_draw_prod = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 4 } } gdp_graph_draw_debt = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 5 } } gdp_graph_draw_inflation = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 6 } } gdp_graph_draw_pop = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 7 } } gdp_graph_draw_budget = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 8 } } gdp_graph_draw_energy = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 9 } } gdp_graph_draw_defense = yes }
+	else_if = { limit = { check_variable = { gdp_graph_tab = 10 } } gdp_graph_draw_trade = yes }
+
+	gdp_graph_update_dirty_var = yes
+}
+
+gdp_graph_close = {
+	set_variable = { gdp_graph_tab = 0 }
+	gdp_graph_update_dirty_var = yes
 }
 
 gdp_graph_update_dirty_var = {
@@ -424,5 +166,568 @@ gdp_graph_update_dirty_var = {
 	}
 	else = {
 		add_to_variable = { gdp_graph_dirty_var = 1 }
+	}
+}
+
+# Output: empty line slots, max_jump at 0, and the slots of the last two recorded Januaries in recent_jan and prev_jan
+gdp_graph_start_draw = {
+	clear_array = gdp_graph_line_1_offsets
+	clear_array = gdp_graph_line_1_red_offsets
+	clear_array = gdp_graph_line_1_slopes
+	clear_array = gdp_graph_line_2_offsets
+	clear_array = gdp_graph_line_2_red_offsets
+	clear_array = gdp_graph_line_2_slopes
+	clear_array = gdp_graph_line_3_offsets
+	clear_array = gdp_graph_line_3_red_offsets
+	clear_array = gdp_graph_line_3_slopes
+
+	set_temp_variable = { max_jump = 0 }
+	set_temp_variable = { recent_jan = { value = current_gdp_graph_end subtract = global.month add = 1 max = 0 } }
+	set_temp_variable = { prev_jan = { value = recent_jan subtract = 12 max = 0 } }
+}
+
+# Parameters:
+# - yoy_recent: value at recent_jan
+# - yoy_prev: value at prev_jan
+gdp_graph_set_yoy = {
+	set_variable = { gdp_graph_yoy_change = { value = yoy_recent subtract = yoy_prev } }
+	if = {
+		limit = { check_variable = { yoy_prev > 0.001 } }
+		set_variable = { gdp_graph_yoy_change_pct = { value = gdp_graph_yoy_change divide = yoy_prev multiply = 100 } }
+	}
+	else = {
+		set_variable = { gdp_graph_yoy_change_pct = 0 }
+	}
+}
+
+# Parameters:
+# - y1_val: value at slot v of the calling loop
+# - y2_val: value at slot next_v
+# Output: true_max, true_min and max_jump widened by the recorded months
+gdp_graph_scan_point = {
+	if = {
+		limit = { NOT = { check_variable = { v > current_gdp_graph_end } } }
+		set_temp_variable = { true_max = { value = true_max max = y1_val } }
+		set_temp_variable = { true_min = { value = true_min min = y1_val } }
+		set_temp_variable = { max_jump = { value = y2_val subtract = y1_val max = { value = y1_val subtract = y2_val } max = max_jump } }
+	}
+}
+
+# Output: high and low, 10 percent outside true_max and true_min
+gdp_graph_pad_axis = {
+	set_temp_variable = { data_diff = { value = true_max subtract = true_min } }
+	set_temp_variable = { pad = { value = data_diff multiply = 0.1 } }
+	if = { limit = { check_variable = { data_diff < 1 } } set_temp_variable = { pad = 1 } }
+	set_temp_variable = { high = { value = true_max add = pad } }
+	set_temp_variable = { low = { value = true_min subtract = pad } }
+}
+
+# GDP, GDP/C and productivity stay above zero, so a flat line pads by a share of its value
+gdp_graph_pad_growth_axis = {
+	gdp_graph_pad_axis = yes
+	if = {
+		limit = { check_variable = { data_diff < 1 } }
+		set_temp_variable = { high = { value = true_max multiply = 1.2 } }
+		set_temp_variable = { low = { value = true_min multiply = 0.8 } }
+	}
+}
+
+# Output: low, diff and step for the axis between high and low
+gdp_graph_fit_axis = {
+	set_temp_variable = { diff = { value = high subtract = low } }
+	# A segment covers at most 100 of the axis's 450 px, so the axis spans 4.5 times the largest monthly jump
+	set_temp_variable = { safe_diff = { value = max_jump multiply = 4.5 } }
+	if = {
+		limit = { check_variable = { diff < safe_diff } }
+		set_temp_variable = { low = { value = low subtract = { value = safe_diff subtract = diff multiply = 0.5 } } }
+		set_temp_variable = { diff = safe_diff }
+	}
+	set_temp_variable = { diff = { value = diff max = 0.01 } }
+	set_temp_variable = { step = { value = diff multiply = 0.1 } }
+}
+
+# Same as gdp_graph_fit_axis, for series that never go below zero
+gdp_graph_fit_floored_axis = {
+	set_temp_variable = { low = { value = low max = 0 } }
+	gdp_graph_fit_axis = yes
+	set_temp_variable = { low = { value = low max = 0 } }
+}
+
+gdp_graph_label_axis = {
+	for_loop_effect = {
+		start = 0
+		end = 11
+		set_variable = { gdp_graph_y_axis_label^v = { value = v multiply = step add = low } }
+	}
+}
+
+# Parameters:
+# - line_slot: line to append to, 1 to 3
+# - red_rule: 0 never red, 1 red when falling, 2 red when rising, 3 red below zero
+# - y1_val: value at slot v of the calling loop
+# - y2_val: value at slot next_v
+# Output: one entry on the line's offset, red offset and slope arrays. Unrecorded months sit off the chart at 1000.
+gdp_graph_add_segment = {
+	set_temp_variable = { offset = 1000 }
+	set_temp_variable = { red_offset = 1000 }
+	set_temp_variable = { slope = 50 }
+
+	if = {
+		limit = { NOT = { check_variable = { v > current_gdp_graph_end } } }
+		set_temp_variable = { y1_px = { value = y1_val subtract = low divide = diff multiply = 450 } }
+		set_temp_variable = { y2_px = { value = y2_val subtract = low divide = diff multiply = 450 } }
+		set_temp_variable = { slope = { value = y2_px subtract = y1_px divide = 2 add = 50 clamp = { min = 1 max = 100 } round = yes } }
+
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { red_rule = 1 } check_variable = { y2_val < y1_val } }
+					AND = { check_variable = { red_rule = 2 } check_variable = { y2_val > y1_val } }
+					AND = { check_variable = { red_rule = 3 } check_variable = { y1_val < 0 } }
+				}
+			}
+			set_temp_variable = { red_offset = { value = y1_px multiply = -1 } }
+		}
+		else = {
+			set_temp_variable = { offset = { value = y1_px multiply = -1 } }
+		}
+	}
+
+	if = {
+		limit = { check_variable = { line_slot = 1 } }
+		add_to_array = { gdp_graph_line_1_offsets = offset }
+		add_to_array = { gdp_graph_line_1_red_offsets = red_offset }
+		add_to_array = { gdp_graph_line_1_slopes = slope }
+	}
+	else_if = {
+		limit = { check_variable = { line_slot = 2 } }
+		add_to_array = { gdp_graph_line_2_offsets = offset }
+		add_to_array = { gdp_graph_line_2_red_offsets = red_offset }
+		add_to_array = { gdp_graph_line_2_slopes = slope }
+	}
+	else = {
+		add_to_array = { gdp_graph_line_3_offsets = offset }
+		add_to_array = { gdp_graph_line_3_red_offsets = red_offset }
+		add_to_array = { gdp_graph_line_3_slopes = slope }
+	}
+}
+
+gdp_graph_draw_gdp = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = gdp_array^recent_jan }
+	set_temp_variable = { yoy_prev = gdp_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	set_temp_variable = { true_max = gdp_array^0 }
+	set_temp_variable = { true_min = gdp_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = gdp_array^v }
+		set_temp_variable = { y2_val = gdp_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_growth_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = gdp_array^v }
+		set_temp_variable = { y2_val = gdp_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_gdpc = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = gdpc_array^recent_jan }
+	set_temp_variable = { yoy_prev = gdpc_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	set_temp_variable = { true_max = gdpc_array^0 }
+	set_temp_variable = { true_min = gdpc_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = gdpc_array^v }
+		set_temp_variable = { y2_val = gdpc_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_growth_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = gdpc_array^v }
+		set_temp_variable = { y2_val = gdpc_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_prod = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = prod_array^recent_jan }
+	set_temp_variable = { yoy_prev = prod_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	set_temp_variable = { true_max = prod_array^0 }
+	set_temp_variable = { true_min = prod_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = prod_array^v }
+		set_temp_variable = { y2_val = prod_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_growth_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = prod_array^v }
+		set_temp_variable = { y2_val = prod_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_debt = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = debt_array^recent_jan }
+	set_temp_variable = { yoy_prev = debt_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	set_temp_variable = { true_max = debt_array^0 }
+	set_temp_variable = { true_min = debt_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = debt_array^v }
+		set_temp_variable = { y2_val = debt_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	# A flat debt line pads by 10 percent of the debt, and at least $10B
+	if = {
+		limit = { check_variable = { data_diff < 1 } }
+		set_temp_variable = { pad = { value = true_max max = { value = true_max multiply = -1 } multiply = 0.1 max = 10 } }
+		set_temp_variable = { high = { value = true_max add = pad } }
+		set_temp_variable = { low = { value = true_min subtract = pad } }
+	}
+	gdp_graph_fit_axis = yes
+	for_loop_effect = {
+		start = 0
+		end = 11
+		set_variable = { gdp_graph_y_axis_label^v = { value = v multiply = step add = low round = yes } }
+	}
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 2 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = debt_array^v }
+		set_temp_variable = { y2_val = debt_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_inflation = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = inflation_array^recent_jan }
+	set_temp_variable = { yoy_prev = inflation_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	set_temp_variable = { true_max = inflation_array^0 }
+	set_temp_variable = { true_min = inflation_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = inflation_array^v }
+		set_temp_variable = { y2_val = inflation_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 2 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = inflation_array^v }
+		set_temp_variable = { y2_val = inflation_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_pop = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = pop_array^recent_jan }
+	set_temp_variable = { yoy_prev = pop_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	# Population and workforce share the left axis
+	set_temp_variable = { true_max = pop_array^0 }
+	set_temp_variable = { true_min = workforce_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = pop_array^v }
+		set_temp_variable = { y2_val = pop_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = workforce_array^v }
+		set_temp_variable = { y2_val = workforce_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_floored_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { red_rule = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { line_slot = 1 }
+		set_temp_variable = { y1_val = pop_array^v }
+		set_temp_variable = { y2_val = pop_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 2 }
+		set_temp_variable = { y1_val = workforce_array^v }
+		set_temp_variable = { y2_val = workforce_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+
+	# Employment uses the fixed 0 to 100 percent right axis
+	set_temp_variable = { low = 0 }
+	set_temp_variable = { diff = 100 }
+	set_temp_variable = { line_slot = 3 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = employment_array^v }
+		set_temp_variable = { y2_val = employment_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_budget = {
+	gdp_graph_start_draw = yes
+
+	set_temp_variable = { true_max = revenue_array^0 }
+	set_temp_variable = { true_min = budget_balance_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = revenue_array^v }
+		set_temp_variable = { y2_val = revenue_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = expense_array^v }
+		set_temp_variable = { y2_val = expense_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = budget_balance_array^v }
+		set_temp_variable = { y2_val = budget_balance_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { line_slot = 1 }
+		set_temp_variable = { red_rule = 1 }
+		set_temp_variable = { y1_val = revenue_array^v }
+		set_temp_variable = { y2_val = revenue_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 2 }
+		set_temp_variable = { red_rule = 2 }
+		set_temp_variable = { y1_val = expense_array^v }
+		set_temp_variable = { y2_val = expense_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 3 }
+		set_temp_variable = { red_rule = 3 }
+		set_temp_variable = { y1_val = budget_balance_array^v }
+		set_temp_variable = { y2_val = budget_balance_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_energy = {
+	gdp_graph_start_draw = yes
+
+	set_temp_variable = { true_max = energy_gen_array^0 }
+	set_temp_variable = { true_min = energy_bal_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = energy_gen_array^v }
+		set_temp_variable = { y2_val = energy_gen_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = energy_con_array^v }
+		set_temp_variable = { y2_val = energy_con_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = energy_bal_array^v }
+		set_temp_variable = { y2_val = energy_bal_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { line_slot = 1 }
+		set_temp_variable = { red_rule = 0 }
+		set_temp_variable = { y1_val = energy_gen_array^v }
+		set_temp_variable = { y2_val = energy_gen_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 2 }
+		set_temp_variable = { y1_val = energy_con_array^v }
+		set_temp_variable = { y2_val = energy_con_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 3 }
+		set_temp_variable = { red_rule = 3 }
+		set_temp_variable = { y1_val = energy_bal_array^v }
+		set_temp_variable = { y2_val = energy_bal_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_defense = {
+	gdp_graph_start_draw = yes
+	set_temp_variable = { yoy_recent = defense_spend_array^recent_jan }
+	set_temp_variable = { yoy_prev = defense_spend_array^prev_jan }
+	gdp_graph_set_yoy = yes
+
+	# Spending in $B per year on the left axis
+	set_temp_variable = { true_max = defense_spend_array^0 }
+	set_temp_variable = { true_min = defense_spend_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = defense_spend_array^v }
+		set_temp_variable = { y2_val = defense_spend_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_floored_axis = yes
+	gdp_graph_label_axis = yes
+
+	set_temp_variable = { line_slot = 1 }
+	set_temp_variable = { red_rule = 1 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = defense_spend_array^v }
+		set_temp_variable = { y2_val = defense_spend_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+
+	# Share of GDP on its own right axis
+	set_temp_variable = { max_jump = 0 }
+	set_temp_variable = { true_max = defense_pct_array^0 }
+	set_temp_variable = { true_min = defense_pct_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = defense_pct_array^v }
+		set_temp_variable = { y2_val = defense_pct_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_floored_axis = yes
+	for_loop_effect = {
+		start = 0
+		end = 11
+		set_variable = { gdp_graph_right_y_axis_label^v = { value = v multiply = step add = low } }
+	}
+
+	set_temp_variable = { line_slot = 2 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = defense_pct_array^v }
+		set_temp_variable = { y2_val = defense_pct_array^next_v }
+		gdp_graph_add_segment = yes
+	}
+}
+
+gdp_graph_draw_trade = {
+	gdp_graph_start_draw = yes
+
+	set_temp_variable = { true_max = trade_exports_array^0 }
+	set_temp_variable = { true_min = trade_balance_array^0 }
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { y1_val = trade_exports_array^v }
+		set_temp_variable = { y2_val = trade_exports_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = trade_imports_array^v }
+		set_temp_variable = { y2_val = trade_imports_array^next_v }
+		gdp_graph_scan_point = yes
+		set_temp_variable = { y1_val = trade_balance_array^v }
+		set_temp_variable = { y2_val = trade_balance_array^next_v }
+		gdp_graph_scan_point = yes
+	}
+	gdp_graph_pad_axis = yes
+	gdp_graph_fit_axis = yes
+	gdp_graph_label_axis = yes
+
+	for_loop_effect = {
+		start = 0
+		end = 120
+		set_temp_variable = { next_v = { value = v add = 1 min = current_gdp_graph_end } }
+		set_temp_variable = { line_slot = 1 }
+		set_temp_variable = { red_rule = 0 }
+		set_temp_variable = { y1_val = trade_exports_array^v }
+		set_temp_variable = { y2_val = trade_exports_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 2 }
+		set_temp_variable = { y1_val = trade_imports_array^v }
+		set_temp_variable = { y2_val = trade_imports_array^next_v }
+		gdp_graph_add_segment = yes
+		set_temp_variable = { line_slot = 3 }
+		set_temp_variable = { red_rule = 3 }
+		set_temp_variable = { y1_val = trade_balance_array^v }
+		set_temp_variable = { y2_val = trade_balance_array^next_v }
+		gdp_graph_add_segment = yes
 	}
 }

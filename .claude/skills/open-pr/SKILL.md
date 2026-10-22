@@ -1,6 +1,6 @@
 ---
 name: open-pr
-description: Create a draft PR with an AngriestBird-style summary, link issues, update Changelog.txt for unlisted changes, and report what issue numbers are needed.
+description: Create a draft PR with a BLUF body, linked issues, and the Changelog.txt line for the branch.
 user-invocable: true
 allowed-tools:
   - Bash
@@ -11,18 +11,16 @@ allowed-tools:
   - Grep
 ---
 
-Create a draft PR for the current branch with an AngriestBird-style summary, linked GitHub issues, and changelog entries for any changes not yet listed in `Changelog.txt`.
+Create a draft PR for the current branch.
 
-Arguments (optional, space-separated):
-
-- Issue numbers to close, e.g. `1354 1261`
-- A quoted PR title override, e.g. `"Fix Cuba AI and Egypt bugs"`
+Arguments (optional, space-separated): issue numbers to close (`1354 1261`) and a quoted
+title override (`"Fix Cuba AI and Egypt bugs"`).
 
 Requested arguments: $ARGUMENTS
 
 ## Steps
 
-### 1. Read branch state
+### 1. Read the branch
 
 ```
 git rev-parse --abbrev-ref HEAD
@@ -31,107 +29,70 @@ git diff origin/main...HEAD --stat
 git diff origin/main...HEAD
 ```
 
-If the branch has no commits ahead of `main`, stop: "No commits ahead of main, nothing to open a PR for."
+With no commits ahead of `main`, stop: "No commits ahead of main, nothing to open a PR
+for."
 
-### 2. Parse arguments
+### 2. Issues
 
-From `$ARGUMENTS`:
+Bare integers in `$ARGUMENTS` are issues to close. For each, run
+`gh issue view <N> --repo MillenniumDawn/Millennium-Dawn --json number,title,body,labels`
+and use it to describe the change accurately. Skip a number `gh` cannot read and say so.
 
-- Bare integers are issue numbers to close.
-- Any double-quoted string is the PR title override.
+With no issue numbers, collect `#N` references from the commit messages as candidates.
+Do not add `Closes` lines for them. Report them at the end.
 
-If no issue numbers were given: scan the step-1 commit messages for `#N` patterns and collect them as candidates. Do NOT fail; continue without `Closes #N` lines. At the end, tell the user which issue numbers you found in commits and prompt them to re-run as `/open-pr N M` to link them.
+### 3. Title
 
-### 3. Fetch linked issues
+Use the quoted title verbatim. Otherwise use the most descriptive commit subject, under
+70 characters, and append `(#N, #M)` when issues were given.
 
-For each issue number from step 2, run:
+### 4. Body
 
-```
-gh issue view <N> --repo MillenniumDawn/Millennium-Dawn --json number,title,body,labels
-```
-
-Use the title and body to write an accurate root-cause sentence in the summary. If `gh` errors (not found or private), note the failure and skip that number.
-
-### 4. Derive the PR title
-
-If the user supplied a quoted title, use it verbatim.
-
-Otherwise: strip a `fix/`, `feature/`, `chore/`, or `content/` prefix from the branch name, replace hyphens and underscores with spaces, title-case each word, then append `(#N, #M)` if issue numbers were given.
-
-Examples:
-
-- Branch `fix/cuba-egypt-bugs` + issues 1354, 1261 → `"Fix Cuba Egypt Bugs (#1354, #1261)"`
-- Branch `thegeneral-uk` (no prefix): prefer the most descriptive commit subject line as the title.
-
-For a personal fork branch with no clear description (e.g. `thegeneral-uk`), derive the title from the most descriptive commit subject in the log. Keep it under 70 characters.
-
-### 5. Compose the PR body
-
-Use this exact structure (AngriestBird format):
+BLUF format, as `AGENTS.md` requires:
 
 ```
+## Bottom line
+
+One or two sentences: what changes for the player, and anything the reviewer must know.
+
+## How
+
+- Only for details that are not obvious from the bottom line.
+
 Closes #N
-Closes #M
 
-### Summary
-
-#### Bug Fixes
-
-- **Fixes #N: [Issue Title].** [Root cause in 1-2 sentences, specific: name focus ID, event ID, wrong value vs. correct value, using `backtick` for code identifiers.]
-
-#### [Other grouping, e.g. "AI", "Content", "Localisation", "Validation"]
-
-- **[Component or focus/event ID].** [What was added or changed and why.]
+BLUF
 ```
 
-Rules:
+- Start with `## Bottom line` and end with `BLUF` on its own line.
+- Lead with the outcome the player sees, not the implementation. No root-cause
+  narration, file paths, or commit hashes in the bottom line.
+- Add `## Why` only when the reason is not obvious. Add `## How` only for non-obvious
+  details, as plain one-line bullets. Omit empty sections.
+- Say what was checked and what was not, such as "Not tested in game."
+- One `Closes #N` per line, above `BLUF`. When different bullets close different
+  issues, append `Closes #N` to the bullet it belongs to.
+- No test plan in the body. `/test-plan` adds one when asked.
+- Never use em dashes in the title, body, or changelog.
 
-- Include `Closes #N` lines only when issue numbers were given. Place them above `### Summary` with one blank line between the last close and `### Summary`.
-- `#### Bug Fixes`: one bullet per distinct fix. Group micro-changes (e.g. "Fixed 12 log copy-paste errors") into a single bullet.
-- Other subsections (`#### AI`, `#### Content`, etc.): include only if there are non-bug changes in that category.
-- **Never use em dashes (`—`, U+2014) anywhere: not in the PR title, body, bullet separators, Changelog.txt, or any `.yml` file.** Replace with a colon (introducing the explanation), a period (ending the bolded prefix, new sentence), or a comma (continuing the clause). Standing user rule, no exceptions even when mimicking AngriestBird's example PRs.
-- Bullet structure: bold the issue ref and title together followed by a period (`**Fixes #N: Issue Title.**`), a space, then the description. No `—` separator.
-- Bullet length: **2 sentences, 2-3 lines max** per fix (one for cause, one for resolution). Name the key focus/event/decision ID and the wrong-vs-right value; skip commit hashes, file:line citations, repro chains, and regression notes (those go in the commit and issue). The `Closes #N` lines are always preserved.
-  The test plan is **not** part of the PR body. After creating the PR, run `/test-plan` to generate and attach an approximate playthrough checklist (`.claude/skills/test-plan/SKILL.md`).
+### 5. Changelog
 
-### 6. Check and update `Changelog.txt`
+For game-file changes not yet listed, add the one BLUF line through `/changelog` and
+commit it separately as `Update Changelog.txt` before creating the PR. Skip this when
+the diff has no game files, and say so.
 
-Apply the `/changelog` process (`.claude/skills/changelog/SKILL.md`) to add entries for any branch changes not already listed: identify the top-most version heading, reuse only the file's existing categories (never invent one), and insert past-tense `  - [TAG] ...` bullets with no em dashes. Skip changes already present (grep the focus/event/decision ID or `Issue #N`).
-
-If entries were added, stage and commit them separately **before** creating the PR:
-
-```
-git add Changelog.txt
-git commit -m "Update Changelog.txt"
-```
-
-If `Changelog.txt` is already up to date, skip this step and note "Changelog already up to date."
-
-### 7. Push and create the draft PR
-
-Push the branch if not already on the remote:
+### 6. Push and create
 
 ```
 git push -u origin HEAD
+gh pr create --draft --repo MillenniumDawn/Millennium-Dawn --title "<title>" --body-file <file>
 ```
 
-Then create the draft PR:
+Write the body to a scratch file and pass it with `--body-file`.
 
-```
-gh pr create --draft \
-  --repo MillenniumDawn/Millennium-Dawn \
-  --title "<title from step 4>" \
-  --body "$(cat <<'EOF'
-<body from step 5>
-EOF
-)"
-```
-
-### 8. Report back
-
-Output:
+### 7. Report
 
 1. The PR URL.
-2. Whether `Changelog.txt` was updated and which entries were added, or "Changelog already up to date."
-3. If **no** issue numbers were provided: list any `#N` references found in commits and tell the user: "To link these issues, re-run as `/open-pr N M`."
-4. Remind the user the PR body has no test plan by design: "Run `/test-plan` to generate and attach an approximate playthrough checklist."
+2. The changelog line added, or why it was skipped.
+3. Any `#N` candidates found in commits, with: "To link these issues, re-run as
+   `/open-pr N M`."

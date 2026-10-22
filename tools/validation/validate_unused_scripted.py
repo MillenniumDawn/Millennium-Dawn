@@ -11,11 +11,13 @@ from typing import List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     Severity,
     run_validator_main,
+    scan_meta_constructed_names,
     should_skip_file,
     strip_comments,
 )
@@ -30,139 +32,28 @@ _CUSTOM_TT_REF_RE = re.compile(
     r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
 )
 
-# Patterns for known false positives — these are referenced by the game engine,
-# called dynamically, or serve as convention-based callbacks rather than being
-# explicitly invoked via `name = yes` in script files.
 FALSE_POSITIVE_PATTERNS = [
-    re.compile(r"^trigger_year_"),  # Year-based triggers, engine-referenced
-    re.compile(
-        r"^EU_update_AI_focus_.*_voting_modifier$"
-    ),  # EU voting AI, dynamically called
-    re.compile(r"_accepted$"),  # Focus accepted callbacks (engine convention)
-    re.compile(
-        r"^DIPLOMACY_.*_ENABLE_TRIGGER"
-    ),  # Game rule triggers, engine-referenced
-    re.compile(
-        r"^is_diplomatic_action_valid_"
-    ),  # Diplo-action validity gates, engine-referenced by action token
-    re.compile(
-        r"^_unlock_btn_enabled$"
-    ),  # MIO catalog meta-dispatch empty-token-key fallback
-    re.compile(
-        r"^should_initiate_resistance$"
-    ),  # Vanilla engine hook — called on controller/owner change and daily
-    re.compile(
-        r"^should_(not_)?activate_active_crypto_bonuses$"
-    ),  # Vanilla engine crypto hooks — engine-read override points
+    re.compile(p)
+    for p in validation_config("validate_unused_scripted", "false_positive_patterns")
 ]
-
-# Files whose definitions are entirely engine-referenced (all contents are false positives)
+FALSE_POSITIVE_NAMES = frozenset(
+    validation_config("validate_unused_scripted", "false_positive_names")
+)
+PENDING_IMPLEMENTATION_NAMES = frozenset(
+    validation_config("validate_unused_scripted", "pending_implementation_names")
+)
 FALSE_POSITIVE_FILES = frozenset(
-    {
-        "00_game_rule_triggers.txt",
-        # Internal faction opinion triggers — a convention-based preset library
-        # (enthusiastic_X / positive_X / indifferent_X / negative_X / hostile_X
-        # for every internal faction). Kept fully populated so any content that
-        # wants to check a faction mood level has a ready-made trigger, even if
-        # many are not currently referenced anywhere in the mod.
-        "00_internal_factions_trigger.txt",
-        # Dummy effect existing only to suppress false positives on dynamically
-        # built flag/variable names; deliberately never called.
-        "!_cwtools_dummy_effects.txt",
-        # Convention/preset libraries
-        "00_scripted_triggers.txt",
-        "00_law_blocking_triggers.txt",
-        "00_influence_scripted_triggers.txt",
-        "01_political_triggers.txt",
-        "01_international_triggers.txt",
-        "05_misc_mechanic_scripted_triggers.txt",
-        "MD_Country_Groups_Triggers.txt",
-        "MD_missile_scripted_triggers.txt",
-        "MD_regional_owned_triggers.txt",
-        "MD_regional_triggers.txt",
-        "00_scripted_effects.txt",
-        "00_law_blocking_effects.txt",
-    }
+    validation_config("validate_unused_scripted", "false_positive_files")
 )
-
-
-# Regex: identifier containing at least one [VAR] placeholder with a non-empty
-# constant prefix (e.g. "set_leader_[IDEOLOGY]", "tooltip_EU_[EUXXX]_approve").
-# Requires a non-empty prefix so pure "[VAR]" expansions (like "[TECH] = 1") are
-# excluded — those don't call scripted effects/triggers by constructed name.
-_TEMPLATE_RE = re.compile(
-    r"(?<![/\"])\b([A-Za-z_][A-Za-z0-9_.]*(?:\[[A-Za-z_][A-Za-z0-9_]*\][A-Za-z0-9_.]*)+"
-    r")"
-)
-
-# Regex: quoted meta-substitution value carrying the constant anchor, where the
-# placeholder may lead (e.g. `TRIG = "[?global.tokens^v.GetTokenKey]_unlock_btn_enabled"`).
-# Here the `text` block holds a bare `[TRIG] = yes` and the real prefix/suffix lives
-# in the quoted assignment, so a leading placeholder with only a trailing constant
-# must still resolve. The suffix anchor keeps the match from over-firing.
-_QUOTED_TEMPLATE_RE = re.compile(r'"([^"]*\[[^\]]+\][^"]*)"')
-
-
-def scan_for_meta_constructed_names(
-    files: List[str], defined_names: Set[str]
-) -> Set[str]:
-    """Return the subset of *defined_names* that are called via meta_effect/
-    meta_trigger template substitution (e.g. ``set_leader_[IDEOLOGY] = yes``).
-
-    For every file that contains a ``meta_effect`` or ``meta_trigger`` keyword,
-    we extract identifier templates of the form ``prefix_[VAR]_suffix``, split
-    them on ``[VAR]`` segments to recover the constant (prefix, suffix) pair,
-    and match any defined name whose lower-cased form starts with *prefix* and
-    ends with *suffix*.
-    """
-    defined_lower = {n.lower(): n for n in defined_names}
-    used: Set[str] = set()
-
-    for filepath in files:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                content = fh.read()
-        except Exception:
-            continue
-
-        if "meta_effect" not in content and "meta_trigger" not in content:
-            continue
-
-        content_clean = strip_comments(content)
-
-        templates = [m.group(1) for m in _TEMPLATE_RE.finditer(content_clean)]
-        templates += [m.group(1) for m in _QUOTED_TEMPLATE_RE.finditer(content_clean)]
-
-        for template in templates:
-            # Split on every [VAR] segment — constant parts become prefix/suffix
-            parts = re.split(r"\[[^\]]+\]", template)
-            prefix = parts[0].lower()
-            suffix = parts[-1].lower() if len(parts) > 1 else ""
-
-            # Skip pure-placeholder templates where no constant anchors the match
-            if not prefix and not suffix:
-                continue
-
-            for name_lower, name_orig in defined_lower.items():
-                if name_orig in used:
-                    continue
-                if name_lower.startswith(prefix) and name_lower.endswith(suffix):
-                    # Guard: VAR must resolve to something non-empty
-                    if len(name_lower) > len(prefix) + len(suffix):
-                        used.add(name_orig)
-
-    return used
 
 
 def _is_false_positive(name: str, filepath: str) -> bool:
     """Check if a definition name is a known false positive."""
-    basename = os.path.basename(filepath)
-    if basename in FALSE_POSITIVE_FILES:
+    if os.path.basename(filepath) in FALSE_POSITIVE_FILES:
         return True
-    for pattern in FALSE_POSITIVE_PATTERNS:
-        if pattern.search(name):
-            return True
-    return False
+    if name in FALSE_POSITIVE_NAMES or name in PENDING_IMPLEMENTATION_NAMES:
+        return True
+    return any(pattern.search(name) for pattern in FALSE_POSITIVE_PATTERNS)
 
 
 def extract_definitions(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
@@ -255,102 +146,18 @@ class Validator(BaseValidator):
 
         if self.staged_files:
             files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
-            files = [f for f in files if not should_skip_file(f)]
+            files = [
+                f for f in files if not should_skip_file(f, mod_path=self.mod_path)
+            ]
             staged_set = set(self.staged_files)
             files = [f for f in files if f in staged_set]
         else:
             files = self._collect_files([f"common/{subdir}/**/*.txt"])
 
         args_list = [(f, self.mod_path) for f in files]
-        all_results = self._pool_map(extract_definitions, args_list, chunksize=10)
-
-        definitions = []
-        for result in all_results:
-            definitions.extend(result)
+        definitions = self._pool_flat_map(extract_definitions, args_list, chunksize=10)
 
         return definitions
-
-    def _find_unused(
-        self, definitions: List[Tuple[str, str, int]], kind: str, def_subdir: str
-    ) -> List[str]:
-        """Find definitions that are never used outside their own definition.
-
-        For each definition, we check if the name appears in ANY file outside
-        the definition directory. We also check if it's used within the same
-        directory but in a different definition block (i.e., called by another
-        scripted effect/trigger).
-        """
-        if not definitions:
-            return []
-
-        # Build a set of all definition names
-        all_names = {d[0] for d in definitions}
-
-        # Scan all txt files for usages
-        all_files = self._collect_files(
-            [
-                "common/**/*.txt",
-                "events/**/*.txt",
-                "history/**/*.txt",
-            ]
-        )
-
-        # Split files into "definition files" and "other files"
-        def_dir = f"common/{def_subdir}/"
-        other_files, def_files = [], []
-        for f in all_files:
-            (def_files if def_dir in f.replace("\\", "/") else other_files).append(f)
-
-        # First pass: find all names used in non-definition files
-        args_list = [(f, all_names, self.mod_path) for f in other_files]
-        results = self._pool_map(scan_file_for_usages, args_list)
-
-        used_names = set()
-        for found in results:
-            used_names.update(found)
-
-        # Second pass: for names not yet found, check if they're used
-        # within definition files (called by other scripted effects/triggers)
-        remaining = all_names - used_names
-        if remaining:
-            args_list = [(f, remaining, self.mod_path) for f in def_files]
-            results = self._pool_map(scan_file_for_usages, args_list, chunksize=10)
-
-            # For each name found in definition files, check if it appears
-            # more than just its own definition (i.e., it's called somewhere)
-            potentially_used = set()
-            for found in results:
-                potentially_used.update(found)
-
-            # Read each def file once and check all potentially-used names
-            # for call patterns (name = yes/no or custom tooltip references)
-            for def_file in def_files:
-                try:
-                    with open(def_file, "r", encoding="utf-8-sig") as f:
-                        content = strip_comments(f.read())
-                except Exception:
-                    continue
-                called = set(_CALL_YES_NO_RE.findall(content))
-                called.update(_CUSTOM_TT_REF_RE.findall(content))
-                used_names |= called & potentially_used
-
-        # Build results for unused definitions
-        unused = []
-        # Build a lookup: name -> (file, line_number)
-        name_to_location = {}
-        for name, filepath, line_num in definitions:
-            if name not in name_to_location:
-                name_to_location[name] = []
-            name_to_location[name].append((filepath, line_num))
-
-        for name in sorted(all_names - used_names):
-            locations = name_to_location.get(name, [])
-            for filepath, line_num in locations:
-                if _is_false_positive(name, filepath):
-                    continue
-                unused.append(f"{filepath}:{line_num} - {name}")
-
-        return unused
 
     def _find_unused_combined(
         self,
@@ -382,7 +189,8 @@ class Validator(BaseValidator):
         # Split files into definition files and other files
         effect_dir = "common/scripted_effects/"
         trigger_dir = "common/scripted_triggers/"
-        other_files, def_files = [], []
+        other_files: List[str] = []
+        def_files: List[str] = []
         for f in all_files:
             norm = f.replace("\\", "/")
             if effect_dir in norm or trigger_dir in norm:
@@ -392,11 +200,7 @@ class Validator(BaseValidator):
 
         # First pass: find all names used outside definition dirs
         args_list = [(f, all_names, self.mod_path) for f in other_files]
-        results = self._pool_map(scan_file_for_usages, args_list)
-
-        used_names: set = set()
-        for found in results:
-            used_names.update(found)
+        used_names = set(self._pool_flat_map(scan_file_for_usages, args_list))
 
         # Second pass: check cross-calls within definition files
         remaining = all_names - used_names
@@ -410,9 +214,9 @@ class Validator(BaseValidator):
 
             for def_file in def_files:
                 try:
-                    with open(def_file, "r", encoding="utf-8-sig") as f:
-                        content = strip_comments(f.read())
-                except Exception:
+                    with open(def_file, "r", encoding="utf-8-sig") as definition_file:
+                        content = strip_comments(definition_file.read())
+                except (OSError, UnicodeError):
                     continue
                 called = set(_CALL_YES_NO_RE.findall(content))
                 called.update(_CUSTOM_TT_REF_RE.findall(content))
@@ -423,9 +227,7 @@ class Validator(BaseValidator):
         # names still remaining after the first two passes to keep cost low.
         still_remaining = all_names - used_names
         if still_remaining:
-            used_names.update(
-                scan_for_meta_constructed_names(all_files, still_remaining)
-            )
+            used_names.update(scan_meta_constructed_names(all_files, still_remaining))
 
         # Build result lists, partitioned by kind
         name_to_location: dict = {}
@@ -448,12 +250,6 @@ class Validator(BaseValidator):
                     unused_triggers.append(entry)
 
         return unused_effects, unused_triggers
-
-    def validate_unused_effects(self):
-        self._log_section("Checking for unused scripted effects...")
-
-    def validate_unused_triggers(self):
-        self._log_section("Checking for unused scripted triggers...")
 
     def run_validations(self):
         if self.staged_only:

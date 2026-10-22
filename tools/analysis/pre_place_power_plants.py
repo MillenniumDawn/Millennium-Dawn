@@ -35,8 +35,10 @@ from collections import defaultdict
 
 # Reuse estimate_gdp's parsers for ideas, country history, and state files.
 THIS_DIR = os.path.dirname(os.path.abspath(__file__))
-if THIS_DIR not in sys.path:
-    sys.path.insert(0, THIS_DIR)
+TOOLS_DIR = os.path.dirname(THIS_DIR)
+for path in (THIS_DIR, TOOLS_DIR):
+    if path not in sys.path:
+        sys.path.insert(0, path)
 
 from estimate_gdp import (
     COUNTRIES_DIR,
@@ -50,15 +52,13 @@ from estimate_gdp import (
 )
 from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
 from estimate_gdp import finalize_gdp as _finalize_gdp
+from shared_utils import atomic_write_text, read_text_strict
 
 REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 
 # ─── Energy formula constants (mirror !_energy_effects.txt) ────────────────────
 ENERGY_USE_BALANCE_MULT = 1.25
 POP_ENERGY_BALANCE = 28
-FOSSIL_GW_PER_PLANT = (
-    2  # base modifier@fossil_energy_gain from common/buildings/00_buildings.txt:344
-)
 NUCLEAR_GW_PER_REACTOR = (
     4  # nuclear_energy_gain in common/buildings/00_buildings.txt:169
 )
@@ -356,8 +356,7 @@ def parse_state_with_category(filepath):
 
 def inject_building(filepath, building_name, count):
     """Insert or update `building_name = count` inside history.buildings = {}."""
-    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-        content = f.read()
+    content = read_text_strict(filepath)
 
     hist_m = re.search(r"\bhistory\s*=\s*\{", content)
     if not hist_m:
@@ -404,8 +403,7 @@ def inject_building(filepath, building_name, count):
                 + content[insert_at:]
             )
 
-    with open(filepath, "w", encoding="utf-8", newline="\n") as f:
-        f.write(content)
+    atomic_write_text(filepath, content)
     return True, "written"
 
 
@@ -509,8 +507,7 @@ def inject_reactor_stockpile(filepath, stockpile, set_flag):
     Returns (changed: bool, msg: str). Idempotent: re-running on a stabilised file
     produces no diff.
     """
-    with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-        content = f.read()
+    content = read_text_strict(filepath)
     original = content
 
     stockpile_target = (
@@ -545,6 +542,8 @@ def inject_reactor_stockpile(filepath, stockpile, set_flag):
     # ── Step 2: flag (insert after stockpile line if requested and not present) ──
     if set_flag and not _REACTOR_FLAG_RE.search(content):
         m = _STOCKPILE_RE.search(content)
+        if m is None:
+            return False, "stockpile insertion failed"
         indent = m.group("indent")
         # Insert on the next line after the stockpile assignment.
         line_end = content.find("\n", m.end())
@@ -559,8 +558,7 @@ def inject_reactor_stockpile(filepath, stockpile, set_flag):
     if content == original:
         return False, "no change"
 
-    with open(filepath, "w", encoding="utf-8", newline="\n") as f:
-        f.write(content)
+    atomic_write_text(filepath, content)
     return True, "written"
 
 

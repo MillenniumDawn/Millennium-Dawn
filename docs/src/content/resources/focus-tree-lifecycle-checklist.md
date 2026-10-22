@@ -113,3 +113,9 @@ The following Claude Code skills automate checklist items. See [Claude Code Skil
 | `/content-review`             | Runs the full content review checklist                |
 | `/validate`                   | Runs all automated validation tools                   |
 | `/changelog`                  | Updates Changelog.txt with branch changes             |
+
+---
+
+## Modernizing a Stale Tree
+
+This checklist covers drafting and building **new** focus tree content. Bringing an existing tree up to current standards is a different workflow, see the [Focus Tree Modernization Guide](/dev-resources/focus-tree-modernization-guide/) for the audit, per-nation design, and chunked-rewrite method.

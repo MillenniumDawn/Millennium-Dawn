@@ -74,7 +74,7 @@ The audit also surfaced a set of small, factual fixes (typos, wrong filenames, w
 
 Spot-checks against the live repo at HEAD came back clean. No action needed.
 
-- `docs/src/content/resources/code-resource.md:544-552` — Party Popularity examples match the new `add_relative_party_popularity` default-to-ruling-party behaviour (post #1876 / #1878).
+- `docs/src/content/resources/code-resource.md:544-552` — Party Popularity examples match the new `change_relative_party_popularity` default-to-ruling-party behaviour (post #1876 / #1878).
 - `docs/src/content/resources/code-stylization-guide.md:187` — same; example is correct under the new default.
 - `docs/src/content/countries/italy.md` — spot-checked against `history/countries/ITA - Italy.txt` and `common/national_focus/05_italy.txt`. Spirit count (19), popularity numbers (34.5% / 18.9% / 15.8%), focus IDs (`ITA_what_we_are`, `ITA_diplomatic_focus`, `ITA_strenghten_ties_with_west`, `ITA_abandon_the_west`), `italy_md.69` threshold (`stability_protests_counter < -15`), and `ITA_nuclear_power_banned` all check out.
 - `docs/src/content/resources/add-eu-nation.md` — claims about `EU_is_potential` (`common/scripted_triggers/99_EU_scripted_triggers.txt:651`) and `on_startup_euu_action` array (`common/scripted_effects/99_eu_scripted_effects.txt:745, 896+`) are accurate.

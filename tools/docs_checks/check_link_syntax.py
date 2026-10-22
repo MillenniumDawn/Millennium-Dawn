@@ -52,10 +52,20 @@ def find_unclosed_link(line: str) -> int | None:
             return None
         depth = 1
         j = open_at + 2
+        quote: str | None = None
         while j < len(line):
-            if line[j] == "(":
+            c = line[j]
+            if quote is not None:
+                # Inside a link title; parens here are literal text.
+                if c == quote:
+                    quote = None
+            elif c in ('"', "'") and j > 0 and line[j - 1].isspace():
+                # A title opens after whitespace; guards against an apostrophe
+                # mid-destination (/o'brien/) being read as a quote.
+                quote = c
+            elif c == "(":
                 depth += 1
-            elif line[j] == ")":
+            elif c == ")":
                 depth -= 1
                 if depth == 0:
                     break
@@ -104,6 +114,8 @@ SELF_TEST_CASES: tuple[tuple[str, bool], ...] = (
     ("Empty [link]() here.", True),
     ("Valid [x](/a_(b)/c/) link.", False),  # balanced inner parens, not broken
     ("Broken [x](/a_(b)/c/ no close.", True),  # nested parens but still unclosed
+    ('Titled [x](/x/ "Note (a").', False),  # unbalanced paren inside title text
+    ("Titled [x](/x/ 'Note (a').", False),  # single-quoted title, same rule
     ("Inline code `[x](y` is not a link.", False),  # inline code is masked
     ("```\n[Guide](/broken/\n```", False),  # fenced code is skipped
     # A shorter run inside a longer fence does not close it.

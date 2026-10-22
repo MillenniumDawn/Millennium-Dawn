@@ -30,7 +30,7 @@ import os
 import re
 import sys
 from collections import OrderedDict
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
@@ -47,6 +47,22 @@ _OPENER_RE = re.compile(r"^([\w:]+)\s*=\s*\{")
 _LAW_RE = re.compile(r"law\s*=\s*yes\b")
 _LAWFILE_RE = re.compile(r"^AA_(law_|corruption|religion)", re.IGNORECASE)
 _TAG_PREFIX_RE = re.compile(r"^[A-Z]{3}_")
+
+
+def _iter_file_lines(path: str) -> Optional[List[str]]:
+    """Read a script file's lines, or None if it can't be opened."""
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return f.readlines()
+    except OSError:
+        return None
+
+
+def _iter_code_lines(lines: List[str]) -> Iterator[Tuple[str, str]]:
+    """Yield (code, stripped) for each raw line, inline comments stripped."""
+    for raw in lines:
+        code = strip_inline_comment(raw)
+        yield code, code.strip()
 
 
 def _detect_mod_root(start: str) -> Optional[str]:
@@ -86,15 +102,11 @@ def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     ideas_dir = os.path.join(mod_root, "common", "ideas")
     for path in glob.glob(os.path.join(ideas_dir, "*.txt")):
         is_lawfile = bool(_LAWFILE_RE.match(os.path.basename(path)))
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
+        lines = _iter_file_lines(path)
+        if lines is None:
             continue
         stack: List[str] = []
-        for raw in lines:
-            code = strip_inline_comment(raw)
-            stripped = code.strip()
+        for code, stripped in _iter_code_lines(lines):
             if _LAW_RE.match(stripped) and len(stack) >= 2:
                 law_categories.add(stack[1])
             m = _OPENER_RE.match(stripped)
@@ -150,15 +162,11 @@ def _load_modifier_variables(mod_root: str) -> Dict[str, set]:
 
     dm_dir = os.path.join(mod_root, "common", "dynamic_modifiers")
     for path in glob.glob(os.path.join(dm_dir, "*.txt")):
-        try:
-            with open(path, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
+        lines = _iter_file_lines(path)
+        if lines is None:
             continue
         stack: List[str] = []
-        for raw in lines:
-            code = strip_inline_comment(raw)
-            stripped = code.strip()
+        for code, stripped in _iter_code_lines(lines):
             nopen = code.count("{")
             nclose = code.count("}")
             m = _OPENER_RE.match(stripped)
@@ -284,6 +292,8 @@ class HistoryStandardizer(BaseStandardizer):
         self._law = idea_law
         self._faction = idea_faction
         self._modvars = modifier_vars
+        if mod_root is not None:
+            self._ensure_classification(mod_root)
 
     # -- classification bootstrap ------------------------------------------- #
 
@@ -304,7 +314,7 @@ class HistoryStandardizer(BaseStandardizer):
                 if self._modvars is None
                 else self._modvars
             )
-            log_message("INFO", f"Mod root: {root}", self.verbose)
+            log_message("DEBUG", f"Mod root: {root}", self.verbose)
         else:
             log_message(
                 "WARNING",
@@ -419,7 +429,7 @@ class HistoryStandardizer(BaseStandardizer):
                 name = _modifier_name(stmt["lines"])
                 if name and name not in props["modifiers"]:
                     props["modifiers"][name] = {"stmt": stmt, "vars": []}
-                    for var in modvars.get(name, ()):  # type: ignore[arg-type]
+                    for var in modvars.get(name, ()):
                         claim.setdefault(var, name)
 
         # Pass 2 - route every statement into exactly one bucket.
@@ -441,7 +451,12 @@ class HistoryStandardizer(BaseStandardizer):
                     props["country_vars"].append(stmt)
                 else:
                     props["system_vars"].append(stmt)
-            elif head in ("add_to_array", "remove_from_array"):
+            elif head in (
+                "add_to_array",
+                "remove_from_array",
+                "init_influence",
+                "sort_influence",
+            ):
                 props["system_vars"].append(stmt)
             elif head == "complete_special_project" or head.startswith("sp:"):
                 props["special_projects"].append(stmt)
@@ -498,13 +513,9 @@ class HistoryStandardizer(BaseStandardizer):
 
     # -- formatting --------------------------------------------------------- #
 
-    def _emit_stmt(self, stmt: Dict[str, List[str]], out: List[str], seen: set) -> None:
-        key = "\n".join(stmt["lines"]).strip()
-        if key and key in seen:
-            log_message("DEBUG", f"Collapsed duplicate: {key[:60]}", self.verbose)
-            return
-        if key:
-            seen.add(key)
+    def _emit_stmt(self, stmt: Dict[str, List[str]], out: List[str]) -> None:
+        # Lossless: repeated statements (e.g. two add_equipment, two set_variable)
+        # are semantically meaningful in history files, so every one is kept.
         out.extend(c for c in stmt["comments"] if c.strip())
         out.extend(stmt["lines"])
 
@@ -518,9 +529,8 @@ class HistoryStandardizer(BaseStandardizer):
         if not stmts:
             return
         rendered: List[str] = []
-        seen: set = set()
         for stmt in stmts:
-            self._emit_stmt(stmt, rendered, seen)
+            self._emit_stmt(stmt, rendered)
         if not rendered:
             return
         out.append("")
@@ -531,9 +541,8 @@ class HistoryStandardizer(BaseStandardizer):
         if not stmts:
             return
         out.append("")
-        seen: set = set()
         for stmt in stmts:
-            self._emit_stmt(stmt, out, seen)
+            self._emit_stmt(stmt, out)
 
     def _emit_equipment(
         self, props: Dict[str, Any], indent: str, out: List[str]
@@ -587,11 +596,10 @@ class HistoryStandardizer(BaseStandardizer):
         if props["modifiers"]:
             out.append("")
             out.append(f"{indent}# Dynamic Modifiers")
-            seen: set = set()
             for name, slot in props["modifiers"].items():
-                self._emit_stmt(slot["stmt"], out, seen)
+                self._emit_stmt(slot["stmt"], out)
                 for var_stmt in slot["vars"]:
-                    self._emit_stmt(var_stmt, out, seen)
+                    self._emit_stmt(var_stmt, out)
 
         self._emit_group("System Variables", props["system_vars"], indent, out)
         self._emit_group("Special Projects", props["special_projects"], indent, out)

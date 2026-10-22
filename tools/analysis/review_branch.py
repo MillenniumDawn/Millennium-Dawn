@@ -17,6 +17,18 @@ def run(cmd: list[str]) -> str:
 
 def main() -> None:
     base = sys.argv[1] if len(sys.argv) > 1 else "main"
+
+    # A bad/unknown base ref otherwise makes every git diff fail silently,
+    # printing empty sections and exiting 0.
+    verify = subprocess.run(
+        ["git", "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}"],
+        capture_output=True,
+        text=True,
+    )
+    if verify.returncode != 0:
+        print(f"error: unknown base ref '{base}'", file=sys.stderr)
+        sys.exit(1)
+
     current = run(["git", "branch", "--show-current"])
 
     print("=" * 40)

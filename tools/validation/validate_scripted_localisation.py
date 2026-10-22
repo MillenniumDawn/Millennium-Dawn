@@ -9,12 +9,15 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import validation_config
+from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
     Colors,
-    DataCleaner,
     FileOpener,
+    Issue,
     Severity,
+    drop_partial_matches,
     find_line_number,
     run_validator_main,
     scan_meta_constructed_names,
@@ -26,7 +29,7 @@ def _scan_defined_locs(text: str, basename: str) -> Tuple[List[str], Dict[str, s
     localisations: List[str] = []
     paths: Dict[str, str] = {}
     if "defined_text" in text and "name =" in text:
-        for match in re.findall(r"name\s*=\s*([a-zA-Z_0-9]+)", text):
+        for match in re.findall(r"name\s*=\s*(\w[\w-]*)", text):
             localisations.append(match)
             paths[match] = basename
     return (localisations, paths)
@@ -37,7 +40,7 @@ def process_file_for_defined_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     if "00_scripted_localisation_FR_loc" in filename:
@@ -49,25 +52,140 @@ def process_file_for_defined_localisations(
     basename = os.path.basename(filename)
     return disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.defined.lc={int(lowercase)}",
+        f"scripted_loc.defined.v3.lc={1 if lowercase else 0}",
         filename,
         text_file,
         lambda: _scan_defined_locs(text_file, basename),
     )
 
 
-def _scan_loc_tokens(text: str, is_scripted_loc_file: bool) -> Set[str]:
-    if is_scripted_loc_file:
-        # Only bracket tokens — full tokenisation would treat `name = X` as a usage.
-        tokens: Set[str] = set(re.findall(r"\[(\w+)\]", text))
-        tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
-        return tokens
-    # Tokenise once; also extract [name] and [Scope.name] bracket calls
-    # (\w catches digit-prefixed names missed by [A-Za-z_][A-Za-z0-9_]*).
-    tokens = set(re.findall(r"[A-Za-z_][A-Za-z0-9_]*", text))
-    tokens |= set(re.findall(r"\[(\w+)\]", text))
-    tokens |= set(re.findall(r"\[\w+\.(\w+)\]", text))
-    return tokens
+# Scripted loc names may contain hyphens and non-ASCII letters
+# (additional_income_GER_Ökosteuer); an ASCII-only class truncates both and invents findings.
+_LOC_REFERENCE_RE = re.compile(
+    r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
+    r"localization_key)\s*=\s*(\w[\w-]*)"
+)
+# Scope chains can be multi-level: a map-mode tooltip scopes to a state, so the country
+# scripted loc is only reachable as [FROM.CONTROLLER.name]. A single-segment prefix misses
+# those calls and reports the target as unused.
+_BRACKET_LOC_RE = re.compile(r"\[((?:[A-Za-z_][A-Za-z0-9_]*\.)+)?(\w[\w-]*)\]")
+
+
+def _find_reference_line(path: str, name: str) -> int:
+    # A bare substring search lands on the wrong line: looking for `adjective` matches
+    # inside `GetAdjective`. Anchor on the call syntax instead.
+    try:
+        text = FileOpener.open_text_file(
+            path, lowercase=False, strip_comments_flag=False
+        )
+    except OSError:
+        return 0
+
+    target = name.lower()
+    for match in _BRACKET_LOC_RE.finditer(text):
+        if match.group(2).lower() == target:
+            return text.count("\n", 0, match.start()) + 1
+    for match in _LOC_REFERENCE_RE.finditer(text):
+        if match.group(1).lower() == target:
+            return text.count("\n", 0, match.start()) + 1
+    return find_line_number(path, name, lowercase=True)
+
+
+def _find_definition_line(path: str, name: str) -> int:
+    # `name = communist` as a substring also matches `name = communist_state_valid`.
+    try:
+        text = FileOpener.open_text_file(
+            path, lowercase=False, strip_comments_flag=False
+        )
+    except OSError:
+        return 0
+
+    pattern = re.compile(
+        r"name\s*=\s*" + re.escape(name) + r"(?![A-Za-z0-9_-])", re.IGNORECASE
+    )
+    match = pattern.search(text)
+    if match:
+        return text.count("\n", 0, match.start()) + 1
+    return find_line_number(path, f"name = {name}", lowercase=True)
+
+
+def _filter_bracket_loc_candidates(
+    candidates: Set[Tuple[str, bool]], defined_names: Set[str]
+) -> Set[str]:
+    defined_lower = {name.lower() for name in defined_names}
+    return {
+        name
+        for name, _scoped in candidates
+        if name.lower() in defined_lower or not name.lower().startswith("get")
+    }
+
+
+def _scan_loc_token_candidates(
+    text: str, is_scripted_loc_file: bool
+) -> Tuple[Set[Tuple[str, bool]], Set[str]]:
+    bracketed = {
+        (member, bool(scope)) for scope, member in _BRACKET_LOC_RE.findall(text)
+    }
+    explicit = set() if is_scripted_loc_file else set(_LOC_REFERENCE_RE.findall(text))
+    return bracketed, explicit
+
+
+_LOC_OBJECTS_DOC = os.path.join(
+    "resources", "documentation", "loc_objects_documentation.md"
+)
+_DOC_GETTER_RE = re.compile(r"^\*\*(\w+)\*\*\s*$", re.MULTILINE)
+# Vanilla defined_text that the mod's replace/ strings call but does not ship.
+_VANILLA_SCRIPTED_LOCS = frozenset({"GetCountryContinent"})
+
+
+def _documented_getters(mod_path: str) -> frozenset:
+    try:
+        with open(
+            os.path.join(mod_path, _LOC_OBJECTS_DOC), "r", encoding="utf-8"
+        ) as handle:
+            return frozenset(_DOC_GETTER_RE.findall(handle.read()))
+    except OSError:
+        return frozenset()
+
+
+def _getter_spelling_message(
+    member: str, defined_lower: Set[str], documented: frozenset
+) -> str:
+    """Why a bracket member is neither a scripted loc nor a documented getter, or ""."""
+    if (
+        member in documented
+        or member in _VANILLA_SCRIPTED_LOCS
+        or member.lower() in defined_lower
+    ):
+        return ""
+    spelling = next((g for g in documented if g.lower() == member.lower()), None)
+    if spelling:
+        return f"'{member}' is not the documented getter spelling '{spelling}'"
+    if member.lower().startswith("get"):
+        return (
+            f"'{member}' is neither a defined scripted localisation "
+            "nor a documented engine getter"
+        )
+    return ""
+
+
+def process_file_for_getter_refs(filename: str) -> List[Tuple[str, int]]:
+    """Pool worker: (member, line) for every [SCOPE.Member] call in one file."""
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    refs = []
+    # Matches come in file order, so count only the newlines since the last one.
+    line, pos = 1, 0
+    for match in _BRACKET_LOC_RE.finditer(text):
+        line += text.count("\n", pos, match.start())
+        pos = match.start()
+        refs.append((match.group(2), line))
+    return refs
+
+
+def _path_key(mod_path: str, filename: str) -> str:
+    return os.path.normpath(os.path.join(mod_path, filename))
 
 
 def process_file_for_used_localisations(
@@ -75,7 +193,7 @@ def process_file_for_used_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, search_names, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     basename = os.path.basename(filename)
@@ -84,29 +202,65 @@ def process_file_for_used_localisations(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
 
-    # Cache the file's token set (independent of search_names); intersect after
-    # the cache hit so a changing defined-set never invalidates the entry.
+    # Cache raw candidates (independent of search_names); filter after the cache
+    # hit so a changing defined set never invalidates the entry.
     is_sl = "scripted_localisation" in filename
-    tokens = disk_cache.per_file_cached_by_content(
+    bracketed, explicit = disk_cache.per_file_cached_by_content(
         mod_path,
-        f"scripted_loc.tokens.lc={int(lowercase)}.{'b' if is_sl else 't'}",
+        f"scripted_loc.tokens.v5.lc={1 if lowercase else 0}.{'b' if is_sl else 't'}",
         filename,
         text_file,
-        lambda: _scan_loc_tokens(text_file, is_sl),
+        lambda: _scan_loc_token_candidates(text_file, is_sl),
     )
+    tokens = _filter_bracket_loc_candidates(bracketed, search_names) | explicit
 
-    # Case-insensitive intersection — recover original casing for downstream matching.
-    search_lower = {n.lower(): n for n in search_names}
-    found_original = {
-        search_lower[t.lower()] for t in tokens if t.lower() in search_lower
-    }
+    # Scripted-localisation, GUI, and English localisation files use bracket
+    # syntax for scripted loc calls. Keep candidates even when undefined so
+    # the missing check can report them.
+    normalized_filename = filename.replace("\\", "/").lstrip("/")
+    is_english_yml = "localisation/english/" in normalized_filename
+    if (
+        is_sl
+        or filename.endswith(".gui")
+        or (filename.endswith(".yml") and is_english_yml)
+    ):
+        found_original = tokens
+    else:
+        search_lower = {n.lower(): n for n in search_names}
+        found_original = {
+            search_lower[t.lower()] for t in tokens if t.lower() in search_lower
+        }
 
     if not found_original:
         return ([], {})
 
-    localisations = list(found_original)
+    localisations = sorted(found_original)
     paths = {name: basename for name in found_original}
     return (localisations, paths)
+
+
+def _scan_used_and_getter_refs(
+    args: Tuple[str, Set[str], bool, str],
+) -> Tuple[Tuple[List[str], Dict[str, str]], List[Tuple[str, int]] | None]:
+    """Pool worker: the usage scan, plus a .yml or .gui file's getter calls
+    from FileOpener's copy of the text the usage scan just read."""
+    used = process_file_for_used_localisations(args)
+    filename, _names, _lowercase, mod_path = args
+    if not filename.endswith((".yml", ".gui")) or should_skip_file(
+        filename, mod_path=mod_path
+    ):
+        return used, None
+    return used, process_file_for_getter_refs(filename)
+
+
+def _map_files(func, args_list, workers, pool, chunksize):
+    """Use the caller's pool, map in-process for one worker, else a transient pool."""
+    if pool is not None:
+        return pool.map(func, args_list, chunksize=chunksize)
+    if workers == 1:
+        return [func(args) for args in args_list]
+    with Pool(processes=workers) as p:
+        return p.map(func, args_list, chunksize=chunksize)
 
 
 class ScriptedLocalisation:
@@ -134,11 +288,9 @@ class ScriptedLocalisation:
             files_to_scan = glob.glob(pattern)
 
         args_list = [(f, lowercase, mod_path) for f in files_to_scan]
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_file_for_defined_localisations, args_list, chunksize=10)
-        if not pool:
-            p.close()
-            p.join()
+        results = _map_files(
+            process_file_for_defined_localisations, args_list, workers, pool, 10
+        )
 
         for locs_list, paths_dict in results:
             localisations.extend(locs_list)
@@ -156,7 +308,14 @@ class ScriptedLocalisation:
         staged_files=None,
         workers=None,
         pool=None,
+        *,
+        getter_refs: Dict[str, List[Tuple[str, int]]] | None = None,
     ):
+        """Scripted locs the scanned files use.
+
+        When ``getter_refs`` is given, each scanned .yml and .gui file's getter
+        calls are added to it, keyed by ``_path_key``, from the same read.
+        """
         localisations = []
         paths = {}
 
@@ -175,7 +334,10 @@ class ScriptedLocalisation:
                 glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
             )
             yml_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.yml"), recursive=True)
+                glob.iglob(
+                    os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
+                    recursive=True,
+                )
             )
             txt_files = list(
                 glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
@@ -183,11 +345,16 @@ class ScriptedLocalisation:
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_file_for_used_localisations, args_list, chunksize=50)
-        if not pool:
-            p.close()
-            p.join()
+        if getter_refs is None:
+            results = _map_files(
+                process_file_for_used_localisations, args_list, workers, pool, 50
+            )
+        else:
+            scans = _map_files(_scan_used_and_getter_refs, args_list, workers, pool, 50)
+            results = [used for used, _refs in scans]
+            for filename, (_used, refs) in zip(files_to_scan, scans):
+                if refs is not None:
+                    getter_refs[_path_key(mod_path, filename)] = refs
 
         found_names = set()
         for locs_list, paths_dict in results:
@@ -232,31 +399,35 @@ class Validator(BaseValidator):
         )
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
-        used_locs_lower_raw = [loc.lower() for loc in used_locs]
         used_lower_to_original = {loc.lower(): loc for loc in used_locs}
-
-        used_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            used_locs_lower_raw, tuple(false_positives)
+        used_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in used_locs), false_positives
         )
 
         results = []
         reported = set()
         for loc in used_locs_lower:
             if loc not in defined_locs_lower and loc not in reported:
-                original_loc = used_lower_to_original.get(loc, loc)
+                original_loc = used_lower_to_original.get(loc) or loc
                 basename = used_paths.get(original_loc, used_paths.get(loc, "unknown"))
                 full_path = self.get_full_path(
-                    basename, loc, file_patterns=["**/*.txt", "**/*.gui"]
+                    basename,
+                    original_loc,
+                    file_patterns=[
+                        "**/*.txt",
+                        "**/*.gui",
+                        "localisation/english/**/*.yml",
+                    ],
                 )
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(full_path, loc, lowercase=True)
+                    line_num = _find_reference_line(full_path, loc)
                     results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
         if len(results) > 0:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC}",
                 "warning",
             )
             self._report(
@@ -278,18 +449,14 @@ class Validator(BaseValidator):
             "Checking unused scripted localisations (defined but not used)..."
         )
 
-        # Preemptive slot libraries — defined for all possible slots even if only a
-        # subset are active.  Suppress unused warnings for the unoccupied slots rather
-        # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
+        unused_only = validation_config(
+            "validate_scripted_localisation", "unused_only_false_positives"
+        )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
-        defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
-
-        defined_locs_lower = DataCleaner.clear_false_positives_partial_match(
-            defined_locs_lower,
-            tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
+        defined_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in defined_locs), (*false_positives, *unused_only)
         )
 
         results = []
@@ -298,7 +465,7 @@ class Validator(BaseValidator):
             if loc not in used_locs_lower and loc not in reported:
                 original_loc = defined_lower_to_original.get(loc, loc)
                 basename = defined_paths.get(
-                    original_loc, defined_paths.get(loc, "unknown")
+                    original_loc or loc, defined_paths.get(loc, "unknown")
                 )
 
                 full_path = None
@@ -319,9 +486,7 @@ class Validator(BaseValidator):
 
                 if full_path:
                     rel_path = os.path.relpath(full_path, self.mod_path)
-                    line_num = find_line_number(
-                        full_path, f"name = {loc}", lowercase=True
-                    )
+                    line_num = _find_definition_line(full_path, loc)
                     results.append((loc, rel_path, line_num))
                     reported.add(loc)
 
@@ -343,11 +508,9 @@ class Validator(BaseValidator):
         defined_gfx = set()
         for filename in glob.iglob(gfx_path + "**/*.gfx", recursive=True):
             text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+                filename, lowercase=False, strip_comments_flag=False
             )
-            matches = re.findall(r'name\s*=\s*"(GFX_[^"]+)"', text_file)
-            for m in matches:
-                defined_gfx.add(m)
+            defined_gfx.update(sprite_names_from_gfx_text(text_file))
 
         # Collect all GFX_ references from scripted localisation files
         if self.staged_files:
@@ -384,6 +547,58 @@ class Validator(BaseValidator):
             category="gfx-icon",
         )
 
+    def validate_getter_spelling(
+        self,
+        defined_locs: List[str],
+        scanned_refs: Dict[str, List[Tuple[str, int]]] | None = None,
+    ):
+        """``scanned_refs`` holds getter calls the usage scan already read,
+        keyed by ``_path_key``; any other file is read here."""
+        self._log_section("Checking engine getter spelling in localisation...")
+
+        documented = _documented_getters(self.mod_path)
+        if not documented:
+            self.log(
+                f"{_LOC_OBJECTS_DOC} not found — skipping getter spelling check",
+                "warning",
+            )
+            return
+
+        defined_lower = {name.lower() for name in defined_locs}
+        files = self._collect_files(
+            ["localisation/english/**/*.yml", "interface/**/*.gui"],
+            extra_skip=lambda f: should_skip_file(f, mod_path=self.mod_path),
+        )
+        refs_by_key = dict(scanned_refs or {})
+        unscanned = [f for f in files if _path_key(self.mod_path, f) not in refs_by_key]
+        for filename, refs in zip(
+            unscanned, self._pool_map(process_file_for_getter_refs, unscanned)
+        ):
+            refs_by_key[_path_key(self.mod_path, filename)] = refs
+        results = []
+        for filename in files:
+            rel_path = os.path.relpath(filename, self.mod_path)
+            for member, line in refs_by_key[_path_key(self.mod_path, filename)]:
+                message = _getter_spelling_message(member, defined_lower, documented)
+                if message:
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
+                            category="loc-getter-spelling",
+                            message=message,
+                            file=rel_path,
+                            line=line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ All getter calls use a defined scripted loc or documented getter",
+            "Getter calls that are neither scripted loc nor documented getters:",
+            Severity.WARNING,
+            category="loc-getter-spelling",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -392,70 +607,81 @@ class Validator(BaseValidator):
             )
             return
 
-        FALSE_POSITIVES = [
-            "root.getname",
-            "this.getname",
-            "from.getname",
-            "prev.getname",
-            "root.getadjective",
-            "this.getadjective",
-            "from.getadjective",
-            "getdatetext",
-            "getyear",
-            "getmonth",
-            "getday",
-            "tt",
-            "_tt",
-            "_desc",
-            "_title",
-            "button",
-            "tooltip",
-            "euxxx_ep_agenda",
-            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
-            # state integration tooltips \u2014 not scripted localisations
-            "gip",
-            "gis",
-            "\u00a7",
-            "\u00a3",
-            "$",
-            "var:",
-            "@",
-            "[",
-        ]
+        # Entries match as substrings, so a short suffix entry swallows real names.
+        false_positives = list(
+            validation_config("validate_scripted_localisation", "false_positives")
+        )
 
-        # Build defined/used lists once and share between both checks — avoids
-        # scanning the entire mod twice (once per validator call).
-        defined_locs, defined_paths = (
-            ScriptedLocalisation.get_all_defined_localisations(
-                mod_path=self.mod_path,
-                lowercase=False,
-                return_paths=True,
-                staged_files=self.staged_files,
-                workers=self.workers,
-                pool=self._get_pool(),
+        getter_refs: Dict[str, List[Tuple[str, int]]] = {}
+        if self.staged_only:
+            # Staged scans cover a handful of files, so they map in-process.
+            all_defined_locs = ScriptedLocalisation.get_all_defined_localisations(
+                mod_path=self.mod_path, lowercase=False, workers=1
             )
-        )
-        # Usage scan ALWAYS goes full-repo — even in staged mode. Restricting
-        # the usage scan to staged files only would falsely flag any defined-
-        # text whose only consumer lives in a non-staged file (e.g. editing
-        # 99_PER_scripted_localisation.txt would report every loc as unused
-        # if the matching 99_PER_scripted_guis.txt isn't also staged).
-        used_locs, used_paths = ScriptedLocalisation.get_all_used_localisations(
-            mod_path=self.mod_path,
-            defined_names=set(defined_locs),
-            lowercase=False,
-            return_paths=True,
-            staged_files=None,
-            workers=self.workers,
-            pool=self._get_pool(),
-        )
+            defined_locs, defined_paths = (
+                ScriptedLocalisation.get_all_defined_localisations(
+                    mod_path=self.mod_path,
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=self.staged_files,
+                    workers=1,
+                )
+            )
+            missing_locs, missing_paths = (
+                ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=self.staged_files,
+                    workers=1,
+                    getter_refs=getter_refs,
+                )
+            )
+            # The unused check reports staged definitions only, so it needs the
+            # repo-wide consumer scan only when a definition file is staged.
+            all_used_locs: List[str] = []
+            if defined_locs:
+                all_used_locs = ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+        else:
+            all_defined_locs, all_defined_paths = (
+                ScriptedLocalisation.get_all_defined_localisations(
+                    mod_path=self.mod_path,
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=None,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+            )
+            all_used_locs, all_used_paths = (
+                ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=None,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                    getter_refs=getter_refs,
+                )
+            )
+            defined_locs, defined_paths = all_defined_locs, all_defined_paths
+            missing_locs, missing_paths = all_used_locs, all_used_paths
 
         self.validate_missing_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, used_locs, used_paths
+            false_positives, all_defined_locs, missing_locs, missing_paths
         )
         self.validate_unused_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, defined_paths, used_locs
+            false_positives, defined_locs, defined_paths, all_used_locs
         )
+        self.validate_getter_spelling(all_defined_locs, getter_refs)
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode
         if not self.staged_only:

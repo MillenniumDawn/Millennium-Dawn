@@ -5,8 +5,14 @@
 import glob
 import os
 import re
-from typing import Dict, List, Set
+import sys
+from collections import Counter
+from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import WORD_BLOCK_LINE_RE as BLOCK_DEF_RE
+from shared_utils import blank_quoted_strings, extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -26,13 +32,37 @@ VALID_RULE_TYPES = {
     "contribution_rule",
 }
 
-# Top-level block: word = { at the start of a line (possibly indented by tabs)
-BLOCK_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
-
 MANIFEST_RE = re.compile(r"\bmanifest\s*=\s*(\w+)")
 ICON_RE = re.compile(r"\bicon\s*=\s*(\w+)")
 TYPE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
+CATEGORY_RE = re.compile(r"^\s*category\s*=\s*(\w+)")
+GOAL_CATEGORIES = ("short_term", "medium_term", "long_term")
+MAX_TEMPLATE_GOALS_PER_CATEGORY = 2
+
+# Trigger blocks that keep the enclosing scope. Any other opener ends the scope walk.
+SCOPE_KEEPING_BLOCKS = frozenset(
+    {
+        "check_variable",
+        "count_triggers",
+        "custom_trigger_tooltip",
+        "custom_override_tooltip",
+        "hidden_trigger",
+        "if",
+        "else_if",
+        "else",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+    }
+)
+# A scope-prefixed name (`ROOT.x_cache`) names its own holder, so it never matches.
+GOAL_TOKEN_RE = re.compile(
+    r"(?P<opener>[^\s{}=]+)\s*=\s*\{"
+    r"|(?P<brace>[{}])"
+    r"|(?P<has>\bhas_variable\s*=\s*)?(?<![\w.:])(?P<cache>\w+_cache)\b"
+)
 
 
 def read_file(filepath: str) -> str:
@@ -66,6 +96,51 @@ def extract_goals_block(content: str, template_id: str) -> List[str]:
     return [
         w.strip() for w in goals_body.split() if w.strip() and not w.startswith("#")
     ]
+
+
+def extract_goal_categories(content: str) -> Dict[str, str]:
+    """Extract each goal's top-level category."""
+    categories = {}
+    for match in BLOCK_DEF_RE.finditer(content):
+        block_body, _ = extract_block_from_text(content, match.end() - 1)
+        depth = 0
+        for line in block_body.splitlines():
+            code = blank_quoted_strings(line)
+            if depth == 0:
+                category_match = CATEGORY_RE.match(code)
+                if category_match:
+                    categories[match.group(1)] = category_match.group(1)
+                    break
+            depth += code.count("{") - code.count("}")
+    return categories
+
+
+def find_faction_scope_cache_reads(content: str) -> List[Tuple[int, str]]:
+    """Return (line, variable) for each `*_cache` read in faction scope.
+
+    The goal caches are written on the faction leader, so a read whose nearest
+    scope-changing block is `scope:faction` finds nothing.
+    """
+    text = blank_quoted_strings(content)
+    hits = []
+    stack: List[str] = []
+    for match in GOAL_TOKEN_RE.finditer(text):
+        if match["opener"]:
+            stack.append(match["opener"])
+        elif match["brace"] == "{":
+            stack.append("")
+        elif match["brace"]:
+            if stack:
+                stack.pop()
+        elif match["has"] or (stack and stack[-1] == "check_variable"):
+            for token in reversed(stack):
+                if token in SCOPE_KEEPING_BLOCKS:
+                    continue
+                if token == "scope:faction":
+                    line = text.count("\n", 0, match.start("cache")) + 1
+                    hits.append((line, match["cache"]))
+                break
+    return hits
 
 
 def extract_default_rules_block(content: str, template_id: str) -> List[str]:
@@ -129,6 +204,7 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.template_ids: Dict[str, str] = {}  # id -> filepath
         self.goal_ids: Set[str] = set()
+        self.goal_categories: Dict[str, str] = {}
         self.manifest_ids: Set[str] = set()
         self.rule_ids: Set[str] = set()
         self.upgrade_ids: Set[str] = set()
@@ -157,14 +233,18 @@ class Validator(BaseValidator):
         goals_dir = self._faction_path("goals")
         for filepath in glob.glob(os.path.join(goals_dir, "*.txt")):
             content = read_file(filepath)
-            for block_id in extract_block_ids(content):
-                if IS_MANIFEST_RE.search(
-                    content[content.index(block_id) : content.index(block_id) + 500]
-                    if block_id in content
-                    else ""
-                ):
+            # Scan at each block's definition site, not the first substring
+            # occurrence of its id (a reference earlier in the file would grab
+            # the wrong window and misclassify the manifest flag). Clamp the
+            # search to the block's own braces so a short goal block can't be
+            # misread as a manifest by bleeding into the next block.
+            for m in BLOCK_DEF_RE.finditer(content):
+                block_id = m.group(1)
+                block_body, _ = extract_block_from_text(content, m.end() - 1)
+                if IS_MANIFEST_RE.search(block_body):
                     self.manifest_ids.add(block_id)
                 self.goal_ids.add(block_id)
+            self.goal_categories.update(extract_goal_categories(content))
 
         # Collect rule IDs from rules/
         rules_dir = self._faction_path("rules")
@@ -241,22 +321,27 @@ class Validator(BaseValidator):
             "Templates with invalid manifest references:",
         )
 
-    def _validate_template_goals(self):
-        """Check that every goal listed in a template exists."""
-        self._log_section("Checking template goal references...")
-
-        results = []
+    def _iter_templates(self):
+        """Yield each template block with its source filename."""
         template_dir = self._faction_path("templates")
         for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for template_id in extract_block_ids(content):
-                goals = extract_goals_block(content, template_id)
-                for goal_id in goals:
-                    if goal_id not in self.goal_ids:
-                        results.append(
-                            f"{fname} ({template_id}): goal '{goal_id}' not found"
-                        )
+                yield fname, template_id, content
+
+    def _validate_template_goals(self):
+        """Check that every goal listed in a template exists."""
+        self._log_section("Checking template goal references...")
+
+        results = []
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            for goal_id in goals:
+                if goal_id not in self.goal_ids:
+                    results.append(
+                        f"{fname} ({template_id}): goal '{goal_id}' not found"
+                    )
 
         self._report(
             results,
@@ -264,22 +349,46 @@ class Validator(BaseValidator):
             "Templates with invalid goal references:",
         )
 
+    def _validate_template_goal_limits(self):
+        """Check that templates start with at most two goals of each category."""
+        self._log_section("Checking template goal category limits...")
+
+        results = []
+        for fname, template_id, content in self._iter_templates():
+            goals = extract_goals_block(content, template_id)
+            counts = Counter(self.goal_categories.get(goal_id) for goal_id in goals)
+            for category in GOAL_CATEGORIES:
+                if counts[category] <= MAX_TEMPLATE_GOALS_PER_CATEGORY:
+                    continue
+                category_goals = [
+                    goal_id
+                    for goal_id in goals
+                    if self.goal_categories.get(goal_id) == category
+                ]
+                results.append(
+                    f"{fname} ({template_id}): {len(category_goals)} {category} goals "
+                    f"(maximum {MAX_TEMPLATE_GOALS_PER_CATEGORY}): "
+                    f"{', '.join(category_goals)}"
+                )
+
+        self._report(
+            results,
+            "All templates meet goal category limits",
+            "Templates with too many starting goals:",
+        )
+
     def _validate_template_rules(self):
         """Check that every rule listed in default_rules exists."""
         self._log_section("Checking template default_rules references...")
 
         results = []
-        template_dir = self._faction_path("templates")
-        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
-            content = read_file(filepath)
-            fname = os.path.basename(filepath)
-            for template_id in extract_block_ids(content):
-                rules = extract_default_rules_block(content, template_id)
-                for rule_id in rules:
-                    if rule_id not in self.rule_ids:
-                        results.append(
-                            f"{fname} ({template_id}): rule '{rule_id}' not found"
-                        )
+        for fname, template_id, content in self._iter_templates():
+            rules = extract_default_rules_block(content, template_id)
+            for rule_id in rules:
+                if rule_id not in self.rule_ids:
+                    results.append(
+                        f"{fname} ({template_id}): rule '{rule_id}' not found"
+                    )
 
         self._report(
             results,
@@ -422,6 +531,32 @@ class Validator(BaseValidator):
             "Duplicate goal IDs:",
         )
 
+    def _validate_goal_cache_scope(self):
+        """Check that no goal reads a faction-leader cache from the faction scope."""
+        self._log_section("Checking faction goal cache read scope...")
+
+        results = []
+        goals_dir = self._faction_path("goals")
+        for filepath in sorted(glob.glob(os.path.join(goals_dir, "*.txt"))):
+            rel = os.path.relpath(filepath, self.mod_path)
+            for line, variable in find_faction_scope_cache_reads(read_file(filepath)):
+                results.append(
+                    (
+                        f"'{variable}' is read under scope:faction, but the goal"
+                        " caches are written on the faction leader. Read it under"
+                        " faction_leader",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            results,
+            "No goal reads a cache variable from the faction scope",
+            "Goal cache variables read under scope:faction:",
+            category="faction-goal-cache-scope",
+        )
+
     def _validate_duplicate_rules(self):
         """Check for duplicate rule IDs across files."""
         self._log_section("Checking for duplicate rule IDs...")
@@ -485,26 +620,28 @@ class Validator(BaseValidator):
         orphaned = self.manifest_ids - referenced_manifests
         if orphaned:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Warning: {len(orphaned)} manifest(s) not referenced by any template:{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Warning: {len(orphaned)} manifest(s) not referenced by any template:{Colors.ENDC}",
                 "warning",
             )
             for m in sorted(orphaned):
                 self.log(f"  {m}", "warning")
         else:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}All manifests are referenced by at least one template{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN}All manifests are referenced by at least one template{Colors.ENDC}"
             )
 
     def run_validations(self):
         self._collect_definitions()
         self._validate_template_manifests()
         self._validate_template_goals()
+        self._validate_template_goal_limits()
         self._validate_template_rules()
         self._validate_template_icons()
         self._validate_rule_groups()
         self._validate_rule_types()
         self._validate_duplicate_templates()
         self._validate_duplicate_goals()
+        self._validate_goal_cache_scope()
         self._validate_duplicate_rules()
         self._validate_upgrade_groups()
         self._check_orphaned_manifests()

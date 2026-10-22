@@ -1,4 +1,4 @@
-version="2.0.0"
+version="2.0.2"
 name="Millennium Dawn: Developer Version"
 tags={
 	"Alternative History"
@@ -26,6 +26,7 @@ replace_path = "common/characters"
 replace_path = "common/countries"
 replace_path = "common/decisions"
 replace_path = "common/decisions/categories"
+replace_path = "common/dynamic_modifiers"
 replace_path = "common/ideas"
 replace_path = "common/military_industrial_organization"
 replace_path = "common/military_industrial_organization/organizations"

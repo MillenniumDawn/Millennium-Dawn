@@ -7,20 +7,17 @@ type: bug
 assignees: ""
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+**What happens**
+What you saw, and what you expected instead.
 
 **To Reproduce**
-Steps to reproduce the behavior.
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+1.
+2.
+3.
 
 **Operating System**
-
-- [ ] Windows
-- [ ] Linux
-- [ ] Mac
+We need to know your operating system as sometimes these issue can happen in one, but not the other.
 
 **Additional context**
-Add any other context about the problem here.
+Screenshots, a save game, or anything else that helps.

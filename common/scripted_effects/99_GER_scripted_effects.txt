@@ -204,6 +204,99 @@ GER_update_dirty_variable = {
 	}
 }
 
+GER_bfv_update_spending_ideas = {
+	if = {
+		limit = { check_variable = { GER_leftwing_department_tier > 0 } }
+		if = {
+			limit = {
+				check_variable = { GER_leftwing_spending_level = 1 }
+				NOT = { has_idea = GER_idea_bfv_leftwing_low }
+			}
+			add_ideas = GER_idea_bfv_leftwing_low
+			remove_ideas = GER_idea_bfv_leftwing_med
+			remove_ideas = GER_idea_bfv_leftwing_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_leftwing_spending_level = 2 }
+				NOT = { has_idea = GER_idea_bfv_leftwing_med }
+			}
+			add_ideas = GER_idea_bfv_leftwing_med
+			remove_ideas = GER_idea_bfv_leftwing_low
+			remove_ideas = GER_idea_bfv_leftwing_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_leftwing_spending_level = 3 }
+				NOT = { has_idea = GER_idea_bfv_leftwing_high }
+			}
+			add_ideas = GER_idea_bfv_leftwing_high
+			remove_ideas = GER_idea_bfv_leftwing_med
+			remove_ideas = GER_idea_bfv_leftwing_low
+		}
+	}
+	if = {
+		limit = { check_variable = { GER_rightwing_department_tier > 0 } }
+		if = {
+			limit = {
+				check_variable = { GER_rightwing_spending_level = 1 }
+				NOT = { has_idea = GER_idea_bfv_rightwing_low }
+			}
+			add_ideas = GER_idea_bfv_rightwing_low
+			remove_ideas = GER_idea_bfv_rightwing_med
+			remove_ideas = GER_idea_bfv_rightwing_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_rightwing_spending_level = 2 }
+				NOT = { has_idea = GER_idea_bfv_rightwing_med }
+			}
+			add_ideas = GER_idea_bfv_rightwing_med
+			remove_ideas = GER_idea_bfv_rightwing_low
+			remove_ideas = GER_idea_bfv_rightwing_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_rightwing_spending_level = 3 }
+				NOT = { has_idea = GER_idea_bfv_rightwing_high }
+			}
+			add_ideas = GER_idea_bfv_rightwing_high
+			remove_ideas = GER_idea_bfv_rightwing_med
+			remove_ideas = GER_idea_bfv_rightwing_low
+		}
+	}
+	if = {
+		limit = { check_variable = { GER_islamist_department_tier > 0 } }
+		if = {
+			limit = {
+				check_variable = { GER_islamist_spending_level = 1 }
+				NOT = { has_idea = GER_idea_bfv_islamist_low }
+			}
+			add_ideas = GER_idea_bfv_islamist_low
+			remove_ideas = GER_idea_bfv_islamist_med
+			remove_ideas = GER_idea_bfv_islamist_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_islamist_spending_level = 2 }
+				NOT = { has_idea = GER_idea_bfv_islamist_med }
+			}
+			add_ideas = GER_idea_bfv_islamist_med
+			remove_ideas = GER_idea_bfv_islamist_low
+			remove_ideas = GER_idea_bfv_islamist_high
+		}
+		else_if = {
+			limit = {
+				check_variable = { GER_islamist_spending_level = 3 }
+				NOT = { has_idea = GER_idea_bfv_islamist_high }
+			}
+			add_ideas = GER_idea_bfv_islamist_high
+			remove_ideas = GER_idea_bfv_islamist_med
+			remove_ideas = GER_idea_bfv_islamist_low
+		}
+	}
+}
+
 GER_bfv_events = {
 	random = {
 		chance = 80
@@ -237,6 +330,7 @@ GER_government_change = {
 			emerging_anarchist_communism_are_in_power = no
 		}
 		drop_cosmetic_tag = yes
+		clear_variable = dynamic_flag_variant
 	}
 	if = {
 		limit = {
@@ -245,6 +339,7 @@ GER_government_change = {
 			nationalist_fascist_are_in_power = no
 		}
 		drop_cosmetic_tag = yes
+		clear_variable = dynamic_flag_variant
 	}
 	if = {
 		limit = {
@@ -256,29 +351,166 @@ GER_government_change = {
 			nationalist_monarchists_are_in_power = no
 		}
 		drop_cosmetic_tag = yes
+		clear_variable = dynamic_flag_variant
 	}
 }
 
-	GER_dark_winds = {
-		if = {
-			limit = {
-				check_variable = { var = GER_dark_winds_status value = 0 compare = greater_than_or_equals }
-			}
-
-			if = {
-				limit = { check_variable = { GER_dark_winds_status > 90 } }
-				random = {
-					chance = 10
-					country_event = { id = GER_winds.6 days = 7 }
+GER_end_V_Fall_effect = {
+	clr_country_flag = GER_V_fall
+	if = {
+		limit = { NOT = { has_completed_focus = GER_our_new_legacy } }
+		add_ideas = german_legacy
+	}
+	if = {
+		limit = { NOT = { has_completed_focus = GER_nuclear_rearmarment } }
+		set_country_flag = GER_no_nuclear
+		custom_effect_tooltip = GER_end_V_Fall_nuclear_TT
+		add_ideas = nuclear_energy
+	}
+	add_stability = 0.1
+	remove_ideas = GER_idea_V_Fall
+	set_country_flag = spending_law_scripted_change
+	if = {
+		limit = { has_idea = defence_03 }
+		swap_ideas = { remove_idea = defence_03 add_idea = defence_02 }
+	}
+	else_if = {
+		limit = { has_idea = defence_04 }
+		swap_ideas = { remove_idea = defence_04 add_idea = defence_02 }
+	}
+	else_if = {
+		limit = { has_idea = defence_05 }
+		swap_ideas = { remove_idea = defence_05 add_idea = defence_02 }
+	}
+	else_if = {
+		limit = { has_idea = defence_06 }
+		swap_ideas = { remove_idea = defence_06 add_idea = defence_02 }
+	}
+	clr_country_flag = spending_law_scripted_change
+	decrease_policing_budget = yes
+	decrease_conscription_effect = yes
+	GER = {
+		every_country_division = {
+			limit = { division_has_majority_template = Mot_Inf_Bat }
+			PREV = {
+				delete_unit_template_and_units = {
+					division_template = "Heimatschutzbrigade"
+					disband = yes
 				}
 			}
-			if = {
-				limit = { check_variable = { GER_dark_winds_status = 0 } }
-				news_event = { id = GER_winds.6 days = 7 }
+		}
+		every_country_division = {
+			limit = { division_has_majority_template = armor_Bat }
+			PREV = {
+				delete_unit_template_and_units = {
+					division_template = "Inactive Brigade"
+					disband = yes
+				}
 			}
 		}
 	}
+}
+
 # update_GER_dark_winds_status = {
 # 	custom_effect_tooltip = GER_dark_winds_status_tt
 # 	add_to_variable = { GER_dark_winds_status = GER_dark_winds_status_change }
 # }
+
+# Siemens corporate history. Five milestones set the route; the closing
+# milestone resolves it into one of four shapes for the group.
+
+GER_siemens_apply_focused_industrials = {
+	if = {
+		limit = { GER_siemens_outcome_settled = no }
+		add_timed_idea = { idea = GER_siemens_focused_industrials days = 365 }
+	}
+}
+
+GER_siemens_apply_digital_industries = {
+	if = {
+		limit = { GER_siemens_outcome_settled = no }
+		add_timed_idea = { idea = GER_siemens_digital_industries days = 365 }
+	}
+}
+
+GER_siemens_apply_automation_core = {
+	if = {
+		limit = { GER_siemens_outcome_settled = no }
+		add_ideas = GER_siemens_automation_core
+	}
+}
+
+GER_siemens_apply_diversified_conglomerate = {
+	if = {
+		limit = { GER_siemens_outcome_settled = no }
+		add_timed_idea = { idea = GER_siemens_diversified_conglomerate days = 365 }
+	}
+}
+
+# One entry point per milestone, called from the yearly pulse. Full presents the
+# choice; Outcomes Only writes the historical route silently and grants nothing.
+GER_siemens_milestone_2001 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.300 days = 119 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = GER_siemens_integrated_conglomerate
+	}
+}
+
+GER_siemens_milestone_2007 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.301 days = 91 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = GER_siemens_networks_strategy
+	}
+}
+
+GER_siemens_milestone_2013 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.302 days = 219 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = GER_siemens_networks_divested
+	}
+}
+
+GER_siemens_milestone_2018 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.303 days = 73 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = GER_siemens_healthineers_listed
+	}
+}
+
+GER_siemens_milestone_2020 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.304 days = 270 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		set_country_flag = GER_siemens_energy_spun_off
+	}
+}
+
+GER_siemens_milestone_2025 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = germany_yearly.305 days = 314 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		GER_siemens_apply_focused_industrials = yes
+	}
+}

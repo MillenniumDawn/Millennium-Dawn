@@ -3,9 +3,13 @@
 
 import argparse
 import codecs
+import os
 import sys
 from pathlib import Path
 from typing import List
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import atomic_write_bytes
 
 
 class LocalizationValidator:
@@ -13,9 +17,9 @@ class LocalizationValidator:
 
     def __init__(self, fix_mode: bool = False):
         self.fix_mode = fix_mode
-        self.errors = []
-        self.fixed = []
-        self.valid = []
+        self.errors: List[str] = []
+        self.fixed: List[str] = []
+        self.valid: List[str] = []
 
     def validate_file(self, file_path: Path) -> bool:
         """
@@ -33,15 +37,18 @@ class LocalizationValidator:
                 content = f.read()
 
             has_bom = content.startswith(codecs.BOM_UTF8)
+            duplicate_bom = content.startswith(codecs.BOM_UTF8 * 2)
 
-            if not has_bom:
+            if not has_bom or duplicate_bom:
                 if self.fix_mode:
                     return self._fix_file(file_path, content)
-                else:
-                    self.errors.append(
-                        f"{file_path}: Missing UTF-8 BOM (required for HOI4 localization)"
-                    )
-                    return False
+                problem = (
+                    "Duplicate UTF-8 BOM" if duplicate_bom else "Missing UTF-8 BOM"
+                )
+                self.errors.append(
+                    f"{file_path}: {problem} (HOI4 requires exactly one)"
+                )
+                return False
 
             try:
                 with open(file_path, "r", encoding="utf-8-sig") as f:
@@ -69,13 +76,12 @@ class LocalizationValidator:
             True if file was fixed successfully, False otherwise
         """
         try:
-            # Reject non-UTF-8 input before prepending a BOM would corrupt it
+            while content.startswith(codecs.BOM_UTF8):
+                content = content[len(codecs.BOM_UTF8) :]
             content.decode("utf-8")
+            atomic_write_bytes(str(file_path), codecs.BOM_UTF8 + content)
 
-            with open(file_path, "wb") as f:
-                f.write(codecs.BOM_UTF8 + content)
-
-            self.fixed.append(f"{file_path}: Added UTF-8 BOM")
+            self.fixed.append(f"{file_path}: Normalized UTF-8 BOM")
             return True
 
         except UnicodeDecodeError as e:
@@ -137,7 +143,7 @@ def find_english_localization_files() -> List[Path]:
         "localisation/english/**/*.yml",  # Nested directories
     ]
 
-    files = []
+    files: List[Path] = []
     project_root = Path.cwd()
 
     for pattern in patterns:

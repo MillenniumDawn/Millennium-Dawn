@@ -3,14 +3,19 @@
 #I WILL KILL YOU. DO. NOT. FUCK. WITH. THE. MATH.
 resource_storage_system = {
 	if = { limit = { has_game_rule = { rule = rule_enable_resource_storage_system option = yes } }
-		if = { limit = { check_variable = { modifier@resource_storage_max_capacity > 0 } }
+		if = {
+			limit = { check_variable = { modifier@resource_storage_max_capacity > 0 } }
+			if = { limit = { NOT = { has_dynamic_modifier = { modifier = resource_storage_modifier } } }
+				resource_storage_system_setup = yes
+			}
+
+			set_temp_variable = { max_storage = modifier@resource_storage_max_capacity }
+
 			resource_storage_steel_calc_effect = yes
 			resource_storage_rubber_calc_effect = yes
 			resource_storage_light_calc_effect = yes
 			resource_storage_tech_calc_effect = yes
 			resource_storage_precious_calc_effect = yes
-
-			set_temp_variable = { max_storage = modifier@resource_storage_max_capacity }
 
 			clamp_variable = { var = steel_in_storage min = 0 max = max_storage }
 			clamp_variable = { var = rubber_in_storage min = 0 max = max_storage }
@@ -18,17 +23,37 @@ resource_storage_system = {
 			clamp_variable = { var = tech_in_storage min = 0 max = max_storage }
 			clamp_variable = { var = precious_in_storage min = 0 max = max_storage }
 		}
-		update_dirty_resource_storage_var = yes
+		if = {
+			limit = {
+				is_ai = no
+				has_country_flag = open_storage_screen
+			}
+			update_dirty_resource_storage_var = yes
+		}
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = resource_storage_modifier } }
+		remove_dynamic_modifier = { modifier = resource_storage_modifier }
 	}
 }
 
 resource_storage_system_setup = {
 	if = { limit = { has_game_rule = { rule = rule_enable_resource_storage_system option = yes } }
-		set_variable = { rubber_in_storage = 0 }
-		set_variable = { light_in_storage = 0 }
-		set_variable = { precious_in_storage = 0 }
-		set_variable = { tech_in_storage = 0 }
-		set_variable = { steel_in_storage = 0 }
+		if = { limit = { NOT = { has_variable = rubber_in_storage } }
+			set_variable = { rubber_in_storage = 0 }
+		}
+		if = { limit = { NOT = { has_variable = light_in_storage } }
+			set_variable = { light_in_storage = 0 }
+		}
+		if = { limit = { NOT = { has_variable = precious_in_storage } }
+			set_variable = { precious_in_storage = 0 }
+		}
+		if = { limit = { NOT = { has_variable = tech_in_storage } }
+			set_variable = { tech_in_storage = 0 }
+		}
+		if = { limit = { NOT = { has_variable = steel_in_storage } }
+			set_variable = { steel_in_storage = 0 }
+		}
 
 		if = { limit = { NOT = { has_dynamic_modifier = { modifier = resource_storage_modifier } } }
 			add_dynamic_modifier = { modifier = resource_storage_modifier }
@@ -45,11 +70,12 @@ resource_storage_steel_calc_effect = {
 			subtract = old_resource_draw_value
 		}
 	}
+	set_variable = { steel_storage_display = resource_base_value }
 
 	# Only draw resources if we have a deficit, want to draw, and have the resources to draw
 	if = {
 		limit = {
-			check_expr = { value = resource_base_value less_than = 1 }
+			check_expr = { value = resource_base_value less_than = 0 }
 			check_expr = { value = steel_in_storage greater_than = 0 }
 			OR = {
 				is_ai = yes
@@ -61,7 +87,7 @@ resource_storage_steel_calc_effect = {
 			value = {
 				value = resource_base_value
 				multiply = -1
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 
@@ -70,7 +96,12 @@ resource_storage_steel_calc_effect = {
 			add_to_temp_variable = { resource_base_value = steel_in_storage }
 			set_variable = { steel_in_storage = 0 }
 		}
-		set_variable = { steel_from_storage = resource_base_value }
+		set_variable = {
+			steel_from_storage = {
+				value = resource_base_value
+				multiply = -1
+			}
+		}
 		set_variable = { steel_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
@@ -81,16 +112,26 @@ resource_storage_steel_calc_effect = {
 		set_variable = { steel_storage_display = 0 }
 	}
 	if = {
-		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
+		limit = {
+			check_expr = { value = resource_base_value greater_than = 0 }
+			check_expr = { value = steel_in_storage less_than = max_storage }
+		}
 		add_to_variable = {
 			var = steel_in_storage
 			value = {
 				value = resource_base_value
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 		set_variable = { steel_from_storage = 0 }
 		set_variable = { steel_storage_display = resource_base_value }
+	}
+	else_if = {
+		limit = { 
+			check_expr = { value = resource_base_value less_than = 1 }
+			NOT = { has_country_flag = steel_storage_draw }
+		}
+		set_variable = { steel_storage_display = 0 }
 	}
 }
 
@@ -103,11 +144,12 @@ resource_storage_light_calc_effect = {
 			subtract = light_from_storage
 		}
 	}
+	set_variable = { light_storage_display = resource_base_value }
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
-			check_expr = { value = resource_base_value less_than = 1 }
+			check_expr = { value = resource_base_value less_than = 0 }
 			check_expr = { value = light_in_storage greater_than = 0 }
 			OR = {
 				is_ai = yes
@@ -119,7 +161,7 @@ resource_storage_light_calc_effect = {
 			value = {
 				value = resource_base_value
 				multiply = -1
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 
@@ -128,7 +170,12 @@ resource_storage_light_calc_effect = {
 			add_to_temp_variable = { resource_base_value = light_in_storage }
 			set_variable = { light_in_storage = 0 }
 		}
-		set_variable = { light_from_storage = resource_base_value }
+		set_variable = {
+			light_from_storage = {
+				value = resource_base_value
+				multiply = -1
+			}
+		}
 		set_variable = { light_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
@@ -139,16 +186,26 @@ resource_storage_light_calc_effect = {
 		set_variable = { light_storage_display = 0 }
 	}
 	if = {
-		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
+		limit = {
+			check_expr = { value = resource_base_value greater_than = 0 }
+			check_expr = { value = light_in_storage less_than = max_storage }
+		}
 		add_to_variable = {
 			var = light_in_storage
 			value = {
 				value = resource_base_value
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 		set_variable = { light_from_storage = 0 }
 		set_variable = { light_storage_display = resource_base_value }
+	}
+	else_if = {
+		limit = { 
+			check_expr = { value = resource_base_value less_than = 1 }
+			NOT = { has_country_flag = light_storage_draw }
+		}
+		set_variable = { light_storage_display = 0 }
 	}
 }
 
@@ -161,11 +218,12 @@ resource_storage_rubber_calc_effect = {
 			subtract = rubber_from_storage
 		}
 	}
+	set_variable = { rubber_storage_display = resource_base_value }
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
-			check_expr = { value = resource_base_value less_than = 1 }
+			check_expr = { value = resource_base_value less_than = 0 }
 			check_expr = { value = rubber_in_storage greater_than = 0 }
 			OR = {
 				is_ai = yes
@@ -177,7 +235,7 @@ resource_storage_rubber_calc_effect = {
 			value = {
 				value = resource_base_value
 				multiply = -1
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 
@@ -186,7 +244,12 @@ resource_storage_rubber_calc_effect = {
 			add_to_temp_variable = { resource_base_value = rubber_in_storage }
 			set_variable = { rubber_in_storage = 0 }
 		}
-		set_variable = { rubber_from_storage = resource_base_value }
+		set_variable = {
+			rubber_from_storage = {
+				value = resource_base_value
+				multiply = -1
+			}
+		}
 		set_variable = { rubber_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
@@ -197,16 +260,26 @@ resource_storage_rubber_calc_effect = {
 		set_variable = { rubber_storage_display = 0 }
 	}
 	if = {
-		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
+		limit = {
+			check_expr = { value = resource_base_value greater_than = 0 }
+			check_expr = { value = rubber_in_storage less_than = max_storage }
+		}
 		add_to_variable = {
 			var = rubber_in_storage
 			value = {
 				value = resource_base_value
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 		set_variable = { rubber_from_storage = 0 }
 		set_variable = { rubber_storage_display = resource_base_value }
+	}
+	else_if = {
+		limit = { 
+			check_expr = { value = resource_base_value less_than = 1 }
+			NOT = { has_country_flag = rubber_storage_draw }
+		}
+		set_variable = { rubber_storage_display = 0 }
 	}
 }
 
@@ -218,11 +291,12 @@ resource_storage_tech_calc_effect = {
 			subtract = tech_from_storage
 		}
 	}
+	set_variable = { tech_storage_display = resource_base_value }
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
-			check_expr = { value = resource_base_value less_than = 1 }
+			check_expr = { value = resource_base_value less_than = 0 }
 			check_expr = { value = tech_in_storage greater_than = 0 }
 			OR = {
 				is_ai = yes
@@ -234,7 +308,7 @@ resource_storage_tech_calc_effect = {
 			value = {
 				value = resource_base_value
 				multiply = -1
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 
@@ -243,7 +317,12 @@ resource_storage_tech_calc_effect = {
 			add_to_temp_variable = { resource_base_value = tech_in_storage }
 			set_variable = { tech_in_storage = 0 }
 		}
-		set_variable = { tech_from_storage = resource_base_value }
+		set_variable = {
+			tech_from_storage = {
+				value = resource_base_value
+				multiply = -1
+			}
+		}
 		set_variable = { tech_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
@@ -254,16 +333,26 @@ resource_storage_tech_calc_effect = {
 		set_variable = { tech_storage_display = 0 }
 	}
 	if = {
-		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
+		limit = {
+			check_expr = { value = resource_base_value greater_than = 0 }
+			check_expr = { value = tech_in_storage less_than = max_storage }
+		}
 		add_to_variable = {
 			var = tech_in_storage
 			value = {
 				value = resource_base_value
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 		set_variable = { tech_from_storage = 0 }
 		set_variable = { tech_storage_display = resource_base_value }
+	}
+	else_if = {
+		limit = { 
+			check_expr = { value = resource_base_value less_than = 1 }
+			NOT = { has_country_flag = tech_storage_draw }
+		}
+		set_variable = { tech_storage_display = 0 }
 	}
 }
 
@@ -275,11 +364,12 @@ resource_storage_precious_calc_effect = {
 			subtract = precious_from_storage
 		}
 	}
+	set_variable = { precious_storage_display = resource_base_value }
 
 	if = {
 		#Only draw resources if we have a deficit, want to draw, and have the resources to draw
 		limit = {
-			check_expr = { value = resource_base_value less_than = 1 }
+			check_expr = { value = resource_base_value less_than = 0 }
 			check_expr = { value = precious_in_storage greater_than = 0 }
 			OR = {
 				is_ai = yes
@@ -291,7 +381,7 @@ resource_storage_precious_calc_effect = {
 			value = {
 				value = resource_base_value
 				multiply = -1
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 
@@ -300,7 +390,12 @@ resource_storage_precious_calc_effect = {
 			add_to_temp_variable = { resource_base_value = precious_in_storage }
 			set_variable = { precious_in_storage = 0 }
 		}
-		set_variable = { precious_from_storage = resource_base_value }
+		set_variable = {
+			precious_from_storage = {
+				value = resource_base_value
+				multiply = -1
+			}
+		}
 		set_variable = { precious_storage_display = resource_base_value }
 		set_temp_variable = { resource_base_value = 0 }
 	}
@@ -311,16 +406,26 @@ resource_storage_precious_calc_effect = {
 		set_variable = { precious_storage_display = 0 }
 	}
 	if = {
-		limit = { check_expr = { value = resource_base_value greater_than = 0 } }
+		limit = {
+			check_expr = { value = resource_base_value greater_than = 0 }
+			check_expr = { value = precious_in_storage less_than = max_storage }
+		}
 		add_to_variable = {
 			var = precious_in_storage
 			value = {
 				value = resource_base_value
-				clamp = { min = -1000 max = modifier@resource_storage_max_capacity }
+				clamp = { min = -1000 max = max_storage }
 			}
 		}
 		set_variable = { precious_from_storage = 0 }
 		set_variable = { precious_storage_display = resource_base_value }
+	}
+	else_if = {
+		limit = { 
+			check_expr = { value = resource_base_value less_than = 1 }
+			NOT = { has_country_flag = precious_storage_draw }
+		}
+		set_variable = { precious_storage_display = 0 }
 	}
 }
 

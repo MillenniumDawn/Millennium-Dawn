@@ -1,242 +1,260 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
+Use `ai_will_do = { base = N }`, not a root-level `factor`, for AI weights. Wiki:
+<https://hoi4.paradoxwikis.com/Decision_modding>. Scripted effects library:
+`docs/src/content/resources/scripted-effects-reference.md`.
 
-Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
+## Icon
 
-## Icon Field
+A decision `icon = X` takes the bare sprite stem or the full `GFX_decision_` name. The
+engine prepends `GFX_decision_` to a bare name. The bare form is the codebase
+convention. Do not "fix" it by adding the prefix. Flag an icon only when neither
+`GFX_decision_<name>` nor `GFX_<name>` exists in `interface/*.gfx`. Category icons and
+most other contexts need the explicit `GFX_` name.
 
-The decision `icon = X` field accepts **either** the bare sprite stem **or** the fully-qualified `GFX_decision_` name — the engine auto-prepends `GFX_decision_` when resolving a bare name. Both render identically:
+## Targeted decisions
 
-```
-icon = generic_political_discourse              # resolves to GFX_decision_generic_political_discourse
-icon = GFX_decision_generic_political_discourse # explicit, same result
-```
+A decision is targeted when it has `targets`, `target_array`, `target_trigger`, or
+`target_root_trigger`. It clones itself per valid target. `ROOT` takes the decision and
+`FROM` is the target.
 
-The bare form is the dominant convention in this codebase (e.g. `generic_decision`, `political_actions`, `generic_nationalism`). **Do not "fix" a bare decision icon by adding the `GFX_decision_` prefix — it is not broken.** Only flag an icon when neither `GFX_decision_<name>` nor `GFX_<name>` exists in any `interface/*.gfx` file. (Decision **category** icons and most other contexts still require the explicit `GFX_` sprite name — this auto-prefix shortcut is specific to the decision `icon` field.)
+| Block                 | Scope       | Frequency          |
+| --------------------- | ----------- | ------------------ |
+| `allowed`             | ROOT        | Once at game start |
+| `target_root_trigger` | ROOT only   | Daily              |
+| `target_trigger`      | ROOT + FROM | Daily, per target  |
+| `visible`             | ROOT + FROM | Every tick         |
+| `available`           | ROOT + FROM | Every tick         |
 
-## Targeted Decisions
-
-A decision becomes targeted when it includes `targets`, `target_array`, `target_trigger`, or `target_root_trigger`. The decision clones itself for each valid target. `ROOT` is the country taking the decision; `FROM` is the target.
-
-### Trigger Evaluation Order & Frequency
-
-| Block                 | Scope       | Frequency                                    | Purpose                                       |
-| --------------------- | ----------- | -------------------------------------------- | --------------------------------------------- |
-| `allowed`             | ROOT        | Once (game start/load)                       | Permanent gate                                |
-| `target_root_trigger` | ROOT only   | Daily                                        | Fast pre-filter — if false, skips all targets |
-| `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
-| `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
-| `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
-
-### Performance Optimization
-
-**Always move ROOT-only conditions from `visible` to `target_root_trigger`.** Single most impactful decision optimization:
-
-- `visible` runs every tick, for every target — O(ticks × targets)
-- `target_root_trigger` runs once daily, ROOT only — O(1/day)
-
-When `target_root_trigger` is false, the engine skips `target_trigger`, `visible`, and `available` entirely for all targets.
-
-**Rules:**
-
-- Conditions that only check ROOT (flags, focuses, ideas, original_tag) belong in `target_root_trigger`
-- Conditions that reference `FROM` must stay in `target_trigger` or `visible`
-- Dynamic flags like `has_country_flag = flag_@FROM` reference FROM to build the name — these need `target_trigger` (not `target_root_trigger`)
-- `hidden_trigger` is redundant inside `target_root_trigger` — it never generates tooltips
-- `always = yes` inside `target_root_trigger` is a no-op — remove it
-
-### Target Selection
+- When `target_root_trigger` is false, the engine skips `target_trigger`, `visible`, and
+  `available` for every target. Move every ROOT-only condition there from `visible`.
+- Conditions that read `FROM` stay in `target_trigger` or `visible`. That includes
+  dynamic flags such as `has_country_flag = flag_@FROM`.
+- `hidden_trigger` and `always = yes` do nothing inside `target_root_trigger`.
+- Do not restate what the target list guarantees. With an explicit `targets = { ... }`,
+  `NOT = { tag = ROOT }` is a dead condition evaluated per target per day.
+- Do not repeat the category's `allowed` on each decision. Restrict the nation once on
+  the category and put dynamic conditions in `available` or `visible`.
 
 ```
-targets = { TAG TAG ... }        # Explicit list of country tags
-target_array = array_name        # Array on ROOT scope
-target_array = global.array_name # Global array
+targets = { TAG TAG ... }        # Explicit list
+target_array = array_name        # Array on ROOT, or global.array_name
 targets_dynamic = yes            # Include civil war tags
 target_non_existing = yes        # Include non-existing countries
 state_target = yes               # Target states instead of countries
 ```
 
-### Targeted Decision Example
-
 ```
 my_targeted_decision = {
-	target_root_trigger = {
-		has_completed_focus = my_focus
-	}
-	targets = { BHR QAT SAU OMA YEM IRQ SYR LEB ISR PAL }
-	targets_dynamic = yes
-	target_trigger = {
-		FROM = { has_idea = my_idea }
-	}
-	icon = my_icon
-	cost = 20
-	war_with_target_on_complete = yes
-	complete_effect = {
-		create_wargoal = {
-			target = FROM
-			type = annex_everything
-		}
-	}
+ target_root_trigger = {
+  has_completed_focus = my_focus
+ }
+ targets = { BHR QAT SAU OMA YEM IRQ SYR LEB ISR PAL }
+ targets_dynamic = yes
+ target_trigger = {
+  FROM = { has_idea = my_idea }
+ }
+ icon = my_icon
+ cost = 20
+ war_with_target_on_complete = yes
+ complete_effect = {
+  create_wargoal = {
+   target = FROM
+   type = annex_everything
+  }
+ }
 }
 ```
 
-### State-Targeted Decision Example
+A state-targeted decision adds `state_target = yes`, a state array such as
+`target_array = GER.core_states`, and `on_map_mode = map_and_decisions_view`.
+
+`war_with_on_*` does not work with `FROM`. Use `war_with_target_on_complete`,
+`war_with_target_on_remove`, or `war_with_target_on_timeout`.
+
+## Effect block logging
+
+`complete_effect`, `remove_effect`, `timeout_effect`, and `cancel_effect` each log their
+own line as the first statement, using the decision's own id:
 
 ```
-my_state_targeted_decision = {
-	state_target = yes
-	target_root_trigger = {
-		has_completed_focus = my_focus
-	}
-	target_array = GER.core_states
-	target_trigger = {
-		FROM = { is_owned_by = ROOT }
-	}
-	on_map_mode = map_and_decisions_view
-	icon = my_icon
-	cost = 20
-	complete_effect = {
-		FROM = { remove_core_of = GER }
-	}
-}
+ log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"
 ```
 
-### War with Target
+- A copied id from a neighboring decision is the common mistake.
+  `tools/linting/fix_log_ids.py` rewrites those.
+- A log nested in an `if` or `hidden_effect` records which branch ran. It does not
+  replace the block's own log.
+- A block whose only content is a log is dead. Delete the block.
 
-Regular `war_with_on_*` does not work with FROM. Use these instead:
+## AI-only decisions
 
-- `war_with_target_on_complete = yes`
-- `war_with_target_on_remove = yes`
-- `war_with_target_on_timeout = yes`
+A decision is AI-only when a human can never see it:
 
-## Example: Basic Decision
+- an unconditional `is_ai = yes` at brace depth zero of its own `visible`, `available`,
+  or `allowed`, or
+- membership in a category gated the same way.
+
+`is_ai = yes` nested in `OR`, `AND`, `if`, or a tag scope is conditional, and the
+decision is not AI-only.
+
+An AI-only decision or category takes no localisation and no tooltip wrappers. Nothing
+renders them, and a key would still have to be translated. Write the trigger bare:
+
+```
+  available = {
+   nationalist_monarchists_are_in_power = no
+   check_variable = { party_pop_array^23 < 0.35 }
+  }
+```
+
+Exceptions: `custom_cost_text` may share a scripted-loc key with player-facing
+decisions, and a category named by `unlock_decision_category_tooltip` renders its name.
+
+## Announcing unlocks
+
+A category gated on state that flips during play appears part-way through a game. The
+effect that opens it should say so:
+
+```
+ completion_reward = {
+  set_country_flag = ALG_drone_program_open
+  unlock_decision_category_tooltip = ALG_drone_program_category
+ }
+```
+
+- `unlock_decision_category_tooltip` takes a bare category token that must exist. A
+  stale name logs `Invalid Decision Category`.
+- `unlock_decision_tooltip = <decision>` announces one decision. The block form
+  `{ decision = X show_effect_tooltip = yes }` also previews its effects.
+- A block that announces one unlock should announce every sibling gated on the flag it
+  just set.
+- The gate must sit at brace depth zero of `visible` to count. Inside a `NOT` the
+  meaning inverts.
+- Categories with no `visible`, or gated only on tag or date, have nothing to announce.
+  AI-only categories are exempt.
+
+## Randomised effects
+
+A repeatable decision that rolls `random_list` or `random` needs
+`fixed_random_seed = no` at decision top level. The engine seeds the roll from the save
+state, so without it every repeat returns the same branch. `fire_only_once = yes`
+decisions are exempt. Write `fixed_random_seed = yes` when the repeat should be
+deterministic.
+
+## Cost-aware AI weights
+
+A decision that charges the treasury, raises debt, or moves a tax rate needs an
+`ai_will_do` that checks whether the country can pay. Zero it under the bankruptcy
+mission and halve it on a high deficit:
+
+```
+ ai_will_do = {
+  base = 10
+  modifier = { add = 5 has_war = yes }
+  modifier = { factor = 0.5 ai_has_high_deficit = yes }
+  modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+ }
+```
+
+- Modifiers run in order on a running total. Put every `factor = 0` modifier after the
+  adds, or a later `add` brings the zeroed weight back.
+- Leave the weight off when skipping the decision costs the AI more than the charge.
+- Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
+
+The Spanish decisions in `common/decisions/Spain.txt` are the reference.
+
+## Formables
+
+Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a
+new formable must wire gates, commits, a unique id, and its size. See
+[formable-reference.md](formable-reference.md).
+
+## Example: basic decision
 
 ```
 URA_world_opr = {
-	allowed = { original_tag = URA }
-	icon = GFX_decision_sovfed_button
+ allowed = { original_tag = URA }
+ icon = GFX_decision_sovfed_button
 
-	cost = 50
-	days_remove = 400
+ cost = 50
+ days_remove = 400
 
-	visible = {
-		country_exists = OPR
-		OPR = {
-			OR = {
-				has_autonomy_state = autonomy_republic_rf
-				has_autonomy_state = autonomy_kray_rf
-			}
-		}
-	}
+ visible = {
+  country_exists = OPR
+ }
 
-	complete_effect = {
-		log = "[GetDateText]: [Root.GetName]: Decision URA_world_opr"
-		OPR = { country_event = { id = subject_rus.121 days = 1 } }
-	}
+ complete_effect = {
+  log = "[GetDateText]: [Root.GetName]: Decision URA_world_opr"
+  OPR = { country_event = { id = subject_rus.121 days = 1 } }
+ }
 
-	ai_will_do = { base = 10 }
+ ai_will_do = { base = 10 }
 }
 ```
 
-## Example: Mission with Timeout (if/else Pattern)
+## Example: mission with timeout
 
-Missions use `activation` instead of player selection, with `days_mission_timeout` and `timeout_effect`:
+Missions use `activation` instead of player selection:
 
 ```
 ISR_pal_rooting_terrorists = {
-	available = { always = no }
-	activation = {
-		has_country_flag = ISR_start_operation
-	}
-	days_mission_timeout = 60
-	is_good = no
-	icon = GFX_decision_category_taliban_insurgency
+ available = { always = no }
+ activation = {
+  has_country_flag = ISR_start_operation
+ }
+ days_mission_timeout = 60
+ is_good = no
+ icon = GFX_decision_category_taliban_insurgency
 
-	visible = {
-		has_country_flag = ISR_start_operation
-	}
-	cancel_if_not_visible = yes
+ visible = {
+  has_country_flag = ISR_start_operation
+ }
+ cancel_if_not_visible = yes
 
-	timeout_effect = {
-		custom_effect_tooltip = ISR_operation_result_outcome_tt
-		custom_effect_tooltip = ISR_operation_failed_root_terr_tt
-		hidden_effect = {
-			clr_country_flag = ISR_start_operation
-			if = {
-				limit = {
-					check_variable = { ISR_operation_success > 7 }
-				}
-				ISR = { country_event = israel.91 }
-				PAL = { country_event = israel.91 }
-			}
-			else = {
-				ISR = { country_event = israel.92 }
-				PAL = { country_event = israel.92 }
-			}
-		}
-	}
+ timeout_effect = {
+  log = "[GetDateText]: [Root.GetName]: Decision ISR_pal_rooting_terrorists"
+  custom_effect_tooltip = ISR_operation_result_outcome_tt
+  hidden_effect = {
+   clr_country_flag = ISR_start_operation
+   if = {
+    limit = { check_variable = { ISR_operation_success > 7 } }
+    ISR = { country_event = israel.91 }
+   }
+   else = {
+    ISR = { country_event = israel.92 }
+   }
+  }
+ }
 }
 ```
 
-## Economic Scripted Effects
-
-Commonly used in decision effects:
-
-### Government Spending Laws
+## Common scripted effects
 
 ```
-# Bureaucracy
-increase_centralization = yes / decrease_centralization = yes
+# Spending laws, each with a decrease_ twin
+increase_centralization = yes
+increase_social_spending = yes
+increase_education_budget = yes
+increase_healthcare_budget = yes
+increase_policing_budget = yes
+increase_exports = yes
+increase_military_spending = yes
 
-# Social Spending
-increase_social_spending = yes / decrease_social_spending = yes
-
-# Education
-increase_education_budget = yes / decrease_education_budget = yes
-
-# Healthcare
-increase_healthcare_budget = yes / decrease_healthcare_budget = yes
-
-# Policing
-increase_policing_budget = yes / decrease_policing_budget = yes
-
-# Trade Law
-increase_exports = yes / decrease_exports = yes
-
-# Military Spending
-increase_military_spending = yes / decrease_military_spending = yes
-```
-
-### Political Effects
-
-```
-# Party popularity — defaults to the ruling party when party_index is unset
+# Party popularity. Defaults to the ruling party when party_index (0-23) is unset
 set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
+change_relative_party_popularity = yes
 
-# Or target a specific party by index (0-23)
-set_temp_variable = { party_index = 2 }
-set_temp_variable = { party_popularity_increase = 0.10 }
-add_relative_party_popularity = yes
-
-# Ban/unban party
+# Ban or unban a party
 set_temp_variable = { party_index = 1 }
 ban_party_scripted_call = yes
-unban_party_scripted_call = yes
-```
 
-### Influence Effects
-
-```
 # Domestic influence
 set_temp_variable = { percent_change = 10 }
 change_domestic_influence_percentage = yes
 
-# Foreign influence (requires target; tag_index defaults to ROOT.id)
+# Foreign influence. tag_index defaults to ROOT.id
 set_temp_variable = { percent_change = 5 }
 set_temp_variable = { influence_target = GER }
 change_influence_percentage = yes
 ```
-
-For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.

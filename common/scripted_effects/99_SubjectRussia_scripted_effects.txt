@@ -1,11 +1,34 @@
 ###########SUBJECTS OF RUSSIA - INFLUENCE HELPERS###########
 # Wraps the +2% SOV->ROOT influence bump used throughout integration blocks.
+SUB_ensure_cossack_regiment_template = {
+	if = {
+		limit = { NOT = { has_template = "Cossack Regiment" } }
+		division_template = {
+			name = "Cossack Regiment"
+			is_locked = yes
+			regiments = {
+				L_Inf_Bat = { x = 0 y = 0 }
+				L_Inf_Bat = { x = 0 y = 1 }
+				L_Inf_Bat = { x = 0 y = 2 }
+			}
+		}
+	}
+}
 SUB_integrate_influence_bonus_to_root = {
 	set_temp_variable = { percent_change = 2 }
 	set_temp_variable = { tag_index = SOV }
 	change_influence_percentage = yes
 }
 ###########SUBJECTS OF RUSSIA - VARIABLES###########
+update_sub_sovfed_dirty_variable = {
+	if = {
+		limit = { check_variable = { SUB_sovfed_gui_dirty_var < 10000 } }
+		add_to_variable = { SUB_sovfed_gui_dirty_var = 1 }
+	}
+	else = {
+		set_variable = { SUB_sovfed_gui_dirty_var = 1 }
+	}
+}
 modify_subjectavtoritet_support = {
 	add_to_variable = { subjectavtoritet = modify_subjectavtoritet }
 	custom_effect_tooltip = SOV_subjectavtoritet_tt
@@ -14,14 +37,7 @@ modify_subjectavtoritet_support = {
 		min = 1
 		max = 100
 	}
-}
-modify_radicalche_support = {
-	add_to_variable = { radicalche = modify_radicalche }
-	clamp_variable = {
-		var = radicalche
-		min = 1
-		max = 100
-	}
+	update_sub_sovfed_dirty_variable = yes
 }
 modify_subjectinped_support = {
 	add_to_variable = { subjectinped = modify_subjectinped }
@@ -40,6 +56,7 @@ modify_subjectnalogs_support = {
 		min = 0
 		max = 10000
 	}
+	update_sub_sovfed_dirty_variable = yes
 }
 ###########SUBJECTS OF RUSSIA - MONEY FOR SUBJECT(SMALL OR BIG)##########
 russia_subject_money_small = {
@@ -767,300 +784,92 @@ URA_ural_monarchy_empire = {
 ###########URAL REPUBLIC - EKB METRO###########
 URA_ural_metro_expand = {
 	if = {
-		limit = {
-			NOT = { has_country_flag = EKB_metro1 }
-		}
+		limit = { NOT = { has_country_flag = EKB_metro1 } }
 		set_temp_variable = { treasury_change = -1.5 }
 		modify_treasury_effect = yes
-		676 = { add_dynamic_modifier = { modifier = URA_metro_modifier } }
+		676 = {
+			set_variable = { URA_metro_army_speed = 0.07 tooltip = army_speed_factor_for_controller_tt }
+			set_variable = { URA_metro_development = 0.15 tooltip = state_productivity_growth_modifier_tt }
+			add_dynamic_modifier = { modifier = URA_metro_modifier }
+		}
 		set_country_flag = EKB_metro1
 	}
 	else_if = {
-		limit = {
-			has_country_flag = EKB_metro1
-		}
+		limit = { NOT = { has_country_flag = EKB_metro2 } }
 		set_temp_variable = { treasury_change = -1.5 }
 		modify_treasury_effect = yes
-		676 = { remove_dynamic_modifier = { modifier = URA_metro_modifier } add_dynamic_modifier = { modifier = URA_metro1_modifier } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = URA_metro_modifier }
+		676 = {
+			add_to_variable = { URA_metro_army_speed = 0.02 tooltip = army_speed_factor_for_controller_tt }
+			add_to_variable = { URA_metro_development = 0.05 tooltip = state_productivity_growth_modifier_tt }
+		}
+		set_country_flag = EKB_metro2
+	}
+}
+TAT_update_party_modifiers = {
+	if = { limit = { has_dynamic_modifier = { modifier = TAT_liberals_modifier } } remove_dynamic_modifier = { modifier = TAT_liberals_modifier } }
+	if = { limit = { has_dynamic_modifier = { modifier = TAT_tatar_kommi_modifier } } remove_dynamic_modifier = { modifier = TAT_tatar_kommi_modifier } }
+	if = { limit = { has_dynamic_modifier = { modifier = TAT_tatarin_nati_modifier } } remove_dynamic_modifier = { modifier = TAT_tatarin_nati_modifier } }
+	if = {
+		limit = {
+			has_completed_focus = TAT_western_start
+			has_government = democratic
+		}
+		add_dynamic_modifier = { modifier = TAT_liberals_modifier }
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = TAT_Communism_start
+			emerging_communist_state_are_in_power = yes
+		}
+		add_dynamic_modifier = { modifier = TAT_tatar_kommi_modifier }
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = TAT_constitution_return
+			has_government = nationalist
+		}
+		add_dynamic_modifier = { modifier = TAT_tatarin_nati_modifier }
+	}
+}
+BSH_update_party_modifiers = {
+	if = { limit = { has_dynamic_modifier = { modifier = BSH_tatar_kommi_modifier } } remove_dynamic_modifier = { modifier = BSH_tatar_kommi_modifier } }
+	if = { limit = { has_dynamic_modifier = { modifier = BSH_tatarin_nati_modifier } } remove_dynamic_modifier = { modifier = BSH_tatarin_nati_modifier } }
+	if = {
+		limit = {
+			has_completed_focus = BSH_Communism_start
+			emerging_communist_state_are_in_power = yes
+		}
+		add_dynamic_modifier = { modifier = BSH_tatar_kommi_modifier }
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = BSH_constitution_return
+			has_government = nationalist
+		}
+		add_dynamic_modifier = { modifier = BSH_tatarin_nati_modifier }
 	}
 }
 ###########SUBJECTS OF RUSSIA - INTEGRATE RUSSIAN ECONOMIC###########
 SUB_subjects_integrate_economic_of_russia = {
-	#Aeroflot
 	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_aeroflot_idea
-					has_idea = SOV_aeroflot_idea1
-					has_idea = SOV_aeroflot_idea2
-				}
-			}
-			NOT = {
-				has_idea = SOV_aeroflot_idea
-			}
-		}
-		add_ideas = SOV_aeroflot_idea
-		SUB_integrate_influence_bonus_to_root = yes
+		limit = { NOT = { has_dynamic_modifier = { modifier = SUB_russian_economy_modifier } } }
+		add_dynamic_modifier = { modifier = SUB_russian_economy_modifier }
 	}
-	#Rostelekom
+	# Influence still accrues per newly shared company, so integrating again as Moscow keeps
+	# buying firms is worth the same as it was when each company arrived as its own spirit.
+	set_temp_variable = { percent_change = SOV.SOV_econ_sphere_company_count }
+	subtract_from_temp_variable = { percent_change = SUB_russian_companies_integrated }
+	multiply_temp_variable = { percent_change = 2 }
+	set_temp_variable = { tag_index = SOV }
+	change_influence_percentage = yes
+	set_variable = { SUB_russian_companies_integrated = SOV.SOV_econ_sphere_company_count }
 	if = {
 		limit = {
-			SOV = {
-				has_idea = SOV_rostelekom_idea
-			}
-			NOT = {
-				has_idea = SOV_rostelekom_idea
-			}
+			has_idea = PMR_inter_rao
+			SOV = { has_completed_focus = SOV_economic_interrao }
 		}
-		add_ideas = SOV_rostelekom_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Megaphone
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_megaphon_idea
-			}
-			NOT = {
-				has_idea = SOV_megaphon_idea
-			}
-		}
-		add_ideas = SOV_megaphon_idea
-	}
-	#MTS
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_mts_idea
-					has_idea = SOV_mts_idea1
-					has_idea = SOV_mts_idea2
-					has_idea = SOV_mts_idea3
-				}
-			}
-			NOT = {
-				has_idea = SOV_mts_idea
-			}
-		}
-		add_ideas = SOV_mts_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#RJD
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_rjd_idea
-			}
-			NOT = {
-				has_idea = SOV_rjd_idea
-			}
-		}
-		add_ideas = SOV_rjd_idea
-	}
-	#Gazprom
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_gazprom_idea
-					has_idea = SOV_gazprom1_idea
-					has_idea = SOV_gazprom2_idea
-					has_idea = SOV_gazprom3_idea
-				}
-			}
-			NOT = {
-				has_idea = SOV_gazprom_idea
-			}
-		}
-		add_ideas = SOV_gazprom_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Gazprom Neft
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_gazprom_neft_idea
-			}
-			NOT = {
-				has_idea = SOV_gazprom_neft_idea
-			}
-		}
-		add_ideas = SOV_gazprom_neft_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Rosneft
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_rosneft_idea
-					has_idea = SOV_rosneft_idea1
-					has_idea = SOV_rosneft_idea2
-					has_idea = SOV_rosneft_idea3
-				}
-			}
-			NOT = {
-				has_idea = SOV_rosneft_idea
-			}
-		}
-		add_ideas = SOV_rosneft_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#RusAgro
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_rusagro_idea
-					has_idea = SOV_rusagro_idea1
-				}
-			}
-			NOT = {
-				has_idea = SOV_rusagro_idea
-			}
-		}
-		add_ideas = SOV_rusagro_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Efko
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_efko_idea
-					has_idea = SOV_efko_idea1
-				}
-			}
-			NOT = {
-				has_idea = SOV_efko_idea
-			}
-		}
-		add_ideas = SOV_efko_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Miratorg
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_miratorg_idea
-					has_idea = SOV_miratorg_idea1
-				}
-			}
-			NOT = {
-				has_idea = SOV_miratorg_idea
-			}
-		}
-		add_ideas = SOV_miratorg_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Evraz
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_evraz_idea
-					has_idea = SOV_evraz_idea1
-				}
-			}
-			NOT = {
-				has_idea = SOV_evraz_idea
-			}
-		}
-		add_ideas = SOV_evraz_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Yandex
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_yandex_idea
-			}
-			NOT = {
-				has_idea = SOV_yandex_idea
-			}
-		}
-		add_ideas = SOV_yandex_idea
-	}
-	#Sberbank
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_sber_idea
-					has_idea = SOV_sber_idea1
-					has_idea = SOV_sber_idea2
-					has_idea = SOV_sber_idea3
-				}
-			}
-			NOT = {
-				has_idea = SOV_sber_idea
-			}
-		}
-		add_ideas = SOV_sber_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#AlphaBank
-	if = {
-		limit = {
-			SOV = {
-				OR = {
-					has_idea = SOV_alphabank_idea
-					has_idea = SOV_alphabank_idea1
-				}
-			}
-			NOT = {
-				has_idea = SOV_alphabank_idea
-			}
-		}
-		add_ideas = SOV_alphabank_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#VTB
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_vtb_idea
-			}
-			NOT = {
-				has_idea = SOV_vtb_idea
-			}
-		}
-		add_ideas = SOV_vtb_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#Kaspersky
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_kaspersky_idea
-			}
-			NOT = {
-				has_idea = SOV_kaspersky_idea
-			}
-		}
-		add_ideas = SOV_kaspersky_idea
-		SUB_integrate_influence_bonus_to_root = yes
-	}
-	#InterRao
-	if = {
-		limit = {
-			SOV = {
-				has_idea = SOV_interrao
-			}
-			NOT = {
-				has_idea = SOV_interrao
-			}
-		}
-		add_ideas = SOV_interrao
-		SUB_integrate_influence_bonus_to_root = yes
-		if = {
-			limit = {
-				has_idea = PMR_inter_rao
-			}
-			remove_ideas = PMR_inter_rao
-		}
+		remove_ideas = PMR_inter_rao
 	}
 }
 ###########SUBJECTS OF RUSSIA - INTEGRATE IN RUSSIAN ARMY###########
@@ -1069,10 +878,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				OR = {
-					has_idea = SOV_russian_spaceforce
-					has_idea = SOV_russian_spaceforce1
-				}
+				has_completed_focus = SOV_kosmo_voiska
 			}
 			NOT = {
 				has_idea = SOV_russian_spaceforce
@@ -1085,7 +891,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_far_aviation_idea
+				has_completed_focus = SOV_airforce_far_aviation
 			}
 			NOT = {
 				has_idea = SOV_far_aviation_idea
@@ -1098,7 +904,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_transport_aviation_idea
+				has_completed_focus = SOV_airforce_transport_aviation
 			}
 			NOT = {
 				has_idea = SOV_transport_aviation_idea
@@ -1111,7 +917,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_air_missile_defence_idea
+				has_completed_focus = SOV_air_rocket_defence
 			}
 			NOT = {
 				has_idea = SOV_air_missile_defence_idea
@@ -1124,7 +930,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_anti_aircraft_forces_idea
+				has_completed_focus = SOV_missile_defense_investments
 			}
 			NOT = {
 				has_idea = SOV_anti_aircraft_forces_idea
@@ -1137,7 +943,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_radio_technical_troops_idea
+				has_completed_focus = SOV_radio_defense_investments
 			}
 			NOT = {
 				has_idea = SOV_radio_technical_troops_idea
@@ -1150,7 +956,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_russian_satellite_idea
+				has_completed_focus = SOV_roscosmos_intel
 			}
 			NOT = {
 				has_idea = SOV_russian_satellite_idea
@@ -1163,7 +969,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_rocket_forces_idea
+				has_completed_focus = SOV_missile_development
 			}
 			NOT = {
 				has_idea = SOV_rocket_forces_idea
@@ -1176,7 +982,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_ipso
+				has_completed_focus = SOV_armyreform_ipso
 			}
 			NOT = {
 				has_idea = SOV_army_ipso
@@ -1189,7 +995,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_mto
+				has_completed_focus = SOV_mto
 			}
 			NOT = {
 				has_idea = SOV_army_mto
@@ -1202,7 +1008,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_engineer
+				has_completed_focus = SOV_armyreform_engineer
 			}
 			NOT = {
 				has_idea = SOV_army_engineer
@@ -1215,7 +1021,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_anti_air
+				has_completed_focus = SOV_armyreform_anti_air
 			}
 			NOT = {
 				has_idea = SOV_army_anti_air
@@ -1228,7 +1034,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_railway
+				has_completed_focus = SOV_railway_troops
 			}
 			NOT = {
 				has_idea = SOV_army_railway
@@ -1241,7 +1047,7 @@ SUB_subjects_integrate_army_of_russia = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_army_radioelectric
+				has_completed_focus = SOV_radioelectronic_warfare
 			}
 			NOT = {
 				has_idea = SOV_army_radioelectric
@@ -1452,7 +1258,7 @@ SUB_apply_annex_transfer = {
 	modify_treasury_effect = yes
 	set_temp_variable = { party_popularity_increase = popularity_change }
 	set_temp_variable = { temp_outlook_increase = popularity_change }
-	add_relative_party_popularity = yes
+	change_relative_party_popularity = yes
 	var:tag_index = {
 		SOV = {
 			annex_country = { target = PREV transfer_troops = yes }
@@ -1514,135 +1320,120 @@ russian_state_annex_effect = {
 		SUB_apply_annex_transfer = yes
 	}
 }
-SOV_moscow_build_script = {
-	if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 8 }
+MSC_abolish_mayor_office = {
+	652 = {
+		if = {
+			limit = { has_dynamic_modifier = { modifier = MSC_mayor_modifier } }
+			remove_dynamic_modifier = { modifier = MSC_mayor_modifier }
 		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_8_level } add_dynamic_modifier = { modifier = MSC_city_9_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
+		MSC_clear_mayor_office = yes
+	}
+}
+MSC_clear_mayor_office = {
+	clear_variable = MSC_mayor_communism_drift
+	clear_variable = MSC_mayor_nationalist_drift
+	clear_variable = MSC_mayor_democratic_drift
+	clear_variable = MSC_mayor_stability_factor
+	clear_variable = MSC_mayor_corporate_tax_income_multiplier_modifier
+	clear_variable = MSC_mayor_production_speed_industrial_complex_factor
+	clear_variable = MSC_mayor_consumer_goods_factor
+	clear_variable = MSC_mayor_surrender_limit
+	clear_variable = MSC_mayor_drift_defence_factor
+	clear_variable = MSC_mayor_opinion_gain_monthly_same_ideology_factor
+	clear_variable = MSC_mayor_social_cost_multiplier_modifier
+	clear_variable = MSC_mayor_corruption_cost_factor
+	clear_variable = MSC_mayor_police_cost_multiplier_modifier
+}
+MSC_elect_lujkov = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_communism_drift = 0.01 tooltip = communism_drift_tt }
+}
+MSC_elect_sobyanin_edro = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_communism_drift = 0.02 tooltip = communism_drift_tt }
+	set_variable = { MSC_mayor_stability_factor = 0.01 tooltip = stability_factor_tt }
+	set_variable = { MSC_mayor_corporate_tax_income_multiplier_modifier = 0.01 tooltip = corporate_tax_income_multiplier_modifier_tt }
+}
+MSC_elect_melnikov_cprf = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_communism_drift = 0.02 tooltip = communism_drift_tt }
+	set_variable = { MSC_mayor_production_speed_industrial_complex_factor = 0.01 tooltip = production_speed_industrial_complex_factor_tt }
+	set_variable = { MSC_mayor_consumer_goods_factor = -0.01 tooltip = consumer_goods_factor_tt }
+}
+MSC_elect_degtyarev_ldpr = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_nationalist_drift = 0.02 tooltip = nationalist_drift_tt }
+	set_variable = { MSC_mayor_surrender_limit = 0.01 tooltip = surrender_limit_tt }
+	set_variable = { MSC_mayor_drift_defence_factor = 0.01 tooltip = drift_defence_factor_tt }
+}
+MSC_elect_mitrohin_yablo = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_democratic_drift = 0.02 tooltip = democratic_drift_tt }
+	set_variable = { MSC_mayor_opinion_gain_monthly_same_ideology_factor = 0.01 tooltip = opinion_gain_monthly_same_ideology_factor_tt }
+	set_variable = { MSC_mayor_social_cost_multiplier_modifier = -0.01 tooltip = social_cost_multiplier_modifier_tt }
+}
+MSC_elect_navalny_parnas = {
+	MSC_clear_mayor_office = yes
+	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = MSC_mayor_modifier }
+	set_variable = { MSC_mayor_democratic_drift = 0.02 tooltip = democratic_drift_tt }
+	set_variable = { MSC_mayor_corruption_cost_factor = -0.01 tooltip = corruption_cost_factor_tt }
+	set_variable = { MSC_mayor_police_cost_multiplier_modifier = -0.01 tooltip = police_cost_multiplier_modifier_tt }
+}
+SOV_city_upgrade = {
+	add_to_variable = { SOV_city_level = 1 }
+	add_to_variable = { SOV_city_development = 0.035 tooltip = state_production_speed_buildings_factor_tt }
+	add_to_variable = { SOV_city_army_speed = 0.025 tooltip = army_speed_factor_for_controller_tt }
+	add_to_variable = { SOV_city_manpower = 0.02 tooltip = local_manpower_tt }
+	if = {
+		limit = { check_variable = { SOV_city_level > 3 } }
+		add_to_variable = { SOV_city_slots = 1 tooltip = local_building_slots_tt }
+	}
+}
+
+SOV_moscow_build_script = {
+	652 = {
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_moscow_levels }
+		SOV_city_upgrade = yes
+	}
+	if = {
+		limit = { 652 = { check_variable = { SOV_city_level > 8 } } }
 		set_temp_variable = { treasury_change = -25 }
 	}
 	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 7 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_7_level } add_dynamic_modifier = { modifier = MSC_city_8_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
+		limit = { 652 = { check_variable = { SOV_city_level > 6 } } }
 		set_temp_variable = { treasury_change = -20 }
 	}
 	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 6 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_6_level } add_dynamic_modifier = { modifier = MSC_city_7_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
-		set_temp_variable = { treasury_change = -20 }
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 5 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_5_level } add_dynamic_modifier = { modifier = MSC_city_6_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
+		limit = { 652 = { check_variable = { SOV_city_level > 4 } } }
 		set_temp_variable = { treasury_change = -15 }
 	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 4 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_4_level } add_dynamic_modifier = { modifier = MSC_city_5_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
-		set_temp_variable = { treasury_change = -15 }
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 3 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_3_level } add_dynamic_modifier = { modifier = MSC_city_4_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
-		set_temp_variable = { treasury_change = -10 }
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 2 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_2_level } add_dynamic_modifier = { modifier = MSC_city_3_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
-		set_temp_variable = { treasury_change = -10 }
-	}
-	else_if = {
-		limit = {
-			NOT = { has_country_flag = SOV_moscow_no_more }
-			check_variable = { SUB_moscow_level = 1 }
-		}
-		652 = { remove_dynamic_modifier = { modifier = MSC_city_1_level } add_dynamic_modifier = { modifier = MSC_city_2_level } }
-		add_to_variable = { SUB_moscow_level = 1 }
+	else = {
 		set_temp_variable = { treasury_change = -10 }
 	}
 	modify_treasury_effect = yes
 }
 
 SOV_ekb_build_script = {
+	676 = {
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = SOV_ekaterinburg_levels } } }
+			set_variable = { SOV_city_development = 0.015 tooltip = state_production_speed_buildings_factor_tt }
+			set_variable = { SOV_city_army_speed = 0.025 tooltip = army_speed_factor_for_controller_tt }
+			add_dynamic_modifier = { modifier = SOV_ekaterinburg_levels }
+		}
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_ekaterinburg_levels }
+		SOV_city_upgrade = yes
+	}
 	if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 5 }
-		}
-		676 = { remove_dynamic_modifier = { modifier = EKB_city_5_level } add_dynamic_modifier = { modifier = EKB_city_6_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
+		limit = { 676 = { check_variable = { SOV_city_level > 3 } } }
 		set_temp_variable = { treasury_change = -15 }
 	}
-	else_if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 4 }
-		}
-		676 = { remove_dynamic_modifier = { modifier = EKB_city_4_level } add_dynamic_modifier = { modifier = EKB_city_5_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
-		set_temp_variable = { treasury_change = -15 }
-	}
-	else_if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 3 }
-		}
-		676 = { remove_dynamic_modifier = { modifier = EKB_city_3_level } add_dynamic_modifier = { modifier = EKB_city_4_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
-		set_temp_variable = { treasury_change = -15 }
-	}
-	else_if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 2 }
-		}
-		676 = { remove_dynamic_modifier = { modifier = EKB_city_2_level } add_dynamic_modifier = { modifier = EKB_city_3_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
-		set_temp_variable = { treasury_change = -10 }
-	}
-	else_if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 1 }
-		}
-		676 = { remove_dynamic_modifier = { modifier = EKB_city_1_level } add_dynamic_modifier = { modifier = EKB_city_2_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
-		set_temp_variable = { treasury_change = -10 }
-	}
-	else_if = {
-		limit = {
-			has_country_flag = SOV_moscow_no_more
-			check_variable = { SUB_ekb_level = 0 }
-		}
-		676 = { add_dynamic_modifier = { modifier = EKB_city_1_level } }
-		add_to_variable = { SUB_ekb_level = 1 }
+	else = {
 		set_temp_variable = { treasury_change = -10 }
 	}
 	modify_treasury_effect = yes

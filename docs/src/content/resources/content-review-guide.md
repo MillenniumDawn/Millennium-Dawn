@@ -96,6 +96,31 @@ These are baseline expectations for all developers on the team:
 - **Have I added flavour events?**
   Aim for at least 10-15 flavour events. Gameplay should not be "click focus, wait, click focus, wait." Make the country feel alive.
 
+### Variety Guidelines
+
+A tree can be perfectly balanced and still feel formulaic. These questions catch reward-shape repetition that the balance questions miss. When reviewing a tree, cross-check it against a reference tree known for variety (Iran, `05_iran.txt`, or Spain, `05_spain.txt`) rather than judging it in isolation.
+
+- **Does one reward shape make up the whole reward too often?**
+  A variable or dynamic-modifier bump (`add_to_variable` plus `add_dynamic_modifier`) is fine at any frequency as seasoning on a substantive reward. It becomes formulaic when it _is_ the entire `completion_reward`. If more than roughly 20% of a tree's focuses reward nothing but `log` + `custom_effect_tooltip` + `add_to_variable`, the tree reads as one idea stretched thin. For contrast, Iran layers an economy bump into 61% of its focuses and never feels formulaic, because the bump always rides a building, resource, event, flag, or idea swap. Spain uses the shape zero times and builds its identity elsewhere.
+
+- **Is the same reward block copy-pasted verbatim?**
+  No `completion_reward` or `ai_will_do` block should repeat byte-for-byte across a branch. The same `variable = number` line appearing ten or more times with only the variable name changing is copy-paste, not design.
+
+- **Do mutually exclusive forks differ in reward _kind_, not just magnitude?**
+  A fork where sibling A adds 0.02 and sibling B adds 0.01 of the same variable is a fake choice. Real forks trade a building for a resource, an idea swap for an event, a stability gain for a drift. If the only difference between two paths is a number, it is not yet a choice.
+
+- **Does the tree have a signature mechanic of its own?**
+  Each tree should carry at least one bespoke modifier family, idea ladder, or scripted mechanic that no other tree shares (Iran's nuclear and missile tiers, Spain's per-culture opinion engine, Serbia's Yugoslav-confederation reunification). A tree whose only mechanic is incrementing the shared economy modifier is interchangeable with every other such tree.
+
+- **Are there enough distinct reward categories?**
+  Across the whole tree, aim for at least four distinct reward categories drawn from: dynamic modifier or variable, timed idea plus `swap_ideas`, treasury or expenditure cost, building or resource spawn, interest-group opinion, event with a player choice, country flag or bespoke mechanic, decision-category unlock, army or tech unlock. A tree hitting only two or three categories is formulaic regardless of size.
+
+- **Do capstone and terminal focuses deliver something new?**
+  A branch endpoint should unlock a decision category, release a subject, fire a defining event, or grant a bespoke idea, not just a bigger number of a variable the branch already used.
+
+- **Do political forks differ mechanically?**
+  Each political path should route to its own ideas, mechanics, or events, not just tick a different popularity up. Political focuses that only do `add_popularity` plus an economy bump are placeholder-grade. A `generic`-named political focus ID is a red flag that the branch leans on the shared minor-nation scaffold for its identity.
+
 ### Visual Appearance
 
 - **Is there a focus icon in every spot?**
@@ -117,7 +142,10 @@ These are baseline expectations for all developers on the team:
   All English grammar rules apply. Titles should be capitalised properly with consistent spelling and punctuation. Trees with significant grammar or spelling issues will not be accepted for merge until corrected.
 
 - **Is there any localisation showing up as non-localised?**
-  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions, if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
+  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions.
+
+ **Do national spirits with cancel clauses have explanations?**
+  Ensure all national spirits that can be cancelled by specific in-game conditions have an explanation. Reference any starting Iranian or Libyan spirit, or paste this at the end of your description for a national spirit: \n§W--------------§!\nThis national spirit will be §RRemoved§! if (Insert your condition here). Furthermore, use reference localization keys to keep it future proof. For instance if you want Civilian Factories mentioned in your condition, use $industrial_complex$ in your description.
 
 - **Is the use of custom focus icons moderated?**
   Do not use custom focus icons for every other focus. Reserve them for major focuses (parties, key decisions, etc.).

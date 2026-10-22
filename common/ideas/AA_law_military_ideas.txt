@@ -11,31 +11,15 @@ ideas = {
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea defence_00"
 				custom_effect_tooltip = defence_00_TT
-				set_variable = { military_spending = 1 }
+				set_temp_variable = { spending_new_level = 1 }
+				military_transition_check = yes
+				set_variable = { military_law = 1 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				has_idea = no_military
 				if = {
 					limit = {
@@ -56,7 +40,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -1.00
+				conscription_factor = -0.95
 				production_speed_arms_factory_factor = -0.5
 				production_speed_dockyard_factor = -0.5
 				mil_facs_worker_requirement_modifier = -0.5
@@ -75,6 +59,11 @@ ideas = {
 					has_idea = defence_01
 					NOT = { has_idea = no_military }
 				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 1 }
+					check_variable = { expected_military_law > 1 }
+				}
 			}
 			cancel_if_invalid = no
 		}
@@ -87,31 +76,15 @@ ideas = {
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea defence_01"
 				custom_effect_tooltip = defence_01_TT
-				set_variable = { military_spending = 2 }
+				set_temp_variable = { spending_new_level = 2 }
+				military_transition_check = yes
+				set_variable = { military_law = 2 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						OR = {
@@ -137,7 +110,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.95
+				conscription_factor = -0.9
 				production_factory_max_efficiency_factor = 0.11
 				industrial_capacity_dockyard = 0.11
 				production_speed_arms_factory_factor = 0.02
@@ -155,7 +128,6 @@ ideas = {
 				modifier = {
 					add = 25
 					has_idea = defence_00
-					check_variable = { expected_military_sp > 0 }
 				}
 				modifier = {
 					add = 25
@@ -165,6 +137,17 @@ ideas = {
 				modifier = {
 					factor = 0
 					has_idea = no_military
+				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 2 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 2 }
+					check_variable = { expected_military_law > 2 }
 				}
 			}
 			cancel_if_invalid = no
@@ -178,32 +161,16 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_02_TT
-				set_variable = { military_spending = 3 }
+				set_temp_variable = { spending_new_level = 3 }
+				military_transition_check = yes
+				set_variable = { military_law = 3 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_02"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						OR = {
@@ -231,7 +198,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.90
+				conscription_factor = -0.80
 				production_factory_max_efficiency_factor = 0.22
 				industrial_capacity_dockyard = 0.22
 				production_speed_arms_factory_factor = 0.04
@@ -260,6 +227,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 3 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 3 }
+					check_variable = { expected_military_law > 3 }
+				}
 			}
 			cancel_if_invalid = no
 		}
@@ -269,32 +247,16 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_03_TT
-				set_variable = { military_spending = 4 }
+				set_temp_variable = { spending_new_level = 4 }
+				military_transition_check = yes
+				set_variable = { military_law = 4 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_03"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						OR = {
@@ -322,7 +284,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.85
+				conscription_factor = -0.65
 				production_factory_max_efficiency_factor = 0.33
 				industrial_capacity_dockyard = 0.33
 				production_speed_arms_factory_factor = 0.06
@@ -333,7 +295,7 @@ ideas = {
 				military_factories_productivity = 0.3
 				dockyard_productivity = 0.3
 				total_workforce_modifier = -0.03 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_5_tt
+				if_the_military_minimum_opinion = 5
 			}
 
 			ai_will_do = {
@@ -352,6 +314,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 4 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 4 }
+					check_variable = { expected_military_law > 4 }
+				}
 			}
 			cancel_if_invalid = no
 		}
@@ -362,32 +335,16 @@ ideas = {
 			allowed_civil_war = { always = yes }
 			on_add = {
 				custom_effect_tooltip = defence_04_TT
-				set_variable = { military_spending = 5 }
+				set_temp_variable = { spending_new_level = 5 }
+				military_transition_check = yes
+				set_variable = { military_law = 5 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_04"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						original_tag = GER
@@ -423,7 +380,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.775
+				conscription_factor = -0.5
 				production_factory_max_efficiency_factor = 0.44
 				industrial_capacity_dockyard = 0.44
 				production_speed_arms_factory_factor = 0.09
@@ -434,7 +391,7 @@ ideas = {
 				military_factories_productivity = 0.45
 				dockyard_productivity = 0.45
 				total_workforce_modifier = -0.045 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_10_tt
+				if_the_military_minimum_opinion = 10
 			}
 
 			ai_will_do = {
@@ -453,6 +410,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 5 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 5 }
+					check_variable = { expected_military_law > 5 }
+				}
 			}
 
 			cancel_if_invalid = no
@@ -466,32 +434,16 @@ ideas = {
 
 			on_add = {
 				custom_effect_tooltip = defence_05_TT
-				set_variable = { military_spending = 6 }
+				set_temp_variable = { spending_new_level = 6 }
+				military_transition_check = yes
+				set_variable = { military_law = 6 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_05"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						original_tag = GER
@@ -527,7 +479,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.7
+				conscription_factor = -0.3
 				production_factory_max_efficiency_factor = 0.55
 				industrial_capacity_dockyard = 0.55
 				production_speed_arms_factory_factor = 0.12
@@ -538,7 +490,7 @@ ideas = {
 				military_factories_productivity = 0.6
 				dockyard_productivity = 0.6
 				total_workforce_modifier = -0.06 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_15_tt
+				if_the_military_minimum_opinion = 15
 			}
 
 
@@ -558,6 +510,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 6 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 6 }
+					check_variable = { expected_military_law > 6 }
+				}
 			}
 
 			cancel_if_invalid = no
@@ -571,32 +534,16 @@ ideas = {
 
 			on_add = {
 				custom_effect_tooltip = defence_06_TT
-				set_variable = { military_spending = 7 }
+				set_temp_variable = { spending_new_level = 7 }
+				military_transition_check = yes
+				set_variable = { military_law = 7 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_06"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						original_tag = GER
@@ -632,7 +579,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.6
+				conscription_factor = -0.15
 				production_factory_max_efficiency_factor = 0.66
 				industrial_capacity_dockyard = 0.66
 				production_speed_arms_factory_factor = 0.16
@@ -643,7 +590,7 @@ ideas = {
 				military_factories_productivity = 0.8
 				dockyard_productivity = 0.8
 				total_workforce_modifier = -0.08 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_20_tt
+				if_the_military_minimum_opinion = 20
 			}
 
 			ai_will_do = {
@@ -662,6 +609,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 7 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 7 }
+					check_variable = { expected_military_law > 7 }
+				}
 			}
 
 			cancel_if_invalid = no
@@ -675,32 +633,16 @@ ideas = {
 
 			on_add = {
 				custom_effect_tooltip = defence_07_TT
-				set_variable = { military_spending = 8 }
+				set_temp_variable = { spending_new_level = 8 }
+				military_transition_check = yes
+				set_variable = { military_law = 8 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 				log = "[GetDateText]: [Root.GetName]: add idea defence_07"
 			}
 			available = {
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				if = {
 					limit = {
 						original_tag = GER
@@ -736,7 +678,7 @@ ideas = {
 				}
 			}
 			modifier = {
-				conscription_factor = -0.5
+				#conscription_factor = 0
 				production_factory_max_efficiency_factor = 0.77
 				industrial_capacity_dockyard = 0.77
 				production_speed_arms_factory_factor = 0.2
@@ -747,7 +689,7 @@ ideas = {
 				military_factories_productivity = 1
 				dockyard_productivity = 1
 				total_workforce_modifier = -0.1 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_25_tt
+				if_the_military_minimum_opinion = 25
 			}
 
 
@@ -768,6 +710,17 @@ ideas = {
 					factor = 0
 					has_idea = no_military
 				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 8 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 8 }
+					check_variable = { expected_military_law > 8 }
+				}
 			}
 
 			cancel_if_invalid = no
@@ -781,8 +734,12 @@ ideas = {
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea defence_08"
 				custom_effect_tooltip = defence_08_TT
-				set_variable = { military_spending = 9 }
+				set_temp_variable = { spending_new_level = 9 }
+				military_transition_check = yes
+				set_variable = { military_law = 9 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 			}
 
 			available = {
@@ -794,27 +751,7 @@ ideas = {
 						has_idea = german_legacy
 					}
 				}
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				OR = {
 					has_war = yes
 					threat > 0.4
@@ -851,7 +788,7 @@ ideas = {
 			}
 
 			modifier = {
-				conscription_factor = -0.375
+				conscription_factor = 0.05
 				production_factory_max_efficiency_factor = 0.88
 				industrial_capacity_dockyard = 0.88
 				production_speed_arms_factory_factor = 0.25
@@ -862,7 +799,7 @@ ideas = {
 				military_factories_productivity = 1.25
 				dockyard_productivity = 1.25
 				total_workforce_modifier = -0.125 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_30_tt
+				if_the_military_minimum_opinion = 30
 			}
 
 			ai_will_do = {
@@ -875,11 +812,21 @@ ideas = {
 				modifier = {
 					add = 25
 					has_idea = defence_09
-					check_variable = { expected_military_sp < 9 }
 				}
 				modifier = {
 					factor = 0
 					has_idea = no_military
+				}
+				modifier = {
+					factor = 0
+					check_variable = { policy_transition_military_cost > 0.05 }
+					check_variable = { military_law < 9 }
+					has_war = no
+				}
+				modifier = {
+					factor = 0
+					check_variable = { military_law > 9 }
+					check_variable = { expected_military_law > 9 }
 				}
 			}
 
@@ -893,8 +840,12 @@ ideas = {
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea defence_09"
 				custom_effect_tooltip = defence_09_TT
-				set_variable = { military_spending = 10 }
+				set_temp_variable = { spending_new_level = 10 }
+				military_transition_check = yes
+				set_variable = { military_law = 10 }
+				refresh_expected_spending_frames = yes
 				ingame_update_setup = yes
+				update_protest_dirty_var = yes
 			}
 
 			available = {
@@ -906,27 +857,7 @@ ideas = {
 						has_idea = german_legacy
 					}
 				}
-				if = {
-					limit = { original_tag = UKR }
-					custom_trigger_tooltip = {
-						tooltip = UKR_parliament_block_tt
-						NOT = { has_country_flag = UKR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = ISR }
-					custom_trigger_tooltip = {
-						tooltip = ISR_parliament_block_tt
-						NOT = { has_country_flag = ISR_parliament_block }
-					}
-				}
-				else_if = {
-					limit = { original_tag = HOL }
-					custom_trigger_tooltip = {
-						tooltip = HOL_army_block_tt
-						NOT = { has_idea = HOL_dutch_army_doctrine_change }
-					}
-				}
+				military_law_parliament_change_allowed = yes
 				OR = {
 					has_war = yes
 					threat > 0.6
@@ -957,6 +888,7 @@ ideas = {
 			}
 
 			modifier = {
+				conscription_factor = 0.15
 				production_factory_max_efficiency_factor = 1.0
 				industrial_capacity_dockyard = 1.0
 				production_speed_arms_factory_factor = 0.4
@@ -967,7 +899,7 @@ ideas = {
 				military_factories_productivity = 2
 				dockyard_productivity = 2
 				total_workforce_modifier = -0.2 #mobilized people can't work
-				custom_modifier_tooltip = the_military_add_35_tt
+				if_the_military_minimum_opinion = 35
 			}
 
 			ai_will_do = {
@@ -1046,6 +978,12 @@ ideas = {
 					}
 					conscription_decrease_blocked = no
 				}
+				if = {
+					limit = {
+						original_tag = AST
+					 }
+					 has_completed_focus = AST_residency_eligibility
+				}
 			}
 
 			modifier = {
@@ -1097,17 +1035,24 @@ ideas = {
 					}
 					conscription_increase_blocked = no
 				}
+				if = {
+					limit = {
+						original_tag = AST
+					}
+					has_completed_focus = AST_residency_eligibility
+				}
 			}
 
+			# Half of people in the army are not in the combat roles
 			modifier = {
-				conscription = 0.025
+				conscription = 0.01
 				army_morale_factor = 0.10
 				army_org_factor = 0.10
 				experience_gain_army = 0.06
 				experience_gain_navy = 0.03
 				experience_gain_air = 0.03
 				personnel_cost_multiplier_modifier = 0.80
-				total_workforce_modifier = -0.025
+				total_workforce_modifier = -0.02
 			}
 
 			ai_will_do = {
@@ -1173,12 +1118,14 @@ ideas = {
 					has_idea = draft_army
 					ai_has_high_deficit = no
 					NOT = {
-						has_idea = social_01
-						has_idea = social_02
-						has_idea = health_01
-						has_idea = health_02
-						has_idea = edu_01
-						has_idea = edu_02
+						OR = {
+							has_idea = social_01
+							has_idea = social_02
+							has_idea = health_01
+							has_idea = health_02
+							has_idea = edu_01
+							has_idea = edu_02
+						}
 					}
 				}
 				modifier = {
@@ -1235,10 +1182,16 @@ ideas = {
 					}
 					conscription_increase_blocked = no
 				}
+				if = {
+					limit = {
+						original_tag = AST
+					 }
+					 has_completed_focus = AST_residency_eligibility
+				}
 			}
 
 			modifier = {
-				conscription = 0.035
+				conscription = 0.015
 				army_attack_factor = -0.05
 				army_core_attack_factor = 0.05
 				army_defence_factor = -0.05
@@ -1248,7 +1201,7 @@ ideas = {
 				experience_gain_navy = 0.02
 				experience_gain_air = 0.02
 				personnel_cost_multiplier_modifier = 0.40
-				total_workforce_modifier = -0.035
+				total_workforce_modifier = -0.03
 				migration_rate_value_factor = -0.05
 			}
 
@@ -1338,10 +1291,16 @@ ideas = {
 					}
 					conscription_increase_blocked = no
 				}
+				if = {
+					limit = {
+						original_tag = AST
+					}
+					has_completed_focus = AST_residency_eligibility
+				}
 			}
 
 			modifier = {
-				conscription = 0.05
+				conscription = 0.03
 				army_morale_factor = -0.10
 				army_org_factor = -0.10
 				army_attack_factor = -0.20
@@ -1352,7 +1311,7 @@ ideas = {
 				experience_gain_army = 0.02
 				experience_gain_navy = 0.01
 				experience_gain_air = 0.01
-				total_workforce_modifier = -0.04
+				total_workforce_modifier = -0.06
 				migration_rate_value_factor = -0.10
 			}
 
@@ -1463,7 +1422,6 @@ ideas = {
 			}
 
 			modifier = {
-				conscription_factor = 0.00
 				stability_factor = 0.1
 			}
 
@@ -1524,9 +1482,10 @@ ideas = {
 			}
 
 			modifier = {
-				conscription = 0.004
+				conscription = 0.003
 				monthly_population = -0.05
 				special_forces_cap = -0.05
+				total_workforce_modifier = -0.01
 			}
 
 			ai_will_do = {
@@ -1587,9 +1546,10 @@ ideas = {
 			}
 
 			modifier = {
-				conscription = 0.04
+				conscription = 0.01
 				monthly_population = -0.15
 				special_forces_cap = -0.15
+				total_workforce_modifier = -0.03
 			}
 
 			ai_will_do = {
@@ -1624,13 +1584,15 @@ ideas = {
 		law = yes
 		use_list_view = yes
 
-		intervention_isolation = {
+		intervention_isolation = { #Lvl 1
 			allowed_civil_war = { always = yes }
 
 			available = {
 				NOT = {
-					has_idea = the_military
-					is_in_faction = yes
+					OR = {
+						has_idea = the_military
+						is_in_faction = yes
+					}
 				}
 				if = {
 					limit = {
@@ -1675,7 +1637,7 @@ ideas = {
 			}
 		}
 
-		intervention_local_security = {
+		intervention_local_security = { #Lvl 2
 			allowed_civil_war = { always = yes }
 
 			available = {
@@ -1731,7 +1693,7 @@ ideas = {
 			default = yes
 		}
 
-		intervention_limited_interventionism = {
+		intervention_limited_interventionism = { #Lvl 3
 			allowed_civil_war = { always = yes }
 
 			available = {
@@ -1793,7 +1755,7 @@ ideas = {
 			}
 		}
 
-		intervention_regional_interventionism = {
+		intervention_regional_interventionism = { #Lvl 4
 			allowed_civil_war = { always = yes }
 
 			available = {
@@ -1857,7 +1819,7 @@ ideas = {
 			}
 		}
 
-		intervention_global_interventionism = {
+		intervention_global_interventionism = { #Lvl 5
 			allowed_civil_war = { always = yes }
 
 			available = {
@@ -1900,7 +1862,6 @@ ideas = {
 			level = 5
 
 			modifier = {
-				lend_lease_tension = 0.00
 				send_volunteers_tension = 0.05
 				guarantee_tension = 0.10
 				join_faction_tension = 0.15
@@ -1920,7 +1881,7 @@ ideas = {
 			}
 		}
 
-		intervention_neo_imperialism = {
+		intervention_neo_imperialism = { #Lvl 6
 			allowed_civil_war = { always = yes }
 
 			available = {
@@ -1998,13 +1959,8 @@ ideas = {
 				modifier = {
 					add = 10
 					has_government = nationalist
-					any_neighbor_country = {
-						any_owned_state = {
-							OR = {
-								is_claimed_by = ROOT
-								is_core_of = ROOT
-							}
-						}
+					any_core_state = {
+						NOT = { is_owned_by = ROOT }
 					}
 				}
 			}
@@ -2048,11 +2004,7 @@ ideas = {
 				military_leader_cost_factor = -0.50
 				army_leader_start_level = -1
 				navy_leader_start_level = -1
-				command_power_gain_mult = 0
-				max_command_power = 0
 				experience_gain_army = -0.01
-				experience_gain_navy = 0.00
-				experience_gain_air = 0.00
 				general_death_chance_modifier = 0.40
 			}
 
@@ -2149,7 +2101,6 @@ ideas = {
 			level = 3
 
 			modifier = {
-				military_leader_cost_factor = 0
 				army_leader_start_level = 1
 				navy_leader_start_level = 1
 				command_power_gain_mult = 0.1
@@ -2282,12 +2233,12 @@ ideas = {
 				OR = {
 					is_in_faction = yes
 					has_idea = NATO_member
-					has_idea = sco_member
+					has_idea = CHI_sco_member
 					hidden_trigger = {
 						OR = {
-							has_idea = sco_member_econ
-							has_idea = sco_member_pol
-							has_idea = sco_member_mil
+							has_idea = CHI_sco_member_econ
+							has_idea = CHI_sco_member_pol
+							has_idea = CHI_sco_member_mil
 						}
 					}
 				}

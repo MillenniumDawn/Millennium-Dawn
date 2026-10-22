@@ -34,10 +34,10 @@ modify_batka_support = {
 		add_ideas = BLR_batka_very_weak
 	}
 }
-modify_tracktors_support = {
-	custom_effect_tooltip = tracktors_TT
-	add_to_variable = { tracktors = modify_tracktors }
-	clamp_variable = { var = tracktors min = 0 max = 30000 }
+BLR_modify_tractors_support = {
+	custom_effect_tooltip = BLR_tractors_TT
+	add_to_variable = { BLR_tractors = BLR_modify_tractors }
+	clamp_variable = { var = BLR_tractors min = 0 max = 30000 }
 }
 
 modify_white_legion_support = {
@@ -101,6 +101,33 @@ AGRO_idea_belarus = {
 		}
 	}
 }
+BLR_idea_currency_crisis = {
+	if = {
+		limit = { has_idea = BLR_unstable_national_currency }
+		swap_ideas = {
+			remove_idea = BLR_unstable_national_currency
+			add_idea = BLR_unstable_national_currency2
+		}
+	}
+	else_if = {
+		limit = { has_idea = BLR_unstable_national_currency3 }
+		swap_ideas = {
+			remove_idea = BLR_unstable_national_currency3
+			add_idea = BLR_unstable_national_currency2
+		}
+	}
+	else_if = {
+		limit = { has_idea = BLR_unstable_national_currency4 }
+		swap_ideas = {
+			remove_idea = BLR_unstable_national_currency4
+			add_idea = BLR_unstable_national_currency2
+		}
+	}
+	else_if = {
+		limit = { NOT = { has_idea = BLR_unstable_national_currency2 } }
+		add_ideas = BLR_unstable_national_currency2
+	}
+}
 BLR_idea_army = {
 	if = {
 		limit = { has_idea = BLR_reforming_army2 }
@@ -129,5 +156,27 @@ BLR_idea_army = {
 			remove_idea = BLR_outdated_army
 			add_idea = BLR_reforming_army
 		}
+	}
+}
+
+# Attaches only the political modifier the current government still qualifies for. The backing
+# variables live on the country and survive detachment, so a path's accumulated focus bonuses
+# return intact if its ideology comes back.
+BLR_update_political_modifiers = {
+	if = { limit = { has_dynamic_modifier = { modifier = BLR_belarus_nati_modifier } } remove_dynamic_modifier = { modifier = BLR_belarus_nati_modifier } }
+	if = { limit = { has_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier } } remove_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier } }
+	if = {
+		limit = {
+			has_completed_focus = BLR_constitution_from_1994
+			has_government = nationalist
+		}
+		add_dynamic_modifier = { modifier = BLR_belarus_nati_modifier }
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = BLR_Communism_start
+			emerging_communist_state_are_in_power = yes
+		}
+		add_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier }
 	}
 }

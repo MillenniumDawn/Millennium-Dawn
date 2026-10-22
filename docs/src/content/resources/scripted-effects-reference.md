@@ -44,10 +44,16 @@ random_controlled_state = {
 | Radar                  | `one_state_radar_station`          | `one_radar_station`                 |
 | Nuclear Reactor        | `one_state_nuclear_reactor`        | `one_random_nuclear_reactor`        |
 | Agriculture District   | `one_state_agriculture_district`   | `one_random_agriculture_district`   |
+| Land Facility          | n/a                                | `one_random_land_facility`          |
+| Naval Facility         | n/a                                | `one_random_naval_facility`         |
+| Air Facility           | n/a                                | `one_random_air_facility`           |
+| Nuclear Facility       | n/a                                | `one_random_nuclear_facility`       |
 
-### Building Costs (State-Level)
+The four research facilities are random-scope only: they pick a state that passes `can_construct_building` and build into a province, so there is no predefined-state variant.
 
-The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot.
+### Building Costs
+
+The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province.
 
 | Building                            | Cost   |
 | ----------------------------------- | ------ |
@@ -63,9 +69,13 @@ The cost implies the INCLUSION of a building slot. A single building slot is $1.
 | Network Infrastructure              | $3.00  |
 | Missile Site                        | $3.00  |
 | Nuclear Reactor                     | $9.00  |
-| Fossil Powerplant                   | $2.25  |
+| Fossil Powerplant                   | $3.25  |
 | Microchip Plant                     | $10.50 |
-| Composite Plant                     | $7.50  |
+| Composite Plant                     | $8.50  |
+| Synthetic Refinery                  | $6.00  |
+| Reinforced Electrical Grid          | $6.50  |
+| High Capacity Electrical Grid       | $6.50  |
+| Research Facility                   | $15.00 |
 
 ---
 
@@ -134,18 +144,15 @@ increase_military_spending = yes / decrease_military_spending = yes
 
 # Internal Faction Effects
 
-> **Location**: `common/scripted_effects/00_scripted_effects.txt`
+> **Location**: `common/scripted_effects/00_internal_faction_effects.txt`
 
 ```hoiscript
-# Change faction opinion
-set_temp_variable = { labour_unions_opinion = 5 }
+# Change faction opinion (does nothing if the country lacks the faction)
+set_temp_variable = { temp_opinion = 5 }
 change_labour_unions_opinion = yes
-
-# Available factions:
-# labour_unions, the_clergy, small_and_medium_business_owners,
-# landowners, military_industrial_complex, intelligence_community,
-# organized_crime
 ```
+
+One `change_<faction>_opinion` effect exists per faction idea, such as `change_the_military_opinion` or `change_small_medium_business_owners_opinion`. Wahhabi Ulema is the exception: use `change_the_wahabi_ulema_opinion`. Autocratic governments get positive changes doubled, but `temp_opinion` itself is left alone, so one value can feed several `change_*` calls in a row. The result respects the faction's `if_<faction>_minimum_opinion` and `if_<faction>_maximum_opinion` modifiers. For a lasting floor, cap, or monthly drift, put `if_<faction>_minimum_opinion`, `if_<faction>_maximum_opinion`, or `if_<faction>_monthly_opinion` on an idea instead of changing opinion in a loop.
 
 ---
 
@@ -324,7 +331,7 @@ Where `N` is the slot index from the slots table. Only set slots for parties tha
 If the party holds government or is a coalition partner at game start, also add:
 
 ```hoiscript
-add_to_array = { ruling_party = N }          # if this party governs alone or leads the coalition
+set_variable = { ruling_party = N }          # if this party governs alone or leads the coalition
 add_to_array = { gov_coalition_array = N }   # if this party is a junior coalition partner
 ```
 
@@ -346,7 +353,7 @@ If the country has scripted leader rotation, add the leader's `create_country_le
 | 1     | `conservatism`               | Pro-Western (democratic)  |
 | 2     | `liberalism`                 | Pro-Western (democratic)  |
 | 3     | `socialism`                  | Pro-Western (democratic)  |
-| 4     | `Communist-State`            | Emerging (communism)      |
+| 4     | `communist_state`            | Emerging (communism)      |
 | 5     | `anarchist_communism`        | Emerging (communism)      |
 | 6     | `Conservative`               | Emerging (communism)      |
 | 7     | `Autocracy`                  | Emerging (communism)      |

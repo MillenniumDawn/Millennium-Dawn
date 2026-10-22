@@ -19,12 +19,37 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       with:
         fetch-depth: 1
 
-    - name: Create Release
-      uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b # v2
+    - name: Extract curated release notes
+      id: changelog
+      run: |
+        if python3 tools/extract_release_notes.py "${{ github.ref_name }}" --output release-notes.md; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          status=$?
+          if [ "$status" -eq 1 ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            exit "$status"
+          fi
+        fi
+
+    - name: Create Release with curated notes
+      if: steps.changelog.outputs.found == 'true'
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        body_path: release-notes.md
+
+    - name: Create Release with generated notes
+      if: steps.changelog.outputs.found == 'false'
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}

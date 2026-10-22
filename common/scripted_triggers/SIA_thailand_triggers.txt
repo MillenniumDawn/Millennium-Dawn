@@ -1,0 +1,220 @@
+## Thailand: scripted triggers. Two shapes, and the difference matters: *_trunk_open asks who
+## governs right now and gates focuses that exercise state power; *_trunk_entry also accepts the
+## committed SIA_path_* flag and gates the three trunk-entry focuses off the 2001 election.
+
+SIA_populist_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_populist_trunk_entry_tt
+		check_variable = { ruling_party = 18 }
+	}
+}
+
+SIA_royalist_trunk_open = {
+	OR = {
+		custom_trigger_tooltip = {
+			tooltip = SIA_ruling_ncpo_tt
+			check_variable = { ruling_party = 22 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = SIA_ruling_chakri_tt
+			check_variable = { ruling_party = 23 }
+		}
+	}
+}
+
+SIA_democrat_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_democrat_trunk_entry_tt
+		check_variable = { ruling_party = 1 }
+	}
+}
+
+SIA_reform_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_reform_trunk_entry_tt
+		check_variable = { ruling_party = 3 }
+	}
+}
+
+SIA_communist_trunk_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_communist_trunk_entry_tt
+		check_variable = { ruling_party = 4 }
+	}
+}
+
+SIA_communist_road_open = { has_country_flag = SIA_path_communist }
+
+## The palace's standing policy work. It runs under any government that has not repudiated the
+## monarchy outright, so it asks who is NOT governing rather than who is.
+SIA_royalist_policy_open = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_not_ruled_by_communists_tt
+		NOT = { check_variable = { ruling_party = 4 } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = SIA_not_ruled_by_reformists_tt
+		NOT = { check_variable = { ruling_party = 3 } }
+	}
+}
+
+## Bare AI-weight trigger, no tooltip: it only ever gates ai_will_do.
+SIA_ai_off_royalist_trunk = {
+	OR = {
+		has_country_flag = SIA_path_communist
+		has_country_flag = SIA_path_reform
+	}
+}
+
+SIA_not_ruled_by_chakri = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_not_ruled_by_chakri_tt
+		NOT = { check_variable = { ruling_party = 23 } }
+	}
+}
+
+SIA_asean_hegemony_available = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_asean_hegemony_government_tt
+		NOT = { check_variable = { ruling_party = 1 } }
+		NOT = { check_variable = { ruling_party = 3 } }
+	}
+	OR = {
+		has_completed_focus = SIA_lost_territories
+		has_war_support > 0.50
+	}
+}
+
+SIA_populist_trunk_entry = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_populist_trunk_entry_tt
+		OR = {
+			has_country_flag = SIA_path_populist
+			# Pheu Thai (18) — the Thaksinite government rules at idx 18 in the never idx 1 (which is the
+			# Democrats; see the Democrat entry).
+			check_variable = { ruling_party = 18 }
+		}
+	}
+}
+
+SIA_royalist_trunk_entry = {
+	OR = {
+		custom_trigger_tooltip = {
+			tooltip = SIA_ruling_ncpo_tt
+			check_variable = { ruling_party = 22 }
+		}
+		custom_trigger_tooltip = {
+			tooltip = SIA_ruling_chakri_tt
+			check_variable = { ruling_party = 23 }
+		}
+		hidden_trigger = { has_country_flag = SIA_path_royalist }
+	}
+}
+
+SIA_democrat_trunk_entry = {
+	custom_trigger_tooltip = {
+		tooltip = SIA_democrat_trunk_entry_tt
+		OR = {
+			has_country_flag = SIA_path_democrat
+			# The Democrats (conservatism, idx 1).
+			check_variable = { ruling_party = 1 }
+		}
+	}
+}
+
+## The Deep South conflict is armed and not yet settled by either route. Gates every decision,
+## category, effect and event that acts on the insurgency meters.
+SIA_ds_conflict_live = {
+	has_country_flag = SIA_ds_active
+	NOT = { has_country_flag = SIA_ds_resolved_force }
+	NOT = { has_country_flag = SIA_ds_resolved_peace }
+}
+
+SIA_coup_machinery_live = {
+	has_country_flag = SIA_path_populist
+	NOT = { has_idea = SIA_junta_government }
+	NOT = { has_completed_focus = SIA_civilian_control }
+}
+
+## Develop conquered land (breakaway-states + ASEAN-hegemony trees) A "reclaimed" state is
+## territory conquered on an expansion path but not yet integrated:
+SIA_is_reclaimed_state = {
+	is_owned_by = SIA
+	is_claimed_by = SIA
+	NOT = { is_core_of = SIA }
+}
+
+SIA_ai_alt_path = {
+	OR = {
+		has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH
+		has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH
+		has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH
+		has_global_flag = SIA_REFORMIST_FOCUS_PATH
+	}
+}
+
+SIA_ai_historical_path = {
+	OR = {
+		has_global_flag = SIA_HISTORICAL_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			NOT = { SIA_ai_alt_path = yes }
+			NOT = { has_game_rule = { rule = SIA_ai_behavior option = NO_PATH } }
+		}
+	}
+}
+
+SIA_ai_not_historical_path = {
+	SIA_ai_alt_path = yes
+}
+
+SIA_ai_not_historical_government_path = {
+	OR = {
+		has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH
+		has_global_flag = SIA_REFORMIST_FOCUS_PATH
+	}
+}
+
+SIA_ai_not_greater_thailand_path = {
+	NOT = { has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = SIA_HISTORICAL_FOCUS_PATH
+		has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH
+		has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH
+		has_global_flag = SIA_REFORMIST_FOCUS_PATH
+	}
+}
+
+SIA_ai_not_regional_pact_path = {
+	NOT = { has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = SIA_HISTORICAL_FOCUS_PATH
+		has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH
+		has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH
+		has_global_flag = SIA_REFORMIST_FOCUS_PATH
+	}
+}
+
+SIA_ai_not_peoples_republic_path = {
+	NOT = { has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = SIA_HISTORICAL_FOCUS_PATH
+		has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH
+		has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH
+		has_global_flag = SIA_REFORMIST_FOCUS_PATH
+	}
+}
+
+SIA_ai_not_reformist_path = {
+	NOT = { has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = SIA_HISTORICAL_FOCUS_PATH
+		has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH
+		has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH
+		has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH
+	}
+}

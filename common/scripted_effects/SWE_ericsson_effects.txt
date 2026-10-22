@@ -1,0 +1,122 @@
+SWE_ericsson_ensure_digital_modifier = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = SWE_digital_modifier } } }
+		add_dynamic_modifier = { modifier = SWE_digital_modifier }
+	}
+}
+
+# Outcomes are idempotent so a silent reconstruction and a live choice cannot stack.
+SWE_ericsson_apply_joint_venture_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_receiving_investment_cost_modifier = -0.01 tooltip = receiving_investment_cost_modifier_tt }
+		set_country_flag = SWE_sony_ericsson_joint_venture
+	}
+}
+
+SWE_ericsson_apply_retained_handsets_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_sony_ericsson_joint_venture }
+			NOT = { has_country_flag = SWE_ericsson_retained_handsets }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+		set_country_flag = SWE_ericsson_retained_handsets
+	}
+}
+
+SWE_ericsson_apply_handset_exit_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_projects_cost_modifier = 0.01 tooltip = projects_cost_modifier_tt }
+		set_country_flag = SWE_ericsson_exited_handsets
+	}
+}
+
+SWE_ericsson_apply_full_handset_control_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_exited_handsets }
+			NOT = { has_country_flag = SWE_ericsson_full_handset_control }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		set_country_flag = SWE_ericsson_full_handset_control
+	}
+}
+
+SWE_ericsson_apply_vonage_platform_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_office_park_income_tax_modifier = 0.01 tooltip = office_park_income_tax_modifier_tt }
+		add_to_variable = { SWE_Digital_receiving_investment_cost_modifier = -0.01 tooltip = receiving_investment_cost_modifier_tt }
+		set_country_flag = SWE_ericsson_vonage_platform
+	}
+}
+
+SWE_ericsson_apply_radio_network_outcome = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = SWE_ericsson_vonage_platform }
+			NOT = { has_country_flag = SWE_ericsson_radio_network_focus }
+		}
+		SWE_ericsson_ensure_digital_modifier = yes
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SWE_digital_modifier }
+		add_to_variable = { SWE_Digital_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		add_to_variable = { SWE_Digital_productivity_growth_modifier = 0.01 tooltip = productivity_growth_modifier_tt }
+		set_country_flag = SWE_ericsson_radio_network_focus
+	}
+}
+
+# One entry point per milestone, called from the yearly pulse. Full presents the
+# choice; Outcomes Only writes the historical route silently and grants nothing.
+SWE_ericsson_milestone_2001 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = Sweden.300 days = 273 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		SWE_ericsson_apply_joint_venture_outcome = yes
+	}
+}
+
+SWE_ericsson_milestone_2012 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = Sweden.301 days = 45 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		SWE_ericsson_apply_handset_exit_outcome = yes
+	}
+}
+
+SWE_ericsson_milestone_2022 = {
+	if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = full } }
+		country_event = { id = Sweden.302 days = 201 }
+	}
+	else_if = {
+		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
+		SWE_ericsson_apply_vonage_platform_outcome = yes
+	}
+}
