@@ -1863,6 +1863,11 @@ UKR_spawn_donbass_war = {
 			give_AI_templates = yes
 		}
 	}
+	if = {
+		limit = { NOT = { has_global_flag = UKR_donbas_depots_seized_flag } }
+		set_global_flag = UKR_donbas_depots_seized_flag
+		UKR = { country_event = { id = ukr_modernize_sov_equipment_storage_sale.28 days = 3 } }
+	}
 }
 UKR_spawn_HPR_war = {
 	HPR = {
@@ -9427,4 +9432,287 @@ UKR_old_small_arms_issue = {
 	UKR_old_gear_deliver_pps43 = yes
 	set_variable = { ukraine_has_pps43_stockpile = 0 }
 	UKR_storage_refresh = yes
+}
+
+# Separatists seize part of our storage when the Donbas war starts (event storage_sale.28).
+# 2% of each pool with well-kept depots, up to 5% after years of neglect (UKR_depot_neglect 0-16).
+# Neglect also opens more depots: AK-47 only; from 6 the other small arms, SPG-9 and Strela-2; from 11 the Malyutka carriers and old guns.
+# DPR gets 65%, LPR 35%, all as Soviet-made equipment.
+UKR_donbas_seize_depots = {
+	set_temp_variable = { ukr_seize_share = UKR_depot_neglect }
+	clamp_temp_variable = { var = ukr_seize_share min = 0 max = 16 }
+	divide_temp_variable = { ukr_seize_share = 16 }
+	multiply_temp_variable = { ukr_seize_share = 0.03 }
+	add_to_temp_variable = { ukr_seize_share = 0.02 }
+	set_variable = { ukraine_seized_ak47 = 0 }
+	set_variable = { ukraine_seized_mosin = 0 }
+	set_variable = { ukraine_seized_sks = 0 }
+	set_variable = { ukraine_seized_ppsh = 0 }
+	set_variable = { ukraine_seized_pps43 = 0 }
+	set_variable = { ukraine_seized_spg9 = 0 }
+	set_variable = { ukraine_seized_strela2 = 0 }
+	set_variable = { ukraine_seized_9k11 = 0 }
+	set_variable = { ukraine_seized_m46 = 0 }
+	set_variable = { ukraine_seized_d1 = 0 }
+	set_variable = { ukraine_seized_m30 = 0 }
+	set_variable = { ukraine_seized_ml20 = 0 }
+	if = {
+		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
+		set_variable = { ukraine_seized_ak47 = ukraine_has_ak47_stockpile }
+		multiply_variable = { ukraine_seized_ak47 = ukr_seize_share }
+		round_variable = ukraine_seized_ak47
+		subtract_from_variable = { ukraine_has_ak47_stockpile = ukraine_seized_ak47 }
+		set_temp_variable = { ukr_seized_now = ukraine_seized_ak47 }
+		UKR_donbas_seized_split = yes
+		if = {
+			limit = { check_variable = { ukr_dpr_amount > 0 } }
+			set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+			DPR = { UKR_old_gear_deliver_ak47 = yes }
+		}
+		if = {
+			limit = { check_variable = { ukr_lpr_amount > 0 } }
+			set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+			LPR = { UKR_old_gear_deliver_ak47 = yes }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_depot_neglect > 5 } }
+		if = {
+			limit = { check_variable = { ukraine_has_mosin_stockpile > 0 } }
+			set_variable = { ukraine_seized_mosin = ukraine_has_mosin_stockpile }
+			multiply_variable = { ukraine_seized_mosin = ukr_seize_share }
+			round_variable = ukraine_seized_mosin
+			subtract_from_variable = { ukraine_has_mosin_stockpile = ukraine_seized_mosin }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_mosin }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_mosin = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_mosin = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_sks_stockpile > 0 } }
+			set_variable = { ukraine_seized_sks = ukraine_has_sks_stockpile }
+			multiply_variable = { ukraine_seized_sks = ukr_seize_share }
+			round_variable = ukraine_seized_sks
+			subtract_from_variable = { ukraine_has_sks_stockpile = ukraine_seized_sks }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_sks }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_sks = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_sks = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_ppsh_stockpile > 0 } }
+			set_variable = { ukraine_seized_ppsh = ukraine_has_ppsh_stockpile }
+			multiply_variable = { ukraine_seized_ppsh = ukr_seize_share }
+			round_variable = ukraine_seized_ppsh
+			subtract_from_variable = { ukraine_has_ppsh_stockpile = ukraine_seized_ppsh }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_ppsh }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_ppsh = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_ppsh = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_pps43_stockpile > 0 } }
+			set_variable = { ukraine_seized_pps43 = ukraine_has_pps43_stockpile }
+			multiply_variable = { ukraine_seized_pps43 = ukr_seize_share }
+			round_variable = ukraine_seized_pps43
+			subtract_from_variable = { ukraine_has_pps43_stockpile = ukraine_seized_pps43 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_pps43 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_pps43 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_pps43 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } }
+			set_variable = { ukraine_seized_spg9 = ukraine_has_spg9_stockpile }
+			multiply_variable = { ukraine_seized_spg9 = ukr_seize_share }
+			round_variable = ukraine_seized_spg9
+			subtract_from_variable = { ukraine_has_spg9_stockpile = ukraine_seized_spg9 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_spg9 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_spg9 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_spg9 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } }
+			set_variable = { ukraine_seized_strela2 = ukraine_has_strela2_stockpile }
+			multiply_variable = { ukraine_seized_strela2 = ukr_seize_share }
+			round_variable = ukraine_seized_strela2
+			subtract_from_variable = { ukraine_has_strela2_stockpile = ukraine_seized_strela2 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_strela2 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_strela2 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_strela2 = yes }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_depot_neglect > 10 } }
+		if = {
+			limit = { check_variable = { ukraine_has_9k11_stockpile > 0 } }
+			set_variable = { ukraine_seized_9k11 = ukraine_has_9k11_stockpile }
+			multiply_variable = { ukraine_seized_9k11 = ukr_seize_share }
+			round_variable = ukraine_seized_9k11
+			subtract_from_variable = { ukraine_has_9k11_stockpile = ukraine_seized_9k11 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_9k11 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_sov_deliver_9k11 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_sov_deliver_9k11 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_m46_stockpile > 0 } }
+			set_variable = { ukraine_seized_m46 = ukraine_has_m46_stockpile }
+			multiply_variable = { ukraine_seized_m46 = ukr_seize_share }
+			round_variable = ukraine_seized_m46
+			subtract_from_variable = { ukraine_has_m46_stockpile = ukraine_seized_m46 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_m46 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_m46 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_m46 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_d1_stockpile > 0 } }
+			set_variable = { ukraine_seized_d1 = ukraine_has_d1_stockpile }
+			multiply_variable = { ukraine_seized_d1 = ukr_seize_share }
+			round_variable = ukraine_seized_d1
+			subtract_from_variable = { ukraine_has_d1_stockpile = ukraine_seized_d1 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_d1 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_d1 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_d1 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_m30_stockpile > 0 } }
+			set_variable = { ukraine_seized_m30 = ukraine_has_m30_stockpile }
+			multiply_variable = { ukraine_seized_m30 = ukr_seize_share }
+			round_variable = ukraine_seized_m30
+			subtract_from_variable = { ukraine_has_m30_stockpile = ukraine_seized_m30 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_m30 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_m30 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_m30 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } }
+			set_variable = { ukraine_seized_ml20 = ukraine_has_ml20_stockpile }
+			multiply_variable = { ukraine_seized_ml20 = ukr_seize_share }
+			round_variable = ukraine_seized_ml20
+			subtract_from_variable = { ukraine_has_ml20_stockpile = ukraine_seized_ml20 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_ml20 }
+		UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_ml20 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_ml20 = yes }
+			}
+		}
+	}
+	UKR_storage_refresh = yes
+}
+# Split temp ukr_seized_now 65/35 into temp ukr_dpr_amount and ukr_lpr_amount; all of it to whichever republic exists
+UKR_donbas_seized_split = {
+	set_temp_variable = { ukr_dpr_amount = 0 }
+	set_temp_variable = { ukr_lpr_amount = 0 }
+	if = {
+		limit = {
+			country_exists = DPR
+			country_exists = LPR
+		}
+		set_temp_variable = { ukr_dpr_amount = ukr_seized_now }
+		multiply_temp_variable = { ukr_dpr_amount = 0.65 }
+		round_temp_variable = ukr_dpr_amount
+		set_temp_variable = { ukr_lpr_amount = ukr_seized_now }
+		subtract_from_temp_variable = { ukr_lpr_amount = ukr_dpr_amount }
+	}
+	else_if = {
+		limit = { country_exists = DPR }
+		set_temp_variable = { ukr_dpr_amount = ukr_seized_now }
+	}
+	else_if = {
+		limit = { country_exists = LPR }
+		set_temp_variable = { ukr_lpr_amount = ukr_seized_now }
+	}
 }
