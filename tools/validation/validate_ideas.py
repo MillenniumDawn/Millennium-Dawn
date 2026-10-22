@@ -1538,11 +1538,7 @@ class Validator(BaseValidator):
                     for staged_file in staged_files_set
                 )
             }
-            idea_tags_changed = any(
-                path.startswith("common/idea_tags/") and path.endswith(".txt")
-                for path in staged_files_set
-            )
-            if idea_tags_changed:
+            if self.staged_touches(("common/idea_tags",)):
                 self.validate_idea_quality(issues_by_file)
             elif staged_issues:
                 self.validate_idea_quality(staged_issues)

@@ -1704,7 +1704,7 @@ def test_staged_run_reports_quality_for_the_staged_idea_file(tmp_path, no_vanill
 def test_staged_idea_tags_change_runs_the_full_quality_scan():
     validator = Validator("/nonexistent", use_colors=False, workers=1)
     validator.staged_only = True
-    validator.staged_files = ["common/idea_tags/00_idea.txt"]
+    validator.staged_files = ["/nonexistent/common/idea_tags/00_idea.txt"]
     all_issues = {
         "common/ideas/test.txt": [IdeaIssue("my_idea", "country", 1, _SLOTLESS_ALLOWED)]
     }
