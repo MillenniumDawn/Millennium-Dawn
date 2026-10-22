@@ -41,6 +41,7 @@ from validator_common import (
     Severity,
     run_validator_main,
     should_skip_file,
+    weight_stays_zero,
 )
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
@@ -1328,16 +1329,23 @@ def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
         )
 
 
+def effect_costs(
+    effect_text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block body charges its own country.
+
+    The body has comments already stripped. `effects` and `stored` come from
+    load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored)
+
+
 def uncovered_costs(
     effect_text: str, ai_weights: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> Set[str]:
-    """Costs an effect block charges its own country that an AI weight block ignores.
-
-    Both arguments are block bodies with comments already stripped. `effects`
-    and `stored` come from load_cost_lookups.
-    """
-    own = _split_option(blank_quoted_strings(effect_text))[0]
-    return _effect_costs(own, effects, {}, stored) - _cost_sensitive_kinds(
+    """Costs an effect block charges its own country that an AI weight block ignores."""
+    return effect_costs(effect_text, effects, stored) - _cost_sensitive_kinds(
         ai_weights, None
     )
 
@@ -1367,6 +1375,10 @@ def find_cost_blind_options(
     where every option has a `trigger`: those may be variants the AI never chooses
     between, so the finding needs a look before it is fixed. `effects` comes from
     costly_scripted_effects and `stored` from stored_variable_signs.
+
+    Skipped: an option the AI never picks (`base = 0`, no `add`) while another
+    option can win, and a cost every option charges, since a guard on each one
+    scales them all alike. Tax rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
@@ -1385,10 +1397,19 @@ def find_cost_blind_options(
             for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
-        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+        option_costs = [_effect_costs(own, effects, {}, stored) for own, _b in splits]
+        shared = set.intersection(*option_costs) - {"tax rate"}
+        never_picked = [
+            weight_stays_zero(blocks.get("ai_chance", (0, ""))[1])
+            for _own, blocks in splits
+        ]
+        for (opt_start, opt_end), (_own, blocks), costs, never in zip(
+            options, splits, option_costs, never_picked
+        ):
+            if never and not all(never_picked):
+                continue
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
-            costs = _effect_costs(own, effects, {}, stored)
-            costs -= _cost_sensitive_kinds(ai_chance, country)
+            costs = costs - shared - _cost_sensitive_kinds(ai_chance, country)
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)

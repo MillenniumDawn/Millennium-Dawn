@@ -288,6 +288,52 @@ _OPTION_CASES = {
         ),
         [("foo.1.b", 17, "stability", False)],
     ),
+    "base 0 option beside one that can win": (
+        _two_options(_PP_COST + "\t\tai_chance = { base = 0 }\n"),
+        [],
+    ),
+    "base 0 option with an add": (
+        _two_options(
+            _PP_COST
+            + "\t\tai_chance = { base = 0 modifier = { add = 5 has_war = yes } }\n"
+        ),
+        [("foo.1.a", 8, "political power", False)],
+    ),
+    "every option at base 0": (
+        _event(
+            _option("foo.1.a", _PP_COST + "\t\tai_chance = { base = 0 }\n"),
+            _option("foo.1.b", "\t\tai_chance = { base = 0 }\n"),
+        ),
+        [("foo.1.a", 8, "political power", False)],
+    ),
+    "cost every option pays": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT), _option("foo.1.b", _PP_COST + _FLAT)
+        ),
+        [],
+    ),
+    "only the shared kind is skipped": (
+        _event(
+            _option("foo.1.a", _PP_COST + "\t\tadd_stability = -0.02\n" + _FLAT),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [("foo.1.a", 9, "stability", False)],
+    ),
+    "tax rate moved by every option": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tset_temp_variable = { corp_change = -2 }\n"
+                "\t\tmodify_corporate_tax_rate_effect = yes\n" + _FLAT,
+            ),
+            _option(
+                "foo.1.b",
+                "\t\tset_temp_variable = { corp_change = 3 }\n"
+                "\t\tmodify_corporate_tax_rate_effect = yes\n" + _FLAT,
+            ),
+        ),
+        [("foo.1.a", 9, "tax rate", False), ("foo.1.b", 15, "tax rate", False)],
+    ),
 }
 
 

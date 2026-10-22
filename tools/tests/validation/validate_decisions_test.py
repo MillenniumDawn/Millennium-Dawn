@@ -283,6 +283,53 @@ _CHECK_CASES = {
         ),
         "plain mission": ([_flat(_MISSION, _PAID)], []),
     },
+    "validate_custom_cost_charged": {
+        "charged when taken": ([_flat(_TREASURY_GATE, _PAID)], []),
+        "scripted charge": (
+            [_flat(_TREASURY_GATE, _effect("\t\tpay_the_bill = yes\n"))],
+            [],
+        ),
+        "charged on removal": (
+            [_flat(_TREASURY_GATE, _PAID_ON_REMOVE)],
+            [
+                (
+                    "dec_one - custom cost charges treasury in remove_effect, not"
+                    " complete_effect",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "never charged": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = {\n\t\tcommand_power > 49\n"
+                    "\t\thas_political_power > 74\n\t}\n",
+                    _effect(_SPEND),
+                )
+            ],
+            [
+                (
+                    "dec_one - custom cost checks command power but never charges it",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "equipment handed over": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { has_equipment = { infantry_equipment > 99 } }\n",
+                    _effect(
+                        "\t\tadd_equipment_to_stockpile = { type = infantry_equipment"
+                        " amount = -100 }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _TREASURY_GATE)], []),
+    },
     # Only the inconsistent case is a defect: a block that announces one unlock
     # and misses a sibling gated on the flag it just set.
     "validate_unannounced_decision_unlocks": {
