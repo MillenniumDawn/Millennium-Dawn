@@ -1131,7 +1131,7 @@ def test_tools_quality_checks_are_wired_in_precommit_and_ci():
     }
     assert {"black-tools", "pylint-tools", "mypy-tools"} <= hooks.keys()
     assert hooks["black-tools"]["entry"] == "black"
-    assert "pylint tools" in hooks["pylint-tools"]["entry"]
+    assert hooks["pylint-tools"]["entry"].startswith("pylint ")
     assert hooks["mypy-tools"]["entry"] == "mypy"
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     assert "ruff check tools" in text
