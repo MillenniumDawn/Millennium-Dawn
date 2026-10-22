@@ -75,12 +75,17 @@ def test_lg_endpoints_and_midpoint():
     assert sc.lg(2120, 2010, 0.1) > 1 - 1e-3
 
 
-def test_chain_logistics_independent():
-    # Renewable, fission and fusion helpers each hit 0.5 at their own tmid
-    assert sc.Lr(2016) == pytest.approx(0.5)
-    assert sc.Lfis(2002) == pytest.approx(0.5)
-    assert sc.Lfus(2053) == pytest.approx(0.5)
-    # And they are different curves (steepness differs)
+def test_chain_logistics_start_at_zero_one_step_before_first_tech():
+    assert sc.START == {"ren": 1985, "nuc": 1980, "fos": 1980}
+    for curve, key in (
+        (sc.Lf, "fos"),
+        (sc.Lr, "ren"),
+        (sc.Lfis, "nuc"),
+        (sc.Lfus, "nuc"),
+    ):
+        assert curve(sc.START[key]) == pytest.approx(0.0)
+    # each helper is its own logistic, shifted down by its start value
+    assert sc.Lr(sc.R_T) == pytest.approx(0.5 - sc.lg(1985, sc.R_T, sc.R_K))
     assert sc.Lf(2080) != sc.Lr(2080)
 
 
@@ -160,15 +165,14 @@ def test_solve_amplitudes_matches_design_crossovers():
     fos_2014 = sc.metric("fos", 2014, *amps)
     assert nuc_2014 == pytest.approx(fos_2014, rel=0.02)
 
-    # 2020: renewable ~ fossil
-    ren_2019 = sc.metric("ren", 2019, *amps)
-    fos_2019 = sc.metric("fos", 2019, *amps)
-    assert ren_2019 == pytest.approx(fos_2019, rel=0.02)
+    # 2015: renewable ~ fossil
+    ren_2014 = sc.metric("ren", 2014, *amps)
+    assert ren_2014 == pytest.approx(fos_2014, rel=0.02)
 
     # 2060: nuclear (fusion on) ~ renewable
-    ren_2060 = sc.metric("ren", 2060, *amps)
-    nuc_2060 = sc.metric("nuc", 2060, *amps)
-    assert nuc_2060 == pytest.approx(ren_2060, rel=0.02)
+    ren_2059 = sc.metric("ren", 2059, *amps)
+    nuc_2059 = sc.metric("nuc", 2059, *amps)
+    assert nuc_2059 == pytest.approx(ren_2059, rel=0.02)
 
     # 2080: nuclear still above renewable (fusion plateau holds the lead)
     ren_2080 = sc.metric("ren", 2080, *amps)
@@ -192,12 +196,12 @@ def test_increments_chain_order_and_floors():
         chain_techs = [t for t, (k, *_rest) in edits.items() if k == key]
         assert chain_techs == c["techs"]
 
-    # Each per-tech power increment is non-negative (>= 0.001 floor)
+    # No tech sits on the 0.001 floor
     for tech, (key, p, s, iv) in edits.items():
-        assert p >= 0.001
-        assert s >= 0.001
-        # infra is non-positive relief and never more extreme than INFRA_CAP
-        assert iv <= 0.0
+        assert p > 0.001, tech
+        assert s > 0.001, tech
+        # infra is negative relief, off the -0.001 floor, never more extreme than INFRA_CAP
+        assert iv < -0.001, tech
         assert iv >= sc.INFRA_CAP - 1e-9
 
 

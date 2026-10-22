@@ -27,14 +27,20 @@ metric = base_GW * state_factor * (1 + sum of power techs)
 At state factor 1.0, by techs alone:
 
 ```
-fossil  < 2015 <  nuclear (fission)  < 2020 <  renewable  < 2060 <  nuclear (fusion)
+fossil  < 2015 <  renewable  < 2060 <  nuclear (fusion)
 ```
 
+Good renewable states (factor 1.5) beat fossil by 2010. Fission nuclear never leads at
+factor 1.0. It beats renewables only in weak states (factor 0.5) until about 2030.
+
 Each source's cumulative tech bonus, for power and for construction speed, follows a
-logistic S-curve. Fossil has one small curve that rises early. Renewable has one large
-curve with a steep rise through the 2010s and 2020s and a plateau near 2040. Nuclear
+logistic S-curve. Each curve starts at zero one tech step before its chain's first tech,
+so no tech carries a pre-1990 lump. Fossil has one small curve past its midpoint, so each
+tech gives a little less than the last. Renewable has one large, wide curve that rises
+through the 2000s to 2030s and still grants real gains on the 2060 to 2080 techs. Nuclear
 has two stacked curves: fission (about 1990 to 2015) and fusion (about 2050 to 2065).
-The amplitudes are solved so the crossovers land on 2015, 2020, and 2060.
+The amplitudes are solved so the crossovers land on 2015 and 2060. No tech sits on the
+0.001 floor.
 
 ## Upkeep relief
 
