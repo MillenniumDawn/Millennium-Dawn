@@ -24,6 +24,7 @@ every write.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import pickle
@@ -208,7 +209,8 @@ def _unpack(mod_path: str, blob: bytes) -> Any:
     return _rehome_mod_paths(payload, old_root, mod_path)
 
 
-def _fingerprint_paths(namespace: str) -> list[Path]:
+@functools.lru_cache(maxsize=None)
+def _fingerprint_paths(namespace: str) -> tuple[Path, ...]:
     paths = [
         Path(__file__),
         Path(__file__).parent.parent / "shared_utils.py",
@@ -223,7 +225,7 @@ def _fingerprint_paths(namespace: str) -> list[Path]:
         paths.extend(Path(__file__).parent.glob("*.py"))
     for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
         paths.append(Path(__file__).parent / dependency)
-    return sorted(set(paths))
+    return tuple(sorted(set(paths)))
 
 
 def _validator_code_fingerprint(namespace: str = "") -> str:
