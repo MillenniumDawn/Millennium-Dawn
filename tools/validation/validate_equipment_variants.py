@@ -420,7 +420,7 @@ class Validator(BaseValidator):
                         "set_technology",
                     )
                 )
-                or any(match[1] in effect_names for match in _ASSIGNMENT.finditer(text))
+                or any(name in effect_names for name in _ASSIGNMENT.findall(text))
                 or re.search(r"\b[A-Za-z_]\w*\.\d+\b", text)
                 or relative.startswith(
                     (
@@ -476,7 +476,7 @@ class Validator(BaseValidator):
                 continue
             text = FileOpener.open_text_file(path)
             if "create_equipment_variant" not in text and not any(
-                match[1] in context.effects for match in _ASSIGNMENT.finditer(text)
+                name in context.effects for name in _ASSIGNMENT.findall(text)
             ):
                 continue
             match = re.match(r"history/countries/([A-Z]{3})(?:\s|\.)", relative)

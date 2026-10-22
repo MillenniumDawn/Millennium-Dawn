@@ -39,7 +39,7 @@ loading a stale or corrupt cache fall back to recomputing.
 
 ```
 .validation_cache/
-  v9/
+  v10/
     cache.db        # single SQLite db: one row per (namespace, key)
     cache.db-wal
     cache.db-shm
