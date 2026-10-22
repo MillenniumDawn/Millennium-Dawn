@@ -132,6 +132,31 @@ _WEEKLY_MODIFIER_CASES = {
             )
         ],
     ),
+    "grant after a nested tooltip stays inside the outer tooltip": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("NESTED_TIP", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {
+            "events/test.txt": (
+                "effect_tooltip = { effect_tooltip = { add_ideas = NESTED_TIP }\n"
+                "add_ideas = NESTED_TIP }"
+            )
+        },
+        [("common/ideas/test.txt", 3, "no statically resolved grant")],
+    ),
+    "unclosed tooltip does not hide a grant": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("OPEN_TIP", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {"events/test.txt": "effect_tooltip = { add_ideas = OPEN_TIP"},
+        [("common/ideas/test.txt", 3, "permanent grant")],
+    ),
     "mixed timed and permanent usage is advisory": (
         {
             "common/ideas/test.txt": _ideas(

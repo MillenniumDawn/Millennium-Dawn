@@ -144,6 +144,7 @@ _ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
 _WEEKLY_IDEA_MODIFIERS = frozenset({"weekly_war_support", "weekly_stability"})
 _TIMED_IDEA_START = re.compile(r"\badd_timed_idea\s*=\s*\{")
 _EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
+_NON_NEWLINE = re.compile(r"[^\n]")
 _PERMANENT_IDEA_REF = re.compile(r"\b(?:add_idea|add_ideas)\s*=\s*([A-Za-z0-9_.:-]+)")
 
 
@@ -166,6 +167,23 @@ def _blank_nested_braces(text: str) -> str:
     return "".join(out)
 
 
+def _blank_effect_tooltips(text: str) -> str:
+    """Blank every `effect_tooltip = { ... }` block, keeping newlines."""
+    pieces = []
+    last = 0
+    for match in _EFFECT_TOOLTIP_START.finditer(text):
+        _block, end = extract_block_from_text(text, match.end() - 1)
+        # Skips unclosed tooltips (end == -1) and ones nested in a blanked block.
+        if end <= last:
+            continue
+        start = max(match.start(), last)
+        pieces.append(text[last:start])
+        pieces.append(_NON_NEWLINE.sub(" ", text[start:end]))
+        last = end
+    pieces.append(text[last:])
+    return "".join(pieces)
+
+
 def _weekly_modifier_issues(
     idea_texts: Dict[str, str], script_texts: Dict[str, str]
 ) -> List[Tuple[str, int, str]]:
@@ -180,16 +198,7 @@ def _weekly_modifier_issues(
     for raw_text in script_texts.values():
         if "add_idea" not in raw_text and "add_timed_idea" not in raw_text:
             continue
-        text = blank_quoted_strings(blank_comments(raw_text))
-        chars = list(text)
-        for match in _EFFECT_TOOLTIP_START.finditer(text):
-            _block, end = extract_block_from_text(text, match.end() - 1)
-            if end == -1:
-                continue
-            for index in range(match.start(), end):
-                if chars[index] != "\n":
-                    chars[index] = " "
-        text = "".join(chars)
+        text = _blank_effect_tooltips(blank_quoted_strings(blank_comments(raw_text)))
         timed_spans = []
         for match in _TIMED_IDEA_START.finditer(text):
             block, end = extract_block_from_text(text, match.end() - 1)
