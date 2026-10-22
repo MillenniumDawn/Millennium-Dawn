@@ -5,17 +5,23 @@ focus_overlap_report.py — report focuses that draw in the same cell.
 A focus sits at its own `x`/`y` plus the `relative_position_id` chain above it,
 plus every `offset` whose trigger passes right now. Branches that never share a
 cell in one game state can pile up in another, so overlaps are only meaningful
-per scenario: which focuses are completed, and what the date is.
+per scenario: which focus tree the country has, which focuses are completed, and
+what the date is. The tree defaults to the file's own `focus_tree`, so a shared
+focus file or a file with several trees needs `--tree` to decide `has_focus_tree`.
 
 Triggers are evaluated three-valued. An offset is applied only when its trigger
 is provably true, and a focus is dropped only when its `allow_branch` is provably
 false, so an unrecognised trigger widens the report rather than hiding a clash.
+
+Coordinates may be fractional. They are kept exact, so halves that add up to a
+whole column land on it, and a fractional cell is printed as a decimal.
 
 Usage:
     python3 tools/analysis/focus_overlap_report.py
     python3 tools/analysis/focus_overlap_report.py --completed POL_stay_on_track --date 2006.1.1
     python3 tools/analysis/focus_overlap_report.py --region 12,26,0,12 --map
     python3 tools/analysis/focus_overlap_report.py --adjacent --format json
+    python3 tools/analysis/focus_overlap_report.py --file common/national_focus/06_AfricanUnion_shared.txt --tree nigeria_focus
 """
 
 from __future__ import annotations
@@ -23,10 +29,12 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence, Tuple
+from decimal import Decimal
+from typing import Dict, List, Optional, Sequence, Tuple, Union
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -39,12 +47,17 @@ from shared_utils import (  # noqa: E402
 DEFAULT_FILE = "common/national_focus/05_poland.txt"
 
 Date = Tuple[int, int, int]
+# A whole coordinate is an int and a fractional one an exact Decimal.
+Coordinate = Union[int, Decimal]
+Position = Tuple[Coordinate, Coordinate]
+
+_NUMBER = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
 
 
 @dataclass
 class Offset:
-    dx: int = 0
-    dy: int = 0
+    dx: Coordinate = 0
+    dy: Coordinate = 0
     trigger: str = ""
 
 
@@ -53,8 +66,8 @@ class Focus:
     id: str
     line: int
     kind: str
-    x: int = 0
-    y: int = 0
+    x: Coordinate = 0
+    y: Coordinate = 0
     relative_to: Optional[str] = None
     allow_branch: Optional[str] = None
     offsets: List[Offset] = field(default_factory=list)
@@ -66,6 +79,7 @@ class Scenario:
     tag: str = "POL"
     completed: frozenset = frozenset()
     date: Optional[Date] = None
+    focus_tree: Optional[str] = None
 
 
 def parse_date(value: str) -> Date:
@@ -73,6 +87,30 @@ def parse_date(value: str) -> Date:
     if len(parts) != 3 or not all(part.isdigit() for part in parts):
         raise ValueError(f"expected a YYYY.M.D date, got {value!r}")
     return int(parts[0]), int(parts[1]), int(parts[2])
+
+
+def parse_coordinate(value: str) -> Coordinate:
+    if not _NUMBER.fullmatch(value):
+        raise ValueError(f"expected a number, got {value!r}")
+    number = Decimal(value)
+    return int(number) if number == number.to_integral_value() else number
+
+
+def file_focus_tree(text: str) -> Optional[str]:
+    """Return the id of the only `focus_tree` in *text*.
+
+    None when the file defines no tree (a shared focus file) or several, since
+    the file alone cannot say which one the country has.
+    """
+    ids: List[str] = []
+    for key, _operator, _scalar, block in iter_statement_ops(text):
+        if key == "focus_tree" and block is not None:
+            ids.extend(
+                value
+                for name, _op, value, _nested in iter_statement_ops(block)
+                if name == "id" and value is not None
+            )
+    return ids[0] if len(ids) == 1 else None
 
 
 def parse_focus_file(text: str) -> Dict[str, Focus]:
@@ -88,9 +126,9 @@ def _build_focus(focus_id: str, kind: str, line: int, body: str) -> Focus:
     focus = Focus(id=focus_id, line=line, kind=kind)
     for key, _operator, scalar, block in iter_statement_ops(body):
         if key == "x" and scalar is not None:
-            focus.x = int(scalar)
+            focus.x = parse_coordinate(scalar)
         elif key == "y" and scalar is not None:
-            focus.y = int(scalar)
+            focus.y = parse_coordinate(scalar)
         elif key == "relative_position_id" and scalar is not None:
             focus.relative_to = scalar
         elif key == "allow_branch" and block is not None:
@@ -112,9 +150,9 @@ def _build_offset(block: str) -> Offset:
     offset = Offset()
     for key, _operator, scalar, nested in iter_statement_ops(block):
         if key == "x" and scalar is not None:
-            offset.dx = int(scalar)
+            offset.dx = parse_coordinate(scalar)
         elif key == "y" and scalar is not None:
-            offset.dy = int(scalar)
+            offset.dy = parse_coordinate(scalar)
         elif key == "trigger" and nested is not None:
             offset.trigger = nested
     return offset
@@ -155,6 +193,8 @@ def _evaluate_statement(
         return _evaluate_date(operator, scalar, scenario)
     if key in ("tag", "original_tag"):
         return scalar == scenario.tag
+    if key == "has_focus_tree":
+        return None if scenario.focus_tree is None else scalar == scenario.focus_tree
     if key == "always":
         return scalar == "yes"
     return None
@@ -191,10 +231,10 @@ def _invert(value: Optional[bool]) -> Optional[bool]:
 
 def resolve_positions(
     focuses: Dict[str, Focus], scenario: Scenario
-) -> Dict[str, Tuple[int, int]]:
-    positions: Dict[str, Tuple[int, int]] = {}
+) -> Dict[str, Position]:
+    positions: Dict[str, Position] = {}
 
-    def resolve(focus_id: str, seen: frozenset) -> Tuple[int, int]:
+    def resolve(focus_id: str, seen: frozenset) -> Position:
         focus = focuses[focus_id]
         x, y = focus.x, focus.y
         for offset in focus.offsets:
@@ -252,7 +292,7 @@ def parse_region(value: str) -> Region:
     return x0, x1, y0, y1
 
 
-def in_region(position: Tuple[int, int], region: Optional[Region]) -> bool:
+def in_region(position: Position, region: Optional[Region]) -> bool:
     if region is None:
         return True
     x0, x1, y0, y1 = region
@@ -261,11 +301,11 @@ def in_region(position: Tuple[int, int], region: Optional[Region]) -> bool:
 
 def find_collisions(
     focuses: Dict[str, Focus],
-    positions: Dict[str, Tuple[int, int]],
+    positions: Dict[str, Position],
     visible: Dict[str, bool],
     region: Optional[Region],
-) -> List[Tuple[Tuple[int, int], List[str]]]:
-    cells: Dict[Tuple[int, int], List[str]] = defaultdict(list)
+) -> List[Tuple[Position, List[str]]]:
+    cells: Dict[Position, List[str]] = defaultdict(list)
     for focus_id in focuses:
         if visible[focus_id] and in_region(positions[focus_id], region):
             cells[positions[focus_id]].append(focus_id)
@@ -274,16 +314,16 @@ def find_collisions(
 
 def find_adjacent(
     focuses: Dict[str, Focus],
-    positions: Dict[str, Tuple[int, int]],
+    positions: Dict[str, Position],
     visible: Dict[str, bool],
     region: Optional[Region],
-) -> List[Tuple[int, str, str]]:
-    rows: Dict[int, List[Tuple[int, str]]] = defaultdict(list)
+) -> List[Tuple[Coordinate, str, str]]:
+    rows: Dict[Coordinate, List[Tuple[Coordinate, str]]] = defaultdict(list)
     for focus_id in focuses:
         if visible[focus_id] and in_region(positions[focus_id], region):
             x, y = positions[focus_id]
             rows[y].append((x, focus_id))
-    pairs: List[Tuple[int, str, str]] = []
+    pairs: List[Tuple[Coordinate, str, str]] = []
     for y, entries in sorted(rows.items()):
         entries.sort()
         for left, right in zip(entries, entries[1:]):
@@ -292,9 +332,14 @@ def find_adjacent(
     return pairs
 
 
+def _json_number(value: Coordinate) -> Union[int, float]:
+    """JSON has no Decimal, so a fractional coordinate goes out as a float."""
+    return int(value) if value == int(value) else float(value)
+
+
 def build_report(
     focuses: Dict[str, Focus],
-    positions: Dict[str, Tuple[int, int]],
+    positions: Dict[str, Position],
     visible: Dict[str, bool],
     scenario: Scenario,
     region: Optional[Region],
@@ -305,13 +350,14 @@ def build_report(
         return {
             "id": focus_id,
             "line": focuses[focus_id].line,
-            "x": positions[focus_id][0],
-            "y": positions[focus_id][1],
+            "x": _json_number(positions[focus_id][0]),
+            "y": _json_number(positions[focus_id][1]),
         }
 
     report = {
         "scenario": {
             "tag": scenario.tag,
+            "focus_tree": scenario.focus_tree,
             "completed": sorted(scenario.completed),
             "date": (
                 ".".join(str(part) for part in scenario.date) if scenario.date else None
@@ -320,13 +366,17 @@ def build_report(
         "focuses": len(focuses),
         "visible": sum(1 for shown in visible.values() if shown),
         "collisions": [
-            {"x": cell[0], "y": cell[1], "focuses": [entry(i) for i in ids]}
+            {
+                "x": _json_number(cell[0]),
+                "y": _json_number(cell[1]),
+                "focuses": [entry(i) for i in ids],
+            }
             for cell, ids in find_collisions(focuses, positions, visible, region)
         ],
     }
     if adjacent:
         report["adjacent"] = [
-            {"y": y, "left": entry(left), "right": entry(right)}
+            {"y": _json_number(y), "left": entry(left), "right": entry(right)}
             for y, left, right in find_adjacent(focuses, positions, visible, region)
         ]
     if show_map:
@@ -341,8 +391,9 @@ def build_report(
 def format_text(report: dict) -> str:
     scenario = report["scenario"]
     lines = [
-        "Scenario: tag={} completed={} date={}".format(
+        "Scenario: tag={} tree={} completed={} date={}".format(
             scenario["tag"],
+            scenario["focus_tree"] or "-",
             ",".join(scenario["completed"]) or "-",
             scenario["date"] or "-",
         ),
@@ -389,6 +440,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--file", default=DEFAULT_FILE, help="focus tree file to read")
     parser.add_argument("--tag", default="POL", help="country the tree is read as")
     parser.add_argument(
+        "--tree",
+        metavar="TREE_ID",
+        help="focus tree the country has, for has_focus_tree "
+        "(default: the file's focus_tree when it defines exactly one)",
+    )
+    parser.add_argument(
         "--completed",
         action="append",
         default=[],
@@ -413,12 +470,16 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             tag=args.tag,
             completed=frozenset(args.completed),
             date=parse_date(args.date) if args.date else None,
+            focus_tree=args.tree,
         )
         region = parse_region(args.region) if args.region else None
     except ValueError as error:
         parser.error(str(error))
 
-    focuses = parse_focus_file(read_script(args.file))
+    text = read_script(args.file)
+    if scenario.focus_tree is None:
+        scenario.focus_tree = file_focus_tree(text)
+    focuses = parse_focus_file(text)
     positions = resolve_positions(focuses, scenario)
     visible = resolve_visibility(focuses, scenario)
     report = build_report(
