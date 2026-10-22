@@ -164,6 +164,20 @@ mission and halve it on a high deficit:
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
+## Prices
+
+- A plain political power price goes in `cost = N`, not in an effect.
+- A custom cost that covers several resources (treasury and PP, command power and
+  PP) stays a `custom_cost_trigger` with its combined `custom_cost_text` and an
+  `ai_hint_pp_cost` for the PP part.
+- The engine charges nothing for a `custom_cost_trigger`. Charge every resource it
+  checks in `complete_effect`, which runs when the decision is taken. Call a scripted
+  payment effect there if needed. A charge in `remove_effect`, `timeout_effect`, or
+  `cancel_effect` is not an entry cost: the country may no longer have the resources
+  when that effect runs. A tooltip preview does not charge anything.
+- `cost` and a non-PP custom cost can sit together; vanilla does this
+  (`AUS_arm_border_guards_decision`).
+
 ## Formables
 
 Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a
