@@ -42,9 +42,8 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
-from validate_events import load_cost_lookups, uncovered_costs
+from validate_events import effect_costs, load_cost_lookups, uncovered_costs
 from validator_common import (
-    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -52,6 +51,7 @@ from validator_common import (
     Severity,
     run_validator_main,
     should_skip_file,
+    weight_stays_zero,
 )
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
@@ -607,9 +607,16 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
-_AI_ADD_RE = re.compile(r"\badd\s*=")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+# What a custom_cost_trigger can check, by the cost kind that pays for it.
+_CUSTOM_COST_CLAIMS = {
+    "treasury": re.compile(r"\btreasury\s*>"),
+    "political power": re.compile(r"\bhas_political_power\s*>"),
+    "command power": re.compile(r"\bcommand_power\s*>"),
+    "manpower": re.compile(r"\bhas_manpower\s*>"),
+    "equipment": re.compile(r"\bhas_equipment\s*="),
+}
 _TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
@@ -1236,11 +1243,6 @@ def _top_level_neg_pp(block: str):
     return None
 
 
-def _ai_never_takes(ai_factor: str) -> bool:
-    """`base = 0` with no `add`: the weight cannot leave zero."""
-    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
-
-
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -1583,8 +1585,15 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
+        self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
         if self.no_cache:
             _set_cache_enabled(False)
+
+    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int]]:
+        """load_cost_lookups, read once per run."""
+        if self._cost_lookups is None:
+            self._cost_lookups = load_cost_lookups(self)
+        return self._cost_lookups
 
     def _get_ai_only_categories(self) -> Dict[str, str]:
         """AI-only decision category names, mapped to their defining filename."""
@@ -3023,7 +3032,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if _ai_never_takes(d.ai_factor):
+            if weight_stays_zero(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -3064,13 +3073,13 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
 
-        effects, stored = load_cost_lookups(self)
+        effects, stored = self._get_cost_lookups()
         results = []
 
         for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype and not d.selectable_mission:
                 continue
-            if _ai_never_takes(d.ai_factor):
+            if weight_stays_zero(d.ai_factor):
                 continue
             ai_weights = d.ai_factor[1:-1]
 
@@ -3101,6 +3110,61 @@ class Validator(BaseValidator):
             " deficit modifier):",
             severity=Severity.WARNING,
             category="decision-ai-will-do-ignores-cost",
+        )
+
+    def validate_custom_cost_charged(self):
+        """Flag custom costs that complete_effect never charges.
+
+        A `custom_cost_trigger` only gates the button; the engine charges
+        nothing for it. Each resource it checks (treasury, political power,
+        command power, manpower, equipment) needs a charge in `complete_effect`,
+        which runs when the decision is taken. A charge in `remove_effect` lands
+        when the decision ends, long after the price was shown. Non-selectable
+        missions are skipped.
+        """
+        self._log_section("Checking custom costs are charged in complete_effect...")
+
+        effects, stored = self._get_cost_lookups()
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.custom_cost_trigger:
+                continue
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            claims = {
+                kind
+                for kind, claim in _CUSTOM_COST_CLAIMS.items()
+                if claim.search(blank_quoted_strings(d.custom_cost_trigger))
+            }
+            missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
+            if not missing:
+                continue
+            late = missing & effect_costs(d.remove_effect[1:-1], effects, stored)
+            parts = []
+            if late:
+                parts.append(
+                    f"charges {', '.join(sorted(late))} in remove_effect, not complete_effect"
+                )
+            if missing - late:
+                parts.append(
+                    f"checks {', '.join(sorted(missing - late))} but has no charge in complete_effect"
+                )
+            results.append(
+                (
+                    f"{d.token} - custom cost {'; '.join(parts)}",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ Every custom cost is charged in complete_effect",
+            "Decisions whose custom cost is not charged when taken (charge it in"
+            " complete_effect):",
+            severity=Severity.WARNING,
+            category="decision-custom-cost-not-charged",
         )
 
     def validate_state_target_with_targets(self):
@@ -3482,6 +3546,7 @@ class Validator(BaseValidator):
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_ai_will_do_ignores_cost()
+        self.validate_custom_cost_charged()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
