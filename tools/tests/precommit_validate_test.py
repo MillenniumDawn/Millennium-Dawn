@@ -393,6 +393,24 @@ def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
     assert oob_calls == ["target.txt\nhistory/units/target.txt"]
 
 
+def test_dispatcher_takes_passed_files_and_staged_deletions(tmp_path, monkeypatch):
+    # A merge commit stages main's files but passes only the conflicted ones.
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    events = tmp_path / "events"
+    events.mkdir()
+    for name in ("passed", "unpassed", "deleted"):
+        (events / f"{name}.txt").write_text("a = 1\n", encoding="utf-8")
+    initialize_git_repository(tmp_path, "events")
+    for name in ("passed", "unpassed"):
+        (events / f"{name}.txt").write_text("a = 2\n", encoding="utf-8")
+    (events / "deleted.txt").unlink()
+    run_git(tmp_path, "add", "-A")
+
+    paths = dispatcher._discover_staged(str(tmp_path), [str(events / "passed.txt")])
+
+    assert paths == ["events/passed.txt", "events/deleted.txt"]
+
+
 def test_no_match_outside_scope():
     # A .lua define, a gui file, a texture — none are owned by this dispatcher.
     assert _selected("common/defines/00_defines.lua") == set()
