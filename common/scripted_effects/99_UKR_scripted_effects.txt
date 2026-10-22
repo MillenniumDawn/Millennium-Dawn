@@ -4981,48 +4981,377 @@ UKR_random_events_ukraine_parliament = {
 
 UKR_parliament_vote_roll = {
 	# rolls the verkhovna vote; sets UKR_vote_roll_result to 1 (event A wins) or 2 (event B wins), 0 if the rada is dissolved
+	# temp UKR_vote_bonus (percent, from the UKR_parliament_vote_bonus_* effects) raises the approval weight
 	set_temp_variable = { UKR_vote_roll_result = 0 }
+	set_temp_variable = { UKR_vote_weight_yes = 0 }
+	set_temp_variable = { UKR_vote_weight_no = 0 }
 	if = {
 		limit = {
 			check_variable = { UKR_verkhovna_support > 149 }
 			check_variable = { UKR_verkhovna_control_selected > 1 }
 		}
-		random_list = {
-			85 = { set_temp_variable = { UKR_vote_roll_result = 1 } }
-			15 = { set_temp_variable = { UKR_vote_roll_result = 2 } }
-		}
+		set_temp_variable = { UKR_vote_weight_yes = 85 }
+		set_temp_variable = { UKR_vote_weight_no = 15 }
 	}
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { UKR_verkhovna_support < 150 }
 			check_variable = { UKR_verkhovna_control_selected > 1 }
 		}
 		custom_effect_tooltip = UKR_our_influence_helps_tt
-		random_list = {
-			60 = { set_temp_variable = { UKR_vote_roll_result = 1 } }
-			40 = { set_temp_variable = { UKR_vote_roll_result = 2 } }
-		}
+		set_temp_variable = { UKR_vote_weight_yes = 60 }
+		set_temp_variable = { UKR_vote_weight_no = 40 }
 	}
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { UKR_verkhovna_support < 150 }
 			check_variable = { UKR_verkhovna_control_selected = 1 }
 		}
-		random_list = {
-			40 = { set_temp_variable = { UKR_vote_roll_result = 1 } }
-			60 = { set_temp_variable = { UKR_vote_roll_result = 2 } }
-		}
+		set_temp_variable = { UKR_vote_weight_yes = 40 }
+		set_temp_variable = { UKR_vote_weight_no = 60 }
 	}
-	if = {
+	else_if = {
 		limit = {
 			check_variable = { UKR_verkhovna_support > 149 }
 			check_variable = { UKR_verkhovna_control_selected = 1 }
 		}
-		random_list = {
-			60 = { set_temp_variable = { UKR_vote_roll_result = 1 } }
-			40 = { set_temp_variable = { UKR_vote_roll_result = 2 } }
+		set_temp_variable = { UKR_vote_weight_yes = 60 }
+		set_temp_variable = { UKR_vote_weight_no = 40 }
+	}
+	if = {
+		limit = { check_variable = { UKR_vote_weight_yes > 0 } }
+		# approval weight x (1 + bonus/100), e.g. 60/40 with +30% -> 78/40 -> 66% approval
+		set_temp_variable = { UKR_vote_bonus_factor = UKR_vote_bonus }
+		divide_temp_variable = { UKR_vote_bonus_factor = 100 }
+		add_to_temp_variable = { UKR_vote_bonus_factor = 1 }
+		multiply_temp_variable = { UKR_vote_weight_yes = UKR_vote_bonus_factor }
+		set_temp_variable = { UKR_vote_weight_total = UKR_vote_weight_yes }
+		add_to_temp_variable = { UKR_vote_weight_total = UKR_vote_weight_no }
+		set_temp_variable = { UKR_vote_pass_chance = UKR_vote_weight_yes }
+		multiply_temp_variable = { UKR_vote_pass_chance = 100 } # before dividing, variables keep only 3 decimals
+		divide_temp_variable = { UKR_vote_pass_chance = UKR_vote_weight_total }
+		round_temp_variable = UKR_vote_pass_chance
+		if = {
+			limit = { check_variable = { UKR_vote_bonus > 0 } }
+			custom_effect_tooltip = UKR_vote_bonus_total_tt
+		}
+		custom_effect_tooltip = UKR_vote_pass_chance_tt
+		hidden_effect = {
+			set_temp_variable = { UKR_vote_dice = random }
+			multiply_temp_variable = { UKR_vote_dice = 100 }
+			if = {
+				limit = { check_variable = { UKR_vote_dice < UKR_vote_pass_chance } }
+				set_temp_variable = { UKR_vote_roll_result = 1 }
+			}
+			else = {
+				set_temp_variable = { UKR_vote_roll_result = 2 }
+			}
 		}
 	}
+}
+
+# Verkhovna Rada vote bonuses: each sets temp UKR_vote_bonus (percent) for UKR_parliament_vote_roll
+# and lists every source by percent and type, marked received or not
+
+UKR_parliament_vote_bonus_military_up = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_military_up_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_ukrainian_armed_forces_reform }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_armed_forces_reform_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_armed_forces_reform_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_create_sso }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_create_sso_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_create_sso_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_found_the_uop }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_found_the_uop_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_found_the_uop_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_sapsan }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_sapsan_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_sapsan_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_concers }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_concers_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_concers_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_10_tt
+	custom_effect_tooltip = UKR_vote_kind_decisions_tt
+	if = {
+		limit = { has_country_flag = UKR_reorganize_navy_finish_ukrayina_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 10 }
+		custom_effect_tooltip = UKR_vote_src_ukrayina_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_ukrayina_todo_tt }
+	if = {
+		limit = { has_country_flag = UKR_developed_an_bfv_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 10 }
+		custom_effect_tooltip = UKR_vote_src_an_bfv_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_an_bfv_todo_tt }
+	if = {
+		limit = { has_country_flag = UKR_develop_nota_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 10 }
+		custom_effect_tooltip = UKR_vote_src_nota_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_nota_todo_tt }
+	custom_effect_tooltip = UKR_vote_kind_events_tt
+	if = {
+		limit = { has_country_flag = UKR_bomber_repair_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 10 }
+		custom_effect_tooltip = UKR_vote_src_bomber_repair_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_bomber_repair_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_5_tt
+	custom_effect_tooltip = UKR_vote_kind_decisions_tt
+	if = {
+		limit = { has_country_flag = UKR_develop_bm_oplot_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 5 }
+		custom_effect_tooltip = UKR_vote_src_oplot_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_oplot_todo_tt }
+	if = {
+		limit = { has_country_flag = UKR_develop_2s22_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 5 }
+		custom_effect_tooltip = UKR_vote_src_2s22_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_2s22_todo_tt }
+	if = {
+		limit = { has_country_flag = UKR_developed_an_lbl_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 5 }
+		custom_effect_tooltip = UKR_vote_src_an_lbl_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_an_lbl_todo_tt }
+	if = {
+		limit = { has_country_flag = UKR_restore_an_71_flag }
+		add_to_temp_variable = { UKR_vote_bonus = 5 }
+		custom_effect_tooltip = UKR_vote_src_an_71_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_an_71_todo_tt }
+	# +30 per full 20 Soviet equipment modernizations
+	set_temp_variable = { UKR_vote_bonus_rest = UKR_sov_modernization_count }
+	modulo_temp_variable = { UKR_vote_bonus_rest = 20 }
+	set_temp_variable = { UKR_vote_bonus_stacks = UKR_sov_modernization_count }
+	subtract_from_temp_variable = { UKR_vote_bonus_stacks = UKR_vote_bonus_rest }
+	multiply_temp_variable = { UKR_vote_bonus_stacks = 1.5 } # / 20 * 30
+	add_to_temp_variable = { UKR_vote_bonus = UKR_vote_bonus_stacks }
+	# +30 per full 5 new Ukrainian designs
+	set_temp_variable = { UKR_vote_bonus_rest = UKR_domestic_development_count }
+	modulo_temp_variable = { UKR_vote_bonus_rest = 5 }
+	set_temp_variable = { UKR_vote_bonus_stacks = UKR_domestic_development_count }
+	subtract_from_temp_variable = { UKR_vote_bonus_stacks = UKR_vote_bonus_rest }
+	multiply_temp_variable = { UKR_vote_bonus_stacks = 6 } # / 5 * 30
+	add_to_temp_variable = { UKR_vote_bonus = UKR_vote_bonus_stacks }
+	custom_effect_tooltip = UKR_vote_src_counters_tt
+}
+
+UKR_parliament_vote_bonus_security_up = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_security_up_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_reform_mvd }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_reform_mvd_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_reform_mvd_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_hur_reform }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_hur_reform_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_hur_reform_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_sbu_start }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_sbu_start_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_sbu_start_todo_tt }
+}
+
+UKR_parliament_vote_bonus_bureau_down = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_bureau_down_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = {
+			OR = {
+				has_completed_focus = UKR_corruption_reforms
+				has_completed_focus = UKR_poroshenko_anti_corruption
+			}
+		}
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_corruption_reforms_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_corruption_reforms_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_end_kleptokracy }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_end_kleptokracy_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_end_kleptokracy_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_corruption_gov }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_corruption_gov_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_corruption_gov_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_corruption_court }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_corruption_court_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_corruption_court_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_20_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_tsnap }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_tsnap_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_tsnap_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_dig_sta }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_dig_sta_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_dig_sta_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_monobank }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_monobank_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_monobank_todo_tt }
+}
+
+UKR_parliament_vote_bonus_health_up = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_health_up_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_corruption_health }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_corruption_health_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_corruption_health_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_health_final }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_health_final_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_health_final_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_20_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_health_tourism }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_health_tourism_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_health_tourism_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_darnytsia }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_darnytsia_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_darnytsia_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_farmak }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_farmak_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_farmak_todo_tt }
+}
+
+UKR_parliament_vote_bonus_education_up = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_education_up_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_corruption_edu }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_corruption_edu_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_corruption_edu_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_edu_final }
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_edu_final_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_edu_final_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_20_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_it }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_it_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_it_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_it_2 }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_it_2_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_it_2_todo_tt }
+}
+
+UKR_parliament_vote_bonus_pension_up = {
+	set_temp_variable = { UKR_vote_bonus = 0 }
+	custom_effect_tooltip = UKR_vote_bonus_pension_up_tt
+	custom_effect_tooltip = UKR_vote_pct_30_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = {
+			OR = {
+				has_completed_focus = UKR_pension_reform
+				has_completed_focus = UKR_party_regions_pension_reform
+			}
+		}
+		add_to_temp_variable = { UKR_vote_bonus = 30 }
+		custom_effect_tooltip = UKR_vote_src_pension_reform_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_pension_reform_todo_tt }
+	custom_effect_tooltip = UKR_vote_pct_20_tt
+	custom_effect_tooltip = UKR_vote_kind_focuses_tt
+	if = {
+		limit = { has_completed_focus = UKR_darnytsia }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_darnytsia_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_darnytsia_todo_tt }
+	if = {
+		limit = { has_completed_focus = UKR_farmak }
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_src_farmak_done_tt
+	}
+	else = { custom_effect_tooltip = UKR_vote_src_farmak_todo_tt }
+}
+# Called by every Soviet equipment modernization decision; counts toward UKR_parliament_vote_bonus_military_up
+UKR_count_sov_modernization = {
+	custom_effect_tooltip = UKR_count_sov_modernization_tt
+	hidden_effect = { add_to_variable = { UKR_sov_modernization_count = 1 } }
+}
+
+# Called by every new Ukrainian equipment design decision; counts toward UKR_parliament_vote_bonus_military_up
+UKR_count_domestic_development = {
+	custom_effect_tooltip = UKR_count_domestic_development_tt
+	hidden_effect = { add_to_variable = { UKR_domestic_development_count = 1 } }
 }
 
 UKR_shift_to_party = {
