@@ -1105,6 +1105,10 @@ _SPACING_CASES = {
         '\tlog = "[GetDateText]: a=b {c}  d"',
         '\tlog = "[GetDateText]: a=b {c}  d"',
     ),
+    "comparison beside a string": (
+        '\tlimit = {x>=3} log = "a  b"',
+        '\tlimit = { x >= 3 } log = "a  b"',
+    ),
     "inline comment": (
         "\tfoo = {bar = yes}\t# why {this} matters",
         "\tfoo = { bar = yes } # why {this} matters",

@@ -474,7 +474,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
         launch_next()
 
     finished = finish_in_order(processes, launch_next, [v[0] for v in VALIDATORS])
-    for (name, _script, label), returncode in zip(VALIDATORS, finished):
+    for (name, _script, label), returncode in zip(VALIDATORS, finished, strict=True):
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:

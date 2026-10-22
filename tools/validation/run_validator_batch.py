@@ -152,7 +152,7 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     finished = run_all_validators.finish_in_order(
         processes, launch_next, [spec.name for spec in specs]
     )
-    for spec, returncode in zip(specs, finished):
+    for spec, returncode in zip(specs, finished, strict=True):
         status, detail = classify_result(spec, returncode, args.output_dir)
         outcomes[spec.name] = (returncode, status, detail)
         if status == "ok":
