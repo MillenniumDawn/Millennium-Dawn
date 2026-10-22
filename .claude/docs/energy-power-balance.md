@@ -33,14 +33,14 @@ fossil  < 2015 <  renewable  < 2060 <  nuclear (fusion)
 Good renewable states (factor 1.5) beat fossil by 2010. Fission nuclear never leads at
 factor 1.0. It beats renewables only in weak states (factor 0.5) until about 2030.
 
-Each source's cumulative tech bonus, for power and for construction speed, follows a
-logistic S-curve. Each curve starts at zero one tech step before its chain's first tech,
-so no tech carries a pre-1990 lump. Fossil has one small curve past its midpoint, so each
-tech gives a little less than the last. Renewable has one large, wide curve that rises
-through the 2000s to 2030s and still grants real gains on the 2060 to 2080 techs. Nuclear
-has two stacked curves: fission (about 1990 to 2015) and fusion (about 2050 to 2065).
-The amplitudes are solved so the crossovers land on 2015 and 2060. No tech sits on the
-0.001 floor.
+Every energy tech grants at least 3% (`MIN_GAIN`) on power, construction speed, and
+upkeep relief. On top of that, each source's cumulative tech bonus follows a logistic
+S-curve. Each curve starts at zero one tech step before its chain's first tech, so no tech
+carries a pre-1990 lump. Fossil has one small curve past its midpoint, so its gains shrink
+from about 7% to the 3% minimum. Renewable has one large, wide curve that rises through
+the 2000s to 2030s and still grants real gains on the 2060 to 2080 techs. Nuclear has two
+stacked curves: fission (about 1990 to 2015) and fusion (about 2050 to 2065). The
+amplitudes are solved so the crossovers land on 2015 and 2060.
 
 ## Upkeep relief
 
@@ -48,8 +48,8 @@ Each energy tech also lowers the weekly upkeep of its own plant type. `update_in
 in `00_money_system.txt` computes per-source expense as plant count times per-plant rate
 times the source's multiplier: `infra_cost_multiplier` plus
 `nuclear_infra_cost_multiplier_modifier`, `fossil_infra_cost_multiplier_modifier`, or
-`renewable_infra_cost_multiplier_modifier`. The relief follows each source's power curve
-and reaches `INFRA_CAP` (-0.40) on a fully researched chain.
+`renewable_infra_cost_multiplier_modifier`. Each tech gives at least 3% relief, the rest
+follows that source's power curve, and a fully researched chain reaches `INFRA_CAP` (-0.40).
 
 ## Tools
 

@@ -19,12 +19,13 @@ with the building stats from ``common/buildings/00_buildings.txt`` (renewable 0.
 See ``tools/analysis/renewable_power_per_cost.py`` for the chart and the full model,
 and ``.claude/docs/energy-power-balance.md`` for the design write-up.
 
-Each source's cumulative tech buff (both the power-output modifier and the
-construction-speed modifier) is a logistic S-curve in calendar year. Every curve is 0 one
-tech step before its chain's first tech, so the first tech is a normal step, not a lump:
+Each tech grants at least ``MIN_GAIN`` on power, construction speed, and upkeep relief.
+On top of that, each source's cumulative tech buff follows a logistic S-curve in calendar
+year. Every curve is 0 one tech step before its chain's first tech, so the first tech is a
+normal step, not a lump:
 
   * Fossil   - ONE S-curve past its midpoint: a mature tech whose gains shrink from ~+7% to
-               ~+1% per tech, keeping the old game-start bonus; small total gain.
+               the minimum, keeping the old game-start bonus; small total gain.
   * Renewable- ONE wide S-curve: good states (x1.5) beat fossil by 2010, average states by
                2015, and the 2060-2080 techs still grant real gains.
   * Nuclear  - TWO stacked S-curves: fission (rises ~1990-2015) then fusion (rises
@@ -32,7 +33,8 @@ tech step before its chain's first tech, so the first tech is a normal step, not
 
 Per-source amplitudes are SOLVED (scipy.brentq) one year before each target: nuclear and
 renewable cross fossil by 2015, and fusion crosses renewable by 2060. Speed amplitude =
-``SPEED_RATIO`` * power amplitude per source.
+``SPEED_RATIO`` * power amplitude per source. Upkeep relief past the minimum follows the
+power curve, so the fully-teched chain reaches ``INFRA_CAP``.
 
 CONSIDERATIONS (things this model deliberately does / omits)
 -----------------------------------------------------------
@@ -47,8 +49,8 @@ CONSIDERATIONS (things this model deliberately does / omits)
 
 POTENTIAL FUTURE WORK
 ---------------------
-  * Re-tune by editing the SHAPE/RATIO/PF constants below and re-running --apply; the chart
-    in tools/analysis confirms the crossovers.
+  * Re-tune by editing the SHAPE/RATIO/PF/MIN_GAIN constants below and re-running
+    --apply; the chart in tools/analysis confirms the crossovers.
   * Hydro/geothermal are separate systems and are not modelled here.
 
 USAGE
@@ -77,19 +79,21 @@ COST = {"ren": 50000, "nuc": 50000, "fos": 9500}
 BASE = {k: GW[k] / COST[k] for k in GW}
 
 # --- S-curve shapes (tmid, steepness) and amplitude couplings ---------------
-F_T, F_K = 1968, 0.03  # fossil: past midpoint, each tech gives less than the last
+F_T, F_K = 1954, 0.075  # fossil: past midpoint, each tech gives less than the last
 R_T, R_K = 2015, 0.08  # renewable: wide rise, viable by 2010 (x1.5) and 2015 (x1.0)
 FIS_T, FIS_K = 2002, 0.16  # nuclear fission
 FUS_T, FUS_K = 2053, 0.24  # nuclear fusion (steep, plateaus ~2065)
 SPEED_RATIO = {"fos": 0.5, "ren": 0.4, "nuc": 0.3}  # speed amplitude / power amplitude
-PF = 0.95  # fossil power amplitude (fixed; only ~0.36 of it is reached by 2080)
+PF = 0.65  # fossil power amplitude (fixed; only ~0.08 of it is reached by 2080)
+
+MIN_GAIN = 0.03  # every tech adds at least this to power, speed, and upkeep relief
 
 # --- infrastructure-maintenance relief (issue #1508) ------------------------
 # Each chain also lowers its OWN plant type's weekly upkeep via a per-source
 # infra-cost modifier (nuclear/fossil/renewable_infra_cost_multiplier_modifier),
 # consumed in update_infra_rate (common/scripted_effects/00_money_system.txt).
-# The relief follows that source's POWER S-curve (so it tracks tech progress) and
-# is scaled so the fully-teched chain reaches INFRA_CAP. Values are NEGATIVE.
+# Each tech gives MIN_GAIN, and the rest follows that source's power S-curve, so
+# the fully-teched chain reaches INFRA_CAP. Values are NEGATIVE.
 INFRA_CAP = -0.40  # total per-source upkeep reduction at the end of each chain
 
 # --- tech chains: year-ordered tech ids + the (power, speed, infra) modifier names ---
@@ -211,8 +215,12 @@ def Lfus(t):
     return rise(t, FUS_T, FUS_K, "nuc")
 
 
-# cumulative power buff as a function of year, given solved amplitudes
-def cum_power(key, t, pf, pr, pfis, pfus):
+def researched(key, t):
+    return sum(1 for y in CHAINS[key]["years"] if y <= t)
+
+
+# S-curve part of the power buff as a function of year, given solved amplitudes
+def curve(key, t, pf, pr, pfis, pfus):
     if key == "fos":
         return pf * Lf(t)
     if key == "ren":
@@ -220,17 +228,18 @@ def cum_power(key, t, pf, pr, pfis, pfus):
     return pfis * Lfis(t) + pfus * Lfus(t)
 
 
+def cum_power(key, t, *a):
+    return curve(key, t, *a) + MIN_GAIN * researched(key, t)
+
+
 def cum_speed(key, t, *a):
-    return SPEED_RATIO[key] * cum_power(key, t, *a)
+    return SPEED_RATIO[key] * curve(key, t, *a) + MIN_GAIN * researched(key, t)
 
 
-# cumulative infra-cost relief: that source's power S-curve normalised to its 2080
-# asymptote and scaled to INFRA_CAP, so the fully-teched chain reaches INFRA_CAP.
 def cum_infra(key, t, *a):
-    full = cum_power(key, 2080, *a)
-    if full <= 0:
-        return 0.0
-    return INFRA_CAP * cum_power(key, t, *a) / full
+    rest = -INFRA_CAP - MIN_GAIN * len(CHAINS[key]["techs"])
+    share = curve(key, t, *a) / curve(key, 2080, *a)
+    return -(MIN_GAIN * researched(key, t) + rest * share)
 
 
 def metric(key, t, *a):
@@ -262,11 +271,7 @@ def solve_amplitudes():
 
 
 def increments(amps):
-    """tech_id -> (key, power_inc, speed_inc, infra_inc), rounded to 3 dp.
-
-    power/speed increments are floored at +0.001 (no dead tech). infra increments
-    are NEGATIVE upkeep relief and are floored toward 0 at -0.001 instead, so a
-    plateaued tail tech still grants a token reduction rather than nothing."""
+    """tech_id -> (key, power_inc, speed_inc, infra_inc), rounded to 3 dp."""
     out = {}
     for key, c in CHAINS.items():
         pp = sp = ip = 0.0
@@ -278,9 +283,9 @@ def increments(amps):
             )
             out[tech] = (
                 key,
-                max(round(cp - pp, 3), 0.001),
-                max(round(cs - sp, 3), 0.001),
-                min(round(ci - ip, 3), -0.001),
+                round(cp - pp, 3),
+                round(cs - sp, 3),
+                round(ci - ip, 3),
             )
             pp, sp, ip = cp, cs, ci
     return out
