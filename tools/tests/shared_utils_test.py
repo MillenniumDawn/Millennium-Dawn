@@ -1143,8 +1143,26 @@ def test_compact_block_drops_blank_lines_and_trailing_space():
     assert U.compact_block(["a\n", "\n", " b  \n"]) == ["a", " b"]
 
 
-def test_collapse_ws_outside_quotes():
-    assert U.collapse_ws_outside_quotes('  a   "b  c"  d  ') == 'a "b  c" d'
+@pytest.mark.parametrize(
+    "text, expected",
+    [('  a   "b  c"  d  ', 'a "b  c" d'), ("\ta \t b  \n", "a b")],
+    ids=["quoted", "unquoted"],
+)
+def test_collapse_ws_outside_quotes(text, expected):
+    assert U.collapse_ws_outside_quotes(text) == expected
+
+
+@pytest.mark.parametrize(
+    "text, counts",
+    [
+        ("a = { b = { c } }", (2, 2)),
+        ('log = "{ x" b = { c }', (1, 1)),
+        ("a = { # }", (1, 0)),
+    ],
+    ids=["unquoted", "brace inside a string", "brace inside a comment"],
+)
+def test_count_braces(text, counts):
+    assert U.count_braces(text) == counts
 
 
 @pytest.mark.parametrize(
