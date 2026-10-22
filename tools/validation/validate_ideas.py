@@ -178,6 +178,8 @@ def _weekly_modifier_issues(
     timed: Set[str] = set()
     permanent: Set[str] = set()
     for raw_text in script_texts.values():
+        if "add_idea" not in raw_text and "add_timed_idea" not in raw_text:
+            continue
         text = blank_quoted_strings(blank_comments(raw_text))
         chars = list(text)
         for match in _EFFECT_TOOLTIP_START.finditer(text):
