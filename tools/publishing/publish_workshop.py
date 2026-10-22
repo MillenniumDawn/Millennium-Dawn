@@ -99,7 +99,6 @@ ROOT_ONLY_EXCLUDES = {
     ".pre-commit-config.yaml",
     ".gitignore",
     ".gitattributes",
-    ".secrets.baseline",
     "CODEOWNERS",
     "CONTRIBUTING.md",
     "SECURITY.md",

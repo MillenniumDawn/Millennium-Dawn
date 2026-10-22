@@ -191,7 +191,12 @@ _REGISTRY = [
 
 
 def _discover_staged(mod_path, argv_files):
-    """Return staged paths relative to *mod_path*, including rename origins."""
+    """Return paths to validate, relative to *mod_path*.
+
+    With *argv_files* from pre-commit, that is those files plus the staged
+    deletions and rename origins pre-commit leaves out. Without them, it is
+    every staged path.
+    """
     from shared_utils import get_staged_files
 
     staged = (
@@ -210,7 +215,9 @@ def _discover_staged(mod_path, argv_files):
         normalize_path_separators(os.path.relpath(os.path.abspath(f), mod_path))
         for f in argv_files
     ]
-    return list(dict.fromkeys(passed + discovered))
+    # A merge commit passes only its conflicted files; the rest are main's.
+    missing = [p for p in discovered if not os.path.exists(os.path.join(mod_path, p))]
+    return list(dict.fromkeys(passed + missing))
 
 
 def _run(spec, mod_path, env, no_color, inner_workers):
