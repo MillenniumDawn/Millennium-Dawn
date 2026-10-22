@@ -5,7 +5,7 @@ calibrated logistic S-curves, so the most cost-effective power source over time 
     fossil  <2015<  renewable  <2060<  nuclear (fusion) forever
 
 Fission nuclear ties fossil and renewable at 2014 but never leads once techs land at state
-factor 1.0; it beats renewables only in weak states.
+factor 1.0. It stays within 1.5x of renewables through 2055 and beats them in weak states.
 
 WHY / DESIGN
 ------------
@@ -28,8 +28,8 @@ normal step, not a lump:
                the minimum, keeping the old game-start bonus; small total gain.
   * Renewable- ONE wide S-curve: good states (x1.5) beat fossil by 2010, average states by
                2015, and the 2060-2080 techs still grant real gains.
-  * Nuclear  - TWO stacked S-curves: fission (rises ~1990-2015) then fusion (rises
-               ~2050-2065), so fusion takes the lead at 2060.
+  * Nuclear  - TWO stacked S-curves: a wide fission curve that keeps growing through the
+               Gen IV techs, then a fusion boost (~2050-2065) that takes the lead at 2060.
 
 Per-source amplitudes are SOLVED (scipy.brentq) one year before each target: nuclear and
 renewable cross fossil by 2015, and fusion crosses renewable by 2060. Speed amplitude =
@@ -81,7 +81,7 @@ BASE = {k: GW[k] / COST[k] for k in GW}
 # --- S-curve shapes (tmid, steepness) and amplitude couplings ---------------
 F_T, F_K = 1954, 0.075  # fossil: past midpoint, each tech gives less than the last
 R_T, R_K = 2015, 0.08  # renewable: wide rise, viable by 2010 (x1.5) and 2015 (x1.0)
-FIS_T, FIS_K = 2002, 0.16  # nuclear fission
+FIS_T, FIS_K = 2028, 0.04  # nuclear fission: wide, keeps renewables within 1.5x to 2055
 FUS_T, FUS_K = 2053, 0.24  # nuclear fusion (steep, plateaus ~2065)
 SPEED_RATIO = {"fos": 0.5, "ren": 0.4, "nuc": 0.3}  # speed amplitude / power amplitude
 PF = 0.65  # fossil power amplitude (fixed; only ~0.08 of it is reached by 2080)

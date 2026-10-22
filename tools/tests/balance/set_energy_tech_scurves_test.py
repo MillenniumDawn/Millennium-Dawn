@@ -168,6 +168,10 @@ def test_solve_amplitudes_matches_design_crossovers():
     nuc_2059 = sc.metric("nuc", 2059, *amps)
     assert nuc_2059 == pytest.approx(ren_2059, rel=0.02)
 
+    # 2015-2055: renewables lead nuclear by at most 1.5x
+    for y in range(2015, 2056):
+        assert sc.metric("ren", y, *amps) <= 1.5 * sc.metric("nuc", y, *amps), y
+
     # 2080: nuclear still above renewable (fusion plateau holds the lead)
     ren_2080 = sc.metric("ren", 2080, *amps)
     nuc_2080 = sc.metric("nuc", 2080, *amps)
