@@ -22,6 +22,7 @@ from shared_utils import (
     blank_quoted_strings,
     collapse_or_compact,
     extract_block,
+    reindent_by_brace_depth,
     strip_inline_comment,
 )
 
@@ -148,7 +149,7 @@ def _option_has_effects(option_block: List[str]) -> bool:
     Brace depth is tracked across body lines so the inner lines of a multi-line
     skipped block (`ai_chance = {` / `trigger = {`) are swallowed whole and not
     misread as top-level effects."""
-    skip_prefixes = ("name =", "ai_chance =", "trigger =")
+    skip_prefixes = ("name =", "ai_chance =", "trigger =", "effect_tooltip =")
     depth = 0
     for line in _option_body(option_block):
         for stripped in _split_packed_body(line.strip()):
@@ -310,7 +311,9 @@ class EventStandardizer(BaseStandardizer):
         emit_comments(trailing, props["comments_trailing"])
         groups.append(trailing)
 
-        return collapse_blank_runs([header] + join_groups(groups) + ["}"])
+        return reindent_by_brace_depth(
+            collapse_blank_runs([header] + join_groups(groups) + ["}"])
+        )
 
 
 def main():

@@ -81,9 +81,7 @@ class Validator(BaseValidator):
                 else:
                     first_seen[value] = line_num
         if issues == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No duplicate replace_path entries{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No duplicate replace_path entries{Colors.ENDC}")
 
     def _check_sync(self, parsed):
         self._log_section(
@@ -113,7 +111,7 @@ class Validator(BaseValidator):
                 issues += 1
         if issues == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ replace_path entries match in both mod descriptors{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN}✓ replace_path entries match in both mod descriptors{Colors.ENDC}"
             )
 
 

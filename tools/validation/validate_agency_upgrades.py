@@ -13,11 +13,21 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 import disk_cache
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    Colors,
+    line_of,
+    run_validator_main,
+    strip_comments,
+)
 
 ON_ACTIONS_FILE = "common/on_actions/MD_auto_agency_on_actions.txt"
 UPGRADES_DIR = "common/intelligence_agency_upgrades"
 SCRIPTED_GUI_FILE = "common/scripted_guis/00_MD_auto_agency_scripted_gui.txt"
+SCRIPTED_TRIGGERS_FILE = (
+    "common/scripted_triggers/00_MD_auto_agency_scripted_triggers.txt"
+)
+SCRIPTED_EFFECTS_FILE = "common/scripted_effects/00_MD_auto_agency_scripted_effects.txt"
 LOC_FILE = "localisation/english/MD_auto_agency_l_english.yml"
 
 # global.agency_upgrades^12 = token:MD_auto_agency_12_upgrade_commando_training
@@ -58,17 +68,43 @@ UPGRADE_CALL_RE = re.compile(r"upgrade_intelligence_agency\s*=\s*(upgrade_\w+)")
 
 GFX_NAME_RE = re.compile(r'name\s*=\s*"(GFX_\w+)"')
 
+CAN_SELECT_DEF_RE = re.compile(
+    r"^MD_auto_agency_can_select_upgrade_(\d+)_trigger\s*=\s*\{", re.MULTILINE
+)
+V_CAN_SELECT_BLOCK_RE = re.compile(
+    r"^MD_auto_agency_v_can_select\s*=\s*\{(.*?)^\}", re.MULTILINE | re.DOTALL
+)
+CAN_SELECT_CALL_RE = re.compile(
+    r"MD_auto_agency_can_select_upgrade_(\d+)_trigger\s*=\s*yes"
+)
+
+SLOT_AVAILABLE_DEF_RE = re.compile(
+    r"^MD_auto_agency_slot_available_(\d+)_trigger\s*=\s*\{(.*?)^\}",
+    re.MULTILINE | re.DOTALL,
+)
+SLOT_AVAILABLE_CALL_RE = re.compile(
+    r"MD_auto_agency_slot_available_(\d+)_trigger\s*=\s*yes"
+)
+CAN_UPGRADE_BLOCK_RE = re.compile(
+    r"^MD_auto_agency_can_upgrade\s*=\s*\{(.*?)^\}", re.MULTILINE | re.DOTALL
+)
+SEED_CACHE_BLOCK_RE = re.compile(
+    r"^MD_auto_agency_seed_completed_cache\s*=\s*\{(.*?)^\}",
+    re.MULTILINE | re.DOTALL,
+)
+# limit = { has_done_agency_upgrade = upgrade_x }
+# set_variable = { agency_upgrades_completed_and_queued^N = 1 }
+SEED_BRANCH_RE = re.compile(
+    r"has_done_agency_upgrade\s*=\s*(\w+)\s*\}\s*"
+    r"set_variable\s*=\s*\{\s*agency_upgrades_completed_and_queued\^(\d+)\s*=\s*1\s*\}"
+)
+
 
 def _read(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return ""
-
-
-def _line_of(text: str, offset: int) -> int:
-    """1-based line number for a character offset in text."""
-    return text.count("\n", 0, offset) + 1
 
 
 def _scan_agency_calls(stripped: str, filepath: str):
@@ -81,13 +117,13 @@ def _scan_agency_calls(stripped: str, filepath: str):
         gfx = icon_match.group(1)
         # Line number of the icon match within the original file
         abs_offset = m.start() + body.find(icon_match.group(0))
-        line = _line_of(stripped, abs_offset)
+        line = line_of(stripped, abs_offset)
         create_icons.append((filepath, line, gfx))
 
     upgrade_calls = []
     for m in UPGRADE_CALL_RE.finditer(stripped):
         upgrade = m.group(1)
-        line = _line_of(stripped, m.start())
+        line = line_of(stripped, m.start())
         upgrade_calls.append((filepath, line, upgrade))
 
     return create_icons, upgrade_calls
@@ -429,7 +465,7 @@ class Validator(BaseValidator):
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_GUI_FILE))
         if not text:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -448,6 +484,184 @@ class Validator(BaseValidator):
             "✓ All has_done_agency_upgrade references resolve",
             "Unknown prerequisite references:",
             category="agency-upgrades-prereqs",
+        )
+
+    def _validate_can_select_dispatch(self) -> None:
+        self._log_section("Checking can_select trigger definitions and dispatch...")
+
+        text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_TRIGGERS_FILE))
+        if not text:
+            self.log(
+                f"{Colors.YELLOW}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC}",
+                "warning",
+            )
+            return
+
+        results: List[str] = []
+        registered = set(self.registered_upgrades)
+        defined = {int(i) for i in CAN_SELECT_DEF_RE.findall(text)}
+
+        block_match = V_CAN_SELECT_BLOCK_RE.search(text)
+        if block_match is None:
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_v_can_select block not found"
+            )
+            dispatched: Set[int] = set()
+        else:
+            dispatched = {
+                int(i) for i in CAN_SELECT_CALL_RE.findall(block_match.group(1))
+            }
+
+        for idx in sorted(registered):
+            if idx not in defined:
+                results.append(
+                    f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                    f"MD_auto_agency_can_select_upgrade_{idx}_trigger definition"
+                )
+            if block_match is not None and idx not in dispatched:
+                results.append(
+                    f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                    f"MD_auto_agency_can_select_upgrade_{idx}_trigger = yes branch in "
+                    f"MD_auto_agency_v_can_select"
+                )
+
+        for idx in sorted(defined - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_can_select_upgrade_{idx}_trigger "
+                f"is defined but index ^{idx} is not registered"
+            )
+        for idx in sorted(dispatched - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_v_can_select dispatches index ^{idx} "
+                f"but it is not registered"
+            )
+
+        self._report(
+            results,
+            "✓ All can_select triggers are defined and dispatched",
+            "can_select trigger / dispatch problems:",
+            category="agency-upgrades-can-select",
+        )
+
+    def _validate_completion_cache(self) -> None:
+        self._log_section(
+            "Checking completion-cache seeding and slot_available dispatch..."
+        )
+
+        triggers = strip_comments(_read(Path(self.mod_path) / SCRIPTED_TRIGGERS_FILE))
+        effects = strip_comments(_read(Path(self.mod_path) / SCRIPTED_EFFECTS_FILE))
+        if not triggers or not effects:
+            missing = SCRIPTED_TRIGGERS_FILE if not triggers else SCRIPTED_EFFECTS_FILE
+            self.log(
+                f"{Colors.YELLOW}Missing {missing} — skipping{Colors.ENDC}",
+                "warning",
+            )
+            return
+
+        results: List[str] = []
+        registered = set(self.registered_upgrades)
+
+        slot_defs = {
+            int(idx): body for idx, body in SLOT_AVAILABLE_DEF_RE.findall(triggers)
+        }
+
+        can_upgrade_match = CAN_UPGRADE_BLOCK_RE.search(triggers)
+        if can_upgrade_match is None:
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_can_upgrade block not found"
+            )
+            slot_dispatched: Set[int] = set()
+            select_dispatched: Set[int] = set()
+        else:
+            slot_dispatched = {
+                int(i)
+                for i in SLOT_AVAILABLE_CALL_RE.findall(can_upgrade_match.group(1))
+            }
+            select_dispatched = {
+                int(i) for i in CAN_SELECT_CALL_RE.findall(can_upgrade_match.group(1))
+            }
+
+        seed_match = SEED_CACHE_BLOCK_RE.search(effects)
+        if seed_match is None:
+            results.append(
+                f"{SCRIPTED_EFFECTS_FILE}: MD_auto_agency_seed_completed_cache block not found"
+            )
+            seeded: Dict[int, str] = {}
+        else:
+            seeded = {
+                int(idx): upgrade
+                for upgrade, idx in SEED_BRANCH_RE.findall(seed_match.group(1))
+            }
+
+        for idx in sorted(registered):
+            expected = self._short_token(self.registered_upgrades[idx])
+
+            if idx not in slot_defs:
+                results.append(
+                    f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                    f"MD_auto_agency_slot_available_{idx}_trigger definition"
+                )
+            else:
+                body = slot_defs[idx]
+                if f"agency_upgrades_completed_and_queued^{idx}" not in body:
+                    results.append(
+                        f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_slot_available_{idx}_trigger "
+                        f"does not read agency_upgrades_completed_and_queued^{idx}"
+                    )
+                if f"global.agency_max_upgrades^{idx}" not in body:
+                    results.append(
+                        f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_slot_available_{idx}_trigger "
+                        f"does not compare against global.agency_max_upgrades^{idx}"
+                    )
+
+            if can_upgrade_match is not None:
+                if idx not in slot_dispatched:
+                    results.append(
+                        f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                        f"MD_auto_agency_slot_available_{idx}_trigger = yes branch in "
+                        f"MD_auto_agency_can_upgrade"
+                    )
+                if idx not in select_dispatched:
+                    results.append(
+                        f"{SCRIPTED_TRIGGERS_FILE}: index ^{idx} is registered but has no "
+                        f"MD_auto_agency_can_select_upgrade_{idx}_trigger = yes branch in "
+                        f"MD_auto_agency_can_upgrade"
+                    )
+
+            if seed_match is not None:
+                if idx not in seeded:
+                    results.append(
+                        f"{SCRIPTED_EFFECTS_FILE}: index ^{idx} is registered but "
+                        f"MD_auto_agency_seed_completed_cache never seeds "
+                        f"agency_upgrades_completed_and_queued^{idx}"
+                    )
+                elif seeded[idx] != expected:
+                    results.append(
+                        f"{SCRIPTED_EFFECTS_FILE}: MD_auto_agency_seed_completed_cache seeds "
+                        f"index ^{idx} from '{seeded[idx]}' but the registry has '{expected}'"
+                    )
+
+        for idx in sorted(set(slot_defs) - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_slot_available_{idx}_trigger "
+                f"is defined but index ^{idx} is not registered"
+            )
+        for idx in sorted(slot_dispatched - registered):
+            results.append(
+                f"{SCRIPTED_TRIGGERS_FILE}: MD_auto_agency_can_upgrade dispatches index ^{idx} "
+                f"but it is not registered"
+            )
+        for idx in sorted(set(seeded) - registered):
+            results.append(
+                f"{SCRIPTED_EFFECTS_FILE}: MD_auto_agency_seed_completed_cache seeds index "
+                f"^{idx} but it is not registered"
+            )
+
+        self._report(
+            results,
+            "✓ Completion cache is seeded and dispatched for every index",
+            "completion cache / slot_available problems:",
+            category="agency-upgrades-completion-cache",
         )
 
     def run_validations(self):
@@ -475,6 +689,8 @@ class Validator(BaseValidator):
         self._validate_loc_and_gfx()
         self._validate_array_size()
         self._validate_scripted_gui_prereqs()
+        self._validate_can_select_dispatch()
+        self._validate_completion_cache()
         self._validate_agency_calls()
 
 

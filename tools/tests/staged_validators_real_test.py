@@ -6,23 +6,17 @@ Stages actual codebase files with temporary deliberate issues, runs each
 validator with --staged, and verifies they find the expected issues.
 
 Usage:
-    python3 tools/test_staged_validators_real.py
+    MD_RUN_STAGED_INTEGRATION=1 python -m pytest tools/tests/staged_validators_real_test.py
 """
 
 import os
-import subprocess
 import sys
-import time
 from unittest import SkipTest
 
 from _staged_integration_gate import require_staged_integration_enabled
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-MAX_TIME = 15.0
-passed = 0
-failed = 0
-errors: list[str] = []
+from shared.paths import REPO_ROOT
+from shared.staged_harness import StagedHarness, restore_all
+from shared.suite import run_git
 
 EVENT_INTEGRATION_SUFFIX = """
 country_event = {
@@ -37,123 +31,37 @@ country_event = {
 LOC_INTEGRATION_SUFFIX = '\n _staged_validator_key: "broken ["\n'
 
 
-def run(cmd, **kwargs):
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
-
-
-def stage_file_as_modified(path, suffix="\n"):
+def stage_file_as_modified(path, suffix, staged_files):
     """Append a temporary issue and stage the file for a real validator run."""
     if ".." in path or os.path.isabs(path) or path not in _TOUCHED_FILES:
         raise ValueError(f"unsafe real path: {path}")
+    # Recorded before the write, so a failed stage still gets restored.
+    staged_files.append(path)
     # pi-lens-ignore: python-path-traversal
     with open(path, "a", encoding="utf-8-sig") as f:
         f.write(suffix)
     # pi-lens-ignore: python-path-traversal
-    run(["git", "add", path])
+    run_git(REPO_ROOT, "add", path)
 
 
 def unstage_file(path):
     """Unstage a file and restore its working tree state."""
-    run(["git", "reset", "HEAD", path])
-    run(["git", "checkout", "--", path])
-
-
-def run_validator(
-    script: str,
-    label: str,
-    expect_issues: bool | None = True,
-    min_issues: int = 0,
-    expected_path: str | None = None,
-    expected_category: str | None = None,
-):
-    global passed, failed, errors
-
-    cmd = [
-        sys.executable,
-        f"tools/validation/{script}",
-        "--staged",
-        "--strict",
-        "--no-color",
-        "--workers",
-        "4",
-    ]
-
-    start = time.time()
-    result = run(cmd)
-    elapsed = time.time() - start
-
-    # Extract issue count from the validator summary.
-    issue_count = 0
-    import re as _re
-
-    output = (result.stderr or "") + (result.stdout or "")
-    total_match = _re.search(r"(\d+)\s+TOTAL ISSUES FOUND", output)
-    if total_match:
-        issue_count = int(total_match.group(1))
-    else:
-        summary_match = _re.search(
-            r"(\d+)\s+ERROR\(S\)(?:\s*-\s*(\d+)\s+WARNING\(S\))?", output
-        )
-        if summary_match:
-            issue_count = int(summary_match.group(1)) + int(summary_match.group(2) or 0)
-
-    ok = True
-    status_parts = []
-
-    if elapsed > MAX_TIME:
-        ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s)")
-    else:
-        status_parts.append(f"{elapsed:.1f}s")
-
-    if expect_issues is True and result.returncode != 1:
-        ok = False
-        status_parts.append(f"expected findings exit 1 but got {result.returncode}")
-    elif expect_issues is True and expected_path and expected_path not in output:
-        ok = False
-        status_parts.append(f"missing expected path {expected_path}")
-    elif (
-        expect_issues is True and expected_category and expected_category not in output
-    ):
-        ok = False
-        status_parts.append(f"missing expected category {expected_category}")
-    elif expect_issues is False and result.returncode != 0:
-        ok = False
-        status_parts.append(f"expected pass but got exit {result.returncode}")
-
-    if expect_issues is True and min_issues > 0 and issue_count < min_issues:
-        ok = False
-        status_parts.append(f"expected >= {min_issues} issues but found {issue_count}")
-    elif issue_count > 0:
-        status_parts.append(f"{issue_count} issues")
-
-    if ok:
-        passed += 1
-        print(f"  PASS  {label} [{', '.join(status_parts)}]")
-    else:
-        failed += 1
-        msg = f"  FAIL  {label} [{', '.join(status_parts)}]"
-        errors.append(msg)
-        print(msg)
-        # Print last few lines of stderr for context
-        output = (result.stderr or "") + (result.stdout or "")
-        for line in output.strip().split("\n")[-5:]:
-            print(f"        {line}")
+    run_git(REPO_ROOT, "reset", "HEAD", path)
+    run_git(REPO_ROOT, "checkout", "--", path)
 
 
 def main():
-    global passed, failed
+    harness = StagedHarness()
+    run_validator = harness.run_validator
 
     os.chdir(REPO_ROOT)
     staged_files = []
 
     def stage(path, suffix="\n"):
-        stage_file_as_modified(path, suffix)
-        staged_files.append(path)
+        stage_file_as_modified(path, suffix, staged_files)
 
     def cleanup():
-        for path in staged_files:
-            unstage_file(path)
+        restore_all(staged_files, unstage_file)
         staged_files.clear()
 
     try:
@@ -167,7 +75,6 @@ def main():
             "validate_events.py",
             "events: Event Horizon.txt (missing is_triggered_only)",
             expect_issues=True,
-            min_issues=1,
             expected_path="Event Horizon.txt",
             expected_category="missing-triggered-only",
         )
@@ -186,7 +93,6 @@ def main():
             "validate_localisation.py",
             "localisation: ALG loc file (unclosed bracket)",
             expect_issues=True,
-            min_issues=1,
             expected_path="MD_focus_ALG_l_english.yml",
             expected_category="Unpaired brackets found in localisation",
         )
@@ -230,7 +136,6 @@ def main():
             "validate_events.py",
             "events: multiple files staged (only events checked)",
             expect_issues=True,
-            min_issues=1,
             expected_path="Event Horizon.txt",
             expected_category="missing-triggered-only",
         )
@@ -238,7 +143,6 @@ def main():
             "validate_localisation.py",
             "localisation: multiple files staged (only loc checked)",
             expect_issues=True,
-            min_issues=1,
             expected_path="MD_focus_ALG_l_english.yml",
             expected_category="Unpaired brackets found in localisation",
         )
@@ -246,20 +150,11 @@ def main():
 
     except Exception as exc:
         print(f"\nERROR: {exc}")
-        failed += 1
+        harness.failed += 1
     finally:
         cleanup()
 
-    print()
-    print("=" * 60)
-    print(f"Results: {passed} passed, {failed} failed")
-    if errors:
-        print("\nFailures:")
-        for error in errors:
-            print(error)
-    print("=" * 60)
-
-    return 1 if failed else 0
+    return harness.summary()
 
 
 # ── pytest entry points ─────────────────────────────────────────────────────
@@ -274,13 +169,8 @@ _TOUCHED_FILES = (
 
 
 def _touched_files_clean() -> bool:
-    r = subprocess.run(
-        ["git", "status", "--porcelain", "--", *_TOUCHED_FILES],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    return r.returncode == 0 and not r.stdout.strip()
+    status = run_git(REPO_ROOT, "status", "--porcelain", "--", *_TOUCHED_FILES)
+    return not status.stdout.strip()
 
 
 def _game_content_checked_out() -> bool:

@@ -1,7 +1,7 @@
 # Write templates
 
-Every artefact of a #3162 country pass, verbatim. Copy from here — **do not open another country's
-focus tree to learn a shape**. Belarus, Brazil, Bulgaria and Comoros are naming references only.
+Every artefact of a country AI path pass, verbatim. Copy from here — **do not open another country's
+focus tree to learn a shape**.
 
 Substitute `DEN` / `Denmark` / the path names. Tabs for indentation.
 
@@ -37,8 +37,10 @@ DEN_ai_behavior = {
 `NO_PATH` is the `default = { }` block and stays last — a fresh game leaves the AI unscripted unless
 the player picks a path. `HISTORICAL` is a plain `option` and comes first, with one `option` per
 alt-history path between it and `RANDOM_PATH`. No `DEFAULT`. Option names are unprefixed
-(`EUROPEAN_UNION`, not `DEN_EUROPEAN_UNION`) and never contain "random". Don't reorder the file —
-the alphabetical pass is a separate cross-cutting item.
+(`EUROPEAN_UNION`, not `DEN_EUROPEAN_UNION`) and never contain "random". The file lists the rules
+alphabetically by displayed country name; insert a new block at that position. A country sub-rule
+(`BLR_union_state_ai_behavior`, `GEO_help_CHE_behavior`) goes directly after the main rule in the
+same group, with no `icon`.
 
 ## 2. Localisation — `localisation/english/MD_game_rules_l_english.yml`
 
@@ -55,10 +57,10 @@ country-specific history. Never an evocative title, never `"Default"`, `"Histori
  RULE_OPTION_DEN_EUROPEAN_UNION_DESC: "..."
 ```
 
-Header key `@TAG <short country name>` — `@EST Estonia`, not `@EST Republic of Estonia`. Some
-countries carry it in `localisation/english/replace/replaced_from_game_rules_l_english.yml` instead;
-check both before adding a duplicate. Some existing keys are suffixed `_MD` (`CZE_AI_BEHAVIOR_MD`) —
-match whatever the rule's `name =` points at.
+Header key `@TAG <short country name>` — `@EST Estonia`, not `@EST Republic of Estonia`. A key
+vanilla also defines lives in `localisation/english/replace/replaced_from_game_rules_l_english.yml`
+instead; check both before adding a duplicate. Country blocks follow the same alphabetical order as
+the rules file; insert a new block at that position.
 
 Every `_desc` is **exactly two sentences**, present tense about the country, no hard dates, `§8…§!`
 on party and movement names. First sentence: what the country does. Second: what that means for the
@@ -123,11 +125,8 @@ Optional AI sentiment grant, if the country has one — `if`/`else_if`, no bookk
 ```
 
 Everything downstream gates on `has_global_flag`, **never** `has_game_rule` — including events and
-strategy plans, or a `RANDOM_PATH` roll enables the flags but not the plan. Known direct readers to
-convert when they touch your country: `HOL_strategy_plans.txt`, `events/Solomon_Islands.txt`,
-`events/Sao_Tome_e_Principe.txt`, `events/comoros.txt`, `events/05_japan.txt`, `events/Italy.txt`,
-`history/countries/GER - Germany.txt`, `common/scripted_effects/00_yearly_effects.txt`. The report's
-Wiring section lists any remaining reader for your tag.
+strategy plans, or a `RANDOM_PATH` roll enables the flags but not the plan. The report's Wiring
+section lists every direct `has_game_rule` reader for your tag; convert each one.
 
 ## 4. Scripted triggers — `common/scripted_triggers/99_DEN_scripted_triggers.txt`
 
@@ -195,6 +194,48 @@ DEN_ai_rival_of_socialist_path = {
 
 Triggers may call each other, so the set stays small. Keep the depth shallow — three levels is
 plenty.
+
+**The `is_historical_focus_on` arm is only safe inside `ai_will_do`.** Under an explicit alt rule with
+historical AI on, the plain owner trigger above is _also_ true — harmless there only because the
+mandated pair (§5) puts `factor = 0 DEN_ai_not_historical_path = yes` **last**, and that not trigger
+is a pure alt-flag OR, so the killswitch wins. Two places break that guarantee:
+
+- An **alias** spanning historical and an alt path. Its not trigger opens with
+  `NOT = { DEN_ai_western_path = yes }`, so the alias being true suppresses its own killswitch and the
+  historical spine outbids the rule the player picked.
+- Any reader **outside** `ai_will_do` — a decision or category `visible`, a strategy-plan `enable`, a
+  walker event `trigger`. There is no second modifier to correct it.
+
+Either case needs the alt-flag guard (`99_FRA_scripted_triggers.txt` and
+`99_GEO_scripted_triggers.txt` are references):
+
+```
+DEN_ai_alt_path = {
+	OR = {
+		has_global_flag = DEN_EUROPEAN_UNION_FOCUS_PATH
+		has_global_flag = DEN_EUROSCEPTIC_FOCUS_PATH
+		has_global_flag = DEN_SOCIALIST_FOCUS_PATH
+		has_global_flag = DEN_NATIONALIST_FOCUS_PATH
+	}
+}
+
+DEN_ai_historical_path = {
+	OR = {
+		has_global_flag = DEN_HISTORICAL_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			NOT = { DEN_ai_alt_path = yes }
+		}
+	}
+}
+```
+
+Name the helper `TAG_ai_alt_path` for the non-historical flags and `TAG_ai_any_path` when it must
+include historical too. A single reader outside `ai_will_do` may instead pair the plain trigger with
+its not trigger: `DEN_ai_historical_path = yes` + `DEN_ai_not_historical_path = no` (§8).
+
+`ai_path_report.py` reports both failures: a focus alive under an alt rule only because historical is
+on, and a decision gate that is dead under `NO_PATH` or visible during an alt path.
 
 **Precondition.** The collapsed shape is behaviour-identical to the old three-modifier form only
 while at most one `TAG_*_FOCUS_PATH` flag is ever set and each not trigger excludes its own group's
@@ -284,6 +325,12 @@ DEN_ai_path_category = {
 
 The icon must be a **category** sprite (52x40, `GFX_decisions_category_*`), not a decision one.
 
+Raw flags are right only while every path in the `visible` is an **alt** path, as above. A ramp that
+also has to run for the **historical** party gates on the alt-guarded `DEN_ai_historical_path` (§4)
+instead — raw `DEN_HISTORICAL_FOCUS_PATH` is dead under `NO_PATH` with historical AI, which is the one
+state the trigger exists to cover, and a bare unguarded trigger runs the historical ramp on top of the
+alt ramp the player picked.
+
 A ramp pair per path, in `common/decisions/<Country>.txt`:
 
 ```
@@ -333,7 +380,6 @@ A ramp pair per path, in `common/decisions/<Country>.txt`:
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_monarchists_take_the_country"
 			set_temp_variable = { rul_party_temp = 23 }
 			change_ruling_party_effect = yes
-			hidden_effect = { update_party_name = yes }
 		}
 
 		ai_will_do = { base = 100 }
@@ -351,44 +397,124 @@ wrong when the target sits inside a group next to the incumbent.
 
 ## 7. AI strategy — war weighting
 
-`declare_war` is target-keyed (`id = TAG`) and weights only **opening** a war. There is no
-`dont_declare_war` token and no targetless form. A `declare_war` block gated on
-`has_war_with = TARGET` is a no-op. The 306 `TAG_cancel_war_TARGET` blocks across
-ITA/LIC/TUR/JAP/GER/HOL/ENG/SWE/CHI/BUL/CUB/IND/CAN/VEN/COL/ETH/GUY/KOR are that bug — never copy
-one, never add one.
+**Write none.** An AI path PR adds no war block to `common/ai_strategy/`: no per-target readiness
+gate (`TAG_avoid_unready_war_with_X`, `TAG_prepare_war_with_X`), no `declare_war` / `conquer`
+hold-and-release tiers, no `avoid_starting_wars`, no losing-war brake. War-goal declaration is
+already covered by the general suite in `MD_war_declaration_ai.txt` (mod-wide restraint without
+`allowed`, plus the named rivalry pairings) and the engine's own wargoal handling. Review rejects
+every per-TAG variant. Existing per-TAG war blocks in other countries are legacy, not models.
 
-**Surrender brake, per target** (`common/ai_strategy/ALG.txt` is the model):
+**When a focus war fires too early**, fix it in the focus: a strength check in `available` (Bolivia's
+`BOL_revenge_of_1879` reads `fighting_army_strength_ratio = { tag = CHL ratio > 1.2 }`) or a
+killswitch / factor in `ai_will_do`. If the mod-wide brake is genuinely too weak for every country,
+that is a separate PR against `MD_war_declaration_ai.txt`, not a per-TAG block.
 
-```
-DEN_cancel_war_neighbours = {
-	allowed = { original_tag = DEN }
-	enable = {
-		has_war = yes
-		surrender_progress > 0.15
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = "SWE" value = -4000 }
-	ai_strategy = { type = declare_war id = "GER" value = -4000 }
-}
-```
-
-**Pre-war readiness gate, per target.** Enable on `has_wargoal_against = X` +
-`NOT = { has_war_with = X }` + a strength or size check, then `declare_war id = X` negative to hold
-and positive to release. `MD_war_declaration_ai.txt`, `BOS_avoid_unready_war_with_cro` /
-`BOS_prepare_war_with_cro` are the references. Cache anything containing `any_of_scopes` behind a
-country flag and have `enable` read only the flag.
-
-**Losing-war brake, targetless.** `avoid_starting_wars` gated on `has_war = yes` +
-`enemies_strength_ratio`; `SOV_avoid_starting_wars`, `BLR_avoid_starting_wars` and `RAJ.txt:378` are
-the references. `enemies_strength_ratio` rises as your enemies get stronger (MD's peace-deal
-triggers read `> 1.7` as losing, `> 2.0` as massively outgunned), while
-`strength_ratio = { tag = X ratio < 1 }` means you are weaker than X. `avoid_starting_wars` is
-additive with `conquer`, not a standalone peacefulness dial — read the surrounding `conquer` values
-before picking a sign or magnitude. A per-tag `avoid_starting_wars` stricter than the mod-wide
-`MD_avoid_new_wars_when_outmatched` (`enemies_strength_ratio > 0.75`) is a strict subset and can
-never fire.
+**Pre-existing blocks** in `common/ai_strategy/TAG.txt` stay untouched unless they are the
+`declare_war`-on-`has_war_with` bug below. `declare_war` is target-keyed and weights only
+**opening** a war, so a block gated on `has_war_with = TARGET` is a no-op. Never add a
+`TAG_cancel_war_TARGET` block.
 
 **Never** add an `on_daily_<TAG>` pass that caches booleans into country flags for `enable` or
 `ai_will_do` to read. Both are already evaluated lazily; a daily cache costs more and lags real
 state by a day. Write the condition inline.
+
+## 8. Historical government walker — `events/<country>.txt`
+
+Only when the report's `government` section verdicts **dated timeline**. On an undated successor
+roster, write nothing: the ramp decisions in §6 already deliver the party, and a walker over an
+undated roster installs the wrong person.
+
+The path rule steers the party; nothing steers the person. `set_leader` runs on a re-election only
+behind a term limit, and most history files set none, so a country whose party keeps winning never
+rotates its leader. The walker is the fix: an AI-only hidden event fired at the real historical
+dates, which asserts the ruling party and the roster pointer and lets the existing succession list
+supply the name.
+
+```
+country_event = {
+	id = denmark_md.400
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		DEN_ai_historical_path = yes
+		DEN_ai_not_historical_path = no
+		NOT = { has_country_flag = generic_election_killswitch }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event denmark_md.400"
+		if = {
+			limit = { date > 2022.10.24 }
+			set_variable = { conservatism_leader = 6 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+		else_if = {
+			limit = { date > 2019.7.23 }
+			set_variable = { socialism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+		else = {
+			set_variable = { socialism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_60_months = yes
+		}
+		else = {
+			set_leader = yes
+		}
+	}
+}
+```
+
+Scheduled once per historical date from `common/scripted_effects/00_yearly_effects.txt`, inside the
+matching `trigger_year_<Y>_events` block. The dispatcher runs at the January tick and MD's day counts
+ignore leap years:
+
+```
+DEN = { country_event = { id = denmark_md.400 days = 158 } }
+```
+
+**Pointer semantics.** `<subideology>_leader = N` means _the next person created is roster index N_.
+Each roster block in `common/scripted_effects/<TAG>_political_leaders.txt` increments before creating,
+and the blocks are sequential `if`s rather than `else_if`s, so the cascade keeps running past N until
+a block's `date <` end-of-tenure guard sets `b = 1`. The last entry of every branch sets `b`
+unconditionally, so the list never falls off its end.
+
+**Assert the index in every branch.** Never blind-advance by calling `set_leader` and trusting the
+pointer. Explicit assertion makes each date idempotent and self-repairing: a generic election between
+two historical dates moves the pointer, and the next date snaps it back. A walker that
+blind-advances installs the wrong person.
+
+**Never pass `change_leader_temp = 1`.** It sets `do_not_retire`, which makes the roster cascade
+pin at the current pointer instead of fast-forwarding. Use it only to deliberately keep an
+incumbent across a coalition reshuffle.
+
+**Bound the date chain.** One descending `if`/`else_if` where every branch asserts both the party and
+the roster index, then one shared tail that decides change-vs-advance. The chain's final `else` must
+not change the ruling party on its own: with no upper bound, a re-fire after the last historical date
+reinstalls the earliest government.
+
+**`set_elections_XX_months` on a party change only**, matching the
+country's `election_frequency`. It resyncs `last_election` so the generic clock does not fire weeks
+later and undo the forced government. Calling it on every branch suppresses AI election news
+indefinitely.
+
+**Never inline `create_country_leader`.** It duplicates the leader data, leaves the person missing
+from the roster, and desyncs the pointer for every other caller of `set_leader`. If the historical
+person is absent, append an entry to
+`<TAG>_political_leaders.txt` in that file's exact existing shape, with a real end-of-tenure `date <`
+marker and a `picture =` that exists under `gfx/leaders/<TAG>/` — nothing validates leader portraits,
+and the filename is case-sensitive on Linux.
+
+The event is hidden and `is_ai = yes`, so it gets **no localisation keys at all**. Gate on the §4
+scripted triggers, never on raw flags: countries converted before this standard carry older flag names
+(ENG reads `ENG_HISTORICAL_AI_FOCUS`, not `_FOCUS_PATH`). Between two historical dates the generic
+election machinery still runs and may seat someone else; the next date re-asserts. That is the
+accepted fidelity ceiling.

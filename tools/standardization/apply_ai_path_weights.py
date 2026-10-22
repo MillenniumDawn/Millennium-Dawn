@@ -30,9 +30,8 @@ import sys
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
-_TOOLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-sys.path.insert(0, _TOOLS)
-sys.path.insert(0, os.path.join(_TOOLS, "analysis"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "analysis"))
 
 from ai_path_report import resolve_focus_file  # noqa: E402
 from common_utils import code_of_line, find_block_span  # noqa: E402
@@ -180,6 +179,18 @@ def rebuild_block(
     kept: List[str] = []
     removed: List[str] = []
     base_line = inner + "base = 1"
+    if start == end:
+        code = code_of_line(lines[start])
+        body_text = code[code.index("{") + 1 : code.rindex("}")].strip()
+        if "{" in body_text:
+            raise MappingError(
+                "inline ai_will_do with a nested block at line {}".format(start + 1)
+            )
+        if body_text:
+            if _BASE_LINE.match(body_text):
+                base_line = inner + body_text.replace("factor = ", "base = ", 1)
+            else:
+                kept.append(inner + body_text)
     cursor = start + 1
     while cursor < end:
         code = code_of_line(lines[cursor])

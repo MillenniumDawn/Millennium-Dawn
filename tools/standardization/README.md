@@ -20,7 +20,7 @@ Standardizes national focus files according to Millennium Dawn standards.
 **Key features:**
 
 - Enforces proper property ordering
-- Adds missing logging to completion rewards and effects
+- Adds missing logging to completion rewards and effects that run something; an empty or log-only block is removed
 - Formats search_filters into single lines
 - Ensures ai_will_do is properly formatted
 
@@ -67,7 +67,7 @@ Standardizes decision files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Adds logging to complete_effect blocks
+- Adds logging to complete/remove/timeout/cancel_effect blocks that run something; an empty or log-only block is removed
 - Enforces proper property ordering
 - Maintains consistent formatting
 - Preserves ai_will_do blocks
@@ -106,6 +106,11 @@ Surgical sweeps for two gates that never fail. Unlike the standardizers above th
 Both find a block's closing brace by column, not by "the line where depth hit zero" — a closer sharing a line with the enclosing block's own `}` would otherwise be swallowed along with it. A block whose braces never balance is reported and left alone, and the run exits non-zero, rather than rewriting from the opener to EOF.
 
 `validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
+
+`add_idea_equipment_bonus_instant.py` adds `instant = yes` to idea equipment
+bonuses that lack it. It leaves other content and already instant bonuses unchanged.
+Run `python3 tools/standardization/add_idea_equipment_bonus_instant.py --dry-run`
+to preview the count, then omit `--dry-run` to update `common/ideas/`.
 
 **Usage:**
 
@@ -169,6 +174,53 @@ Standardizes MIO organization files according to Millennium Dawn standards.
 python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 ```
 
+### Technologies (`standardize_technologies.py`)
+
+Reorders every `technology` block in `common/technologies/` into one fixed layout with one blank line between technologies. Text outside the blocks (the `technologies = {` wrapper, `@row` constants, section comments) passes through unchanged.
+
+**Block layout** (one blank line between groups, `ai_will_do` last):
+
+1. Gates: `is_special_project_tech`, `doctrine`, `allow`, `allow_branch`, `dependencies`, `XOR`
+2. Effects: every key that is not in the structural set (plain modifiers, `category_*` and sub-unit blocks) in source order, then `modifier`, `custom_modifier_tooltip`, `show_effect_as_desc`
+3. Unlocks: `enable_equipments`, `enable_equipment_modules`, `enable_subunits`, `enable_building`, `enable_tactic`, `sub_technologies`, `show_equipment_icon`
+4. `on_research_complete_limit`, `on_research_complete`
+5. Research: `research_cost`, `start_year`, `xp_research_type`, `xp_boost_cost`, `xp_unlock_cost`, `xp_research_bonus`, `force_use_small_tech_layout`
+6. Tree: `path` (repeatable), `folder`, `categories`, `special_project_specialization`
+7. AI: `ai_research_weights`, `ai_will_do`
+
+**Rendering:**
+
+- Single-leaf blocks collapse to one line (`ai_will_do = { factor = 1 }`, `allow = { has_doctrine = x }`); other blocks are reindented with their single-leaf children collapsed (`position = { x = @row1 y = @1965 }`)
+- Bare token lists are one line for a single token (`enable_equipments = { X }`) and one token per line for two or more
+- Comments above a property travel with it; a block holding a `#` comment stays multi-line
+- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that, only into a block that runs something)
+
+**Usage:**
+
+```bash
+python3 standardize_technologies.py common/technologies/infantry.txt -o output.txt
+```
+
+### History (`standardize_history.py`)
+
+Standardizes dated blocks in country history files without changing content outside them.
+
+**Usage:**
+
+```bash
+python3 standardize_history.py "history/countries/CHI - China.txt" -o output.txt
+```
+
+### Localisation (`standardize_localisation.py`)
+
+Reorganizes English localisation files by content category and detects the mod root when possible.
+
+**Usage:**
+
+```bash
+python3 standardize_localisation.py input.yml --mod-root /path/to/mod
+```
+
 ## Unified Interface
 
 For convenience, use the unified `standardize.py` script:
@@ -188,6 +240,15 @@ python3 standardize.py idea input.txt -v
 
 # Standardize MIOs
 python3 standardize.py mio input.txt
+
+# Standardize technologies
+python3 standardize.py technology common/technologies/infantry.txt
+
+# Standardize history files
+python3 standardize.py history "history/countries/CHI - China.txt"
+
+# Standardize localisation
+python3 standardize.py localisation input.yml --mod-root /path/to/mod
 ```
 
 ## Common Options
@@ -199,6 +260,11 @@ All standardizers support these command-line options:
 - `-b, --backup` - Create backup before modifying (recommended)
 - `-v, --verbose` - Verbose output for debugging
 
+Additional options are limited to their relevant subcommands:
+
+- `--check-naming` - Check modifier naming conventions (focus trees only)
+- `--mod-root` - Mod root path (localisation files only)
+
 ## Code Standards Enforced
 
 ### All File Types
@@ -209,10 +275,13 @@ Every line written by a standardizer passes through `normalize_spacing`
 Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 `tools/linting/fix_styling.py` uses the same helper.
 
+Focus, event, decision, idea and technology blocks are reindented by brace
+depth, one tab per level, so a nested line written at the wrong depth is moved.
+
 ### Focus Trees
 
 - Use `relative_position_id` for positioning
-- Include logging in completion_reward/select_effect/bypass_effect
+- Include logging in completion_reward/select_effect/bypass_effect only when the block runs an effect; a log-only block is removed
 - Proper property ordering (id, icon, position, cost, prerequisites, etc.)
 - ai_will_do always last
 
@@ -225,7 +294,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Decisions
 
-- Include logging in complete_effect
+- Include logging in complete_effect only when the block runs an effect; a log-only block is removed
 - Use `fire_only_once` sparingly
 - Proper property ordering
 - Include ai_will_do
@@ -234,7 +303,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 - Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
-- Remove empty `on_add = { log = "" }`
+- Remove `on_add` / `on_remove` blocks whose only statement is a log
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
 
@@ -244,6 +313,12 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 - Place all `tree_header_text` blocks before `initial_trait`
 - Place all `trait` blocks after `initial_trait`
 - Remove excessive blank lines inside blocks
+
+### Technologies
+
+- Fixed group order: gates, effects, unlocks, on_research_complete, research meta, tree placement, AI
+- Any key outside the structural set is an effect and keeps its source order
+- `ai_will_do` always last
 
 ## Performance Optimizations
 
@@ -313,30 +388,39 @@ This will show:
 
 ## Integration with Development Workflow
 
-### Pre-commit Hook
-
-Consider adding standardization to your pre-commit hooks:
+Standardization is manual, static tooling: no standardizer or standardization
+check runs in pre-commit or CI. The `md-standardize` auto-fixer hook is
+disabled on purpose — it rewrites whole files, so on a repo where most files
+predate the current rules it would drag a full reformat into every unrelated
+commit — and `tools/validation/validate_standardization.py` is likewise
+unwired from both pipelines. Run the standardizers by hand on the files you
+are working on, or run the report on your own schedule for a cleanup pass:
 
 ```bash
-# In .git/hooks/pre-commit
-#!/bin/bash
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-    python3 tools/standardization/standardize.py event events/*.txt
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt
+python3 tools/validation/validate_standardization.py --all --no-color
 ```
 
-### CI/CD Pipeline
+Each finding names the command that fixes it:
 
-Add standardization checks to your continuous integration:
-
-```yaml
-# .github/workflows/standardize.yml
-- name: Standardize Files
-  run: |
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
-    python3 tools/standardization/standardize.py event events/*.txt --backup
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt --backup
 ```
+events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
+```
+
+Drop `--all` (and add `--staged`) for the changed-file scope.
+
+### standardize_api.py
+
+`standardize_api.py` is the in-memory entry point both the validator and the
+(disabled) `tools/standardize_staged.py` hook drive, so path routing and
+standardizer selection live in one place:
+
+- `kind_for_path(path)` — `"focus"`, `"event"`, `"decision"`, `"idea"`, `"mio"`,
+  or `None` when no standardizer owns the path.
+- `standardize_text(kind, text)` — the text the standardizer would write, or
+  `None` when the file holds no block of that kind.
+
+Neither reads or writes the file, so a checker can compare against disk without
+the risk of a half-written file.
 
 ## Related Documentation
 

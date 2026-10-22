@@ -18,7 +18,6 @@ focus_tree = {
 
 	continuous_focus_position = { x = 1780 y = 1100 }
 	#shared_focus = ASEAN_shared_focus
-	# shared_focus = CMW_Aso_Rock_Declaration
 
 	# Focus Shortcuts
 	shortcut = {
@@ -236,7 +235,7 @@ focus_tree = {
 		ai_will_do = {
 			base = 1
 			modifier = {
-				check_variable = { int_investment < 600 }
+				check_variable = { int_investments < 600 }
 				add = 4
 			} #Singapore needs to invest globally. Core gameplay mechanic!!
 			modifier = {
@@ -274,7 +273,7 @@ focus_tree = {
 			modifier = {
 				add = 2
 				# Western Clique likes this
-				is_in_array = { ruling_party = 1 }
+				check_variable = { ruling_party = 1 }
 			}
 		}
 	}
@@ -575,9 +574,7 @@ focus_tree = {
 			else_if = { limit = { USA = { has_government = neutrality } }
 				has_government = neutrality
 			}
-			else = {
-				has_government = nationalist
-			}
+			else = { has_government = nationalist }
 		}
 
 		completion_reward = {
@@ -593,7 +590,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -648,7 +649,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -981,7 +986,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: focus SIN_energy_efforts"
 			add_tech_bonus = {
 				name = SIN_energy_efforts
-				category = CAT_fuel_oil
+				category = CAT_fuel_refining
 				category = CAT_industry
 				uses = 1
 				bonus = 0.5
@@ -1061,8 +1066,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: focus SIN_fossil_fuel_efficiency"
 			add_tech_bonus = {
-				name = SIN_energy_efforts
-				category = CAT_fuel_oil
+				name = SIN_fossil_fuel_efficiency
+				category = CAT_fuel_efficiency
 				category = CAT_industry
 				uses = 1
 				bonus = 0.5
@@ -1212,23 +1217,21 @@ focus_tree = {
 					target = SIN
 					value > 69
 				}
-			 }
+			}
 			IND = {
 				has_opinion = {
 					target = SIN
 					value > 49
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = AST }
-				has_opinion = {
-					target = AST
-					value > 9
-				}
-				has_opinion = {
-					target = IND
-					value > 9
-				}
+			}
+			NOT = { has_war_with = AST }
+			has_opinion = {
+				target = AST
+				value > 9
+			}
+			has_opinion = {
+				target = IND
+				value > 9
 			}
 		}
 
@@ -1251,14 +1254,12 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
-			AST = {
-				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
-			}
-			IND = {
-				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
-			}
+			set_temp_variable = { sender_nation = SIN.id }
+			set_temp_variable = { receiver_nation = AST.id }
+			set_improved_trade_agreement = yes
+			set_temp_variable = { receiver_nation = IND.id }
+			set_improved_trade_agreement = yes
+			SIN_calculate_singaporean_trade_agreements = yes
 		}
 
 		ai_will_do = {
@@ -1332,10 +1333,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_nanyang_technological_university"
 			add_tech_bonus = {
-				name = CAT_Civilian
+				name = SIN_EDU_nanyang_technological_university
 				bonus = 0.20
 				uses = 2
-				category = CAT_Civilian
+				category = CAT_civilian
 			}
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
@@ -1358,7 +1359,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIN_EDU_education_effort
 
-		cost = 8.6 #60 Days
+		cost = 8.6
 
 		prerequisite = { focus = SIN_EDU_education_effort }
 
@@ -1374,7 +1375,7 @@ focus_tree = {
 			set_temp_variable = { temp_productivity_change = 15 }
 			flat_productivity_change_effect = yes
 			add_tech_bonus = {
-				name = CAT_industry
+				name = SIN_EDU_university_patent_and_journal
 				bonus = 0.70
 				uses = 3
 				category = CAT_industry
@@ -1400,7 +1401,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SIN_EDU_education_effort
 
-		cost = 11.5 #80 Days
+		cost = 11.5
 
 		prerequisite = { focus = SIN_EDU_university_patent_and_journal }
 		prerequisite = { focus = SIN_EDU_nanyang_technological_university }
@@ -1413,25 +1414,25 @@ focus_tree = {
 		}
 
 		completion_reward = {
-		log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_south_east_asia_education_center"
-		add_offsite_building = {
-			type = offices
-			level = 1
-		}
-		set_temp_variable = { temp_productivity_change = 35 }
-		flat_productivity_change_effect = yes
-		add_tech_bonus = {
-			name = CAT_internet_tech
-			bonus = 0.80
-			uses = 2
-			category = CAT_internet_tech
-		}
-		swap_ideas = {
-			remove_idea = SIN_education_efforts_1_idea
-			add_idea = SIN_education_efforts_2_idea
-		}
-		set_temp_variable = { treasury_change = -8 }
-		modify_treasury_effect = yes
+			log = "[GetDateText]: [THIS.GetName]: Focus SIN_EDU_south_east_asia_education_center"
+			add_offsite_building = {
+				type = offices
+				level = 1
+			}
+			set_temp_variable = { temp_productivity_change = 35 }
+			flat_productivity_change_effect = yes
+			add_tech_bonus = {
+				name = SIN_EDU_south_east_asia_education_center
+				bonus = 0.80
+				uses = 2
+				category = CAT_internet
+			}
+			swap_ideas = {
+				remove_idea = SIN_education_efforts_1_idea
+				add_idea = SIN_education_efforts_2_idea
+			}
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1490,6 +1491,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
@@ -1535,7 +1537,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1550,7 +1555,7 @@ focus_tree = {
 
 		prerequisite = { focus = SIN_total_defence }
 
-		search_filters = { FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			has_war = no
@@ -1560,13 +1565,11 @@ focus_tree = {
 					target = SIN
 					value > 49
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = USA }
-				has_opinion = {
-					target = USA
-					value > 49
-				}
+			}
+			NOT = { has_war_with = USA }
+			has_opinion = {
+				target = USA
+				value > 49
 			}
 		}
 
@@ -1617,13 +1620,18 @@ focus_tree = {
 						amount = 5
 						producer = USA
 					}
-					set_temp_variable = { treasury_change = -56.5 }
-					modify_treasury_effect = yes
 				}
+				set_temp_variable = { treasury_change = -56.5 }
+				modify_treasury_effect = yes
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	focus = {
@@ -1652,6 +1660,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -1693,6 +1702,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -1712,7 +1722,7 @@ focus_tree = {
 
 		prerequisite = { focus = SIN_singaporean_armor }
 
-		search_filters = { FOCUS_FILTER_EQUIPMENT }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			has_war = no
@@ -1722,13 +1732,11 @@ focus_tree = {
 					target = SIN
 					value > 49
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = USA }
-				has_opinion = {
-					target = USA
-					value > 49
-				}
+			}
+			NOT = { has_war_with = USA }
+			has_opinion = {
+				target = USA
+				value > 49
 			}
 		}
 
@@ -1767,7 +1775,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	focus = {
@@ -1792,7 +1805,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1841,7 +1857,10 @@ focus_tree = {
 			change_defense_industry_opinion = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1876,6 +1895,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -1950,7 +1970,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIN_navy
 
-		cost = 7.15 #50 Days
+		cost = 7.15
 
 		prerequisite = { focus = SIN_navy }
 
@@ -1959,20 +1979,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_navy_corvettes"
 			add_tech_bonus = {
-				name = CAT_corvette
+				name = SIN_navy_corvettes
 				bonus = 0.25
 				uses = 1
-				category = CAT_corvette
+				category = CAT_corvettes
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_corvette
-				category = CAT_corvette
+				name = SIN_navy_corvettes
+				category = CAT_corvettes
 				uses = 1
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_naval_all
-				category = CAT_naval_all
+				name = SIN_navy_corvettes
+				category = CAT_naval
 				uses = 1
 				cost_reduction = 0.5
 			}
@@ -1986,6 +2006,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2001,7 +2022,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = SIN_navy
 
-		cost = 8.6 #60 Days
+		cost = 8.6
 
 		prerequisite = { focus = SIN_navy_corvettes }
 
@@ -2010,20 +2031,20 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_navy_frigate"
 			add_tech_bonus = {
-				name = CAT_frigate
+				name = SIN_navy_frigate
 				bonus = 0.230
 				uses = 2
-				category = CAT_frigate
+				category = CAT_frigates
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_frigate
-				category = CAT_frigate
+				name = SIN_navy_frigate
+				category = CAT_frigates
 				uses = 1
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_naval_all
-				category = CAT_naval_all
+				name = SIN_navy_frigate
+				category = CAT_naval
 				uses = 1
 				cost_reduction = 0.5
 			}
@@ -2037,6 +2058,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2068,7 +2090,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2097,7 +2122,10 @@ focus_tree = {
 			add_to_variable = { singapore_navy_personnel_cost_multiplier_modifier = -0.10 tooltip = navy_personnel_cost_multiplier_modifier_tt }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2129,7 +2157,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2157,7 +2188,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	#Singapore Army Section
@@ -2179,9 +2213,7 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_army"
 			generate_scientist_character = {
 				gender = male
-				skills = {
-					specialization_land = 3
-				}
+				skills = { specialization_land = 3 }
 				traits = { scientist_trait_genius }
 			}
 			army_experience = 50
@@ -2209,7 +2241,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIN_army
 
-		cost = 7.15 #50 Days
+		cost = 7.15
 
 		prerequisite = { focus = SIN_army }
 
@@ -2218,14 +2250,14 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_army_infantry_equipment"
 			add_tech_bonus = {
-				name = CAT_inf
+				name = SIN_army_infantry_equipment
 				bonus = 0.30
 				uses = 1
-				category = CAT_inf
+				category = CAT_infantry
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_inf
-				category = CAT_inf
+				name = SIN_army_infantry_equipment
+				category = CAT_infantry
 				uses = 1
 				cost_reduction = 0.3
 			}
@@ -2235,6 +2267,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2264,15 +2297,14 @@ focus_tree = {
 			add_to_variable = { singapore_military_recruitable_population = 0.03 tooltip = conscription_factor_tt }
 			add_to_variable = { singapore_army_personnel_cost_multiplier_modifier = -0.12 tooltip = army_personnel_cost_multiplier_modifier_tt }
 			add_to_variable = { singapore_military_army_training_time = -0.10 tooltip = training_time_factor_tt }
-			effect_tooltip = {
-				add_stability = -0.05
-			}
+			effect_tooltip = { add_stability = -0.05 }
 			set_temp_variable = { treasury_change = -8.5 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2309,6 +2341,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2338,7 +2371,10 @@ focus_tree = {
 			add_to_variable = { singapore_send_volunteers_tension = -0.3 tooltip = send_volunteers_tension_tt }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2371,6 +2407,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2420,6 +2457,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2455,7 +2493,6 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_nuclear_weapon_for_defence"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_max_command_power = 30 tooltip = max_command_power_tt }
-			set_temp_variable = { temp_change = 1 }
 			random_owned_state = { add_building_construction = { type = enrichment_facility level = 1 } }
 			add_equipment_to_stockpile = {
 				type = Missile
@@ -2476,10 +2513,6 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2506,19 +2539,19 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_force"
 			generate_scientist_character = {
 				gender = male
-				skills = {
-					specialization_air = 3
-				}
+				skills = { specialization_air = 3 }
 				traits = { scientist_trait_genius }
 			}
+			newline = yes
 			air_experience = 50
-			###Goveremnt Expenses
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_military_personnel_cost = -0.01 tooltip = personnel_cost_multiplier_modifier_tt }
-			##Military General Effect
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_command_power_gain = 0.15 tooltip = command_power_gain_tt }
 			add_to_variable = { singapore_max_command_power = 30 tooltip = max_command_power_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -7.5 }
 			modify_treasury_effect = yes
 		}
@@ -2540,7 +2573,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIN_air_force
 
-		cost = 7.15 #50 Days
+		cost = 7.15
 
 		prerequisite = { focus = SIN_air_force }
 
@@ -2550,29 +2583,34 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_force_helicopter"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_military_personnel_cost = -0.005 tooltip = personnel_cost_multiplier_modifier_tt }
+			newline = yes
 			add_tech_bonus = {
-				name = CAT_heli
+				name = SIN_air_force_helicopter
 				bonus = 0.30
 				uses = 1
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_heli
-				category = CAT_heli
+				name = SIN_air_force_helicopter
+				category = CAT_helicopters
 				uses = 2
 				cost_reduction = 0.3
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_air_eqp
-				category = CAT_air_eqp
+				name = SIN_air_force_helicopter
+				category = CAT_aircraft
 				uses = 1
 				cost_reduction = 0.30
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -3.5 }
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2594,14 +2632,17 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_military_personnel_cost = -0.01 tooltip = personnel_cost_multiplier_modifier_tt }
 			add_tech_bonus = {
-				name = CAT_mr_fighter
+				name = SIN_air_force_fighter
 				bonus = 0.40
 				uses = 1
-				category = CAT_mr_fighter
+				category = CAT_medium_aircraft
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2612,7 +2653,7 @@ focus_tree = {
 		y = 3
 		relative_position_id = SIN_air_force
 
-		cost = 8.6 #60 Days
+		cost = 8.6
 
 		prerequisite = { focus = SIN_air_force_fighter }
 
@@ -2622,24 +2663,27 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_air_force_drone"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_airforce_personnel_cost_multiplier_modifier = -0.15 tooltip = personnel_cost_multiplier_modifier_tt }
+			newline = yes
 			add_tech_bonus = {
-				name = CAT_drones
+				name = SIN_air_force_drone
 				bonus = 0.50
 				uses = 1
-				category = CAT_drones
+				category = CAT_air_drones
 			}
 			add_doctrine_cost_reduction = {
-				name = CAT_drones
-				category = CAT_drones
+				name = SIN_air_force_drone
+				category = CAT_air_drones
 				uses = 1
 				cost_reduction = 0.3
 			}
+			newline = yes
 			set_temp_variable = { treasury_change = -3.5 }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2671,7 +2715,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2706,7 +2753,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2738,7 +2788,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -2764,7 +2817,10 @@ focus_tree = {
 			modify_treasury_effect = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	#Singapore Security and Intelligence Division
@@ -2800,11 +2856,7 @@ focus_tree = {
 				create_intelligence_agency = yes
 			}
 			else_if = {
-				limit = {
-					NOT = {
-						has_done_agency_upgrade = upgrade_passive_defense
-					}
-				}
+				limit = { NOT = { has_done_agency_upgrade = upgrade_passive_defense } }
 				upgrade_intelligence_agency = upgrade_passive_defense
 			}
 			else = {
@@ -2998,7 +3050,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIN_SSA_space_agency
 
-		cost = 10 #70 Days
+		cost = 10
 
 		prerequisite = { focus = SIN_SSA_space_agency }
 
@@ -3012,18 +3064,19 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_SSA_space_technology_effort"
 			add_tech_bonus = {
-				name = CAT_space
+				name = SIN_SSA_space_technology_effort
 				bonus = 0.50
 				uses = 8
 				category = CAT_space
 			}
-			##Space
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = singapore_military }
 			add_to_variable = { singapore_decryption = 1 tooltip = decryption_factor_tt }
 			add_to_variable = { singapore_encryption = 1 tooltip = encryption_factor_tt }
 			add_to_variable = { singapore_MODIFIER_DECRYPTION_POWER = 1 tooltip = decryption_power_tt }
 			add_to_variable = { singapore_MODIFIER_CRYPTO_STRENGTH = 1 tooltip = encryption_factor_tt }
 			add_to_variable = { singapore_intelligence_agency_defense = 1.0 tooltip = intelligence_agency_defense_tt }
+			newline = yes
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
 		}
@@ -3084,21 +3137,15 @@ focus_tree = {
 			is_in_faction = no
 			is_subject = no
 			has_war = no
-			SIN = {
-				NOT = { has_war_with = USA }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = communism }
-				NOT = { has_government = fascism }
-				has_opinion = {
-					target = USA
-					value > 9
-				}
+			NOT = { has_war_with = USA }
+			NOT = { has_government = nationalist }
+			NOT = { has_government = communism }
+			NOT = { has_government = fascism }
+			has_opinion = {
+				target = USA
+				value > 9
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = NATO_member
-				}
-			}
+			NOT = { any_enemy_country = { has_idea = NATO_member } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				any_of_scopes = {
@@ -3121,6 +3168,7 @@ focus_tree = {
 						NOT = { has_idea = EU_member }
 						NOT = { has_idea = Major_Non_NATO_Ally }
 					}
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 				}
@@ -3133,6 +3181,7 @@ focus_tree = {
 						NOT = { original_tag = SIN }
 						NOT = { has_idea = Major_Non_NATO_Ally }
 					}
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 				}
@@ -3142,6 +3191,7 @@ focus_tree = {
 					has_idea = Major_Non_NATO_Ally
 					NOT = { original_tag = SIN }
 				}
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -3149,10 +3199,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
 		}
 	}
 
@@ -3175,21 +3223,15 @@ focus_tree = {
 			is_in_faction = no
 			is_subject = no
 			has_war = no
-			SIN = {
-				NOT = { has_war_with = USA }
-				NOT = { has_government = nationalist }
-				NOT = { has_government = communism }
-				NOT = { has_government = fascism }
-				has_opinion = {
-					target = USA
-					value > 9
-				}
+			NOT = { has_war_with = USA }
+			NOT = { has_government = nationalist }
+			NOT = { has_government = communism }
+			NOT = { has_government = fascism }
+			has_opinion = {
+				target = USA
+				value > 9
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = NATO_member
-				}
-			}
+			NOT = { any_enemy_country = { has_idea = NATO_member } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				any_of_scopes = {
@@ -3207,13 +3249,10 @@ focus_tree = {
 			for_each_scope_loop = {
 				array = global.nato_members
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
 			every_country = {
@@ -3224,17 +3263,15 @@ focus_tree = {
 				set_temp_variable = { receiver_nation = THIS.id }
 				set_temp_variable = { sender_nation = SIN.id }
 				set_improved_trade_agreement = yes
-				SIN_calculate_singaporean_trade_agreements = yes
 			}
+			SIN_calculate_singaporean_trade_agreements = yes
 			NATO_major_non_nato_ally_join = yes
 		}
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
 		}
 	}
 
@@ -3274,10 +3311,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
 		}
 	}
 
@@ -3318,6 +3353,7 @@ focus_tree = {
 					}
 					NOT = { original_tag = SIN }
 				}
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -3325,10 +3361,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 SIN_ai_historical_path = yes }
+			modifier = { factor = 0 SIN_ai_not_historical_path = yes }
 		}
 	}
 
@@ -3375,10 +3409,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 SIN_ai_historical_path = yes }
+			modifier = { factor = 0 SIN_ai_not_historical_path = yes }
 		}
 	}
 
@@ -3414,10 +3446,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 SIN_ai_historical_path = yes }
+			modifier = { factor = 0 SIN_ai_not_historical_path = yes }
 		}
 	}
 
@@ -3472,6 +3502,7 @@ focus_tree = {
 					NOT = { original_tag = SIN }
 				}
 				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -3479,10 +3510,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -3506,52 +3535,46 @@ focus_tree = {
 			is_subject = no
 			has_war = no
 			RAJ = {
-				 has_idea = RAJ_BRICS
+				has_idea = RAJ_BRICS
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			CHI = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			SOV = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			SAF = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			BRA = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = RAJ }
-				has_opinion = {
-					target = RAJ
-					target = CHI
-					target = SOV
-					target = SAF
-					target = BRA
-					value > 9
-				}
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = RAJ_BRICS
-				}
+			NOT = { has_war_with = RAJ }
+			has_opinion = {
+				target = RAJ
+				target = CHI
+				target = SOV
+				target = SAF
+				target = BRA
+				value > 9
 			}
+			NOT = { any_enemy_country = { has_idea = RAJ_BRICS } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				any_of_scopes = {
@@ -3569,10 +3592,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -3597,52 +3618,46 @@ focus_tree = {
 			has_war = no
 			threat > 0.15
 			RAJ = {
-				 has_idea = faction_brics_alliance
+				has_idea = faction_brics_alliance
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			CHI = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			SOV = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			SAF = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
+			}
 			BRA = {
 				has_opinion = {
 					target = SIN
 					value > 9
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = RAJ }
-				has_opinion = {
-					target = RAJ
-					target = CHI
-					target = SOV
-					target = SAF
-					target = BRA
-					value > 9
-				}
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = RAJ_BRICS
-				}
+			NOT = { has_war_with = RAJ }
+			has_opinion = {
+				target = RAJ
+				target = CHI
+				target = SOV
+				target = SAF
+				target = BRA
+				value > 9
 			}
+			NOT = { any_enemy_country = { has_idea = RAJ_BRICS } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				any_of_scopes = {
@@ -3660,10 +3675,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -3694,19 +3707,13 @@ focus_tree = {
 					target = SIN
 					value > 9
 				}
-			 }
-			SIN = {
-				NOT = { has_war_with = CHI }
-				has_opinion = {
-					target = CHI
-					value > 9
-				}
 			}
-			NOT = {
-				any_enemy_country = {
-					has_idea = CHI_sco_member
-				}
+			NOT = { has_war_with = CHI }
+			has_opinion = {
+				target = CHI
+				value > 9
 			}
+			NOT = { any_enemy_country = { has_idea = CHI_sco_member } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
 				any_other_country = {
@@ -3723,10 +3730,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -3755,7 +3760,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -3781,7 +3790,11 @@ focus_tree = {
 			country_event = singapore.3
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -3811,7 +3824,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -3841,7 +3858,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	# The Alignment
@@ -3893,11 +3914,15 @@ focus_tree = {
 			add_ideas = SIN_centralized_education_idea
 			if = { limit = { has_idea = edu_01 }
 				remove_ideas = edu_01
+				set_country_flag = spending_law_scripted_change
 				add_ideas = edu_03
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = { limit = { has_idea = edu_02 }
 				remove_ideas = edu_02
+				set_country_flag = spending_law_scripted_change
 				add_ideas = edu_03
+				clr_country_flag = spending_law_scripted_change
 			}
 			unlock_decision_tooltip = SIN_replace_centralized_education_system
 			unlock_decision_tooltip = SIN_repeal_centralized_education_system
@@ -3924,11 +3949,15 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_decentralize_the_government"
 			if = { limit = { has_idea = bureau_05 }
 				remove_ideas = bureau_05
+				set_country_flag = spending_law_scripted_change
 				add_ideas = bureau_03
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = { limit = { has_idea = bureau_04 }
 				remove_ideas = bureau_04
+				set_country_flag = spending_law_scripted_change
 				add_ideas = bureau_03
+				clr_country_flag = spending_law_scripted_change
 			}
 			add_ideas = SIN_decentralize_the_government_idea
 			unlock_decision_tooltip = SIN_repeal_decentralization_protocol_decision
@@ -4057,6 +4086,7 @@ focus_tree = {
 					days = 365
 				}
 			}
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -4124,10 +4154,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
 		}
 	}
 
@@ -4178,11 +4206,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
 		}
 	}
 
@@ -4210,12 +4236,14 @@ focus_tree = {
 					add_idea = SIN_defence_strategy_two_idea
 				}
 			}
-			else = {
-				add_ideas = SIN_defence_strategy_idea
-			}
+			else = { add_ideas = SIN_defence_strategy_idea }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4237,7 +4265,11 @@ focus_tree = {
 			add_ideas = SIN_conservative_singapore_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4295,7 +4327,11 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4327,7 +4363,11 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 
@@ -4357,12 +4397,14 @@ focus_tree = {
 					add_idea = SIN_defence_strategy_two_idea
 				}
 			}
-			else = {
-				add_ideas = SIN_defence_strategy_idea
-			}
+			else = { add_ideas = SIN_defence_strategy_idea }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4387,7 +4429,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4439,7 +4485,11 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4471,7 +4521,11 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4497,7 +4551,11 @@ focus_tree = {
 			modify_election_threshold = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4523,7 +4581,11 @@ focus_tree = {
 			modify_election_threshold = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4545,7 +4607,11 @@ focus_tree = {
 			SIN_censorship_law_increase = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -4575,7 +4641,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4597,7 +4667,11 @@ focus_tree = {
 			add_ideas = SIN_liberties_for_stability_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_pap_path = yes }
+			modifier = { factor = 0 SIN_ai_not_pap_path = yes }
+		}
 	}
 
 	focus = {
@@ -4619,7 +4693,11 @@ focus_tree = {
 			SIN_censorship_law_decrease = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4641,7 +4719,11 @@ focus_tree = {
 			add_ideas = SIN_pro_lgbtqa_stance_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4666,7 +4748,11 @@ focus_tree = {
 			change_communist_cadres_opinion = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	##The Alignment
@@ -4728,22 +4814,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
-			modifier = {
-				factor = 2
-				has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
-			}
-			modifier = {
-				factor = 0
-				OR = {
-					has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
-					has_global_flag = SIN_SINGAPORE_ALONE_PATH
-				}
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
 		}
 	}
 
@@ -4792,21 +4865,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
-			modifier = {
-				factor = 2
-				has_global_flag = SIN_SINGAPORE_ALONE_PATH
-			}
-			modifier = {
-				factor = 0
-				OR = {
-					has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
-					has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
-				}
-			}
+			modifier = { factor = 25 SIN_ai_alone_path = yes }
+			modifier = { factor = 0 SIN_ai_not_alone_path = yes }
 		}
 	}
 
@@ -4847,22 +4907,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 10
-				is_historical_focus_on = no
-			}
-			modifier = {
-				factor = 2
-				has_global_flag = SIN_PRESSURE_SOUTH_ASIAN_SEAS_PATH
-			}
-			modifier = {
-				factor = 0
-				OR = {
-					has_global_flag = SIN_SINGAPORE_ALONE_PATH
-					has_global_flag = SIN_GLOBAL_DIPLOMACY_PATH
-				}
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
 		}
 	}
 
@@ -4898,7 +4945,11 @@ focus_tree = {
 			SIN_censorship_law_decrease = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -4932,7 +4983,11 @@ focus_tree = {
 			add_stability = 0.05
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_alone_path = yes }
+			modifier = { factor = 0 SIN_ai_not_alone_path = yes }
+		}
 	}
 
 	focus = {
@@ -5005,6 +5060,8 @@ focus_tree = {
 				factor = 0
 				can_staff_an_offices = no
 			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -5045,7 +5102,11 @@ focus_tree = {
 			modify_election_threshold = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -5086,7 +5147,11 @@ focus_tree = {
 			unlock_decision_tooltip = SIN_extend_finance_western_projects
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5119,7 +5184,11 @@ focus_tree = {
 			add_ideas = SIN_singaporean_identity_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_alone_path = yes }
+			modifier = { factor = 0 SIN_ai_not_alone_path = yes }
+		}
 	}
 
 	focus = {
@@ -5160,12 +5229,17 @@ focus_tree = {
 					}
 					NOT = { original_tag = SIN }
 				}
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5195,7 +5269,11 @@ focus_tree = {
 			add_ideas = SIN_anti_opposition_laws_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -5234,7 +5312,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -5273,17 +5355,20 @@ focus_tree = {
 					tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 					if = {
 						limit = { NOT = { tag = ROOT } }
+						set_temp_variable = { influence_target = THIS }
 						change_influence_percentage = yes
 						add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 					}
 				}
 			}
-			else = {
-				add_political_power = 125
-			}
+			else = { add_political_power = 125 }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_opposition_path = yes }
+		}
 	}
 
 	focus = {
@@ -5319,7 +5404,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_alone_path = yes }
+			modifier = { factor = 0 SIN_ai_not_alone_path = yes }
+		}
 	}
 
 	focus = {
@@ -5354,7 +5443,11 @@ focus_tree = {
 			SIN_censorship_law_increase = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5383,31 +5476,20 @@ focus_tree = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_harsher_state"
 			custom_effect_tooltip = SIN_harsher_state_tt
 			hidden_effect = {
-				set_country_flag = party2_banned
-				set_country_flag = party3_banned
-				set_country_flag = party4_banned
-				set_country_flag = party5_banned
-				set_country_flag = party6_banned
-				set_country_flag = party8_banned
-				set_country_flag = party9_banned
-				set_country_flag = party10_banned
-				set_country_flag = party11_banned
-				set_country_flag = party12_banned
-				set_country_flag = party14_banned
-				set_country_flag = party15_banned
-				set_country_flag = party16_banned
-				set_country_flag = party17_banned
-				set_country_flag = party18_banned
-				set_country_flag = party19_banned
-				set_country_flag = party20_banned
-				set_country_flag = party21_banned
-				set_country_flag = party23_banned
-				set_country_flag = party24_banned
+				add_to_temp_array = { ban_except_array = 0 }
+				add_to_temp_array = { ban_except_array = 6 }
+				add_to_temp_array = { ban_except_array = 12 }
+				add_to_temp_array = { ban_except_array = 21 }
+				ban_all_parties_except_array = yes
 			}
 			add_stability = 0.05
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -5423,7 +5505,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SIN_the_pap
 			focus = SIN_european_democracy
-		 }
+		}
 		mutually_exclusive = { focus = SIN_pressure_the_south_asian_seas }
 		mutually_exclusive = { focus = SIN_singapore_on_the_rise }
 
@@ -5443,7 +5525,11 @@ focus_tree = {
 			add_ideas = SIN_global_diplomacy_1_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5460,7 +5546,7 @@ focus_tree = {
 			focus = SIN_the_pap
 			focus = SIN_european_democracy
 			focus = SIN_harsher_state
-		 }
+		}
 		mutually_exclusive = { focus = SIN_pressure_the_south_asian_seas }
 		mutually_exclusive = { focus = SIN_global_initiative }
 
@@ -5482,7 +5568,11 @@ focus_tree = {
 			add_ideas = SIN_economic_champion_1_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5518,7 +5608,11 @@ focus_tree = {
 			increase_military_spending = yes
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -5552,12 +5646,14 @@ focus_tree = {
 					create_intelligence_agency = yes
 				}
 			}
-			else = {
-				add_ideas = SIN_spy_agency_expansion
-			}
+			else = { add_ideas = SIN_spy_agency_expansion }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5591,7 +5687,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5628,7 +5728,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5673,6 +5777,8 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
 		}
 	}
 
@@ -5714,6 +5820,8 @@ focus_tree = {
 				factor = 0
 				can_staff_an_arms_industry = no
 			}
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
 		}
 	}
 
@@ -5753,12 +5861,14 @@ focus_tree = {
 				country_event = { id = singapore.5 days = 5 }
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				transfer_state = 627
-			}
+			effect_tooltip = { transfer_state = 627 }
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -5797,7 +5907,11 @@ focus_tree = {
 			change_influence_percentage = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5831,7 +5945,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -5867,7 +5985,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5911,7 +6033,11 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -5957,7 +6083,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -6015,7 +6145,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -6050,7 +6184,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 SIN_ai_western_path = yes }
+			modifier = { factor = 0 SIN_ai_not_western_path = yes }
+		}
 	}
 
 	focus = {
@@ -6087,7 +6225,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_LOOK_EAST_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_east_path = yes }
+		}
 	}
 
 	focus = {
@@ -6119,7 +6261,11 @@ focus_tree = {
 			add_ideas = SIN_setting_our_sights_idea
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	##Migration Stuff
@@ -6154,7 +6300,12 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 2 has_idea = SIN_migrant_workers }
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
+		}
 	}
 
 	focus = {
@@ -6190,10 +6341,9 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 2 has_idea = SIN_migrant_workers }
+			modifier = { factor = 25 SIN_ai_open_door_path = yes }
+			modifier = { factor = 0 SIN_ai_not_open_door_path = yes }
 		}
 	}
 
@@ -6226,10 +6376,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 has_global_flag = SIN_MASTER_OF_THE_STRAITS_FOCUS_PATH }
+			modifier = { factor = 0 SIN_ai_not_straits_path = yes }
 		}
 	}
 
@@ -6265,10 +6413,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				add = 10
-				is_historical_focus_on = yes
-			}
+			modifier = { factor = 25 SIN_ai_open_door_path = yes }
+			modifier = { factor = 0 SIN_ai_not_open_door_path = yes }
 		}
 	}
 
@@ -6299,9 +6445,7 @@ focus_tree = {
 
 		select_effect = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIN_singapore_south_east_asia"
-			add_dynamic_modifier = {
-				modifier = SIN_singaporean_trade_strength
-			}
+			add_dynamic_modifier = { modifier = SIN_singaporean_trade_strength }
 			SIN_calculate_singaporean_trade_agreements = yes
 		}
 
@@ -6344,12 +6488,14 @@ focus_tree = {
 				tooltip = TT_ALL_ASEAN_NATIONS_GAIN
 				if = {
 					limit = { NOT = { original_tag = SIN } }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 					add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 				}
 			}
 			every_neighbor_country = {
 				limit = { NOT = { is_in_array = { global.ASEAN_Member = THIS.id } } }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -6448,6 +6594,7 @@ focus_tree = {
 					NOT = { has_idea = ASEAN_Member }
 					NOT = { original_tag = SIN }
 				}
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -6491,11 +6638,13 @@ focus_tree = {
 				array = global.ASEAN_Member
 				if = {
 					limit = { NOT = { original_tag = SIN } }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
 			every_neighbor_country = {
 				limit = { NOT = { is_in_array = { global.ASEAN_Member = THIS.id } } }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			for_each_scope_loop = {
@@ -6505,9 +6654,9 @@ focus_tree = {
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
+			SIN_calculate_singaporean_trade_agreements = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -6534,9 +6683,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = SRI
-					any_allied_country = {
-						has_war_with = SRI
-					}
+					any_allied_country = { has_war_with = SRI }
 				}
 			}
 			if = {
@@ -6613,9 +6760,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = MAD
-					any_allied_country = {
-						has_war_with = MAD
-					}
+					any_allied_country = { has_war_with = MAD }
 				}
 			}
 			if = {
@@ -6664,9 +6809,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = PHI
-					any_allied_country = {
-						has_war_with = PHI
-					}
+					any_allied_country = { has_war_with = PHI }
 				}
 			}
 			if = {
@@ -6979,9 +7122,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = JAP
-					any_allied_country = {
-						has_war_with = JAP
-					}
+					any_allied_country = { has_war_with = JAP }
 				}
 			}
 			if = {
@@ -7030,9 +7171,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = USA
-					any_allied_country = {
-						has_war_with = USA
-					}
+					any_allied_country = { has_war_with = USA }
 				}
 			}
 			if = {
@@ -7205,27 +7344,22 @@ focus_tree = {
 			for_each_scope_loop = {
 				array = global.AU_member
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
 			for_each_scope_loop = {
 				array = global.OAU_member
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
+			SIN_calculate_singaporean_trade_agreements = yes
 			215 = {
 				add_building_construction = {
 					type = offices
@@ -7266,11 +7400,13 @@ focus_tree = {
 				array = global.OAU_member
 				if = {
 					limit = { NOT = { original_tag = SIN } }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
 			every_neighbor_country = {
 				limit = { NOT = { is_in_array = { global.OAU_member = THIS.id } } }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			set_temp_variable = { treasury_change = -85 }
@@ -7318,15 +7454,13 @@ focus_tree = {
 				array = global.EU_member
 				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
+			SIN_calculate_singaporean_trade_agreements = yes
 			943 = {
 				add_building_construction = {
 					type = offices
@@ -7345,13 +7479,13 @@ focus_tree = {
 			for_each_scope_loop = {
 				array = global.EU_member
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
 			every_neighbor_country = {
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			set_temp_variable = { treasury_change = -50 }
@@ -7407,15 +7541,13 @@ focus_tree = {
 				array = global.CSTO_member
 				tooltip = TT_ALL_CSTO_MEMBER_NATIONS_GAIN
 				if = {
-					limit = {
-						NOT = { original_tag = SIN }
-					}
+					limit = { NOT = { original_tag = SIN } }
 					set_temp_variable = { receiver_nation = THIS.id }
 					set_temp_variable = { sender_nation = SIN.id }
 					set_improved_trade_agreement = yes
-					SIN_calculate_singaporean_trade_agreements = yes
 				}
 			}
+			SIN_calculate_singaporean_trade_agreements = yes
 			644 = {
 				add_building_construction = {
 					type = offices
@@ -7428,11 +7560,13 @@ focus_tree = {
 				array = global.CSTO_member
 				if = {
 					limit = { NOT = { original_tag = SIN } }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
 			every_neighbor_country = {
 				limit = { NOT = { is_in_array = { global.CSTO_member = THIS.id } } }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			set_temp_variable = { treasury_change = -25 }
@@ -7509,9 +7643,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = MAY
-					any_allied_country = {
-						has_war_with = MAY
-					}
+					any_allied_country = { has_war_with = MAY }
 				}
 			}
 			if = {
@@ -7607,9 +7739,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = IND
-					any_allied_country = {
-						has_war_with = IND
-					}
+					any_allied_country = { has_war_with = IND }
 				}
 			}
 			if = {
@@ -7722,9 +7852,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = SIA
-					any_allied_country = {
-						has_war_with = SIA
-					}
+					any_allied_country = { has_war_with = SIA }
 				}
 			}
 			if = {
@@ -7816,9 +7944,7 @@ focus_tree = {
 			NOT = {
 				OR = {
 					has_war_with = USA
-					any_allied_country = {
-						has_war_with = USA
-					}
+					any_allied_country = { has_war_with = USA }
 				}
 			}
 			if = {
@@ -8352,9 +8478,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_reclamation_sanyongkong_island"
-			530 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			530 = { add_extra_state_shared_building_slots = 1 }
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -8390,9 +8514,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tekong_kechil_island_development"
-			530 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			530 = { add_extra_state_shared_building_slots = 1 }
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -8525,11 +8647,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_sajahat_island_reclamation"
+			set_temp_variable = { temp_change = 1 }
 			set_temp_variable = { skip_payment = 1 }
 			build_battery_park_effect = yes
-			530 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			530 = { add_extra_state_shared_building_slots = 1 }
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -8791,11 +8912,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_semakau_island_reclamation_project"
+			set_temp_variable = { temp_change = 1 }
 			set_temp_variable = { skip_payment = 1 }
 			build_battery_park_effect = yes
-			530 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			530 = { add_extra_state_shared_building_slots = 1 }
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}
@@ -8892,9 +9012,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus SIN_tuas_reclamation_project_phase_1"
-			530 = {
-				add_extra_state_shared_building_slots = 1
-			}
+			530 = { add_extra_state_shared_building_slots = 1 }
 			set_temp_variable = { treasury_change = -3 }
 			modify_treasury_effect = yes
 		}

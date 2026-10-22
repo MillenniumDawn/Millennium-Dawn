@@ -1,6 +1,15 @@
 """Focused regressions for scripted-localisation invocation scanning."""
 
+from pathlib import Path
+
 import validate_scripted_localisation as V
+from shared.suite import write_under
+
+
+def _scan_loc_tokens(text, is_scripted_loc_file, defined_names=frozenset()):
+    """The token scan as the used-localisation worker composes it."""
+    bracketed, explicit = V._scan_loc_token_candidates(text, is_scripted_loc_file)
+    return V._filter_bracket_loc_candidates(bracketed, defined_names) | explicit
 
 
 def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path):
@@ -50,9 +59,7 @@ def test_digit_prefixed_defined_loc_is_tracked_via_gui(tmp_path):
     )
     assert used == ["991_maoist_influence"]
     assert paths == {"991_maoist_influence": "consumer.gui"}
-    assert V._scan_loc_tokens("[991_maoist_influence]", False) == {
-        "991_maoist_influence"
-    }
+    assert _scan_loc_tokens("[991_maoist_influence]", False) == {"991_maoist_influence"}
 
 
 def test_defined_bracketed_invocation_is_tracked(tmp_path):
@@ -97,13 +104,21 @@ def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
 
 
 def test_scoped_bracketed_invocation_tracks_member_name():
-    assert V._scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
+    assert _scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
         "MD_auto_agency_status"
     }
 
 
+def test_multi_scope_bracketed_invocation_tracks_member_name():
+    # A map-mode tooltip scopes to a state, so the country scripted loc is only reachable
+    # as [FROM.CONTROLLER.name]; a single-segment scope class reported it as unused.
+    assert _scan_loc_tokens("[FROM.CONTROLLER.map_mode_ruling_party]", False) == {
+        "map_mode_ruling_party"
+    }
+
+
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
-    assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
+    assert _scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",
         "USA_STATUS",
     }
@@ -111,7 +126,7 @@ def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
 
 def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
     getters = " ".join(
-        f"[{value}] [ROOT.{value}]"
+        f"[{value}] [ROOT.{value}] [FROM.CONTROLLER.{value}]"
         for value in (
             "GetFullName",
             "GetRank",
@@ -137,7 +152,7 @@ def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
 
 
 def test_defined_get_prefixed_scripted_loc_is_retained():
-    assert V._scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
+    assert _scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
         "GetProjectStatus"
     }
 
@@ -175,19 +190,17 @@ def test_builtin_and_ordinary_syntax_do_not_create_candidates():
         "text = [?country_var]\n"
         "text = $ORDINARY_LOC_KEY$\n"
     )
-    assert V._scan_loc_tokens(text, is_scripted_loc_file=True) == set()
+    assert _scan_loc_tokens(text, is_scripted_loc_file=True) == set()
 
 
 def test_hyphenated_scripted_loc_is_defined_and_used():
-    # MD sub-ideology names carry hyphens (Communist-State_valid); a name class without
-    # `-` truncates them to `Communist` on both sides and invents unused findings.
+    # Sub-ideology names can carry hyphens (e.g. `Test-State_valid`); a name class
+    # without `-` truncates them to `Test` on both sides and invents unused findings.
     defined, _ = V._scan_defined_locs(
-        "defined_text = { name = Communist-State_valid }", "ideologies.txt"
+        "defined_text = { name = Test-State_valid }", "ideologies.txt"
     )
-    assert defined == ["Communist-State_valid"]
-    assert V._scan_loc_tokens("[Communist-State_valid]", False) == {
-        "Communist-State_valid"
-    }
+    assert defined == ["Test-State_valid"]
+    assert _scan_loc_tokens("[Test-State_valid]", False) == {"Test-State_valid"}
 
 
 def test_reference_line_skips_substring_match(tmp_path):
@@ -201,7 +214,7 @@ def test_reference_line_skips_substring_match(tmp_path):
 def test_definition_line_skips_longer_name_prefix(tmp_path):
     path = tmp_path / "defs.txt"
     path.write_text(
-        "defined_text = {\n\tname = Communist-State_valid\n}\n"
+        "defined_text = {\n\tname = Test-State_valid\n}\n"
         "defined_text = {\n\tname = communist\n}\n"
     )
     assert V._find_definition_line(str(path), "communist") == 5
@@ -434,6 +447,42 @@ def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
     assert not any("GFX_other_missing" in m for m in messages)
 
 
+def _run_rows(tmp_path):
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    ]
+
+
+def test_one_worker_run_scans_in_process(tmp_path, monkeypatch):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = UsedLoc\n}\n"
+        "defined_text = {\n\tname = OrphanLoc\n}\n",
+    )
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text('text = "[UsedLoc]"\ntext = "[GhostLoc]"\n', encoding="utf-8")
+
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(V, "Pool", no_pool)
+
+    assert _run_rows(tmp_path) == [
+        ("missing-scripted-loc", "ghostloc", "interface/use.gui", 2),
+        (
+            "unused-scripted-loc",
+            "orphanloc",
+            "common/scripted_localisation/defs.txt",
+            5,
+        ),
+    ]
+
+
 class _InlinePool:
     """Stand-in for the validator's shared worker pool: maps in-process."""
 
@@ -523,3 +572,210 @@ def test_usage_scan_ignores_non_english_localisation(tmp_path):
 
     assert "englishonly" in used
     assert "frenchonly" not in used
+
+
+def test_missing_references_in_one_file_are_reported_in_name_order(tmp_path):
+    names = [f"gone_{letter}" for letter in "jihgfedcba"]
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text("".join(f'text = "[{name}]"\n' for name in names), encoding="utf-8")
+
+    assert _run_rows(tmp_path) == [
+        ("missing-scripted-loc", name, "interface/use.gui", names.index(name) + 1)
+        for name in sorted(names)
+    ]
+
+
+DOCUMENTED = frozenset({"GetName", "GetNameWithFlag", "GetAdjective", "Owner"})
+
+
+def test_getter_spelling_accepts_documented_and_defined_members():
+    for member in ("GetName", "GetNameWithFlag", "Owner", "GetCountryContinent"):
+        assert V._getter_spelling_message(member, set(), DOCUMENTED) == ""
+    assert (
+        V._getter_spelling_message("GetProjectStatus", {"getprojectstatus"}, DOCUMENTED)
+        == ""
+    )
+
+
+def test_getter_spelling_names_the_documented_spelling():
+    assert V._getter_spelling_message("Getname", set(), DOCUMENTED) == (
+        "'Getname' is not the documented getter spelling 'GetName'"
+    )
+    assert "'GetNameWithFlag'" in V._getter_spelling_message(
+        "GetNamewithFlag", set(), DOCUMENTED
+    )
+    assert "'Owner'" in V._getter_spelling_message("OWNER", set(), DOCUMENTED)
+
+
+def test_getter_spelling_reports_unknown_get_members_only():
+    assert "neither a defined scripted localisation" in V._getter_spelling_message(
+        "GetAdj", set(), DOCUMENTED
+    )
+    # Undefined non-get members belong to the missing-scripted-loc check.
+    assert V._getter_spelling_message("MissingLoc", set(), DOCUMENTED) == ""
+
+
+def test_documented_getters_read_the_vanilla_reference(tmp_path):
+    assert V._documented_getters(str(tmp_path)) == frozenset()
+    doc = tmp_path / V._LOC_OBJECTS_DOC
+    doc.parent.mkdir(parents=True)
+    doc.write_text(
+        "## Country\n\n### Properties\n**GetName**\n\nGets the name.\n",
+        encoding="utf-8",
+    )
+    assert V._documented_getters(str(tmp_path)) == frozenset({"GetName"})
+
+
+def test_documented_getters_cover_the_repository_reference():
+    repo = Path(__file__).resolve().parents[3]
+    documented = V._documented_getters(str(repo))
+    assert {"GetName", "GetNameWithFlag", "GetFlag", "GetCallsign"} <= documented
+
+
+def test_getter_refs_report_member_and_line(tmp_path):
+    path = tmp_path / "consumer_l_english.yml"
+    path.write_text(
+        'l_english:\n key: "[ROOT.GetName] [?var|0]"\n # [FROM.Getname]\n'
+        ' other: "[FROM.CONTROLLER.Getname]"\n',
+        encoding="utf-8-sig",
+    )
+    assert V.process_file_for_getter_refs(str(path)) == [
+        ("GetName", 2),
+        ("Getname", 4),
+    ]
+
+
+def _getter_mod(tmp_path):
+    english = tmp_path / "localisation" / "english"
+    english.mkdir(parents=True)
+    (english / "a_l_english.yml").write_text(
+        'l_english:\n key: "[ROOT.GetName] [THIS.Getname] [ROOT.GetDefinedLoc]"\n',
+        encoding="utf-8-sig",
+    )
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "a.gui").write_text('text = "[GetAdj]"\n')
+    return tmp_path
+
+
+def test_getter_spelling_check_warns_per_call(tmp_path):
+    mod = _getter_mod(tmp_path)
+    doc = mod / V._LOC_OBJECTS_DOC
+    doc.parent.mkdir(parents=True)
+    doc.write_text("**GetName**\n", encoding="utf-8")
+
+    validator = V.Validator(mod_path=str(mod), use_colors=False, workers=1)
+    validator.validate_getter_spelling(["GetDefinedLoc"])
+
+    found = {
+        (issue.file.replace("\\", "/"), issue.line, issue.severity, issue.category)
+        for issue in validator._issues
+    }
+    assert found == {
+        ("localisation/english/a_l_english.yml", 2, "warning", "loc-getter-spelling"),
+        ("interface/a.gui", 1, "warning", "loc-getter-spelling"),
+    }
+
+
+def test_getter_spelling_check_skips_without_the_reference(tmp_path):
+    validator = V.Validator(
+        mod_path=str(_getter_mod(tmp_path)), use_colors=False, workers=1
+    )
+    validator.validate_getter_spelling([])
+    assert validator._issues == []
+
+
+def _run_getter_check(tmp_path, monkeypatch, workers=1):
+    """Full run whose getter check must take every call from the usage scan."""
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=workers)
+    pool_map = validator._pool_map
+
+    def no_second_read(func, args_list, *args, **kwargs):
+        assert not (func is V.process_file_for_getter_refs and args_list)
+        return pool_map(func, args_list, *args, **kwargs)
+
+    monkeypatch.setattr(validator, "_pool_map", no_second_read)
+    validator.run_all_validations()
+    return [
+        (issue.message, issue.file.replace("\\", "/"), issue.line)
+        for issue in validator._issues
+        if issue.category == "loc-getter-spelling"
+    ]
+
+
+def test_getter_check_reads_first_last_and_crlf_lines_from_the_usage_scan(
+    tmp_path, monkeypatch
+):
+    write_under(tmp_path, V._LOC_OBJECTS_DOC, "**GetName**\n\n**GetFlag**\n")
+    write_under(
+        tmp_path,
+        "interface/edges.gui",
+        '[ROOT.Getname]\ntext = "x"\ntext = "[GetFlags]"',
+    )
+    write_under(
+        tmp_path,
+        "localisation/english/crlf_l_english.yml",
+        'l_english:\r\n a:0 "[ROOT.GetName]"\r\n'
+        ' b:0 "[FROM.GETFLAG] [Root.GetName]"\r\n c:0 "[THIS.Getflag]"',
+    )
+
+    assert _run_getter_check(tmp_path, monkeypatch) == [
+        (
+            "'GETFLAG' is not the documented getter spelling 'GetFlag'",
+            "localisation/english/crlf_l_english.yml",
+            3,
+        ),
+        (
+            "'Getflag' is not the documented getter spelling 'GetFlag'",
+            "localisation/english/crlf_l_english.yml",
+            4,
+        ),
+        (
+            "'Getname' is not the documented getter spelling 'GetName'",
+            "interface/edges.gui",
+            1,
+        ),
+        (
+            "'GetFlags' is neither a defined scripted localisation "
+            "nor a documented engine getter",
+            "interface/edges.gui",
+            3,
+        ),
+    ]
+
+
+def test_pooled_getter_check_matches_the_in_process_run(
+    tmp_path, monkeypatch, pool_sizes
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    write_under(tmp_path, V._LOC_OBJECTS_DOC, "**GetName**\n")
+    for index in range(12):
+        write_under(
+            tmp_path,
+            f"interface/g{index:02}.gui",
+            "\n" * index + f'text = "[ROOT.Getname{index}] [ROOT.GETNAME]"\n',
+        )
+
+    pooled = _run_getter_check(tmp_path, monkeypatch, workers=2)
+
+    assert pool_sizes and set(pool_sizes) == {2}
+    assert pooled == _run_getter_check(tmp_path, monkeypatch)
+    # Files come back in directory order, so compare the rows as a set.
+    assert sorted(pooled) == sorted(
+        row
+        for index in range(12)
+        for row in (
+            (
+                f"'Getname{index}' is neither a defined scripted localisation "
+                "nor a documented engine getter",
+                f"interface/g{index:02}.gui",
+                index + 1,
+            ),
+            (
+                "'GETNAME' is not the documented getter spelling 'GetName'",
+                f"interface/g{index:02}.gui",
+                index + 1,
+            ),
+        )
+    )

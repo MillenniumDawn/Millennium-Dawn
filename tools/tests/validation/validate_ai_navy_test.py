@@ -282,3 +282,25 @@ def test_staged_navy_file_still_runs_every_check(tmp_path, write_path, monkeypat
     validator.run_validations()
 
     assert any("tf_overloaded exceeds" in i.message for i in validator._issues)
+
+
+def test_template_with_more_than_one_mission_is_reported(tmp_path, write_path):
+    write_path(tmp_path, "common/units/MD_naval_units.txt", _UNITS)
+    write_path(
+        tmp_path,
+        "common/ai_navy/taskforce/taskforces.txt",
+        "tf_double = {\n\tmission = { naval_strike naval_patrol }\n}\n"
+        "tf_single = {\n\tmission = { naval_patrol }\n}\n",
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    multi = [
+        (i.file, i.line, i.message)
+        for i in validator._issues
+        if "missions; the game allows one" in i.message
+    ]
+
+    assert len(multi) == 1
+    assert multi[0][0].endswith("taskforces.txt")
+    assert multi[0][1] == 2
+    assert multi[0][2].startswith("taskforce template lists 2 missions")

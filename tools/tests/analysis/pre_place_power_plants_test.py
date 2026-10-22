@@ -11,15 +11,9 @@ from __future__ import annotations
 
 import sys
 from collections import defaultdict
-from pathlib import Path
 
 import pytest
-
-
-def write_text(path: Path, content: str) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-
+from shared.suite import write_text
 
 # ─── Helpers ────────────────────────────────────────────────────────────────────
 

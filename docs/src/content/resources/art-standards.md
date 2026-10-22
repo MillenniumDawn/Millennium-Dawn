@@ -3,6 +3,10 @@ title: Art Standards
 description: Document detailing Millennium Dawn's GFX/Art Standards
 ---
 
+## 3D Models
+
+Follow the [3D Model Performance Guidelines](/dev-resources/3d-model-performance-guidelines/) for mesh and texture budgets, triangle targets, CM consultation, and permissions for public redistribution through GitHub.
+
 ## File Management
 
 All graphics need to be placed in the right location to ensure they aren’t lost and implemented into the game. Here are the resources you need and the places you need to be looking when you finish your icons.
@@ -26,7 +30,7 @@ The app will be brought up when saving a copy of a file when using it as a plugi
 - Goals/Focus - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
 - GUI icons - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
 
-- Loading Screens/Main Menu - PNG
+- Loading Screens/Main Menu - DXT1 (BC1) - No Mipmaps - 1920x1440 - see [Add Loading Screens](/dev-resources/add-loading-screens/)
 
 Some textures, such as flags, require the TGA format instead. Be mindful of what you’re working on.
 
@@ -60,6 +64,7 @@ You can usually find the location where your graphics need to go relatively easi
 - Flags: gfx → flags, medium, small
 - Leaders: gfx → leaders → TAG
 - National Focuses: gfx → interface → goals
+- Loading Screens: gfx → loadingscreens, then [Add Loading Screens](/dev-resources/add-loading-screens/)
 
 Remember that some of these folders have subfolders for each country or region. Place your graphics for Germany in the German folder if you see one.
 

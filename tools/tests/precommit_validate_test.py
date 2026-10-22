@@ -7,13 +7,28 @@ could silently stop running on some paths. These tests pin which validators a
 given staged path selects, so an unintended coverage change fails CI.
 """
 
+import subprocess
 import sys
 
 import precommit_validate as dispatcher
+import pytest
 from precommit_validate import _REGISTRY
 from shared.suite import initialize_git_repository, run_git
 
 _BY_SCRIPT = {spec.script: spec for spec in _REGISTRY}
+
+
+def _run_dispatcher_with_stubbed_runner(monkeypatch, argv):
+    """Stub the dispatcher's subprocess runner and argv; return recorded calls."""
+    calls = []
+
+    def run(spec, _mod_path, env, _no_color, _inner_workers):
+        calls.append((spec.script, env["MD_STAGED_FILES"]))
+        return (spec.script, 0, "", "", 0.0)
+
+    monkeypatch.setattr(dispatcher, "_run", run)
+    monkeypatch.setattr(sys, "argv", argv)
+    return calls
 
 
 def _selected(path):
@@ -177,6 +192,29 @@ def test_style_runs_on_normal_txt():
     assert "validate_style" in _selected("common/national_focus/france.txt")
 
 
+def test_interface_sprite_changes_run_mio_validation():
+    assert _selected("interface/mio_icons.gfx") == {"validate_mios"}
+
+
+def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    run_git(tmp_path, "init")
+    run_git(tmp_path, "config", "user.email", "test@example.com")
+    run_git(tmp_path, "config", "user.name", "Test User")
+    target = tmp_path / "interface" / "mio_icons.gfx"
+    target.parent.mkdir(parents=True)
+    target.write_text("spriteTypes = {\n}\n", encoding="utf-8")
+    run_git(tmp_path, "add", "-A")
+
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch, ["precommit_validate.py", "--path", str(tmp_path)]
+    )
+
+    assert dispatcher.main() == 0
+    mio_calls = [env for script, env in calls if script == "validate_mios"]
+    assert mio_calls == ["interface/mio_icons.gfx"]
+
+
 def test_agency_upgrades_exact_file_match():
     spec = _BY_SCRIPT["validate_agency_upgrades"]
     assert spec.matches(["common/on_actions/MD_auto_agency_on_actions.txt"])
@@ -212,8 +250,12 @@ def test_manual_validators_not_folded():
         assert script not in folded
 
 
-def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
-    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")], strict=True)
+@pytest.mark.parametrize(
+    ("strict", "no_color", "flags"),
+    [(True, True, ["--strict", "--no-color"]), (False, False, [])],
+)
+def test_dispatcher_subprocess_contract(monkeypatch, tmp_path, strict, no_color, flags):
+    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")], strict=strict)
     captured = {}
 
     def fake_run(command, **kwargs):
@@ -227,14 +269,96 @@ def test_dispatcher_subprocess_contract(monkeypatch, tmp_path):
 
     monkeypatch.setattr(dispatcher.subprocess, "run", fake_run)
     env = {"MD_STAGED_FILES": "events/test.txt"}
-    result = dispatcher._run(spec, str(tmp_path), env, True, 3)
+    result = dispatcher._run(spec, str(tmp_path), env, no_color, 3)
 
-    assert "--staged" in captured["command"]
-    assert "--strict" in captured["command"]
-    assert captured["command"][-3:] == ["3", "--strict", "--no-color"]
+    assert captured["command"][2:] == ["--staged", "--workers", "3", *flags]
     assert captured["env"] is env
     assert captured["timeout"] == 300
-    assert result[1] == 1
+    assert result[:4] == ("validate_stub", 1, "finding", "")
+
+
+@pytest.mark.parametrize(
+    ("captured", "stdout", "stderr"),
+    [
+        pytest.param(
+            {"output": b"out", "stderr": b"err"}, "out", "err", id="bytes are decoded"
+        ),
+        pytest.param({}, "", "", id="nothing captured"),
+    ],
+)
+def test_a_validator_that_times_out_exits_124(
+    tmp_path, monkeypatch, captured, stdout, stderr
+):
+    def timed_out(*_args, **_kwargs):
+        raise subprocess.TimeoutExpired("validator", 300, **captured)
+
+    monkeypatch.setattr(dispatcher.subprocess, "run", timed_out)
+    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")])
+
+    result = dispatcher._run(spec, str(tmp_path), {}, True, 1)
+
+    assert result[:4] == (
+        "validate_stub",
+        124,
+        stdout,
+        f"{stderr}\nvalidate_stub: TIMED OUT after 300s",
+    )
+
+
+@pytest.mark.parametrize(
+    ("skip", "staged", "message"),
+    [
+        pytest.param("1", ["events/x.txt"], "skipping", id="MD_SKIP_VALIDATE is set"),
+        pytest.param(None, [], "nothing to validate", id="nothing staged"),
+        pytest.param(
+            None,
+            ["Changelog.txt"],
+            "No content validators match",
+            id="no validator takes the file",
+        ),
+    ],
+)
+def test_dispatcher_exits_clean_without_running_a_validator(
+    monkeypatch, capsys, skip, staged, message
+):
+    monkeypatch.delenv("MD_SKIP_VALIDATE", raising=False)
+    if skip:
+        monkeypatch.setenv("MD_SKIP_VALIDATE", skip)
+    monkeypatch.setattr(dispatcher, "_discover_staged", lambda *_args: staged)
+    calls = _run_dispatcher_with_stubbed_runner(monkeypatch, ["precommit_validate.py"])
+
+    assert dispatcher.main() == 0
+    assert calls == []
+    assert message in capsys.readouterr().out
+
+
+def test_a_failing_validator_blocks_the_commit_and_shows_its_output(
+    monkeypatch, capsys
+):
+    monkeypatch.delenv("MD_SKIP_VALIDATE", raising=False)
+    spec = dispatcher._Spec("validate_stub", [("events/", ".txt")])
+    monkeypatch.setattr(dispatcher, "_REGISTRY", [spec])
+    monkeypatch.setattr(dispatcher, "_discover_staged", lambda *_args: ["events/x.txt"])
+    monkeypatch.setattr(
+        dispatcher,
+        "_run",
+        lambda *_args: ("validate_stub", 1, "stdout text", "stderr text", 0.1),
+    )
+    monkeypatch.setattr(sys, "argv", ["precommit_validate.py"])
+
+    assert dispatcher.main() == 1
+    output = capsys.readouterr().out
+    assert "stdout text" in output and "stderr text" in output
+    assert "[FAIL] validate_stub" in output
+    assert "1 validator(s) failed" in output
+
+
+def test_precommit_dispatcher_routes_history_general_templates():
+    assert "validate_oob_units" in {
+        spec.script
+        for spec in _REGISTRY
+        if spec.matches(["history/general/template.txt"])
+    }
 
 
 def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
@@ -258,16 +382,8 @@ def test_precommit_dispatcher_selects_oob_for_a_moved_history_target(
         spec.script for spec in _REGISTRY if spec.matches(paths)
     }
 
-    calls = []
-
-    def run(spec, _mod_path, env, _no_color, _inner_workers):
-        calls.append((spec.script, env["MD_STAGED_FILES"]))
-        return (spec.script, 0, "", "", 0.0)
-
-    monkeypatch.setattr(dispatcher, "_run", run)
-    monkeypatch.setattr(
-        sys,
-        "argv",
+    calls = _run_dispatcher_with_stubbed_runner(
+        monkeypatch,
         ["precommit_validate.py", "--path", str(tmp_path), destination],
     )
 

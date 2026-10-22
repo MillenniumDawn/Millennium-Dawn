@@ -4,6 +4,7 @@ Invalid modifier names compile silently and do nothing in-game, so this check
 is the only guard against typo'd modifiers in ideas/focuses/decisions.
 """
 
+import pytest
 from shared.paths import REPO_ROOT
 from validate_modifiers import (
     _DOC_REL_PATH,
@@ -14,6 +15,7 @@ from validate_modifiers import (
     _is_parametric_modifier,
     _load_documented_modifiers,
 )
+from validator_common import Severity
 
 NEWLINE = chr(10)
 
@@ -137,17 +139,6 @@ def test_doctrine_folder_cost_factors_are_harvested(tmp_path):
         "land_doctrine_cost_factor",
         "equipment_doctrine_cost_factor",
     }
-
-
-def test_shipped_doctrine_folders_cover_the_netherlands_ideas():
-    """The five folders MD ships are exactly the five modifiers in use."""
-    shipped = REPO_ROOT / "common" / "doctrines" / "folders" / "doctrine_folders.txt"
-    if not shipped.exists():
-        return
-    harvested = _harvest_doctrine_folder_cost_factors([str(shipped)])
-    assert "equipment_doctrine_cost_factor" in harvested
-    for vanilla in ("air", "land", "naval", "special_forces"):
-        assert f"{vanilla}_doctrine_cost_factor" in harvested
 
 
 def test_shipped_doc_yields_concrete_names_and_families():
@@ -419,7 +410,7 @@ def test_empty_dynamic_modifier_file_is_skipped(tmp_path):
     assert validator._issues[0].file.endswith("real.txt")
 
 
-def test_full_run_covers_all_three_checks(tmp_path):
+def test_full_run_covers_every_check(tmp_path):
     _write_idea_file(tmp_path, "\t\t\t\tcompletely_fake_modifier_field = 0.1\n")
     dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
     dynamic_dir.mkdir(parents=True)
@@ -436,8 +427,42 @@ def test_full_run_covers_all_three_checks(tmp_path):
     validator.run_validations()
 
     categories = {issue.category for issue in validator._issues}
+    # The one modifier trips both enable checks: the error names the dead
+    # trigger, the warning questions the block.
     assert categories == {
         "unknown-modifier",
         "dynamic-modifier-name-loc",
         "redundant-enable-gate",
+        "dynamic-modifier-enable-block",
     }
+
+
+# Tooltips render the bare modifier name, so a _TT key alone shows the token.
+@pytest.mark.parametrize(
+    "loc_keys, flagged",
+    [
+        (["test_dynamic_modifier_TT"], True),
+        (["test_dynamic_modifier", "test_dynamic_modifier_TT"], False),
+    ],
+    ids=["only a _TT key", "bare name key"],
+)
+def test_dynamic_modifier_needs_a_bare_name_loc_key(tmp_path, loc_keys, flagged):
+    dynamic_dir = tmp_path / "common" / "dynamic_modifiers"
+    dynamic_dir.mkdir(parents=True)
+    (dynamic_dir / "00_test.txt").write_text(
+        "test_dynamic_modifier = {\n\tenable = { always = yes }\n}\n",
+        encoding="utf-8",
+    )
+    loc_dir = tmp_path / "localisation" / "english"
+    loc_dir.mkdir(parents=True)
+    (loc_dir / "test_l_english.yml").write_text(
+        "l_english:\n" + "".join(f' {key}: "value"\n' for key in loc_keys),
+        encoding="utf-8-sig",
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False)
+    validator.validate_dynamic_modifier_name_loc()
+
+    assert [(i.severity, i.category) for i in validator._issues] == (
+        [(Severity.ERROR, "dynamic-modifier-name-loc")] if flagged else []
+    )

@@ -1,28 +1,3 @@
-#	Example:
-#
-#	example_dynamic_modifier = {
-#		icon = "GFX_idea_unknown" # optional, will show up in guis if icon is specified
-#		enable = { always = yes } #optional, the modifier won't apply if not enabled
-#		remove_trigger = { always = no } #optional, will remove the modifier if true
-#
-#		# list of modifiers
-#		fuel_cost = 321
-#		max_fuel = var_max_fuel # will be taken from a variable
-#	}
-#
-#
-#	In a script file:
-#
-#	effect = {
-#		add_dynamic_modifier = {
-#			modifier = example_dynamic_modifier
-#			scope = GER # optional, if you specify this your dynamic modifier scoped to this scope (root is the effect scope)
-#			days = 14 # optional, will be removed after this many days passes
-#		}
-#	}
-#
-#	can be added to countries, states or unit leaders
-#	will only updated daily, unless forced by force_update_dynamic_modifier effect
 sabotaged_resources = {
 	remove_trigger = {
 		has_resistance = yes
@@ -36,25 +11,6 @@ sabotaged_resources = {
 	temporary_state_resource_steel = sabotaged_steel
 }
 
-autonomous_state = {
-
-	icon = GFX_modifiers_sabotaged_resource
-
-	recruitable_population_factor = -0.5
-	local_building_slots_factor = -0.25
-	state_resources_factor = -0.25
-	state_production_speed_buildings_factor = -0.25
-}
-
-semi_autonomous_state = {
-
-	icon = GFX_modifiers_sabotaged_resource
-
-	local_building_slots_factor = -0.25
-	state_resources_factor = -0.25
-	state_production_speed_buildings_factor = -0.25
-}
-
 government_popularity_modifier = {
 
 	# Government Popularity
@@ -62,8 +18,8 @@ government_popularity_modifier = {
 	political_power_factor = gov_pop_political_power_factor
 	drift_defence_factor = gov_pop_drift_defence_factor
 
-	# Migration Rate
-	monthly_population = net_immigration_rate
+	# Migration Rate and growth floor
+	monthly_population = gov_pop_monthly_population
 }
 
 influence_drift_modifier = {
@@ -77,10 +33,6 @@ influence_drift_modifier = {
 
 cartel_penalties = {
 	icon = "GFX_idea_cartels"
-	enable = {
-		has_country_flag = is_cartel_nation
-		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
-	}
 
 	political_power_factor = CAR_political_power_factor # -0.25
 	corruption_cost_factor = CAR_corruption_cost_factor # -1.00
@@ -95,9 +47,6 @@ cartel_penalties = {
 
 narco_state_bonuses = {
 	icon = "GFX_idea_cartels"
-	enable = {
-		has_country_flag = is_cartel_nation
-	}
 
 	political_power_factor = CAR_political_power_factor # 30%
 	corruption_cost_factor = CAR_corruption_cost_factor # 150%
@@ -111,11 +60,6 @@ narco_state_bonuses = {
 }
 
 public_war_weariness_effect = {
-	enable = {
-		has_an_AB_war = yes
-		has_war = yes
-	}
-
 	war_support_factor = war_support_factor_var
 }
 
@@ -140,7 +84,6 @@ auto_influencer_cost_effect = {
 
 inflation_dynamic_modifier = {
 	icon = "GFX_idea_inflation_spirit"
-	inflation_cost_multiplier_modifier = inflation_cost_combined_var
 	projects_cost_modifier = inflation_rate_var
 	economic_cycles_cost_factor = inflation_rate_econ_var
 	corruption_cost_factor = inflation_corruption_var
@@ -155,7 +98,11 @@ inflation_dynamic_modifier = {
 	receiving_investment_cost_modifier = inflation_rate_var
 	international_market_purchase_modifier = inflation_rate_var
 	internal_investments_money_cost_modifier = inflation_rate_var
-	currency_strength_modifier = currency_strength
+}
+
+# No icon keeps it out of national spirits
+currency_effects_modifier = {
+	inflation_cost_multiplier_modifier = inflation_cost_combined_var
 	return_on_investment_modifier = reserve_roi_bonus
 	trade_opinion_factor = reserve_trade_bonus
 }
@@ -176,14 +123,6 @@ tsmc_modifier = {
 
 USA_tsmc_access_modifier = {
 	icon = "GFX_idea_tsmc"
-	enable = {
-		country_exists = TAI
-		NOT = { has_war_with = TAI }
-		TAI = {
-			controls_state = 598
-			NOT = { has_country_flag = TAI_tsmc_us_export_ban }
-		}
-	}
 
 	resource_trade_cost_bonus_per_factory = USA_tsmc_resource_trade_cost_bonus_per_factory
 }

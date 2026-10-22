@@ -23,8 +23,33 @@ jobs:
       with:
         fetch-depth: 1
 
-    - name: Create Release
-      uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v2
+    - name: Extract curated release notes
+      id: changelog
+      run: |
+        if python3 tools/extract_release_notes.py "${{ github.ref_name }}" --output release-notes.md; then
+          echo "found=true" >> "$GITHUB_OUTPUT"
+        else
+          status=$?
+          if [ "$status" -eq 1 ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+          else
+            exit "$status"
+          fi
+        fi
+
+    - name: Create Release with curated notes
+      if: steps.changelog.outputs.found == 'true'
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
+      with:
+        tag_name: ${{ github.ref_name }}
+        name: Release ${{ github.ref_name }}
+        draft: false
+        prerelease: false
+        body_path: release-notes.md
+
+    - name: Create Release with generated notes
+      if: steps.changelog.outputs.found == 'false'
+      uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v2
       with:
         tag_name: ${{ github.ref_name }}
         name: Release ${{ github.ref_name }}

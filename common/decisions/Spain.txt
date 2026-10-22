@@ -6,26 +6,23 @@ SPR_the_regions_of_spain = {
 			NAV = { NOT = { has_war_with = SPR } }
 			check_variable = { SPR_culture_opinion^1 < 21 }
 			NOT = { NAV = { is_subject_of = SPR } }
-			86 = { is_core_of = NAV }
+			88 = { is_core_of = NAV }
 			NOT = { has_country_flag = NAV_revolted_against_spain }
 		}
+
 		available = {
 			owns_state = 88
 			OR = {
-				88 = { is_core_of = NAV }
-				CAT = { is_subject_of = SPR }
+				NOT = { 88 = { is_core_of = NAV } }
+				NAV = { is_subject_of = SPR }
 				custom_trigger_tooltip = {
 					tooltip = SPR_basque_opinion_above_20_tt
 					check_variable = { SPR_culture_opinion^1 > 20 }
 				}
 			}
 		}
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 88
-			}
-		}
 
+		highlight_states = { highlight_states_trigger = { state = 88 } }
 		days_mission_timeout = 100
 		is_good = no
 		war_with_on_timeout = SPR
@@ -36,6 +33,7 @@ SPR_the_regions_of_spain = {
 			change_relative_party_popularity = yes
 			add_political_power = 25
 		}
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_basque_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = -0.075 }
@@ -52,7 +50,7 @@ SPR_the_regions_of_spain = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
@@ -92,12 +90,8 @@ SPR_the_regions_of_spain = {
 			88 = { is_core_of = NAV }
 		}
 
-		available = {
-			20_percent_government_popularity = yes
-		}
-
+		available = { 20_percent_government_popularity = yes }
 		cost = 50
-
 		days_remove = 90
 		days_re_enable = 15
 
@@ -112,7 +106,17 @@ SPR_the_regions_of_spain = {
 			set_temp_variable = { cultural_opinion = 3 }
 			SPR_modify_cultural_opinion = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 50
+				check_variable = { SPR_culture_opinion^1 < 35 }
+				SPR_ai_nationalist_stance = no
+			}
+			modifier = { add = 50 check_variable = { SPR_culture_opinion^1 < 26 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	# Revoke Basque Citizenship
@@ -133,25 +137,50 @@ SPR_the_regions_of_spain = {
 		}
 
 		cost = 150
-
 		days_remove = 100
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_revoke_basque_citizenship_decision"
-			88 = { remove_core_of = NAV }
-			add_stability = -0.05
-			custom_effect_tooltip = SPR_all_culture_decrease_10_tt
-			# 5% increase to all culture opinions and a explanation of what they are for
-			hidden_effect = {
-				for_each_loop = {
-					array = SPR_culture_opinion
-					set_temp_variable = { culture_index = i }
-					set_temp_variable = { cultural_opinion = -10 }
-					SPR_modify_cultural_opinion = yes
+			if = {
+				limit = {
+					OR = {
+						is_ai = no
+						AND = {
+							SPR_basque_citizenship_revocation_is_safe = yes
+							NOT = { has_stability < 0.3 }
+						}
+					}
+				}
+				88 = { remove_core_of = NAV }
+				add_stability = -0.05
+				custom_effect_tooltip = SPR_all_culture_decrease_10_tt
+				hidden_effect = {
+					for_each_loop = {
+						array = SPR_culture_opinion
+						set_temp_variable = { culture_index = i }
+						set_temp_variable = { cultural_opinion = -10 }
+						SPR_modify_cultural_opinion = yes
+					}
+				}
+			}
+			else = { add_political_power = 150 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				SPR_nationalist_bloc_government = yes
+			}
+			modifier = { factor = 0 has_stability < 0.3 }
+			modifier = {
+				factor = 0
+				OR = {
+					SPR_citizenship_revocation_pending = yes
+					SPR_basque_citizenship_revocation_is_safe = no
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
 	}
 
 	## Catalonian Shit
@@ -164,6 +193,7 @@ SPR_the_regions_of_spain = {
 			86 = { is_core_of = CAT }
 			NOT = { has_country_flag = CAT_revolted_against_spain }
 		}
+
 		available = {
 			owns_state = 86
 			OR = {
@@ -175,24 +205,21 @@ SPR_the_regions_of_spain = {
 				}
 			}
 		}
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 86
-			}
-		}
 
-		days_mission_timeout = 10
+		highlight_states = { highlight_states_trigger = { state = 86 } }
+		days_mission_timeout = 100
 		is_good = no
 		war_with_on_timeout = SPR
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission complete_effect SPR_basque_revolt_against_spain_mission"
+			log = "[GetDateText]: [Root.GetName]: mission complete_effect SPR_catalonian_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			change_relative_party_popularity = yes
 			add_political_power = 25
 		}
+
 		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_basque_revolt_against_spain_mission"
+			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_catalonian_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = -0.075 }
 			change_relative_party_popularity = yes
 			set_country_flag = CAT_revolted_against_spain
@@ -207,7 +234,7 @@ SPR_the_regions_of_spain = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
@@ -249,6 +276,7 @@ SPR_the_regions_of_spain = {
 			}
 		}
 	}
+
 	# Targeted Subsidies
 	SPR_catalonian_targeted_subsidies_decision = {
 		visible = {
@@ -256,12 +284,8 @@ SPR_the_regions_of_spain = {
 			86 = { is_core_of = CAT }
 		}
 
-		available = {
-			20_percent_government_popularity = yes
-		}
-
+		available = { 20_percent_government_popularity = yes }
 		cost = 50
-
 		days_remove = 90
 		days_re_enable = 15
 
@@ -276,8 +300,19 @@ SPR_the_regions_of_spain = {
 			set_temp_variable = { cultural_opinion = 3 }
 			SPR_modify_cultural_opinion = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 50
+				check_variable = { SPR_culture_opinion^0 < 35 }
+				SPR_ai_nationalist_stance = no
+			}
+			modifier = { add = 50 check_variable = { SPR_culture_opinion^0 < 26 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
+
 	# Revoke Catalonian Citizenship
 	SPR_revoke_catalonian_citizenship_decision = {
 		visible = {
@@ -296,74 +331,98 @@ SPR_the_regions_of_spain = {
 		}
 
 		cost = 150
-
 		days_remove = 100
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_revoke_catalonian_citizenship_decision"
-			86 = { remove_core_of = CAT }
-			add_stability = -0.05
-			custom_effect_tooltip = SPR_all_culture_decrease_10_tt
-			# 5% increase to all culture opinions and a explanation of what they are for
-			hidden_effect = {
-				for_each_loop = {
-					array = SPR_culture_opinion
-					set_temp_variable = { culture_index = i }
-					set_temp_variable = { cultural_opinion = -10 }
-					SPR_modify_cultural_opinion = yes
+			if = {
+				limit = {
+					OR = {
+						is_ai = no
+						AND = {
+							SPR_catalonian_citizenship_revocation_is_safe = yes
+							NOT = { has_stability < 0.3 }
+						}
+					}
+				}
+				86 = { remove_core_of = CAT }
+				add_stability = -0.05
+				custom_effect_tooltip = SPR_all_culture_decrease_10_tt
+				hidden_effect = {
+					for_each_loop = {
+						array = SPR_culture_opinion
+						set_temp_variable = { culture_index = i }
+						set_temp_variable = { cultural_opinion = -10 }
+						SPR_modify_cultural_opinion = yes
+					}
+				}
+			}
+			else = { add_political_power = 150 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				SPR_nationalist_bloc_government = yes
+			}
+			modifier = { factor = 0 has_stability < 0.3 }
+			modifier = {
+				factor = 0
+				OR = {
+					SPR_citizenship_revocation_pending = yes
+					SPR_catalonian_citizenship_revocation_is_safe = no
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
 	}
+
 	## Galicia Stuff
 	# Revolt Against Spain
 	SPR_galician_revolt_against_spain_mission = {
 		activation = {
 			GAL = { NOT = { has_war_with = SPR } }
-			check_variable = { SPR_culture_opinion^3 < 21 }
+			check_variable = { SPR_culture_opinion^2 < 21 }
 			NOT = { GAL = { is_subject_of = SPR } }
 			OR = {
-				944 = { is_core_of = GAL }
-				1055 = { is_core_of = GAL }
+				AND = {
+					owns_state = 944
+					944 = { is_core_of = GAL }
+				}
+				AND = {
+					owns_state = 1055
+					1055 = { is_core_of = GAL }
+				}
 			}
 			NOT = { has_country_flag = GAL_revolted_against_spain }
 		}
+
 		available = {
 			OR = {
 				owns_state = 944
 				owns_state = 1055
 			}
 			OR = {
-				if = {
-					limit = {
-						owns_state = 944
-						owns_state = 1055
+				NOT = {
+					OR = {
+						AND = {
+							owns_state = 944
+							944 = { is_core_of = GAL }
+						}
+						AND = {
+							owns_state = 1055
+							1055 = { is_core_of = GAL }
+						}
 					}
-					NOT = { 944 = { is_core_of = GAL } }
-					NOT = { 1055 = { is_core_of = GAL } }
-				}
-				else_if = {
-					limit = {
-						owns_state = 944
-						NOT = { owns_state = 1055 }
-					}
-					NOT = { 944 = { is_core_of = GAL } }
-				}
-				else_if = {
-					limit = {
-						owns_state = 1055
-						NOT = { owns_state = 944 }
-					}
-					NOT = { 1055 = { is_core_of = GAL } }
 				}
 				GAL = { is_subject_of = SPR }
 				custom_trigger_tooltip = {
 					tooltip = SPR_galician_opinion_above_20_tt
-					check_variable = { SPR_culture_opinion^3 > 20 }
+					check_variable = { SPR_culture_opinion^2 > 20 }
 				}
 			}
 		}
+
 		highlight_states = {
 			highlight_states_trigger = {
 				state = 944
@@ -381,6 +440,7 @@ SPR_the_regions_of_spain = {
 			change_relative_party_popularity = yes
 			add_political_power = 25
 		}
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_galician_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = -0.075 }
@@ -402,7 +462,7 @@ SPR_the_regions_of_spain = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
@@ -444,6 +504,7 @@ SPR_the_regions_of_spain = {
 			}
 		}
 	}
+
 	# Targeted Subsidies
 	SPR_galician_targeted_subsidies_decision = {
 		visible = {
@@ -451,12 +512,8 @@ SPR_the_regions_of_spain = {
 			944 = { is_core_of = GAL }
 		}
 
-		available = {
-			20_percent_government_popularity = yes
-		}
-
+		available = { 20_percent_government_popularity = yes }
 		cost = 50
-
 		days_remove = 90
 		days_re_enable = 15
 
@@ -471,7 +528,17 @@ SPR_the_regions_of_spain = {
 			set_temp_variable = { cultural_opinion = 3 }
 			SPR_modify_cultural_opinion = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 50
+				check_variable = { SPR_culture_opinion^2 < 35 }
+				SPR_ai_nationalist_stance = no
+			}
+			modifier = { add = 50 check_variable = { SPR_culture_opinion^2 < 26 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	# Revoke Galician Citizenship
@@ -480,8 +547,12 @@ SPR_the_regions_of_spain = {
 			has_country_flag = SPR_lugo_convention_crush_galegos
 			has_country_flag = SPR_revoke_citizenship_northerner_flag
 			OR = {
-				944 = { is_core_of = GAL }
-				if = { limit = { owns_state = 1055 }
+				AND = {
+					owns_state = 944
+					944 = { is_core_of = GAL }
+				}
+				AND = {
+					owns_state = 1055
 					1055 = { is_core_of = GAL }
 				}
 			}
@@ -497,28 +568,55 @@ SPR_the_regions_of_spain = {
 		}
 
 		cost = 150
-
 		days_remove = 100
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_revoke_galician_citizenship_decision"
-			944 = { remove_core_of = GAL }
-			if = { limit = { owns_state = 1055 }
-				1055 = { remove_core_of = GAL }
+			if = {
+				limit = {
+					OR = {
+						is_ai = no
+						AND = {
+							SPR_galician_citizenship_revocation_is_safe = yes
+							NOT = { has_stability < 0.3 }
+						}
+					}
+				}
+				if = { limit = { owns_state = 944 }
+					944 = { remove_core_of = GAL }
+				}
+				if = { limit = { owns_state = 1055 }
+					1055 = { remove_core_of = GAL }
+				}
+				add_stability = -0.05
+				custom_effect_tooltip = SPR_all_culture_decrease_10_tt
+				hidden_effect = {
+					for_each_loop = {
+						array = SPR_culture_opinion
+						set_temp_variable = { culture_index = i }
+						set_temp_variable = { cultural_opinion = -10 }
+						SPR_modify_cultural_opinion = yes
+					}
+				}
 			}
-			add_stability = -0.05
-			custom_effect_tooltip = SPR_all_culture_decrease_10_tt
-			# 5% increase to all culture opinions and a explanation of what they are for
-			hidden_effect = {
-				for_each_loop = {
-					array = SPR_culture_opinion
-					set_temp_variable = { culture_index = i }
-					set_temp_variable = { cultural_opinion = -10 }
-					SPR_modify_cultural_opinion = yes
+			else = { add_political_power = 150 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				SPR_nationalist_bloc_government = yes
+			}
+			modifier = { factor = 0 has_stability < 0.3 }
+			modifier = {
+				factor = 0
+				OR = {
+					SPR_citizenship_revocation_pending = yes
+					SPR_galician_citizenship_revocation_is_safe = no
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
 	}
 
 	## Andalusia Shit
@@ -526,28 +624,25 @@ SPR_the_regions_of_spain = {
 	SPR_andalusia_revolt_against_spain_mission = {
 		activation = {
 			SPA = { NOT = { has_war_with = SPR } }
-			check_variable = { SPR_culture_opinion^1 < 21 }
+			check_variable = { SPR_culture_opinion^3 < 21 }
 			NOT = { SPA = { is_subject_of = SPR } }
 			93 = { is_core_of = SPA }
 			NOT = { has_country_flag = SPA_revolted_against_spain }
 		}
+
 		available = {
 			owns_state = 93
 			OR = {
 				NOT = { 93 = { is_core_of = SPA } }
-				SPA = { is_subject_of = SPA }
+				SPA = { is_subject_of = SPR }
 				custom_trigger_tooltip = {
 					tooltip = SPR_andalusia_opinion_above_20_tt
 					check_variable = { SPR_culture_opinion^3 > 20 }
 				}
 			}
 		}
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 93
-			}
-		}
 
+		highlight_states = { highlight_states_trigger = { state = 93 } }
 		days_mission_timeout = 100
 		is_good = no
 		war_with_on_timeout = SPR
@@ -558,6 +653,7 @@ SPR_the_regions_of_spain = {
 			change_relative_party_popularity = yes
 			add_political_power = 25
 		}
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_andalusia_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = -0.075 }
@@ -574,7 +670,7 @@ SPR_the_regions_of_spain = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
@@ -644,12 +740,8 @@ SPR_the_regions_of_spain = {
 			93 = { is_core_of = SPA }
 		}
 
-		available = {
-			20_percent_government_popularity = yes
-		}
-
+		available = { 20_percent_government_popularity = yes }
 		cost = 50
-
 		days_remove = 90
 		days_re_enable = 15
 
@@ -664,7 +756,17 @@ SPR_the_regions_of_spain = {
 			set_temp_variable = { cultural_opinion = 3 }
 			SPR_modify_cultural_opinion = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 50
+				check_variable = { SPR_culture_opinion^3 < 35 }
+				SPR_ai_nationalist_stance = no
+			}
+			modifier = { add = 50 check_variable = { SPR_culture_opinion^3 < 26 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	# Revoke Andalusian Citizenship
@@ -685,25 +787,50 @@ SPR_the_regions_of_spain = {
 		}
 
 		cost = 150
-
 		days_remove = 100
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_revoke_andalusian_citizenship_decision"
-			93 = { remove_core_of = SPA }
-			add_stability = -0.05
-			custom_effect_tooltip = SPR_all_culture_decrease_10_tt
-			# 5% increase to all culture opinions and a explanation of what they are for
-			hidden_effect = {
-				for_each_loop = {
-					array = SPR_culture_opinion
-					set_temp_variable = { culture_index = i }
-					set_temp_variable = { cultural_opinion = -10 }
-					SPR_modify_cultural_opinion = yes
+			if = {
+				limit = {
+					OR = {
+						is_ai = no
+						AND = {
+							SPR_andalusian_citizenship_revocation_is_safe = yes
+							NOT = { has_stability < 0.3 }
+						}
+					}
+				}
+				93 = { remove_core_of = SPA }
+				add_stability = -0.05
+				custom_effect_tooltip = SPR_all_culture_decrease_10_tt
+				hidden_effect = {
+					for_each_loop = {
+						array = SPR_culture_opinion
+						set_temp_variable = { culture_index = i }
+						set_temp_variable = { cultural_opinion = -10 }
+						SPR_modify_cultural_opinion = yes
+					}
+				}
+			}
+			else = { add_political_power = 150 }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				SPR_nationalist_bloc_government = yes
+			}
+			modifier = { factor = 0 has_stability < 0.3 }
+			modifier = {
+				factor = 0
+				OR = {
+					SPR_citizenship_revocation_pending = yes
+					SPR_andalusian_citizenship_revocation_is_safe = no
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
 	}
 
 	## Canarios Shit
@@ -715,23 +842,20 @@ SPR_the_regions_of_spain = {
 			95 = { is_core_of = CNR }
 			NOT = { has_country_flag = CNR_revolted_against_spain }
 		}
+
 		available = {
 			owns_state = 95
 			OR = {
 				NOT = { 95 = { is_core_of = CNR } }
-				CNR = { is_subject_of = CNR }
+				CNR = { is_subject_of = SPR }
 				custom_trigger_tooltip = {
 					tooltip = SPR_canarios_opinion_above_20_tt
 					check_variable = { SPR_culture_opinion^4 > 20 }
 				}
 			}
 		}
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 95
-			}
-		}
 
+		highlight_states = { highlight_states_trigger = { state = 95 } }
 		days_mission_timeout = 100
 		is_good = no
 		war_with_on_timeout = SPR
@@ -742,6 +866,7 @@ SPR_the_regions_of_spain = {
 			change_relative_party_popularity = yes
 			add_political_power = 25
 		}
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect SPR_canarios_revolt_against_spain_mission"
 			set_temp_variable = { party_popularity_increase = -0.075 }
@@ -758,7 +883,7 @@ SPR_the_regions_of_spain = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+						L_Inf_Bat = { x = 1 y = 0 }
 					}
 					support = {
 						L_Engi_Comp = { x = 0 y = 0 }
@@ -786,12 +911,8 @@ SPR_the_regions_of_spain = {
 			95 = { is_core_of = CNR }
 		}
 
-		available = {
-			20_percent_government_popularity = yes
-		}
-
+		available = { 20_percent_government_popularity = yes }
 		cost = 50
-
 		days_remove = 90
 		days_re_enable = 15
 
@@ -806,7 +927,17 @@ SPR_the_regions_of_spain = {
 			set_temp_variable = { cultural_opinion = 3 }
 			SPR_modify_cultural_opinion = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 50
+				check_variable = { SPR_culture_opinion^4 < 35 }
+				SPR_ai_nationalist_stance = no
+			}
+			modifier = { add = 50 check_variable = { SPR_culture_opinion^4 < 26 } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	## Cultura Content
@@ -815,10 +946,10 @@ SPR_the_regions_of_spain = {
 		allowed = { always = no }
 		available = { always = no }
 		activation = { always = no }
-
 		days_mission_timeout = 180
 		selectable_mission = no
 		fire_only_once = yes
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_challenge_the_court_ban_bull_mission"
 			set_temp_variable = { temp_success_rate = 25 }
@@ -827,12 +958,10 @@ SPR_the_regions_of_spain = {
 			add_to_temp_variable = { temp_success_rate = popularity }
 			set_temp_variable = { temp_failure_rate = 75 }
 			subtract_from_temp_variable = { temp_failure_rate = popularity }
-
 			if = { limit = { has_country_flag = SPR_pro_ban_campaign }
 				add_to_temp_variable = { temp_success_rate = 5 }
 				subtract_from_temp_variable = { temp_failure_rate = 5 }
 			}
-
 			random_list = {
 				temp_success_rate = {
 					custom_effect_tooltip = SPR_change_is_upheld
@@ -843,19 +972,19 @@ SPR_the_regions_of_spain = {
 					set_country_flag = SPR_banfighting_is_unconstitutional
 				}
 			}
-
 			country_event = spain.53
 		}
 	}
+
 	SPR_challenge_the_court_killing_bull_mission = {
 		allowed = { always = no }
 		available = { always = no }
 		activation = { always = no }
-
 		days_mission_timeout = 180
 		selectable_mission = no
 		fire_only_once = yes
 		fixed_random_seed = no
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_challenge_the_court_killing_bull_mission"
 			set_temp_variable = { temp_success_rate = 25 }
@@ -864,12 +993,10 @@ SPR_the_regions_of_spain = {
 			add_to_temp_variable = { temp_success_rate = popularity }
 			set_temp_variable = { temp_failure_rate = 75 }
 			subtract_from_temp_variable = { temp_failure_rate = popularity }
-
 			if = { limit = { has_country_flag = SPR_pro_ban_campaign }
 				add_to_temp_variable = { temp_success_rate = 5 }
 				subtract_from_temp_variable = { temp_failure_rate = 5 }
 			}
-
 			random_list = {
 				temp_success_rate = {
 					custom_effect_tooltip = SPR_change_is_upheld
@@ -880,7 +1007,6 @@ SPR_the_regions_of_spain = {
 					set_country_flag = SPR_bankilling_is_unconstitutional
 				}
 			}
-
 			country_event = spain.53
 		}
 	}
@@ -894,7 +1020,6 @@ SPR_the_regions_of_spain = {
 		}
 
 		cost = 75
-
 		days_remove = 45
 		fire_only_once = yes
 
@@ -902,24 +1027,17 @@ SPR_the_regions_of_spain = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_support_the_cause_decision"
 			set_country_flag = SPR_pro_ban_campaign
 			custom_effect_tooltip = SPR_pro_ban_campaign_tt
-
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
 	SPR_codify_the_ban_into_law_decision = {
-		visible = {
-			has_active_mission = SPR_challenge_the_court_ban_bull_mission
-		}
-
-		available = {
-			60_percent_government_popularity = yes
-		}
-
+		visible = { has_active_mission = SPR_challenge_the_court_ban_bull_mission }
+		available = { 60_percent_government_popularity = yes }
 		cost = 150
-
 		days_remove = 90
 		fire_only_once = yes
 
@@ -927,19 +1045,14 @@ SPR_the_regions_of_spain = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_codify_the_ban_into_law_decision"
 			remove_mission = SPR_challenge_the_court_ban_bull_mission
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
 	SPR_codify_the_killing_of_the_bull_decision = {
-		visible = {
-			has_active_mission = SPR_challenge_the_court_killing_bull_mission
-		}
-		available = {
-			50_percent_government_popularity = yes
-		}
-
+		visible = { has_active_mission = SPR_challenge_the_court_killing_bull_mission }
+		available = { 50_percent_government_popularity = yes }
 		cost = 150
-
 		days_remove = 90
 		fire_only_once = yes
 
@@ -947,6 +1060,7 @@ SPR_the_regions_of_spain = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_codify_the_killing_of_the_bull_decision"
 			remove_mission = SPR_challenge_the_court_killing_bull_mission
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -984,11 +1098,10 @@ SPR_the_regions_of_spain = {
 			if = { limit = { has_active_mission = SPR_challenge_the_court_ban_bull_mission }
 				remove_mission = SPR_challenge_the_court_ban_bull_mission
 			}
-			else = {
-				remove_mission = SPR_challenge_the_court_killing_bull_mission
-			}
+			else = { remove_mission = SPR_challenge_the_court_killing_bull_mission }
 			country_event = spain.54
 		}
+
 		ai_will_do = { base = 0 }
 	}
 }
@@ -1005,7 +1118,6 @@ SPR_monarchist_spain = {
 
 		days_remove = 90
 		days_re_enable = 90
-
 		cost = 25
 
 		remove_effect = {
@@ -1020,7 +1132,7 @@ SPR_monarchist_spain = {
 							Special_Forces = { x = 0 y = 0 }
 							Special_Forces = { x = 0 y = 1 }
 							Special_Forces = { x = 0 y = 2 }
-							Special_Forces = { x = 0 y = 3 }
+							Special_Forces = { x = 1 y = 0 }
 						}
 					}
 				}
@@ -1042,7 +1154,11 @@ SPR_monarchist_spain = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 5 has_war = yes }
+		}
 	}
 
 	SPR_a_just_tax_decision = {
@@ -1065,7 +1181,11 @@ SPR_monarchist_spain = {
 			multiply_temp_variable = { treasury_change = 0.03 }
 			modify_treasury_effect = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SPR_a_divine_right_decision = {
@@ -1076,7 +1196,6 @@ SPR_monarchist_spain = {
 
 		days_remove = 90
 		days_re_enable = 45
-
 		cost = 50
 
 		modifier = {
@@ -1084,7 +1203,11 @@ SPR_monarchist_spain = {
 			nationalist_drift = 0.05
 			nationalist_outlook_campaign_cost_modifier = -0.15
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0 50_percent_government_popularity = yes }
+		}
 	}
 
 	SPR_install_the_carlists_decision = {
@@ -1103,7 +1226,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 50
-
 		days_remove = 60
 
 		remove_effect = {
@@ -1115,7 +1237,7 @@ SPR_monarchist_spain = {
 			set_variable = { Western_Autocracy_leader = 3 }
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = { base = 100 }
 	}
 
 	# The New Elections
@@ -1132,7 +1254,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 150
-
 		days_remove = 30
 		days_re_enable = 30
 
@@ -1141,7 +1262,6 @@ SPR_monarchist_spain = {
 			if = { limit = { nationalist_fascist_are_in_coalition = yes }
 				hidden_effect = {
 					# remove_ideas = {
-
 					# }
 				}
 				remove_from_array = { gov_coalition_array = 21 }
@@ -1149,7 +1269,6 @@ SPR_monarchist_spain = {
 			else_if = { limit = { nationalist_right_wing_populists_are_in_coalition = yes }
 				hidden_effect = {
 					# remove_ideas = {
-
 					# }
 				}
 				remove_from_array = { gov_coalition_array = 20 }
@@ -1172,12 +1291,12 @@ SPR_monarchist_spain = {
 			else_if = { limit = { western_social_democrats_are_in_coalition = yes }
 				hidden_effect = {
 					# remove_ideas = {
-
 					# }
 				}
 				remove_from_array = { gov_coalition_array = 3 }
 			}
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1199,7 +1318,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 100
-
 		days_re_enable = 45
 		days_remove = 90
 
@@ -1233,6 +1351,7 @@ SPR_monarchist_spain = {
 				add_ideas = SPR_unionization_of_faith_idea
 			}
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1254,7 +1373,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 100
-
 		days_re_enable = 45
 		days_remove = 90
 
@@ -1263,6 +1381,7 @@ SPR_monarchist_spain = {
 			set_temp_variable = { add_col_one = 3 }
 			add_coalition_members_effect = yes
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1284,7 +1403,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 100
-
 		days_re_enable = 45
 		days_remove = 90
 
@@ -1299,6 +1417,7 @@ SPR_monarchist_spain = {
 				add_ideas = SPR_the_hands_of_the_few_idea
 			}
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1320,7 +1439,6 @@ SPR_monarchist_spain = {
 		}
 
 		cost = 100
-
 		days_re_enable = 45
 		days_remove = 90
 
@@ -1362,11 +1480,8 @@ SPR_political_policy_category = {
 			has_elections = yes
 		}
 
-		available = {
-			NOT = { has_country_flag = SPR_filed_a_motion_of_no_confidence }
-		}
+		available = { NOT = { has_country_flag = SPR_filed_a_motion_of_no_confidence } }
 		cost = 100
-
 		days_remove = 60
 		days_re_enable = 1
 
@@ -1376,14 +1491,16 @@ SPR_political_policy_category = {
 			change_relative_party_popularity = yes
 			set_country_flag = { flag = SPR_filed_a_motion_of_no_confidence value = 1 days = 365 }
 		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_file_a_motion_of_no_confidence"
 			country_event = MD4_election_campaign.0
-
 			custom_effect_tooltip = SPR_file_a_motion_of_no_confidence_tt
 		}
+
 		ai_will_do = { base = 0 }
 	}
+
 	SPR_political_support_decision = {
 		visible = {
 			has_completed_focus = SPR_the_republic
@@ -1391,7 +1508,6 @@ SPR_political_policy_category = {
 		}
 
 		cost = 50
-
 		days_remove = 45
 		days_re_enable = 45
 
@@ -1406,7 +1522,34 @@ SPR_political_policy_category = {
 			set_temp_variable = { temp_outlook_increase = 0.03 }
 			change_relative_party_popularity = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 10 40_percent_government_popularity = no }
+			# An alternate SPR_ai_behavior path does not prop up a government it means to replace
+			modifier = {
+				factor = 0
+				OR = {
+					AND = {
+						has_global_flag = SPR_SOCIALIST_FOCUS_PATH
+						NOT = { check_variable = { ruling_party = 3 } }
+					}
+					AND = {
+						has_global_flag = SPR_NATIONALIST_FOCUS_PATH
+						NOT = { check_variable = { ruling_party = 20 } }
+					}
+					AND = {
+						has_global_flag = SPR_FALANGIST_FOCUS_PATH
+						NOT = { check_variable = { ruling_party = 21 } }
+					}
+					AND = {
+						has_global_flag = SPR_COMMUNIST_FOCUS_PATH
+						NOT = { check_variable = { ruling_party = 4 } }
+					}
+				}
+			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	SPR_exploit_the_union_decision = {
@@ -1427,13 +1570,9 @@ SPR_political_policy_category = {
 		}
 
 		cost = 50
-
 		days_remove = 120
 		days_re_enable = 90
-
-		modifier = {
-			political_power_factor = -0.20
-		}
+		modifier = { political_power_factor = -0.20 }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_exploit_the_union_decision"
@@ -1448,17 +1587,17 @@ SPR_political_policy_category = {
 			set_temp_variable = { temp_outlook_increase = 0.02 }
 			change_relative_party_popularity = yes
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 5 ai_has_high_deficit = yes }
+		}
 	}
 
 	SPR_tap_the_bank_funds_decision = {
 		visible = { has_completed_focus = SPR_a_state_bank }
-
-		available = {
-			NOT = { has_active_mission = bankruptcy_incoming_collapse }
-		}
+		available = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
 		cost = 50
-
 		days_remove = 180
 		days_re_enable = 5
 		fixed_random_seed = no
@@ -1484,6 +1623,7 @@ SPR_political_policy_category = {
 				increase_corruption = yes
 			}
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1497,7 +1637,6 @@ SPR_political_policy_category = {
 		}
 
 		cost = 75
-
 		days_remove = 30
 		days_re_enable = 60
 
@@ -1526,7 +1665,11 @@ SPR_political_policy_category = {
 				change_relative_party_popularity = yes
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 1 has_global_flag = SPR_COMMUNIST_FOCUS_PATH }
+		}
 	}
 
 	SPR_unban_the_monarchy_decision = {
@@ -1554,10 +1697,13 @@ SPR_political_policy_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_unban_the_monarchy_decision"
-			clr_country_flag = party1_banned
-			clr_country_flag = party23_banned
+			set_temp_variable = { party_index = 0 }
+			unban_party_scripted_call = yes
+			set_temp_variable = { party_index = 22 }
+			unban_party_scripted_call = yes
 			custom_effect_tooltip = SPR_monarchs_unbanned_tt
 		}
+
 		ai_will_do = { base = 0 }
 	}
 
@@ -1643,11 +1789,8 @@ SPR_political_policy_category = {
 						}
 					}
 				}
-				else = {
-					add_ideas = SPR_the_spanish_patriot_act_idea
-				}
+				else = { add_ideas = SPR_the_spanish_patriot_act_idea }
 			}
-
 			# Unique Custom Party Content
 			if = {
 				limit = {
@@ -1665,7 +1808,8 @@ SPR_political_policy_category = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = { base = 50 }
 	}
 
 	SPR_rwp_policy_replacer_decisions = {
@@ -1688,10 +1832,7 @@ SPR_political_policy_category = {
 			}
 		}
 
-		available = {
-			nationalist_right_wing_populists_are_in_power_or_coalition = yes
-		}
-
+		available = { nationalist_right_wing_populists_are_in_power_or_coalition = yes }
 		days_remove = 30
 		fire_only_once = no
 
@@ -1771,12 +1912,9 @@ SPR_political_policy_category = {
 				}
 				add_ideas = SPR_unionization_of_faith_idea
 			}
-
 			# Unique Party Effects
 			if = {
-				limit = {
-					nationalist_right_wing_populists_are_in_power = yes
-				}
+				limit = { nationalist_right_wing_populists_are_in_power = yes }
 				if = {
 					limit = {
 						NOT = { has_idea = SPR_the_true_identity_of_spain_idea }
@@ -1826,7 +1964,8 @@ SPR_political_policy_category = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = { base = 50 }
 	}
 
 	SPR_falangists_policy_replacer_decision = {
@@ -1838,15 +1977,10 @@ SPR_political_policy_category = {
 				has_completed_focus = SPR_return_of_francoism
 				has_completed_focus = SPR_spanish_first
 			}
-			NOT = {
-				has_idea = SPR_the_falangist_youth_front_idea
-			}
+			NOT = { has_idea = SPR_the_falangist_youth_front_idea }
 		}
 
-		available = {
-			nationalist_fascists_are_in_power_or_coalition = yes
-		}
-
+		available = { nationalist_fascists_are_in_power_or_coalition = yes }
 		days_remove = 30
 		fire_only_once = no
 
@@ -1860,9 +1994,7 @@ SPR_political_policy_category = {
 				add_ideas = SPR_the_falangist_youth_front_idea
 			}
 			if = {
-				limit = {
-					has_completed_focus = SPR_role_of_the_woman
-				}
+				limit = { has_completed_focus = SPR_role_of_the_woman }
 				if = {
 					limit = {
 						has_country_flag = SPR_women_homefront_idea_flag
@@ -1885,7 +2017,6 @@ SPR_political_policy_category = {
 				}
 				add_ideas = SPR_the_hands_of_the_few_idea
 			}
-
 			# Unique Party Only Ideas
 			if = { limit = { nationalist_fascist_are_in_power = yes }
 				if = {
@@ -1912,16 +2043,13 @@ SPR_political_policy_category = {
 					}
 					add_ideas = SPR_una_espana_y_granda_libre_idea
 				}
-
 			}
-
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = { base = 50 }
 	}
 
-
 	SPR_socialism_policy_replacer_decision = {
-
 		visible = {
 			NOT = { western_autocrats_are_in_power = yes }
 			OR = {
@@ -1970,7 +2098,6 @@ SPR_political_policy_category = {
 				}
 				add_ideas = SPR_keynesian_economic_idea
 			}
-
 			# Unique
 			if = {
 				limit = {
@@ -2036,11 +2163,11 @@ SPR_political_policy_category = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = { base = 50 }
 	}
 
 	SPR_communist_policy_replacer_decision = {
-
 		visible = {
 			NOT = { western_autocrats_are_in_power = yes }
 			OR = {
@@ -2125,7 +2252,6 @@ SPR_political_policy_category = {
 				}
 				add_ideas = SPR_the_emancipation_of_the_woman_idea
 			}
-
 			# Unique
 			if = {
 				limit = {
@@ -2168,21 +2294,18 @@ SPR_political_policy_category = {
 				}
 			}
 		}
-		ai_will_do = { base = 0 }
+
+		ai_will_do = { base = 50 }
 	}
 
 	# Economic Political Decisions
 	SPR_expand_the_huelva_copper_mine = {
 		icon = GFX_decision_tungsten
-
 		cost = 75
-
 		days_remove = 120
 		fire_only_once = yes
+		visible = { has_completed_focus = SPR_andalusian_mines }
 
-		visible = {
-			has_completed_focus = SPR_andalusian_mines
-		}
 		available = {
 			has_full_control_of_state = 93
 			has_tech = excavation3
@@ -2218,15 +2341,11 @@ SPR_political_policy_category = {
 
 	SPR_expand_the_los_santos_mine = {
 		icon = GFX_decision_tungsten
-
 		cost = 75
-
 		days_remove = 120
 		fire_only_once = yes
+		visible = { has_completed_focus = SPR_extremadura_mines }
 
-		visible = {
-			has_completed_focus = SPR_extremadura_mines
-		}
 		available = {
 			has_full_control_of_state = 971
 			has_tech = excavation3
@@ -2262,15 +2381,11 @@ SPR_political_policy_category = {
 
 	SPR_exploit_the_mediterranean_province = {
 		icon = GFX_decision_aluminium
-
 		cost = 75
-
 		days_remove = 120
 		fire_only_once = yes
+		visible = { has_completed_focus = SPR_modernize_mining_operations }
 
-		visible = {
-			has_completed_focus = SPR_modernize_mining_operations
-		}
 		available = {
 			has_full_control_of_state = 971
 			has_tech = excavation4
@@ -2319,7 +2434,6 @@ SPR_foreign_recruitment = {
 
 		days_remove = 90
 		days_re_enable = 90
-
 		cost = 25
 
 		remove_effect = {
@@ -2393,8 +2507,9 @@ SPR_foreign_recruitment = {
 			base = 1
 			modifier = {
 				factor = 2
-				has_government = nationalist
+				SPR_ai_nationalist_stance = yes
 			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -2411,7 +2526,6 @@ SPR_foreign_recruitment = {
 		}
 
 		days_remove = 365
-
 		cost = 150
 
 		remove_effect = {
@@ -2435,7 +2549,6 @@ SPR_foreign_recruitment = {
 						Mech_Inf_Bat = { x = 3 y = 1 }
 						Mech_Inf_Bat = { x = 3 y = 2 }
 					}
-
 					support = {
 						Arty_Battery = { x = 0 y = 0 }
 						H_Engi_Comp = { x = 0 y = 1 }
@@ -2466,7 +2579,6 @@ SPR_foreign_recruitment = {
 					prioritize_location = 7183
 				}
 			}
-
 			set_variable = { SPR.SPR_deployed_legions = 4 }
 		}
 
@@ -2474,15 +2586,14 @@ SPR_foreign_recruitment = {
 			base = 1
 			modifier = {
 				factor = 2
-				has_government = nationalist
+				SPR_ai_nationalist_stance = yes
 			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	SPR_spawn_new_regulares_decision = {
-		visible = {
-			has_completed_focus = SPR_expand_the_regulares
-		}
+		visible = { has_completed_focus = SPR_expand_the_regulares }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -2493,51 +2604,235 @@ SPR_foreign_recruitment = {
 
 		days_remove = 90
 		days_re_enable = 90
-
 		cost = 25
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SPR_spawn_new_regulares_decision"
-			if = { limit = { NOT = { has_completed_focus = SPR_expand_the_regulares } }
-				if = {
-					limit = { NOT = { has_template = "Regulares Group" } }
-					division_template = {
-						name = "Regulares Group"
-						is_locked = yes
-						regiments = {
-							L_Inf_Bat = { x = 0 y = 0 }
-							L_Inf_Bat = { x = 0 y = 1 }
-							Mot_Inf_Bat = { x = 1 y = 0 }
-						}
-					}
+			495 = {
+				create_unit = {
+					division = " name = \"Regulares Brigade\" division_template = \"Regulares Brigade\" start_experience_factor = 0.5"
+					owner = SPR
 				}
-				495 = {
-					create_unit = {
-						division = " name = \"Regulares Group\" division_template = \"Regulares Group\" start_experience_factor = 0.5"
-						owner = SPR
-					}
-				}
-
-				add_to_variable = { SPR_deployed_regulares = 1 }
 			}
-			else = {
-				495 = {
-					create_unit = {
-						division = " name = \"Regulares Brigade\" division_template = \"Regulares Brigade\" start_experience_factor = 0.5"
-						owner = SPR
-					}
-				}
-
-				add_to_variable = { SPR_deployed_regulares = 1 }
-			}
+			add_to_variable = { SPR_deployed_regulares = 1 }
 		}
 
 		ai_will_do = {
 			base = 1
 			modifier = {
 				factor = 2
-				has_government = nationalist
+				SPR_ai_nationalist_stance = yes
+			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+SPR_ai_path_category = {
+	SPR_rally_the_socialists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = SPR_SOCIALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^3 < 0.45 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_rally_the_socialists"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_socialists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = SPR_SOCIALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { check_variable = { ruling_party = 3 } }
+			check_variable = {
+				var = party_pop_array^3
+				value = party_pop_array^1
+				compare = greater_than
 			}
 		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_socialists_take_the_country"
+			set_temp_variable = { rul_party_temp = 3 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_rally_the_nationalists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = SPR_NATIONALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^20 < 0.40 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_rally_the_nationalists"
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_nationalists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = SPR_NATIONALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { check_variable = { ruling_party = 20 } }
+			check_variable = { party_pop_array^20 > 0.3 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_nationalists_take_the_country"
+			set_temp_variable = { rul_party_temp = 20 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_rally_the_falangists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = SPR_FALANGIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^21 < 0.40 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_rally_the_falangists"
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_falangists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = SPR_FALANGIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { check_variable = { ruling_party = 21 } }
+			check_variable = { party_pop_array^21 > 0.3 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_falangists_take_the_country"
+			set_temp_variable = { rul_party_temp = 21 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_rally_the_communists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = SPR_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^4 < 0.40 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_rally_the_communists"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SPR_communists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = SPR_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { check_variable = { ruling_party = 4 } }
+			check_variable = { party_pop_array^4 > 0.3 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SPR_communists_take_the_country"
+			set_temp_variable = { rul_party_temp = 4 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

@@ -58,7 +58,7 @@ def test_child_blocks_on_empty_span():
 
 
 def test_match_brace_returns_minus_one_when_unclosed():
-    assert VC._match_brace("{ a = 1", 0) == -1
+    assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
 # ---- leader trait parsing -------------------------------------------------
@@ -68,7 +68,7 @@ def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
     write_path(
         tmp_path,
         "common/country_leader/traits.txt",
-        "leader_traits = {\n\temerging_Communist-State = {\n\t}\n}\n",
+        "leader_traits = {\n\temerging_communist_state = {\n\t}\n}\n",
     )
     write_path(
         tmp_path,
@@ -78,7 +78,7 @@ def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
 
     names = VC.parse_leader_trait_names(str(tmp_path), "country_leader")
 
-    assert names == {"emerging_Communist-State"}
+    assert names == {"emerging_communist_state"}
 
 
 def test_parse_leader_trait_names_survives_an_unreadable_dir(tmp_path, monkeypatch):
@@ -149,10 +149,16 @@ def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path, write
 # ---- logging --------------------------------------------------------------
 
 
-@pytest.mark.parametrize("level", ["ERROR", "INFO", "WARNING"])
-def test_md_log_level_env_var_sets_the_module_threshold(monkeypatch, level):
+@pytest.mark.parametrize(
+    ("env", "level"),
+    [("error", "ERROR"), ("info", "INFO"), ("warning", "WARNING"), (None, "WARNING")],
+)
+def test_md_log_level_env_var_sets_the_module_threshold(monkeypatch, env, level):
     """The threshold is read at import, so it is env-driven, not settable later."""
-    monkeypatch.setenv("MD_LOG_LEVEL", level.lower())
+    if env is None:
+        monkeypatch.delenv("MD_LOG_LEVEL", raising=False)
+    else:
+        monkeypatch.setenv("MD_LOG_LEVEL", env)
     spec = importlib.util.spec_from_file_location("validator_common_probe", VC.__file__)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -250,7 +256,9 @@ def test_get_full_path_returns_none_when_unreadable(dummy, tmp_path):
 # ---- file collection ------------------------------------------------------
 
 
-def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch):
+def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch, write_path):
+    # A full scan would find this file, so an empty result proves the staged path.
+    write_path(tmp_path, "common/a.txt", "x")
     monkeypatch.setenv("MD_STAGED_FILES", "")
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1)
     assert v._collect_files(["common/**/*.txt"]) == []
@@ -262,10 +270,72 @@ def test_collect_files_dedupes_overlapping_patterns(dummy, write_path, tmp_path)
     assert len(files) == 1
 
 
+def test_collect_files_dedupes_nested_dir_patterns(dummy, write_path, tmp_path):
+    write_path(tmp_path, "common/sub/a.txt", "x")
+    files = dummy._collect_files(["common/sub/*.txt", "common/**/*.txt"])
+    assert len(files) == 1
+
+
+@pytest.mark.parametrize("staged_only", [False, True])
+def test_worktree_collection_and_basename_index_use_checkout_root(
+    tmp_path, write_path, monkeypatch, staged_only
+):
+    root = tmp_path / ".claude/worktrees/repo"
+    kept = write_path(root, "events/kept.txt", "wanted_item = yes\n")
+    nested = write_path(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
+    write_path(root, "resources/vanilla/events/reference.txt", "ignored")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "events/kept.txt\n.claude/worktrees/stale/events/nested.txt"
+    )
+    v = _Dummy(str(root), use_colors=False, workers=1, staged_only=staged_only)
+
+    assert v._collect_files(["**/*.txt"]) == [str(kept)]
+    assert v._basename_index(("**/*.txt",)) == {"kept.txt": [str(kept)]}
+    assert v.get_full_path("kept.txt", "wanted_item") == str(kept)
+    assert str(nested) not in v._collect_files(["**/*.txt"])
+
+
 def test_pool_map_falls_back_to_sequential_without_a_pool(tmp_path, monkeypatch):
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
     monkeypatch.setattr(v, "_get_pool", lambda: None)
     assert v._pool_map(str, list(range(12))) == [str(i) for i in range(12)]
+
+
+def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
+    tmp_path, monkeypatch
+):
+    events = []
+
+    class _SharedPool:
+        def terminate(self):
+            events.append("terminate")
+
+        def join(self):
+            events.append("join")
+
+    class _DedicatedPool:
+        def __init__(self, **_kwargs):
+            events.append("start")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def map(self, func, items, chunksize=None):
+            return [func(item) for item in items]
+
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    monkeypatch.setattr(VC, "Pool", _DedicatedPool)
+    v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
+    monkeypatch.setattr(v, "_pool", _SharedPool())
+
+    result = v._pool_map_init(str, list(range(12)), lambda: None, ())
+
+    assert events == ["terminate", "join", "start"]
+    assert v._pool is None
+    assert result == [str(i) for i in range(12)]
 
 
 # ---- localisation keys ----------------------------------------------------
@@ -281,6 +351,65 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
 
     assert "k" in keys
     assert "recruit_in_europe" in keys
+
+
+@pytest.mark.parametrize(
+    "registry, expected",
+    [
+        ("TOKEN_one\nTOKEN_two\n\nnot a token line\n", {"TOKEN_one", "TOKEN_two"}),
+        ("", set()),
+    ],
+    ids=["tokens", "empty registry"],
+)
+def test_dynamic_token_names(write_path, tmp_path, registry, expected):
+    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+    assert VC.load_dynamic_token_names(str(tmp_path)) == expected
+
+
+def _loc_tree(write_path, tmp_path):
+    write_path(
+        tmp_path,
+        "localisation/english/test_l_english.yml",
+        'l_english:\n TEST_key_one:0 "One"\n TEST_key_two:0 "Two"\n',
+    )
+
+
+# A staged .txt reads its loc keys from unstaged files. Restricting the lookup
+# to staged files once flooded --staged runs with false positives.
+def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    dummy.staged_only = True
+    dummy.staged_files = ["events/some_event.txt"]
+
+    assert {"TEST_key_one", "TEST_key_two"} <= dummy._load_localisation_keys()
+
+
+def test_loc_keys_are_memoized(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    assert dummy._load_localisation_keys() is dummy._load_localisation_keys()
+
+
+def test_loc_keys_hit_the_disk_cache_across_instances(
+    write_path, tmp_path, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _loc_tree(write_path, tmp_path)
+    first = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    opens = []
+    original_open = open
+
+    def wrapped(path, *args, **kwargs):
+        opens.append(str(path))
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", wrapped)
+    second = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    assert not any(path.endswith(".yml") for path in opens)
+    assert second == first
 
 
 # ---- run wiring -----------------------------------------------------------

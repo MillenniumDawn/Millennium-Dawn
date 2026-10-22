@@ -46,8 +46,8 @@ scripted_gui = {
 				else = {
 					custom_trigger_tooltip = {
 						tooltip = is_cyber_complete_techs_to_unlock_tt
-						has_tech = encryption1
-						has_tech = decryption1
+						has_tech = encryption_1
+						has_tech = decryption_1
 					}
 				}
 			 }
@@ -61,24 +61,20 @@ scripted_gui = {
 				clr_country_flag = open_MD_countrymissilesview
 				if = {
 					limit = {
-						has_country_flag = open_MD_missile_production_type_window
+						check_variable = { missile_production_type > 0 }
 					}
 					clear_prod_display_arrays = yes
-					clr_country_flag = open_MD_missile_production_type_window
 				}
 				if = {
 					limit = {
-						has_country_flag = open_MD_space_selection_window
+						check_variable = { space_selection_model > 0 }
 					}
 					clear_array = OLV_display_array
 					clear_array = sat_payload_display_array
 					clear_array = spp_payload_display_array
-					clr_country_flag = OLV_model
-					clr_country_flag = sat_payload_model
-					clr_country_flag = spp_payload_model
 					clear_variable = var_open_space_selection_ledger_1
 					clear_variable = var_open_space_selection_ledger_2
-					clr_country_flag = open_MD_space_selection_window
+					clear_variable = space_selection_model
 				}
 				if = {
 					limit = {
@@ -120,6 +116,13 @@ scripted_gui = {
 				clear_variable = var_open_MD_UN_gui
 				clear_variable = var_open_MD_cyber_gui
 				clear_variable = var_open_MD_antarctica_gui
+				if = {
+					limit = {
+						check_variable = { selected_nation > 0 }
+						NOT = { check_variable = { selected_nation = THIS.id } }
+					}
+					set_variable = { selected_ct_nation = selected_nation }
+				}
 				international_systems_update = yes
 			}
 			pmc_gui_ledger_button_click = {
@@ -138,6 +141,7 @@ scripted_gui = {
 						check_variable = { var_open_MD_state_recog = 0 }
 						check_variable = { var_open_MD_un_aid = 0 }
 						check_variable = { var_open_MD_un_council = 0 }
+						check_variable = { var_open_MD_un_assembly = 0 }
 					}
 					set_variable = { var_open_MD_state_recog = 2 }
 				}
@@ -208,14 +212,12 @@ scripted_gui = {
 				set_variable = { var_open_MD_missiles_gui_ledger_1 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_4
 				clear_variable = var_open_MD_missiles_gui_ledger_5
-				clear_variable = var_open_MD_international_space
 				international_systems_update = yes
 			}
 			launching_button_click = {
 				set_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_5
 				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_international_space
 				space_auto_refresh_ui = yes
 				international_systems_update = yes
 			}
@@ -223,14 +225,6 @@ scripted_gui = {
 				set_variable = { var_open_MD_missiles_gui_ledger_5 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_4
 				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_international_space
-				international_systems_update = yes
-			}
-			iss_button_click = {
-				set_variable = { var_open_MD_international_space = 2 }
-				clear_variable = var_open_MD_missiles_gui_ledger_4
-				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_missiles_gui_ledger_5
 				international_systems_update = yes
 			}
 		}
@@ -244,9 +238,6 @@ scripted_gui = {
 			}
 			space_button = {
 				frame = var_open_MD_missiles_gui_ledger_5
-			}
-			iss_button = {
-				frame = var_open_MD_international_space
 			}
 		}
 	}
@@ -267,8 +258,7 @@ scripted_gui = {
 			### OLV
 			production_type_10_button_click = {
 				ROOT = {
-					set_country_flag = open_MD_missile_production_type_window
-					set_country_flag = missile_production_type_10
+					set_variable = { missile_production_type = 10 }
 					set_prod_display_arrays = yes
 				}
 				international_systems_update = yes
@@ -365,8 +355,7 @@ scripted_gui = {
 			### GNSS
 			production_type_11_button_click = {
 				ROOT = {
-					set_country_flag = open_MD_missile_production_type_window
-					set_country_flag = missile_production_type_11
+					set_variable = { missile_production_type = 11 }
 					set_prod_display_arrays = yes
 				}
 				international_systems_update = yes
@@ -463,8 +452,7 @@ scripted_gui = {
 			### COMSAT
 			production_type_12_button_click = {
 				ROOT = {
-					set_country_flag = open_MD_missile_production_type_window
-					set_country_flag = missile_production_type_12
+					set_variable = { missile_production_type = 12 }
 					set_prod_display_arrays = yes
 				}
 				international_systems_update = yes
@@ -561,8 +549,7 @@ scripted_gui = {
 			### SPYSAT
 			production_type_13_button_click = {
 				ROOT = {
-					set_country_flag = open_MD_missile_production_type_window
-					set_country_flag = missile_production_type_13
+					set_variable = { missile_production_type = 13 }
 					set_prod_display_arrays = yes
 				}
 				international_systems_update = yes
@@ -659,8 +646,7 @@ scripted_gui = {
 			### KILLSAT
 			production_type_14_button_click = {
 				ROOT = {
-					set_country_flag = open_MD_missile_production_type_window
-					set_country_flag = missile_production_type_14
+					set_variable = { missile_production_type = 14 }
 					set_prod_display_arrays = yes
 				}
 				international_systems_update = yes
@@ -1083,39 +1069,19 @@ scripted_gui = {
 			}
 			####
 			production_type_10_button_click_enabled = {
-				NOT = { has_country_flag = missile_production_type_10 }
-				NOT = { has_country_flag = missile_production_type_11 }
-				NOT = { has_country_flag = missile_production_type_12 }
-				NOT = { has_country_flag = missile_production_type_13 }
-				NOT = { has_country_flag = missile_production_type_14 }
+				missile_production_type_window_closed = yes
 			}
 			production_type_11_button_click_enabled = {
-				NOT = { has_country_flag = missile_production_type_10 }
-				NOT = { has_country_flag = missile_production_type_11 }
-				NOT = { has_country_flag = missile_production_type_12 }
-				NOT = { has_country_flag = missile_production_type_13 }
-				NOT = { has_country_flag = missile_production_type_14 }
+				missile_production_type_window_closed = yes
 			}
 			production_type_12_button_click_enabled = {
-				NOT = { has_country_flag = missile_production_type_10 }
-				NOT = { has_country_flag = missile_production_type_11 }
-				NOT = { has_country_flag = missile_production_type_12 }
-				NOT = { has_country_flag = missile_production_type_13 }
-				NOT = { has_country_flag = missile_production_type_14 }
+				missile_production_type_window_closed = yes
 			}
 			production_type_13_button_click_enabled = {
-				NOT = { has_country_flag = missile_production_type_10 }
-				NOT = { has_country_flag = missile_production_type_11 }
-				NOT = { has_country_flag = missile_production_type_12 }
-				NOT = { has_country_flag = missile_production_type_13 }
-				NOT = { has_country_flag = missile_production_type_14 }
+				missile_production_type_window_closed = yes
 			}
 			production_type_14_button_click_enabled = {
-				NOT = { has_country_flag = missile_production_type_10 }
-				NOT = { has_country_flag = missile_production_type_11 }
-				NOT = { has_country_flag = missile_production_type_12 }
-				NOT = { has_country_flag = missile_production_type_13 }
-				NOT = { has_country_flag = missile_production_type_14 }
+				missile_production_type_window_closed = yes
 			}
 		}
 
@@ -1146,7 +1112,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			has_country_flag = open_MD_missile_production_type_window
+			check_variable = { missile_production_type > 0 }
 			check_variable = { var_open_MD_space_gui = 2 }
 		}
 
@@ -1163,8 +1129,6 @@ scripted_gui = {
 				calculate_production_vars_10 = yes
 
 				clear_prod_display_arrays = yes
-				clr_country_flag = open_MD_missile_production_type_window
-				clr_country_flag = missile_production_type_10
 				international_systems_update = yes
 			}
 			### GNSS
@@ -1179,8 +1143,6 @@ scripted_gui = {
 				calculate_production_vars_11 = yes
 
 				clear_prod_display_arrays = yes
-				clr_country_flag = open_MD_missile_production_type_window
-				clr_country_flag = missile_production_type_11
 				international_systems_update = yes
 			}
 			### COMSAT
@@ -1195,8 +1157,6 @@ scripted_gui = {
 				calculate_production_vars_12 = yes
 
 				clear_prod_display_arrays = yes
-				clr_country_flag = open_MD_missile_production_type_window
-				clr_country_flag = missile_production_type_12
 				international_systems_update = yes
 			}
 			### SPYSAT
@@ -1211,8 +1171,6 @@ scripted_gui = {
 				calculate_production_vars_13 = yes
 
 				clear_prod_display_arrays = yes
-				clr_country_flag = open_MD_missile_production_type_window
-				clr_country_flag = missile_production_type_13
 				international_systems_update = yes
 			}
 			### KILLSAT
@@ -1227,19 +1185,11 @@ scripted_gui = {
 				calculate_production_vars_14 = yes
 
 				clear_prod_display_arrays = yes
-				clr_country_flag = open_MD_missile_production_type_window
-				clr_country_flag = missile_production_type_14
 				international_systems_update = yes
 			}
 
 			close_button_click = {
 				clear_prod_display_arrays = yes
-				if = {
-					limit = {
-						has_country_flag = open_MD_missile_production_type_window
-					}
-					clr_country_flag = open_MD_missile_production_type_window
-				}
 				international_systems_update = yes
 			}
 		}
@@ -1247,74 +1197,74 @@ scripted_gui = {
 		triggers = {
 			### OLV
 			missile_type_10_button_visible = {
-				has_country_flag = missile_production_type_10
+				check_variable = { missile_production_type = 10 }
 			}
 			missile_type_10_icon_visible = {
-				has_country_flag = missile_production_type_10
+				check_variable = { missile_production_type = 10 }
 			}
 			missile_model_name_10_visible = {
-				has_country_flag = missile_production_type_10
+				check_variable = { missile_production_type = 10 }
 			}
 			missile_type_10_button_click_enabled = {
 				NOT = { has_active_mission = missile_construction_10 }
 			}
 			### GNSS
 			missile_type_11_button_visible = {
-				has_country_flag = missile_production_type_11
+				check_variable = { missile_production_type = 11 }
 			}
 			missile_type_11_icon_visible = {
-				has_country_flag = missile_production_type_11
+				check_variable = { missile_production_type = 11 }
 			}
 			missile_model_name_11_visible = {
-				has_country_flag = missile_production_type_11
+				check_variable = { missile_production_type = 11 }
 			}
 			missile_model_type_11_visible = {
-				has_country_flag = missile_production_type_11
+				check_variable = { missile_production_type = 11 }
 			}
 			missile_type_11_button_click_enabled = {
 				NOT = { has_active_mission = missile_construction_11 }
 			}
 			### COMSAT
 			missile_type_12_button_visible = {
-				has_country_flag = missile_production_type_12
+				check_variable = { missile_production_type = 12 }
 			}
 			missile_type_12_icon_visible = {
-				has_country_flag = missile_production_type_12
+				check_variable = { missile_production_type = 12 }
 			}
 			missile_model_name_12_visible = {
-				has_country_flag = missile_production_type_12
+				check_variable = { missile_production_type = 12 }
 			}
 			missile_model_type_12_visible = {
-				has_country_flag = missile_production_type_12
+				check_variable = { missile_production_type = 12 }
 			}
 			missile_type_12_button_click_enabled = {
 				NOT = { has_active_mission = missile_construction_12 }
 			}
 			### SPYSAT
 			missile_type_13_button_visible = {
-				has_country_flag = missile_production_type_13
+				check_variable = { missile_production_type = 13 }
 			}
 			missile_type_13_icon_visible = {
-				has_country_flag = missile_production_type_13
+				check_variable = { missile_production_type = 13 }
 			}
 			missile_model_name_13_visible = {
-				has_country_flag = missile_production_type_13
+				check_variable = { missile_production_type = 13 }
 			}
 			missile_model_type_13_visible = {
-				has_country_flag = missile_production_type_13
+				check_variable = { missile_production_type = 13 }
 			}
 			missile_type_13_button_click_enabled = {
 				NOT = { has_active_mission = missile_construction_13 }
 			}
 			### KILLSAT
 			missile_type_14_button_visible = {
-				has_country_flag = missile_production_type_14
+				check_variable = { missile_production_type = 14 }
 			}
 			missile_type_14_icon_visible = {
-				has_country_flag = missile_production_type_14
+				check_variable = { missile_production_type = 14 }
 			}
 			missile_model_name_14_visible = {
-				has_country_flag = missile_production_type_14
+				check_variable = { missile_production_type = 14 }
 			}
 			missile_type_14_button_click_enabled = {
 				NOT = { has_active_mission = missile_construction_14 }
@@ -1389,8 +1339,7 @@ scripted_gui = {
 			OLV_model_button_click = {
 				ROOT = {
 					set_OLV_display_array = yes
-					set_country_flag = open_MD_space_selection_window
-					set_country_flag = OLV_model
+					set_variable = { space_selection_model = 1 }
 				}
 				international_systems_update = yes
 			}
@@ -1398,8 +1347,7 @@ scripted_gui = {
 				ROOT = {
 					set_variable = { var_open_space_selection_ledger_1 = 2 }
 					set_sat_payload_display_array = yes
-					set_country_flag = open_MD_space_selection_window
-					set_country_flag = sat_payload_model
+					set_variable = { space_selection_model = 2 }
 				}
 				international_systems_update = yes
 			}
@@ -1468,8 +1416,7 @@ scripted_gui = {
 			ASAT_model_button_click = {
 				ROOT = {
 					set_ASAT_display_array = yes
-					set_country_flag = open_MD_space_selection_window
-					set_country_flag = ASAT_model
+					set_variable = { space_selection_model = 4 }
 				}
 				international_systems_update = yes
 			}
@@ -1539,8 +1486,7 @@ scripted_gui = {
 			KILLSAT_model_button_click = {
 				ROOT = {
 					set_KILLSAT_display_array = yes
-					set_country_flag = open_MD_space_selection_window
-					set_country_flag = KILLSAT_model
+					set_variable = { space_selection_model = 5 }
 				}
 				international_systems_update = yes
 			}
@@ -1666,24 +1612,16 @@ scripted_gui = {
 		}
 		triggers = {
 			OLV_model_button_click_enabled = {
-				NOT = {
-					has_country_flag = open_MD_space_selection_window
-				}
+				space_selection_window_closed = yes
 			}
 			payload_button_click_enabled = {
-				NOT = {
-					has_country_flag = open_MD_space_selection_window
-				}
+				space_selection_window_closed = yes
 			}
 			ASAT_model_button_click_enabled = {
-				NOT = {
-					has_country_flag = open_MD_space_selection_window
-				}
+				space_selection_window_closed = yes
 			}
 			KILLSAT_model_button_click_enabled = {
-				NOT = {
-					has_country_flag = open_MD_space_selection_window
-				}
+				space_selection_window_closed = yes
 			}
 			KILLSAT_salvo_small_minus_button_bg_click_enabled = {
 				check_variable = { var_KILLSAT_salvo > 0 }
@@ -1830,8 +1768,9 @@ scripted_gui = {
 
 		dirty = global.international_systems_updated
 
+		# space_selection_model: 1 OLV, 2 satellite payload, 3 SPP payload, 4 ASAT, 5 KILLSAT
 		visible = {
-			has_country_flag = open_MD_space_selection_window
+			check_variable = { space_selection_model > 0 }
 			check_variable = { var_open_MD_space_gui = 2 }
 		}
 
@@ -1851,8 +1790,7 @@ scripted_gui = {
 				set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				set_variable = { var_OLV_inventory = missile_inventory_array^OLV_display_array^i }
 				clear_array = OLV_display_array
-				clr_country_flag = OLV_model
-				clr_country_flag = open_MD_space_selection_window
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 			sat_payload_type_button_click = {
@@ -1886,8 +1824,7 @@ scripted_gui = {
 				add_to_variable = { var_launch_mass = global.sat_mass_array^i }
 				#set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				clear_array = sat_payload_display_array
-				clr_country_flag = sat_payload_model
-				clr_country_flag = open_MD_space_selection_window
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 			spp_payload_type_button_click = {
@@ -1921,30 +1858,25 @@ scripted_gui = {
 				add_to_variable = { var_launch_mass = global.spp_mass_array^i }
 				#set_variable = { var_OLV_payload_mass = global.OLV_payload_mass_array^i }
 				clear_array = spp_payload_display_array
-				clr_country_flag = spp_payload_model
-				clr_country_flag = open_MD_space_selection_window
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 			space_selection_ledger_btn_1_click = {
 				set_variable = { var_open_space_selection_ledger_1 = 2 }
 				clear_variable = var_open_space_selection_ledger_2
 				set_sat_payload_display_array = yes
-				set_country_flag = sat_payload_model
+				set_variable = { space_selection_model = 2 }
 				clear_array = spp_payload_display_array
-				clr_country_flag = spp_payload_model
 				clear_array = OLV_display_array
-				clr_country_flag = OLV_model
 				international_systems_update = yes
 			}
 			space_selection_ledger_btn_2_click = {
 				set_variable = { var_open_space_selection_ledger_2 = 2 }
 				clear_variable = var_open_space_selection_ledger_1
 				set_spp_payload_display_array = yes
-				set_country_flag = spp_payload_model
+				set_variable = { space_selection_model = 3 }
 				clear_array = sat_payload_display_array
-				clr_country_flag = sat_payload_model
 				clear_array = OLV_display_array
-				clr_country_flag = OLV_model
 				international_systems_update = yes
 			}
 			ASAT_type_button_click = {
@@ -1952,8 +1884,7 @@ scripted_gui = {
 				set_variable = { var_ASAT_accuracy = global.ASAT_accuracy_array^i }
 				set_variable = { var_ASAT_inventory = missile_inventory_array^ASAT_display_array^i }
 				clear_array = ASAT_display_array
-				clr_country_flag = ASAT_model
-				clr_country_flag = open_MD_space_selection_window
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 			KILLSAT_type_button_click = {
@@ -1961,35 +1892,26 @@ scripted_gui = {
 				set_variable = { var_KILLSAT_accuracy = global.KILLSAT_accuracy_array^i }
 				set_variable = { var_KILLSAT_orbit = KILL_satellite_array^i }
 				clear_array = KILLSAT_display_array
-				clr_country_flag = KILLSAT_model
-				clr_country_flag = open_MD_space_selection_window
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 			close_button_click = {
 				clear_array = OLV_display_array
 				clear_array = sat_payload_display_array
 				clear_array = spp_payload_display_array
-				clr_country_flag = OLV_model
-				clr_country_flag = sat_payload_model
-				clr_country_flag = spp_payload_model
 				clear_variable = var_open_space_selection_ledger_1
 				clear_variable = var_open_space_selection_ledger_2
-				if = {
-					limit = {
-						has_country_flag = open_MD_space_selection_window
-					}
-					clr_country_flag = open_MD_space_selection_window
-				}
+				clear_variable = space_selection_model
 				international_systems_update = yes
 			}
 		}
 		triggers = {
 			### OLV
 			OLV_type_button_visible = {
-				has_country_flag = OLV_model
+				check_variable = { space_selection_model = 1 }
 			}
 			OLV_type_icon_visible = {
-				has_country_flag = OLV_model
+				check_variable = { space_selection_model = 1 }
 			}
 			OLV_type_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -1999,10 +1921,10 @@ scripted_gui = {
 			}
 			### sat_payload
 			sat_payload_type_button_visible = {
-				has_country_flag = sat_payload_model
+				check_variable = { space_selection_model = 2 }
 			}
 			sat_payload_type_icon_visible = {
-				has_country_flag = sat_payload_model
+				check_variable = { space_selection_model = 2 }
 			}
 			sat_payload_type_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -2012,10 +1934,10 @@ scripted_gui = {
 			}
 			### spp_payload
 			spp_payload_type_button_visible = {
-				has_country_flag = spp_payload_model
+				check_variable = { space_selection_model = 3 }
 			}
 			spp_payload_type_icon_visible = {
-				has_country_flag = spp_payload_model
+				check_variable = { space_selection_model = 3 }
 			}
 			spp_payload_type_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -2025,35 +1947,23 @@ scripted_gui = {
 			}
 			#
 			space_selection_ledger_btn_1_visible = {
-				OR = {
-					has_country_flag = sat_payload_model
-					has_country_flag = spp_payload_model
-				}
+				space_selection_shows_payloads = yes
 			}
 			icon_space_selection_btn_1_visible = {
-				OR = {
-					has_country_flag = sat_payload_model
-					has_country_flag = spp_payload_model
-				}
+				space_selection_shows_payloads = yes
 			}
 			space_selection_ledger_btn_2_visible = {
-				OR = {
-					has_country_flag = sat_payload_model
-					has_country_flag = spp_payload_model
-				}
+				space_selection_shows_payloads = yes
 			}
 			icon_space_selection_btn_2_visible = {
-				OR = {
-					has_country_flag = sat_payload_model
-					has_country_flag = spp_payload_model
-				}
+				space_selection_shows_payloads = yes
 			}
 			### ASAT
 			ASAT_type_button_visible = {
-				has_country_flag = ASAT_model
+				check_variable = { space_selection_model = 4 }
 			}
 			ASAT_type_icon_visible = {
-				has_country_flag = ASAT_model
+				check_variable = { space_selection_model = 4 }
 			}
 			ASAT_type_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -2063,10 +1973,10 @@ scripted_gui = {
 			}
 			### KILLSAT
 			KILLSAT_type_button_visible = {
-				has_country_flag = KILLSAT_model
+				check_variable = { space_selection_model = 5 }
 			}
 			KILLSAT_type_icon_visible = {
-				has_country_flag = KILLSAT_model
+				check_variable = { space_selection_model = 5 }
 			}
 			KILLSAT_type_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -2641,14 +2551,11 @@ scripted_gui = {
 			country_view_flag_button_click = {
 				clear_satellite_deorbit_state = yes
 				set_country_flag = open_MD_satellite_orbit_country_selection
-				clear_array = temp_countries
-				every_country = {
-					ROOT = { add_to_array = { temp_countries = PREV.id } }
-				}
 				international_systems_update = yes
 			}
 			country_view_flag_button_right_click = {
 				clear_satellite_deorbit_state = yes
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
@@ -2749,8 +2656,8 @@ scripted_gui = {
 			### sat
 			sat_6_button_visible = {
 				var:orbit_selected_TAG = {
-					check_variable = { sat_6_array^i > 0 }
-					NOT = { check_variable = { sat_6_array^i < 1 } }
+					check_variable = { sat_6_array^i > -1 }
+					NOT = { check_variable = { sat_6_array^i < 0 } }
 					is_filtered_type = yes
 				}
 			}
@@ -2956,7 +2863,6 @@ scripted_gui = {
 	MD_satellite_orbit_country_selection_gui = {
 		window_name = MD_satellite_orbit_country_selection
 		context_type = player_context
-		#context_type = selected_country_context
 		parent_window_token = MD_satellite_orbit_view
 
 		dirty = global.international_systems_updated
@@ -2971,7 +2877,8 @@ scripted_gui = {
 		}
 		effects = {
 			country_list_flag_button_click = {
-				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
+				clear_satellite_deorbit_state = yes
+				set_variable = { orbit_selected_TAG = v }
 				set_sat_access_arrays_selected_TAG = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
@@ -2981,26 +2888,29 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			close_button_click = {
-				if = {
-					limit = {
-						has_country_flag = open_MD_satellite_orbit_country_selection
-					}
-					clr_country_flag = open_MD_satellite_orbit_country_selection
-				}
-				clear_array = ROOT.temp_countries
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				international_systems_update = yes
+			}
+		}
+
+		triggers = {
+			country_list_selected_visible = {
+				check_variable = { orbit_selected_TAG = v }
+			}
+			country_list_empty_visible = {
+				check_variable = { global.MD_satellite_owners^num = 0 }
 			}
 		}
 
 		dynamic_lists = {
 			country_list_gridbox = {
-				array = temp_countries
+				array = global.MD_satellite_owners
 				entry_container = country_list_entry
 			}
 		}
 		properties = {
-			country_list_flag_button = {
-				#text = "test" #[?ROOT.temp_countries^i.GetFlag]
+			country_list_flag = {
+				image = "[?v.GetFlag]"
 			}
 		}
 	}
@@ -3029,10 +2939,14 @@ scripted_gui = {
 			}
 
 			analyst_focus_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
 			}
 
 			analyst_focus_button_right_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
 			}
 
@@ -3045,23 +2959,23 @@ scripted_gui = {
 			}
 
 			infil_agent_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 50
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = ct_has_infiltrated_org
-							NOT = { has_country_flag = ct_infiltrated_agent_[ORG] }
-						}
-						custom_trigger_tooltip = {
-							tooltip = ct_has_failed_recent_infil_against
-							NOT = { has_country_flag = ct_failed_infil_against_[ORG] }
-						}
-					}
-					ORG = "[?selected_org]"
+				set_temp_variable = { ct_gui_org_id = global.active_terror_orgs^selected_org }
+				custom_trigger_tooltip = {
+					tooltip = ct_has_infiltrated_org
+					NOT = { check_variable = { ct_infiltrated_org_arr^ct_gui_org_id > 0 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = ct_has_failed_recent_infil_against
+					NOT = { check_variable = { ct_failed_infil_org_arr^ct_gui_org_id > 0 } }
 				}
 			}
 
 			arrest_sympathizers_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 30 }
 				custom_trigger_tooltip = {
@@ -3076,6 +2990,8 @@ scripted_gui = {
 			}
 
 			seize_assets_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 40 }
 				custom_trigger_tooltip = {
@@ -3089,6 +3005,8 @@ scripted_gui = {
 			}
 
 			mass_gathering_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				custom_trigger_tooltip = {
 					tooltip = ct_not_has_done_recent_intel_op
@@ -3097,6 +3015,8 @@ scripted_gui = {
 			}
 
 			exploit_intelligence_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				custom_trigger_tooltip = {
 					tooltip = ct_has_intel_to_exploit
 					check_variable = { ct_mass_gather_store_var^selected_org > 0 }
@@ -3141,6 +3061,8 @@ scripted_gui = {
 			}
 
 			conduct_drone_operations_button_click_enabled = {
+				check_variable = { selected_org > -1 }
+				check_variable = { selected_org < global.active_terror_orgs^num }
 				has_political_power > 100
 				set_temp_variable = { req_level > 24 }
 				custom_trigger_tooltip = {
@@ -3330,6 +3252,13 @@ scripted_gui = {
 			infil_agent_button_click = {
 				add_political_power = -50
 				custom_effect_tooltip = is_ct_infil_agent_tt
+				if = {
+					limit = {
+						check_variable = { selected_org > -1 }
+						check_variable = { selected_org < global.active_terror_orgs^num }
+					}
+					set_temp_variable = { ct_gui_infil_org_id = global.active_terror_orgs^selected_org }
+				}
 				set_temp_variable = {
 					success_chance = {
 						value = international_terror_org_intel^selected_org
@@ -3352,12 +3281,7 @@ scripted_gui = {
 							max = 0.5
 						}
 						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-						meta_effect = {
-							text = {
-								set_country_flag = ct_infiltrated_agent_[ORG]
-							}
-							ORG = "[?selected_org]"
-						}
+						set_variable = { ct_infiltrated_org_arr^ct_gui_infil_org_id = 1 }
 					}
 					fail_chance = {
 						country_event = MD_terror.8
@@ -3367,16 +3291,7 @@ scripted_gui = {
 							max = -0.05
 						}
 						add_to_variable = { international_terror_org_specific_intel^selected_org = random_add }
-						meta_effect = {
-							text = {
-								set_country_flag = {
-									flag = ct_failed_infil_against_[ORG]
-									days = 365
-									value = 1
-								}
-							}
-							ORG = "[?selected_org]"
-						}
+						set_variable = { ct_failed_infil_org_arr^ct_gui_infil_org_id = 13 }
 					}
 				}
 				international_systems_update = yes
@@ -3581,19 +3496,19 @@ scripted_gui = {
 			remove_light_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_recruited_blackwater_light
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_recruited_aegis_light
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_recruited_constellis_light
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_recruited_wagner_light
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_recruited_md_light
 					}
 				}
@@ -3604,19 +3519,19 @@ scripted_gui = {
 			remove_mot_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_mot
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_mot
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_mot
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_mot
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_mot
 					}
 				}
@@ -3627,19 +3542,19 @@ scripted_gui = {
 			remove_mech_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_mech
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_mech
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_mech
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_mech
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_mech
 					}
 				}
@@ -3650,19 +3565,19 @@ scripted_gui = {
 			remove_hvy_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_heavy_mech
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_heavy_mech
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_heavy_mech
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_heavy_mech
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_heavy_mech
 					}
 				}
@@ -3673,19 +3588,19 @@ scripted_gui = {
 			remove_spec_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_special_unit
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_special_unit
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_special_unit
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_special_unit
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_special_unit
 					}
 				}
@@ -3696,19 +3611,19 @@ scripted_gui = {
 			remove_tank_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_tank
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_tank
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_tank
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_tank
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_tank
 					}
 				}
@@ -3720,19 +3635,19 @@ scripted_gui = {
 			remove_sf_inf_button_click_enabled = {
 				custom_trigger_tooltip = {
 					tooltip = has_hired_tt
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						has_country_flag = pmc_blackwater_specops
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						has_country_flag = pmc_aegis_specops
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						has_country_flag = pmc_constellis_specops
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						has_country_flag = pmc_wagner_specops
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						has_country_flag = pmc_md_specops
 					}
 				}
@@ -3741,59 +3656,59 @@ scripted_gui = {
 
 		effects = {
 			remove_light_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_light_infantry_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_light_infantry_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_light_infantry_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_light_infantry_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_light_infantry_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_light_infantry_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_light_infantry_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_light_infantry_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_light_infantry_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_light_infantry_md = yes }
 				international_systems_update = yes
 			}
 			remove_mot_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_mot_infantry_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_mot_infantry_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_mot_infantry_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_mot_infantry_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_mot_infantry_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_mot_infantry_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_mot_infantry_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_mot_infantry_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_mot_infantry_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_mot_infantry_md = yes }
 				international_systems_update = yes
 			}
 			remove_mech_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_mech_infantry_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_mech_infantry_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_mech_infantry_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_mech_infantry_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_mech_infantry_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_mech_infantry_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_mech_infantry_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_mech_infantry_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_mech_infantry_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_mech_infantry_md = yes }
 				international_systems_update = yes
 			}
 			remove_hvy_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_heavy_mech_infantry_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_heavy_mech_infantry_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_heavy_mech_infantry_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_heavy_mech_infantry_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_heavy_mech_infantry_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_heavy_mech_infantry_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_heavy_mech_infantry_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_heavy_mech_infantry_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_heavy_mech_infantry_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_heavy_mech_infantry_md = yes }
 				international_systems_update = yes
 			}
 			remove_spec_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_special_unit_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_special_unit_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_special_unit_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_special_unit_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_special_unit_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_special_unit_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_special_unit_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_special_unit_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_special_unit_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_special_unit_md = yes }
 				international_systems_update = yes
 			}
 			remove_tank_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_tank_unit_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_tank_unit_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_tank_unit_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_tank_unit_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_tank_unit_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_tank_unit_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_tank_unit_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_tank_unit_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_tank_unit_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_tank_unit_md = yes }
 				international_systems_update = yes
 			}
 			remove_sf_inf_button_click = {
-				if = { limit = { has_country_flag = blackwater_sel } delete_specops_unit_blackwater = yes }
-				else_if = { limit = { has_country_flag = aegis_sel } delete_specops_unit_aegis = yes }
-				else_if = { limit = { has_country_flag = constellis_sel } delete_specops_unit_constellis = yes }
-				else_if = { limit = { has_country_flag = wagner_sel } delete_specops_unit_wagner = yes }
-				else_if = { limit = { has_country_flag = md_sel } delete_specops_unit_md = yes }
+				if = { limit = { is_blackwater_selected = yes } delete_specops_unit_blackwater = yes }
+				else_if = { limit = { is_aegis_selected = yes } delete_specops_unit_aegis = yes }
+				else_if = { limit = { is_constellis_selected = yes } delete_specops_unit_constellis = yes }
+				else_if = { limit = { is_wagner_selected = yes } delete_specops_unit_wagner = yes }
+				else_if = { limit = { is_md_pmc_selected = yes } delete_specops_unit_md = yes }
 				international_systems_update = yes
 			}
 		}
@@ -3884,18 +3799,13 @@ scripted_gui = {
 				var:open_state = { has_idea = lacks_international_recognition }
 				country_exists = var:open_state
 				is_full_state = yes
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = has_recog_tt
-							has_country_flag = Recognised_[stname]
-						}
-						custom_trigger_tooltip = {
-							tooltip = recent_pressure_tt
-							NOT = { has_country_flag = pressure_timer_[stname] }
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					is_in_array = { recognised_countries = var:open_state }
+				}
+				custom_trigger_tooltip = {
+					tooltip = recent_pressure_tt
+					NOT = { check_variable = { recognition_pressure_end@var:open_state > global.num_days } }
 				}
 				if = {
 					limit = { original_tag = SWI }
@@ -3912,14 +3822,9 @@ scripted_gui = {
 					limit = { original_tag = SWI }
 					has_dynamic_modifier = { modifier = united_nations_member }
 				}
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = not_recog_tt
-							NOT = { has_country_flag = Recognised_[stname] }
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = not_recog_tt
+					NOT = { is_in_array = { recognised_countries = var:open_state } }
 				}
 
 				has_political_power > 25
@@ -3932,14 +3837,9 @@ scripted_gui = {
 					limit = { original_tag = SWI }
 					has_dynamic_modifier = { modifier = united_nations_member }
 				}
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = has_recog_tt
-							has_country_flag = Recognised_[stname]
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					is_in_array = { recognised_countries = var:open_state }
 				}
 				has_political_power > 25
 			}
@@ -3983,6 +3883,7 @@ scripted_gui = {
 			}
 			un_ask_for_independence_button_click_enabled = {
 				has_political_power > 350
+				check_variable = { prev_owner > 0 }
 
 				custom_trigger_tooltip = {
 					tooltip = has_not_recently_requested_independence
@@ -4006,7 +3907,7 @@ scripted_gui = {
 				add_political_power = -25
 				meta_effect = {
 					text = {
-						THIS = { set_country_flag = Recognised_[stname] }
+						add_to_array = { recognised_countries = var:open_state }
 
 						if = {
 							limit = {
@@ -4019,11 +3920,11 @@ scripted_gui = {
 								if = {
 									limit = {
 										has_country_flag = supports_original_owner_[stname]
-										NOT = { has_country_flag = Recognised_[stname] }
+										NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									}
 									add_opinion_modifier = { target = ROOT modifier = recognises_them }
 								} else_if = {
-									limit = { has_country_flag = Recognised_[stname] }
+									limit = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 								}
 							}
@@ -4031,7 +3932,7 @@ scripted_gui = {
 							random_country = {
 								limit = {
 									has_country_flag = original_owner_[stname]
-									NOT = { has_country_flag = Recognised_[stname] }
+									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 								}
 								add_opinion_modifier = { target = ROOT modifier = recognises_them }
 								country_event = recognition.1
@@ -4057,7 +3958,7 @@ scripted_gui = {
 							if = {
 								limit = {
 									is_influencer = yes
-									NOT = { has_country_flag = Recognised_[stname] }
+									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 									NOT = { has_country_flag = pressured_to_recognize_[stname] }
 									NOT = { tag = ROOT }
 									is_full_state = yes
@@ -4066,25 +3967,23 @@ scripted_gui = {
 								country_event = recognition.8
 							}
 						}
-						set_country_flag = {
-							flag = pressure_timer_[stname]
-							days = 180 value = 1
-						}
 					}
 					stname = "[?var:open_state.GetTag]"
 				}
+				set_variable = { recognition_pressure_end@var:open_state = global.num_days }
+				add_to_variable = { recognition_pressure_end@var:open_state = 180 }
 				add_political_power = -100
 				international_systems_update = yes
 			}
 			rescind_recog_button_click = {
 				meta_effect = {
 					text = {
-						clr_country_flag = Recognised_[stname]
+						remove_from_array = { recognised_countries = var:open_state }
 
 						random_country = {
 							limit = {
 								has_country_flag = original_owner_[stname]
-								NOT = { has_country_flag = Recognised_[stname] }
+								NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
 							}
 							add_opinion_modifier = {
 								target = ROOT
@@ -4175,6 +4074,15 @@ scripted_gui = {
 		}
 
 		triggers = {
+			un_sc_vote_status_tracker_visible = {
+				OR = {
+					has_global_flag = current_ongoing_sc_vote
+					has_country_flag = unsc_permanent_seat_sc_pending
+					has_country_flag = unsc_permanent_seat_ga_pending
+					has_country_flag = unsc_permanent_seat_approved_pending_promotion
+					has_country_flag = unsc_permanent_seat_retry_cooldown
+				}
+			}
 			unsc_actions_text_visible = {
 				is_on_un_sec_council = yes
 			}
@@ -4413,73 +4321,38 @@ scripted_gui = {
 			}
 		}
 
+		# ga_pop_out_view: 1 full member list, 2 pending votes, 3 propose resolutions
 		effects = {
 			un_ga_show_all_nations_button_click = {
 				if = {
 					limit = {
-						has_country_flag = show_full_ga_list
+						check_variable = { ga_pop_out_view = 1 }
 					}
-					clr_country_flag = show_full_ga_list
+					clear_variable = ga_pop_out_view
 				} else = {
-					set_country_flag = show_full_ga_list
-				}
-				if = {
-					limit = {
-						has_country_flag = show_ga_vote_list
-					}
-					clr_country_flag = show_ga_vote_list
-				}
-				if = {
-					limit = {
-						has_country_flag = show_ga_propose_resolutions
-					}
-					clr_country_flag = show_ga_propose_resolutions
+					set_variable = { ga_pop_out_view = 1 }
 				}
 				international_systems_update = yes
 			}
 			un_ga_show_pending_votes_button_click = {
 				if = {
 					limit = {
-						has_country_flag = show_ga_vote_list
+						check_variable = { ga_pop_out_view = 2 }
 					}
-					clr_country_flag = show_ga_vote_list
+					clear_variable = ga_pop_out_view
 				} else = {
-					set_country_flag = show_ga_vote_list
-				}
-				if = {
-					limit = {
-						has_country_flag = show_full_ga_list
-					}
-					clr_country_flag = show_full_ga_list
-				}
-				if = {
-					limit = {
-						has_country_flag = show_ga_propose_resolutions
-					}
-					clr_country_flag = show_ga_propose_resolutions
+					set_variable = { ga_pop_out_view = 2 }
 				}
 				international_systems_update = yes
 			}
 			un_ga_show_propose_resolutions_button_click = {
 				if = {
 					limit = {
-						has_country_flag = show_ga_propose_resolutions
+						check_variable = { ga_pop_out_view = 3 }
 					}
-					clr_country_flag = show_ga_propose_resolutions
+					clear_variable = ga_pop_out_view
 				} else = {
-					set_country_flag = show_ga_propose_resolutions
-				}
-				if = {
-					limit = {
-						has_country_flag = show_full_ga_list
-					}
-					clr_country_flag = show_full_ga_list
-				}
-				if = {
-					limit = {
-						has_country_flag = show_ga_vote_list
-					}
-					clr_country_flag = show_ga_vote_list
+					set_variable = { ga_pop_out_view = 3 }
 				}
 				international_systems_update = yes
 			}
@@ -4562,11 +4435,7 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_assembly = 2 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			OR = {
-				has_country_flag = show_full_ga_list
-				has_country_flag = show_ga_vote_list
-				has_country_flag = show_ga_propose_resolutions
-			}
+			check_variable = { ga_pop_out_view > 0 }
 		}
 	}
 
@@ -5588,10 +5457,12 @@ scripted_gui = {
 					NOT = { has_idea = at_member }
 				}
 				NOT = { has_idea = ANT_kicked_from_treaty_idea }
+				NOT = { has_country_flag = antarctica_treaty_join_pending }
 				has_political_power > 200
 			}
 			antarctica_treaty_join_atcp_button_click_enabled = {
 				has_idea = at_member
+				has_country_flag = antarctica_has_active_station
 				NOT = {
 					OR = {
 						has_country_flag = antarctica_atcp_application_pending
@@ -5644,6 +5515,8 @@ scripted_gui = {
 			antarctica_treaty_join_button_click = {
 				log = "[GetDateText]: [Root.GetName]: Join Antarctica Treaty GUI"
 				add_political_power = -200
+				set_country_flag = antarctica_treaty_join_pending
+				add_to_variable = { global.missile_ui_updated = 1 }
 				news_event = MD_antarctica_news.1
 				custom_effect_tooltip = join_antarctica_treaty_tt
 				effect_tooltip = { add_ideas = at_member }
@@ -5657,6 +5530,8 @@ scripted_gui = {
 			antarctica_treaty_leave_button_click = {
 				log = "[GetDateText]: [Root.GetName]: Leave Antarctica Treaty GUI"
 				add_political_power = -200
+				set_country_flag = antarctica_treaty_leave_pending
+				add_to_variable = { global.missile_ui_updated = 1 }
 				news_event = MD_antarctica_news.3
 				custom_effect_tooltip = leave_antarctica_treaty_tt
 				effect_tooltip = { remove_ideas = at_member }
@@ -5724,7 +5599,6 @@ scripted_gui = {
 			antarctica_map_bp_glow_visible = { has_country_flag = antarctica_station_bp_visible }
 			antarctica_map_bp_visible = { has_country_flag = antarctica_station_bp_visible }
 			antarctica_map_continent_glow_visible = { NOT = { has_country_flag = antarctica_station_bp_visible } }
-			antarctica_map_blizzard_visible = { has_global_flag = antarctica_blizzard_active }
 			antarctica_station_find_or_create_button_visible = { NOT = { has_country_flag = antarctica_station_bp_visible } }
 
 			antarctica_station_show_blueprint_button_click_enabled = {
@@ -5736,7 +5610,10 @@ scripted_gui = {
 				NOT = { has_country_flag = antarctica_treaty_leave_pending }
 				OR = {
 					has_country_flag = antarctica_has_active_station
-					check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
+					AND = {
+						has_idea = at_member
+						check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
+					}
 				}
 			}
 
@@ -5773,7 +5650,6 @@ scripted_gui = {
 					tooltip = ANTARCTICA_STATION_INSTALL_MODULE_IN_PROGRESS_TT
 					check_variable = { selected_antarctica_station_install_in_progress < 1 }
 				}
-				check_variable = { selected_antarctica_station_selected_module > 0 }
 				antarctica_station_selected_slot_module_different = yes
 				antarctica_can_install_module_no_duplicate_laboratories = yes
 				antarctica_can_install_module_power_balance = yes
@@ -7033,70 +6909,13 @@ scripted_gui = {
 			list_of_available_pmc_units = {
 				array = THIS.selected_units
 				entry_container = IS_available_pmc_units_list
-				ai_weights = {
-					#TODO: For further international system updates, detail this out further for better ai utilization
-					name_of_pmc_units_button_click = {
-						ai_will_do = {
-							factor = 1
-
-							modifier = {
-								add = 25
-								has_army_size = { size < 40 }
-							}
-							modifier = {
-								add = 50
-								has_army_size = { size < 30 }
-							}
-							modifier = {
-								add = 75
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = 100
-								has_army_size = { size < 10 }
-							}
-							#buy armor if you need it bois
-							modifier = {
-								add = 100
-								has_army_size = {
-									size < 5
-									type = armor
-								}
-								check_variable = { v = 006 }
-							}
-							#killswitch for recently grabbing a major pmc
-							modifier = {
-								factor = 0
-								has_country_flag = hold_major_pmc_purchase
-							}
-							#killswitch for not having a major selected, just in case
-							modifier = {
-								factor = 0
-								NOT = {
-									OR = {
-										has_country_flag = blackwater_sel
-										has_country_flag = aegis_sel
-										has_country_flag = wagner_sel
-										has_country_flag = constellis_sel
-									}
-								}
-							}
-						}
-					}
-				}
 			}
 
 		}
 
 		triggers = {
 			name_of_pmc_units_button_click_enabled = {
-				OR = {
-					has_country_flag = blackwater_sel
-					has_country_flag = aegis_sel
-					has_country_flag = wagner_sel
-					has_country_flag = constellis_sel
-					has_country_flag = md_sel
-				}
+				is_major_company = yes
 
 				OR = {
 					if = { limit = { check_variable = { v = 001 } }
@@ -7132,28 +6951,28 @@ scripted_gui = {
 				if = {
 					limit = {
 						NOT = { tag = USA }
-						has_country_flag = blackwater_sel
+						is_blackwater_selected = yes
 					}
 					USA = { has_opinion = { target = ROOT value > 0 } }
 				}
 				else_if = {
 					limit = {
 						NOT = { tag = ENG }
-						has_country_flag = aegis_sel
+						is_aegis_selected = yes
 					}
 					ENG = { has_opinion = { target = ROOT value > 0 } }
 				}
 				else_if = {
 					limit = {
 						NOT = { tag = USA }
-						has_country_flag = constellis_sel
+						is_constellis_selected = yes
 					}
 					USA = { has_opinion = { target = ROOT value > 0 } }
 				}
 				else_if = {
 					limit = {
 						NOT = { tag = SOV }
-						has_country_flag = wagner_sel
+						is_wagner_selected = yes
 					}
 					SOV = { has_opinion = { target = ROOT value > 0 } }
 				}
@@ -7185,155 +7004,155 @@ scripted_gui = {
 		effects = {
 			name_of_pmc_units_button_click = {
 				if = { limit = { check_variable = { v = 001 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = inf_hire
 						activate_mission = get_blackwater_light_infantry
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = inf_hire
 						activate_mission = get_aegis_light_infantry
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = inf_hire
 						activate_mission = get_constellis_light_infantry
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = inf_hire
 						activate_mission = get_wagner_light_infantry
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = inf_hire
 						activate_mission = get_md_light_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 002 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_blackwater_mot_infantry
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_aegis_mot_infantry
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_constellis_mot_infantry
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_wagner_mot_infantry
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = mot_inf_hire
 						activate_mission = get_md_mot_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 003 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = mech_inf_hire
 						activate_mission = get_blackwater_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = mech_inf_hire
 						activate_mission = get_aegis_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = mech_inf_hire
 						activate_mission = get_constellis_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = mech_inf_hire
 						activate_mission = get_wagner_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = mech_inf_hire
 						activate_mission = get_md_mech_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 004 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_blackwater_heavy_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_aegis_heavy_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_constellis_heavy_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_wagner_heavy_mech_infantry
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = hvy_inf_hire
 						activate_mission = get_md_heavy_mech_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 005 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = spec_inf_hire
 						activate_mission = get_blackwater_special_infantry
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = spec_inf_hire
 						activate_mission = get_aegis_special_infantry
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = spec_inf_hire
 						activate_mission = get_constellis_special_infantry
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = spec_inf_hire
 						activate_mission = get_wagner_special_infantry
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = spec_inf_hire
 						activate_mission = get_md_special_infantry
 					}
 				}
 				if = { limit = { check_variable = { v = 006 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = tank_hire
 						activate_mission = get_blackwater_tank
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = tank_hire
 						activate_mission = get_aegis_tank
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = tank_hire
 						activate_mission = get_constellis_tank
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = tank_hire
 						activate_mission = get_wagner_tank
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = tank_hire
 						activate_mission = get_md_tank
 					}
 				}
 				if = { limit = { check_variable = { v = 007 } }
-					if = { limit = { has_country_flag = blackwater_sel }
+					if = { limit = { is_blackwater_selected = yes }
 						set_country_flag = sf_hire
 						activate_mission = get_blackwater_specops
 					}
-					else_if = { limit = { has_country_flag = aegis_sel }
+					else_if = { limit = { is_aegis_selected = yes }
 						set_country_flag = sf_hire
 						activate_mission = get_aegis_specops
 					}
-					else_if = { limit = { has_country_flag = constellis_sel }
+					else_if = { limit = { is_constellis_selected = yes }
 						set_country_flag = sf_hire
 						activate_mission = get_constellis_specops
 					}
-					else_if = { limit = { has_country_flag = wagner_sel }
+					else_if = { limit = { is_wagner_selected = yes }
 						set_country_flag = sf_hire
 						activate_mission = get_wagner_specops
 					}
-					else_if = { limit = { has_country_flag = md_sel }
+					else_if = { limit = { is_md_pmc_selected = yes }
 						set_country_flag = sf_hire
 						activate_mission = get_md_specops
 					}
@@ -7368,159 +7187,6 @@ scripted_gui = {
 			list_of_available_pmc_companies = {
 				array = global.PMC_Companies
 				entry_container = IS_available_pmc_companies_list
-				ai_weights = {
-					name_of_pmc_companies_button_click = {
-						ai_will_do = {
-							factor = 1
-							#Get Buffs
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 10
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size > 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size < 21 }
-							}
-							#Get Units (Smol)
-							modifier = {
-								add = 0
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 0
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size > 19 }
-							}
-							#Get Units (Lorg)
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = super_power
-							}
-							modifier = {
-								add = 5
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = great_power
-							}
-							modifier = {
-								add = 10
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = large_power
-							}
-							modifier = {
-								add = 20
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = regional_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = minor_power
-							}
-							modifier = {
-								add = 30
-								is_in_array = { global.PMC_buffs = v }
-								has_idea = non_power
-							}
-							modifier = {
-								add = 30
-								has_army_size = { size < 20 }
-							}
-							modifier = {
-								add = -30
-								has_army_size = { size > 19 }
-							}
-							#when at war, hire what you can get
-							modifier = {
-								factor = 5
-								has_war = yes
-							}
-							#killswitch for recent hires or selections
-							modifier = {
-								factor = 0
-								has_country_flag = ai_recent_pmc_select
-							}
-							#killswitch for being broke
-							modifier = {
-								factor = 0
-								check_variable = { treasury_rate < -10 }
-								NOT = { has_war = yes }
-							}
-							modifier = {
-								factor = 0
-								check_variable = { treasury_rate < -20 }
-								has_war = yes
-							}
-							#killswitch for non-state actor / unrecognized state
-							modifier = {
-								factor = 0
-								OR = {
-									has_idea = non_state_actor
-									has_idea = lacks_international_recognition
-								}
-							}
-						}
-					}
-				}
 			}
 		}
 
@@ -7828,7 +7494,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 023 } }
-					SOV = { has_country_flag = redut_create }
+					SOV = { has_completed_focus = SOV_pmc_redut }
 					if = { limit = { NOT = { tag = SOV } }
 						country_exists = SOV
 						NOT = { has_war_with = SOV }
@@ -7843,7 +7509,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 024 } }
-					SOV = { has_country_flag = gazprom_create }
+					SOV = { has_completed_focus = SOV_pmc_gazproms }
 					if = { limit = { NOT = { tag = SOV } }
 						country_exists = SOV
 						NOT = { has_war_with = SOV }
@@ -7873,7 +7539,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 026 } }
-					PMR = { has_country_flag = sheriff_create }
+					PMR = { has_completed_focus = PMR_sheriff_pmc }
 					if = { limit = { NOT = { tag = PMR } }
 						country_exists = PMR
 						NOT = { has_war_with = PMR }
@@ -7904,7 +7570,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 028 } }
-					SOV = { has_country_flag = rosneft_create }
+					SOV = { has_completed_focus = SOV_pmc_gazproms }
 					if = {
 						limit = { NOT = { tag = SOV } }
 						country_exists = SOV
@@ -7920,7 +7586,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 029 } }
-					SOV = { has_country_flag = sberbank_create }
+					SOV = { has_completed_focus = SOV_pmc_gazproms }
 					if = { limit = { NOT = { tag = SOV } }
 						country_exists = SOV
 						NOT = {	has_war_with = SOV }
@@ -7935,7 +7601,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 030 } }
-					SOV = { has_country_flag = vtb_create }
+					SOV = { has_completed_focus = SOV_pmc_gazproms }
 					if = { limit = { NOT = { tag = SOV } }
 						country_exists = SOV
 						NOT = { has_war_with = SOV }
@@ -7969,37 +7635,32 @@ scripted_gui = {
 		effects = {
 			name_of_pmc_companies_button_click = {
 				if = { limit = { check_variable = { v = 001 } }
-					clr_country_pmc_flag = yes
-					set_country_flag = blackwater_sel
+					set_variable = { selected_pmc = 1 }
 					set_sel_pmc_units = yes
 					custom_effect_tooltip = pmc_open_units_list
 				}
 				if = { limit = { check_variable = { v = 002 } }
-					clr_country_pmc_flag = yes
-					set_country_flag = aegis_sel
+					set_variable = { selected_pmc = 3 }
 					set_sel_pmc_units = yes
 					custom_effect_tooltip = pmc_open_units_list
 				}
 				if = { limit = { check_variable = { v = 003 } }
-					clr_country_pmc_flag = yes
-					set_country_flag = constellis_sel
+					set_variable = { selected_pmc = 4 }
 					set_sel_pmc_units = yes
 					custom_effect_tooltip = pmc_open_units_list
 				}
 				if = { limit = { check_variable = { v = 004 } }
-					clr_country_pmc_flag = yes
-					set_country_flag = wagner_sel
+					set_variable = { selected_pmc = 2 }
 					set_sel_pmc_units = yes
 					custom_effect_tooltip = pmc_open_units_list
 				}
 				if = { limit = { check_variable = { v = 031 } }
-					clr_country_pmc_flag = yes
-					set_country_flag = md_sel
+					set_variable = { selected_pmc = 5 }
 					set_sel_pmc_units = yes
 					custom_effect_tooltip = pmc_open_units_list
 				}
 				if = { limit = { check_variable = { v = 005 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8032,7 +7693,7 @@ scripted_gui = {
 					activate_mission = pmc_mpri
 				}
 				if = { limit = { check_variable = { v = 006 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8065,7 +7726,7 @@ scripted_gui = {
 					activate_mission = pmc_sadat
 				}
 				if = { limit = { check_variable = { v = 007 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8098,35 +7759,9 @@ scripted_gui = {
 					activate_mission = pmc_rsb
 				}
 				if = { limit = { check_variable = { v = 008 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps SandLine Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-								Arty_Bat = { x = 1 y = 0 }
-								Arty_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-								SP_AA_Battery = { x = 0 y = 3 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps SandLine Unit\" division_template = \"Mercenary SpecOps SandLine Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_sandline = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8139,7 +7774,7 @@ scripted_gui = {
 					activate_mission = pmc_sadline
 				}
 				if = { limit = { check_variable = { v = 009 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8172,7 +7807,7 @@ scripted_gui = {
 					activate_mission = pmc_kbr
 				}
 				if = { limit = { check_variable = { v = 010 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					add_equipment_to_stockpile = {
 						type = infantry_weapons_type
@@ -8209,7 +7844,7 @@ scripted_gui = {
 					activate_mission = pmc_nirtal
 				}
 				if = { limit = { check_variable = { v = 011 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8248,7 +7883,7 @@ scripted_gui = {
 					activate_mission = pmc_halo
 				}
 				if = { limit = { check_variable = { v = 012 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8281,32 +7916,9 @@ scripted_gui = {
 					activate_mission = pmc_dci
 				}
 				if = { limit = { check_variable = { v = 013 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps GardaWorld Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps GardaWorld Unit\" division_template = \"Mercenary SpecOps GardaWorld Unit\" start_experience_factor = 0.7"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_gardaworld = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					CAN = { set_country_flag = garda_yes }
@@ -8319,7 +7931,7 @@ scripted_gui = {
 					activate_mission = pmc_garda
 				}
 				if = { limit = { check_variable = { v = 014 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8352,39 +7964,9 @@ scripted_gui = {
 					activate_mission = pmc_eu
 				}
 				if = { limit = { check_variable = { v = 015 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps G4S Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-								Special_Forces = { x = 1 y = 0 }
-								Special_Forces = { x = 1 y = 1 }
-								Special_Forces = { x = 1 y = 2 }
-								Special_Forces = { x = 1 y = 3 }
-								Arty_Bat = { x = 2 y = 0 }
-								Arty_Bat = { x = 2 y = 1 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-								SP_AA_Battery = { x = 0 y = 3 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps G4S Unit\" division_template = \"Mercenary SpecOps G4S Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_g4s = yes }
 					set_temp_variable = { treasury_change = -3.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8397,7 +7979,7 @@ scripted_gui = {
 					activate_mission = pmc_itt
 				}
 				if = { limit = { check_variable = { v = 016 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8430,32 +8012,9 @@ scripted_gui = {
 					activate_mission = pmc_asgard
 				}
 				if = { limit = { check_variable = { v = 017 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary The Union of the Tribes of Sinai"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary The Union of the Tribes of Sinai\" division_template = \"Mercenary The Union of the Tribes of Sinai\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sinai_union_tribes = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8468,32 +8027,9 @@ scripted_gui = {
 					activate_mission = pmc_sinai
 				}
 				if = { limit = { check_variable = { v = 018 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary of Gard Service"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary of Gard Service\" division_template = \"Mercenary of Gard Service\" start_experience_factor = 0.8"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_gard_service = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8506,35 +8042,9 @@ scripted_gui = {
 					activate_mission = pmc_gard
 				}
 				if = { limit = { check_variable = { v = 019 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Patriot Heavy Mechanized Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Arm_Inf_Bat = { x = 0 y = 0 }
-								Arm_Inf_Bat = { x = 0 y = 1 }
-								Arm_Inf_Bat = { x = 0 y = 2 }
-								Arm_Inf_Bat = { x = 1 y = 0 }
-								Arm_Inf_Bat = { x = 1 y = 1 }
-								Arm_Inf_Bat = { x = 1 y = 2 }
-							}
-							support = {
-								armor_Comp = { x = 0 y = 0 }
-								Arm_Recce_Comp = { x = 0 y = 1 }
-								H_Engi_Comp = { x = 0 y = 2 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_patriot_heavy_mech = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8547,32 +8057,9 @@ scripted_gui = {
 					activate_mission = pmc_patriot
 				}
 				if = { limit = { check_variable = { v = 020 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary of Dewe Security Services"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary of Dewe Security Services\" division_template = \"Mercenary of Dewe Security Services\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_dewe_security = yes }
 					set_temp_variable = { treasury_change = -3.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8585,7 +8072,7 @@ scripted_gui = {
 					activate_mission = pmc_dewe
 				}
 				if = { limit = { check_variable = { v = 021 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
@@ -8618,7 +8105,7 @@ scripted_gui = {
 					activate_mission = pmc_over
 				}
 				if = { limit = { check_variable = { v = 022 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8661,37 +8148,9 @@ scripted_gui = {
 					activate_mission = pmc_front
 				}
 				if = { limit = { check_variable = { v = 023 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Redut PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								Arty_Bat = { x = 0 y = 4 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-								L_Inf_Bat = { x = 1 y = 2 }
-								L_Inf_Bat = { x = 1 y = 3 }
-								Arty_Bat = { x = 1 y = 4 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Redut PMC Battalion\" division_template = \"Redut PMC Battalion\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_redut_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8704,7 +8163,7 @@ scripted_gui = {
 					activate_mission = pmc_redut
 				}
 				if = { limit = { check_variable = { v = 024 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8725,31 +8184,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Gazprom PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Gazprom PMC Battalion\" division_template = \"Gazprom PMC Battalion\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_gazprom_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8762,29 +8197,9 @@ scripted_gui = {
 					activate_mission = pmc_gazprom
 				}
 				if = { limit = { check_variable = { v = 025 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Iron Navy PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Iron Navy PMC Battalion\" division_template = \"Iron Navy PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_iron_navy_battalion = yes }
 					set_temp_variable = { treasury_change = -1.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8797,29 +8212,9 @@ scripted_gui = {
 					activate_mission = pmc_iron
 				}
 				if = { limit = { check_variable = { v = 026 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Sheriff PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Sheriff PMC Battalion\" division_template = \"Sheriff PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sheriff_battalion = yes }
 					set_temp_variable = { treasury_change = -1.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8832,7 +8227,7 @@ scripted_gui = {
 					activate_mission = pmc_sheriff
 				}
 				if = { limit = { check_variable = { v = 027 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8853,31 +8248,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Lukoil PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Lukoil PMC Battalion\" division_template = \"Lukoil PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_lukoil_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8890,7 +8261,7 @@ scripted_gui = {
 					activate_mission = pmc_lukoil
 				}
 				if = { limit = { check_variable = { v = 028 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8911,31 +8282,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Rosneft PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Rosneft PMC Battalion\" division_template = \"Rosneft PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_rosneft_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8948,7 +8295,7 @@ scripted_gui = {
 					activate_mission = pmc_rosneft
 				}
 				if = { limit = { check_variable = { v = 029 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -8969,31 +8316,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Sber PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Sber PMC Battalion\" division_template = \"Sber PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sber_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -9006,7 +8329,7 @@ scripted_gui = {
 					activate_mission = pmc_sberbank
 				}
 				if = { limit = { check_variable = { v = 030 } }
-					clr_country_pmc_flag = yes
+					clear_variable = selected_pmc
 					set_sel_pmc_units = yes
 					if = {
 						limit = {
@@ -9027,31 +8350,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Vtb PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Vtb PMC Battalion\" division_template = \"Vtb PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_vtb_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -9422,7 +8721,7 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_assembly = 2 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			has_country_flag = show_ga_vote_list
+			check_variable = { ga_pop_out_view = 2 }
 		}
 		dynamic_lists = {
 			list_of_pending_ga_votes = {
@@ -9719,7 +9018,7 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_assembly = 2 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			has_country_flag = show_full_ga_list
+			check_variable = { ga_pop_out_view = 1 }
 		}
 
 		dynamic_lists = {
@@ -9742,7 +9041,7 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_assembly = 2 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			has_country_flag = show_ga_propose_resolutions
+			check_variable = { ga_pop_out_view = 3 }
 		}
 
 		triggers = {
@@ -10158,14 +9457,9 @@ scripted_gui = {
 							has_country_flag = recognition_campaign_from@ROOT
 						}
 					}
-					meta_trigger = {
-						text = {
-							custom_trigger_tooltip = {
-								tooltip = not_recog_checker_tt
-								NOT = { has_country_flag = Recognised_[stname] }
-							}
-						}
-						stname = "[?ROOT.GetTag]"
+					custom_trigger_tooltip = {
+						tooltip = not_recog_checker_tt
+						NOT = { is_in_array = { recognised_countries = ROOT } }
 					}
 				}
 				has_political_power > 200
@@ -10244,10 +9538,8 @@ scripted_gui = {
 
 		effects = {
 			name_of_nation_button_click = {
-				ROOT = {
-					set_variable = { selected_ct_nation = PREV }
-					international_systems_update = yes
-				}
+				rotate_selected_nation = yes
+				ROOT = { international_systems_update = yes }
 			}
 		}
 	}

@@ -142,7 +142,10 @@ A tree can be perfectly balanced and still feel formulaic. These questions catch
   All English grammar rules apply. Titles should be capitalised properly with consistent spelling and punctuation. Trees with significant grammar or spelling issues will not be accepted for merge until corrected.
 
 - **Is there any localisation showing up as non-localised?**
-  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions, if negative and removable, explain how. Reference Iran or Libya starting spirits for examples.
+  Ensure there are no unlocalised strings. Focus descriptions must not be blank or re-use the focus name. All starting national spirits must have descriptions.
+
+ **Do national spirits with cancel clauses have explanations?**
+  Ensure all national spirits that can be cancelled by specific in-game conditions have an explanation. Reference any starting Iranian or Libyan spirit, or paste this at the end of your description for a national spirit: \n§W--------------§!\nThis national spirit will be §RRemoved§! if (Insert your condition here). Furthermore, use reference localization keys to keep it future proof. For instance if you want Civilian Factories mentioned in your condition, use $industrial_complex$ in your description.
 
 - **Is the use of custom focus icons moderated?**
   Do not use custom focus icons for every other focus. Reserve them for major focuses (parties, key decisions, etc.).

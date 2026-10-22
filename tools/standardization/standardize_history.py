@@ -292,6 +292,8 @@ class HistoryStandardizer(BaseStandardizer):
         self._law = idea_law
         self._faction = idea_faction
         self._modvars = modifier_vars
+        if mod_root is not None:
+            self._ensure_classification(mod_root)
 
     # -- classification bootstrap ------------------------------------------- #
 
@@ -312,7 +314,7 @@ class HistoryStandardizer(BaseStandardizer):
                 if self._modvars is None
                 else self._modvars
             )
-            log_message("INFO", f"Mod root: {root}", self.verbose)
+            log_message("DEBUG", f"Mod root: {root}", self.verbose)
         else:
             log_message(
                 "WARNING",
@@ -427,7 +429,7 @@ class HistoryStandardizer(BaseStandardizer):
                 name = _modifier_name(stmt["lines"])
                 if name and name not in props["modifiers"]:
                     props["modifiers"][name] = {"stmt": stmt, "vars": []}
-                    for var in modvars.get(name, ()):  # type: ignore[arg-type]
+                    for var in modvars.get(name, ()):
                         claim.setdefault(var, name)
 
         # Pass 2 - route every statement into exactly one bucket.
@@ -449,7 +451,12 @@ class HistoryStandardizer(BaseStandardizer):
                     props["country_vars"].append(stmt)
                 else:
                     props["system_vars"].append(stmt)
-            elif head in ("add_to_array", "remove_from_array"):
+            elif head in (
+                "add_to_array",
+                "remove_from_array",
+                "init_influence",
+                "sort_influence",
+            ):
                 props["system_vars"].append(stmt)
             elif head == "complete_special_project" or head.startswith("sp:"):
                 props["special_projects"].append(stmt)

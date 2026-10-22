@@ -11,7 +11,7 @@ equipments = {
 \t\t\tanti_air
 \t\t}
 \t\tupgrades = {
-\t\t\tAA_Fire_Control
+\t\t\tAA_fire_control
 \t\t}
 \t\treliability = 0.9
 \t\tarmor_value = 0
@@ -295,3 +295,87 @@ mio_cat_edge = {
 
 def test_group_ignores_blocks_other_than_equipment_type():
     assert _index(_AA, groups=_EDGE_GROUPS).expand("mio_cat_edge") == ["frigate"]
+
+
+_SHIPS = """
+equipments = {
+	helicopter_operator = {
+		is_archetype = yes
+		type = carrier
+		build_cost_ic = 28000
+	}
+	carrier = {
+		is_archetype = yes
+		type = carrier
+		build_cost_ic = 40000
+	}
+}
+"""
+
+
+def test_type_and_child_sharing_a_stat_overlap():
+    index = _index(_SHIPS)
+    assert index.type_archetype_overlaps(
+        {
+            "carrier": {"build_cost_ic"},
+            "helicopter_operator": {"build_cost_ic"},
+        }
+    ) == [("carrier", "helicopter_operator", frozenset({"build_cost_ic"}))]
+
+
+def test_type_and_child_with_distinct_stats_do_not_overlap():
+    index = _index(_SHIPS)
+    assert (
+        index.type_archetype_overlaps(
+            {
+                "carrier": {"carrier_size"},
+                "helicopter_operator": {"anti_air_attack"},
+            }
+        )
+        == []
+    )
+
+
+def test_iter_stacks_reports_the_child_key_offset():
+    index = _index(_SHIPS)
+    text = (
+        "equipment_bonus = {\n"
+        "\tcarrier = { build_cost_ic = -0.25 }\n"
+        "\thelicopter_operator = { build_cost_ic = -0.25 }\n"
+        "}\n"
+    )
+    hits = list(S.iter_type_archetype_stacks(text, index))
+    assert len(hits) == 1
+    offset, type_key, child, shared = hits[0]
+    assert (type_key, child, shared) == (
+        "carrier",
+        "helicopter_operator",
+        frozenset({"build_cost_ic"}),
+    )
+    assert text[offset:].startswith("helicopter_operator")
+
+
+def test_is_naval_covers_archetypes_categories_and_land():
+    index = _index(_SHIPS)
+    # An equipment name resolves through its own `type`; a bare type category
+    # has no `types` entry and resolves through the category set directly.
+    assert index.is_naval("helicopter_operator")
+    assert index.is_naval("carrier")
+    assert index.is_naval("submarine")
+    assert not index.is_naval("AA_Equipment")
+
+
+def test_archetype_of_resolves_variants_clones_and_unknowns():
+    index = _index(
+        "equipments = {\n"
+        "\tplane_airframe = { is_archetype = yes }\n"
+        "\tplane_airframe_1 = { archetype = plane_airframe }\n"
+        "}\n"
+        "duplicate_archetypes = {\n"
+        "\tplane_cas_airframe = { archetype = plane_airframe }\n"
+        "}\n"
+    )
+    assert index.archetype_of("plane_airframe") == "plane_airframe"
+    assert index.archetype_of("plane_airframe_1") == "plane_airframe"
+    assert index.archetype_of("plane_cas_airframe_1") == "plane_cas_airframe"
+    assert index.archetype_of("fighter_equipment_1") is None

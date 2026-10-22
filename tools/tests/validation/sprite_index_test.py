@@ -10,6 +10,7 @@ import os
 
 import pytest
 import sprite_index
+from validate_gfx_references import _load_vanilla_sprite_manifest
 
 
 @pytest.fixture(autouse=True)
@@ -84,6 +85,12 @@ def test_vanilla_names_join_the_index_when_included(tmp_path, monkeypatch):
     }
 
 
+def test_name_index_does_not_fold_in_the_vanilla_manifest(tmp_path):
+    # The icon checks the manifest fed are opt-in and kept out of CI.
+    assert _load_vanilla_sprite_manifest()
+    assert not sprite_index.build_sprite_index(str(tmp_path), include_vanilla=True)
+
+
 def test_mod_texture_overrides_a_vanilla_sprite_of_the_same_name(tmp_path, monkeypatch):
     vanilla_root = tmp_path / "vanilla"
     vanilla_gfx = vanilla_root / "interface" / "shared.gfx"
@@ -135,6 +142,29 @@ def test_texture_worker_tolerates_a_vanished_file(tmp_path):
         sprite_index._textures_in_file((str(tmp_path / "gone.gfx"), str(tmp_path)))
         == []
     )
+
+
+def test_size_index_uses_the_manifest_only_without_an_install(tmp_path, monkeypatch):
+    _write_gfx(
+        tmp_path,
+        "g.gfx",
+        'spriteType = {\n\tname = "GFX_g"\n\ttexturefile = "gfx/art/g.dds"\n}\n',
+    )
+    monkeypatch.setattr(
+        sprite_index, "_load_vanilla_sprite_sizes", lambda: {"GFX_v": (52, 40)}
+    )
+
+    index = sprite_index.build_sprite_size_index(str(tmp_path))
+    assert index.manifest_backed
+    assert "GFX_v" in index and "GFX_g" in index
+    assert index.size("GFX_v") == (52, 40)
+    assert index.is_vanilla_only("GFX_v") and not index.is_vanilla_only("GFX_g")
+
+    monkeypatch.setattr(sprite_index, "_vanilla_gfx_files", lambda: ["/x/v.gfx"])
+    monkeypatch.setattr(sprite_index, "_textures_in_file", lambda args: [])
+    live = sprite_index.build_sprite_size_index(str(tmp_path))
+    assert not live.manifest_backed
+    assert "GFX_v" not in live
 
 
 def test_gfx_root_is_the_directory_holding_interface(tmp_path):

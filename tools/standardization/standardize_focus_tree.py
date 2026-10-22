@@ -11,24 +11,26 @@ import sys
 import time
 from typing import Any
 
-from _common import format_elapsed
 from common_utils import (
     PROP_NAME_RE,
     collapse_blank_runs,
     compact_icon,
     compact_search_filters,
+    format_elapsed,
     join_groups,
     read_lines_for_standardization,
+    render_standardized,
     resolve_output_file_and_backup,
 )
 from shared_utils import (
+    add_standard_file_arguments,
     atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
     convert_root_factor_to_base,
     extract_block,
     log_message,
-    normalize_spacing,
+    reindent_by_brace_depth,
     strip_inline_comment,
 )
 
@@ -220,10 +222,18 @@ def _split_block(block_lines, *, allow_trailing_comment=False):
     return first, block_lines[1:-1], block_lines[-1]
 
 
-def _merge_duplicate_blocks(first, second):
+# Weight blocks are not merged. The trigger/effect argument below does not hold
+# for a scoring block: folding two of them under one header yields a single
+# `ai_will_do` carrying two `base` lines, which is not what either block meant.
+_UNMERGEABLE_PROPERTY_KEYS = frozenset({"ai_will_do"})
+
+
+def _merge_duplicate_blocks(first, second, key=None):
     """The engine ANDs duplicate trigger blocks and runs duplicate effect
     blocks in order, so concatenating inner lines under one header preserves
     semantics. Falls back to emitting both blocks when a shape is opaque."""
+    if key in _UNMERGEABLE_PROPERTY_KEYS:
+        return first + second
     a = _split_block(first)
     b = _split_block(second)
     if a is None or b is None:
@@ -344,7 +354,7 @@ def extract_focus_properties(focus_lines):
                     claim(key, len(props[key]) - 1)
                 elif props[key]:
                     claim(key)
-                    props[key] = _merge_duplicate_blocks(props[key], block_lines)
+                    props[key] = _merge_duplicate_blocks(props[key], block_lines, key)
                 else:
                     claim(key)
                     props[key] = block_lines
@@ -361,27 +371,32 @@ def extract_focus_properties(focus_lines):
     return props
 
 
-def clean_block_lines(block_lines):
-    """Remove trailing blank lines from a block and return cleaned lines"""
-    if not block_lines:
-        return block_lines
-
-    while block_lines and block_lines[-1].strip() == "":
-        block_lines.pop()
-
-    return block_lines
-
-
 def _fix_log_id(line: str, focus_id: str) -> str:
     """Correct a log line: ensure 'Focus ' prefix and replace the focus ID."""
     return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
 
 
+def _effect_has_statements(effect_block):
+    """True when an effect block runs anything besides its log line."""
+    if len(effect_block) == 1:
+        split = _split_block(effect_block, allow_trailing_comment=True)
+        inner = split[1] if split is not None else []
+    else:
+        inner = effect_block[1:-1]
+    for line in inner:
+        stripped = strip_inline_comment(line).strip()
+        if stripped and not stripped.startswith("log ="):
+            return True
+    return False
+
+
 def effect_block_with_log(effect_block, focus_id):
     """Return an effect block's lines, injecting a log line as the first
     statement if the block doesn't already contain one, or correcting a
-    mismatched focus ID / missing 'Focus ' prefix in an existing log line."""
-    if not effect_block:
+    mismatched focus ID / missing 'Focus ' prefix in an existing log line.
+    An empty or log-only block is dropped: a log with nothing beside it
+    records an effect that never runs (#4456)."""
+    if not effect_block or not _effect_has_statements(effect_block):
         return []
     if focus_id and not any("log =" in line for line in effect_block):
         log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
@@ -601,45 +616,6 @@ def format_focus_block(props, block_type="focus"):
     groups.append(trailing)
 
     return [f"\t{block_type} = {{"] + collapse_blank_runs(join_groups(groups)) + ["\t}"]
-
-
-def reindent_by_brace_depth(block_lines, base_tabs=0):
-    """Re-indent a formatted block so each line's tab depth is derived purely
-    from brace nesting (base_tabs at the outermost level). Blank lines are kept
-    empty. Braces inside double-quoted strings are ignored. Used to render a
-    top-level shared_focus/joint_focus block at column 0 regardless of the
-    source's original indentation, keeping the standardizer idempotent."""
-    out = []
-    depth = 0
-    for line in block_lines:
-        stripped = line.strip()
-        if not stripped:
-            out.append("")
-            continue
-
-        # Count braces on the code portion only: a `#` comment may carry an
-        # unbalanced brace (e.g. `# TODO fix { this }`) that must not shift depth.
-        code = strip_inline_comment(stripped)
-        opens = closes = 0
-        in_str = False
-        prev = ""
-        for c in code:
-            if c == '"' and prev != "\\":
-                in_str = not in_str
-            elif not in_str:
-                if c == "{":
-                    opens += 1
-                elif c == "}":
-                    closes += 1
-            prev = c
-
-        this_depth = depth - 1 if code.startswith("}") else depth
-        indent = "\t" * (base_tabs + max(0, this_depth))
-        out.append(f"{indent}{stripped}")
-
-        depth = max(0, depth + opens - closes)
-
-    return out
 
 
 def _finish_block_with_trigger(
@@ -917,16 +893,8 @@ def add_check_naming_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def standardize_focus_tree(
-    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
-):
-    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
-    start_time = time.time()
-
-    lines = read_lines_for_standardization(input_file, verbose=verbose)
-    if lines is None:
-        return False
-
+def format_focus_tree_lines(lines, verbose: bool = False):
+    """Reformat focus tree lines in memory, returning (output_lines, counts)."""
     output_lines = []
     i = 0
     counts = {block_type: 0 for block_type in _BLOCK_COUNT_ORDER}
@@ -948,10 +916,6 @@ def standardize_focus_tree(
             if block_type in _FOCUS_BLOCK_TYPES:
                 props = extract_focus_properties(block_lines)
                 formatted_lines = format_focus_block(props, block_type)
-                if block_type in {"shared_focus", "joint_focus"}:
-                    # shared_focus/joint_focus are top-level definitions (no
-                    # focus_tree wrapper), so render them at column 0.
-                    formatted_lines = reindent_by_brace_depth(formatted_lines)
                 counts[block_type] += 1
                 log_message(
                     "DEBUG",
@@ -967,7 +931,10 @@ def standardize_focus_tree(
                     f"Processed {block_type} block {counts[block_type]}",
                     verbose,
                 )
-            output_lines.extend(formatted_lines)
+            # shared_focus/joint_focus are top-level definitions (no
+            # focus_tree wrapper), so render them at column 0.
+            indent = "" if block_type in {"shared_focus", "joint_focus"} else "\t"
+            output_lines.extend(reindent_by_brace_depth(formatted_lines, indent))
 
         i = next_i
 
@@ -988,7 +955,21 @@ def standardize_focus_tree(
             ):
                 final_lines.append("")
         final_lines.append(line)
-    output_lines = final_lines
+
+    return final_lines, counts
+
+
+def standardize_focus_tree(
+    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
+):
+    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
+    start_time = time.time()
+
+    lines = read_lines_for_standardization(input_file, verbose=verbose)
+    if lines is None:
+        return False
+
+    output_lines, counts = format_focus_tree_lines(lines, verbose)
 
     # Naming convention check runs before writing so a failed standardization
     # cannot silently leave a partially reformatted file behind.
@@ -1000,7 +981,7 @@ def standardize_focus_tree(
         return False
 
     try:
-        output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+        output = render_standardized(output_lines)
         atomic_write_text(output_file, output)
 
         time_str = format_elapsed(time.time() - start_time)
@@ -1027,14 +1008,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Standardize HOI4 focus tree files - reformats focus blocks and all focus tree properties"
     )
-    parser.add_argument("input_file", help="Input focus tree file")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input focus tree file")
     add_check_naming_argument(parser)
 
     args = parser.parse_args()

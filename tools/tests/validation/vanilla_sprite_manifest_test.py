@@ -15,6 +15,15 @@ def test_manifest_loads_names(tmp_path, monkeypatch):
     assert vg._load_vanilla_sprite_manifest() == frozenset({"GFX_alpha", "GFX_beta"})
 
 
+def test_manifest_size_column_is_optional(tmp_path, monkeypatch):
+    manifest = tmp_path / "vanilla_sprites.txt"
+    manifest.write_text("# header\nGFX_a 33x32\nGFX_b\nGFX_c junk\n", encoding="utf-8")
+    monkeypatch.setattr(vg, "_VANILLA_SPRITES_MANIFEST", str(manifest))
+
+    assert vg._load_vanilla_sprite_manifest() == frozenset({"GFX_a", "GFX_b", "GFX_c"})
+    assert vg._load_vanilla_sprite_sizes() == {"GFX_a": (33, 32)}
+
+
 def test_missing_manifest_reads_as_absent(tmp_path, monkeypatch):
     monkeypatch.setattr(
         vg, "_VANILLA_SPRITES_MANIFEST", str(tmp_path / "does_not_exist.txt")
@@ -27,6 +36,7 @@ def test_corrupt_manifest_reads_as_absent(tmp_path, monkeypatch):
     manifest.write_bytes(b"\xff\xfe\x00 not utf-8 \x80")
     monkeypatch.setattr(vg, "_VANILLA_SPRITES_MANIFEST", str(manifest))
     assert vg._load_vanilla_sprite_manifest() == frozenset()
+    assert vg._load_vanilla_sprite_sizes() == {}
 
 
 def test_sprite_names_from_gfx_text():

@@ -1,94 +1,67 @@
 ---
 name: audit
-description: "Comprehensive pre-merge review of one file or the whole branch diff: dispatches parallel reviewer agents (correctness, adversarial edge cases, performance, simplification, content) and merges findings. Use when asked to audit or fully review a branch or file. Replaces /review-branch."
+description: "Comprehensive pre-merge review of one file or the whole branch diff: dispatches parallel reviewer agents (correctness, adversarial edge cases, performance, simplification, content) and merges findings. Use when asked to audit or fully review a branch or file."
 ---
 
-Run a comprehensive review of a single file or the entire branch diff (correctness, edge cases, simplification, performance, and content design) by dispatching the canonical reviewers in parallel and merging their findings. This is the single Millennium Dawn pre-merge review command; it absorbs the former `/review-branch`.
+**Syntax:** `/audit [file_path]`. With a path, review that file. Without one, review
+every file the branch changes against `main`.
 
-**Syntax:** `/audit [file_path]`
+## 1. Gather context once
 
-- With `file_path`: review that file.
-- Without argument: review all changed files on the current branch against `main`.
+Gather the diff and file contents once, in this agent, and pass them to the reviewers
+inline. Reviewers do not re-run `git` or re-read shared docs.
 
-## Execution
+- File mode: read the file, note its subsystem and hot-path exposure, and identify the
+  files it calls or is called by.
+- Branch mode: `git diff origin/main...HEAD`, `git log origin/main..HEAD --oneline`, and
+  `git diff --name-only origin/main...HEAD`.
 
-### 1. Gather context once
+Skip generated and binary assets.
 
-Gather the diff and file contents **a single time in this (the main) agent**, then hand them to the reviewers inline. The reviewers must not re-run `git`, re-read the diff, or re-read shared reference docs — duplicated context-gathering across agents is the main token sink this skill avoids.
+## 2. Pick the lanes
 
-**File mode** (path provided):
+- Trivial change (one small file, under about 80 changed lines, no hot path or
+  cross-country logic): review it inline. Dispatch at most one focused agent.
+- Localisation only: `localisation-editor` and `performance-analyzer`.
+- Normal change: the lanes below, minus any with nothing in scope.
 
-- Read the file. Note its subsystem and hot-path exposure (daily on_action, per-frame GUI, player event, AI event, etc.).
-- Identify related files it calls or is called by (scripted effects, triggers, events, GUI, loc).
+## 3. Launch the reviewers in parallel
 
-**Branch mode** (no argument):
+Send every applicable lane in one message. Tell each one to report findings only.
 
-- `git diff origin/main...HEAD` and `git log origin/main..HEAD --oneline` — run these **once**, here.
-- `git diff --name-only origin/main...HEAD` to get the file list and their types.
+- `code-quality-reviewer`: correctness, standards, readability, localisation.
+- Adversarial edge cases: `head-mod-developer`, applying
+  `.claude/docs/bug-patterns.md`.
+- `performance-analyzer`: `.claude/docs/performance-patterns.md`.
+- `simplify-analyzer`: simplification opportunities.
+- Content design: `head-mod-developer`, checking against
+  `.claude/docs/content-guidelines.md` and the two guides it names. Skip categories that
+  do not apply to the file type.
+- `tools-reviewer`: only when `tools/**` changed. Dispatch it here, never from inside
+  another lane.
 
-### 2. Decide the lane set
+## 4. Merge the findings
 
-Don't fan out every reviewer on every change. Scale to the size and type of what changed:
+Wait for every lane, then report per file:
 
-- **Trivial change** (a single small file, roughly < 80 changed lines, with no hot-path or cross-country logic): skip the fan-out. Review it inline in this agent. Dispatch at most one focused agent if a specialised pass is clearly warranted.
-- **Pure localisation** (`.yml` only): run **`localisation-editor`** (defaults to haiku — fine for typo/grammar) and **`performance-analyzer`** (undefined variable substitutions, excessive nested formatters). Skip the other lanes.
-- **Normal change**: run the lanes in step 3, but **drop any lane with nothing in scope** — e.g. skip the content lane on a tools-only or pure-code diff, skip the simplification lane on a file with no branching, skip the tools lane unless `tools/**` changed.
+1. File summary: purpose and hot-path exposure, in one sentence.
+2. Correctness and standards.
+3. Edge cases. Mark save-corruption, soft-lock, and crash risks `[critical]`.
+4. Performance, with severity.
+5. Simplification.
+6. Content, with category labels and `[blocker]` tags.
+7. Cross-cutting concerns.
+8. Action items, blockers and criticals first, with file and line.
 
-### 3. Launch the applicable reviewers in parallel
+Drop empty sections. When two lanes flag the same line, keep one entry with both
+reasons, or the more detailed explanation when the reason is the same. Never drop a
+finding because it appears twice. Flag an uncertain finding for human review.
 
-Launch all applicable lanes **in a single message** so they run concurrently. Pass each agent the file path (file mode) or the already-gathered diff (branch mode) inline. Each lane is a **focused agent**, not a `general-purpose` agent running a whole sub-skill, and each is told explicitly: do not re-run `git`, do not re-gather context, report findings only.
+When the branch has an open PR, check that its title and body describe what the diff
+changes. A mismatch, or a missing body, is a blocker. Name what the body claims that the
+diff lacks and what the diff contains that the body omits.
 
-- **`code-quality-reviewer`** — rules, standards, correctness, readability, and localisation against project conventions.
-- **Adversarial edge cases** — dispatch **`head-mod-developer`**. Tell it to apply the checklist in `.claude/docs/bug-patterns.md` (existence/scope guards, timing/state transitions, variable/array safety, silent NOPs) and hunt for edge cases, silent failures, and logic gaps rule-based review misses. It must **not** re-run git and must **not** dispatch `tools-reviewer` — the main agent handles tools (below).
-- **`performance-analyzer`** — the anti-patterns from `.claude/docs/performance-patterns.md`.
-- **`simplify-analyzer`** — simplification opportunities (collapse `if/else_if` chains, array lookups, dead code). For `.yml` loc, this lane is replaced by `localisation-editor` per step 2.
-- **Content design** — dispatch **`head-mod-developer`**. Tell it to read `docs/src/content/resources/content-review-guide.md`, `docs/src/content/resources/new-general-guidelines.md`, and `.claude/docs/content-guidelines.md` (once), then check the changed files against the full checklist (Economic, Political, Visual, Military, AI, Code, Miscellaneous). Skip categories that don't apply to the file type (no Military checks on a decisions file, no Economic checks on a character file). It must **not** re-run git.
-- **`tools-reviewer`** — **only if** `tools/**` changed. Dispatch it directly here, in the same parallel batch, with the list of changed tooling files. Do not nest it under another lane.
+## 5. Apply fixes when asked
 
-### 4. Wait for all reviewers to complete
-
-All dispatched lanes must report back before the merge step.
-
-### 5. Merge and deduplicate findings
-
-Combine all reports into a single structured output.
-
-**Deduplication rules:**
-
-- Multiple agents flag the same line for different reasons: list both reasons under one entry.
-- Multiple agents flag the same line for the same underlying issue: keep the more detailed explanation (the adversarial lane usually names the breaking scenario, which is more actionable).
-- Never drop a finding just because it appears in multiple reports.
-
-**Output structure** — for each file reviewed, report:
-
-1. **File summary** — one sentence on purpose and hot-path exposure.
-2. **Correctness & standards** — from `code-quality-reviewer`.
-3. **Edge cases** — from the adversarial lane; mark save-corruption, soft-lock, or crash risks `[critical]`.
-4. **Performance** — from `performance-analyzer`, with severity (Critical / High / Medium / Low).
-5. **Simplification** — from `simplify-analyzer`.
-6. **Content** — from the content lane, with category labels (`[Economic]`, `[Political]`, etc.) and `[blocker]` tags where applicable.
-7. **Cross-cutting concerns** — issues touching multiple categories (e.g., "replace 15 `if/else_if` branches with an array lookup" improves both simplification and performance).
-8. **Action items** — prioritized fix list with file and line numbers. Blockers and criticals first.
-
-Drop empty sections rather than writing "none".
-
-### 6. Apply fixes (if user confirms)
-
-If the user asks to fix the issues, apply them directly:
-
-- **Correctness / simplification / performance fixes** — edit files in place (Edit/Write).
-- **Critical issues** — fix first, even if they require structural changes.
-- **Non-critical** — fix in order of impact.
-
-After applying fixes, verify the edited regions by **re-reading the changed lines** — do not re-dispatch the reviewer lanes unless the user explicitly asks for a fresh full pass.
-
-## Important Notes
-
-- Gather the diff and shared docs **once** (step 1); hand them to reviewers inline. Never let a lane re-run `git` or re-read reference docs.
-- **Do not** run the lanes sequentially — launch all applicable ones in parallel in a single message.
-- **Do not** nest reviewers inside other reviewers. `tools-reviewer` is dispatched by the main agent, only when `tools/**` changed.
-- **Do not** modify files outside the scope of the review.
-- **Do not** run validators after fixing unless explicitly asked.
-- When uncertain about a finding, flag it for human review rather than applying blindly.
-- For branch mode, focus on files in the branch diff. Do not review unchanged files unless the user asks.
-- Skip generated or binary assets (`.dds`, `.png`, etc.).
+Edit in place, criticals first. Stay within the reviewed files. Verify by re-reading
+the changed lines. Do not re-dispatch the lanes or run validators unless asked.

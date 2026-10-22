@@ -57,10 +57,10 @@ focus_tree = {
 			set_country_flag = SIA_imf_program_active
 			country_event = thailand.50
 			add_tech_bonus = {
-				name = SIA_recover_97_util
+				name = SIA_recover_from_97_crisis
 				bonus = 1.0
 				uses = 1
-				category = CAT_util
+				category = CAT_utility_vehicles
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_crisis_modifier }
 			add_to_variable = { SIA_crisis_trade_opinion_factor = 0.25 tooltip = trade_opinion_factor_tt }
@@ -178,6 +178,20 @@ focus_tree = {
 		available = {
 			date > 2003.1.1 # Thaksin's historical early IMF payoff completed 31 Jul 2003 (2yrs ahead of the 2004 schedule)
 			has_country_flag = SIA_imf_program_active
+		}
+
+		bypass = {
+			date > 2005.1.1
+			# A repayment more than half done still pays out. Progress persists across focus
+			# switches, so a lower bar would let one parked day disable the deadline outright.
+			NOT = { focus_progress = { focus = SIA_repay_the_imf progress > 0.5 } }
+		}
+
+		bypass_effect = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_repay_the_imf"
+			clr_country_flag = SIA_imf_program_active
+			set_country_flag = SIA_imf_repayment_lapsed
+			country_event = thailand.51
 		}
 
 		completion_reward = {
@@ -496,16 +510,16 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			add_tech_bonus = {
-				name = SIA_rnd_computing
+				name = SIA_national_rnd_network
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_tech_bonus = {
-				name = SIA_rnd_internet
+				name = SIA_national_rnd_network
 				bonus = 0.5
 				uses = 1
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 		}
 
@@ -698,7 +712,7 @@ focus_tree = {
 				name = SIA_civilian_rnd_center
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
@@ -738,7 +752,7 @@ focus_tree = {
 				name = SIA_air_rnd_center
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
@@ -813,27 +827,34 @@ focus_tree = {
 				name = SIA_gistda_space_agency
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			set_temp_variable = { treasury_change = -16 }
 			modify_treasury_effect = yes
 			if = {
-				limit = {
-					NOT = { has_tech = cruise_missile }
+				limit = { has_dlc = "Gotterdammerung" }
+				if = {
+					limit = { NOT = { has_tech = cruise_missile } }
+					set_technology = { cruise_missile = 1 }
+					newline = yes
 				}
-				set_technology = {
-					cruise_missile = 1
+				if = {
+					limit = { NOT = { has_tech = GLCM } }
+					set_technology = { GLCM = 1 }
+					newline = yes
 				}
-				newline = yes
 			}
-			if = {
-				limit = {
-					NOT = { has_tech = GLCM }
+			else = {
+				if = {
+					limit = { NOT = { has_tech = cruise_missile_non_got } }
+					set_technology = { cruise_missile_non_got = 1 }
+					newline = yes
 				}
-				set_technology = {
-					GLCM = 1
+				if = {
+					limit = { NOT = { has_tech = GLCM_non_got } }
+					set_technology = { GLCM_non_got = 1 }
+					newline = yes
 				}
-				newline = yes
 			}
 			add_breakthrough_progress = {
 				specialization = specialization_nuclear
@@ -872,7 +893,7 @@ focus_tree = {
 				name = SIA_theos_earth_observation
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			506 = {
 				one_state_radar_station = yes
@@ -907,7 +928,7 @@ focus_tree = {
 				name = SIA_space_krenovation_park
 				bonus = 1
 				uses = 2
-				category = CAT_satellite
+				category = CAT_satellites
 			}
 		}
 
@@ -938,7 +959,7 @@ focus_tree = {
 				name = SIA_sovereign_launch_capability
 				bonus = 1.0
 				uses = 2
-				category = CAT_satellite
+				category = CAT_satellites
 			}
 			air_experience = 25
 			set_temp_variable = { treasury_change = -4 }
@@ -1003,7 +1024,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# FORCE-MODEL FORK — "The Old Guard and Its Two Exits" Standalone third military branch,
@@ -1028,7 +1052,10 @@ focus_tree = {
 			army_experience = 25
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1055,7 +1082,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1079,7 +1109,10 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1110,6 +1143,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -1138,7 +1172,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1164,7 +1201,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_army_leader_start_level = 1 tooltip = army_leader_start_level_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1192,7 +1232,10 @@ focus_tree = {
 			army_experience = 25
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1221,6 +1264,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -1264,6 +1308,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -1293,7 +1338,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1322,7 +1370,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 55 }
+		ai_will_do = {
+			base = 55
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1347,7 +1398,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_army_morale_factor = -0.03 tooltip = army_morale_factor_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1372,7 +1426,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_enemy_attrition = 0.02 tooltip = enemy_attrition_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1398,7 +1455,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1424,7 +1484,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_army_attack_factor = -0.03 tooltip = army_attack_factor_tt }
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1453,7 +1516,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1478,7 +1544,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_training_time_factor = 0.10 tooltip = training_time_factor_tt }
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1516,7 +1585,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -1590,10 +1662,8 @@ focus_tree = {
 		# downstream.
 		ai_will_do = {
 			base = 2
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -1630,18 +1700,17 @@ focus_tree = {
 			country_event = thailand.100
 			add_political_power = 50
 			custom_effect_tooltip = SIA_lost_territories_choice_tt
+			unlock_decision_category_tooltip = SIA_greater_thailand_category
 			country_event = { id = thailand.410 days = 1 }
 		}
 
 		# Grants the Greater Thailand mandate, so this is the gate the Pan-Thai AI has to pass to
 		# unlock ASEAN Hegemony. Base stays 0 for everyone else.
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -1665,7 +1734,7 @@ focus_tree = {
 			NOT = { has_war_with = USA }
 			custom_trigger_tooltip = {
 				tooltip = SIA_not_ruled_by_communists_tt
-				NOT = { is_in_array = { ruling_party = 4 } }
+				NOT = { check_variable = { ruling_party = 4 } }
 			}
 		}
 
@@ -1682,7 +1751,7 @@ focus_tree = {
 				name = SIA_treaty_ally
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			set_country_flag = SIA_cobra_gold_active
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
@@ -1690,10 +1759,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_max_planning = 0.05 tooltip = max_planning_tt }
 			add_to_variable = { SIA_mil_training_time_factor = -0.10 tooltip = training_time_factor_tt }
 			add_tech_bonus = {
-				name = SIA_treaty_ally_inf
+				name = SIA_treaty_ally
 				bonus = 0.5
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 			hidden_effect = {
 				country_event = { id = thailand.203 days = 180 }
@@ -1757,16 +1826,16 @@ focus_tree = {
 			set_temp_variable = { int_investment_change = 25 }
 			modify_international_investment_effect = yes
 			add_tech_bonus = {
-				name = SIA_partner_china_electronics
+				name = SIA_bamboo_bends_east
 				bonus = 0.5
 				uses = 2
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_tech_bonus = {
-				name = SIA_partner_china_industry
+				name = SIA_bamboo_bends_east
 				bonus = 0.5
 				uses = 1
-				category = CAT_util
+				category = CAT_utility_vehicles
 			}
 			if = {
 				limit = { country_exists = TAI }
@@ -1781,7 +1850,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -1813,7 +1886,7 @@ focus_tree = {
 		id = SIA_thai_rak_thai
 		icon = political_pressure_blue
 
-		x = -11
+		x = -10
 		y = 1
 		relative_position_id = SIA_the_2001_election
 
@@ -1845,10 +1918,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 60
-			modifier = {
-				is_historical_focus_on = yes
-				add = 40
-			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -1878,7 +1949,11 @@ focus_tree = {
 			change_landowners_opinion = yes
 		}
 
-		ai_will_do = { base = 80 }
+		ai_will_do = {
+			base = 80
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -1904,7 +1979,11 @@ focus_tree = {
 			country_event = thailand.3
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -1936,7 +2015,11 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -1976,6 +2059,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 70
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -2006,7 +2091,11 @@ focus_tree = {
 			increase_economic_growth = yes
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2032,7 +2121,11 @@ focus_tree = {
 			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2059,7 +2152,11 @@ focus_tree = {
 			country_event = { id = thailand.205 days = 14 }
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2093,7 +2190,11 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2127,10 +2228,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 60
-			modifier = {
-				is_historical_focus_on = yes
-				add = 40
-			}
+			modifier = { factor = 40 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -2159,7 +2258,11 @@ focus_tree = {
 			country_event = thailand.16
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2191,7 +2294,11 @@ focus_tree = {
 			country_event = thailand.15
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2213,6 +2320,16 @@ focus_tree = {
 			SIA_royalist_trunk_entry = yes
 		}
 
+		# Committing to another trunk settles the question; the palace moment has passed.
+		bypass = {
+			OR = {
+				has_completed_focus = SIA_thai_rak_thai
+				has_completed_focus = SIA_the_democrats_endure
+				has_completed_focus = SIA_seeds_of_reform
+				has_completed_focus = SIA_ghosts_of_the_jungle
+			}
+		}
+
 		# Switchable trunks: engine mutual_exclusive removed (see SIA_thai_rak_thai).
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_old_order"
@@ -2223,23 +2340,20 @@ focus_tree = {
 			add_ideas = SIA_network_monarchy_idea
 			set_temp_variable = { temp_opinion = 10 }
 			change_landowners_opinion = yes
-			if = {
-				limit = {
-					NOT = { has_idea = SIA_kings_moral_authority }
-					NOT = { has_country_flag = SIA_succession_done }
-				}
-				add_ideas = SIA_kings_moral_authority
-			}
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
 		id = SIA_privy_council
 		icon = general_staff
 
-		x = -1
+		x = 0
 		y = 1
 		relative_position_id = SIA_the_old_order
 
@@ -2249,12 +2363,13 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { SIA_royalist_trunk_open = yes }
+		available = {
+			SIA_royalist_policy_open = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_privy_council"
-			add_ideas = SIA_privy_council_idea
-			set_temp_variable = { temp_opinion = 10 }
+			set_temp_variable = { temp_opinion = 15 }
 			change_the_military_opinion = yes
 			if = {
 				limit = { has_idea = SIA_ninth_reign_barami }
@@ -2265,40 +2380,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 70 }
-	}
-
-	focus = {
-		id = SIA_sufficiency_economy
-		icon = agriculture2
-
-		x = 1
-		y = 1
-		relative_position_id = SIA_the_old_order
-
-		cost = 5
-
-		prerequisite = { focus = SIA_the_old_order }
-
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
-
-		available = { SIA_royalist_trunk_open = yes }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus SIA_sufficiency_economy"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
-			add_to_variable = { SIA_econ_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
-			add_to_variable = { SIA_econ_production_speed_infrastructure_factor = 0.1 tooltip = production_speed_infrastructure_factor_tt }
-			set_temp_variable = { treasury_change = 4 }
-			modify_treasury_effect = yes
-			custom_effect_tooltip = {
-				localization_key = UNLOCK_DECISION_IN_CATEGORY
-				DECISION = SIA_royal_projects
-				DECISION_CATEGORY = SIA_economy_category
+		ai_will_do = {
+			base = 70
+			modifier = {
+				factor = 0
+				SIA_ai_off_royalist_trunk = yes
 			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
-
-		ai_will_do = { base = 70 }
 	}
 
 	# Bridge focuses (2001–2005): widen the royalist branch so the establishment has work to do
@@ -2307,7 +2397,7 @@ focus_tree = {
 		id = SIA_royal_guidance
 		icon = political_pressure
 
-		x = -3
+		x = -2
 		y = 1
 		relative_position_id = SIA_the_old_order
 
@@ -2317,14 +2407,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { SIA_royalist_trunk_open = yes }
+		available = { SIA_royalist_policy_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_royal_guidance"
 			add_ideas = SIA_royal_guidance_idea
 			set_temp_variable = { party_index = 23 }
-			set_temp_variable = { party_popularity_increase = 0.12 }
-			set_temp_variable = { temp_outlook_increase = 0.12 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
 			custom_effect_tooltip = SIA_outlook_nationalist_tt
 			# temp_outlook_increase persists across calls - clear it so the TRT penalty below stays a
@@ -2336,14 +2426,18 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
 		id = SIA_three_pillars
 		icon = political_pressure_dark_green
 
-		x = 3
+		x = 2
 		y = 1
 		relative_position_id = SIA_the_old_order
 
@@ -2353,7 +2447,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { SIA_royalist_trunk_open = yes }
+		available = { SIA_royalist_policy_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_three_pillars"
@@ -2391,7 +2485,11 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2408,8 +2506,6 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = { SIA_royalist_trunk_open = yes }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_yellow_shirts"
 			add_ideas = SIA_yellow_shirts_idea
@@ -2424,7 +2520,15 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = {
+				factor = 0
+				SIA_ai_off_royalist_trunk = yes
+			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2442,26 +2546,34 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		# SIA_yellow_shirts is already the prerequisite, so the old OR reduced to this date.
+		# There is nothing to overthrow when the palace party itself governs.
 		available = {
-			SIA_royalist_trunk_open = yes
-			OR = {
-				date > 2006.9.1
-				AND = {
-					has_completed_focus = SIA_yellow_shirts
-					date > 2004.10.1
-				}
-			}
+			date > 2004.10.1
+			SIA_not_ruled_by_chakri = yes
 		}
+
+		# A junta seated by any other route has already done this; the quiet word closes with it.
+		bypass = { has_idea = SIA_junta_government }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_2006_coup"
 			custom_effect_tooltip = SIA_the_2006_coup_choice_tt
+			# thailand.4 seats the NCPO directly, with no civil war on either option.
 			country_event = thailand.4
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 30 }
+		ai_will_do = {
+			base = 30
+			modifier = {
+				factor = 0
+				SIA_ai_off_royalist_trunk = yes
+			}
+			modifier = { factor = 100 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2492,7 +2604,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2520,7 +2636,11 @@ focus_tree = {
 			country_event = thailand.5
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2538,7 +2658,8 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		available = {
-			SIA_royalist_trunk_open = yes
+			NOT = { has_idea = SIA_junta_government }
+			SIA_not_ruled_by_chakri = yes
 			OR = {
 				date > 2014.5.1
 				custom_trigger_tooltip = {
@@ -2549,12 +2670,24 @@ focus_tree = {
 			}
 		}
 
+		# Symmetric with the 2006 coup: you can only overthrow a civilian government, and a junta
+		# already in power has done this one. Without the bypass the 2006 coup locks the 2017 tail.
+		bypass = { has_idea = SIA_junta_government }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_2014_coup"
 			country_event = thailand.6
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = {
+				factor = 0
+				SIA_ai_off_royalist_trunk = yes
+			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2587,7 +2720,11 @@ focus_tree = {
 			set_country_flag = SIA_reform_radicalized
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2616,7 +2753,11 @@ focus_tree = {
 			add_timed_idea = { idea = SIA_isoc_overreach_backlash days = 30 }
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2645,7 +2786,11 @@ focus_tree = {
 			country_event = thailand.18
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2676,7 +2821,11 @@ focus_tree = {
 			country_event = { id = thailand.414 days = 1 }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2705,7 +2854,11 @@ focus_tree = {
 			country_event = thailand.17
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2721,25 +2874,28 @@ focus_tree = {
 		prerequisite = { focus = SIA_yellow_shirts }
 		mutually_exclusive = { focus = SIA_the_2006_coup }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
 		available = {
-			SIA_royalist_trunk_open = yes
-			has_completed_focus = SIA_yellow_shirts
+			SIA_royalist_policy_open = yes
 		}
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_quiet_word"
 			set_temp_variable = { temp_opinion = 10 }
 			change_the_military_opinion = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_drift_defence_factor = 0.10 tooltip = drift_defence_factor_tt }
+			add_timed_idea = { idea = SIA_quiet_word_pressure days = 365 }
 		}
 
 		ai_will_do = {
 			base = 30
 			modifier = {
 				factor = 0
-				is_historical_focus_on = yes
+				SIA_ai_off_royalist_trunk = yes
 			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -2757,7 +2913,9 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
-		available = { SIA_royalist_trunk_open = yes }
+		available = {
+			SIA_royalist_policy_open = yes
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_judicial_review_route"
@@ -2770,7 +2928,15 @@ focus_tree = {
 			country_event = thailand.434
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				SIA_ai_off_royalist_trunk = yes
+			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2799,7 +2965,11 @@ focus_tree = {
 			add_to_variable = { SIA_pol_drift_defence_factor = 0.1 tooltip = drift_defence_factor_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2832,7 +3002,11 @@ focus_tree = {
 			country_event = thailand.435
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2860,7 +3034,11 @@ focus_tree = {
 			add_to_variable = { SIA_pol_political_power_factor = 0.05 tooltip = political_power_factor_tt }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2888,7 +3066,11 @@ focus_tree = {
 			unlock_decision_category_tooltip = SIA_establishment_category
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -2906,6 +3088,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
+			has_civil_war = no
 			custom_trigger_tooltip = {
 				tooltip = SIA_reform_5pct_tt
 				check_variable = { party_pop_array^3 > 0.05 }
@@ -2914,22 +3097,24 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_seeds_of_reform"
-			set_temp_variable = { party_index = 3 }
-			set_temp_variable = { party_popularity_increase = 0.25 }
-			set_temp_variable = { temp_outlook_increase = 0.25 }
-			change_relative_party_popularity = yes
-			custom_effect_tooltip = SIA_outlook_western_tt
-			recalculate_party = yes
+			SIA_clear_path_flags = yes
+			set_country_flag = SIA_path_reform
+			# The Reform Spring is the drive: support builds over its year rather than arriving whole.
 			add_timed_idea = { idea = SIA_reform_spring days = 365 }
+			set_variable = { SIA_drive_party = 3 }
+			set_variable = { SIA_drive_rate = 0.0035 }
+			set_variable = { SIA_drive_weeks = 52 }
+			custom_effect_tooltip = SIA_drive_reform_tt
 			set_temp_variable = { temp_opinion = -15 }
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 35 }
+		ai_will_do = {
+			base = 35
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
-
-	# BRANCH E — THE DEMOCRAT ESTABLISHMENT (idx 1, conservatism) The fourth political trunk off
-	# the 2001 election.
 
 	focus = {
 		id = SIA_the_democrats_endure
@@ -2959,15 +3144,14 @@ focus_tree = {
 			set_country_flag = SIA_path_democrat
 			add_ideas = SIA_loyal_opposition
 			set_country_flag = SIA_democrat_machine_active
+			unlock_decision_category_tooltip = SIA_democrat_machine_category
 			SIA_pt_pressure_seed = yes
 		}
 
 		ai_will_do = {
 			base = 40
-			modifier = {
-				is_historical_focus_on = yes
-				add = 30
-			}
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -2999,7 +3183,11 @@ focus_tree = {
 			change_small_medium_business_owners_opinion = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3027,7 +3215,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3057,7 +3249,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3087,7 +3283,11 @@ focus_tree = {
 			add_stability = 0.03
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3116,13 +3316,17 @@ focus_tree = {
 				name = SIA_liberal_market_stewardship
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_small_medium_business_owners_opinion = yes
 		}
 
-		ai_will_do = { base = 40 }
+		ai_will_do = {
+			base = 40
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3159,6 +3363,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 35
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -3191,7 +3397,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3233,10 +3443,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 50
-			modifier = {
-				is_historical_focus_on = yes
-				add = 30
-			}
+			modifier = { factor = 40 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -3280,7 +3488,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 45 }
+		ai_will_do = {
+			base = 45
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3317,7 +3529,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3350,7 +3566,11 @@ focus_tree = {
 			SIA_pt_pressure_set = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3381,7 +3601,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 60
-			modifier = { is_historical_focus_on = yes add = 30 }
+			modifier = { factor = 40 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -3406,18 +3627,19 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_street_over_the_ballot"
 			# The PDRC route: abandon the ballot box for the streets, shut down the capital, and hand the
 			# generals their pretext.
-			SIA_clear_path_flags = yes
-			set_country_flag = SIA_path_royalist
-			SIA_strip_democrat_ideas = yes
+			# Same reason as SIA_democrat_revival: the detector will not strip for us here.
+			SIA_realign_to_royalist = yes
 			set_temp_variable = { rul_party_temp = 22 }
 			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
-			update_party_name = yes
-			set_leader_SIA = yes
 			add_war_support = 0.05
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -3460,6 +3682,8 @@ focus_tree = {
 			base = 45
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_industrial_complex = no }
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -3488,7 +3712,7 @@ focus_tree = {
 				name = SIA_future_forward
 				bonus = 0.5
 				uses = 1
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 			add_political_power = 50
 			hidden_effect = {
@@ -3496,7 +3720,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3521,7 +3749,11 @@ focus_tree = {
 			country_event = thailand.9
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3545,11 +3777,11 @@ focus_tree = {
 			add_stability = -0.05
 			decrease_military_spending = yes
 			add_timed_idea = { idea = SIA_barracks_pushback days = 365 }
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_demilitarize_politics
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 			hidden_effect = {
 				random = {
@@ -3559,7 +3791,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3590,7 +3826,11 @@ focus_tree = {
 			SIA_coup_cleanup_effect = yes
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3615,7 +3855,11 @@ focus_tree = {
 			country_event = thailand.10
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3637,12 +3881,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_decentralize"
 			507 = { one_state_office_construction = yes }
+			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
 		}
 
 		ai_will_do = {
 			base = 60
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_offices = no }
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
 		}
 	}
 
@@ -3673,7 +3920,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3705,7 +3956,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3732,11 +3987,14 @@ focus_tree = {
 			add_to_variable = { SIA_pol_consumer_goods_factor = 0.01 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { SIA_pol_monthly_population = 0.1 tooltip = monthly_population_tt }
 			add_to_variable = { SIA_pol_political_power_factor = -0.05 tooltip = political_power_factor_tt }
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
 			base = 50
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
 		}
 	}
 
@@ -3774,7 +4032,11 @@ focus_tree = {
 			SIA_ds_cleanup_effect = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3808,7 +4070,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3836,7 +4102,11 @@ focus_tree = {
 			country_event = thailand.13
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -3865,11 +4135,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -3887,27 +4155,23 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_EXPENDITURE }
 
-		available = { has_army_experience > 30 }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_rearmament"
 			add_war_support = 0.05
 			add_command_power = 100
 			army_experience = 25
 			add_tech_bonus = {
-				name = SIA_rearmament_inf
+				name = SIA_rearmament
 				bonus = 1.0
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -3931,11 +4195,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -3973,14 +4235,14 @@ focus_tree = {
 				add_to_variable = { SIA_mil_army_org_factor = 0.05 tooltip = army_org_factor_tt }
 				add_to_variable = { SIA_mil_training_time_factor = -0.10 tooltip = training_time_factor_tt }
 			}
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_modernize_the_rta
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 			add_tech_bonus = {
-				name = SIA_modernize_rta_armor
+				name = SIA_modernize_the_rta
 				bonus = 1.0
 				uses = 1
 				category = CAT_armor
@@ -3988,11 +4250,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4029,21 +4289,19 @@ focus_tree = {
 			country_event = thailand.57
 			509 = { one_state_dockyard = yes }
 			add_tech_bonus = {
-				name = SIA_blue_water_navy_carrier
+				name = SIA_blue_water_navy
 				bonus = 1.0
 				uses = 1
-				category = CAT_carrier
+				category = CAT_aircraft_carriers
 			}
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4086,17 +4344,15 @@ focus_tree = {
 				name = SIA_gripen_squadrons_rearm
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4132,10 +4388,10 @@ focus_tree = {
 				category = CAT_artillery
 			}
 			add_tech_bonus = {
-				name = SIA_dti_self_reliance_infantry
+				name = SIA_dti_self_reliance
 				bonus = 0.5
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_consumer_goods_factor = -0.05 tooltip = consumer_goods_factor_tt }
@@ -4147,16 +4403,14 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
 			modifier = {
 				factor = 0
 				can_staff_an_arms_industry = no
 			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4183,6 +4437,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = BRM }
+				has_subject = BRM
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_thai_yai"
 			country_event = thailand.101
@@ -4199,11 +4460,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4229,6 +4488,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = LAO }
+				has_subject = LAO
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_mekong_destiny"
 			country_event = thailand.102
@@ -4245,11 +4511,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4275,6 +4539,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = CBD }
+				has_subject = CBD
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_preah_vihear"
 			country_event = thailand.103
@@ -4291,11 +4562,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4321,6 +4590,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = MAY }
+				has_subject = MAY
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_lost_sultanates"
 			country_event = thailand.104
@@ -4337,11 +4613,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4373,11 +4647,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4417,11 +4689,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -4445,10 +4715,10 @@ focus_tree = {
 				one_state_infrastructure = yes
 			}
 			add_tech_bonus = {
-				name = SIA_hsr_engineering
+				name = SIA_three_airport_rail
 				bonus = 0.5
 				uses = 2
-				category = CAT_construction_tech
+				category = CAT_construction
 			}
 			hidden_effect = {
 				country_event = { id = thailand.61 days = 180 random_days = 60 }
@@ -4517,14 +4787,14 @@ focus_tree = {
 				name = SIA_thailand_4_0
 				bonus = 1.0
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_political_power = 50
 			add_tech_bonus = {
-				name = SIA_thailand_4_0_internet
+				name = SIA_thailand_4_0
 				bonus = 1.0
 				uses = 1
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 			set_temp_variable = { temp_productivity_change = 40 }
 			every_owned_state = {
@@ -4584,10 +4854,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eastern_aviation_city"
 			add_tech_bonus = {
-				name = SIA_aerospace_mro
+				name = SIA_eastern_aviation_city
 				bonus = 0.5
 				uses = 2
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			508 = {
 				add_building_construction = {
@@ -4674,15 +4944,16 @@ focus_tree = {
 				one_state_radar_station = yes
 			}
 			add_tech_bonus = {
-				name = SIA_cavalry_of_the_sky_1
+				name = SIA_cavalry_of_the_sky
 				bonus = 0.5
 				uses = 2
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -4726,10 +4997,10 @@ focus_tree = {
 				add_to_variable = { SIA_mil_experience_gain_air_factor = 0.05 tooltip = experience_gain_air_factor_tt }
 			}
 			add_tech_bonus = {
-				name = SIA_gripen_deal_techtransfer
+				name = SIA_gripen_deal
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_opinion_modifier = { target = SWE modifier = medium_increase }
 			country_event = { id = thailand.65 days = 5 }
@@ -4740,6 +5011,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -4784,7 +5056,7 @@ focus_tree = {
 				name = SIA_gripen_ef_program
 				bonus = 0.75
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_equipment_to_stockpile = {
 				type = MR_Fighter4
@@ -4795,6 +5067,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -4832,12 +5105,15 @@ focus_tree = {
 				name = SIA_f5th_super_tigris
 				bonus = 1.0
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_opinion_modifier = { target = ISR modifier = medium_increase }
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -4867,7 +5143,7 @@ focus_tree = {
 				name = SIA_eyes_in_the_sky
 				bonus = 0.5
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			add_equipment_to_stockpile = {
 				type = Air_UAV1
@@ -4880,6 +5156,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 40
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -4913,7 +5190,7 @@ focus_tree = {
 				name = SIA_gripen_globaleye
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_equipment_to_stockpile = {
 				type = MR_Fighter4
@@ -4924,6 +5201,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -4970,7 +5248,7 @@ focus_tree = {
 				name = SIA_j10_squadrons
 				bonus = 1.0
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_opinion_modifier = { target = CHI modifier = medium_increase }
 			if = {
@@ -4981,6 +5259,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5024,12 +5303,13 @@ focus_tree = {
 				name = SIA_hq9_air_defense
 				bonus = 0.5
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5061,7 +5341,7 @@ focus_tree = {
 				name = SIA_wing_loong_uav
 				bonus = 1.0
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			add_equipment_to_stockpile = {
 				type = Air_UAV1
@@ -5082,6 +5362,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5109,7 +5390,7 @@ focus_tree = {
 				name = SIA_dti_uav_command
 				bonus = 0.5
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			add_equipment_to_stockpile = {
 				type = Air_UAV1
@@ -5118,7 +5399,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# AIR capstone (convergence; reachable from any path's terminal)
@@ -5156,7 +5440,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5190,6 +5477,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_arms_industry = no }
 		}
@@ -5240,7 +5528,10 @@ focus_tree = {
 			add_opinion_modifier = { target = CHI modifier = medium_increase }
 		}
 
-		ai_will_do = { base = 30 }
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5284,11 +5575,11 @@ focus_tree = {
 					province = 12230
 				}
 			}
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_stream_of_the_navy
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 			hidden_effect = {
 				country_event = { id = thailand.281 days = 5 }
@@ -5297,6 +5588,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 25
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
 		}
@@ -5339,7 +5631,7 @@ focus_tree = {
 				name = SIA_s26t_program
 				bonus = 0.5
 				uses = 1
-				category = CAT_sub
+				category = CAT_submarines
 			}
 			add_opinion_modifier = { target = CHI modifier = medium_increase }
 			hidden_effect = {
@@ -5349,6 +5641,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5392,7 +5685,10 @@ focus_tree = {
 			add_opinion_modifier = { target = USA modifier = medium_increase }
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5430,11 +5726,11 @@ focus_tree = {
 				army_experience = 50
 			}
 			add_opinion_modifier = { target = USA modifier = medium_increase }
-			add_tech_bonus = {
-				name = SIA_cobra_gold_land_doctrine
-				bonus = 0.5
+			add_doctrine_cost_reduction = {
+				name = SIA_cobra_gold_focus
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.05 tooltip = land_doctrine_cost_factor_tt }
@@ -5451,6 +5747,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 50
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = {
 				is_historical_focus_on = yes
 				add = 20
@@ -5487,7 +5784,7 @@ focus_tree = {
 				name = SIA_eda_blackhawks
 				bonus = 1.0
 				uses = 1
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 			add_equipment_to_stockpile = {
 				type = transport_helicopter_1
@@ -5506,6 +5803,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5547,7 +5845,10 @@ focus_tree = {
 			army_experience = 25
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5586,7 +5887,10 @@ focus_tree = {
 			army_experience = 25
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# Self+Others land path: "The Tiger's Own Teeth" (align_self)
@@ -5620,11 +5924,14 @@ focus_tree = {
 				name = SIA_tavor_standard
 				bonus = 1.0
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5659,7 +5966,7 @@ focus_tree = {
 				name = SIA_oplot_and_rotors
 				bonus = 0.5
 				uses = 1
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 			if = {
 				limit = { country_exists = USA }
@@ -5674,6 +5981,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5711,7 +6019,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# LAND capstone (convergence; reachable from any path's terminal)
@@ -5749,7 +6060,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5788,17 +6102,18 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -2.5 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_korean_frigates
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 			add_opinion_modifier = { target = KOR modifier = medium_increase }
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -5835,12 +6150,13 @@ focus_tree = {
 				name = SIA_chakri_modernization
 				bonus = 0.5
 				uses = 1
-				category = CAT_carrier
+				category = CAT_aircraft_carriers
 			}
 		}
 
 		ai_will_do = {
 			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
 		}
@@ -5871,13 +6187,14 @@ focus_tree = {
 				name = SIA_uxv_carrier_conversion
 				bonus = 0.5
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			country_event = { id = thailand.67 days = 7 }
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
 		}
@@ -5912,13 +6229,16 @@ focus_tree = {
 				name = SIA_chinese_engine_compromise
 				bonus = 0.5
 				uses = 1
-				category = CAT_sub
+				category = CAT_submarines
 			}
 			add_timed_idea = { idea = SIA_chd620_teething days = 365 }
 			navy_experience = 25
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -5942,16 +6262,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_type071_flotilla"
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_type071_flotilla
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 			navy_experience = 25
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# Self+Others sea path: "Built in Sattahip" (align_self)
@@ -5987,16 +6310,17 @@ focus_tree = {
 			}
 			set_temp_variable = { treasury_change = -2.5 }
 			modify_treasury_effect = yes
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_krabi_class_opv
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
 		}
@@ -6021,11 +6345,11 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_navy_max_range_factor = 0.1 tooltip = navy_max_range_factor_tt }
 			add_to_variable = { SIA_mil_naval_morale_factor = 0.05 tooltip = naval_morale_factor_tt }
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_european_propulsion
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 			if = {
 				limit = { country_exists = GER }
@@ -6033,7 +6357,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -6066,16 +6393,17 @@ focus_tree = {
 			add_to_variable = { SIA_mil_industrial_capacity_dockyard = 0.1 tooltip = industrial_capacity_dockyard_tt }
 			add_to_variable = { SIA_mil_trade_opinion_factor = 0.1 tooltip = trade_opinion_factor_tt }
 			508 = { one_state_dockyard = yes }
-			add_tech_bonus = {
+			add_doctrine_cost_reduction = {
 				name = SIA_naval_self_reliance
-				bonus = 0.5
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 		}
 
 		ai_will_do = {
 			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_dockyard = no }
 		}
@@ -6113,7 +6441,10 @@ focus_tree = {
 			change_the_military_opinion = yes
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# ALIGNMENT CAPSTONES — the grand payoff.
@@ -6142,7 +6473,7 @@ focus_tree = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = SIA_not_ruled_by_communists_tt
-				NOT = { is_in_array = { ruling_party = 4 } }
+				NOT = { check_variable = { ruling_party = 4 } }
 			}
 		}
 
@@ -6178,7 +6509,10 @@ focus_tree = {
 			add_command_power = 50
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -6235,7 +6569,10 @@ focus_tree = {
 			add_command_power = 50
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -6274,7 +6611,10 @@ focus_tree = {
 			add_command_power = 50
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -6317,7 +6657,10 @@ focus_tree = {
 			add_command_power = 50
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -6346,7 +6689,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6386,7 +6733,11 @@ focus_tree = {
 			country_event = { id = thailand.416 days = 1 }
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6408,8 +6759,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_senate_of_appointees"
 			add_political_power = 50
-			# S-2: SIA_isoc_network (post appointed_senate merge) may already be held via the parallel
-			# SIA_isoc_state branch.
 			if = { limit = { NOT = { has_idea = SIA_isoc_network } } add_ideas = SIA_isoc_network }
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
@@ -6422,7 +6771,11 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6457,7 +6810,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6484,7 +6841,11 @@ focus_tree = {
 			country_event = { id = thailand.211 days = 5 }
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6514,17 +6875,21 @@ focus_tree = {
 				name = SIA_digital_democracy
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_tech_bonus = {
-				name = SIA_digital_democracy_internet
+				name = SIA_digital_democracy
 				bonus = 0.5
 				uses = 1
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6560,7 +6925,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6607,7 +6976,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6626,7 +6999,7 @@ focus_tree = {
 
 		available = {
 			date > 2005.2.6
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -6645,7 +7018,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 70 }
+		ai_will_do = {
+			base = 70
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6663,7 +7040,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 			date > 2011.8.1
 		}
 
@@ -6688,6 +7065,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 40
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -6706,7 +7085,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 			NOT = { has_idea = SIA_junta_government }
 		}
 
@@ -6717,7 +7096,11 @@ focus_tree = {
 			SIA_coup_set_risk = yes
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6734,7 +7117,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
-		available = { has_country_flag = SIA_path_populist }
+		available = { SIA_populist_trunk_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_heartland_development"
@@ -6747,6 +7130,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 50
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
 		}
 	}
 
@@ -6764,7 +7149,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_MILITARY_LAWS }
 
-		available = { has_country_flag = SIA_path_royalist }
+		available = { SIA_royalist_trunk_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eastern_tigers"
@@ -6773,7 +7158,11 @@ focus_tree = {
 			add_political_power = 50
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6791,7 +7180,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
+			SIA_royalist_trunk_open = yes
 			date > 2014.5.22
 		}
 
@@ -6807,7 +7196,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6825,17 +7218,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
+			SIA_royalist_trunk_open = yes
 			date > 2016.10.13
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_royal_succession_managed"
 			set_country_flag = SIA_succession_done
-			if = {
-				limit = { has_idea = SIA_kings_moral_authority }
-				remove_ideas = SIA_kings_moral_authority
-			}
 			# Premium over thailand.14's unmanaged path: settles at Ninth Reign, not Tenth.
 			if = {
 				limit = { has_idea = SIA_ninth_reign_zenith }
@@ -6853,7 +7242,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 SIA_ai_historical_path = yes }
+			modifier = { factor = 0 SIA_ai_not_historical_government_path = yes }
+		}
 	}
 
 	focus = {
@@ -6887,7 +7280,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 50 }
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6919,7 +7316,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 60 }
+		ai_will_do = {
+			base = 60
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
+		}
 	}
 
 	focus = {
@@ -6948,6 +7349,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 40
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REFORMIST_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_reformist_path = yes }
 		}
 	}
 
@@ -7005,13 +7408,12 @@ focus_tree = {
 			if = {
 				limit = { NOT = { has_country_flag = SIA_ds_active } }
 				set_country_flag = SIA_ds_active
-				set_variable = { SIA_insurgency_intensity = 25 }
-				# Twin-meter: seed the community-grievance root cause behind the violence. Kept well
-				# under intensity so the derived floor (0.6x) leaves the counter-insurgency ladders
-				# room to actually move the meter down.
+				set_variable = { SIA_insurgency_intensity = 30 }
 				set_variable = { SIA_ds_grievance = 15 }
 				SIA_ds_recompute_floor = yes
-				add_ideas = SIA_deep_south_insurgency_1
+				# Tier 2 is what intensity 30 resolves to (SIA_ds_update_tier: > 29). Named outright
+				# rather than derived so the focus tooltip shows the spirit the player actually gets.
+				add_ideas = SIA_deep_south_insurgency_2
 			}
 			custom_effect_tooltip = SIA_the_southern_question_choice_tt
 			country_event = { id = thailand.350 days = 1 }
@@ -7020,8 +7422,6 @@ focus_tree = {
 		ai_will_do = { base = 40 }
 	}
 
-	# Deep South three-track arc (Z6) One shared crisis (anchored at SIA_the_southern_question,
-	# 65,1) with three path-locked answers:
 	focus = {
 		id = SIA_iron_fist_doctrine
 		icon = generic_counter_insurgency_icon
@@ -7033,19 +7433,23 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_royal_development_projects focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_populist
-			has_country_flag = SIA_ds_active
+			OR = {
+				SIA_populist_trunk_open = yes
+				SIA_communist_trunk_open = yes
+			}
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
 		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_iron_fist_doctrine"
-			custom_effect_tooltip = SIA_iron_fist_doctrine_tt
 			set_temp_variable = { ds_delta = -10 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7074,17 +7478,18 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_iron_fist_doctrine
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_iron_fist_doctrine }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_iron_fist_doctrine }
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_martial_law_south"
-			custom_effect_tooltip = SIA_martial_law_south_tt
 			set_temp_variable = { ds_delta = -8 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7105,25 +7510,25 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_martial_law_south
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_martial_law_south }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
-			# (Hard rebalance): the decisive sweep can't begin while the South is in open revolt — grind
-			# intensity down with decisions first.
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_50_tt
 				check_variable = { SIA_insurgency_intensity < 50 }
 			}
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_search_and_destroy"
-			custom_effect_tooltip = SIA_search_and_destroy_tt
 			set_temp_variable = { ds_delta = -12 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 10 }
@@ -7156,12 +7561,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
 			}
 		}
+
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_pacification_complete"
@@ -7175,8 +7584,6 @@ focus_tree = {
 		ai_will_do = { base = 20 }
 	}
 
-	## Royal Development ladder (Royalist) — x=65 SIA_royal_development_projects is the MERGE
-	## target for SIA_southern_development_push.
 	focus = {
 		id = SIA_royal_development_projects
 		icon = stability
@@ -7188,19 +7595,20 @@ focus_tree = {
 		cost = 7
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
-			has_country_flag = SIA_ds_active
+			SIA_royalist_trunk_open = yes
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
 		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_royal_development_projects"
-			custom_effect_tooltip = SIA_royal_development_projects_tt
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -6 }
@@ -7229,7 +7637,9 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_royal_development_projects }
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_isoc_southern_command"
@@ -7257,25 +7667,25 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_isoc_southern_command
 
-		cost = 5
+		cost = 4
 
 		prerequisite = { focus = SIA_isoc_southern_command }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
 			}
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_winning_hearts_royally"
-			custom_effect_tooltip = SIA_winning_hearts_royally_tt
-			# Twin-meter: patronage and development heal the grievance behind the revolt. Grievance
-			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -12 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
@@ -7300,19 +7710,23 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_winning_hearts_royally
 
-		cost = 6
+		cost = 7
 
 		prerequisite = { focus = SIA_winning_hearts_royally }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_30_tt
 				check_variable = { SIA_insurgency_intensity < 30 }
 			}
 		}
+
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_southern_calm"
@@ -7337,24 +7751,26 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_royal_development_projects }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_democrat
-			has_country_flag = SIA_ds_active
+			OR = {
+				SIA_democrat_trunk_open = yes
+				SIA_reform_trunk_open = yes
+			}
 			has_stability > 0.45
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
 		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_peace_dialogue_initiative"
-			# Twin-meter: coming to the table starts to address the grievance directly. Grievance (floor)
-			# down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
-			custom_effect_tooltip = SIA_peace_dialogue_initiative_tt
 			set_temp_variable = { ds_delta = -5 }
 			SIA_ds_set_intensity = yes
 			add_opinion_modifier = { target = MAY modifier = medium_increase }
@@ -7378,13 +7794,15 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
-			has_stability > 0.45
+			has_stability > 0.50
 		}
+
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_mara_patani_talks"
-			custom_effect_tooltip = SIA_mara_patani_talks_tt
 			# Twin-meter: formal negotiation with MARA Patani eases grievance substantially. Grievance
 			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -14 }
@@ -7412,21 +7830,23 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_35_tt
 				check_variable = { SIA_insurgency_intensity < 35 }
 			}
 		}
 
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_autonomy_framework"
-			custom_effect_tooltip = SIA_autonomy_framework_tt
-			set_temp_variable = { ds_grievance_delta = -16 }
+			set_temp_variable = { ds_grievance_delta = -15 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
 			SIA_ds_set_intensity = yes
-			country_event = { id = thailand.359 days = 3 }
+			country_event = { id = thailand.359 days = 1 }
 		}
 
 		ai_will_do = { base = 30 }
@@ -7447,12 +7867,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_25_tt
 				check_variable = { SIA_insurgency_intensity < 25 }
 			}
 		}
+
+		# The episode ends when the insurgency does; an unfinished ladder must not sit on a
+		# focus slot moving meters nothing reads any more.
+		bypass = { NOT = { has_country_flag = SIA_ds_active } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_pattani_peace_accord"
@@ -7479,9 +7903,6 @@ focus_tree = {
 		}
 	}
 
-	# ZONE 7 — KRA CANAL MEGAPROJECT Anchor SIA_kra_gateway (abs 76,2) is the only absolute root
-	# in Z7; every other focus chains to it via relative_position_id.
-
 	focus = {
 		id = SIA_kra_gateway
 		icon = naval_industry
@@ -7501,8 +7922,6 @@ focus_tree = {
 			NOT = { has_country_flag = SIA_imf_program_active }
 		}
 
-		# G-KRA gate: economy dependency satisfied only by has_completed_focus inside `available`; NO
-		# prerequisite = { focus = SIA_thailand_4_0 }.
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_kra_gateway"
 			set_temp_variable = { treasury_change = -30 }
@@ -7522,8 +7941,6 @@ focus_tree = {
 		}
 	}
 
-	# Patron fan — 4 hidden mutually-exclusive focuses; the player picks one in thailand.380,
-	# which completes the matching focus and sets the patron flag.
 	focus = {
 		id = SIA_kra_patron_china
 		icon = trade_with_china
@@ -7556,7 +7973,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -7592,7 +8009,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -7629,7 +8046,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -7665,7 +8082,7 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -7724,22 +8141,22 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -6 }
 			modify_treasury_effect = yes
 			add_tech_bonus = {
-				name = SIA_two_oceans_sub_1
+				name = SIA_two_oceans_one_kingdom
 				bonus = 1.0
 				uses = 1
-				category = CAT_atk_sub
+				category = CAT_attack_submarines
 			}
 			add_tech_bonus = {
-				name = SIA_two_oceans_sub_2
+				name = SIA_two_oceans_one_kingdom
 				bonus = 1.0
 				uses = 1
-				category = CAT_atk_sub
+				category = CAT_attack_submarines
 			}
-			add_tech_bonus = {
-				name = SIA_two_oceans_naval_doctrine
-				bonus = 1.0
+			add_doctrine_cost_reduction = {
+				name = SIA_two_oceans_one_kingdom
+				cost_reduction = 1.0
 				uses = 1
-				category = CAT_naval_doctrine
+				category = naval_doctrine
 			}
 			navy_experience = 100
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
@@ -7904,7 +8321,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_command_power_gain_mult = 0.05 tooltip = command_power_gain_mult_tt }
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# HOMELAND DEFENSE — Fortifications & territorial defence Thematically a sub-branch of
@@ -7944,7 +8364,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_production_speed_bunker_factor = 0.10 tooltip = production_speed_bunker_factor_tt }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	# Capability pillars (y=1 rel head)
@@ -7982,6 +8405,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8009,7 +8433,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_dig_in_speed_factor = 0.10 tooltip = dig_in_speed_factor_tt }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -8045,6 +8472,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8091,6 +8519,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 8
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8130,6 +8559,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 8
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8168,6 +8598,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 8
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -8198,7 +8629,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_enemy_attrition = 0.15 tooltip = enemy_attrition_tt }
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = {
+			base = 8
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -8215,40 +8649,31 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = {
-			# The party only marches once it has a real base — the Communist Party (sub-ideology idx 4)
-			# must hold at least 5% of the popular vote.
-			custom_trigger_tooltip = {
-				tooltip = SIA_ghosts_5pct_tt
-				check_variable = { party_pop_array^4 > 0.05 }
-			}
-		}
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_ghosts_of_the_jungle"
+			# Path reset first: it zeroes the drive and strips SIA_red_revival.
+			SIA_clear_path_flags = yes
 			set_country_flag = SIA_path_communist
-			# Grow the emerging (communist) outlook alongside the party share, or the relative shift just
-			# caps out at Thailand's near-zero communist bloc.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.20 }
-			set_temp_variable = { temp_outlook_increase = 0.20 }
-			change_relative_party_popularity = yes
-			custom_effect_tooltip = SIA_outlook_emerging_tt
-			recalculate_party = yes
+			SIA_coup_cleanup_effect = yes
+			set_country_flag = generic_election_killswitch
+
+			custom_effect_tooltip = SIA_red_road_elections_tt
+			set_variable = { SIA_drive_party = 4 }
+			set_variable = { SIA_drive_rate = 0.0035 }
+			set_variable = { SIA_drive_weeks = 52 }
+			custom_effect_tooltip = SIA_drive_ghosts_tt
 			add_ideas = SIA_red_revival
 		}
 
 		ai_will_do = {
-			base = 0
+			base = 1
 			modifier = {
 				add = 3
 				is_historical_focus_on = no
 				check_variable = { party_pop_array^4 > 0.05 }
 			}
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 3 }
-			}
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
 		}
 	}
 
@@ -8266,29 +8691,38 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
 
+		available = { SIA_communist_road_open = yes
+					custom_trigger_tooltip = {
+					tooltip = SIA_ghosts_5pct_tt
+					check_variable = { party_pop_array^4 > 0.05 }
+			}
+		}
+		bypass = { SIA_communist_trunk_open = yes }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_isaan_soviets"
-			# Raise the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.15 }
-			set_temp_variable = { temp_outlook_increase = 0.15 }
-			change_relative_party_popularity = yes
-			custom_effect_tooltip = SIA_outlook_emerging_tt
-			recalculate_party = yes
-			# N-1: SIA_western_sanctions can also arrive via thailand.251.a; guard so this grant is
-			# idempotent rather than a silent no-op double-add.
+			# Stacks on top of SIA_ghosts_of_the_jungle's drive and re-arms the year.
+			set_variable = { SIA_drive_party = 4 }
+			add_to_variable = { SIA_drive_rate = 0.0035 }
+			set_variable = { SIA_drive_weeks = 26 }
+			custom_effect_tooltip = SIA_drive_isaan_tt
+			unlock_decision_category_tooltip = SIA_red_path_category
 			if = { limit = { NOT = { has_idea = SIA_western_sanctions } } add_ideas = SIA_western_sanctions }
 			if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } } }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
 		id = SIA_general_strike
 		icon = political_pressure
 
-		x = 0
+		x = -1
 		y = 1
 		relative_position_id = SIA_isaan_soviets
 
@@ -8298,6 +8732,10 @@ focus_tree = {
 		mutually_exclusive = { focus = SIA_protracted_peoples_war }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { SIA_communist_road_open = yes }
+
+		bypass = { SIA_communist_trunk_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_general_strike"
@@ -8309,23 +8747,28 @@ focus_tree = {
 			custom_effect_tooltip = SIA_outlook_emerging_tt
 			recalculate_party = yes
 			add_political_power = 50
-			# Open the 180-day strike: a decision-driven push toward capitulation.
+			# Open the year-long strike: a decision-driven push toward capitulation.
 			set_country_flag = SIA_strike_active
 			set_variable = { SIA_strike_momentum = 0 }
-			add_timed_idea = { idea = SIA_general_strike_idea days = 180 }
+			set_variable = { SIA_strike_days_left = 365 }
+			add_timed_idea = { idea = SIA_general_strike_idea days = 365 }
 			hidden_effect = {
-				country_event = { id = thailand.259 days = 180 }
+				country_event = { id = thailand.259 days = 365 }
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 50 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
 		id = SIA_protracted_peoples_war
 		icon = focus_CHI_guerrilla_warfare
 
-		x = 2
+		x = 1
 		y = 1
 		relative_position_id = SIA_isaan_soviets
 
@@ -8336,18 +8779,22 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
 
+		bypass = { SIA_communist_trunk_open = yes }
+
+		available = {
+			SIA_communist_road_open = yes
+			has_civil_war = no
+			custom_trigger_tooltip = {
+				tooltip = communist_state_20_tt
+				check_variable = { party_pop_array^4 > 0.2 }
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_protracted_peoples_war"
 			# This is the armed road — set the same flag the crackdown branch of thailand.250 sets, so
 			# downstream content reads one consistent state.
 			set_country_flag = SIA_communist_armed_path
-			# Lift the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.10 }
-			change_relative_party_popularity = yes
-			custom_effect_tooltip = SIA_outlook_emerging_tt
-			recalculate_party = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
 			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
@@ -8368,16 +8815,46 @@ focus_tree = {
 			hidden_effect = {
 				news_event = { id = thailand_news.31 days = 2 }
 			}
+			custom_effect_tooltip = SIA_ppw_uprising_tt
+			hidden_effect = {
+				start_civil_war_with_no_leader_change = yes
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+				set_temp_variable = { nation_to_copy_from = PREV }
+				copy_subideolgy_leader_throughput = yes
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.5
+				}
+				start_politics_input = yes
+				set_variable = { ruling_party = 4 }
+				set_variable = { party_pop_array^4 = 0.9 }
+				startup_politics = yes
+				set_leader = yes
+			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
 		id = SIA_people_seize_power
 		icon = armed_revolution
 
-		x = 0
+		x = 1
 		y = 1
 		relative_position_id = SIA_general_strike
 
@@ -8387,8 +8864,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		bypass = {
+			SIA_communist_trunk_open = yes
+			has_civil_war = no
+		}
+
 		available = {
-			# You cannot simply click your way into power.
+			SIA_communist_road_open = yes
+			has_civil_war = no
 			custom_trigger_tooltip = {
 				tooltip = SIA_seize_power_gate_tt
 				OR = {
@@ -8398,48 +8881,21 @@ focus_tree = {
 			}
 		}
 
-		completion_reward = {
+		bypass_effect = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_people_seize_power"
-			SIA_remove_barami = yes
-			SIA_remove_three_pillars = yes
-			if = {
-				limit = { has_idea = SIA_network_monarchy_idea }
-				remove_ideas = SIA_network_monarchy_idea
-			}
-			if = {
-				limit = { has_idea = SIA_kings_moral_authority }
-				remove_ideas = SIA_kings_moral_authority
-			}
-			if = {
-				limit = { has_idea = SIA_peoples_constitution }
-				remove_ideas = SIA_peoples_constitution
-			}
-			if = {
-				limit = { has_idea = SIA_junta_government }
-				remove_ideas = SIA_junta_government
-			}
-			if = {
-				limit = { has_country_flag = SIA_communist_armed_path }
-				start_civil_war = {
-					ruling_party = communism
-					ideology = nationalist
-					size = 0.45
-				}
-				add_war_support = 0.10
-			}
-			# Formalize the communist state on our side: exact party index, name, leader and suspended
-			# elections (thailand.70-style protocol).
-			set_temp_variable = { rul_party_temp = 4 }
-			set_temp_variable = { disable_elections = 1 }
-			change_ruling_party_effect = yes
-			update_party_name = yes
-			set_leader_SIA = yes
-			hidden_effect = {
-				country_event = { id = thailand.251 days = 3 }
-			}
+			SIA_communist_seizure_effect = yes
 		}
 
-		ai_will_do = { base = 5 }
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_people_seize_power"
+			SIA_communist_seizure_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	# Fork 2 — consolidating the revolution. How does the new state treat the old order and its
@@ -8474,7 +8930,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -8509,7 +8969,11 @@ focus_tree = {
 			recalculate_party = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 30 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -8543,13 +9007,10 @@ focus_tree = {
 				remove_ideas = SIA_crown_property_idea
 			}
 			if = {
-				limit = { has_idea = SIA_privy_council_idea }
-				remove_ideas = SIA_privy_council_idea
-			}
-			if = {
 				limit = { has_idea = landowners }
 				swap_ideas = { remove_idea = landowners add_idea = farmers }
 			}
+			if = { limit = { has_idea = SIA_two_thailands } remove_ideas = SIA_two_thailands }
 			hidden_effect = {
 				country_event = { id = thailand.252 days = 30 random_days = 30 }
 			}
@@ -8558,6 +9019,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
 		}
 	}
 
@@ -8593,6 +9056,8 @@ focus_tree = {
 			base = 5
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_industrial_complex = no }
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
 		}
 	}
 
@@ -8619,7 +9084,7 @@ focus_tree = {
 				name = SIA_peoples_army
 				bonus = 0.5
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_conscription_factor = 0.1 tooltip = conscription_factor_tt }
@@ -8628,7 +9093,11 @@ focus_tree = {
 			army_experience = 25
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 30 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -8656,7 +9125,11 @@ focus_tree = {
 			decrease_corruption = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -8681,7 +9154,11 @@ focus_tree = {
 			country_event = { id = thailand.253 days = 1 }
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -8689,7 +9166,7 @@ focus_tree = {
 		icon = coalition_army
 
 		x = 2
-		y = 0
+		y = 1
 		relative_position_id = SIA_coalition_kingmakers
 
 		cost = 6
@@ -8747,14 +9224,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_democrat_revival"
-			SIA_clear_path_flags = yes
-			set_country_flag = SIA_path_democrat
+			# Full realignment, not just the flag: the detector's own guard sees SIA_path_democrat
+			# already set and skips the strip, so it has to happen here.
+			SIA_realign_to_democrat = yes
 			# Flip the government back to the Democrats (idx 1, conservatism); the leader dispatch + party
 			# name are handled by change_ruling_party_effect.
 			set_temp_variable = { rul_party_temp = 1 }
 			change_ruling_party_effect = yes
-			update_party_name = yes
-			set_leader_SIA = yes
 			set_temp_variable = { party_index = 1 }
 			set_temp_variable = { party_popularity_increase = 0.10 }
 			set_temp_variable = { temp_outlook_increase = 0.10 }
@@ -8762,7 +9238,6 @@ focus_tree = {
 			custom_effect_tooltip = SIA_outlook_western_tt
 			recalculate_party = yes
 			add_ideas = SIA_loyal_opposition
-			set_country_flag = SIA_democrat_machine_active
 			set_variable = { SIA_pheu_thai_pressure = 40 }
 			SIA_pt_update_tier = yes
 		}
@@ -8861,7 +9336,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -8885,7 +9363,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
 		}
 
-		ai_will_do = { base = 30 }
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -8905,16 +9386,16 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_dti_expansion"
 			add_tech_bonus = {
-				name = SIA_dti_expansion_artillery
+				name = SIA_dti_expansion
 				bonus = 0.5
 				uses = 1
 				category = CAT_artillery
 			}
 			add_tech_bonus = {
-				name = SIA_dti_expansion_drone
+				name = SIA_dti_expansion
 				bonus = 0.5
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			one_random_arms_factory = yes
 			set_temp_variable = { treasury_change = -8 }
@@ -8923,6 +9404,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 25
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0 can_staff_an_arms_industry = no }
 		}
@@ -8953,7 +9435,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 15 }
+		ai_will_do = {
+			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -8993,7 +9478,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9047,7 +9535,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9077,7 +9568,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 15 }
+		ai_will_do = {
+			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9124,14 +9618,17 @@ focus_tree = {
 			}
 			set_variable = { SIA_arsenal_tier = 2 }
 			add_tech_bonus = {
-				name = SIA_self_reliant_base
+				name = SIA_self_reliant_defense_base
 				bonus = 1.0
 				uses = 1
 				category = CAT_artillery
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9156,7 +9653,7 @@ focus_tree = {
 				name = SIA_cyber_command
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
@@ -9171,7 +9668,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9211,7 +9711,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -9255,7 +9759,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 30 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -9305,7 +9813,11 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 25 has_global_flag = SIA_PEOPLES_REPUBLIC_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_peoples_republic_path = yes }
+		}
 	}
 
 	focus = {
@@ -9337,7 +9849,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 30 }
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9387,6 +9902,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 25
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -9426,7 +9942,10 @@ focus_tree = {
 			country_event = { id = thailand.330 days = 3 }
 		}
 
-		ai_will_do = { base = 25 }
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9465,22 +9984,22 @@ focus_tree = {
 			add_to_variable = { SIA_mil_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			add_to_variable = { SIA_mil_cyber_capability_modifier = 2 tooltip = cyber_capability_modifier_tt }
 			add_tech_bonus = {
-				name = SIA_mdo_l_drone
+				name = SIA_multi_domain_operations
 				bonus = 1.0
 				uses = 1
-				category = CAT_l_drone
+				category = CAT_land_drones
 			}
 			add_tech_bonus = {
-				name = SIA_mdo_computing
+				name = SIA_multi_domain_operations
 				bonus = 1.0
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
-			add_tech_bonus = {
-				name = SIA_mdo_land_doctrine
-				bonus = 1.0
+			add_doctrine_cost_reduction = {
+				name = SIA_multi_domain_operations
+				cost_reduction = 1.0
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 			# Standing up cross-domain command eats budget before the doctrine starts paying for itself.
 			add_timed_idea = { idea = SIA_mdo_integration_strain days = 180 }
@@ -9489,7 +10008,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9536,6 +10058,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 60
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { add = 30 is_historical_focus_on = yes }
 		}
 	}
@@ -9574,6 +10097,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { add = 40 has_country_flag = SIA_path_royalist }
 		}
 	}
@@ -9641,6 +10165,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 25
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -9672,7 +10197,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -9692,6 +10220,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_protector_of_the_realm_focus"
 			set_country_flag = SIA_reconstruction_unlocked
+			unlock_decision_category_tooltip = SIA_reconstruction_category
 			add_political_power = 50
 			add_ideas = SIA_protector_of_the_realm
 			if = {
@@ -9712,12 +10241,10 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -9923,7 +10450,10 @@ focus_tree = {
 
 		cost = 10
 
-		allow_branch = { has_dlc = "Gotterdammerung" }
+		allow_branch = {
+			has_dlc = "Gotterdammerung"
+			NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+		}
 
 		prerequisite = { focus = SIA_dual_use_threshold }
 
@@ -9954,9 +10484,12 @@ focus_tree = {
 					add_idea = nuclear_power_def
 				}
 			}
-			add_equipment_to_stockpile = {
-				type = nuclear_missile_equipment_1
-				amount = 3
+			if = {
+				limit = { nuclear_grant_allowed = yes }
+				add_equipment_to_stockpile = {
+					type = nuclear_missile_equipment_1
+					amount = 3
+				}
 			}
 			add_named_threat = {
 				threat = 8
@@ -10052,7 +10585,7 @@ focus_tree = {
 				add_extra_state_shared_building_slots = 1
 				add_building_construction = { type = microchip_plant level = 1 instant_build = yes }
 			}
-			add_tech_bonus = { name = SIA_hard_disk_bonus bonus = 1.0 uses = 1 category = CAT_computing_tech }
+			add_tech_bonus = { name = SIA_hard_disk_of_the_world bonus = 1.0 uses = 1 category = CAT_information_technology }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_min_export = 0.05 tooltip = min_export_tt }
 			add_to_variable = { SIA_econ_microchip_export_multiplier_modifier = -0.1 tooltip = microchip_export_multiplier_modifier_tt }
@@ -10110,13 +10643,24 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_RESEARCH }
 
+		bypass = { date > 2011.1.1 }
+
+		bypass_effect = {
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
+			add_to_variable = { SIA_econ_research_speed_factor = -0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { SIA_econ_productivity_growth_modifier = -0.40 tooltip = productivity_growth_modifier_tt }
+			add_to_variable = { SIA_econ_monthly_population = -0.05 tooltip = monthly_population_tt }
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_ignite_thailand"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_research_speed_factor = -0.05 tooltip = research_speed_factor_tt }
 			add_to_variable = { SIA_econ_productivity_growth_modifier = -0.40 tooltip = productivity_growth_modifier_tt }
 			add_to_variable = { SIA_econ_monthly_population = -0.05 tooltip = monthly_population_tt }
-			add_tech_bonus = { name = SIA_ignite_bonus bonus = 0.5 uses = 1 category = CAT_computing_tech }
+			add_tech_bonus = { name = SIA_ignite_thailand bonus = 0.5 uses = 1 category = CAT_information_technology }
 			add_political_power = 50
 			set_temp_variable = { temp_opinion = -10 }
 			change_small_medium_business_owners_opinion = yes
@@ -10262,14 +10806,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 10
-			modifier = {
-				factor = 0
-				check_variable = { global.SIA_ai_road = 1 }
-			}
-			modifier = {
-				factor = 3
-				check_variable = { global.SIA_ai_road = 2 }
-			}
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10297,11 +10835,9 @@ focus_tree = {
 
 		# The gateway to founding SEATO, so only the SEATO AI pushes for it.
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 2 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10337,6 +10873,7 @@ focus_tree = {
 				limit = { is_in_faction = no }
 				create_faction_from_template = faction_template_sia_seato
 			}
+			unlock_decision_category_tooltip = SIA_seato_accession_category
 			set_temp_variable = { treasury_change = -15 }
 			modify_treasury_effect = yes
 			set_temp_variable = { temp_opinion = 10 }
@@ -10345,11 +10882,9 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10424,11 +10959,9 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10510,11 +11043,9 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10578,11 +11109,9 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10613,11 +11142,11 @@ focus_tree = {
 			else = {
 				army_experience = 50
 			}
-			add_tech_bonus = {
-				name = SIA_joint_command_doctrine
-				bonus = 0.5
+			add_doctrine_cost_reduction = {
+				name = SIA_joint_command
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_land_doctrine_cost_factor = -0.1 tooltip = land_doctrine_cost_factor_tt }
@@ -10627,10 +11156,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10659,10 +11186,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10700,13 +11225,11 @@ focus_tree = {
 		ai_will_do = {
 			base = 5
 			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
-			modifier = {
 				factor = 5
 				has_completed_focus = SIA_arms_exporter
 			}
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10743,10 +11266,8 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 3
-				is_historical_focus_on = no
-			}
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -10847,16 +11368,16 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_partner_japan"
 			add_opinion_modifier = { target = JAP modifier = medium_increase }
 			add_tech_bonus = {
-				name = SIA_partner_japan_electronics
+				name = SIA_partner_japan
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_tech_bonus = {
-				name = SIA_partner_japan_industry
+				name = SIA_partner_japan
 				bonus = 0.5
 				uses = 1
-				category = CAT_util
+				category = CAT_utility_vehicles
 			}
 			set_temp_variable = { int_investment_change = 5 }
 			modify_international_investment_effect = yes
@@ -10889,10 +11410,10 @@ focus_tree = {
 			air_experience = 30
 			add_opinion_modifier = { target = KOR modifier = medium_increase }
 			add_tech_bonus = {
-				name = SIA_partner_korea_industry
+				name = SIA_partner_korea
 				bonus = 0.5
 				uses = 1
-				category = CAT_util
+				category = CAT_utility_vehicles
 			}
 			if = {
 				limit = { KOR = { has_tech = infantry_weapons_2 } }
@@ -10964,10 +11485,10 @@ focus_tree = {
 			army_experience = 25
 			add_opinion_modifier = { target = TAI modifier = medium_increase }
 			add_tech_bonus = {
-				name = SIA_partner_taiwan_tech
+				name = SIA_partner_taiwan
 				bonus = 0.5
 				uses = 1
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 			if = {
 				limit = { country_exists = CHI }
@@ -11220,14 +11741,15 @@ focus_tree = {
 
 		prerequisite = { focus = SIA_anti_narcotics_bureau }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_golden_triangle_interdiction"
-			add_stability = 0.03
-			set_temp_variable = { treasury_change = 3 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SIA_golden_triangle_interdiction_tt
+			add_stability = 0.05
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_politics_modifier }
+			add_to_variable = { SIA_pol_corruption_cost_factor = -0.05 tooltip = corruption_cost_factor_tt }
 			hidden_effect = {
 				if = {
 					# B-1 guard: don't re-fire.362 if thailand.3 Option C already did.
@@ -11240,7 +11762,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	focus = {
@@ -11323,7 +11848,7 @@ focus_tree = {
 			# stability swing (contrast SIA_decentralize_governance's provincial office + construction.
 			508 = { one_state_industrial_complex = yes }
 			add_tech_bonus = {
-				name = SIA_bangkok_industrial_rnd
+				name = SIA_bangkok_primacy
 				bonus = 0.5
 				uses = 1
 				category = CAT_industry
@@ -11373,11 +11898,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11401,7 +11924,7 @@ focus_tree = {
 			navy_experience = 50
 			add_named_threat = { threat = 4 name = SIA_maritime_claims_threat }
 			add_tech_bonus = {
-				name = SIA_maritime_claims_bonus
+				name = SIA_maritime_claims
 				bonus = 0.5
 				uses = 1
 				category = CAT_landing_craft
@@ -11409,11 +11932,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11436,6 +11957,13 @@ focus_tree = {
 			country_exists = PHI
 			NOT = { has_war_with = PHI }
 			NOT = { has_subject = PHI }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = PHI }
+				has_subject = PHI
+			}
 		}
 
 		completion_reward = {
@@ -11461,11 +11989,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11488,6 +12014,13 @@ focus_tree = {
 			country_exists = IND
 			NOT = { has_war_with = IND }
 			NOT = { has_subject = IND }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = IND }
+				has_subject = IND
+			}
 		}
 
 		completion_reward = {
@@ -11513,11 +12046,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11540,6 +12071,13 @@ focus_tree = {
 			country_exists = BRU
 			NOT = { has_war_with = BRU }
 			NOT = { has_subject = BRU }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = BRU }
+				has_subject = BRU
+			}
 		}
 
 		completion_reward = {
@@ -11565,11 +12103,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11592,20 +12128,18 @@ focus_tree = {
 			add_war_support = 0.05
 			army_experience = 50
 			add_named_threat = { threat = 4 name = SIA_mainland_claims_threat }
-			add_tech_bonus = {
-				name = SIA_mainland_claims_bonus
-				bonus = 0.5
+			add_doctrine_cost_reduction = {
+				name = SIA_mainland_claims
+				cost_reduction = 0.5
 				uses = 1
-				category = CAT_land_doctrine
+				category = land_doctrine
 			}
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11628,6 +12162,13 @@ focus_tree = {
 			country_exists = VIE
 			NOT = { has_war_with = VIE }
 			NOT = { has_subject = VIE }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = VIE }
+				has_subject = VIE
+			}
 		}
 
 		completion_reward = {
@@ -11653,11 +12194,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11680,6 +12219,13 @@ focus_tree = {
 			country_exists = SIN
 			NOT = { has_war_with = SIN }
 			NOT = { has_subject = SIN }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = SIN }
+				has_subject = SIN
+			}
 		}
 
 		completion_reward = {
@@ -11705,11 +12251,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 20
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11730,6 +12274,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_new_order"
 			set_country_flag = SIA_reconstruction_unlocked
+			unlock_decision_category_tooltip = SIA_reconstruction_category
 			if = {
 				limit = { NOT = { has_idea = SIA_occupation_administration } }
 				add_ideas = SIA_occupation_administration
@@ -11747,6 +12292,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11786,11 +12333,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 2 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -11830,11 +12375,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 2 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -11891,11 +12434,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 40
-				check_variable = { global.SIA_ai_road = 2 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_REGIONAL_PACT_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_regional_pact_path = yes }
 		}
 	}
 
@@ -11943,11 +12484,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 10 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -11978,11 +12517,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12030,11 +12567,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 50 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12059,6 +12594,13 @@ focus_tree = {
 			NOT = { has_subject = SHN }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = SHN }
+				has_subject = SHN
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_subdue_the_shan"
 			add_timed_idea = { idea = SIA_shan_campaign days = 365 }
@@ -12080,11 +12622,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12109,6 +12649,13 @@ focus_tree = {
 			NOT = { has_subject = KAR }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = KAR }
+				has_subject = KAR
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_subdue_the_karen"
 			add_timed_idea = { idea = SIA_karen_campaign days = 365 }
@@ -12130,11 +12677,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12159,6 +12704,13 @@ focus_tree = {
 			NOT = { has_subject = WAA }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = WAA }
+				has_subject = WAA
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_subdue_the_wa"
 			add_timed_idea = { idea = SIA_wa_campaign days = 365 }
@@ -12180,11 +12732,9 @@ focus_tree = {
 		}
 
 		ai_will_do = {
-			base = 0
-			modifier = {
-				add = 30
-				check_variable = { global.SIA_ai_road = 1 }
-			}
+			base = 1
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12211,6 +12761,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -8 }
 			modify_treasury_effect = yes
 			set_country_flag = SIA_reconstruction_unlocked
+			unlock_decision_category_tooltip = SIA_reconstruction_category
 			if = {
 				limit = { NOT = { has_idea = SIA_occupation_administration } }
 				add_ideas = SIA_occupation_administration
@@ -12231,6 +12782,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 25 has_global_flag = SIA_GREATER_THAILAND_FOCUS_PATH }
+			modifier = { factor = 0 SIA_ai_not_greater_thailand_path = yes }
 		}
 	}
 
@@ -12400,7 +12953,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_map_ta_phut"
 			one_random_synthetic_refinery = yes
-			add_tech_bonus = { name = SIA_map_ta_phut_bonus bonus = 0.5 uses = 1 category = CAT_util }
+			add_tech_bonus = { name = SIA_map_ta_phut bonus = 0.5 uses = 1 category = CAT_utility_vehicles }
 			508 = {
 				one_state_dockyard = yes
 				one_state_dockyard = yes
@@ -12430,7 +12983,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_digital_kingdom"
-			add_tech_bonus = { name = SIA_digital_kingdom_bonus bonus = 1.0 uses = 1 category = CAT_internet_tech }
+			add_tech_bonus = { name = SIA_digital_kingdom bonus = 1.0 uses = 1 category = CAT_internet }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			add_to_variable = { SIA_econ_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
@@ -12457,7 +13010,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_data_center_hub"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_production_speed_offices_factor = 0.1 tooltip = production_speed_offices_factor_tt }
-			add_tech_bonus = { name = SIA_data_center_hub_bonus bonus = 1.0 uses = 1 category = CAT_internet_tech }
+			add_tech_bonus = { name = SIA_data_center_hub bonus = 1.0 uses = 1 category = CAT_internet }
 			508 = {
 				one_state_office_construction = yes
 			}
@@ -12518,7 +13071,7 @@ focus_tree = {
 			# Sacrifice: seed grants for bio-circular-green pilot projects are funded up front.
 			set_temp_variable = { treasury_change = -4 }
 			modify_treasury_effect = yes
-			add_tech_bonus = { name = SIA_bcg_bonus bonus = 0.5 uses = 1 category = CAT_util }
+			add_tech_bonus = { name = SIA_bcg_economy bonus = 0.5 uses = 1 category = CAT_utility_vehicles }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
 			add_to_variable = { SIA_econ_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
 			add_to_variable = { SIA_econ_production_factory_efficiency_gain_factor = 0.05 tooltip = production_factory_efficiency_gain_factor_tt }
@@ -12621,7 +13174,7 @@ focus_tree = {
 			add_to_variable = { SIA_econ_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
 			# Sacrifice: a hot money hub draws rent-seekers along with capital.
 			add_to_variable = { SIA_econ_corruption_cost_factor = 0.03 tooltip = corruption_cost_factor_tt }
-			add_tech_bonus = { name = SIA_capital_bonus bonus = 0.5 uses = 1 category = CAT_computing_tech }
+			add_tech_bonus = { name = SIA_capital_of_capital bonus = 0.5 uses = 1 category = CAT_information_technology }
 			add_political_power = 50
 		}
 
@@ -12697,9 +13250,7 @@ focus_tree = {
 		}
 	}
 
-	# B6 - ROYAL & SUFFICIENCY ("Sufficiency and the Crown") Positioned right of the Kra Gateway
-	# canvas.
-
+	# ROYAL & SUFFICIENCY ("Sufficiency and the Crown") Positioned right of the Kra Gateway focus
 	focus = {
 		id = SIA_sufficiency_and_the_crown
 		icon = goal_generic_support_monarchy
@@ -12714,30 +13265,29 @@ focus_tree = {
 
 		available = {
 			has_completed_focus = SIA_recover_from_97_crisis
-			# Sufficiency-and-Crown is a monarchist economic doctrine: a communist or a Move Forward
-			# (socialism, ruling_party idx 3) government will not run it.
+			# Sufficiency-and-Crown is a monarchist economic doctrine: a communist or a Move Forward (socialism, ruling_party idx 3) government will not run it.
 			custom_trigger_tooltip = {
 				tooltip = SIA_sufficiency_gov_gate_tt
 				NOT = { has_government = communism }
-				NOT = { is_in_array = { ruling_party = 3 } }
+				NOT = { check_variable = { ruling_party = 3 } }
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_sufficiency_and_the_crown"
 			add_ideas = SIA_sufficiency_resilience
+			custom_effect_tooltip = {
+				localization_key = UNLOCK_DECISION_IN_CATEGORY
+				DECISION = SIA_royal_projects
+				DECISION_CATEGORY = SIA_economy_category
+			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
-			add_to_variable = { SIA_econ_expected_welfare_modifier = -0.25 tooltip = expected_welfare_modifier_tt }
-			add_to_variable = { SIA_econ_productivity_growth_modifier = -0.05 tooltip = productivity_growth_modifier_tt }
-			# Sacrifice: turning inward toward self-reliance forgoes the dynamism of the growth-maximising
-			# path (unconditional cost - the guarded farmer/conglomerate swings below only fire if.
+			add_to_variable = { SIA_econ_expected_welfare_modifier = -0.5 tooltip = expected_welfare_modifier_tt }
 			if = {
 				limit = { has_idea = farmers }
 				set_temp_variable = { temp_opinion = 5 }
 				change_farmers_opinion = yes
 			}
-			# Flavour: sufficiency rhetoric alienates the big conglomerates who profit from growth-
-			# maximisation (fires only if Thailand has gained the industrial_conglomerates group).
 			if = {
 				limit = { has_idea = industrial_conglomerates }
 				set_temp_variable = { temp_opinion = -5 }
@@ -13773,7 +14323,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_the_digital_consumer"
-			add_tech_bonus = { name = SIA_digital_consumer_bonus bonus = 1.0 uses = 1 category = CAT_internet_tech }
+			add_tech_bonus = { name = SIA_the_digital_consumer bonus = 1.0 uses = 1 category = CAT_internet }
 			if = {
 				limit = { has_idea = small_medium_business_owners }
 				set_temp_variable = { temp_opinion = 4 }
@@ -13962,10 +14512,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_open_digital_market"
 			add_tech_bonus = {
-				name = SIA_open_platform_rnd
+				name = SIA_open_digital_market
 				bonus = 0.5
 				uses = 1
-				category = CAT_computing_tech
+				category = CAT_information_technology
 			}
 			add_opinion_modifier = { target = USA modifier = medium_increase }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_economy_modifier }
@@ -14171,7 +14721,7 @@ focus_tree = {
 
 	focus = {
 		id = SIA_scg_long_son
-		icon = industrial_expansion
+		icon = construct_factory
 
 		x = 2
 		y = 2
@@ -14381,6 +14931,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -14414,7 +14965,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -14455,7 +15009,10 @@ focus_tree = {
 			add_to_variable = { SIA_mil_stability_factor = -0.04 tooltip = stability_factor_tt }
 		}
 
-		ai_will_do = { base = 20 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -14492,6 +15049,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -14528,7 +15086,10 @@ focus_tree = {
 			# Sacrifice: costly tradecraft is a real political-capital drain.
 		}
 
-		ai_will_do = { base = 15 }
+		ai_will_do = {
+			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	## Foreign-partner ME fork (DLC-gated; western vs Chinese tilt)
@@ -14558,7 +15119,10 @@ focus_tree = {
 			add_to_variable = { SIA_econ_foreign_influence_defense_modifier = -0.04 tooltip = foreign_influence_defense_modifier_tt }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -14587,7 +15151,10 @@ focus_tree = {
 			add_to_variable = { SIA_econ_foreign_influence_defense_modifier = -0.04 tooltip = foreign_influence_defense_modifier_tt }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	## Capstone spine - needs at least one focus from each arm.
@@ -14621,6 +15188,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 15
+			modifier = { factor = 2 ai_is_threatened = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -14660,7 +15228,10 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 
 	focus = {
@@ -14696,6 +15267,9 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 2 ai_is_threatened = yes }
+		}
 	}
 }

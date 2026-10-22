@@ -51,6 +51,7 @@ _FOCUS_FILE = """focus_tree = {
 \t\t}
 \t\tcompletion_reward = {
 \t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_focus"
+\t\t\tadd_political_power = 50
 \t\t}
 \t}
 }

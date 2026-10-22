@@ -8,7 +8,7 @@ definitions. Targeted modifiers (XXX_opinion, XXX_autonomy_gain) are skipped.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, Iterator, List, Set, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -18,6 +18,7 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     line_for_offset,
+    validation_config,
 )
 from validator_common import (
     BaseValidator,
@@ -478,6 +479,18 @@ def _redundant_enable_gates(body: str) -> List[Tuple[str, int]]:
     return findings
 
 
+def _enable_block_line(body: str):
+    """Return the line offset of the modifier's own `enable` block, else None.
+
+    Every `enable` is a per-tick cost for every holder, whatever it contains,
+    so this reports the block itself rather than inspecting its triggers.
+    """
+    match = _find_top_level_enable(blank_quoted_strings(body))
+    if not match:
+        return None
+    return body.count("\n", 0, match.start())
+
+
 def _harvest_idea_slot_cost_factors(idea_tags_files: List[str]) -> Set[str]:
     """Every idea slot auto-generates a `<slot>_cost_factor` modifier.
 
@@ -623,6 +636,106 @@ def _extract_dynamic_modifier_names(text: str) -> List[Tuple[str, int]]:
     ]
 
 
+# Balance caps for single-reward economy modifiers (issue #4370). Each cap
+# applies to one direct `key = number` assignment, never to a stacked total.
+# Variable-fed dynamic modifiers (e.g. `= SAU_return_on_investment_modifier`)
+# resolve at runtime and are out of scope for this check.
+_UNBALANCED_ROI_KEYS: FrozenSet[str] = frozenset({"return_on_investment_modifier"})
+_UNBALANCED_ROI_CAP = 0.03
+_UNBALANCED_PRODUCTIVITY_KEYS: FrozenSet[str] = frozenset(
+    {
+        "productivity_growth_modifier",
+        "country_productivity_growth_modifier",
+        "state_productivity_growth_modifier",
+    }
+)
+_UNBALANCED_PRODUCTIVITY_CAP = 0.25
+_UNBALANCED_POLICY_RATE_VAR = "cb_policy_rate"
+_UNBALANCED_POLICY_RATE_CAP = 30  # central-bank clamp max in the economy GUI
+_UNBALANCED_INFLATION_VAR = "inflation_rate_var"
+_UNBALANCED_INFLATION_START_CAP = 0.50
+_INFLATION_HISTORY_HARD_CAP = 1.0
+
+# Documented ROI exceptions, as "owner::key". A single reward above the ROI
+# cap must justify itself there; undocumented ones fail the opt-in check.
+_UNBALANCED_ROI_EXCEPTIONS: FrozenSet[str] = frozenset(
+    validation_config("validate_modifiers", "unbalanced_roi_exceptions")
+)
+
+_NUMERIC_BARE_ASSIGNMENT_RE = re.compile(
+    r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)\s*$"
+)
+_BLOCK_OPEN_RE = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{\s*$")
+_INLINE_NUMERIC_PAIR_RE = re.compile(
+    r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(-?\d+(?:\.\d+)?)"
+)
+
+
+def _parse_entry_value(raw: str) -> Optional[float]:
+    """Guarded float parse for scanner values (keeps the pi-lens
+    call-safety check quiet on validator input paths)."""
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+def _scan_numeric_modifier_entries(text: str) -> List[Tuple[str, float, int, str]]:
+    """Return (key, value, line, owner) for every bare `key = number` line.
+
+    One walk covers every reward shape: `modifier = {}` blocks in ideas,
+    focuses, decisions and leader traits, numeric literals in dynamic/static
+    modifier definitions, direct keys in country-leader traits, and
+    `set_variable` setup in history files. Variable references (`= some_var`),
+    tooltips and non-numeric values never match. Single-line blocks (`name =
+    { key = number }`) are harvested inline. The owner is the innermost
+    enclosing block name, or "" at file scope.
+    """
+    entries: List[Tuple[str, float, int, str]] = []
+    stack: List[Tuple[str, int]] = []  # (block name, depth after its open)
+    depth = 0
+    for lineno, raw_line in enumerate(text.splitlines(), start=1):
+        line = blank_quoted_strings(raw_line)
+        stripped = line.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        opens = line.count("{")
+        closes = line.count("}")
+        if opens and opens == closes:
+            owner_match = re.match(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", line)
+            owner = (
+                owner_match.group(1) if owner_match else (stack[-1][0] if stack else "")
+            )
+            for key, raw_value in _INLINE_NUMERIC_PAIR_RE.findall(line):
+                value = _parse_entry_value(raw_value)
+                if value is None:
+                    continue
+                entries.append((key, value, lineno, owner))
+            continue
+        block_open = _BLOCK_OPEN_RE.match(line)
+        if block_open and opens - closes == 1:
+            depth += 1
+            stack.append((block_open.group(1), depth))
+            continue
+        depth += opens - closes
+        while stack and stack[-1][1] > depth:
+            stack.pop()
+        bare = _NUMERIC_BARE_ASSIGNMENT_RE.match(line)
+        if bare:
+            value = _parse_entry_value(bare.group(2))
+            if value is None:
+                continue
+            entries.append(
+                (
+                    bare.group(1),
+                    value,
+                    lineno,
+                    stack[-1][0] if stack else "",
+                )
+            )
+    return entries
+
+
 def _check_file_for_unknown_modifiers(
     args: Tuple[str, FrozenSet[str], str],
 ) -> List[Tuple[str, str, int]]:
@@ -631,7 +744,7 @@ def _check_file_for_unknown_modifiers(
     Returns a list of (modifier_name, rel_path, line_number) tuples.
     """
     filepath, known_good, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -687,8 +800,24 @@ class Validator(BaseValidator):
         "common/decisions/**/*.txt",
     ]
 
-    def __init__(self, mod_path: str, **kwargs):
-        super().__init__(mod_path, **kwargs)
+    # Source patterns for the opt-in unbalanced-modifier balance check (#4370)
+    _UNBALANCED_PATTERNS: List[str] = [
+        "common/dynamic_modifiers/**/*.txt",
+        "common/ideas/**/*.txt",
+        "common/modifiers/**/*.txt",
+        "common/country_leader/**/*.txt",
+        "common/unit_leader/**/*.txt",
+        "common/characters/**/*.txt",
+        "common/decisions/**/*.txt",
+        "common/national_focus/**/*.txt",
+        "common/continuous_focus/**/*.txt",
+        "common/bop/**/*.txt",
+    ]
+    _UNBALANCED_HISTORY_PATTERNS: List[str] = ["history/countries/**/*.txt"]
+
+    def __init__(self, *args, **kwargs):
+        self.unbalanced_modifiers = kwargs.pop("unbalanced_modifiers", False)
+        super().__init__(*args, **kwargs)
 
     def _build_known_good_set(self) -> FrozenSet[str]:
         """Build the known-good set from authoritative modifier sources."""
@@ -824,7 +953,7 @@ class Validator(BaseValidator):
             ["common/dynamic_modifiers/**/*.txt"], ignore_staged=ignore_staged
         )
         for filepath in files:
-            if should_skip_file(filepath):
+            if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
                 filepath, lowercase=False, strip_comments_flag=True
@@ -833,9 +962,9 @@ class Validator(BaseValidator):
                 yield filepath, os.path.relpath(filepath, self.mod_path), text
 
     def validate_dynamic_modifier_name_loc(self):
-        """Check that dynamic modifiers with a _TT/_desc loc entry also have a
-        bare-name loc key — the in-game modifier header renders the bare key,
-        so a missing one shows the literal token to players."""
+        """Check that every dynamic modifier has a bare-name loc key. The
+        modifier header, breakdown tooltips and `MODIFIER = X` tooltips render
+        the bare key, so a missing one shows the literal token to players."""
         self._log_section("Checking dynamic modifier name loc references...")
 
         loc_keys = self._load_localisation_keys()
@@ -852,12 +981,11 @@ class Validator(BaseValidator):
                 lambda text=text: _extract_dynamic_modifier_names(text),
             )
             for name, lineno in names:
-                has_tt_or_desc = f"{name}_TT" in loc_keys or f"{name}_desc" in loc_keys
-                if has_tt_or_desc and name not in loc_keys:
+                if name not in loc_keys:
                     results.append(
                         (
-                            f"Dynamic modifier '{name}' has a _TT/_desc loc entry but "
-                            f"no bare '{name}' key (in-game header shows the literal token)",
+                            f"Dynamic modifier '{name}' has no English loc key "
+                            f"(in-game tooltips show the literal token)",
                             rel,
                             lineno,
                         )
@@ -865,9 +993,9 @@ class Validator(BaseValidator):
 
         self._report(
             results,
-            "✓ All dynamic modifiers with _TT/_desc loc have a bare-name key",
-            "Dynamic modifiers missing a bare-name loc key:",
-            severity=Severity.WARNING,
+            "✓ All dynamic modifiers have a bare-name loc key",
+            "Dynamic modifiers missing a loc key:",
+            severity=Severity.ERROR,
             category="dynamic-modifier-name-loc",
         )
 
@@ -891,15 +1019,221 @@ class Validator(BaseValidator):
             category="redundant-enable-gate",
         )
 
+    def validate_dynamic_modifier_enable_blocks(self):
+        """Flag every dynamic modifier `enable` block, whatever it gates on."""
+        self._log_section("Checking for dynamic modifier enable blocks...")
+
+        results = []
+        for _filepath, rel, text in self._iter_dynamic_modifier_files():
+            for name, _nl, body_line, body in _extract_top_level_definition_blocks(
+                text
+            ):
+                offset = _enable_block_line(body)
+                if offset is None:
+                    continue
+                results.append(
+                    (
+                        f"'{name}': enable is re-evaluated every tick for every "
+                        "country holding the modifier - delete the block and let "
+                        "the effect that owns this state call add_dynamic_modifier "
+                        "/ remove_dynamic_modifier when it flips",
+                        rel,
+                        body_line + offset,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No dynamic modifier enable blocks",
+            "Dynamic modifiers with an enable block (tie the state to an effect instead):",
+            severity=Severity.WARNING,
+            category="dynamic-modifier-enable-block",
+        )
+
+    def validate_unbalanced_modifiers(self):
+        """Flag overpowered single-reward economy modifiers (issue #4370).
+
+        Opt-in: pass --unbalanced-modifiers. Each cap applies per direct
+        assignment: ROI over 3% (needs a documented entry in
+        validation_config.json unbalanced_roi_exceptions), productivity growth over 25%,
+        game-start policy rate above the 30 cap, game-start inflation
+        above 50%.
+        """
+        self._log_section("Checking for unbalanced economy modifiers...")
+        if not self.unbalanced_modifiers:
+            self.log(
+                "  Skipping unbalanced-modifier check "
+                "(pass --unbalanced-modifiers to enable)"
+            )
+            return
+
+        roi_results = []
+        productivity_results = []
+        for key, value, rel, lineno, owner in self._scan_unbalanced_entries(
+            self._UNBALANCED_PATTERNS
+        ):
+            where = f"'{owner}'" if owner else rel
+            if key in _UNBALANCED_ROI_KEYS and value > _UNBALANCED_ROI_CAP:
+                if f"{owner}::{key}" in _UNBALANCED_ROI_EXCEPTIONS:
+                    continue
+                roi_results.append(
+                    (
+                        f"{where}: {key} = {value:g} exceeds the 3% "
+                        "single-reward cap (document an exception in "
+                        "validation_config.json unbalanced_roi_exceptions if "
+                        "intended, issue #4370)",
+                        rel,
+                        lineno,
+                    )
+                )
+            elif (
+                key in _UNBALANCED_PRODUCTIVITY_KEYS
+                and value > _UNBALANCED_PRODUCTIVITY_CAP
+            ):
+                productivity_results.append(
+                    (
+                        f"{where}: {key} = {value:g} exceeds the 25% "
+                        "single-reward cap (issue #4370)",
+                        rel,
+                        lineno,
+                    )
+                )
+
+        self._report(
+            roi_results,
+            "No ROI rewards above the 3% single-reward cap",
+            "ROI rewards above the 3% single-reward cap:",
+            severity=Severity.WARNING,
+            category="unbalanced-roi",
+        )
+        self._report(
+            productivity_results,
+            "No productivity rewards above the 25% single-reward cap",
+            "Productivity rewards above the 25% single-reward cap:",
+            severity=Severity.WARNING,
+            category="unbalanced-productivity",
+        )
+
+        rate_results = [
+            (
+                f"Starting {_UNBALANCED_POLICY_RATE_VAR} = {value:g} "
+                f"exceeds the {_UNBALANCED_POLICY_RATE_CAP} cap "
+                "(redundant value set, issue #4370)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_POLICY_RATE_VAR, _UNBALANCED_POLICY_RATE_CAP
+            )
+        ]
+        inflation_results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                "exceeds 50% (issue #4370)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _UNBALANCED_INFLATION_START_CAP
+            )
+        ]
+
+        self._report(
+            rate_results,
+            "No game-start policy rates above the cap",
+            "Game-start policy rates above the cap:",
+            severity=Severity.WARNING,
+            category="unbalanced-policy-rate",
+        )
+        self._report(
+            inflation_results,
+            "No game-start inflation values above 50%",
+            "Game-start inflation values above 50%:",
+            severity=Severity.WARNING,
+            category="unbalanced-inflation",
+        )
+
+    def validate_history_inflation_hard_cap(self):
+        """Flag game-start inflation_rate_var above 1.0. Always on."""
+        self._log_section("Checking history inflation_rate_var over 100%...")
+        results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                f"exceeds {_INFLATION_HISTORY_HARD_CAP:g} (100%)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _INFLATION_HISTORY_HARD_CAP
+            )
+        ]
+        self._report(
+            results,
+            "No game-start inflation values above 100%",
+            "Game-start inflation values above 100%:",
+            severity=Severity.ERROR,
+            category="history-inflation-over-one",
+        )
+
+    def _history_numeric_over_cap(self, key, cap):
+        """History assignments of key whose literal value is above cap."""
+        hits = []
+        for scan_key, value, rel, lineno, _owner in self._scan_unbalanced_entries(
+            self._UNBALANCED_HISTORY_PATTERNS
+        ):
+            if scan_key == key and value > cap:
+                hits.append((value, rel, lineno))
+        return hits
+
+    def _scan_unbalanced_entries(self, patterns):
+        """(key, value, rel, lineno, owner) bare numerics in pattern files."""
+        found = []
+        for filepath in self._collect_files(patterns):
+            if should_skip_file(filepath, mod_path=self.mod_path):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not text:
+                continue
+            rel = os.path.relpath(filepath, self.mod_path)
+            entries = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                "modifiers.unbalanced",
+                filepath,
+                text,
+                lambda text=text: _scan_numeric_modifier_entries(text),
+            )
+            for key, value, lineno, owner in entries:
+                found.append((key, value, rel, lineno, owner))
+        return found
+
     def run_validations(self):
         known_good = self._build_known_good_set()
         self.validate_modifier_names(known_good)
         self.validate_dynamic_modifier_name_loc()
         self.validate_redundant_enable_gates()
+        self.validate_dynamic_modifier_enable_blocks()
+        self.validate_unbalanced_modifiers()
+        self.validate_history_inflation_hard_cap()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--unbalanced-modifiers",
+        action="store_true",
+        dest="unbalanced_modifiers",
+        help="Enable balance caps on single-reward economy modifiers "
+        "(issue #4370): ROI over 3 percent, productivity growth over "
+        "25 percent, game-start policy rate over 30, game-start "
+        "inflation over 50 percent "
+        "(off by default until the backlog is triaged)",
+    )
 
 
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Validate modifier names in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
     )

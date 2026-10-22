@@ -1,5 +1,6 @@
 # Author(s): AngriestBird
 save_pp_for_laws = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		count_triggers = {
 			amount = 2
@@ -26,13 +27,12 @@ save_pp_for_laws = {
 	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = general value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = admiral value = -9999 }
-	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
-	ai_strategy = { type = pp_spend_priority id = decision value = -2000 }
 	ai_strategy = { type = pp_spend_priority id = idea value = 2500 } #Focus on Editing LAWS
 	ai_strategy = { type = pp_spend_amount id = idea value = 500 }
 }
 
 save_pp_for_laws_early = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		ai_has_moderate_economic_problems = yes
 		NOT = {
@@ -48,7 +48,6 @@ save_pp_for_laws_early = {
 	ai_strategy = { type = pp_spend_priority id = guarantee value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = general value = -9999 }
 	ai_strategy = { type = pp_spend_priority id = admiral value = -9999 }
-	ai_strategy = { type = pp_spend_priority id = decision value = -500 }
 	ai_strategy = { type = pp_spend_priority id = idea value = 2500 }
 	ai_strategy = { type = pp_spend_amount id = idea value = 500 }
 }
@@ -93,11 +92,12 @@ minor_production_of_factories = {
 			has_idea = minor_power
 			has_idea = non_power
 		}
+		num_of_civilian_factories < 50
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = industrial_complex
 		value = 50
 	}
@@ -118,14 +118,20 @@ major_production_of_factories1 = {
 	}
 	enable = {
 		OR = {
-			has_idea = regional_power
-			has_idea = large_power
+			AND = {
+				has_idea = regional_power
+				num_of_civilian_factories < 75
+			}
+			AND = {
+				has_idea = large_power
+				num_of_civilian_factories < 100
+			}
 		}
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = industrial_complex
 		value = 10
 	}
@@ -146,11 +152,12 @@ major_production_of_factories2 = {
 	}
 	enable = {
 		has_idea = great_power
+		num_of_civilian_factories < 125
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = industrial_complex
 		value = 12
 	}
@@ -171,11 +178,12 @@ major_production_of_factories3 = {
 	}
 	enable = {
 		has_idea = super_power
+		num_of_civilian_factories < 150
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = industrial_complex
 		value = 15
 	}
@@ -198,7 +206,7 @@ minor_military_factories = {
 				tag = ITA
 				tag = CAN
 				tag = USA
-				tag = ITA
+				tag = ENG
 				tag = JAP
 			}
 		}
@@ -210,7 +218,7 @@ minor_military_factories = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = arms_factory
 		value = 8
 	}
@@ -225,7 +233,7 @@ AI_production_of_factories_Russia = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = industrial_complex
 		value = 15
 	}
@@ -248,7 +256,7 @@ AI_minor_military_factories = {
 				tag = ITA
 				tag = CAN
 				tag = USA
-				tag = ITA
+				tag = ENG
 				tag = JAP
 			}
 		}
@@ -260,6 +268,7 @@ AI_minor_military_factories = {
 	}
 	abort_when_not_enabled = yes
 
+	# Hard minimum: maintain one military factory for basic defense.
 	ai_strategy = {
 		type = building_target
 		id = arms_factory
@@ -283,7 +292,7 @@ AI_major_military_factories = {
 			tag = ITA
 			tag = CAN
 			tag = USA
-			tag = ITA
+			tag = ENG
 			tag = JAP
 		}
 	}
@@ -295,7 +304,7 @@ AI_major_military_factories = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = arms_factory
 		value = 35
 	}
@@ -320,7 +329,7 @@ AI_major_military_factories2 = {
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = arms_factory
 		value = 8
 	}
@@ -331,15 +340,15 @@ AI_military_factories_Russia = {
 		tag = SOV
 	}
 	enable = {
-		date > 2004.1.1
 		has_war = no
 		num_of_civilian_factories > 100
 		num_of_military_factories < 35
+		date > 2004.1.1
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = arms_factory
 		value = 35
 	}
@@ -451,6 +460,7 @@ AI_ratio_military_india = {
 }
 
 AI_generic_office_construction = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		has_war = no
 		num_of_civilian_factories > 40
@@ -490,21 +500,6 @@ AI_generic_office_construction_sup = {
 		type = build_building
 		id = offices
 		value = 10
-	}
-}
-
-AI_generic_office_construction1_SOV = {
-	allowed = { original_tag = SOV }
-	enable = {
-		has_war = no
-		num_of_civilian_factories > 40
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = {
-		type = build_building
-		id = offices
-		value = 1
 	}
 }
 
@@ -552,11 +547,14 @@ AI_minor_production_of_dockyard = {
 			}
 		}
 	}
+	# Total, not available: available civs are almost always 0.
 	enable = {
-		num_of_available_civilian_factories > 10
+		num_of_civilian_factories > 10
+		any_owned_state = { is_coastal = yes }
 	}
 	abort_when_not_enabled = yes
 
+	# Hard minimum: maintain one dockyard for basic naval access.
 	ai_strategy = {
 		type = building_target
 		id = dockyard
@@ -584,11 +582,12 @@ AI_major_production_of_dockyard = {
 	}
 	enable = {
 		num_of_civilian_factories < 80
+		num_of_naval_factories < 8
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = dockyard
 		value = 8
 	}
@@ -614,17 +613,19 @@ AI_major_production_of_dockyard2 = {
 	}
 	enable = {
 		num_of_civilian_factories < 150
+		num_of_naval_factories < 17
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = dockyard
 		value = 17
 	}
 }
 
 AI_idea_focus = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		check_variable = { treasury_rate > 5.00 }
 		NOT = {
@@ -641,6 +642,7 @@ AI_idea_focus = {
 
 # Energy AI
 AI_fuel_power_plant_focuses = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		has_an_energy_deficit = yes
 	}
@@ -654,20 +656,22 @@ AI_fuel_power_plant_focuses = {
 }
 
 AI_build_fuel_silos = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		date > 2005.1.1
 		has_fuel < 1000000
+		date > 2005.1.1
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = {
-		type = building_target
+		type = build_building
 		id = fuel_silo
 		value = 50
 	}
 }
 
 AI_build_nuclear_reactors = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		date < 2008.1.1
 		has_tech = reactor1
@@ -676,6 +680,7 @@ AI_build_nuclear_reactors = {
 	}
 	abort_when_not_enabled = yes
 
+	# Hard minimum: reach five reactors to support baseline nuclear production.
 	ai_strategy = {
 		type = building_target
 		id = nuclear_reactor
@@ -684,10 +689,11 @@ AI_build_nuclear_reactors = {
 }
 
 AI_build_nuclear_reactors_2 = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		date > 2003.1.1
 		has_tech = reactor1
 		check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
+		date > 2003.1.1
 	}
 	abort_when_not_enabled = yes
 
@@ -699,9 +705,10 @@ AI_build_nuclear_reactors_2 = {
 }
 
 AI_build_renewable_energy_infrastructure = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		date > 2010.1.1
 		check_variable = { total_unemployed_percentage_display < 0.010 } # 1% unemployment
+		date > 2010.1.1
 	}
 	abort_when_not_enabled = yes
 
@@ -713,6 +720,7 @@ AI_build_renewable_energy_infrastructure = {
 }
 
 AI_stop_building_civilian_industry = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		check_variable = { total_unemployed_percentage_display < 0.01 }
 	}
@@ -773,6 +781,7 @@ AI_accelerate_construction_on_surplus = {
 }
 
 AI_build_agricultural_districts = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		check_variable = { overall_productivity < 850 }
 		num_of_available_civilian_factories > 10
@@ -783,6 +792,7 @@ AI_build_agricultural_districts = {
 }
 
 AI_no_military_industry = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		has_war = no
 		threat < 0.25
@@ -794,7 +804,9 @@ AI_no_military_industry = {
 }
 
 AI_build_internet_stations = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
+		num_of_available_civilian_factories > 0
 		any_owned_state = {
 			free_building_slots = {
 				building = internet_station
@@ -809,8 +821,10 @@ AI_build_internet_stations = {
 }
 
 AI_build_rail_terminals = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		has_tech = post_conventional_rail
+		has_tech = railway_system_02
+		check_variable = { rail_terminal_total < 100 }
 		any_owned_state = {
 			free_building_slots = {
 				building = rail_terminal
@@ -820,7 +834,7 @@ AI_build_rail_terminals = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = building_target id = rail_terminal value = 100 }
+	ai_strategy = { type = build_building id = rail_terminal value = 20 }
 }
 
 #Microchip & Composite AI

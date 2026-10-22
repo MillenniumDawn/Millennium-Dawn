@@ -6,6 +6,7 @@ under OR / random_list / count_triggers, and never for non-deterministic
 (random_*) or iterator scopes.
 """
 
+import os
 import runpy
 import sys
 
@@ -15,6 +16,7 @@ from validate_simplifications import (
     _count_children,
     _find_bare_not,
     _find_count_collapsible,
+    _find_duplicate_or_clauses,
     _find_empty_trigger_blocks,
     _find_government_match,
     _find_mergeable,
@@ -23,40 +25,46 @@ from validate_simplifications import (
     _find_two_bucket_random,
     _iter_direct_assignments,
     _scan_composite,
+    _scan_decision_file,
+    _scan_focus_file,
     strip_comments,
 )
 
 
+def _script(text):
+    return vs._Script(strip_comments(text))
+
+
 def _merge_lines(text):
-    return sorted(line for line, _ in _find_mergeable(strip_comments(text)))
+    return sorted(line for line, _ in _find_mergeable(_script(text)))
 
 
 def _expansion(text):
-    return [(tag, flat) for _, tag, flat in _find_scope_expansion(strip_comments(text))]
+    return [(tag, flat) for _, tag, flat in _find_scope_expansion(_script(text))]
 
 
 def _random(text):
-    return [chance for _, chance in _find_two_bucket_random(strip_comments(text))]
+    return [chance for _, chance in _find_two_bucket_random(_script(text))]
 
 
 def _count(text):
-    return [(line, n) for line, n in _find_count_collapsible(strip_comments(text))]
+    return [(line, n) for line, n in _find_count_collapsible(_script(text))]
 
 
 def _empty(text):
-    return [kw for _, kw in _find_empty_trigger_blocks(strip_comments(text))]
+    return [kw for _, kw in _find_empty_trigger_blocks(_script(text))]
 
 
 def _gov(text):
-    return [rep for _, rep in _find_government_match(strip_comments(text))]
+    return [rep for _, rep in _find_government_match(_script(text))]
 
 
 def _not(text):
-    return [(line, n) for line, n in _find_bare_not(strip_comments(text))]
+    return [(line, n) for line, n in _find_bare_not(_script(text))]
 
 
 def _controlled(text):
-    return list(_find_random_controlled_shortcut(strip_comments(text)))
+    return list(_find_random_controlled_shortcut(_script(text)))
 
 
 def _all_five(target, scoped_tmpl):
@@ -684,15 +692,13 @@ def test_two_bare_government_checks_in_one_clause_not_flagged():
 
 
 def test_quoted_brace_inside_a_clause_not_flagged():
-    text = "OR = {\n" '  AND = { has_government = democratic  log = "x = {" }\n' "}\n"
+    text = 'OR = {\n  AND = { has_government = democratic  log = "x = {" }\n}\n'
     assert _gov(text) == []
 
 
 def test_bare_not_without_a_scope_block_not_flagged():
     text = (
-        "OR = {\n"
-        "  AND = { has_government = democratic  NOT = { has_war = yes } }\n"
-        "}\n"
+        "OR = {\n  AND = { has_government = democratic  NOT = { has_war = yes } }\n}\n"
     )
     assert _gov(text) == []
 
@@ -776,6 +782,57 @@ def test_unterminated_child_block_stops_the_count():
 
 def test_missing_child_value_stops_the_count():
     assert _count_children(" tag =") == 1
+
+
+# --- duplicate OR clauses ----------------------------------------------------
+
+
+def _dup(text):
+    return _find_duplicate_or_clauses(_script(text))
+
+
+def test_repeated_block_clause_in_an_or_is_flagged_at_the_second_copy():
+    # SyriaFocus.80 shape: communism listed twice, neutrality missing
+    text = (
+        "OR = {\n"
+        "\tAND = { has_government = democratic FROM = { has_government = democratic } }\n"
+        "\tAND = { has_government = communism FROM = { has_government = communism } }\n"
+        "\tAND = {\n"
+        "\t\thas_government = communism\n"
+        "\t\tFROM = { has_government = communism }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _dup(text) == [
+        (
+            4,
+            "AND = { has_government = communism FROM = { has_government = communism } }",
+        )
+    ]
+
+
+def test_repeated_scalar_clause_in_an_or_is_flagged():
+    assert _dup("OR = { tag = ITA tag = GER tag = ITA }\n") == [(1, "tag = ITA")]
+
+
+def test_distinct_or_clauses_are_not_flagged():
+    assert _dup("OR = { tag = ITA original_tag = ITA NOT = { tag = ITA } }\n") == []
+
+
+def test_repeat_outside_an_or_is_not_flagged():
+    assert _dup("AND = { tag = ITA tag = ITA }\nadd_stability = 0.1\n") == []
+
+
+def test_nested_or_is_checked_on_its_own_children():
+    text = "OR = {\n\thas_war = yes\n\tAND = { OR = { tag = ITA tag = ITA } }\n}\n"
+    assert _dup(text) == [(3, "tag = ITA")]
+
+
+def test_composite_reports_a_duplicate_or_clause_outside_the_effect_dirs():
+    text = "ai_strategy = {\n\tenable = { OR = { tag = ITA tag = ITA } }\n}\n"
+    findings = _scan_composite(text, "common/ai_strategy/test.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "OR repeats the clause `tag = ITA`" in findings[0][0]
 
 
 # --- direct child iteration ------------------------------------------------
@@ -912,6 +969,432 @@ def test_clean_tree_reports_nothing(tmp_path, write_path):
     assert validator._issues == []
 
 
+# --- redundant owner scope -------------------------------------------------
+
+
+def _owner_focus(text):
+    return sorted((line, m) for m, line in _scan_focus_file(_script(text)))
+
+
+def _owner_decision(text):
+    return sorted((line, m) for m, line in _scan_decision_file(_script(text)))
+
+
+def _strict_chi_tree(focus_text):
+    return (
+        "focus_tree = {\n"
+        "\tid = china_focus\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t}\n" + focus_text + "}\n"
+    )
+
+
+def test_owner_scope_trigger_wrapper_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tCHI = { has_war = no }\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`CHI = { ... }`" in findings[0][1]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_owner_scope_effect_wrapper_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t\tadd_war_support = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_owner_scope_redundant_tag_check_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\ttag = CHI\n"
+        "\t\t\thas_war = no\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`tag = CHI` always true" in findings[0][1]
+
+
+def test_owner_scope_inside_iterator_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tevery_other_country = {\n"
+        "\t\t\t\tlimit = { has_government = fascism }\n"
+        "\t\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_owner_scope_body_with_prev_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_opinion_modifier = { target = PREV modifier = drama }\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_joint_focus_never_scanned():
+    text = (
+        "joint_focus = {\n"
+        "\tid = CHI_SOV_test\n"
+        "\tallow_branch = { tag = CHI }\n"
+        "\tcompletion_reward = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_original_tag_gate_lifts_nothing_but_flags_recheck():
+    text = (
+        "focus_tree = {\n"
+        "\tid = shared\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 original_tag = CHI }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t\tadd_war_support = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t\tif = {\n"
+        "\t\t\t\tlimit = { tag = CHI }\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_multi_owner_tree_not_flagged():
+    text = (
+        "focus_tree = {\n"
+        "\tid = joint\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t\tmodifier = { add = 20 tag = SOV }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_or_and_not_nested_recheck_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tOR = { tag = CHI has_war = yes }\n"
+        "\t\t\tNOT = { tag = CHI }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_flat_equiv_single_trigger_left_to_scope_expansion():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tCHI = { exists = yes }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+    assert ("CHI", "country_exists = CHI") in _expansion(text)
+
+
+def test_focus_without_tree_not_flagged():
+    text = (
+        "focus = {\n"
+        "\tid = CHI_test\n"
+        "\tcompletion_reward = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_decision_strict_allowed_lifts_scope():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t\tadd_war_support = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [4]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_decision_original_tag_allowed_flags_recheck_only():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tvisible = {\n"
+        "\t\toriginal_tag = CHI\n"
+        "\t\thas_country_flag = test_flag\n"
+        "\t}\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t\tadd_war_support = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [4]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_decision_inherits_category_allowed():
+    text = (
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tvisible = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t\thas_country_flag = test_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [5]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_decision_target_trigger_excluded():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\ttarget_trigger = {\n"
+        "\t\tCHI = { has_war = no }\n"
+        "\t}\n"
+        "\tcomplete_effect = {\n"
+        "\t\tadd_stability = 0.05\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_decision_negated_allowed_claims_no_ownership():
+    text = (
+        "BLT_integrate_LIT = {\n"
+        "\tallowed = { NOT = { tag = LIT } }\n"
+        "\tremove_effect = {\n"
+        "\t\tif = {\n"
+        "\t\t\tlimit = { country_exists = LIT }\n"
+        "\t\t\tLIT = { every_unit_leader = { set_nationality = ROOT } }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_decision_disjunctive_allowed_claims_no_ownership():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { OR = { tag = CHI has_war = yes } }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_focus_disjunctive_allow_branch_keeps_tree_ownership():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tallow_branch = {\n"
+        "\t\t\tOR = { original_tag = CHI original_tag = SOV }\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [13]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_decision_conflicting_gates_not_flagged():
+    text = (
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tallowed = { tag = SOV }\n"
+        "\t\tcomplete_effect = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_owner_scope_lines_account_for_leading_lines():
+    text = "# a comment line\n\n" + _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [12]
+
+
+def test_decision_lines_account_for_leading_lines():
+    text = (
+        "# a comment line\n"
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tvisible = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [6]
+
+
+def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/national_focus/mix.txt",
+        "focus_tree = {\n"
+        "\tid = mix\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_mix\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tUSA = { add_stability = 0.01 }\n"
+        "\t\t\tUSA = { add_war_support = 0.01 }\n"
+        "\t\t\tCHI = { add_political_power = 10 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+
+    scoped = vs.Validator(
+        str(tmp_path), use_colors=False, workers=1, owner_scope_only=True
+    )
+    scoped.run_validations()
+    scoped_messages = [issue.message for issue in scoped._issues]
+    assert len(scoped_messages) == 1
+    assert "remove the wrapper" in scoped_messages[0]
+
+    full = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    full.run_validations()
+    full_messages = [issue.message for issue in full._issues]
+    assert len(full_messages) == 2
+    assert any("can be merged into one" in m for m in full_messages)
+    assert any("remove the wrapper" in m for m in full_messages)
+
+
+def test_composite_routes_focus_and_decision_passes():
+    focus_text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    messages = [
+        m for m, _line in _scan_composite(focus_text, "common/national_focus/x.txt")
+    ]
+    assert any("remove the wrapper" in m for m in messages)
+
+    decision_text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    messages = [
+        m for m, _line in _scan_composite(decision_text, "common/decisions/x.txt")
+    ]
+    assert any("remove the wrapper" in m for m in messages)
+
+
 def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
     write_path(
         tmp_path,
@@ -928,3 +1411,159 @@ def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
         runpy.run_path(vs.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# --- shared brace index, keyword scans, pool, and disk cache ----------------
+
+_MERGE_USA = "consecutive `USA = { }` blocks can be merged into one"
+_NOT_TWO = (
+    "NOT with 2 children is ambiguous (semantics disputed NAND vs NOR); "
+    "write `NOT = { OR = { ... } }` or one NOT per trigger"
+)
+
+# Quoted braces, a brace-only string, an escaped quote, an unclosed block, a
+# stray close, and an unterminated string.
+_TRICKY_BRACES = (
+    'a = { log = "}" b = { c = 1 } }\n'
+    'd = { log = "x = { y" e = { } }\n'
+    'm = { log = "{ }" }\n'
+    'f = { s = "esc \\" {" g = { } }\n'
+    "h = { open = { i = 1 }\n"
+    '} } j = { "unterminated { k = { } }'
+)
+
+
+def _findings(validator):
+    return [(issue.file, issue.line, issue.message) for issue in validator._issues]
+
+
+def _run(root, **kwargs):
+    validator = vs.Validator(str(root), use_colors=False, workers=1, **kwargs)
+    validator.run_validations()
+    return _findings(validator)
+
+
+def test_block_end_matches_extract_block_from_text_for_every_brace_and_limit():
+    src = _script(_TRICKY_BRACES)
+    text = src.text
+    checked = 0
+    for brace in (i for i, char in enumerate(text) if char == "{"):
+        for limit in range(brace + 1, len(text) + 1):
+            expected = vs.extract_block_from_text(text[:limit], brace)[1]
+            assert src.block_end(brace, limit) == expected, (brace, limit)
+            checked += 1
+    assert checked > 1000
+
+
+def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "events/quoted.txt",
+        "# USA = { a = yes } USA = { b = yes }\n"
+        'USA = { log = "} # {" a = yes }\n'
+        "USA = { b = yes } # NOT = { a = 1 b = 2 }\n",
+    )
+    assert _run(tmp_path) == [("events/quoted.txt", 3, _MERGE_USA)]
+
+
+def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_path):
+    path = write_path(
+        tmp_path, "events/twice.txt", "USA = { a = yes }\nUSA = { b = yes }\n"
+    )
+    monkeypatch.setattr(
+        vs.Validator, "_collect_files", lambda self, patterns: [str(path), str(path)]
+    )
+    assert _run(tmp_path) == [("events/twice.txt", 2, _MERGE_USA)]
+
+
+def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/scripted_triggers/crlf.txt",
+        "NOT = { tag = USA tag = GER }\r\nUSA = { a = yes }\r\nUSA = { b = yes }",
+    )
+    assert _run(tmp_path) == [
+        ("common/scripted_triggers/crlf.txt", 3, _MERGE_USA),
+        ("common/scripted_triggers/crlf.txt", 1, _NOT_TWO),
+    ]
+
+
+def test_keyword_blocks_need_a_word_boundary():
+    nots = "xNOT = { a = 1 b = 2 }\n_NOT = { a = 1 b = 2 }\n.NOT = { a = 1 b = 2 }"
+    assert _not(nots) == [(3, 2)]
+    empties = "xvisible = { }\nnot_allowed = { }\navailable = { }"
+    assert _find_empty_trigger_blocks(_script(empties)) == [(3, "available")]
+
+
+def test_scope_expansion_gate_opens_on_either_trigger():
+    # The only `exists` is in a comment, so is_puppet alone must open the gate;
+    # the spaceless form must open it too.
+    text = "# exists = yes\nUSA = { has_war = yes }\nGER = { is_puppet=yes }"
+    assert _find_scope_expansion(_script(text)) == [(3, "GER", "is_puppet_of = GER")]
+
+
+def test_government_gate_opens_on_spaceless_has_government():
+    clauses = "".join(
+        f"\tAND = {{ has_government={i} FROM = {{ has_government={i} }} }}\n"
+        for i in sorted(vs._GOV_IDEOS)
+    )
+    text = "\nOR = {\n" + clauses + "}\n"
+    assert _find_government_match(_script(text)) == [(2, "has_government = FROM")]
+
+
+def test_pooled_run_matches_in_process_findings_and_order(
+    tmp_path, monkeypatch, write_path
+):
+    # 61 files cross the pool threshold and span two map chunks.
+    for index in range(60):
+        write_path(
+            tmp_path,
+            f"events/pool_{index:02}.txt",
+            "\n" * index + "USA = { a = yes }\nUSA = { b = yes }\n",
+        )
+    write_path(tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }")
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+
+    pooled = vs.Validator(str(tmp_path), use_colors=False, workers=2)
+    assert pooled.workers == 2
+    try:
+        pooled.run_validations()
+        assert pooled._pool is not None, "the scan must run in the worker pool"
+    finally:
+        if pooled._pool is not None:
+            pooled._pool.terminate()
+            pooled._pool.join()
+    in_process = _run(tmp_path)
+
+    assert _findings(pooled) == in_process
+    assert sorted(in_process) == sorted(
+        [(f"events/pool_{index:02}.txt", index + 2, _MERGE_USA) for index in range(60)]
+        + [("common/ai_strategy/pool.txt", 1, _NOT_TWO)]
+    )
+
+
+def test_disk_cache_reuses_findings_until_the_content_changes(
+    tmp_path, monkeypatch, write_path
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    merge = "USA = { a = yes }\nUSA = { b = yes }\n"
+    path = write_path(tmp_path, "events/cached.txt", merge)
+    scanned = []
+    original = vs._scan_composite
+
+    def counting(text, rel):
+        scanned.append(rel)
+        return original(text, rel)
+
+    monkeypatch.setattr(vs, "_scan_composite", counting)
+    cold = _run(tmp_path)
+    assert scanned == [os.path.normpath("events/cached.txt")]
+
+    scanned.clear()
+    assert _run(tmp_path) == cold == [("events/cached.txt", 2, _MERGE_USA)]
+    assert scanned == [], "the warm run must read the cached findings"
+
+    write_path(tmp_path, "events/cached.txt", "\n" + merge)
+    vs.FileOpener.invalidate(str(path))  # in-process reads are memoized per path
+    assert _run(tmp_path) == [("events/cached.txt", 3, _MERGE_USA)]
+    assert scanned == [os.path.normpath("events/cached.txt")]

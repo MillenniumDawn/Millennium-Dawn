@@ -10,7 +10,11 @@ from typing import List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text, find_unquoted_block_end
+from shared_utils import (
+    extract_block_from_text,
+    find_unquoted_block_end,
+    validation_config,
+)
 from validator_common import (
     BaseValidator,
     Severity,
@@ -18,9 +22,6 @@ from validator_common import (
     casefold_index,
     run_validator_main,
 )
-
-# Declared namespaces: add_namespace = foo
-_ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 
 # Top-level event block openers (country_event, news_event, state_event, …).
 # Allow optional leading whitespace — some files indent the top-level blocks
@@ -70,13 +71,9 @@ _STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
     r")\b"
 )
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
-# Dated polls intentionally kept as retries outside the yearly event table.
+_FACTION_GOAL_STARTUP_EVENT = "faction_goal_cache.2"
 _DATE_POLL_EXEMPT_IDS = frozenset(
-    {
-        "ast_elections_howard_placeholders.1",
-        "ast_elections_howard_placeholders.2",
-        "the_new_look_rudd.1",
-    }
+    validation_config("validate_on_actions", "date_poll_exempt_ids")
 )
 
 
@@ -99,6 +96,18 @@ def _scan_event_text(text: str) -> Tuple[Set[str], Set[str]]:
     return defined_ids, triggered_only_ids
 
 
+def _event_calls_effect(text: str, event_id: str, effect: str) -> bool:
+    """Return whether the named event directly calls an effect."""
+    text = re.sub(r"#[^\n]*", "", text)
+    effect_re = re.compile(rf"\b{re.escape(effect)}\s*=\s*yes\b")
+    for match in _EVENT_BLOCK_OPEN_RE.finditer(text):
+        body, _ = extract_block_from_text(text, match.end() - 1)
+        id_match = _EVENT_ID_IN_BODY_RE.search(body)
+        if id_match and id_match.group(1) == event_id:
+            return effect_re.search(body) is not None
+    return False
+
+
 def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
     """Return (defined_ids, triggered_only_ids) from a single events/*.txt file."""
     filepath, mod_path = args
@@ -114,16 +123,6 @@ def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
         text,
         lambda: _scan_event_text(text),
     )
-
-
-def _extract_random_events_ids(text: str) -> Set[str]:
-    """Return all event IDs found inside random_events = { ... } blocks."""
-    ids: Set[str] = set()
-    for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        body, _ = extract_block_from_text(text, m.end() - 1)
-        for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
-            ids.add(entry.group(1))
-    return ids
 
 
 # Opening of any control-flow or scope-change block that gates its body —
@@ -484,13 +483,11 @@ class Validator(BaseValidator):
         self._log_section("Checking pulse on-actions for deterministic date polling...")
 
         on_actions_files = self._collect_files(["common/on_actions/**/*.txt"])
-        polls: List[Tuple[str, str, int, str]] = []
-        for result in self._pool_map(
+        polls: List[Tuple[str, str, int, str]] = self._pool_flat_map(
             _scan_date_polls_file,
             [(f, self.mod_path) for f in on_actions_files],
             chunksize=10,
-        ):
-            polls.extend(result)
+        )
 
         results = []
         for eid, block_name, line, filepath in sorted(polls, key=lambda x: x[2]):
@@ -594,6 +591,50 @@ class Validator(BaseValidator):
             category="non-triggered-on-action",
         )
 
+    def validate_faction_goal_cache_creation(self):
+        """Require post-startup faction creation to initialize faction-goal caches."""
+        self._log_section("Checking faction-goal cache creation wiring...")
+
+        defined_ids, _ = self._get_defined_event_ids()
+        if _FACTION_GOAL_STARTUP_EVENT not in defined_ids:
+            return
+
+        all_refs, _ = self._get_on_actions_refs()
+        create_hook_wired = any(
+            eid == _FACTION_GOAL_STARTUP_EVENT and block_name == "on_create_faction"
+            for eid, block_name, _line, _filepath in all_refs
+        )
+        startup_event_updates_cache = False
+        for filepath in self._collect_files(["events/**/*.txt"], ignore_staged=True):
+            try:
+                text = Path(filepath).read_text(encoding="utf-8-sig", errors="replace")
+            except OSError:
+                continue
+            if _event_calls_effect(
+                text, _FACTION_GOAL_STARTUP_EVENT, "faction_goal_update_daily_caches"
+            ):
+                startup_event_updates_cache = True
+                break
+
+        results = []
+        if not create_hook_wired:
+            results.append(
+                "on_create_faction must schedule faction_goal_cache.2 to initialize "
+                "new faction caches"
+            )
+        if not startup_event_updates_cache:
+            results.append(
+                "faction_goal_cache.2 must call faction_goal_update_daily_caches"
+            )
+
+        self._report(
+            results,
+            "Faction-goal caches initialize when factions are created",
+            "Missing faction-goal cache lifecycle wiring:",
+            Severity.ERROR,
+            category="missing-faction-goal-cache-lifecycle",
+        )
+
     def validate_duplicate_event_refs(self):
         """Warn when the same event ID appears more than once in the same on_action block."""
         self._log_section(
@@ -625,6 +666,7 @@ class Validator(BaseValidator):
         self.validate_deterministic_date_polls()
         self.validate_missing_event_refs()
         self.validate_non_triggered_on_action_refs()
+        self.validate_faction_goal_cache_creation()
         self.validate_duplicate_event_refs()
 
 

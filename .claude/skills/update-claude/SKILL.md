@@ -13,6 +13,7 @@ Summarize the current conversation and propose improvements to CLAUDE.md, rules,
 - One home per rule: grep `.claude/` for an existing statement before adding anywhere; extend the existing home, and put at most a one-line pointer elsewhere.
 - Always-loaded files (`CLAUDE.md`, `AGENTS.md`, `.claude/rules/*.md` without `paths:` frontmatter) hold only high-frequency, broadly-applicable rules in <=2 lines; worked examples and niche topics go to `.claude/docs/`.
 - Every new `.claude/docs` file must be added to `.claude/docs/documentation-references.md`.
+- Backlogs, finding counts, and change history go in a GitHub issue or the commit message, never in a doc.
 - New skills need frontmatter (`name` + a trigger-quality `description`); never add tables duplicating harness-injected lists.
 - Topic guidance that should auto-load for certain files → `.claude/rules/*.md` with `paths:` glob frontmatter.
 
@@ -31,8 +32,10 @@ Review the full conversation and extract:
 
 For each pattern or rule, assess whether it applies broadly or only to the specific task:
 
-- **Broad rules** → `.claude/rules/general-rules.md` or `.claude/docs/localisation-rules.md`
-- **Documentation references** → `.claude/docs/`
+- **Essential shared guardrails** → `AGENTS.md`, with no implementation recipes
+- **Scripting and tooling details** → the existing domain reference or `tools/README.md`
+- **Player/contributor guidance** → the appropriate existing page under `docs/src/content/`
+- **Task-based reading pointers** → `.claude/rules/` or `AGENTS.md`
 - **Skill improvements** → `.claude/skills/*/SKILL.md`
 - **Project context** (non-obvious, persists across sessions) → memory
 
@@ -46,8 +49,8 @@ Filter ruthlessly — only propose additions that:
 
 Read the current state of:
 
-- `CLAUDE.md` — is the skill table up to date?
-- `.claude/rules/general-rules.md` — any rules that conflict with what we learned?
+- `CLAUDE.md` and `AGENTS.md` routing: do their pointers still reach the right guidance?
+- Always-loaded files (`AGENTS.md`, unscoped `.claude/rules/*.md`): has implementation detail crept back in?
 - `.claude/docs/localisation-rules.md` — any gaps?
 - `AGENTS.md` — any conventions needing updates?
 
@@ -55,7 +58,7 @@ Flag anything outdated or contradicting current practice.
 
 ### 4. Propose changes
 
-Present a structured list:
+Lead with the recommended change in BLUF style. Include only applicable sections:
 
 ```
 ## Rules to add/update
@@ -76,7 +79,7 @@ Present a structured list:
 After presenting the proposals, ask the user which to apply. Then:
 
 - Edit the relevant files directly
-- Update `CLAUDE.md` skill table if new skills were added
+- Update the documentation index and task pointers when destinations change
 - Save any memory items
 
 ## Important Notes

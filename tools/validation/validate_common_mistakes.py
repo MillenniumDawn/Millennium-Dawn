@@ -6,6 +6,7 @@ import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from linting.check_common_mistakes import (
+    _files_need_global_refs,
     _init_worker,
     _scan_global_refs,
     check_file,
@@ -19,7 +20,12 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+                "music/**/*.txt",
+            ]
         )
         files = [
             path
@@ -38,7 +44,10 @@ class Validator(BaseValidator):
                 category="common-mistakes",
             )
             return
-        focuses, decisions, flags = _scan_global_refs(self.mod_path)
+        if self.staged_only and not _files_need_global_refs(files):
+            focuses, decisions, flags = set(), set(), set()
+        else:
+            focuses, decisions, flags = _scan_global_refs(self.mod_path)
         results = []
         for file_results in self._pool_map_init(
             check_file,

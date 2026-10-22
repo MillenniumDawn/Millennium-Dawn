@@ -9,7 +9,7 @@ Usage:
 
 Prerequisites
 -------------
-- Python 3.10+ (3.12+ recommended)
+- Python 3.12+
 - Git
 - (Optional for --docs) Node.js 24+ and Bun (https://bun.sh/)
 
@@ -17,7 +17,7 @@ The script will auto-create a local ``.venv`` if your system Python is
 externally managed (PEP 668 on Debian/Ubuntu and similar).
 
 Run this after cloning the repo. It will:
-  1. Check Python version (3.10+ required, 3.12+ recommended)
+  1. Check Python version (3.12+ required)
   2. Install pre-commit and set up git hooks
   3. Install Python tool dependencies (requests, pillow)
   4. Install Python dev/test and static-analysis dependencies so tests and
@@ -32,6 +32,7 @@ import re
 import subprocess
 import sys
 import sysconfig
+import tomllib
 from pathlib import Path
 
 # Force line-buffered stdout so prints appear in the correct order
@@ -46,10 +47,9 @@ DOCS_DIR = REPO_ROOT / "docs"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 # Packages whose import name differs from their distribution name.
-_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml"}
+_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml", "pytest-xdist": "xdist"}
 
-MIN_PYTHON = (3, 10)
-REC_PYTHON = (3, 12)
+MIN_PYTHON = (3, 12)
 MIN_NODE = 24
 
 
@@ -149,14 +149,11 @@ def reexec_with(python: Path) -> None:
 def check_python() -> bool:
     v = sys.version_info
     print(f"  Python: {v.major}.{v.minor}.{v.micro}", end="")
-    if v >= REC_PYTHON:
-        print(" (recommended)")
-    elif v >= MIN_PYTHON:
-        print(f" (works, but {REC_PYTHON[0]}.{REC_PYTHON[1]}+ recommended)")
-    else:
-        print(f" (too old — need {MIN_PYTHON[0]}.{MIN_PYTHON[1]}+)")
-        return False
-    return True
+    if v >= MIN_PYTHON:
+        print()
+        return True
+    print(f" (too old — need {MIN_PYTHON[0]}.{MIN_PYTHON[1]}+)")
+    return False
 
 
 def check_pre_commit() -> bool:
@@ -204,10 +201,15 @@ def _group_packages(group: str) -> list[str]:
     """Return the package specs in a pyproject [dependency-groups] entry."""
     if not PYPROJECT.exists():
         return []
-    match = re.search(
-        rf"(?ms)^{re.escape(group)}\s*=\s*\[(.*?)\]", PYPROJECT.read_text()
-    )
-    return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+    with PYPROJECT.open("rb") as handle:
+        groups = tomllib.load(handle).get("dependency-groups", {})
+    specs: list[str] = []
+    for entry in groups.get(group, []):
+        if isinstance(entry, str):
+            specs.append(entry)
+        else:
+            specs.extend(_group_packages(entry["include-group"]))
+    return specs
 
 
 def _version_tuple(value: str) -> tuple[int, ...]:

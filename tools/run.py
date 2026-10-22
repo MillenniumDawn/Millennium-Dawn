@@ -26,6 +26,7 @@ TOOLS_DIR = Path(__file__).resolve().parent
 SEARCH_DIRS = [
     "analysis",
     "assets",
+    "balance",
     "generators",
     "linting",
     "publishing",
@@ -40,7 +41,6 @@ HIDDEN = {
     "loc",
     "logging_tool",
     "run",
-    "validate_staged",
     "standardize_staged",
     "common_utils",
     "validator_common",
@@ -48,7 +48,12 @@ HIDDEN = {
     "disk_cache",
     "equipment_module_slots",
     "equipment_stats",
+    "guard_scan",
+    "image_size",
+    "international_system_art",
     "sprite_index",
+    "standardize_api",
+    "validator_batches",
 }
 
 

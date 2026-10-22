@@ -82,13 +82,19 @@ MD_auto_agency_verify_queue = {
 			if = {
 				limit = {
 					MD_auto_agency_v_index_valid = yes
-					MD_auto_agency_v_not_completed = yes
 					MD_auto_agency_v_not_maxed_in_queue = yes
 				}
 
 				set_variable = { agency_queue^write_idx = v }
 				add_to_variable = { agency_upgrades_in_queue_count^v = 1 }
 				add_to_temp_variable = { write_idx = 1 }
+			}
+			else_if = {
+				limit = {
+					MD_auto_agency_v_index_valid = yes
+					check_variable = { agency_upgrades_completed_and_queued^v > 0 }
+				}
+				subtract_from_variable = { agency_upgrades_completed_and_queued^v = 1 }
 			}
 		}
 
@@ -160,7 +166,7 @@ MD_auto_agency_select_random = {
 		if = {
 			limit = {
 				MD_auto_agency_v_can_select = yes
-				MD_auto_agency_v_not_completed = yes
+				MD_auto_agency_v_slot_available = yes
 			}
 
 			add_to_array = { random_agency_upgrade_to_select = v }
@@ -203,8 +209,8 @@ MD_auto_agency_apply_selected = {
 }
 
 MD_auto_agency_init_country_state = {
-	resize_array = { array = agency_upgrades_completed_and_queued value = 0 size = 25 }
-
+	# State variables first: an unset agency_selected_upgrade reads 0, not -1, and
+	# MD_auto_agency_can_start would then refuse every start for the rest of the game.
 	if = {
 		limit = { NOT = { has_variable = agency_selected_upgrade } }
 		set_variable = { agency_selected_upgrade = -1 }
@@ -218,8 +224,117 @@ MD_auto_agency_init_country_state = {
 		set_variable = { agency_dropdown_visible = 2 }
 	}
 
+	resize_array = { array = agency_upgrades_completed_and_queued value = 0 size = 25 }
+	MD_auto_agency_seed_completed_cache = yes
+
 	MD_auto_agency_get_upgrade_time = yes
 	MD_auto_agency_mark_dirty = yes
+}
+
+# Seeds the completion cache with levels taken outside the automation (history, focuses,
+# the vanilla agency UI). has_done_agency_upgrade needs a literal upgrade name, so the
+# index mapping from MD_auto_agency_on_actions.txt is written out statically.
+MD_auto_agency_seed_completed_cache = {
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_economy_civilian }
+		set_variable = { agency_upgrades_completed_and_queued^0 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_army_department }
+		set_variable = { agency_upgrades_completed_and_queued^1 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_computer_servers }
+		set_variable = { agency_upgrades_completed_and_queued^2 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_passive_defense }
+		set_variable = { agency_upgrades_completed_and_queued^3 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_anti_partisan }
+		set_variable = { agency_upgrades_completed_and_queued^4 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_counter_terror_operations }
+		set_variable = { agency_upgrades_completed_and_queued^5 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_blueprint_stealing }
+		set_variable = { agency_upgrades_completed_and_queued^6 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_portable_radios }
+		set_variable = { agency_upgrades_completed_and_queued^7 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_invisible_ink }
+		set_variable = { agency_upgrades_completed_and_queued^8 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_plastic_explosives }
+		set_variable = { agency_upgrades_completed_and_queued^9 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_suicide_pills }
+		set_variable = { agency_upgrades_completed_and_queued^10 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_training_centers }
+		set_variable = { agency_upgrades_completed_and_queued^11 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_commando_training }
+		set_variable = { agency_upgrades_completed_and_queued^12 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_interrogation_techniques }
+		set_variable = { agency_upgrades_completed_and_queued^13 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_diplo_training }
+		set_variable = { agency_upgrades_completed_and_queued^14 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_psycho_warfare }
+		set_variable = { agency_upgrades_completed_and_queued^15 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_form_department }
+		set_variable = { agency_upgrades_completed_and_queued^16 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_decryption_boost }
+		set_variable = { agency_upgrades_completed_and_queued^17 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_crypto_strength }
+		set_variable = { agency_upgrades_completed_and_queued^18 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_crypto_strength_2 }
+		set_variable = { agency_upgrades_completed_and_queued^19 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_establish_cyber_operations_division }
+		set_variable = { agency_upgrades_completed_and_queued^20 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_offensive_cyber_operations }
+		set_variable = { agency_upgrades_completed_and_queued^21 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_cyber_warfare_operational_planning }
+		set_variable = { agency_upgrades_completed_and_queued^22 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_defensive_cyber_operations }
+		set_variable = { agency_upgrades_completed_and_queued^23 = 1 }
+	}
+	if = {
+		limit = { has_done_agency_upgrade = upgrade_cyber_elite }
+		set_variable = { agency_upgrades_completed_and_queued^24 = 1 }
+	}
 }
 
 MD_auto_agency_get_upgrade_time = {

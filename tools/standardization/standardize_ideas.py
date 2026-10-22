@@ -7,7 +7,7 @@ Standardizes HOI4 idea files according to Millennium Dawn coding standards
 
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from common_utils import (
     PROP_NAME_RE,
@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     blank_quoted_strings,
+    collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
     log_message,
@@ -50,6 +51,7 @@ _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
 
 
 _ALLOWED_TAG_RE = re.compile(r"\btag\s*=\s*(\w+)")
+_LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 
 
 def _rewrite_allowed_tag(line: str) -> str:
@@ -253,13 +255,12 @@ class IdeaStandardizer(BaseStandardizer):
             return False
 
         for line in block_lines:
-            stripped = line.strip()
+            stripped = _LOG_STATEMENT_RE.sub("", line).strip()
             if (
                 stripped in ("{", "}", "")
                 or not stripped
                 or stripped.startswith("#")
                 or stripped.endswith("{")  # block opener, e.g. `on_remove = {`
-                or stripped.startswith("log =")
             ):
                 continue
             return True
@@ -315,7 +316,7 @@ class IdeaStandardizer(BaseStandardizer):
     ) -> List[str]:
         """Single-line collapse a single-leaf block, else reindent at prop_indent."""
         collapsed = collapse_or_compact(block_lines[:], prop_indent)
-        multi = self.compact_block(block_lines[:], prop_indent)
+        multi = self.compact_block(collapse_nested_blocks(block_lines), prop_indent)
         if len(collapsed) == 1 and len(multi) != 1:
             return collapsed
         return multi
@@ -333,19 +334,15 @@ class IdeaStandardizer(BaseStandardizer):
         # A single-line block (`on_add = { set_variable = { x = 1 } }`) has its
         # opener and closer on the same line, so an injected log would land
         # outside the block and re-inject on the next run (non-idempotent).
-        # Explode it only when a log will actually be injected (meaningful
-        # effects, no existing log) — leaving log-only single-line blocks handled
-        # exactly as before so this fix doesn't silently strip them.
+        # Judge the exploded form (a packed `on_add = { log = "..." }` reads as
+        # content otherwise) and explode only when a log will be injected.
         if len(block) == 1:
             exploded = _explode_braces(block)
-            # An empty single-line block (`on_add = { }`) reads as meaningful when
-            # left packed, so the legacy path would inject a log outside its
-            # braces. Detect emptiness on the exploded form and drop it.
             if self.is_empty_log_block(exploded):
                 return []
-            if self.has_meaningful_effects(exploded) and not any(
-                "log =" in line for line in exploded
-            ):
+            if not self.has_meaningful_effects(exploded):
+                return []
+            if not any("log =" in line for line in exploded):
                 block = exploded
         if self.is_empty_log_block(block):
             return []
@@ -365,7 +362,7 @@ class IdeaStandardizer(BaseStandardizer):
                     modified.append(log_line)
             block = modified
 
-        return self.compact_block(block[:], prop_indent)
+        return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 
     def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""
@@ -470,6 +467,10 @@ class IdeaStandardizer(BaseStandardizer):
 
         return cleaned_lines
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Ideas nest, so the recursive walker replaces the base block loop."""
+        return self._process_lines(lines, depth=0)
+
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
@@ -477,7 +478,9 @@ class IdeaStandardizer(BaseStandardizer):
         if lines is None:
             return False
 
-        output_lines = self._process_lines(lines, depth=0)
+        output_lines = self.standardize_lines(lines)
+        if output_lines is None:
+            return True
 
         return write_standardized_output(
             output_file,

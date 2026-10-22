@@ -13,7 +13,6 @@ from shared.suite import read_text as _read
 from shared.suite import write_text as _write
 from shared_utils import strip_inline_comment
 from standardize_focus_tree import (
-    clean_block_lines,
     effect_block_with_log,
     extract_focus_properties,
     format_continuous_focus_position_block,
@@ -238,6 +237,31 @@ def test_duplicate_single_line_available_blocks_merged():
     assert _code_braces_balanced(out)
 
 
+def test_duplicate_ai_will_do_blocks_are_not_merged():
+    # Merging two weight blocks under one header yields a single ai_will_do
+    # carrying two `base` lines, which is neither block's meaning. Both survive
+    # verbatim instead (POL_azure_poland in 05_poland.txt is the live case).
+    props = extract_focus_properties(
+        [
+            "\tfocus = {\n",
+            "\t\tid = TST_weighted\n",
+            "\t\tai_will_do = {\n",
+            "\t\t\tbase = 15\n",
+            "\t\t}\n",
+            "\t\tai_will_do = {\n",
+            "\t\t\tbase = 25\n",
+            "\t\t}\n",
+            "\t}\n",
+        ]
+    )
+    out = format_focus_block(props)
+    assert sum(1 for l in out if l.strip().startswith("ai_will_do")) == 2
+    body = "\n".join(out)
+    assert "base = 15" in body
+    assert "base = 25" in body
+    assert _code_braces_balanced(out)
+
+
 def test_duplicate_single_line_blocks_with_comment_braces_not_merged():
     # A `}` inside a trailing comment must not be mistaken for the block's
     # closing brace — merging is skipped and both blocks survive verbatim.
@@ -316,6 +340,7 @@ def test_hyphenated_focus_id_log_corrected():
             "\t\tid = TST_austria-este\n",
             "\t\tcompletion_reward = {\n",
             '\t\t\tlog = "[GetDateText]: [Root.GetName]: TST_Austria-este"\n',
+            "\t\t\tadd_political_power = 50\n",
             "\t\t}\n",
             "\t}\n",
         ]
@@ -493,6 +518,46 @@ def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
         assert f"\tid = TST_{block_type}" in lines
         assert "\t\tadd_political_power = 1" in lines
         assert lines[-1] == "}"
+
+
+def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
+    # Issue #4650: lines inside a nested block kept the source's wrong depth.
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "focus-output.txt"
+    source.write_text(
+        """focus_tree = {
+\tfocus = {
+\t\tid = TST_x
+\t\tcompletion_reward = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"
+\t\t\t34 = {
+\t\t\t\tadd_building_construction = {
+\t\t\t\ttype = infrastructure
+\t\t\t\tlevel = 1
+\t\t\t\t}
+\t\t\t}
+\t\t}
+\t\t\tcomplete_tooltip = {
+\t\t\tadd_political_power = 1
+\t\t\tadd_stability = 0.01
+\t\t\t}
+\t}
+}
+""",
+        encoding="utf-8",
+    )
+
+    assert standardize_focus_tree(str(source), str(output)) is True
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+    assert "\t\t\t\tadd_building_construction = {" in lines
+    assert "\t\t\t\t\ttype = infrastructure" in lines
+    assert "\t\t\t\t\tlevel = 1" in lines
+    assert "\t\tcomplete_tooltip = {" in lines
+    assert "\t\t\tadd_stability = 0.01" in lines
+
+    assert standardize_focus_tree(str(output), str(output)) is True
+    assert output.read_text(encoding="utf-8").splitlines() == lines
 
 
 _INVALID_MODIFIER_TREE = """focus_tree = {
@@ -743,16 +808,6 @@ def test_focus_without_an_id_still_formats():
     ]
 
 
-def test_clean_block_lines_drops_only_trailing_blanks():
-    assert clean_block_lines([]) == []
-    assert clean_block_lines(["a = {", "", "\tb = 1", "}", "", "  "]) == [
-        "a = {",
-        "",
-        "\tb = 1",
-        "}",
-    ]
-
-
 def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     # Braces do not balance on the one line, so there is no safe insertion point.
     over_closed = ["completion_reward = { add_political_power = 1 } }"]
@@ -761,6 +816,35 @@ def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     assert "log =" not in "".join(
         effect_block_with_log(["completion_reward = { add_political_power = 1 }"], "")
     )
+
+
+def test_effect_block_with_log_drops_empty_and_log_only_blocks():
+    assert effect_block_with_log(["\t\tcompletion_reward = { }"], "TST_x") == []
+    assert effect_block_with_log(['\t\tselect_effect = { log = "x" }'], "TST_x") == []
+    log_only = ["\t\tcompletion_reward = {\n", '\t\t\tlog = "x"\n', "\t\t}\n"]
+    assert effect_block_with_log(log_only, "TST_x") == []
+
+
+def test_effect_block_collapses_single_leaf_children():
+    out = effect_block_with_log(
+        [
+            "\t\tcompletion_reward = {\n",
+            "\t\t\tset_temp_variable = {\n",
+            "\t\t\t\tparty_popularity_increase = 0.1\n",
+            "\t\t\t}\n",
+            "\t\t\tchange_relative_party_popularity = yes\n",
+            "\t\t}\n",
+        ],
+        "TST_x",
+    )
+    assert out == [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"',
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.1 }",
+        "\t\t\tchange_relative_party_popularity = yes",
+        "\t\t}",
+    ]
+    assert effect_block_with_log(out, "TST_x") == out
 
 
 def test_offset_block_keeps_unknown_lines_without_coordinates():
@@ -857,3 +941,160 @@ def test_main_exits_one_when_naming_check_rejects(tmp_path, monkeypatch):
 
     assert exit_info.value.code == 1
     assert not output.exists()
+
+
+_FULL_TREE = """focus_tree = {
+\tcontinuous_focus_position = { x = 5700 y = 2000 }
+\tinitial_show_position = { x = 2 y = 0 }
+\toffset = {
+\t\tx = 1
+\t\ty = 2
+\t\ttrigger = { has_country_flag = TST_ready }
+\t}
+\tshortcut = {
+\t\tname = TST_shortcut
+\t\ttarget = TST_focus
+\t\tscroll_wheel_factor = 1
+\t\ttrigger = { has_country_flag = TST_ready }
+\t\tpriority = 2
+\t}
+\tinlay_window = {
+\t\tid = TST_window
+\t\tposition = { x = 1 y = 2 }
+\t\toverride_position = { x = 3 y = 4 }
+\t\tvisible = yes
+\t}
+\tfocus = {
+\t\tid = TST_focus # comment
+\t\ticon = GFX_goal_generic_political_pressure
+\t\ttext_icon = TST_text
+\t\toverlay = GFX_overlay
+\t\tx = 0
+\t\ty = 1
+\t\trelative_position_id = TST_parent
+\t\toffset = {
+\t\t\tx = 2
+\t\t\ty = 3
+\t\t\ttrigger = { has_war = no }
+\t\t}
+\t\tallow_branch = { has_country_flag = TST_ready }
+\t\tprerequisite = { focus = TST_parent }
+\t\tmutually_exclusive = { focus = TST_other }
+\t\twill_lead_to_war_with = TST_enemy
+\t\tsearch_filters = {
+\t\t\tpolitics
+\t\t\tnational_focus
+\t\t}
+\t\tavailable = { has_war = no }
+\t\tbypass = { has_country_flag = TST_done }
+\t\tcancel = { has_war = yes }
+\t\tselect_effect = { add_political_power = 1 }
+\t\tcompletion_reward = {
+\t\t\tadd_stability = 0.1
+\t\t}
+\t\tcompletion_reward_joint_originator = { add_political_power = 2 }
+\t\tcompletion_reward_joint_member = { add_political_power = 3 }
+\t\tbypass_effect = { add_political_power = 4 }
+\t\tunknown_property = yes
+\t\tai_will_do = { factor = 0.5 }
+\t}
+}
+shared_focus = {
+\tid = TST_shared
+\tcompletion_reward = { add_political_power = 1 }
+}
+joint_focus = {
+\tid = TST_joint
+\tai_will_do = { factor = 0.2 }
+}
+"""
+
+
+def test_every_tree_level_block_is_standardized_once(tmp_path):
+    source = _write(tmp_path / "focus.txt", _FULL_TREE)
+    assert standardize_focus_tree(str(source), str(source), verbose=True)
+    once = _read(source)
+    for fragment in (
+        "continuous_focus_position = { x = 5700 y = 2000 }",
+        "initial_show_position = { x = 2 y = 0 }",
+        "\tshortcut = {",
+        "\tinlay_window = {",
+        'Focus TST_focus"',
+        'Focus TST_shared"',
+        "base = 0.5",
+    ):
+        assert fragment in once, fragment
+    assert "# shortcut" not in once
+    assert standardize_focus_tree(str(source), str(source))
+    assert _read(source) == once
+
+
+@pytest.mark.parametrize(
+    "lines, expected",
+    [
+        ([], True),
+        (["available = { }"], True),
+        (["available = { has_war = no }"], False),
+    ],
+    ids=["no lines", "empty braces", "a condition"],
+)
+def test_is_empty_block(lines, expected):
+    assert focus_tree_module.is_empty_block(lines) is expected
+
+
+def test_split_block_of_an_unclosed_line_is_none():
+    assert focus_tree_module._split_block(["x = { bad"]) is None
+
+
+def test_split_block_takes_a_trailing_comment_only_when_allowed():
+    line = ["x = { value } # note"]
+    assert focus_tree_module._split_block(line) is None
+    assert focus_tree_module._split_block(line, allow_trailing_comment=True) == (
+        "x = {",
+        ["\tvalue"],
+        "} # note",
+    )
+
+
+def test_merge_keeps_blocks_it_cannot_split():
+    assert focus_tree_module._merge_duplicate_blocks(
+        ["x = { value } # note"], ["x = { y }"]
+    ) == ["x = { value } # note", "x = { y }"]
+
+
+def test_effect_block_with_log_of_no_lines_is_empty():
+    assert effect_block_with_log([], "TST_empty") == []
+
+
+# case: (formatter, block lines, formatted lines)
+_TREE_BLOCK_EDGE_CASES = {
+    "continuous position without y": (
+        format_continuous_focus_position_block,
+        ["continuous_focus_position = { x = 1 }"],
+        ["continuous_focus_position = { x = 1 }"],
+    ),
+    "initial show position by focus": (
+        format_initial_show_position_block,
+        ["initial_show_position = { focus = TST_focus }"],
+        ["\tinitial_show_position = { focus = TST_focus }"],
+    ),
+    "empty shortcut": (
+        format_shortcut_block,
+        ["shortcut = { }"],
+        ["\tshortcut = { }"],
+    ),
+    "empty inlay window": (
+        format_inlay_window_block,
+        ["inlay_window = { }"],
+        ["\tinlay_window = { }"],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("formatter", "lines", "expected"),
+    _TREE_BLOCK_EDGE_CASES.values(),
+    ids=_TREE_BLOCK_EDGE_CASES,
+)
+def test_tree_block_formatters_keep_unusual_shapes(formatter, lines, expected):
+    assert formatter(lines) == expected

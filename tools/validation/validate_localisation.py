@@ -5,18 +5,26 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import functools
 import glob
 import logging
 import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import AbstractSet, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from linting.fix_loc_yaml import check_line
+from shared_utils import (
+    extract_block_from_text,
+    iter_statements,
+    read_text_strict,
+    strip_comments,
+    validation_config,
+)
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     KNOWN_VANILLA_LOC_KEYS,
@@ -36,102 +44,124 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS + ["00_operations", "MD_dm_mod
 VANILLA_LOC_KEYS = KNOWN_VANILLA_LOC_KEYS
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 # --- Multiprocessing helpers ---
 
 
-def _loc_body_lines(filename: str) -> List[str]:
-    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
-
-
-def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
-    filename = args[0]
+def _scan_brackets_text(text: str, basename: str) -> List[str]:
     results = []
-    lines = _loc_body_lines(filename)
-    for line_idx, line in enumerate(lines):
+    for line_idx, line in enumerate(text.split("\n")[1:]):
         if line.count("[") != line.count("]"):
-            results.append(
-                f"{os.path.basename(filename)} - line {line_idx + 2} - unpaired bracket"
-            )
+            results.append(f"{basename} - line {line_idx + 2} - unpaired bracket")
     return results
 
 
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
-_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
-# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
-# space after §. Requiring the digit keeps a dangling/broken code (§ before a
-# word, quote, or line end) flagged instead of silently exempted.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# Literal first so sre can scan for it; the look-behind stands in for a leading \b.
+_NOT_OPEN_RE = re.compile(r"NOT(?<!\wNOT)\s*=\s*\{")
+# `§§` is the engine's escape for a literal section sign ("15 U.S.C. §§ 1"
+# renders "15 U.S.C. § 1"). A single § always starts a color code, even before
+# a space: in game (1.19.3) "§ 1" drops the space, logs "Could not find
+# coloring for character ' '" every frame, and shows no §. So only the escaped
+# pair is exempt from the color checks; a bare § before whitespace is flagged.
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
+_SECTION_SIGN_BEFORE_SPACE_RE = re.compile(r"§\s")
 
 # A formatter (Prettier/pre-commit --all-files) once split Paradox loc
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
-# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
-# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# Opinion modifiers, raid types, and raid categories sit exactly one level under
+# their file's wrapper block (`opinion_modifiers`, `types`, `categories`). Spaces are accepted alongside the tab MD actually uses, but
 # only one level deep — `\s+` would swallow blank lines and match nested blocks.
-_OPINION_MODIFIER_RE = re.compile(
+_TOP_LEVEL_BLOCK_RE = re.compile(
     r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
 )
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
-    filename, valid_colors, subst_keys = args
-    results: List[Issue | str] = []
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=False, strip_comments_flag=True
+def _mangled_loc_issue(basename: str, line: int, message: str) -> Issue:
+    return Issue(
+        severity=Severity.ERROR,
+        category="mangled-loc-line",
+        message=message,
+        file=basename,
+        line=line,
     )
-    lines = text_file.split("\n")[1:]
-    for line_idx, line in enumerate(lines):
+
+
+def _scan_syntax_text(
+    text: str, basename: str, valid_colors: List[str]
+) -> List[Tuple[Union[Issue, str], Optional[str]]]:
+    """Return (finding, line-key) pairs in line order for one yml file.
+
+    Mangled-line findings carry a None key so they are never filtered; color
+    findings carry their line's loc key so the caller can drop keys resolved
+    through $KEY$ substitution once the repo-wide set is known.
+    """
+    out: List[Tuple[Union[Issue, str], Optional[str]]] = []
+    for line_idx, line in enumerate(text.split("\n")[1:]):
         if "#" in line or line.strip() in ["", "l_english:"]:
             continue
         if _MANGLED_SINGLE_QUOTE_VALUE_RE.match(line):
-            results.append(
-                Issue(
-                    severity=Severity.ERROR,
-                    category="mangled-loc-line",
-                    message="Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
-                    file=os.path.basename(filename),
-                    line=line_idx + 2,
+            out.append(
+                (
+                    _mangled_loc_issue(
+                        basename,
+                        line_idx + 2,
+                        "Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
+                    ),
+                    None,
                 )
             )
         elif _MANGLED_KEY_NO_VALUE_RE.match(line):
-            results.append(
-                Issue(
-                    severity=Severity.ERROR,
-                    category="mangled-loc-line",
-                    message="Loc key has no value on the same line (formatter-mangled, breaks in-game)",
-                    file=os.path.basename(filename),
-                    line=line_idx + 2,
+            out.append(
+                (
+                    _mangled_loc_issue(
+                        basename,
+                        line_idx + 2,
+                        "Loc key has no value on the same line (formatter-mangled, breaks in-game)",
+                    ),
+                    None,
                 )
             )
         if "\u00a7" in line:
-            # Skip \u00a7-balance checks for keys consumed via $KEY$ substitution: those
-            # keys intentionally split their \u00a7 codes across multiple values (one ends
-            # with \u00a7Y, another supplies \u00a7!) so only the merged result is balanced.
             key_match = _LINE_KEY_RE.match(line)
-            if key_match and key_match.group(1) in subst_keys:
-                continue
-            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            key = key_match.group(1) if key_match else None
+            color_line = _LITERAL_SECTION_SIGN_RE.sub("", line)
             if "\u00a7" not in color_line:
+                continue
+            if _SECTION_SIGN_BEFORE_SPACE_RE.search(color_line):
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - \u00a7 before whitespace is read as a color code; write \u00a7\u00a7 for a literal \u00a7",
+                        key,
+                    )
+                )
                 continue
             count = color_line.count("\u00a7")
             if count % 2 != 0:
-                results.append(
-                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - odd number of \u00a7 symbols ({count})"
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - odd number of \u00a7 symbols ({count})",
+                        key,
+                    )
                 )
             elif count != color_line.count("\u00a7!") * 2:
                 expected = count // 2
                 actual = color_line.count("\u00a7!")
-                results.append(
-                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}",
+                        key,
+                    )
                 )
             else:
                 for idx, ch in enumerate(color_line):
@@ -142,21 +172,22 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue
                             "[",
                             "$",
                         ]:
-                            results.append(
-                                f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
+                            out.append(
+                                (
+                                    f"{basename}, line {line_idx + 2}, colors - unsupported color '{next_ch}'",
+                                    key,
+                                )
                             )
-    return results
+    return out
 
 
-def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
-    filename = args[0]
+def _scan_mandatory_text(text: str, basename: str) -> List[str]:
     results: List[str] = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")
+    lines = text.split("\n")
     if lines == [""]:
         return results
     if not any("l_english:" in line for line in lines):
-        results.append(f"{os.path.basename(filename)} - l_english: line is absent")
+        results.append(f"{basename} - l_english: line is absent")
     return results
 
 
@@ -209,55 +240,172 @@ _TYPO_WATCHLIST: Dict[str, str] = {
     "seperation": "separation",
     "seperate": "separate",
     "seperated": "separated",
+    "actionns": "actions",
+    "annexd": "annexed",
 }
 
-# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
-_TYPO_EXEMPTIONS: Set[str] = set()
+# Exact-phrase substrings exempt from typo flagging.
+_TYPO_EXEMPTIONS: Set[str] = set(
+    validation_config("validate_localisation", "typo_exemptions")
+)
 
 _TYPO_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
     re.IGNORECASE,
 )
-_TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_WORDS = frozenset(_TYPO_WATCHLIST)
+_TYPO_LENGTHS = frozenset(len(typo) for typo in _TYPO_WORDS)
+_WORD_TOKEN_RE = re.compile(r"\w+")
+_TYPO_VALUE_RE = re.compile(r'^\s*([\w.\-]+):\d*\s*"(.*)"')
 _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
 
-def process_yml_for_typos(args: Tuple[str]) -> List[str]:
-    filename = args[0]
-    results = []
-    lines = _loc_body_lines(filename)
-    for line_idx, line in enumerate(lines):
+def _iter_loc_values(text: str) -> Iterator[Tuple[int, str, str]]:
+    """Yield (line_idx, key, value) for each non-blank body line with a quoted value."""
+    for line_idx, line in enumerate(text.split("\n")[1:]):
         if not line.strip():
             continue
         value_match = _TYPO_VALUE_RE.match(line)
         if not value_match:
             continue
-        value = value_match.group(1)
+        yield line_idx, value_match.group(1), value_match.group(2)
+
+
+def _scan_typos_text(text: str, basename: str) -> List[str]:
+    results = []
+    for line_idx, _, value in _iter_loc_values(text):
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
         prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
-        for m in _TYPO_RE.finditer(prose):
-            correction = _TYPO_WATCHLIST[m.group(0).lower()]
+        # Watchlist words are all word characters, so each _TYPO_RE match is
+        # one whole \w+ token; on ASCII text IGNORECASE is plain lowercasing.
+        tokens = _WORD_TOKEN_RE.findall(prose)
+        if prose.isascii() and _TYPO_WORDS.isdisjoint(map(str.lower, tokens)):
+            continue
+        for token in tokens:
+            if len(token) not in _TYPO_LENGTHS or not _TYPO_RE.fullmatch(token):
+                continue
+            correction = _TYPO_WATCHLIST[token.lower()]
             results.append(
-                f"{os.path.basename(filename)} - line {line_idx + 2} - "
-                f"'{m.group(0)}' -> '{correction}'"
+                f"{basename} - line {line_idx + 2} - '{token}' -> '{correction}'"
             )
     return results
 
 
-def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
-    filename = args[0]
+_PROSE_COLOR_RE = re.compile(r"§(?:\[[^\]]*\]|\$[^$\s]+\$|[A-Za-z0-9!])")
+_PROSE_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$\$|\$[^$\s]+\$|£[\w.@|+\-]+")
+_PROSE_WORD_RE = re.compile(r"\b[^\W\d_]+(?:['’][^\W\d_]+)*\b")
+_TRIPLED_LETTER_RE = re.compile(r"([a-z])\1{2}")
+_ROMAN_WORD_RE = re.compile(r"[ivxlcdm]+")
+_PLACEHOLDER_VALUES = frozenset({"TODO", "TBD", "TDA", "WIP", "PLACEHOLDER"})
+_DANGLING_WORDS = frozenset(
+    "a an the and or but of to with for from at by into onto than because "
+    "although if while whose which our their your its them".split()
+)
+_REPEATED_WORD_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "repeated_word_exemptions")
+)
+_STRETCHED_WORD_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "stretched_word_exemptions")
+)
+_DANGLING_DESCRIPTION_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "dangling_description_exemptions")
+)
+_SPACED_EN_DASH_EXEMPT_FILES = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exempt_files")
+)
+_SPACED_EN_DASH_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exemptions")
+)
+# A spaced en dash between two numbers is a range ("1959 – 2015"), not an em dash stand-in.
+_SPACED_EN_DASH_RE = re.compile(r"(?<!\d) \u2013 |(?<=\d) \u2013 (?!\d)")
+
+
+def _event_description_keys(text: str) -> Set[str]:
+    keys: Set[str] = set()
+    for event_type, _, event_body in iter_statements(strip_comments(text)):
+        if event_body is None or event_type not in (
+            "country_event",
+            "news_event",
+            "state_event",
+            "unit_leader_event",
+            "operative_leader_event",
+        ):
+            continue
+        for field, value, description in iter_statements(event_body):
+            if field != "desc":
+                continue
+            if value:
+                keys.add(value)
+            elif description is not None:
+                keys.update(
+                    value
+                    for field, value, _ in iter_statements(description)
+                    if field == "text" and value
+                )
+    return keys
+
+
+def _prose_findings(
+    key: str, value: str, event_description_keys: AbstractSet[str]
+) -> Iterator[Tuple[str, str]]:
+    if value in _PLACEHOLDER_VALUES:
+        yield (
+            "loc-placeholder",
+            f"{key}: placeholder value '{value}' needs finished text",
+        )
+    # Runtime text is opaque, not empty; deleting it invents adjacency and endings.
+    prose = _PROSE_COLOR_RE.sub("", value.replace("§§", "\0"))
+    prose = _PROSE_REFERENCE_RE.sub("\0", prose).replace(r"\n", "\n")
+    previous = None
+    previous_folded = None
+    has_tripled_letter = _TRIPLED_LETTER_RE.search(prose) is not None
+    for match in _PROSE_WORD_RE.finditer(prose):
+        word = match.group()
+        folded = word.casefold()
+        if (
+            previous is not None
+            and folded == previous_folded
+            and prose[previous.end() : match.start()].strip(" \t") == ""
+            and f"{key}:{folded}" not in _REPEATED_WORD_EXEMPTIONS
+        ):
+            yield (
+                "loc-repeated-word",
+                f"{key}: repeated word '{word}' (review in context)",
+            )
+        if (
+            has_tripled_letter
+            and word.isascii()
+            and word.islower()
+            and _TRIPLED_LETTER_RE.search(word)
+            and not _ROMAN_WORD_RE.fullmatch(word)
+            and word not in _STRETCHED_WORD_EXEMPTIONS
+        ):
+            yield (
+                "loc-tripled-letter",
+                f"{key}: tripled letter in '{word}' (review in context)",
+            )
+        previous = match
+        previous_folded = folded
+    if (
+        (key.endswith("_desc") or key in event_description_keys)
+        and previous is not None
+        and (previous.start() == 0 or prose[previous.start() - 1] not in "-–")
+        and previous.group().lower() in _DANGLING_WORDS
+        and not prose[previous.end() :].strip()
+        and f"{key}:{previous.group().lower()}" not in _DANGLING_DESCRIPTION_EXEMPTIONS
+    ):
+        yield (
+            "loc-dangling-description",
+            f"{key}: description ends on '{previous.group()}' without punctuation; check for cut-off text",
+        )
+
+
+def _scan_prose_text(
+    text: str, basename: str, event_description_keys: AbstractSet[str] = frozenset()
+) -> List[Issue]:
     results: List[Issue] = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
-    basename = os.path.basename(filename)
-    for line_idx, line in enumerate(lines):
-        if not line.strip():
-            continue
-        value_match = _TYPO_VALUE_RE.match(line)
-        if not value_match:
-            continue
-        value = value_match.group(1)
+    for line_idx, key, value in _iter_loc_values(text):
         for _ in range(value.count("\u2014")):
             results.append(
                 Issue(
@@ -268,6 +416,20 @@ def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if (
+            basename not in _SPACED_EN_DASH_EXEMPT_FILES
+            and key not in _SPACED_EN_DASH_EXEMPTIONS
+        ):
+            for _ in _SPACED_EN_DASH_RE.finditer(value):
+                results.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="loc-spaced-en-dash",
+                        message="Spaced en dash used as an em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                        file=basename,
+                        line=line_idx + 2,
+                    )
+                )
         for _ in range(value.count("`")):
             results.append(
                 Issue(
@@ -278,7 +440,42 @@ def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if value.count('\\"') % 2:
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="loc-unbalanced-quote",
+                    message='Odd number of \\" in loc value: an opening or closing quote is missing',
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        for category, message in _prose_findings(key, value, event_description_keys):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category=category,
+                    message=message,
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+
     return results
+
+
+def _scan_subst_keys_text(text: str) -> Set[str]:
+    return set(_SUBST_KEY_RE.findall(text))
+
+
+def _scan_var_refs_text(raw: str, basename: str) -> List[Tuple[str, str, int]]:
+    out: List[Tuple[str, str, int]] = []
+    for number, line in enumerate(raw.split("\n"), 1):
+        for token in _LOC_VAR_REF_RE.findall(line):
+            name = _loc_var_name(token)
+            if name:
+                out.append((name, basename, number))
+    return out
 
 
 def _parse_loc_keys_from_text(text: str) -> List[Tuple[str, str]]:
@@ -358,12 +555,16 @@ def get_all_colors(mod_path: str) -> List[str]:
 # _txt_refs_init plants them as worker globals once per worker instead.
 _W_VALID_KEYS: frozenset = frozenset()
 _W_SCRIPTED_KEYS: frozenset = frozenset()
+_W_MOD_PATH: Optional[str] = None
 
 
-def _txt_refs_init(valid_keys: frozenset, scripted_keys: frozenset) -> None:
-    global _W_VALID_KEYS, _W_SCRIPTED_KEYS
+def _txt_refs_init(
+    valid_keys: frozenset, scripted_keys: frozenset, mod_path: Optional[str] = None
+) -> None:
+    global _W_VALID_KEYS, _W_SCRIPTED_KEYS, _W_MOD_PATH
     _W_VALID_KEYS = valid_keys
     _W_SCRIPTED_KEYS = scripted_keys
+    _W_MOD_PATH = mod_path
 
 
 def process_txt_for_loc_key_refs(filename: str) -> List[str]:
@@ -372,7 +573,7 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     Reads the valid/scripted key sets from worker globals (set by
     _txt_refs_init), so the large set is shipped once per worker, not per task.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=_W_MOD_PATH):
         return []
     valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
@@ -401,12 +602,412 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     return results
 
 
+def _scan_txt_key_refs(filename: str) -> Tuple[List[str], List[str]]:
+    """Pool worker: loc-key and custom-tooltip refs; the second scan reuses
+    FileOpener's copy of the text the first one read."""
+    return process_txt_for_loc_key_refs(filename), process_txt_for_custom_tt_refs(
+        filename
+    )
+
+
+def _trigger_tooltip_keys(text: str) -> List[str]:
+    """Keys from every custom_trigger_tooltip, past any nested trigger body."""
+    keys: List[str] = []
+    for match in re.finditer(r"custom_trigger_tooltip\s*=\s*\{", text):
+        depth = 0
+        start = text.index("{", match.end() - 1)
+        for token in re.finditer(r"[{}]|\btooltip\s*=\s*(?!\{)(\S+)", text[start:]):
+            symbol = token.group(0)
+            if symbol == "{":
+                depth += 1
+            elif symbol == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif depth == 1:
+                keys.append(token.group(1))
+                break
+    return keys
+
+
+# --- [?variable] references -------------------------------------------------
+
+# An unwritten [?name] renders as 0 rather than erroring, so it is invisible.
+
+_LOC_VAR_REF_RE = re.compile(r"\[\?([^\]]+)\]")
+_LOC_VAR_WRITE_RE = re.compile(
+    r"(?:set_variable|set_temp_variable|set_global_variable|set_variable_to_random|"
+    r"set_temp_variable_to_random|randomize_variable|"
+    r"add_to_variable|add_to_temp_variable|subtract_from_variable|"
+    r"subtract_from_temp_variable|multiply_variable|multiply_temp_variable|"
+    r"divide_variable|divide_temp_variable|clamp_variable|clamp_temp_variable|"
+    r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
+    r"min_variable|max_variable)\s*=\s*\{\s*"
+    r"(?:var\s*=\s*)?((?:\d+\.)?(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*)"
+)
+_LOC_VAR_ARRAY_RE = re.compile(
+    r"(?:add_to_array|add_to_temp_array|resize_array)\s*=\s*\{\s*"
+    r"(?:array\s*=\s*)?([A-Za-z_][\w.:@^]*)"
+)
+
+_VAR_SCOPE_WORDS = frozenset(
+    {
+        "root",
+        "this",
+        "from",
+        "prev",
+        "owner",
+        "controller",
+        "capital",
+        "global",
+        "var",
+        "event_target",
+        "token",
+    }
+)
+
+# Engine-side, but absent from resources/documentation.
+_EXTRA_ENGINE_LOC_VARS = frozenset(
+    {"days_left", "war_support", "strength_ratio", "random"}
+)
+# Written by vanilla common/on_actions/05_lar_on_actions.txt, which MD does not replace.
+_VANILLA_WRITTEN_VARS = frozenset({"historical_capital_for_country"})
+
+_DYNAMIC_VAR_DOC = os.path.join(
+    "resources", "documentation", "dynamic_variables_documentation.md"
+)
+_DOC_HEADING_RE = re.compile(r"^#{2,4}\s+([A-Za-z_][\w.]*)\s*$", re.M)
+
+
+@functools.lru_cache(maxsize=1)
+def _engine_loc_vars(mod_path: str) -> frozenset:
+    """Read-only dynamic variables the engine supplies, from the vanilla docs."""
+    try:
+        with open(
+            os.path.join(mod_path, _DYNAMIC_VAR_DOC), "r", encoding="utf-8"
+        ) as handle:
+            body = handle.read()
+    except OSError:
+        return _EXTRA_ENGINE_LOC_VARS
+    return frozenset(_DOC_HEADING_RE.findall(body)) | _EXTRA_ENGINE_LOC_VARS
+
+
+_SCOPE_HOP_RE = re.compile(r"[A-Za-z_]\w*")
+_TAG_RE = re.compile(r"[A-Z]{3}")
+
+
+def _loc_var_name(raw: str) -> str:
+    """The variable a `[?...]` names, or "" for a promote or scope.
+
+    Leading scope hops (`var:`, `CONTROLLER:`, `ROOT.`, `145.`) are stripped.
+    A `name@target` dynamic variable yields `name`.
+    """
+    name = raw.split("|", 1)[0].strip()
+    if not name:
+        return ""
+    if "@" in name:
+        name = name.split("@", 1)[0]
+    name = name.split("^", 1)[0]
+    while ":" in name:
+        head, _, tail = name.partition(":")
+        if not _SCOPE_HOP_RE.fullmatch(head):
+            break
+        name = tail
+    parts = [seg for seg in name.split(".") if seg]
+    if any(seg[:1].isupper() and seg[1:2].islower() for seg in parts[1:]):
+        return ""  # a promote such as .GetName, not a variable read
+    while len(parts) > 1 and (
+        parts[0].lower() in _VAR_SCOPE_WORDS
+        or _TAG_RE.fullmatch(parts[0])
+        or parts[0].isdigit()
+    ):
+        parts.pop(0)
+    name = ".".join(parts).strip()
+    # A scope hop can sit behind the dotted prefix too: FROM.CONTROLLER:var.
+    while ":" in name:
+        head, _, tail = name.partition(":")
+        if not _SCOPE_HOP_RE.fullmatch(head):
+            break
+        name = tail
+    if not name or name.lower() in _VAR_SCOPE_WORDS or _TAG_RE.fullmatch(name):
+        return ""
+    if len(name) < 3 or name.endswith("_array") or "." in name:
+        return ""
+    return name
+
+
+def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
+    """Pool worker: variable names one script file writes."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return set()
+    written: Set[str] = set()
+    # Every write effect name contains "variable", every array one "_array".
+    raws = _LOC_VAR_WRITE_RE.findall(text) if "variable" in text else []
+    if "_array" in text:
+        raws += _LOC_VAR_ARRAY_RE.findall(text)
+    for raw in raws:
+        written.add(raw.split("^")[0].split(".")[-1])
+        name = _loc_var_name(raw)
+        if name:
+            written.add(name)
+    if any(
+        key in text
+        for key in (
+            "for_each_loop",
+            "for_each_scope_loop",
+            "for_loop_effect",
+            "while_loop_effect",
+            "find_highest_in_array",
+            "find_lowest_in_array",
+            "any_of",
+            "all_of",
+        )
+    ):
+        search_from = 0
+        while True:
+            match = _COLLECTION_BIND_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            for key, scalar, _block in iter_statements(body):
+                if (
+                    key in {"value", "index"}
+                    and scalar
+                    and _BIND_NAME_RE.fullmatch(scalar)
+                ):
+                    written.add(scalar)
+            # Resume inside the block so a binder nested in another loop is found too.
+            search_from = match.end()
+    if "dynamic_lists" in text:
+        search_from = 0
+        while True:
+            match = _DYNAMIC_LISTS_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            for _key, _scalar, entry in iter_statements(body):
+                if entry is None:
+                    continue
+                for key, scalar, _block in iter_statements(entry):
+                    if key == "value" and scalar and _BIND_NAME_RE.fullmatch(scalar):
+                        written.add(scalar)
+            search_from = end
+    if "var =" in text or "var=" in text:
+        search_from = 0
+        while True:
+            match = _WRITE_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            for raw in _VAR_BIND_RE.findall(body):
+                written.add(raw.split("^")[0].split(".")[-1])
+                name = _loc_var_name(raw)
+                if name:
+                    written.add(name)
+            search_from = end
+    return written
+
+
+# name@target. Trailing `_@SCOPE` is a flag token, not a dynamic variable.
+_TARGETED_VAR_RE = re.compile(r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*[A-Za-z0-9])@")
+_FLAG_LINE_RE = re.compile(
+    r"(?:"
+    r"\b(?:has|set|clr|modify)_"
+    r"(?:country|global|state|character|mio|project|unit_leader)_flag\s*="
+    r"|\bflag\s*="
+    r")"
+)
+
+
+def _scan_targeted_var_text(text: str, basename: str) -> List[Tuple[str, str, int]]:
+    """(prefix, file, line) for every name@target that is not a flag token."""
+    if "@" not in text:
+        return []
+    out: List[Tuple[str, str, int]] = []
+    for number, line in enumerate(text.split("\n"), 1):
+        if "@" not in line or _FLAG_LINE_RE.search(line):
+            continue
+        for prefix in _TARGETED_VAR_RE.findall(line):
+            out.append((prefix, basename, number))
+    return out
+
+
+def process_txt_for_targeted_vars(args: Tuple[str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: name@target prefixes one script file uses."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+    return _scan_targeted_var_text(text, os.path.basename(filename))
+
+
+_WRITE_OPEN_RE = re.compile(
+    r"\b(?:set_variable|set_temp_variable|set_global_variable|"
+    r"set_variable_to_random|set_temp_variable_to_random|randomize_variable|"
+    r"add_to_variable|add_to_temp_variable|subtract_from_variable|"
+    r"subtract_from_temp_variable|multiply_variable|multiply_temp_variable|"
+    r"divide_variable|divide_temp_variable|clamp_variable|clamp_temp_variable|"
+    r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
+    r"min_variable|max_variable)\s*=\s*\{"
+)
+_VAR_BIND_RE = re.compile(r"\bvar\s*=\s*((?:[A-Za-z_]|[0-9]+_)[\w.:@^]*)")
+_DYNAMIC_LISTS_OPEN_RE = re.compile(r"\bdynamic_lists\s*=\s*\{")
+_BIND_NAME_RE = re.compile(r"[A-Za-z_]\w*")
+_COLLECTION_BIND_OPEN_RE = re.compile(
+    r"\b(?:for_each_loop|for_each_scope_loop|for_loop_effect|while_loop_effect|"
+    r"find_highest_in_array|find_lowest_in_array|any_of|all_of)\s*=\s*\{"
+)
+_CHECK_VARIABLE_OPEN_RE = re.compile(r"check_variable(?<!\wcheck_variable)\s*=\s*\{")
+_HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
+_CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
+_CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
+_CHECK_VAR_CONSTANT_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z_][\w]*")
+# Reads that are valid only in one file, keyed by basename.
+_FILE_SCOPED_READ_VARS = {
+    # The engine supplies these temporary values only while scoring occupation laws.
+    "occupation_laws.txt": frozenset(
+        {
+            "uncapped_resistance_target",
+            "resistance_target_without_law",
+            "garrison_min_support_ratio",
+        }
+    ),
+    # Vanilla autonomy state copy; vanilla instantiate_collaboration_government writes it.
+    "lar_collaboration_government.txt": frozenset({"collaboration_formed_by"}),
+}
+_CHECK_VAR_KEYWORDS = frozenset(
+    {
+        "var",
+        "variable",
+        "value",
+        "compare",
+        "tooltip",
+        "greater",
+        "greater_than",
+        "less",
+        "less_than",
+        "equals",
+        "not_equals",
+        "greater_than_or_equals",
+        "less_than_or_equals",
+        "AND",
+        "OR",
+        "NOT",
+        "limit",
+        "if",
+        "else",
+    }
+)
+
+
+def _scan_script_var_reads_text(text: str, basename: str) -> List[Tuple[str, str, int]]:
+    """Unwritten check_variable / has_variable names. @ targets are a separate check."""
+    if "check_variable" not in text and "has_variable" not in text:
+        return []
+    out: List[Tuple[str, str, int]] = []
+    for number, line in enumerate(text.split("\n"), 1):
+        if "has_variable" not in line:
+            continue
+        for raw in _HAS_VARIABLE_RE.findall(line):
+            if "@" in raw or raw.startswith("token:"):
+                continue
+            name = _loc_var_name(raw)
+            if name:
+                out.append((name, basename, number))
+    search_from = 0
+    # Blocks come in file order, so count only the newlines since the last one.
+    line_pos = 0
+    lineno = 1
+    while True:
+        match = _CHECK_VARIABLE_OPEN_RE.search(text, search_from)
+        if not match:
+            break
+        body, end = extract_block_from_text(text, match.end() - 1)
+        if end == -1:
+            break
+        search_from = end
+        if "[" in body:
+            continue
+        lineno += text.count("\n", line_pos, match.start())
+        line_pos = match.start()
+        body = _CHECK_VAR_TOOLTIP_RE.sub("", body)
+        body = _CHECK_VAR_CONSTANT_RE.sub("", body)
+        for raw in _CHECK_VAR_TOKEN_RE.findall(body):
+            if "@" in raw or raw.startswith("token:") or raw in _CHECK_VAR_KEYWORDS:
+                continue
+            name = _loc_var_name(raw)
+            if name:
+                out.append((name, basename, lineno))
+        search_from = end
+    return out
+
+
+def process_txt_for_script_var_reads(args: Tuple[str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: check_variable / has_variable names one script file reads."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+    return _scan_script_var_reads_text(text, os.path.basename(filename))
+
+
+def _scan_yaml_text(text: str, filename: str) -> List[Issue]:
+    return [
+        Issue(
+            severity=Severity.ERROR,
+            category=f"loc-yaml-{kind.replace('_', '-')}",
+            message=description,
+            file=filename,
+            line=line_num,
+        )
+        for line_num, line in enumerate(text.split("\n"), 1)
+        for _, kind, description in check_line(line, line_num)
+    ]
+
+
+def _scan_shared_yml_file(
+    args, *, event_description_keys: AbstractSet[str] = frozenset()
+) -> Tuple:
+    """Run every yml check after one read; YAML checks never use content exemptions."""
+    filename, valid_colors, skip_content, relative_path = args
+    raw = read_text_strict(filename)
+    yaml_issues = _scan_yaml_text(raw, relative_path)
+    if skip_content:
+        return ([], [], [], [], [], [], set(), yaml_issues)
+    text = strip_comments(raw)
+    basename = os.path.basename(filename)
+    return (
+        _scan_brackets_text(text, basename),
+        _scan_syntax_text(text, basename, valid_colors),
+        _scan_mandatory_text(text, basename),
+        _scan_typos_text(text, basename),
+        _scan_prose_text(text, basename, event_description_keys),
+        _scan_var_refs_text(raw, basename),
+        _scan_subst_keys_text(text),
+        yaml_issues,
+    )
+
+
 def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
 
     Valid/scripted key sets come from worker globals set by _txt_refs_init.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=_W_MOD_PATH):
         return []
     valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
@@ -418,22 +1019,20 @@ def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     ):
         return []
     simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
     basename = os.path.basename(filename)
     results = []
-    for pattern in [simple_pattern, trigger_pattern]:
-        for key in re.findall(pattern, text_file):
-            if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
-                continue
-            if "[" in key or "|" in key or '"' in key:
-                continue
-            if key.startswith("GFX_"):
-                continue
-            if key.startswith("cannot_go_higher_than_") or key.startswith(
-                "cannot_go_lower_than_"
-            ):
-                continue
-            results.append(f"{key} - {basename}")
+    for key in re.findall(simple_pattern, text_file) + _trigger_tooltip_keys(text_file):
+        if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
+            continue
+        if "[" in key or "|" in key or '"' in key:
+            continue
+        if key.startswith("GFX_"):
+            continue
+        if key.startswith("cannot_go_higher_than_") or key.startswith(
+            "cannot_go_lower_than_"
+        ):
+            continue
+        results.append(f"{key} - {basename}")
     return results
 
 
@@ -455,7 +1054,7 @@ def _extract_not_blocks(text: str) -> List[str]:
 
 
 def process_file_for_orphan_tt_refs(
-    args: Tuple,
+    args: Tuple, *, mod_path: Optional[str] = None
 ) -> Tuple[set, List[str], set]:
     """Pool worker: collect tooltip references and dynamic patterns from one file.
 
@@ -466,7 +1065,7 @@ def process_file_for_orphan_tt_refs(
     negation lookup.
     """
     filename, patterns = args
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set(), [], set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -490,12 +1089,84 @@ def process_file_for_orphan_tt_refs(
     return referenced, dynamic_raw, negated_refs
 
 
+_RESISTANCE_BLOCK_RE = re.compile(
+    r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}", re.MULTILINE | re.DOTALL
+)
+_RESISTANCE_TOOLTIP_RE = re.compile(r"tooltip = ([^\t \n]+)")
+
+
+def _scan_resistance_tooltips(filename: str, mod_path: str) -> List[Tuple[str, str]]:
+    """Per add_resistance_target block, ``(tooltip, "")``, or ``("", message)``
+    when the block has no tooltip, in file order."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "add_resistance_target = {" not in text_file:
+        return []
+    hits: List[Tuple[str, str]] = []
+    for match in _RESISTANCE_BLOCK_RE.findall(text_file):
+        body = match[1]
+        if "tooltip =" in body:
+            tooltips = _RESISTANCE_TOOLTIP_RE.findall(body)
+            if tooltips:
+                hits.append((tooltips[0], ""))
+        else:
+            snippet = body.replace("\n", " ").replace("\t", "")[:80]
+            hits.append(
+                ("", f"{snippet} - {os.path.basename(filename)} - missing tooltip")
+            )
+    return hits
+
+
+_TXT_TOOLTIP_PATTERNS = [
+    r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
+    r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
+    r"tooltip\s*=\s*(\S+)",
+    r"localization_key\s*=\s*(\S+)",
+]
+_GUI_TOOLTIP_PATTERNS = [
+    r'(?:pdx_tooltip|pdx_tooltip_delayed|tooltip|text|buttonText)\s*=\s*"([^"]+)"',
+    r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
+]
+
+
+def _scan_shared_txt_file(args: Tuple[str, str, bool, bool]) -> Tuple:
+    """Pool worker: the tooltip and variable scans for one .txt file, one read.
+
+    Each scan is the worker its own check used, so findings are unchanged;
+    FileOpener serves the later scans the text the first one read.
+    ``tooltips`` marks a file the tooltip checks scan, ``script`` one the
+    variable checks scan. Returns (resistance, orphan_refs, var_writes,
+    var_reads, targeted_vars).
+    """
+    filename, mod_path, tooltips, script = args
+    if tooltips:
+        refs: Tuple = (
+            _scan_resistance_tooltips(filename, mod_path),
+            process_file_for_orphan_tt_refs(
+                (filename, _TXT_TOOLTIP_PATTERNS), mod_path=mod_path
+            ),
+        )
+    else:
+        refs = ([], (set(), [], set()))
+    if not script:
+        return (*refs, set(), [], [])
+    return (
+        *refs,
+        process_txt_for_var_writes((filename,)),
+        process_txt_for_script_var_reads((filename,)),
+        process_txt_for_targeted_vars((filename,)),
+    )
+
+
 def _get_skipped_loc_keys(mod_path: str) -> set:
     """Get all loc keys defined in yml files matching EXTRA_SKIP_PATTERNS."""
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     keys = set()
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
-        if not _should_skip(filename):
+        if not _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -533,28 +1204,82 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def _get_yml_files(self) -> List[str]:
-        return self._collect_files(
-            ["localisation/english/**/*.yml"], extra_skip=_should_skip
-        )
+        return self._collect_files(["localisation/english/**/*.yml"])
 
-    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
-        """Return loc keys referenced via $KEY$ string interpolation.
+    def _get_shared_yml_scan(self) -> dict:
+        """Share file reads while preserving content exemptions, not YAML exemptions."""
+        memo = getattr(self, "_shared_yml_memo", None)
+        if memo is not None:
+            return memo
+        self._log_section("Sharing per-file reads across localisation checks...")
 
-        These keys intentionally split § color codes across multiple values
-        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
-        §-balance check produces false positives. Caller skips that check
-        for any key in this set.
-        """
-        keys: set = set()
-        for filepath in yml_files:
-            try:
-                text = FileOpener.open_text_file(
-                    filepath, lowercase=False, strip_comments_flag=True
+        yml_files = self._get_yml_files()
+        event_description_keys: Set[str] = set()
+        if yml_files:
+            for filename in self._collect_files(
+                ["events/**/*.txt"], ignore_staged=True
+            ):
+                event_description_keys.update(
+                    _event_description_keys(read_text_strict(filename))
                 )
-            except Exception:
-                continue
-            keys.update(_SUBST_KEY_RE.findall(text))
-        return frozenset(keys)
+        scan = functools.partial(
+            _scan_shared_yml_file,
+            event_description_keys=frozenset(event_description_keys),
+        )
+        valid_colors = get_all_colors(self.mod_path)
+        args_list = [
+            (
+                f,
+                valid_colors,
+                _should_skip(f, mod_path=self.mod_path),
+                Path(f).relative_to(self.mod_path).as_posix(),
+            )
+            for f in yml_files
+        ]
+
+        brackets_all: List[str] = []
+        syntax_all: List = []
+        mandatory_all: List[str] = []
+        typos_all: List[str] = []
+        prose_all: List[Issue] = []
+        yaml_all: List[Issue] = []
+        var_refs_all: List[Tuple[str, str, int]] = []
+        subst_all: Set[str] = set()
+        syntax_tagged: List = []
+        for (
+            brackets,
+            pairs,
+            mandatory,
+            typos,
+            prose,
+            var_refs,
+            subst,
+            yaml_issues,
+        ) in self._pool_map(scan, args_list, chunksize=10):
+            brackets_all.extend(brackets)
+            syntax_tagged.extend(pairs)
+            mandatory_all.extend(mandatory)
+            typos_all.extend(typos)
+            prose_all.extend(prose)
+            yaml_all.extend(yaml_issues)
+            var_refs_all.extend(var_refs)
+            subst_all.update(subst)
+        subst_keys = frozenset(subst_all)
+        syntax_all.extend(
+            finding for finding, key in syntax_tagged if key not in subst_keys
+        )
+        empty: dict = {
+            "brackets": brackets_all,
+            "syntax": syntax_all,
+            "mandatory": mandatory_all,
+            "typos": typos_all,
+            "prose": prose_all,
+            "yaml": yaml_all,
+            "var_refs": var_refs_all,
+            "subst": subst_keys,
+        }
+        self._shared_yml_memo = empty
+        return empty
 
     def validate_duplicated_keys(self, duplicated: List[str], skipped_keys: set):
         self._log_section("Checking for duplicated localisation keys...")
@@ -569,14 +1294,7 @@ class Validator(BaseValidator):
     def validate_brackets(self):
         self._log_section("Checking for unpaired brackets in localisation...")
 
-        yml_files = self._get_yml_files()
-        args_list = [(f,) for f in yml_files]
-
-        all_results = self._pool_map(process_yml_for_brackets, args_list, chunksize=10)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = list(self._get_shared_yml_scan()["brackets"])
 
         self._report(
             results,
@@ -587,16 +1305,7 @@ class Validator(BaseValidator):
     def validate_syntax(self):
         self._log_section("Checking localisation color syntax...")
 
-        valid_colors = get_all_colors(self.mod_path)
-        yml_files = self._get_yml_files()
-        subst_keys = self._collect_substitution_keys(yml_files)
-        args_list = [(f, valid_colors, subst_keys) for f in yml_files]
-
-        all_results = self._pool_map(process_yml_for_syntax, args_list, chunksize=10)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = list(self._get_shared_yml_scan()["syntax"])
 
         self._report(
             results,
@@ -604,17 +1313,18 @@ class Validator(BaseValidator):
             "Localisation color syntax issues:",
         )
 
+    def validate_yaml_syntax(self):
+        self._log_section("Checking localisation YAML syntax...")
+        self._report(
+            self._get_shared_yml_scan()["yaml"],
+            "✓ No localisation YAML syntax issues",
+            "Localisation YAML syntax issues:",
+        )
+
     def validate_mandatory_line(self):
         self._log_section("Checking mandatory l_english: line in loc files...")
 
-        yml_files = self._get_yml_files()
-        args_list = [(f,) for f in yml_files]
-
-        all_results = self._pool_map(process_yml_for_mandatory, args_list, chunksize=10)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = list(self._get_shared_yml_scan()["mandatory"])
 
         self._report(
             results,
@@ -625,80 +1335,70 @@ class Validator(BaseValidator):
     def validate_typo_watchlist(self):
         self._log_section("Checking localisation values against the typo watchlist...")
 
-        yml_files = self._get_yml_files()
-        args_list = [(f,) for f in yml_files]
-
-        all_results = self._pool_map(process_yml_for_typos, args_list, chunksize=10)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = list(self._get_shared_yml_scan()["typos"])
 
         self._report(
             results,
             "✓ No typo-watchlist matches in localisation",
             "Typo-watchlist matches in localisation values:",
-            severity=Severity.WARNING,
             category="loc-typo-watchlist",
         )
 
     def validate_prose_conventions(self):
-        self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
-        )
+        self._log_section("Checking localisation prose conventions...")
+        categories = {
+            "loc-em-dash": "Em dashes",
+            "loc-spaced-en-dash": "Spaced en dashes",
+            "loc-backtick-apostrophe": "Backtick apostrophes",
+            "loc-unbalanced-quote": "Unbalanced escaped quotes",
+            "loc-repeated-word": "Repeated words",
+            "loc-tripled-letter": "Tripled letters",
+            "loc-placeholder": "Placeholder values",
+            "loc-dangling-description": "Possibly cut-off descriptions",
+        }
+        grouped: Dict[str, List[Issue]] = {category: [] for category in categories}
+        for issue in self._get_shared_yml_scan()["prose"]:
+            grouped[issue.category].append(issue)
+        for category, label in categories.items():
+            self._report(
+                grouped[category],
+                f"✓ No {label.lower()} in localisation values",
+                f"{label} in localisation values:",
+                category=category,
+            )
 
-        yml_files = self._get_yml_files()
-        args_list = [(f,) for f in yml_files]
+    def _txt_files(self) -> List[str]:
+        return self.cached("txt_files", lambda: self._collect_files(["**/*.txt"]))
 
-        all_results = self._pool_map(process_yml_for_prose, args_list, chunksize=10)
+    def _get_txt_key_refs(
+        self, loc_keys: Dict, scripted_loc_keys: set
+    ) -> List[Tuple[List[str], List[str]]]:
+        """Both key-reference checks from one pass that reads each .txt once.
 
-        em_dash_results: List[Issue] = []
-        backtick_results: List[Issue] = []
-        for file_results in all_results:
-            for issue in file_results:
-                if issue.category == "loc-em-dash":
-                    em_dash_results.append(issue)
-                else:
-                    backtick_results.append(issue)
-
-        self._report(
-            em_dash_results,
-            "✓ No em dashes in localisation values",
-            "Em dashes in localisation values:",
-            severity=Severity.WARNING,
-            category="loc-em-dash",
-        )
-        self._report(
-            backtick_results,
-            "✓ No backtick-as-apostrophe in localisation values",
-            "Backtick used as apostrophe in localisation values:",
-            severity=Severity.WARNING,
-            category="loc-backtick-apostrophe",
-        )
-
-    def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
-        """Scan txt files with a worker that needs the valid/scripted key sets,
-        shipped once per worker (loc_keys is ~200k entries; per-task shipping
-        pickled it ~23 MB per chunk)."""
-        return self._pool_map_init(
-            worker,
-            txt_files,
-            _txt_refs_init,
-            (frozenset(loc_keys), frozenset(scripted_loc_keys)),
-            chunksize=30,
-        )
+        The valid/scripted key sets ship once per worker (loc_keys is ~200k
+        entries; per-task shipping pickled it ~23 MB per chunk).
+        """
+        memo = getattr(self, "_txt_key_refs_memo", None)
+        if memo is None or memo[0] is not loc_keys or memo[1] is not scripted_loc_keys:
+            refs = self._pool_map_init(
+                _scan_txt_key_refs,
+                self._txt_files(),
+                _txt_refs_init,
+                (frozenset(loc_keys), frozenset(scripted_loc_keys), self.mod_path),
+                chunksize=30,
+            )
+            memo = (loc_keys, scripted_loc_keys, refs)
+            self._txt_key_refs_memo = memo
+        return memo[2]
 
     def validate_localization_key_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
         self._log_section("Checking localization_key references...")
 
-        txt_files = self._collect_files(["**/*.txt"])
-        all_results = self._scan_txt_refs(
-            process_txt_for_loc_key_refs, txt_files, loc_keys, scripted_loc_keys
-        )
+        all_results = self._get_txt_key_refs(loc_keys, scripted_loc_keys)
 
-        results = sorted({k for file_res in all_results for k in file_res})
+        results = sorted({k for file_res, _tt in all_results for k in file_res})
         self._report(
             results,
             "✓ All localization_key references are valid",
@@ -710,56 +1410,58 @@ class Validator(BaseValidator):
     ):
         self._log_section("Checking custom tooltip references...")
 
-        txt_files = self._collect_files(["**/*.txt"])
-        all_results = self._scan_txt_refs(
-            process_txt_for_custom_tt_refs, txt_files, loc_keys, scripted_loc_keys
-        )
+        all_results = self._get_txt_key_refs(loc_keys, scripted_loc_keys)
 
-        results = sorted({r for file_res in all_results for r in file_res})
+        results = sorted({r for _keys, file_res in all_results for r in file_res})
         self._report(
             results,
             "✓ All custom tooltip references are valid",
             "Custom tooltip references not found in localisation:",
         )
 
+    def _get_shared_txt_scan(self) -> Dict[str, list]:
+        """Read each .txt file once for the tooltip and script-variable checks.
+
+        Each check gets its per-file results in its own file order, so
+        findings are unchanged.
+        """
+        memo = getattr(self, "_shared_txt_memo", None)
+        if memo is not None:
+            return memo
+        txt_files = self._txt_files()
+        script_files = self._script_txt_files()
+        tooltip_set = set(txt_files)
+        script_set = set(script_files)
+        files = txt_files + [f for f in script_files if f not in tooltip_set]
+        args_list = [
+            (f, self.mod_path, f in tooltip_set, f in script_set) for f in files
+        ]
+        scans = dict(
+            zip(files, self._pool_map(_scan_shared_txt_file, args_list, chunksize=30))
+        )
+        memo = {
+            "resistance": [scans[f][0] for f in txt_files],
+            "orphan_refs": [scans[f][1] for f in txt_files],
+            "var_writes": [scans[f][2] for f in script_files],
+            "var_reads": [scans[f][3] for f in script_files],
+            "targeted_vars": [scans[f][4] for f in script_files],
+        }
+        self._shared_txt_memo = memo
+        return memo
+
     def validate_add_resistance_tooltip(self, loc_keys: Dict):
         self._log_section("Checking add_resistance_target tooltip localisation...")
 
-        pattern = r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}"
         results = []
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
-        ):
-            if _should_skip(filename):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "add_resistance_target = {" not in text_file:
-                continue
-
-            matches = re.findall(pattern, text_file, flags=re.MULTILINE | re.DOTALL)
-            for match in matches:
-                body = match[1]
-                if "tooltip =" in body:
-                    tt = re.findall(r"tooltip = ([^\t \n]+)", body)
-                    if tt:
-                        tt = tt[0]
-                        if tt in loc_keys:
-                            if "$VALUE|=-%0$" not in loc_keys[tt]:
-                                results.append(
-                                    f"{tt} - missing $VALUE|=-%0$ in loc value"
-                                )
-                        else:
-                            if tt.startswith("OTT_"):
-                                continue
-                            results.append(f"{tt} - localization key not found")
-                else:
-                    snippet = body.replace("\n", " ").replace("\t", "")[:80]
-                    results.append(
-                        f"{snippet} - {os.path.basename(filename)} - missing tooltip"
-                    )
+        for hits in self._get_shared_txt_scan()["resistance"]:
+            for tt, missing in hits:
+                if missing:
+                    results.append(missing)
+                elif tt in loc_keys:
+                    if "$VALUE|=-%0$" not in loc_keys[tt]:
+                        results.append(f"{tt} - missing $VALUE|=-%0$ in loc value")
+                elif not tt.startswith("OTT_"):
+                    results.append(f"{tt} - localization key not found")
 
         self._report(
             results,
@@ -795,24 +1497,11 @@ class Validator(BaseValidator):
 
         # 1. Collect all tooltip keys referenced in script, GUI, and scripted loc files.
         referenced_in_scripts: set = set(scripted_loc_keys)
-        txt_patterns = [
-            r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
-            r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
-            r"tooltip\s*=\s*(\S+)",
-            r"localization_key\s*=\s*(\S+)",
-        ]
-        gui_patterns = [
-            r'(?:pdx_tooltip|pdx_tooltip_delayed|tooltip|text|buttonText)\s*=\s*"([^"]+)"',
-            r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
-        ]
-
-        txt_files = self._collect_files(["**/*.txt"])
         gui_files = self._collect_files(["**/*.gui"])
-        args_list = [(f, txt_patterns) for f in txt_files] + [
-            (f, gui_patterns) for f in gui_files
-        ]
-        all_scan_results = self._pool_map(
-            process_file_for_orphan_tt_refs, args_list, chunksize=30
+        all_scan_results = self._get_shared_txt_scan()["orphan_refs"] + self._pool_map(
+            functools.partial(process_file_for_orphan_tt_refs, mod_path=self.mod_path),
+            [(f, _GUI_TOOLTIP_PATTERNS) for f in gui_files],
+            chunksize=30,
         )
 
         # Dynamic-key patterns (compiled regexes) collected from meta_effect
@@ -892,7 +1581,7 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             basename = os.path.basename(filepath)
-            for match in _OPINION_MODIFIER_RE.finditer(text):
+            for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
                 name = match.group(1)
                 if name not in modifiers:
                     modifiers[name] = basename
@@ -916,6 +1605,119 @@ class Validator(BaseValidator):
             category="missing-opinion-modifier-localisation",
         )
 
+    def validate_raid_localisation(self, loc_keys: Dict, scripted_loc_keys: set):
+        self._log_section("Checking raid localisation...")
+
+        required: Dict[str, str] = {}
+        for patterns, suffixes in (
+            (["common/raids/*.txt"], ("raid_type_{}", "raid_type_{}_desc")),
+            (["common/raids/categories/*.txt"], ("raid_category_{}",)),
+        ):
+            for filepath in self._collect_files(patterns, ignore_staged=True):
+                try:
+                    text = FileOpener.open_text_file(
+                        filepath, lowercase=False, strip_comments_flag=True
+                    )
+                except OSError:
+                    continue
+                basename = os.path.basename(filepath)
+                for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    for suffix in suffixes:
+                        required.setdefault(suffix.format(match.group(1)), basename)
+
+        missing = [
+            f"{key} - {basename}: raid without localisation"
+            for key, basename in sorted(required.items())
+            if key not in loc_keys
+            and key not in scripted_loc_keys
+            and key not in VANILLA_LOC_KEYS
+        ]
+        self._report(
+            missing,
+            "✓ All raids have localisation",
+            "Raids without localisation:",
+            severity=Severity.WARNING,
+            category="missing-raid-localisation",
+        )
+
+    def _script_txt_files(self) -> List[str]:
+        return self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+
+    def _script_written_variables(self) -> Set[str]:
+        memo = getattr(self, "_script_written_vars", None)
+        if memo is not None:
+            return memo
+        written: Set[str] = set()
+        for names in self._get_shared_txt_scan()["var_writes"]:
+            written |= names
+        self._script_written_vars = written
+        return written
+
+    def validate_variable_references(self):
+        """`[?name]` in English loc must name a variable some script writes."""
+        self._log_section("Checking [?variable] references in localisation...")
+
+        written = self._script_written_variables()
+        engine = _engine_loc_vars(self.mod_path)
+        results = []
+        for name, basename, number in self._get_shared_yml_scan()["var_refs"]:
+            if name not in written and name not in engine:
+                results.append((f"{name} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every [?variable] reference resolves to a written variable",
+            "Localisation reads a variable no script writes (renders as 0):",
+            severity=Severity.ERROR,
+            category="loc-unwritten-variable",
+        )
+
+    def validate_unwritten_script_variables(self):
+        """check_variable / has_variable must name a written or engine variable."""
+        self._log_section("Checking check_variable and has_variable reads...")
+
+        known = (
+            self._script_written_variables()
+            | _engine_loc_vars(self.mod_path)
+            | _VANILLA_WRITTEN_VARS
+        )
+        results = []
+        for hits in self._get_shared_txt_scan()["var_reads"]:
+            for name, basename, number in hits:
+                if name not in known and name not in _FILE_SCOPED_READ_VARS.get(
+                    basename, ()
+                ):
+                    results.append((f"{name} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every check_variable / has_variable read is documented or written",
+            "Script reads a variable no script writes (reads as 0):",
+            severity=Severity.WARNING,
+            category="script-unwritten-variable",
+        )
+
+    def validate_targeted_dynamic_variables(self):
+        """name@target in script must be a documented dynamic var or a write."""
+        self._log_section("Checking name@target dynamic variables...")
+
+        known = self._script_written_variables() | _engine_loc_vars(self.mod_path)
+        results = []
+        for hits in self._get_shared_txt_scan()["targeted_vars"]:
+            for prefix, basename, number in hits:
+                if prefix not in known:
+                    results.append((f"{prefix} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every name@target dynamic variable is documented or written",
+            "Unknown name@target dynamic variable (typos read as 0):",
+            severity=Severity.ERROR,
+            category="unknown-dynamic-variable",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -932,6 +1734,7 @@ class Validator(BaseValidator):
         self.validate_duplicated_keys(duplicated, skipped_keys)
         self.validate_brackets()
         self.validate_syntax()
+        self.validate_yaml_syntax()
         self.validate_mandatory_line()
         self.validate_typo_watchlist()
         self.validate_prose_conventions()
@@ -945,6 +1748,10 @@ class Validator(BaseValidator):
                 loc_keys, skipped_keys, scripted_loc_keys
             )
             self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
+            self.validate_raid_localisation(loc_keys, scripted_loc_keys)
+            self.validate_variable_references()
+            self.validate_unwritten_script_variables()
+            self.validate_targeted_dynamic_variables()
 
 
 if __name__ == "__main__":

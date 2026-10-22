@@ -18,10 +18,12 @@ import glob
 import os
 import shutil
 import sys
-from typing import Callable, Dict, Iterable, List
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from image_size import read_image_size
 from shared_utils import find_hoi4_install
+from sprite_index import _gfx_root
 from validate_defines import find_vanilla_defines, parse_vanilla_defines
 from validate_file_paths import collect_vanilla_paths
 from validate_gfx_references import (
@@ -29,7 +31,7 @@ from validate_gfx_references import (
     _vanilla_gfx_files,
     _vanilla_gui_files,
     font_names_from_gfx_text,
-    sprite_names_from_gfx_text,
+    sprite_defs_from_gfx_text,
 )
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -136,19 +138,33 @@ def _refresh_sprites() -> str:
     gfx_files = _vanilla_gfx_files()
     if not gfx_files:
         raise RefreshError("no interface .gfx files found")
-    names = set()
+    # Later files override earlier ones, matching sprite_index's load order; a
+    # sized definition is never displaced by a texture-less repeat of the name.
+    sizes: Dict[str, Optional[Tuple[int, int]]] = {}
     for gfx in gfx_files:
         raw = _read_raw(gfx)
-        if raw is not None:
-            names.update(sprite_names_from_gfx_text(raw))
+        if raw is None:
+            continue
+        root = _gfx_root(gfx)
+        for name, texture, _line in sprite_defs_from_gfx_text(raw):
+            size = None
+            if texture:
+                rel = texture.replace("\\", "/").lstrip("/")
+                size = read_image_size(os.path.normpath(os.path.join(root, rel)))
+            sizes[name] = size or sizes.get(name)
+    entries = []
+    for name, size in sizes.items():
+        entries.append(f"{name} {size[0]}x{size[1]}" if size else name)
     return _write_manifest(
         "vanilla_sprites.txt",
         [
-            "# Vanilla Hearts of Iron IV GFX sprite names (base + DLC interface .gfx).",
+            "# Vanilla Hearts of Iron IV GFX sprite names (base + DLC interface .gfx),",
+            "# each followed by its texture's WxH when the texture could be read.",
             "# Used by validate_gfx_references.py when no live install is present",
-            "# (CI) so references to vanilla sprites are not flagged as undefined.",
+            "# (CI) so references to vanilla sprites are not flagged as undefined,",
+            "# and by validate_decisions.py to size vanilla decision icons.",
         ],
-        names,
+        entries,
     )
 
 

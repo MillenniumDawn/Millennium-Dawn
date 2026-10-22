@@ -8,6 +8,8 @@ from types import SimpleNamespace
 
 import dev_setup
 import pytest
+from shared.suite import run_tool_script
+from shared.suite import write_text as write
 
 Version = namedtuple("Version", "major minor micro releaselevel serial")
 
@@ -46,12 +48,6 @@ def stub_run(monkeypatch, handler=lambda cmd: completed()):
 
     monkeypatch.setattr(dev_setup, "run", fake_run)
     return calls
-
-
-def write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def venv_python(root):
@@ -267,14 +263,14 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
 
 
 @pytest.mark.parametrize(
-    ("version", "ok", "note"),
+    ("version", "ok"),
     [
-        ((3, 13, 1), True, "(recommended)"),
-        ((3, 11, 4), True, "3.12+ recommended"),
-        ((3, 9, 18), False, "too old"),
+        ((3, 13, 1), True),
+        ((3, 12, 0), True),
+        ((3, 11, 4), False),
     ],
 )
-def test_check_python_grades_the_interpreter(version, ok, note, monkeypatch, capsys):
+def test_check_python_grades_the_interpreter(version, ok, monkeypatch, capsys):
     monkeypatch.setattr(
         sys,
         "version_info",
@@ -282,7 +278,14 @@ def test_check_python_grades_the_interpreter(version, ok, note, monkeypatch, cap
     )
 
     assert dev_setup.check_python() is ok
-    assert note in capsys.readouterr().out
+    output = capsys.readouterr().out
+    printed = f"{version[0]}.{version[1]}.{version[2]}"
+    assert printed in output
+    if ok:
+        assert "too old" not in output
+    else:
+        assert "too old" in output
+        assert f"{dev_setup.MIN_PYTHON[0]}.{dev_setup.MIN_PYTHON[1]}+" in output
 
 
 def test_check_pre_commit_reports_the_module_version(monkeypatch, capsys):
@@ -381,11 +384,13 @@ def test_group_packages_reads_the_named_group(monkeypatch, tmp_path):
         pyproject,
         "[dependency-groups]\n"
         'runtime = [\n  "requests>=2.32",\n  "pillow",\n]\n'
-        'dev = [\n  "pytest>=9.1.0",\n]\n',
+        'test = [\n  "pytest>=9.1.0",\n]\n'
+        'dev = [\n  {include-group = "test"},\n  "ruff",\n]\n',
     )
     monkeypatch.setattr(dev_setup, "PYPROJECT", pyproject)
 
     assert dev_setup._group_packages("runtime") == ["requests>=2.32", "pillow"]
+    assert dev_setup._group_packages("dev") == ["pytest>=9.1.0", "ruff"]
     assert dev_setup._group_packages("analysis") == []
 
 
@@ -453,13 +458,15 @@ def test_check_group_maps_distribution_names_to_import_names(monkeypatch, capsys
         return object()
 
     monkeypatch.setattr(
-        dev_setup, "_group_packages", lambda _group: ["pillow>=11", "pyyaml", "ruff"]
+        dev_setup,
+        "_group_packages",
+        lambda _group: ["pillow>=11", "pyyaml", "ruff", "pytest-xdist"],
     )
     monkeypatch.setattr(dev_setup.importlib.util, "find_spec", fake_find_spec)
     monkeypatch.setattr(dev_setup.importlib.metadata, "version", lambda _name: "11.1.0")
 
     assert dev_setup._check_group("runtime", "Tool dependencies") is True
-    assert imported == ["PIL", "yaml", "ruff"]
+    assert imported == ["PIL", "yaml", "ruff", "xdist"]
     assert "Tool dependencies: OK" in capsys.readouterr().out
 
 
@@ -710,6 +717,14 @@ def run_main(monkeypatch, *argv):
     return exc.value.code
 
 
+def test_the_script_checks_the_real_environment():
+    result = run_tool_script("dev_setup.py", "--check")
+
+    assert "Python:" in result.stdout
+    assert "pre-commit" in result.stdout
+    assert result.returncode in (0, 1), f"crashed: {result.stderr[:200]}"
+
+
 def test_check_mode_reports_a_ready_environment(setup_env, monkeypatch, capsys):
     assert run_main(monkeypatch, "--check") == 0
     assert "Everything is set up." in capsys.readouterr().out
@@ -751,7 +766,10 @@ def test_main_stops_on_an_unsupported_python(setup_env, monkeypatch, capsys):
     setup_env.state["check_python"] = False
 
     assert run_main(monkeypatch) == 1
-    assert "Python 3.10+ is required" in capsys.readouterr().out
+    assert (
+        f"Python {dev_setup.MIN_PYTHON[0]}.{dev_setup.MIN_PYTHON[1]}+ is required"
+        in capsys.readouterr().out
+    )
     assert not any(name.startswith("install_") for name in setup_env.calls)
 
 

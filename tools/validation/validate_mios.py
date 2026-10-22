@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Validate Military-Industrial Organization definitions in Millennium Dawn.
 
-Rules from .claude/docs/mio-reference.md + AGENTS.md:
+Rules from .claude/docs/mio-reference.md:
   * org ids are TAG_organization_name (3-uppercase tag prefix); the shared
     GENERIC_/generic_ orgs are exempt
   * orgs pin their tag with allowed = { original_tag = TAG }
   * initial traits are named TAG_<...>_trait (or reference a shared
-    generic_* trait from MD_generic_organization.txt)
+    generic_* trait from MD_generic_organizations_old.txt)
   * trait grid x never exceeds 9 (negative x is the standard organic-layout
     first column; only the upper bound is a finding)
   * on_complete blocks are never empty (they need expenditure_for_mio_upgrade
@@ -16,6 +16,13 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     localisation key (TAG_<key> fallback included)
   * equipment_bonus stats reach equipment that declares a base for them, since
     the bonus is a percentage and 10% of an undeclared stat is still nothing
+  * production_bonus efficiency and conversion keys never sit on a wholly naval
+    roster — ships are built in dockyards, which have no production efficiency
+  * percentage-type organization_modifier keys stay inside -1..1 — a whole
+    number there is a dropped decimal point that silently breaks the org
+  * a `create_equipment_variant` naming `design_team = mio:<org>` uses a type
+    the org's equipment_type covers (after `mio_cat_*` expansion and archetype
+    resolution), or the engine ignores the designer
   * every `mio:<org>` reference names a real org, and the org is reachable from
     the country whose script references it — an org pinned to another tag is
     simply absent in that scope, so the engine logs `was not found in country
@@ -31,18 +38,40 @@ existence, never for tag reachability.
 """
 
 import glob
+import os
 import re
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple, Union
+from typing import (
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Union,
+)
 
-from equipment_module_slots import blank_comments
+from equipment_module_slots import _iter_named_blocks, _scalar, blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
+from shared_utils import (
+    blank_quoted_strings,
+    find_unquoted_block_end,
+    get_staged_files,
+    validation_config,
+)
+from sprite_index import build_sprite_index
+from validate_style import _is_escaped, split_code_and_comment
 from validator_common import BaseValidator, run_validator_main
 
 ORG_DIR = "common/military_industrial_organization/organizations"
 POLICY_DIR = "common/military_industrial_organization/policies"
 COMPANY_TRAIT_FILE = "common/country_leader/defense_company_traits.txt"
 COUNTRY_TAG_DIR = "common/country_tags"
+SCRIPTED_TRIGGER_DIR = "common/scripted_triggers"
+DOCTRINE_DIR = "common/doctrines"
 
 # Files that can carry a `mio:` reference. The org dir itself is excluded — a
 # trait naming its own org is not a cross-scope reference.
@@ -53,55 +82,108 @@ ORG_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 TAG_PREFIX_RE = re.compile(r"^([A-Z]{3})_")
 SHARED_PREFIXES = ("GENERIC_", "generic_")
 
-# Shared generic trees are wider than the country-MIO grid; their branch roots are
-# absolute-positioned lane origins at x = 10..16 and their children stay relative.
 X_BOUNDS_EXEMPT_ORGS = frozenset(
-    {
-        "generic_AFV_equipment_organization",
-        "generic_air_equipment_organization",
-        "generic_fixed_wing_and_helicopter_equipment_organization",
-        "generic_infantry_equipment_organization",
-        "generic_mixed_naval_equipment_organization",
-        "generic_naval_equipment_organization",
-        "generic_naval_light_equipment_organization",
-        "generic_small_naval_Manufacturer",
-        "generic_specialized_helicopter_aa_at_organization",
-        "generic_tank_equipment_organization",
-        "generic_utility_vehicle_manufacturer",
-    }
+    validation_config("validate_mios", "x_bounds_exempt_orgs")
 )
 
-ORIGINAL_TAG_RE = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
+
+def _keyword(name: str) -> str:
+    """Pattern for *name* with no identifier character before it.
+
+    The literal leads and a lookbehind re-checks the character before it, so
+    the regex engine jumps between literal hits instead of trying every offset.
+    """
+    return f"{name}(?<![A-Za-z0-9_]{name})"
+
+
+# _keyword's shape with `\w`, the class a leading `\b` tests.
+ORIGINAL_TAG_RE = re.compile(
+    r"original_tag(?<!\woriginal_tag)\s*=\s*([A-Z][A-Z0-9_]{1,7})\b"
+)
+# `allowed = { is_benelux_country = yes }`: a scripted trigger standing in for the tag list.
+SCRIPTED_TRIGGER_USE_RE = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
 INITIAL_TRAIT_NAME_RE = re.compile(
     r"initial_trait\s*=\s*\{\s*name\s*=\s*([A-Za-z0-9_]+)"
 )
 POSITION_X_RE = re.compile(r"position\s*=\s*\{\s*x\s*=\s*(-?\d+)")
 ON_COMPLETE_RE = re.compile(r"on_complete\s*=\s*\{([^{}]*)\}")
 
+# Trait-grid geometry: trait identity (token), position (absolute or relative to
+# another trait's position), parents, and mutual exclusivity. All parents and
+# mutually_exclusive traits are bare tokens inside block values; the mod never
+# writes the scalar `parent = TOKEN` form.
+_POSITION_BLOCK_RE = re.compile(_keyword("position") + r"\s*=\s*\{([^{}]*)\}")
+_POSITION_XY_RE = re.compile(r"(?<![A-Za-z0-9_])([xy])\s*=\s*(-?\d+)")
+_RELATIVE_POSITION_RE = re.compile(
+    _keyword("relative_position_id") + r"\s*=\s*([A-Za-z0-9_]+)"
+)
+_PARENT_BLOCK_RE = re.compile(
+    f"({_keyword('all_parents')}|{_keyword('any_parent')}|{_keyword('parent')})"
+    r"\s*=\s*\{([^{}]*)\}"
+)
+_MUTUALLY_EXCLUSIVE_RE = re.compile(
+    _keyword("mutually_exclusive") + r"\s*=\s*\{([^{}]*)\}"
+)
+_BARE_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
+
+ICON_ASSIGNMENT_RE = re.compile(r"(?<![A-Za-z0-9_])icon\s*=")
+
+_MIN_SPRITE_INDEX = 1000
+
 # The lookbehind keeps `text` from matching `tree_header_text` and `trait`
 # from matching `initial_trait`.
-HEADER_TEXT_RE = re.compile(r'(?<![A-Za-z0-9_])text\s*=\s*("[^"]*"|[^\s{}]+)')
-NAME_RE = re.compile(r"(?<![A-Za-z0-9_])name\s*=\s*([A-Za-z0-9_]+)")
-TOKEN_RE = re.compile(r"(?<![A-Za-z0-9_])token\s*=\s*([A-Za-z0-9_]+)")
+HEADER_TEXT_RE = re.compile(_keyword("text") + r'\s*=\s*("[^"]*"|[^\s{}]+)')
+NAME_RE = re.compile(_keyword("name") + r"\s*=\s*([A-Za-z0-9_]+)")
+TOKEN_RE = re.compile(_keyword("token") + r"\s*=\s*([A-Za-z0-9_]+)")
+
+
+def _iter_icon_values(text: str):
+    offset = 0
+    line = 1
+    counted = 0
+    for raw_line in text.splitlines():
+        # Only a line holding the literal can match; skip the per-character mask.
+        if "icon" in raw_line:
+            code, _comment = split_code_and_comment(raw_line)
+            masked = blank_quoted_strings(code)
+            for match in ICON_ASSIGNMENT_RE.finditer(masked):
+                value = code[match.end() :].lstrip()
+                if value.startswith('"'):
+                    end = 1
+                    while end < len(value):
+                        if value[end] == '"' and not _is_escaped(value, end):
+                            break
+                        end += 1
+                    name = value[1:end]
+                else:
+                    token = re.match(r"[^\s{}]+", value)
+                    name = token.group(0) if token else ""
+                line += text.count("\n", counted, offset + match.start())
+                counted = offset + match.start()
+                yield name, line
+        offset += len(raw_line) + 1
+
 
 # Covers every reference form in one pass: `design_team = mio:X`,
 # `industrial_manufacturer = mio:X`, the unlock tooltip, and the `mio:X = { }`
 # scope block.
-MIO_REFERENCE_RE = re.compile(r"(?<![A-Za-z0-9_])mio:([A-Za-z0-9_]+)")
+MIO_REFERENCE_RE = re.compile(_keyword("mio:") + r"([A-Za-z0-9_]+)")
+DESIGN_TEAM_RE = re.compile(_keyword("design_team") + r"\s*=\s*mio:([A-Za-z0-9_]+)")
 COUNTRY_TAG_DEF_RE = re.compile(r"^\s*([A-Z][A-Z0-9]{2})\s*=", re.MULTILINE)
 FOCUS_BLOCK_RE = re.compile(
     r"^[^\S\n]*(?:shared_focus|joint_focus|focus)\s*=\s*\{", re.MULTILINE
 )
+_FOCUS_KEYWORD_RE = re.compile(r"focus\s*=\s*\{")
 FOCUS_ID_RE = re.compile(r"^[^\S\n]*id\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE)
 # Any literal tag named inside a focus block: `original_tag = X`, `tag = X`.
 BLOCK_TAG_RE = re.compile(
-    r"(?<![A-Za-z0-9_])(?:original_)?tag\s*=\s*([A-Z][A-Z0-9]{2})\b"
+    f"(?:{_keyword('original_tag')}|{_keyword('tag')})" r"\s*=\s*([A-Z][A-Z0-9]{2})\b"
 )
 # `TAG = {` opening a scope block, matched against the text before a reference.
 SCOPE_OPEN_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*\{$")
 HISTORY_FILE_TAG_RE = re.compile(r"^([A-Z]{3})(?: -|_)")
 
-INCLUDE_RE = re.compile(r"(?<![A-Za-z0-9_])include\s*=\s*([A-Za-z0-9_]+)")
+INCLUDE_RE = re.compile(_keyword("include") + r"\s*=\s*([A-Za-z0-9_]+)")
 NAMED_BLOCK_RE = re.compile(r"([A-Za-z0-9_]+)\s*=\s*\{")
 BONUS_STAT_RE = re.compile(r"([A-Za-z_]\w*)[^\S\n]*=[^\S\n]*([^\s{}]+)")
 EQUIPMENT_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
@@ -118,83 +200,131 @@ NON_STAT_BONUS_KEYS = frozenset(
     }
 )
 
+# production_bonus keys the engine only applies to a line that accumulates
+# production efficiency. Ships are built in dockyards, which have none, so all
+# three are inert on a wholly naval roster.
+NON_NAVAL_PRODUCTION_KEYS = frozenset(
+    {
+        "production_conversion_speed_factor",
+        "production_efficiency_cap_factor",
+        "production_efficiency_gain_factor",
+    }
+)
+
 # Stats the engine gives a non-zero default, so a percentage bonus bites even
 # though no MD equipment file declares a base. Empty until one is confirmed in
 # game — an entry here silences a real finding, so it needs evidence, not a
-# hunch. The open candidates are the naval *_factor keys
-# (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
-# naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
-ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset()
+# hunch. The naval *_factor keys (naval_light_gun_hit_chance_factor,
+# naval_heavy_gun_hit_chance_factor, naval_torpedo_damage_reduction_factor,
+# naval_weather_penalty_factor) are not candidates: vanilla declares a base for
+# each on its hulls or modules, and MD declares none.
+ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset(
+    validation_config("validate_mios", "zero_base_exempt_stats")
+)
+
+# organization_modifier keys the engine reads as a factor, so 0.15 is +15% and a
+# whole number is a dropped decimal point, not a strong bonus. Helsing SE shipped
+# `size_up_requirement = -3`, driving the level-up cost negative and maxing the
+# org's trait tree for free. task_capacity is absent on purpose — it is a flat
+# task count and 1..5 is its normal range.
+PERCENT_ORG_MODIFIERS = frozenset(
+    {
+        "military_industrial_organization_design_team_assign_cost",
+        "military_industrial_organization_design_team_change_cost",
+        "military_industrial_organization_funds_gain",
+        "military_industrial_organization_industrial_manufacturer_assign_cost",
+        "military_industrial_organization_research_bonus",
+        "military_industrial_organization_size_up_requirement",
+    }
+)
 
 LocKeys = Union[FrozenSet[str], Set[str]]
 
 
 def _block_spans(text: str) -> List[Tuple[int, int, str]]:
     """Yield (start, end, key) spans of every top-level `key = {` block."""
-    spans = []
-    for m in ORG_DEF_RE.finditer(text):
-        depth = 1
-        i = m.end()
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        spans.append((m.start(), i, m.group(1)))
-    return spans
+    return [
+        (m.start(), _block_end(text, m.end()), m.group(1))
+        for m in ORG_DEF_RE.finditer(text)
+    ]
 
 
 def _block_end(text: str, open_brace_end: int) -> int:
-    """End offset of the block whose `{` was consumed up to *open_brace_end*."""
-    depth = 1
-    i = open_brace_end
-    while i < len(text) and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return i
+    """End offset of the block whose `{` was consumed up to *open_brace_end*.
 
-
-def _enclosing_scope_tag(text: str, pos: int, tags: LocKeys) -> Optional[str]:
-    """Innermost `TAG = { ... }` country scope containing *pos*, if any.
-
-    Walks left counting braces, so `CHI = { mio:CHI_norinco = { ... } }` inside
-    an NKO-gated joint focus reads as CHI and not as the focus owner.
+    Braces are counted bare, quoted or not; an unclosed block runs to the end
+    of *text*.
     """
-    depth = 0
-    i = pos
-    while i > 0:
-        i -= 1
-        char = text[i]
-        if char == "}":
-            depth += 1
-        elif char == "{":
-            if depth:
-                depth -= 1
-                continue
-            m = SCOPE_OPEN_RE.search(text[max(0, i - 80) : i + 1])
-            if m and m.group(1) in tags:
-                return m.group(1)
+    return find_unquoted_block_end(text, open_brace_end)[0]
+
+
+def _open_braces(text: str, positions: Sequence[int]) -> List[Tuple[int, ...]]:
+    """Offsets of the `{` still open at each of the ascending *positions*.
+
+    A `}` closes the innermost open `{` and a stray one with nothing open is
+    ignored, which matches walking left from each position and skipping every
+    balanced pair.
+    """
+    stacks = []
+    stack: List[int] = []
+    opening = text.find("{")
+    closing = text.find("}")
+    for pos in positions:
+        while True:
+            if 0 <= opening < pos and not 0 <= closing < opening:
+                stack.append(opening)
+                opening = text.find("{", opening + 1)
+            elif 0 <= closing < pos:
+                if stack:
+                    stack.pop()
+                closing = text.find("}", closing + 1)
+            else:
+                break
+        stacks.append(tuple(stack))
+    return stacks
+
+
+def _enclosing_scope_tag(
+    text: str, open_braces: Sequence[int], tags: LocKeys
+) -> Optional[str]:
+    """Innermost `TAG = { ... }` country scope among the still-open braces.
+
+    Innermost first, so `CHI = { mio:CHI_norinco = { ... } }` inside an
+    NKO-gated joint focus reads as CHI and not as the focus owner.
+    """
+    for i in reversed(open_braces):
+        m = SCOPE_OPEN_RE.search(text[max(0, i - 80) : i + 1])
+        if m and m.group(1) in tags:
+            return m.group(1)
     return None
+
+
+def _focus_spans(text: str) -> List[Tuple[int, int]]:
+    """(start, end) of every FOCUS_BLOCK_RE block, in file order.
+
+    Its line anchor makes the regex try every offset, so a literal hit picks
+    the lines to try it on.
+    """
+    spans = []
+    tried = -1
+    for hit in _FOCUS_KEYWORD_RE.finditer(text):
+        line_start = text.rfind("\n", 0, hit.start()) + 1
+        if line_start == tried:
+            continue
+        tried = line_start
+        m = FOCUS_BLOCK_RE.match(text, line_start)
+        if m:
+            spans.append((m.start(), _block_end(text, m.end())))
+    return spans
 
 
 def _sub_blocks(body: str, keyword: str) -> List[Tuple[int, str]]:
     """Yield (start_offset_in_body, inner_text) for each `keyword = { ... }`."""
-    pattern = re.compile(r"(?<![A-Za-z0-9_])" + keyword + r"\s*=\s*\{")
+    pattern = re.compile(_keyword(keyword) + r"\s*=\s*\{")
     blocks = []
     for m in pattern.finditer(body):
-        depth = 1
-        i = m.end()
-        while i < len(body) and depth > 0:
-            if body[i] == "{":
-                depth += 1
-            elif body[i] == "}":
-                depth -= 1
-            i += 1
-        blocks.append((m.start(), body[m.end() : i - 1]))
+        end = _block_end(body, m.end())
+        blocks.append((m.start(), body[m.end() : end - 1]))
     return blocks
 
 
@@ -208,28 +338,83 @@ def _named_sub_blocks(body: str) -> List[Tuple[str, int, str]]:
         m = NAMED_BLOCK_RE.search(body, i)
         if not m:
             break
-        depth = 1
-        j = m.end()
-        while j < n and depth > 0:
-            if body[j] == "{":
-                depth += 1
-            elif body[j] == "}":
-                depth -= 1
-            j += 1
+        j = _block_end(body, m.end())
         blocks.append((m.group(1), m.start(), body[m.end() : j - 1]))
         i = j
     return blocks
 
 
+@dataclass
+class _Trait:
+    """Geometry data of one trait: grid position, parents, mutual exclusivity."""
+
+    line: int
+    x: Optional[int] = None
+    y: Optional[int] = None
+    rel: Optional[str] = None
+    parents: Set[str] = field(default_factory=set)
+    any_parents: Set[str] = field(default_factory=set)
+    mutual: Set[str] = field(default_factory=set)
+
+
+def _parse_org_traits(body: str) -> Dict[str, _Trait]:
+    """Parse one org body into token -> trait geometry data.
+
+    Only traits with a resolvable token and integer x/y participate; everything
+    else is geometry the file cannot prove and is left out by the caller.
+    """
+    traits: Dict[str, _Trait] = {}
+    for start, inner in _sub_blocks(body, "trait"):
+        token_m = TOKEN_RE.search(inner)
+        if not token_m:
+            continue
+        trait = _Trait(line=start)
+        pos = _POSITION_BLOCK_RE.search(inner)
+        if pos:
+            inner_pos = pos.group(1)
+            for axis, value in _POSITION_XY_RE.findall(inner_pos):
+                if axis == "x":
+                    trait.x = int(value)
+                else:
+                    trait.y = int(value)
+        for rel in _RELATIVE_POSITION_RE.finditer(inner):
+            if inner.count("{", 0, rel.start()) == inner.count("}", 0, rel.start()):
+                trait.rel = rel.group(1)
+                break
+        for m in _PARENT_BLOCK_RE.finditer(inner):
+            key = "any_parents" if m.group(1) == "any_parent" else "parents"
+            getattr(trait, key).update(_BARE_TOKEN_RE.findall(m.group(2)))
+        for m in _MUTUALLY_EXCLUSIVE_RE.finditer(inner):
+            trait.mutual.update(_BARE_TOKEN_RE.findall(m.group(1)))
+        traits.setdefault(token_m.group(1), trait)
+    return traits
+
+
 class Validator(BaseValidator):
     TITLE = "MIOS"
-    STAGED_EXTENSIONS = [".txt", ".yml"]
+    STAGED_EXTENSIONS = [".txt", ".yml", ".gfx"]
 
     # org id -> comment-blanked body, for resolving `include` across files.
     _org_bodies: Dict[str, str] = {}
-    # Lazily built once per run; both are full-repo indexes.
+    # Lazily built once per run; all are full-repo indexes.
+    _org_texts: Optional[Dict[str, Tuple[str, List[Tuple[int, int, str]]]]] = None
     _org_allowed: Optional[Dict[str, FrozenSet[str]]] = None
+    _trigger_tags: Optional[Dict[str, FrozenSet[str]]] = None
+    _sprites: Optional[FrozenSet[str]] = None
     _tags: Optional[FrozenSet[str]] = None
+    _traits: Optional[Dict[str, _Trait]] = None
+    _reported_mutex_rows: Set[Tuple[str, str]] = set()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._traits: Optional[Dict[str, _Trait]] = None
+        self._reported_mutex_rows: Set[Tuple[str, str]] = set()
+        if self.staged_only:
+            staged = get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+            if staged:
+                self.staged_files = staged
 
     def _org_files(self) -> List[str]:
         pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
@@ -243,9 +428,12 @@ class Validator(BaseValidator):
             for path in staged
         ):
             return files
-        # An equipment edit can strip the base stat a live bonus relied on, so it
-        # has to re-scan every org, not just the ones staged alongside it.
-        if any(self._is_equipment_input(path) for path in staged):
+        if any(
+            self._is_equipment_input(path)
+            or self._is_sprite_input(path)
+            or self._is_scripted_trigger_input(path)
+            for path in staged
+        ):
             return files
         return [f for f in files if Path(f).resolve() in staged]
 
@@ -256,6 +444,16 @@ class Validator(BaseValidator):
                 return True
         return False
 
+    def _is_sprite_input(self, path: Path) -> bool:
+        return path.suffix == ".gfx" and path.is_relative_to(
+            (Path(self.mod_path) / "interface").resolve()
+        )
+
+    def _is_scripted_trigger_input(self, path: Path) -> bool:
+        return path.is_relative_to(
+            (Path(self.mod_path) / SCRIPTED_TRIGGER_DIR).resolve()
+        )
+
     def _reference_files(self) -> List[str]:
         """Script files that may carry a `mio:` reference, minus the org dir."""
 
@@ -264,7 +462,13 @@ class Validator(BaseValidator):
             # across ~6k candidates.
             return f"/{ORG_DIR}/" in filepath.replace("\\", "/")
 
-        return self._collect_files(REFERENCE_PATTERNS, extra_skip=_in_org_dir)
+        staged = {Path(f).resolve() for f in self.staged_files or []}
+        return self._collect_files(
+            REFERENCE_PATTERNS,
+            extra_skip=_in_org_dir,
+            ignore_staged=self.staged_only
+            and any(self._is_scripted_trigger_input(path) for path in staged),
+        )
 
     def _org_allowed_tags(self) -> Dict[str, FrozenSet[str]]:
         """org id -> every tag its `allowed` block accepts.
@@ -277,18 +481,80 @@ class Validator(BaseValidator):
         if self._org_allowed is not None:
             return self._org_allowed
         allowed: Dict[str, FrozenSet[str]] = {}
-        for filepath in self._collect_files([f"{ORG_DIR}/*.txt"], ignore_staged=True):
+        for org_id, body in self._iter_all_org_blocks():
+            allowed[org_id] = self._allowed_tags(body)
+        self._org_allowed = allowed
+        return allowed
+
+    def _allowed_tags(self, body: str) -> FrozenSet[str]:
+        """Tags an org's `allowed` block accepts, literal or via a scripted trigger."""
+        blocks = _sub_blocks(body, "allowed")
+        if not blocks:
+            return frozenset()
+        inner = blocks[0][1]
+        tags: Set[str] = set(ORIGINAL_TAG_RE.findall(inner))
+        triggers = self._scripted_trigger_tags()
+        for name in SCRIPTED_TRIGGER_USE_RE.findall(inner):
+            tags.update(triggers.get(name, ()))
+        return frozenset(tags)
+
+    def _scripted_trigger_tags(self) -> Dict[str, FrozenSet[str]]:
+        """scripted trigger name -> every `original_tag` its body names."""
+        if self._trigger_tags is not None:
+            return self._trigger_tags
+        triggers: Dict[str, FrozenSet[str]] = {}
+        for filepath in self._collect_files(
+            [f"{SCRIPTED_TRIGGER_DIR}/*.txt"], ignore_staged=True
+        ):
             try:
                 text = blank_comments(Path(filepath).read_text(encoding="utf-8"))
             except (OSError, UnicodeDecodeError):
                 continue
-            for start, end, org_id in _block_spans(text):
-                body = text[start:end]
-                blocks = _sub_blocks(body, "allowed")
-                tags = ORIGINAL_TAG_RE.findall(blocks[0][1]) if blocks else []
-                allowed[org_id] = frozenset(tags)
-        self._org_allowed = allowed
-        return allowed
+            for start, end, name in _block_spans(text):
+                tags = ORIGINAL_TAG_RE.findall(text[start:end])
+                if tags:
+                    triggers[name] = frozenset(tags)
+        self._trigger_tags = triggers
+        return triggers
+
+    def _org_universe(self) -> Dict[str, Tuple[str, List[Tuple[int, int, str]]]]:
+        """Normalized path -> (comment-blanked text, org spans) for every
+        readable org file, staged filter ignored, read once per run."""
+        if self._org_texts is None:
+            texts = {}
+            for filepath in self._collect_files(
+                [f"{ORG_DIR}/*.txt"], ignore_staged=True
+            ):
+                # blank_comments preserves offsets, so line numbers still line
+                # up while a commented-out bonus can no longer be read as live.
+                try:
+                    text = blank_comments(Path(filepath).read_text(encoding="utf-8"))
+                except (OSError, UnicodeDecodeError):
+                    continue
+                texts[os.path.normpath(filepath)] = (text, _block_spans(text))
+            self._org_texts = texts
+        return self._org_texts
+
+    def _iter_all_org_blocks(self) -> Iterator[Tuple[str, str]]:
+        """(org id, block body) for every org in the dir, staged filter ignored.
+
+        Every caller needs the whole universe rather than the staged subset: a
+        staged focus file has to resolve against orgs nobody touched, and
+        `include = <org>` reaches across files.
+        """
+        for text, spans in self._org_universe().values():
+            for start, end, org_id in spans:
+                yield org_id, text[start:end]
+
+    def _load_org_bodies(self) -> Dict[str, str]:
+        """org id -> its block body.
+
+        Built up front rather than as files are visited: the dir sorts
+        `MD_UKR_organizations.txt` before `MD_generic_organizations_old.txt`, so a
+        lazily-filled map silently drops the equipment scope of every org whose
+        `include` target sorts after it.
+        """
+        return dict(self._iter_all_org_blocks())
 
     def _country_tags(self) -> FrozenSet[str]:
         """Every tag declared in common/country_tags/."""
@@ -313,50 +579,75 @@ class Validator(BaseValidator):
         company_traits = Path(self.mod_path) / COMPANY_TRAIT_FILE
         if company_traits.is_file():
             files.append(str(company_traits))
+        return self._staged_bonus_subset(files)
+
+    def _doctrine_files(self) -> List[str]:
+        files = sorted(
+            glob.glob(
+                str(Path(self.mod_path) / DOCTRINE_DIR / "**" / "*.txt"),
+                recursive=True,
+            )
+        )
+        return self._staged_bonus_subset(files)
+
+    def _staged_bonus_subset(self, files: List[str]) -> List[str]:
         if not self.staged_only:
             return files
         staged = {Path(f).resolve() for f in self.staged_files or []}
-        if any(self._is_equipment_input(path) for path in staged):
+        if any(
+            self._is_equipment_input(path) or self._is_sprite_input(path)
+            for path in staged
+        ):
             return files
         return [f for f in files if Path(f).resolve() in staged]
 
     def run_validations(self):
         files = self._org_files()
         bonus_files = self._bonus_files()
+        doctrine_files = self._doctrine_files()
         reference_files = self._reference_files()
-        if self.staged_only and not files and not bonus_files and not reference_files:
+        if (
+            self.staged_only
+            and not files
+            and not bonus_files
+            and not doctrine_files
+            and not reference_files
+        ):
             self.log("No staged MIO files found — skipping MIO validation", "warning")
             return
 
         loc_keys = self._load_localisation_keys()
         equipment = build_equipment_stat_index(self.mod_path)
-        self._org_bodies = {}
+        self._org_bodies = self._load_org_bodies()
 
         org_count = 0
+        org_texts = self._org_universe()
         for filepath in files:
-            try:
-                text = Path(filepath).read_text(encoding="utf-8")
-            except OSError:
-                continue
+            parsed = org_texts.get(os.path.normpath(filepath))
+            if parsed is None:
+                # Not in the universe: skip an unreadable file, raise on bad bytes.
+                try:
+                    clean = blank_comments(Path(filepath).read_text(encoding="utf-8"))
+                except OSError:
+                    continue
+                parsed = (clean, _block_spans(clean))
+            clean, spans = parsed
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            # blank_comments preserves offsets, so line numbers still line up
-            # while a commented-out bonus can no longer be read as live script.
-            clean = blank_comments(text)
-            for start, end, org_id in _block_spans(clean):
+            self._check_icons(clean, rel)
+            for start, end, org_id in spans:
                 org_count += 1
                 body = clean[start:end]
-                self._org_bodies[org_id] = body
                 body_offset = clean.count("\n", 0, start)
                 self._check_id(org_id, rel, body_offset)
                 self._check_allowed(org_id, body, rel, body_offset)
                 self._check_initial_trait(org_id, body, rel, body_offset)
                 self._check_positions(org_id, body, rel, body_offset)
+                self._check_trait_geometry(org_id, body, rel, body_offset)
+                self._check_org_modifier_range(body, rel, body_offset)
                 self._check_on_complete(body, rel, body_offset)
                 self._check_header_text(org_id, body, rel, body_offset, loc_keys)
                 self._check_trait_localisation(org_id, body, rel, body_offset, loc_keys)
-                self._check_org_equipment_bonus(
-                    org_id, body, rel, body_offset, equipment
-                )
+                self._check_org_trait_bonuses(org_id, body, rel, body_offset, equipment)
 
         for filepath in bonus_files:
             try:
@@ -364,7 +655,19 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_nested_equipment_bonus(blank_comments(text), rel, equipment)
+            clean = blank_comments(text)
+            self._check_nested_equipment_bonus(clean, rel, equipment)
+            self._check_org_modifier_range(clean, rel, 0)
+            self._check_icons(clean, rel)
+        for filepath in doctrine_files:
+            try:
+                text = Path(filepath).read_text(encoding="utf-8")
+            except OSError:
+                continue
+            rel = Path(filepath).relative_to(self.mod_path).as_posix()
+            self._check_nested_equipment_bonus(
+                blank_comments(text), rel, equipment, dead_stats=False
+            )
 
         reference_hits = 0
         for filepath in reference_files:
@@ -383,7 +686,9 @@ class Validator(BaseValidator):
                 continue
             reference_hits += 1
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_mio_references(blank_comments(text), rel)
+            clean = blank_comments(text)
+            self._check_mio_references(clean, rel)
+            self._check_design_team_coverage(clean, rel, equipment)
 
         self.log(
             f"  Scanned {len(files) + len(bonus_files)} files | "
@@ -413,7 +718,9 @@ class Validator(BaseValidator):
         if not m:
             return
         tag = m.group(1)
-        if not any(m2.group(1) == tag for m2 in ORIGINAL_TAG_RE.finditer(body)):
+        if tag not in ORIGINAL_TAG_RE.findall(body) and tag not in self._allowed_tags(
+            body
+        ):
             self.add_error(
                 "org-allowed-tag",
                 f"MIO {org_id} must pin its tag with "
@@ -432,13 +739,52 @@ class Validator(BaseValidator):
             return
         prefix = org_id.split("_", 1)[0]
         if not name.startswith(prefix + "_") or not name.endswith("_trait"):
-            self.add_warning(
+            self.add_error(
                 "initial-trait-name",
                 f"initial_trait name '{name}' must be {prefix}_<name>_trait "
                 f"(e.g. {prefix}_norinco_trait)",
                 rel,
                 line,
             )
+
+    def _sprite_names(self) -> FrozenSet[str]:
+        if self._sprites is None:
+            from validate_gfx_references import (
+                _load_vanilla_sprite_manifest,
+                _vanilla_gfx_files,
+            )
+
+            sprites = set(
+                build_sprite_index(
+                    self.mod_path, gfx_only=True, pool_map=self._pool_map
+                )
+            )
+            # Use the manifest when CI has no HOI4 install.
+            if not _vanilla_gfx_files():
+                sprites.update(_load_vanilla_sprite_manifest())
+            self._sprites = frozenset(sprites)
+        return self._sprites
+
+    def _check_icons(self, text: str, rel: str):
+        sprites = self._sprite_names()
+        resolved = len(sprites) >= _MIN_SPRITE_INDEX
+        for name, line in _iter_icon_values(text):
+            if not name.startswith("GFX_"):
+                self.add_error(
+                    "mio-icon-not-gfx",
+                    f"icon = {name or '<empty>'} is not a GFX_ sprite name; "
+                    "the engine renders a blank icon",
+                    rel,
+                    line,
+                )
+            elif resolved and name not in sprites:
+                self.add_warning(
+                    "mio-icon-unresolved",
+                    f"icon = {name} matches no spriteType in any interface/*.gfx "
+                    "(mod or vanilla)",
+                    rel,
+                    line,
+                )
 
     def _check_positions(self, org_id: str, body: str, rel: str, body_offset: int):
         if org_id in X_BOUNDS_EXEMPT_ORGS:
@@ -449,11 +795,164 @@ class Validator(BaseValidator):
             except ValueError:
                 continue
             if x > 9:
-                self.add_warning(
+                self.add_error(
                     "trait-x-bounds",
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
                     body_offset + body.count("\n", 0, m.start()) + 1,
+                )
+
+    def _trait_index(self) -> Dict[str, _Trait]:
+        """token -> trait geometry across every org file, ignoring staging.
+
+        A global index because parents, position anchors and mutually
+        exclusive traits routinely live in an `include`d org or another file's
+        tree; resolving them per-org would leave those comparisons unresolved.
+        A token defined twice keeps its first sighting (redefinition is not a
+        geometry question) but is marked ambiguous so it reports nothing.
+        """
+        if self._traits is not None:
+            return self._traits
+        index: Dict[str, _Trait] = {}
+        for _org_id, body in self._iter_all_org_blocks():
+            for token, trait in _parse_org_traits(body).items():
+                if token in index:
+                    index[token] = _Trait(line=trait.line, x=None, y=None)
+                else:
+                    index[token] = trait
+        self._traits = index
+        return index
+
+    @staticmethod
+    def _resolve_position(
+        token: str, index: Dict[str, _Trait], seen: Optional[Set[str]] = None
+    ) -> Optional[Tuple[int, int]]:
+        """Absolute (x, y) of a trait, or None when not determinable.
+
+        relative_position_id offsets are resolved recursively against the
+        anchor trait's absolute position; unresolvable anchors and cycles
+        return None rather than a guess.
+        """
+        trait = index.get(token)
+        if trait is None or trait.x is None or trait.y is None:
+            return None
+        if not trait.rel:
+            return trait.x, trait.y
+        seen = seen or set()
+        if token in seen:
+            return None
+        seen.add(token)
+        base = Validator._resolve_position(trait.rel, index, seen)
+        if base is None:
+            return None
+        return base[0] + trait.x, base[1] + trait.y
+
+    def _check_trait_geometry(self, org_id: str, body: str, rel: str, body_offset: int):
+        """Trait-grid rules from mio-reference.md, resolved where determinable:
+
+        a child never sits on or above its parent's row, mutually exclusive
+        traits share a row, and a child listing two mutually exclusive parents
+        in `parent`/`all_parents` is locked out (it needs `any_parent`).
+        Positions that cannot be resolved (unknown anchor, cycle) and traits
+        whose parent tokens match no org are skipped rather than guessed.
+        """
+        index = self._trait_index()
+        for _start, inner in _sub_blocks(body, "trait"):
+            token_m = TOKEN_RE.search(inner)
+            if not token_m:
+                continue
+            token = token_m.group(1)
+            trait = index.get(token)
+            if trait is None:
+                continue
+            line = body_offset + body.count("\n", 0, trait.line) + 1
+
+            child_pos = self._resolve_position(token, index)
+            if child_pos is not None:
+                for parent in sorted(trait.parents | trait.any_parents):
+                    parent_pos = self._resolve_position(parent, index)
+                    if parent_pos is None:
+                        continue
+                    if child_pos[1] <= parent_pos[1]:
+                        self.add_error(
+                            "trait-geometry-parent-row",
+                            f"trait `{token}` sits on or above its parent "
+                            f"`{parent}` (rows {child_pos[1]} vs "
+                            f"{parent_pos[1]})",
+                            rel,
+                            line,
+                        )
+
+            for other in sorted(trait.mutual):
+                if token < other:
+                    row_pair = (token, other)
+                else:
+                    row_pair = (other, token)
+                if row_pair in self._reported_mutex_rows:
+                    continue
+                other_pos = self._resolve_position(other, index)
+                if child_pos is None or other_pos is None:
+                    continue
+                if child_pos[1] != other_pos[1]:
+                    self._reported_mutex_rows.add(row_pair)
+                    self.add_error(
+                        "trait-geometry-mutex-row",
+                        f"mutually exclusive traits `{token}` and `{other}` "
+                        f"sit on different rows ({child_pos[1]} vs "
+                        f"{other_pos[1]}); exclusive traits share a row",
+                        rel,
+                        line,
+                    )
+
+            exclusive_parents = sorted(
+                p
+                for p in trait.parents
+                if p in index and (index[p].mutual & trait.parents)
+            )
+            seen_pairs: Set[Tuple[str, str]] = set()
+            for parent in exclusive_parents:
+                for other in sorted(index[parent].mutual & trait.parents):
+                    if parent < other:
+                        pair = (parent, other)
+                    else:
+                        pair = (other, parent)
+                    if pair in seen_pairs:
+                        continue
+                    seen_pairs.add(pair)
+                    self.add_error(
+                        "trait-geometry-mutex-parents",
+                        f"trait `{token}` requires both `{parent}` and "
+                        f"`{other}`, but they are mutually exclusive — the "
+                        f"trait is locked out; use any_parent",
+                        rel,
+                        line,
+                    )
+
+    def _check_org_modifier_range(self, body: str, rel: str, line_offset: int):
+        for block_start, inner in _sub_blocks(body, "organization_modifier"):
+            for m in BONUS_STAT_RE.finditer(inner):
+                key = m.group(1)
+                if key not in PERCENT_ORG_MODIFIERS:
+                    continue
+                try:
+                    value = float(m.group(2))
+                except ValueError:
+                    continue
+                if abs(value) < 1:
+                    continue
+                line = (
+                    line_offset
+                    + body.count("\n", 0, block_start)
+                    + inner.count("\n", 0, m.start())
+                    + 1
+                )
+                self.add_error(
+                    "org-modifier-out-of-range",
+                    f"{key} = {m.group(2)} is a factor, so this reads as "
+                    f"{value * 100:.0f}% — write it as a decimal "
+                    f"(e.g. {value / 100:g})",
+                    rel,
+                    line,
                 )
 
     @staticmethod
@@ -580,7 +1079,7 @@ class Validator(BaseValidator):
         With *allow_partial* a stat that reaches only part of the scope is
         accepted and just a wholly dead one is reported, which is the shape an
         ``initial_trait`` has no way to fix (see
-        :meth:`_check_org_equipment_bonus`).
+        :meth:`_check_org_trait_bonuses`).
         """
         for m in BONUS_STAT_RE.finditer(inner):
             stat = m.group(1)
@@ -591,7 +1090,7 @@ class Validator(BaseValidator):
                 continue
             line = line_of(m.start())
             if len(dead) == len(scope):
-                self.add_warning(
+                self.add_error(
                     "mio-bonus-no-base-stat",
                     f"equipment_bonus '{stat}' is inert: {', '.join(dead)} "
                     f"{'declares' if len(dead) == 1 else 'declare'} no base "
@@ -610,7 +1109,45 @@ class Validator(BaseValidator):
                     line,
                 )
 
-    def _check_org_equipment_bonus(
+    def _report_production_bonus(
+        self,
+        inner: str,
+        scope: Dict[str, FrozenSet[str]],
+        equipment: EquipmentStatIndex,
+        rel: str,
+        line_of,
+    ):
+        """Flag every efficiency or conversion key in one production_bonus block
+        whose equipment scope is wholly or partly naval."""
+        naval = sorted(name for name in scope if equipment.is_naval(name))
+        if not naval:
+            return
+        for m in BONUS_STAT_RE.finditer(inner):
+            key = m.group(1)
+            if key not in NON_NAVAL_PRODUCTION_KEYS:
+                continue
+            line = line_of(m.start())
+            if len(naval) == len(scope):
+                self.add_error(
+                    "mio-production-bonus-naval",
+                    f"production_bonus '{key}' is inert: ships have no "
+                    f"production efficiency, and this trait only reaches "
+                    f"{', '.join(naval)}",
+                    rel,
+                    line,
+                )
+            else:
+                live = sorted(set(scope) - set(naval))
+                self.add_warning(
+                    "mio-production-bonus-partial-naval",
+                    f"production_bonus '{key}' is inert on {', '.join(naval)} "
+                    f"(ships have no production efficiency); it only applies to "
+                    f"{', '.join(live)}",
+                    rel,
+                    line,
+                )
+
+    def _check_org_trait_bonuses(
         self,
         org_id: str,
         body: str,
@@ -618,6 +1155,9 @@ class Validator(BaseValidator):
         body_offset: int,
         equipment: EquipmentStatIndex,
     ):
+        """Both bonus blocks a trait can carry, against the equipment it reaches:
+        dead ``equipment_bonus`` stats and naval-inert ``production_bonus`` keys.
+        """
         org_types = self._org_equipment_types(org_id, body)
         if not org_types:
             return
@@ -646,16 +1186,40 @@ class Validator(BaseValidator):
                     lambda pos, o=offset, b=bonus: o + b.count("\n", 0, pos) + 1,
                     allow_partial=is_initial,
                 )
+            for bonus_start, bonus in _sub_blocks(inner, "production_bonus"):
+                offset = inner_offset + inner.count("\n", 0, bonus_start)
+                self._report_production_bonus(
+                    bonus,
+                    scope,
+                    equipment,
+                    rel,
+                    lambda pos, o=offset, b=bonus: o + b.count("\n", 0, pos) + 1,
+                )
 
     def _check_nested_equipment_bonus(
-        self, text: str, rel: str, equipment: EquipmentStatIndex
+        self,
+        text: str,
+        rel: str,
+        equipment: EquipmentStatIndex,
+        *,
+        dead_stats: bool = True,
     ):
-        """Policies and country-leader company traits key their equipment_bonus
-        by archetype, so each nested block is its own scope."""
+        """Policies, doctrines, and country-leader company traits key their
+        equipment_bonus by archetype, so each nested block is its own scope."""
         for start, block in _sub_blocks(text, "equipment_bonus"):
             block_offset = text.count("\n", 0, start)
+            keyed: Dict[str, Set[str]] = {}
+            token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
                 line = block_offset + block.count("\n", 0, token_start) + 1
+                keyed[token] = {
+                    stat
+                    for stat, _value in BONUS_STAT_RE.findall(inner)
+                    if stat != "instant"
+                }
+                token_at[token] = token_start
+                if not dead_stats:
+                    continue
                 scope = self._resolve_scope([token], equipment, rel, line)
                 if not scope:
                     continue
@@ -666,20 +1230,36 @@ class Validator(BaseValidator):
                     rel,
                     lambda pos, o=offset, b=inner: o + b.count("\n", 0, pos) + 1,
                 )
+            for type_key, child, shared in equipment.type_archetype_overlaps(keyed):
+                line = block_offset + block.count("\n", 0, token_at[child]) + 1
+                self.add_error(
+                    "bonus-type-archetype-stack",
+                    f"equipment_bonus {', '.join(sorted(shared))} on {child} "
+                    f"also applies via type '{type_key}' in this block",
+                    rel,
+                    line,
+                )
 
-    def _focus_context(self, text: str, pos: int, tags: FrozenSet[str]) -> Set[str]:
-        """Tags a focus block containing *pos* can run as.
+    @staticmethod
+    def _focus_context(
+        text: str,
+        focus_spans: Sequence[Tuple[int, int]],
+        pos: int,
+        tags: FrozenSet[str],
+    ) -> Set[str]:
+        """Tags the first focus block containing *pos* can run as.
 
         The union of the focus id prefix and every literal tag named anywhere in
         the block. Deliberately permissive: a joint focus pays out to more than
         one country (completion_reward_joint_member runs in the member's scope),
         and widening the accepted set can only hide a finding, never invent one.
         """
-        for m in FOCUS_BLOCK_RE.finditer(text):
-            end = _block_end(text, m.end())
-            if not m.start() <= pos < end:
+        for start, end in focus_spans:
+            if start > pos:
+                break
+            if pos >= end:
                 continue
-            block = text[m.start() : end]
+            block = text[start:end]
             context = set(BLOCK_TAG_RE.findall(block)) & tags
             focus_id = FOCUS_ID_RE.search(block)
             if focus_id:
@@ -700,9 +1280,15 @@ class Validator(BaseValidator):
             if m and m.group(1) in tags:
                 file_tag = m.group(1)
 
-        for m in MIO_REFERENCE_RE.finditer(text):
+        references = list(MIO_REFERENCE_RE.finditer(text))
+        open_braces = _open_braces(text, [m.start() for m in references])
+        focus_spans = _focus_spans(text) if is_focus_file else []
+        line = 1
+        counted = 0
+        for m, enclosing in zip(references, open_braces):
             org_id = m.group(1)
-            line = text.count("\n", 0, m.start()) + 1
+            line += text.count("\n", counted, m.start())
+            counted = m.start()
             org_tags = allowed.get(org_id)
             if org_tags is None:
                 self.add_error(
@@ -716,11 +1302,11 @@ class Validator(BaseValidator):
             if not org_tags:
                 continue
 
-            scope = _enclosing_scope_tag(text, m.start(), tags)
+            scope = _enclosing_scope_tag(text, enclosing, tags)
             if scope:
                 context = {scope}
             elif is_focus_file:
-                context = self._focus_context(text, m.start(), tags)
+                context = self._focus_context(text, focus_spans, m.start(), tags)
             elif file_tag:
                 context = {file_tag}
             else:
@@ -737,6 +1323,43 @@ class Validator(BaseValidator):
                     rel,
                     line,
                 )
+
+    def _check_design_team_coverage(
+        self, text: str, rel: str, equipment: EquipmentStatIndex
+    ):
+        """Flag a `create_equipment_variant` whose `design_team = mio:<org>` org
+        does not list the variant's archetype, which the engine ignores.
+
+        A type the index cannot resolve to an archetype (a vanilla designer
+        airframe, or a typo) and an org with no equipment_type are skipped, so
+        only a provable mismatch is reported.
+        """
+        for lo, hi in _iter_named_blocks(
+            text, 0, len(text), "create_equipment_variant"
+        ):
+            team = DESIGN_TEAM_RE.search(text, lo, hi)
+            variant_type = _scalar(text, lo, hi, "type")
+            body = self._org_bodies.get(team.group(1)) if team else None
+            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if body is None or archetype is None:
+                continue
+            tokens = self._org_equipment_types(team.group(1), body)
+            covered = {m for token in tokens for m in equipment.expand(token)}
+            if not tokens or covered & {
+                variant_type,
+                archetype,
+                *equipment.types.get(archetype, ()),
+                *equipment.types.get(variant_type, ()),
+            }:
+                continue
+            self.add_warning(
+                "mio-design-team-type-uncovered",
+                f"design_team = mio:{team.group(1)} cannot design {variant_type}: "
+                f"its equipment_type does not cover {archetype}, so the engine "
+                f"ignores the designer",
+                rel,
+                text.count("\n", 0, team.start()) + 1,
+            )
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
         for m in ON_COMPLETE_RE.finditer(body):

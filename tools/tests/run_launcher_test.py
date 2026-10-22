@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 import run as launcher
+from shared.suite import run_tool_script
 
 
 def stub_subprocess(monkeypatch, returncode=0):
@@ -52,11 +53,22 @@ def test_discovery_hides_tests_and_validation_libraries():
             "disk_cache",
             "equipment_module_slots",
             "equipment_stats",
+            "guard_scan",
+            "image_size",
             "sprite_index",
+            "standardize_api",
+            "validator_batches",
         }
         & tools.keys()
     )
     assert "validate_common_mistakes" in tools
+
+
+def test_discovery_includes_balance_scripts():
+    tools = launcher.find_all_tools()
+
+    assert tools["set_energy_tech_scurves"].parent.name == "balance"
+    assert tools["set_renewable_hotspots"].parent.name == "balance"
 
 
 def test_discovery_skips_private_hidden_and_absent_directories(tmp_path, monkeypatch):
@@ -118,6 +130,7 @@ def test_exact_name_launches_the_script_and_propagates_its_exit_code(monkeypatch
     [
         ("batchdds-2", "batchdds-2"),
         ("flag_reference_checker", "flag-reference-checker"),
+        ("standardize-focus-tree", "standardize_focus_tree"),
     ],
 )
 def test_launcher_resolves_hyphenated_aliases(requested, discovered, monkeypatch):
@@ -159,6 +172,14 @@ def test_an_ambiguous_substring_lists_the_candidates_and_fails(monkeypatch, caps
     assert "  validate_events" in out
     assert "  validate_ideas" in out
     assert calls == []
+
+
+def test_the_script_lists_the_real_catalogue():
+    result = run_tool_script("run.py", "--list")
+
+    assert result.returncode == 0, result.stderr
+    assert "standardize" in result.stdout
+    assert "run.py" not in result.stdout
 
 
 def test_an_unknown_name_points_at_the_catalogue(monkeypatch, capsys):

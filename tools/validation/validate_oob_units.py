@@ -10,27 +10,44 @@
 import glob
 import os
 import re
+import subprocess
 import sys
 from difflib import get_close_matches
-from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Dict,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from equipment_module_slots import (
+    CreatedVariants,
     Finding,
     _iter_blocks,
     _iter_named_blocks,
     _scalar,
     blank_comments,
     build_equipment_index,
+    check_created_variant_upgrades,
     check_created_variants,
+    created_variant_spans,
     parse_variant_names,
 )
 from shared_utils import (
     get_staged_files,
+    label_before_brace,
     normalize_path_separators,
     read_text_under,
+    validation_config,
 )
 from validator_common import (
     BaseValidator,
@@ -48,6 +65,7 @@ _VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "SHIP VARIANT: required slot left empty",
     "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "SHIP VARIANT: unsupported upgrade",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -58,6 +76,7 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
     "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -86,11 +105,51 @@ _HISTORY_PRODUCTION_PATTERNS = [
 _OOB_EQUIPMENT_RE = re.compile(
     r"equipment\s*=\s*\{\s*([A-Za-z_]\w*)\s*=\s*\{([^{}]*)\}"
 )
+# Para, Parachute, Paracadutisti, Para-quedista; VDV and desant for Russian,
+# Ukrainian and Tajik airborne. \bpara skips "Separate Infantry BDE".
+_AIRBORNE_NAME_RES = tuple(
+    re.compile(pattern, re.I) for pattern in (r"\bpara", "airborne", "vdv", "desant")
+)
+_AIR_ASSAULT_TEMPLATES = frozenset(
+    validation_config("validate_oob_units", "air_assault_templates")
+)
+_TEMPLATE_UNIT_BLOCKS = frozenset({"regiments", "regimental_support", "support"})
+# Vanilla NDefines.NMilitary values for the division designer. common/defines
+# overrides them; CI has no game install to read the rest from.
+_VANILLA_TEMPLATE_DEFINES = {
+    "MAX_DIVISION_BRIGADE_WIDTH": (5,),
+    "MAX_DIVISION_BRIGADE_HEIGHT": (5,),
+    "MIN_DIVISION_BRIGADE_HEIGHT": (4,),
+    "MAX_DIVISION_SUPPORT_WIDTH": (1,),
+    "MAX_DIVISION_SUPPORT_HEIGHT": (5,),
+    "MAX_REGIMENTAL_SUPPORT_WIDTH": (5,),
+    "MAX_REGIMENTAL_SUPPORT_HEIGHT": (1,),
+    "REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS": (3,),
+}
+_NMILITARY_DEFINE_RE = re.compile(
+    r"^\s*NDefines\.NMilitary\.(\w+)\s*=\s*(\{[^}\n]*\}|\d+)", re.M
+)
+_INT_RE = re.compile(r"\d+")
+_COLUMN_SIZE_MODIFIER = "additional_brigade_column_size"
+_SET_SUB_DOCTRINE_RE = re.compile(
+    r"^set_sub_doctrine\s*=\s*(?:\{[^}]*?\bsub_doctrine\s*=\s*)?(\w+)", re.M
+)
+_ADD_MASTERY_RE = re.compile(r"^add_mastery\s*=\s*\{([^{}]*)\}", re.M)
+_ASSIGNMENT_RE = re.compile(r"(\w+)\s*=\s*(\S+)")
+_REWARD_MASTERY_RE = re.compile(
+    r"^\s*NDefines\.NDoctrines\.DEFAULT_REWARD_MASTERY\s*=\s*([\d.]+)", re.M
+)
+_SLOT_COORD_RE = re.compile(r"\b([xy])\s*=\s*(\d+)")
+_TEMPLATE_SLOT = "template-slot"
+_TEMPLATE_LOCKED_ROW = "template-locked-row"
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
 _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
 _LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
+_DIVISION_TEMPLATE_DEF_PATTERN = r"division_template\s*=\s*\{"
+_DIVISION_TEMPLATE_DEF_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN.encode())
+_DIVISION_TEMPLATE_DEF_TEXT_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN)
 
 # create_unit and runtime load_oob appear in these sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
@@ -104,6 +163,96 @@ _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
 _DELETE_TEMPLATE_SOURCE_PATTERNS = _CREATE_UNIT_SOURCE_PATTERNS + [
     "common/ideas/*.txt",
 ]
+# Static template sources; OOB definitions stay wildcard-owned.
+_TEMPLATE_SOURCE_PATTERNS = [
+    "history/**/*.txt",
+    "events/**/*.txt",
+    "common/national_focus/*.txt",
+    "common/decisions/*.txt",
+    "common/scripted_effects/*.txt",
+    "common/on_actions/*.txt",
+    "common/scripted_guis/**/*.txt",
+    "common/operations/**/*.txt",
+    "common/resistance_compliance_modifiers/**/*.txt",
+    "common/special_projects/**/*.txt",
+    "common/ideas/**/*.txt",
+]
+# Designer limits: the defines, and the doctrines a country starts with.
+_DEFINES_PATTERN = "common/defines/*.lua"
+_DOCTRINES_PATTERN = "common/doctrines/**/*.txt"
+_COUNTRY_HISTORY_PATTERN = "history/countries/*.txt"
+_TEMPLATE_LIMIT_SOURCE_PATTERNS = [
+    _DEFINES_PATTERN,
+    _DOCTRINES_PATTERN,
+    _COUNTRY_HISTORY_PATTERN,
+]
+_TEMPLATE_SOURCE_ROOTS = (
+    "history/",
+    "events/",
+    "common/national_focus/",
+    "common/decisions/",
+    "common/scripted_effects/",
+    "common/on_actions/",
+    "common/scripted_guis/",
+    "common/operations/",
+    "common/resistance_compliance_modifiers/",
+    "common/special_projects/",
+    "common/ideas/",
+)
+
+
+def _any_file_contains(paths: List[str], needle: bytes) -> bool:
+    # Unreadable files stay in-scope so a skip cannot hide a real check.
+    for path in paths:
+        try:
+            with open(path, "rb") as handle:
+                if needle in handle.read():
+                    return True
+        except OSError:
+            return True
+    return False
+
+
+def _any_file_matches(paths: List[str], pattern: re.Pattern[bytes]) -> bool:
+    for path in paths:
+        try:
+            with open(path, "rb") as handle:
+                if pattern.search(handle.read()):
+                    return True
+        except OSError:
+            return True
+    return False
+
+
+def _changed_lines_match(mod_path: str, paths: List[str], pattern: str) -> bool:
+    if not paths or not os.path.exists(os.path.join(mod_path, ".git")):
+        return False
+    relative = [
+        normalize_path_separators(os.path.relpath(path, mod_path)) for path in paths
+    ]
+    try:
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+        if staged.returncode not in (0, 1):
+            return True
+        scope = ["--cached"] if staged.returncode == 1 else ["main...HEAD"]
+        matched = subprocess.run(
+            ["git", "diff", *scope, "--quiet", f"-G{pattern}", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return True
+    return matched.returncode != 0
 
 
 def _read_text(filepath: str, under: str) -> str:
@@ -115,6 +264,8 @@ def _read_text(filepath: str, under: str) -> str:
 
 def find_load_oob_references(content: str) -> List[Tuple[str, int]]:
     """Return literal load_oob targets and their line numbers."""
+    if "load_oob" not in content:
+        return []
     refs = []
     content = strip_comments(content)
     for match in _LOAD_OOB_RE.finditer(content):
@@ -179,35 +330,6 @@ def _parse_canonical_units_file(content: str) -> Set[str]:
     return canonical
 
 
-def parse_canonical_units(mod_path: str) -> Set[str]:
-    """Build a set of canonical sub-unit names from common/units/*.txt.
-
-    Unit names are top-level identifiers inside sub_units = { ... } blocks.
-    """
-    canonical = set()
-    for sub_units, _ in _parse_canonical_unit_sources(mod_path):
-        canonical.update(sub_units)
-    return canonical
-
-
-def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str]:
-    """Return the set of valid namelist block keys.
-
-    A namelist block key is valid if it is either:
-      - a sub_unit name, OR
-      - an equipment-type name referenced in `need = { ... }` or
-        `need_equipment = { ... }` inside a sub_unit definition.
-
-    Air namelists use equipment-type keys (small_plane_airframe etc.) rather
-    than sub_unit names (light_fighter etc.), so the canonical set must
-    include both.
-    """
-    valid = set(sub_units)
-    for _, equipment_names in _parse_canonical_unit_sources(mod_path):
-        valid.update(equipment_names)
-    return valid
-
-
 def _parse_equipment_names_file(content: str) -> Set[str]:
     """Extract equipment-type names from `need`/`need_equipment` blocks in one file."""
     equipment = set()
@@ -222,16 +344,31 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
     return equipment
 
 
+def _parse_parachutable_units_file(content: str) -> Set[str]:
+    """Sub-unit names declared `can_be_parachuted = yes` in one units file."""
+    text = blank_comments(content)
+    parachutable = set()
+    for lo, hi in _iter_named_blocks(text, 0, len(text), "sub_units"):
+        for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
+            if _scalar(text, blo, bhi, "can_be_parachuted") == "yes":
+                parachutable.add(name)
+    return parachutable
+
+
 def _parse_canonical_unit_source(
     content: str,
-) -> Tuple[Set[str], Set[str]]:
-    return _parse_canonical_units_file(content), _parse_equipment_names_file(content)
+) -> Tuple[Set[str], Set[str], Set[str]]:
+    return (
+        _parse_canonical_units_file(content),
+        _parse_equipment_names_file(content),
+        _parse_parachutable_units_file(content),
+    )
 
 
 def _parse_canonical_unit_sources(
     mod_path: str,
-) -> List[Tuple[Set[str], Set[str]]]:
-    """Parse each unit source once for both canonical unit indexes."""
+) -> List[Tuple[Set[str], Set[str], Set[str]]]:
+    """Parse each unit source once for the canonical and paradrop unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
@@ -239,7 +376,7 @@ def _parse_canonical_unit_sources(
 
         def compute(
             source_content: str = content,
-        ) -> Tuple[Set[str], Set[str]]:
+        ) -> Tuple[Set[str], Set[str], Set[str]]:
             return _parse_canonical_unit_source(source_content)
 
         parsed.append(
@@ -475,9 +612,9 @@ def variant_tag_from_path(rel: str) -> Optional[str]:
 
 
 def build_variant_name_index(
-    sources: List[Tuple[str, str]],
+    sources: List[Tuple[str, Optional[CreatedVariants]]],
 ) -> Tuple[Dict[str, Set[Tuple[str, str]]], Set[Tuple[str, str]]]:
-    """``(per-tag, wildcard)`` ``(type, name)`` sets from ``(relpath, content)``.
+    """``(per-tag, wildcard)`` ``(type, name)`` sets from ``(relpath, variants)``.
 
     A variant in `history/countries/` belongs to that file's tag. Everywhere else
     (focus rewards, events, decisions, scripted effects) the effect runs in a
@@ -487,11 +624,11 @@ def build_variant_name_index(
     """
     by_tag: Dict[str, Set[Tuple[str, str]]] = {}
     wildcard: Set[Tuple[str, str]] = set()
-    for rel, content in sources:
-        if "create_equipment_variant" not in content:
+    for rel, variants in sources:
+        if variants is None:
             continue
         tag = variant_tag_from_path(rel)
-        for etype, name, _ in parse_variant_names(content):
+        for etype, name, _ in parse_variant_names(variants):
             if tag:
                 by_tag.setdefault(tag, set()).add((etype, name))
             else:
@@ -732,13 +869,14 @@ _DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
 _TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
 _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
-_OWNER_VALUE_RE = re.compile(r"\bowner\s*=\s*([A-Za-z0-9_]+)")
 _DELETE_TEMPLATE_BLOCK_RE = re.compile(
     r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
 )
 _DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
-_ZERO_FACTOR_RE = re.compile(
-    r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
+_EQUIPMENT_FACTOR_RE = re.compile(r"\bstart_equipment_factor\s*=")
+_START_FACTOR_RE = re.compile(
+    r"\bstart_(equipment|manpower)_factor\s*=\s*"
+    r"([+-]?(?:\d+\.\d*|\.\d+|\d+))(?![.\w])"
 )
 _STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
 _EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
@@ -793,10 +931,15 @@ _CREATE_UNIT_CATEGORIES = {
     "malformed-division": "CREATE UNIT: division string does not parse",
     "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
+    "missing-equipment-factor": (
+        "CREATE UNIT: division string lacks start_equipment_factor"
+    ),
+    "near-zero-factor": "CREATE UNIT: equipment/manpower factor below 0.01",
     "template-order": "CREATE UNIT: template defined after create_unit",
     "missing-template-ensure": (
         "CREATE UNIT: template not created or has_template-guarded in this effect"
     ),
+    "foreign-static-template": ("CREATE UNIT: foreign-only static template definition"),
 }
 _CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
 # persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
@@ -826,6 +969,7 @@ _DIVISION_NUMBER_KEYS = frozenset(
 )
 _FEV_ENTRY_KEYS = frozenset({"owner", "amount", "version_name", "creator"})
 _NUMBER_RE = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+|\d+)$")
+_BRACE_SCAN_RE = re.compile(r'[{}"\n]')
 
 
 class _CreateUnitChecks:
@@ -855,32 +999,19 @@ class _CreateUnitChecks:
         )
 
 
-def _line_of(text: str, pos: int) -> int:
-    return text[:pos].count("\n") + 1
-
-
-def _label_before_brace(text: str, brace_idx: int) -> Optional[str]:
-    j = brace_idx - 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or text[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (text[j].isalnum() or text[j] in "_:.@"):
-        j -= 1
-    return text[j + 1 : end] or None
-
-
 def _matching_braces(text: str) -> Dict[int, int]:
     stack = []
     pairs = {}
     in_str = False
-    for i, c in enumerate(text):
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            in_str = not in_str
+    for match in _BRACE_SCAN_RE.finditer(text):
+        i = match.start()
+        c = text[i]
+        if c == "\n":
+            # HOI4 strings cannot span lines.
+            in_str = False
+        elif c == '"':
+            if i == 0 or text[i - 1] != "\\":
+                in_str = not in_str
         elif not in_str:
             if c == "{":
                 stack.append(i)
@@ -894,14 +1025,18 @@ def _build_block_nodes(text: str) -> List[Dict]:
     pairs = _matching_braces(text)
     nodes: List[Dict[str, Any]] = []
     stack: List[int] = []
+    line = 1
+    counted_to = 0
     for op in sorted(pairs):
         while stack and nodes[stack[-1]]["end"] < op:
             stack.pop()
+        line += text.count("\n", counted_to, op)
+        counted_to = op
         node: Dict[str, Any] = {
-            "label": _label_before_brace(text, op),
+            "label": label_before_brace(text, op),
             "start": op,
             "end": pairs[op],
-            "line": _line_of(text, op),
+            "line": line,
             "parent": stack[-1] if stack else -1,
             "children": [],
         }
@@ -961,6 +1096,485 @@ def _country_scope_path(
         elif scope is not None:
             path.append(scope)
     return tuple(path)
+
+
+def _at_top_level(text: str, start: int, pos: int) -> bool:
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in text[start:pos]:
+        if char == '"' and not escaped:
+            in_string = not in_string
+        elif not in_string:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+        escaped = char == "\\" and not escaped
+        if char != "\\":
+            escaped = False
+    return depth == 0 and not in_string
+
+
+def _top_level_value(text: str, start: int, end: int, key: str) -> Optional[str]:
+    assignment = re.compile(r"\b" + re.escape(key) + r"\s*=\s*")
+    for match in assignment.finditer(text, start, end):
+        if not _at_top_level(text, start, match.start()):
+            continue
+        value_start = match.end()
+        if value_start >= end:
+            return None
+        if text[value_start] == '"':
+            escaped = False
+            for pos in range(value_start + 1, end):
+                char = text[pos]
+                if char == '"' and not escaped:
+                    return text[value_start + 1 : pos]
+                escaped = char == "\\" and not escaped
+                if char != "\\":
+                    escaped = False
+            return None
+        value = re.match(r"[^\s{}]+", text[value_start:end])
+        return value.group(0) if value else None
+    return None
+
+
+def _static_template_name(nodes: List[Dict], text: str, idx: int) -> Optional[str]:
+    name = _top_level_value(text, nodes[idx]["start"] + 1, nodes[idx]["end"], "name")
+    if not name or any(
+        marker in name for marker in ("$", "[", "]", "var:", "global.", "event_target:")
+    ):
+        return None
+    return name
+
+
+def _focus_root_owner(nodes: List[Dict], text: str, idx: int) -> Optional[str]:
+    focus = next(
+        (
+            ancestor
+            for ancestor in _ancestors(nodes, idx)
+            if nodes[ancestor]["label"] == "focus_tree"
+        ),
+        -1,
+    )
+    if focus == -1:
+        return None
+    country_blocks = [
+        child
+        for child in nodes[focus]["children"]
+        if nodes[child]["label"] == "country"
+    ]
+    if len(country_blocks) != 1:
+        return None
+    country = nodes[country_blocks[0]]
+    body = text[country["start"] + 1 : country["end"]]
+    selectors = []
+    unknown = False
+    for match in re.finditer(r"\b(?:original_tag|tag)\s*=", body):
+        value = re.match(r"\s*([^\s{}]+)", body[match.end() :])
+        if not value or not _LITERAL_TAG_SCOPE_RE.fullmatch(value.group(1)):
+            unknown = True
+        else:
+            selectors.append(value.group(1))
+    if unknown or len(set(selectors)) != 1:
+        return None
+    return selectors[0]
+
+
+def _template_owner(nodes: List[Dict], text: str, idx: int, rel: str) -> Optional[str]:
+    if rel.startswith("history/"):
+        return None
+    path = _country_scope_path(nodes, idx)
+    tags = []
+    for scope in path[1:]:
+        if not _LITERAL_TAG_SCOPE_RE.fullmatch(scope):
+            return None
+        tags.append(scope)
+    if tags:
+        return tags[-1]
+    if rel.startswith("common/national_focus/"):
+        return _focus_root_owner(nodes, text, idx)
+    return None
+
+
+def division_template_entries(rel: str, raw: str) -> List[Tuple[str, Optional[str]]]:
+    """``(name, owner)`` for each static division_template in one file.
+
+    The owner is None when no safe country scope pins the definition down.
+    """
+    if "division_template" not in raw:
+        return []
+    text = strip_comments(raw)
+    nodes = _build_block_nodes(text)
+    entries = []
+    for idx, node in enumerate(nodes):
+        if node["label"] != "division_template":
+            continue
+        name = _static_template_name(nodes, text, idx)
+        if name is not None:
+            entries.append((name, _template_owner(nodes, text, idx, rel)))
+    return entries
+
+
+def check_paradrop_templates(
+    raw: str,
+    parachutable: Set[str],
+    name_res: Tuple[re.Pattern, ...],
+    allowlist: FrozenSet[str],
+) -> List[Tuple[int, str, str, int]]:
+    """``(template_line, template, sub_unit, sub_unit_line)`` per airborne template
+    sub-unit lacking `can_be_parachuted = yes`; one pair per template and sub-unit.
+
+    One such sub-unit stops the whole division from paradropping.
+    """
+    if "division_template" not in raw or not any(p.search(raw) for p in name_res):
+        return []
+    text = strip_comments(raw)
+    nodes = _build_block_nodes(text)
+    findings = []
+    for idx, node in enumerate(nodes):
+        if node["label"] != "division_template":
+            continue
+        name = _static_template_name(nodes, text, idx)
+        if (
+            name is None
+            or name in allowlist
+            or not any(pattern.search(name) for pattern in name_res)
+        ):
+            continue
+        seen = set()
+        for block in node["children"]:
+            if nodes[block]["label"] not in _TEMPLATE_UNIT_BLOCKS:
+                continue
+            for unit_idx in nodes[block]["children"]:
+                unit = nodes[unit_idx]["label"]
+                if unit in parachutable or unit in seen:
+                    continue
+                seen.add(unit)
+                findings.append((node["line"], name, unit, nodes[unit_idx]["line"]))
+    return findings
+
+
+def _check_paradrop_file(
+    args: Tuple[str, str, Set[str], Tuple[re.Pattern, ...], FrozenSet[str]],
+) -> List[Issue]:
+    filepath, mod_path, parachutable, name_res, allowlist = args
+    rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    # Allowlist keys are "<file>:<template name>", so a shared name in another
+    # country's OOB is still checked.
+    allowed_here = frozenset(
+        key[len(rel) + 1 :] for key in allowlist if key.startswith(rel + ":")
+    )
+    findings = check_paradrop_templates(
+        _read_text(filepath, mod_path), parachutable, name_res, allowed_here
+    )
+    return [
+        Issue(
+            severity=Severity.WARNING,
+            category="airborne-template-not-parachutable",
+            message=(
+                f"airborne template '{name}' (line {template_line}) uses "
+                f"'{unit}' without can_be_parachuted = yes, so the division "
+                f"cannot paradrop"
+            ),
+            file=rel,
+            line=unit_line,
+        )
+        for template_line, name, unit, unit_line in findings
+    ]
+
+
+def _first_gap(used: Dict[int, Any]) -> Optional[int]:
+    """Lowest index missing below the highest one in use."""
+    return next((i for i in range(max(used)) if i not in used), None)
+
+
+class TemplateLimits(NamedTuple):
+    """Division designer limits, read from the defines and starting doctrines."""
+
+    grids: Dict[str, Tuple[int, int]]  # block -> (columns, rows)
+    open_rows: int  # regiments rows usable without a column size bonus
+    required_battalions: Tuple[int, ...]  # per regimental support row
+    column_bonus: Dict[str, int]  # tag -> extra regiments rows at game start
+
+
+def _limit_sources(mod_path: str, pattern: str) -> List[str]:
+    return sorted(glob.glob(os.path.join(mod_path, pattern), recursive=True))
+
+
+def _starting_column_bonus(mod_path: str) -> Dict[str, int]:
+    """Regiments rows each tag's starting subdoctrines and mastery rewards add.
+
+    Only root-level history counts. Ideas that add rows are not counted.
+    """
+    reward_mastery = 100.0
+    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
+        for value in _REWARD_MASTERY_RE.findall(_read_text(path, mod_path)):
+            reward_mastery = float(value)
+    sizes: Dict[str, int] = {}
+    reward_rows: Dict[str, List[Tuple[float, int]]] = {}
+    for path in _limit_sources(mod_path, _DOCTRINES_PATTERN):
+        text = strip_comments(_read_text(path, mod_path))
+        if _COLUMN_SIZE_MODIFIER not in text:
+            continue
+        nodes = _build_block_nodes(text)
+        for node in nodes:
+            if node["parent"] != -1:
+                continue
+            size = _top_level_value(
+                text, node["start"] + 1, node["end"], _COLUMN_SIZE_MODIFIER
+            )
+            if size:
+                sizes[node["label"]] = int(size)
+            needed = 0.0
+            for child in node["children"]:
+                if nodes[child]["label"] != "rewards":
+                    continue
+                for idx in nodes[child]["children"]:
+                    start, end = nodes[idx]["start"] + 1, nodes[idx]["end"]
+                    # Rewards unlock in order, so each threshold adds to the last.
+                    needed += float(
+                        _top_level_value(text, start, end, "mastery") or reward_mastery
+                    )
+                    size = _top_level_value(text, start, end, _COLUMN_SIZE_MODIFIER)
+                    if size:
+                        reward_rows.setdefault(node["label"], []).append(
+                            (needed, int(size))
+                        )
+    bonus: Dict[str, int] = {}
+    for path in _limit_sources(mod_path, _COUNTRY_HISTORY_PATTERN):
+        text = _read_text(path, mod_path)
+        if "set_sub_doctrine" not in text:
+            continue
+        text = strip_comments(text)
+        doctrines = _SET_SUB_DOCTRINE_RE.findall(text)
+        mastery: Dict[str, float] = {}
+        for body in _ADD_MASTERY_RE.findall(text):
+            fields = dict(_ASSIGNMENT_RE.findall(body))
+            if fields.keys() == {"amount", "sub_doctrine"} and _NUMBER_RE.fullmatch(
+                fields["amount"]
+            ):
+                doctrine = fields["sub_doctrine"]
+                mastery[doctrine] = mastery.get(doctrine, 0.0) + float(fields["amount"])
+        rows = sum(sizes.get(doctrine, 0) for doctrine in doctrines)
+        rows += sum(
+            size
+            for doctrine in set(doctrines)
+            for needed, size in reward_rows.get(doctrine, [])
+            if mastery.get(doctrine, 0.0) >= needed
+        )
+        if rows:
+            bonus[os.path.basename(path)[:3]] = rows
+    return bonus
+
+
+def read_template_limits(mod_path: str) -> TemplateLimits:
+    defines: Dict[str, Tuple[int, ...]] = dict(_VANILLA_TEMPLATE_DEFINES)
+    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
+        for name, value in _NMILITARY_DEFINE_RE.findall(_read_text(path, mod_path)):
+            if name in defines:
+                defines[name] = tuple(int(number) for number in _INT_RE.findall(value))
+
+    def grid(prefix: str) -> Tuple[int, int]:
+        return defines[f"{prefix}_WIDTH"][0], defines[f"{prefix}_HEIGHT"][0]
+
+    return TemplateLimits(
+        grids={
+            "regiments": grid("MAX_DIVISION_BRIGADE"),
+            "regimental_support": grid("MAX_REGIMENTAL_SUPPORT"),
+            "support": grid("MAX_DIVISION_SUPPORT"),
+        },
+        open_rows=defines["MIN_DIVISION_BRIGADE_HEIGHT"][0],
+        required_battalions=defines["REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS"],
+        column_bonus=_starting_column_bonus(mod_path),
+    )
+
+
+_TemplateGrids = Dict[str, Dict[int, Dict[int, int]]]
+
+
+def _read_template_grids(
+    text: str, nodes: List[Dict], node: Dict, limits: TemplateLimits
+) -> Tuple[_TemplateGrids, List[Tuple[int, str]]]:
+    """One template's slots as block -> column -> row -> unit line, and the
+    ``(line, message)`` of each unit that could not take its slot."""
+    grids: _TemplateGrids = {}
+    errors = []
+    for block_idx in node["children"]:
+        block = nodes[block_idx]["label"]
+        if block not in limits.grids:
+            continue
+        width, height = limits.grids[block]
+        for unit_idx in nodes[block_idx]["children"]:
+            unit = nodes[unit_idx]
+            line = unit["line"]
+            pos = dict(_SLOT_COORD_RE.findall(text[unit["start"] : unit["end"]]))
+            if len(pos) != 2:
+                label = unit["label"]
+                errors.append((line, f"{block} unit '{label}' has no readable x and y"))
+                continue
+            x, y = int(pos["x"]), int(pos["y"])
+            slot = f"{block} slot x = {x} y = {y}"
+            rows = grids.setdefault(block, {}).setdefault(x, {})
+            if y in rows:
+                errors.append((line, f"{slot} is already used on line {rows[y]}"))
+                continue
+            rows[y] = line
+            if x >= width or y >= height:
+                errors.append((line, f"{slot} is outside the {width}x{height} grid"))
+    return grids, errors
+
+
+def _row_gap_errors(
+    block: str, columns: Dict[int, Dict[int, int]]
+) -> List[Tuple[int, str]]:
+    errors = []
+    for x, rows in sorted(columns.items()):
+        gap = _first_gap(rows)
+        if gap is not None:
+            past = rows[min(y for y in rows if y > gap)]
+            errors.append((past, f"{block} column x = {x} skips row y = {gap}"))
+    return errors
+
+
+def _regimental_support_errors(
+    columns: Dict[int, Dict[int, int]],
+    regiments: Dict[int, Dict[int, int]],
+    required_battalions: Tuple[int, ...],
+) -> List[Tuple[int, str]]:
+    """Each column of companies attaches to the same regiments column, and a
+    row opens only once that regiment has enough battalions."""
+    errors = []
+    for x, rows in sorted(columns.items()):
+        battalions = len(regiments.get(x, ()))
+        column = f"regiments column x = {x}"
+        if not battalions:
+            errors.append(
+                (
+                    min(rows.values()),
+                    f"regimental_support column x = {x} has no {column}",
+                )
+            )
+            continue
+        for y, needed in enumerate(required_battalions):
+            if y in rows and battalions < needed:
+                errors.append(
+                    (
+                        rows[y],
+                        f"regimental_support slot x = {x} y = {y} needs {needed} "
+                        f"battalions in {column}, which has {battalions}",
+                    )
+                )
+    return errors
+
+
+def check_template_slots(
+    text: str, nodes: List[Dict], rel: str, limits: TemplateLimits
+) -> List[Tuple[int, str, str]]:
+    """``(line, category, message)`` per division_template layout problem.
+
+    template-slot: the designer hides the unit and locks the template for
+    editing. template-locked-row: the row needs a doctrine the owner lacks.
+    """
+    findings: List[Tuple[int, str, str]] = []
+    for idx, node in enumerate(nodes):
+        if node["label"] != "division_template":
+            continue
+        grids, errors = _read_template_grids(text, nodes, node, limits)
+        regiments = grids.get("regiments", {})
+        for block, columns in grids.items():
+            errors += _row_gap_errors(block, columns)
+            if block == "regimental_support":
+                errors += _regimental_support_errors(
+                    columns, regiments, limits.required_battalions
+                )
+                continue
+            gap = _first_gap(columns)
+            if gap is not None:
+                past = min(columns[min(x for x in columns if x > gap)].values())
+                errors.append((past, f"{block} skips column x = {gap}"))
+        problems = [(line, _TEMPLATE_SLOT, message) for line, message in errors]
+
+        if rel.startswith("history/units/"):
+            owner: Optional[str] = os.path.basename(rel)[:3]
+        else:
+            owner = _template_owner(nodes, text, idx, rel)
+        open_rows = limits.open_rows + limits.column_bonus.get(owner or "", 0)
+        locked = sorted(
+            line
+            for rows in regiments.values()
+            for y, line in rows.items()
+            if open_rows <= y < limits.grids["regiments"][1]
+        )
+        if locked:
+            problems.append(
+                (
+                    locked[0],
+                    _TEMPLATE_LOCKED_ROW,
+                    f"{len(locked)} regiments unit(s) on row y = {open_rows} or "
+                    f"higher, locked without a doctrine that adds "
+                    f"{_COLUMN_SIZE_MODIFIER}",
+                )
+            )
+
+        name = _top_level_value(text, node["start"] + 1, node["end"], "name")
+        findings.extend(
+            (line, category, f"template '{name}' (line {node['line']}): {message}")
+            for line, category, message in sorted(problems)
+        )
+    return findings
+
+
+def _check_template_slots_file(args: Tuple[str, str, TemplateLimits]) -> List[Issue]:
+    filepath, mod_path, limits = args
+    raw = _read_text(filepath, mod_path)
+    # Most candidates only name a template inside a create_unit string.
+    if not _DIVISION_TEMPLATE_DEF_TEXT_RE.search(raw):
+        return []
+    text = strip_comments(raw)
+    nodes = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.blocks",
+        filepath,
+        text,
+        lambda: _build_block_nodes(text),
+    )
+    rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    return [
+        Issue(
+            severity=(
+                Severity.ERROR if category == _TEMPLATE_SLOT else Severity.WARNING
+            ),
+            category=category,
+            message=message,
+            file=rel,
+            line=line,
+        )
+        for line, category, message in check_template_slots(text, nodes, rel, limits)
+    ]
+
+
+def _read_division_template_entries(
+    args: Tuple[str, str],
+) -> List[Tuple[str, Optional[str]]]:
+    filepath, mod_path = args
+    rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    return division_template_entries(rel, _read_text(filepath, mod_path))
+
+
+def build_division_template_index(
+    file_entries: Iterable[List[Tuple[str, Optional[str]]]],
+) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+    """Index static template names by safe country scope and wildcard the rest."""
+    owners: Dict[str, Set[str]] = {}
+    wildcard: Set[str] = set()
+    for entries in file_entries:
+        for name, owner in entries:
+            if owner is None:
+                wildcard.add(name)
+            else:
+                owners.setdefault(name, set()).add(owner)
+    return {name: frozenset(tags) for name, tags in owners.items()}, frozenset(wildcard)
 
 
 def _deepest_node_at(nodes: List[Dict], pos: int) -> int:
@@ -1441,15 +2055,20 @@ def _effect_template_closure(
         content = strip_comments(_read_text(filepath, mod_path))
         if not content:
             continue
-        nodes = _build_block_nodes(content)
-        for i, node in enumerate(nodes):
-            if node["parent"] != -1 or not node["label"]:
+        pairs = _matching_braces(content)
+        top_end = -1
+        for start in sorted(pairs):
+            if start < top_end:
                 continue
-            body = content[node["start"] : node["end"]]
+            top_end = pairs[start]
+            label = label_before_brace(content, start)
+            if not label:
+                continue
+            body = content[start:top_end]
             names = set(_TEMPLATE_NAME_RE.findall(body))
             names.update(_HAS_TEMPLATE_RE.findall(body))
-            ensures.setdefault(node["label"], set()).update(names)
-            calls.setdefault(node["label"], set()).update(_EFFECT_CALL_RE.findall(body))
+            ensures.setdefault(label, set()).update(names)
+            calls.setdefault(label, set()).update(_EFFECT_CALL_RE.findall(body))
 
     resolved: Dict[str, FrozenSet[str]] = {}
 
@@ -1492,7 +2111,7 @@ def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
     names: Set[str] = set()
     for filepath in files:
         raw = _read_text(filepath, mod_path)
-        if not raw:
+        if "delete_unit_template_and_units" not in raw:
             continue
         for block in _DELETE_TEMPLATE_BLOCK_RE.finditer(strip_comments(raw)):
             m = _DELETE_TEMPLATE_NAME_RE.search(block.group(1))
@@ -1502,12 +2121,32 @@ def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
 
 
 def _check_created_units(
-    args: Tuple[str, str, str, FrozenSet[str], Dict[str, FrozenSet[str]]],
+    args: Tuple[
+        str,
+        str,
+        str,
+        FrozenSet[str],
+        Dict[str, FrozenSet[str]],
+        Dict[str, FrozenSet[str]],
+        FrozenSet[str],
+    ],
 ) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
-    filepath, rel, mod_path, deleted_names, effect_closure = args
+    (
+        filepath,
+        rel,
+        mod_path,
+        deleted_names,
+        effect_closure,
+        template_owners,
+        template_wildcard,
+    ) = args
     raw = _read_text(filepath, mod_path)
     if not raw:
+        return []
+    if "create_unit" not in raw:
+        # Most candidates never mention it; the strip and block parse below
+        # would find no create_unit node anyway.
         return []
     content = strip_comments(raw)
     nodes = disk_cache.per_file_cached_by_content(
@@ -1565,15 +2204,43 @@ def _check_created_units(
                 f"{cu['line']}: division string must stay on one physical line",
                 line,
             )
+        # An unescaped inner quote closes the value early.
+        tail = body[dm.end() :].split("\n", 1)[0]
+        if tail.strip() and not re.match(
+            r"\s*(?:[A-Za-z_][A-Za-z0-9_]*\s*=|[{}])", tail
+        ):
+            out.error(
+                "malformed-division",
+                f"{cu['line']}: division string has an unescaped inner quote; "
+                f"the text after it does not parse as army data",
+                line,
+            )
         # The string carries escaped quotes (\"...\"); normalize so the inner
         # name/template/factor tokens parse like the engine's parsed string.
         dval_clean = dval.replace('\\"', '"')
-        if _ZERO_FACTOR_RE.search(dval_clean):
-            out.error(
-                "zero-factor",
-                f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
+        if not _EQUIPMENT_FACTOR_RE.search(dval_clean):
+            out.warn(
+                "missing-equipment-factor",
+                f"{cu['line']}: division string has no start_equipment_factor; set it explicitly",
                 line,
             )
+        for fmatch in _START_FACTOR_RE.finditer(dval_clean):
+            try:
+                fvalue = float(fmatch.group(2))
+            except ValueError:
+                continue
+            if fvalue == 0.0:
+                out.error(
+                    "zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is treated as 1",
+                    line,
+                )
+            elif fvalue < 0.01:
+                out.error(
+                    "near-zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is below 0.01",
+                    line,
+                )
 
         parsed_issues, tname = _parse_division_string(dval_clean)
         for kind, message in parsed_issues:
@@ -1611,24 +2278,38 @@ def _check_created_units(
 
         if found_same_scope:
             continue
-        if tname not in deleted_names:
-            continue
-        # force_equipment_variants entries carry their own `owner =`; only the
-        # keys outside the division string belong to the create_unit block.
-        outer = body[: dm.start()] + body[dm.end() :]
-        owner_m = _OWNER_VALUE_RE.search(outer)
-        owner = owner_m.group(1) if owner_m else None
+        # Ignore owner values embedded in force_equipment_variants.
+        owner_value = _top_level_value(content, cu["start"] + 1, cu["end"], "owner")
+        owner = (
+            owner_value
+            if owner_value and _LITERAL_TAG_SCOPE_RE.fullmatch(owner_value)
+            else None
+        )
         if _prior_effect_ensures(
             content, container, nodes, cu["start"], tname, effect_closure
         ):
             continue
-        if not _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+        if _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+            continue
+        if tname in deleted_names:
             out.warn(
                 "missing-template-ensure",
                 f"{cu['line']}: create_unit uses division_template '{tname}' which is deleted "
                 f"elsewhere, with no prior division_template or has_template guard in this effect",
                 line,
             )
+        if not owner or tname in template_wildcard:
+            continue
+        known_owners = template_owners.get(tname)
+        if not known_owners or owner in known_owners:
+            continue
+        foreign_owners = sorted(known_owners)
+        out.warn(
+            "foreign-static-template",
+            f"{cu['line']}: create_unit uses division_template '{tname}', but only static "
+            f"definitions found for {', '.join(foreign_owners)}; none found for {owner}",
+            line,
+        )
 
     return out.issues
 
@@ -1638,26 +2319,33 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_equipment_factor = kwargs.pop("missing_equipment_factor", False)
         super().__init__(*args, **kwargs)
         self.canonical = set()
         self.canonical_lower = {}
+        self.parachutable = set()
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
-        self._variant_sources_by_scope: Dict[bool, List[Tuple[str, str]]] = {}
+        self._variant_sources_by_scope: Dict[
+            bool, List[Tuple[str, Optional[CreatedVariants]]]
+        ] = {}
 
     def _build_canonical_units(self):
         """Build the canonical unit name set from unit definition files."""
         self._log_section("Building canonical unit name set...")
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
-        self.canonical = {name for sub_units, _ in unit_sources for name in sub_units}
+        self.canonical = {
+            name for sub_units, _, _ in unit_sources for name in sub_units
+        }
+        self.parachutable = {name for _, _, para in unit_sources for name in para}
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
         # Namelist keys also accept equipment-type names (air namelists use
         # `small_plane_airframe` rather than the sub_unit name `light_fighter`).
         self.namelist_canonical = set(self.canonical)
         self.namelist_canonical.update(
-            name for _, equipment_names in unit_sources for name in equipment_names
+            name for _, equipment_names, _ in unit_sources for name in equipment_names
         )
         self.namelist_canonical_lower = {
             name.lower(): name for name in self.namelist_canonical
@@ -1689,11 +2377,7 @@ class Validator(BaseValidator):
             (f, self.canonical, self.canonical_lower, self.mod_path) for f in files
         ]
 
-        all_results = self._pool_map(validate_oob_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_oob_file, args_list, chunksize=20)
 
         self._report(
             results,
@@ -1718,11 +2402,7 @@ class Validator(BaseValidator):
             (f, self.namelist_canonical, self.namelist_canonical_lower, self.mod_path)
             for f in files
         ]
-        all_results = self._pool_map(validate_namelist_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_namelist_file, args_list, chunksize=20)
 
         # Namelist mismatches are reported as warnings (not errors) — many
         # legacy 00_*_names.txt files still carry vanilla-style block keys
@@ -1740,21 +2420,24 @@ class Validator(BaseValidator):
         """Validate every `division_names_group = X` in OOB files points to a real group."""
         self._log_section("Checking division_names_group references in OOB files...")
 
+        files = self._collect_files(["history/units/*.txt"])
+        self.log(f"  Found {len(files)} OOB files to check")
+        if not files:
+            self._report(
+                [],
+                "✓ All division_names_group references resolve",
+                "OOB files with unknown division_names_group references:",
+            )
+            return
+
         group_keys = parse_division_group_keys(self.mod_path)
         group_keys_lower = {k.lower(): k for k in group_keys}
         self.log(f"  Found {len(group_keys)} division_names_group definitions")
 
-        files = self._collect_files(["history/units/*.txt"])
-        self.log(f"  Found {len(files)} OOB files to check")
-
         args_list = [(f, group_keys, group_keys_lower, self.mod_path) for f in files]
-        all_results = self._pool_map(
+        results = self._pool_flat_map(
             validate_oob_division_groups_file, args_list, chunksize=20
         )
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
 
         self._report(
             results,
@@ -1770,9 +2453,18 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking air_wing_names_template loc references...")
 
-        loc_keys = self._load_localisation_keys()
         files = self._collect_files(["common/units/names/*.txt", "history/units/*.txt"])
         self.log(f"  Found {len(files)} files to check")
+        if not files:
+            self._report(
+                [],
+                "✓ All air_wing_names_template references resolve to a loc key",
+                "Files with unknown air_wing_names_template loc references:",
+                severity=Severity.WARNING,
+                category="air-wing-template-loc",
+            )
+            return
+        loc_keys = self._load_localisation_keys()
 
         results = []
         for filepath in files:
@@ -1803,20 +2495,26 @@ class Validator(BaseValidator):
             category="air-wing-template-loc",
         )
 
-    def _get_variant_sources(self, *, ignore_staged: bool) -> List[Tuple[str, str]]:
-        """Read variant sources once per effective staged/full scope."""
+    def _get_variant_sources(
+        self, *, ignore_staged: bool
+    ) -> List[Tuple[str, Optional[CreatedVariants]]]:
+        """Walk variant sources once per effective staged/full scope.
+
+        A file without `create_equipment_variant` maps to None.
+        """
         full_scope = not (self.staged_only and not ignore_staged)
         if full_scope in self._variant_sources_by_scope:
             return self._variant_sources_by_scope[full_scope]
 
         files = self._collect_files(_VARIANT_SOURCE_PATTERNS, ignore_staged=full_scope)
-        sources = [
-            (
-                normalize_path_separators(os.path.relpath(filepath, self.mod_path)),
-                _read_text(filepath, self.mod_path),
-            )
-            for filepath in files
-        ]
+        sources = []
+        for filepath in files:
+            content = _read_text(filepath, self.mod_path)
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
+            variants = None
+            if "create_equipment_variant" in content:
+                variants = created_variant_spans(content)
+            sources.append((rel, variants))
         self._variant_sources_by_scope[full_scope] = sources
         return sources
 
@@ -1846,18 +2544,24 @@ class Validator(BaseValidator):
         if not sources:
             self.log("  No files with equipment variants to check")
             return
-        self.log(f"  Found {len(sources)} files to check")
+        variant_files = [
+            (rel, variants) for rel, variants in sources if variants is not None
+        ]
+        if not variant_files:
+            self.log("  No create_equipment_variant effects in scope — skipping")
+            return
+        self.log(f"  Found {len(variant_files)} files to check")
 
         index = self.cached(
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
         results = []
-        for rel, content in sources:
-            if "create_equipment_variant" not in content:
-                continue
-
-            for f in check_created_variants(content, index):
+        for rel, variants in variant_files:
+            findings = check_created_variants(
+                variants, index
+            ) + check_created_variant_upgrades(variants, index)
+            for f in findings:
                 labels = (
                     _VARIANT_SLOT_CATEGORIES
                     if f.hull in index.ship_hulls
@@ -1889,15 +2593,29 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking OOB and production equipment references...")
 
+        oob_files = self._collect_files(["history/units/*.txt"])
+        prod_files = self._collect_files(_HISTORY_PRODUCTION_PATTERNS)
+        if not oob_files and not prod_files:
+            self.log("  No OOB or production files in scope — skipping")
+            return
+        need_variants = _any_file_contains(oob_files, b"version_name")
+        need_archetypes = _any_file_contains(prod_files, b"add_equipment_")
+        if not need_variants and not need_archetypes:
+            self.log("  No equipment references in scope — skipping")
+            return
+
         def _build_variants():
             return build_variant_name_index(
                 self._get_variant_sources(ignore_staged=True)
             )
 
-        by_tag, wildcard = self.cached("variant_name_index", _build_variants)
-        if not by_tag and not wildcard:
-            self.log("  No equipment variants found, skipping")
-            return
+        by_tag: Dict[str, Set[Tuple[str, str]]] = {}
+        wildcard: Set[Tuple[str, str]] = set()
+        if need_variants:
+            by_tag, wildcard = self.cached("variant_name_index", _build_variants)
+            if not by_tag and not wildcard:
+                self.log("  No equipment variants found")
+                need_variants = False
 
         def _build_archetypes():
             units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
@@ -1908,40 +2626,50 @@ class Validator(BaseValidator):
                 ]
             )
 
-        archetypes = self.cached("equipment_archetypes", _build_archetypes)
+        archetypes: Set[str] = set()
+        if need_archetypes:
+            archetypes = self.cached("equipment_archetypes", _build_archetypes)
+        if not need_variants and not need_archetypes:
+            return
 
         results = []
-        for filepath in self._collect_files(["history/units/*.txt"]):
-            content = _read_text(filepath, self.mod_path)
-            if "version_name" not in content:
-                continue
-            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
-            for f in check_oob_variant_refs(content, by_tag, wildcard):
-                results.append(
-                    Issue(
-                        severity=Severity.ERROR,
-                        category=_VARIANT_REF_CATEGORIES[f.kind],
-                        message=f.message,
-                        file=rel,
-                        line=f.line,
-                    )
+        if need_variants:
+            for filepath in oob_files:
+                content = _read_text(filepath, self.mod_path)
+                if "version_name" not in content:
+                    continue
+                rel = normalize_path_separators(
+                    os.path.relpath(filepath, self.mod_path)
                 )
+                for f in check_oob_variant_refs(content, by_tag, wildcard):
+                    results.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category=_VARIANT_REF_CATEGORIES[f.kind],
+                            message=f.message,
+                            file=rel,
+                            line=f.line,
+                        )
+                    )
 
-        for filepath in self._collect_files(_HISTORY_PRODUCTION_PATTERNS):
-            content = _read_text(filepath, self.mod_path)
-            if "add_equipment_" not in content:
-                continue
-            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
-            for f in check_attributed_archetypes(content, archetypes):
-                results.append(
-                    Issue(
-                        severity=Severity.ERROR,
-                        category=_VARIANT_REF_CATEGORIES[f.kind],
-                        message=f.message,
-                        file=rel,
-                        line=f.line,
-                    )
+        if need_archetypes:
+            for filepath in prod_files:
+                content = _read_text(filepath, self.mod_path)
+                if "add_equipment_" not in content:
+                    continue
+                rel = normalize_path_separators(
+                    os.path.relpath(filepath, self.mod_path)
                 )
+                for f in check_attributed_archetypes(content, archetypes):
+                    results.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category=_VARIANT_REF_CATEGORIES[f.kind],
+                            message=f.message,
+                            file=rel,
+                            line=f.line,
+                        )
+                    )
 
         self._report(
             results,
@@ -1953,10 +2681,6 @@ class Validator(BaseValidator):
         """Check that runtime OOB loads name an existing history file."""
         self._log_section("Checking runtime OOB references...")
 
-        target_paths = self._collect_files(["history/units/*.txt"], ignore_staged=True)
-        targets = {
-            os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
-        }
         changed_targets = self.staged_only and any(
             normalize_path_separators(
                 os.path.relpath(filepath, self.mod_path)
@@ -1969,6 +2693,17 @@ class Validator(BaseValidator):
         source_paths = self._collect_files(
             _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=changed_targets
         )
+        if not source_paths:
+            self.log("  No runtime OOB callers in scope — skipping")
+            return
+        if not changed_targets and not _any_file_contains(source_paths, b"load_oob"):
+            self.log("  No load_oob calls in scope — skipping")
+            return
+
+        target_paths = self._collect_files(["history/units/*.txt"], ignore_staged=True)
+        targets = {
+            os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
+        }
 
         results = []
         for filepath in source_paths:
@@ -1999,11 +2734,57 @@ class Validator(BaseValidator):
         """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
 
-        files = self._collect_files(_CREATE_UNIT_SOURCE_PATTERNS)
+        staged_template_paths = [
+            normalize_path_separators(os.path.relpath(path, self.mod_path))
+            for path in get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+            or []
+        ]
+        template_candidates = []
+        for path in staged_template_paths:
+            if not (path.startswith(_TEMPLATE_SOURCE_ROOTS) and path.endswith(".txt")):
+                continue
+            template_candidates.append(
+                path if os.path.isabs(path) else os.path.join(self.mod_path, path)
+            )
+        # Path roots include events/focuses, which usually have no template
+        # definition. Only a real `division_template = {` (or a deleted file)
+        # should force a full-repo create_unit rescan.
+        template_changed = self.staged_only and (
+            _any_file_matches(template_candidates, _DIVISION_TEMPLATE_DEF_RE)
+            or _changed_lines_match(
+                self.mod_path,
+                template_candidates,
+                _DIVISION_TEMPLATE_DEF_PATTERN,
+            )
+        )
+        files = self._collect_files(
+            _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=template_changed
+        )
         if not files:
             self.log("  No files to check")
             return
+        if not template_changed and not _any_file_contains(files, b"create_unit"):
+            self.log("  No create_unit effects in scope — skipping")
+            return
         self.log(f"  Found {len(files)} files to check")
+
+        template_files = self._collect_files(
+            _TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
+        )
+        template_owners, template_wildcard = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.division_templates",
+            template_files,
+            lambda: build_division_template_index(
+                self._pool_map(
+                    _read_division_template_entries,
+                    [(f, self.mod_path) for f in template_files],
+                    chunksize=20,
+                )
+            ),
+        )
 
         delete_files = self._collect_files(
             _DELETE_TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
@@ -2030,19 +2811,88 @@ class Validator(BaseValidator):
                 self.mod_path,
                 deleted_names,
                 effect_closure,
+                template_owners,
+                template_wildcard,
             )
             for f in files
         ]
-        all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
+        results = self._pool_flat_map(_check_created_units, args_list, chunksize=20)
 
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        if not self.missing_equipment_factor:
+            self.log(
+                "  Skipping missing-equipment-factor check "
+                "(pass --missing-equipment-factor to enable)"
+            )
+            skip_cat = _CREATE_UNIT_CATEGORIES["missing-equipment-factor"]
+            results = [issue for issue in results if issue.category != skip_cat]
 
         self._report(
             results,
             "✓ All create_unit effects are well-formed",
             "create_unit effects with structural problems:",
+        )
+
+    def validate_airborne_templates(self):
+        """Warn when an airborne-named division_template cannot paradrop."""
+        self._log_section("Checking airborne division templates for paradrop...")
+
+        files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
+        self.log(f"  Found {len(files)} files to check")
+        args_list = [
+            (
+                f,
+                self.mod_path,
+                self.parachutable,
+                _AIRBORNE_NAME_RES,
+                _AIR_ASSAULT_TEMPLATES,
+            )
+            for f in files
+        ]
+        results = self._pool_flat_map(_check_paradrop_file, args_list, chunksize=20)
+
+        self._report(
+            results,
+            "✓ All airborne templates can paradrop",
+            "Airborne templates with non-parachutable sub-units:",
+            severity=Severity.WARNING,
+            category="airborne-template-not-parachutable",
+        )
+
+    def validate_template_slots(self):
+        """Flag division_template layouts the designer hides or keeps locked."""
+        self._log_section("Checking division template slot layout...")
+
+        files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
+        self.log(f"  Found {len(files)} files to check")
+        limits = TemplateLimits(
+            *disk_cache.aggregate_cached(
+                self.mod_path,
+                "oob_units.template_limits",
+                self._collect_files(
+                    _TEMPLATE_LIMIT_SOURCE_PATTERNS, ignore_staged=True
+                ),
+                # A plain tuple: the class pickles under the running module name.
+                lambda: tuple(read_template_limits(self.mod_path)),
+            )
+        )
+        results = self._pool_flat_map(
+            _check_template_slots_file,
+            [(f, self.mod_path, limits) for f in files],
+            chunksize=20,
+        )
+
+        self._report(
+            [issue for issue in results if issue.category == _TEMPLATE_SLOT],
+            "✓ All division template slots fit the designer",
+            "Division templates the designer cannot show:",
+            category=_TEMPLATE_SLOT,
+        )
+        self._report(
+            [issue for issue in results if issue.category == _TEMPLATE_LOCKED_ROW],
+            "✓ No division template uses a locked regiments row",
+            "Division templates using regiments rows locked without doctrines:",
+            severity=Severity.WARNING,
+            category=_TEMPLATE_LOCKED_ROW,
         )
 
     def run_validations(self):
@@ -2055,10 +2905,22 @@ class Validator(BaseValidator):
         self.validate_oob_variant_references()
         self.validate_load_oob_references()
         self.validate_created_units()
+        self.validate_airborne_templates()
+        self.validate_template_slots()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--missing-equipment-factor",
+        action="store_true",
+        dest="missing_equipment_factor",
+        help=("Warn when a create_unit division string omits start_equipment_factor"),
+    )
 
 
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Validate unit names in OOB files and AI templates against canonical definitions",
+        extra_args_fn=_add_extra_args,
     )

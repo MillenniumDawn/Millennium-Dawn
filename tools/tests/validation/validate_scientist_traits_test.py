@@ -62,14 +62,6 @@ def _no_index_floor(monkeypatch):
     monkeypatch.setattr("validate_scientist_traits._MIN_SPRITE_INDEX", 0)
 
 
-def _issues(tmp_path):
-    validator = Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    return {
-        (issue.category, issue.line): issue for issue in validator._issues
-    }, validator
-
-
 def test_parse_trait_icons_resolves_explicit_and_implicit_names():
     content = (
         "scientist_trait_a = {\n"
@@ -108,21 +100,21 @@ def test_shadowed_token_is_still_in_the_vanilla_manifest():
     assert f"GFX_{SHADOWED_TOKEN}" in _load_vanilla_sprite_manifest()
 
 
-def test_defined_icons_produce_no_issue(tmp_path):
+def test_defined_icons_produce_no_issue(tmp_path, issues_by_line):
     _write_fixture(
         tmp_path,
         traits="scientist_trait_ok = {\n}\nscientist_trait_custom = {\n\ticon = GFX_custom_medal\n}\n",
     )
 
-    _, validator = _issues(tmp_path)
+    _, validator = issues_by_line(Validator, tmp_path)
 
     assert validator._issues == []
 
 
-def test_undefined_icons_are_reported_with_their_line(tmp_path):
+def test_undefined_icons_are_reported_with_their_line(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
 
-    found, _ = _issues(tmp_path)
+    found, _ = issues_by_line(Validator, tmp_path)
 
     missing = {
         line: issue.message
@@ -134,10 +126,12 @@ def test_undefined_icons_are_reported_with_their_line(tmp_path):
     assert "GFX_scientist_trait_nothing" in missing[15]
 
 
-def test_vanilla_only_sprite_is_reported_as_shadowed_not_missing(tmp_path):
+def test_vanilla_only_sprite_is_reported_as_shadowed_not_missing(
+    tmp_path, issues_by_line
+):
     _write_fixture(tmp_path)
 
-    found, _ = _issues(tmp_path)
+    found, _ = issues_by_line(Validator, tmp_path)
 
     assert ("shadowed-scientist-trait-icon", 18) in found
     assert ("missing-scientist-trait-icon", 18) not in found
@@ -146,10 +140,10 @@ def test_vanilla_only_sprite_is_reported_as_shadowed_not_missing(tmp_path):
     )
 
 
-def test_stale_todo_marker_is_reported_when_the_sprite_exists(tmp_path):
+def test_stale_todo_marker_is_reported_when_the_sprite_exists(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
 
-    found, _ = _issues(tmp_path)
+    found, _ = issues_by_line(Validator, tmp_path)
 
     assert ("stale-scientist-trait-icon-todo", 21) in found
     # A marker on a trait that really has no sprite is the backlog, not a stale
@@ -157,21 +151,21 @@ def test_stale_todo_marker_is_reported_when_the_sprite_exists(tmp_path):
     assert ("stale-scientist-trait-icon-todo", 24) not in found
 
 
-def test_every_finding_is_warning_severity(tmp_path):
+def test_every_finding_is_warning_severity(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
 
-    _, validator = _issues(tmp_path)
+    _, validator = issues_by_line(Validator, tmp_path)
 
     assert validator._issues
     assert {issue.severity for issue in validator._issues} == {Severity.WARNING}
 
 
 def test_check_is_skipped_when_the_sprite_index_is_suspiciously_small(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, issues_by_line
 ):
     monkeypatch.setattr("validate_scientist_traits._MIN_SPRITE_INDEX", 1000)
     _write_fixture(tmp_path)
 
-    _, validator = _issues(tmp_path)
+    _, validator = issues_by_line(Validator, tmp_path)
 
     assert validator._issues == []
