@@ -8438,6 +8438,8 @@ UKR_storage_rebuild_rows = {
 			if = { limit = { check_variable = { ukraine_has_ppsh_stockpile > 0 } } add_to_array = { UKR_storage_rows = 83 } }
 			if = { limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } } add_to_array = { UKR_storage_rows = 84 } }
 			if = { limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } } add_to_array = { UKR_storage_rows = 85 } }
+			if = { limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } } add_to_array = { UKR_storage_rows = 86 } }
+			if = { limit = { check_variable = { ukraine_has_pps43_stockpile > 0 } } add_to_array = { UKR_storage_rows = 87 } }
 		}
 	}
 }
@@ -8492,6 +8494,8 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_ppsh_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_spg9_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_strela2_stockpile }
+	add_to_variable = { UKR_storage_total_8 = ukraine_has_ak47_stockpile }
+	add_to_variable = { UKR_storage_total_8 = ukraine_has_pps43_stockpile }
 	UKR_storage_rebuild_rows = yes
 	if = {
 		limit = { check_variable = { UKR_storage_dirty_var < 10000 } }
@@ -9196,6 +9200,24 @@ UKR_old_gear_deliver_spg9 = {
 		add_equipment_to_stockpile = { type = Anti_tank_1 amount = ukr_sov_amount producer = SOV }
 	}
 }
+UKR_old_gear_deliver_ak47 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = infantry_weapons_1 variant_name = "AK-47" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = infantry_weapons_1 amount = ukr_sov_amount producer = SOV }
+	}
+}
+UKR_old_gear_deliver_pps43 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = infantry_weapons_1 variant_name = "PPS-43" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = infantry_weapons_1 amount = ukr_sov_amount producer = SOV }
+	}
+}
 UKR_old_gear_deliver_strela2 = {
 	if = {
 		limit = { has_dlc = "No Step Back" }
@@ -9318,6 +9340,24 @@ UKR_storage_sell_small_arms = {
 		subtract_from_variable = { ukraine_has_strela2_stockpile = ukr_sov_amount tooltip = ukraine_storage_strela2_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_strela2 = yes }
 	}
+	if = {
+		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
+		set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
+		set_temp_variable = { ukr_item_price = ukr_sov_amount }
+		multiply_temp_variable = { ukr_item_price = 1 }
+		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
+		subtract_from_variable = { ukraine_has_ak47_stockpile = ukr_sov_amount tooltip = ukraine_storage_ak47_sold_tt }
+		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ak47 = yes }
+	}
+	if = {
+		limit = { check_variable = { ukraine_has_pps43_stockpile > 0 } }
+		set_temp_variable = { ukr_sov_amount = ukraine_has_pps43_stockpile }
+		set_temp_variable = { ukr_item_price = ukr_sov_amount }
+		multiply_temp_variable = { ukr_item_price = 0.5 }
+		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
+		subtract_from_variable = { ukraine_has_pps43_stockpile = ukr_sov_amount tooltip = ukraine_storage_pps43_sold_tt }
+		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_pps43 = yes }
+	}
 	divide_temp_variable = { ukr_sale_price = 1000000 } # thousands of dollars to billions
 	UKR_storage_sale_payment = yes
 	UKR_storage_sanctioned_sale_backlash = yes
@@ -9380,5 +9420,11 @@ UKR_old_small_arms_issue = {
 	set_temp_variable = { ukr_sov_amount = ukraine_has_strela2_stockpile }
 	UKR_old_gear_deliver_strela2 = yes
 	set_variable = { ukraine_has_strela2_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
+	UKR_old_gear_deliver_ak47 = yes
+	set_variable = { ukraine_has_ak47_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_pps43_stockpile }
+	UKR_old_gear_deliver_pps43 = yes
+	set_variable = { ukraine_has_pps43_stockpile = 0 }
 	UKR_storage_refresh = yes
 }
