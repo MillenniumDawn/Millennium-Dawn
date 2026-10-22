@@ -3,11 +3,12 @@
 import importlib.util
 import io
 import json
+import operator
 import os
+import re
 import struct
 import subprocess
 import sys
-import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
@@ -15,24 +16,224 @@ from types import ModuleType
 
 import yaml
 from report_lib.models import Issue, Severity
+from shared_utils import iter_statement_ops, strip_comments
 
 from shared.paths import REPO_ROOT
 
+_SCRIPT_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!=]=?|[^\s{}<>=!]+')
 
-def symlinks_available() -> bool:
-    """Whether this process may create a symlink.
 
-    Windows refuses without Developer Mode or admin rights (WinError 1314), so
-    symlink-rejection tests skip there instead of failing the whole suite.
+def _economic_statements(source):
+    source = strip_comments(source)
+    entries = list(iter_statement_ops(source))
+    rebuilt = " ".join(
+        (
+            f"{key} {comparison} {{ {body} }}"
+            if body is not None
+            else f'{key} {comparison} "{scalar}"'
+        )
+        for key, comparison, scalar, body in entries
+    )
+
+    def tokens(text):
+        return [token.strip('"') for token in _SCRIPT_TOKEN.findall(text)]
+
+    assert tokens(source) == tokens(rebuilt), "Malformed or unconsumed script"
+    return entries
+
+
+def script_block(source, name):
+    """Extract exactly one direct child block from a script fixture or live source."""
+    blocks = [
+        body
+        for key, comparison, _, body in iter_statement_ops(strip_comments(source))
+        if key == name and comparison == "=" and body is not None
+    ]
+    assert len(blocks) == 1, (name, len(blocks))
+    _economic_statements(blocks[0])
+    return blocks[0]
+
+
+class EconomicScriptFixture:
+    """Bounded arithmetic/branch execution, with native effects recorded explicitly.
+
+    This is not an engine simulator. Scopes, scheduling and timed-idea behavior are
+    unsupported; round_variable accepts only integral fixtures to avoid claiming
+    native rounding semantics. Unknown statements and missing inputs fail closed.
     """
-    with tempfile.TemporaryDirectory() as folder:
-        target = Path(folder) / "target"
-        target.mkdir()
+
+    comparisons = {
+        "=": operator.eq,
+        ">": operator.gt,
+        "<": operator.lt,
+        ">=": operator.ge,
+        "<=": operator.le,
+    }
+
+    def __init__(self, values, *, predicates=None, triggers=None, native_effects=()):
+        self.values = dict(values)
+        self.predicates = predicates or {}
+        self.triggers = triggers or {}
+        self.native_effects = set(native_effects)
+        self.calls = []
+
+    def number(self, scalar):
         try:
-            (Path(folder) / "link").symlink_to(target)
-        except (OSError, NotImplementedError):
-            return False
-    return True
+            return float(scalar)
+        except ValueError:
+            assert scalar in self.values, f"Missing numeric input: {scalar}"
+            return self.values[scalar]
+
+    def expression(self, entries):
+        result = None
+        for key, comparison, scalar, body in entries:
+            assert comparison == "=", "Unsupported arithmetic operator"
+            if key == "clamp":
+                assert result is not None and body is not None
+                limits = list(_economic_statements(body))
+                assert [(item[0], item[1]) for item in limits] == [
+                    ("min", "="),
+                    ("max", "="),
+                ]
+                low, high = (self.number(item[2]) for item in limits)
+                result = min(max(result, low), high)
+                continue
+            value = (
+                self.expression(_economic_statements(body))
+                if body
+                else self.number(scalar)
+            )
+            if key == "value":
+                assert result is None
+                result = value
+            else:
+                assert result is not None
+                operations = {"add": operator.add, "multiply": operator.mul}
+                assert key in operations, f"Unsupported arithmetic: {key}"
+                result = operations[key](result, value)
+        assert result is not None
+        return result
+
+    def active(self, source, *, branch=False):
+        taken = None
+        for key, comparison, scalar, body in _economic_statements(source):
+            if branch and key == "limit":
+                continue
+            if key in {"if", "else_if", "else"}:
+                assert comparison == "=", "Unsupported branch operator"
+                assert body is not None
+                if key == "if":
+                    taken = False
+                else:
+                    assert taken is not None, f"Unpaired {key}"
+                matches = not taken and (
+                    key == "else" or self.condition(script_block(body, "limit"))
+                )
+                if matches:
+                    taken = True
+                    yield from self.active(body, branch=True)
+            else:
+                taken = None
+                yield key, comparison, scalar, body
+
+    def condition(self, source):
+        results = []
+        for key, comparison, scalar, body in self.active(source):
+            assert comparison == "=", "Unsupported predicate operator"
+            if key == "tooltip":
+                continue
+            if key in {"AND", "OR", "NOT"}:
+                children = list(_economic_statements(body))
+                checks = [self.condition_entry(entry) for entry in children]
+                result = any(checks) if key == "OR" else all(checks)
+                results.append(not result if key == "NOT" else result)
+            elif key == "custom_trigger_tooltip":
+                results.append(self.condition(body))
+            elif key == "check_variable":
+                entries = list(_economic_statements(body))
+                assert len(entries) == 1
+                name, operation, threshold, nested = entries[0]
+                assert nested is None and operation in self.comparisons
+                results.append(
+                    self.comparisons[operation](
+                        self.number(name), self.number(threshold)
+                    )
+                )
+            elif key == "check_expr":
+                entries = list(_economic_statements(body))
+                relations = [item for item in entries if item[0] == "greater_than"]
+                assert len(relations) == 1
+                assert relations[0][1] == "=" and relations[0][3] is not None
+                actual = self.expression(
+                    item for item in entries if item not in relations
+                )
+                expected = self.expression(_economic_statements(relations[0][3]))
+                results.append(actual > expected)
+            elif key in self.triggers:
+                assert scalar in {"yes", "no"}
+                results.append(self.condition(self.triggers[key]) == (scalar == "yes"))
+            else:
+                assert key in self.predicates, f"Unsupported predicate: {key}"
+                predicate = self.predicates[key]
+                if callable(predicate):
+                    results.append(predicate(scalar, body))
+                else:
+                    assert scalar in {"yes", "no"}
+                    results.append(predicate == (scalar == "yes"))
+        return all(results)
+
+    def condition_entry(self, entry):
+        key, comparison, scalar, body = entry
+        operand = f"{{ {body} }}" if body is not None else scalar
+        return self.condition(f"{key} {comparison} {operand}")
+
+    def execute(self, source):
+        for key, comparison, scalar, body in self.active(source):
+            assert comparison == "=", "Unsupported effect operator"
+            if key in {"log", "custom_effect_tooltip"}:
+                continue
+            if key in {"set_variable", "multiply_variable"}:
+                entries = list(_economic_statements(body))
+                assert len(entries) == 1
+                name, comparison, operand, expression = entries[0]
+                assert comparison == "="
+                value = (
+                    self.expression(_economic_statements(expression))
+                    if expression is not None
+                    else self.number(operand)
+                )
+                if key == "multiply_variable":
+                    value *= self.number(name)
+                self.values[name] = value
+            elif key == "round_variable":
+                value = self.number(scalar)
+                assert value == int(value), "Native fractional rounding is unsupported"
+            else:
+                assert key in self.native_effects, f"Unsupported effect: {key}"
+                self.calls.append((key, scalar, body))
+
+    def weight(self, source):
+        weight = None
+        for key, comparison, scalar, body in _economic_statements(source):
+            assert comparison == "=", "Unsupported weight operator"
+            if key == "base":
+                weight = self.number(scalar)
+                continue
+            assert key == "modifier" and weight is not None
+            entries = list(_economic_statements(body))
+            condition = [
+                entry for entry in entries if entry[0] not in {"factor", "add"}
+            ]
+            if all(self.condition_entry(entry) for entry in condition):
+                for operation, comparison, amount, nested in entries:
+                    if operation in {"factor", "add"}:
+                        assert comparison == "=" and nested is None
+                        value = self.number(amount)
+                        weight = (
+                            weight * value if operation == "factor" else weight + value
+                        )
+        assert weight is not None
+        return weight
 
 
 def imagemagick_available() -> bool:
@@ -105,12 +306,59 @@ def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
     )
 
 
-def run_validator(validator_cls, tmp_path, **kwargs):
-    validator = validator_cls(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+def run_tool_script(script, *args, timeout=60) -> subprocess.CompletedProcess:
+    """Run tools/<script> as its own process, the way run.py and the hooks do."""
+    return subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / script), *map(str, args)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
+
+
+def build_validator(validator_cls, root, **kwargs):
+    return validator_cls(
+        mod_path=str(root), use_colors=False, workers=1, no_cache=True, **kwargs
+    )
+
+
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = build_validator(validator_cls, tmp_path, **kwargs)
     validator.run_validations()
     return validator
+
+
+def checks_called_by_run(validator, monkeypatch):
+    """Stub every `validate_*` method and run the validator.
+
+    Returns (checks the run called, checks the class defines), both sorted.
+    """
+    checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
+    called = []
+    for name in checks:
+        monkeypatch.setattr(
+            validator, name, lambda *_args, name=name: called.append(name)
+        )
+    validator.run_validations()
+    return sorted(called), checks
+
+
+def _finding_matches(row, entry):
+    if isinstance(entry, str):
+        return row == entry
+    return all(part in row for part in entry)
+
+
+def assert_findings(results, expected):
+    """One result per expected entry: a string matches a whole result, a tuple
+    matches a result holding every fragment in it. A result matches once."""
+    unmatched = list(results)
+    for entry in expected:
+        match = next((row for row in unmatched if _finding_matches(row, entry)), None)
+        assert match is not None, (entry, results)
+        unmatched.remove(match)
+    assert not unmatched, unmatched
 
 
 def issue_categories(validator):
@@ -124,7 +372,16 @@ def issue_rows(validator):
     )
 
 
-_YML_SECTIONS = ("brackets", "syntax", "mandatory", "typos", "prose", "var_refs")
+_YML_SECTIONS = (
+    "brackets",
+    "syntax",
+    "mandatory",
+    "typos",
+    "prose",
+    "var_refs",
+    "subst",
+    "yaml",
+)
 
 
 def yml_scan(path, section: str, valid_colors=()):
@@ -132,7 +389,7 @@ def yml_scan(path, section: str, valid_colors=()):
     import validate_localisation
 
     results = validate_localisation._scan_shared_yml_file(
-        (str(path), list(valid_colors))
+        (str(path), list(valid_colors), False, str(path))
     )
     return results[_YML_SECTIONS.index(section)]
 
@@ -190,7 +447,7 @@ def variable_scan(
     import validate_variables
 
     flag, index = _VARIABLE_SECTIONS[section]
-    args = (
+    args: tuple = (
         str(path),
         str(mod_path),
         getattr(validate_variables, flag),
@@ -225,10 +482,20 @@ def fake_decisions_validator(*args, **kwargs):
     return collecting_validator(V.Validator)(*args, **kwargs)
 
 
-def decision_factory(body):
+def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename="X.txt")
+    return V.DecisionFactory(body, source_path=basename)
+
+
+def event_block(event_id, *fields, kind="country_event"):
+    """One event definition: the id on line 2, then one line per field.
+
+    `event_id=None` leaves the id out. A multi-line field carries its own tabs
+    after the first line.
+    """
+    lines = (f"id = {event_id}",) * (event_id is not None) + fields
+    return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
 
 
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
@@ -305,6 +572,14 @@ def dds_header(
     )
 
 
+def dds_stub(width: int, height: int) -> bytes:
+    """A DDS header that carries a size and nothing else."""
+    header = bytearray(128)
+    header[0:4] = b"DDS "
+    struct.pack_into("<II", header, 12, height, width)
+    return bytes(header)
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
@@ -333,6 +608,13 @@ def write_under(root: Path, relative_path: str, content: str) -> Path:
 
 def write_under_str(root: Path, relative_path: str, content: str) -> str:
     return str(write_under(root, relative_path, content))
+
+
+def write_tree(root: Path, files: dict) -> Path:
+    """Write `{relative path: content}` under root."""
+    for relative_path, content in files.items():
+        write_under(root, relative_path, content)
+    return root
 
 
 def write_focus_file(root: Path, content: str) -> Path:
