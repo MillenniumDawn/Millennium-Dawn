@@ -10,7 +10,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Optional, TextIO, Tuple
+import time
+from typing import Callable, Dict, Iterator, List, Optional, TextIO, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +24,7 @@ from validator_batches import ALL_SPECS
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PERSISTENCE_MARKER = ".persist-complete"
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
+_POLL_SECONDS = 0.05
 
 
 # The manual texture audit needs the full gfx tree, which cache warm-up omits.
@@ -115,6 +117,35 @@ def launch_validator(
         stderr_fh.close()
         raise
     return proc, stderr_fh
+
+
+def finish_in_order(
+    processes: Dict[str, Tuple[subprocess.Popen, TextIO]],
+    launch_next: Callable[[], None],
+    names: List[str],
+) -> Iterator[int]:
+    """Yield each return code in `names` order, refilling a slot as soon as
+    any child exits so one long validator never idles the finished slots."""
+    returncodes: Dict[str, int] = {}
+    for name in names:
+        while name not in returncodes:
+            done = next(
+                (
+                    key
+                    for key, (proc, _) in processes.items()
+                    if proc.poll() is not None
+                ),
+                None,
+            )
+            if done is None:
+                # Polling waits portably for completion without a second scheduler.
+                time.sleep(_POLL_SECONDS)
+                continue
+            proc, stderr_fh = processes.pop(done)
+            returncodes[done] = proc.wait()
+            stderr_fh.close()
+            launch_next()
+        yield returncodes.pop(name)
 
 
 def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
@@ -429,8 +460,6 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     crashed_validators = []
 
     def launch_next() -> None:
-        # Results are consumed in VALIDATORS order and launched in the same
-        # order, so whatever is waited on next has always started already.
         if pending:
             name, script, _label = pending.pop(0)
             processes[name] = launch_validator(
@@ -444,11 +473,8 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     for _ in range(max_parallel):
         launch_next()
 
-    for name, _script, label in VALIDATORS:
-        proc, stderr_fh = processes[name]
-        returncode = proc.wait()
-        stderr_fh.close()
-        launch_next()
+    finished = finish_in_order(processes, launch_next, [v[0] for v in VALIDATORS])
+    for (name, _script, label), returncode in zip(VALIDATORS, finished):
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:
