@@ -1,14 +1,17 @@
 # Focus inlay windows
+
 Focus inlay windows are generic inlay components that can be added
 to the focus tree. Currently, they support showing information
 and adding buttons with on click effects.
 
 ## Define inlay window syntax
+
 An inlay window is defined using the following syntax
+
 ```
 inlay_window_id = {
     window_name = gui_component_name
-    internal = yes/no # If true, then the inlay window is only visible to the country itself (defaults no) 
+    internal = yes/no # If true, then the inlay window is only visible to the country itself (defaults no)
     visible = visibility_trigger # when not visible, no evaluations will be done
     scripted_images = { # list of images that should have dynamic sprites
         icon_name = { # Name of the icon (must be a subcomponent of "gui_component_name") or button
@@ -31,10 +34,16 @@ inlay_window_id = {
             }
         }
     }
+    scripted_progressbars = { # list of progressbars that should fill up based on a variable
+        icon_name = { # Name of the progressbar (must be an icon that is a a subcomponent of "gui_component_name" or a button, with a "progressbartype" as its spriteType)
+            progress = <variable_name>
+        }
+    }
 }
 ```
 
 ## Include inlay window in focus tree
+
 An inlay window can be included in a focus tree using the following syntax. Note that any number of inlay windows can be defined for every focus tree.
 
 ```
