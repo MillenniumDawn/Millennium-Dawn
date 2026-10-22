@@ -301,6 +301,47 @@ apply_EU_QMV_result = {
 				limit = { check_variable = { global.EUXXX_council_agenda = 111 } }
 				focus_EU111_QMV_result = yes
 			}
+			else_if = {
+				limit = { check_variable = { global.EUXXX_council_agenda = 600 } }
+				if = {
+					limit = { EU_voting_decision_result_trigger = yes }
+					focus_EU600_QMV_result = yes
+					set_temp_variable = { vote_passed = 1 }
+					cleanup_european_union_voting = yes
+				}
+				else = {
+					for_each_scope_loop = {
+						array = global.EU_enlargement_query
+						add_to_array = { global.EU_potential_members = global.EU_enlargement_query^i }
+					}
+					clear_array = global.EU_enlargement_query
+					set_temp_variable = { vote_passed = 0 }
+					cleanup_european_union_voting = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.EUXXX_council_agenda = 601 }
+					check_variable = { global.EUXXX_council_agenda = 602 }
+					check_variable = { global.EUXXX_council_agenda = 603 }
+				}
+				if = {
+					limit = { EU_voting_decision_result_trigger = yes }
+					# agenda-specific reward; agendas without a reward fall through to cleanup
+					if = { limit = { check_variable = { global.EUXXX_council_agenda = [EUXXX] } } focus_[EUXXX]_QMV_result = yes }
+					set_temp_variable = { vote_passed = 1 }
+					cleanup_european_union_voting = yes
+				}
+				else = {
+					for_each_scope_loop = {
+						array = global.EU_enlargement_query
+						add_to_array = { global.EU_potential_members = global.EU_enlargement_query^i }
+					}
+					clear_array = global.EU_enlargement_query
+					set_temp_variable = { vote_passed = 0 }
+					cleanup_european_union_voting = yes
+				}
+			}
 			else = {
 				if = {
 					limit = { EU_voting_decision_result_trigger = yes }
@@ -921,7 +962,6 @@ focus_EU504_QMV_result = {
 focus_EU505_QMV_result = {
 	set_global_flag = EU_space_office_unlocked
 }
-# EU506 - Directive on Copyright in the Digital Single Market
 focus_EU506_QMV_result = {
 	for_each_scope_loop = {
 		array = global.EU_member
@@ -945,8 +985,6 @@ focus_EU508_QMV_result = {
 }
 focus_EU509_QMV_result = {
 }
-
-### EU112 ###
 focus_EU112_QMV_result = {
 	set_global_flag = european_federation
 	unlock_decision_category_tooltip = EFS_flag_category
@@ -955,11 +993,16 @@ focus_EU112_QMV_result = {
 		EU_drop_rival_endgame = yes
 	}
 }
-
-# Enlargement QMV handlers — passing the vote makes each cohort an EU candidate,
-# which is the gate that lets a non-member apply for entry (existing members rejoin
-# via the EU_former_member cooldown path instead).
-# EU601 - 2003 EU Enlargement
+focus_EU600_QMV_result = {
+	set_temp_variable = { modify_europeanism = 0.03 }
+	EU_potential_europeanism_change = yes
+	newline = yes
+	for_each_scope_loop = {
+		array = global.EU_enlargement_query
+		set_country_flag = EU_candidate
+	}
+	clear_array = global.EU_enlargement_query
+}
 focus_EU601_QMV_result = {
 	set_temp_variable = { modify_europeanism = 0.03 }
 	EU_potential_europeanism_change = yes
@@ -974,21 +1017,22 @@ focus_EU601_QMV_result = {
 	POL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 	SLO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 	SLV = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	clear_array = global.EU_enlargement_query
 }
-# EU602 - 2007 EU Enlargement
 focus_EU602_QMV_result = {
 	set_temp_variable = { modify_europeanism = 0.03 }
 	EU_potential_europeanism_change = yes
 	newline = yes
 	BUL = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
 	ROM = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	clear_array = global.EU_enlargement_query
 }
-# EU603 - 2013 EU Enlargement
 focus_EU603_QMV_result = {
 	set_temp_variable = { modify_europeanism = 0.03 }
 	EU_potential_europeanism_change = yes
 	newline = yes
 	CRO = { set_country_flag = EU_candidate set_eu_candidate_europeanism_floor = yes }
+	clear_array = global.EU_enlargement_query
 }
 # EU605 - Western Balkans
 focus_EU605_QMV_result = {
