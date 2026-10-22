@@ -17,6 +17,9 @@ class _Process:
     def __init__(self, returncode=0):
         self.returncode = returncode
 
+    def poll(self):
+        return self.returncode
+
     def wait(self):
         return self.returncode
 
@@ -252,6 +255,33 @@ def test_suite_bounds_concurrency_and_passes_a_worker_budget(tmp_path, monkeypat
 
     assert max(peak) == 2
     assert all(f[-2:] == ["--workers", "3"] for f in flags)
+
+
+def test_suite_refills_a_free_slot_while_an_earlier_validator_runs(
+    tmp_path, monkeypatch, capsys
+):
+    monkeypatch.setattr(runner, "split_cpu_budget", lambda tasks: (2, 1))
+    launched = []
+
+    class _Slow(_Process):
+        def poll(self):
+            return 0 if "c" in launched else None
+
+        def wait(self):
+            assert "c" in launched, "a free slot sat idle behind a running validator"
+            return 0
+
+    def launch(_script, _flags, output_dir, name, _mod_path):
+        launched.append(name)
+        write_text(Path(output_dir) / f"{name}.json", "[]")
+        return (_Slow() if name == "a" else _Process()), io.StringIO()
+
+    monkeypatch.setattr(runner, "launch_validator", launch)
+    validators = [(name, f"{name}.py", name.upper()) for name in "abc"]
+    runner._run_suite(_args("text"), [], str(tmp_path), validators, str(tmp_path))
+
+    out = capsys.readouterr().out
+    assert out.index("✓ A") < out.index("✓ B") < out.index("✓ C")
 
 
 def test_batch_names_match_main_sidecar_names():

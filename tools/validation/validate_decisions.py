@@ -11,6 +11,7 @@ import math
 import os
 import re
 import sys
+from collections import Counter
 from functools import partial
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
@@ -1218,15 +1219,18 @@ def _top_level_field_value(raw: str, field: str):
     return None
 
 
+_NEG_PP_RE = re.compile(r"add_political_power\s*=\s*-(\d+)")
+
+
 def _top_level_neg_pp(block: str):
     """Return the magnitude (positive int) of an unconditional
     ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
     if there is no such line. Conditional/nested subtractions are
     ignored (they are gameplay outcomes, not entry costs)."""
-    if not block:
+    if "add_political_power" not in block:
         return None
     for inner, index in iter_flat_offsets(block):
-        match = re.match(r"add_political_power\s*=\s*-(\d+)", inner[index:])
+        match = _NEG_PP_RE.match(inner, index)
         if match:
             return _int_literal(match.group(1))
     return None
@@ -1452,6 +1456,11 @@ def parse_decision_categories(
     return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
+# The keys that open a block at the start of a line, the only place a category
+# block can start.
+_LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
+
+
 def parse_categories_with_decisions(
     mod_path: str, lowercase: bool = False, visible_when_empty: bool = True
 ) -> Dict[str, List[str]]:
@@ -1471,8 +1480,9 @@ def parse_categories_with_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
+            openers = set(_LINE_OPENER_RE.findall(text_file))
             for category in category_names:
-                if f"{category} = {{" in text_file:
+                if category in openers:
                     pattern = r"^" + re.escape(category) + r" = \{.*?^\}"
                     matches = re.findall(
                         pattern, text_file, flags=re.DOTALL | re.MULTILINE
@@ -1706,7 +1716,8 @@ class Validator(BaseValidator):
 
         names, paths = parse_all_decision_names(self.mod_path)
         self.log(f"  Found {len(names)} total decisions")
-        results = [f"{n} - {paths[n]}" for n in names if names.count(n) > 1]
+        counts = Counter(names)
+        results = [f"{n} - {paths[n]}" for n in names if counts[n] > 1]
         results = sorted(set(results))
         self._report(
             results, "✓ No duplicated decisions", "Duplicated decisions found:"
@@ -3343,6 +3354,12 @@ class Validator(BaseValidator):
             category="missing-decision-icon",
         )
 
+    def _sprite_sizes(self) -> SpriteSizeIndex:
+        return self.cached(
+            "sprite_sizes",
+            lambda: build_sprite_size_index(self.mod_path, self._pool_map),
+        )
+
     def validate_icon_types(self):
         """Flag icons whose art belongs to a different decision-UI slot.
 
@@ -3354,7 +3371,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decision icons match their UI slot...")
 
-        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        sprites = self._sprite_sizes()
         if len(sprites) < 1000:
             self.log(
                 f"  Only {len(sprites)} GFX textures loaded — sprite definitions "
@@ -3399,7 +3416,7 @@ class Validator(BaseValidator):
         self._log_section("Checking category description images clear the header...")
 
         categories = parse_decision_categories(self.mod_path, lowercase=False)
-        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        sprites = self._sprite_sizes()
         files = self._collect_files(
             ["localisation/english/**/*.yml"], ignore_staged=True
         )
