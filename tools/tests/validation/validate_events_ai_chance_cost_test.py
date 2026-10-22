@@ -288,6 +288,14 @@ _OPTION_CASES = {
         ),
         [("foo.1.b", 17, "stability", False)],
     ),
+    "decision-only resources do not widen the event check": (
+        _two_options(
+            "\t\tadd_command_power = -20\n\t\tadd_manpower = -100\n"
+            "\t\tadd_equipment_to_stockpile = { type = infantry_equipment amount = -100 }\n"
+            + _FLAT
+        ),
+        [],
+    ),
     "base 0 option beside one that can win": (
         _two_options(_PP_COST + "\t\tai_chance = { base = 0 }\n"),
         [],
@@ -438,6 +446,11 @@ def test_find_cost_blind_options(text, expected):
             "\t\tmodify_treasury_effect = yes\n",
             "treasury",
         ),
+        (
+            "\t\tset_temp_variable = { var = bill value = { value = 2 multiply = { value = gdp_total divide = -500 } } }\n"
+            "\t\tadd_to_variable = { treasury = bill }\n",
+            "treasury",
+        ),
         ("\t\tadd_to_variable = { treasury = -5 }\n", "treasury"),
         ("\t\tadd_to_variable = { var = treasury value = -5 }\n", "treasury"),
         ("\t\tsubtract_from_variable = { treasury = loan_amount }\n", "treasury"),
@@ -550,6 +563,10 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\t\t\tmodify_treasury_effect = yes\n"
         "\t\t\t}\n"
         "\t\t}\n",
+        "\t\tset_temp_variable = { bill = { value = 2 multiply = { value = gdp_total multiply = -0.002 } multiply = -1 } }\n"
+        "\t\tadd_to_variable = { treasury = bill }\n",
+        "\t\tif = { limit = { always = no } add_political_power = -50 }\n",
+        "\t\trandom = { chance = 0 add_political_power = -50 }\n",
         "\t\tset_variable = { treasury = 100 }\n",
         "\t\tadd_to_temp_variable = { treasury = -5 }\n",
         "\t\tadd_to_variable = { treasury = SOV.treasury }\n",

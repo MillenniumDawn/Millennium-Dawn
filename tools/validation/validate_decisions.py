@@ -617,14 +617,6 @@ _CUSTOM_COST_CLAIMS = {
     "manpower": re.compile(r"\bhas_manpower\s*>"),
     "equipment": re.compile(r"\bhas_equipment\s*="),
 }
-# Charges validate_events.effect_costs does not track.
-_DIRECT_CHARGES = {
-    "command power": re.compile(r"\badd_command_power\s*=\s*-"),
-    "manpower": re.compile(r"\badd_manpower\s*=\s*-"),
-    "equipment": re.compile(
-        r"\badd_equipment_to_stockpile\s*=\s*\{[^{}]*\bamount\s*=\s*-"
-    ),
-}
 _TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
@@ -1249,16 +1241,6 @@ def _top_level_neg_pp(block: str):
         if match:
             return _int_literal(match.group(1))
     return None
-
-
-def _charges(block: str, effects: Dict[str, str], stored: Dict[str, int]) -> Set[str]:
-    """Cost kinds an effect block (with braces) charges, for the custom cost check."""
-    if not block:
-        return set()
-    body = block[1:-1]
-    found = effect_costs(body, effects, stored)
-    found |= {kind for kind, charge in _DIRECT_CHARGES.items() if charge.search(body)}
-    return found
 
 
 def extract_value_multi_line(obj: str, s: str) -> str:
@@ -3153,12 +3135,12 @@ class Validator(BaseValidator):
             claims = {
                 kind
                 for kind, claim in _CUSTOM_COST_CLAIMS.items()
-                if claim.search(d.custom_cost_trigger)
+                if claim.search(blank_quoted_strings(d.custom_cost_trigger))
             }
-            missing = claims - _charges(d.complete_effect, effects, stored)
+            missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
             if not missing:
                 continue
-            late = missing & _charges(d.remove_effect, effects, stored)
+            late = missing & effect_costs(d.remove_effect[1:-1], effects, stored)
             parts = []
             if late:
                 parts.append(
@@ -3166,7 +3148,7 @@ class Validator(BaseValidator):
                 )
             if missing - late:
                 parts.append(
-                    f"checks {', '.join(sorted(missing - late))} but never charges it"
+                    f"checks {', '.join(sorted(missing - late))} but has no charge in complete_effect"
                 )
             results.append(
                 (

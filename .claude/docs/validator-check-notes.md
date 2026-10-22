@@ -110,9 +110,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `decision-custom-cost-not-charged` (WARNING): a `custom_cost_trigger` that checks
   treasury, political power, command power, manpower, or equipment needs a matching
   charge in `complete_effect`. A charge found only in `remove_effect` is reported as
-  late. Treasury and PP charges follow scripted effects; command power, manpower,
-  and equipment match direct writes only, in any scope. Amounts and equipment types
-  are not compared.
+  late; timeout and cancellation payments do not satisfy the check either. All five
+  resource kinds follow scripted effects in the choosing country's scope, including
+  nested math and equipment transfers. Previews, quoted text, foreign-country writes,
+  literal `always = no` branches, and zero-chance random blocks do not count as payment.
+  Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
+  resource variables and scripted cost triggers still need manual review.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
