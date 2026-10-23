@@ -122,6 +122,18 @@ ai_strategy = { type = conquer id = GER value = 200 }
 - A country gets a custom chip or composite production strategy only when it is a
   significant producer. Others use the generic logic.
 
+## Construction
+
+- `AI_construction_priorities` and `AI_wartime_construction_priorities` in
+  `MD_econ_ai.txt` hold the generic building weights and the only
+  `added_military_to_civilian_factory_ratio`. Tune them before adding a tier or per-tag
+  block.
+- `build_building` without `target` on `industrial_complex` or `arms_factory` converts
+  an existing factory instead of building one, because both have `base_cost_conversion`.
+  Use `building_target` for a factory floor. Other buildings take weights.
+- The engine's own build picks weigh 1. Keep always-on generic weights in low single
+  digits so they do not crowd out factory construction.
+
 ## Strategy plans (`common/ai_strategy_plans/`)
 
 ```pdx
