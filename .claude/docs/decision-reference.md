@@ -178,6 +178,13 @@ The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 - `cost` and a non-PP custom cost can sit together; vanilla does this
   (`AUS_arm_border_guards_decision`).
 
+## Timers
+
+- `days_remove = N` keeps a decision active for N days. Use it only when something
+  reads the timer: a `remove_effect` that runs at the end, a `modifier` or
+  `targeted_modifier` that lasts while it is active, or a `has_decision` check.
+- For a cooldown before a repeatable decision comes back, use `days_re_enable`.
+
 ## Formables
 
 Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a
@@ -192,7 +199,6 @@ URA_world_opr = {
  icon = GFX_decision_sovfed_button
 
  cost = 50
- days_remove = 400
 
  visible = {
   country_exists = OPR

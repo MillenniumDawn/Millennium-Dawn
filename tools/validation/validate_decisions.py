@@ -403,6 +403,7 @@ _REMOVE_TARGETED_BLOCK_RE = re.compile(
     r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
 )
 _REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+_HAS_DECISION_RE = re.compile(r"\bhas_decision\s*=\s*(\w+)")
 
 _CYBER_OPERATION_TYPES = (
     "gps_tracking",
@@ -546,16 +547,16 @@ def _flat_flag_gates(block: str) -> Set[str]:
 
 def _scan_activations_and_removals(
     filename: str, *, mod_path: Optional[str] = None
-) -> Tuple[set, set, set, list]:
-    """Single-read worker: (activated, missions, removed, unlock refs).
+) -> Tuple[set, set, set, list, set]:
+    """Single-read worker: (activated, missions, removed, unlock refs, checked).
 
-    Combines the activation, external-removal and unlock-tooltip scans so the
-    full-repo .txt sweep reads each file once instead of three times. The last
-    element holds (kind, name, line) for every reference that tells the player a
-    decision or category it has unlocked; the caller adds the file path.
+    Combines the activation, external-removal, unlock-tooltip and has_decision
+    scans so the full-repo .txt sweep reads each file once. The unlock refs hold
+    (kind, name, line) for every reference that tells the player a decision or
+    category it has unlocked; the caller adds the file path.
     """
     if _should_skip(filename, mod_path=mod_path):
-        return set(), set(), set(), []
+        return set(), set(), set(), [], set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -563,6 +564,7 @@ def _scan_activations_and_removals(
     missions: set = set()
     removals: set = set()
     unlock_refs: List[Tuple[str, str, int]] = []
+    checked: set = set()
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
@@ -574,7 +576,9 @@ def _scan_activations_and_removals(
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
     if "unlock_decision" in text_file:
         unlock_refs = _unlock_refs(text_file)
-    return decisions, missions, removals, unlock_refs
+    if "has_decision" in text_file:
+        checked.update(_HAS_DECISION_RE.findall(text_file))
+    return decisions, missions, removals, unlock_refs, checked
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -1581,7 +1585,9 @@ class Validator(BaseValidator):
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
         self._activation_removal_cache: Optional[
-            Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]
+            Tuple[
+                Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
+            ]
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
@@ -1627,12 +1633,13 @@ class Validator(BaseValidator):
 
     def _get_activation_removal_scan(
         self,
-    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]:
-        """Scan shipped content for activations, external removals and unlocks.
+    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]]:
+        """Scan shipped content for activations, removals, unlocks and checks.
 
         The fourth element is every `unlock_*_tooltip` reference as
         (kind, name, file, line); the names it carries are the unlocks that
-        announce themselves to the player.
+        announce themselves to the player. The fifth is every name a
+        `has_decision` trigger reads.
         """
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
@@ -1647,11 +1654,13 @@ class Validator(BaseValidator):
         activated_missions: Set[str] = set()
         externally_removed: Set[str] = set()
         unlock_refs: List[Tuple[str, str, str, int]] = []
+        checked: Set[str] = set()
         for filename, (
             decision_set,
             mission_set,
             removed_set,
             file_refs,
+            checked_set,
         ) in zip(
             all_files,
             self._pool_map(
@@ -1663,6 +1672,7 @@ class Validator(BaseValidator):
             activated_decisions |= decision_set
             activated_missions |= mission_set
             externally_removed |= removed_set
+            checked |= checked_set
             relative = os.path.relpath(filename, self.mod_path)
             unlock_refs.extend(
                 (kind, name, relative, line) for kind, name, line in file_refs
@@ -1672,6 +1682,7 @@ class Validator(BaseValidator):
             activated_missions,
             externally_removed,
             unlock_refs,
+            checked,
         )
         return self._activation_removal_cache
 
@@ -1747,7 +1758,7 @@ class Validator(BaseValidator):
         # `activate_targeted_decision = { ... }` block; the bare keyword
         # `decision` appears in unrelated places (on_political_decision hooks etc.)
         # and matching them would hide genuinely unused decisions.
-        activated_decisions, activated_missions, _, _ = (
+        activated_decisions, activated_missions, _, _, _ = (
             self._get_activation_removal_scan()
         )
 
@@ -2622,7 +2633,7 @@ class Validator(BaseValidator):
         if not flagged:
             return []
 
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         return [
             f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
@@ -2659,7 +2670,7 @@ class Validator(BaseValidator):
             ),
             "category": set(parse_decision_categories(self.mod_path)),
         }
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         results = []
         for kind, name, filepath, line in unlock_refs:
             if name not in known[kind]:
@@ -2688,7 +2699,7 @@ class Validator(BaseValidator):
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
 
@@ -3260,7 +3271,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        _, _, externally_removed, _ = self._get_activation_removal_scan()
+        _, _, externally_removed, _, _ = self._get_activation_removal_scan()
 
         results = []
 
@@ -3282,6 +3293,49 @@ class Validator(BaseValidator):
             "✓ No decisions with orphaned remove_effect",
             "Decisions with remove_effect but no days_remove or remove_trigger (dead code — add a timer or removal trigger):",
             severity=Severity.WARNING,
+        )
+
+    def validate_timer_without_remove_effect(self):
+        """Flag a days_remove timer that nothing reads.
+
+        A timer keeps the decision active. That matters only when a
+        remove_effect runs at the end, a modifier lasts while it is active, or a
+        has_decision trigger reads it. Missions are skipped.
+        """
+        self._log_section("Checking decisions with days_remove but no remove_effect...")
+
+        _, _, _, _, checked = self._get_activation_removal_scan()
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.has_days_remove or d.remove_effect or d.mission_subtype:
+                continue
+            days = _top_level_field_value(d.raw, "days_remove")
+            if (
+                days is None
+                or d.token in checked
+                or any(
+                    _top_level_field_value(d.raw, field)
+                    for field in ("modifier", "targeted_modifier")
+                )
+            ):
+                continue
+            results.append(
+                (
+                    f"{d.token} - days_remove = {days} but no remove_effect,"
+                    " modifier, or has_decision check reads the timer",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ Every days_remove timer has something to end",
+            "Decisions whose days_remove timer does nothing (add a remove_effect,"
+            " or drop the timer and use days_re_enable for a cooldown):",
+            severity=Severity.WARNING,
+            category="decision-days-remove-without-effect",
         )
 
     def validate_orphaned_target_modifiers(self):
@@ -3550,6 +3604,7 @@ class Validator(BaseValidator):
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
+        self.validate_timer_without_remove_effect()
         self.validate_orphaned_target_modifiers()
         self.validate_formable_commitment_sync()
         self.validate_icon_types()
