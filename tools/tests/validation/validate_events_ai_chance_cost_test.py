@@ -288,6 +288,60 @@ _OPTION_CASES = {
         ),
         [("foo.1.b", 17, "stability", False)],
     ),
+    "decision-only resources do not widen the event check": (
+        _two_options(
+            "\t\tadd_command_power = -20\n\t\tadd_manpower = -100\n"
+            "\t\tadd_equipment_to_stockpile = { type = infantry_equipment amount = -100 }\n"
+            + _FLAT
+        ),
+        [],
+    ),
+    "base 0 option beside one that can win": (
+        _two_options(_PP_COST + "\t\tai_chance = { base = 0 }\n"),
+        [],
+    ),
+    "base 0 option with an add": (
+        _two_options(
+            _PP_COST
+            + "\t\tai_chance = { base = 0 modifier = { add = 5 has_war = yes } }\n"
+        ),
+        [("foo.1.a", 8, "political power", False)],
+    ),
+    "every option at base 0": (
+        _event(
+            _option("foo.1.a", _PP_COST + "\t\tai_chance = { base = 0 }\n"),
+            _option("foo.1.b", "\t\tai_chance = { base = 0 }\n"),
+        ),
+        [("foo.1.a", 8, "political power", False)],
+    ),
+    "cost every option pays": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT), _option("foo.1.b", _PP_COST + _FLAT)
+        ),
+        [],
+    ),
+    "only the shared kind is skipped": (
+        _event(
+            _option("foo.1.a", _PP_COST + "\t\tadd_stability = -0.02\n" + _FLAT),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [("foo.1.a", 9, "stability", False)],
+    ),
+    "tax rate moved by every option": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tset_temp_variable = { corp_change = -2 }\n"
+                "\t\tmodify_corporate_tax_rate_effect = yes\n" + _FLAT,
+            ),
+            _option(
+                "foo.1.b",
+                "\t\tset_temp_variable = { corp_change = 3 }\n"
+                "\t\tmodify_corporate_tax_rate_effect = yes\n" + _FLAT,
+            ),
+        ),
+        [("foo.1.a", 9, "tax rate", False), ("foo.1.b", 15, "tax rate", False)],
+    ),
 }
 
 
@@ -390,6 +444,11 @@ def test_find_cost_blind_options(text, expected):
         (
             "\t\tset_temp_variable = { treasury_change = FROM.TAG_project_cost }\n"
             "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { var = bill value = { value = 2 multiply = { value = gdp_total divide = -500 } } }\n"
+            "\t\tadd_to_variable = { treasury = bill }\n",
             "treasury",
         ),
         ("\t\tadd_to_variable = { treasury = -5 }\n", "treasury"),
@@ -504,6 +563,10 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\t\t\tmodify_treasury_effect = yes\n"
         "\t\t\t}\n"
         "\t\t}\n",
+        "\t\tset_temp_variable = { bill = { value = 2 multiply = { value = gdp_total multiply = -0.002 } multiply = -1 } }\n"
+        "\t\tadd_to_variable = { treasury = bill }\n",
+        "\t\tif = { limit = { always = no } add_political_power = -50 }\n",
+        "\t\trandom = { chance = 0 add_political_power = -50 }\n",
         "\t\tset_variable = { treasury = 100 }\n",
         "\t\tadd_to_temp_variable = { treasury = -5 }\n",
         "\t\tadd_to_variable = { treasury = SOV.treasury }\n",
