@@ -39,6 +39,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
   on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
+  On a merge commit the dispatcher checks only the conflicted files pre-commit passes,
+  plus staged deletions and rename origins.
 - Run a CI-only validator locally with
   `python3 tools/validation/validate_<topic>.py --staged --no-color`. Drop `--staged`
   for a full-repo scan.

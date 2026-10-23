@@ -1131,7 +1131,7 @@ def test_tools_quality_checks_are_wired_in_precommit_and_ci():
     }
     assert {"black-tools", "pylint-tools", "mypy-tools"} <= hooks.keys()
     assert hooks["black-tools"]["entry"] == "black"
-    assert "pylint tools" in hooks["pylint-tools"]["entry"]
+    assert hooks["pylint-tools"]["entry"].startswith("pylint ")
     assert hooks["mypy-tools"]["entry"] == "mypy"
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     assert "ruff check tools" in text
@@ -1169,16 +1169,24 @@ def test_pytest_collection_gate_cannot_self_exclude():
     assert "python_files=*_test.py" in text
 
 
-def test_manual_texture_audit_always_runs():
+@pytest.mark.parametrize(
+    ("hook_id", "key", "expected"),
+    [
+        ("md-validate-unused-textures", "always_run", True),
+        ("md-validate-unused-textures", "pass_filenames", False),
+        # The dispatcher validates the whole staged set on every run.
+        ("md-validate-content", "require_serial", True),
+    ],
+)
+def test_precommit_hook_run_settings(hook_id, key, expected):
     config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
     hook = next(
         hook
         for repo in config["repos"]
         for hook in repo.get("hooks", [])
-        if hook.get("id") == "md-validate-unused-textures"
+        if hook.get("id") == hook_id
     )
-    assert hook.get("always_run") is True
-    assert hook.get("pass_filenames") is False
+    assert hook.get(key) is expected
 
 
 def test_ci_strict_gate_lives_in_batch_specs():
