@@ -1429,6 +1429,35 @@ _UNSUPPORTED_SYNTAX_CASES = {
             ("unsupported-effect-arguments", "events/caller.txt", 1),
         ],
     ),
+    "scope_keyword_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tFROM = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "lowercase_scope_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tfrom = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [
+            ("lowercase-scope-shadowed-by-effect", "events/caller.txt", 3),
+        ],
+    ),
+    "idea_definition_sharing_effect_name": (
+        "common/ideas/test_ideas.txt",
+        "depression = { swap_ideas = { remove_idea = recession add_idea = depression } }\n",
+        "ideas = {\n\teconomic_cycles = {\n\t\tdepression = {\n"
+        "\t\t\tcost = 300\n\t\t\tmodifier = { stability_factor = -0.1 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "dynamic_modifier_definition_sharing_effect_name": (
+        "common/dynamic_modifiers/test_modifiers.txt",
+        "public_war_weariness_effect = { add_stability = 0.01 }\n",
+        "public_war_weariness_effect = {\n\twar_support_factor = war_support_factor_var\n}\n",
+        [],
+    ),
 }
 
 
