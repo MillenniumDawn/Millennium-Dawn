@@ -116,6 +116,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   literal `always = no` branches, and zero-chance random blocks do not count as payment.
   Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
   resource variables and scripted cost triggers still need manual review.
+- `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
+  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
+  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
+  cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
+  `has_decision` in the decision's own block also exempts it.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
