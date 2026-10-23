@@ -415,6 +415,14 @@ def test_starting_history_for_event_recipients(gate):
         ("1999.12.31 = { set_technology = { naval_tech = 1 } }", 0),
         ("2000.1.1 = { set_technology = { naval_tech = 1 } }", 0),
         ("2001.1.1 = { set_technology = { naval_tech = 1 } }", 1),
+        (
+            'if = { limit = { always = no } else_if = { limit = { has_dlc = "Designer" } set_technology = { naval_tech = 1 } } else = { set_technology = { naval_tech = 0 } } }',
+            0,
+        ),
+        (
+            "if = { limit = { always = no } else_if = { limit = { always = no } } else = { set_technology = { naval_tech = 1 } } }",
+            0,
+        ),
         ("if = { limit = { has_war = yes } set_technology = { naval_tech = 1 } }", 1),
         ("set_technology = { naval_tech = 1 } set_technology = { naval_tech = 0 }", 1),
         (
@@ -945,3 +953,36 @@ def test_only_equipment_relevant_scripted_chains_are_expanded():
         }
     )
     assert set(context.effects) == {"wrapper", "build_design"}
+
+
+# case: (nested condition, selected-arm grant, fallback grant, warning count)
+_NESTED_HISTORY_CASES = {
+    "Ukraine non-designer fallback": ('has_dlc = "Designer"', "", "naval_tech = 1", 0),
+    "wrong DLC arm": ('has_dlc = "Designer"', "naval_tech = 1", "", 1),
+    "unknown optional fallback": ("has_war = yes", "", "naval_tech = 1", 1),
+    "unknown both arms": ("has_war = yes", "naval_tech = 1", "naval_tech = 1", 0),
+    "fallback revokes": ('has_dlc = "Designer"', "", "naval_tech = 0", 1),
+}
+
+
+@pytest.mark.parametrize(
+    "condition,selected,fallback,expected",
+    _NESTED_HISTORY_CASES.values(),
+    ids=_NESTED_HISTORY_CASES,
+)
+def test_nested_history_else(condition, selected, fallback, expected):
+    history = f"2000.1.1 = {{ if = {{ limit = {{ {condition} }} set_technology = {{ {selected} }} else = {{ set_technology = {{ {fallback} }} }} }} }}"
+    context = context_for(
+        {
+            "history/countries/UKR - Test.txt": history,
+            "common/technology_tags/folders.txt": 'technology_folders = { designer = { available = { NOT = { has_dlc = "Designer" } } } }',
+        }
+    )
+    assert (
+        len(
+            check_variant_availability(
+                event_body(reward(), trigger="original_tag = UKR"), UNLOCKS, context
+            )
+        )
+        == expected
+    )

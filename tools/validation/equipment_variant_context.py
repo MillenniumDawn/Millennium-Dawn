@@ -12,6 +12,7 @@ from linting.check_common_mistakes import (
 
 _TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!]=?|=|[^\s{}=<>!]+')
 _DATE = re.compile(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?")
+_TAG = re.compile(r"[A-Z]{3}")
 _WRAPPERS = {
     "AND",
     "hidden_trigger",
@@ -22,9 +23,9 @@ _WRAPPERS = {
 
 def script_nodes(text):
     tokens = [
-        (match.group(), line)
+        (token, line)
         for line, code in enumerate(blank_comments(text).splitlines(), 1)
-        for match in _TOKEN.finditer(code)
+        for token in _TOKEN.findall(code)
     ]
     return _parse_script_nodes(tokens, 0)[0]
 
@@ -36,6 +37,8 @@ def value(node, key):
 
 def event_pool_targets(text):
     """Bare event lists are omitted by the shared assignment-only AST parser."""
+    if "events" not in text:
+        return set()
     return {
         event
         for block in re.finditer(
@@ -68,7 +71,7 @@ def countries(nodes):
 def scope_country(key, current, root):
     if key == "ROOT":
         return root
-    if re.fullmatch(r"[A-Z]{3}", key):
+    if _TAG.fullmatch(key):
         return frozenset({key})
     if (
         _scope_frame_kind(key) == "foreign"
@@ -134,20 +137,31 @@ def branches(nodes, dlcs):
             continue
         outcomes = []
         reachable = True
+        nested = []
         while True:
             limit = _first_child(node, "limit")
             truth = dlc_truth(limit.children, dlcs) if limit else None
             if reachable and (truth is None or truth):
                 outcomes.append(
-                    [child for child in node.children if child.key != "limit"]
+                    [
+                        child
+                        for child in node.children
+                        if child.key not in {"limit", "else", "else_if"}
+                    ]
                 )
             reachable = reachable and (truth is None or not truth)
-            if index == len(nodes) or nodes[index].key not in {"else_if", "else"}:
+            nested = [
+                child for child in node.children if child.key in {"else_if", "else"}
+            ] + nested
+            if nested:
+                node = nested.pop(0)
+            elif index < len(nodes) and nodes[index].key in {"else_if", "else"}:
+                node = nodes[index]
+                index += 1
+            else:
                 if reachable:
                     outcomes.append([])
                 break
-            node = nodes[index]
-            index += 1
             if node.key == "else":
                 if reachable:
                     outcomes.append(node.children)

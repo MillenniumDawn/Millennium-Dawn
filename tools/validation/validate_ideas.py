@@ -141,6 +141,11 @@ _IDEA_TOKEN_RE = re.compile(r"\bidea_token\s*=\s*([A-Za-z0-9_]+)")
 _ALLOWED_CIVIL_WAR_ALWAYS_NO = re.compile(
     r"allowed_civil_war\s*=\s*\{\s*always\s*=\s*no\s*\}"
 )
+_WEEKLY_IDEA_MODIFIERS = frozenset({"weekly_war_support", "weekly_stability"})
+_TIMED_IDEA_START = re.compile(r"\badd_timed_idea\s*=\s*\{")
+_EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
+_NON_NEWLINE = re.compile(r"[^\n]")
+_PERMANENT_IDEA_REF = re.compile(r"\b(?:add_idea|add_ideas)\s*=\s*([A-Za-z0-9_.:-]+)")
 
 
 def _blank_nested_braces(text: str) -> str:
@@ -160,6 +165,117 @@ def _blank_nested_braces(text: str) -> str:
         else:
             out.append(ch if depth == 0 else " ")
     return "".join(out)
+
+
+def _blank_effect_tooltips(text: str) -> str:
+    """Blank every `effect_tooltip = { ... }` block, keeping newlines."""
+    pieces = []
+    last = 0
+    for match in _EFFECT_TOOLTIP_START.finditer(text):
+        _block, end = extract_block_from_text(text, match.end() - 1)
+        # Skips unclosed tooltips (end == -1) and ones nested in a blanked block.
+        if end <= last:
+            continue
+        start = max(match.start(), last)
+        pieces.append(text[last:start])
+        pieces.append(_NON_NEWLINE.sub(" ", text[start:end]))
+        last = end
+    pieces.append(text[last:])
+    return "".join(pieces)
+
+
+def _weekly_modifier_issues(
+    idea_texts: Dict[str, str], script_texts: Dict[str, str]
+) -> List[Tuple[str, int, str]]:
+    """Find weekly modifiers on country ideas with statically permanent grants.
+
+    Timed-only ideas are exempt. An idea with a known permanent grant or no
+    statically resolved grant is reported; the latter is advisory because a
+    dynamic reference may grant it permanently.
+    """
+    timed: Set[str] = set()
+    permanent: Set[str] = set()
+    for raw_text in script_texts.values():
+        if "add_idea" not in raw_text and "add_timed_idea" not in raw_text:
+            continue
+        text = _blank_effect_tooltips(blank_quoted_strings(blank_comments(raw_text)))
+        timed_spans = []
+        for match in _TIMED_IDEA_START.finditer(text):
+            block, end = extract_block_from_text(text, match.end() - 1)
+            timed_spans.append((match.start(), end))
+            for key, value, _nested in iter_statements(block):
+                if key == "idea" and value:
+                    timed.add(value)
+                    break
+        for match in _PERMANENT_IDEA_REF.finditer(text):
+            if any(start <= match.start() < end for start, end in timed_spans):
+                continue
+            permanent.add(match.group(1))
+        for match in re.finditer(r"\badd_ideas\s*=\s*\{", text):
+            if any(start <= match.start() < end for start, end in timed_spans):
+                continue
+            block, _ = extract_block_from_text(text, match.end() - 1)
+            permanent.update(
+                re.findall(r"\b[A-Za-z][A-Za-z0-9_.:-]*\b", _blank_nested_braces(block))
+            )
+
+    findings: List[Tuple[str, int, str]] = []
+    idea_start = re.compile(r"([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
+    for filepath, raw_text in idea_texts.items():
+        text = blank_quoted_strings(blank_comments(raw_text))
+        for root, root_open, root_close in iter_direct_child_blocks(text, idea_start):
+            if root.group(1) != "ideas":
+                continue
+            root_body = text[root_open + 1 : root_close]
+            for category, cat_open, cat_close in iter_direct_child_blocks(
+                root_body, idea_start
+            ):
+                if category.group(1) != "country":
+                    continue
+                cat_body = root_body[cat_open + 1 : cat_close]
+                for idea_match, idea_open, idea_close in iter_direct_child_blocks(
+                    cat_body, idea_start
+                ):
+                    idea_name = idea_match.group(1)
+                    idea_body = cat_body[idea_open + 1 : idea_close]
+                    modifiers = []
+                    for _modifier, mod_open, mod_close in iter_direct_child_blocks(
+                        idea_body, re.compile(r"(?<![A-Za-z0-9_])modifier\s*=\s*\{")
+                    ):
+                        modifiers.extend(
+                            key
+                            for key, _value, _block in iter_statements(
+                                idea_body[mod_open + 1 : mod_close]
+                            )
+                            if key in _WEEKLY_IDEA_MODIFIERS
+                        )
+                    if not modifiers or (
+                        idea_name in timed and idea_name not in permanent
+                    ):
+                        continue
+                    line = (
+                        text.count(
+                            "\n",
+                            0,
+                            root_open + 1 + cat_open + 1 + idea_match.start(),
+                        )
+                        + 1
+                    )
+                    if idea_name in permanent and idea_name in timed:
+                        usage = "mixed timed and permanent grants"
+                    elif idea_name in permanent:
+                        usage = "permanent grant"
+                    else:
+                        usage = "no statically resolved grant; verify dynamic usage"
+                    findings.append(
+                        (
+                            filepath,
+                            line,
+                            f"{idea_name} uses {', '.join(sorted(set(modifiers)))} "
+                            f"on a country idea ({usage})",
+                        )
+                    )
+    return findings
 
 
 # Stand-in textures: the sprite loads, but the idea still shows no real art.
@@ -850,6 +966,27 @@ class Validator(BaseValidator):
                     "redundant allowed_civil_war = { always = no }",
                 )
 
+        script_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        idea_texts = {
+            os.path.relpath(path, self.mod_path): FileOpener.open_text_file(
+                path, lowercase=False, strip_comments_flag=False
+            )
+            for path in idea_files
+        }
+        script_texts = {
+            os.path.relpath(path, self.mod_path): FileOpener.open_text_file(
+                path, lowercase=False, strip_comments_flag=False
+            )
+            for path in script_files
+        }
+        for filepath, line, message in _weekly_modifier_issues(
+            idea_texts, script_texts
+        ):
+            _add(os.path.join(self.mod_path, filepath), line, message)
+
         for filepath, file_issues in issues_by_file.items():
             for issue in file_issues:
                 if issue.issue_type == "allowed-in-slotless-category":
@@ -1410,11 +1547,7 @@ class Validator(BaseValidator):
                     for staged_file in staged_files_set
                 )
             }
-            idea_tags_changed = any(
-                path.startswith("common/idea_tags/") and path.endswith(".txt")
-                for path in staged_files_set
-            )
-            if idea_tags_changed:
+            if self.staged_touches(("common/idea_tags",)):
                 self.validate_idea_quality(issues_by_file)
             elif staged_issues:
                 self.validate_idea_quality(staged_issues)

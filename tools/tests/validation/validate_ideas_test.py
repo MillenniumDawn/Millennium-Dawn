@@ -34,6 +34,7 @@ from validate_ideas import (
     _parse_ideas_from_text,
     _scan_idea_refs,
     _scan_idea_refs_for_unused,
+    _weekly_modifier_issues,
 )
 from validator_batches import BATCHES
 from validator_common import Severity, casefold_index
@@ -66,6 +67,167 @@ def _idea(name, *lines):
 
 def _issue_types(text, slotless=SLOTLESS):
     return {issue.issue_type for issue in _parse_ideas_from_text(text, slotless)[1]}
+
+
+# case: (idea files, grant call sites, expected (file, line, message fragment))
+_WEEKLY_MODIFIER_CASES = {
+    "war support on permanent country idea": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("PERMANENT", "modifier = { weekly_war_support = 0.01 }"),
+            )
+        },
+        {
+            "common/national_focus/test.txt": (
+                "completion_reward = { add_ideas = PERMANENT }"
+            )
+        },
+        [
+            ("common/ideas/test.txt", 3, "weekly_war_support"),
+            ("common/ideas/test.txt", 3, "permanent grant"),
+        ],
+    ),
+    "stability on permanent list grant": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("PERMANENT", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {"history/countries/AAA.txt": "add_ideas = { PERMANENT }"},
+        [
+            ("common/ideas/test.txt", 3, "weekly_stability"),
+            ("common/ideas/test.txt", 3, "permanent grant"),
+        ],
+    ),
+    "timed-only country idea is excluded": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("TEMPORARY", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {
+            "events/test.txt": (
+                "add_timed_idea = { idea = TEMPORARY days = 30 }\n"
+                "effect_tooltip = { add_ideas = TEMPORARY }"
+            )
+        },
+        [],
+    ),
+    "tooltip-only grant does not establish permanence": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("TOOLTIP_ONLY", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {"events/test.txt": "effect_tooltip = { add_ideas = TOOLTIP_ONLY }"},
+        [
+            (
+                "common/ideas/test.txt",
+                3,
+                "no statically resolved grant",
+            )
+        ],
+    ),
+    "grant after a nested tooltip stays inside the outer tooltip": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("NESTED_TIP", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {
+            "events/test.txt": (
+                "effect_tooltip = { effect_tooltip = { add_ideas = NESTED_TIP }\n"
+                "add_ideas = NESTED_TIP }"
+            )
+        },
+        [("common/ideas/test.txt", 3, "no statically resolved grant")],
+    ),
+    "unclosed tooltip does not hide a grant": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("OPEN_TIP", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {"events/test.txt": "effect_tooltip = { add_ideas = OPEN_TIP"},
+        [("common/ideas/test.txt", 3, "permanent grant")],
+    ),
+    "mixed timed and permanent usage is advisory": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("MIXED", "modifier = { weekly_war_support = 0.01 }"),
+            )
+        },
+        {
+            "events/test.txt": (
+                "add_timed_idea = { idea = MIXED days = 30 }\nadd_idea = MIXED"
+            )
+        },
+        [("common/ideas/test.txt", 3, "mixed timed and permanent grants")],
+    ),
+    "nested modifier and unrelated categories are ignored": (
+        _ideas(
+            "country",
+            _idea("NESTED", "on_add = { modifier = { weekly_stability = 1 } }"),
+        )
+        + _ideas(
+            "political_advisor",
+            _idea("ADVISOR", "modifier = { weekly_stability = 1 }"),
+        ),
+        {"events/test.txt": "add_idea = NESTED\nadd_idea = ADVISOR"},
+        [],
+    ),
+    "targeted modifier is not a national idea modifier": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea(
+                    "TARGETED",
+                    "targeted_modifier = { weekly_stability = 0.01 }",
+                ),
+            )
+        },
+        {"events/test.txt": "add_idea = TARGETED"},
+        [],
+    ),
+    "unresolved grant remains advisory": (
+        {
+            "common/ideas/test.txt": _ideas(
+                "country",
+                _idea("DYNAMIC", "modifier = { weekly_stability = 0.01 }"),
+            )
+        },
+        {"common/scripted_effects/test.txt": "add_idea = [dynamic_idea]"},
+        [("common/ideas/test.txt", 3, "no statically resolved grant")],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "idea_files,script_files,expected",
+    _WEEKLY_MODIFIER_CASES.values(),
+    ids=_WEEKLY_MODIFIER_CASES.keys(),
+)
+def test_weekly_modifiers_require_a_permanent_national_idea(
+    idea_files, script_files, expected
+):
+    if isinstance(idea_files, str):
+        idea_files = {"common/ideas/test.txt": idea_files}
+    findings = _weekly_modifier_issues(idea_files, script_files)
+    assert len(findings) == len({(path, line) for path, line, _ in expected})
+    assert all(
+        any(
+            (path, line) == (expected_path, expected_line) and fragment in message
+            for path, line, message in findings
+        )
+        for expected_path, expected_line, fragment in expected
+    )
 
 
 # ---- parsing ---------------------------------------------------------------------
@@ -1005,6 +1167,31 @@ def test_quality_issues_carry_their_idea_file_and_line(tmp_path):
     assert validator.warnings_found == 5
 
 
+def test_weekly_modifier_is_a_warning_in_idea_quality(tmp_path):
+    _write(
+        tmp_path,
+        "common/ideas/weekly.txt",
+        _ideas("country", _idea("WEEKLY", "modifier = { weekly_stability = 0.01 }")),
+    )
+    _write(tmp_path, "events/grant.txt", "add_idea = WEEKLY\n")
+    validator = _validator(tmp_path)
+
+    validator.validate_idea_quality({})
+
+    assert [
+        (issue.severity, issue.category, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+    ] == [
+        (
+            Severity.WARNING,
+            "idea-quality",
+            "common/ideas/weekly.txt",
+            3,
+            "WEEKLY uses weekly_stability on a country idea (permanent grant)",
+        )
+    ]
+
+
 @pytest.mark.parametrize("gate", ("allowed", "available"))
 def test_a_slotless_gate_is_an_error_under_the_target_root(tmp_path, gate):
     _write(
@@ -1542,7 +1729,7 @@ def test_staged_run_reports_quality_for_the_staged_idea_file(tmp_path, no_vanill
 def test_staged_idea_tags_change_runs_the_full_quality_scan():
     validator = Validator("/nonexistent", use_colors=False, workers=1)
     validator.staged_only = True
-    validator.staged_files = ["common/idea_tags/00_idea.txt"]
+    validator.staged_files = ["/nonexistent/common/idea_tags/00_idea.txt"]
     all_issues = {
         "common/ideas/test.txt": [IdeaIssue("my_idea", "country", 1, _SLOTLESS_ALLOWED)]
     }
