@@ -327,6 +327,20 @@ _OPTION_CASES = {
         ),
         [("foo.1.a", 9, "stability", False)],
     ),
+    "player-only event": (
+        _two_options(_PP_COST + _FLAT).replace(
+            "\tis_triggered_only = yes\n",
+            "\tis_triggered_only = yes\n\ttrigger = { is_ai = no }\n",
+        ),
+        [],
+    ),
+    "is_ai = no inside OR still reports": (
+        _two_options(_PP_COST + _FLAT).replace(
+            "\tis_triggered_only = yes\n",
+            "\tis_triggered_only = yes\n\ttrigger = { OR = { is_ai = no has_war = yes } }\n",
+        ),
+        [("foo.1.a", 9, "political power", False)],
+    ),
     "tax rate moved by every option": (
         _event(
             _option(

@@ -26,6 +26,7 @@ from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
+    first_flat_match,
     get_staged_files,
     iter_statements,
     strip_comments,
@@ -300,6 +301,7 @@ def _extract_event_log_id_mismatches(
 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
+_IS_AI_NO_RE = re.compile(r"\bis_ai\s*=\s*no\b")
 
 # Per-worker copies of costly_scripted_effects and stored_variable_signs, set
 # once by the Pool initializer.
@@ -1425,9 +1427,10 @@ def find_cost_blind_options(
     between, so the finding needs a look before it is fixed. `effects` comes from
     costly_scripted_effects and `stored` from stored_variable_signs.
 
-    Skipped: an option the AI never picks (`base = 0`, no `add`) while another
-    option can win, and a cost every option charges, since a guard on each one
-    scales them all alike. Tax rate is never shared: options can move it apart.
+    Skipped: an event whose own trigger requires `is_ai = no`, an option the AI
+    never picks (`base = 0`, no `add`) while another option can win, and a cost
+    every option charges, since a guard on each one scales them all alike. Tax
+    rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
@@ -1438,9 +1441,10 @@ def find_cost_blind_options(
             (match.end(), find_unquoted_brace_close(body, match.end() - 1))
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
-        if len(options) < 2:
+        trigger = _event_trigger_body(body) or ""
+        if len(options) < 2 or first_flat_match(trigger, _IS_AI_NO_RE):
             continue
-        country = _receiver_tag(_event_trigger_body(body) or "")
+        country = _receiver_tag(trigger)
         splits = [
             _split_option(body[opt_start:opt_end], country)
             for opt_start, opt_end in options
