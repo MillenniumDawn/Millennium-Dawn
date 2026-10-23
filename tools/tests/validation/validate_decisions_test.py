@@ -787,7 +787,7 @@ def test_unused_decisions(monkeypatch, tokens, decisions, missions, unused):
     monkeypatch.setattr(
         V.Validator,
         "_get_activation_removal_scan",
-        lambda self: (decisions, missions, set(), set()),
+        lambda self: (decisions, missions, set(), set(), set()),
     )
     factories = [
         decision_factory(_flat("\tallowed = { always = no }\n", token=token))
@@ -858,7 +858,7 @@ def test_ai_only_localisation(monkeypatch, decisions, loc_keys, state, expected)
         "_load_localisation_keys": loc_keys,
         "_get_ai_only_by_category": set(),
         "_get_ai_only_categories": dict.fromkeys(state.get("categories", ()), "c.txt"),
-        "_get_activation_removal_scan": (set(), set(), set(), unlocks),
+        "_get_activation_removal_scan": (set(), set(), set(), unlocks, set()),
     }
     for name, value in patched.items():
         monkeypatch.setattr(V.Validator, name, lambda self, value=value: value)
@@ -1876,21 +1876,22 @@ def test_quoted_brace_does_not_truncate_decision_block(tmp_path):
     assert V.DecisionFactory(dec=decisions[0]).cost == "42"
 
 
-# case: (file, text, (decisions, missions, removals, unlock references))
+# case: (file, text, (decisions, missions, removals, unlock references, checked))
 _ACTIVATION_SCAN_CASES: dict[
-    str, tuple[str, str, tuple[set[str], set[str], set[str], list[object]]]
+    str,
+    tuple[str, str, tuple[set[str], set[str], set[str], list[object], set[str]]],
 ] = {
     # The substring gate must admit a file that only removes targeted decisions.
     "remove_targeted_decision only": (
         "effects.txt",
         "some_effect = {\n"
         "\tremove_targeted_decision = { target = ROOT decision = my_targeted_dec }\n}\n",
-        (set(), set(), {"my_targeted_dec"}, []),
+        (set(), set(), {"my_targeted_dec"}, [], set()),
     ),
     "skipped file": (
         "events/FR_loc_events.txt",
         "remove_decision = some_decision\n",
-        (set(), set(), set(), []),
+        (set(), set(), set(), [], set()),
     ),
 }
 
@@ -1920,6 +1921,7 @@ def test_activation_scan_uses_only_shipped_content_roots(tmp_path):
         {"shipped_mission"},
         set(),
         [],
+        set(),
     )
 
 
@@ -2303,6 +2305,55 @@ def test_orphaned_remove_effect_skips_every_exempt_shape(tmp_path):
     validator.validate_orphaned_remove_effect()
 
     assert validator._issues == []
+
+
+_TIMER = "\t\tdays_remove = 30\n"
+# case: (decision token, decision body, reported)
+_TIMER_CASES = {
+    "nothing reads the timer": (
+        "timer_dec",
+        _TIMER + _block("ai_will_do", "base = 1\nmodifier = { factor = 0 }"),
+        True,
+    ),
+    "remove_effect at the end": ("timer_dec", _TIMER + _ONE_LINE_REMOVE, False),
+    "modifier while active": (
+        "timer_dec",
+        _TIMER + _block("modifier", "stability_factor = 0.1"),
+        False,
+    ),
+    "targeted modifier while active": (
+        "timer_dec",
+        _TIMER + _block("targeted_modifier", "tag = FROM"),
+        False,
+    ),
+    "has_decision reads the timer": ("checked_timer", _TIMER, False),
+    "mission": ("timer_dec", _TIMER + _MISSION_DAYS, False),
+}
+
+
+@pytest.mark.parametrize(
+    ("token", "body", "reported"), _TIMER_CASES.values(), ids=_TIMER_CASES
+)
+def test_timer_without_remove_effect(tmp_path, token, body, reported):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/timers.txt": "cat = {\n" + _nested(token, body) + "}\n",
+            "events/checks.txt": "checks = { has_decision = checked_timer }\n",
+        },
+    )
+
+    validator.validate_timer_without_remove_effect()
+
+    expected = (
+        "decision-days-remove-without-effect",
+        f"{token} - days_remove = 30 but no remove_effect, modifier, or has_decision"
+        " check reads the timer",
+        "common/decisions/timers.txt",
+        2,
+    )
+    assert issue_rows(validator) == [expected] * reported
+    assert validator.warnings_found == reported
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):
