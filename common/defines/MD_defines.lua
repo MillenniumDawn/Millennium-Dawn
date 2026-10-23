@@ -993,7 +993,7 @@
 	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_OWNED_CORE = 2.50				-- 2.00 vanilla; factor prio with this if owned core territory
 	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_REPAIRING = 0.20				-- 0.30 vanilla; factor prio with this if building is being repaired
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory', 'dockyard'
+		'fossil_powerplant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'industrial_complex', 'internet_station', 'microchip_plant', 'arms_factory', 'dockyard', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'rail_terminal', 'agriculture_district'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
