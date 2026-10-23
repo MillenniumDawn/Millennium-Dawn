@@ -186,6 +186,16 @@ AI_build_renewable_energy_infrastructure = {
 	}
 }
 
+AI_build_more_civilian_industry = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		check_variable = { total_unemployed_percentage_display > 0.05 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = building_target id = industrial_complex value = 50 }
+}
+
 AI_stop_building_civilian_industry = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
@@ -193,9 +203,6 @@ AI_stop_building_civilian_industry = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = industrial_complex value = -50 }
-	ai_strategy = { type = build_building id = arms_factory value = -50 }
-	ai_strategy = { type = build_building id = dockyard value = -50 }
 	ai_strategy = { type = build_building id = agriculture_district value = -50 }
 	ai_strategy = { type = build_building id = microchip_plant value = -50 }
 	ai_strategy = { type = build_building id = composite_plant value = -50 }
@@ -203,35 +210,6 @@ AI_stop_building_civilian_industry = {
 	# Create Other Infrastructure While Low unemployment
 	ai_strategy = { type = build_building id = internet_station value = 25 }
 	ai_strategy = { type = build_building id = infrastructure value = 25 }
-}
-
-AI_reduce_construction_on_deficit = {
-	allowed = { ai_for_units_is_not_disabled = yes }
-	enable = {
-		has_war = no
-		ai_has_high_deficit = yes
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = build_building id = industrial_complex value = -20 }
-	ai_strategy = { type = build_building id = arms_factory value = -20 }
-	ai_strategy = { type = build_building id = dockyard value = -20 }
-	ai_strategy = { type = build_building id = offices value = -10 }
-}
-
-AI_halt_construction_major_crisis = {
-	allowed = { ai_for_units_is_not_disabled = yes }
-	enable = {
-		ai_has_major_economic_problems = yes
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = build_building id = industrial_complex value = -50 }
-	ai_strategy = { type = build_building id = arms_factory value = -50 }
-	ai_strategy = { type = build_building id = dockyard value = -50 }
-	ai_strategy = { type = build_building id = offices value = -50 }
-	ai_strategy = { type = build_building id = microchip_plant value = -50 }
-	ai_strategy = { type = build_building id = composite_plant value = -50 }
 }
 
 AI_accelerate_construction_on_surplus = {
@@ -250,7 +228,7 @@ AI_build_agricultural_districts = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		check_variable = { overall_productivity < 850 }
-		num_of_available_civilian_factories > 10
+		num_of_civilian_factories > 10
 	}
 	abort_when_not_enabled = yes
 
@@ -262,7 +240,7 @@ AI_no_military_industry = {
 	enable = {
 		has_war = no
 		threat < 0.25
-		num_of_available_civilian_factories < 5
+		num_of_civilian_factories < 5
 	}
 	abort_when_not_enabled = yes
 
@@ -270,7 +248,18 @@ AI_no_military_industry = {
 }
 
 #Microchip & Composite AI
-default_build_chip_and_composite = {
+AI_build_microchip_plants = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		check_variable = { resource_consumed@microchips > resource_produced@microchips }
+		num_of_civilian_factories > 14
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_building id = microchip_plant value = 50 }
+}
+
+default_build_composites = {
 	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
 		OR = {
@@ -281,10 +270,6 @@ default_build_chip_and_composite = {
 			is_major = yes
 
 			AND = {
-				check_variable = { resource_consumed@microchips > resource_produced@microchips }
-				check_variable = { resource_imported@microchips > resource_produced@microchips }
-			}
-			AND = {
 				check_variable = { resource_consumed@composites > resource_produced@composites }
 				check_variable = { resource_imported@composites > resource_produced@composites }
 			}
@@ -292,25 +277,7 @@ default_build_chip_and_composite = {
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_building id = microchip_plant value = 15 }
 	ai_strategy = { type = build_building id = composite_plant value = 15 }
-}
-
-want_chip_factories = {
-	allowed = { ai_for_units_is_not_disabled = yes }
-	enable = {
-		#If we both import AND consume more than we produce, we need more internal production
-		check_variable = { resource_consumed@microchips > resource_produced@microchips }
-		check_variable = { resource_imported@microchips > resource_produced@microchips }
-		#Don't try to make factories unless we have a surplus of the input supplies
-		check_variable = { resource@chromium > 0 }
-		check_variable = { resource@tungsten > 0 }
-
-		num_of_available_civilian_factories > 14
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = build_building id = microchip_plant value = 50 }
 }
 
 want_comp_factories = {
@@ -325,7 +292,7 @@ want_comp_factories = {
 		check_variable = { resource@rubber > 0 }
 		check_variable = { resource@oil > 0 }
 
-		num_of_available_civilian_factories > 14
+		num_of_civilian_factories > 14
 	}
 
 	abort_when_not_enabled = yes
