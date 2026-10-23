@@ -55,6 +55,7 @@ add_namespace = ukraine_develop_2s22
 add_namespace = ukraine_equipment_develop_domestic_atgm
 add_namespace = ukraine_light_transport_tender
 add_namespace = ukraine_modernize_planes_restore_an_71
+add_namespace = ukraine_sevastopol
 ##############MAIDAN##############
 #Start Protest
 country_event = {
@@ -5085,6 +5086,11 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	trigger = {
+		NOT = { has_country_flag = UKR_kharkiv_pact_signed }
+		NOT = { has_country_flag = UKR_kharkiv_pact_refused }
+	}
+
 	option = {
 		name = ukraine_regions.13.a
 		log = "[GetDateText]: [This.GetName]: ukraine_regions.13.a executed"
@@ -5094,7 +5100,10 @@ country_event = {
 				add = 100
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 UKR_is_pro_west = yes }
 		}
+		set_country_flag = UKR_kharkiv_pact_signed
+		custom_effect_tooltip = UKR_kharkiv_pact_signed_tt
 		add_opinion_modifier = {
 			target = SOV
 			modifier = recent_actions_positive
@@ -5119,6 +5128,8 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
+		set_country_flag = UKR_kharkiv_pact_refused
+		custom_effect_tooltip = UKR_kharkiv_pact_refused_tt
 		add_opinion_modifier = {
 			target = SOV
 			modifier = recent_actions_negative
@@ -26596,7 +26607,7 @@ country_event = {
 	}
 }
 
-news_event = {
+country_event = {
 	id = ukraine_modernize_planes_restore_an_71.1
 	title = ukraine_modernize_planes_restore_an_71.1.name
 	desc = ukraine_modernize_planes_restore_an_71.1.desc
@@ -26780,7 +26791,7 @@ country_event = {
 
 		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_200_tt
 
-		news_event = { id = ukraine_modernize_planes_restore_an_71.3 days = 150 }
+		country_event = { id = ukraine_modernize_planes_restore_an_71.3 days = 150 }
 	}
 
 	option = {
@@ -26881,7 +26892,7 @@ country_event = {
 
 		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_300_tt
 
-		news_event = { id = ukraine_modernize_planes_restore_an_71.4 days = 240 }
+		country_event = { id = ukraine_modernize_planes_restore_an_71.4 days = 240 }
 	}
 
 	option = {
@@ -26976,7 +26987,7 @@ country_event = {
 	}
 }
 
-news_event = {
+country_event = {
 	id = ukraine_modernize_planes_restore_an_71.3
 	title = ukraine_modernize_planes_restore_an_71.3.name
 	desc = ukraine_modernize_planes_restore_an_71.3.desc
@@ -27059,7 +27070,7 @@ news_event = {
 	}
 }
 
-news_event = {
+country_event = {
 	id = ukraine_modernize_planes_restore_an_71.4
 	title = ukraine_modernize_planes_restore_an_71.4.name
 	desc = ukraine_modernize_planes_restore_an_71.4.desc
@@ -27284,6 +27295,7 @@ country_event = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		set_country_flag = UKR_bomber_repair_flag
+		custom_effect_tooltip = UKR_vote_bonus_military_up_10_tt
 		unlock_decision_category_tooltip = UKR_repair_bombers_category
 		set_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
@@ -27498,6 +27510,7 @@ country_event = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		set_country_flag = UKR_bomber_repair_flag
+		custom_effect_tooltip = UKR_vote_bonus_military_up_10_tt
 		unlock_decision_category_tooltip = UKR_repair_bombers_category
 		set_temp_variable = { treasury_change = -1 }
 		modify_treasury_effect = yes
@@ -27646,5 +27659,241 @@ country_event = {
 			amount = -45
 			producer = SOV
 		}
+	}
+}
+##############SEVASTOPOL BAY##############
+#Kyiv demands the return of Sevastopol Bay
+country_event = {
+	id = ukraine_sevastopol.1
+	title = ukraine_sevastopol.1.name
+	desc = {
+		text = ukraine_sevastopol.1.desc_nato
+		trigger = { UKR = { has_idea = NATO_member } }
+	}
+	desc = {
+		text = ukraine_sevastopol.1.desc_early
+		trigger = {
+			date < 2017.1.1
+			UKR = { NOT = { has_idea = NATO_member } }
+		}
+	}
+	desc = {
+		text = ukraine_sevastopol.1.desc_nato_prep
+		trigger = {
+			date > 2016.12.31
+			UKR = {
+				NOT = { has_idea = NATO_member }
+				has_country_flag = UKR_kharkiv_pact_signed
+			}
+		}
+	}
+	desc = {
+		text = ukraine_sevastopol.1.desc_expiry
+		trigger = {
+			date > 2016.12.31
+			UKR = {
+				NOT = { has_idea = NATO_member }
+				NOT = { has_country_flag = UKR_kharkiv_pact_signed }
+			}
+		}
+	}
+	picture = GFX_UKR_Sevastopol_Base_Demand
+	is_triggered_only = yes
+
+	trigger = {
+		owns_state = 1112
+		country_exists = UKR
+	}
+
+	option = {
+		name = ukraine_sevastopol.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.a executed"
+		UKR = { transfer_state = 1112 }
+		add_opinion_modifier = {
+			target = UKR
+			modifier = recent_actions_negative
+		}
+		hidden_effect = {
+			UKR = { country_event = { id = ukraine_sevastopol.2 days = 1 } }
+		}
+		# Each Ukrainian deterrent shifts weight from war to withdrawal; all six cap withdrawal at about 67%
+		ai_chance = {
+			base = 20
+			modifier = {
+				add = 10
+				UKR = { has_completed_focus = UKR_sapsan }
+			}
+			modifier = {
+				add = 10
+				UKR = { has_country_flag = UKR_develop_nota_flag }
+			}
+			modifier = {
+				add = 10
+				UKR = { has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag }
+			}
+			modifier = {
+				add = 10
+				UKR = {
+					OR = {
+						has_country_flag = UKR_developed_an_lbl_flag
+						has_country_flag = UKR_developed_an_bfv_flag
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				UKR = { has_completed_focus = UKR_hur_reform }
+			}
+			modifier = {
+				add = 10
+				UKR = {
+					OR = {
+						has_completed_focus = UKR_ukrainian_armed_forces_reform
+						has_completed_focus = UKR_poroshenko_army_reform
+					}
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_sevastopol.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.b executed"
+		trigger = { UKR = { NOT = { has_idea = NATO_member } } }
+		add_opinion_modifier = {
+			target = UKR
+			modifier = recent_actions_negative
+		}
+		UKR = {
+			add_opinion_modifier = {
+				target = SOV
+				modifier = recent_actions_negative
+			}
+		}
+		hidden_effect = {
+			UKR = { country_event = { id = ukraine_sevastopol.3 days = 1 } }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				add = 12
+				strength_ratio = { tag = UKR ratio < 2 }
+			}
+			modifier = {
+				add = 18
+				has_government = democratic
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_sevastopol.1.c
+		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.c executed"
+		trigger = { UKR = { NOT = { has_idea = NATO_member } } }
+		UKR = {
+			add_opinion_modifier = {
+				target = SOV
+				modifier = recent_actions_negative
+			}
+		}
+		declare_war_on = {
+			target = UKR
+			type = take_state_focus
+			generator = { 669 }
+		}
+		hidden_effect = {
+			UKR = { country_event = { id = ukraine_sevastopol.4 days = 1 } }
+		}
+		ai_chance = {
+			base = 48
+			modifier = {
+				add = 10
+				has_opinion = { target = UKR value < -25 }
+			}
+			modifier = {
+				add = -4
+				UKR = { has_completed_focus = UKR_sapsan }
+			}
+			modifier = {
+				add = -4
+				UKR = { has_country_flag = UKR_develop_nota_flag }
+			}
+			modifier = {
+				add = -4
+				UKR = { has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag }
+			}
+			modifier = {
+				add = -4
+				UKR = {
+					OR = {
+						has_country_flag = UKR_developed_an_lbl_flag
+						has_country_flag = UKR_developed_an_bfv_flag
+					}
+				}
+			}
+			modifier = {
+				add = -4
+				UKR = { has_completed_focus = UKR_hur_reform }
+			}
+			modifier = {
+				add = -4
+				UKR = {
+					OR = {
+						has_completed_focus = UKR_ukrainian_armed_forces_reform
+						has_completed_focus = UKR_poroshenko_army_reform
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				strength_ratio = { tag = UKR ratio < 2 }
+			}
+			modifier = {
+				factor = 0.25
+				has_government = democratic
+			}
+		}
+	}
+}
+
+#Sevastopol Bay returns to Ukraine
+country_event = {
+	id = ukraine_sevastopol.2
+	title = ukraine_sevastopol.2.name
+	desc = ukraine_sevastopol.2.desc
+	picture = GFX_UKR_Sevastopol_Base_Returned
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = ukraine_sevastopol.2.a
+	}
+}
+
+#Russia rejects the early termination
+country_event = {
+	id = ukraine_sevastopol.3
+	title = ukraine_sevastopol.3.name
+	desc = ukraine_sevastopol.3.desc
+	picture = GFX_UKR_Sevastopol_Base_Refused
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = ukraine_sevastopol.3.a
+	}
+}
+
+#Russia refuses and attacks
+country_event = {
+	id = ukraine_sevastopol.4
+	title = ukraine_sevastopol.4.name
+	desc = ukraine_sevastopol.4.desc
+	picture = GFX_UKR_Sevastopol_Base_War
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = ukraine_sevastopol.4.a
 	}
 }

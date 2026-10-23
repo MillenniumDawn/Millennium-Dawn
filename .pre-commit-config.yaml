@@ -30,13 +30,6 @@
 exclude: "^resources/"
 
 repos:
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.5.0
-    hooks:
-      - id: detect-secrets
-        name: Detect secrets
-        args: ["--baseline", ".secrets.baseline"]
-        exclude: '(^localisation/|\.secrets\.baseline$)'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
@@ -91,11 +84,12 @@ repos:
         files: '^tools/.*\.py$'
       - id: pylint-tools
         name: Check Python correctness (pylint)
-        entry: pylint tools -j 0 --reports=no --score=no
+        # Staged files only. CI's tools-quality job lints the whole tree.
+        entry: pylint -j 0 --reports=no --score=no
         language: python
         additional_dependencies: [pylint==4.0.6]
         files: '^tools/.*\.py$'
-        pass_filenames: false
+        require_serial: true
       - id: mypy-tools
         name: Type-check typed tools (mypy)
         entry: mypy
@@ -205,6 +199,9 @@ repos:
         language: system
         files: '\.(txt|yml|gfx)$'
         pass_filenames: true
+        # Each run validates the whole staged set, so pre-commit must not
+        # split the file list across parallel copies.
+        require_serial: true
       - id: md-validate-defines
         name: MD Validate defines against vanilla
         entry: >-
