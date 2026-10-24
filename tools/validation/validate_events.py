@@ -1470,15 +1470,15 @@ def _split_option(
             if skip is not None or kept_whole:
                 continue
             if (
-                key in _VARIABLE_EFFECTS
-                or key in _EQUIPMENT_COSTS
-                or (triggers and key == "check_variable")
-                or (
+                (
                     key == "limit"
                     and _skip_switch(
                         body[m.end() : find_unquoted_brace_close(body, m.end() - 1)]
                     )
                 )
+                or key in _VARIABLE_EFFECTS
+                or key in _EQUIPMENT_COSTS
+                or (triggers and key == "check_variable")
             ):
                 kept_whole = depth
             else:
