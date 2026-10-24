@@ -370,6 +370,26 @@ def _extract_cost_blind_options(
     ]
 
 
+def _extract_corruption_pp_cost_options(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: options that charge PP while decreasing corruption unguarded."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    text = FileOpener.open_text_file(filename)
+    path = os.path.relpath(filename, mod_path)
+    return [
+        (
+            f"{name} - PP charge above the {_MIN_CORRUPTION_REFUND} PP refund per "
+            f"decrease_corruption; no recognized local guard against "
+            f"{_MIN_CORRUPTION_ID}",
+            path,
+            line,
+        )
+        for name, line in find_corruption_pp_cost_options(text)
+    ]
+
+
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
 
 
@@ -1039,6 +1059,9 @@ _VARIABLE_OPS = ("set", "add_to", "subtract_from", "multiply", "divide")
 _VARIABLE_EFFECTS = frozenset(
     f"{op}_{temp}variable" for op in _VARIABLE_OPS for temp in ("", "temp_")
 )
+_IDEA_MUTATION_BLOCKS = frozenset(
+    {"add_ideas", "remove_ideas", "add_timed_idea", "remove_timed_idea", "swap_ideas"}
+)
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
 _AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
@@ -1082,6 +1105,11 @@ _STAT_COSTS = {
     "add_manpower": "manpower",
 }
 _COST_ORDER = tuple(_COST_GUARDS)
+_MIN_CORRUPTION_ID = "corruption_level_01"
+_MIN_CORRUPTION_REFUND = 150
+_CORRUPTION_LEVEL_RE = re.compile(r"corruption_level_(0[1-9]|10)")
+_CORRUPTION_ID_RE = re.compile(r"(?<![\w])corruption_level_(?:0[1-9]|10)(?![\w])")
+_NEGATIVE_NUMBER_RE = re.compile(r"-(?:\d+(?:\.\d*)?|\.\d+)")
 # `{ x = operand }` or the long form `{ var = x value = operand }`.
 _VARIABLE_ARGS = (
     r"\s*=\s*\{\s*(?:var\s*=\s*(?P<long>[^\s={}]+)\s+value\s*=\s*"
@@ -1302,7 +1330,14 @@ def _disabled_cost_branch(key: str, body: str) -> bool:
 
 
 def _split_option(
-    body: str, country: Optional[str] = None, *, triggers: bool = False
+    body: str,
+    country: Optional[str] = None,
+    *,
+    triggers: bool = False,
+    preserve_limits: bool = False,
+    numeric_state_scopes: bool = False,
+    preserve_idea_effects: bool = False,
+    preserve_root_reentry: bool = False,
 ) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
     """(own-scope text, excluded option-level blocks as key -> (offset, body))."""
     scope_blocks = _OWN_SCOPE_BLOCKS
@@ -1313,43 +1348,97 @@ def _split_option(
     depth = 0
     cursor = 0
     kept_whole = 0
-    skip: Optional[Tuple[int, int, Optional[str]]] = None
+    stack: List[Optional[str]] = []
+    skip: Optional[Tuple[int, int, Optional[str], Optional[str]]] = None
     for m in _BLOCK_TOKEN_RE.finditer(body):
         if m.group(0) != "}":
+            parent_key = stack[-1] if stack else None
             depth += 1
             key = m.group(1)
+            stack.append(key)
             if skip is not None or kept_whole:
                 continue
             if (
                 key in _VARIABLE_EFFECTS
                 or key in _EQUIPMENT_COSTS
                 or (triggers and key == "check_variable")
+                or (preserve_limits and key == "limit")
+                or (preserve_idea_effects and key in _IDEA_MUTATION_BLOCKS)
             ):
                 kept_whole = depth
             else:
                 excluded = (
                     key not in scope_blocks
                     and (country is None or key != country)
-                    and not (key or "").isdigit()
+                    and not (
+                        (key or "").isdigit()
+                        and (not numeric_state_scopes or parent_key == "random_list")
+                    )
                 )
                 if not triggers and key in {"if", "else_if", "random"}:
                     end = find_unquoted_brace_close(body, m.end() - 1)
                     excluded = _disabled_cost_branch(key, body[m.end() : end])
                 if excluded:
                     own.append(body[cursor : m.start()])
-                    skip = (depth, m.end(), key)
+                    skip = (depth, m.end(), key, parent_key)
             continue
         if kept_whole == depth:
             kept_whole = 0
         if skip is not None and skip[0] == depth:
             if depth == 1:
                 blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
+            if (
+                preserve_root_reentry
+                and skip[2] not in {"limit", "trigger"}
+                and not ((skip[2] or "").isdigit() and skip[3] == "random_list")
+            ):
+                own.append(
+                    _root_reentry_effects(
+                        body[skip[1] : m.start()],
+                        country,
+                        preserve_limits=preserve_limits,
+                    )
+                )
             cursor = m.end()
             skip = None
         depth -= 1
+        if stack:
+            stack.pop()
     if skip is None:
         own.append(body[cursor:])
     return " ".join(own), blocks
+
+
+def _root_reentry_effects(
+    body: str, country: Optional[str], *, preserve_limits: bool
+) -> str:
+    """Keep only ROOT effects reached while executing in a foreign scope."""
+    effects: List[str] = []
+    for key, _value, block in iter_statements(body):
+        if (
+            block is None
+            or key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+            or key in _IDEA_MUTATION_BLOCKS
+        ):
+            continue
+        if key == "ROOT":
+            own, _blocks = _split_option(
+                block,
+                country,
+                preserve_limits=preserve_limits,
+                numeric_state_scopes=True,
+                preserve_idea_effects=True,
+                preserve_root_reentry=True,
+            )
+            if own.strip():
+                effects.append(f"ROOT = {{ {own} }}")
+        else:
+            effects.append(
+                _root_reentry_effects(block, country, preserve_limits=preserve_limits)
+            )
+    return " ".join(effect for effect in effects if effect)
 
 
 def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
@@ -1479,6 +1568,295 @@ def find_cost_blind_options(
     return out
 
 
+def _statement_corruption_level_bound(
+    key: str,
+    value: Optional[str],
+    block: Optional[str],
+    country: Optional[str] = None,
+) -> Optional[int]:
+    """Minimum corruption level implied by one trigger statement, if known.
+
+    A level-1 exclusion supplies a floor of 2. Repeated decreases can still
+    reach the level-1 PP refund branch.
+    """
+    if key == "NOT" and block is not None:
+        statements = list(iter_statements(block))
+        if len(statements) == 1:
+            child_key, child_value, child_block = statements[0]
+            if (
+                child_key == "has_idea"
+                and child_value == _MIN_CORRUPTION_ID
+                and child_block is None
+            ):
+                return 2
+            if child_key == "OR" and child_block is not None:
+                excludes = any(
+                    branch_key == "has_idea"
+                    and branch_value == _MIN_CORRUPTION_ID
+                    and branch_block is None
+                    for branch_key, branch_value, branch_block in iter_statements(
+                        child_block
+                    )
+                )
+                return 2 if excludes else None
+        return None
+    if key == "has_idea" and value is not None and block is None:
+        match = _CORRUPTION_LEVEL_RE.fullmatch(value)
+        return int(match.group(1)) if match else None
+    if block is None:
+        return None
+    statements = list(iter_statements(block))
+    if key == "OR":
+        bounds = [
+            _statement_corruption_level_bound(*branch, country=country)
+            for branch in statements
+        ]
+        return (
+            min(bounds)
+            if bounds and all(bound is not None for bound in bounds)
+            else None
+        )
+    if (
+        key in {"AND", "ROOT", "THIS", "hidden_trigger", "custom_trigger_tooltip"}
+        or key == country
+    ):
+        bounds = [
+            _statement_corruption_level_bound(*statement, country=country)
+            for statement in statements
+        ]
+        proven = [bound for bound in bounds if bound is not None]
+        return max(proven) if proven else None
+    return None
+
+
+def _trigger_corruption_level_bound(
+    trigger: str, country: Optional[str] = None
+) -> Optional[int]:
+    """Minimum corruption level implied by a trigger's conjunctive conditions."""
+    bounds = [
+        _statement_corruption_level_bound(key, value, block, country)
+        for key, value, block in iter_statements(trigger)
+    ]
+    proven = [bound for bound in bounds if bound is not None]
+    return max(proven) if proven else None
+
+
+def _negative_pp_cost(value: Optional[str]) -> bool:
+    return bool(
+        value is not None
+        and _NEGATIVE_NUMBER_RE.fullmatch(value)
+        and any(character in "123456789" for character in value)
+    )
+
+
+def _effect_presence(body: str) -> Tuple[float, int]:
+    """Total literal negative PP charge and count of decrease_corruption calls."""
+    pp_charge = 0.0
+    decreases_corruption = 0
+    for key, value, block in iter_statements(body):
+        if (
+            key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+        ):
+            continue
+        if key == "add_political_power" and _negative_pp_cost(value):
+            pp_charge -= float(value or 0)
+        elif key == "decrease_corruption" and value == "yes":
+            decreases_corruption += 1
+        if block is not None:
+            nested_charge, nested_decrease = _effect_presence(block)
+            pp_charge += nested_charge
+            decreases_corruption += nested_decrease
+    return pp_charge, decreases_corruption
+
+
+def _guard_prevents_min_corruption_refund(
+    bound: Optional[int], decrease_calls: int
+) -> bool:
+    return bound is not None and decrease_calls < bound
+
+
+def _has_corruption_level_mutation(body: str) -> bool:
+    """Whether own-scope effects can invalidate a previously checked level bound."""
+    for key, value, block in iter_statements(body):
+        if key == "decrease_corruption" and value == "yes":
+            return True
+        if key in _IDEA_MUTATION_BLOCKS and _CORRUPTION_ID_RE.search(
+            value or block or ""
+        ):
+            return True
+        if (
+            block is not None
+            and key not in {"limit", "trigger"}
+            and key not in _VARIABLE_EFFECTS
+            and key not in _EQUIPMENT_COSTS
+            and _has_corruption_level_mutation(block)
+        ):
+            return True
+    return False
+
+
+def _idea_mutation_before_decrease(
+    body: str, changed_idea: bool = False
+) -> Tuple[bool, bool]:
+    """Whether an idea change precedes a decrease, and whether one remains pending."""
+    for key, value, block in iter_statements(body):
+        if key == "decrease_corruption" and value == "yes":
+            if changed_idea:
+                return True, True
+            continue
+        if key in _IDEA_MUTATION_BLOCKS and _CORRUPTION_ID_RE.search(
+            value or block or ""
+        ):
+            changed_idea = True
+            continue
+        if (
+            block is not None
+            and key not in {"limit", "trigger"}
+            and key not in _VARIABLE_EFFECTS
+            and key not in _EQUIPMENT_COSTS
+        ):
+            invalidated, nested_change = _idea_mutation_before_decrease(
+                block, changed_idea
+            )
+            if invalidated:
+                return True, True
+            changed_idea = nested_change
+    return False, changed_idea
+
+
+def _all_corruption_operations_guarded(
+    body: str, country: Optional[str] = None
+) -> bool:
+    """Require every relevant operation to sit in a guarded paid-decrease block."""
+    for key, value, block in iter_statements(body):
+        if (key == "add_political_power" and _negative_pp_cost(value)) or (
+            key == "decrease_corruption" and value == "yes"
+        ):
+            return False
+        if (
+            block is None
+            or key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+        ):
+            continue
+        if key in {"if", "else_if"}:
+            limit = next(
+                (
+                    nested
+                    for nested_key, _nested_value, nested in iter_statements(block)
+                    if nested_key == "limit" and nested is not None
+                ),
+                None,
+            )
+            bound = _trigger_corruption_level_bound(limit, country) if limit else None
+            if bound is not None:
+                pp_charge, decreases_corruption = _effect_presence(block)
+                idea_bound_invalidated, _idea_change_remains = (
+                    _idea_mutation_before_decrease(block)
+                )
+                if (
+                    pp_charge
+                    and decreases_corruption
+                    and not idea_bound_invalidated
+                    and _guard_prevents_min_corruption_refund(
+                        bound, decreases_corruption
+                    )
+                ):
+                    continue
+        if not _all_corruption_operations_guarded(block, country):
+            return False
+    return True
+
+
+def find_corruption_pp_cost_options(text: str) -> List[Tuple[str, int]]:
+    """Return event options charging literal PP while decreasing corruption unguarded.
+
+    Only a charge above the 150 PP each decrease refunds at level 1 can lose PP.
+    A level-1 exclusion must gate the event, the option, or an effect block that
+    contains both operations. Dynamic PP values and unrelated country scopes are
+    left to manual review.
+    """
+    source = strip_comments(text)
+    code = blank_quoted_strings(source)
+    line = _line_lookup(code)
+    out: List[Tuple[str, int]] = []
+    for _event_id, body, start in _iter_event_bodies(code):
+        event_trigger = _event_trigger_body(body) or ""
+        country = _receiver_tag(event_trigger)
+        event_bound = _trigger_corruption_level_bound(event_trigger, country)
+        event_immediate = next(
+            (
+                block
+                for key, _value, block in iter_statements(body)
+                if key == "immediate" and block is not None
+            ),
+            "",
+        )
+        immediate_effects, _immediate_blocks = _split_option(
+            event_immediate,
+            country,
+            numeric_state_scopes=True,
+            preserve_idea_effects=True,
+            preserve_root_reentry=True,
+        )
+        if _has_corruption_level_mutation(immediate_effects):
+            event_bound = None
+        base = code.index("{", start) + 1
+        for match in _OPTION_OPEN_RE.finditer(body):
+            end = find_unquoted_brace_close(body, match.end() - 1)
+            if end == -1:
+                continue
+            option = body[match.end() : end]
+            own_effects, blocks = _split_option(
+                option,
+                country,
+                preserve_limits=True,
+                numeric_state_scopes=True,
+                preserve_idea_effects=True,
+                preserve_root_reentry=True,
+            )
+            option_trigger = blocks.get("trigger", (0, ""))[1]
+            option_bound = _trigger_corruption_level_bound(option_trigger, country)
+            idea_bound_invalidated, _idea_change_remains = (
+                _idea_mutation_before_decrease(own_effects)
+            )
+            if idea_bound_invalidated:
+                bound = None
+            else:
+                bound = max(
+                    (
+                        value
+                        for value in (event_bound, option_bound)
+                        if value is not None
+                    ),
+                    default=None,
+                )
+            pp_charge, decreases_corruption = _effect_presence(own_effects)
+            # At level 1 each decrease refunds this much, so a smaller charge loses nothing.
+            if (
+                not decreases_corruption
+                or pp_charge <= _MIN_CORRUPTION_REFUND * decreases_corruption
+            ):
+                continue
+            if _guard_prevents_min_corruption_refund(bound, decreases_corruption):
+                continue
+            if _all_corruption_operations_guarded(own_effects, country):
+                continue
+            option_name = _OPTION_NAME_RE.search(
+                source, base + match.start(), base + end
+            )
+            out.append(
+                (
+                    option_name.group(1) if option_name else "unnamed option",
+                    line(base + match.start()),
+                )
+            )
+    return out
+
+
 def _extract_random_event_ids(text: str) -> set:
     """Find event IDs referenced inside ``random_events = { ... }`` blocks.
 
@@ -1585,9 +1963,16 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, check_ai_chance_costs: bool = False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        check_ai_chance_costs: bool = False,
+        check_corruption_pp_costs: bool = False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.check_ai_chance_costs = check_ai_chance_costs
+        self.check_corruption_pp_costs = check_corruption_pp_costs
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._parsed_event_files: Dict[str, Tuple[List[dict], Set[str]]] = {}
         self._random_events_cache: Optional[set] = None
@@ -2916,6 +3301,35 @@ class Validator(BaseValidator):
             category="event-ai-chance-ignores-cost",
         )
 
+    def validate_corruption_pp_cost(self):
+        """Warn when paid event options can waste PP at the minimum corruption level."""
+        if not self.check_corruption_pp_costs:
+            self._log_section(
+                "Skipping event corruption PP cost check "
+                "(pass --check-corruption-pp-costs to enable)"
+            )
+            return
+        self._log_section(
+            "Checking event options for paid corruption decreases without a level-1 guard..."
+        )
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[Tuple[str, str, int]] = []
+        for sub in self._pool_map(
+            partial(_extract_corruption_pp_cost_options, mod_path=self.mod_path), files
+        ):
+            results.extend(sub)
+        self._report(
+            sorted(results, key=lambda result: (result[1], result[2])),
+            "✓ No charged event corruption decreases omit a level-1 guard",
+            "Event options needing review for a PP charge with decrease_corruption "
+            "and no recognized local minimum-corruption guard:",
+            Severity.WARNING,
+            category="event-corruption-pp-cost",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -2940,6 +3354,7 @@ class Validator(BaseValidator):
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
         self.validate_option_log_id()
+        self.validate_corruption_pp_cost()
         self.validate_ai_chance_ignores_cost()
 
 
@@ -2949,6 +3364,15 @@ def _add_extra_args(parser):
         action="store_true",
         dest="check_ai_chance_costs",
         help="Report event options whose ai_chance ignores the option's cost",
+    )
+    parser.add_argument(
+        "--check-corruption-pp-costs",
+        action="store_true",
+        dest="check_corruption_pp_costs",
+        help=(
+            "Warn on event options that charge political power to decrease "
+            "corruption without a minimum-corruption guard"
+        ),
     )
 
 
