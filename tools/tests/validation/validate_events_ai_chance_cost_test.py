@@ -77,6 +77,12 @@ _SCRIPTED_EFFECTS = (
     "\tadd_stability = -0.01\n"
     "\tTAG_loops_forever = yes\n"
     "}\n"
+    "TAG_war_only_cost = {\n"
+    "\tif = {\n"
+    "\t\tlimit = { has_war = yes }\n"
+    "\t\tadd_political_power = -50\n"
+    "\t}\n"
+    "}\n"
     "increase_economic_growth = {\n"
     "\tadd_political_power = 10\n"
     "}\n"
@@ -320,6 +326,201 @@ _OPTION_CASES = {
         ),
         [],
     ),
+    "unconditional scripted costs stay shared": (
+        _event(
+            _option("foo.1.a", "\t\tlose_pp_for_15_days = yes\n" + _FLAT),
+            _option("foo.1.b", "\t\tlose_pp_for_15_days = yes\n" + _FLAT),
+        ),
+        [],
+    ),
+    "unconditional variable costs stay shared": (
+        _event(
+            _option("foo.1.a", "\t\tadd_to_variable = { treasury = -5 }\n" + _FLAT),
+            _option("foo.1.b", "\t\tadd_to_variable = { treasury = -5 }\n" + _FLAT),
+        ),
+        [],
+    ),
+    "own-country wrappers keep unconditional shared costs": (
+        _event(
+            _option(
+                "foo.1.a", "\t\thidden_effect = { add_political_power = -50 }\n" + _FLAT
+            ),
+            _option("foo.1.b", "\t\tROOT = { add_political_power = -50 }\n" + _FLAT),
+        ),
+        [],
+    ),
+    "always-paid and war-only costs are not shared": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                + _FLAT,
+            ),
+        ),
+        [
+            ("foo.1.a", 8, "political power", False),
+            ("foo.1.b", 13, "political power", False),
+        ],
+    ),
+    "nested conditional cost is not shared": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\tif = {\n"
+                "\t\t\tlimit = { has_war = yes }\n"
+                "\t\t\tif = { limit = { has_country_flag = foo } add_political_power = -50 }\n"
+                "\t\t}\n" + _FLAT,
+            ),
+        ),
+        [
+            ("foo.1.a", 8, "political power", False),
+            ("foo.1.b", 16, "political power", False),
+        ],
+    ),
+    "random conditional cost is not shared": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\trandom = { chance = 50 add_political_power = -50 }\n" + _FLAT,
+            ),
+        ),
+        [
+            ("foo.1.a", 8, "political power", False),
+            ("foo.1.b", 13, "political power", False),
+        ],
+    ),
+    "random-list conditional cost is not shared": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\trandom_list = { 50 = { add_political_power = -50 } 50 = { } }\n"
+                + _FLAT,
+            ),
+        ),
+        [
+            ("foo.1.a", 8, "political power", False),
+            ("foo.1.b", 13, "political power", False),
+        ],
+    ),
+    "scripted conditional cost is not shared": (
+        _event(
+            _option("foo.1.a", _PP_COST + _FLAT),
+            _option("foo.1.b", "\t\tTAG_war_only_cost = yes\n" + _FLAT),
+        ),
+        [
+            ("foo.1.a", 8, "political power", False),
+            ("foo.1.b", 13, "political power", False),
+        ],
+    ),
+    "scripted charge after conditional variable change is not shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tset_temp_variable = { debt_change = 5 }\n"
+                "\t\tmodify_debt_effect = yes\n" + _FLAT,
+            ),
+            _option(
+                "foo.1.b",
+                "\t\tset_temp_variable = { bill = 0 }\n"
+                "\t\tif = {\n"
+                "\t\t\tlimit = { has_war = yes }\n"
+                "\t\t\tset_temp_variable = { bill = 5 }\n"
+                "\t\t}\n"
+                "\t\tset_temp_variable = { debt_change = bill }\n"
+                "\t\tmodify_debt_effect = yes\n" + _FLAT,
+            ),
+        ),
+        [
+            ("foo.1.a", 9, "debt", False),
+            ("foo.1.b", 20, "debt", False),
+        ],
+    ),
+    "unconditional reset restores a shared charge": (
+        _event(
+            _option("foo.1.a", "\t\tadd_to_variable = { debt = 5 }\n" + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\tset_temp_variable = { debt_change = 0 }\n"
+                "\t\tif = { limit = { has_war = yes } set_temp_variable = { debt_change = 5 } }\n"
+                "\t\tset_temp_variable = { debt_change = 5 }\n"
+                "\t\tmodify_debt_effect = yes\n" + _FLAT,
+            ),
+        ),
+        [],
+    ),
+    "branch-only positive variable assignment stays conditional": (
+        _event(
+            _option("foo.1.a", "\t\tadd_to_variable = { debt = 5 }\n" + _FLAT),
+            _option(
+                "foo.1.b",
+                "\t\tif = { limit = { has_war = yes } set_temp_variable = { debt_change = 5 } }\n"
+                "\t\tmodify_debt_effect = yes\n" + _FLAT,
+            ),
+        ),
+        [("foo.1.a", 8, "debt", False), ("foo.1.b", 14, "debt", False)],
+    ),
+    "charge-skip guards stay shared": (
+        _event(
+            _option("foo.1.a", "\t\tsmall_expenditure = yes\n" + _FLAT),
+            _option("foo.1.b", "\t\tone_office_construction = yes\n" + _FLAT),
+        ),
+        [],
+    ),
+    "if and else that both charge stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                "\t\telse = { add_political_power = -25 }\n" + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [],
+    ),
+    "if and else_if without else are not shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                "\t\telse_if = { limit = { has_war = no } add_political_power = -25 }\n"
+                + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [
+            ("foo.1.a", 9, "political power", False),
+            ("foo.1.b", 14, "political power", False),
+        ],
+    ),
+    "random-list buckets that all charge stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\trandom_list = { 50 = { add_political_power = -50 } "
+                "50 = { add_political_power = -10 } }\n" + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [],
+    ),
+    "costs every option pays only sometimes stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                + _FLAT,
+            ),
+            _option(
+                "foo.1.b",
+                "\t\trandom = { chance = 50 add_political_power = -50 }\n" + _FLAT,
+            ),
+        ),
+        [],
+    ),
     "only the shared kind is skipped": (
         _event(
             _option("foo.1.a", _PP_COST + "\t\tadd_stability = -0.02\n" + _FLAT),
@@ -424,6 +625,12 @@ def test_find_cost_blind_options(text, expected):
             "\t\tsubtract_from_temp_variable = { needed_money = 4.5 }\n"
             "\t\tset_temp_variable = { treasury_change = needed_money }\n"
             "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tif = { limit = { has_war = yes } set_temp_variable = { bill = 0 } }\n"
+            "\t\tsubtract_from_temp_variable = { bill = 5 }\n"
+            "\t\tadd_to_variable = { treasury = bill }\n",
             "treasury",
         ),
         (
@@ -610,6 +817,7 @@ def test_only_effects_that_can_charge_the_caller_are_kept():
         "lose_pp_for_15_days",
         "TAG_pay_or_defer",
         "TAG_loops_forever",
+        "TAG_war_only_cost",
         "modify_corporate_tax_rate_effect",
     }
 
