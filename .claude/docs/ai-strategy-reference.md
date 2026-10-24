@@ -119,8 +119,23 @@ ai_strategy = { type = conquer id = GER value = 200 }
   production. A `role_ratio` or `build_army` on a shortage gate flips as stock moves, and
   each flip deletes or re-queues training lines.
 - `default_AI_needs_to_live` adds light infantry once surrender progress passes 0.49.
-- A country gets a custom chip or composite production strategy only when it is a
-  significant producer. Others use the generic logic.
+
+## Construction
+
+- `AI_construction_priorities` and `AI_wartime_construction_priorities` in
+  `MD_econ_ai.txt` hold the generic building weights and the only
+  `added_military_to_civilian_factory_ratio`. Tune them before adding a tier or per-tag
+  block. Microchip plants come only from `AI_build_microchip_plants`, and strategy plans
+  carry no construction strategies.
+- `CONSTRUCTION_PRIO_*` and `BUILDING_TARGETS_BUILDING_PRIORITIES` in `MD_defines.lua`
+  order the construction queue and competing `building_target` floors.
+- Gate on `num_of_civilian_factories`, never `num_of_available_civilian_factories`. AI
+  countries have no idle factories, so the available count stays near 0.
+- `build_building` without `target` on `industrial_complex` or `arms_factory` converts
+  an existing factory instead of building one, because both have `base_cost_conversion`.
+  Use `building_target` for a factory floor. Other buildings take weights.
+- The engine's own build picks weigh 1. Keep always-on generic weights in low single
+  digits so they do not crowd out factory construction.
 
 ## Strategy plans (`common/ai_strategy_plans/`)
 
