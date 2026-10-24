@@ -79,6 +79,13 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
 }
 
+_VariantDlcRecord = Tuple[
+    Optional[str], str, Dict[str, bool], Optional[Tuple[int, int, int]]
+]
+_VariantDlcIndex = Tuple[Dict[str, List[_VariantDlcRecord]], List[_VariantDlcRecord]]
+_UNCERTAIN_DLC_CONTEXT = "__uncertain__"
+_UNCERTAIN_PRODUCER_CONTEXT = "__uncertain_producer__"
+
 # Every directory where a create_equipment_variant effect actually appears.
 _VARIANT_SOURCE_PATTERNS = [
     "history/countries/*.txt",
@@ -88,10 +95,36 @@ _VARIANT_SOURCE_PATTERNS = [
     "common/special_projects/*.txt",
     "common/scripted_effects/*.txt",
 ]
+_NAMED_VARIANT_CONSUMER_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
+    "history/units/*.txt",
+    "common/on_actions/*.txt",
+    "common/operations/*.txt",
+    "common/resistance_compliance_modifiers/*.txt",
+    "common/scripted_guis/**/*.txt",
+    "common/ideas/**/*.txt",
+    "common/military_industrial_organization/**/*.txt",
+]
+_VARIANT_SOURCE_ROOTS = (
+    "history/countries/",
+    "common/national_focus/",
+    "events/",
+    "common/decisions/",
+    "common/special_projects/",
+    "common/scripted_effects/",
+)
+_DLC_PATH_CONSTRAINTS = (
+    ("_bba.txt", "By Blood Alone", True),
+    ("_nonbba.txt", "By Blood Alone", False),
+    ("_nsb.txt", "No Step Back", True),
+    ("_nonnsb.txt", "No Step Back", False),
+    ("_naval_mtg.txt", "Man the Guns", True),
+)
 
 _VARIANT_REF_CATEGORIES = {
     "unknown_variant": "OOB SHIP: version_name has no matching equipment variant",
     "attributed_archetype": "PRODUCTION: archetype attributed to a producer",
+    "unknown_named_variant": "NAMED VARIANT: unresolved producer, type, and name",
+    "wrong_variant_type": "NAMED VARIANT: name exists for a different equipment type",
 }
 
 # The archetype rule only covers startup-loaded history. Focus and event rewards
@@ -146,6 +179,12 @@ _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
 _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
+_FIELD_VALUE_RE = re.compile(r'\b([A-Za-z_]\w*)\s*=\s*(?:"([^"\n]*)"|([^\s{}]+))')
+_LITERAL_TAG_RE = re.compile(r"[A-Z0-9_]{3}\Z")
+_DYNAMIC_VARIANT_NAME_RE = re.compile(r"\$|\[|\]")
+_AIR_WING_VARIANT_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*\{([^{}]*)\}")
+_AIRFRAME_TYPE_RE = re.compile(r"[A-Za-z_]\w*airframe_\d+\Z")
+_HISTORY_DATE_RE = re.compile(r"(\d{1,4})\.(\d{1,2})\.(\d{1,2})\Z")
 _LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
 _DIVISION_TEMPLATE_DEF_PATTERN = r"division_template\s*=\s*\{"
 _DIVISION_TEMPLATE_DEF_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN.encode())
@@ -636,6 +675,231 @@ def build_variant_name_index(
     return by_tag, wildcard
 
 
+def _path_dlc_context(rel: str) -> Dict[str, bool]:
+    name = os.path.basename(rel)
+    for suffix, dlc, enabled in _DLC_PATH_CONSTRAINTS:
+        if name.endswith(suffix):
+            return {dlc: enabled}
+    return {}
+
+
+def _direct_fields(text: str, lo: int, hi: int) -> List[Tuple[str, str]]:
+    fields = []
+    for match in _FIELD_VALUE_RE.finditer(text, lo, hi):
+        before = text[lo : match.start()]
+        if before.count("{") == before.count("}"):
+            value = match.group(2) if match.group(2) is not None else match.group(3)
+            fields.append((match.group(1), value))
+    return fields
+
+
+def _simple_dlc_condition(text: str, lo: int, hi: int) -> Optional[Tuple[str, bool]]:
+    fields = _direct_fields(text, lo, hi)
+    blocks = list(_iter_blocks(text, lo, hi))
+    if not blocks and len(fields) == 1 and fields[0][0] == "has_dlc":
+        return fields[0][1].strip('"'), True
+    if len(blocks) != 1 or blocks[0][0] != "NOT" or fields:
+        return None
+    _, not_lo, not_hi, _ = blocks[0]
+    nested_fields = _direct_fields(text, not_lo, not_hi)
+    if (
+        list(_iter_blocks(text, not_lo, not_hi))
+        or len(nested_fields) != 1
+        or nested_fields[0][0] != "has_dlc"
+    ):
+        return None
+    return nested_fields[0][1].strip('"'), False
+
+
+def _if_dlc_gate(text: str, node: Dict[str, Any]) -> Optional[Tuple[str, bool]]:
+    limits = list(_iter_named_blocks(text, node["start"] + 1, node["end"], "limit"))
+    if len(limits) != 1:
+        return None
+    return _simple_dlc_condition(text, *limits[0])
+
+
+def _merge_dlc_gate(context: Dict[str, bool], gate: Optional[Tuple[str, bool]]) -> bool:
+    if gate is None:
+        return True
+    dlc, enabled = gate
+    if dlc in context and context[dlc] != enabled:
+        return False
+    context[dlc] = enabled
+    return True
+
+
+def _dlc_contexts_compatible(
+    candidate: Dict[str, bool], consumer: Dict[str, bool]
+) -> bool:
+    return all(
+        dlc == _UNCERTAIN_DLC_CONTEXT or dlc not in consumer or consumer[dlc] == enabled
+        for dlc, enabled in candidate.items()
+    )
+
+
+def _variant_record_status(
+    candidate_context: Dict[str, bool],
+    consumer_context: Dict[str, bool],
+    source_date: Optional[Tuple[int, int, int]],
+    consumer_date: Optional[Tuple[int, int, int]],
+) -> Tuple[bool, bool]:
+    """Return whether a definition could apply and whether that is uncertain."""
+    if not _dlc_contexts_compatible(candidate_context, consumer_context):
+        return False, False
+    if (
+        source_date is not None
+        and consumer_date is not None
+        and source_date > consumer_date
+    ):
+        return False, False
+    uncertain_context = (
+        _UNCERTAIN_DLC_CONTEXT in candidate_context
+        or _UNCERTAIN_DLC_CONTEXT in consumer_context
+        or _UNCERTAIN_PRODUCER_CONTEXT in candidate_context
+    )
+    uncertain_date = (consumer_date is not None and source_date is None) or (
+        consumer_date is None and source_date is not None and source_date != (1, 1, 1)
+    )
+    return True, uncertain_context or uncertain_date
+
+
+def _dlc_context_at_offset(
+    text: str,
+    nodes: List[Dict[str, Any]],
+    offset: int,
+    source_path: str = "",
+) -> Optional[Dict[str, bool]]:
+    context = _path_dlc_context(source_path)
+    candidates = [
+        index
+        for index, node in enumerate(nodes)
+        if node["start"] <= offset <= node["end"]
+    ]
+    if candidates:
+        index = min(
+            candidates,
+            key=lambda candidate: nodes[candidate]["end"] - nodes[candidate]["start"],
+        )
+        chain = []
+        while index != -1:
+            chain.append(index)
+            index = nodes[index]["parent"]
+        chain_set = set(chain)
+        for index in reversed(chain):
+            node = nodes[index]
+            if node["label"] == "if":
+                is_else_branch = any(
+                    child in chain_set
+                    and nodes[child]["label"] in {"else", "else_if"}
+                    and nodes[child]["parent"] == index
+                    for child in chain_set
+                )
+                if not is_else_branch:
+                    gate = _if_dlc_gate(text, node)
+                    if gate is None:
+                        context[_UNCERTAIN_DLC_CONTEXT] = True
+                    elif not _merge_dlc_gate(context, gate):
+                        return None
+            elif node["label"] in {"else", "else_if"}:
+                parent = node["parent"]
+                if parent != -1 and nodes[parent]["label"] == "if":
+                    previous = [nodes[parent]]
+                else:
+                    siblings = (
+                        nodes[parent]["children"]
+                        if parent != -1
+                        else [
+                            i
+                            for i, candidate in enumerate(nodes)
+                            if candidate["parent"] == -1
+                        ]
+                    )
+                    position = siblings.index(index) if index in siblings else 0
+                    previous = []
+                    for sibling in reversed(siblings[:position]):
+                        if nodes[sibling]["label"] not in {"if", "else_if"}:
+                            break
+                        previous.append(nodes[sibling])
+                for prior in previous:
+                    gate = _if_dlc_gate(text, prior)
+                    if gate:
+                        if not _merge_dlc_gate(context, (gate[0], not gate[1])):
+                            return None
+                    else:
+                        context[_UNCERTAIN_DLC_CONTEXT] = True
+                if node["label"] == "else_if":
+                    gate = _if_dlc_gate(text, node)
+                    if gate is None:
+                        context[_UNCERTAIN_DLC_CONTEXT] = True
+                    elif not _merge_dlc_gate(context, gate):
+                        return None
+    return context
+
+
+def _history_date_at_offset(
+    text: str, nodes: List[Dict[str, Any]], offset: int, source_path: str = ""
+) -> Optional[Tuple[int, int, int]]:
+    normalized_path = source_path.replace("\\", "/")
+    if normalized_path.startswith("history/units/"):
+        match = re.search(r"_(\d{4})(?:_|\.)", os.path.basename(source_path))
+        if match:
+            return int(match.group(1)), 1, 1
+    candidates = [
+        node
+        for node in nodes
+        if node["start"] <= offset <= node["end"]
+        and _HISTORY_DATE_RE.fullmatch(node["label"] or "")
+    ]
+    if candidates:
+        date = min(candidates, key=lambda node: node["end"] - node["start"])["label"]
+        return tuple(int(part) for part in date.split("."))
+    return None
+
+
+def build_variant_dlc_index(
+    sources: List[Tuple[str, Optional[CreatedVariants]]],
+) -> _VariantDlcIndex:
+    """Map variants to their producer and simple surrounding DLC conditions."""
+    by_tag: Dict[str, List[_VariantDlcRecord]] = {}
+    wildcard: List[_VariantDlcRecord] = []
+    for rel, variants in sources:
+        if variants is None:
+            continue
+        nodes = _build_block_nodes(variants.text)
+        for lo, hi in variants.spans:
+            name = _field_value(variants.text, lo, hi, "name")
+            equipment = _literal_variant_type(variants.text, lo, hi)
+            if not name:
+                continue
+            context = _dlc_context_at_offset(variants.text, nodes, lo, rel)
+            if context is None:
+                continue
+            source_date = _history_date_at_offset(variants.text, nodes, lo, rel)
+            if source_date is None and rel.replace("\\", "/").startswith(
+                "history/countries/"
+            ):
+                source_date = (1, 1, 1)
+            variant_node = min(
+                (node for node in nodes if node["start"] <= lo <= node["end"]),
+                key=lambda node: node["end"] - node["start"],
+            )
+            scopes = _country_scope_path(nodes, nodes.index(variant_node))
+            country_scopes = scopes[1:]
+            if any(not _LITERAL_TAG_RE.fullmatch(scope) for scope in country_scopes):
+                context[_UNCERTAIN_PRODUCER_CONTEXT] = True
+                tag = None
+            else:
+                tag = (
+                    country_scopes[-1] if country_scopes else variant_tag_from_path(rel)
+                )
+            record = (equipment, name, context, source_date)
+            if tag:
+                by_tag.setdefault(tag, []).append(record)
+            else:
+                wildcard.append(record)
+    return by_tag, wildcard
+
+
 def parse_archetypes(equipment_texts: List[str]) -> Set[str]:
     """Equipment names declared `is_archetype = yes`."""
     archetypes: Set[str] = set()
@@ -681,6 +945,347 @@ def check_oob_variant_refs(
                 f"the ship falls back to version 0 of the hull",
             )
         )
+    return findings
+
+
+def _field_match(text: str, lo: int, hi: int, key: str) -> Optional[re.Match]:
+    """Find a literal scalar assignment at depth zero of a block."""
+    for match in _FIELD_VALUE_RE.finditer(text, lo, hi):
+        if match.group(1) != key:
+            continue
+        before = text[lo : match.start()]
+        if before.count("{") == before.count("}"):
+            return match
+    return None
+
+
+def _field_value(text: str, lo: int, hi: int, key: str) -> Optional[str]:
+    match = _field_match(text, lo, hi, key)
+    if match is None:
+        return None
+    return match.group(2) if match.group(2) is not None else match.group(3)
+
+
+def _literal_variant_type(text: str, lo: int, hi: int) -> Optional[str]:
+    """Return a complete literal equipment type, leaving dynamic values unknown."""
+    match = _field_match(text, lo, hi, "type")
+    if match is None or match.group(2) is not None:
+        return None
+    value = match.group(3)
+    return value if value and re.fullmatch(r"[A-Za-z_]\w*", value) else None
+
+
+def _literal_variant_name(
+    text: str, lo: int, hi: int, key: str
+) -> Optional[Tuple[str, int, int]]:
+    match = _field_match(text, lo, hi, key)
+    if match is None or match.group(2) is None:
+        return None
+    name = match.group(2)
+    if not name or _DYNAMIC_VARIANT_NAME_RE.search(name):
+        return None
+    return name, text.count("\n", 0, match.start()) + 1, match.start()
+
+
+def _literal_producer(
+    text: str, lo: int, hi: int, keys: Tuple[str, ...]
+) -> Optional[str]:
+    for key in keys:
+        value = _field_value(text, lo, hi, key)
+        if value is not None:
+            return value if _LITERAL_TAG_RE.fullmatch(value) else None
+    return None
+
+
+def _named_variant_reference(
+    offset: int,
+    line: int,
+    producer: Optional[str],
+    equipment: Optional[str],
+    name: Optional[str],
+) -> Optional[Tuple[int, int, str, str, str]]:
+    if (
+        not producer
+        or not equipment
+        or not re.fullmatch(r"[A-Za-z_]\w*", equipment)
+        or not name
+    ):
+        return None
+    if not _LITERAL_TAG_RE.fullmatch(producer) or _DYNAMIC_VARIANT_NAME_RE.search(name):
+        return None
+    return offset, line, producer, equipment, name
+
+
+def _masked_create_unit_divisions(text: str) -> str:
+    """Hide serialized division strings before scanning ordinary game blocks."""
+    masked = list(text)
+    for blo, bhi in _iter_named_blocks(text, 0, len(text), "create_unit"):
+        match = _DIVISION_VALUE_RE.search(text, blo, bhi)
+        if match is None:
+            continue
+        for index in range(match.start(), match.end()):
+            if masked[index] != "\n":
+                masked[index] = " "
+    return "".join(masked)
+
+
+def _force_equipment_variant_refs(
+    text: str, *, source_line: Optional[int] = None, source_offset: Optional[int] = None
+) -> List[Tuple[int, int, str, str, str]]:
+    """Literal named variants in direct or serialized force_equipment_variants."""
+    refs = []
+    for blo, bhi in _iter_named_blocks(text, 0, len(text), "force_equipment_variants"):
+        for equipment, elo, ehi, _ in _iter_blocks(text, blo, bhi):
+            named = _literal_variant_name(text, elo, ehi, "version_name")
+            if not named:
+                continue
+            producer = _literal_producer(text, elo, ehi, ("creator", "owner"))
+            ref = _named_variant_reference(
+                source_offset if source_offset is not None else named[2],
+                source_line if source_line is not None else named[1],
+                producer,
+                equipment,
+                named[0],
+            )
+            if ref:
+                refs.append(ref)
+    return refs
+
+
+def _create_unit_variant_refs(text: str) -> List[Tuple[int, int, str, str, str]]:
+    refs = []
+    for blo, bhi in _iter_named_blocks(text, 0, len(text), "create_unit"):
+        division = _DIVISION_VALUE_RE.search(text, blo, bhi)
+        if division is None:
+            continue
+        division_text = division.group(1).replace('\\"', '"')
+        line = text.count("\n", 0, division.start()) + 1
+        refs.extend(
+            _force_equipment_variant_refs(
+                division_text, source_line=line, source_offset=division.start()
+            )
+        )
+    return refs
+
+
+def _literal_named_variant_refs(
+    content: str,
+) -> List[Tuple[int, int, str, str, str]]:
+    """Find literal air-wing, division, stockpile, and production consumers.
+
+    AI ``target_variant`` blocks are intentionally outside this history-reference
+    scan: their display names describe a design specification.
+    """
+    text = blank_comments(content)
+    refs: List[Tuple[int, int, str, str, str]] = []
+
+    force_spans = list(
+        _iter_named_blocks(text, 0, len(text), "force_equipment_variants")
+    )
+    air_wing_spans = list(_iter_named_blocks(text, 0, len(text), "air_wings"))
+    for match in _AIR_WING_VARIANT_RE.finditer(text):
+        if any(lo <= match.start() < hi for lo, hi in force_spans):
+            continue
+        equipment = match.group(1)
+        if not _AIRFRAME_TYPE_RE.fullmatch(equipment) and not any(
+            lo <= match.start() < hi for lo, hi in air_wing_spans
+        ):
+            continue
+        body_lo, body_hi = match.start(2), match.end(2)
+        name = _literal_variant_name(text, body_lo, body_hi, "version_name")
+        if not name:
+            continue
+        producer = _literal_producer(text, body_lo, body_hi, ("creator", "owner"))
+        ref = _named_variant_reference(
+            name[2],
+            name[1],
+            producer,
+            equipment,
+            name[0],
+        )
+        if ref:
+            refs.append(ref)
+
+    masked = _masked_create_unit_divisions(text)
+    refs.extend(_force_equipment_variant_refs(masked))
+    refs.extend(_create_unit_variant_refs(text))
+
+    for blo, bhi in _iter_named_blocks(
+        masked, 0, len(masked), "add_equipment_to_stockpile"
+    ):
+        named = _literal_variant_name(masked, blo, bhi, "variant_name")
+        if not named:
+            continue
+        producer = _literal_producer(masked, blo, bhi, ("producer",))
+        equipment = _field_value(masked, blo, bhi, "type")
+        ref = _named_variant_reference(
+            named[2], named[1], producer, equipment, named[0]
+        )
+        if ref:
+            refs.append(ref)
+
+    for blo, bhi in _iter_named_blocks(
+        masked, 0, len(masked), "add_equipment_production"
+    ):
+        equipment_blocks = list(_iter_named_blocks(masked, blo, bhi, "equipment"))
+        for elo, ehi in equipment_blocks or [(blo, bhi)]:
+            named = _literal_variant_name(masked, elo, ehi, "version_name")
+            if not named:
+                named = _literal_variant_name(masked, elo, ehi, "variant_name")
+            if not named:
+                continue
+            equipment = _field_value(masked, elo, ehi, "type")
+            producer_keys = ("creator", "producer")
+            producer_lo, producer_hi = elo, ehi
+            if not any(
+                _field_match(masked, elo, ehi, key) is not None for key in producer_keys
+            ):
+                producer_lo, producer_hi = blo, bhi
+            producer = _literal_producer(
+                masked, producer_lo, producer_hi, producer_keys
+            )
+            ref = _named_variant_reference(
+                named[2], named[1], producer, equipment, named[0]
+            )
+            if ref:
+                refs.append(ref)
+
+    return refs
+
+
+def check_named_variant_refs(
+    content: str,
+    by_tag: Dict[str, Set[Tuple[str, str]]],
+    wildcard: Set[Tuple[str, str]],
+    *,
+    source_path: str = "",
+    variant_dlc_index: Optional[_VariantDlcIndex] = None,
+) -> List[Finding]:
+    """Check literal non-ship named-variant consumers against their producer."""
+    findings = []
+    text = blank_comments(content)
+    contextual_by_tag, contextual_wildcard = variant_dlc_index or ({}, [])
+    nodes = _build_block_nodes(text) if variant_dlc_index is not None else []
+    for offset, line, producer, equipment, name in _literal_named_variant_refs(content):
+        consumer_context = {}
+        consumer_date = None
+        if variant_dlc_index is not None:
+            context = _dlc_context_at_offset(text, nodes, offset, source_path)
+            if context is None:
+                continue
+            consumer_context = context
+            consumer_date = _history_date_at_offset(text, nodes, offset, source_path)
+
+        if variant_dlc_index is None:
+            available = by_tag.get(producer, set())
+            exact = (equipment, name) in available or (equipment, name) in wildcard
+            other_types = sorted(
+                etype for etype, variant_name in available if variant_name == name
+            )
+            wildcard_name = any(variant_name == name for _, variant_name in wildcard)
+        else:
+            applicable = []
+            uncertain_evidence = _UNCERTAIN_DLC_CONTEXT in consumer_context
+            dynamic_type_available = False
+            for records, is_wildcard in (
+                (contextual_by_tag.get(producer, []), False),
+                (contextual_wildcard, True),
+            ):
+                for etype, variant_name, context, source_date in records:
+                    if variant_name != name:
+                        continue
+                    could_apply, uncertain = _variant_record_status(
+                        context, consumer_context, source_date, consumer_date
+                    )
+                    if not could_apply:
+                        continue
+                    uncertain_evidence = uncertain_evidence or uncertain
+                    dynamic_type_available = dynamic_type_available or etype is None
+                    applicable.append((etype, is_wildcard, uncertain, context))
+
+            exact = any(
+                etype == equipment and not is_wildcard and not uncertain
+                for etype, is_wildcard, uncertain, _ in applicable
+            )
+            if not exact:
+                producer_records = [
+                    (etype, uncertain)
+                    for etype, is_wildcard, uncertain, _ in applicable
+                    if not is_wildcard and etype is not None
+                ]
+                other_types = sorted(
+                    {
+                        etype
+                        for etype, uncertain in producer_records
+                        if etype != equipment and not uncertain
+                    }
+                )
+                uncertain_other_type = any(
+                    etype != equipment and uncertain
+                    for etype, uncertain in producer_records
+                )
+                uncertain_exact_type = any(
+                    etype == equipment and (is_wildcard or uncertain)
+                    for etype, is_wildcard, uncertain, _ in applicable
+                )
+                wildcard_name = any(
+                    is_wildcard
+                    and etype is not None
+                    and _UNCERTAIN_PRODUCER_CONTEXT not in context
+                    for etype, is_wildcard, _, context in applicable
+                )
+            else:
+                other_types = []
+                uncertain_other_type = False
+                uncertain_exact_type = False
+                wildcard_name = False
+
+            if not exact and (
+                uncertain_other_type
+                or (
+                    other_types
+                    and (
+                        uncertain_evidence
+                        or dynamic_type_available
+                        or uncertain_exact_type
+                    )
+                )
+            ):
+                findings.append(
+                    Finding(
+                        line,
+                        "unknown_named_variant",
+                        f'Unresolved named variant "{name}" for producer {producer} '
+                        f"and equipment type {equipment}; applicable definition context is uncertain",
+                    )
+                )
+                continue
+            if (
+                not exact
+                and not other_types
+                and (uncertain_exact_type or dynamic_type_available)
+            ):
+                continue
+        if exact:
+            continue
+        if other_types:
+            findings.append(
+                Finding(
+                    line,
+                    "wrong_variant_type",
+                    f'{producer} defines named variant "{name}" for {", ".join(other_types)}, '
+                    f"not requested equipment type {equipment}",
+                )
+            )
+        elif not wildcard_name:
+            findings.append(
+                Finding(
+                    line,
+                    "unknown_named_variant",
+                    f'Unresolved named variant "{name}" for producer {producer} '
+                    f"and equipment type {equipment}",
+                )
+            )
     return findings
 
 
@@ -2593,29 +3198,72 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking OOB and production equipment references...")
 
-        oob_files = self._collect_files(["history/units/*.txt"])
         prod_files = self._collect_files(_HISTORY_PRODUCTION_PATTERNS)
-        if not oob_files and not prod_files:
+        variant_definitions_changed = False
+        if self.staged_only:
+            staged_variant_sources = []
+            for path in (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            ):
+                rel = normalize_path_separators(os.path.relpath(path, self.mod_path))
+                if rel.startswith(_VARIANT_SOURCE_ROOTS) and rel.endswith(".txt"):
+                    staged_variant_sources.append(
+                        path
+                        if os.path.isabs(path)
+                        else os.path.join(self.mod_path, path)
+                    )
+            variant_definitions_changed = bool(staged_variant_sources) and (
+                _any_file_contains(staged_variant_sources, b"create_equipment_variant")
+                or _changed_lines_match(
+                    self.mod_path,
+                    staged_variant_sources,
+                    r"\bcreate_equipment_variant\s*=",
+                )
+            )
+        oob_files = self._collect_files(
+            ["history/units/*.txt"], ignore_staged=variant_definitions_changed
+        )
+        named_files = self._collect_files(
+            _NAMED_VARIANT_CONSUMER_PATTERNS,
+            ignore_staged=variant_definitions_changed,
+        )
+        if not oob_files and not prod_files and not named_files:
             self.log("  No OOB or production files in scope — skipping")
             return
         need_variants = _any_file_contains(oob_files, b"version_name")
+        need_named_variants = _any_file_contains(
+            named_files, b"version_name"
+        ) or _any_file_contains(named_files, b"variant_name")
         need_archetypes = _any_file_contains(prod_files, b"add_equipment_")
-        if not need_variants and not need_archetypes:
+        if not need_variants and not need_named_variants and not need_archetypes:
             self.log("  No equipment references in scope — skipping")
             return
 
+        variant_sources = self._get_variant_sources(ignore_staged=True)
+
         def _build_variants():
-            return build_variant_name_index(
-                self._get_variant_sources(ignore_staged=True)
-            )
+            return build_variant_name_index(variant_sources)
 
         by_tag: Dict[str, Set[Tuple[str, str]]] = {}
         wildcard: Set[Tuple[str, str]] = set()
-        if need_variants:
+        if need_variants or need_named_variants:
             by_tag, wildcard = self.cached("variant_name_index", _build_variants)
-            if not by_tag and not wildcard:
+            if need_variants and not by_tag and not wildcard:
                 self.log("  No equipment variants found")
-                need_variants = False
+                if not variant_definitions_changed:
+                    need_variants = False
+
+        variant_dlc_index = None
+        if need_named_variants:
+            variant_dlc_index = self.cached(
+                "variant_dlc_index",
+                lambda: build_variant_dlc_index(variant_sources),
+            )
 
         def _build_archetypes():
             units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
@@ -2629,7 +3277,7 @@ class Validator(BaseValidator):
         archetypes: Set[str] = set()
         if need_archetypes:
             archetypes = self.cached("equipment_archetypes", _build_archetypes)
-        if not need_variants and not need_archetypes:
+        if not need_variants and not need_named_variants and not need_archetypes:
             return
 
         results = []
@@ -2649,6 +3297,42 @@ class Validator(BaseValidator):
                             message=f.message,
                             file=rel,
                             line=f.line,
+                        )
+                    )
+
+        if need_named_variants:
+            for filepath in named_files:
+                content = _read_text(filepath, self.mod_path)
+                if not any(
+                    token in content
+                    for token in (
+                        "version_name",
+                        "variant_name",
+                        "force_equipment_variants",
+                    )
+                ):
+                    continue
+                rel = normalize_path_separators(
+                    os.path.relpath(filepath, self.mod_path)
+                )
+                for finding in check_named_variant_refs(
+                    content,
+                    by_tag,
+                    wildcard,
+                    source_path=rel,
+                    variant_dlc_index=variant_dlc_index,
+                ):
+                    results.append(
+                        Issue(
+                            severity=(
+                                Severity.WARNING
+                                if finding.kind == "unknown_named_variant"
+                                else Severity.ERROR
+                            ),
+                            category=_VARIANT_REF_CATEGORIES[finding.kind],
+                            message=finding.message,
+                            file=rel,
+                            line=finding.line,
                         )
                     )
 
