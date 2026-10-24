@@ -1,0 +1,182 @@
+ai_race_full_mode = {
+	NOT = { has_game_rule = { rule = rule_ai_race option = outcomes_only } }
+	NOT = { has_game_rule = { rule = rule_ai_race option = disabled } }
+}
+
+ai_race_outcomes_only_mode = {
+	has_game_rule = { rule = rule_ai_race option = outcomes_only }
+}
+
+ai_race_enabled = {
+	OR = {
+		ai_race_full_mode = yes
+		ai_race_outcomes_only_mode = yes
+	}
+}
+
+ai_race_disabled = {
+	has_game_rule = { rule = rule_ai_race option = disabled }
+}
+
+ai_race_eligible_participant = {
+	ai_race_enabled = yes
+	exists = yes
+	NOT = { has_country_flag = collapsed_nation }
+	date > 2015.12.31
+	has_tech = artificial_intelligence_7
+}
+
+ai_race_country_initialized = {
+	has_country_flag = AI_RACE_state_initialized
+}
+
+ai_race_active = {
+	ai_race_enabled = yes
+	ai_race_country_initialized = yes
+	exists = yes
+	NOT = { has_country_flag = collapsed_nation }
+}
+
+ai_race_debug_visible = {
+	is_debug = yes
+	ai_race_enabled = yes
+}
+
+
+ai_race_next_stage_available = {
+	OR = {
+		AND = {
+			check_variable = { ai_race_stage = 0 }
+			date > 2015.12.31
+			has_tech = artificial_intelligence_7
+		}
+		AND = {
+			check_variable = { ai_race_stage = 1 }
+			check_variable = { ai_race_current_required_months > 0 }
+			check_variable = { var = ai_race_stage_months value = ai_race_current_required_months compare = greater_than_or_equals }
+			date > 2018.12.31
+			has_tech = artificial_intelligence_7
+		}
+		AND = {
+			check_variable = { ai_race_stage = 2 }
+			check_variable = { ai_race_current_required_months > 0 }
+			check_variable = { var = ai_race_stage_months value = ai_race_current_required_months compare = greater_than_or_equals }
+			date > 2023.12.31
+			has_tech = artificial_intelligence_8
+		}
+		AND = {
+			check_variable = { ai_race_stage = 3 }
+			check_variable = { ai_race_current_required_months > 0 }
+			check_variable = { var = ai_race_stage_months value = ai_race_current_required_months compare = greater_than_or_equals }
+			date > 2024.12.31
+			has_tech = artificial_intelligence_8
+		}
+	}
+}
+
+ai_race_can_review = {
+	ai_race_full_mode = yes
+	exists = yes
+	NOT = { has_country_flag = collapsed_nation }
+	NOT = { has_country_flag = AI_RACE_review_pending }
+	ai_race_next_stage_available = yes
+}
+
+ai_race_quote_valid = {
+	ai_race_full_mode = yes
+	ai_race_active = yes
+	has_country_flag = AI_RACE_review_pending
+	ai_race_next_stage_available = yes
+	check_variable = { global.num_days < ai_race_quote_expiry_day }
+	check_variable = { ai_race_quote_stage > 0 }
+	check_variable = { ai_race_stage = ai_race_quote_previous_stage }
+	check_variable = { ai_race_offer_stage = ai_race_quote_stage }
+	check_variable = { ai_race_offer_cost = ai_race_quote_cost }
+	check_variable = { ai_race_offer_readiness = ai_race_quote_readiness }
+	check_variable = { ai_race_offer_required_months = ai_race_quote_required_months }
+	check_variable = { ai_race_offer_civs_ratio = ai_race_quote_civs_ratio }
+	check_variable = { ai_race_offer_network_ratio = ai_race_quote_network_ratio }
+	check_variable = { ai_race_offer_power_ratio = ai_race_quote_power_ratio }
+	check_variable = { ai_race_offer_microchips_ratio = ai_race_quote_microchips_ratio }
+	check_variable = { ai_race_offer_composites_ratio = ai_race_quote_composites_ratio }
+	check_variable = { ai_race_offer_oil_ratio = ai_race_quote_oil_ratio }
+}
+
+ai_race_purchase_is_funded = {
+	check_variable = { ai_race_capacity_settled = 1 }
+	check_variable = { ai_race_quote_cost > 0 }
+	check_variable = { var = treasury value = ai_race_quote_cost compare = greater_than_or_equals }
+	NOT = { has_active_mission = bankruptcy_incoming_collapse }
+	NOT = { has_country_flag = MD_skip_treasury_cost }
+}
+
+ai_race_can_pay_direct = {
+	ai_race_quote_valid = yes
+	ai_race_purchase_is_funded = yes
+	check_variable = { ai_race_quote_readiness = 1 }
+}
+
+ai_race_can_finance = {
+	ai_race_quote_valid = yes
+	ai_race_purchase_is_funded = yes
+	check_variable = { ai_race_quote_readiness < 1 }
+	check_variable = { ai_race_quote_gdp > 0 }
+	check_variable = { ai_race_quote_principal > 0 }
+	check_variable = { gdp_total = ai_race_quote_gdp }
+	check_variable = { ai_race_offer_principal = ai_race_quote_principal }
+	check_variable = { ai_race_offer_payment = ai_race_quote_payment }
+	check_variable = { ai_race_offer_rate = ai_race_quote_rate }
+}
+
+ai_race_autonomous_reserve_available = {
+	check_variable = { var = ai_race_ai_reserve value = ai_race_ai_year_expenses compare = greater_than_or_equals }
+	NOT = { has_active_mission = bankruptcy_incoming_collapse }
+	NOT = { has_country_flag = MD_skip_treasury_cost }
+}
+
+ai_race_autonomous_financing_prudent = {
+	check_variable = { gdp_total > 0 }
+	check_variable = { debt < ai_race_ai_debt_limit }
+	check_variable = { var = ai_race_ai_projected_balance value = 0 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_civs_ratio value = 0.75 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_network_ratio value = 0.75 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_power_ratio value = 0.75 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_microchips_ratio value = 0.75 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_composites_ratio value = 0.75 compare = greater_than_or_equals }
+	check_variable = { var = ai_race_offer_oil_ratio value = 0.75 compare = greater_than_or_equals }
+}
+
+ai_race_candidate_has_more_capability = {
+	OR = {
+		check_variable = { ai_race_effective_capability > ai_race_candidate_capability }
+		AND = {
+			check_variable = { ai_race_effective_capability = ai_race_candidate_capability }
+			check_variable = { ai_race_this_id < ai_race_candidate_id }
+		}
+	}
+}
+
+ai_race_candidate_is_better = {
+	OR = {
+		check_variable = { ai_race_candidate_found = 0 }
+		AND = {
+			check_variable = { ai_race_sort_for_purchase = 1 }
+			ai_race_candidate_has_more_capability = yes
+		}
+		AND = {
+			check_variable = { ai_race_sort_for_purchase = 0 }
+			OR = {
+				check_variable = { ai_race_stage > ai_race_candidate_stage }
+				AND = {
+					check_variable = { ai_race_stage = ai_race_candidate_stage }
+					check_variable = { ai_race_stage_months > ai_race_candidate_months }
+				}
+				AND = {
+					check_variable = { ai_race_stage = ai_race_candidate_stage }
+					check_variable = { ai_race_stage_months = ai_race_candidate_months }
+					ai_race_candidate_has_more_capability = yes
+				}
+			}
+		}
+	}
+}

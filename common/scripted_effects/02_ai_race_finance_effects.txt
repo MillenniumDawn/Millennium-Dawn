@@ -1,0 +1,218 @@
+# Preview and economy refresh paths never mutate principal or installment counts.
+ai_race_refresh_finance_totals = {
+	set_variable = { ai_race_finance_outstanding = 0 }
+	set_variable = { ai_race_finance_weekly = 0 }
+	set_variable = { ai_race_finance_due_1 = 0 }
+	if = {
+		limit = { check_variable = { ai_race_finance_installments_1 > 0 } }
+		set_variable = { ai_race_finance_due_1 = ai_race_finance_weekly_1 }
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_1 = 1 } }
+			set_variable = { ai_race_finance_due_1 = ai_race_finance_remaining_1 }
+		}
+		add_to_variable = { ai_race_finance_outstanding = ai_race_finance_remaining_1 }
+		add_to_variable = { ai_race_finance_weekly = ai_race_finance_due_1 }
+	}
+	set_variable = { ai_race_finance_due_2 = 0 }
+	if = {
+		limit = { check_variable = { ai_race_finance_installments_2 > 0 } }
+		set_variable = { ai_race_finance_due_2 = ai_race_finance_weekly_2 }
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_2 = 1 } }
+			set_variable = { ai_race_finance_due_2 = ai_race_finance_remaining_2 }
+		}
+		add_to_variable = { ai_race_finance_outstanding = ai_race_finance_remaining_2 }
+		add_to_variable = { ai_race_finance_weekly = ai_race_finance_due_2 }
+	}
+	set_variable = { ai_race_finance_due_3 = 0 }
+	if = {
+		limit = { check_variable = { ai_race_finance_installments_3 > 0 } }
+		set_variable = { ai_race_finance_due_3 = ai_race_finance_weekly_3 }
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_3 = 1 } }
+			set_variable = { ai_race_finance_due_3 = ai_race_finance_remaining_3 }
+		}
+		add_to_variable = { ai_race_finance_outstanding = ai_race_finance_remaining_3 }
+		add_to_variable = { ai_race_finance_weekly = ai_race_finance_due_3 }
+	}
+	set_variable = { ai_race_finance_due_4 = 0 }
+	if = {
+		limit = { check_variable = { ai_race_finance_installments_4 > 0 } }
+		set_variable = { ai_race_finance_due_4 = ai_race_finance_weekly_4 }
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_4 = 1 } }
+			set_variable = { ai_race_finance_due_4 = ai_race_finance_remaining_4 }
+		}
+		add_to_variable = { ai_race_finance_outstanding = ai_race_finance_remaining_4 }
+		add_to_variable = { ai_race_finance_weekly = ai_race_finance_due_4 }
+	}
+}
+
+ai_race_create_financing = {
+	if = {
+		limit = { NOT = { has_variable = ai_race_finance_next_bill_day } }
+		set_variable = { ai_race_finance_next_bill_day = { value = global.num_days add = 7 } }
+	}
+	if = {
+		limit = {
+			check_variable = { ai_race_stage = 1 }
+			NOT = { has_variable = ai_race_finance_original_1 }
+		}
+		set_variable = { ai_race_finance_original_1 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_remaining_1 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_weekly_1 = ai_race_offer_payment }
+		set_variable = { ai_race_finance_installments_1 = 520 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ai_race_stage = 2 }
+			NOT = { has_variable = ai_race_finance_original_2 }
+		}
+		set_variable = { ai_race_finance_original_2 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_remaining_2 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_weekly_2 = ai_race_offer_payment }
+		set_variable = { ai_race_finance_installments_2 = 520 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ai_race_stage = 3 }
+			NOT = { has_variable = ai_race_finance_original_3 }
+		}
+		set_variable = { ai_race_finance_original_3 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_remaining_3 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_weekly_3 = ai_race_offer_payment }
+		set_variable = { ai_race_finance_installments_3 = 520 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { ai_race_stage = 4 }
+			NOT = { has_variable = ai_race_finance_original_4 }
+		}
+		set_variable = { ai_race_finance_original_4 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_remaining_4 = ai_race_offer_principal }
+		set_variable = { ai_race_finance_weekly_4 = ai_race_offer_payment }
+		set_variable = { ai_race_finance_installments_4 = 520 }
+	}
+	ai_race_refresh_finance_totals = yes
+}
+
+# Called after MD's inflation adjustment. The component records what the current treasury rate includes.
+ai_race_refresh_finance_expense = {
+	set_variable = { ai_race_finance_expense_component = 0 }
+	if = {
+		limit = {
+			ai_race_full_mode = yes
+			check_variable = { ai_race_finance_outstanding > 0 }
+		}
+		ai_race_refresh_finance_totals = yes
+		set_variable = { ai_race_finance_expense_component = ai_race_finance_weekly }
+		add_to_variable = { additional_expenses_rate = ai_race_finance_expense_component }
+	}
+}
+
+# Freeze the charge immediately before the actual weekly treasury accrual.
+ai_race_prepare_weekly_bill = {
+	set_temp_variable = { ai_race_bill_prepared = 0 }
+	set_temp_variable = { ai_race_bill_total = 0 }
+	set_temp_variable = { ai_race_bill_1 = 0 }
+	set_temp_variable = { ai_race_bill_2 = 0 }
+	set_temp_variable = { ai_race_bill_3 = 0 }
+	set_temp_variable = { ai_race_bill_4 = 0 }
+	if = {
+		limit = {
+			ai_race_full_mode = yes
+			check_variable = { ai_race_finance_outstanding > 0 }
+			OR = {
+				NOT = { has_variable = ai_race_finance_next_bill_day }
+				check_variable = { var = global.num_days value = ai_race_finance_next_bill_day compare = greater_than_or_equals }
+			}
+		}
+		ai_race_refresh_finance_totals = yes
+		set_temp_variable = { ai_race_bill_prepared = 1 }
+		set_temp_variable = { ai_race_bill_1 = ai_race_finance_due_1 }
+		add_to_temp_variable = { ai_race_bill_total = ai_race_bill_1 }
+		set_temp_variable = { ai_race_bill_2 = ai_race_finance_due_2 }
+		add_to_temp_variable = { ai_race_bill_total = ai_race_bill_2 }
+		set_temp_variable = { ai_race_bill_3 = ai_race_finance_due_3 }
+		add_to_temp_variable = { ai_race_bill_total = ai_race_bill_3 }
+		set_temp_variable = { ai_race_bill_4 = ai_race_finance_due_4 }
+		add_to_temp_variable = { ai_race_bill_total = ai_race_bill_4 }
+	}
+	# Correct only the race component, including a repeated callback after the final installment.
+	add_to_temp_variable = { treasury_rate_gain = ai_race_finance_rate_component }
+	subtract_from_temp_variable = { treasury_rate_gain = ai_race_bill_total }
+}
+
+ai_race_commit_weekly_bill = {
+	if = {
+		limit = { check_variable = { ai_race_bill_prepared = 1 } }
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_1 > 0 } }
+			subtract_from_variable = { ai_race_finance_remaining_1 = ai_race_bill_1 }
+			subtract_from_variable = { ai_race_finance_installments_1 = 1 }
+			if = {
+				limit = { check_variable = { ai_race_finance_installments_1 = 0 } }
+				set_variable = { ai_race_finance_remaining_1 = 0 }
+			}
+		}
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_2 > 0 } }
+			subtract_from_variable = { ai_race_finance_remaining_2 = ai_race_bill_2 }
+			subtract_from_variable = { ai_race_finance_installments_2 = 1 }
+			if = {
+				limit = { check_variable = { ai_race_finance_installments_2 = 0 } }
+				set_variable = { ai_race_finance_remaining_2 = 0 }
+			}
+		}
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_3 > 0 } }
+			subtract_from_variable = { ai_race_finance_remaining_3 = ai_race_bill_3 }
+			subtract_from_variable = { ai_race_finance_installments_3 = 1 }
+			if = {
+				limit = { check_variable = { ai_race_finance_installments_3 = 0 } }
+				set_variable = { ai_race_finance_remaining_3 = 0 }
+			}
+		}
+		if = {
+			limit = { check_variable = { ai_race_finance_installments_4 > 0 } }
+			subtract_from_variable = { ai_race_finance_remaining_4 = ai_race_bill_4 }
+			subtract_from_variable = { ai_race_finance_installments_4 = 1 }
+			if = {
+				limit = { check_variable = { ai_race_finance_installments_4 = 0 } }
+				set_variable = { ai_race_finance_remaining_4 = 0 }
+			}
+		}
+		set_variable = { ai_race_finance_next_bill_day = { value = global.num_days add = 7 } }
+		ai_race_refresh_finance_totals = yes
+		ai_race_refresh_gui = yes
+		set_temp_variable = { ai_race_bill_prepared = 0 }
+	}
+}
+
+ai_race_clear_finance_state = {
+	clear_variable = ai_race_finance_outstanding
+	clear_variable = ai_race_finance_weekly
+	clear_variable = ai_race_finance_expense_component
+	clear_variable = ai_race_finance_rate_component
+	clear_variable = ai_race_finance_next_bill_day
+	clear_variable = ai_race_finance_original_1
+	clear_variable = ai_race_finance_remaining_1
+	clear_variable = ai_race_finance_weekly_1
+	clear_variable = ai_race_finance_installments_1
+	clear_variable = ai_race_finance_due_1
+	clear_variable = ai_race_finance_original_2
+	clear_variable = ai_race_finance_remaining_2
+	clear_variable = ai_race_finance_weekly_2
+	clear_variable = ai_race_finance_installments_2
+	clear_variable = ai_race_finance_due_2
+	clear_variable = ai_race_finance_original_3
+	clear_variable = ai_race_finance_remaining_3
+	clear_variable = ai_race_finance_weekly_3
+	clear_variable = ai_race_finance_installments_3
+	clear_variable = ai_race_finance_due_3
+	clear_variable = ai_race_finance_original_4
+	clear_variable = ai_race_finance_remaining_4
+	clear_variable = ai_race_finance_weekly_4
+	clear_variable = ai_race_finance_installments_4
+	clear_variable = ai_race_finance_due_4
+}

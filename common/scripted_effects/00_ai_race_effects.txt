@@ -1,0 +1,534 @@
+# The race owns only AI_RACE/ai_race state. External contributions are rebuilt from canonical
+# owners and never written back; each rebuild clears adapter slots before reading current sources.
+
+ai_race_clear_country_state = {
+	clear_variable = ai_race_capability_stock
+	clear_variable = ai_race_capability_external
+	clear_variable = ai_race_capability_funded_usable
+	clear_variable = ai_race_capability
+	clear_variable = ai_race_compute_stock
+	clear_variable = ai_race_compute_external
+	clear_variable = ai_race_compute
+	clear_variable = ai_race_talent_stock
+	clear_variable = ai_race_talent_external
+	clear_variable = ai_race_talent
+	clear_variable = ai_race_deployment_stock
+	clear_variable = ai_race_deployment_external
+	clear_variable = ai_race_deployment
+	clear_variable = ai_race_control_capacity_stock
+	clear_variable = ai_race_control_capacity_external
+	clear_variable = ai_race_control_capacity
+	clear_variable = ai_race_public_confidence_stock
+	clear_variable = ai_race_public_confidence_external
+	clear_variable = ai_race_public_confidence
+	clear_variable = ai_race_public_alarm
+	clear_variable = ai_race_control_debt
+	clear_variable = ai_race_frontier_gap
+	clear_variable = ai_race_rank
+	clr_country_flag = AI_RACE_state_initialized
+	ai_race_clear_progression_state = yes
+	ai_race_clear_capacity_state = yes
+	ai_race_clear_finance_state = yes
+	clear_variable = ai_race_effective_capability
+	clear_variable = ai_race_gui_dirty
+	clear_variable = ai_race_gui_hint_y
+}
+
+ai_race_repair_country_state = {
+	if = {
+		limit = {
+			ai_race_enabled = yes
+			ai_race_country_initialized = yes
+		}
+		if = { limit = { has_variable = ai_race_capability_stock } clamp_variable = { var = ai_race_capability_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_capability_external } clamp_variable = { var = ai_race_capability_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_capability } clamp_variable = { var = ai_race_capability min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_compute_stock } clamp_variable = { var = ai_race_compute_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_compute_external } clamp_variable = { var = ai_race_compute_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_compute } clamp_variable = { var = ai_race_compute min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_talent_stock } clamp_variable = { var = ai_race_talent_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_talent_external } clamp_variable = { var = ai_race_talent_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_talent } clamp_variable = { var = ai_race_talent min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_deployment_stock } clamp_variable = { var = ai_race_deployment_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_deployment_external } clamp_variable = { var = ai_race_deployment_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_deployment } clamp_variable = { var = ai_race_deployment min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_control_capacity_stock } clamp_variable = { var = ai_race_control_capacity_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_control_capacity_external } clamp_variable = { var = ai_race_control_capacity_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_control_capacity } clamp_variable = { var = ai_race_control_capacity min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_public_confidence_stock } clamp_variable = { var = ai_race_public_confidence_stock min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_public_confidence_external } clamp_variable = { var = ai_race_public_confidence_external min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_public_confidence } clamp_variable = { var = ai_race_public_confidence min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_public_alarm } clamp_variable = { var = ai_race_public_alarm min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_control_debt } clamp_variable = { var = ai_race_control_debt min = 0 max = 100 } }
+		if = { limit = { has_variable = ai_race_frontier_gap } clamp_variable = { var = ai_race_frontier_gap min = -100 max = 0 } }
+		if = { limit = { has_variable = ai_race_rank } clamp_variable = { var = ai_race_rank min = 0 max = global.ai_race_all_initialized^num } }
+		if = { limit = { has_variable = ai_race_stage } clamp_variable = { var = ai_race_stage min = 0 max = 4 } }
+		if = { limit = { has_variable = ai_race_stage_months } clamp_variable = { var = ai_race_stage_months min = 0 } }
+	}
+}
+
+ai_race_initialize_country = {
+	if = {
+		limit = { ai_race_eligible_participant = yes }
+		if = {
+			limit = { NOT = { is_in_array = { global.ai_race_all_initialized = THIS } } }
+			add_to_array = { global.ai_race_all_initialized = THIS }
+			unlock_decision_category_tooltip = AI_RACE_category
+		}
+		set_country_flag = AI_RACE_state_initialized
+		if = {
+			limit = { NOT = { is_in_array = { global.ai_race_participants = THIS } } }
+			add_to_array = { global.ai_race_participants = THIS }
+		}
+		ai_race_repair_country_state = yes
+	}
+}
+
+ai_race_rebuild_country_metrics = {
+	if = {
+		limit = { ai_race_active = yes }
+		clear_variable = ai_race_capability_external
+		clear_variable = ai_race_compute_external
+		clear_variable = ai_race_talent_external
+		clear_variable = ai_race_deployment_external
+		clear_variable = ai_race_control_capacity_external
+		clear_variable = ai_race_public_confidence_external
+
+		if = {
+			limit = { original_tag = USA }
+			# Capability: approximate from AI tech depth (each level adds +5, up to 14 tiers)
+			ai_race_count_ai_technology = yes
+			set_variable = { ai_race_capability_external = ai_race_generic_technology }
+			# Compute: microchip production and energy availability (thin heuristic)
+			set_temp_variable = {
+				_cmp_raw = {
+					value = resource_produced@microchips
+					subtract = country_microchip_production_var
+					multiply = 2
+				}
+			}
+			set_variable = { ai_race_compute_external = _cmp_raw }
+			if = { limit = { check_variable = { energy_difference_variable < 0 } } subtract_from_variable = { ai_race_compute_external = 10 } }
+			# Talent: research slots (thin fallback)
+			set_temp_variable = { _tal_tmp = { value = research_slots_from_gdp multiply = 10 } }
+			add_to_temp_variable = { _tal_tmp = { value = research_slots_from_gdp_c multiply = 10 } }
+			set_variable = { ai_race_talent_external = _tal_tmp }
+			# Other externals left to 0 in fallback
+			ai_race_repair_country_state = yes
+		}
+		else_if = {
+			limit = { original_tag = CHI }
+			ai_race_count_ai_technology = yes
+			set_variable = { ai_race_capability_external = ai_race_generic_technology }
+			set_temp_variable = { _cmp_tmp = { value = research_slots_from_gdp multiply = 10 } }
+			add_to_temp_variable = { _cmp_tmp = { value = research_slots_from_gdp_c multiply = 10 } }
+			if = { limit = { has_idea = CHI_semiconductor_backwardness } subtract_from_temp_variable = { _cmp_tmp = 20 } }
+			set_variable = { ai_race_compute_external = _cmp_tmp }
+			set_temp_variable = { _tal_tmp = { value = research_slots_from_gdp multiply = 10 } }
+			add_to_temp_variable = { _tal_tmp = { value = research_slots_from_gdp_c multiply = 10 } }
+			set_variable = { ai_race_talent_external = _tal_tmp }
+			# Read starting policy ideas when present
+			if = { limit = { has_idea = edu_02 } add_to_variable = { ai_race_talent_external = 5 } }
+			if = { limit = { has_idea = police_04 } add_to_variable = { ai_race_control_capacity_external = 5 } }
+			ai_race_repair_country_state = yes
+		}
+		else = { ai_race_generic_adapter = yes }
+
+		set_variable = { ai_race_capability = ai_race_capability_stock }
+		add_to_variable = { ai_race_capability = ai_race_capability_external }
+		set_variable = { ai_race_compute = ai_race_compute_stock }
+		add_to_variable = { ai_race_compute = ai_race_compute_external }
+		set_variable = { ai_race_talent = ai_race_talent_stock }
+		add_to_variable = { ai_race_talent = ai_race_talent_external }
+		set_variable = { ai_race_deployment = ai_race_deployment_stock }
+		add_to_variable = { ai_race_deployment = ai_race_deployment_external }
+		set_variable = { ai_race_control_capacity = ai_race_control_capacity_stock }
+		add_to_variable = { ai_race_control_capacity = ai_race_control_capacity_external }
+		set_variable = { ai_race_public_confidence = ai_race_public_confidence_stock }
+		add_to_variable = { ai_race_public_confidence = ai_race_public_confidence_external }
+		ai_race_repair_country_state = yes
+	}
+}
+
+ai_race_refresh_participants = {
+	clear_array = global.ai_race_participants
+	for_each_loop = {
+		array = global.ai_race_all_initialized
+		value = ai_race_participant
+		var:ai_race_participant = {
+			clear_variable = ai_race_rank
+			if = {
+				limit = { ai_race_active = yes }
+				add_to_array = { global.ai_race_participants = THIS }
+			}
+		}
+	}
+}
+
+ai_race_rebuild_frontier_and_ranking = {
+	clear_array = global.ai_race_ranked_participants
+	clear_variable = global.ai_race_frontier_capability
+	set_temp_variable = { ai_race_sort_for_purchase = 0 }
+	ai_race_sort_participants = yes
+	set_temp_variable = { ai_race_next_rank = 1 }
+	for_each_loop = {
+		array = global.ai_race_sorted_work
+		value = ai_race_ranked_country
+		var:ai_race_ranked_country = {
+			add_to_array = { global.ai_race_ranked_participants = THIS }
+			set_variable = { ai_race_rank = ai_race_next_rank }
+			if = {
+				limit = { check_variable = { ai_race_effective_capability > global.ai_race_frontier_capability } }
+				set_variable = { global.ai_race_frontier_capability = ai_race_effective_capability }
+			}
+			add_to_temp_variable = { ai_race_next_rank = 1 }
+		}
+	}
+	clear_array = global.ai_race_sorted_work
+	for_each_loop = {
+		array = global.ai_race_participants
+		value = ai_race_participant
+		var:ai_race_participant = {
+			set_variable = { ai_race_frontier_gap = ai_race_effective_capability }
+			subtract_from_variable = { ai_race_frontier_gap = global.ai_race_frontier_capability }
+			ai_race_repair_country_state = yes
+			ai_race_refresh_gui = yes
+		}
+	}
+	ai_race_bump_view = yes
+}
+
+ai_race_repair_global_state = {
+	if = {
+		limit = {
+			ai_race_enabled = yes
+			has_global_flag = GLOBAL_ai_race_initialized
+		}
+		if = { limit = { has_variable = global.ai_race_frontier_capability } clamp_variable = { var = global.ai_race_frontier_capability min = 0 max = 100 } }
+		if = { limit = { has_variable = global.ai_race_temperature } clamp_variable = { var = global.ai_race_temperature min = 0 max = 100 } }
+		if = { limit = { has_variable = global.ai_race_frontier_pressure } clamp_variable = { var = global.ai_race_frontier_pressure min = 0 max = 100 } }
+		if = { limit = { has_variable = global.ai_race_epoch } clamp_variable = { var = global.ai_race_epoch min = 0 } }
+	}
+}
+
+ai_race_initialize_global = {
+	if = {
+		limit = {
+			ai_race_enabled = yes
+			NOT = { has_global_flag = GLOBAL_ai_race_initialized }
+		}
+		clear_array = global.ai_race_participants
+		clear_array = global.ai_race_ranked_participants
+		clear_variable = global.ai_race_frontier_capability
+		clear_variable = global.ai_race_temperature
+		clear_variable = global.ai_race_frontier_pressure
+		clear_variable = global.ai_race_epoch
+		set_global_flag = GLOBAL_ai_race_initialized
+		# Publish a current projection on the first eligible pulse without advancing scheduled state.
+		ai_race_rebuild_derived_state = yes
+	}
+}
+
+ai_race_rebuild_derived_state = {
+	if = {
+		limit = {
+			ai_race_enabled = yes
+			has_global_flag = GLOBAL_ai_race_initialized
+		}
+		ai_race_refresh_mode_state = yes
+		ai_race_refresh_participants = yes
+		for_each_loop = {
+			array = global.ai_race_participants
+			value = ai_race_participant
+			var:ai_race_participant = {
+				ai_race_rebuild_country_metrics = yes
+				ai_race_refresh_operating_state = yes
+				ai_race_refresh_offer = yes
+				ai_race_refresh_effective_capability = yes
+			}
+		}
+		ai_race_rebuild_frontier_and_ranking = yes
+		ai_race_repair_global_state = yes
+	}
+}
+
+ai_race_quarterly_reconcile = {
+	if = {
+		limit = {
+			ai_race_enabled = yes
+			has_global_flag = GLOBAL_ai_race_initialized
+		}
+		ai_race_rebuild_derived_state = yes
+		add_to_variable = { global.ai_race_epoch = 1 }
+	}
+}
+
+ai_race_teardown_global = {
+	ai_race_ai_clear_all_plans = yes
+	for_each_loop = {
+		array = global.ai_race_all_initialized
+		value = ai_race_participant
+		var:ai_race_participant = { ai_race_clear_country_state = yes }
+	}
+	clear_array = global.ai_race_all_initialized
+	clear_array = global.ai_race_participants
+	clear_array = global.ai_race_ranked_participants
+	clear_array = global.ai_race_sorted_work
+	clear_array = global.ai_race_sort_input
+	clear_variable = global.ai_race_frontier_capability
+	clear_variable = global.ai_race_temperature
+	clear_variable = global.ai_race_frontier_pressure
+	clear_variable = global.ai_race_first_finisher_id
+	clear_variable = global.ai_race_view_dirty
+	clear_variable = global.ai_race_epoch
+	clear_variable = global.ai_race_last_processed_quarter
+	clear_variable = global.ai_race_last_processed_month
+	clear_variable = global.ai_race_last_discovery_year
+	clr_global_flag = GLOBAL_ai_race_initialized
+}
+
+ai_race_monthly_dispatch = {
+	if = {
+		limit = { ai_race_enabled = yes }
+		ai_race_initialize_global = yes
+		ai_race_discover_participants = yes
+		ai_race_ai_discover_candidates = yes
+		ai_race_get_month_token = yes
+		if = {
+			limit = { NOT = { check_variable = { global.ai_race_last_processed_month = ai_race_current_month } } }
+			ai_race_refresh_mode_state = yes
+			ai_race_refresh_participants = yes
+			ai_race_run_monthly_work = yes
+			set_variable = { global.ai_race_last_processed_month = ai_race_current_month }
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { global.month = 1 }
+					check_variable = { global.month = 4 }
+					check_variable = { global.month = 7 }
+					check_variable = { global.month = 10 }
+				}
+			}
+			set_temp_variable = { ai_race_current_quarter = global.year }
+			multiply_temp_variable = { ai_race_current_quarter = 4 }
+			if = {
+				limit = { check_variable = { global.month = 1 } }
+				add_to_temp_variable = { ai_race_current_quarter = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { global.month = 4 } }
+				add_to_temp_variable = { ai_race_current_quarter = 2 }
+			}
+			else_if = {
+				limit = { check_variable = { global.month = 7 } }
+				add_to_temp_variable = { ai_race_current_quarter = 3 }
+			}
+			else = {
+				add_to_temp_variable = { ai_race_current_quarter = 4 }
+			}
+			if = {
+				limit = {
+					NOT = { check_variable = { global.ai_race_last_processed_quarter = ai_race_current_quarter } }
+				}
+				ai_race_quarterly_reconcile = yes
+				set_variable = { global.ai_race_last_processed_quarter = ai_race_current_quarter }
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_global_flag = GLOBAL_ai_race_initialized
+				check_variable = { global.ai_race_all_initialized^num > 0 }
+				check_variable = { global.ai_race_ai_countries^num > 0 }
+			}
+		}
+		ai_race_teardown_global = yes
+	}
+}
+
+ai_race_debug_repair_state = {
+	if = {
+		limit = {
+			is_debug = yes
+			ai_race_enabled = yes
+		}
+		ai_race_initialize_global = yes
+		ai_race_rebuild_derived_state = yes
+	}
+}
+
+ai_race_debug_log_state = {
+	if = {
+		limit = {
+			is_debug = yes
+			ai_race_enabled = yes
+			has_global_flag = GLOBAL_ai_race_initialized
+		}
+		log = "[GetDateText]: AI Race epoch [?global.ai_race_epoch], frontier [?global.ai_race_frontier_capability], temperature [?global.ai_race_temperature], pressure [?global.ai_race_frontier_pressure], participants [?global.ai_race_participants^num]"
+		for_each_loop = {
+			array = global.ai_race_ranked_participants
+			value = ai_race_participant
+			var:ai_race_participant = {
+				# External contributions rebuilt this quarter
+				log = "[GetDateText]: [THIS.GetName]: External: cap [?ai_race_capability_external|0], compute [?ai_race_compute_external|0], talent [?ai_race_talent_external|0], deploy [?ai_race_deployment_external|0], control [?ai_race_control_capacity_external|0], confidence [?ai_race_public_confidence_external|0]"
+				# Effective totals
+				log = "[GetDateText]: [THIS.GetName]: Effective: cap [?ai_race_capability], compute [?ai_race_compute], talent [?ai_race_talent], deploy [?ai_race_deployment], control [?ai_race_control_capacity], confidence [?ai_race_public_confidence], gap [?ai_race_frontier_gap|+0], rank [?ai_race_rank]"
+			}
+		}
+	}
+	else_if = {
+		limit = {
+			is_debug = yes
+			ai_race_disabled = yes
+		}
+		log = "[GetDateText]: AI Race is disabled; no state was created"
+	}
+}
+
+
+ai_race_count_ai_technology = {
+	set_temp_variable = { ai_race_generic_technology = 0 }
+	if = { limit = { has_tech = artificial_intelligence_1 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_2 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_3 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_4 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_5 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_6 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_7 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_8 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_9 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_10 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_11 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_12 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_13 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+	if = { limit = { has_tech = artificial_intelligence_14 } add_to_temp_variable = { ai_race_generic_technology = 5 } }
+}
+
+ai_race_generic_adapter = {
+	ai_race_count_ai_technology = yes
+	set_variable = { ai_race_capability_external = ai_race_generic_technology }
+	set_variable = { ai_race_compute_external = resource@microchips }
+	multiply_variable = { ai_race_compute_external = 2 }
+	set_temp_variable = { ai_race_generic_industry = num_of_civilian_factories }
+	multiply_temp_variable = { ai_race_generic_industry = 0.2 }
+	add_to_variable = { ai_race_compute_external = ai_race_generic_industry }
+	if = {
+		limit = { check_variable = { energy_difference_variable < 0 } }
+		subtract_from_variable = { ai_race_compute_external = 10 }
+	}
+	set_variable = { ai_race_talent_external = research_slots_from_gdp }
+	add_to_variable = { ai_race_talent_external = research_slots_from_gdp_c }
+	multiply_variable = { ai_race_talent_external = 10 }
+	set_variable = { ai_race_deployment_external = internet_station_total }
+	add_to_variable = { ai_race_deployment_external = ai_race_generic_industry }
+	set_variable = { ai_race_control_capacity_external = ai_race_generic_technology }
+	multiply_variable = { ai_race_control_capacity_external = 0.5 }
+}
+
+# Apply readiness to funded stock before the final cap, preserving the external base.
+ai_race_refresh_effective_capability = {
+	set_variable = { ai_race_effective_capability = ai_race_capability }
+	set_variable = { ai_race_capability_funded_usable = 0 }
+	if = {
+		limit = {
+			ai_race_full_mode = yes
+			check_variable = { ai_race_stage > 0 }
+		}
+		set_variable = { ai_race_effective_capability = ai_race_capability_external }
+		set_variable = { ai_race_capability_funded_usable = { value = ai_race_capability_stock multiply = ai_race_current_readiness } }
+		set_temp_variable = { ai_race_ready_funded_capability = { value = ai_race_capability_stock multiply = ai_race_current_readiness } }
+		add_to_variable = { ai_race_effective_capability = ai_race_ready_funded_capability }
+	}
+	clamp_variable = { var = ai_race_effective_capability min = 0 max = 100 }
+}
+
+ai_race_discover_participants = {
+	if = {
+		limit = {
+			date > 2015.12.31
+			OR = {
+				NOT = { has_variable = global.ai_race_last_discovery_year }
+				AND = {
+					check_variable = { global.month = 1 }
+					NOT = { check_variable = { global.ai_race_last_discovery_year = global.year } }
+				}
+			}
+		}
+		for_each_loop = {
+			array = global.countries
+			value = ai_race_prospective_country
+			var:ai_race_prospective_country = { ai_race_initialize_country = yes }
+		}
+		set_variable = { global.ai_race_last_discovery_year = global.year }
+	}
+}
+
+ai_race_refresh_mode_state = {
+	if = {
+		limit = { ai_race_outcomes_only_mode = yes }
+		ai_race_ai_clear_all_plans = yes
+		for_each_loop = {
+			array = global.ai_race_all_initialized
+			value = ai_race_participant
+			var:ai_race_participant = {
+				ai_race_clear_progression_state = yes
+				ai_race_clear_capacity_state = yes
+				ai_race_clear_finance_state = yes
+			}
+		}
+	}
+}
+
+ai_race_sort_participants = {
+	clear_array = global.ai_race_sorted_work
+	clear_array = global.ai_race_sort_input
+	for_each_loop = {
+		array = global.ai_race_participants
+		value = ai_race_sort_country
+		var:ai_race_sort_country = {
+			if = {
+				limit = {
+					OR = {
+						check_variable = { ai_race_sort_for_purchase = 0 }
+						AND = {
+							is_ai = yes
+							ai_race_can_review = yes
+						}
+					}
+				}
+				add_to_array = { global.ai_race_sort_input = THIS }
+			}
+		}
+	}
+	set_temp_variable = { ai_race_sort_remaining = global.ai_race_sort_input^num }
+	while_loop_effect = {
+		limit = { check_variable = { ai_race_sort_remaining > 0 } }
+		set_temp_variable = { ai_race_candidate_found = 0 }
+		for_each_loop = {
+			array = global.ai_race_sort_input
+			value = ai_race_sort_country
+			var:ai_race_sort_country = {
+				if = {
+					limit = { NOT = { is_in_array = { global.ai_race_sorted_work = THIS } } }
+					set_temp_variable = { ai_race_this_id = THIS.id }
+					if = {
+						limit = { ai_race_candidate_is_better = yes }
+						set_temp_variable = { ai_race_candidate_found = 1 }
+						set_temp_variable = { ai_race_candidate_id = THIS.id }
+						set_temp_variable = { ai_race_candidate_stage = ai_race_stage }
+						set_temp_variable = { ai_race_candidate_months = ai_race_stage_months }
+						set_temp_variable = { ai_race_candidate_capability = ai_race_effective_capability }
+					}
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { ai_race_candidate_found = 1 } }
+			var:ai_race_candidate_id = { add_to_array = { global.ai_race_sorted_work = THIS } }
+		}
+		subtract_from_temp_variable = { ai_race_sort_remaining = 1 }
+	}
+	clear_array = global.ai_race_sort_input
+}
