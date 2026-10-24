@@ -186,13 +186,46 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `OR` or `NOT` do not prove the receiver.
   - Display-only `effect_tooltip` costs and temp writes do not execute.
   - Skipped: an option at `base = 0` with no `add` while another option can win, and
-    a cost kind every option charges. Tax rate is never shared, since options can
-    move it apart.
+    a cost kind every option always pays, or every option pays only sometimes. A kind
+    some options always pay and others only sometimes pay is not shared. An
+    `if`/`else` chain or `random_list` whose every arm charges counts as always, and
+    so does a charge behind the `MD_skip_treasury_cost` flag or an unset
+    `skip_payment`. Tax rate is never shared, since options can move it apart.
   - Known gaps: a shared cost of different sizes is skipped too, so the dearer
-    option goes unreported. Stored negative values built from math or arrays, unsubstituted
+    option goes unreported. So is a kind every option pays only sometimes, at
+    different odds. Charges that depend on a variable set in each arm stay
+    conditional. Costs behind conditions that can never hold still count. Stored negative values built from math or arrays, unsubstituted
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
+- `event-corruption-pp-cost` (WARNING, opt-in with
+  `--check-corruption-pp-costs`): event options with a literal negative
+  `add_political_power` and `decrease_corruption` in the choosing country, without a
+  recognized local guard. Each decrease refunds 150 PP at level 1, so only a charge
+  above 150 PP per decrease is reported. Event/option triggers and nested `if`
+  limits can supply a lower corruption-level bound; fewer decreases must run than
+  that bound. A direct
+  level-1 exclusion supplies a bound of 2, so repeated decreases still need review.
+  Entry bounds are discarded when event `immediate` effects can change corruption.
+  Option bounds are discarded when a literal corruption-idea change precedes a
+  decrease in that option. Nested `if` bounds expire after a corruption-idea change
+  before a later decrease; a guard evaluated after an earlier change can establish a
+  fresh bound. Every relevant operation must be guarded before nested limits suppress
+  an option. Numeric state scopes are excluded; only explicit `ROOT` effects are
+  followed back to the choosing country. Numeric weights directly under `random_list`
+  remain in the choosing country's scope. Run:
+
+  ```sh
+  python3 tools/validation/validate_events.py --path . --check-corruption-pp-costs \
+    --workers 1 --no-color --no-cache --output /tmp/event-corruption-audit.txt
+  ```
+
+  This runs all event checks; review the `event-corruption-pp-cost` diagnostics.
+  Findings are review candidates, not proven content bugs. Dynamic PP costs,
+  scripted-effect bodies, caller conditions, surrounding conditions in foreign scopes,
+  and indirect corruption mutations are not followed. Mutually exclusive branches are
+  aggregated. These gaps keep the check opt-in. No decisions are checked.
+
 - Other gaps from #5738 are not checked:
   - Double building charges need both payments resolved to the same country and
     reachable path. Adjacent costs alone do not prove a double charge.
