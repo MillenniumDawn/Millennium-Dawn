@@ -1117,6 +1117,7 @@ _STORED_LITERAL_RE = re.compile(
     r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
     r"|([^\s={}]+)\s*=\s*)(-?[\d.]+)\s*\}"
 )
+_VARIABLE_REFERENCE_RE = re.compile(r"[A-Za-z_][\w.:@^]*")
 
 
 def _flip(signs: int) -> int:
@@ -1138,9 +1139,21 @@ def _combine(op: str, signs: int, term: int) -> int:
     return signs or (_flip(term) if op.startswith("subtract") else term)
 
 
+def _guaranteed_cost(signs: int, cost_signs: int) -> bool:
+    """Whether every possible nonzero sign represents a charge."""
+    return bool(signs) and not signs & ~cost_signs
+
+
 def _stored_name(variable: str) -> str:
     """`FROM.LBA_cost^2` -> `LBA_cost`: the name a stored variable is set under."""
     return variable.rsplit(".", 1)[-1].split("^", 1)[0]
+
+
+def _uses_conditional_variable(operand: str, conditional_variables: Set[str]) -> bool:
+    return any(
+        _stored_name(variable) in conditional_variables
+        for variable in _VARIABLE_REFERENCE_RE.findall(operand)
+    )
 
 
 def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
@@ -1172,8 +1185,9 @@ def _effect_costs(
     known: Dict[str, int],
     stored: Dict[str, int],
     stack: Tuple[str, ...] = (),
-) -> Set[str]:
-    """What these effects cost the country running them, read in script order.
+    conditional_variables: Optional[Set[str]] = None,
+) -> Tuple[Set[str], Set[str]]:
+    """Possible and guaranteed costs to the country running these effects.
 
     Charges are rarely a plain negative literal: `treasury_change` is often set to
     a GDP variable and negated by `multiply_temp_variable`, or built in one math
@@ -1181,69 +1195,110 @@ def _effect_costs(
     effect. So this tracks the signs every variable can have and follows calls
     into `effects` (see costly_scripted_effects), which share the caller's temp
     variables the way the game does. A branch (`if`, `random`, a `random_list`
-    bucket) may or may not run, so what it sets is added to what was possible
-    before it, and an `else` starts from what held before its `if`. The cost
-    itself is a write to a stored variable in _COST_VARIABLES, a negative stat
-    effect, or equipment leaving the stockpile.
+    bucket) may or may not run, so its costs are possible but not guaranteed, and
+    its variable changes are added to what was possible before it. An `else`
+    starts from what held before its `if`. The cost itself is a write to a stored
+    variable in _COST_VARIABLES, a negative stat effect, or equipment leaving the
+    stockpile.
     """
+    # Sign unions omit zero, so retain conditional writes separately.
+    if conditional_variables is None:
+        conditional_variables = set()
     costs: Set[str] = set()
+    guaranteed: Set[str] = set()
     # Also right for the old `if = { ... else = { ... } }` form: this call is the `if`.
     before_if = dict(known)
     pos = 0
     while True:
         m = _COST_STEP_RE.search(text, pos)
         if m is None:
-            return costs
+            return costs, guaranteed
         pos = m.end()
         end = find_unquoted_brace_close(text, pos - 1) if m["branch"] else -1
         if end != -1:
             if m["branch"] == "if":
                 before_if = dict(known)
-            branch = dict(before_if if m["branch"].startswith("else") else known)
-            costs |= _effect_costs(text[pos:end], effects, branch, stored, stack)
+            branch_start = before_if if m["branch"].startswith("else") else known
+            branch = dict(branch_start)
+            branch_conditional = set(conditional_variables)
+            branch_costs, _ = _effect_costs(
+                text[pos:end], effects, branch, stored, stack, branch_conditional
+            )
+            costs |= branch_costs
+            conditional_variables.update(branch_conditional)
             for variable, signs in branch.items():
+                if signs != branch_start.get(variable):
+                    conditional_variables.add(variable)
                 known[variable] = signs | known.get(variable, 0)
             pos = end
         elif m["stat"]:
-            if _signs(m["stat_operand"], known, stored) & _NEG:
+            signs = _signs(m["stat_operand"], known, stored)
+            if signs & _NEG:
                 costs.add(_STAT_COSTS[m["stat"]])
+                if _guaranteed_cost(signs, _NEG) and not _uses_conditional_variable(
+                    m["stat_operand"], conditional_variables
+                ):
+                    guaranteed.add(_STAT_COSTS[m["stat"]])
         elif m["equipment"]:
             end = find_unquoted_brace_close(text, pos - 1)
             if end == -1:
-                return costs
+                return costs, guaranteed
             for key, value, block in iter_statements(text[pos:end]):
                 if key == "amount":
                     operand = "{" + block + "}" if block is not None else value
-                    if (
-                        operand
-                        and _signs(operand, known, stored)
-                        & _EQUIPMENT_COSTS[m["equipment"]]
-                    ):
-                        costs.add("equipment")
+                    if operand:
+                        signs = _signs(operand, known, stored)
+                        cost_signs = _EQUIPMENT_COSTS[m["equipment"]]
+                        if signs & cost_signs:
+                            costs.add("equipment")
+                            if _guaranteed_cost(
+                                signs, cost_signs
+                            ) and not _uses_conditional_variable(
+                                operand, conditional_variables
+                            ):
+                                guaranteed.add("equipment")
             pos = end + 1
         elif m["call"]:
             call = m["call"]
             if call in effects and call not in stack:
-                costs |= _effect_costs(
-                    effects[call], effects, known, stored, (*stack, call)
+                call_costs, call_guaranteed = _effect_costs(
+                    effects[call],
+                    effects,
+                    known,
+                    stored,
+                    (*stack, call),
+                    conditional_variables,
                 )
+                costs |= call_costs
+                guaranteed |= call_guaranteed
         elif m["op"]:
             target = m["long"] or m["short"]
             operand = m["operand"]
             if operand == "{":
                 end = find_unquoted_brace_close(text, pos - 1)
                 if end == -1:
-                    return costs
+                    return costs, guaranteed
                 operand = text[pos - 1 : end + 1]
                 pos = end + 1
             term = _signs(operand, known, stored)
             if target not in _COST_VARIABLES or m["temp"]:
                 current = 0 if m["op"] == "set" else _signs(target, known, stored)
                 known[target] = _combine(m["op"], current, term)
+                if _uses_conditional_variable(operand, conditional_variables):
+                    conditional_variables.add(target)
+                elif m["op"] == "set":
+                    conditional_variables.discard(target)
             elif m["op"] in ("add_to", "subtract_from"):
                 cost_signs, kind = _COST_VARIABLES[target]
-                if _combine(m["op"], 0, term) & cost_signs:
+                signs = _combine(m["op"], 0, term)
+                if signs & cost_signs:
                     costs.add(kind)
+                    if _guaranteed_cost(
+                        signs, cost_signs
+                    ) and not _uses_conditional_variable(
+                        operand, conditional_variables
+                    ):
+                        guaranteed.add(kind)
 
 
 def stored_variable_signs(texts: Iterable[str]) -> Dict[str, int]:
@@ -1389,7 +1444,7 @@ def effect_costs(
     load_cost_lookups.
     """
     own = _split_option(blank_quoted_strings(effect_text))[0]
-    return _effect_costs(own, effects, {}, stored)
+    return _effect_costs(own, effects, {}, stored)[0]
 
 
 def uncovered_costs(
@@ -1429,8 +1484,8 @@ def find_cost_blind_options(
 
     Skipped: an event whose own trigger requires `is_ai = no`, an option the AI
     never picks (`base = 0`, no `add`) while another option can win, and a cost
-    every option charges, since a guard on each one scales them all alike. Tax
-    rate is never shared: options can move it apart.
+    guaranteed on every option, since a guard on each one scales them all alike.
+    Tax rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
@@ -1450,8 +1505,12 @@ def find_cost_blind_options(
             for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
-        option_costs = [_effect_costs(own, effects, {}, stored) for own, _b in splits]
-        shared = set.intersection(*option_costs) - {"tax rate"}
+        option_effect_costs = [
+            _effect_costs(own, effects, {}, stored) for own, _b in splits
+        ]
+        option_costs = [costs for costs, _guaranteed in option_effect_costs]
+        guaranteed_costs = [guaranteed for _costs, guaranteed in option_effect_costs]
+        shared = set.intersection(*guaranteed_costs) - {"tax rate"}
         never_picked = [
             weight_stays_zero(blocks.get("ai_chance", (0, ""))[1])
             for _own, blocks in splits
