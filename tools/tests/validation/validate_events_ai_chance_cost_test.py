@@ -463,6 +463,64 @@ _OPTION_CASES = {
         ),
         [("foo.1.a", 8, "debt", False), ("foo.1.b", 14, "debt", False)],
     ),
+    "charge-skip guards stay shared": (
+        _event(
+            _option("foo.1.a", "\t\tsmall_expenditure = yes\n" + _FLAT),
+            _option("foo.1.b", "\t\tone_office_construction = yes\n" + _FLAT),
+        ),
+        [],
+    ),
+    "if and else that both charge stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                "\t\telse = { add_political_power = -25 }\n" + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [],
+    ),
+    "if and else_if without else are not shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                "\t\telse_if = { limit = { has_war = no } add_political_power = -25 }\n"
+                + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [
+            ("foo.1.a", 9, "political power", False),
+            ("foo.1.b", 14, "political power", False),
+        ],
+    ),
+    "random-list buckets that all charge stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\trandom_list = { 50 = { add_political_power = -50 } "
+                "50 = { add_political_power = -10 } }\n" + _FLAT,
+            ),
+            _option("foo.1.b", _PP_COST + _FLAT),
+        ),
+        [],
+    ),
+    "costs every option pays only sometimes stay shared": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tif = { limit = { has_war = yes } add_political_power = -50 }\n"
+                + _FLAT,
+            ),
+            _option(
+                "foo.1.b",
+                "\t\trandom = { chance = 50 add_political_power = -50 }\n" + _FLAT,
+            ),
+        ),
+        [],
+    ),
     "only the shared kind is skipped": (
         _event(
             _option("foo.1.a", _PP_COST + "\t\tadd_stability = -0.02\n" + _FLAT),

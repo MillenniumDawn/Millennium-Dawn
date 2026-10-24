@@ -186,12 +186,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `OR` or `NOT` do not prove the receiver.
   - Display-only `effect_tooltip` costs and temp writes do not execute.
   - Skipped: an option at `base = 0` with no `add` while another option can win, and
-    a cost kind guaranteed on every option's executable paths. Conditional charges
-    do not qualify as shared. Tax rate is never shared, since options can move it
-    apart. The check does not prove that complementary `if`/`else` or `random_list`
-    branches all charge.
+    a cost kind every option always pays, or every option pays only sometimes. A kind
+    some options always pay and others only sometimes pay is not shared. An
+    `if`/`else` chain or `random_list` whose every arm charges counts as always, and
+    so does a charge behind the `MD_skip_treasury_cost` flag or an unset
+    `skip_payment`. Tax rate is never shared, since options can move it apart.
   - Known gaps: a shared cost of different sizes is skipped too, so the dearer
-    option goes unreported. Stored negative values built from math or arrays, unsubstituted
+    option goes unreported. So is a kind every option pays only sometimes, at
+    different odds. Charges that depend on a variable set in each arm stay
+    conditional. Costs behind conditions that can never hold still count. Stored negative values built from math or arrays, unsubstituted
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
