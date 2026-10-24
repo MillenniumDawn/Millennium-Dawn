@@ -17,6 +17,10 @@ MAP_MODE_DIR = ROOT / "common/map_modes"
 REFRESH_EFFECT_FILE = ROOT / "common/scripted_effects/00_map_mode_palette_effects.txt"
 REFRESH_EFFECT = "refresh_palette_map_modes"
 LEGEND_FILE = ROOT / "localisation/english/MD_map_modes_l_english.yml"
+EU_STATUS_FILE = (
+    ROOT
+    / "common/scripted_localisation/04_membership_map_mode_scripted_localisation.txt"
+)
 # Text colors from interface/core.gfx that vanish on the dark tooltip background
 UNREADABLE_TEXT_CODES = {"Z", "b"}
 
@@ -176,11 +180,14 @@ def _parse_map_modes():
         for _, _, root in iter_statements(text):
             for mode, _, body in iter_statements(root or ""):
                 leaves = []
+                layer_bodies = {}
                 for layer, _, layer_body in iter_statements(body or ""):
                     if layer in ("top", "bottom"):
-                        _leaves(layer_body or "", set(PALETTES), leaves)
+                        layer_bodies[layer] = layer_body or ""
+                        _leaves(layer_bodies[layer], set(PALETTES), leaves)
                 modes[mode] = {
                     "leaves": leaves,
+                    "layer_bodies": layer_bodies,
                     "palette_aware": "map_mode_palette" in (body or ""),
                 }
     return modes
@@ -203,6 +210,77 @@ def _closest_pair(colors, vision):
     return min(
         (_distance(a, b, vision), a, b) for a, b in itertools.combinations(colors, 2)
     )
+
+
+def _script_block(body, key):
+    blocks = [block for name, _, block in iter_statements(body) if name == key]
+    assert len(blocks) == 1, (key, len(blocks))
+    return blocks[0]
+
+
+def _script_scalar(body, key):
+    values = [value for name, value, _ in iter_statements(body) if name == key]
+    assert len(values) == 1, (key, len(values))
+    return values[0]
+
+
+def _predicate_tree(body):
+    return frozenset(
+        (key, scalar, _predicate_tree(block) if block is not None else None)
+        for key, scalar, block in iter_statements(body)
+    )
+
+
+def _rgb_for_block(block, palette):
+    leaves = []
+    _leaves(block, {palette}, leaves)
+    selected = [channels for palettes, channels in leaves if palette in palettes]
+    assert len(selected) == 1, (palette, leaves)
+    return tuple(float(selected[0][channel]) for channel in _RGB)
+
+
+_EU_COLOR_BRANCHES = (
+    (
+        "if",
+        {
+            "EU_commission_office_idea",
+            "EU_parliament_office_idea",
+            "EU_council_office_idea",
+        },
+        ((0.900, 0.150, 0.100), (0.984, 0.113, 0.199), (0.933, 0.120, 0.215)),
+    ),
+    (
+        "else_if",
+        {"EU_EF_president"},
+        ((0.950, 0.950, 0.950), (0.972, 0.880, 0.861), (0.873, 0.847, 0.896)),
+    ),
+    (
+        "else_if",
+        {"EU_army_office_idea", "EU_navy_office_idea", "EU_frontex_office_idea"},
+        ((0.150, 0.000, 0.900), (0.115, 0.125, 0.657), (0.352, 0.109, 0.654)),
+    ),
+    (
+        "else_if",
+        {"EU_high_repr_office_idea", "EU_UN_ambassador_office_idea"},
+        ((0.550, 0.800, 1.000), (0.471, 0.736, 0.896), (0.308, 0.807, 0.990)),
+    ),
+    (
+        "else_if",
+        {"EU_ECB_office_idea", "EU_ECOFIN_office_idea"},
+        ((0.200, 0.700, 0.450), (0.273, 0.636, 0.495), (0.104, 0.621, 0.265)),
+    ),
+    (
+        "else",
+        set(),
+        ((0.100, 0.400, 0.850), (0.292, 0.461, 1.000), (0.077, 0.346, 0.956)),
+    ),
+)
+
+_EU_CANDIDATE_RGB = (
+    (0.950, 0.850, 0.300),
+    (0.918, 0.896, 0.246),
+    (0.926, 0.793, 0.217),
+)
 
 
 # vision: (pair that a correct simulation keeps apart only in normal vision)
@@ -234,6 +312,83 @@ def test_every_color_sets_all_three_channels(map_modes, mode):
 def test_every_palette_colors_every_category(map_modes, mode):
     counts = {p: len(_colors(map_modes[mode], p)) for p in PALETTES}
     assert min(counts.values()) > 1 and len(set(counts.values())) == 1, (mode, counts)
+
+
+def test_eu_member_layer_covers_members_outside_potential_array(map_modes):
+    layers = map_modes["EU_map_mode"]["layer_bodies"]
+    top, bottom = layers["top"], layers["bottom"]
+    top_targets = _script_block(top, "targets")
+    bottom_targets = _script_block(bottom, "targets")
+    assert _script_scalar(top_targets, "target_array") == "global.EU_member"
+    assert _script_scalar(bottom_targets, "target_array") == "global.EU_potential"
+
+    top_membership = _script_block(_script_block(top, "color"), "FROM")
+    top_check = _script_block(top_membership, "is_in_array")
+    assert _script_scalar(top_check, "array") == "global.EU_member"
+    assert _script_scalar(top_check, "value") == "THIS"
+
+    candidate_membership = _script_block(_script_block(bottom, "color"), "FROM")
+    candidate_check = _script_block(candidate_membership, "is_in_array")
+    assert _script_scalar(candidate_check, "array") == "global.EU_potential"
+    assert _script_scalar(candidate_check, "value") == "THIS"
+    for palette, expected in zip(PALETTES, _EU_CANDIDATE_RGB):
+        assert _rgb_for_block(_script_block(bottom, "color"), palette) == expected
+
+
+def test_eu_member_role_order_and_colors_match_status(map_modes):
+    top_color = _script_block(map_modes["EU_map_mode"]["layer_bodies"]["top"], "color")
+    member_scope = _script_block(top_color, "FROM")
+    branches = [
+        (key, block)
+        for key, _, block in iter_statements(member_scope)
+        if key in ("if", "else_if", "else")
+    ]
+    assert [key for key, _ in branches] == [key for key, _, _ in _EU_COLOR_BRANCHES]
+    for (key, block), (expected_key, expected_ideas, expected_colors) in zip(
+        branches, _EU_COLOR_BRANCHES
+    ):
+        assert key == expected_key
+        if expected_ideas:
+            idea_checks = frozenset(("has_idea", idea, None) for idea in expected_ideas)
+            expected_limit = (
+                frozenset({("OR", None, idea_checks)})
+                if len(expected_ideas) > 1
+                else idea_checks
+            )
+            assert _predicate_tree(_script_block(block, "limit")) == expected_limit
+        for palette, expected in zip(PALETTES, expected_colors):
+            assert _rgb_for_block(block, palette) == expected
+
+    status_script = read_script(str(EU_STATUS_FILE))
+    status_body = next(
+        definition
+        for name, _, definition in iter_statements(status_script)
+        if name == "defined_text"
+        and _script_scalar(definition, "name") == "map_mode_EU_status"
+    )
+    status_cases = [
+        block for key, _, block in iter_statements(status_body) if key == "text"
+    ]
+    status_keys = [_script_scalar(block, "localization_key") for block in status_cases]
+    assert status_keys[-3:] == [
+        "map_mode_member_state",
+        "map_mode_potential_member_state",
+        "map_mode_not_a_member",
+    ]
+    status_roles = status_keys[:-3]
+    role_groups = {
+        idea: group
+        for group, (_, ideas, _) in enumerate(_EU_COLOR_BRANCHES[:-1])
+        for idea in ideas
+    }
+    assert set(status_roles) == set(role_groups)
+    assert len(status_roles) == len(role_groups)
+    status_order = [role_groups[idea] for idea in status_roles]
+    assert status_order == sorted(status_order)
+    for role, case in zip(status_roles, status_cases):
+        assert _predicate_tree(_script_block(case, "trigger")) == frozenset(
+            {("has_idea", role, None)}
+        )
 
 
 _CATEGORICAL_CASES = [
