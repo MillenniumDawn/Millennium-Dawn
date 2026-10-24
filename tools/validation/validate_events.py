@@ -26,6 +26,7 @@ from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
+    first_flat_match,
     get_staged_files,
     iter_statements,
     strip_comments,
@@ -41,6 +42,7 @@ from validator_common import (
     Severity,
     run_validator_main,
     should_skip_file,
+    weight_stays_zero,
 )
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
@@ -299,6 +301,7 @@ def _extract_event_log_id_mismatches(
 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
+_IS_AI_NO_RE = re.compile(r"\bis_ai\s*=\s*no\b")
 
 # Per-worker copies of costly_scripted_effects and stored_variable_signs, set
 # once by the Pool initializer.
@@ -1060,6 +1063,7 @@ _TRIGGER_SCOPE_BLOCKS = frozenset(
 
 # Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
 _NEG, _POS = 1, 2
+_EQUIPMENT_COSTS = {"add_equipment_to_stockpile": _NEG, "send_equipment": _POS}
 
 # Stored variable -> (signs of a change that cost the country, label). Debt is the
 # odd one out: adding to it is what hurts. A tax rate change costs either way.
@@ -1074,17 +1078,16 @@ _STAT_COSTS = {
     "add_political_power": "political power",
     "add_stability": "stability",
     "add_war_support": "war support",
+    "add_command_power": "command power",
+    "add_manpower": "manpower",
 }
-_COST_ORDER = (
-    *dict.fromkeys(kind for _cost_signs, kind in _COST_VARIABLES.values()),
-    *_STAT_COSTS.values(),
-)
+_COST_ORDER = tuple(_COST_GUARDS)
 # `{ x = operand }` or the long form `{ var = x value = operand }`.
 _VARIABLE_ARGS = (
     r"\s*=\s*\{\s*(?:var\s*=\s*(?P<long>[^\s={}]+)\s+value\s*=\s*"
-    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{[^{}]*\}|[^\s{}]+)"
+    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{|[^\s{}]+)"
 )
-_STAT_COST = r"\b(?P<stat>add_political_power|add_stability|add_war_support)\s*=\s*-"
+_STAT_COST = r"\b(?P<stat>" + "|".join(_STAT_COSTS) + r")\s*=\s*"
 _COST_STEP_RE = re.compile(
     r"\b(?P<op>"
     + "|".join(_VARIABLE_OPS)
@@ -1092,6 +1095,10 @@ _COST_STEP_RE = re.compile(
     + _VARIABLE_ARGS
     + "|"
     + _STAT_COST
+    + r"(?P<stat_operand>[^\s{}]+)"
+    + r"|\b(?P<equipment>"
+    + "|".join(_EQUIPMENT_COSTS)
+    + r")\s*=\s*\{"
     + r"|\b(?P<call>[A-Za-z_]\w*)\s*=\s*yes\b"
     r"|\b(?P<branch>if|else_if|else|random|\d+)\s*=\s*\{"
 )
@@ -1100,10 +1107,12 @@ _DIRECT_COST_RE = re.compile(
     + "|".join(_COST_VARIABLES)
     + r")\b|"
     + _STAT_COST
+    + r"(?:-|[A-Za-z_])|\b(?:"
+    + "|".join(_EQUIPMENT_COSTS)
+    + r")\s*=\s*\{"
 )
 _EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
-_MATH_TERM_RE = re.compile(r"\b(value|add|subtract|multiply|divide)\s*=\s*([^\s{}]+)")
 _STORED_LITERAL_RE = re.compile(
     r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
     r"|([^\s={}]+)\s*=\s*)(-?[\d.]+)\s*\}"
@@ -1142,8 +1151,11 @@ def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
     """
     if operand.startswith("{"):
         signs = 0
-        for op, term in _MATH_TERM_RE.findall(operand):
-            signs = _combine(op, signs, _signs(term, known, stored))
+        for op, value, block in iter_statements(operand[1:-1]):
+            if op in {"value", "add", "subtract", "multiply", "divide"}:
+                term = "{" + block + "}" if block is not None else value
+                if term is not None:
+                    signs = _combine(op, signs, _signs(term, known, stored))
         return signs
     if operand[0] in "-.0123456789":
         if not operand.strip("-.0"):
@@ -1171,8 +1183,8 @@ def _effect_costs(
     variables the way the game does. A branch (`if`, `random`, a `random_list`
     bucket) may or may not run, so what it sets is added to what was possible
     before it, and an `else` starts from what held before its `if`. The cost
-    itself is always a write to a stored variable in _COST_VARIABLES or a negative
-    stat effect.
+    itself is a write to a stored variable in _COST_VARIABLES, a negative stat
+    effect, or equipment leaving the stockpile.
     """
     costs: Set[str] = set()
     # Also right for the old `if = { ... else = { ... } }` form: this call is the `if`.
@@ -1193,7 +1205,22 @@ def _effect_costs(
                 known[variable] = signs | known.get(variable, 0)
             pos = end
         elif m["stat"]:
-            costs.add(_STAT_COSTS[m["stat"]])
+            if _signs(m["stat_operand"], known, stored) & _NEG:
+                costs.add(_STAT_COSTS[m["stat"]])
+        elif m["equipment"]:
+            end = find_unquoted_brace_close(text, pos - 1)
+            if end == -1:
+                return costs
+            for key, value, block in iter_statements(text[pos:end]):
+                if key == "amount":
+                    operand = "{" + block + "}" if block is not None else value
+                    if (
+                        operand
+                        and _signs(operand, known, stored)
+                        & _EQUIPMENT_COSTS[m["equipment"]]
+                    ):
+                        costs.add("equipment")
+            pos = end + 1
         elif m["call"]:
             call = m["call"]
             if call in effects and call not in stack:
@@ -1202,7 +1229,14 @@ def _effect_costs(
                 )
         elif m["op"]:
             target = m["long"] or m["short"]
-            term = _signs(m["operand"], known, stored)
+            operand = m["operand"]
+            if operand == "{":
+                end = find_unquoted_brace_close(text, pos - 1)
+                if end == -1:
+                    return costs
+                operand = text[pos - 1 : end + 1]
+                pos = end + 1
+            term = _signs(operand, known, stored)
             if target not in _COST_VARIABLES or m["temp"]:
                 current = 0 if m["op"] == "set" else _signs(target, known, stored)
                 known[target] = _combine(m["op"], current, term)
@@ -1258,6 +1292,15 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
         costly |= callers
 
 
+def _disabled_cost_branch(key: str, body: str) -> bool:
+    for name, value, block in iter_statements(body):
+        if key == "random" and name == "chance" and value:
+            return _signs(value, {}, {}) == 0
+        if name == "limit" and block is not None:
+            return ("always", "no", None) in iter_statements(block)
+    return False
+
+
 def _split_option(
     body: str, country: Optional[str] = None, *, triggers: bool = False
 ) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
@@ -1277,15 +1320,24 @@ def _split_option(
             key = m.group(1)
             if skip is not None or kept_whole:
                 continue
-            if key in _VARIABLE_EFFECTS or (triggers and key == "check_variable"):
-                kept_whole = depth
-            elif (
-                key not in scope_blocks
-                and (country is None or key != country)
-                and not (key or "").isdigit()
+            if (
+                key in _VARIABLE_EFFECTS
+                or key in _EQUIPMENT_COSTS
+                or (triggers and key == "check_variable")
             ):
-                own.append(body[cursor : m.start()])
-                skip = (depth, m.end(), key)
+                kept_whole = depth
+            else:
+                excluded = (
+                    key not in scope_blocks
+                    and (country is None or key != country)
+                    and not (key or "").isdigit()
+                )
+                if not triggers and key in {"if", "else_if", "random"}:
+                    end = find_unquoted_brace_close(body, m.end() - 1)
+                    excluded = _disabled_cost_branch(key, body[m.end() : end])
+                if excluded:
+                    own.append(body[cursor : m.start()])
+                    skip = (depth, m.end(), key)
             continue
         if kept_whole == depth:
             kept_whole = 0
@@ -1328,16 +1380,23 @@ def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
         )
 
 
+def effect_costs(
+    effect_text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block body charges its own country.
+
+    The body has comments already stripped. `effects` and `stored` come from
+    load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored)
+
+
 def uncovered_costs(
     effect_text: str, ai_weights: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> Set[str]:
-    """Costs an effect block charges its own country that an AI weight block ignores.
-
-    Both arguments are block bodies with comments already stripped. `effects`
-    and `stored` come from load_cost_lookups.
-    """
-    own = _split_option(blank_quoted_strings(effect_text))[0]
-    return _effect_costs(own, effects, {}, stored) - _cost_sensitive_kinds(
+    """Costs an effect block charges its own country that an AI weight block ignores."""
+    return effect_costs(effect_text, effects, stored) - _cost_sensitive_kinds(
         ai_weights, None
     )
 
@@ -1367,6 +1426,11 @@ def find_cost_blind_options(
     where every option has a `trigger`: those may be variants the AI never chooses
     between, so the finding needs a look before it is fixed. `effects` comes from
     costly_scripted_effects and `stored` from stored_variable_signs.
+
+    Skipped: an event whose own trigger requires `is_ai = no`, an option the AI
+    never picks (`base = 0`, no `add`) while another option can win, and a cost
+    every option charges, since a guard on each one scales them all alike. Tax
+    rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
@@ -1377,18 +1441,30 @@ def find_cost_blind_options(
             (match.end(), find_unquoted_brace_close(body, match.end() - 1))
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
-        if len(options) < 2:
+        trigger = _event_trigger_body(body) or ""
+        if len(options) < 2 or first_flat_match(trigger, _IS_AI_NO_RE):
             continue
-        country = _receiver_tag(_event_trigger_body(body) or "")
+        country = _receiver_tag(trigger)
         splits = [
             _split_option(body[opt_start:opt_end], country)
             for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
-        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+        option_costs = [_effect_costs(own, effects, {}, stored) for own, _b in splits]
+        shared = set.intersection(*option_costs) - {"tax rate"}
+        never_picked = [
+            weight_stays_zero(blocks.get("ai_chance", (0, ""))[1])
+            for _own, blocks in splits
+        ]
+        for (opt_start, opt_end), (_own, blocks), costs, never in zip(
+            options, splits, option_costs, never_picked
+        ):
+            if never and not all(never_picked):
+                continue
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
-            costs = _effect_costs(own, effects, {}, stored)
-            costs -= _cost_sensitive_kinds(ai_chance, country)
+            costs = (
+                costs - shared - _cost_sensitive_kinds(ai_chance, country)
+            ) & _COST_GUARDS.keys()
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
