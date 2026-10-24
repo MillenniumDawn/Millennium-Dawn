@@ -196,8 +196,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
-  recognized local guard. Event/option triggers and nested `if` limits can supply a
-  lower corruption-level bound; fewer decreases must run than that bound. A direct
+  recognized local guard. Each decrease refunds 150 PP at level 1, so only a charge
+  above 150 PP per decrease is reported. Event/option triggers and nested `if`
+  limits can supply a lower corruption-level bound; fewer decreases must run than
+  that bound. A direct
   level-1 exclusion supplies a bound of 2, so repeated decreases still need review.
   Entry bounds are discarded when event `immediate` effects can change corruption.
   Option bounds are discarded when a literal corruption-idea change precedes a
@@ -218,6 +220,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   scripted-effect bodies, caller conditions, surrounding conditions in foreign scopes,
   and indirect corruption mutations are not followed. Mutually exclusive branches are
   aggregated. These gaps keep the check opt-in. No decisions are checked.
+
 - Other gaps from #5738 are not checked:
   - Double building charges need both payments resolved to the same country and
     reachable path. Adjacent costs alone do not prove a double charge.

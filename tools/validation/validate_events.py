@@ -380,8 +380,9 @@ def _extract_corruption_pp_cost_options(
     path = os.path.relpath(filename, mod_path)
     return [
         (
-            f"{name} - possible PP charge with decrease_corruption; "
-            f"no recognized local guard against {_MIN_CORRUPTION_ID}",
+            f"{name} - PP charge above the {_MIN_CORRUPTION_REFUND} PP refund per "
+            f"decrease_corruption; no recognized local guard against "
+            f"{_MIN_CORRUPTION_ID}",
             path,
             line,
         )
@@ -1105,6 +1106,7 @@ _STAT_COSTS = {
 }
 _COST_ORDER = tuple(_COST_GUARDS)
 _MIN_CORRUPTION_ID = "corruption_level_01"
+_MIN_CORRUPTION_REFUND = 150
 _CORRUPTION_LEVEL_RE = re.compile(r"corruption_level_(0[1-9]|10)")
 _CORRUPTION_ID_RE = re.compile(r"(?<![\w])corruption_level_(?:0[1-9]|10)(?![\w])")
 _NEGATIVE_NUMBER_RE = re.compile(r"-(?:\d+(?:\.\d*)?|\.\d+)")
@@ -1647,9 +1649,9 @@ def _negative_pp_cost(value: Optional[str]) -> bool:
     )
 
 
-def _effect_presence(body: str) -> Tuple[bool, int]:
-    """Find a literal negative PP operation and count decrease_corruption calls."""
-    pp_cost = False
+def _effect_presence(body: str) -> Tuple[float, int]:
+    """Total literal negative PP charge and count of decrease_corruption calls."""
+    pp_charge = 0.0
     decreases_corruption = 0
     for key, value, block in iter_statements(body):
         if (
@@ -1658,15 +1660,15 @@ def _effect_presence(body: str) -> Tuple[bool, int]:
             or key in _EQUIPMENT_COSTS
         ):
             continue
-        if key == "add_political_power":
-            pp_cost |= _negative_pp_cost(value)
+        if key == "add_political_power" and _negative_pp_cost(value):
+            pp_charge -= float(value or 0)
         elif key == "decrease_corruption" and value == "yes":
             decreases_corruption += 1
         if block is not None:
-            nested_cost, nested_decrease = _effect_presence(block)
-            pp_cost |= nested_cost
+            nested_charge, nested_decrease = _effect_presence(block)
+            pp_charge += nested_charge
             decreases_corruption += nested_decrease
-    return pp_cost, decreases_corruption
+    return pp_charge, decreases_corruption
 
 
 def _guard_prevents_min_corruption_refund(
@@ -1751,12 +1753,12 @@ def _all_corruption_operations_guarded(
             )
             bound = _trigger_corruption_level_bound(limit, country) if limit else None
             if bound is not None:
-                pp_cost, decreases_corruption = _effect_presence(block)
+                pp_charge, decreases_corruption = _effect_presence(block)
                 idea_bound_invalidated, _idea_change_remains = (
                     _idea_mutation_before_decrease(block)
                 )
                 if (
-                    pp_cost
+                    pp_charge
                     and decreases_corruption
                     and not idea_bound_invalidated
                     and _guard_prevents_min_corruption_refund(
@@ -1772,6 +1774,7 @@ def _all_corruption_operations_guarded(
 def find_corruption_pp_cost_options(text: str) -> List[Tuple[str, int]]:
     """Return event options charging literal PP while decreasing corruption unguarded.
 
+    Only a charge above the 150 PP each decrease refunds at level 1 can lose PP.
     A level-1 exclusion must gate the event, the option, or an effect block that
     contains both operations. Dynamic PP values and unrelated country scopes are
     left to manual review.
@@ -1831,8 +1834,12 @@ def find_corruption_pp_cost_options(text: str) -> List[Tuple[str, int]]:
                     ),
                     default=None,
                 )
-            pp_cost, decreases_corruption = _effect_presence(own_effects)
-            if not pp_cost or not decreases_corruption:
+            pp_charge, decreases_corruption = _effect_presence(own_effects)
+            # At level 1 each decrease refunds this much, so a smaller charge loses nothing.
+            if (
+                not decreases_corruption
+                or pp_charge <= _MIN_CORRUPTION_REFUND * decreases_corruption
+            ):
                 continue
             if _guard_prevents_min_corruption_refund(bound, decreases_corruption):
                 continue

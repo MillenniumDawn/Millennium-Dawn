@@ -6,7 +6,7 @@ import pytest
 import validate_events as V
 from shared.suite import build_validator, write_tree
 
-_PP_COST = "\t\tadd_political_power = -150\n"
+_PP_COST = "\t\tadd_political_power = -400\n"
 _DECREASE = "\t\tdecrease_corruption = yes\n"
 _MIN_GUARD = "\t\tNOT = { has_idea = corruption_level_01 }\n"
 _HIGH_CORRUPTION_GUARD = (
@@ -21,7 +21,7 @@ _HIGH_CORRUPTION_GUARD = (
 _NESTED_GUARD = (
     "\t\tif = {\n"
     "\t\t\tlimit = { NOT = { has_idea = corruption_level_01 } }\n"
-    "\t\t\tadd_political_power = -150\n"
+    "\t\t\tadd_political_power = -400\n"
     "\t\t\tdecrease_corruption = yes\n"
     "\t\t}\n"
 )
@@ -42,6 +42,21 @@ _FINDING = [("foo.1.a", 3)]
 _SCAN_CASES = {
     "unguarded charged corruption option": (
         _event(_option(_PP_COST + _DECREASE)),
+        _FINDING,
+    ),
+    "refund covers a charge up to 150 PP per decrease": (
+        _event(
+            _option(
+                "\t\tadd_political_power = -150\n"
+                + _DECREASE
+                + "\t\tadd_political_power = -150\n"
+                + _DECREASE
+            )
+        ),
+        [],
+    ),
+    "charge above the refund for every decrease is reported": (
+        _event(_option("\t\tadd_political_power = -301\n" + _DECREASE + _DECREASE)),
         _FINDING,
     ),
     "event trigger excludes minimum corruption": (
@@ -137,7 +152,7 @@ _SCAN_CASES = {
                 "\t\tswap_ideas = { remove_idea = corruption_level_02 "
                 "add_idea = corruption_level_01 }\n"
                 "\t\thidden_effect = {\n"
-                "\t\t\tadd_political_power = -150\n"
+                "\t\t\tadd_political_power = -400\n"
                 "\t\t\tdecrease_corruption = yes\n"
                 "\t\t}\n"
             ),
@@ -152,7 +167,7 @@ _SCAN_CASES = {
                 "remove_idea = corruption_level_02 "
                 "add_idea = corruption_level_01 } }\n"
                 "\t\thidden_effect = {\n"
-                "\t\t\tadd_political_power = -150\n"
+                "\t\t\tadd_political_power = -400\n"
                 "\t\t\tdecrease_corruption = yes\n"
                 "\t\t}\n"
             ),
@@ -165,7 +180,7 @@ _SCAN_CASES = {
             _option(
                 "\t\tswap_ideas = { remove_idea = corruption_level_02 "
                 "add_idea = corruption_level_01 }\n"
-                "\t\tROOT = { add_political_power = -150 "
+                "\t\tROOT = { add_political_power = -400 "
                 "decrease_corruption = yes }\n",
                 _MIN_GUARD,
             )
@@ -179,7 +194,7 @@ _SCAN_CASES = {
                 "\t\t\tlimit = { NOT = { has_idea = corruption_level_01 } }\n"
                 "\t\t\tswap_ideas = { remove_idea = corruption_level_02 "
                 "add_idea = corruption_level_01 }\n"
-                "\t\t\tadd_political_power = -150\n"
+                "\t\t\tadd_political_power = -400\n"
                 "\t\t\tdecrease_corruption = yes\n"
                 "\t\t}\n"
             )
@@ -192,7 +207,7 @@ _SCAN_CASES = {
                 "\t\tswap_ideas = { remove_idea = corruption_level_02 "
                 "add_idea = corruption_level_01 }\n"
                 "\t\tif = { limit = { NOT = { has_idea = corruption_level_01 } } "
-                "add_political_power = -150 decrease_corruption = yes }\n"
+                "add_political_power = -400 decrease_corruption = yes }\n"
             )
         ),
         [],
@@ -250,15 +265,15 @@ _SCAN_CASES = {
     ),
     "variable payload does not execute a PP effect": (
         _event(
-            _option("\t\tset_variable = { add_political_power = -150 }\n" + _DECREASE)
+            _option("\t\tset_variable = { add_political_power = -400 }\n" + _DECREASE)
         ),
         [],
     ),
     "comments and quoted logs cannot invent a PP cost": (
         _event(
             _option(
-                "#add_political_power = -150\n"
-                '\t\tlog = "add_political_power = -150"\n' + _DECREASE
+                "#add_political_power = -400\n"
+                '\t\tlog = "add_political_power = -400"\n' + _DECREASE
             )
         ),
         [],
@@ -307,7 +322,7 @@ _SCAN_CASES = {
         _event(
             _option(
                 "\t\tGER = { decrease_corruption = yes "
-                "ROOT = { add_political_power = -150 "
+                "ROOT = { add_political_power = -400 "
                 "decrease_corruption = yes } }\n"
             ),
             "\ttag = FRA\n",
@@ -343,7 +358,7 @@ _SCAN_CASES = {
     "numeric option scope preserves explicit ROOT PP and corruption effects": (
         _event(
             _option(
-                "\t\t123 = { ROOT = { add_political_power = -150 "
+                "\t\t123 = { ROOT = { add_political_power = -400 "
                 "decrease_corruption = yes } }\n"
             )
         ),
@@ -361,7 +376,7 @@ _SCAN_CASES = {
         _event(
             _option(
                 "\t\tROOT = {\n"
-                "\t\t\tadd_political_power = -150\n"
+                "\t\t\tadd_political_power = -400\n"
                 "\t\t\tdecrease_corruption = yes\n"
                 "\t\t}\n"
             )
