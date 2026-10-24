@@ -47,7 +47,9 @@ from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
 # the token shape requires a version bump to avoid stale 3-tuple entries).
 # v9 stores checkout-relative keys and records the checkout root on each
 # payload so embedded paths rehome when the cache is restored at another root.
-CACHE_VERSION = 9
+# v10 is a rowid table: rows hold pickles up to megabytes, and a WITHOUT ROWID
+# b-tree keeps whole rows in its interior pages, so concurrent inserts crawled.
+CACHE_VERSION = 10
 
 
 # Cache entries include the owning validator and shared cache/parser code so a
@@ -313,7 +315,7 @@ def _connect(mod_path: str) -> Optional[sqlite3.Connection]:
                 " tag TEXT NOT NULL,"
                 " value BLOB NOT NULL,"
                 " PRIMARY KEY (namespace, key)"
-                ") WITHOUT ROWID"
+                ")"
             )
         except (OSError, sqlite3.Error):
             return None
