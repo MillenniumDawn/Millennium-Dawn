@@ -1,0 +1,1250 @@
+add_namespace = econ_forum
+add_namespace = econ_forum_news
+
+# Preparations open for the forum we host.
+country_event = {
+	id = econ_forum.1
+	title = econ_forum.1.t
+	desc = {
+		text = econ_forum.1.d_short
+		trigger = { check_variable = { econ_forum_prep_months = 1 } }
+	}
+	desc = {
+		text = econ_forum.1.d
+		trigger = { NOT = { check_variable = { econ_forum_prep_months = 1 } } }
+	}
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.1.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.1.a executed"
+		unlock_decision_category_tooltip = econ_forum_category
+		ai_chance = { base = 1 }
+	}
+}
+
+# An invitation to another forum's summit. Claims the oldest queued forum and saves its host as econ_forum_inviter.
+country_event = {
+	id = econ_forum.2
+	title = econ_forum.2.t
+	desc = econ_forum.2.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	trigger = { check_variable = { econ_forum_invite_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_invite_queue^0 }
+			remove_from_array = { array = econ_forum_invite_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_inviter }
+			if = {
+				limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+				var:global.econ_forum_seat^ef_i = { save_event_target_as = econ_forum_invite_seat }
+			}
+		}
+	}
+
+	option = {
+		name = econ_forum.2.a
+		trigger = { has_political_power > 19 }
+		log = "[GetDateText]: [This.GetName]: econ_forum.2.a executed"
+		add_political_power = -20
+		custom_effect_tooltip = econ_forum_send_head_tt
+		hidden_effect = {
+			set_temp_variable = { ef_answer = 4 }
+			set_temp_variable = { ef_cost = 20 }
+			econ_forum_answer_invitation = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.2.b
+		trigger = { has_political_power > 4 }
+		log = "[GetDateText]: [This.GetName]: econ_forum.2.b executed"
+		add_political_power = -5
+		custom_effect_tooltip = econ_forum_send_ministers_tt
+		hidden_effect = {
+			set_temp_variable = { ef_answer = 3 }
+			set_temp_variable = { ef_cost = 5 }
+			econ_forum_answer_invitation = yes
+		}
+		ai_chance = { base = 2 }
+	}
+
+	option = {
+		name = econ_forum.2.c
+		log = "[GetDateText]: [This.GetName]: econ_forum.2.c executed"
+		hidden_effect = {
+			set_temp_variable = { ef_answer = -1 }
+			set_temp_variable = { ef_cost = 0 }
+			econ_forum_answer_invitation = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Summit report for the host.
+country_event = {
+	id = econ_forum.3
+	title = econ_forum.3.t
+	desc = {
+		text = econ_forum.3.d_gain
+		trigger = { check_variable = { econ_forum_report_prestige > econ_forum_report_prestige_before } }
+	}
+	desc = {
+		text = econ_forum.3.d_loss
+		trigger = { NOT = { check_variable = { econ_forum_report_prestige > econ_forum_report_prestige_before } } }
+	}
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.3.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# Result of courting a headline speaker.
+country_event = {
+	id = econ_forum.4
+	title = econ_forum.4.t
+	desc = {
+		text = econ_forum.4.d_poached
+		trigger = { check_variable = { econ_forum_speaker_result = 2 } }
+	}
+	desc = {
+		text = econ_forum.4.d_booked
+		trigger = { check_variable = { econ_forum_speaker_result = 1 } }
+	}
+	desc = {
+		text = econ_forum.4.d_declined
+		trigger = { check_variable = { econ_forum_speaker_result = 0 } }
+	}
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.4.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# A human guest who accepted an invitation picks what its delegation pushes. The inviter and seat saved by
+# econ_forum.2 carry over, so the agenda lands on the forum that sent the invitation.
+country_event = {
+	id = econ_forum.5
+	title = econ_forum.5.t
+	desc = econ_forum.5.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.5.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.5.a executed"
+		custom_effect_tooltip = econ_forum.5.a_tt
+		hidden_effect = {
+			set_temp_variable = { ef_agenda = 1 }
+			econ_forum_set_agenda = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.5.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.5.b executed"
+		custom_effect_tooltip = econ_forum.5.b_tt
+		hidden_effect = {
+			set_temp_variable = { ef_agenda = 2 }
+			econ_forum_set_agenda = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.5.c
+		log = "[GetDateText]: [This.GetName]: econ_forum.5.c executed"
+		custom_effect_tooltip = econ_forum.5.c_tt
+		hidden_effect = {
+			set_temp_variable = { ef_agenda = 3 }
+			econ_forum_set_agenda = yes
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.5.e
+		log = "[GetDateText]: [This.GetName]: econ_forum.5.e executed"
+		hidden_effect = {
+			set_temp_variable = { ef_agenda = 0 }
+			econ_forum_set_agenda = yes
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# Result of a guest's bid for a headline slot, sent from the Forums tab.
+country_event = {
+	id = econ_forum.6
+	title = econ_forum.6.t
+	desc = {
+		text = econ_forum.6.d_won
+		trigger = { check_variable = { econ_forum_bid_result = 1 } }
+	}
+	desc = {
+		text = econ_forum.6.d_lost
+		trigger = { check_variable = { econ_forum_bid_result = 0 } }
+	}
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.6.a
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.6.b
+		# Only while the keynote this event reported is still booked for the summit in preparation.
+		trigger = {
+			check_variable = { econ_forum_bid_result = 1 }
+			check_variable = { econ_forum_keynote_booked^econ_forum_bid_forum = econ_forum_bid_tag }
+			check_variable = { global.econ_forum_preparing^econ_forum_bid_forum = 1 }
+			check_variable = { econ_forum_bid_cycle^econ_forum_bid_forum = global.econ_forum_cycle^econ_forum_bid_forum }
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.6.b executed"
+		custom_effect_tooltip = econ_forum.6.b_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_bid_forum }
+			set_variable = { econ_forum_keynote_hard^ef_i = 1 }
+		}
+		ai_chance = { base = 0 }
+	}
+}
+
+# An AI host turns down a guest's request for an invitation, sent from the Forums tab.
+country_event = {
+	id = econ_forum.7
+	title = econ_forum.7.t
+	desc = econ_forum.7.d
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.7.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# A forum host books a signing ceremony with a human guest.
+country_event = {
+	id = econ_forum.8
+	title = econ_forum.8.t
+	desc = econ_forum.8.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	trigger = { check_variable = { econ_forum_ceremony_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_ceremony_queue^0 }
+			remove_from_array = { array = econ_forum_ceremony_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_ceremony_host }
+		}
+	}
+
+	option = {
+		name = econ_forum.8.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.8.a executed"
+		custom_effect_tooltip = econ_forum.8.a_tt
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.8.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.8.b executed"
+		econ_forum_decline_ceremony = yes
+		ai_chance = { base = 0 }
+	}
+}
+
+# A host picks the controversial speaker it booked from the Forums decisions.
+country_event = {
+	id = econ_forum.9
+	title = econ_forum.9.t
+	desc = econ_forum.9.desc
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.9.a
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 0 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.a executed"
+		custom_effect_tooltip = econ_forum.9.a_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 1 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.b
+		trigger = {
+			date > 2008.1.1
+			check_variable = { econ_forum_speaker_page = 2 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.b executed"
+		custom_effect_tooltip = econ_forum.9.b_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 2 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.c
+		trigger = {
+			date > 2019.1.1
+			check_variable = { econ_forum_speaker_page = 2 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.c executed"
+		custom_effect_tooltip = econ_forum.9.c_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 3 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.d
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 0 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.d executed"
+		custom_effect_tooltip = econ_forum.9.d_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 4 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.e
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 1 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.e executed"
+		custom_effect_tooltip = econ_forum.9.e_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 5 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.f
+		trigger = {
+			date > 2006.1.1
+			check_variable = { econ_forum_speaker_page = 1 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.f executed"
+		custom_effect_tooltip = econ_forum.9.f_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 6 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.g
+		trigger = {
+			date > 2024.1.1
+			check_variable = { econ_forum_speaker_page = 3 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.g executed"
+		custom_effect_tooltip = econ_forum.9.g_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_speaker = 7 }
+			econ_forum_book_controversial = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.9.i
+		trigger = { econ_forum_speaker_choice_open = yes }
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.i executed"
+		hidden_effect = {
+			add_to_variable = { econ_forum_speaker_page = 1 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { econ_forum_speaker_page > 3 }
+						AND = {
+							check_variable = { econ_forum_speaker_page = 2 }
+							NOT = { date > 2008.1.1 }
+						}
+						AND = {
+							check_variable = { econ_forum_speaker_page = 3 }
+							NOT = { date > 2024.1.1 }
+						}
+					}
+				}
+				set_variable = { econ_forum_speaker_page = 0 }
+			}
+			country_event = econ_forum.9
+		}
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = econ_forum.9.h
+		log = "[GetDateText]: [This.GetName]: econ_forum.9.h executed"
+		hidden_effect = {
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		add_political_power = 25
+		ai_chance = { base = 0 }
+	}
+}
+
+# A host picks the star speaker it booked from the Forums decisions.
+country_event = {
+	id = econ_forum.10
+	title = econ_forum.10.t
+	desc = econ_forum.10.desc
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.10.a
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 0 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.a executed"
+		custom_effect_tooltip = econ_forum.10.a_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 0 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.b
+		trigger = {
+			date > 2010.1.1
+			check_variable = { econ_forum_speaker_page = 2 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.b executed"
+		custom_effect_tooltip = econ_forum.10.b_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 0 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.c
+		trigger = {
+			date > 2021.1.1
+			check_variable = { econ_forum_speaker_page = 4 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.c executed"
+		custom_effect_tooltip = econ_forum.10.c_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 0 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.d
+		trigger = {
+			date > 2015.9.1
+			check_variable = { econ_forum_speaker_page = 3 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.d executed"
+		custom_effect_tooltip = econ_forum.10.d_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 1 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.e
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 0 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.e executed"
+		custom_effect_tooltip = econ_forum.10.e_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 2 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.f
+		trigger = {
+			date > 2011.7.1
+			check_variable = { econ_forum_speaker_page = 2 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.f executed"
+		custom_effect_tooltip = econ_forum.10.f_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 2 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.g
+		trigger = {
+			date > 2014.10.1
+			check_variable = { econ_forum_speaker_page = 3 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.g executed"
+		custom_effect_tooltip = econ_forum.10.g_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 3 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.h
+		trigger = {
+			date > 2021.3.1
+			check_variable = { econ_forum_speaker_page = 4 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.h executed"
+		custom_effect_tooltip = econ_forum.10.h_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 4 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.i
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 1 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.i executed"
+		custom_effect_tooltip = econ_forum.10.i_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 5 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.j
+		trigger = {
+			check_variable = { econ_forum_speaker_page = 1 }
+			econ_forum_speaker_choice_open = yes
+		}
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.j executed"
+		custom_effect_tooltip = econ_forum.10.j_tt
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_speaker_forum }
+			set_temp_variable = { ef_t = 5 }
+			econ_forum_book_star = yes
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.10.l
+		trigger = { econ_forum_speaker_choice_open = yes }
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.l executed"
+		hidden_effect = {
+			add_to_variable = { econ_forum_speaker_page = 1 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { econ_forum_speaker_page > 4 }
+						AND = {
+							check_variable = { econ_forum_speaker_page = 2 }
+							NOT = { date > 2010.1.1 }
+						}
+						AND = {
+							check_variable = { econ_forum_speaker_page = 3 }
+							NOT = { date > 2014.10.1 }
+						}
+						AND = {
+							check_variable = { econ_forum_speaker_page = 4 }
+							NOT = { date > 2021.1.1 }
+						}
+					}
+				}
+				set_variable = { econ_forum_speaker_page = 0 }
+			}
+			country_event = econ_forum.10
+		}
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = econ_forum.10.k
+		log = "[GetDateText]: [This.GetName]: econ_forum.10.k executed"
+		hidden_effect = {
+			clr_country_flag = econ_forum_choosing_speaker
+			clear_variable = econ_forum_speaker_page
+		}
+		add_political_power = 75
+		ai_chance = { base = 0 }
+	}
+}
+
+# A forum's organizers offer a human guest a seat in the summit's private room.
+country_event = {
+	id = econ_forum.11
+	title = econ_forum.11.t
+	desc = econ_forum.11.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	trigger = { check_variable = { econ_forum_room_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_room_queue^0 }
+			remove_from_array = { array = econ_forum_room_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_room_host }
+			if = {
+				limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+				var:global.econ_forum_seat^ef_i = { save_event_target_as = econ_forum_room_seat }
+			}
+		}
+	}
+
+	option = {
+		name = econ_forum.11.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.11.a executed"
+		custom_effect_tooltip = econ_forum.11.a_tt
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.11.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.11.b executed"
+		econ_forum_decline_room = yes
+		ai_chance = { base = 0 }
+	}
+}
+
+# A forum's organizers bring a human government together with a rival on the summit's sidelines.
+country_event = {
+	id = econ_forum.12
+	title = econ_forum.12.t
+	desc = econ_forum.12.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	trigger = { check_variable = { econ_forum_talks_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_talks_queue^0 }
+			remove_from_array = { array = econ_forum_talks_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_talks_host }
+			if = {
+				limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+				var:global.econ_forum_seat^ef_i = { save_event_target_as = econ_forum_talks_seat }
+			}
+			if = {
+				limit = {
+					check_variable = { global.econ_forum_talks_a^ef_i = THIS.id }
+					check_variable = { global.econ_forum_talks_b^ef_i > 0 }
+				}
+				var:global.econ_forum_talks_b^ef_i = { save_event_target_as = econ_forum_talks_other }
+			}
+			else_if = {
+				limit = {
+					check_variable = { global.econ_forum_talks_b^ef_i = THIS.id }
+					check_variable = { global.econ_forum_talks_a^ef_i > 0 }
+				}
+				var:global.econ_forum_talks_a^ef_i = { save_event_target_as = econ_forum_talks_other }
+			}
+		}
+	}
+
+	option = {
+		name = econ_forum.12.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.12.a executed"
+		custom_effect_tooltip = econ_forum.12.a_tt
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.12.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.12.b executed"
+		custom_effect_tooltip = econ_forum.12.b_tt
+		econ_forum_refuse_talks = yes
+		ai_chance = { base = 0 }
+	}
+}
+
+# The World Economic Forum asks a human China to co-host a summer meeting for the emerging economies.
+country_event = {
+	id = econ_forum.14
+	title = econ_forum.14.t
+	desc = econ_forum.14.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.14.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.14.a executed"
+		custom_effect_tooltip = econ_forum.14.a_tt
+		hidden_effect = { econ_forum_found_new_champions = yes }
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.14.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.14.b executed"
+		custom_effect_tooltip = econ_forum.14.b_tt
+		ai_chance = { base = 0 }
+	}
+}
+
+# Summer Davos has met; China and every human guest hear how it went.
+country_event = {
+	id = econ_forum.15
+	title = econ_forum.15.t
+	desc = econ_forum.15.d
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.15.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# The World Economic Forum names one of a human government's ministers a Young Global Leader.
+country_event = {
+	id = econ_forum.16
+	title = econ_forum.16.t
+	desc = econ_forum.16.d
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.16.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# After the Great Reset, a Young Global Leaders government faces claims that Davos runs it.
+country_event = {
+	id = econ_forum.17
+	title = econ_forum.17.t
+	desc = econ_forum.17.d
+	picture = GFX_economic_forum_aze
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.17.a
+		log = "[GetDateText]: [This.GetName]: econ_forum.17.a executed"
+		add_stability = -0.02
+		add_popularity = { ideology = nationalist popularity = 0.02 }
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = econ_forum.17.b
+		log = "[GetDateText]: [This.GetName]: econ_forum.17.b executed"
+		if = {
+			limit = { has_dynamic_modifier = { modifier = econ_forum_young_leaders_modifier } }
+			remove_dynamic_modifier = { modifier = econ_forum_young_leaders_modifier }
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# A human host's competitiveness report comes out at its summit.
+country_event = {
+	id = econ_forum.13
+	title = econ_forum.13.t
+	desc = econ_forum.13.d
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.13.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# A new forum is founded.
+news_event = {
+	id = econ_forum_news.1
+	title = econ_forum_news.1.t
+	desc = econ_forum_news.1.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.1.a
+	}
+}
+
+# A challenger outranks the World Economic Forum for the first time.
+news_event = {
+	id = econ_forum_news.2
+	title = econ_forum_news.2.t
+	desc = econ_forum_news.2.d
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.2.a
+	}
+}
+
+# A great power's head of government picks a counter-programmed summit over the forum it clashed with.
+news_event = {
+	id = econ_forum_news.3
+	title = econ_forum_news.3.t
+	desc = econ_forum_news.3.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.3.a
+	}
+}
+
+# The World Economic Forum retakes first place after being overtaken.
+news_event = {
+	id = econ_forum_news.4
+	title = econ_forum_news.4.t
+	desc = {
+		text = econ_forum_news.4.d_schwab
+		trigger = { date < 2025.4.21 }
+	}
+	desc = {
+		text = econ_forum_news.4.d
+		trigger = { NOT = { date < 2025.4.21 } }
+	}
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.4.a
+	}
+}
+
+# A challenger forum reaches 50 prestige for the first time.
+news_event = {
+	id = econ_forum_news.5
+	title = econ_forum_news.5.t
+	desc = {
+		text = econ_forum_news.5.d_schwab
+		trigger = { date < 2025.4.21 }
+	}
+	desc = {
+		text = econ_forum_news.5.d
+		trigger = { NOT = { date < 2025.4.21 } }
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.5.a
+	}
+}
+
+# A forum's seat changed owner, so the forum moved to a new host.
+news_event = {
+	id = econ_forum_news.6
+	title = econ_forum_news.6.t
+	desc = econ_forum_news.6.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.6.a
+	}
+}
+
+# FROM is the sanctioned host.
+news_event = {
+	id = econ_forum_news.7
+	title = econ_forum_news.7.t
+	desc = econ_forum_news.7.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.7.a
+	}
+}
+
+# A great or super power boycotts a forum from the Forums tab. Fired by the host; FROM names the forum.
+news_event = {
+	id = econ_forum_news.8
+	title = econ_forum_news.8.t
+	desc = econ_forum_news.8.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.8.a
+	}
+}
+
+# A great or super power's boycott leads members of its faction out of a forum.
+news_event = {
+	id = econ_forum_news.9
+	title = econ_forum_news.9.t
+	desc = {
+		text = econ_forum_news.9.d_rival
+		trigger = { FROM = { check_variable = { econ_forum_news_rival > -1 } } }
+	}
+	desc = {
+		text = econ_forum_news.9.d
+		trigger = { FROM = { check_variable = { econ_forum_news_rival = -1 } } }
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.9.a
+	}
+}
+
+# A great or super power founds a breakaway forum against one it boycotts.
+news_event = {
+	id = econ_forum_news.10
+	title = econ_forum_news.10.t
+	desc = {
+		text = econ_forum_news.10.d_rival
+		trigger = { FROM = { check_variable = { econ_forum_news_rival > -1 } } }
+	}
+	desc = {
+		text = econ_forum_news.10.d
+		trigger = { FROM = { check_variable = { econ_forum_news_rival = -1 } } }
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.10.a
+	}
+}
+
+# A forum launches its standing council.
+news_event = {
+	id = econ_forum_news.11
+	title = econ_forum_news.11.t
+	desc = econ_forum_news.11.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.11.a
+	}
+}
+
+# Notes from a forum's private room reach the press.
+news_event = {
+	id = econ_forum_news.12
+	title = econ_forum_news.12.t
+	desc = econ_forum_news.12.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.12.a
+	}
+}
+
+# A challenger's summit out-draws Davos in heads of government.
+news_event = {
+	id = econ_forum_news.13
+	title = econ_forum_news.13.t
+	desc = econ_forum_news.13.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.13.a
+	}
+}
+
+# A challenger reaches 70 prestige and is treated as Davos's equal.
+news_event = {
+	id = econ_forum_news.14
+	title = econ_forum_news.14.t
+	desc = econ_forum_news.14.d
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.14.a
+	}
+}
+
+# The World Economic Forum falls below 60 prestige and launches a reform.
+news_event = {
+	id = econ_forum_news.15
+	title = econ_forum_news.15.t
+	desc = {
+		text = econ_forum_news.15.d_schwab
+		trigger = { date < 2025.4.21 }
+	}
+	desc = {
+		text = econ_forum_news.15.d
+		trigger = { NOT = { date < 2025.4.21 } }
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.15.a
+	}
+}
+
+# Two rivals reach an accord on a forum's sidelines.
+news_event = {
+	id = econ_forum_news.16
+	title = econ_forum_news.16.t
+	desc = econ_forum_news.16.d
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.16.a
+	}
+}
+
+# Talks between two rivals on a forum's sidelines collapse.
+news_event = {
+	id = econ_forum_news.17
+	title = econ_forum_news.17.t
+	desc = econ_forum_news.17.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.17.a
+	}
+}
+
+# A host moved a favorite to the top of its forum's competitiveness report, and it leaked.
+news_event = {
+	id = econ_forum_news.18
+	title = econ_forum_news.18.t
+	desc = econ_forum_news.18.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.18.a
+	}
+}
+
+# Protesters disrupt an unsecured summit.
+news_event = {
+	id = econ_forum_news.19
+	title = econ_forum_news.19.t
+	desc = {
+		text = econ_forum_news.19.d_globalisation
+		trigger = { date < 2004.1.1 }
+	}
+	desc = {
+		text = econ_forum_news.19.d_occupy
+		trigger = {
+			date > 2011.9.15
+			date < 2014.1.1
+		}
+	}
+	desc = {
+		text = econ_forum_news.19.d
+		trigger = {
+			NOT = { date < 2004.1.1 }
+			OR = {
+				NOT = { date > 2011.9.15 }
+				NOT = { date < 2014.1.1 }
+			}
+		}
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.19.a
+	}
+}
+
+# The pandemic sends the World Economic Forum's meeting online.
+news_event = {
+	id = econ_forum_news.20
+	title = econ_forum_news.20.t
+	desc = econ_forum_news.20.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.20.a
+	}
+}
+
+# The pandemic pushes the World Economic Forum's next meeting back four months.
+news_event = {
+	id = econ_forum_news.21
+	title = econ_forum_news.21.t
+	desc = econ_forum_news.21.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.21.a
+	}
+}
+
+# The World Economic Forum meets in New York after an attack on the United States.
+news_event = {
+	id = econ_forum_news.22
+	title = econ_forum_news.22.t
+	desc = econ_forum_news.22.d
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.22.a
+	}
+}
+
+# China agrees to host the World Economic Forum's Annual Meeting of the New Champions.
+news_event = {
+	id = econ_forum_news.23
+	title = econ_forum_news.23.t
+	desc = econ_forum_news.23.d
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.23.a
+	}
+}

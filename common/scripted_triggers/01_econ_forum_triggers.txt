@@ -1,0 +1,452 @@
+# Economic forums (Issue #4802). See 01_econ_forum_effects.txt.
+# Program tracks: 0 AI and technology, 1 energy, 2 finance, 3 defense industry, 4 infrastructure and trade, 5 development.
+
+# Country scope, temp ef_i set. Members the forum always invites.
+econ_forum_is_core_member = {
+	OR = {
+		AND = {
+			check_variable = { ef_i = 1 }
+			OR = {
+				original_tag = POL
+				original_tag = CZE
+				original_tag = HUN
+				original_tag = SLO
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 2 }
+			OR = {
+				original_tag = BLR
+				original_tag = KAZ
+				original_tag = ARM
+				original_tag = KYR
+				original_tag = TAJ
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 3 }
+			has_country_flag = asian_nation_flag
+		}
+		AND = {
+			check_variable = { ef_i = 4 }
+			check_variable = { gdp_per_capita < 20 }
+			is_in_array = { global.PR_regional_or_greater_powers = THIS.id }
+		}
+		AND = {
+			check_variable = { ef_i = 5 }
+			has_country_flag = sub_saharan_nation_flag
+		}
+		AND = {
+			check_variable = { ef_i = 6 }
+			econ_forum_is_arctic_nation = yes
+		}
+		AND = {
+			check_variable = { ef_i = 7 }
+			has_idea = NATO_member
+		}
+		# The breakaway's host keeps its faction at its table.
+		AND = {
+			check_variable = { ef_i = 8 }
+			var:ef_host = { is_in_faction_with = PREV }
+		}
+	}
+}
+
+econ_forum_is_arctic_nation = {
+	OR = {
+				original_tag = NRY
+				original_tag = DEN
+				original_tag = ICE
+				original_tag = FIN
+				original_tag = SWE
+				original_tag = CAN
+				original_tag = SOV
+				original_tag = USA
+	}
+}
+
+# Temps ef_i and ef_t set. The tracks each forum runs when its host is AI, and its starting strengths.
+econ_forum_track_in_identity = {
+	OR = {
+		AND = {
+			check_variable = { ef_i = 0 }
+			OR = {
+				check_variable = { ef_t = 0 }
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 1 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 3 }
+				check_variable = { ef_t = 4 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 2 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 4 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 3 }
+			OR = {
+				check_variable = { ef_t = 0 }
+				check_variable = { ef_t = 4 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 4 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 4 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 5 }
+			OR = {
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 4 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 6 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 3 }
+				check_variable = { ef_t = 4 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 7 }
+			OR = {
+				check_variable = { ef_t = 0 }
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 3 }
+			}
+		}
+	}
+}
+
+# Country scope, temp ef_t set. Whether track ef_t matters to this government.
+econ_forum_interested_in_track = {
+	OR = {
+		AND = {
+			check_variable = { ef_t = 0 }
+			check_variable = { gdp_per_capita > 19.999 }
+		}
+		AND = {
+			check_variable = { ef_t = 1 }
+			OR = {
+				check_variable = { energy_balance < 0 }
+				check_variable = { oil_exports > 1 }
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 2 }
+			OR = {
+				check_variable = { gdp_total > 499 }
+				check_variable = { gdp_per_capita > 49.999 }
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 3 }
+			OR = {
+				has_war = yes
+				has_idea = defence_04
+				has_idea = defence_05
+				has_idea = defence_06
+				has_idea = defence_07
+				has_idea = defence_08
+				has_idea = defence_09
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 4 }
+			check_variable = { gdp_per_capita < 20 }
+		}
+		AND = {
+			check_variable = { ef_t = 5 }
+			check_variable = { gdp_per_capita < 7 }
+		}
+	}
+}
+
+# Invitee scope, PREV is the host. True while the invitee has no personal invitation, reply or refusal this cycle.
+econ_forum_can_be_invited = {
+	OR = {
+		check_variable = { econ_forum_status^num < 9 }
+		AND = {
+			check_variable = { econ_forum_status^PREV.econ_forum_hosted > -1 }
+			check_variable = { econ_forum_status^PREV.econ_forum_hosted < 2 }
+		}
+	}
+	OR = {
+		check_variable = { econ_forum_boycott^num < 9 }
+		NOT = { check_variable = { econ_forum_boycott^PREV.econ_forum_hosted = 1 } }
+	}
+}
+
+# Temp ef_after_last set: months from the forum's last summit to the next one. Summits stay at least
+# 11 months apart, so a reschedule cannot fit a second summit into the same year.
+econ_forum_summit_spacing_ok = {
+	check_variable = { ef_after_last > 10 }
+}
+
+# Country scope, temp ef_host set. NATO and EU governments stay away from a host under Western sanctions.
+econ_forum_boycotts_host = {
+	OR = {
+		has_idea = NATO_member
+		has_idea = EU_member
+	}
+	var:ef_host = { has_country_flag = SOV_western_sanctions }
+}
+
+# Country scope, temp ef_host set. A full BRICS member hosting invites every other full member.
+econ_forum_brics_standing_guest = {
+	has_idea = RAJ_BRICS
+	var:ef_host = { has_idea = RAJ_BRICS }
+}
+
+# Country scope, temp ef_host set. Full and associate BRICS members favour each other's forums.
+econ_forum_brics_partner = {
+	OR = {
+		has_idea = RAJ_BRICS
+		has_idea = RAJ_BRICS_associate
+	}
+	var:ef_host = {
+		OR = {
+			has_idea = RAJ_BRICS
+			has_idea = RAJ_BRICS_associate
+		}
+	}
+}
+
+# Country scope, temp ef_host set. A host that pivoted to the East courts BRICS members and Asian nations.
+econ_forum_pivot_east_guest = {
+	var:ef_host = { has_country_flag = econ_forum_pivot_east }
+	OR = {
+		has_idea = RAJ_BRICS
+		has_idea = RAJ_BRICS_associate
+		has_country_flag = asian_nation_flag
+	}
+}
+
+# Forums tab row of forum v, in the viewing country's scope. Someone else runs it.
+econ_forum_guest_row = {
+	check_variable = { global.econ_forum_host^v > 0 }
+	NOT = { check_variable = { global.econ_forum_host^v = THIS.id } }
+}
+
+econ_forum_can_sponsor = {
+	econ_forum_guest_row = yes
+	var:global.econ_forum_host^v = { NOT = { has_war_with = PREV } }
+	check_variable = { global.econ_forum_preparing^v = 1 }
+	check_variable = { global.econ_forum_sponsors^v < 25 }
+	NOT = { check_variable = { econ_forum_sponsor_cycle^v = global.econ_forum_cycle^v } }
+	check_variable = { econ_forum_boycott^v = 0 }
+	has_political_power > 9
+	check_variable = { treasury > 1.49 }
+}
+
+econ_forum_can_bid = {
+	econ_forum_guest_row = yes
+	check_variable = { global.econ_forum_preparing^v = 1 }
+	check_variable = { global.econ_forum_speakers^v < 3 }
+	check_variable = { econ_forum_status^v > 2 }
+	NOT = { check_variable = { econ_forum_bid_cycle^v = global.econ_forum_cycle^v } }
+	has_political_power > 24
+}
+
+econ_forum_can_request = {
+	econ_forum_guest_row = yes
+	var:global.econ_forum_host^v = {
+		is_ai = yes
+		NOT = { has_war_with = PREV }
+	}
+	check_variable = { global.econ_forum_preparing^v = 1 }
+	# Requests close with the host's invitations, a month before the summit.
+	set_temp_variable = { ef_request_gap = global.econ_forum_month^v }
+	subtract_from_temp_variable = { ef_request_gap = global.month }
+	OR = {
+		check_variable = { ef_request_gap = 2 }
+		check_variable = { ef_request_gap = -10 }
+	}
+	check_variable = { econ_forum_status^v = 0 }
+	check_variable = { econ_forum_boycott^v = 0 }
+	NOT = { check_variable = { econ_forum_request_cycle^v = global.econ_forum_cycle^v } }
+	has_political_power > 14
+}
+
+econ_forum_can_boycott = {
+	econ_forum_guest_row = yes
+	check_variable = { econ_forum_boycott^v = 0 }
+	has_political_power > 24
+}
+
+# Country scope, temp ef_i set. Governments that object to forum ef_i's controversial speaker this cycle.
+econ_forum_objects_to_speaker = {
+	OR = {
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 1 }
+			has_government = democratic
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 2 }
+			check_variable = { oil_exports > 1 }
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 3 }
+			has_idea = EU_member
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 4 }
+			has_idea = NATO_member
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 5 }
+			OR = {
+				has_government = nationalist
+				has_government = fascism
+			}
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 6 }
+			has_government = communism
+		}
+		AND = {
+			check_variable = { global.econ_forum_controversial^ef_i = 7 }
+			OR = {
+				has_idea = RAJ_BRICS
+				has_idea = RAJ_BRICS_associate
+			}
+		}
+	}
+}
+
+# Country scope. The speaker booking the speaker decisions snapshotted is still open: we still host that forum, the
+# same cycle is preparing, and a speaker slot is free.
+econ_forum_speaker_choice_open = {
+	has_variable = econ_forum_hosted
+	check_variable = { econ_forum_hosted = econ_forum_speaker_forum }
+	check_variable = { global.econ_forum_cycle^econ_forum_speaker_forum = econ_forum_speaker_cycle }
+	check_variable = { global.econ_forum_preparing^econ_forum_speaker_forum = 1 }
+	check_variable = { global.econ_forum_speakers^econ_forum_speaker_forum < 3 }
+}
+
+# Candidate scope, PREV the first party, temp ef_i: an invited regional or greater power other than the host that
+# either side holds below -24 opinion, at peace with the first party and not at the table with it in the last five years.
+econ_forum_talks_partner = {
+	NOT = { tag = PREV }
+	NOT = { check_variable = { global.econ_forum_host^ef_i = THIS.id } }
+	check_variable = { econ_forum_status^num > ef_i }
+	check_variable = { econ_forum_status^ef_i > 0 }
+	NOT = { has_war_with = PREV }
+	NOT = { has_country_flag = econ_forum_talks_held@PREV }
+	OR = {
+		has_opinion = { target = PREV value < -24 }
+		PREV = { has_opinion = { target = PREV value < -24 } }
+	}
+}
+
+# Country scope, temp ef_i: a rival of ours is among forum ef_i's invited regional or greater powers.
+econ_forum_has_talks_rival = {
+	any_of_scopes = {
+		array = global.PR_regional_or_greater_powers
+		econ_forum_talks_partner = yes
+	}
+}
+
+# Temp ef_i: the World Economic Forum's first summit within 15 months of a real attack on the United States, which
+# meets in New York in solidarity, as it did in 2002.
+econ_forum_new_york_summit = {
+	check_variable = { ef_i = 0 }
+	NOT = { has_global_flag = econ_forum_davos_new_york }
+	country_exists = USA
+	USA = {
+		has_country_flag = { flag = USA_wot_attack_occurred days < 450 }
+		NOT = { has_country_flag = USA_wot_plot_disrupted }
+	}
+}
+
+# Temp ef_i: the pandemic has broken out and has not yet pushed back a World Economic Forum meeting. MD's outbreak
+# arrives in late 2020, so the first January after it is 2021, the meeting the real pandemic sent online.
+econ_forum_pandemic_disrupts = {
+	check_variable = { ef_i = 0 }
+	has_global_flag = COVID_start_of_pandemic
+	NOT = { has_global_flag = econ_forum_davos_postponed }
+}
+
+# Summer Davos meets while China and the WEF are on speaking terms. The real meeting was cancelled from 2020 to 2022;
+# MD's outbreak only arrives in late 2020, so the gap follows the calendar.
+econ_forum_new_champions_can_meet = {
+	country_exists = CHI
+	check_variable = { global.econ_forum_host^0 > 0 }
+	var:global.econ_forum_host^0 = {
+		exists = yes
+		NOT = { has_war_with = CHI }
+	}
+	CHI = {
+		NOT = {
+			AND = {
+				check_variable = { econ_forum_boycott^num > 0 }
+				check_variable = { econ_forum_boycott^0 = 1 }
+			}
+		}
+	}
+	NOT = {
+		AND = {
+			date > 2020.1.1
+			date < 2023.1.1
+		}
+	}
+}
+
+# Country scope, temp ef_i. The government is the power the host courts this cycle: the United States, China or Russia.
+econ_forum_is_audience_power = {
+	OR = {
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 2 }
+			original_tag = USA
+		}
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 3 }
+			original_tag = CHI
+		}
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 4 }
+			original_tag = SOV
+		}
+	}
+}
+
+# Country scope, temp ef_i. The government belongs to the audience the host courts this cycle: the EU, or the courted
+# power and its partners (NATO for the United States, the faction for China and Russia).
+econ_forum_in_audience = {
+	OR = {
+		econ_forum_is_audience_power = yes
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 1 }
+			has_idea = EU_member
+		}
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 2 }
+			has_idea = NATO_member
+		}
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 3 }
+			is_in_faction_with = CHI
+		}
+		AND = {
+			check_variable = { global.econ_forum_audience^ef_i = 4 }
+			is_in_faction_with = SOV
+		}
+	}
+}
