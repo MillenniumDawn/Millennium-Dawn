@@ -9,8 +9,8 @@ from validate_equipment_variants import check_variant_availability, equipment_un
 from validate_history import check_influence_order
 from validate_oob_units import (
     build_default_equipment_name_index,
-    build_variant_dlc_index,
     build_variant_name_index,
+    build_variant_registry,
     check_named_variant_refs,
 )
 
@@ -33,15 +33,17 @@ def test_china_base_equipment_name_shares_an_explicit_variant_name(remove_defaul
     if remove_default:
         del defaults["CHI_infantry_weapons_2"]
     consumer_path = "history/units/CHI_2000_nsb.txt"
+    # Original stockpile reference, before #6034 renamed the infantry variant.
+    source = 'add_equipment_to_stockpile = { type = infantry_weapons_2 variant_name = "Type-81" producer = CHI amount = 1 }'
     findings = check_named_variant_refs(
-        read(consumer_path),
+        source,
         by_tag,
         wildcard,
         source_path=consumer_path,
-        variant_dlc_index=build_variant_dlc_index(sources),
+        variant_registry=build_variant_registry(sources),
         default_equipment_names=defaults,
     )
-    assert [finding.kind for finding in findings if '"Type-81"' in finding.message] == (
+    assert [finding.kind for finding in findings] == (
         ["wrong_variant_type"] if remove_default else []
     )
 
