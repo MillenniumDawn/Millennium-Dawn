@@ -455,6 +455,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `validate_ai_equipment.py` applies the same rules to `target_variant` designs.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
   proof the runtime design is legal.
+- Explicit variant definitions are cached per source file by content and indexed by
+  producer, equipment type, and name. English default model names stay separate.
+  Staged edits widen reference checks only when the resulting identities or
+  producer/DLC/date context change. Equipment and English name edits still widen them.
+- `duplicate-equipment-variant` (WARNING): repeated explicit creation of the same
+  producer, equipment type, and name in potentially overlapping contexts. The finding
+  cites both sites. Different producers or types, mutually exclusive DLC/if branches,
+  event options, random outcomes, and tooltip-only effects do not count. Unresolved
+  producers and dynamic names or types are not checked. Separate events can overlap,
+  but the check does not prove both execute, so this is advisory.
 - `validate_ai_equipment.py` runs without `--strict` locally and with it in CI.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
