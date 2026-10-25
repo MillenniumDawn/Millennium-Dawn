@@ -397,6 +397,9 @@ def test_extended_facility_objectives_follow_native_tiers_and_keep_people(
     script.facility_callback(tier=tier)
     assert variables["TOP_org_case_result"][12] == expected
     assert script.external["damage_building", 101] == int(tier > 1)
+    assert script.globals["TOP_group_disruption_until"][12] == (
+        script.globals["TOP_clock"] + 90 if tier > 1 else 0
+    )
     assert script.globals["TOP_group_disruption_type"][12] == (
         objective if tier > 1 else 0
     )

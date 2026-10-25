@@ -586,7 +586,7 @@ class RaceScript:
                 for argument, expression in data.items():
                     if argument == "text":
                         continue
-                    match = re.fullmatch(r'"\[\?(\w+)\.GetTokenKey\]"', expression)
+                    match = re.fullmatch(r'"\[\?(\w+)(?:\.GetTokenKey)?\]"', expression)
                     assert match, f"Unsupported meta expression {expression}"
                     arguments[argument] = self.value(match[1], identifier)
 
@@ -598,7 +598,7 @@ class RaceScript:
                         ]
                     return re.sub(
                         r"\[([A-Za-z0-9_]+)\]",
-                        lambda match: arguments[match[1]],
+                        lambda match: str(arguments[match[1]]),
                         value,
                     )
 
