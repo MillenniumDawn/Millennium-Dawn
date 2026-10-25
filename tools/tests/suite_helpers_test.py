@@ -12,6 +12,7 @@ from shared.suite import (
     issue_dict,
     make_issue,
     make_results_tree,
+    read_decision_categories,
     run_git,
     script_block,
     write_slug_json,
@@ -77,6 +78,14 @@ def test_economic_fixture_rejects_unmodeled_behavior(source, message):
 def test_script_block_requires_one_definition(source):
     with pytest.raises(AssertionError):
         script_block(source, "x")
+
+
+def test_read_decision_categories_merges_blocks_and_ignores_scalar_metadata(tmp_path):
+    write_text(tmp_path / "one.txt", "first = { icon = scalar a = { cost = 1 } }")
+    write_text(tmp_path / "two.txt", "other = {} second = { b = { cost = 2 } }")
+    assert read_decision_categories(
+        tmp_path, (("one.txt", "first"), ("two.txt", "second"))
+    ) == {"a": " cost = 1 ", "b": " cost = 2 "}
 
 
 def test_economic_fixture_rejects_invalid_predicate_and_weight_operators():
