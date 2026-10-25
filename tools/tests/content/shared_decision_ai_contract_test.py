@@ -2,8 +2,12 @@
 
 import pytest
 from shared.paths import REPO_ROOT
-from shared.suite import EconomicScriptFixture, read_text, script_block
-from shared_utils import iter_statements
+from shared.suite import (
+    EconomicScriptFixture,
+    read_decision_categories,
+    read_text,
+    script_block,
+)
 
 _AGRICULTURE = "agricultural_district_tax_credits_decision"
 _LABOUR = "raise_wages_labour_unions_decision"
@@ -65,18 +69,13 @@ _COSTLY = (
 
 @pytest.fixture(scope="module")
 def decisions():
-    result = {}
-    for filename, category in (
-        ("Internal Factions.txt", "decision_category_internal_factions"),
-        ("00_political_decisions.txt", "generic_coalition_politics_decisions"),
-    ):
-        source = read_text(REPO_ROOT / "common/decisions" / filename)
-        result.update(
-            (name, body)
-            for name, _, body in iter_statements(script_block(source, category))
-            if body is not None
-        )
-    return result
+    return read_decision_categories(
+        REPO_ROOT / "common/decisions",
+        (
+            ("Internal Factions.txt", "decision_category_internal_factions"),
+            ("00_political_decisions.txt", "generic_coalition_politics_decisions"),
+        ),
+    )
 
 
 @pytest.fixture
