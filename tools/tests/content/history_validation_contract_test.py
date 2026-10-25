@@ -1,15 +1,49 @@
-"""Reported Japan and Ukraine validation regressions against real history data."""
+"""Reported China, Japan, and Ukraine validation regressions against real history data."""
 
 import pytest
+from equipment_module_slots import created_variant_spans
 from equipment_variant_context import VariantContext, script_nodes
 from shared.paths import REPO_ROOT
 from shared_utils import FileOpener
 from validate_equipment_variants import check_variant_availability, equipment_unlocks
 from validate_history import check_influence_order
+from validate_oob_units import (
+    build_default_equipment_name_index,
+    build_variant_dlc_index,
+    build_variant_name_index,
+    check_named_variant_refs,
+)
 
 
 def read(relative):
     return FileOpener.open_text_file(str(REPO_ROOT / relative))
+
+
+@pytest.mark.parametrize("remove_default", [False, True])
+def test_china_base_equipment_name_shares_an_explicit_variant_name(remove_default):
+    history_path = "history/countries/CHI - China.txt"
+    sources = [(history_path, created_variant_spans(read(history_path)))]
+    by_tag, wildcard = build_variant_name_index(sources)
+    defaults = build_default_equipment_name_index(
+        [read("common/units/equipment/MD_infantry_equipment.txt")],
+        [read("localisation/english/equipment_l_english.yml")],
+    )
+    assert defaults["CHI_infantry_weapons_2"] == "Type-81"
+    assert ("medium_tank_rocket_chassis_0", "Type-81") in by_tag["CHI"]
+    if remove_default:
+        del defaults["CHI_infantry_weapons_2"]
+    consumer_path = "history/units/CHI_2000_nsb.txt"
+    findings = check_named_variant_refs(
+        read(consumer_path),
+        by_tag,
+        wildcard,
+        source_path=consumer_path,
+        variant_dlc_index=build_variant_dlc_index(sources),
+        default_equipment_names=defaults,
+    )
+    assert [finding.kind for finding in findings if '"Type-81"' in finding.message] == (
+        ["wrong_variant_type"] if remove_default else []
+    )
 
 
 @pytest.mark.parametrize("late_init", [False, True])
