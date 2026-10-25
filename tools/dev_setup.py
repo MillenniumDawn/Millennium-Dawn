@@ -11,6 +11,7 @@ Prerequisites
 -------------
 - Python 3.12+
 - Git
+- ImageMagick (magick or convert on PATH)
 - (Optional for --docs) Node.js 24+ and Bun (https://bun.sh/)
 
 The script will auto-create a local ``.venv`` if your system Python is
@@ -34,6 +35,8 @@ import sys
 import sysconfig
 import tomllib
 from pathlib import Path
+
+from assets.md_art_convert import find_imagemagick
 
 # Force line-buffered stdout so prints appear in the correct order
 # even when subprocesses write directly to the fd.
@@ -263,6 +266,15 @@ def check_dev_packages() -> bool:
     return _check_group("dev", "Dev/test dependencies")
 
 
+def check_imagemagick() -> bool:
+    binary = find_imagemagick("magick", "convert")
+    if binary:
+        print(f"  ImageMagick: {binary}")
+        return True
+    print("  ImageMagick: MISSING (install it on PATH; see tools/README.md)")
+    return False
+
+
 def check_node() -> tuple[bool, str | None]:
     ver = get_version(_resolve_tool("node") + ["--version"])
     if ver:
@@ -392,6 +404,7 @@ def main() -> None:
     hooks_ok = check_hooks_installed()
     deps_ok = check_pip_packages()
     dev_deps_ok = check_dev_packages()
+    imagemagick_ok = check_imagemagick()
 
     docs_ready = True
     node_ok = True
@@ -405,13 +418,18 @@ def main() -> None:
         docs_ready = node_ok and bun_ok and docs_deps_ok
 
     if args.check:
-        all_ok = py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok
+        all_ok = (
+            py_ok and pc_ok and hooks_ok and deps_ok and dev_deps_ok and imagemagick_ok
+        )
         if args.docs:
             all_ok = all_ok and docs_ready
         if all_ok:
             print("Everything is set up.")
         else:
-            print("Some components need setup. Run without --check to install.")
+            print(
+                "Some components need setup. Install system prerequisites as shown above; "
+                "run without --check for Python dependencies and hooks."
+            )
         sys.exit(0 if all_ok else 1)
 
     if not py_ok:
@@ -421,7 +439,7 @@ def main() -> None:
         sys.exit(1)
 
     # --- Install phase ---
-    ok = True
+    ok = imagemagick_ok
 
     if not pc_ok:
         ok = install_pre_commit() and ok
