@@ -651,7 +651,7 @@ def variant_tag_from_path(rel: str) -> Optional[str]:
 
 
 def build_variant_name_index(
-    sources: List[Tuple[str, Optional[CreatedVariants]]],
+    sources: Iterable[Tuple[str, Optional[CreatedVariants]]],
 ) -> Tuple[Dict[str, Set[Tuple[str, str]]], Set[Tuple[str, str]]]:
     """``(per-tag, wildcard)`` ``(type, name)`` sets from ``(relpath, variants)``.
 
@@ -673,6 +673,34 @@ def build_variant_name_index(
             else:
                 wildcard.add((etype, name))
     return by_tag, wildcard
+
+
+_EQUIPMENT_LOC_NAME_RE = re.compile(
+    r'^[ \t]*([A-Za-z_]\w*)\s*:\d*[ \t]*"((?:\\.|[^"\\\r\n])*)"',
+    re.MULTILINE,
+)
+
+
+def build_default_equipment_name_index(
+    equipment_texts: Iterable[str], localisation_texts: Iterable[str]
+) -> Dict[str, str]:
+    """Index English base-model names for declared concrete equipment types."""
+    equipment = set()
+    for raw in equipment_texts:
+        text = blank_comments(raw)
+        for lo, hi in _iter_named_blocks(text, 0, len(text), "equipments"):
+            for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
+                if _scalar(text, blo, bhi, "is_archetype") != "yes":
+                    equipment.add(name)
+    names = {}
+    for raw in localisation_texts:
+        for key, name in _EQUIPMENT_LOC_NAME_RE.findall(blank_comments(raw)):
+            equipment_key = key
+            if key[3:4] == "_" and _LITERAL_TAG_RE.fullmatch(key[:3]):
+                equipment_key = key[4:]
+            if equipment_key in equipment:
+                names[key] = name
+    return names
 
 
 def _path_dlc_context(rel: str) -> Dict[str, bool]:
@@ -852,12 +880,13 @@ def _history_date_at_offset(
     ]
     if candidates:
         date = min(candidates, key=lambda node: node["end"] - node["start"])["label"]
-        return tuple(int(part) for part in date.split("."))
+        year, month, day = date.split(".")
+        return int(year), int(month), int(day)
     return None
 
 
 def build_variant_dlc_index(
-    sources: List[Tuple[str, Optional[CreatedVariants]]],
+    sources: Iterable[Tuple[str, Optional[CreatedVariants]]],
 ) -> _VariantDlcIndex:
     """Map variants to their producer and simple surrounding DLC conditions."""
     by_tag: Dict[str, List[_VariantDlcRecord]] = {}
@@ -1160,13 +1189,19 @@ def check_named_variant_refs(
     *,
     source_path: str = "",
     variant_dlc_index: Optional[_VariantDlcIndex] = None,
+    default_equipment_names: Optional[Dict[str, str]] = None,
 ) -> List[Finding]:
     """Check literal non-ship named-variant consumers against their producer."""
     findings = []
     text = blank_comments(content)
     contextual_by_tag, contextual_wildcard = variant_dlc_index or ({}, [])
     nodes = _build_block_nodes(text) if variant_dlc_index is not None else []
+    default_names = default_equipment_names or {}
     for offset, line, producer, equipment, name in _literal_named_variant_refs(content):
+        if name == default_names.get(
+            f"{producer}_{equipment}", default_names.get(equipment)
+        ):
+            continue
         consumer_context = {}
         consumer_date = None
         if variant_dlc_index is not None:
@@ -2921,7 +2956,7 @@ def _check_created_units(
 
 class Validator(BaseValidator):
     TITLE = "OOB UNIT NAME VALIDATION"
-    STAGED_EXTENSIONS = [".txt"]
+    STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def __init__(self, *args, **kwargs):
         self.missing_equipment_factor = kwargs.pop("missing_equipment_factor", False)
@@ -3211,18 +3246,29 @@ class Validator(BaseValidator):
                 or []
             ):
                 rel = normalize_path_separators(os.path.relpath(path, self.mod_path))
+                if (
+                    rel.startswith("localisation/english/") and rel.endswith(".yml")
+                ) or (
+                    rel.startswith("common/units/equipment/") and rel.endswith(".txt")
+                ):
+                    variant_definitions_changed = True
                 if rel.startswith(_VARIANT_SOURCE_ROOTS) and rel.endswith(".txt"):
                     staged_variant_sources.append(
                         path
                         if os.path.isabs(path)
                         else os.path.join(self.mod_path, path)
                     )
-            variant_definitions_changed = bool(staged_variant_sources) and (
-                _any_file_contains(staged_variant_sources, b"create_equipment_variant")
-                or _changed_lines_match(
-                    self.mod_path,
-                    staged_variant_sources,
-                    r"\bcreate_equipment_variant\s*=",
+            variant_definitions_changed = variant_definitions_changed or (
+                bool(staged_variant_sources)
+                and (
+                    _any_file_contains(
+                        staged_variant_sources, b"create_equipment_variant"
+                    )
+                    or _changed_lines_match(
+                        self.mod_path,
+                        staged_variant_sources,
+                        r"\bcreate_equipment_variant\s*=",
+                    )
                 )
             )
         oob_files = self._collect_files(
@@ -3265,18 +3311,35 @@ class Validator(BaseValidator):
                 lambda: build_variant_dlc_index(variant_sources),
             )
 
-        def _build_archetypes():
-            units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
-            return parse_archetypes(
-                [
-                    _read_text(fp, self.mod_path)
-                    for fp in sorted(glob.iglob(os.path.join(units_dir, "*.txt")))
-                ]
+        equipment_texts = []
+        if need_archetypes or need_named_variants:
+            equipment_texts = [
+                _read_text(fp, self.mod_path)
+                for fp in self._collect_files(
+                    ["common/units/equipment/*.txt"], ignore_staged=True
+                )
+            ]
+        default_equipment_names = {}
+        if need_named_variants:
+            default_equipment_names = self.cached(
+                "default_equipment_names",
+                lambda: build_default_equipment_name_index(
+                    equipment_texts,
+                    (
+                        _read_text(fp, self.mod_path)
+                        for fp in sorted(
+                            self._collect_files(
+                                ["localisation/english/**/*.yml"], ignore_staged=True
+                            )
+                        )
+                    ),
+                ),
             )
-
         archetypes: Set[str] = set()
         if need_archetypes:
-            archetypes = self.cached("equipment_archetypes", _build_archetypes)
+            archetypes = self.cached(
+                "equipment_archetypes", lambda: parse_archetypes(equipment_texts)
+            )
         if not need_variants and not need_named_variants and not need_archetypes:
             return
 
@@ -3321,6 +3384,7 @@ class Validator(BaseValidator):
                     wildcard,
                     source_path=rel,
                     variant_dlc_index=variant_dlc_index,
+                    default_equipment_names=default_equipment_names,
                 ):
                     results.append(
                         Issue(
