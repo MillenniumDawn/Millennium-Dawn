@@ -309,7 +309,14 @@ def test_native_facility_extension_owns_damage_and_replaces_disruption_only():
     assert "apply_raid_building_damage_critical = yes" in result
     assert "TOP_group_disruption_type^TOP_group_target" in result
     assert "TOP_group_disruption_until^TOP_group_target" in result
-    assert "add = 90" in result
+    assert (
+        "set_variable = { global.TOP_group_disruption_until^TOP_group_target = global.TOP_clock }"
+        in result
+    )
+    assert (
+        "add_to_variable = { global.TOP_group_disruption_until^TOP_group_target = 90 }"
+        in result
+    )
     assert "kill_country_leader" not in organization + result
     assert "global.TOP_status" not in result
     assert "damage_building" not in _named_block(
