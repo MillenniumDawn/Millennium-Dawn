@@ -43,19 +43,19 @@ def test_the_laboratory_check_reads_the_live_station():
     lab = _named_block(TRIGGERS, "STALKER_has_working_radiation_lab")
     assert "has_idea = at_member" in lab
     assert "array = country_owned_station_ids" in lab
-    assert "check_variable = { STALKER_station > 0 }" in lab
-    assert "global.antarctica_station_controller^STALKER_station = THIS.id" in lab
+    assert "check_variable = { stalker_station > 0 }" in lab
+    assert "global.antarctica_station_controller^stalker_station = THIS.id" in lab
     for slot in range(6, 10):
         assert (
-            f"global.antarctica_station_module_slot_{slot}^STALKER_station = 7" in lab
+            f"global.antarctica_station_module_slot_{slot}^stalker_station = 7" in lab
         )
         assert (
-            f"global.antarctica_station_module_slot_{slot}_blizzard_damaged^STALKER_station > 0"
+            f"global.antarctica_station_module_slot_{slot}_blizzard_damaged^stalker_station > 0"
             in lab
         )
-    assert "global.antarctica_station_output_storage^STALKER_station > 0" in lab
+    assert "global.antarctica_station_output_storage^stalker_station > 0" in lab
     assert (
-        "var = global.antarctica_station_output_power^STALKER_station value = 0" in lab
+        "var = global.antarctica_station_output_power^stalker_station value = 0" in lab
     )
     assert "antarctica_lab_cat_nuclear_reactors" not in DECISIONS
 
