@@ -33,8 +33,15 @@ def test_china_base_equipment_name_shares_an_explicit_variant_name(remove_defaul
     if remove_default:
         del defaults["CHI_infantry_weapons_2"]
     consumer_path = "history/units/CHI_2000_nsb.txt"
+    # Original stockpile before #6043 changed it to an explicit rifle variant.
+    consumer = """add_equipment_to_stockpile = {
+        type = infantry_weapons_2
+        variant_name = "Type-81"
+        producer = CHI
+        amount = 400000
+    }"""
     findings = check_named_variant_refs(
-        read(consumer_path),
+        consumer,
         by_tag,
         wildcard,
         source_path=consumer_path,
