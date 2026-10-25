@@ -214,9 +214,9 @@ def test_registry_emits_legacy_and_three_axis_person_and_organization_state(mani
     registry = output["common/scripted_effects/01_targeted_operations_registry.txt"]
     assert "global.TOP_registry_capacity = 161" in registry
     for field in GENERATOR.GROUP_FIELDS:
-        assert f"resize_array = {{ global.TOP_group_{field} = 35 }}" in registry
+        assert f"resize_array = {{ global.TOP_group_{field} = 39 }}" in registry
     for field in GENERATOR.ORG_COUNTRY_FIELDS:
-        assert f"resize_array = {{ TOP_org_{field} = 35 }}" in registry
+        assert f"resize_array = {{ TOP_org_{field} = 39 }}" in registry
     generated = range(manifest["generated_start"], manifest["generated_end"])
     assert set(generated) == set(range(65, 129))
     for ident in generated:
@@ -275,7 +275,7 @@ def test_registry_emits_legacy_and_three_axis_person_and_organization_state(mani
     resize = _named_block(registry, "TOP_resize_country_arrays")
     assert "set_variable" not in resize
     assert "resize_array = { TOP_lead_report_clock = 161 }" in resize
-    assert "resize_array = { TOP_org_lead_report_clock = 35 }" in resize
+    assert "resize_array = { TOP_org_lead_report_clock = 39 }" in resize
     successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
     assert "TOP_person_129" not in successors
 
@@ -368,7 +368,7 @@ def test_manifest_declares_classes_location_policy_and_2027_2032_roster(manifest
     assert groups["tpusa"]["group_class"] == "civilian_organization"
     assert groups["tpusa"]["public_identity"] is True
     for group in manifest["groups"]:
-        if group["id"] >= 25:
+        if 25 <= group["id"] <= 34:
             assert "ct_id" not in group
             assert group["group_class"] == "political_executive"
             assert group["public_identity"] is True
@@ -418,7 +418,14 @@ def test_non_ct_organizations_activate_on_their_authored_windows(manifest):
         window = _named_block(registry, f"TOP_open_windows_{group['year']}")
         assert f"global.TOP_group_window^{group['id']} = 1" in window
         if "ct_id" not in group:
-            assert f"global.TOP_group_created^{group['id']} = 1" in window
+            created = f"global.TOP_group_created^{group['id']} = 1"
+            if "activation_condition" in group:
+                assert created not in window
+                activation = _named_block(registry, f"TOP_activate_group_{group['id']}")
+                assert group["activation_condition"] in activation
+                assert created in activation
+            else:
+                assert created in window
 
 
 def test_authored_movement_successors_get_office_adapters(manifest):

@@ -42,6 +42,8 @@ class TargetScript(TargetedScript):
             "09_targeted_operations_depth.txt",
             "10_targeted_operations_core.txt",
             "11_targeted_operations_native_extensions.txt",
+            "99_STALKER_society_effects.txt",
+            "99_STALKER_top_effects.txt",
         ):
             self.effects.update(
                 _parse_race_script(
@@ -116,6 +118,13 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_triggers/99_STALKER_scripted_triggers.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
         core_raid = (
             ROOT / "common/scripted_effects/00_raid_scripted_effects.txt"
         ).read_text(encoding="utf-8")
@@ -182,6 +191,7 @@ class TargetScript(TargetedScript):
         self.state(100, 1)
         self.state(101, 2)
         self.state(102, 3)
+        self.state(698, 2)
         self.run("TOP_setup_registry", 1)
         self.run("TOP_initialize_redesign_global", 1)
         self.globals.update(
@@ -332,12 +342,16 @@ class TargetScript(TargetedScript):
         }:
             self.execute_statement(statement, identifier)
             result = True
+        elif key.isdigit():
+            result = self.scoped(operand, identifier, int(key), condition=True)
         elif key.startswith("var:") or key == "controller" or self.tag(key) is not None:
             result = self.scoped(
                 operand, identifier, self.value(key, identifier), condition=True
             )
         elif key == "raid_show_target_intervention_check":
             result = operand == "yes"
+        elif key == "has_state_flag":
+            result = self._flag(self.countries[identifier]["flags"], operand)
         elif key == "TOP_authored_role_eligible":
             # No longer parameterised: the caller sets TOP_role_target,
             # because the engine cannot substitute $PARAM$ for a trigger.
@@ -442,6 +456,8 @@ class TargetScript(TargetedScript):
         key, comparison, operand = statement
         if key in self.stubs:
             self.run(key, identifier)
+        elif key.isdigit():
+            self.scoped(operand, identifier, int(key))
         elif key == "controller" or self.tag(key) is not None:
             self.scoped(operand, identifier, self.value(key, identifier))
         elif key in {"random_controlled_state", "capital_scope"}:

@@ -1,0 +1,127 @@
+STALKER_monthly_international_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { global.STALKER_active_zone_anchors^num > 0 }
+		}
+		STALKER_roll_artifact_seizure = yes
+		STALKER_monthly_polesie_pulse = yes
+		for_each_scope_loop = {
+			array = global.STALKER_active_zone_anchors
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					NOT = { has_state_flag = STALKER_access_request_cooldown }
+					controller = { exists = yes }
+				}
+				random = {
+					chance = 5
+					STALKER_send_access_request = yes
+				}
+			}
+		}
+		STALKER_monthly_mdst_pulse = yes
+	}
+}
+
+# Smuggled artifacts pool globally; every five can surface as a foreign customs seizure. The seizure is traced
+# to the Zone whose black market leaked the most last month.
+STALKER_roll_artifact_seizure = {
+	if = {
+		limit = {
+			check_variable = { global.STALKER_smuggled_artifacts > 4.99 }
+			NOT = { has_global_flag = STALKER_artifact_seizure_cooldown }
+		}
+		random = {
+			chance = 25
+			set_temp_variable = { STALKER_seizure_state = 0 }
+			set_temp_variable = { STALKER_seizure_best = 0 }
+			for_each_scope_loop = {
+				array = global.STALKER_active_zone_anchors
+				if = {
+					limit = {
+						controller = { exists = yes }
+						check_variable = { STALKER_zone_black_market > STALKER_seizure_best }
+					}
+					set_temp_variable = { STALKER_seizure_best = STALKER_zone_black_market }
+					set_temp_variable = { STALKER_seizure_state = THIS }
+				}
+			}
+			set_temp_variable = { STALKER_seizure_original = 0 }
+			if = {
+				limit = { check_variable = { STALKER_seizure_state > 0 } }
+				var:STALKER_seizure_state = {
+					controller = { save_event_target_as = STALKER_zone_controller_target }
+					if = {
+						limit = { state = 698 }
+						set_temp_variable = { STALKER_seizure_original = 1 }
+					}
+				}
+			}
+			random_scope_in_array = {
+				array = global.majors
+				limit = {
+					exists = yes
+					NOT = { STALKER_controls_active_zone = yes }
+				}
+				set_global_flag = { flag = STALKER_artifact_seizure_cooldown value = 1 days = 180 }
+				add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+				save_event_target_as = STALKER_seizing_country
+				country_event = STALKER.20
+			}
+			if = {
+				limit = {
+					has_global_flag = STALKER_artifact_seizure_cooldown
+					check_variable = { STALKER_seizure_original = 1 }
+				}
+				event_target:STALKER_seizing_country = { STALKER_top_seizure_lead = yes }
+			}
+		}
+	}
+}
+
+STALKER_send_access_request = {
+	STALKER_target_zone = yes
+	controller = { save_event_target_as = STALKER_zone_controller_target }
+	random_scope_in_array = {
+		array = global.majors
+		limit = {
+			exists = yes
+			NOT = { STALKER_controls_active_zone = yes }
+			NOT = { has_country_flag = STALKER_zone_research_access }
+			NOT = { has_war_with = event_target:STALKER_zone_controller_target }
+		}
+		PREV = { set_state_flag = { flag = STALKER_access_request_cooldown value = 1 days = 365 } }
+		save_event_target_as = STALKER_access_requester
+		event_target:STALKER_zone_controller_target = { country_event = STALKER.21 }
+	}
+}
+
+STALKER_grant_zone_research_access = {
+	if = {
+		limit = { NOT = { has_country_flag = STALKER_zone_research_access } }
+		add_to_variable = { global.STALKER_research_access_count = 1 }
+	}
+	set_country_flag = STALKER_zone_research_access
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = STALKER_foreign_zone_access } } }
+		add_dynamic_modifier = { modifier = STALKER_foreign_zone_access }
+	}
+}
+
+# Each call adds 5 containment and removes 5 bandit influence in every Zone the host controls.
+STALKER_reinforce_host_zones = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				is_controlled_by = event_target:STALKER_ipsf_host
+			}
+			add_to_variable = { STALKER_zone_containment = 5 }
+			add_to_variable = { STALKER_zone_bandits = -5 }
+			STALKER_clamp_zone_society = yes
+		}
+	}
+}

@@ -1,0 +1,748 @@
+STALKER_zone_management_category = {
+	STALKER_reinforce_zone_containment = {
+		icon = GFX_decision_generic_nuclear
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_containment < 80 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_reinforce_zone_containment in [FROM.GetName]"
+			small_expenditure = yes
+			custom_effect_tooltip = STALKER_reinforce_zone_containment_tt
+			hidden_effect = { FROM = { STALKER_reinforce_containment = yes } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 80
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
+			modifier = {
+				add = 15
+				FROM = { check_variable = { STALKER_zone_activity > 39 } }
+			}
+			modifier = {
+				add = 30
+				FROM = {
+					OR = {
+						check_variable = { STALKER_zone_containment < 40 }
+						check_variable = { STALKER_zone_exploitation > 29 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 10 }
+			}
+			modifier = {
+				factor = 0
+				FROM = { has_state_flag = STALKER_zone_reinforced }
+			}
+		}
+	}
+
+	STALKER_emergency_perimeter_patrol = {
+		icon = GFX_decision_generic_police_action
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				has_state_flag = STALKER_perimeter_breach_active
+				NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+				is_controlled_by = ROOT
+			}
+		}
+
+		available = {
+			hidden_trigger = {
+				FROM = {
+					STALKER_is_active_zone_anchor = yes
+					has_state_flag = STALKER_perimeter_breach_active
+					NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+					is_controlled_by = ROOT
+				}
+			}
+		}
+
+		cost = 25
+		days_re_enable = 1
+
+		complete_effect = {
+			if = {
+				limit = {
+					FROM = {
+						STALKER_is_active_zone_anchor = yes
+						has_state_flag = STALKER_perimeter_breach_active
+						NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+						is_controlled_by = ROOT
+					}
+				}
+				log = "[GetDateText]: [Root.GetName]: Decision STALKER_emergency_perimeter_patrol in [FROM.GetName]"
+				custom_effect_tooltip = STALKER_emergency_perimeter_patrol_tt
+				FROM = {
+					set_state_flag = STALKER_perimeter_patrol_used
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_activity = -5 }
+					add_to_variable = { STALKER_zone_bandits = -5 }
+					add_to_variable = { STALKER_zone_exploitation = -5 }
+					STALKER_clamp_zone_society = yes
+					clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	STALKER_cordon_crackdown = {
+		icon = GFX_decision_generic_police_action
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_bandits > 9 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_cordon_crackdown in [FROM.GetName]"
+			small_expenditure = yes
+			custom_effect_tooltip = STALKER_cordon_crackdown_tt
+			hidden_effect = {
+				FROM = {
+					add_to_variable = { STALKER_zone_bandits = -20 }
+					add_to_variable = { STALKER_zone_stalkers = -10 }
+					add_to_variable = { STALKER_zone_containment = 5 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 25
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
+			modifier = {
+				add = 25
+				FROM = { check_variable = { STALKER_zone_bandits > 49 } }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 10 }
+			}
+		}
+	}
+
+	STALKER_license_cordon_trader = {
+		icon = GFX_decision_money_dec
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+			}
+		}
+
+		cost = 25
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_license_cordon_trader in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_license_cordon_trader_tt
+			hidden_effect = {
+				FROM = {
+					add_to_variable = { STALKER_zone_exploitation = 10 }
+					add_to_variable = { STALKER_zone_bandits = -10 }
+					add_to_variable = { STALKER_zone_stalkers = 10 }
+					if = {
+						limit = { check_variable = { STALKER_zone_id = 1 } }
+						add_to_variable = { STALKER_zone_freedom = 5 }
+					}
+					STALKER_clamp_zone_society = yes
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 10
+				FROM = { check_variable = { STALKER_zone_exploitation < 20 } }
+			}
+			modifier = {
+				factor = 0
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
+		}
+	}
+
+	STALKER_back_duty = {
+		icon = GFX_decision_generic_military
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_duty < 100 }
+			}
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_back_duty in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_back_duty_tt
+			hidden_effect = {
+				FROM = {
+					add_to_variable = { STALKER_zone_duty = 20 }
+					add_to_variable = { STALKER_zone_freedom = -10 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 15
+				FROM = { check_variable = { STALKER_zone_containment < 40 } }
+			}
+		}
+	}
+
+	STALKER_back_freedom = {
+		icon = GFX_decision_generic_civil_support
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_freedom < 100 }
+			}
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_back_freedom in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_back_freedom_tt
+			hidden_effect = {
+				FROM = {
+					add_to_variable = { STALKER_zone_freedom = 20 }
+					add_to_variable = { STALKER_zone_duty = -10 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				add = 10
+				FROM = { check_variable = { STALKER_zone_exploitation > 29 } }
+			}
+		}
+	}
+
+	STALKER_duty_security_mandate = {
+		icon = GFX_decision_generic_military
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_faction_mandate_cooldown }
+				check_variable = { STALKER_zone_id = 1 }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_duty > 39 }
+				check_variable = { STALKER_zone_duty > STALKER_zone_freedom }
+				check_variable = { STALKER_zone_duty > STALKER_zone_bandits }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_duty_security_mandate in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_duty_security_mandate_tt
+			hidden_effect = {
+				FROM = {
+					set_state_flag = { flag = STALKER_faction_mandate_cooldown value = 1 days = 180 }
+					add_to_variable = { STALKER_zone_duty = 5 }
+					add_to_variable = { STALKER_zone_bandits = -15 }
+					add_to_variable = { STALKER_zone_stalkers = -5 }
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_exploitation = -5 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	STALKER_freedom_access_mandate = {
+		icon = GFX_decision_generic_civil_support
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_faction_mandate_cooldown }
+				check_variable = { STALKER_zone_id = 1 }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_freedom > 39 }
+				check_variable = { STALKER_zone_freedom > STALKER_zone_duty }
+				check_variable = { STALKER_zone_freedom > STALKER_zone_bandits }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_freedom_access_mandate in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_freedom_access_mandate_tt
+			hidden_effect = {
+				FROM = {
+					set_state_flag = { flag = STALKER_faction_mandate_cooldown value = 1 days = 180 }
+					add_to_variable = { STALKER_zone_freedom = 5 }
+					add_to_variable = { STALKER_zone_stalkers = 10 }
+					add_to_variable = { STALKER_zone_bandits = 5 }
+					add_to_variable = { STALKER_zone_exploitation = 10 }
+					add_to_variable = { STALKER_zone_containment = -10 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	STALKER_bandit_broker_mandate = {
+		icon = GFX_decision_generic_police_action
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_faction_mandate_cooldown }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_bandits > 39 }
+				check_variable = { STALKER_zone_bandits > STALKER_zone_duty }
+				check_variable = { STALKER_zone_bandits > STALKER_zone_freedom }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_bandit_broker_mandate_available_tt
+				check_variable = { global.STALKER_smuggled_artifacts > 4.99 }
+			}
+		}
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_bandit_broker_mandate in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_bandit_broker_mandate_tt
+			hidden_effect = {
+				add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+				add_to_variable = { STALKER_artifact_stockpile = 5 }
+				FROM = {
+					set_state_flag = { flag = STALKER_faction_mandate_cooldown value = 1 days = 180 }
+					add_to_variable = { STALKER_zone_bandits = 10 }
+					add_to_variable = { STALKER_zone_exploitation = 10 }
+					add_to_variable = { STALKER_zone_containment = -10 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	STALKER_study_recovered_artifacts = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			STALKER_scenario_enabled = yes
+			OR = {
+				STALKER_controls_active_zone = yes
+				AND = {
+					original_tag = BLR
+					check_variable = { STALKER_artifact_stockpile > 0.01 }
+				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_study_recovered_artifacts_available_tt
+				check_variable = { STALKER_artifact_stockpile > 4.99 }
+			}
+			NOT = { has_dynamic_modifier = { modifier = STALKER_artifact_studies } }
+		}
+
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_study_recovered_artifacts"
+			custom_effect_tooltip = STALKER_study_recovered_artifacts_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_artifact_stockpile = -5 }
+				add_dynamic_modifier = { modifier = STALKER_artifact_studies days = 180 }
+			}
+		}
+
+		ai_will_do = {
+			base = 20
+		}
+	}
+
+	STALKER_military_cordon_mandate = {
+		icon = GFX_decision_generic_military
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_faction_mandate_cooldown }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_military > 39 }
+				check_variable = { STALKER_zone_leader = 6 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_military_cordon_mandate in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_military_cordon_mandate_tt
+			hidden_effect = {
+				FROM = {
+					set_state_flag = { flag = STALKER_faction_mandate_cooldown value = 1 days = 180 }
+					add_to_variable = { STALKER_zone_military = 5 }
+					add_to_variable = { STALKER_zone_containment = 15 }
+					add_to_variable = { STALKER_zone_stalkers = -8 }
+					add_to_variable = { STALKER_zone_exploitation = -5 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				add = 8
+				FROM = { check_variable = { STALKER_zone_containment < 40 } }
+			}
+		}
+	}
+
+	STALKER_ecologist_field_mandate = {
+		icon = GFX_decision_generic_research
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_faction_mandate_cooldown }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_scientists > 39 }
+				check_variable = { STALKER_zone_leader = 5 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_ecologist_field_mandate in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_ecologist_field_mandate_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_artifact_stockpile = 2 }
+				FROM = {
+					set_state_flag = { flag = STALKER_faction_mandate_cooldown value = 1 days = 180 }
+					add_to_variable = { STALKER_zone_scientists = 5 }
+					add_to_variable = { STALKER_zone_exploitation = 10 }
+					add_to_variable = { STALKER_zone_containment = -5 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				add = 6
+				FROM = { check_variable = { STALKER_zone_exploitation < 30 } }
+			}
+		}
+	}
+
+	STALKER_issue_emission_shelter = {
+		icon = GFX_decision_generic_civil_support
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_emission_shelter }
+				is_controlled_by = ROOT
+			}
+		}
+
+		cost = 25
+		days_re_enable = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_issue_emission_shelter in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_issue_emission_shelter_tt
+			hidden_effect = {
+				FROM = { set_state_flag = { flag = STALKER_emission_shelter value = 1 days = 120 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				add = 10
+				FROM = {
+					check_variable = { STALKER_zone_activity > 49 }
+					check_variable = { STALKER_zone_containment < 40 }
+				}
+			}
+		}
+	}
+
+	STALKER_field_medical_artifacts = {
+		fixed_random_seed = no
+		icon = GFX_decision_generic_research
+
+		visible = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_study_recovered_artifacts_available_tt
+				check_variable = { STALKER_artifact_stockpile > 4.99 }
+			}
+			NOT = { has_dynamic_modifier = { modifier = STALKER_medical_artifacts } }
+		}
+
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_field_medical_artifacts"
+			custom_effect_tooltip = STALKER_field_medical_artifacts_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_artifact_stockpile = -5 }
+				set_temp_variable = { STALKER_medical_failed = 0 }
+				random = {
+					chance = 15
+					set_temp_variable = { STALKER_medical_failed = 1 }
+					add_stability = -0.03
+				}
+				if = {
+					limit = {
+						check_variable = { STALKER_medical_failed = 0 }
+						NOT = { has_dynamic_modifier = { modifier = STALKER_medical_artifacts } }
+					}
+					add_dynamic_modifier = { modifier = STALKER_medical_artifacts days = 180 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				factor = 0
+				has_stability < 0.4
+			}
+		}
+	}
+
+	STALKER_issue_psi_shielding = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_issue_psi_shielding_available_tt
+				check_variable = { STALKER_artifact_stockpile > 2.99 }
+			}
+			NOT = { has_country_flag = STALKER_psi_shielding }
+		}
+
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_issue_psi_shielding"
+			custom_effect_tooltip = STALKER_issue_psi_shielding_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_artifact_stockpile = -3 }
+				set_country_flag = { flag = STALKER_psi_shielding value = 1 days = 180 }
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				add = 8
+				any_of_scopes = {
+					array = global.STALKER_active_zone_anchors
+					is_controlled_by = ROOT
+					check_variable = { STALKER_zone_activity > 59 }
+				}
+			}
+		}
+	}
+}

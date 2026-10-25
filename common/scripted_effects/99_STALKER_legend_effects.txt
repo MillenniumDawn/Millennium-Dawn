@@ -1,0 +1,362 @@
+# Zone 1 dates. 2011 sets one of STALKER_strelok_marked, STALKER_strelok_turned_back,
+# or STALKER_strelok_remembers. Fairway reads the 2012 route four months later.
+# global.STALKER_fairway_result is 1 evacuate, 2 foothold, 3 bury, 4 massacre.
+# global.STALKER_sircaa_result is 1 charter, 2 army.
+
+STALKER_schedule_fairway = {
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_fairway_scheduled } }
+		set_global_flag = STALKER_fairway_scheduled
+		set_global_flag = { flag = STALKER_fairway_delay value = 1 days = 120 }
+		if = {
+			limit = { country_exists = USA }
+			USA = { country_event = { id = STALKER.178 days = 120 } }
+		}
+	}
+}
+
+STALKER_monthly_legend_pulse = {
+	698 = {
+		if = {
+			limit = {
+				STALKER_scenario_enabled = yes
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				controller = { exists = yes }
+			}
+			if = {
+				limit = {
+					has_global_flag = STALKER_2011_dispatched
+					NOT = { has_global_flag = STALKER_2011_delay }
+					STALKER_2011_unresolved = yes
+					OR = {
+						NOT = { has_variable = global.STALKER_2011_recipient }
+						NOT = { is_controlled_by = var:global.STALKER_2011_recipient }
+					}
+				}
+				controller = {
+					set_variable = { global.STALKER_2011_recipient = THIS.id }
+					country_event = STALKER.172
+				}
+			}
+			if = {
+				limit = {
+					has_global_flag = STALKER_sircaa_dispatched
+					NOT = { has_global_flag = STALKER_sircaa_delay }
+					NOT = { has_variable = global.STALKER_sircaa_result }
+					OR = {
+						NOT = { has_variable = global.STALKER_sircaa_recipient }
+						NOT = { is_controlled_by = var:global.STALKER_sircaa_recipient }
+					}
+				}
+				controller = {
+					set_variable = { global.STALKER_sircaa_recipient = THIS.id }
+					country_event = STALKER.176
+				}
+			}
+		}
+	}
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			has_global_flag = STALKER_fairway_scheduled
+			NOT = { has_global_flag = STALKER_fairway_delay }
+			NOT = { has_variable = global.STALKER_fairway_result }
+		}
+		STALKER_deliver_fairway = yes
+	}
+	STALKER_deliver_strider = yes
+}
+
+STALKER_deliver_strider = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			has_global_flag = STALKER_strelok_opposed
+			NOT = { has_global_flag = STALKER_strider_delay }
+			NOT = { has_global_flag = STALKER_strider_told }
+		}
+		698 = {
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					controller = { exists = yes }
+				}
+				set_global_flag = STALKER_strider_told
+				if = {
+					limit = { NOT = { has_variable = STALKER_zone_noon } }
+					add_to_variable = { STALKER_zone_noon = 10 }
+					clamp_variable = { var = STALKER_zone_noon min = 0 max = 100 }
+					STALKER_clamp_zone_society = yes
+					STALKER_target_zone = yes
+					controller = { country_event = STALKER.123 }
+				}
+			}
+		}
+	}
+}
+
+STALKER_deliver_fairway = {
+	698 = {
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				controller = { exists = yes }
+				has_global_flag = STALKER_fairway_scheduled
+				NOT = { has_global_flag = STALKER_fairway_delay }
+				NOT = { has_variable = global.STALKER_fairway_result }
+				OR = {
+					NOT = { has_variable = global.STALKER_fairway_recipient }
+					NOT = { is_controlled_by = var:global.STALKER_fairway_recipient }
+				}
+			}
+			controller = {
+				set_variable = { global.STALKER_fairway_recipient = THIS.id }
+				country_event = STALKER.174
+			}
+		}
+	}
+}
+
+STALKER_apply_clear_sky_spared = {
+	if = {
+		limit = { STALKER_2011_unresolved = yes }
+		set_global_flag = STALKER_strelok_turned_back
+		set_global_flag = STALKER_scar_survived
+		log = "[GetDateText]: STALKER 2011, Clear Sky turned Strelok back"
+		news_event = STALKER.173
+	}
+}
+
+STALKER_apply_clear_sky_canon = {
+	if = {
+		limit = { STALKER_2011_unresolved = yes }
+		set_global_flag = STALKER_strelok_marked
+		set_global_flag = STALKER_scar_survived
+		log = "[GetDateText]: STALKER 2011, Clear Sky fell and Strelok was marked"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				set_variable = { STALKER_zone_clear_sky = 0 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.173
+	}
+}
+
+STALKER_apply_clear_sky_helped = {
+	if = {
+		limit = { STALKER_2011_unresolved = yes }
+		set_global_flag = STALKER_strelok_remembers
+		set_global_flag = STALKER_scar_survived
+		log = "[GetDateText]: STALKER 2011, Strelok went through and Clear Sky fell"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				set_variable = { STALKER_zone_clear_sky = 0 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.173
+	}
+}
+
+STALKER_apply_fairway_evacuate = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_fairway_result } }
+		set_variable = { global.STALKER_fairway_result = 1 }
+		log = "[GetDateText]: STALKER Fairway evacuated the scientists"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				if = {
+					limit = { check_variable = { global.STALKER_2012_route = 1 } }
+					add_to_variable = { STALKER_zone_scientists = 8 }
+					add_to_variable = { STALKER_zone_military = 5 }
+					add_to_variable = { STALKER_zone_containment = 5 }
+				}
+				else = {
+					add_to_variable = { STALKER_zone_scientists = 5 }
+					add_to_variable = { STALKER_zone_military = -5 }
+					add_to_variable = { STALKER_zone_containment = 5 }
+				}
+				clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.175
+	}
+}
+
+STALKER_apply_fairway_foothold = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_fairway_result } }
+		set_variable = { global.STALKER_fairway_result = 2 }
+		log = "[GetDateText]: STALKER Fairway held a foothold in Pripyat"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_military = 10 }
+				add_to_variable = { STALKER_zone_scientists = 5 }
+				add_to_variable = { STALKER_zone_containment = 5 }
+				clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.175
+	}
+}
+
+STALKER_apply_fairway_bury = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_fairway_result } }
+		set_variable = { global.STALKER_fairway_result = 3 }
+		log = "[GetDateText]: STALKER Fairway was buried"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				if = {
+					limit = { check_variable = { global.STALKER_2012_route = 1 } }
+					add_to_variable = { STALKER_zone_military = -5 }
+				}
+				else = {
+					add_to_variable = { STALKER_zone_military = -10 }
+				}
+				add_to_variable = { STALKER_zone_activity = 5 }
+				clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.175
+	}
+}
+
+STALKER_apply_fairway_massacre = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_fairway_result } }
+		set_variable = { global.STALKER_fairway_result = 4 }
+		log = "[GetDateText]: STALKER Fairway was destroyed at the plant"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_military = -10 }
+				add_to_variable = { STALKER_zone_monolith = 10 }
+				add_to_variable = { STALKER_zone_activity = 5 }
+				clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.175
+	}
+}
+
+STALKER_raise_ward_to_charter = {
+	if = {
+		limit = {
+			OR = {
+				NOT = { has_variable = STALKER_zone_ward }
+				check_variable = { STALKER_zone_ward < 15 }
+			}
+		}
+		set_variable = { STALKER_zone_ward = 15 }
+	}
+	if = {
+		limit = { has_global_flag = STALKER_scar_survived }
+		if = {
+			limit = {
+				OR = {
+					NOT = { has_variable = STALKER_zone_spark }
+					check_variable = { STALKER_zone_spark < 10 }
+				}
+			}
+			set_variable = { STALKER_zone_spark = 10 }
+		}
+	}
+}
+
+STALKER_apply_sircaa_charter = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_sircaa_result } }
+		set_variable = { global.STALKER_sircaa_result = 1 }
+		log = "[GetDateText]: STALKER chartered SIRCAA"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				STALKER_raise_ward_to_charter = yes
+				if = {
+					limit = { check_variable = { STALKER_field_yantar_result = 1 } }
+					add_to_variable = { STALKER_zone_scientists = 5 }
+				}
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.177
+	}
+}
+
+STALKER_apply_sircaa_army = {
+	if = {
+		limit = { NOT = { has_variable = global.STALKER_sircaa_result } }
+		set_variable = { global.STALKER_sircaa_result = 2 }
+		log = "[GetDateText]: STALKER kept the Zone under the army"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				if = {
+					limit = { has_global_flag = STALKER_scar_survived }
+					if = {
+						limit = {
+							OR = {
+								NOT = { has_variable = STALKER_zone_spark }
+								check_variable = { STALKER_zone_spark < 10 }
+							}
+						}
+						set_variable = { STALKER_zone_spark = 10 }
+					}
+				}
+				add_to_variable = { STALKER_zone_military = 10 }
+				if = {
+					limit = { check_variable = { STALKER_field_yantar_result = 1 } }
+					add_to_variable = { STALKER_zone_scientists = 5 }
+				}
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.177
+	}
+}

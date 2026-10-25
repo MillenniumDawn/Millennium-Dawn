@@ -1,0 +1,37 @@
+# The wider-network reveal shows how deep MDST already reaches; nobody sees it before then.
+STALKER_expose_mdst_penetration = {
+	if = {
+		limit = { NOT = { has_variable = STALKER_mdst_penetration } }
+		set_temp_variable = { STALKER_mdst_roll = 0 }
+		randomize_temp_variable = { var = STALKER_mdst_roll min = 20 max = 50 distribution = uniform }
+		set_variable = { STALKER_mdst_penetration = { value = STALKER_mdst_roll round = yes } }
+		add_to_array = { global.STALKER_mdst_aware_countries = THIS }
+	}
+}
+
+# An unchecked network recruits a little each month and steals research in proportion to its reach.
+STALKER_monthly_mdst_pulse = {
+	for_each_scope_loop = {
+		array = global.STALKER_mdst_aware_countries
+		if = {
+			limit = {
+				exists = yes
+				has_variable = STALKER_mdst_penetration
+			}
+			add_to_variable = { STALKER_mdst_penetration = 1 }
+			clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+			if = {
+				limit = {
+					check_variable = { STALKER_mdst_penetration > 9 }
+					NOT = { has_country_flag = STALKER_mdst_theft_cooldown }
+				}
+				set_temp_variable = { STALKER_mdst_theft_chance = { value = STALKER_mdst_penetration divide = 5 } }
+				random = {
+					chance = STALKER_mdst_theft_chance
+					set_country_flag = { flag = STALKER_mdst_theft_cooldown value = 1 days = 180 }
+					country_event = STALKER.80
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,63 @@
+# Rare in-joke events, only for players who enable the crossover rule and hold a Zone.
+STALKER_monthly_meme_pulse = {
+	if = {
+		limit = {
+			STALKER_meme_content_enabled = yes
+			has_global_flag = STALKER_alice_said_hello
+			check_variable = { global.STALKER_alice_choice > 0 }
+			NOT = { has_global_flag = STALKER_alice_return_wait }
+			NOT = { has_global_flag = STALKER_alice_returned }
+			1221 = {
+				check_variable = { STALKER_zone_id = 27 }
+				STALKER_is_active_zone_anchor = yes
+				controller = {
+					exists = yes
+					is_ai = no
+				}
+			}
+		}
+		1221 = {
+			STALKER_target_zone = yes
+			controller = { country_event = STALKER.106 }
+		}
+	}
+	if = {
+		limit = {
+			STALKER_meme_content_enabled = yes
+			NOT = { has_global_flag = STALKER_meme_cooldown }
+		}
+		random = {
+			chance = 5
+			random_scope_in_array = {
+				array = global.STALKER_active_zone_anchors
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					controller = {
+						exists = yes
+						is_ai = no
+					}
+				}
+				set_global_flag = { flag = STALKER_meme_cooldown value = 1 days = 180 }
+				STALKER_target_zone = yes
+				controller = {
+					if = {
+						limit = {
+							event_target:STALKER_zone_event_target = { check_variable = { STALKER_zone_id = 27 } }
+							NOT = { has_global_flag = STALKER_alice_said_hello }
+						}
+						country_event = STALKER.105
+					}
+					else = {
+						random_list = {
+							25 = { country_event = STALKER.100 }
+							25 = { country_event = STALKER.101 }
+							25 = { country_event = STALKER.102 }
+							25 = { country_event = STALKER.103 }
+						}
+					}
+				}
+			}
+		}
+	}
+}

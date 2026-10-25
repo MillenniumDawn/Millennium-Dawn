@@ -382,7 +382,8 @@ def test_temp_variables_are_never_scope_prefixed():
     scripts = [
         path
         for folder in ("common", "events")
-        for path in (ROOT / folder).rglob("*argeted*perations*.txt")
+        for pattern in ("*argeted*perations*.txt", "*STALKER*.txt")
+        for path in (ROOT / folder).rglob(pattern)
     ]
     texts = {
         path: "\n".join(
