@@ -3,8 +3,8 @@
 # See https://pre-commit.com/hooks.html for more hooks
 #
 # !! DO NOT RUN `pre-commit run --all-files` !!
-# The auto-fixer hooks (trailing-whitespace, end-of-file-fixer,
-# mixed-line-ending, fix-byte-order-marker) will rewrite every matching file in
+# The whole-file auto-fixers (end-of-file-fixer, mixed-line-ending,
+# fix-byte-order-marker) will rewrite every matching file in
 # the repo and produce hundreds of whitespace-only modifications unrelated to
 # your actual work. Always scope runs to specific files:
 #   pre-commit run --files path/to/file1 path/to/file2
@@ -30,14 +30,20 @@
 exclude: "^resources/"
 
 repos:
+  - repo: local
+    hooks:
+      - id: md-trailing-whitespace
+        name: Trim trailing whitespace on staged-diff lines
+        entry: python3 tools/linting/fix_styling.py --trailing-whitespace-only
+        language: system
+        types: [text]
+        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       # Asset-only directories (gfx/, map/, interface/, music/, sound/) are
       # excluded from the auto-fixers below — these files use significant
       # tab/whitespace alignment that the fixers shouldn't rewrite.
-      - id: trailing-whitespace
-        exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: end-of-file-fixer
         exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: mixed-line-ending

@@ -36,6 +36,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   is the single list of what runs, which change groups select each validator, and which
   run without `--strict`. Its `args` are also the flags of the main baseline run, so a
   PR and main enable the same checks.
+- Trailing-whitespace cleanup uses `fix_styling.py --trailing-whitespace-only` on
+  staged-diff lines only, preserving untouched lines and refusing worktree/index
+  mismatches. The normal commit flow stashes unstaged work first. The fixer never
+  stages its output; stage the changed lines and retry when it makes a correction.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
   on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
