@@ -22,6 +22,9 @@ _EVENTS_SOURCE = strip_comments(read_text(REPO_ROOT / "events/Libya.txt"))
 _ON_ACTIONS_SOURCE = strip_comments(
     read_text(REPO_ROOT / "common/on_actions/99_LBA_on_actions.txt")
 )
+_SCRIPTED_EFFECTS = {
+    name: body for name, _, body in iter_statements(_EFFECTS_SOURCE) if body is not None
+}
 
 
 def _block(source, name):
@@ -42,25 +45,17 @@ def _value(source, name):
     return values[0]
 
 
-def _find_block(source, name):
-    matches = []
+def _script_blocks(source):
     for key, _, body in iter_statements(source):
-        if key == name and body is not None:
-            matches.append(body)
         if body is not None:
-            matches.extend(_find_blocks(body, name))
+            yield key, body
+            yield from _script_blocks(body)
+
+
+def _find_block(source, name):
+    matches = [body for key, body in _script_blocks(source) if key == name]
     assert len(matches) == 1, (name, len(matches))
     return matches[0]
-
-
-def _find_blocks(source, name):
-    matches = []
-    for key, _, body in iter_statements(source):
-        if key == name and body is not None:
-            matches.append(body)
-        if body is not None:
-            matches.extend(_find_blocks(body, name))
-    return matches
 
 
 def _tribal_decisions():
@@ -235,12 +230,8 @@ class LibyaEffectFixture:
                     self.scope.setdefault("modifiers", set()).discard(modifier)
             elif key == "update_lba_dirty_variable":
                 self.dirty_updates += 1
-            elif key == "libya_disable_tribalism":
-                self.apply_effects(_block(_EFFECTS_SOURCE, "lba_disable_tribalism"))
-            elif key == "libya_update_tribalism_modifiers":
-                self.apply_effects(
-                    _block(_EFFECTS_SOURCE, "libya_update_tribalism_modifiers")
-                )
+            elif key in _SCRIPTED_EFFECTS:
+                self.apply_effects(_SCRIPTED_EFFECTS[key])
             elif key == "random_list":
                 continue
             else:
@@ -429,9 +420,9 @@ def test_libya_paid_rail_offer_is_free_of_recipient_cost_weight_penalties():
         from_fixture = EconomicScriptFixture(
             {},
             predicates={
-                "has_country_flag": lambda flag, _: flag
-                == "LBA_railroad_deal_libya_pays_all"
-                and pays_all
+                "has_country_flag": lambda flag, _: (
+                    flag == "LBA_railroad_deal_libya_pays_all" and pays_all
+                )
             },
         )
         fixture = EconomicScriptFixture(
