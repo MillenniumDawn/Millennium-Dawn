@@ -19,6 +19,15 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 `dev` includes a smaller `test` group, which is all the CI test jobs install.
 
+ImageMagick is also required for art conversion and its integration tests. Install
+it with your system package manager: `sudo apt-get install imagemagick` on
+Debian/Ubuntu, or `brew install imagemagick` on macOS. On Windows, use the
+[ImageMagick installer](https://imagemagick.org/script/download.php#windows) and
+enable its PATH option. Setup checks for a working `magick` or ImageMagick
+`convert`, rejects unrelated programs with those names, and fails if neither is
+available. It does not install system packages. After installing, reopen your
+terminal and run `python tools/dev_setup.py --check`.
+
 CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
 and pylint on staged files only, plus mypy:
 

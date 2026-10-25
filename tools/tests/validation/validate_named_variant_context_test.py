@@ -147,15 +147,14 @@ CASES = {
 def test_context_review_blockers(raw_sources, path, consumer, expected):
     sources = [(rel, v.created_variant_spans(text)) for rel, text in raw_sources]
     by_tag, wildcard = v.build_variant_name_index(sources)
-    index = v.build_variant_dlc_index(sources)
+    index = v.build_variant_registry(sources)
     if expected in (
         "unresolved with uncertain DLC",
         "skip uncertain DLC match",
     ):
         candidates = [
-            context
-            for equipment, _, context, _ in index[0]["SOV"]
-            if equipment == SMALL
+            record.context
+            for record in index.by_identity.get(("SOV", SMALL, "Review-X"), [])
         ]
         assert candidates
         assert all(context.get("By Blood Alone") is not False for context in candidates)
@@ -166,7 +165,7 @@ def test_context_review_blockers(raw_sources, path, consumer, expected):
         by_tag,
         wildcard,
         source_path=path,
-        variant_dlc_index=index,
+        variant_registry=index,
     )
     assert [finding.kind for finding in found] == expected
 
@@ -185,19 +184,18 @@ def test_dynamic_history_scope_does_not_inherit_filename_producer(scope):
         f"2000.1.1 = {{ {scope} {definition(MEDIUM)} }} }}",
     )
     sources = [(source[0], v.created_variant_spans(source[1]))]
-    index = v.build_variant_dlc_index(sources)
+    index = v.build_variant_registry(sources)
 
-    assert not index[0].get("SOV")
-    assert len(index[1]) == 1
-    equipment, name, context, _ = index[1][0]
-    assert (equipment, name) == (MEDIUM, "Review-X")
-    assert context.get(v._UNCERTAIN_PRODUCER_CONTEXT)
+    assert not any(producer == "SOV" for producer, _, _ in index.by_identity)
+    records = index.by_identity[(None, MEDIUM, "Review-X")]
+    assert len(records) == 1
+    assert records[0].context.get(v._UNCERTAIN_PRODUCER_CONTEXT)
 
     found = v.check_named_variant_refs(
         stockpile(SMALL),
         *v.build_variant_name_index(sources),
         source_path="history/units/UKR_2000_bba.txt",
-        variant_dlc_index=index,
+        variant_registry=index,
     )
     assert [finding.kind for finding in found] == [UNKNOWN]
 
@@ -217,15 +215,13 @@ def test_dynamic_meta_effect_type_is_not_truncated_to_a_literal_prefix():
             ),
         ),
     ]
-    index = v.build_variant_dlc_index(sources)
+    index = v.build_variant_registry(sources)
 
-    assert any(
-        equipment is None and name == "Review-X" for equipment, name, _, _ in index[1]
-    )
+    assert (None, None, "Review-X") in index.by_identity
     found = v.check_named_variant_refs(
         stockpile(SMALL),
         *v.build_variant_name_index(sources),
         source_path="events/Review.txt",
-        variant_dlc_index=index,
+        variant_registry=index,
     )
     assert [finding.kind for finding in found] == [UNKNOWN]

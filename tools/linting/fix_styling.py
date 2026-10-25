@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "validation"))
 from shared_utils import (
     Timer,
+    atomic_write_bytes,
     atomic_write_text,
     clean_filepath,
     collect_files_by_mode,
@@ -254,6 +255,28 @@ def fix_file(
         return (filepath, 0, [f"  Error processing {filepath}: {e}"])
 
 
+def fix_trailing_whitespace(filename, *, dry_run=False):
+    try:
+        _worktree_matches_index(filename)
+        changed = staged_changed_lines(filename)
+        content = read_text_strict(filename, encoding="utf-8")
+        lines = content.split("\n")
+        for number in changed:
+            line = lines[number - 1]
+            body = line.removesuffix("\r")
+            lines[number - 1] = body.rstrip(" \t") + line[len(body) :]
+        fixed = "\n".join(lines)
+        if fixed != content:
+            if not dry_run:
+                atomic_write_bytes(filename, fixed.encode("utf-8"))
+            print(f"{'Would fix' if dry_run else 'Fixing'} {filename}")
+            return 1
+    except (OSError, UnicodeError, StagedDiffError) as error:
+        print(f"{filename}: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def fix_file_dry_run(filepath):
     """Run fix_file without writing."""
     return fix_file(filepath, dry_run=True)
@@ -261,6 +284,11 @@ def fix_file_dry_run(filepath):
 
 def main():
     def _extra(parser):
+        parser.add_argument(
+            "--trailing-whitespace-only",
+            action="store_true",
+            help="Trim only staged-diff trailing whitespace in the named text files",
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -286,6 +314,13 @@ def main():
         "Fix styling issues in HOI4 mod files", extra_args_fn=_extra
     )
     args = parser.parse_args()
+    if args.trailing_whitespace_only:
+        if not args.filenames:
+            parser.error("--trailing-whitespace-only requires named files")
+        return max(
+            fix_trailing_whitespace(filename, dry_run=args.dry_run)
+            for filename in args.filenames
+        )
 
     timings = []
     start_time = time.time()
