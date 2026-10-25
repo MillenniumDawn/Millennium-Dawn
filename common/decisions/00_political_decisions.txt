@@ -46,6 +46,7 @@ generic_coalition_politics_decisions = {
 		}
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision demobilize_after_warfare_mission"
+			set_country_flag = spending_law_scripted_change
 			if = { limit = { has_idea = defence_09 }
 				swap_ideas = {
 					remove_idea = defence_09
@@ -70,6 +71,7 @@ generic_coalition_politics_decisions = {
 					add_idea = defence_06
 				}
 			}
+			clr_country_flag = spending_law_scripted_change
 		}
 
 		ai_will_do = {
@@ -689,8 +691,10 @@ generic_coalition_politics_decisions = {
 			}
 			modifier = {
 				factor = 0
-				has_equipment = { util_vehicle_type < 750 }
+				has_equipment = { util_vehicle_type > 749 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 	HOL_add_dutchaid = {
@@ -971,6 +975,10 @@ generic_coalition_politics_decisions = {
 
 		ai_will_do = {
 			base = 50
+			modifier = { factor = 2 check_variable = { protest_strength > 74 } }
+			modifier = { factor = 2 has_stability < 0.3 }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.5 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1019,6 +1027,10 @@ generic_coalition_politics_decisions = {
 				}
 				add_ideas = the_eco
 			}
+			else_if = {
+				limit = { FRA = { has_completed_focus = FRA_CFA_Reforms } }
+				add_ideas = cfa_franc_2
+			}
 			else = {
 				add_ideas = cfa_franc
 			}
@@ -1060,6 +1072,7 @@ generic_coalition_politics_decisions = {
 					value > 50
 				}
 			}
+			modifier = { factor = 3 ai_needs_currency_support = yes }
 		}
 	}
 	AFRICA_remove_the_cfa_franc = {
@@ -1163,6 +1176,13 @@ generic_coalition_politics_decisions = {
 					target = FRA
 					value > 0
 				}
+			}
+			modifier = {
+				factor = 0.1
+				NOT = { ai_needs_currency_support = yes }
+				NOT = { ai_has_high_deficit = yes }
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				NOT = { has_war_with = FRA }
 			}
 			modifier = {
 				factor = 0
@@ -1280,7 +1300,7 @@ generic_coalition_politics_decisions = {
 			modifier = {
 				strength_ratio = {
 					tag = AZE
-					ratio < 1
+					ratio > 1
 				}
 				add = 355
 			}
@@ -1412,8 +1432,8 @@ generic_coalition_politics_decisions = {
 			country_exists = ARM
 			ARM = {
 				owns_state = 1034
-				NOT = { is_subject_of = ARM }
-				NOT = { is_in_faction_with = ARM }
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
 				influence_higher_40 = yes
 				has_government = democratic
 			}
