@@ -272,6 +272,8 @@ def _civil_war_tribal_branch():
 def test_all_sixteen_resource_decision_weights_ignore_disabled_loyalty():
     assert len(TRIBAL_DECISIONS) == 16
     low = {name: 0.1 for name in _LOYALTY}
+    moderate = {name: 0.3 for name in _LOYALTY}
+    healthy = {name: 0.9 for name in _LOYALTY}
 
     def weight(decision, disabled, variables):
         fixture = EconomicScriptFixture(
@@ -285,12 +287,18 @@ def test_all_sixteen_resource_decision_weights_ignore_disabled_loyalty():
         return fixture.weight(script_block(decision, "ai_will_do"))
 
     for decision in TRIBAL_DECISIONS.values():
-        active = weight(decision, False, low)
+        healthy_active = weight(decision, False, healthy)
+        active_low = weight(decision, False, low)
+        active_moderate = weight(decision, False, moderate)
+        assert active_low == 0
+        assert active_moderate == pytest.approx(healthy_active * 0.1)
+
         disabled_low = weight(decision, True, low)
+        disabled_moderate = weight(decision, True, moderate)
         disabled_cleared = weight(decision, True, {})
-        assert active < disabled_low
-        assert disabled_low == disabled_cleared
-        assert disabled_cleared > 0
+        assert disabled_low == healthy_active
+        assert disabled_moderate == healthy_active
+        assert disabled_cleared == healthy_active
 
 
 @pytest.mark.parametrize("ai", [False, True])
