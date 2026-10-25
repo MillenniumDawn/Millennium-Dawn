@@ -2,7 +2,12 @@
 
 import pytest
 from shared.paths import REPO_ROOT
-from shared.suite import EconomicScriptFixture, read_text, script_block
+from shared.suite import (
+    EconomicScriptFixture,
+    read_decision_categories,
+    read_text,
+    script_block,
+)
 from shared_utils import extract_block_from_text, iter_statements
 
 _CANADA = [
@@ -34,20 +39,15 @@ _SPENDING = _CANADA + [("SWE_Officer_education_course", 6)] + _GREECE + _ITALY
 
 @pytest.fixture(scope="module")
 def decisions():
-    result = {}
-    for filename, category in (
-        ("Canada.txt", "CAN_provincial_infrastructure"),
-        ("05_sweden_decision.txt", "SWE_decision_Forsvarsmarkten_category"),
-        ("05_GRE_decisions.txt", "GRE_generic_decisions_category"),
-        ("Italy.txt", "ITA_italian_space_decision_category"),
-    ):
-        source = read_text(REPO_ROOT / "common/decisions" / filename)
-        result.update(
-            (name, body)
-            for name, _, body in iter_statements(script_block(source, category))
-            if body is not None
-        )
-    return result
+    return read_decision_categories(
+        REPO_ROOT / "common/decisions",
+        (
+            ("Canada.txt", "CAN_provincial_infrastructure"),
+            ("05_sweden_decision.txt", "SWE_decision_Forsvarsmarkten_category"),
+            ("05_GRE_decisions.txt", "GRE_generic_decisions_category"),
+            ("Italy.txt", "ITA_italian_space_decision_category"),
+        ),
+    )
 
 
 @pytest.fixture
