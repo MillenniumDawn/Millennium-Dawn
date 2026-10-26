@@ -54,6 +54,18 @@ def script_block(source, name):
     return blocks[0]
 
 
+def read_decision_categories(directory, categories):
+    result = {}
+    for filename, category in categories:
+        source = read_text(directory / filename)
+        result.update(
+            (name, body)
+            for name, _, _, body in iter_statement_ops(script_block(source, category))
+            if body is not None
+        )
+    return result
+
+
 class EconomicScriptFixture:
     """Bounded arithmetic/branch execution, with native effects recorded explicitly.
 
@@ -139,6 +151,11 @@ class EconomicScriptFixture:
     def condition(self, source):
         results = []
         for key, comparison, scalar, body in self.active(source):
+            if key == "threat" and body is None:
+                results.append(
+                    self.comparisons[comparison](self.number(key), self.number(scalar))
+                )
+                continue
             assert comparison == "=", "Unsupported predicate operator"
             if key == "tooltip":
                 continue
