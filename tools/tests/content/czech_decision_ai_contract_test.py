@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    AI_SPENDING_BUDGET_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -108,14 +109,7 @@ def economy():
 @pytest.mark.parametrize("name,base", _SPENDING.items())
 @pytest.mark.parametrize(
     "rate,ratio,bankrupt,multiplier",
-    [
-        (0, 0, False, 1),
-        (-3, -0.10, False, 1),
-        (-3.001, 0, False, 0.5),
-        (0, -0.1001, False, 0.5),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    AI_SPENDING_BUDGET_CASES,
 )
 def test_national_expenses_use_the_taking_countrys_budget(
     decisions, economy, name, base, rate, ratio, bankrupt, multiplier

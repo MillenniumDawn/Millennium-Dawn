@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    AI_SPENDING_BUDGET_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -78,14 +79,7 @@ def economy():
 @pytest.mark.parametrize("name", _SPENDING)
 @pytest.mark.parametrize(
     "rate,balance,bankrupt,expected",
-    [
-        (0, 0, False, 1),
-        (-3, -0.10, False, 1),
-        (-3.001, 0, False, 0.5),
-        (0, -0.1001, False, 0.5),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    AI_SPENDING_BUDGET_CASES,
 )
 def test_project_weights_respond_to_the_sponsors_finances(
     decisions, economy, name, rate, balance, bankrupt, expected

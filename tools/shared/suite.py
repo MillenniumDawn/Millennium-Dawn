@@ -66,6 +66,17 @@ def read_decision_categories(directory, categories):
     return result
 
 
+# treasury_rate, budget_balance_ratio, bankrupt, multiplier
+AI_SPENDING_BUDGET_CASES = (
+    (0, 0, False, 1),
+    (-3, -0.10, False, 1),
+    (-3.001, 0, False, 0.5),
+    (0, -0.1001, False, 0.5),
+    (0, 0, True, 0),
+    (-4, -0.11, True, 0),
+)
+
+
 class EconomicScriptFixture:
     """Bounded arithmetic/branch execution, with native effects recorded explicitly.
 
