@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    FISCAL_DISTRESS_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -61,18 +62,11 @@ def decisions():
 
 @pytest.mark.parametrize("project", _PROJECTS)
 @pytest.mark.parametrize(
-    "rate,balance,bankrupt,expected",
-    [
-        (0, 0, False, 100),
-        (-3, -0.10, False, 100),
-        (-3.001, 0, False, 50),
-        (0, -0.1001, False, 50),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    "rate,balance,bankrupt,multiplier",
+    FISCAL_DISTRESS_CASES,
 )
 def test_project_weights_respond_to_fiscal_distress(
-    decisions, project, rate, balance, bankrupt, expected
+    decisions, project, rate, balance, bankrupt, multiplier
 ):
     triggers = read_text(
         REPO_ROOT / "common/scripted_triggers/00_economic_triggers.txt"
@@ -87,4 +81,4 @@ def test_project_weights_respond_to_fiscal_distress(
         triggers={"ai_has_high_deficit": script_block(triggers, "ai_has_high_deficit")},
     )
     weight = script_block(decisions[f"GRN_decision_{project}"], "ai_will_do")
-    assert economy.weight(weight) == expected
+    assert economy.weight(weight) == 100 * multiplier
