@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -200,21 +199,42 @@ def test_text_report_honours_sections(tmp_path, capsys):
     assert "== hooks" not in out
 
 
-def test_presets_cover_the_documented_systems():
-    assert {"top"} <= set(system_inspector.PRESETS)
-
-
-@pytest.mark.parametrize(
-    "rel",
-    [
-        "events/Targeted Operations.txt",
-        "events/Targeted Operations Runtime.txt",
-        "events/Targeted Operations Redesign.txt",
-        "common/scripted_effects/01_targeted_operations_registry.txt",
-    ],
-)
-def test_top_preset_matches_its_event_files(rel):
-    assert re.search(system_inspector.PRESETS["top"].path_pattern, rel)
+def test_top_preset_keeps_semantic_links_when_effect_files_are_folded(tmp_path):
+    reports = []
+    for layout in ("split", "folded"):
+        root = tmp_path / layout
+        for relative, text in FILES.items():
+            relative = relative.replace("ZZZ", "targeted_operations")
+            text = text.replace("ZZZ", "TOP").replace("zzz", "top")
+            if (
+                layout == "split"
+                and relative
+                == "common/scripted_effects/targeted_operations_effects.txt"
+            ):
+                start, orphan = text.split("\n\nTOP_orphan", 1)
+                write_under_str(root, relative, start + "\n")
+                write_under_str(
+                    root,
+                    "common/scripted_effects/targeted_operations_other.txt",
+                    "TOP_orphan" + orphan,
+                )
+            else:
+                write_under_str(root, relative, text)
+        preset = system_inspector.PRESETS["top"]
+        report = system_inspector.inspect(
+            system_inspector.read_tree(root), preset.path_pattern, preset.prefixes
+        )
+        assert report["definitions"]["scripted_effect"] == ["TOP_orphan", "TOP_start"]
+        assert report["definitions"]["scripted_trigger"] == ["TOP_ready"]
+        assert report["definitions"]["event"] == ["top.1", "top.2"]
+        assert report["unresolved"]["calls"] == ["TOP_missing_effect"]
+        assert {item["name"] for item in report["dependencies"]["scripted_effect"]} == {
+            "shared_helper"
+        }
+        assert report["hooks"]
+        reports.append(report)
+    for section in ("definitions", "hooks", "dependencies", "unresolved", "unused"):
+        assert reports[0][section] == reports[1][section], section
 
 
 @pytest.mark.parametrize("id_first", [True, False])
