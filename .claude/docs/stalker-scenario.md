@@ -1,0 +1,172 @@
+# STALKER Scenario
+
+The opt-in STALKER scenario (MillenniumDawn/Millennium-Dawn#4791) is split into subsystems. Each
+subsystem owns its own files and its own block of event IDs, so parallel work does not collide.
+Add content to the subsystem that owns it, and touch shared files only through the hooks below.
+
+## Rules
+
+- **Own files only.** New events, decisions, effects and localisation go in the subsystem's
+  files. A new subsystem gets new files and the next free event-ID block: run `/scenario-subsystem`
+  (`tools/generators/add_scenario.py subsystem`). Other opt-in scenarios start from `/new-scenario`.
+- **Event IDs.** Use only your subsystem's block. Never reuse or renumber an ID.
+- **Localisation.** Keys live in the subsystem's `MD_STALKER_<subsystem>_l_english.yml`. Keys
+  used by two or more subsystems live in the core file `MD_STALKER_l_english.yml`.
+- **Monthly work.** Add a line to `STALKER_monthly_pulse` in
+  `common/scripted_effects/99_STALKER_pulse_effects.txt`. Do not add lines to `MD_on_actions.txt`.
+- **Changelog.** Each STALKER PR adds one BLUF line to `Changelog.txt`, as `AGENTS.md` requires.
+- **Target `main`.** This complete upstream port carries the scenario from OEM `main` and the
+  Targeted Operations prerequisite in #5498. Merge STALKER PRs one at a time, and incorporate
+  the latest upstream `main` into each one first.
+
+## Canon
+
+Player-facing text follows GSC Game World's games. GSC's own pages carry little lore, so check
+names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wiki and Game8.
+
+- Use STALKER 2 spellings: Chornobyl, and Dr. Kaymanov, the Doctor.
+- In the Kaymanov ending, Skif defies Strelok, spares the Doctor, enters the eighth
+  C-Consciousness pod and cedes control to the Zone. New Zones then form around the world.
+- The Ward is SIRCAA's private army under Colonel Korshunov. SIRCAA does the research.
+- The Spark follows Scar and seeks the Shining Zone. Noon is former Monolith under Strider.
+- The IPSF is the International Perimeter Security Force.
+- The in-game scientists are the Ecologists.
+- Dated history on Zone 1 lives in the Zone Legend subsystem. 2006 is the second disaster and does not start management. Management still begins in 2008. In 2011 Clear Sky assaults the plant. Stopping Strelok sets `STALKER_strelok_turned_back` and the 2012 raid does not happen. The canon assault sets `STALKER_strelok_marked`. Helping him through sets `STALKER_strelok_remembers`. Scar survives all three. Operation Fairway follows the 2012 result by about four months, and a route of 1 can hold Pripyat. SIRCAA, under Dalin, and Colonel Korshunov's Ward can be chartered in 2018. From December 2010 the random Clear Sky collapse does not fire. The X-Lab option that disables the Brain Scorcher sets none of these flags. Names used here, checked against the S.T.A.L.K.E.R. Wiki: Lebedev, Scar, Major Alexander Degtyarev, Colonel Kovalsky, Operation Fairway, Dalin.
+- Faction Wars and Tearlings come from GSC's pre-launch Discord event in the official
+  S.T.A.L.K.E.R. server (announcements of 9, 11 and 17 November 2024). SIRCAA asked every
+  faction to bring in Tearlings, common crystals long logged as worthless. The Free Stalkers
+  delivered the most, 331 of 1,232, and every faction got a share of the rewards.
+- Reference-map Zones follow the #4791 reference image, which shows 27 outbreak markers besides
+  Chornobyl. Zones 5 (New Mexico), 12 (Paraguayan Chaco), 15 (Wielkopolska) and 27 (Lake Mungo)
+  have no marker on it and are this scenario's own additions. Zone 31 (Aksai Chin) was added
+  after a placement check found its marker unassigned. The map is a guideline, not a cap: add
+  Zones where lore or gameplay calls for them, and note each addition in the placement table. The
+  Randomized rule option registers each reference Zone with a 60% chance and swaps in the recorded
+  alternative sites (Zone IDs 32 to 37) at random.
+- Project X and MDST are canon (STALKER 2). Project X was the state Noosphere program the
+  Regulatory Board funded after 1991. Its scientists defied the Board in 2006 and created the
+  Zone by accident; the Board shut Project X down and the scientists carried on as MDST, the
+  Ministry of Defense and Secret Technologies. MDST created the Monolith and the S.T.A.L.K.E.R.
+  agents, keeps the X-Network running and serves the C-Consciousness. MDST is not SIRCAA, the
+  Ward or Malachite. Its reach into state institutions (MDST penetration) is this scenario's
+  own mechanic.
+
+## Subsystems
+
+- **Core Zone (1–9):** `STALKER.txt`; loc `MD_STALKER_l_english.yml`; `STALKER_decisions.txt`;
+  `99_STALKER_scripted_effects.txt`, `_society_`, `_zone_placements`, `_pulse_`, `_top_`. The Zone overview panel is
+  `01_STALKER_zone_overview_gui.txt` with `interface/STALKER_zone_overview.gui`, embedded in the Zone
+  management category.
+  An AI holder in crisis (containment under 30, or a perimeter breach) with less than the 50 political
+  power containment costs gets `STALKER_reinforce_containment` from the treasury instead, unless the
+  treasury is under 10 (`STALKER_monthly_ai_zone_relief_pulse`). Both paths share the 180-day
+  `STALKER_zone_reinforced` cooldown.
+- **X-Labs (10–19):** `STALKER_xlabs.txt`; loc `_xlabs_`; `STALKER_xlab_decisions.txt`;
+  `99_STALKER_xlab_effects.txt`.
+- **International (20–29):** `STALKER_international.txt`; loc `_international_`;
+  `STALKER_international_decisions.txt`; `99_STALKER_international_effects.txt`.
+- **2022 arc (30–39):** `STALKER_2022.txt`, `STALKER_aftermath.txt`; loc `_2022_`, `_aftermath_`;
+  `99_STALKER_2022_effects.txt`, `_global_`, `_aftermath_`.
+- **Regional flavor (40–49):** `STALKER_regional.txt`; loc `_regional_`;
+  `99_STALKER_regional_effects.txt`.
+- **Economy (50–59):** `STALKER_economy.txt`; loc `_economy_`; `STALKER_global_decisions.txt`;
+  `99_STALKER_economy_effects.txt`; the artifact MIO.
+- **Belarus (60–69):** `STALKER_belarus.txt`; loc `_belarus_`; `STALKER_belarus_decisions.txt`;
+  `99_STALKER_belarus_effects.txt`.
+- **Monolith (70–79):** `STALKER_monolith.txt`; loc `_monolith_`;
+  `STALKER_monolith_decisions.txt`; society effects in core.
+- **MDST (80–89):** `STALKER_mdst.txt`; loc `_mdst_`; `STALKER_mdst_decisions.txt`;
+  `99_STALKER_mdst_effects.txt`.
+- **Mutants (90–99):** `STALKER_mutants.txt`; loc `_mutants_`; `STALKER_mutant_decisions.txt`;
+  `99_STALKER_mutant_effects.txt`.
+- **Crossover (100–109):** `STALKER_crossover.txt`; loc `_crossover_`;
+  `99_STALKER_meme_effects.txt`. Crossover content is player-only: the pulse targets human-held Zones
+  only. The first roll on Lake Mungo (Zone 27) fires Alice's one-time contact, STALKER.105. Its choice
+  goes in `global.STALKER_alice_choice`, and 180 days after the answer the return, STALKER.106,
+  answers that choice. The return waits while an AI holds Lake Mungo. If the Zone changes hands before
+  the answer, nothing is recorded and the introduction can reach the next holder.
+- **Footprint (110–119):** `STALKER_footprint.txt`; loc `_footprint_`;
+  `99_STALKER_footprint_effects.txt`. Zones spread, recede and drift; anchors never move, because event
+  text names a Zone through literal state IDs. A reference Zone at its full footprint can split once:
+  its oldest footprint state becomes a new Zone with the parent's ID plus 100, named "the borderlands
+  of" the parent.
+- **Factions (120–129):** `STALKER_factions.txt`; loc `_factions_`;
+  `99_STALKER_faction_effects.txt`.
+- **World reaction (130–139):** `STALKER_world.txt`; loc `_world_`;
+  `99_STALKER_world_effects.txt`.
+- **Foreign intelligence (140–149):** `STALKER_intel.txt`; loc `_intel_`;
+  `99_STALKER_intel_effects.txt`.
+- **Faction Wars (150–159):** `STALKER_faction_wars.txt`; loc `_faction_wars_`;
+  `99_STALKER_faction_wars_effects.txt`.
+- **Strelok (160–169):** `STALKER_strelok.txt`; loc `_strelok_`;
+  `99_STALKER_strelok_effects.txt`. The 2012 raid uses events 160–162. The rest of the block stays with that raid.
+- **Zone Legend (170–181):** `STALKER_legend.txt`; loc `_legend_`;
+  `99_STALKER_legend_effects.txt`. 2006, 2011 and 2018 come from the yearly file. Fairway and Strider are scheduled from the 2012 result. Fairway, Clear Sky and SIRCAA use distinct delayed relays (178, 180 and 181). The monthly legend pulse recovers Fairway after its 120-day delay, Strider after his 60-day delay, Clear Sky after its 70-day delay and SIRCAA after its 80-day delay if their event carriers disappear. It also redelivers unresolved choices when Zone control changes.
+- **Antarctic Research (190–199):** `STALKER_antarctic.txt`; loc `_antarctic_`;
+  `99_STALKER_antarctic_effects.txt`, `STALKER_antarctic_decisions.txt`.
+  `STALKER_polar_artifact_study` spends 5 artifacts at a station with a working Radiation
+  Laboratory (`STALKER_has_working_radiation_lab`, the station's live slot, fuel and power): 180
+  days of +3% research and +15% station iteration progress, then `STALKER.190`. Observers who
+  visit during the study always seize the samples (major news `STALKER.191`). Antarctica's
+  `MD_antarctica.4` penalty applies unless the visit already reported another violation.
+  Hidden `STALKER.192` checks the laboratory daily while a study runs, for that country only, and ends
+  the study the first day it is not working. Either way `STALKER_polar_study_cut_short` (181 days)
+  blocks `STALKER.190`.
+- **Field Campaigns (200–209):** `STALKER_field_campaigns.txt`; loc `_field_campaigns_`;
+  `99_STALKER_field_campaigns_effects.txt`.
+
+Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
+
+Events 182–189 remain available in the Legend block. The next free block is 210–219. Decision categories are one file each in
+`common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
+subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
+
+## Hooks into shared files
+
+These are the only places the scenario touches files other MD content owns. Keep them to one line
+where possible; they are what an upstream port has to carry.
+
+- `common/on_actions/MD_on_actions.txt`: `STALKER_monthly_pulse = yes` in the monthly block.
+- `common/scripted_effects/00_yearly_effects.txt`: the 2006 dispatch of STALKER.170, the 2008
+  Zone activation, the 2011 dispatch of STALKER.171 and STALKER.172, the 2012 dispatch of
+  STALKER.160, the 2018 dispatch of STALKER.176, and the 2022 dispatch of STALKER.34 and STALKER.35.
+- `common/scripted_effects/00_startup_effects.txt`: the artifact MIO in MD's starting MIO sizing.
+- Targeted Operations: `STALKER_check_top_zone_crisis` calls in the TOP proposal and resolution
+  effects, `STALKER_apply_top_organization_sabotage` in the organization resolution, the four
+  STALKER organizations in `tools/data/targeted_operations.json`, and
+  `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
+  [Targeted Operations](targeted-operations.md).
+- `localisation/english/MD_game_rules_l_english.yml`: the three STALKER rules.
+- `events/MD_Antarctica.txt`: the observer report event's block that seizes a polar artifact study
+  and adds the Treaty penalty only when the station shows no other violation.
+
+## Scripting traps found at runtime
+
+- `on_startup` runs with no scope. Wrap scripted effects in `random_country = { }`, or they error
+  with "provided: None" and do nothing. This kept the whole scenario from starting until 2026-09-27.
+- `clamp_variable` on an unset variable is a runtime error. Initialize any variable that a shared
+  clamp such as `STALKER_clamp_zone_society` touches, even when its value is 0.
+
+## Original Zone field campaigns
+
+Field Campaigns owns IDs 200-209. The Yantar, Army Warehouses and Red Forest dossiers each use an intake,
+first report and final choice. They run in that order, after the original Zone opens and its policy is answered.
+All phases, 60-day assignment flags, outcomes and recurring assignment cooldowns live on state 698. Campaign
+steps are 0 intake, 1 investigation available, 2 investigating, 3 first report, 4 recovery available,
+5 recovering and 6 final report; case 4 means all dossiers are closed. Monthly delivery binds each event to
+the original Zone and its current controller. A transferred or lost report retries without changing the result.
+
+An investigation costs 25 PP; recovery costs 50 PP. Escorting scientific supplies or patrolling the road costs
+25 PP and takes 60 days, with a 180-day cooldown after completion. These share the field-assignment slot and
+grant only their 5-point effects, never the campaign's research reward. Abandoning a dossier strengthens bandits.
+Road patrols support both factions by 5 after an accord, or strengthen the backed faction by 5 while weakening
+its rival by 5. When the existing 2022 battle begins, unfinished dossiers close unprepared and their campaign
+timer stops. Completed history and recurring management assignments remain available.
+Shared Yantar findings add 5 scientists when the existing 2018 SIRCAA choice resolves. A secured road offsets
+5 containment loss in the 2022 battle once. Preserved Red Forest evidence discounts one MDST purge for the Zone
+controller from 75 to 50 PP; its custom cost and affordability use the same site-owned condition.
+
+Yantar, the Army Warehouses and the Red Forest are narrative locations, not new map states. These are original
+government missions using existing factions. No existing dated route or ending is selected by this subsystem.
+Native acceptance: save/reload during both assignments, transfer during every report, inactive Zone,
+repeat pulses and options, recurring rewards, all 2018/2022 branches, and one-use purge cost.

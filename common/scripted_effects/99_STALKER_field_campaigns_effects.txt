@@ -1,0 +1,150 @@
+STALKER_monthly_field_campaigns_pulse = {
+	if = {
+		limit = { STALKER_scenario_enabled = yes }
+		698 = {
+			if = {
+				limit = { has_global_flag = STALKER_battle_for_the_zone }
+				STALKER_close_field_preparation = yes
+			}
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					controller = { exists = yes }
+				}
+				STALKER_complete_field_supplies = yes
+				STALKER_complete_field_patrol = yes
+				if = {
+					limit = { NOT = { has_variable = STALKER_field_case } }
+					set_variable = { STALKER_field_case = 1 }
+				}
+				if = {
+					limit = {
+						OR = { check_variable = { STALKER_field_step = 2 } check_variable = { STALKER_field_step = 5 } }
+						NOT = { has_state_flag = STALKER_field_work_wait }
+					}
+					add_to_variable = { STALKER_field_step = 1 }
+				}
+				controller = { set_temp_variable = { STALKER_field_holder = THIS.id } }
+				if = {
+					limit = { NOT = { check_variable = { STALKER_field_recipient = STALKER_field_holder } } }
+					clr_state_flag = STALKER_field_notice_pending
+				}
+				if = {
+					limit = {
+						check_variable = { STALKER_field_case < 4 }
+						OR = { check_variable = { STALKER_field_step = 0 } check_variable = { STALKER_field_step = 3 } check_variable = { STALKER_field_step = 6 } }
+						NOT = { has_state_flag = STALKER_field_notice_pending }
+					}
+					set_variable = { STALKER_field_recipient = STALKER_field_holder }
+					set_state_flag = { flag = STALKER_field_notice_pending value = 1 days = 35 }
+					STALKER_dispatch_field_report = yes
+				}
+			}
+		}
+	}
+}
+
+STALKER_dispatch_field_report = {
+	if = {
+		limit = { check_variable = { STALKER_field_case = 1 } check_variable = { STALKER_field_step = 0 } }
+		controller = { country_event = { id = STALKER.200 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 1 } check_variable = { STALKER_field_step = 3 } }
+		controller = { country_event = { id = STALKER.201 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 1 } check_variable = { STALKER_field_step = 6 } }
+		controller = { country_event = { id = STALKER.202 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 2 } check_variable = { STALKER_field_step = 0 } }
+		controller = { country_event = { id = STALKER.203 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 2 } check_variable = { STALKER_field_step = 3 } }
+		controller = { country_event = { id = STALKER.204 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 2 } check_variable = { STALKER_field_step = 6 } }
+		controller = { country_event = { id = STALKER.205 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 3 } check_variable = { STALKER_field_step = 0 } }
+		controller = { country_event = { id = STALKER.206 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 3 } check_variable = { STALKER_field_step = 3 } }
+		controller = { country_event = { id = STALKER.207 days = 1 } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_field_case = 3 } check_variable = { STALKER_field_step = 6 } }
+		controller = { country_event = { id = STALKER.208 days = 1 } }
+	}
+}
+
+STALKER_finish_field_campaign = {
+	add_to_variable = { STALKER_field_case = 1 }
+	set_variable = { STALKER_field_step = 0 }
+	clr_state_flag = STALKER_field_notice_pending
+	clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+	STALKER_clamp_zone_society = yes
+	controller = { STALKER_refresh_zone_administration = yes }
+}
+
+STALKER_close_field_preparation = {
+	if = {
+		limit = { check_variable = { STALKER_field_case < 4 } }
+		if = { limit = { NOT = { has_variable = STALKER_field_yantar_result } } set_variable = { STALKER_field_yantar_result = 4 } }
+		if = { limit = { NOT = { has_variable = STALKER_field_road_result } } set_variable = { STALKER_field_road_result = 4 } }
+		if = { limit = { NOT = { has_variable = STALKER_field_forest_result } } set_variable = { STALKER_field_forest_result = 4 } }
+		set_variable = { STALKER_field_case = 4 }
+		set_variable = { STALKER_field_step = 0 }
+		clr_state_flag = STALKER_field_work_wait
+		clr_state_flag = STALKER_field_notice_pending
+	}
+}
+
+STALKER_complete_field_supplies = {
+	if = {
+		limit = { has_state_flag = STALKER_field_supplies_assigned NOT = { has_state_flag = STALKER_field_supplies_wait } }
+		clr_state_flag = STALKER_field_supplies_assigned
+		clr_state_flag = STALKER_field_recurring_busy
+		set_state_flag = { flag = STALKER_field_supplies_wait value = 1 days = 180 }
+		add_to_variable = { STALKER_zone_scientists = 5 }
+		add_to_variable = { STALKER_zone_containment = 5 }
+		STALKER_clamp_zone_society = yes
+		controller = { STALKER_refresh_zone_administration = yes }
+	}
+}
+
+STALKER_complete_field_patrol = {
+	if = {
+		limit = { has_state_flag = STALKER_field_patrol_assigned NOT = { has_state_flag = STALKER_field_patrol_wait } }
+		clr_state_flag = STALKER_field_patrol_assigned
+		clr_state_flag = STALKER_field_recurring_busy
+		set_state_flag = { flag = STALKER_field_patrol_wait value = 1 days = 180 }
+		add_to_variable = { STALKER_zone_bandits = -5 }
+		add_to_variable = { STALKER_zone_activity = -5 }
+		if = {
+			limit = { check_variable = { STALKER_field_road_result = 1 } }
+			add_to_variable = { STALKER_zone_duty = 5 }
+			add_to_variable = { STALKER_zone_freedom = 5 }
+		}
+		else_if = {
+			limit = { check_variable = { STALKER_field_road_result = 2 } }
+			add_to_variable = { STALKER_zone_duty = 5 }
+			add_to_variable = { STALKER_zone_freedom = -5 }
+		}
+		else_if = {
+			limit = { check_variable = { STALKER_field_road_result = 3 } }
+			add_to_variable = { STALKER_zone_freedom = 5 }
+			add_to_variable = { STALKER_zone_duty = -5 }
+		}
+		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+		STALKER_clamp_zone_society = yes
+		controller = { STALKER_refresh_zone_administration = yes }
+	}
+}

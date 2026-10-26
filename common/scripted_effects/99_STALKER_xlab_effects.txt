@@ -1,0 +1,61 @@
+# Investigation knowledge belongs to the government that funds it, so progress lives on ROOT, not the Zone.
+STALKER_run_xlab_expedition = {
+	ROOT = {
+		add_to_variable = {
+			STALKER_xlab_progress = {
+				value = PREV.STALKER_zone_stalkers
+				add = PREV.STALKER_zone_exploitation
+				multiply = 0.1
+				add = 20
+				subtract = { value = PREV.STALKER_zone_monolith multiply = 0.2 }
+				add = { value = PREV.STALKER_zone_scientists multiply = 0.1 }
+				clamp = { min = 5 max = 100 }
+			}
+		}
+	}
+	random = {
+		chance = 25
+		add_to_variable = { STALKER_zone_stalkers = -5 }
+		STALKER_clamp_zone_society = yes
+	}
+	if = {
+		limit = {
+			ROOT = {
+				check_variable = { STALKER_xlab_progress > 99.99 }
+				check_variable = { STALKER_xlab_stage < 4 }
+			}
+		}
+		STALKER_target_zone = yes
+		ROOT = { STALKER_advance_xlab_stage = yes }
+	}
+}
+
+STALKER_advance_xlab_stage = {
+	set_variable = { STALKER_xlab_progress = 0 }
+	add_to_variable = { STALKER_xlab_stage = 1 }
+	add_to_variable = { STALKER_xlab_research_factor = 0.01 }
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = STALKER_xlab_findings } } }
+		add_dynamic_modifier = { modifier = STALKER_xlab_findings }
+	}
+	if = {
+		limit = { check_variable = { STALKER_xlab_stage < 4 } }
+		add_to_variable = { STALKER_artifact_stockpile = 5 }
+	}
+	if = {
+		limit = { check_variable = { STALKER_xlab_stage = 1 } }
+		country_event = STALKER.10
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_xlab_stage = 2 } }
+		country_event = STALKER.11
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_xlab_stage = 3 } }
+		country_event = STALKER.12
+	}
+	else = {
+		STALKER_expose_mdst_penetration = yes
+		country_event = STALKER.13
+	}
+}

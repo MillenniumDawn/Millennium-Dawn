@@ -1,0 +1,142 @@
+# A treaty member's station runs a Radiation Laboratory right now: undamaged, fuelled and powered, the
+# conditions Antarctica checks before it grants laboratory effects. Its weekly totals can lag a blizzard.
+STALKER_has_working_radiation_lab = {
+	has_idea = at_member
+	any_of = {
+		array = country_owned_station_ids
+		value = stalker_station
+		check_variable = { stalker_station > 0 }
+		check_variable = { global.antarctica_station_controller^stalker_station = THIS.id }
+		OR = {
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_6^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_7^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_8^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_9^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^stalker_station > 0 } }
+			}
+		}
+		OR = {
+			check_variable = { global.antarctica_station_output_fuel_usage^stalker_station < 1 }
+			check_variable = { global.antarctica_station_output_storage^stalker_station > 0 }
+		}
+		check_variable = { var = global.antarctica_station_output_power^stalker_station value = 0 compare = greater_than_or_equals }
+	}
+}
+
+# Country scope, read by STALKER.151's text: this country backed the faction that won the last Tearling exchange.
+STALKER_backed_tearling_winner = {
+	var:global.STALKER_event_zone = {
+		check_variable = { STALKER_zone_tearling_backed > 0 }
+		check_variable = { STALKER_zone_tearling_backed = STALKER_zone_tearling_leader }
+		has_variable = STALKER_zone_tearling_backer
+		var:STALKER_zone_tearling_backer = { tag = ROOT }
+	}
+}
+
+# The rule is unavailable while load-time triggers resolve; registration records its selected state.
+STALKER_scenario_enabled = {
+	has_global_flag = GLOBAL_STALKER_zone_registry_initialized
+}
+
+STALKER_can_resolve_strelok_raid = {
+	STALKER_scenario_enabled = yes
+	NOT = { has_global_flag = STALKER_2012_resolved }
+	698 = {
+		STALKER_is_active_zone_anchor = yes
+		check_variable = { STALKER_zone_id = 1 }
+		is_controlled_by = ROOT
+	}
+}
+
+STALKER_2011_unresolved = {
+	NOT = { has_global_flag = STALKER_strelok_turned_back }
+	NOT = { has_global_flag = STALKER_strelok_marked }
+	NOT = { has_global_flag = STALKER_strelok_remembers }
+}
+
+STALKER_global_zones_enabled = {
+	STALKER_scenario_enabled = yes
+	NOT = {
+		has_game_rule = {
+			rule = rule_stalker_kaimanov_global_zones
+			option = DISABLED
+		}
+	}
+}
+
+STALKER_meme_content_enabled = {
+	STALKER_scenario_enabled = yes
+	has_game_rule = {
+		rule = rule_stalker_meme_content
+		option = ENABLED
+	}
+}
+
+STALKER_is_zone_location = {
+	has_state_flag = STALKER_zone_location
+}
+
+STALKER_is_active_zone = {
+	has_state_flag = STALKER_zone_active
+}
+
+STALKER_is_active_zone_anchor = {
+	has_state_flag = STALKER_zone_active
+	has_state_flag = STALKER_zone_anchor
+}
+
+STALKER_controls_active_zone = {
+	has_dynamic_modifier = { modifier = STALKER_zone_administration }
+}
+
+STALKER_zone_in_crisis = {
+	STALKER_is_active_zone_anchor = yes
+	OR = {
+		has_state_flag = STALKER_perimeter_breach_active
+		has_dynamic_modifier = { modifier = STALKER_emission_disruption }
+		check_variable = { STALKER_zone_containment < 30 }
+		check_variable = { STALKER_zone_activity > 79 }
+	}
+}
+
+# Targeted Operations activates the STALKER organizations only while the original Zone (state 698) is active.
+STALKER_top_zone_organization_active = {
+	STALKER_scenario_enabled = yes
+	698 = { STALKER_is_active_zone_anchor = yes }
+}
+
+STALKER_top_sircaa_active = {
+	STALKER_top_zone_organization_active = yes
+	has_global_flag = STALKER_battle_for_the_zone
+}
+
+STALKER_top_mercenaries_active = {
+	STALKER_top_zone_organization_active = yes
+	698 = { check_variable = { STALKER_zone_mercenaries > 19 } }
+}
+
+# Reads STALKER_top_state, a state ID from Targeted Operations.
+STALKER_top_state_in_crisis = {
+	STALKER_scenario_enabled = yes
+	NOT = { check_variable = { STALKER_top_state = 0 } }
+	var:STALKER_top_state = { STALKER_zone_in_crisis = yes }
+}
+
+STALKER_controls_original_zone = {
+	STALKER_scenario_enabled = yes
+	698 = {
+		STALKER_is_active_zone_anchor = yes
+		check_variable = { STALKER_zone_id = 1 }
+		is_controlled_by = ROOT
+	}
+}

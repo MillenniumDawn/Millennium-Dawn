@@ -1,0 +1,67 @@
+add_namespace = STALKER
+
+# The polar artifact study ends for the country that ran it, unless observers seized the samples or its laboratory stopped.
+country_event = {
+	id = STALKER.190
+	title = STALKER.190.t
+	desc = STALKER.190.d
+	picture = GFX_antarctic_treaty_generic_picture
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_country_flag = STALKER_polar_study_cut_short }
+	}
+
+	option = {
+		name = STALKER.190.a
+		log = "[GetDateText]: [This.GetName]: STALKER.190.a executed"
+		add_tech_bonus = {
+			name = STALKER_polar_artifact_study_bonus
+			bonus = 0.5
+			uses = 1
+			category = CAT_nuclear_reactors
+		}
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = STALKER.190.b
+		log = "[GetDateText]: [This.GetName]: STALKER.190.b executed"
+		custom_effect_tooltip = STALKER_polar_artifacts_returned_tt
+		hidden_effect = { add_to_variable = { STALKER_artifact_stockpile = 3 } }
+		ai_chance = { base = 30 }
+	}
+}
+
+news_event = {
+	id = STALKER.191
+	title = STALKER.191.t
+	desc = STALKER.191.d
+	picture = GFX_antarctic_treaty_news
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.191.a }
+}
+
+# Daily while a polar study runs, only for the country running it: the study ends on the first day its
+# Radiation Laboratory is not working, so a short outage still counts.
+country_event = {
+	id = STALKER.192
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		has_dynamic_modifier = { modifier = STALKER_polar_artifact_samples }
+	}
+
+	immediate = {
+		if = {
+			limit = { NOT = { STALKER_has_working_radiation_lab = yes } }
+			STALKER_polar_study_lab_lost = yes
+		}
+		else = { country_event = { id = STALKER.192 days = 1 } }
+	}
+}

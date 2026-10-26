@@ -1,0 +1,136 @@
+STALKER_monthly_strelok_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			has_global_flag = STALKER_2012_dispatched
+			NOT = { has_global_flag = STALKER_2012_resolved }
+			date > 2012.3.31
+		}
+		STALKER_begin_strelok_raid = yes
+	}
+}
+
+# 2012. global.STALKER_2012_route is 1 when Strelok shuts the C-Consciousness down,
+# 2 when the military stops him, and 3 when the C-Consciousness takes him.
+# Route 1 leaves him alive and opposed to the Zone, which opens his 2022 ending.
+
+STALKER_begin_strelok_raid = {
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_2012_resolved } }
+		if = {
+			limit = { has_global_flag = STALKER_strelok_turned_back }
+			set_global_flag = STALKER_2012_resolved
+			news_event = STALKER.162
+			STALKER_schedule_fairway = yes
+		}
+		else = {
+			698 = {
+				if = {
+					limit = {
+						STALKER_is_active_zone_anchor = yes
+						check_variable = { STALKER_zone_id = 1 }
+						controller = { exists = yes }
+						OR = {
+							NOT = { has_variable = global.STALKER_2012_recipient }
+							NOT = { is_controlled_by = var:global.STALKER_2012_recipient }
+						}
+					}
+					STALKER_target_zone = yes
+					controller = {
+						set_variable = { global.STALKER_2012_recipient = THIS.id }
+						country_event = STALKER.161
+					}
+				}
+			}
+		}
+	}
+}
+
+STALKER_apply_strelok_shutdown = {
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_2012_resolved } }
+		set_global_flag = STALKER_2012_resolved
+		set_global_flag = STALKER_strelok_opposed
+		set_variable = { global.STALKER_2012_route = 1 }
+		log = "[GetDateText]: STALKER 2012 route 1, Strelok shut down the C-Consciousness"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_monolith = -40 }
+				add_to_variable = { STALKER_zone_activity = 15 }
+				add_to_variable = { STALKER_zone_containment = -10 }
+				add_to_variable = { STALKER_zone_stalkers = 10 }
+				clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.162
+		STALKER_schedule_fairway = yes
+		set_global_flag = { flag = STALKER_strider_delay value = 1 days = 60 }
+		698 = {
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					controller = { exists = yes }
+				}
+				if = {
+					limit = { country_exists = USA }
+					USA = { country_event = { id = STALKER.179 days = 60 } }
+				}
+			}
+		}
+	}
+}
+
+STALKER_apply_strelok_stopped = {
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_2012_resolved } }
+		set_global_flag = STALKER_2012_resolved
+		set_variable = { global.STALKER_2012_route = 2 }
+		log = "[GetDateText]: STALKER 2012 route 2, the military stopped Strelok"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_military = 15 }
+				add_to_variable = { STALKER_zone_containment = 15 }
+				add_to_variable = { STALKER_zone_monolith = 5 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.162
+		STALKER_schedule_fairway = yes
+	}
+}
+
+STALKER_apply_strelok_taken = {
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_2012_resolved } }
+		set_global_flag = STALKER_2012_resolved
+		set_variable = { global.STALKER_2012_route = 3 }
+		log = "[GetDateText]: STALKER 2012 route 3, the C-Consciousness took Strelok"
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_monolith = 20 }
+				add_to_variable = { STALKER_zone_activity = -10 }
+				add_to_variable = { STALKER_zone_containment = 5 }
+				clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		news_event = STALKER.162
+		STALKER_schedule_fairway = yes
+	}
+}

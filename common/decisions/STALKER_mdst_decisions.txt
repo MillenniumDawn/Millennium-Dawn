@@ -1,0 +1,93 @@
+STALKER_mdst_category = {
+	STALKER_purge_mdst_channels = {
+		icon = GFX_decision_generic_police_action
+
+		visible = {
+			STALKER_scenario_enabled = yes
+			has_variable = STALKER_mdst_penetration
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_purge_mdst_channels_available_tt
+				check_variable = { STALKER_mdst_penetration > 4 }
+			}
+		}
+
+		cost = 0
+		custom_cost_text = STALKER_field_purge_cost
+		ai_hint_pp_cost = 75
+		custom_cost_trigger = {
+			OR = {
+				AND = { has_political_power > 49 698 = { is_controlled_by = ROOT OR = { check_variable = { STALKER_field_forest_result = 1 } check_variable = { STALKER_field_forest_result = 2 } } NOT = { has_state_flag = STALKER_field_purge_used } } }
+				AND = { has_political_power > 74 NOT = { 698 = { is_controlled_by = ROOT OR = { check_variable = { STALKER_field_forest_result = 1 } check_variable = { STALKER_field_forest_result = 2 } } NOT = { has_state_flag = STALKER_field_purge_used } } } }
+			}
+		}
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_purge_mdst_channels"
+			set_temp_variable = { STALKER_field_purge_price = -75 }
+			if = {
+				limit = { 698 = { is_controlled_by = ROOT OR = { check_variable = { STALKER_field_forest_result = 1 } check_variable = { STALKER_field_forest_result = 2 } } NOT = { has_state_flag = STALKER_field_purge_used } } }
+				set_temp_variable = { STALKER_field_purge_price = -50 }
+				698 = { set_state_flag = STALKER_field_purge_used }
+			}
+			add_political_power = STALKER_field_purge_price
+			add_stability = -0.02
+			custom_effect_tooltip = STALKER_purge_mdst_channels_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_mdst_penetration = -25 }
+				clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = {
+				add = 15
+				check_variable = { STALKER_mdst_penetration > 39 }
+			}
+		}
+	}
+
+	STALKER_warn_foreign_government = {
+		icon = GFX_decision_generic_break_treaty
+		target_array = global.majors
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			has_variable = STALKER_mdst_penetration
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				NOT = { tag = ROOT }
+				NOT = { has_war_with = ROOT }
+				NOT = { has_variable = STALKER_mdst_penetration }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_warn_foreign_government to [FROM.GetName]"
+			custom_effect_tooltip = STALKER_warn_foreign_government_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_mdst_penetration = -5 }
+				clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+				FROM = {
+					STALKER_expose_mdst_penetration = yes
+					country_event = STALKER.81
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+}

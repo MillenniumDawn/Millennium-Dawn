@@ -1,0 +1,144 @@
+add_namespace = STALKER
+
+# The 2012 yearly dispatch fires this once. It reaches the original Zone's controller.
+country_event = {
+	id = STALKER.160
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_global_flag = STALKER_2012_resolved }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.160 immediate executed"
+		STALKER_begin_strelok_raid = yes
+	}
+}
+
+country_event = {
+	id = STALKER.161
+	title = STALKER.161.t
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_marked }
+		text = STALKER.161.d_marked
+	}
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_remembers }
+		text = STALKER.161.d_remembers
+	}
+	desc = { text = STALKER.161.d }
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_global_flag = STALKER_2012_resolved }
+		has_event_target = STALKER_zone_event_target
+		event_target:STALKER_zone_event_target = {
+			STALKER_is_active_zone_anchor = yes
+			check_variable = { STALKER_zone_id = 1 }
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
+		name = STALKER.161.a
+		trigger = { STALKER_can_resolve_strelok_raid = yes }
+		log = "[GetDateText]: [This.GetName]: STALKER.161.a executed"
+		custom_effect_tooltip = STALKER.161.a_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_can_resolve_strelok_raid = yes }
+				STALKER_apply_strelok_shutdown = yes
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				event_target:STALKER_zone_event_target = { check_variable = { STALKER_zone_monolith > 39 } }
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.161.b
+		trigger = { STALKER_can_resolve_strelok_raid = yes }
+		log = "[GetDateText]: [This.GetName]: STALKER.161.b executed"
+		custom_effect_tooltip = STALKER.161.b_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_can_resolve_strelok_raid = yes }
+				add_political_power = -50
+				STALKER_apply_strelok_stopped = yes
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 20
+				event_target:STALKER_zone_event_target = { check_variable = { STALKER_zone_containment < 40 } }
+			}
+			modifier = {
+				factor = 0
+				has_political_power < 50
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.161.c
+		trigger = { STALKER_can_resolve_strelok_raid = yes }
+		log = "[GetDateText]: [This.GetName]: STALKER.161.c executed"
+		custom_effect_tooltip = STALKER.161.c_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_can_resolve_strelok_raid = yes }
+				STALKER_apply_strelok_taken = yes
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+news_event = {
+	id = STALKER.162
+	title = STALKER.162.t
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_turned_back }
+		text = STALKER.162.d_turned_back
+	}
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_2012_route = 1 }
+			has_global_flag = STALKER_strelok_marked
+		}
+		text = STALKER.162.d_shutdown_marked
+	}
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_2012_route = 1 }
+			has_global_flag = STALKER_strelok_remembers
+		}
+		text = STALKER.162.d_shutdown_remembers
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2012_route = 1 } }
+		text = STALKER.162.d_shutdown
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2012_route = 2 } }
+		text = STALKER.162.d_stopped
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2012_route = 3 } }
+		text = STALKER.162.d_taken
+	}
+	picture = GFX_news_nuclear_plant
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.162.a }
+}

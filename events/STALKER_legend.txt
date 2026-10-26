@@ -1,0 +1,546 @@
+add_namespace = STALKER
+
+# 2006. News only. Zone management still starts in 2008.
+news_event = {
+	id = STALKER.170
+	title = STALKER.170.t
+	desc = STALKER.170.d
+	picture = GFX_fukushima_nuclear_disaster_news
+	major = yes
+	is_triggered_only = yes
+
+	trigger = { STALKER_scenario_enabled = yes }
+
+	option = { name = STALKER.170.a }
+}
+
+# 2011. The emission is news. The assault is the Zone controller's choice.
+news_event = {
+	id = STALKER.171
+	title = STALKER.171.t
+	desc = STALKER.171.d
+	picture = GFX_news_nuclear_plant
+	major = yes
+	is_triggered_only = yes
+
+	trigger = { STALKER_scenario_enabled = yes }
+
+	option = { name = STALKER.171.a }
+}
+
+country_event = {
+	id = STALKER.172
+	title = STALKER.172.t
+	desc = STALKER.172.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		STALKER_2011_unresolved = yes
+		698 = {
+			STALKER_is_active_zone_anchor = yes
+			check_variable = { STALKER_zone_id = 1 }
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
+		name = STALKER.172.a
+		trigger = {
+			STALKER_controls_original_zone = yes
+			STALKER_2011_unresolved = yes
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.172.a executed"
+		custom_effect_tooltip = STALKER.172.a_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_clear_sky_spared = yes
+			}
+		}
+		ai_chance = {
+			base = 25
+			modifier = {
+				add = 20
+				698 = { check_variable = { STALKER_zone_containment < 40 } }
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.172.b
+		trigger = {
+			STALKER_controls_original_zone = yes
+			STALKER_2011_unresolved = yes
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.172.b executed"
+		custom_effect_tooltip = STALKER.172.b_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_clear_sky_canon = yes
+			}
+		}
+		ai_chance = { base = 45 }
+	}
+
+	option = {
+		name = STALKER.172.c
+		trigger = {
+			STALKER_controls_original_zone = yes
+			STALKER_2011_unresolved = yes
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.172.c executed"
+		custom_effect_tooltip = STALKER.172.c_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_clear_sky_helped = yes
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 20
+				698 = { check_variable = { STALKER_zone_monolith > 39 } }
+			}
+		}
+	}
+}
+
+news_event = {
+	id = STALKER.173
+	title = STALKER.173.t
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_turned_back }
+		text = STALKER.173.d_spared
+	}
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_remembers }
+		text = STALKER.173.d_helped
+	}
+	desc = {
+		trigger = { has_global_flag = STALKER_strelok_marked }
+		text = STALKER.173.d_marked
+	}
+	picture = GFX_news_nuclear_plant
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.173.a }
+}
+
+country_event = {
+	id = STALKER.174
+	title = STALKER.174.t
+	desc = {
+		trigger = { check_variable = { global.STALKER_2012_route = 1 } }
+		text = STALKER.174.d_open
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2012_route = 3 } }
+		text = STALKER.174.d_massacre
+	}
+	desc = { text = STALKER.174.d_closed }
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_variable = global.STALKER_fairway_result }
+		OR = {
+			has_global_flag = STALKER_strelok_turned_back
+			has_variable = global.STALKER_2012_route
+		}
+		698 = {
+			STALKER_is_active_zone_anchor = yes
+			check_variable = { STALKER_zone_id = 1 }
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
+		name = STALKER.174.a
+		trigger = {
+			STALKER_controls_original_zone = yes
+			check_variable = { global.STALKER_2012_route = 1 }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.a open executed"
+		custom_effect_tooltip = STALKER.174.a_open_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_evacuate = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	option = {
+		name = STALKER.174.a
+		trigger = {
+			STALKER_controls_original_zone = yes
+			OR = {
+				check_variable = { global.STALKER_2012_route = 2 }
+				has_global_flag = STALKER_strelok_turned_back
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.a closed executed"
+		custom_effect_tooltip = STALKER.174.a_closed_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_evacuate = yes
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = STALKER.174.b
+		trigger = {
+			STALKER_controls_original_zone = yes
+			check_variable = { global.STALKER_2012_route = 1 }
+			NOT = { has_global_flag = STALKER_strelok_turned_back }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.b executed"
+		custom_effect_tooltip = STALKER.174.b_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_foothold = yes
+			}
+		}
+		ai_chance = { base = 35 }
+	}
+
+	option = {
+		name = STALKER.174.c
+		trigger = {
+			STALKER_controls_original_zone = yes
+			check_variable = { global.STALKER_2012_route = 1 }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.c open executed"
+		custom_effect_tooltip = STALKER.174.c_open_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_bury = yes
+			}
+		}
+		ai_chance = { base = 25 }
+	}
+
+	option = {
+		name = STALKER.174.c
+		trigger = {
+			STALKER_controls_original_zone = yes
+			OR = {
+				check_variable = { global.STALKER_2012_route = 2 }
+				has_global_flag = STALKER_strelok_turned_back
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.c closed executed"
+		custom_effect_tooltip = STALKER.174.c_closed_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_bury = yes
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+
+	option = {
+		name = STALKER.174.e
+		trigger = {
+			STALKER_controls_original_zone = yes
+			check_variable = { global.STALKER_2012_route = 3 }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.174.e executed"
+		custom_effect_tooltip = STALKER.174.e_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_fairway_massacre = yes
+			}
+		}
+		ai_chance = { base = 100 }
+	}
+}
+
+news_event = {
+	id = STALKER.175
+	title = STALKER.175.t
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_fairway_result = 1 }
+			check_variable = { global.STALKER_2012_route = 1 }
+		}
+		text = STALKER.175.d_evacuate_open
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_fairway_result = 1 } }
+		text = STALKER.175.d_evacuate_closed
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_fairway_result = 2 } }
+		text = STALKER.175.d_foothold
+	}
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_fairway_result = 3 }
+			check_variable = { global.STALKER_2012_route = 1 }
+		}
+		text = STALKER.175.d_bury_open
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_fairway_result = 3 } }
+		text = STALKER.175.d_bury_closed
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_fairway_result = 4 } }
+		text = STALKER.175.d_massacre
+	}
+	picture = GFX_news_generic_soldiers
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.175.a }
+}
+
+country_event = {
+	id = STALKER.176
+	title = STALKER.176.t
+	desc = {
+		trigger = { has_global_flag = STALKER_scar_survived }
+		text = STALKER.176.d_scar
+	}
+	desc = { text = STALKER.176.d }
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_variable = global.STALKER_sircaa_result }
+		698 = {
+			STALKER_is_active_zone_anchor = yes
+			check_variable = { STALKER_zone_id = 1 }
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
+		name = STALKER.176.a
+		trigger = {
+			STALKER_controls_original_zone = yes
+			NOT = { has_variable = global.STALKER_sircaa_result }
+			has_global_flag = STALKER_scar_survived
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.176.a scar executed"
+		custom_effect_tooltip = STALKER.176.a_scar_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_sircaa_charter = yes
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = STALKER.176.a
+		trigger = {
+			STALKER_controls_original_zone = yes
+			NOT = { has_variable = global.STALKER_sircaa_result }
+			NOT = { has_global_flag = STALKER_scar_survived }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.176.a executed"
+		custom_effect_tooltip = STALKER.176.a_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_sircaa_charter = yes
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = STALKER.176.b
+		trigger = {
+			STALKER_controls_original_zone = yes
+			NOT = { has_variable = global.STALKER_sircaa_result }
+			has_global_flag = STALKER_scar_survived
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.176.b scar executed"
+		custom_effect_tooltip = STALKER.176.b_scar_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_sircaa_army = yes
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				698 = { check_variable = { STALKER_zone_military > 39 } }
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.176.b
+		trigger = {
+			STALKER_controls_original_zone = yes
+			NOT = { has_variable = global.STALKER_sircaa_result }
+			NOT = { has_global_flag = STALKER_scar_survived }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.176.b executed"
+		custom_effect_tooltip = STALKER.176.b_tt
+		hidden_effect = {
+			if = {
+				limit = { STALKER_controls_original_zone = yes }
+				STALKER_apply_sircaa_army = yes
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				698 = { check_variable = { STALKER_zone_military > 39 } }
+			}
+		}
+	}
+}
+
+news_event = {
+	id = STALKER.177
+	title = STALKER.177.t
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_sircaa_result = 1 }
+			has_global_flag = STALKER_scar_survived
+		}
+		text = STALKER.177.d_charter_scar
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_sircaa_result = 1 } }
+		text = STALKER.177.d_charter
+	}
+	desc = {
+		trigger = {
+			check_variable = { global.STALKER_sircaa_result = 2 }
+			has_global_flag = STALKER_scar_survived
+		}
+		text = STALKER.177.d_army_scar
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_sircaa_result = 2 } }
+		text = STALKER.177.d_army
+	}
+	picture = GFX_UN_joint_command
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.177.a }
+}
+
+# Waits out the Fairway delay, then gives the choice to whoever holds the Zone.
+country_event = {
+	id = STALKER.178
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = { STALKER_scenario_enabled = yes }
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.178 immediate executed"
+		STALKER_deliver_fairway = yes
+	}
+}
+
+# Route 1 only. Fires the existing Noon news once Strider's people wake.
+country_event = {
+	id = STALKER.179
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_global_flag = STALKER_strider_told }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.179 immediate executed"
+		STALKER_deliver_strider = yes
+	}
+}
+
+country_event = {
+	id = STALKER.180
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		STALKER_2011_unresolved = yes
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.180 immediate executed"
+		698 = {
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					controller = { exists = yes }
+					NOT = { has_global_flag = STALKER_2011_delay }
+					OR = {
+						NOT = { has_variable = global.STALKER_2011_recipient }
+						NOT = { is_controlled_by = var:global.STALKER_2011_recipient }
+					}
+				}
+				controller = {
+					set_variable = { global.STALKER_2011_recipient = THIS.id }
+					country_event = STALKER.172
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = STALKER.181
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		NOT = { has_variable = global.STALKER_sircaa_result }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.181 immediate executed"
+		698 = {
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					controller = { exists = yes }
+					NOT = { has_global_flag = STALKER_sircaa_delay }
+					OR = {
+						NOT = { has_variable = global.STALKER_sircaa_recipient }
+						NOT = { is_controlled_by = var:global.STALKER_sircaa_recipient }
+					}
+				}
+				controller = {
+					set_variable = { global.STALKER_sircaa_recipient = THIS.id }
+					country_event = STALKER.176
+				}
+			}
+		}
+	}
+}

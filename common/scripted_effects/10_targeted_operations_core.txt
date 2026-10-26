@@ -1,0 +1,238 @@
+# Dossiers consume core intelligence results; operations and raids own delivery.
+TOP_open_core_ct = {
+	set_variable = { TOP_open = 0 }
+	set_variable = { TOP_security_open = 0 }
+	set_variable = { var_open_MD_CT_gui = 1 }
+	international_systems_update = yes
+}
+
+TOP_tracking_started = {
+	if = {
+		limit = { TOP_enabled = yes }
+		TOP_country_initialize = yes
+		set_temp_variable = { TOP_tracking_host = FROM.id }
+		set_temp_variable = { TOP_tracking_slot = selected_org }
+		if = {
+			limit = { check_variable = { TOP_tracking_kind = 0 } }
+			set_variable = { TOP_tracking_person^TOP_tracking_host = 0 }
+			set_variable = { TOP_tracking_org^TOP_tracking_host = -1 }
+			if = { limit = { has_target_in_region_intel = yes } set_variable = { TOP_tracking_org^TOP_tracking_host = global.active_terror_orgs^TOP_tracking_slot } }
+			if = { limit = { TOP_tracking_host_selected = yes } set_variable = { TOP_tracking_person^TOP_tracking_host = TOP_selected } }
+		}
+		else_if = { limit = { check_variable = { TOP_tracking_kind = 1 } } set_variable = { TOP_locate_hq_org^TOP_tracking_host = global.active_terror_orgs^TOP_tracking_slot } }
+		else_if = { limit = { check_variable = { TOP_tracking_kind = 2 } } set_variable = { TOP_locate_training_org^TOP_tracking_host = global.active_terror_orgs^TOP_tracking_slot } }
+		else_if = { limit = { check_variable = { TOP_tracking_kind = 3 } } set_variable = { TOP_locate_cache_org^TOP_tracking_host = global.active_terror_orgs^TOP_tracking_slot } }
+	}
+}
+
+TOP_core_location_report = {
+	set_temp_variable = { TOP_arg_target = TOP_target }
+	set_temp_variable = { TOP_arg_amount = 0 }
+	TOP_add_target_lead = yes
+	set_variable = { TOP_identity_confidence^TOP_target = 100 }
+	set_variable = { TOP_location_confidence^TOP_target = 100 }
+	set_variable = { TOP_pattern_confidence^TOP_target = 100 }
+	set_variable = { TOP_identity_source^TOP_target = 2 }
+	set_variable = { TOP_location_source^TOP_target = 2 }
+	set_variable = { TOP_pattern_source^TOP_target = 2 }
+	TOP_update_person_compat_confidence = yes
+}
+
+# Reads TOP_core_objective: 1 headquarters, 2 training, 3 arms caches.
+TOP_core_facility_located = {
+	if = {
+		limit = { TOP_enabled = yes }
+		TOP_country_initialize = yes
+		set_temp_variable = { TOP_tracking_host = FROM.id }
+		set_temp_variable = { TOP_located_org = -1 }
+		if = { limit = { check_variable = { TOP_core_objective = 1 } } set_temp_variable = { TOP_located_org = TOP_locate_hq_org^TOP_tracking_host } }
+		else_if = { limit = { check_variable = { TOP_core_objective = 2 } } set_temp_variable = { TOP_located_org = TOP_locate_training_org^TOP_tracking_host } }
+		else_if = { limit = { check_variable = { TOP_core_objective = 3 } } set_temp_variable = { TOP_located_org = TOP_locate_cache_org^TOP_tracking_host } }
+		for_loop_effect = {
+			start = 1
+			end = global.TOP_group_ct^num
+			value = top_located_group
+			if = {
+				limit = { check_variable = { TOP_located_org > -1 } check_variable = { global.TOP_group_ct^top_located_group = TOP_located_org } }
+				set_temp_variable = { TOP_arg_group = top_located_group }
+				TOP_discover_organization = yes
+				set_variable = { TOP_org_verification^top_located_group = 100 }
+				set_variable = { TOP_org_location^top_located_group = 100 }
+				set_variable = { TOP_org_activity^top_located_group = 100 }
+				set_variable = { TOP_org_lead_report_clock^top_located_group = global.TOP_clock }
+				set_variable = { TOP_org_lead_host^top_located_group = FROM }
+				if = {
+					limit = { check_variable = { TOP_core_objective = 1 } }
+					set_temp_variable = { TOP_group_target = top_located_group }
+					set_temp_variable = { TOP_group = TOP_group_target }
+					TOP_find_group_org = yes
+					set_variable = { TOP_org_lead_state^top_located_group = global.active_terror_hq^TOP_org_slot }
+				}
+				else = { FROM = { capital_scope = { set_variable = { PREV.PREV.TOP_org_lead_state^top_located_group = THIS } } } }
+			}
+		}
+	}
+}
+
+# Called in native raid scope before core CT arrays can be removed or reordered.
+TOP_core_raid_result = {
+	if = {
+		limit = { TOP_enabled = yes }
+		set_temp_variable = { TOP_core_state = target_state }
+		set_temp_variable = { TOP_core_host = victim_country }
+		set_temp_variable = { targeted_org = -1 }
+		var:target_state = {
+			if = {
+				limit = { check_variable = { TOP_core_objective = 1 } }
+				for_each_loop = {
+					array = global.active_terror_hq
+					value = top_core_hq
+					index = top_core_slot
+					if = { limit = { check_variable = { top_core_hq = THIS } } set_temp_variable = { targeted_org = top_core_slot } }
+				}
+			}
+			else_if = {
+				limit = { has_variable = target_raid_org_id }
+				for_each_loop = {
+					array = global.active_terror_orgs
+					value = top_core_ct_id
+					index = top_core_slot
+					if = { limit = { check_variable = { top_core_ct_id = target_raid_org_id } } set_temp_variable = { targeted_org = top_core_slot } }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { targeted_org > -1 } }
+			set_temp_variable = { TOP_core_org = global.active_terror_orgs^targeted_org }
+			set_temp_variable = { TOP_native_impact = 0 }
+			set_temp_variable = { TOP_native_case_group = 0 }
+			if = {
+				limit = { check_variable = { TOP_core_objective = 2 } }
+				var:actor_country = {
+					for_loop_effect = {
+						start = 1
+						end = global.TOP_group_ct^num
+						value = top_native_training_group
+						if = {
+							limit = {
+								check_variable = { global.TOP_group_ct^top_native_training_group = TOP_core_org }
+								check_variable = { TOP_org_case_phase^top_native_training_group = 3 }
+								check_variable = { TOP_org_case_objective^top_native_training_group = 2 }
+								check_variable = { TOP_org_case_state^top_native_training_group = TOP_core_state }
+								check_variable = { TOP_org_case_host^top_native_training_group = TOP_core_host }
+								check_variable = { TOP_operation_subject_kind = 2 }
+								check_variable = { TOP_operation_subject_id = top_native_training_group }
+								check_variable = { TOP_operation_sequence = TOP_org_case_sequence^top_native_training_group }
+							}
+							set_temp_variable = { TOP_native_case_group = top_native_training_group }
+						}
+					}
+				}
+				if = {
+					limit = { check_variable = { TOP_native_case_group > 0 } }
+					set_temp_variable = { TOP_group_target = TOP_native_case_group }
+					set_temp_variable = { TOP_facility_objective = 2 }
+					TOP_native_facility_damage = yes
+				}
+			}
+			var:actor_country = { TOP_record_core_raid = yes }
+		}
+	}
+}
+
+TOP_record_core_raid = {
+	for_loop_effect = {
+		start = 1
+		end = global.TOP_group_ct^num
+		value = top_core_group
+		if = {
+			limit = { check_variable = { global.TOP_group_ct^top_core_group = TOP_core_org } }
+			if = {
+				limit = { check_variable = { TOP_core_objective = 0 } check_variable = { TOP_tier > 1 } }
+				set_temp_variable = { TOP_target = global.TOP_group_leader^top_core_group }
+				if = {
+					limit = { check_variable = { TOP_target > 0 } check_variable = { global.TOP_state^TOP_target = TOP_core_state } }
+					set_temp_variable = { TOP_result = 3 }
+					set_temp_variable = { TOP_core_result = 1 }
+					set_temp_variable = { TOP_arg_target = TOP_target }
+					TOP_kill_target = yes
+					set_temp_variable = { TOP_core_result = 0 }
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { TOP_org_case_phase^top_core_group = 3 }
+					check_variable = { TOP_org_case_objective^top_core_group = TOP_core_objective }
+					check_variable = { TOP_org_case_state^top_core_group = TOP_core_state }
+					check_variable = { TOP_org_case_host^top_core_group = TOP_core_host }
+					check_variable = { TOP_operation_subject_kind = 2 }
+					check_variable = { TOP_operation_subject_id = top_core_group }
+					check_variable = { TOP_operation_sequence = TOP_org_case_sequence^top_core_group }
+				}
+				set_temp_variable = { TOP_group_target = top_core_group }
+				TOP_resolve_organization_operation = yes
+			}
+		}
+	}
+}
+
+# Reads TOP_target and TOP_result. Legacy callers already applied their own rewards.
+TOP_record_legacy_result = {
+	if = {
+		limit = { TOP_enabled = yes }
+		set_temp_variable = { TOP_external_result = 1 }
+		set_temp_variable = { TOP_case_result_context = 0 }
+		set_temp_variable = { TOP_case_result_sequence = 0 }
+		TOP_resolve_target = yes
+		if = {
+			limit = { check_variable = { TOP_resolution_applied = 1 } }
+			set_variable = { TOP_assessment^TOP_target = TOP_result }
+			remove_from_array = { TOP_pending_assessments = TOP_target }
+		}
+		set_temp_variable = { TOP_external_result = 0 }
+	}
+}
+
+TOP_invalidate_other_person_cases = {
+	set_temp_variable = { TOP_resolving_actor = THIS }
+	for_each_scope_loop = {
+		array = global.TOP_pending_actors
+		if = {
+			limit = {
+				check_variable = { TOP_case_phase^TOP_target > 0 }
+				check_variable = { TOP_case_phase^TOP_target < 4 }
+				OR = { check_variable = { TOP_external_result = 1 } NOT = { check_variable = { TOP_resolving_actor = THIS } } }
+			}
+			set_temp_variable = { TOP_arg_target = TOP_target }
+			set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_target }
+			set_variable = { TOP_assessment^TOP_target = 6 }
+			TOP_close_case = yes
+		}
+	}
+}
+
+TOP_sync_core_locations = {
+	if = {
+		limit = {
+			has_global_flag = GLOBAL_bin_laden_at_large
+			check_variable = { global.TOP_status^1 = 1 }
+			event_target:GLOBAL_bin_laden_hideout = { exists = yes num_of_controlled_states > 0 }
+		}
+		event_target:GLOBAL_bin_laden_hideout = {
+			set_variable = { global.TOP_host^1 = THIS }
+			capital_scope = { set_variable = { global.TOP_state^1 = THIS } }
+		}
+	}
+	for_loop_effect = {
+		start = 1
+		end = global.TOP_group_ct^num
+		value = top_core_location_group
+		set_temp_variable = { TOP_group = top_core_location_group }
+		TOP_find_group_org = yes
+		if = {
+			limit = { check_variable = { TOP_org_slot > -1 } NOT = { check_variable = { global.active_terror_hq^TOP_org_slot = 0 } } }
+			set_variable = { global.TOP_group_state^top_core_location_group = global.active_terror_hq^TOP_org_slot }
+			set_variable = { global.TOP_group_host^top_core_location_group = global.active_terror_hq_country^TOP_org_slot }
+		}
+	}
+}

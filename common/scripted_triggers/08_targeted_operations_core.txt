@@ -1,0 +1,81 @@
+TOP_tracking_host_selected = {
+	TOP_country_eligible = yes
+	TOP_has_selected_target = yes
+	check_variable = { global.TOP_status^TOP_selected = 1 }
+	check_variable = { global.TOP_host^TOP_selected = FROM }
+}
+
+# Reads TOP_group_target, TOP_facility_objective and TOP_facility_state.
+TOP_core_facility_ready = {
+	set_temp_variable = { TOP_org_binding = { value = TOP_group_target multiply = 40000 add = { value = TOP_facility_state multiply = 4 } add = TOP_facility_objective } }
+	NOT = { is_in_array = { TOP_retired_org_bindings = TOP_org_binding } }
+	OR = {
+		AND = {
+			set_temp_variable = { TOP_expected_org = global.TOP_group_ct^TOP_group_target }
+			check_variable = { TOP_expected_org > -1 }
+			is_in_array = { global.active_terror_orgs = TOP_expected_org }
+			OR = {
+				AND = {
+					check_variable = { TOP_facility_objective = 1 }
+					any_of = {
+						array = global.active_terror_orgs
+						value = top_core_ct_id
+						index = top_core_ct_slot
+						check_variable = { top_core_ct_id = TOP_expected_org }
+						OR = { check_variable = { TOP_core_require_state = 0 } check_variable = { TOP_facility_state = global.active_terror_hq^top_core_ct_slot } }
+					}
+					var:TOP_access_host = { has_country_flag = ct_elim_raid_prepared_by@ROOT }
+				}
+				AND = {
+					check_variable = { TOP_facility_objective = 2 }
+					OR = { check_variable = { TOP_core_require_state = 0 } var:TOP_facility_state = { is_capital = yes } }
+					var:TOP_access_host = { has_country_flag = ct_training_target_found_by@ROOT }
+				}
+			}
+		}
+		AND = {
+			TOP_native_facility_extension = yes
+			TOP_organization_facility_available = yes
+		}
+	}
+}
+
+# Reads TOP_target. An inactive person may be resolved by authored legacy content.
+TOP_legacy_person_available = {
+	OR = {
+		TOP_enabled = no
+		check_variable = { global.TOP_status^TOP_target < 2 }
+	}
+}
+
+TOP_native_family_matches = {
+	OR = {
+		AND = { check_variable = { TOP_native_kind = 1 } check_variable = { TOP_arg_method = 1 } }
+		AND = { check_variable = { TOP_native_kind = 2 } check_variable = { TOP_arg_method = 2 } }
+	}
+}
+
+TOP_facility_tracking_host_selected = {
+	TOP_country_eligible = yes
+	TOP_has_selected_organization = yes
+	check_variable = { global.TOP_group_host^TOP_selected_organization = FROM }
+	NOT = { check_variable = { global.TOP_group_host^TOP_selected_organization = THIS } }
+}
+
+TOP_native_facility_extension = {
+	OR = {
+		check_variable = { TOP_facility_objective = 1 }
+		check_variable = { TOP_facility_objective = 3 }
+		check_variable = { global.TOP_group_ct^TOP_group_target < 0 }
+	}
+}
+
+TOP_native_facility_authorized = {
+	set_temp_variable = { TOP_native_state = target_state }
+	check_variable = { TOP_org_case_objective^TOP_arg_group = TOP_facility_objective }
+	check_variable = { TOP_org_case_state^TOP_arg_group = TOP_native_state }
+	check_variable = { TOP_org_case_host^TOP_arg_group = FROM }
+	TOP_organization_mission_binding_valid = yes
+	TOP_native_facility_extension = yes
+	raid_show_target_intervention_check = yes
+}
