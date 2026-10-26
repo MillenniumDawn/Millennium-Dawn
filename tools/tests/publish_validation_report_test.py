@@ -186,7 +186,14 @@ def test_unreadable_pr_fails_closed(tmp_path, monkeypatch, publishing):
     assert not calls
 
 
-@pytest.mark.parametrize("body", ["{", "[]", "x" * 256_001])
+@pytest.mark.parametrize(
+    "body",
+    [
+        pytest.param("{", id="malformed JSON"),
+        pytest.param("[]", id="nonobject payload"),
+        pytest.param("x" * 256_001, id="oversize payload"),
+    ],
+)
 def test_invalid_artifact_never_writes(tmp_path, publishing, body):
     _run, _pr, _payload, calls = publishing
     path = write_under_str(tmp_path, "comment.json", body)

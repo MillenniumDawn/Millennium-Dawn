@@ -566,7 +566,7 @@ def test_publisher_uses_trusted_code_and_comment_only_writes():
     assert publish["run"] == (
         'python3 tools/publish_validation_report.py --payload "$COMMENT_PAYLOAD"'
     )
-    workflow_path = str(REPORT_WORKFLOW.relative_to(REPO_ROOT))
+    workflow_path = REPORT_WORKFLOW.relative_to(REPO_ROOT).as_posix()
     assert classify([workflow_path])["full_suite"]
     tools_checkout = workflow_step("tools-tests", "Checkout tools test tree")
     assert workflow_path in tools_checkout["with"]["sparse-checkout"].splitlines()
