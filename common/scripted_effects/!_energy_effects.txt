@@ -327,7 +327,7 @@ energy_calc_generation = {
 
 	set_variable = { renewable_energy_display_var = energy_sum }
 
-	# Base amount of GW/h one battery park can store, scaled by storage size modifier
+	# Battery Park building levels contribute 100 GWh each, scaled by the storage size modifier.
 	set_variable = {
 		max_stored_energy = {
 			value = max_stored_energy_base
@@ -770,8 +770,17 @@ build_battery_park_effect = {
 		modify_treasury_effect = yes
 	}
 	hidden_effect = {
-		random_owned_controlled_state = {
-			add_to_variable = { number_of_battery_parks_state_var = temp_change }
+		set_temp_variable = { battery_park_builds_remaining = temp_change }
+		while_loop_effect = {
+			limit = { check_variable = { battery_park_builds_remaining > 0 } }
+			random_owned_controlled_state = {
+				add_building_construction = {
+					type = battery_park
+					level = 1
+					instant_build = yes
+				}
+			}
+			subtract_from_temp_variable = { battery_park_builds_remaining = 1 }
 		}
 	}
 	ingame_update_setup = yes
