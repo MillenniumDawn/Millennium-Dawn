@@ -89,13 +89,13 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## CI artifacts and reports
 
-- `test-suite.yml` holds no write credentials until the `report` job. A
-  `pull_request` run, re-runs included, validates its event's head and base. A
+- `test-suite.yml` has read-only repository permissions, including its `report`
+  job. A `pull_request` run, re-runs included, validates its event's head and base. A
   dispatch looks the PR up, which is the explicit refresh to its live head. The report
-  leaves the PR comment alone when the head has since moved. A head predating the
-  tooling contract stops with one error asking to merge main. The report and the base
-  scan run the head's scripts with the workflow's flags, so a new flag joins the
-  contract.
+  publisher leaves the PR comment alone when the head has since moved. A head
+  predating the tooling contract stops with one error asking to merge main. The
+  report and base scan run the head's scripts with the workflow's flags, so a new
+  flag joins the contract.
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
@@ -103,7 +103,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
-  diff-scoped style sections. It runs with main's token and cache scope, so it refuses
+  diff-scoped style sections. A PR dispatch requires `head_sha` so its run title
+  pins the validated commit. It runs with main's token and cache scope, so it refuses
   fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
   re-dispatches same-repository PRs with no successful run on their current head and
   base. `validator-cache.yml` rebuilds main's baseline.
@@ -141,12 +142,26 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
   `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
   `python3 tools/merge_changelog.py --fix` repairs it.
-- The report posts one PR comment: new findings against main's baseline first, then
-  findings in touched files. A clean run removes the older comment. If change
-  detection succeeds and every validation job is skipped, `--no-tests-selected`
-  also removes the older comment instead of posting an empty report. Empty results
-  without that flag still report missing output. Section titles derive from
-  artifact directory names, so keep those slugs stable.
+- The report uploads `report.md` and `comment.json` in `validation-report`.
+  `validation-report.yml` publishes the comment after the Test Suite completes,
+  including failed runs. It checks out only the default branch's trusted code and
+  reads the artifact as data outside the checkout. Only this publisher has
+  `pull-requests: write`; its other permissions are `actions: read` and
+  `contents: read`. It has no checks, contents, or issues write access.
+- The publisher verifies the source workflow, repository, run attempt, PR, and
+  validated head against GitHub before writing. Fork runs often have an empty
+  `pull_requests` list, so the pinned run title identifies the target. The PR's
+  head repository and branch must also match the source run. Dispatches can publish
+  only to same-repository PRs. Closed PRs and moved heads are left alone; unreadable
+  PRs and malformed or missing payloads fail publishing. Artifact mentions are
+  disabled. The new workflow must land on the default branch before it can run.
+- The comment lists new findings against main's baseline first, then findings in
+  touched files. A clean run removes the older comment. If change detection
+  succeeds and every validation job is skipped, `--no-tests-selected` also removes
+  the older comment instead of posting an empty report. Empty results without that
+  flag still report missing output. The workflow no longer writes Checks API
+  annotations; the validation jobs and suite gate remain the merge checks. Section
+  titles derive from artifact directory names, so keep those slugs stable.
 - Every validator writes a sidecar, even when clean, and the baseline meta lists them.
   A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
   drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
