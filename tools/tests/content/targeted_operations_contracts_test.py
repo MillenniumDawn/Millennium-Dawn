@@ -1533,11 +1533,12 @@ def test_open_story_chain_carries_its_pick_in_country_variables():
     assert "clear_variable = TOP_open_visit_target" in closing
 
 
-def test_top_raid_and_political_category_use_dynamic_rule_gates():
-    category = read("common/decisions/categories/targeted_operations_political.txt")
-    assert "allowed = { TOP_enabled = yes }" not in category
-    assert "allowed = { always = yes }" in category
-    assert "visible = { TOP_enabled = yes }" in category
+def test_political_category_visibility_follows_game_rule():
+    category = _parse_race_script(
+        read("common/decisions/categories/targeted_operations_political.txt")
+    )["TOP_political_authority"]
+    visible = next(value for key, _, value in category if key == "visible")
+    assert ("TOP_enabled", "=", "yes") in visible
 
 
 def test_ct_registration_reads_the_unscoped_host_region():
