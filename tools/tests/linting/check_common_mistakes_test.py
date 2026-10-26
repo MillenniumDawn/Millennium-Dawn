@@ -59,6 +59,7 @@ from check_common_mistakes import (
     _check_random_select_amount_literal,
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
+    _check_shadowed_branches,
     _check_tautological_or,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
@@ -115,6 +116,16 @@ _chain_lines = [
     "\t\t}\n",
     "\t}\n",
 ]
+
+
+def _chain(first, second):
+    """An if/else_if pair whose limits hold `first` and `second`."""
+    return [
+        "effect = {\n",
+        f"\tif = {{ limit = {{ {first} }} add_stability = 0.1 }}\n",
+        f"\telse_if = {{ limit = {{ {second} }} add_stability = 0.2 }}\n",
+        "}\n",
+    ]
 
 
 def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=None):
@@ -2250,6 +2261,106 @@ _COUNT_CASES: dict[
         ("var:x^i shorthand flagged", 1, ["\tset_variable = { x = var:a^i }\n"]),
         ("shorthand in a comment not flagged", 0, ["\t# var:a^i\n"]),
     ],
+    _check_shadowed_branches: [
+        (
+            "lower bound before a higher one flagged",
+            1,
+            _chain("check_variable = { x > 10 }", "check_variable = { x > 20 }"),
+        ),
+        (
+            "higher bound first clean",
+            0,
+            _chain("check_variable = { x > 20 }", "check_variable = { x > 10 }"),
+        ),
+        (
+            "branch shadowed by two earlier ones reported once",
+            2,
+            [
+                "effect = {\n",
+                "\tif = { limit = { check_variable = { x > 10 } } add_stability = 0.1 }\n",
+                "\telse_if = { limit = { check_variable = { x > 20 } } add_stability = 0.2 }\n",
+                "\telse_if = { limit = { check_variable = { x > 30 } } add_stability = 0.3 }\n",
+                "}\n",
+            ],
+        ),
+        (
+            "tighter less-than bound after a looser one flagged",
+            1,
+            _chain("check_variable = { x < 5 }", "check_variable = { x < 3 }"),
+        ),
+        (
+            "bare comparison bounds flagged",
+            1,
+            _chain("has_stability > 0.5", "has_stability > 0.75"),
+        ),
+        (
+            "bounds on different triggers not compared",
+            0,
+            _chain("has_stability > 0.5", "has_war_support > 0.75"),
+        ),
+        (
+            "earlier limit contained in a later one flagged",
+            1,
+            _chain("has_idea = a", "has_idea = a has_war = yes"),
+        ),
+        (
+            "opposite operators not ordered",
+            0,
+            _chain("check_variable = { x > 10 }", "check_variable = { x < 5 }"),
+        ),
+        (
+            "equality is not a bound",
+            0,
+            _chain("check_variable = { x = 20 }", "check_variable = { x = 10 }"),
+        ),
+        (
+            "variables on different scopes not compared",
+            0,
+            _chain(
+                "check_variable = { 169.troops < 1 }",
+                "check_variable = { 1122.troops < 1 }",
+            ),
+        ),
+        (
+            "different quoted values not compared",
+            0,
+            _chain('has_dlc = "La Resistance"', 'has_dlc = "By Blood Alone"'),
+        ),
+        (
+            "else_if written inside the if body flagged",
+            1,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a } add_stability = 0.1\n",
+                "\t\telse_if = { limit = { has_idea = a } add_stability = 0.2 }\n",
+                "\t}\n",
+                "}\n",
+            ],
+        ),
+        (
+            "inner chain's else_if is not the outer chain's",
+            0,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a }\n",
+                "\t\tif = { limit = { has_idea = b } add_stability = 0.1 }\n",
+                "\t\telse_if = { limit = { has_idea = a } add_stability = 0.2 }\n",
+                "\t}\n",
+                "}\n",
+            ],
+        ),
+        (
+            "a new if starts a new chain",
+            0,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a } add_stability = 0.1 }\n",
+                "\tif = { limit = { has_idea = b } add_stability = 0.2 }\n",
+                "\telse_if = { limit = { has_idea = a } add_stability = 0.3 }\n",
+                "}\n",
+            ],
+        ),
+    ],
 }
 
 
@@ -2609,6 +2720,12 @@ _EXPECTED = {
         (
             1,
             'bare "tst_trigger" inside NOT = { }: add "= yes" to call the scripted trigger/effect',
+        )
+    ],
+    "shadowed else_if": [
+        (
+            3,
+            "else_if never runs -- the branch at line 2 already matches whenever this limit holds, and if/else_if stops at the first match",
         )
     ],
 }
@@ -3145,6 +3262,11 @@ _EXACT_CASES = [
     ),
     _exact(
         "bare trigger call", _check_bare_statement_token, ["\tNOT = { tst_trigger }\n"]
+    ),
+    _exact(
+        "shadowed else_if",
+        _check_shadowed_branches,
+        _chain("has_idea = a", "has_idea = a"),
     ),
 ]
 

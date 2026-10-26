@@ -34,6 +34,25 @@ def test_mistake_is_reported_with_relative_path_and_line(tmp_path):
     assert validator.errors_found == 1
 
 
+def test_shadowed_branch_is_a_warning_while_the_backlog_is_triaged(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/shadow.txt",
+        "shadow_effect = {\n"
+        "\tif = { limit = { has_idea = a } add_stability = 0.1 }\n"
+        "\telse_if = { limit = { has_idea = a } add_stability = 0.2 }\n"
+        "}\n",
+    )
+
+    validator = _validator(tmp_path)
+    validator.run_validations()
+
+    assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
+        ("shadowed-branch", "warning", "common/scripted_effects/shadow.txt", 3)
+    ]
+    assert validator.errors_found == 0
+
+
 def _findings(validator):
     return [(i.file, i.line, i.message) for i in validator._issues]
 
@@ -53,7 +72,7 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
         "common/scripted_effects/flags.txt",
         "TST_flags = {\n\tset_country_flag = arab_nation_flag\n}\n",
     )
-    checker = importlib.import_module(common_mistakes.check_file.__module__)
+    checker = importlib.import_module(common_mistakes.check_file_by_severity.__module__)
     # Forked workers inherit these, so only _init_worker can fill them in.
     for name in (
         "_SCRIPT_COMPLETED_FOCUSES",

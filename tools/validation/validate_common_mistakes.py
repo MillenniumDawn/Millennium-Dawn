@@ -9,7 +9,7 @@ from linting.check_common_mistakes import (
     _files_need_global_refs,
     _init_worker,
     _scan_global_refs,
-    check_file,
+    check_file_by_severity,
 )
 from validator_common import BaseValidator, Severity, run_validator_main
 
@@ -48,24 +48,32 @@ class Validator(BaseValidator):
             focuses, decisions, flags = set(), set(), set()
         else:
             focuses, decisions, flags = _scan_global_refs(self.mod_path)
-        results = []
-        for file_results in self._pool_map_init(
-            check_file,
+        errors, warnings = [], []
+        for file_errors, file_warnings in self._pool_map_init(
+            check_file_by_severity,
             files,
             initializer=_init_worker,
             initargs=(focuses, decisions, flags),
             chunksize=20,
         ):
-            for filepath, line, message in file_results:
-                results.append(
+            for found, results in ((file_errors, errors), (file_warnings, warnings)):
+                results.extend(
                     (message, os.path.relpath(filepath, self.mod_path), line)
+                    for filepath, line, message in found
                 )
         self._report(
-            results,
+            errors,
             "No common scripting mistakes found",
             "Common scripting mistakes:",
             severity=Severity.ERROR,
             category="common-mistakes",
+        )
+        self._report(
+            warnings,
+            "No shadowed else_if branches found",
+            "Shadowed else_if branches:",
+            severity=Severity.WARNING,
+            category="shadowed-branch",
         )
 
 

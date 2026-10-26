@@ -376,6 +376,20 @@ def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
     assert _matching(messages, "advances the counter by 2")
 
 
+def test_political_leaders_duplicate_branch_is_reported_once(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "common/scripted_effects/MD_TAG_political_leaders.txt",
+        "set_leader_TAG = {",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } } }",
+        "\telse_if = { limit = { check_variable = { ruling_party = 1 } } }",
+        "}",
+    )
+
+    assert len(messages) == 1
+    assert _matching(messages, "duplicate set_")
+
+
 def test_provincial_building_checks_only_run_for_common_and_events(
     tmp_path, scoped_refs
 ):
