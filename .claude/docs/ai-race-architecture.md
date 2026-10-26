@@ -314,6 +314,13 @@ Any future Corporate History mode must remain independent of the race mode.
 
 ## Acceptance evidence
 
+Generic encoding, YAML style, decision localisation/logging and AI weight-order checks use
+the shared production validators, including diplomatic `ai_desire`. AI Race content fixtures
+exercise those checks with both current source and deliberately broken temporary copies.
+The feature suite retains transaction, accounting and owner-order contracts that generic
+syntax validators cannot infer. Exact game-rule label fields and player-facing terms remain
+content contracts; a fixed list of source files is not a contract.
+
 Executable state regressions cover actual progression/transaction scripts with bounded owner
 stubs. Separate accounting and capacity models test conservation, timing, shocks, and cleanup,
 with structural checks binding them to the shipped owner hooks. These are source-level evidence.

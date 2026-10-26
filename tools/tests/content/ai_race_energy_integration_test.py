@@ -35,9 +35,6 @@ def _modifier(statements, token):
 class EnergyRaceScript(StrategicRaceScript):
     """Exercise owner guards with explicit fuel and diplomatic sender fixtures."""
 
-    def __init__(self, mode="full"):
-        super().__init__(mode)
-
     def condition(self, statements, identifier):
         values = self.countries[identifier]["vars"]
         results = []
@@ -58,6 +55,28 @@ class EnergyRaceScript(StrategicRaceScript):
                     else "enrichment_facilities"
                 )
                 result = (values.get(field, 0) > 0) == (operand == "yes")
+            elif key == "has_opinion":
+                target = next(value for field, _, value in operand if field == "target")
+                assert target == "PREV"
+                _, relation, threshold = next(
+                    entry for entry in operand if entry[0] == "value"
+                )
+                result = self.comparisons[relation](
+                    values.get("seller_opinion", 0), float(threshold)
+                )
+            elif key == "is_in_faction_with":
+                assert operand == "ROOT"
+                result = bool(values.get("seller_allied", False))
+            elif key in {
+                "ai_has_minor_economic_problems",
+                "ai_has_moderate_economic_problems",
+            }:
+                severity = (
+                    "minor" if key == "ai_has_minor_economic_problems" else "moderate"
+                )
+                result = (values.get("owner_economic_severity") == severity) == (
+                    operand == "yes"
+                )
             elif key == "check_expr":
                 math = [entry for entry in operand if entry[0] not in self.comparisons]
                 result = all(
@@ -262,35 +281,34 @@ def _reactor_desire():
     return [value for key, _, value in _body(action, "ai_desire") if key == "modifier"]
 
 
-def test_the_affordability_veto_comes_after_every_added_weight():
-    modifiers = _reactor_desire()
-    veto = next(
-        index
-        for index, modifier in enumerate(modifiers)
-        if _contains(modifier, "bankruptcy_incoming_collapse")
-    )
-    assert ("factor", "=", "0") in modifiers[veto]
-    assert all(key != "add" for modifier in modifiers[veto:] for key, _, _ in modifier)
-
-
+@pytest.mark.parametrize("opinion,allied", [(0, False), (150, True)])
 @pytest.mark.parametrize(
     "treasury,bankrupt,expected",
-    [(3, False, True), (4, False, False), (50, True, True), (50, False, False)],
+    [(3, False, 0), (4, False, 185), (50, True, 0), (50, False, 185)],
 )
 def test_the_affordability_veto_stops_a_buyer_who_cannot_pay(
-    treasury, bankrupt, expected
+    treasury, bankrupt, expected, opinion, allied
 ):
     race, country = _recovering()
-    country["vars"]["treasury"] = treasury
+    country["vars"].update(
+        treasury=treasury,
+        var_reactor_material_stockpile=30,
+        seller_opinion=opinion,
+        seller_allied=allied,
+        owner_economic_severity="healthy",
+    )
     if bankrupt:
         country["missions"].add("bankruptcy_incoming_collapse")
-    veto = next(
-        modifier
-        for modifier in _reactor_desire()
-        if _contains(modifier, "bankruptcy_incoming_collapse")
-    )
-    condition = [entry for entry in veto if entry[0] not in {"add", "factor"}]
-    assert race.condition(condition, 1) is expected
+    weight = 0
+    for modifier in _reactor_desire():
+        guards = [entry for entry in modifier if entry[0] not in {"add", "factor"}]
+        if race.condition(guards, 1):
+            for key, _, operand in modifier:
+                if key == "add":
+                    weight += race.value(operand, 1)
+                elif key == "factor":
+                    weight *= race.value(operand, 1)
+    assert weight == expected + (35 if expected and allied else 0)
 
 
 def _reactor_completion():

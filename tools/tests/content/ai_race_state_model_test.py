@@ -5,11 +5,14 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+import validate_decisions
+import validate_localisation
+from shared.suite import build_validator, write_tree
+from validate_localization_encoding import LocalizationValidator
 
 ROOT = Path(__file__).resolve().parents[3]
 ON_ACTIONS_PATH = ROOT / "common" / "on_actions" / "MD_on_actions.txt"
 GAME_RULES_PATH = ROOT / "common" / "game_rules" / "00_game_rules.txt"
-DECISIONS_PATH = ROOT / "common" / "decisions" / "MD_ai_race_decisions.txt"
 GAME_RULES_LOC_PATH = ROOT / "localisation" / "english" / "MD_game_rules_l_english.yml"
 RACE_LOC_PATH = ROOT / "localisation" / "english" / "MD_ai_race_l_english.yml"
 RACE_GUI_PATH = ROOT / "interface" / "MD_ai_race.gui"
@@ -323,46 +326,99 @@ def test_ranking_replay_guards_and_clamps_match_the_documented_bounds():
         assert f"check_variable = {{ global.month = {month} }}" in dispatch
 
 
-def test_debug_and_playable_decisions_have_localisation_and_logging():
-    decisions = DECISIONS_PATH.read_text(encoding="utf-8")
-    rules_loc_bytes = GAME_RULES_LOC_PATH.read_bytes()
-    race_loc_bytes = RACE_LOC_PATH.read_bytes()
-
-    for payload in (rules_loc_bytes, race_loc_bytes):
-        assert payload.startswith(b"\xef\xbb\xbf")
-        assert b"\r" not in payload
-        assert b":0" not in payload
-
-    rules_loc = rules_loc_bytes.decode("utf-8-sig")
-    race_loc = race_loc_bytes.decode("utf-8-sig")
-    for key in (
-        "RULE_AI_RACE",
-        "RULE_AI_RACE_FULL",
-        "RULE_AI_RACE_FULL_DESC",
-        "RULE_AI_RACE_OUTCOMES_ONLY",
-        "RULE_AI_RACE_OUTCOMES_ONLY_DESC",
-        "RULE_AI_RACE_OFF",
-        "RULE_AI_RACE_OFF_DESC",
+def test_player_facing_finance_and_shortfall_terms():
+    loc = RACE_LOC_PATH.read_text(encoding="utf-8-sig")
+    for term in (
+        "Emergency AI Financing",
+        "Outstanding AI Financing",
+        "Capacity Shortfall",
     ):
-        assert re.search(rf"(?m)^ {key}: ", rules_loc)
-    for key in (
-        "AI_RACE_debug_category",
-        "AI_RACE_debug_category_desc",
-        "AI_RACE_debug_readout",
-        "AI_RACE_debug_readout_desc",
-        "AI_RACE_debug_repair",
-        "AI_RACE_debug_repair_desc",
-    ):
-        assert re.search(rf"(?m)^ {key}: ", race_loc)
+        assert term in loc
 
-    for decision in ("research", "implementation", "expansion", "frontier"):
-        name = f"AI_RACE_review_{decision}"
-        block = _named_block(decisions, name)
-        assert f"Decision {name}" in block
-        assert re.search(rf"(?m)^ {name}: ", race_loc)
-    assert "Emergency AI Financing" in race_loc
-    assert "Outstanding AI Financing" in race_loc
-    assert "Capacity Shortfall" in race_loc
+
+def test_rule_labels_resolve_from_the_declared_rule_fields():
+    rule = _parse_race_script(
+        _named_block(GAME_RULES_PATH.read_text(encoding="utf-8"), "rule_ai_race")
+    )["rule_ai_race"]
+    keys = dict(
+        validate_localisation._parse_loc_keys_from_text(
+            GAME_RULES_LOC_PATH.read_text(encoding="utf-8-sig")
+        )
+    )
+    labels = [value for key, _, value in rule if key == "name"]
+    labels.extend(
+        value
+        for key, _, block in rule
+        if key in {"default", "option"}
+        for field, _, value in block
+        if field in {"text", "desc"}
+    )
+    assert labels
+    assert all(label.strip('"') in keys for label in labels)
+
+
+# The real feature content exercises the production validators; mutations stay in tmp_path.
+@pytest.mark.parametrize(
+    "check,category",
+    [
+        ("validate_missing_log", "missing-decision-log"),
+        ("validate_missing_localisation", "missing-decision-localisation"),
+    ],
+)
+@pytest.mark.parametrize("broken", [False, True])
+def test_shared_decision_validation_covers_race_content(
+    tmp_path, check, category, broken
+):
+    decisions = _race_text("common/decisions")
+    loc = RACE_LOC_PATH.read_text(encoding="utf-8")
+    if broken:
+        if check == "validate_missing_log":
+            decisions = re.sub(r"(?m)^\s*log\s*=.*$", "", decisions)
+        else:
+            loc = "\ufeffl_english:\n"
+    write_tree(
+        tmp_path,
+        {
+            "common/decisions/race.txt": decisions,
+            "common/decisions/categories/race.txt": _race_text(
+                "common/decisions/categories"
+            ),
+            "localisation/english/race_l_english.yml": loc,
+        },
+    )
+    validator = validate_decisions.Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )
+    getattr(validator, check)()
+    assert {issue.category for issue in validator._issues} == (
+        {category} if broken else set()
+    )
+
+
+@pytest.mark.parametrize(
+    "source", [RACE_LOC_PATH, GAME_RULES_LOC_PATH], ids=["race", "rules"]
+)
+@pytest.mark.parametrize("check", ["encoding", "yaml"])
+@pytest.mark.parametrize("broken", [False, True])
+def test_shared_localisation_validation_covers_race_content(
+    tmp_path, source, check, broken
+):
+    text = source.read_text(encoding="utf-8")
+    if broken:
+        if check == "encoding":
+            text = text.removeprefix("\ufeff")
+        else:
+            text = re.sub(r"(?m)^( [\w.-]+): ", r"\1:0 ", text, count=1)
+    relative = "localisation/english/race_l_english.yml"
+    write_tree(tmp_path, {relative: text})
+    if check == "encoding":
+        validator = LocalizationValidator()
+        assert validator.validate_file(tmp_path / relative) is not broken
+        assert bool(validator.errors) is broken
+    else:
+        validator = build_validator(validate_localisation.Validator, tmp_path)
+        validator.validate_yaml_syntax()
+        assert bool(validator._issues) is broken
 
 
 def _parse_race_script(text):
