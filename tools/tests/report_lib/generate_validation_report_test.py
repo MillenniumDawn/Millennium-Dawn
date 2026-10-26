@@ -441,6 +441,7 @@ def test_main_handles_empty_validation(tmp_path, monkeypatch, specs, skipped, po
 
 def test_main_writes_comment_payload_without_api_credentials(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
     posted, cleared = _comment_spies(monkeypatch)
 
