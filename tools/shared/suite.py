@@ -22,6 +22,16 @@ from shared.paths import REPO_ROOT
 
 _SCRIPT_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!=]=?|[^\s{}<>=!]+')
 
+# Treasury rate, budget balance ratio, collapse mission, weight multiplier.
+FISCAL_DISTRESS_CASES = [
+    (0, 0, False, 1),
+    (-3, -0.10, False, 1),
+    (-3.001, 0, False, 0.5),
+    (0, -0.1001, False, 0.5),
+    (0, 0, True, 0),
+    (-4, -0.11, True, 0),
+]
+
 
 def _economic_statements(source):
     source = strip_comments(source)

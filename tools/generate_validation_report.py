@@ -16,6 +16,7 @@ All heavy lifting lives in `tools/report_lib/`; this file is just a CLI.
 """
 
 import argparse
+import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -110,6 +111,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser.add_argument("--results-dir", required=True)
     parser.add_argument("--output", default="report.md")
+    parser.add_argument(
+        "--comment-output",
+        help="Write the comment payload for the trusted publishing workflow",
+    )
     parser.add_argument("--pr-number")
     parser.add_argument("--commit-sha")
     parser.add_argument("--workflow-run-url")
@@ -120,6 +125,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         default="partial",
     )
     parser.add_argument("--print", action="store_true")
+    parser.add_argument(
+        "--no-tests-selected",
+        action="store_true",
+        help="Treat empty results as clean when the workflow selected no tests",
+    )
     parser.add_argument(
         "--post-comment",
         action="store_true",
@@ -264,9 +274,27 @@ def main(argv: Optional[List[str]] = None) -> int:
         args.results_dir, ctx, baseline, changed_files, renames, hunks
     )
 
+    # Missing results are not clean unless every test job was skipped.
+    should_post = (not runs and not args.no_tests_selected) or any(
+        run.status != "passed" for run in runs
+    )
     try:
         with open(args.output, "w", encoding="utf-8", newline="") as f:
             f.write(body)
+        if args.comment_output:
+            with open(args.comment_output, "w", encoding="utf-8", newline="") as f:
+                json.dump(
+                    {
+                        "pr_number": args.pr_number,
+                        "commit_sha": args.commit_sha,
+                        "run_id": os.environ.get("GITHUB_RUN_ID"),
+                        "run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
+                        "should_post": should_post,
+                        "body": body,
+                    },
+                    f,
+                    ensure_ascii=False,
+                )
     except Exception as e:
         print(f"Error writing report: {e}", file=sys.stderr)
         return 1
@@ -353,9 +381,6 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-            # An empty run list means the pipeline didn't finish, not clean —
-            # still posts instead of clearing.
-            should_post = not runs or any(run.status != "passed" for run in runs)
             if should_post:
                 success, message = post_comment(
                     repo_owner,

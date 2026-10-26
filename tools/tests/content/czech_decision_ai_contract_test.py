@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    FISCAL_DISTRESS_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -108,14 +109,7 @@ def economy():
 @pytest.mark.parametrize("name,base", _SPENDING.items())
 @pytest.mark.parametrize(
     "rate,ratio,bankrupt,multiplier",
-    [
-        (0, 0, False, 1),
-        (-3, -0.10, False, 1),
-        (-3.001, 0, False, 0.5),
-        (0, -0.1001, False, 0.5),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    FISCAL_DISTRESS_CASES,
 )
 def test_national_expenses_use_the_taking_countrys_budget(
     decisions, economy, name, base, rate, ratio, bankrupt, multiplier
@@ -130,18 +124,11 @@ def test_national_expenses_use_the_taking_countrys_budget(
 
 
 @pytest.mark.parametrize(
-    "rate,ratio,bankrupt,expected",
-    [
-        (0, 0, False, 350),
-        (-3, -0.10, False, 350),
-        (-3.001, 0, False, 175),
-        (0, -0.1001, False, 175),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    "rate,ratio,bankrupt,multiplier",
+    FISCAL_DISTRESS_CASES,
 )
 def test_slovak_reactor_uses_its_controllers_budget_not_the_decision_takers(
-    decisions, economy, rate, ratio, bankrupt, expected
+    decisions, economy, rate, ratio, bankrupt, multiplier
 ):
     controller = EconomicScriptFixture(
         {"treasury_rate": rate, "budget_balance_ratio": ratio},
@@ -163,7 +150,9 @@ def test_slovak_reactor_uses_its_controllers_budget_not_the_decision_takers(
     weight = script_block(decision, "ai_will_do")
     assert weight.count("119 =") == 2
     # The fixture cannot parse numeric scope names.
-    assert economy.weight(weight.replace("119 =", "reactor_state =")) == expected
+    assert economy.weight(weight.replace("119 =", "reactor_state =")) == (
+        350 * multiplier
+    )
 
 
 @pytest.mark.parametrize("name,base", _UNCHANGED.items())
