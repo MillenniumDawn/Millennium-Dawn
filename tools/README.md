@@ -19,7 +19,17 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 `dev` includes a smaller `test` group, which is all the CI test jobs install.
 
-Python quality checks run on `tools/` in pre-commit and CI:
+ImageMagick is also required for art conversion and its integration tests. Install
+it with your system package manager: `sudo apt-get install imagemagick` on
+Debian/Ubuntu, or `brew install imagemagick` on macOS. On Windows, use the
+[ImageMagick installer](https://imagemagick.org/script/download.php#windows) and
+enable its PATH option. Setup checks for a working `magick` or ImageMagick
+`convert`, rejects unrelated programs with those names, and fails if neither is
+available. It does not install system packages. After installing, reopen your
+terminal and run `python tools/dev_setup.py --check`.
+
+CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
+and pylint on staged files only, plus mypy:
 
 ```bash
 python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
@@ -446,7 +456,9 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+Internal package used by `generate_validation_report.py` to render PR report artifacts. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+
+`publish_validation_report.py` runs in a separate trusted workflow to synchronize the PR comment. Validation runs, including forks, have read-only repository permissions. The publisher verifies the artifact's run and PR before writing; it never executes artifact content. Checks API support remains available through the CLI but is not used by CI.
 
 | Module            | Responsibility                                                                                 |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -483,7 +495,8 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                          |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                             |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                              |
+| **generate_validation_report.py** | CI: renders the PR report and comment payload for the trusted publisher                                                                                                                                                                                                                                                                                                                                                                                      |
+| **publish_validation_report.py**  | CI: trusted publisher that synchronizes the PR report comment                                                                                                                                                                                                                                                                                                                                                                                                |
 | **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                     |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                               |
