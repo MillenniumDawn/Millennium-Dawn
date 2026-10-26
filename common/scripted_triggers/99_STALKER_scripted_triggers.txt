@@ -1,3 +1,48 @@
+# A treaty member's station runs a Radiation Laboratory right now: undamaged, fuelled and powered, the
+# conditions Antarctica checks before it grants laboratory effects. Its weekly totals can lag a blizzard.
+STALKER_has_working_radiation_lab = {
+	has_idea = at_member
+	any_of = {
+		array = country_owned_station_ids
+		value = stalker_station
+		check_variable = { stalker_station > 0 }
+		check_variable = { global.antarctica_station_controller^stalker_station = THIS.id }
+		OR = {
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_6^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_7^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_8^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^stalker_station > 0 } }
+			}
+			AND = {
+				check_variable = { global.antarctica_station_module_slot_9^stalker_station = 7 }
+				NOT = { check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^stalker_station > 0 } }
+			}
+		}
+		OR = {
+			check_variable = { global.antarctica_station_output_fuel_usage^stalker_station < 1 }
+			check_variable = { global.antarctica_station_output_storage^stalker_station > 0 }
+		}
+		check_variable = { var = global.antarctica_station_output_power^stalker_station value = 0 compare = greater_than_or_equals }
+	}
+}
+
+# Country scope, read by STALKER.151's text: this country backed the faction that won the last Tearling exchange.
+STALKER_backed_tearling_winner = {
+	var:global.STALKER_event_zone = {
+		check_variable = { STALKER_zone_tearling_backed > 0 }
+		check_variable = { STALKER_zone_tearling_backed = STALKER_zone_tearling_leader }
+		has_variable = STALKER_zone_tearling_backer
+		var:STALKER_zone_tearling_backer = { tag = ROOT }
+	}
+}
+
 # The rule is unavailable while load-time triggers resolve; registration records its selected state.
 STALKER_scenario_enabled = {
 	has_global_flag = GLOBAL_STALKER_zone_registry_initialized

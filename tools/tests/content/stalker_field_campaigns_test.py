@@ -1,7 +1,7 @@
 from copy import deepcopy
 
 import pytest
-from stalker_lifecycle_test import ROOT, StalkerScript
+from stalker_lifecycle_test import ROOT, StalkerScript, _event, _option
 from targeted_operations_model_test import _named_block, _parse_race_script
 
 EVENTS = "events/STALKER_field_campaigns.txt"
@@ -284,3 +284,66 @@ def test_road_patrol_follows_the_recorded_faction_settlement_once(
     script.run("STALKER_monthly_field_campaigns_pulse", 2)
     assert variables == completed
     assert script.research_rewards == []
+
+
+@pytest.mark.parametrize(
+    "case,step,letters",
+    [
+        (case, step, letters)
+        for case in (1, 2, 3)
+        for step, letters in ((0, "ab"), (3, "a"), (6, "abc"))
+    ],
+)
+def test_field_report_event_and_options_keep_each_live_gate(case, step, letters):
+    script = campaign()
+    site = script.countries[698]
+    site["vars"].update(STALKER_field_case=case, STALKER_field_step=step)
+    event = f"STALKER.{200 + (case - 1) * 3 + step // 3}"
+    gates = [next(body for key, _, body in _event(event, EVENTS) if key == "trigger")]
+    gates.extend(
+        next(
+            body
+            for key, _, body in _option(event, event + "." + letter, EVENTS)
+            if key == "trigger"
+        )
+        for letter in letters
+    )
+    assert all(script.condition(gate, 2) for gate in gates)
+    for invalid in (
+        "disabled",
+        "inactive",
+        "zone_id",
+        "policy",
+        "controller",
+        "case",
+        "step",
+    ):
+        changed = script
+        zone = deepcopy(site)
+        changed.countries[698] = zone
+        for trigger in ("STALKER_scenario_enabled", "STALKER_is_active_zone_anchor"):
+            changed.triggers[trigger] = [("always", "=", "yes")]
+        if invalid in {"disabled", "inactive"}:
+            trigger = (
+                "STALKER_scenario_enabled"
+                if invalid == "disabled"
+                else "STALKER_is_active_zone_anchor"
+            )
+            changed.triggers[trigger] = [("always", "=", "no")]
+        elif invalid == "policy":
+            zone["flags"]["STALKER_zone_policy_pending"] = None
+        elif invalid == "controller":
+            zone["controller"] = 3
+        else:
+            variable = (
+                "STALKER_zone_id"
+                if invalid == "zone_id"
+                else "STALKER_field_" + invalid
+            )
+            zone["vars"][variable] += 1
+        assert not any(changed.condition(gate, 2) for gate in gates), invalid
+        before = deepcopy(zone)
+        for letter in letters:
+            changed.hidden_option(event, event + "." + letter, EVENTS)
+        assert zone == before, invalid
+        assert not changed.research_rewards, invalid
