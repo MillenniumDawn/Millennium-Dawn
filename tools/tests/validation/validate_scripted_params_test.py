@@ -1542,6 +1542,15 @@ _UNSUPPORTED_SYNTAX_CASES.update(
 )
 
 
+_UNSUPPORTED_SYNTAX_CASES["qualified_names_are_scopes_not_loops"] = (
+    "events/caller.txt",
+    "",
+    "var:for_each_loop = { index = UPPER } ROOT.any_of = { value = OTHER } "
+    "123all_of = { break = THIRD } TOP_array^for_loop_effect = { index = FOURTH }\n",
+    [],
+)
+
+
 @pytest.mark.parametrize("case", _UNSUPPORTED_SYNTAX_CASES)
 def test_unsupported_scripted_effect_syntax(tmp_path, case):
     relative, definitions, caller, expected = _UNSUPPORTED_SYNTAX_CASES[case]

@@ -486,7 +486,7 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
 
 
 _LOOP_FIELD_RE = re.compile(
-    r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\{|"[^"\n]*"|[^\s{}]+)|([{}])'
+    r'([A-Za-z0-9_:.@^$+-]+)\s*=\s*(\{|"[^"\n]*"|[^\s{}]+)|([{}])'
 )
 _LOOP_KINDS = {"for_each_loop", "for_loop_effect", "any_of", "all_of"}
 _LOOP_BINDINGS = {"value", "index", "break"}
