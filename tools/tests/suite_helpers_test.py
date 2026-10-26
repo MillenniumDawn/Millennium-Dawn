@@ -88,6 +88,40 @@ def test_read_decision_categories_merges_blocks_and_ignores_scalar_metadata(tmp_
     ) == {"a": " cost = 1 ", "b": " cost = 2 "}
 
 
+@pytest.mark.parametrize(
+    "comparison,value,expected",
+    [
+        ("=", 0.09, True),
+        ("=", 0.08, False),
+        (">", 0.091, True),
+        (">", 0.09, False),
+        ("<", 0.08, True),
+        ("<", 0.09, False),
+        (">=", 0.09, True),
+        (">=", 0.08, False),
+        ("<=", 0.09, True),
+        ("<=", 0.091, False),
+    ],
+)
+def test_economic_fixture_compares_world_tension(comparison, value, expected):
+    script = EconomicScriptFixture({"threat": value})
+    assert script.condition(f"threat {comparison} 0.09") is expected
+
+
+@pytest.mark.parametrize(
+    "values,source,message",
+    [
+        ({"threat": 0.1}, "threat != 0.09", "Malformed or unconsumed"),
+        ({"threat": 0.1}, "threat > missing", "Missing numeric input"),
+        ({}, "threat > 0.09", "Missing numeric input"),
+        ({"treasury_rate": -4}, "treasury_rate < -3", "predicate operator"),
+    ],
+)
+def test_economic_fixture_rejects_unmodeled_scalar_comparisons(values, source, message):
+    with pytest.raises(AssertionError, match=message):
+        EconomicScriptFixture(values).condition(source)
+
+
 def test_economic_fixture_rejects_invalid_predicate_and_weight_operators():
     script = EconomicScriptFixture({}, predicates={"is_ai": True})
     with pytest.raises(AssertionError, match="predicate operator"):

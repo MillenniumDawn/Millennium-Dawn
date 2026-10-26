@@ -151,6 +151,11 @@ class EconomicScriptFixture:
     def condition(self, source):
         results = []
         for key, comparison, scalar, body in self.active(source):
+            if key == "threat" and body is None:
+                results.append(
+                    self.comparisons[comparison](self.number(key), self.number(scalar))
+                )
+                continue
             assert comparison == "=", "Unsupported predicate operator"
             if key == "tooltip":
                 continue
