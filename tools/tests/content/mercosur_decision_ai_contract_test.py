@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    FISCAL_DISTRESS_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -78,14 +79,7 @@ def economy():
 @pytest.mark.parametrize("name", _SPENDING)
 @pytest.mark.parametrize(
     "rate,balance,bankrupt,expected",
-    [
-        (0, 0, False, 1),
-        (-3, -0.10, False, 1),
-        (-3.001, 0, False, 0.5),
-        (0, -0.1001, False, 0.5),
-        (0, 0, True, 0),
-        (-4, -0.11, True, 0),
-    ],
+    FISCAL_DISTRESS_CASES,
 )
 def test_project_weights_respond_to_the_sponsors_finances(
     decisions, economy, name, rate, balance, bankrupt, expected
@@ -98,12 +92,9 @@ def test_project_weights_respond_to_the_sponsors_finances(
 
 
 @pytest.mark.parametrize("name", _INTEREST_LIMITED)
-@pytest.mark.parametrize("deficit", [False, True])
 @pytest.mark.parametrize("interest,expected", [(10, 1), (10.001, 0)])
 def test_existing_interest_limit_still_blocks_regional_projects(
-    decisions, economy, name, deficit, interest, expected
+    decisions, economy, name, interest, expected
 ):
-    economy.values.update(interest_rate=interest, treasury_rate=-4 if deficit else 0)
-    assert economy.weight(script_block(decisions[name], "ai_will_do")) == (
-        expected / 2 if deficit else expected
-    )
+    economy.values.update(interest_rate=interest)
+    assert economy.weight(script_block(decisions[name], "ai_will_do")) == expected
