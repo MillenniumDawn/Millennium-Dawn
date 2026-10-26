@@ -2,13 +2,12 @@ from pathlib import Path
 
 import pytest
 from targeted_operations_core_test import TargetScript
-from targeted_operations_helpers_test import TargetedScript
-from targeted_operations_model_test import _named_block, _parse_race_script
+from targeted_operations_helpers import TargetedScript, _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
-EFFECTS = ROOT / "common/scripted_effects/03_targeted_operations_security.txt"
-REDESIGN_EFFECTS = ROOT / "common/scripted_effects/06_targeted_operations_redesign.txt"
-TRIGGERS = ROOT / "common/scripted_triggers/03_targeted_operations_security.txt"
+EFFECTS = ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
+REDESIGN_EFFECTS = ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
+TRIGGERS = ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
 
 
 class SecurityScript(TargetedScript):
@@ -255,7 +254,7 @@ def test_organization_defense_is_wired_to_collection_review_and_resolution():
         REDESIGN_EFFECTS.read_text(encoding="utf-8"), "TOP_collect_organization_pulse"
     )
     organization = (
-        ROOT / "common/scripted_effects/07_targeted_operations_organization_cases.txt"
+        ROOT / "common/scripted_effects/04_targeted_operations_cases.txt"
     ).read_text(encoding="utf-8")
     review = _named_block(organization, "TOP_calculate_organization_proposal_risks")
     resolution = _named_block(organization, "TOP_resolve_organization_operation")
@@ -266,7 +265,7 @@ def test_organization_defense_is_wired_to_collection_review_and_resolution():
     assert "TOP_organization_defensive_exposure_bonus" in review
     assert "TOP_tier > 1" in resolution
     assert "random" not in resolution
-    raids = (ROOT / "common/raids/targeted_operations_facility_raids.txt").read_text()
+    raids = (ROOT / "common/raids/targeted_operations_raids.txt").read_text()
     assert "TOP_org_case_protection" in raids
 
 
@@ -320,7 +319,7 @@ def test_ai_avoids_unneeded_or_unaffordable_defensive_spending(restriction):
 
 
 def test_parody_badge_has_explicit_non_sponsorship_hover_text():
-    path = ROOT / "localisation/english/MD_targeted_operations_security_l_english.yml"
+    path = ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
     raw = path.read_bytes()
     assert raw.startswith(b"\xef\xbb\xbf")
     text = raw.decode("utf-8-sig")
@@ -382,9 +381,9 @@ def test_lethal_resolution_snapshots_defensive_exposure_before_retirement():
     assert game.temps["TOP_operation_protection_country"] == 2
 
     resolution = _named_block(
-        (
-            ROOT / "common/scripted_effects/08_targeted_operations_resolution.txt"
-        ).read_text(encoding="utf-8"),
+        (ROOT / "common/scripted_effects/04_targeted_operations_cases.txt").read_text(
+            encoding="utf-8"
+        ),
         "TOP_resolve_person_operation",
     )
     assert resolution.index(

@@ -1,11 +1,10 @@
-"""Source-executed regression coverage for CT/native authority and legacy races."""
-
+import re
+from collections import Counter
 from copy import deepcopy
 
 import pytest
-from targeted_operations_core_test import ScriptArray, TargetScript
-from targeted_operations_model_test import _named_block, _parse_race_script
-from targeted_operations_redesign_test import block, read
+from targeted_operations_core_test import ROOT, ScriptArray, TargetScript
+from targeted_operations_helpers import _named_block, _parse_race_script, block, read
 
 
 class CoreIntegrationScript(TargetScript):
@@ -186,8 +185,8 @@ def test_native_locate_operations_have_independent_identity_snapshots():
 
 def test_person_and_organization_execution_have_no_timer_or_parallel_resolution():
     person = read("common/scripted_effects/04_targeted_operations_cases.txt")
-    org = read("common/scripted_effects/07_targeted_operations_organization_cases.txt")
-    resolution = read("common/scripted_effects/08_targeted_operations_resolution.txt")
+    org = read("common/scripted_effects/04_targeted_operations_cases.txt")
+    resolution = read("common/scripted_effects/04_targeted_operations_cases.txt")
     assert "TOP_resolve_timed_case" not in person
     assert "TOP_roll_timed_tactical_result" not in resolution
     for source in (person, org):
@@ -198,7 +197,7 @@ def test_person_and_organization_execution_have_no_timer_or_parallel_resolution(
     ):
         assert name not in org
     native = block(
-        "common/scripted_effects/08_targeted_operations_resolution.txt",
+        "common/scripted_effects/04_targeted_operations_cases.txt",
         "TOP_resolve_person_operation",
     )
     assert "TOP_intelligence_roll" not in native
@@ -206,12 +205,20 @@ def test_person_and_organization_execution_have_no_timer_or_parallel_resolution(
 
 def test_all_generated_raids_share_core_eligibility_cost_losses_and_victim_reactions():
     raids = read("common/raids/targeted_operations_raids.txt")
-    assert raids.count("raid_available_base = yes") == 320
-    assert raids.count("raid_can_launch = yes") == 320
-    assert raids.count("top_native_person_reaction = yes") == 1280
-    assert "victim_effects = { send_raid_event_to_victim" not in raids
-    assert raids.count("apply_raid_failure_losses = yes") == 160
-    assert raids.count("raid_damage_units = { org_damage") == 640
+    names = re.findall(r"(?m)^\s*(TOP_(?:drone|capture)_\d+)\s*=\s*\{", raids)
+    assert names
+    for name in names:
+        raid = _named_block(raids, name)
+        assert raid.count("raid_available_base = yes") == 1, name
+        assert raid.count("raid_can_launch = yes") == 1, name
+        assert raid.count("top_native_person_reaction = yes") == 4, name
+        assert "victim_effects = { send_raid_event_to_victim" not in raid
+        assert raid.count("apply_raid_failure_losses = yes") == int(
+            name.startswith("TOP_drone_")
+        ), name
+        assert raid.count("raid_damage_units = { org_damage") == (
+            4 if name.startswith("TOP_capture_") else 0
+        ), name
 
 
 def iraq_script():
@@ -405,7 +412,7 @@ def test_extended_facility_objectives_follow_native_tiers_and_keep_people(
 
 
 def test_partner_capture_preserves_host_custody_and_consent_gate():
-    from targeted_operations_agency_test import AgencyScript
+    from targeted_operations_core_integration_test import AgencyScript
 
     script = AgencyScript()
     variables = script.authorize(method=5)
@@ -567,3 +574,696 @@ def test_native_ct_tracking_initializes_dossier_storage_without_opening_top():
     assert variables["TOP_tracking_org"][2] == 10
     assert variables["TOP_tracking_person"][2] == 0
     assert variables["selected_org"] == 1
+
+
+METHODS = {3: "covert_killing", 4: "rendition", 5: "host_arrest", 7: "poisoning"}
+
+
+class AgencyScript(CoreIntegrationScript):
+    def __init__(self):
+        super().__init__()
+        self.effects.update(
+            _parse_race_script(
+                read("common/scripted_effects/00_targeted_operations_effects.txt")
+            )
+        )
+        self.triggers.update(
+            _parse_race_script(
+                read("common/scripted_triggers/01_targeted_operations_triggers.txt")
+            )
+        )
+        self.globals["num_days"] = 0
+        self.operation_type = ""
+        self.running = set()
+        self.actor = 1
+
+    def condition_statement(self, statement, identifier):
+        key, _, operand = statement
+        if key == "ROOT":
+            return self.scoped(operand, identifier, self.actor, condition=True)
+        if key == "is_operation_type":
+            return self.operation_type == operand
+        if key == "is_running_operation":
+            data = dict((key, value) for key, _, value in operand)
+            return (self.from_country, data["operation"]) in self.running
+        return super().condition_statement(statement, identifier)
+
+    def execute_statement(self, statement, identifier):
+        if statement[0] == "ROOT":
+            self.scoped(statement[2], identifier, self.actor)
+        else:
+            super().execute_statement(statement, identifier)
+
+    def operation(self, method):
+        source = read("common/operations/02_targeted_operations.txt")
+        source = re.sub(r"(?:risk|outcome|cost)_modifiers\s*=\s*\{[^}]*\}", "", source)
+        return _parse_race_script(source)["operation_top_" + METHODS[method]]
+
+    def callback(self, method, key):
+        operation = self.operation(method)
+        self.execute(next(value for name, _, value in operation if name == key), 1)
+
+    def complete(self, method):
+        self.operation_type = "operation_top_" + METHODS[method]
+        source = _named_block(
+            read("common/on_actions/05_lar_on_actions.txt"), "on_operation_completed"
+        )
+        dispatch = (
+            "dispatch = {"
+            + "\n".join(
+                line
+                for line in source.splitlines()
+                if "is_operation_type = operation_top_" in line
+            )
+            + "}"
+        )
+        self.execute(_parse_race_script(dispatch)["dispatch"], 1)
+
+
+@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("bonus_first", [False, True])
+@pytest.mark.parametrize("bonus", [False, True])
+def test_agency_callbacks_commit_one_native_outcome_and_keep_distinct_custody(
+    method, bonus_first, bonus
+):
+    script = AgencyScript()
+    if method == 7:
+        script.countries[1]["tag"] = "SOV"
+    variables = script.authorize(method=method)
+    script.callback(method, "on_start")
+    script.countries[1]["vars"]["TOP_selected"] = 12
+    callbacks = ["outcome_execute"] + (["outcome_extra_execute"] if bonus else [])
+    if bonus_first:
+        callbacks.reverse()
+    for callback in callbacks:
+        script.callback(method, callback)
+    assert script.globals["TOP_status"][11] == 1
+    script.complete(method)
+    expected = (2 if method in (4, 5) else 3) if bonus else 1
+    assert script.globals["TOP_status"][11] == expected
+    assert variables["TOP_case_result"][11] == (expected if bonus else 8)
+    if bonus and method in (4, 5):
+        assert script.globals["TOP_custodian"][11] == (2 if method == 5 else 1)
+    assert variables["TOP_case_native_prepared"][11] == 0
+    before = deepcopy(script.globals)
+    script.complete(method)
+    assert script.globals == before
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        "disabled",
+        "sequence",
+        "person",
+        "state",
+        "host",
+        "role",
+        "legacy",
+        "consent",
+        "stand_down",
+    ],
+)
+def test_agency_stale_completion_cannot_bind_a_new_or_invalid_case(change):
+    script = AgencyScript()
+    variables = script.authorize(method=5)
+    script.callback(5, "on_start")
+    script.callback(5, "outcome_execute")
+    script.callback(5, "outcome_extra_execute")
+    if change == "disabled":
+        script.globals["TOP_rule_mode"] = 0
+    elif change == "sequence":
+        variables["TOP_case_sequence"][11] += 1
+    elif change == "person":
+        script.call("TOP_close_case", 1, TARGET=11, SEQUENCE=11)
+        script.authorize(target=12, method=5)
+    elif change == "state":
+        variables["TOP_case_state"][11] = 102
+    elif change == "host":
+        script.from_country = 3
+    elif change == "role":
+        script.ineligible_roles.add(11)
+    elif change == "legacy":
+        script.temps.update(TOP_target=11, TOP_result=3)
+        script.run("TOP_record_legacy_result", 1)
+    elif change == "consent":
+        variables["TOP_case_consent"][11] = 0
+    else:
+        variables["TOP_case_phase"][11] = 2
+    before = deepcopy(script.globals)
+    script.complete(5)
+    assert script.globals["TOP_status"] == before["TOP_status"]
+    assert script.globals["TOP_removals"] == before["TOP_removals"]
+    if change in ("sequence", "person"):
+        assert variables["TOP_case_phase"][12 if change == "person" else 11] == 3
+
+
+@pytest.mark.parametrize("method", METHODS)
+def test_agency_operation_uses_native_commitment_and_original_foreign_access(method):
+    script = AgencyScript()
+    if method == 7:
+        script.countries[1]["tag"] = "SOV"
+    script.authorize(method=method)
+    operation = dict((key, value) for key, _, value in script.operation(method))
+    assert script.condition(operation["available"], 1)
+    script.running.add((2, "operation_top_" + METHODS[method]))
+    assert not script.condition(operation["available"], 1)
+    assert float(operation["operatives"]) >= 1
+    assert float(operation["days"]) > 0
+    assert float(operation["risk_chance"]) > 0
+    assert operation["outcome_extra_chance"] == "0.65"
+    text = _named_block(
+        read("common/operations/02_targeted_operations.txt"),
+        "operation_top_" + METHODS[method],
+    )
+    assert "operation_infiltrate_risk operation_risk" in text
+    assert "operation_infiltrate_outcome operation_outcome" in text
+    assert not any(
+        term in text
+        for term in (
+            "Special_Forces",
+            "raid_can_launch",
+            "command_power",
+            "TOP_clock",
+            "random",
+        )
+    )
+    script.running.clear()
+    script.from_country = 1
+    variables = script.countries[1]["vars"]
+    variables["TOP_case_host"][11] = 1
+    script.countries[101]["controller"] = 1
+    assert not script.condition(operation["available"], 1)
+
+
+class ReactionScript(AgencyScript):
+    """Run the actual helper, .8/.9 relay and .1 eligibility, preserving event scopes."""
+
+    def __init__(self):
+        super().__init__()
+        self.effects.update(
+            _parse_race_script(
+                _named_block(
+                    read("common/scripted_effects/00_raid_scripted_effects.txt"),
+                    "send_raid_event_to_victim",
+                )
+            )
+        )
+        self.effects.update(
+            _parse_race_script(
+                _named_block(
+                    read("common/scripted_effects/00_raid_scripted_effects.txt"),
+                    "send_events_to_others",
+                )
+            )
+        )
+        self.event_sources = {}
+        for match in re.finditer(r"(?m)^country_event = \{", read("events/raids.txt")):
+            source = _named_block(
+                read("events/raids.txt")[match.start() :], "country_event"
+            )
+            event = _parse_race_script(source)["country_event"]
+            ident = next(value for key, _, value in event if key == "id")
+            self.event_sources[ident] = event
+        self.relay = []
+        self.delivered = []
+        self.event_from = 1
+        self.event_root = 1
+        self.allied = False
+        self.retaliate = False
+
+    def _scope(self, name, identifier):
+        if name.startswith("THIS."):
+            return super()._scope(name[5:], identifier)
+        if name.startswith("ROOT."):
+            return super()._scope(name[5:], self.event_root)
+        if name.startswith("FROM."):
+            return super()._scope(name[5:], self.event_from)
+        return super()._scope(name, identifier)
+
+    def value(self, name, identifier):
+        if name == "FROM":
+            return self.event_from
+        return super().value(name, identifier)
+
+    def condition_statement(self, statement, identifier):
+        key, _, operand = statement
+        if key == "FROM":
+            return self.scoped(operand, identifier, self.event_from, condition=True)
+        if key == "ROOT":
+            return self.scoped(operand, identifier, self.event_root, condition=True)
+        if key in {"tag", "original_tag"} and operand in {"ROOT", "FROM"}:
+            target = self.event_root if operand == "ROOT" else self.event_from
+            return self.countries[identifier]["tag"] == self.countries[target]["tag"]
+        if key == "is_ally_with":
+            return self.allied
+        return super().condition_statement(statement, identifier)
+
+    def execute_statement(self, statement, identifier):
+        key, _, operand = statement
+        if key == "PREV":
+            self.scoped(operand, identifier, self.scope_stack[-1])
+        elif key == "country_event":
+            event_id = (
+                dict((key, value) for key, _, value in operand)["id"]
+                if isinstance(operand, list)
+                else operand
+            )
+            if not event_id.startswith("MD_raid."):
+                self.external[event_id, identifier] += 1
+                return
+            self.relay.append((event_id, identifier, self.event_root))
+        elif key == "FROM":
+            self.scoped(operand, identifier, self.event_from)
+        elif key in {
+            "create_wargoal",
+            "news_event",
+            "add_war_support",
+            "add_threat_from_wargoal_effect",
+        }:
+            self.external[key, identifier] += 1
+        elif key == "log":
+            pass
+        else:
+            super().execute_statement(statement, identifier)
+
+    def flush(self):
+        while self.relay:
+            event_id, target, sender = self.relay.pop(0)
+            self.event_from, self.event_root = sender, target
+            event = self.event_sources[event_id]
+            trigger = next((value for key, _, value in event if key == "trigger"), [])
+            if not self.condition(trigger, target):
+                continue
+            self.delivered.append(event_id)
+            immediate = next(
+                (value for key, _, value in event if key == "immediate"), []
+            )
+            self.execute(immediate, target)
+            if self.retaliate and event_id == "MD_raid.1":
+                option = next(
+                    value
+                    for key, _, value in event
+                    if key == "option" and ("name", "=", "MD_raid.1.a") in value
+                )
+                trigger = next(value for key, _, value in option if key == "trigger")
+                assert self.condition(trigger, target)
+                self.execute(
+                    [
+                        entry
+                        for entry in option
+                        if entry[0] not in {"name", "trigger", "ai_chance"}
+                    ],
+                    target,
+                )
+
+
+@pytest.mark.parametrize("consent", [0, 1])
+@pytest.mark.parametrize("attribution", [0, 1, 2, 3])
+@pytest.mark.parametrize("applied", [0, 1])
+def test_top_reaction_complete_chain_rejects_consent_hidden_or_stale_callbacks(
+    consent, attribution, applied
+):
+    script = ReactionScript()
+    variables = script.authorize(method=2)
+    variables.update(actor_country=1, victim_country=2)
+    variables["TOP_case_consent"][11] = consent
+    variables["TOP_case_attribution"][11] = attribution
+    script.temps.update(
+        actor_country=1,
+        TOP_target=11,
+        top_native_result_applied=applied,
+        top_native_reaction_consent=consent,
+        top_native_reaction_attribution=attribution,
+    )
+    script.run("top_native_person_reaction", 1)
+    script.flush()
+    expected = (
+        ["MD_raid.8", "MD_raid.9", "MD_raid.1"]
+        if applied and not consent and attribution >= 2
+        else []
+    )
+    assert script.delivered == expected
+
+
+@pytest.mark.parametrize("condition", ["ordinary", "war", "allied", "blocked", "own"])
+def test_unrelated_core_raid_reaction_retains_the_entire_existing_chain(condition):
+    script = ReactionScript()
+    variables = script.countries[1]["vars"]
+    variables.update(actor_country=1, victim_country=2)
+    script.temps.update(actor_country=1, victim_country=2)
+    if condition == "war":
+        script.countries[1]["has_war_with"] = {2}
+    elif condition == "allied":
+        script.allied = True
+    elif condition == "blocked":
+        script.countries[2]["flags"]["block_raid_events"] = 1
+    elif condition == "own":
+        script.countries[2]["tag"] = "USA"
+    script.run("send_raid_event_to_victim", 1)
+    script.flush()
+    expected = [] if condition == "war" else ["MD_raid.8", "MD_raid.9"]
+    if condition == "ordinary":
+        expected.append("MD_raid.1")
+    assert script.delivered == expected
+
+
+def test_military_delivery_is_public_but_agency_delivery_keeps_attribution_roll():
+    for method in (1, 2, 3, 4, 5, 7):
+        script = AgencyScript()
+        if method == 7:
+            script.countries[1]["tag"] = "SOV"
+        variables = script.authorize(method=method)
+        variables["TOP_case_exposure_score"][11] = 0
+        script.temps.update(TOP_target=11, TOP_method=method)
+        script.run("TOP_calculate_person_consequences", 1)
+        assert variables["TOP_case_attribution"][11] == (3 if method < 3 else 0)
+
+
+@pytest.mark.parametrize("consent", [0, 1])
+def test_top_victim_retaliation_and_faction_neighbor_notifications_follow_consent(
+    consent,
+):
+    script = ReactionScript()
+    variables = script.authorize(method=2)
+    variables.update(actor_country=1, victim_country=2)
+    variables["TOP_case_consent"][11] = consent
+    variables["TOP_case_attribution"][11] = 3
+    script.countries[2]["vars"].update(faction_members=[2, 3], neighbors=[4])
+    script.temps.update(
+        actor_country=1,
+        TOP_target=11,
+        top_native_result_applied=1,
+        top_native_reaction_consent=consent,
+        top_native_reaction_attribution=3,
+    )
+    script.retaliate = True
+    script.run("top_native_person_reaction", 1)
+    script.flush()
+    assert script.external["create_wargoal", 2] == (0 if consent else 1)
+    assert script.external["news_event", 2] == (0 if consent else 1)
+    assert script.delivered == (
+        []
+        if consent
+        else [
+            "MD_raid.8",
+            "MD_raid.9",
+            "MD_raid.1",
+            "MD_raid.15",
+            "MD_raid.12",
+            "MD_raid.10",
+        ]
+    )
+
+
+@pytest.mark.parametrize("method", METHODS)
+def test_agency_visit_action_duration_leaves_room_in_existing_execution_window(method):
+    script = AgencyScript()
+    operation = dict((key, value) for key, _, value in script.operation(method))
+    setup = _named_block(
+        read("common/scripted_effects/04_targeted_operations_cases.txt"),
+        "TOP_setup_extended_runtime",
+    )
+    window = int(re.search(r"global.TOP_visit_execution_days = (\d+)", setup)[1])
+    assert int(operation["days"]) < window
+    phases = read("common/operation_phases/targeted_operations.txt")
+    placement = _named_block(phases, "top_agency_placement")
+    assert "days = 2" in placement
+    assert "Special_Forces" not in phases
+
+
+@pytest.mark.parametrize(
+    "consent,protection,expected", [(0, 2, True), (1, 2, False), (1, 3, True)]
+)
+def test_top_sovereignty_and_crisis_respect_consent_without_silencing_a_foreign_sponsor(
+    consent, protection, expected
+):
+    script = AgencyScript()
+    variables = script.authorize(method=5)
+    variables["TOP_case_consent"][11] = consent
+    variables["TOP_case_protection"][11] = protection
+    variables["TOP_case_attribution"][11] = 3
+    script.globals["TOP_leader_role"][11] = 1
+    script.globals["TOP_status"][11] = 2
+    script.temps.update(
+        TOP_target=11,
+        TOP_result=2,
+        TOP_exposure_recorded=1,
+        TOP_strategic_crisis_candidate=1,
+        TOP_operation_protection_country=protection,
+    )
+    variables.update(TOP_authorized_consent=consent, TOP_authorized_host=2)
+    assert (
+        script.condition(script.triggers["TOP_exposed_visit_kill_valid"], 1) == expected
+    )
+    script.run("TOP_apply_shared_consequences", 1)
+    assert script.external["add_opinion_modifier", protection] == int(expected)
+
+
+@pytest.mark.parametrize("wrong_location", [False, True])
+@pytest.mark.parametrize("consent", [0, 1])
+def test_generated_actor_result_and_reaction_keep_frozen_permission_after_case_closure(
+    wrong_location, consent
+):
+    script = ReactionScript()
+    variables = script.authorize(method=2)
+    variables.update(actor_country=1, victim_country=2, target_state=101)
+    variables["TOP_case_consent"][11] = consent
+    if wrong_location:
+        script.globals["TOP_state"][11] = 102
+    script.stubs.add("apply_discounted_raid_pp_cost")
+    source = _named_block(
+        read("common/raids/targeted_operations_raids.txt"), "TOP_capture_11"
+    )
+    success = _named_block(_named_block(source, "success_levels"), "success")
+    actor = _parse_race_script(_named_block(success, "actor_effects"))["actor_effects"]
+    script.stubs.add("raid_damage_units")
+    script.execute(actor, 1)
+    script.flush()
+    assert script.delivered == (
+        [] if consent else ["MD_raid.8", "MD_raid.9", "MD_raid.1"]
+    )
+    assert script.globals["TOP_status"][11] == (1 if wrong_location else 2)
+
+
+@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("legacy_first", [False, True])
+def test_agency_and_legacy_resolution_retire_the_same_person_once(method, legacy_first):
+    script = AgencyScript()
+    if method == 7:
+        script.countries[1]["tag"] = "SOV"
+    variables = script.authorize(method=method)
+    script.callback(method, "on_start")
+    script.callback(method, "outcome_execute")
+    script.callback(method, "outcome_extra_execute")
+    if legacy_first:
+        script.temps.update(TOP_target=11, TOP_result=3)
+        script.run("TOP_record_legacy_result", 1)
+    script.complete(method)
+    if not legacy_first:
+        script.temps.update(TOP_target=11, TOP_result=3)
+        script.run("TOP_record_legacy_result", 3)
+    assert script.globals["TOP_removals"][11] == 1
+    assert script.globals["TOP_status"][11] == (
+        3 if legacy_first or method in (3, 7) else 2
+    )
+    assert variables["TOP_attempts"][11] == (0 if legacy_first else 1)
+
+
+def test_two_agency_actors_cannot_capture_and_kill_the_same_person_twice():
+    script = AgencyScript()
+    first = script.authorize(method=3)
+    script.callback(3, "on_start")
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.countries[3]["techs"].add("special_forces_tech_1")
+    script.actor = 3
+    second = script.authorize(method=4, actor=3)
+    script.run("TOP_enroll_pending_actor", 3)
+    script.callback(4, "on_start")
+    script.callback(4, "outcome_execute")
+    script.callback(4, "outcome_extra_execute")
+    script.complete(4)
+    script.actor = 1
+    script.complete(3)
+    assert script.globals["TOP_status"][11] == 2
+    assert script.globals["TOP_custodian"][11] == 3
+    assert script.globals["TOP_removals"][11] == 1
+    assert first["TOP_attempts"][11] == 0
+    assert second["TOP_attempts"][11] == 1
+
+
+class CrisisOpinionScript(TargetScript):
+    """Execute crisis responses with native opinion-target restrictions."""
+
+    def __init__(self):
+        super().__init__()
+        self.effects.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_effects/04_targeted_operations_cases.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
+        self.crisis_events = _parse_race_script(
+            "events = {\n"
+            + (ROOT / "events/Targeted Operations.txt").read_text(encoding="utf-8")
+            + "\n}"
+        )["events"]
+        self.stubs.add("TOP_cleanup_crisis")
+        self.stubs.discard("TOP_process_crisis")
+        self.opinions = Counter()
+        self.changes = Counter()
+        self.globals.update(
+            TOP_clock=100,
+            TOP_crisis_active=1,
+            TOP_crisis_token=7,
+            TOP_crisis_until=200,
+            TOP_crisis_actor=1,
+            TOP_crisis_protection=2,
+            TOP_crisis_host=3,
+            TOP_crisis_story=1,
+            TOP_crisis_visit_token=1,
+            TOP_crisis_tension=50,
+            TOP_crisis_sanctions_threshold=30,
+            TOP_crisis_ultimatum_threshold=85,
+            TOP_crisis_actor_response=1,
+            TOP_crisis_settlement_apology_pp=-25,
+        )
+        for actor in (1, 2, 3):
+            self.countries[actor]["vars"]["TOP_crisis_token"] = 7
+        self.countries[3]["vars"].update(
+            TOP_crisis_participant_pending=1,
+            TOP_crisis_participant_token=7,
+        )
+
+    def condition_statement(self, statement, identifier):
+        if statement[0] == "subtract_from_temp_variable":
+            self.execute_statement(statement, identifier)
+            return True
+        return super().condition_statement(statement, identifier)
+
+    def execute_statement(self, statement, identifier):
+        key, _, operand = statement
+        if key in {"add_opinion_modifier", "reverse_add_opinion_modifier"}:
+            fields = {name: value for name, _, value in operand}
+            target = fields["target"]
+            assert not target.startswith(
+                "var:"
+            ), "The native opinion effect rejects variable scopes as its target"
+            target = self.value(target, identifier)
+            source, recipient = identifier, target
+            if key == "reverse_add_opinion_modifier":
+                source, recipient = recipient, source
+            self.opinions[source, recipient, fields["modifier"]] += 1
+        elif key in {"add_stability", "add_war_support"}:
+            self.changes[key, identifier] += self.value(operand, identifier)
+        else:
+            super().execute_statement(statement, identifier)
+
+    def choose(self, event_id, option_name, actor):
+        event = next(
+            body
+            for key, _, body in self.crisis_events
+            if key == "country_event" and ("id", "=", event_id) in body
+        )
+        assert self.condition(
+            dict((key, value) for key, _, value in event)["trigger"], actor
+        )
+        option = next(
+            body
+            for key, _, body in event
+            if key == "option" and ("name", "=", option_name) in body
+        )
+        fields = dict((key, value) for key, _, value in option)
+        assert self.condition(fields.get("trigger", []), actor)
+        self.execute(
+            [
+                entry
+                for entry in option
+                if entry[0] not in {"name", "trigger", "ai_chance"}
+            ],
+            actor,
+        )
+
+
+@pytest.mark.parametrize(
+    "effect,expired,modifier",
+    [
+        ("TOP_apply_crisis_sanctions", False, "harsh_sanctions"),
+        ("TOP_process_crisis", True, "harsh_sanctions"),
+        ("TOP_settle_crisis", False, "TOP_crisis_settlement"),
+    ],
+)
+def test_crisis_resolution_keeps_both_opinion_directions(effect, expired, modifier):
+    script = CrisisOpinionScript()
+    if expired:
+        script.globals["TOP_crisis_until"] = 99
+
+    script.run(effect, 2)
+
+    assert script.opinions == Counter({(1, 2, modifier): 1, (2, 1, modifier): 1})
+    if modifier == "harsh_sanctions":
+        assert script.changes == Counter({("add_stability", 1): -0.01})
+    else:
+        assert script.countries[1]["vars"]["political_power"] == 475
+    if effect != "TOP_apply_crisis_sanctions":
+        assert script.external["TOP_cleanup_crisis", 2] == 1
+
+
+@pytest.mark.parametrize(
+    "event,option,actor,target,modifier",
+    [
+        ("TOP_crisis.1", "TOP_crisis.1.b", 2, 1, "TOP_sovereignty_violation"),
+        ("TOP_crisis.4", "TOP_crisis.4.a", 3, 2, "established_diplomatic_relations"),
+        ("TOP_crisis.4", "TOP_crisis.4.b", 3, 1, "established_diplomatic_relations"),
+        ("TOP_crisis.3", "TOP_crisis.3.c", 2, 1, "TOP_sovereignty_violation"),
+    ],
+)
+def test_crisis_option_changes_only_the_respondents_opinion(
+    event, option, actor, target, modifier
+):
+    script = CrisisOpinionScript()
+
+    script.choose(event, option, actor)
+
+    assert script.opinions == Counter({(actor, target, modifier): 1})
+
+
+@pytest.mark.parametrize("effect", ["TOP_apply_crisis_sanctions", "TOP_settle_crisis"])
+@pytest.mark.parametrize("invalid", ["disabled", "stale", "expired"])
+def test_invalid_crisis_does_not_apply_opinions_or_costs(effect, invalid):
+    script = CrisisOpinionScript()
+    if invalid == "disabled":
+        script.globals["TOP_rule_mode"] = 0
+    elif invalid == "stale":
+        script.countries[2]["vars"]["TOP_crisis_token"] = 6
+    else:
+        script.globals["TOP_crisis_until"] = 99
+
+    script.run(effect, 2)
+
+    assert not script.opinions
+    assert not script.changes
+    assert script.countries[1]["vars"]["political_power"] == 500
+
+
+def test_sanctions_require_the_recorded_victim():
+    script = CrisisOpinionScript()
+
+    script.run("TOP_apply_crisis_sanctions", 3)
+
+    assert not script.opinions
+    assert not script.changes
+
+
+def test_crisis_with_annexed_principal_cleans_up_instead_of_repeating_ultimatum():
+    script = CrisisOpinionScript()
+    script.globals.update(TOP_crisis_tension=100, TOP_crisis_until=99)
+    script.countries[2]["exists"] = False
+
+    script.run("TOP_process_crisis", 1)
+
+    assert script.external["TOP_cleanup_crisis", 1] == 1
+    assert not script.opinions
+    assert not script.events

@@ -2,12 +2,12 @@ import operator
 import re
 
 import pytest
-from targeted_operations_model_test import (
+from targeted_operations_helpers import (
     _extract_block,
     _named_block,
     _parse_race_script,
 )
-from targeted_operations_redesign_test import read as source
+from targeted_operations_helpers import read as source
 
 IRAQ = tuple(
     zip(
@@ -88,7 +88,7 @@ def test_ct_ledger_preserves_main_navigation_and_explicit_top_access():
     )
 
     open_dossiers = _named_block(
-        source("common/scripted_effects/01_targeted_operations_view.txt"),
+        source("common/scripted_effects/00_targeted_operations_effects.txt"),
         "TOP_open_dossiers",
     )
     for token in (
@@ -166,7 +166,7 @@ def test_dossiers_window_is_screen_level_and_scoped_to_counter_terror():
 
 def test_security_footer_is_retired_but_remains_attached_to_the_live_dossiers_gui():
     gui = _named_block(
-        source("common/scripted_guis/03_targeted_operations_security.txt"),
+        source("common/scripted_guis/01_targeted_operations_gui.txt"),
         "TOP_security_footer_gui",
     )
     assert "parent_scripted_gui = TOP_dossiers_gui" in gui
@@ -176,7 +176,7 @@ def test_security_footer_is_retired_but_remains_attached_to_the_live_dossiers_gu
 
 def test_security_policy_attaches_to_the_live_dossiers_security_tab():
     gui = _named_block(
-        source("common/scripted_guis/03_targeted_operations_security.txt"),
+        source("common/scripted_guis/01_targeted_operations_gui.txt"),
         "TOP_security_policy_gui",
     )
     assert "parent_scripted_gui = TOP_dossiers_gui" in gui
@@ -188,7 +188,7 @@ def test_security_policy_attaches_to_the_live_dossiers_security_tab():
 
 
 def test_security_footer_leaves_room_for_the_dossiers_refresh_button():
-    windows = _parse_race_script(source("interface/targeted_operations_security.gui"))[
+    windows = _parse_race_script(source("interface/targeted_operations.gui"))[
         "guiTypes"
     ]
     footer = next(

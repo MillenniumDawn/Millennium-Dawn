@@ -54,20 +54,23 @@ def check_wiring(root: Path) -> list[str]:
         "startup": "common/on_actions/00_on_actions.txt",
         "weekly": "common/on_actions/MD_on_actions.txt",
         "ct": "common/scripted_effects/00_ct_effects.txt",
-        "effects": "common/scripted_effects/00_targeted_operations_effects.txt",
         "game_rule": "common/game_rules/01_targeted_operations.txt",
-        "registry": "common/scripted_effects/01_targeted_operations_registry.txt",
-        "triggers": "common/scripted_triggers/01_targeted_operations_triggers.txt",
-        "case_triggers": "common/scripted_triggers/04_targeted_operations_cases.txt",
-        "redesign_triggers": "common/scripted_triggers/07_targeted_operations_redesign.txt",
-        "person_cases": "common/scripted_effects/04_targeted_operations_cases.txt",
-        "organization_cases": "common/scripted_effects/07_targeted_operations_organization_cases.txt",
     }
     try:
         source = {
             name: strip_comments((root / path).read_text(encoding="utf-8-sig"))
             for name, path in paths.items()
         }
+        for kind in ("scripted_effects", "scripted_triggers"):
+            definitions = sorted(
+                (root / "common" / kind).glob("*targeted_operations*.txt")
+            )
+            if not definitions:
+                raise OSError(f"No TOP definitions in common/{kind}")
+            source[kind] = "\n".join(
+                strip_comments(path.read_text(encoding="utf-8-sig"))
+                for path in definitions
+            )
     except OSError as error:
         return [f"Cannot read TOP wiring source: {error}"]
     failures = []
@@ -129,7 +132,7 @@ def check_wiring(root: Path) -> list[str]:
         else:
             require(guard_block, "TOP_global_weekly", "on_weekly global guard")
 
-    effects = source["effects"]
+    effects = source["scripted_effects"]
     game_rule = get_block(source["game_rule"], "TOP_game_rule")
     cache_rule = get_block(effects, "TOP_cache_game_rule")
     for option in (
@@ -184,10 +187,10 @@ def check_wiring(root: Path) -> list[str]:
         not in country_tick
     ):
         failures.append("TOP_country_tick counts countries without initialized storage")
-    get_block(source["registry"], "TOP_setup_registry")
-    resize = get_block(source["registry"], "TOP_resize_country_arrays")
+    get_block(source["scripted_effects"], "TOP_setup_registry")
+    resize = get_block(source["scripted_effects"], "TOP_resize_country_arrays")
     capacity = re.search(
-        r"global\.TOP_registry_capacity\s*=\s*(\d+)", source["registry"]
+        r"global\.TOP_registry_capacity\s*=\s*(\d+)", source["scripted_effects"]
     )
     if capacity is None:
         failures.append("TOP registry lacks a numeric capacity")
@@ -201,35 +204,51 @@ def check_wiring(root: Path) -> list[str]:
         failures.append(
             "TOP_resize_country_arrays does not resize TOP_known to capacity"
         )
-    if "has_game_rule" in source["triggers"]:
+    if "has_game_rule" in source["scripted_triggers"]:
         failures.append(
             "TOP scripted triggers evaluate has_game_rule before a game exists"
         )
-    if "is_ai = no" not in get_block(source["triggers"], "TOP_human_offense"):
+    if "is_ai = no" not in get_block(source["scripted_triggers"], "TOP_human_offense"):
         failures.append("TOP_human_offense lacks the player-only gate")
-    slot = get_block(source["case_triggers"], "TOP_operation_slot_available")
+    slot = get_block(source["scripted_triggers"], "TOP_operation_slot_available")
     if "check_variable = { TOP_operation_subject_kind = 0 }" not in slot:
         failures.append("TOP_operation_slot_available does not require an empty slot")
     slot_uses = sum(
         len(re.findall(r"(?m)^\s*TOP_operation_slot_available\s*=\s*yes\s*$", text))
-        for text in (source["case_triggers"], source["redesign_triggers"])
+        for text in (source["scripted_triggers"], source["scripted_triggers"])
     )
     if slot_uses < 2:
         failures.append(
             "Person and organization operations do not share the single slot gate"
         )
     for name in ("TOP_trace_slot_begin", "TOP_trace_slot_end"):
-        if "TOP_diagnostics_enabled" not in get_block(source["effects"], name):
+        if "TOP_diagnostics_enabled" not in get_block(source["scripted_effects"], name):
             failures.append(f"{name} is not diagnostic-only")
-    for source_name, label, ends in (
-        ("person_cases", "person", 3),
-        ("organization_cases", "organization", 3),
+    for label, begin, ends in (
+        (
+            "person",
+            "TOP_begin_person_operation",
+            ("TOP_close_case", "TOP_finish_case", "TOP_process_cases"),
+        ),
+        (
+            "organization",
+            "TOP_begin_organization_operation",
+            (
+                "TOP_stand_down_selected",
+                "TOP_close_organization_case",
+                "TOP_resolve_organization_operation",
+            ),
+        ),
     ):
-        text = source[source_name]
-        if text.count("TOP_trace_slot_begin = yes") != 1:
+        text = source["scripted_effects"]
+        if get_block(text, begin).count("TOP_trace_slot_begin = yes") != 1:
             failures.append(f"{label} operation begin lacks one slot trace")
-        if text.count("TOP_trace_slot_end = yes") != ends:
-            failures.append(f"{label} operation releases lack {ends} slot traces")
+        if any(
+            get_block(text, name).count("TOP_trace_slot_end = yes") != 1
+            for name in ends
+        ):
+            failures.append(f"{label} operation releases lack {len(ends)} slot traces")
+
     return failures
 
 

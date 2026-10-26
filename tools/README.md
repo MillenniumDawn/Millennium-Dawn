@@ -180,6 +180,24 @@ not rise. Run the suite with `--cov-context=test` to see which rows share a path
 Shared paths only pick candidates: equal coverage does not show that two rows check
 the same rule.
 
+## Targeted Operations checks
+
+Run `python tools/analysis/targeted_operations_audit.py` for the generated registry,
+TOP behavior suites, and lifecycle probe checks. Discovery includes unit, content,
+and analysis tests, so reorganizing a suite does not drop it from the audit.
+An empty discovered suite fails instead of invoking unscoped pytest.
+
+Authored TOP scripts are grouped by engine directory: core lifecycle and defense,
+legacy adapters, authorization and roster roles, and typed cases. Registry and
+succession data, native raids and gates, name dispatch, and roster localisation
+remain generated. Update `tools/data/targeted_operations.json`, then run
+`python tools/generators/generate_targeted_operations.py`; use `--check` to detect
+drift without writing. Person and organization IDs remain permanent.
+
+Static script tests and `top_lifecycle_probe.py wiring` establish source behavior
+and reachability. Native callback timing, GUI rendering, and save serialization
+still require separate runtime evidence.
+
 ## Quick Start
 
 Use `run.py` to run any tool by short name — no need to remember subdirectory paths:

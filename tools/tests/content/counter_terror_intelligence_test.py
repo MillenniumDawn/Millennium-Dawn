@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 from targeted_operations_core_test import ScriptArray, TargetScript
-from targeted_operations_model_test import _named_block, _parse_race_script
+from targeted_operations_helpers import _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -188,9 +188,7 @@ def test_operations_center_organization_tabs_use_separate_lifecycle(tab, expecte
 
 
 def test_unselected_operations_center_explains_cold_dossier_workflow():
-    localisation = source(
-        "localisation/english/MD_targeted_operations_redesign_l_english.yml"
-    )
+    localisation = source("localisation/english/MD_targeted_operations_l_english.yml")
     line = next(
         line
         for line in localisation.splitlines()

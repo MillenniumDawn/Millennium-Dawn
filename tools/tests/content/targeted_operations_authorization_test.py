@@ -4,19 +4,18 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from targeted_operations_helpers_test import TargetedScript
-from targeted_operations_model_test import (
+from targeted_operations_helpers import (
+    TargetedScript,
     _extract_block,
     _named_block,
     _parse_race_script,
+    read_top_source,
 )
-from targeted_operations_redesign_test import read as source
+from targeted_operations_helpers import read as source
 
 ROOT = Path(__file__).resolve().parents[3]
 EFFECT_PATH = "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
-TRIGGER_PATH = (
-    "common/scripted_triggers/02_targeted_operations_authorization_triggers.txt"
-)
+TRIGGER_PATH = "common/scripted_triggers/01_targeted_operations_triggers.txt"
 EVENT_PATH = "events/Targeted Operations.txt"
 
 
@@ -29,27 +28,8 @@ class ReviewScript(TargetedScript):
     }
 
     def __init__(self, designated=True):
-        self.effects = _parse_race_script(source(EFFECT_PATH))
-        core = _parse_race_script(
-            source("common/scripted_effects/00_targeted_operations_effects.txt")
-        )
-        self.effects.update(core)
-        self.effects.update(
-            _parse_race_script(
-                source("common/scripted_effects/04_targeted_operations_cases.txt")
-            )
-        )
-        self.effects.update(
-            _parse_race_script(
-                source("common/scripted_effects/06_targeted_operations_redesign.txt")
-            )
-        )
-        self.effects.update(
-            _parse_race_script(
-                source(
-                    "common/scripted_effects/07_targeted_operations_organization_cases.txt"
-                )
-            )
+        self.effects = _parse_race_script(
+            read_top_source(ROOT, "common/scripted_effects")
         )
         self.effects.update(
             TOP_refresh_view=[],
@@ -61,32 +41,8 @@ class ReviewScript(TargetedScript):
             TOP_get_organization_defensive_modifiers=[],
             TOP_get_protection_country=[],
         )
-        self.triggers = _parse_race_script(source(TRIGGER_PATH))
-        core_triggers = _parse_race_script(
-            source("common/scripted_triggers/01_targeted_operations_triggers.txt")
-        )
-        self.triggers.update(core_triggers)
-        self.triggers.update(
-            _parse_race_script(
-                source(
-                    "common/scripted_triggers/03_targeted_operations_political_roster.txt"
-                )
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                source("common/scripted_triggers/04_targeted_operations_cases.txt")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                source("common/scripted_triggers/07_targeted_operations_redesign.txt")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                source("common/scripted_triggers/08_targeted_operations_core.txt")
-            )
+        self.triggers = _parse_race_script(
+            read_top_source(ROOT, "common/scripted_triggers")
         )
         self.countries = {
             country: {
@@ -742,11 +698,11 @@ def test_facility_sabotage_uses_the_typed_organization_review_path():
         "TOP_method_startable",
     )
     organization_review = _named_block(
-        source("common/scripted_effects/07_targeted_operations_organization_cases.txt"),
+        source("common/scripted_effects/04_targeted_operations_cases.txt"),
         "TOP_begin_organization_review",
     )
     organization_valid = _named_block(
-        source("common/scripted_triggers/07_targeted_operations_redesign.txt"),
+        source("common/scripted_triggers/01_targeted_operations_triggers.txt"),
         "TOP_organization_review_valid",
     )
     assert "NOT = { check_variable = { TOP_requested_method = 6 } }" in person_start
@@ -850,9 +806,7 @@ def test_expired_modern_window_does_not_replay_as_a_later_campaign_year():
 
 def test_event_defaults_defer_and_options_have_matching_logs_and_localisation():
     text = source(EVENT_PATH)
-    loc_path = (
-        ROOT / "localisation/english/MD_targeted_operations_authorization_l_english.yml"
-    )
+    loc_path = ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
     assert loc_path.read_bytes().startswith(b"\xef\xbb\xbf")
     loc = loc_path.read_text(encoding="utf-8-sig")
     for number, first in ((1, "c"), (2, "e"), (3, "b"), (4, "c")):
@@ -914,7 +868,7 @@ def test_novichok_is_a_russia_only_high_exposure_native_method():
     )
     review = _named_block(source(TRIGGER_PATH), "TOP_person_review_valid")
     lethal = _named_block(source(TRIGGER_PATH), "TOP_review_lethal")
-    resolution = source("common/scripted_effects/08_targeted_operations_resolution.txt")
+    resolution = source("common/scripted_effects/04_targeted_operations_cases.txt")
     gui = source("common/scripted_guis/01_targeted_operations_gui.txt")
     layout = source("interface/targeted_operations.gui")
     assert "TOP_requested_method = 7" in startable
@@ -942,20 +896,28 @@ def test_novichok_is_a_russia_only_high_exposure_native_method():
 
 
 @pytest.mark.parametrize(
-    ("path", "actor", "expected_modifiers"),
+    ("event_id", "actor", "expected_modifiers"),
     [
-        (EVENT_PATH, "TOP_incoming_actor", 5),
+        ("TOP_authorization.3", "TOP_incoming_actor", 5),
         (
-            "events/Targeted Operations Redesign.txt",
+            "TOP_redesign.30",
             "TOP_incoming_liaison_actor",
             2,
         ),
     ],
 )
 def test_host_ai_opinion_modifiers_use_supported_country_scope(
-    path, actor, expected_modifiers
+    event_id, actor, expected_modifiers
 ):
-    text = source(path)
+    events = source(EVENT_PATH)
+    text = next(
+        body
+        for match in re.finditer(r"(?m)^country_event\s*=\s*\{", events)
+        if re.search(
+            rf"(?m)^\s*id\s*=\s*{re.escape(event_id)}\s*$",
+            body := _extract_block(events, match.start()),
+        )
+    )
     assert "has_opinion = { target = var:" not in text
     lines = [line for line in text.splitlines() if "has_opinion = {" in line]
     assert len(lines) == expected_modifiers

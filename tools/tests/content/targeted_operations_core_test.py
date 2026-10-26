@@ -5,8 +5,12 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from targeted_operations_helpers_test import TargetedScript
-from targeted_operations_model_test import _named_block, _parse_race_script
+from targeted_operations_helpers import (
+    TargetedScript,
+    _named_block,
+    _parse_race_script,
+    read_top_source,
+)
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -29,92 +33,11 @@ class TargetScript(TargetedScript):
     """Execute TOP source while recording separately owned engine and legacy effects."""
 
     def __init__(self):
-        self.effects = {}
-        for filename in (
-            "00_targeted_operations_effects.txt",
-            "01_targeted_operations_world.txt",
-            "01_targeted_operations_registry.txt",
-            "04_targeted_operations_cases.txt",
-            "05_targeted_operations_runtime.txt",
-            "06_targeted_operations_redesign.txt",
-            "07_targeted_operations_organization_cases.txt",
-            "08_targeted_operations_resolution.txt",
-            "09_targeted_operations_depth.txt",
-            "10_targeted_operations_core.txt",
-            "11_targeted_operations_native_extensions.txt",
-        ):
-            self.effects.update(
-                _parse_race_script(
-                    (ROOT / "common/scripted_effects" / filename).read_text(
-                        encoding="utf-8"
-                    )
-                )
-            )
-        succession = (
-            ROOT / "common/scripted_effects/01_targeted_operations_successors.txt"
-        ).read_text(encoding="utf-8")
-        self.effects.update(
-            _parse_race_script(
-                _named_block(succession, "TOP_select_authored_successor")
-            )
+        self.effects = _parse_race_script(
+            read_top_source(ROOT, "common/scripted_effects")
         )
         self.triggers = _parse_race_script(
-            (
-                ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
-            ).read_text(encoding="utf-8")
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT / "common/scripted_triggers/04_targeted_operations_cases.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT
-                    / "common/scripted_triggers/02_targeted_operations_authorization_triggers.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT
-                    / "common/scripted_triggers/03_targeted_operations_political_roster.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT
-                    / "common/scripted_triggers/07_targeted_operations_redesign.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT / "common/scripted_triggers/05_targeted_operations_runtime.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT
-                    / "common/scripted_triggers/05_targeted_operations_arg_wrappers.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT / "common/scripted_triggers/08_targeted_operations_core.txt"
-                ).read_text(encoding="utf-8")
-            )
+            read_top_source(ROOT, "common/scripted_triggers")
         )
         core_raid = (
             ROOT / "common/scripted_effects/00_raid_scripted_effects.txt"
@@ -1525,7 +1448,7 @@ def complete_agency_case_after_metadata_tick(script, person):
 
 
 def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
-    from targeted_operations_agency_test import AgencyScript
+    from targeted_operations_core_integration_test import AgencyScript
 
     script = AgencyScript()
     person = script.authorize(method=3)
@@ -1753,7 +1676,7 @@ def test_facility_objective_cannot_change_after_review_or_case_freezes_it():
 def test_foreign_leader_remains_operationally_eligible_after_arriving_on_a_visit():
     script = TargetScript()
     runtime = _parse_race_script(
-        (ROOT / "common/scripted_effects/05_targeted_operations_runtime.txt").read_text(
+        (ROOT / "common/scripted_effects/04_targeted_operations_cases.txt").read_text(
             encoding="utf-8"
         )
     )
@@ -1942,7 +1865,7 @@ def test_waiting_mandates_close_at_expiry_but_prepared_native_case_survives():
 
 
 def test_prepared_native_operations_survive_waiting_mandate_expiry():
-    from targeted_operations_agency_test import AgencyScript
+    from targeted_operations_core_integration_test import AgencyScript
 
     script = AgencyScript()
     person = script.authorize(method=3)
@@ -1964,7 +1887,7 @@ def test_async_resolution_reloads_the_case_selected_in_the_open_view():
     script.effects.update(
         _parse_race_script(
             (
-                ROOT / "common/scripted_effects/01_targeted_operations_view.txt"
+                ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
             ).read_text(encoding="utf-8")
         )
     )
@@ -2068,7 +1991,7 @@ def test_inactive_former_officeholder_moves_to_cold_and_can_reactivate():
     script.effects.update(
         _parse_race_script(
             (
-                ROOT / "common/scripted_effects/01_targeted_operations_view.txt"
+                ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
             ).read_text(encoding="utf-8")
         )
     )
@@ -2093,7 +2016,7 @@ def test_inactive_former_officeholder_moves_to_cold_and_can_reactivate():
 
 @pytest.mark.parametrize("restore", [False, True], ids=["live", "persisted_state"])
 def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
-    from targeted_operations_agency_test import AgencyScript
+    from targeted_operations_core_integration_test import AgencyScript
 
     script = AgencyScript()
     script.authorize(method=3)
@@ -2200,7 +2123,7 @@ def test_closing_one_case_preserves_other_hosts_and_rejects_its_late_callback(ac
 
 
 def test_cancelled_timed_case_cannot_complete_after_other_host_is_authorized():
-    from targeted_operations_agency_test import AgencyScript
+    from targeted_operations_core_integration_test import AgencyScript
 
     script = AgencyScript()
     variables = script.authorize(method=3)

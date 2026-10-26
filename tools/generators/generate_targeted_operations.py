@@ -487,12 +487,18 @@ def load_manifest(root: Path) -> dict:
             if target["successors"] != expected:
                 raise ValueError(f"Incomplete successor binding for {target['id']}")
 
-    trigger_text = (
-        root / "common/scripted_triggers/03_targeted_operations_political_roster.txt"
-    ).read_text(encoding="utf-8")
-    retirement_text = (
-        root / "common/scripted_effects/03_targeted_operations_political_roster.txt"
-    ).read_text(encoding="utf-8")
+    trigger_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(
+            (root / "common/scripted_triggers").glob("*targeted_operations*.txt")
+        )
+    )
+    retirement_text = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted(
+            (root / "common/scripted_effects").glob("*targeted_operations*.txt")
+        )
+    )
     for target in data["targets"]:
         if target["leader_role"] in {
             "head_of_state",
@@ -1134,35 +1140,27 @@ def native_gates(data: dict) -> str:
 
 
 def render(data: dict) -> dict[str, str]:
+    definitions = [
+        facility_raid(group["id"], objective)
+        for group in data["groups"]
+        for objective in (1, 2, 3)
+        if group_objective_mask(data, group) & (1 << (objective - 1))
+    ] + [
+        raid(ident, method) for ident in range(1, data["capacity"]) for method in (1, 2)
+    ]
     raids = (
         "types = {\n"
         + "\n".join(
-            "\n".join("\t" + line for line in raid(ident, method).splitlines())
-            for ident in range(1, data["capacity"])
-            for method in (1, 2)
-        )
-        + "\n}\n"
-    )
-    facilities = (
-        "types = {\n"
-        + "\n".join(
-            "\n".join(
-                "\t" + line
-                for line in facility_raid(group["id"], objective).splitlines()
-            )
-            for group in data["groups"]
-            for objective in (1, 2, 3)
-            if group_objective_mask(data, group) & (1 << (objective - 1))
+            "\n".join("\t" + line for line in definition.splitlines())
+            for definition in definitions
         )
         + "\n}\n"
     )
     return {
-        "common/scripted_effects/01_targeted_operations_registry.txt": registry(data),
-        "common/scripted_effects/01_targeted_operations_successors.txt": successors(
-            data
-        ),
+        "common/scripted_effects/01_targeted_operations_registry.txt": registry(data)
+        + "\n"
+        + successors(data),
         "common/raids/targeted_operations_raids.txt": raids,
-        "common/raids/targeted_operations_facility_raids.txt": facilities,
         "common/scripted_triggers/06_targeted_operations_native_gates.txt": native_gates(
             data
         ),

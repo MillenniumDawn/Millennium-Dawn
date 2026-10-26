@@ -6,8 +6,7 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from targeted_operations_helpers_test import TargetedScript
-from targeted_operations_model_test import _named_block, _parse_race_script
+from targeted_operations_helpers import TargetedScript, _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -22,7 +21,8 @@ class PoliticalScript(TargetedScript):
 
     def __init__(self):
         source = (
-            ROOT / "common/scripted_effects/03_targeted_operations_political_roster.txt"
+            ROOT
+            / "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
         ).read_text(encoding="utf-8")
         # Country-leader traits are an engine-owned literal list, outside this evaluator.
         self.effects = _parse_race_script(
@@ -30,8 +30,7 @@ class PoliticalScript(TargetedScript):
         )
         self.triggers = _parse_race_script(
             (
-                ROOT
-                / "common/scripted_triggers/03_targeted_operations_political_roster.txt"
+                ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
             ).read_text(encoding="utf-8")
         )
         self.tags = {
@@ -385,7 +384,8 @@ def test_legacy_officials_keep_their_pre_expansion_role_eligibility():
 def test_added_advisors_start_in_history_and_require_top_window(target, token):
     history = (ROOT / "history/countries/PER - Iran.txt").read_text(encoding="utf-8")
     effects = (
-        ROOT / "common/scripted_effects/03_targeted_operations_political_roster.txt"
+        ROOT
+        / "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
     ).read_text(encoding="utf-8")
     characters = (ROOT / "common/characters/PER_targeted_operations.txt").read_text(
         encoding="utf-8"

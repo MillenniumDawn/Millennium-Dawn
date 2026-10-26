@@ -8,26 +8,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "analysis"))
 import top_lifecycle_probe
 
 ROOT = Path(__file__).resolve().parents[3]
-SOURCE_PATHS = (
-    "common/on_actions/00_on_actions.txt",
-    "common/on_actions/MD_on_actions.txt",
-    "common/scripted_effects/00_ct_effects.txt",
-    "common/scripted_effects/00_targeted_operations_effects.txt",
-    "common/game_rules/01_targeted_operations.txt",
-    "common/scripted_effects/01_targeted_operations_registry.txt",
-    "common/scripted_triggers/01_targeted_operations_triggers.txt",
-    "common/scripted_triggers/04_targeted_operations_cases.txt",
-    "common/scripted_triggers/07_targeted_operations_redesign.txt",
-    "common/scripted_effects/04_targeted_operations_cases.txt",
-    "common/scripted_effects/07_targeted_operations_organization_cases.txt",
-)
 
 
 def copy_sources(root):
-    for relative in SOURCE_PATHS:
-        target = root / relative
+    paths = [
+        ROOT / "common/on_actions/00_on_actions.txt",
+        ROOT / "common/on_actions/MD_on_actions.txt",
+        ROOT / "common/scripted_effects/00_ct_effects.txt",
+        ROOT / "common/game_rules/01_targeted_operations.txt",
+        *(ROOT / "common/scripted_effects").glob("*targeted_operations*.txt"),
+        *(ROOT / "common/scripted_triggers").glob("*targeted_operations*.txt"),
+    ]
+    for source in paths:
+        target = root / source.relative_to(ROOT)
         target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_bytes((ROOT / relative).read_bytes())
+        target.write_bytes(source.read_bytes())
 
 
 def test_current_system_wiring_is_reachable():
@@ -53,13 +48,13 @@ def test_wiring_requires_human_only_offense_and_shared_single_slot(tmp_path):
     copy_sources(tmp_path)
     triggers = tmp_path / "common/scripted_triggers/01_targeted_operations_triggers.txt"
     triggers.write_bytes(triggers.read_bytes().replace(b"\tis_ai = no", b"", 1))
-    cases = tmp_path / "common/scripted_triggers/04_targeted_operations_cases.txt"
+    cases = tmp_path / "common/scripted_triggers/01_targeted_operations_triggers.txt"
     cases.write_bytes(
         cases.read_bytes().replace(
             b"TOP_operation_subject_kind = 0", b"TOP_operation_subject_kind = 1"
         )
     )
-    redesign = tmp_path / "common/scripted_triggers/07_targeted_operations_redesign.txt"
+    redesign = tmp_path / "common/scripted_triggers/01_targeted_operations_triggers.txt"
     redesign.write_bytes(
         redesign.read_bytes().replace(
             b"TOP_operation_slot_available = yes", b"always = yes"
@@ -77,10 +72,7 @@ def test_wiring_requires_human_only_offense_and_shared_single_slot(tmp_path):
 
 def test_wiring_detects_missing_organization_slot_trace(tmp_path):
     copy_sources(tmp_path)
-    cases = (
-        tmp_path
-        / "common/scripted_effects/07_targeted_operations_organization_cases.txt"
-    )
+    cases = tmp_path / "common/scripted_effects/04_targeted_operations_cases.txt"
     cases.write_bytes(cases.read_bytes().replace(b"TOP_trace_slot_begin = yes", b""))
     assert (
         "organization operation begin lacks one slot trace"
@@ -181,3 +173,11 @@ def test_wiring_requires_country_storage_and_checked_tick_counter(tmp_path):
     failures = top_lifecycle_probe.check_wiring(tmp_path)
     assert "TOP_resize_country_arrays does not resize TOP_known to capacity" in failures
     assert "TOP_country_tick counts countries without initialized storage" in failures
+
+
+def test_wiring_follows_definitions_after_a_same_directory_file_split(tmp_path):
+    copy_sources(tmp_path)
+    for folder in ("common/scripted_effects", "common/scripted_triggers"):
+        for source in list((tmp_path / folder).glob("*targeted_operations*.txt")):
+            source.rename(source.with_name("folded_targeted_operations_" + source.name))
+    assert top_lifecycle_probe.check_wiring(tmp_path) == []

@@ -1,22 +1,20 @@
+from tools.generators import generate_targeted_operations as GENERATOR
+
 """Tool-only tests for Targeted Operations manifest validation and rendering."""
 
-import importlib.util
 import json
 import re
 from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from targeted_operations_manifest_helpers_test import mutate_manifest
-from targeted_operations_model_test import _named_block, _parse_race_script
+from targeted_operations_helpers import (
+    _named_block,
+    _parse_race_script,
+    mutate_manifest,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
-SPEC = importlib.util.spec_from_file_location(
-    "targeted_operations_generator",
-    ROOT / "tools/generators/generate_targeted_operations.py",
-)
-GENERATOR = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(GENERATOR)
 
 
 @pytest.fixture
@@ -99,7 +97,10 @@ def test_all_native_raids_bind_their_own_person_method_and_callback(manifest):
     assert set(definitions) == expected
     assert len(definitions) == 2 * (manifest["capacity"] - 1)
     assert "has_dlc" not in text
-    assert text.count("ai_will_do = { base = 0 }") == len(definitions)
+    assert all(
+        "ai_will_do = { base = 0 }" in _named_block(text, token)
+        for token, _, _ in definitions
+    )
     assert "add = 50 TOP_native_gate" not in text
     for token, kind, target in definitions:
         raid = _named_block(text, token)
@@ -276,8 +277,10 @@ def test_registry_emits_legacy_and_three_axis_person_and_organization_state(mani
     assert "set_variable" not in resize
     assert "resize_array = { TOP_lead_report_clock = 161 }" in resize
     assert "resize_array = { TOP_org_lead_report_clock = 35 }" in resize
-    successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
-    assert "TOP_person_129" not in successors
+    successors = output["common/scripted_effects/01_targeted_operations_registry.txt"]
+    assert "TOP_person_129" not in _named_block(
+        successors, "TOP_install_generated_office"
+    )
 
 
 def test_manifest_declares_classes_location_policy_and_2027_2032_roster(manifest):
@@ -423,7 +426,7 @@ def test_non_ct_organizations_activate_on_their_authored_windows(manifest):
 
 def test_authored_movement_successors_get_office_adapters(manifest):
     output = GENERATOR.render(manifest)
-    successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
+    successors = output["common/scripted_effects/01_targeted_operations_registry.txt"]
     install = _named_block(successors, "TOP_install_generated_office")
     retire = _named_block(successors, "TOP_retire_generated_office")
     branch = install[install.index("check_variable = { TOP_target = 142 }") :]
