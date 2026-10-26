@@ -22,6 +22,16 @@ from shared.paths import REPO_ROOT
 
 _SCRIPT_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!=]=?|[^\s{}<>=!]+')
 
+# Treasury rate, budget balance ratio, collapse mission, weight multiplier.
+FISCAL_DISTRESS_CASES = [
+    (0, 0, False, 1),
+    (-3, -0.10, False, 1),
+    (-3.001, 0, False, 0.5),
+    (0, -0.1001, False, 0.5),
+    (0, 0, True, 0),
+    (-4, -0.11, True, 0),
+]
+
 
 def _economic_statements(source):
     source = strip_comments(source)
@@ -52,6 +62,18 @@ def script_block(source, name):
     assert len(blocks) == 1, (name, len(blocks))
     _economic_statements(blocks[0])
     return blocks[0]
+
+
+def read_decision_categories(directory, categories):
+    result = {}
+    for filename, category in categories:
+        source = read_text(directory / filename)
+        result.update(
+            (name, body)
+            for name, _, _, body in iter_statement_ops(script_block(source, category))
+            if body is not None
+        )
+    return result
 
 
 class EconomicScriptFixture:
@@ -139,6 +161,11 @@ class EconomicScriptFixture:
     def condition(self, source):
         results = []
         for key, comparison, scalar, body in self.active(source):
+            if key == "threat" and body is None:
+                results.append(
+                    self.comparisons[comparison](self.number(key), self.number(scalar))
+                )
+                continue
             assert comparison == "=", "Unsupported predicate operator"
             if key == "tooltip":
                 continue
