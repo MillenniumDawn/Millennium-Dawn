@@ -3,6 +3,7 @@
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import (
+    FISCAL_DISTRESS_CASES,
     EconomicScriptFixture,
     read_decision_categories,
     read_text,
@@ -62,12 +63,7 @@ def decisions():
 @pytest.mark.parametrize(
     "threat,rate,balance,bankrupt,factor",
     [
-        (0.091, 0, 0, False, 1),
-        (0.091, -3, -0.10, False, 1),
-        (0.091, -3.001, 0, False, 0.5),
-        (0.091, 0, -0.1001, False, 0.5),
-        (0.091, 0, 0, True, 0),
-        (0.091, -4, -0.11, True, 0),
+        *((0.091, *case) for case in FISCAL_DISTRESS_CASES),
         (0.09, 0, 0, False, 0),
     ],
 )
