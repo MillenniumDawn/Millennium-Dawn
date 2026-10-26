@@ -15,14 +15,22 @@ def sweden_source():
 
 
 @pytest.fixture(scope="module")
-def sweden_options(sweden_source):
-    options = {}
+def sweden_events(sweden_source):
+    events = {}
     for event_type, _, event in iter_statements(sweden_source):
         if event_type not in {"country_event", "news_event"} or event is None:
             continue
         event_id = next(
             value for key, value, _ in iter_statements(event) if key == "id"
         )
+        events[event_id] = event
+    return events
+
+
+@pytest.fixture(scope="module")
+def sweden_options(sweden_events):
+    options = {}
+    for event_id, event in sweden_events.items():
         for key, _, option in iter_statements(event):
             if key != "option" or option is None:
                 continue
@@ -52,8 +60,9 @@ def _weight(option, *, bankruptcy=False, deficit=False, stability=0.6, war_suppo
             "interest_rate": 8,
         },
         predicates={
-            "has_active_mission": lambda value, _body: bankruptcy
-            and value == "bankruptcy_incoming_collapse",
+            "has_active_mission": lambda value, _body: (
+                bankruptcy and value == "bankruptcy_incoming_collapse"
+            ),
             "ai_has_high_deficit": lambda value, _body: deficit and value == "yes",
             "has_idea": lambda value, _body: value == "depression" and False,
             "has_government": lambda value, _body: value == "FROM",
@@ -153,6 +162,78 @@ def _gdp_charges(source):
     return charges
 
 
+def _recipient_for_event(option, event_id):
+    recipients = [
+        scope
+        for scope, _, body in iter_statements(option)
+        if body is not None
+        and any(
+            key == "country_event"
+            and target is not None
+            and ("id", event_id, None) in list(iter_statements(target))
+            for key, _, target in iter_statements(body)
+        )
+    ]
+    assert len(recipients) == 1, (event_id, recipients)
+    return recipients[0]
+
+
+def _helicopter_delivery_branches(option):
+    branches = {}
+    for key, _, branch in iter_statements(option):
+        if key != "if" or branch is None:
+            continue
+        limit = next(
+            (body for name, _, body in iter_statements(branch) if name == "limit"),
+            None,
+        )
+        if limit is None:
+            continue
+        suppliers = [
+            tag
+            for tag, _, scope in iter_statements(limit)
+            if scope is not None
+            and ("has_country_flag", "i_like_potato_2", None)
+            in list(iter_statements(scope))
+        ]
+        if suppliers:
+            assert len(suppliers) == 1
+            branches[suppliers[0]] = branch
+    return branches
+
+
+def test_helicopter_offer_reaches_only_guarded_suppliers(sweden_options):
+    request_suppliers = {
+        "Sweden_foci.5.o1": "USA",
+        "Sweden_foci.5.o2": "SOV",
+        "Sweden_foci.5.o3": "FRA",
+    }
+    for name, supplier in request_suppliers.items():
+        assert (
+            _recipient_for_event(sweden_options[name][1], "Sweden_foci.5001")
+            == supplier
+        )
+
+    acceptance = sweden_options["Sweden_foci.5001.o2"][1]
+    assert ("set_country_flag", "i_like_potato_2", None) in list(
+        iter_statements(acceptance)
+    )
+    assert _recipient_for_event(acceptance, "Sweden_foci.5002") == "SWE"
+    delivery = sweden_options["Sweden_foci.5002.o1"][1]
+    # FRA's accepted request sets the FRA flag, but the delayed delivery checks NRY.
+    delivery_branches = _helicopter_delivery_branches(delivery)
+    assert set(delivery_branches) == {"USA", "SOV", "NRY"}
+    reachable_suppliers = set(request_suppliers.values()) & set(delivery_branches)
+    assert reachable_suppliers == {"USA", "SOV"}
+    assert {
+        supplier: set(_gdp_charges(delivery_branches[supplier]))
+        for supplier in reachable_suppliers
+    } == {
+        "USA": {("USA", -0.07)},
+        "SOV": {("SOV", -0.07)},
+    }
+
+
 def test_delayed_purchase_charges_use_the_quoted_donor_gdp(sweden_options):
     costs = {
         "Sweden_foci.1002.o1": {("USA", -0.10), ("SOV", -0.10)},
@@ -170,11 +251,6 @@ def test_delayed_purchase_charges_use_the_quoted_donor_gdp(sweden_options):
             ("GER", -0.10),
             ("SOV", -0.10),
             ("NRY", -0.10),
-        },
-        "Sweden_foci.5002.o1": {
-            ("USA", -0.07),
-            ("SOV", -0.07),
-            ("FRA", -0.07),
         },
         "Sweden_foci.6004.o1": {
             ("GER", -0.15),
@@ -206,7 +282,6 @@ def test_delayed_gdp_costs_reduce_the_original_request_weights(sweden_options):
         "Sweden_foci.4.o3",
         "Sweden_foci.5.o1",
         "Sweden_foci.5.o2",
-        "Sweden_foci.5.o3",
         "Sweden_foci.6.o1",
         "Sweden_foci.6.o2",
         "Sweden_foci.6.o3",
