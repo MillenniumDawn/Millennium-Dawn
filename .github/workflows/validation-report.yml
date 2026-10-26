@@ -1,0 +1,59 @@
+name: Publish validation report
+
+on:
+  workflow_run:
+    workflows: [Test Suite]
+    types: [completed]
+
+concurrency:
+  group: >-
+    validation-report-${{ github.event.workflow_run.head_repository.id }}-${{
+    github.event.workflow_run.head_branch }}
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  publish:
+    name: Publish PR comment
+    if: >-
+      github.event.workflow_run.conclusion != 'cancelled' &&
+      (github.event.workflow_run.event == 'pull_request' ||
+      github.event.workflow_run.event == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout trusted publishing code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            .github/actions/setup-md-python/action.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python
+        uses: ./.github/actions/setup-md-python
+        with:
+          install: "false"
+
+      - name: Download report data
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: validation-report
+          path: ${{ runner.temp }}/validation-report
+
+      - name: Synchronize PR comment
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          COMMENT_PAYLOAD: ${{ runner.temp }}/validation-report/comment.json
+        run: >-
+          python3 tools/publish_validation_report.py
+          --payload "$COMMENT_PAYLOAD"
