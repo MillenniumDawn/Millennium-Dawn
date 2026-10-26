@@ -32,8 +32,8 @@ from validate_oob_units import (
     _parse_division_string,
     _runs_in_if_true_branch,
     _scope_label,
-    build_variant_dlc_index,
     build_variant_name_index,
+    build_variant_registry,
     check_attributed_archetypes,
     check_named_variant_refs,
     check_oob_variant_refs,
@@ -940,7 +940,7 @@ def test_named_variant_refs(content, sources, expected):
         content,
         by_tag,
         wildcard,
-        variant_dlc_index=build_variant_dlc_index(sources),
+        variant_registry=build_variant_registry(sources),
     )
 
     assert len(findings) == len(expected)
@@ -1070,7 +1070,7 @@ def test_named_variant_default_identity(defaults, variants, expected, contextual
         _NAMED_VARIANT_CONSUMERS["stockpile"],
         by_tag,
         wildcard,
-        variant_dlc_index=build_variant_dlc_index(sources) if contextual else None,
+        variant_registry=build_variant_registry(sources) if contextual else None,
         default_equipment_names=defaults,
     )
     assert [finding.kind for finding in findings] == expected
@@ -1088,7 +1088,7 @@ def test_named_variant_refs_respect_dlc_country_context():
         ),
     )
     by_tag, wildcard = build_variant_name_index([source])
-    context_index = build_variant_dlc_index([source])
+    context_index = build_variant_registry([source])
     content = (
         "add_equipment_to_stockpile = { type = small_plane_airframe_1 "
         'variant_name = "MiG-X" amount = 12 producer = SOV }'
@@ -1100,7 +1100,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_nonbba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )
         == []
     )
@@ -1110,7 +1110,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_bba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )[0].kind
         == "wrong_variant_type"
     )
@@ -1406,6 +1406,134 @@ def test_staged_variant_definition_change_rescans_unchanged_ship(
             "error",
         )
     ]
+
+
+_EVENT_VARIANT_PATH = "events/Purchase.txt"
+_SCOPED_VARIANT = "SWE = {\n" + _SWE_VARIANT + "}\n"
+_DLC_VARIANT = 'if = { limit = { has_dlc = "Man the Guns" }\n' + _SCOPED_VARIANT + "}\n"
+
+# case: (original sources, replacement sources, rescan unchanged consumers)
+_STAGED_VARIANT_SCOPE_CASES = {
+    "unrelated edit without variants": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: "add_political_power = 2\n"},
+        False,
+    ),
+    "unrelated edit beside a variant": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 2\n"},
+        False,
+    ),
+    "comment inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("type =", "# a comment\n\ttype =")},
+        False,
+    ),
+    "whitespace inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\t", "    ")},
+        False,
+    ),
+    "module edit preserves variant identity": (
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = old }\n}")},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = new }\n}")},
+        False,
+    ),
+    "variant name edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("Naresuan Class", "Renamed Class")},
+        True,
+    ),
+    "variant type edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("frigate_hull_2", "destroyer_hull_2")},
+        True,
+    ),
+    "variant addition": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        True,
+    ),
+    "variant block deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: "add_political_power = 1\n"},
+        True,
+    ),
+    "variant file deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {},
+        True,
+    ),
+    "variant file addition": (
+        {},
+        {_SWE_HISTORY: _SWE_VARIANT},
+        True,
+    ),
+    "producer scope edit": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT.replace("SWE =", "CHI =")},
+        True,
+    ),
+    "DLC condition edit": (
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT},
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT.replace("Man the Guns", "By Blood Alone")},
+        True,
+    ),
+    "history date edit": (
+        {_SWE_HISTORY: "2000.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        {_SWE_HISTORY: "2017.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        True,
+    ),
+    "file rename changes producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/NOR - Norway.txt": _SWE_VARIANT},
+        True,
+    ),
+    "file rename preserves producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/SWE - Renamed.txt": _SWE_VARIANT},
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize("scope", ["staged", "branch"])
+@pytest.mark.parametrize(
+    "original, updated, rescan",
+    _STAGED_VARIANT_SCOPE_CASES.values(),
+    ids=_STAGED_VARIANT_SCOPE_CASES,
+)
+def test_staged_variant_reference_scope(
+    tmp_path, monkeypatch, original, updated, rescan, scope
+):
+    consumer_path = "history/units/SWE_2000_nsb.txt"
+    write_tree(
+        tmp_path,
+        {
+            consumer_path: "add_equipment_to_stockpile = { type = frigate_hull_2 "
+            'variant_name = "Missing Class" producer = SWE amount = 1 }',
+            **original,
+        },
+    )
+    initialize_git_repository(tmp_path, ".")
+    run_git(tmp_path, "branch", "-M", "main")
+    run_git(tmp_path, "switch", "-c", "feature")
+    for path in original.keys() - updated.keys():
+        (tmp_path / path).unlink()
+    write_tree(tmp_path, updated)
+    run_git(tmp_path, "add", ".")
+    if scope == "branch":
+        run_git(tmp_path, "commit", "-m", "change sources")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "\n".join(dict.fromkeys([*original, *updated]))
+    )
+
+    validator = _validator(tmp_path, staged_only=True)
+    validator.validate_oob_variant_references()
+
+    assert [issue.file for issue in validator._issues] == (
+        [consumer_path] if rescan else []
+    )
 
 
 def test_unresolved_named_variant_is_reported_as_warning(tmp_path):
