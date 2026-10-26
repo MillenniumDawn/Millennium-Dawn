@@ -387,6 +387,12 @@ def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, 
 # Literal zero AI weights. The lookahead keeps `0.5` from reading as zero.
 FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
+_WEIGHT_ADD_RE = re.compile(r"\badd\s*=")
+
+
+def weight_stays_zero(weights: str) -> bool:
+    """An AI weight body with `base = 0` and no `add`: no modifier can lift it."""
+    return bool(BASE_ZERO_RE.search(weights)) and not _WEIGHT_ADD_RE.search(weights)
 
 
 def casefold_index(names) -> dict:

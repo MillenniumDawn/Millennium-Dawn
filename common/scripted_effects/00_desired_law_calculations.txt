@@ -225,9 +225,7 @@ ai_reduce_spending_on_deficit = {
 			if = {
 				limit = {
 					check_variable = { military_law > 1 }
-					# military_law is the idea number + 1, so compare on the ai_will_do scale.
-					set_temp_variable = { held_military_level = { value = military_law subtract = 1 } }
-					check_variable = { held_military_level > expected_military_sp }
+					check_variable = { military_law > expected_military_law }
 				}
 				decrease_military_spending = yes
 			}
@@ -381,7 +379,16 @@ ai_lower_expected_spending_on_deficit = {
 		}
 		# Undo one marked trim; restarts the cooldown in case the step reopens a deficit.
 		else_if = {
-			limit = { check_variable = { budget_balance_ratio > 0.08 } }
+			limit = {
+				check_variable = { budget_balance_ratio > 0.08 }
+				OR = {
+					has_country_flag = ai_deficit_cut_social
+					has_country_flag = ai_deficit_cut_health
+					has_country_flag = ai_deficit_cut_education
+					has_country_flag = ai_deficit_cut_police
+					has_country_flag = ai_deficit_cut_bureau
+				}
+			}
 			set_temp_variable = { desire_change = 1 }
 			random_list = {
 				10 = {
