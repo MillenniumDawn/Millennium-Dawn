@@ -536,6 +536,18 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+def test_empty_report_requires_every_validation_job_to_be_skipped():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    required = workflow["jobs"]["gate"]["needs"]
+    conditions = [
+        f"needs.{job}.result == '{'success' if job == 'detect-changes' else 'skipped'}'"
+        for job in required
+        if job != "report"
+    ]
+    selector = workflow["jobs"]["report"]["env"]["NO_TESTS_SELECTED"]
+    assert " ".join(selector.split()) == "${{ " + " && ".join(conditions) + " }}"
+
+
 def test_suite_step_ids_are_unique():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     for name, job in workflow["jobs"].items():
@@ -1073,14 +1085,15 @@ def test_pull_request_runs_keep_their_event_head(tmp_path, event, expected):
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
-    ("gh", "posts"),
+    ("gh", "skipped", "posts"),
     [
-        pytest.param("echo head", True, id="head unchanged"),
-        pytest.param("echo newer", False, id="head moved"),
-        pytest.param("exit 1", True, id="head unreadable"),
+        pytest.param("echo head", "false", True, id="head unchanged"),
+        pytest.param("echo newer", "false", False, id="head moved"),
+        pytest.param("exit 1", "false", True, id="head unreadable"),
+        pytest.param("echo head", "true", True, id="no tests selected"),
     ],
 )
-def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, posts):
+def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, skipped, posts):
     calls = tmp_path / "calls.txt"
     path = _stub_commands(tmp_path, gh=gh, python3=f'echo "$@" > "{calls}"')
     step = workflow_step("report", "Generate and post validation report")
@@ -1090,12 +1103,15 @@ def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, posts):
         "PR_NUMBER": "5",
         "HEAD_SHA": "head",
         "GITHUB_REPOSITORY": "o/r",
+        "NO_TESTS_SELECTED": skipped,
     }
 
     result = run_bash_step(script, tmp_path, env)
 
     assert result.returncode == 0, result.stderr
-    assert ("--post-comment" in calls.read_text(encoding="utf-8")) is posts
+    arguments = calls.read_text(encoding="utf-8")
+    assert ("--post-comment" in arguments) is posts
+    assert ("--no-tests-selected" in arguments) is (skipped == "true")
 
 
 def test_every_fingerprint_site_hashes_the_same_inputs():

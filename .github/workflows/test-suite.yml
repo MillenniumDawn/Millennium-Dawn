@@ -1226,6 +1226,15 @@ jobs:
       BASELINE_SHA: >-
         ${{ needs.detect-changes.outputs.baseline-sha || github.sha }}
       TOOLING_CHANGED: ${{ needs.detect-changes.outputs.tooling-changed }}
+      NO_TESTS_SELECTED: >-
+        ${{ needs.detect-changes.result == 'success' &&
+        needs.validate-paths.result == 'skipped' &&
+        needs.prepare-workspace.result == 'skipped' &&
+        needs.tools-tests.result == 'skipped' &&
+        needs.content-tests.result == 'skipped' &&
+        needs.tools-quality.result == 'skipped' &&
+        needs.mod-tests.result == 'skipped' &&
+        needs.docs-quality.result == 'skipped' }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.full_suite == 'true') &&
@@ -1336,6 +1345,9 @@ jobs:
             --baseline-toolshash "$TOOLSHASH"
             --baseline-commit "$BASELINE_SHA"
           )
+          if [ "$NO_TESTS_SELECTED" = true ]; then
+            args+=(--no-tests-selected)
+          fi
           if [ "$TOOLING_CHANGED" = true ]; then
             args+=(--tooling-changed)
           fi

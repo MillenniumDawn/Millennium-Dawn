@@ -121,6 +121,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     )
     parser.add_argument("--print", action="store_true")
     parser.add_argument(
+        "--no-tests-selected",
+        action="store_true",
+        help="Treat empty results as clean when the workflow selected no tests",
+    )
+    parser.add_argument(
         "--post-comment",
         action="store_true",
         help="POST/PATCH the PR comment via the GitHub REST API",
@@ -353,9 +358,10 @@ def main(argv: Optional[List[str]] = None) -> int:
                     file=sys.stderr,
                 )
                 return 1
-            # An empty run list means the pipeline didn't finish, not clean —
-            # still posts instead of clearing.
-            should_post = not runs or any(run.status != "passed" for run in runs)
+            # Missing results are not clean unless every test job was skipped.
+            should_post = (not runs and not args.no_tests_selected) or any(
+                run.status != "passed" for run in runs
+            )
             if should_post:
                 success, message = post_comment(
                     repo_owner,

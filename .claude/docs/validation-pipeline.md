@@ -142,8 +142,11 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
   `python3 tools/merge_changelog.py --fix` repairs it.
 - The report posts one PR comment: new findings against main's baseline first, then
-  findings in touched files. A clean run removes the older comment. Section titles
-  derive from artifact directory names, so keep those slugs stable.
+  findings in touched files. A clean run removes the older comment. If change
+  detection succeeds and every validation job is skipped, `--no-tests-selected`
+  also removes the older comment instead of posting an empty report. Empty results
+  without that flag still report missing output. Section titles derive from
+  artifact directory names, so keep those slugs stable.
 - Every validator writes a sidecar, even when clean, and the baseline meta lists them.
   A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
   drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
