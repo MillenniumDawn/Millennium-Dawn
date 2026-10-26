@@ -8,12 +8,10 @@ from ai_race_state_model_test import (
     _extract_block,
     _named_block,
     _parse_race_script,
+    _race_text,
 )
 
-AI_EFFECTS = ROOT / "common/scripted_effects/04_ai_race_ai_effects.txt"
-AI_TRIGGERS = ROOT / "common/scripted_triggers/MD_ai_race_ai_triggers.txt"
 AI_STRATEGIES = ROOT / "common/ai_strategy/MD_ai_race_ai.txt"
-CAPACITY_EFFECTS = ROOT / "common/scripted_effects/01_ai_race_capacity_effects.txt"
 ECONOMIC_EFFECTS = ROOT / "common/scripted_effects/00_economic_system_utilities.txt"
 ECONOMIC_TRIGGERS = ROOT / "common/scripted_triggers/00_economic_triggers.txt"
 INVESTMENT_EFFECTS = ROOT / "common/scripted_effects/99_investment_scripted_effects.txt"
@@ -25,19 +23,13 @@ class StrategicRaceScript(RaceScript):
 
     def __init__(self, mode="full"):
         super().__init__(mode)
-        self.effects.update(_parse_race_script(AI_EFFECTS.read_text(encoding="utf-8")))
-        self.effects.update(
-            _parse_race_script(CAPACITY_EFFECTS.read_text(encoding="utf-8"))
-        )
         self.effects["ai_repay_debt"] = _parse_race_script(
             ECONOMIC_EFFECTS.read_text(encoding="utf-8")
         )["ai_repay_debt"]
         self.effects["calculate_investment_spendable_treasury"] = _parse_race_script(
             INVESTMENT_EFFECTS.read_text(encoding="utf-8")
         )["calculate_investment_spendable_treasury"]
-        self.triggers.update(
-            _parse_race_script(AI_TRIGGERS.read_text(encoding="utf-8"))
-        )
+        self.triggers.update(_parse_race_script(_race_text("common/scripted_triggers")))
         economic_triggers = _parse_race_script(
             ECONOMIC_TRIGGERS.read_text(encoding="utf-8")
         )
@@ -985,7 +977,7 @@ def test_tokenized_support_research_respects_the_first_missing_year(year, expect
 
 def test_runtime_research_tokens_are_synchronized():
     research_tokens = set(
-        re.findall(r"token:([A-Za-z0-9_]+)", AI_EFFECTS.read_text(encoding="utf-8"))
+        re.findall(r"token:([A-Za-z0-9_]+)", _race_text("common/scripted_effects"))
     )
     registrations = set()
     for path in (ROOT / "common/synchronized_dynamic_tokens").glob("*.txt"):
@@ -1188,7 +1180,7 @@ def test_owner_order_revalues_savings_after_billing_and_before_discretionary_deb
         < on_actions.index("automated_debt_taker = yes")
     )
     effects = _parse_race_script(
-        (ROOT / "common/scripted_effects/03_ai_race_progression_effects.txt").read_text(
+        (ROOT / "common/scripted_effects/00_ai_race_effects.txt").read_text(
             encoding="utf-8"
         )
     )
@@ -1203,9 +1195,9 @@ def test_owner_order_revalues_savings_after_billing_and_before_discretionary_deb
 
 def test_planner_economy_guard_matches_the_native_owner_without_a_positive_enable_flag():
     owner = (ROOT / "common/on_actions/MD_on_actions.txt").read_text(encoding="utf-8")
-    triggers = AI_TRIGGERS.read_text(encoding="utf-8")
+    triggers = _race_text("common/scripted_triggers")
     assert "NOT = { has_country_flag = disabled_economic_system }" in owner
-    assert "enabled_economy" not in triggers + AI_EFFECTS.read_text(encoding="utf-8")
+    assert "enabled_economy" not in triggers + _race_text("common/scripted_effects")
     race, country = _planner()
     assert "disabled_economic_system" not in country["flags"]
     assert race.condition(race.triggers["ai_race_ai_expansion_permitted"], 1)

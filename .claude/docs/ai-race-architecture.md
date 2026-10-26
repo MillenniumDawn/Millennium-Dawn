@@ -7,6 +7,16 @@ The investment-owner offer guard and the corporate adapters for OEM-only systems
 in a later port. Natural campaign balance and UI acceptance remain separate from source
 and regression-test evidence.
 
+## Source organization
+
+Effects share `common/scripted_effects/00_ai_race_effects.txt`, with registry, capacity, finance,
+progression, and strategic planning sections. Triggers share `common/scripted_triggers/MD_ai_race.txt`.
+Both GUI bindings share `common/scripted_guis/01_ai_race_gui.txt`; both windows live in
+`interface/MD_ai_race.gui`, and English strings share `MD_ai_race_l_english.yml`.
+AI strategies, decision categories, dynamic modifiers, custom marker definitions, and scripted
+localisation retain their separate engine directories. This is the single feature architecture
+reference; tests discover feature source independently of how many files it occupies.
+
 ## Ownership and scope
 
 The race owns `ai_race_*` variables, `AI_RACE_*` country flags, its registries, declarative AI
@@ -26,7 +36,7 @@ implementation.
 
 ## Stages and centralized values
 
-`common/scripted_effects/01_ai_race_capacity_effects.txt` owns the stage requirement table.
+`common/scripted_effects/00_ai_race_effects.txt` owns the stage requirement table.
 Costs are billions of dollars. Work is completed monthly work after entry, not calendar catch-up.
 
 | Stage          | Entry from | AI tech | Work months | Upfront |
@@ -100,6 +110,12 @@ Battery withdrawal and curtailed fossil capacity must not be added again.
 
 The race modifier applies base electricity demand and resource costs. In the same modifier,
 four applied-demand markers identify the race portion actually applied by the engine.
+Actual demand uses `energy_use` and native `country_resource_cost_microchips`,
+`country_resource_cost_composites`, and `country_resource_cost_oil`. The markers impose no
+additional cost. Aggregate native modifier values also include other systems and cannot isolate
+the race share; requested `ai_race_demand_*` values can precede engine application. Removing
+the markers would therefore either credit unapplied demand or add back other consumers.
+The four markers remain paired with their native costs in one dynamic modifier.
 The energy owner samples its applied power marker and display multiplier during consumption,
 then publishes supporting capacity after the corresponding balance calculation. Only that
 sampled race load is added back; a newly requested stage cannot create apparent spare power.
@@ -128,6 +144,10 @@ weekly_installment = additional_principal / 520
 The fixed additional principal is 45% to 85% of approval-time GDP. It is additional to the upfront
 investment. There is no GDP destruction, treasury grant, or modeled IMF transfer.
 
+Finance projections use documented scripted math expressions: inactive slots contribute zero,
+active slots contribute the fixed installment, and the final slot uses the full remaining principal.
+Preview expressions never change the ledger.
+
 Each stage has one immutable original principal and weekly installment, plus remaining principal
 and installments. Concurrent packages add together. On installment 520, the exact remaining
 principal is due, including rounding residue. Even a rounded zero interim installment advances
@@ -136,7 +156,7 @@ its term after the corresponding zero charge enters weekly accounting.
 The first package cannot bill before seven days after approval. Later packages use the country's
 existing weekly cadence. A next-bill day prevents repeated weekly callbacks from collecting twice.
 
-Accounting entrypoints in `02_ai_race_finance_effects.txt`:
+Accounting entrypoints in `00_ai_race_effects.txt`:
 
 - `ai_race_refresh_finance_totals`: pure outstanding and installment projections.
 - `ai_race_refresh_finance_expense`: adds the fixed obligation after MD's inflation adjustment.
@@ -167,7 +187,7 @@ treasury remaining after upfront investment sufficient for a year of expenses.
 
 ## Strategic computer planning
 
-`04_ai_race_ai_effects.txt` owns the controller and `MD_ai_race_ai.txt` owns declarative
+`00_ai_race_effects.txt` owns the controller and `MD_ai_race_ai.txt` owns declarative
 AI strategies. Policy state uses `ai_race_ai_*`. Preparation has its own
 `global.ai_race_ai_countries` registry and never initializes a public stage or grants technology.
 
@@ -255,7 +275,7 @@ that it lapsed. A frozen, generation-bound offer record remains part of the inve
 
 One Decisions dashboard shows national progress, current physical requirements, benefits, rank,
 next investment, and financing. The public leaderboard lives in its own International Systems
-tab, The AI Race (`01_international_ai_race_gui.txt`, `MD_international_ai_race.gui`): every
+tab, The AI Race (`01_ai_race_gui.txt`, `MD_ai_race.gui`): every
 ranked participant's stage and capability, the first Frontier AI finisher, and a status line for
 Off, before 2016, no participants, and Outcomes Only. It refreshes on `global.ai_race_view_dirty`, and
 opening it calls `ai_race_bump_view` only while the race is enabled, so Off creates no state.

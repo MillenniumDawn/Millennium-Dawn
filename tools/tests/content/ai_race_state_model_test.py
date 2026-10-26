@@ -7,11 +7,6 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[3]
-EFFECTS_PATH = ROOT / "common" / "scripted_effects" / "00_ai_race_effects.txt"
-PROGRESSION_PATH = (
-    ROOT / "common" / "scripted_effects" / "03_ai_race_progression_effects.txt"
-)
-TRIGGERS_PATH = ROOT / "common" / "scripted_triggers" / "MD_ai_race_triggers.txt"
 ON_ACTIONS_PATH = ROOT / "common" / "on_actions" / "MD_on_actions.txt"
 GAME_RULES_PATH = ROOT / "common" / "game_rules" / "00_game_rules.txt"
 DECISIONS_PATH = ROOT / "common" / "decisions" / "MD_ai_race_decisions.txt"
@@ -21,6 +16,14 @@ RACE_GUI_PATH = ROOT / "interface" / "MD_ai_race.gui"
 SCRIPTED_LOC_PATH = (
     ROOT / "common" / "scripted_localisation" / "01_ai_race_localisation.txt"
 )
+
+
+def _race_text(directory):
+    return "\n".join(
+        path.read_text(encoding="utf-8-sig")
+        for path in sorted((ROOT / directory).glob("*ai_race*.txt"))
+    )
+
 
 COUNTRY_CAPABILITIES = (
     "capability",
@@ -108,16 +111,23 @@ def _variable_write_targets(text: str) -> set[str]:
     return targets
 
 
-def test_race_is_the_sole_writer_of_its_persistent_state():
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+def test_race_writes_only_its_state_and_the_economy_expense_hook():
+    effects = _race_text("common/scripted_effects")
     writes = _variable_write_targets(effects)
 
     assert writes
     assert all(
-        target.startswith("ai_race_") or target.startswith("global.ai_race_")
+        target.removeprefix("PREV.").startswith("ai_race_")
+        or target.startswith("global.ai_race_")
+        or target == "additional_expenses_rate"
         for target in writes
     )
     assert not any(target.startswith(UPSTREAM_PREFIXES) for target in writes)
+    for name, body in _parse_race_script(effects).items():
+        if "additional_expenses_rate" in _variable_write_targets(
+            _named_block(effects, name)
+        ):
+            assert name == "ai_race_refresh_finance_expense"
 
     country_flags = re.findall(
         r"\b(?:set_country_flag|clr_country_flag)\s*=\s*"
@@ -142,7 +152,7 @@ def test_race_is_the_sole_writer_of_its_persistent_state():
 
 
 def test_first_enabled_pulse_publishes_without_advancing_scheduled_state():
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    effects = _race_text("common/scripted_effects")
     on_actions = ON_ACTIONS_PATH.read_text(encoding="utf-8")
     initialize = _named_block(effects, "ai_race_initialize_global")
     rebuild = _named_block(effects, "ai_race_rebuild_derived_state")
@@ -165,8 +175,8 @@ def test_first_enabled_pulse_publishes_without_advancing_scheduled_state():
 
 
 def test_modes_cleanup_and_participant_reentry_have_live_routes():
-    triggers = TRIGGERS_PATH.read_text(encoding="utf-8")
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    triggers = _race_text("common/scripted_triggers")
+    effects = _race_text("common/scripted_effects")
     rules = GAME_RULES_PATH.read_text(encoding="utf-8")
     on_actions = ON_ACTIONS_PATH.read_text(encoding="utf-8")
 
@@ -203,7 +213,7 @@ def test_modes_cleanup_and_participant_reentry_have_live_routes():
 
 
 def test_country_adapters_use_one_energy_guard_and_all_ai_technology_tiers():
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    effects = _race_text("common/scripted_effects")
     rebuild = _named_block(effects, "ai_race_rebuild_country_metrics")
 
     assert rebuild.count("check_variable = { energy_difference_variable < 0 }") == 1
@@ -230,7 +240,7 @@ def test_country_adapters_use_one_energy_guard_and_all_ai_technology_tiers():
 
 
 def test_rebuild_is_idempotent_and_quarter_wrapper_owns_replay_mutation():
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    effects = _race_text("common/scripted_effects")
     metrics = _named_block(effects, "ai_race_rebuild_country_metrics")
     rebuild = _named_block(effects, "ai_race_rebuild_derived_state")
     quarterly = _named_block(effects, "ai_race_quarterly_reconcile")
@@ -263,7 +273,7 @@ def test_rebuild_is_idempotent_and_quarter_wrapper_owns_replay_mutation():
 
 
 def test_ranking_replay_guards_and_clamps_match_the_documented_bounds():
-    effects = EFFECTS_PATH.read_text(encoding="utf-8")
+    effects = _race_text("common/scripted_effects")
     repair_country = _named_block(effects, "ai_race_repair_country_state")
     repair_global = _named_block(effects, "ai_race_repair_global_state")
     ranking = _named_block(effects, "ai_race_rebuild_frontier_and_ranking")
@@ -406,18 +416,8 @@ class RaceScript:
     }
 
     def __init__(self, mode="full", corporate_mode="full"):
-        self.effects = _parse_race_script(
-            EFFECTS_PATH.read_text(encoding="utf-8")
-            + PROGRESSION_PATH.read_text(encoding="utf-8")
-        )
-        self.triggers = _parse_race_script(TRIGGERS_PATH.read_text(encoding="utf-8"))
-        self.triggers.update(
-            _parse_race_script(
-                (
-                    ROOT / "common/scripted_triggers/MD_ai_race_ai_triggers.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
+        self.effects = _parse_race_script(_race_text("common/scripted_effects"))
+        self.triggers = _parse_race_script(_race_text("common/scripted_triggers"))
         for filename, names in (
             (
                 "00_economic_triggers.txt",
@@ -479,7 +479,22 @@ class RaceScript:
     def value(self, name, identifier):
         if isinstance(name, list):
             result = 0
+            matched = False
             for key, _op, operand in name:
+                if key in {"if", "else"}:
+                    if key == "if":
+                        matched = False
+                    limit = next(
+                        (value for field, _, value in operand if field == "limit"), []
+                    )
+                    if not matched and (key == "else" or self.value(limit, identifier)):
+                        matched = True
+                        result = self.value(
+                            [("value", "=", str(result))]
+                            + [entry for entry in operand if entry[0] != "limit"],
+                            identifier,
+                        )
+                    continue
                 if key == "clamp":
                     limits = {key: value for key, _op, value in operand}
                     if "min" in limits:
@@ -502,6 +517,8 @@ class RaceScript:
                     result = min(result, number)
                 elif key == "max":
                     result = max(result, number)
+                elif key in self.comparisons:
+                    result = int(self.comparisons[key](result, number))
                 else:
                     raise AssertionError(f"Unsupported expression {key}")
             return result
@@ -1628,3 +1645,14 @@ def test_dashboard_bottleneck_source_order_resolves_ties(ratios, expected):
     )
     assert selected == expected
     assert f"AI_RACE_bottleneck_{selected}" in block
+
+
+@pytest.mark.parametrize("value,expected", [(2, 1), (10, 9), (11, 111)])
+def test_documented_math_conditionals_use_expression_limits(value, expected):
+    race = RaceScript()
+    country = race.country(1)
+    country["vars"]["math_input"] = value
+    expression = _parse_race_script(
+        "math = { value = math_input if = { limit = { value = math_input greater_than = 10 } add = 100 } else = { subtract = 1 } }"
+    )["math"]
+    assert race.value(expression, 1) == expected

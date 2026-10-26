@@ -2,7 +2,6 @@ import pytest
 from ai_race_state_model_test import ROOT, _named_block, _parse_race_script
 from ai_race_strategic_ai_test import StrategicRaceScript
 
-ENERGY_TRIGGERS = ROOT / "common/scripted_triggers/MD_ai_race_energy_triggers.txt"
 DIPLOMACY = (
     ROOT / "common/scripted_diplomatic_actions/00_scripted_diplomatic_actions.txt"
 )
@@ -38,9 +37,6 @@ class EnergyRaceScript(StrategicRaceScript):
 
     def __init__(self, mode="full"):
         super().__init__(mode)
-        self.triggers.update(
-            _parse_race_script(ENERGY_TRIGGERS.read_text(encoding="utf-8"))
-        )
 
     def condition(self, statements, identifier):
         values = self.countries[identifier]["vars"]
@@ -331,3 +327,40 @@ def test_a_lapsed_reactor_purchase_moves_nothing_and_tells_the_buyer():
     buyer = _body(lapsed, "ROOT")
     assert ("clear_variable", "=", "pending_reactor_material_purchase") in buyer
     assert ("country_event", "=", "MD_nuclear_energy.2") in buyer
+
+
+@pytest.mark.parametrize("settlement", ["settled", "old_markers", "before_boundary"])
+def test_live_resource_sampling_adds_back_only_applied_race_costs(settlement):
+    race, country = _recovering()
+    values = country["vars"]
+    day = race.globals["num_days"]
+    values.update(
+        ai_race_stage=1,
+        ai_race_power_multiplier=1,
+        ai_race_demand_settle_day=day + (settlement == "before_boundary"),
+        ai_race_demand_power=2,
+        ai_race_demand_microchips=5,
+        ai_race_demand_composites=2,
+        ai_race_demand_oil=2,
+    )
+    for resource, demand, net in (
+        ("power", 2, 0),
+        ("microchips", 5, 3),
+        ("composites", 2, 2),
+        ("oil", 2, 1),
+    ):
+        values[f"modifier@ai_race_applied_{resource}"] = demand - (
+            settlement == "old_markers"
+        )
+        values[f"modifier@country_resource_cost_{resource}"] = demand + 10
+        values[f"resource@{resource}"] = net
+    race.run("ai_race_refresh_capacity_sample", 1)
+    assert values["ai_race_capacity_settled"] == (settlement == "settled")
+    expected = (8, 4, 3) if settlement == "settled" else (3, 2, 1)
+    assert (
+        tuple(
+            values[f"ai_race_{resource}_available"]
+            for resource in ("microchips", "composites", "oil")
+        )
+        == expected
+    )
