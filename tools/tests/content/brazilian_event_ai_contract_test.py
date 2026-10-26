@@ -9,9 +9,6 @@ _TREASURY_COSTS = [
     ("brazil.28.a", 1),
     ("brazil.42.a", 1),
     ("brazil_flavour_events.7.a", 1),
-    ("brazil_amazon.22.a", 1),
-    ("brazil_amazon.24.a", 1),
-    ("brazil_amazon.25.a", 1),
     ("brazil_flavour_events.9.a", 1),
     ("brazil_flavour_events.11.b", 1),
     ("brazil_amazon.6.b", 5),
@@ -19,7 +16,7 @@ _TREASURY_COSTS = [
     ("brazil_amazon.13.c", 1),
     ("brazil_amazon.15.b", 1),
 ]
-_BUILDING_COSTS = [
+_COMPANY_FUNDED_BUILDS = [
     "brazil_amazon.22.a",
     "brazil_amazon.24.a",
     "brazil_amazon.25.a",
@@ -75,10 +72,17 @@ def economy():
         REPO_ROOT / "common/scripted_triggers/00_economic_triggers.txt"
     )
     result = EconomicScriptFixture(
-        {"treasury_rate": 0, "budget_balance_ratio": 0},
+        {
+            "treasury_rate": 0,
+            "budget_balance_ratio": 0,
+            "industrial_conglomerates_opinion": 100,
+            "small_medium_business_owners_opinion": 100,
+            "fossil_fuel_industry_opinion": 100,
+        },
         predicates={
             "has_active_mission": lambda *_: False,
             "has_government": lambda *_: False,
+            "has_idea": lambda *_: False,
             "has_opinion": lambda *_: False,
         },
         triggers={"ai_has_high_deficit": script_block(triggers, "ai_has_high_deficit")},
@@ -94,13 +98,51 @@ def _set_fiscal_state(economy, bankrupt, deficit):
         treasury_rate=-3.01 if deficit else 0,
         budget_balance_ratio=0,
     )
-    economy.predicates["has_active_mission"] = (
-        lambda mission, _: bankrupt and mission == "bankruptcy_incoming_collapse"
+    economy.predicates["has_active_mission"] = lambda mission, _: (
+        bankrupt and mission == "bankruptcy_incoming_collapse"
     )
 
 
 def _weight(options, economy, name):
     return economy.weight(script_block(options[name], "ai_chance"))
+
+
+def _set_cross_country_bankruptcy(economy, france_bankrupt, brazil_bankrupt):
+    _set_fiscal_state(economy, france_bankrupt, False)
+
+    def brazil_scope(_, body):
+        original_mission = economy.predicates["has_active_mission"]
+        economy.predicates["has_active_mission"] = lambda mission, _: (
+            brazil_bankrupt and mission == "bankruptcy_incoming_collapse"
+        )
+        try:
+            return economy.condition(body)
+        finally:
+            economy.predicates["has_active_mission"] = original_mission
+
+    economy.predicates["BRA"] = brazil_scope
+
+
+def _weight_at_stability(options, economy, name, stability):
+    original_condition = economy.condition
+
+    def condition(source):
+        entries = list(iter_statement_ops(source))
+        if len(entries) == 1 and entries[0][0] == "has_stability":
+            _, comparison, threshold, body = entries[0]
+            assert body is None and comparison in {"<", ">"} and threshold is not None
+            return (
+                stability < float(threshold)
+                if comparison == "<"
+                else stability > float(threshold)
+            )
+        return original_condition(source)
+
+    economy.condition = condition
+    try:
+        return _weight(options, economy, name)
+    finally:
+        economy.condition = original_condition
 
 
 def _has_payment_setter(source, variable, value, effect):
@@ -129,11 +171,25 @@ def test_treasury_cost_weights_respond_to_bankruptcy_and_deficits(
     assert _weight(brazilian_options, economy, name) == pytest.approx(base * factor)
 
 
-@pytest.mark.parametrize("name", _BUILDING_COSTS)
-def test_charged_building_construction_is_financially_weighted(brazilian_options, name):
-    state = script_block(brazilian_options[name], "random_owned_controlled_state")
+@pytest.mark.parametrize("name", _COMPANY_FUNDED_BUILDS)
+def test_company_funded_builds_remain_cost_free_and_unweighted(brazilian_options, name):
+    option = brazilian_options[name]
+    state = script_block(option, "random_owned_controlled_state")
     construction = script_block(state, "add_building_construction")
-    assert ("skip_payment", "1", None) not in list(iter_statements(construction))
+    fields = list(iter_statements(option))
+
+    assert ("instant_build", "yes", None) in list(iter_statements(construction))
+    assert ("BRA_wild_acreage_effect", "yes", None) in fields
+    assert not any(
+        key in {"ai_chance", "modify_treasury_effect", "modify_debt_effect"}
+        for key, _, _ in fields
+    )
+    assert not any(
+        key == "set_temp_variable"
+        and body is not None
+        and any(name == "treasury_change" for name, _, _ in iter_statements(body))
+        for key, _, body in iter_statements(option)
+    )
 
 
 @pytest.mark.parametrize("name", _POLITICAL_POWER_COSTS)
@@ -148,7 +204,9 @@ def test_political_power_cost_weights_stay_positive_and_avoid_bankruptcy(
 
 
 @pytest.mark.parametrize("name", _STABILITY_LOSSES)
-def test_stability_losses_are_discounted_when_stability_is_low(brazilian_options, name):
+def test_stability_losses_are_discounted_when_stability_is_low(
+    brazilian_options, economy, name
+):
     option = brazilian_options[name]
     assert any(
         key == "add_stability" and value is not None and float(value) < 0
@@ -164,6 +222,9 @@ def test_stability_losses_are_discounted_when_stability_is_low(brazilian_options
         and ("has_stability", "<", "0.4", None) in list(iter_statement_ops(modifier))
         for modifier in modifiers
     )
+    high = _weight_at_stability(brazilian_options, economy, name, 0.6)
+    low = _weight_at_stability(brazilian_options, economy, name, 0.2)
+    assert 0 < low < high
 
 
 def test_cost_free_fallback_weights_remain_positive(brazilian_options, economy):
@@ -182,13 +243,15 @@ def test_debt_assistance_keeps_diplomatic_adds_before_cost_factors(
     assert _weight(brazilian_options, economy, "brazil.42.a") == pytest.approx(1.5)
 
 
+@pytest.mark.parametrize(
+    ("france_bankrupt", "brazil_bankrupt", "expected"),
+    [(False, False, 1), (True, False, 1), (False, True, 0.25), (True, True, 0.25)],
+)
 def test_french_refusal_weights_brazils_political_power_cost(
-    brazilian_options, economy
+    brazilian_options, economy, france_bankrupt, brazil_bankrupt, expected
 ):
-    _set_fiscal_state(economy, False, False)
-    assert _weight(brazilian_options, economy, "brazil.15.b") == 1
-    _set_fiscal_state(economy, True, False)
-    assert _weight(brazilian_options, economy, "brazil.15.b") == 0.25
+    _set_cross_country_bankruptcy(economy, france_bankrupt, brazil_bankrupt)
+    assert _weight(brazilian_options, economy, "brazil.15.b") == expected
 
 
 def test_delayed_debt_assistance_payment_matches_its_weighted_preview(
