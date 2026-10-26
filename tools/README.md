@@ -194,6 +194,11 @@ remain generated. Update `tools/data/targeted_operations.json`, then run
 `python tools/generators/generate_targeted_operations.py`; use `--check` to detect
 drift without writing. Person and organization IDs remain permanent.
 
+Loop alias casing is checked by the shared scripted-parameter validator across
+all script caller directories. TOP content tests exercise that shared check;
+its synthetic cases cover each loop kind and binding field. Findings stay warnings
+while existing content is triaged.
+
 Static script tests and `top_lifecycle_probe.py wiring` establish source behavior
 and reachability. Native callback timing, GUI rendering, and save serialization
 still require separate runtime evidence.

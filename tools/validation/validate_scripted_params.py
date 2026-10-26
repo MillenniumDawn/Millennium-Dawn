@@ -485,6 +485,43 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     return tokens
 
 
+_LOOP_FIELD_RE = re.compile(
+    r'([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(\{|"[^"\n]*"|[^\s{}]+)|([{}])'
+)
+_LOOP_KINDS = {"for_each_loop", "for_loop_effect", "any_of", "all_of"}
+_LOOP_BINDINGS = {"value", "index", "break"}
+
+
+def _loop_binding_syntax(text: str, rel: str) -> List[Tuple[str, str, int]]:
+    """Engine loop aliases are lowercase, unlike ordinary variable names."""
+    stack = []
+    results = []
+    for match in _LOOP_FIELD_RE.finditer(text):
+        key, value, brace = match.groups()
+        if value == "{" or brace == "{":
+            stack.append(key)
+        elif brace == "}":
+            if stack:
+                stack.pop()
+        elif (
+            stack
+            and stack[-1] in _LOOP_KINDS
+            and key in _LOOP_BINDINGS
+            and value
+            and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value)
+            and value != value.lower()
+        ):
+            line = text.count("\n", 0, match.start()) + 1
+            results.append(
+                (
+                    "uppercase-loop-binding",
+                    f"{rel}:{line} - {stack[-1]} {key} alias '{value}' must be lowercase",
+                    line,
+                )
+            )
+    return results
+
+
 def _unsupported_effect_syntax(
     text: str, rel: str, effect_names: "frozenset[str]"
 ) -> List[Tuple[str, str, int]]:
@@ -598,6 +635,7 @@ def _validate_call_sites_in_file(
     rel = os.path.relpath(filepath, mod_path)
 
     results = _unsupported_effect_syntax(text, rel, effect_names)
+    results.extend(_loop_binding_syntax(text, rel))
 
     # Quick pre-check: does this file reference any contracted effect?
     contracted_names = set(contracts.keys())
@@ -1168,6 +1206,7 @@ class Validator(BaseValidator):
         unsupported_argument_results = []
         unsupported_placeholder_results = []
         lowercase_scope_results = []
+        loop_binding_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -1189,6 +1228,8 @@ class Validator(BaseValidator):
                     unsupported_placeholder_results.append(message)
                 elif category == "lowercase-scope-shadowed-by-effect":
                     lowercase_scope_results.append(message)
+                elif category == "uppercase-loop-binding":
+                    loop_binding_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
 
@@ -1212,6 +1253,14 @@ class Validator(BaseValidator):
             "Scopes sharing a name with a scripted effect, written lowercase (use uppercase):",
             severity=Severity.WARNING,
             category="lowercase-scope-shadowed-by-effect",
+        )
+
+        self._report(
+            loop_binding_results,
+            "All loop aliases are lowercase",
+            "Loop aliases the engine resolves as lowercase:",
+            severity=Severity.WARNING,
+            category="uppercase-loop-binding",
         )
 
         self._report(

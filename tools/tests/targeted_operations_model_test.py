@@ -1,5 +1,14 @@
 import pytest
 from targeted_operations_helpers import RaceScript, _parse_race_script
+from targeted_operations_helpers import (
+    _extract_block as _extract_block,
+)
+from targeted_operations_helpers import (
+    _named_block as _named_block,
+)
+from targeted_operations_helpers import (
+    _substitute_script_parameters as _substitute_script_parameters,
+)
 
 
 @pytest.mark.parametrize("reference", ("TOP_history_rows", "global.TOP_history_rows"))

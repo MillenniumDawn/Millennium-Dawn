@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+import validate_scripted_params as vsp
 from targeted_operations_authorization_test import ReviewScript
 from targeted_operations_core_test import ScriptArray, TargetScript
 from targeted_operations_helpers import _extract_block, _named_block, _parse_race_script
@@ -441,27 +442,22 @@ def test_history_wrap_refreshes_an_open_tab_when_another_subject_replaces_its_ro
     assert script.external["TOP_refresh_view", 1] == before + 1
 
 
-LOOP_PATTERN = re.compile(r"\b(for_each_loop|for_loop_effect|any_of|all_of)\s*=\s*\{")
-
-
-SCRIPT_PATHS = sorted(
-    path
-    for folder in ("common/scripted_effects", "common/scripted_triggers")
-    for path in (ROOT / folder).glob("*targeted_operations*.txt")
-)
-
-
-@pytest.mark.parametrize("path", SCRIPT_PATHS, ids=lambda path: path.name)
-def test_top_loop_bindings_use_engine_resolvable_lowercase_names(path):
-    text = path.read_text(encoding="utf-8")
-    for match in LOOP_PATTERN.finditer(text):
-        kind = match.group(1)
-        loop = _parse_race_script(_named_block(text[match.start() :], kind))[kind]
-        bindings = {
-            key: value for key, _, value in loop if key in {"value", "index", "break"}
-        }
-        for key, name in bindings.items():
-            assert name == name.lower(), (path.name, kind, key, name)
+def test_top_loop_bindings_use_shared_static_validation():
+    paths = [
+        path
+        for folder in ("common/scripted_effects", "common/scripted_triggers")
+        for path in (ROOT / folder).glob("*targeted_operations*.txt")
+    ]
+    assert paths
+    findings = [
+        finding
+        for path in paths
+        for finding in vsp._validate_call_sites_in_file(
+            (str(path), {}, str(ROOT), frozenset(), frozenset(), frozenset())
+        )
+        if finding[0] == "uppercase-loop-binding"
+    ]
+    assert findings == []
 
 
 def discovery_script():

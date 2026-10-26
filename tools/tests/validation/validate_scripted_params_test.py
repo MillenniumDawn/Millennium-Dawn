@@ -1461,6 +1461,87 @@ _UNSUPPORTED_SYNTAX_CASES = {
 }
 
 
+_UNSUPPORTED_SYNTAX_CASES.update(
+    {
+        f"{kind}_{field}_alias": (
+            "events/caller.txt",
+            "",
+            f"{kind} = {{ {field} = MixedCase }}\n",
+            [("uppercase-loop-binding", "events/caller.txt", 1)],
+        )
+        for kind in ("for_each_loop", "for_loop_effect", "any_of", "all_of")
+        for field in ("value", "index", "break")
+    }
+)
+_UNSUPPORTED_SYNTAX_CASES.update(
+    {
+        "lowercase_loop_aliases_and_uppercase_array": (
+            "events/caller.txt",
+            "",
+            "for_each_loop = { array = UPPER value = item index = idx break = done }\n",
+            [],
+        ),
+        "nested_nonbinding_fields": (
+            "events/caller.txt",
+            "",
+            "for_each_loop = { value = item limit = { index = UPPER } }\n",
+            [],
+        ),
+        "loop_alias_comments_and_quotes": (
+            "events/caller.txt",
+            "",
+            '# for_each_loop = { index = UPPER }\nlog = "for_each_loop = { value = UPPER }"\n',
+            [],
+        ),
+        "multiline_loop_alias_and_nested_loop": (
+            "events/caller.txt",
+            "",
+            "for_each_loop = { value = lower all_of = {\n index =\n UPPER } }\n",
+            [("uppercase-loop-binding", "events/caller.txt", 2)],
+        ),
+        "multiple_bad_loop_fields_same_line": (
+            "events/caller.txt",
+            "",
+            "for_each_loop = { value = UPPER index = OTHER }\n",
+            [
+                ("uppercase-loop-binding", "events/caller.txt", 1),
+                ("uppercase-loop-binding", "events/caller.txt", 1),
+            ],
+        ),
+        "loop_alias_bom_crlf": (
+            "events/caller.txt",
+            "",
+            "\ufefffor_loop_effect = {\r\n value = UPPER\r\n}\r\n",
+            [("uppercase-loop-binding", "events/caller.txt", 2)],
+        ),
+    }
+)
+
+
+_UNSUPPORTED_SYNTAX_CASES.update(
+    {
+        "unmatched_close_does_not_corrupt_loop_tracking": (
+            "events/caller.txt",
+            "",
+            "}\nfor_each_loop = { value = lower }\n",
+            [],
+        ),
+        "binding_fields_outside_loops_and_numeric_rhs": (
+            "events/caller.txt",
+            "",
+            "index = UPPER\nfor_each_loop = { value = 3 }\n",
+            [],
+        ),
+        "anonymous_array_block_inside_loop": (
+            "events/caller.txt",
+            "",
+            "for_each_loop = { array = { FIRST SECOND } value = item }\n",
+            [],
+        ),
+    }
+)
+
+
 @pytest.mark.parametrize("case", _UNSUPPORTED_SYNTAX_CASES)
 def test_unsupported_scripted_effect_syntax(tmp_path, case):
     relative, definitions, caller, expected = _UNSUPPORTED_SYNTAX_CASES[case]

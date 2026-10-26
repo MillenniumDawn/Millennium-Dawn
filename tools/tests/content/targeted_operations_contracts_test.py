@@ -22,32 +22,34 @@ def test_game_rule_modes_and_authoritative_eligibility_contract():
     triggers = read("common/scripted_triggers/01_targeted_operations_triggers.txt")
     effects = read("common/scripted_effects/00_targeted_operations_effects.txt")
 
-    assert "default = {\n\t\tname = TOP_limited_sandbox_option" in rules
-    assert rules.count("name = TOP_limited_sandbox_option") == 1
-    assert rules.count("name = TOP_full_sandbox_option") == 1
-    assert rules.count("name = TOP_disabled_option") == 1
-    for name in (
+    rule = _parse_race_script(rules)["TOP_game_rule"]
+    options = [
+        (next(value for key, _, value in body if key == "name"), kind)
+        for kind, _, body in rule
+        if kind in {"default", "option"}
+    ]
+    assert len(options) == len({name for name, _ in options})
+    assert dict(options) == {
+        "TOP_limited_sandbox_option": "default",
+        "TOP_full_sandbox_option": "option",
+        "TOP_disabled_option": "option",
+    }
+    predicates = _parse_race_script(triggers)
+    assert {
         "TOP_enabled",
         "TOP_limited_sandbox",
         "TOP_full_sandbox",
         "TOP_person_operational_eligible",
         "TOP_organization_operational_eligible",
         "TOP_facility_operational_eligible",
-    ):
-        assert f"{name} = {{" in triggers
-
-    assert "is_ai = no" in block(
-        "common/scripted_triggers/01_targeted_operations_triggers.txt",
-        "TOP_human_offense",
-    )
-    assert "TOP_human_offense = yes" in block(
-        "common/scripted_triggers/01_targeted_operations_triggers.txt",
+    } <= predicates.keys()
+    assert ("is_ai", "=", "no") in predicates["TOP_human_offense"]
+    for name in (
         "TOP_person_operational_eligible",
-    )
-    assert "TOP_human_offense = yes" in block(
-        "common/scripted_triggers/01_targeted_operations_triggers.txt",
         "TOP_organization_operational_eligible",
-    )
+    ):
+        assert ("TOP_human_offense", "=", "yes") in predicates[name]
+
     assert "TOP_rule_enabled" not in effects
 
 
@@ -829,23 +831,8 @@ TRIGGERS = (
 ).read_text(encoding="utf-8")
 
 
-CASES = (ROOT / "common/scripted_effects/04_targeted_operations_cases.txt").read_text(
-    encoding="utf-8"
-)
-
-
-CASE_TRIGGERS = (
-    ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
-).read_text(encoding="utf-8")
-
-
 CORE_EFFECTS = (
     ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
-).read_text(encoding="utf-8")
-
-
-CORE_TRIGGERS = (
-    ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
 ).read_text(encoding="utf-8")
 
 
@@ -863,14 +850,6 @@ LOCALISATION_PATH = ROOT / "localisation/english/MD_targeted_operations_l_englis
 LOCALISATION = LOCALISATION_PATH.read_text(encoding="utf-8-sig")
 
 
-AUTH_LOCALISATION_PATH = (
-    ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
-)
-
-
-AUTH_LOCALISATION = AUTH_LOCALISATION_PATH.read_text(encoding="utf-8-sig")
-
-
 YEARLY = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
     encoding="utf-8"
 )
@@ -878,11 +857,6 @@ YEARLY = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
 
 REGISTRY = (
     ROOT / "common/scripted_effects/01_targeted_operations_registry.txt"
-).read_text(encoding="utf-8")
-
-
-WRAPPERS = (
-    ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
 ).read_text(encoding="utf-8")
 
 
@@ -964,7 +938,7 @@ def test_headline_visit_schedule_and_fixed_story_bindings():
 
 def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution():
     for field in ("token", "status", "story"):
-        assert f"TOP_case_visit_{field}^TOP_arg_target" in CASES
+        assert f"TOP_case_visit_{field}^TOP_arg_target" in EFFECTS
     execution = _named_block(TRIGGERS, "TOP_case_visit_execution_valid")
     assert (
         "TOP_case_visit_token^TOP_case_visit_target = global.TOP_visit_active_token^TOP_case_visit_target"
@@ -975,15 +949,15 @@ def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution()
         "var = global.TOP_clock value = global.TOP_visit_execution_until^TOP_case_visit_target compare = less_than_or_equals"
         in execution
     )
-    assert "TOP_case_visit_execution_valid = yes" in CASE_TRIGGERS
+    assert "TOP_case_visit_execution_valid = yes" in TRIGGERS
     assert (
         "var = TOP_case_until^TOP_arg_target value = global.TOP_clock compare = greater_than_or_equals"
-        not in _named_block(CASE_TRIGGERS, "TOP_case_binding_valid")
+        not in _named_block(TRIGGERS, "TOP_case_binding_valid")
     )
     assert "TOP_case_until^TOP_arg_target > global.TOP_clock" in _named_block(
-        CASE_TRIGGERS, "TOP_can_begin_person_operation"
+        TRIGGERS, "TOP_can_begin_person_operation"
     )
-    stood_down = _named_block(CORE_TRIGGERS, "TOP_native_callback_matches_stood_down")
+    stood_down = _named_block(TRIGGERS, "TOP_native_callback_matches_stood_down")
     for requirement in (
         "TOP_native_callback_matches_stood_down_tuple = yes",
         "TOP_case_until^TOP_target > global.TOP_clock",
@@ -997,7 +971,7 @@ def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution()
 
 
 def test_cancelled_visit_closes_preparation_but_underway_operation_fails_closed():
-    processor = _named_block(CASES, "TOP_process_cases")
+    processor = _named_block(EFFECTS, "TOP_process_cases")
     assert "TOP_case_phase^TOP_target < 3" in processor
     assert "global.TOP_visit_status^TOP_target = 0" in processor
     assert "NOT = { TOP_authored_role_eligible = yes }" in processor
@@ -1014,9 +988,9 @@ def test_cancelled_visit_closes_preparation_but_underway_operation_fails_closed(
     assert "global.TOP_visit_active_token^TOP_case_visit_target" in execution
     assert "global.TOP_visit_status^TOP_case_visit_target = 2" in execution
     assert "TOP_case_visit_execution_valid = yes" in _named_block(
-        CORE_TRIGGERS, "TOP_native_callback_matches_stood_down"
+        TRIGGERS, "TOP_native_callback_matches_stood_down"
     )
-    assert "TOP_case_visit_execution_valid = yes" in CASE_TRIGGERS
+    assert "TOP_case_visit_execution_valid = yes" in TRIGGERS
 
 
 def test_visit_review_deadline_and_specific_tooltip_are_wired():
@@ -1191,10 +1165,10 @@ def test_unmatched_exposed_killing_uses_independent_news_snapshots():
         "TOP_unmatched_incident_host",
     ):
         assert f"set_variable = {{ {variable} = 0 }}" in option
-        assert f"[?{variable}.GetNameDef]" in AUTH_LOCALISATION
+        assert f"[?{variable}.GetNameDef]" in LOCALISATION
     independent_desc = next(
         line
-        for line in AUTH_LOCALISATION.splitlines()
+        for line in LOCALISATION.splitlines()
         if line.startswith(" TOP_crisis.12.d:")
     )
     assert "global.TOP_crisis_" not in independent_desc
@@ -1341,9 +1315,9 @@ def test_engine_safe_wrappers_cover_every_appended_target_and_novichok():
     assert "$TARGET$" not in TRIGGERS
     assert "$STORY$" not in TRIGGERS
     for target in range(129, 161):
-        assert f"TOP_authored_role_eligible_{target} = {{" in WRAPPERS
-    assert "TOP_method_startable_7 = {" in WRAPPERS
-    assert "set_temp_variable = { TOP_requested_method = 7 }" in WRAPPERS
+        assert f"TOP_authored_role_eligible_{target} = {{" in TRIGGERS
+    assert "TOP_method_startable_7 = {" in TRIGGERS
+    assert "set_temp_variable = { TOP_requested_method = 7 }" in TRIGGERS
 
 
 def test_visit_retention_and_dossier_refresh_share_full_live_revalidation():

@@ -582,16 +582,6 @@ METHODS = {3: "covert_killing", 4: "rendition", 5: "host_arrest", 7: "poisoning"
 class AgencyScript(CoreIntegrationScript):
     def __init__(self):
         super().__init__()
-        self.effects.update(
-            _parse_race_script(
-                read("common/scripted_effects/00_targeted_operations_effects.txt")
-            )
-        )
-        self.triggers.update(
-            _parse_race_script(
-                read("common/scripted_triggers/01_targeted_operations_triggers.txt")
-            )
-        )
         self.globals["num_days"] = 0
         self.operation_type = ""
         self.running = set()
@@ -1098,13 +1088,6 @@ class CrisisOpinionScript(TargetScript):
 
     def __init__(self):
         super().__init__()
-        self.effects.update(
-            _parse_race_script(
-                (
-                    ROOT / "common/scripted_effects/04_targeted_operations_cases.txt"
-                ).read_text(encoding="utf-8")
-            )
-        )
         self.crisis_events = _parse_race_script(
             "events = {\n"
             + (ROOT / "events/Targeted Operations.txt").read_text(encoding="utf-8")
