@@ -1,9 +1,11 @@
 """Economic AI weights in India's multi-option events."""
 
+import re
+
 import pytest
 from shared.paths import REPO_ROOT
 from shared.suite import EconomicScriptFixture, read_text, script_block
-from shared_utils import iter_statement_ops, iter_statements, strip_comments
+from shared_utils import iter_statements, strip_comments
 
 _EVENT_SOURCE = strip_comments(read_text(REPO_ROOT / "events" / "Indian.txt"))
 _ECONOMIC_TRIGGERS = read_text(
@@ -38,33 +40,73 @@ def _modifier_bodies(option):
 _OPTIONS = _options()
 
 
-def _economy(bankruptcy=False, deficit=False, opinion=False):
+def _financial_economy(bankruptcy, deficit, stability=0.6, war_support=0.6):
+    return EconomicScriptFixture(
+        {
+            "treasury_rate": -4 if deficit else 0,
+            "budget_balance_ratio": 0,
+            "stability": stability,
+            "war_support": war_support,
+            "RAJ_muslim_opinion": 50,
+        },
+        predicates={
+            "has_active_mission": lambda name, _block: (
+                bankruptcy and name == "bankruptcy_incoming_collapse"
+            ),
+        },
+        triggers={"ai_has_high_deficit": _HIGH_DEFICIT},
+    )
+
+
+def _economy(
+    bankruptcy=False,
+    deficit=False,
+    opinion=False,
+    stability=0.6,
+    war_support=0.6,
+    raj_bankruptcy=False,
+    raj_deficit=False,
+):
     def has_opinion(_value, block):
         assert block is not None
         assert any(key == "target" for key, _, _ in iter_statements(block))
         return opinion
 
-    economy = EconomicScriptFixture(
+    economy = _financial_economy(bankruptcy, deficit, stability, war_support)
+    economy.predicates.update(
         {
-            "treasury_rate": -4 if deficit else 0,
-            "budget_balance_ratio": 0,
-        },
-        predicates={
-            "has_active_mission": lambda name, _block: bankruptcy
-            and name == "bankruptcy_incoming_collapse",
             "has_opinion": has_opinion,
             "RAJ_both_conflict_sides_below_35": lambda _value, _block: False,
             "RAJ_has_severe_naxalite_states_trigger": lambda _value, _block: False,
             "is_historical_focus_on": lambda _value, _block: False,
-        },
-        triggers={"ai_has_high_deficit": _HIGH_DEFICIT},
+            "has_government": lambda _value, _block: False,
+            "strength_ratio": lambda _value, _block: False,
+        }
     )
-    economy.predicates["RAJ"] = lambda _value, block: economy.condition(block)
+    raj = _financial_economy(raj_bankruptcy, raj_deficit)
+    economy.predicates["RAJ"] = lambda _value, block: raj.condition(block)
     return economy
 
 
+_NUMERIC_AI_TRIGGERS = re.compile(
+    r"\b(has_stability|has_war_support)\s*<\s*(\d+(?:\.\d+)?)"
+)
+_NUMERIC_AI_VARIABLES = {
+    "has_stability": "stability",
+    "has_war_support": "war_support",
+}
+
+
 def _weight(option, economy):
-    return economy.weight(script_block(option, "ai_chance"))
+    chance = script_block(option, "ai_chance")
+    chance = _NUMERIC_AI_TRIGGERS.sub(
+        lambda match: (
+            f"check_variable = {{ {_NUMERIC_AI_VARIABLES[match.group(1)]} "
+            f"< {match.group(2)} }}"
+        ),
+        chance,
+    )
+    return economy.weight(chance)
 
 
 @pytest.mark.parametrize(
@@ -84,14 +126,26 @@ def test_treasury_spending_weights_use_live_financial_triggers(name, base):
     assert _weight(option, _economy(bankruptcy=True, deficit=True)) == base * 0.125
 
 
-def test_brics_renewable_offer_accounts_for_both_payers():
+def test_brics_renewable_offer_weights_both_payers_independently():
     option = _OPTIONS["indian_event.27.o1"]
     assert _weight(option, _economy()) == 50
-    assert _weight(option, _economy(bankruptcy=True)) == 50 * 0.25**2
-    assert _weight(option, _economy(deficit=True)) == 50 * 0.5**2
+    assert _weight(option, _economy(bankruptcy=True)) == 50 * 0.25
+    assert _weight(option, _economy(deficit=True)) == 50 * 0.5
+    assert _weight(option, _economy(raj_bankruptcy=True)) == 50 * 0.25
+    assert _weight(option, _economy(raj_deficit=True)) == 50 * 0.5
     assert (
-        _weight(option, _economy(bankruptcy=True, deficit=True))
-        == 50 * 0.25**2 * 0.5**2
+        _weight(
+            option,
+            _economy(bankruptcy=True, raj_bankruptcy=True),
+        )
+        == 50 * 0.25**2
+    )
+    assert (
+        _weight(
+            option,
+            _economy(deficit=True, raj_deficit=True),
+        )
+        == 50 * 0.5**2
     )
 
 
@@ -184,49 +238,49 @@ def test_export_weights_only_penalize_the_most_expensive_purchase():
     assert _weight(expensive, _economy(bankruptcy=True, deficit=True)) == 0.125
 
 
-def test_stability_and_war_support_loss_factors_follow_the_existing_weights():
-    options = _OPTIONS
-    expected = {
-        "indian_event.5.a": ("has_war_support", "0.5"),
-        "indian_event.8.b": ("has_stability", "0.3"),
-        "indian_event.22.b": ("has_stability", "0.3"),
-        "indian_event.34.b": ("has_stability", "0.5"),
-        "indian_event.35.b": ("has_stability", "0.5"),
-        "indian_event.37.b": ("has_stability", "0.5"),
-        "indian_event.39.b": ("has_stability", "0.5"),
-        "RAJ_naxal.14.a": ("has_stability", "0.3"),
-        "RAJ_regional.3.b": ("has_stability", "0.3"),
-        "RAJ_regional.4.b": ("has_stability", "0.3"),
-        "RAJ_regional.7.b": ("has_stability", "0.3"),
-        "RAJ_regional.13.a": ("has_stability", "0.3"),
-        "RAJ_regional.13.b": ("has_stability", "0.3"),
-        "RAJ_regional.14.a": ("has_stability", "0.3"),
-        "RAJ_regional.16.b": ("has_stability", "0.3"),
-        "RAJ_regional.19.b": ("has_stability", "0.3"),
-        "RAJ_regional.20.b": ("has_stability", "0.3"),
-        "RAJ_regional.21.a": ("has_stability", "0.3"),
-        "pak_raj_border_crisis.4.b": ("has_stability", "0.3"),
-        "raj_chi_border_crisis.3.b": ("has_stability", "0.3"),
-    }
-    for name, (trigger, threshold) in expected.items():
-        assert any(
-            (trigger, "<", threshold)
-            in [
-                (key, operator, value)
-                for key, operator, value, _ in iter_statement_ops(modifier)
-            ]
-            for modifier in _modifier_bodies(options[name])
-        ), name
+@pytest.mark.parametrize(
+    "name,stat,healthy,low,base",
+    [
+        ("indian_event.5.a", "war_support", 0.6, 0.4, 1),
+        ("indian_event.8.b", "stability", 0.6, 0.2, 1),
+        ("indian_event.22.b", "stability", 0.6, 0.2, 1),
+        ("indian_event.34.b", "stability", 0.6, 0.4, 10),
+        ("indian_event.35.b", "stability", 0.6, 0.4, 10),
+        ("indian_event.37.b", "stability", 0.6, 0.4, 10),
+        ("indian_event.39.b", "stability", 0.6, 0.4, 10),
+        ("RAJ_naxal.14.a", "stability", 0.6, 0.2, 30),
+        ("RAJ_regional.3.b", "stability", 0.6, 0.2, 40),
+        ("RAJ_regional.4.b", "stability", 0.6, 0.2, 70),
+        ("RAJ_regional.7.b", "stability", 0.6, 0.2, 50),
+        ("RAJ_regional.13.a", "stability", 0.6, 0.2, 40),
+        ("RAJ_regional.13.b", "stability", 0.6, 0.2, 30),
+        ("RAJ_regional.14.a", "stability", 0.6, 0.2, 1),
+        ("RAJ_regional.16.b", "stability", 0.6, 0.2, 60),
+        ("RAJ_regional.19.b", "stability", 0.6, 0.2, 30),
+        ("RAJ_regional.20.b", "stability", 0.6, 0.2, 40),
+        ("RAJ_regional.21.a", "stability", 0.6, 0.2, 80),
+        ("pak_raj_border_crisis.4.b", "stability", 0.6, 0.2, 4),
+        ("raj_chi_border_crisis.3.b", "stability", 0.6, 0.2, 4),
+    ],
+)
+def test_stability_and_war_support_losses_reduce_source_weights(
+    name, stat, healthy, low, base
+):
+    option = _OPTIONS[name]
+    assert _weight(option, _economy(**{stat: healthy})) == base
+    assert _weight(option, _economy(**{stat: low})) == base * 0.5
 
+
+def test_very_low_stability_zeros_only_the_costly_event_choice():
+    bankrupt_country = _economy(bankruptcy=True, stability=0.3)
     for name in [
         "indian_event.34.b",
         "indian_event.35.b",
         "indian_event.37.b",
         "indian_event.39.b",
     ]:
-        modifiers = _modifier_bodies(options[name])
-        last_modifier = modifiers[-1]
-        assert list(iter_statements(last_modifier))[0][:2] == ("factor", "0")
+        assert _weight(_OPTIONS[name], bankrupt_country) == 0
+    assert _weight(_OPTIONS["indian_event.34.a"], bankrupt_country) > 0
 
 
 def test_scripted_construction_costs_are_covered_by_their_choices():
