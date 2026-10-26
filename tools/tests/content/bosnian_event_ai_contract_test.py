@@ -61,13 +61,11 @@ _TREASURY_SPENDING = {
     "BOS_political.60.a": 60,
     "BOS_political.79.b": 35,
 }
-_TARGETED_TREASURY_SPENDING = {
-    "BOS_events.56.c": 60,
-    "BOS_events.57.c": 60,
-}
-_RANDOM_TREASURY_SPENDING = {
-    "BOS_political.58.b": 40,
-    "BOS_political.59.b": 45,
+_TREASURY_SPECIAL_CASES = {
+    "BOS_events.56.c": (60, "BOS_events.56.b", False),
+    "BOS_events.57.c": (60, "BOS_events.57.b", False),
+    "BOS_political.58.b": (40, None, True),
+    "BOS_political.59.b": (45, None, True),
 }
 _AUDITED_EVENTS = (
     "BOS_events.56",
@@ -215,30 +213,20 @@ def test_treasury_spending_discounts_financial_distress(bosnia_options, distress
         assert _weight(option, **distress) > 0
 
 
-@pytest.mark.parametrize("name,healthy", sorted(_TARGETED_TREASURY_SPENDING.items()))
-def test_targeted_treasury_spending_discounts_financial_distress(
-    bosnia_options, name, healthy
-):
+@pytest.mark.parametrize("name,case", sorted(_TREASURY_SPECIAL_CASES.items()))
+def test_treasury_cost_options_discount_financial_distress(bosnia_options, name, case):
+    healthy, fallback, random_stability_loss = case
     option = bosnia_options[name]
     assert _weight(option) == healthy
     assert _weight(option, bankrupt=True) == healthy * 0.25
     assert _weight(option, deficit=True) == healthy * 0.5
-    assert _weight(option, bankrupt=True, treasury=0) == 0
-    fallback = bosnia_options[f"{name.rsplit('.', 1)[0]}.b"]
-    assert _weight(fallback, bankrupt=True, treasury=0) > 0
-
-
-@pytest.mark.parametrize("name,healthy", sorted(_RANDOM_TREASURY_SPENDING.items()))
-def test_random_treasury_spending_discounts_financial_distress(
-    bosnia_options, name, healthy
-):
-    option = bosnia_options[name]
-    assert _weight(option) == healthy
-    assert _weight(option, bankrupt=True) == healthy * 0.25
-    assert _weight(option, deficit=True) == healthy * 0.5
-    assert _weight(option, bankrupt=True, deficit=True, stability=0.2) == (
-        healthy * 0.25 * 0.5 * 0.25
-    )
+    if fallback is not None:
+        assert _weight(option, bankrupt=True, treasury=0) == 0
+        assert _weight(bosnia_options[fallback], bankrupt=True, treasury=0) > 0
+    if random_stability_loss:
+        assert _weight(option, bankrupt=True, deficit=True, stability=0.2) == (
+            healthy * 0.25 * 0.5 * 0.25
+        )
 
 
 def test_loan_option_carries_both_financial_guards_with_the_path_bonus(bosnia_options):
