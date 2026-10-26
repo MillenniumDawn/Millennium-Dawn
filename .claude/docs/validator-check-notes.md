@@ -565,8 +565,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  core batch through `validate_common_mistakes.py` and report ERROR, except
+  `shadowed-branch`, a WARNING until its existing findings are fixed. It scans
   `common`, `events`, `history`, and `music`.
+- Shadowed branches: the parser blanks quoted strings, so a limit with a quoted value
+  never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
+  skipped, since the rotation check already reports their duplicate branches.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
