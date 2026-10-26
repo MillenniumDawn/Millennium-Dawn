@@ -2268,9 +2268,15 @@ _COUNT_CASES: dict[
             _chain("check_variable = { x > 10 }", "check_variable = { x > 20 }"),
         ),
         (
-            "higher bound first clean",
+            "higher bound first, then else, clean",
             0,
-            _chain("check_variable = { x > 20 }", "check_variable = { x > 10 }"),
+            [
+                *_chain("check_variable = { x > 20 }", "check_variable = { x > 10 }")[
+                    :-1
+                ],
+                "\telse = { add_stability = 0.3 }\n",
+                "}\n",
+            ],
         ),
         (
             "branch shadowed by two earlier ones reported once",

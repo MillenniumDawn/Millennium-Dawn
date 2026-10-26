@@ -9,7 +9,7 @@ from linting.check_common_mistakes import (
     _files_need_global_refs,
     _init_worker,
     _scan_global_refs,
-    check_file_by_severity,
+    check_file,
 )
 from validator_common import BaseValidator, Severity, run_validator_main
 
@@ -50,7 +50,7 @@ class Validator(BaseValidator):
             focuses, decisions, flags = _scan_global_refs(self.mod_path)
         errors, warnings = [], []
         for file_errors, file_warnings in self._pool_map_init(
-            check_file_by_severity,
+            check_file,
             files,
             initializer=_init_worker,
             initargs=(focuses, decisions, flags),

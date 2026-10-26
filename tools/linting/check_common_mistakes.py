@@ -4209,13 +4209,8 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
-    errors, warnings = check_file_by_severity(filepath)
-    return errors + warnings
-
-
-def check_file_by_severity(filepath):
-    """check_file's findings as (errors, warnings). Shadowed branches are warnings
+    """Check a single file for common mistakes. Returns (errors, warnings), each a
+    list of (filepath, line_num, message) tuples. Shadowed branches are warnings
     while the existing ones are triaged."""
     issues = []
 
@@ -4534,11 +4529,13 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = [issue for file_issues in results for issue in file_issues]
+    all_issues = sorted(issue for errors, _ in results for issue in errors)
+    warnings = sorted(issue for _, file_warnings in results for issue in file_warnings)
 
-    sorted_issues = sorted(all_issues)
-    for filepath, line_num, message in sorted_issues:
+    for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
+    for filepath, line_num, message in warnings:
+        print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
 

@@ -72,7 +72,7 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
         "common/scripted_effects/flags.txt",
         "TST_flags = {\n\tset_country_flag = arab_nation_flag\n}\n",
     )
-    checker = importlib.import_module(common_mistakes.check_file_by_severity.__module__)
+    checker = importlib.import_module(common_mistakes.check_file.__module__)
     # Forked workers inherit these, so only _init_worker can fill them in.
     for name in (
         "_SCRIPT_COMPLETED_FOCUSES",
