@@ -73,7 +73,10 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   officer networks and the Legion, the intelligence service, the European question and the
   Fifth Empire.
 - **Ideological Question**: an ideological development meter that rises on every change of
-  government and every policy enacted, and gates the radical content behind it. Four branches:
+  government and every policy enacted, and gates the radical content behind it. The current value
+  and tier show in the description of The Third Republic. The party press, party machine and
+  political university each add daily support for the ruling outlook, and the Beijing,
+  Washington and sovereigntist alignments add more. Four branches:
   - **The Battle of Ideas**: the party press and the institutes, then the Casino Conferences
     and a choice of tradition. Down one side are the Hidden King, Integralismo Lusitano,
     Pessoa's Mensagem and Lusotropicalism. Down the other are Seara Nova, Agostinho da Silva,
@@ -97,9 +100,10 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   ideological development above 60, and only one can be taken per game. Each has three core
   focuses, a choice of specialisations that only add modifiers, and an endgame.
   - **The Crown** (PPM, CDS-PP, NOS): a monarchy referendum that passes if the monarchists hold
-    more than 20% or stability is above 60%, the Kingdom of Portugal, a crowned republic, an
-    integral monarchy or the Sebastianist dream, and the Lusophone Crown, which makes Portugal
-    the Fifth Portuguese Empire.
+    more than 20% or stability is above 60%. If another crown party governs, a win also hands the
+    government to the monarchists. If they already govern, it only crowns the king. Then the
+    Kingdom of Portugal, a crowned republic, an integral monarchy or the Sebastianist dream, and
+    the Lusophone Crown, which makes Portugal the Fifth Portuguese Empire.
   - **The Executive State** (PDR, PNR, the Army): the constitution suspended and elections
     ended, which Brussels answers with an Article 7 procedure. The Guardian Council, the Fourth
     Republic or the Chief Executive's shareholder state, and a permanent executive at the end.
@@ -184,9 +188,13 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   Federation, each with a friendly and a hostile road.
 
 Policy and industry focuses also move the interest groups, and the big settlements move them a
-long way: compulsory letting costs 30 landowner opinion, the wealth tax costs them 40, and the
-2012 labour law swings 40 from the unions to business. Repealing a policy gives the opinion back.
+long way: compulsory letting costs 10 landowner opinion, the wealth tax costs them 15, and the
+2012 labour law swings 15 from the unions to business. Repealing a policy takes back what it
+gained. What it cost is not refunded.
 Chinese contractors and planners anger the unions and the landowners.
+
+A democratic Portugal that has suspended elections is not held to the democratic rule that wars
+can only be justified on threat countries. The rule returns when elections do.
 
 ## The Shadow War
 
