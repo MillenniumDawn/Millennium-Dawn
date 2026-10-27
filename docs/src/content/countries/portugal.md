@@ -149,6 +149,11 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   effects, so an optimal set of policies means flipping governments deliberately. The
   branch also carries the court of auditors, the coalition agreements, and most of the
   reforms that improve the four starting spirits; the rest are in regional development.
+  Social policy also answers Portugal's unemployment, which the economy counts as the workers left
+  over once every sector is staffed. Labour Agreements send workers abroad (3% fewer in the workforce) and bring in
+  remittances worth 0.1% of GDP a week. The CPLP Mobility Visa regularises Lusophone workers for
+  more income tax and more influence abroad. The Student Pipeline buys research speed and
+  productivity growth from the Lusophone world's best students.
   The wealth tax raises productivity growth and the flat tax lowers it. Retail CBDC
   (40 billion) gives every citizen an account at the central bank: inside the euro it is the
   digital euro, with the escudo back it is Portugal's own. The Sovereign Wealth Fund puts
@@ -257,15 +262,21 @@ someone to blame, which is the pretext the rising needs for 180 days. Neither op
 country's operation list until Portugal has an intelligence network there.
 
 **The campaigns** are the list of places to use the instruments, eight chains. Each one opens
-with a diplomatic focus that gives influence and opinion, runs through one cooperation focus
-(Angola, Guinea-Bissau, São Tomé and Cape Verde) or two (the rest) that add influence and
-modifiers, and ends in a choice between a friendly road and a hostile one. None of them grant infiltration; that is done by hand through the operations. Angola starts in a civil war that usually ends within a few years, so its chain works with or without
+with a diplomatic focus that gives influence and opinion. Guinea-Bissau, Cape Verde, São Tomé,
+East Timor and Equatorial Guinea are too small for a civil war, so their opening focus is their
+only step: it gives 18 to 25% influence and an industrial concession, and the choice follows
+at once. The others run through cooperation focuses (Angola, Mozambique and Cabinda) that add
+influence and modifiers, and end in the same choice between a friendly road and a hostile one.
+Every opening focus except Angola's and Cabinda's gives the country a Portuguese Concession: 15% of its
+civilian factories and 10% of its military factories work for Portugal, and its workers stay
+at home, so Portugal needs no population to use them. A client that wins a civil war, or is
+bought by a hostile focus, becomes an associated state and gives 25% of both instead. None of them grant infiltration; that is done by hand through the operations. Angola starts in a civil war that usually ends within a few years, so its chain works with or without
 the war. Portugal observes from Estoril, helps carry out the settlement and bids for the
 reconstruction, oil and diamond contracts. Guinea-Bissau is the coup state, where every officer
 above major did his staff course in Lisbon and two tons of cocaine a week come ashore in
 the Bijagós. Mozambique is the dam Portugal still owned in 2000, the training mission and the
 Rovuma gas. East Timor only exists from 2002. Equatorial Guinea joins the club in 2014 and
-brings the Black Beach file with it. Cabinda is not a country yet. Cape Verde is the one
+brings Severo Moto with it. Cabinda is not a country yet. Cape Verde is the one
 where nobody gets shot, and São Tomé is one island at the point every West African tanker
 has to pass.
 
@@ -274,7 +285,9 @@ settlement. For Guinea-Bissau, Mozambique, East Timor, Equatorial Guinea and the
 Angola it is an offer the other side can refuse; a refusal uncompletes the focus, so the other
 road opens, and that country will not hear the offer again for a year. The hostile focus
 usually asks nobody. It costs exposure and a clear opinion penalty with the target, and it opens
-the Lusophone Realpolitik decisions and operations against that country. Angola is the
+the Lusophone Realpolitik decisions and operations against that country. For the five small
+states it is a coup instead: with 30% influence and 6 billion, the country becomes an associated
+state at once and pays what a winning client pays, with no civil war and no operation. Angola is the
 exception. While its civil war lasts, the hostile road against one side is the friendly road to the other:
 Support UNITA (against Angola) and Recognise Luanda (against UNITA) are offers the backed side can refuse,
 and only if it accepts do they cost exposure and open the decisions against the other side. Once the war
