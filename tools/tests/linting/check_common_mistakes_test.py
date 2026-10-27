@@ -177,6 +177,19 @@ _CUB_DAILY_CACHE = [
 ]
 
 
+def _logged_decision(text):
+    """TST_decision whose complete_effect carries one log line."""
+    return [
+        "TST_category = {\n",
+        "\tTST_decision = {\n",
+        "\t\tcomplete_effect = {\n",
+        f'\t\t\tlog = "{text}"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ]
+
+
 def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
     return [
         "CUB_avoid_starting_wars = {\n",
@@ -1176,6 +1189,31 @@ _COUNT_CASES: dict[
                 "\t}\n",
                 "}\n",
             ],
+        ),
+        (
+            "log with no Decision word naming another id flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: TST_other"),
+        ),
+        (
+            "log with no Decision word, filler word and trailing space flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: add TST_other "),
+        ),
+        (
+            "log with no Decision word naming its own id not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: TST_decision"),
+        ),
+        (
+            "free text after the standard prefix not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: Operation succeeded"),
+        ),
+        (
+            "filler word alone is not an id",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: remove"),
         ),
     ],
     _check_event_log_id: [
