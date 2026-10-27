@@ -100,8 +100,8 @@ def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
 
 
 def test_scoped_bracketed_invocation_tracks_member_name():
-    assert V._scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
-        "MD_auto_agency_status"
+    assert V._scan_loc_tokens("[THIS.example_scripted_loc]", False) == {
+        "example_scripted_loc"
     }
 
 
