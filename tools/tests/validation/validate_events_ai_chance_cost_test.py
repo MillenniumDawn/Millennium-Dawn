@@ -871,21 +871,26 @@ def test_unrelated_neutral_or_foreign_modifiers_do_not_cover_costs(condition, we
 
 
 @pytest.mark.parametrize(
-    "condition",
+    "condition,flagged",
     [
-        "has_active_mission = bankruptcy_incoming_collapse",
-        "ai_has_high_deficit = yes",
-        "check_variable = { treasury < 15 }",
-        "check_variable = { var = ROOT.treasury value = 15 compare = less_than }",
-        "ROOT = { ai_has_high_deficit = yes }",
-        "THIS = { ai_has_high_deficit = yes }",
-        "OR = { ai_has_high_deficit = yes has_war = yes }",
-        "NOT = { ai_has_high_deficit = yes }",
+        ("has_war = yes", True),
+        ("has_active_mission = bankruptcy_incoming_collapse", False),
+        ("ai_has_high_deficit = yes", False),
+        ("check_variable = { treasury < 15 }", False),
+        (
+            "check_variable = { var = ROOT.treasury value = 15 compare = less_than }",
+            False,
+        ),
+        ("ROOT = { ai_has_high_deficit = yes }", False),
+        ("THIS = { ai_has_high_deficit = yes }", False),
+        ("OR = { ai_has_high_deficit = yes has_war = yes }", False),
+        ("NOT = { ai_has_high_deficit = yes }", False),
     ],
 )
-def test_financial_modifiers_cover_treasury_costs(condition):
+def test_financial_modifiers_cover_treasury_costs(condition, flagged):
     body = "\t\tsmall_expenditure = yes\n" + _weighted(condition)
-    assert _found(_two_options(body)) == []
+    found = [costs for _name, _line, costs, _gated in _found(_two_options(body))]
+    assert found == (["treasury"] if flagged else [])
 
 
 @pytest.mark.parametrize(

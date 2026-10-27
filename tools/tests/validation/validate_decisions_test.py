@@ -1888,6 +1888,11 @@ _ACTIVATION_SCAN_CASES: dict[
         "\tremove_targeted_decision = { target = ROOT decision = my_targeted_dec }\n}\n",
         (set(), set(), {"my_targeted_dec"}, [], set()),
     ),
+    "plain activate_decision": (
+        "effects.txt",
+        "some_effect = {\n\tactivate_decision = my_timed_dec\n}\n",
+        ({"my_timed_dec"}, set(), set(), [], set()),
+    ),
     "skipped file": (
         "events/FR_loc_events.txt",
         "remove_decision = some_decision\n",
