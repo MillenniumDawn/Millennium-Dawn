@@ -11,6 +11,7 @@ import math
 import os
 import re
 import sys
+from collections import Counter
 from functools import partial
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
@@ -41,9 +42,8 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
-from validate_events import load_cost_lookups, uncovered_costs
+from validate_events import effect_costs, load_cost_lookups, uncovered_costs
 from validator_common import (
-    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -51,6 +51,7 @@ from validator_common import (
     Severity,
     run_validator_main,
     should_skip_file,
+    weight_stays_zero,
 )
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
@@ -76,6 +77,7 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+_ACTIVATE_DECISION_RE = re.compile(r"\bactivate_decision\s*=\s*(\S+)")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
@@ -402,6 +404,7 @@ _REMOVE_TARGETED_BLOCK_RE = re.compile(
     r"\bremove_targeted_decision\s*=\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\}"
 )
 _REMOVE_DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
+_HAS_DECISION_RE = re.compile(r"\bhas_decision\s*=\s*(\w+)")
 
 _CYBER_OPERATION_TYPES = (
     "gps_tracking",
@@ -545,16 +548,16 @@ def _flat_flag_gates(block: str) -> Set[str]:
 
 def _scan_activations_and_removals(
     filename: str, *, mod_path: Optional[str] = None
-) -> Tuple[set, set, set, list]:
-    """Single-read worker: (activated, missions, removed, unlock refs).
+) -> Tuple[set, set, set, list, set]:
+    """Single-read worker: (activated, missions, removed, unlock refs, checked).
 
-    Combines the activation, external-removal and unlock-tooltip scans so the
-    full-repo .txt sweep reads each file once instead of three times. The last
-    element holds (kind, name, line) for every reference that tells the player a
-    decision or category it has unlocked; the caller adds the file path.
+    Combines the activation, external-removal, unlock-tooltip and has_decision
+    scans so the full-repo .txt sweep reads each file once. The unlock refs hold
+    (kind, name, line) for every reference that tells the player a decision or
+    category it has unlocked; the caller adds the file path.
     """
     if _should_skip(filename, mod_path=mod_path):
-        return set(), set(), set(), []
+        return set(), set(), set(), [], set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -562,9 +565,12 @@ def _scan_activations_and_removals(
     missions: set = set()
     removals: set = set()
     unlock_refs: List[Tuple[str, str, int]] = []
+    checked: set = set()
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
+    if "activate_decision" in text_file:
+        decisions.update(_ACTIVATE_DECISION_RE.findall(text_file))
     if "activate_mission" in text_file:
         missions.update(_MISSION_NAME_RE.findall(text_file))
     if "remove_decision" in text_file or "remove_targeted_decision" in text_file:
@@ -573,7 +579,9 @@ def _scan_activations_and_removals(
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
     if "unlock_decision" in text_file:
         unlock_refs = _unlock_refs(text_file)
-    return decisions, missions, removals, unlock_refs
+    if "has_decision" in text_file:
+        checked.update(_HAS_DECISION_RE.findall(text_file))
+    return decisions, missions, removals, unlock_refs, checked
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -606,9 +614,16 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
-_AI_ADD_RE = re.compile(r"\badd\s*=")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+# What a custom_cost_trigger can check, by the cost kind that pays for it.
+_CUSTOM_COST_CLAIMS = {
+    "treasury": re.compile(r"\btreasury\s*>"),
+    "political power": re.compile(r"\bhas_political_power\s*>"),
+    "command power": re.compile(r"\bcommand_power\s*>"),
+    "manpower": re.compile(r"\bhas_manpower\s*>"),
+    "equipment": re.compile(r"\bhas_equipment\s*="),
+}
 _TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
@@ -1218,23 +1233,21 @@ def _top_level_field_value(raw: str, field: str):
     return None
 
 
+_NEG_PP_RE = re.compile(r"add_political_power\s*=\s*-(\d+)")
+
+
 def _top_level_neg_pp(block: str):
     """Return the magnitude (positive int) of an unconditional
     ``add_political_power = -N`` at depth 0 of ``block``, or ``None``
     if there is no such line. Conditional/nested subtractions are
     ignored (they are gameplay outcomes, not entry costs)."""
-    if not block:
+    if "add_political_power" not in block:
         return None
     for inner, index in iter_flat_offsets(block):
-        match = re.match(r"add_political_power\s*=\s*-(\d+)", inner[index:])
+        match = _NEG_PP_RE.match(inner, index)
         if match:
             return _int_literal(match.group(1))
     return None
-
-
-def _ai_never_takes(ai_factor: str) -> bool:
-    """`base = 0` with no `add`: the weight cannot leave zero."""
-    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
 
 
 def extract_value_multi_line(obj: str, s: str) -> str:
@@ -1452,6 +1465,11 @@ def parse_decision_categories(
     return _get_cached(cache_key, mod_path, lowercase, _parse)
 
 
+# The keys that open a block at the start of a line, the only place a category
+# block can start.
+_LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
+
+
 def parse_categories_with_decisions(
     mod_path: str, lowercase: bool = False, visible_when_empty: bool = True
 ) -> Dict[str, List[str]]:
@@ -1471,8 +1489,9 @@ def parse_categories_with_decisions(
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
+            openers = set(_LINE_OPENER_RE.findall(text_file))
             for category in category_names:
-                if f"{category} = {{" in text_file:
+                if category in openers:
                     pattern = r"^" + re.escape(category) + r" = \{.*?^\}"
                     matches = re.findall(
                         pattern, text_file, flags=re.DOTALL | re.MULTILINE
@@ -1569,12 +1588,21 @@ class Validator(BaseValidator):
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
         self._activation_removal_cache: Optional[
-            Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]
+            Tuple[
+                Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
+            ]
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
+        self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
         if self.no_cache:
             _set_cache_enabled(False)
+
+    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int]]:
+        """load_cost_lookups, read once per run."""
+        if self._cost_lookups is None:
+            self._cost_lookups = load_cost_lookups(self)
+        return self._cost_lookups
 
     def _get_ai_only_categories(self) -> Dict[str, str]:
         """AI-only decision category names, mapped to their defining filename."""
@@ -1608,12 +1636,13 @@ class Validator(BaseValidator):
 
     def _get_activation_removal_scan(
         self,
-    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]:
-        """Scan shipped content for activations, external removals and unlocks.
+    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]]:
+        """Scan shipped content for activations, removals, unlocks and checks.
 
         The fourth element is every `unlock_*_tooltip` reference as
         (kind, name, file, line); the names it carries are the unlocks that
-        announce themselves to the player.
+        announce themselves to the player. The fifth is every name a
+        `has_decision` trigger reads.
         """
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
@@ -1628,11 +1657,13 @@ class Validator(BaseValidator):
         activated_missions: Set[str] = set()
         externally_removed: Set[str] = set()
         unlock_refs: List[Tuple[str, str, str, int]] = []
+        checked: Set[str] = set()
         for filename, (
             decision_set,
             mission_set,
             removed_set,
             file_refs,
+            checked_set,
         ) in zip(
             all_files,
             self._pool_map(
@@ -1644,6 +1675,7 @@ class Validator(BaseValidator):
             activated_decisions |= decision_set
             activated_missions |= mission_set
             externally_removed |= removed_set
+            checked |= checked_set
             relative = os.path.relpath(filename, self.mod_path)
             unlock_refs.extend(
                 (kind, name, relative, line) for kind, name, line in file_refs
@@ -1653,6 +1685,7 @@ class Validator(BaseValidator):
             activated_missions,
             externally_removed,
             unlock_refs,
+            checked,
         )
         return self._activation_removal_cache
 
@@ -1706,7 +1739,8 @@ class Validator(BaseValidator):
 
         names, paths = parse_all_decision_names(self.mod_path)
         self.log(f"  Found {len(names)} total decisions")
-        results = [f"{n} - {paths[n]}" for n in names if names.count(n) > 1]
+        counts = Counter(names)
+        results = [f"{n} - {paths[n]}" for n in names if counts[n] > 1]
         results = sorted(set(results))
         self._report(
             results, "✓ No duplicated decisions", "Duplicated decisions found:"
@@ -1727,7 +1761,7 @@ class Validator(BaseValidator):
         # `activate_targeted_decision = { ... }` block; the bare keyword
         # `decision` appears in unrelated places (on_political_decision hooks etc.)
         # and matching them would hide genuinely unused decisions.
-        activated_decisions, activated_missions, _, _ = (
+        activated_decisions, activated_missions, _, _, _ = (
             self._get_activation_removal_scan()
         )
 
@@ -2602,7 +2636,7 @@ class Validator(BaseValidator):
         if not flagged:
             return []
 
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         return [
             f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
@@ -2639,7 +2673,7 @@ class Validator(BaseValidator):
             ),
             "category": set(parse_decision_categories(self.mod_path)),
         }
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         results = []
         for kind, name, filepath, line in unlock_refs:
             if name not in known[kind]:
@@ -2668,7 +2702,7 @@ class Validator(BaseValidator):
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
-        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        _, _, _, unlock_refs, _ = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
 
@@ -3012,7 +3046,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if _ai_never_takes(d.ai_factor):
+            if weight_stays_zero(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -3053,13 +3087,13 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
 
-        effects, stored = load_cost_lookups(self)
+        effects, stored = self._get_cost_lookups()
         results = []
 
         for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype and not d.selectable_mission:
                 continue
-            if _ai_never_takes(d.ai_factor):
+            if weight_stays_zero(d.ai_factor):
                 continue
             ai_weights = d.ai_factor[1:-1]
 
@@ -3090,6 +3124,61 @@ class Validator(BaseValidator):
             " deficit modifier):",
             severity=Severity.WARNING,
             category="decision-ai-will-do-ignores-cost",
+        )
+
+    def validate_custom_cost_charged(self):
+        """Flag custom costs that complete_effect never charges.
+
+        A `custom_cost_trigger` only gates the button; the engine charges
+        nothing for it. Each resource it checks (treasury, political power,
+        command power, manpower, equipment) needs a charge in `complete_effect`,
+        which runs when the decision is taken. A charge in `remove_effect` lands
+        when the decision ends, long after the price was shown. Non-selectable
+        missions are skipped.
+        """
+        self._log_section("Checking custom costs are charged in complete_effect...")
+
+        effects, stored = self._get_cost_lookups()
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.custom_cost_trigger:
+                continue
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            claims = {
+                kind
+                for kind, claim in _CUSTOM_COST_CLAIMS.items()
+                if claim.search(blank_quoted_strings(d.custom_cost_trigger))
+            }
+            missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
+            if not missing:
+                continue
+            late = missing & effect_costs(d.remove_effect[1:-1], effects, stored)
+            parts = []
+            if late:
+                parts.append(
+                    f"charges {', '.join(sorted(late))} in remove_effect, not complete_effect"
+                )
+            if missing - late:
+                parts.append(
+                    f"checks {', '.join(sorted(missing - late))} but has no charge in complete_effect"
+                )
+            results.append(
+                (
+                    f"{d.token} - custom cost {'; '.join(parts)}",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ Every custom cost is charged in complete_effect",
+            "Decisions whose custom cost is not charged when taken (charge it in"
+            " complete_effect):",
+            severity=Severity.WARNING,
+            category="decision-custom-cost-not-charged",
         )
 
     def validate_state_target_with_targets(self):
@@ -3185,7 +3274,7 @@ class Validator(BaseValidator):
 
         factories = parse_all_decision_factories(self.mod_path)
 
-        _, _, externally_removed, _ = self._get_activation_removal_scan()
+        _, _, externally_removed, _, _ = self._get_activation_removal_scan()
 
         results = []
 
@@ -3207,6 +3296,49 @@ class Validator(BaseValidator):
             "✓ No decisions with orphaned remove_effect",
             "Decisions with remove_effect but no days_remove or remove_trigger (dead code — add a timer or removal trigger):",
             severity=Severity.WARNING,
+        )
+
+    def validate_timer_without_remove_effect(self):
+        """Flag a days_remove timer that nothing reads.
+
+        A timer keeps the decision active. That matters only when a
+        remove_effect runs at the end, a modifier lasts while it is active, or a
+        has_decision trigger reads it. Missions are skipped.
+        """
+        self._log_section("Checking decisions with days_remove but no remove_effect...")
+
+        _, _, _, _, checked = self._get_activation_removal_scan()
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.has_days_remove or d.remove_effect or d.mission_subtype:
+                continue
+            days = _top_level_field_value(d.raw, "days_remove")
+            if (
+                days is None
+                or d.token in checked
+                or any(
+                    _top_level_field_value(d.raw, field)
+                    for field in ("modifier", "targeted_modifier")
+                )
+            ):
+                continue
+            results.append(
+                (
+                    f"{d.token} - days_remove = {days} but no remove_effect,"
+                    " modifier, or has_decision check reads the timer",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ Every days_remove timer has something to end",
+            "Decisions whose days_remove timer does nothing (add a remove_effect,"
+            " or drop the timer and use days_re_enable for a cooldown):",
+            severity=Severity.WARNING,
+            category="decision-days-remove-without-effect",
         )
 
     def validate_orphaned_target_modifiers(self):
@@ -3343,6 +3475,12 @@ class Validator(BaseValidator):
             category="missing-decision-icon",
         )
 
+    def _sprite_sizes(self) -> SpriteSizeIndex:
+        return self.cached(
+            "sprite_sizes",
+            lambda: build_sprite_size_index(self.mod_path, self._pool_map),
+        )
+
     def validate_icon_types(self):
         """Flag icons whose art belongs to a different decision-UI slot.
 
@@ -3354,7 +3492,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decision icons match their UI slot...")
 
-        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        sprites = self._sprite_sizes()
         if len(sprites) < 1000:
             self.log(
                 f"  Only {len(sprites)} GFX textures loaded — sprite definitions "
@@ -3399,7 +3537,7 @@ class Validator(BaseValidator):
         self._log_section("Checking category description images clear the header...")
 
         categories = parse_decision_categories(self.mod_path, lowercase=False)
-        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        sprites = self._sprite_sizes()
         files = self._collect_files(
             ["localisation/english/**/*.yml"], ignore_staged=True
         )
@@ -3465,9 +3603,11 @@ class Validator(BaseValidator):
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_ai_will_do_ignores_cost()
+        self.validate_custom_cost_charged()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
+        self.validate_timer_without_remove_effect()
         self.validate_orphaned_target_modifiers()
         self.validate_formable_commitment_sync()
         self.validate_icon_types()

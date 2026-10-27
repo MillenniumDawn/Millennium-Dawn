@@ -1,6 +1,8 @@
 v2.1.0
 
 Content:
+ - Added an opt-in Automation setting that unlocks eligible generic MIOs in catalog order, pays their normal Political Power, XP, and Contract Token costs, and preserves the Political Power Reserve; catalog Unlock tooltips now state which costs are spent (Issue #3761).
+ - Clears the Corrupt Oligarchy idea when the National-Bolshevik cleanup focus bypasses (Issue #5895).
  - Added unit experience rewards to special forces completing counter-terrorism raids (Issue #5389).
  - Added a Manual option to the Event Horizon Scenario game rule: the scenario never starts on its own and begins when a player takes the Start Scenario Now decision (Issue #5120).
  - Added policy transition costs: budget law and tax changes you make that move away from what the public expects raise that spending (up to +30%) or lower stability (war support for military cuts) for a while; taxes now have expected rates set by GDP per capita and, for corporate tax, the economic cycle, with costs only for raises above them and bonuses for cuts below them; budget bills passed by the Rada or the Knesset count at half cost (full cost when bribed through); reformist focuses grant a one-year mandate that halves new costs; tax automation now reviews rates every four weeks, expected spending updates when a war starts or ends, and military spending protests and alerts now use the right expected level (Issue #5481).
@@ -8,6 +10,8 @@ Content:
  - Standardized country AI path game rules to Historical, Alternate Paths, Random Path, and No Path for KOS, LIC, NKR, SMA, SOO, and TAJ.
  - Standardized historical party names for HEZ, HKG, HOL, IND, ITA, JAP, KOR, KOS, and KUW.
  - Added Political Concessions buttons to the Protests System panel: Give Promises and Bribe the Protestors trade political power, stability, and money for lower Protest Strength, and Delve into Demands buys stability by funding one underfunded spending law. The AI uses them too.
+ - Integrated CFA and Eco spirits with currency strength and inflation growth, made AI seek currency support when needed and less likely to abandon it while healthy, and made Armenia upgrade from either CFA spirit when France introduces Eco; new adopters get the current spirit, and France weighs influence and war when accepting Armenia (Issue #5979).
+ - [AST] Focus trees and events have been added for Kim Beazley and Mark Latham. The elections will now function as normal from the game’s start date.
  - [ERI] New starting NSB/BBA OOB with updated units, equipment and namelists.
  - [ETH] New starting NSB/BBA OOB with updated units, equipment and namelists.
  - [HLS] Added a Vatican City focus tree behind the off-by-default Enable the Vatican City Tree game rule, with Status Quo, Crusader Pope and Vatican Caliphate paths, a Roman Curia branch, an AI path rule, and new decisions and events. The Holy See spirit now slows construction, raises office productivity and clergy opinion, and gives extra influence over Christian countries.
@@ -23,12 +27,18 @@ Content:
  - [UKR] Added the NVO Praktyka Otaman program: a 2014 event starts the 6x6 line (122 SPG, Grom-equiped IFV, Otaman-3 for the marines), the 8x8 line on the BTR-60 hull (base APC hull, mortar carrier, Shturm-M-equiped IFV, KPVT-equiped APC) and the BTR-60M Khorunzhyi APC.
  - [UKR] Rework all current ATGM-related Decisions and Events for Ukraine - make it more predictable and dependeble, added 4 more Decisions/Events, related to ATGMs development - Mi-24PU2 helicopter, Sokil-300 UAV, Kombat & Konus Tank-fired Smoothbore ATGMs and BM-3 Shturm weapons module for APCs/IFVs.
  - [UKR] Added a bomber sale, disarmament, and restoration chain with NARP repair capacity, DLC-specific aircraft deliveries, and the Soviet Tu-22M2 design.
+ - [UKR] Made Verkhovna Rada spending votes react to the situation: public spending expectations, a large budget deficit, a defensive war, the Rada majority and kleptocracy now raise or lower the approval chance, and the new Lobby the Deputies decision buys +30% for the next vote.
+ - [UKR] Split the Verkhovna Rada decisions into the Rada and a new Foreign Finances and Influence category, shortened spending debates to 30 days, and made matching reforms, flagship defence projects, and Soviet equipment modernizations or new Ukrainian designs raise the chance the Rada approves spending changes, with every bonus shown in tooltips.
+ - [UKR] Ukraine can now get Sevastopol Bay back: an early lease termination decision before 2010, a Kharkiv Pact decision in 2010, and a demand to Russia once the lease expires in 2017 or Ukraine joins NATO. Russia can withdraw, refuse, or go to war, with Ukrainian defense programs making withdrawal more likely, and Russia's Crimea annexation and Crimean subject events now account for a Ukrainian-held bay.
 
 AI:
+ - Improved AI event and decision choices to account for budgets, bankruptcy risk, stability, war support, diplomacy, and chosen paths.
+ - Made AI use shared decisions for budget relief, faction opinion, resource shortages, and wartime recruitment (Issue #6000).
+ - Fixed AI bonuses reviving blocked focuses, decisions, event options, law changes, raids, and energy actions.
  - Improved AI research for peacetime growth, labor and energy shortages, and useful military equipment (Issue #4223).
- - Made coastal AI minors with over 10 civilian factories aim for at least one dockyard; the target never switched on before because it waited for idle civilian factories.
- - Made AI equipment shortages only raise production of the missing equipment instead of also blocking division types, which deleted training divisions every few days.
- - Made AI take cheap IMF loans only on a deficit over 10% of income and keep raising taxes while the loan pauses debt payments; bailouts and defaults now wait for taxes at the cap in deficit, a major crisis, an incoming collapse, or interest of at least 15% taking over 30% of income; tax cuts and AI spending raises wait for a surplus above 3% of income.
+ - Made coastal AI minors with over 10 civilian factories aim for at least one dockyard.
+ - Stopped AI equipment shortages from blocking division types and repeatedly deleting training divisions.
+ - Made AI reserve IMF loans, bailouts, and defaults for serious deficits or debt crises, keep raising taxes during IMF relief, and require a surplus before cutting taxes or raising spending.
  - Made peacetime deficit AI trim a civil spending law each month and lower popular expectations, then restore spending once a surplus returns.
  - Reduced AI support and repair ship production with fleet-size and combined auxiliary limits (Issue #5171).
  - Reduced AI transport helicopter production and spare equipment reserves, slowed APC and IFV production above 1,000 spare, put every nation on the shared army mix tiers with small national overlays, and combined matching air, naval, and ship-contract production strategies without changing their weights (Issue #5133).
@@ -39,24 +49,37 @@ AI:
  - Stopped AI with economic problems from skipping every decision that costs political power while it saves for law changes, including cheap IMF loans and bailouts.
  - Stopped corporate tax automation from cutting toward 15% just for having fewer than 10 free civilian factories, and made corporate tax fall only from a surplus with low debt.
  - Made AI favor eligible puppets, resource producers and regional partners, reduce priority for saturated targets and existing subjects, and halve monthly spreading chances in wars or severe economic crises (Issue #5290).
- - Removed AI plan values for AFG, BOS, ENG, HOL, RAJ, SIA, and TAJ that raised front war priority for them and for every country bordering their alliances instead of keeping the peace; their peaceful intent stays in the befriend and no-war lines.
- - [BOS] Fixed the Bosnian civil war ending in puppets and a locked focus tree: a beaten breakaway is now absorbed and every ending runs the recovery. Breakaways get their AI templates and inflation and currency setup, and AI on the Historical, Srpska Partnership, Islamist, and Workers State paths, or on historical focuses with no path, now works to defuse both secession crises. EU Membership Path now asks EU members to invest in Bosnia instead of Bosnia investing in them, investment offers made by focuses and events now build in the state they were made for, and Bosnian AI no longer waits for 60 political power before taking decisions (Issue #4655).
+ - Reworked AI construction to prioritize power, civilian factories, internet, and microchips, adapt to war and economic needs, and stop unwanted factory conversions; China now targets 250 civilian factories in peacetime.
+ - Removed unintended peacetime war priority boosts for AFG, BOS, ENG, HOL, RAJ, SIA, and TAJ while preserving peaceful diplomacy.
+ - Fixed utility truck purchase conditions, Nakhchivan demand responses, liberal speech party gains, Iran's IRGC option text, Armenian rebellion eligibility, default office-sale proceeds, high-debt company closures, and biofuel plant costs and rewards.
+ - [AST] Made it a little easier for the Republic movement to succeed with AI.
+ - [AST] Added AI decision tweak to occasionally buff stability. AI can now attempt Gillard's special elections without her always losing.
+ - [BOS] Fixed civil-war recovery and breakaway integration, set up breakaway economies and army templates, made AI defuse secession crises, corrected EU investment direction and location, and removed the AI's 60 PP decision gate (Issue #4655).
  - [CAN] Made nationalist Canada keep only a normal garrison on the US border unless it is at war with, holds a war goal on, or is much stronger than the US, or the US turns nationalist or communist; it no longer sends its whole army there before other wars.
+ - [CAN]/[GRE]/[ITA]/[SWE] Made decision AI avoid reversals and restored Canadian infrastructure payments (Issue #5973, #5974, #5975, #5976).
  - [CHI] Fixed AI weight bonuses reviving zeroed China focuses, decisions, and event options, so date, war, and other blocks now hold.
- - [GER] Fixed AI Germany stalling after its civil war: it no longer waits on the East German infrastructure focus before taking its political focuses, so Monarchist, Nationalist, and Socialist AI can take Will of the People and Stray from the Republic.
+ - [FRA] Kept public support for the space program up and prevented low stability from forcing French subjects to accept annexation demands.
+ - [GER] Unblocked Will of the People and Stray from the Republic for German AI after its civil war.
  - [HOL] Fixed AI Luxembourg, Ireland, England, and Scotland accepting Dutch ultimatums more often the stronger they were; they now accept more when much weaker, and England never accepts as a major, a faction member, or the stronger side.
- - [KOR] Made AI weigh bankruptcy, deficits, stability, and its path game rule on Korean events and treasury decisions, and fixed doubled POSCO investment charges, repeating wartime control events, arms sales reading the wrong technology, and China's unity proposal going to South Korea instead of the North.
+ - [KOR] Fixed doubled POSCO investment charges, repeating wartime control events, arms sales reading the wrong technology, and China's unity proposal going to South Korea instead of the North.
  - [KUR] Made Iraq weigh war, stability, strength, opinion, and influence before refusing Kurdish independence or autonomy (Issue #5143).
- - [PER] Stopped Historical AI wars over Iran, made AI countries weaker than Iran skip their wars on it, and made AI Iran weigh its budget on its spending decisions and events (Issue #4690).
- - [SIN] Made AI weigh costs and its path game rule on Singaporean events and decisions, steer the Balance of Power by path (Singapore First on Master of the Straits, World Dominance on other paths, the middle on No Path), take its trade focus early and seek trade agreements once tariff income is active, and stop siding with the PAP on Master of the Straits. The US and Indonesia now weigh their opinion of Singapore on its arms purchases and Riau Islands demand, and AI countries are more willing to sign trade agreements with fellow ASEAN members and with Singapore once its trade mechanic is active. Annexation now clears both sides of the annexed country's trade agreements, and Saudi focus trade agreements now count toward both countries' totals. Fixed the American aircraft sale being free with By Blood Alone, the US being paid the wrong amount for both arms sales, the Australia-Asia PowerLink trade agreements never being signed, and Singapore's trade agreement strength being recalculated on partner countries instead of Singapore.
- - [SOL] New national spirits. They now have some first year events leading up to and including the coup. There is also more feedback on their side if they choose to approve the intervention, and a way to avoid the collapse has been added. News events tweaked.
+ - [LBA] Fixed communist AI never nationalising oil fields, cleared disabled loyalty and modifiers across civil wars, cancelled pending revolts, and kept recipient rail-offer costs aligned with who pays.
+ - [PER] Stopped Historical AI wars over Iran and made AI countries weaker than Iran skip their wars on it (Issue #4690).
+ - [POL] Made AI pick a space partner that fits its alliances.
+ - [SAU] Stopped Saudi cyber operations targeting faction allies.
+ - [SIN] Aligned AI politics with its chosen path, improved trade priorities, ASEAN trade, arms deals, and Riau demand responses, and fixed trade accounting, annexation cleanup, arms-sale payments, and PowerLink agreements.
+ - [SOL] Added starting national spirits and first-year coup events, improved intervention feedback, added a way to avoid collapse, and updated news events.
  - [SOV] Excluded Russia from the generic airframe production tiers so they no longer stack on its own air weights, gave it matching factory-balance tiers, and closed the 50-factory gap in the high tier (Issue #5656).
+ - [SOV] Improved Russian and Caucasus influence campaigns, enforced the Belarus Union State rule, displayed the 75 PP influence cost, and fixed Warsaw Pact coups, EU candidacy, Wagner deployments, MTS value, decision eligibility, Cossack unlocks, and Luhansk investments.
  - [SOV] Tweaked vehicle design targets and prioritization weights.
- - [TAI] Removed Taiwan's "antagonize China" AI strategy, which targeted Taiwan itself and raised peacetime war priority on every rival front toward Taiwan (Philippines front 3 to 305).
+ - [TAI] Removed Taiwan's self-targeting "antagonize China" AI strategy and its unintended peacetime war priority boosts.
+ - [USA] Fixed three American event weights whose party checks could never match.
 
 Balance:
+ - Required Police State or 70% ruling-coalition support to declare a one-party state (Issue #5915).
  - Reduced the base ROI for international investments from 6% to 3%.
  - Staged railgun development from naval and land systems into air-to-air projects around 2030 and helicopter projects around 2040 (Issue #5735).
+ - Balanced AA and Armor values between AA missile load, RAM and CIWS. AA missile load provides the most AA, CIWS provides the most armor.
  - Added base income of 0.25 billion weekly for all countries
  - Removed microstate income fix as it is now replaced by universal base income
  - Additional income from Panama, Suez and Malacca straits is now based off 2000 profit values and scales up with world GDP (trade estimate)
@@ -71,6 +94,7 @@ Balance:
  - Reduced policy rate points' debt-interest contribution from 0.5 to 0.33 (Issue #5190).
  - Reduced starting inflation for LAO, DRC, and AGL.
  - Reduced the worldwide supply of Mounted ATGM vehicles to realistic operator stockpiles.
+ - Changed the Resourse requirements for most Airframes, and allowed a third weapons module for the Third generation medium Airframe and a second weapons module to the Third generation Light Airframe
  - Removed gunship weapons and stealth bomb bays from AWACS aircraft, and stealth bomb bays from transport aircraft.
  - Revised artillery to be more useful from the start.
  - Reworked population growth and migration: growth falls as GDP per capita rises (minimum 0.01% a month), the Migration Law sets immigration, unemployment and war drive emigration, and world migration balances (Issue #5660).
@@ -88,16 +112,31 @@ Balance:
  - Added a 180-day cooldown between Reverse Engineering rewards (Issue #5066).
  - Reduced railway upgrade cost to 5x vanilla at every level (upgrades were 16-24x) so small economies no longer spend all their construction on railways.
  - Let AI default at war, made defaults keep 10% of debt instead of 25% and add a two-year credit downgrade, and fixed AI never settling defaulted debt (Issue #5768).
+ - Quadrupled the political power cost of Reserve Currency Policy and Currency Backing (Issue #5926).
+ - Retuned energy techs so renewables beat fossil by 2010 in good states and 2015 on average, every energy tech grants at least 3% power, construction speed, and upkeep relief, nuclear stays within 1.5x of renewables until fusion, and reactors 9 to 12 are fusion designs (Issue #5263).
+ - Counted SP rocket units toward Artillery Leader experience, gave the Artillery Leader and Artillery Expert bonuses to all SP rocket units, and let armies with any self-propelled artillery or SP rocket unit roll the Artillery Officer trait (Issue #5917).
+ - Tweaked Army doctrines to prevent overstacking of Max Battle Plan bonus.
  - [AST] Mark’s Gambit, Partner with Japan and Made in Vietnam events have been tweaked to provide better feedback for AST and to include modifiers for the accepting countries.
+ - [AST] Minor tweaks to Air shared focuses
  - [CHI]/[JAP]/[KOR]/[SOV] Raised starting dockyards to match real-life capacity.
- - [CHI] Changes focus "Shandong at Sanya" to only require 1 aircraft carrier, which more closely reflects the PRC's aircraft carrier development path.
+ - [CHI] Changes focus "Shandong at Sanya" to only require 1 aircraft carrier, which more closely reflects the PRC's aircraft carrier development path. Also updated all 3 carriers ship role icons and 3d models.
  - [CUB] Rebalanced Cuba to reduce starting bankruptcy.
  - [ECU] Made the two Ecuador events that trigger in 2000 fire about 5 days apart instead of at the same time.
+ - [JAP] Cut Japan's interest rate by 3, 2, and 1 points across the three Entrenched Demand Slump tiers, so rates start low and rise as the slump is resolved (Issue #5732).
  - [PER] Reduced starting inflation to 12.6% and raised the starting policy rate to 8%.
+ - [PER] Iran no longer starts with the Nuclear Warhead Program or ICBM technologies. Natanz Enrichment Complex now builds an Aerodynamics & Avionics Facility and boosts the Nuclear Fission Bomb Project, IR-40 and The Mouse in the Corner boost the Nuclear Warhead Program, and North Korean missile aid boosts whichever project is next instead of granting ICBM technology before the program is done (Issue #5215).
  - [POL] Shortened 21 of the economic tree's 70-day focuses: 11 small ones to 35 days and 10 larger ones to 49, while 11 that spend heavily, build, or restructure the state stay at 70.
  - [UKR] Rescheduled National Bank of Ukraine rate cuts for the 30% starting policy rate (29% in April 2000, 27% in August).
-
+ - [UKR] Postponed most aicraft decisions to years later, made them decisions longer. Changed the prerequisites of some decisions that required wrong techs
+ 
 Bugfix:
+ - Fixed no effect German focuses and events values that were too small  (Issue #5991)
+ - Disabled unused vanilla Death or Dishonor artillery and vehicle entities to prevent missing Yugoslav infantry and rifle attachment errors.
+ - Fixed removed internal factions, such as Iraq's Oligarchs after the Mukhabarat event, keeping their faction modifier (Issue #5890).
+ - Moved PMC division template battalions, including Wagner units in Russian and Kuban content, off regiment rows that need a doctrine, so every buyer gets the same battalions in rows it can use.
+ - Made 190 custom-cost decisions charge the price they show when taken; they charged when they ended, charged a different amount, or never charged. Iraqi arms for rebels now reach the target country when delivered.
+ - Prevented AI spending restoration from selecting an empty random list when no deficit cuts remain to undo.
+ - Fixed prerequisites and mutually exclusive focuses on the wrong rows in the Georgian, Saudi, Venezuelan, and United States of Europe trees (Issue #5402).
  - Fixed the Indian focus "Declare Holy Jihad" making the world a more peaceful place (Issue #5914)
  - Fixed the generic Naval Bases focus setting a province's naval base to level 1 instead of adding a level (Issue #5785).
  - Fixed the crash report for faction pinging during multiplayer (Issue #5793)
@@ -110,6 +149,7 @@ Bugfix:
  - Replaced breakaway recognition event spam with delayed campaign reports, and fixed aspiring states asking themselves instead of their territorial claimant for independence (Issue #5531).
  - Corrected validator AI guard checks, made unreadable building files fail validation, and consolidated shared scanner rules (Issue #5738, #5739).
  - Stopped the decision icon validator from reading agency logos and equipment variant icons inside decision effects as the decision's own icon.
+ - Sped up the commit hooks: content validators run once per commit and only on conflicted files during merges, pylint checks staged files only, detect-secrets is removed, and staged idea_tags changes now run the idea quality check.
  - Removed trailing localization version numbers from vanilla replacement strings and exempted Eritrea's released-puppet tree from AI path-rule warnings.
  - Fixed EU member spirit not being removed by disabling EU in game rules
  - Corrected copy-pasted event option log ids (Issue #5266).
@@ -156,17 +196,32 @@ Bugfix:
  - Standardized USA and Singapore influence call layout without changing effects (Issue #5226).
  - Fixed scripted-effect validation flagging idea and dynamic-modifier definitions and FROM scopes as argument blocks, and made it warn on lowercase scopes shadowed by effect names.
  - Stopped the United States of Europe from giving the Military Reorganization trait to inherited operatives and to leaders of members integrated after A European Officer Corps, who never lost it (Issue #5722).
+ - Fixed multirole weapons being allowed on heavy airframes to prevent conflicts between modules.
+ - Land attack ammo loads used in surface ships and submarines are now unlocked correctly.
+ - Anti Ship / Air Defence ammo load removed, superseded by balanced load.
+ - Fixed Vojvodina's EU candidacy after Internal Enlargement and corrected three OOB stockpiles using mismatched equipment types (Issue #6042).
+ - Made GDP/c research slots count only civilian factories in controlled states, so leased factories no longer unlock them, made a slot whose factory requirement is no longer met start the Laboratory Equipment Shortage mission, and made owned slots show as unlocked (Issue #5709).
  - [AFG] Removed influence effect tooltip from Invite Western Investors.
+ - [ALG]/[CHI]/[FRA]/[HEZ] Removed unnecessary Political Power gates and clarified Algeria's decision costs.
  - [ALG] Fixed the FIS victory leaving the FLN and Bouteflika in charge. The victory focus now puts the Islamic Salvation Front in power under Ali Belhadj, the politics view names the FIS, and the later leadership choice no longer installs a leader for the wrong party (Issue #4190).
  - [ALG] Made cabinet loyalty changes clear in tooltips and preserved the competence penalty when ministers resist loyalty demands (Issue #5603).
+ - [ALG] Changed the Su-30MKA purchase to grant a production license on completion, not on game start. Additionally, changed non-BBA reward to correspond to the BBA reward.
  - [ARM] Fixed US relations for Armenia to require at least 1, rather than being at most -1 (Issue #5922)
+ - [ARM] Required the Russian base for the Gyumri Massacre and Unit 102, and clarified their descriptions (Issue #5939).
+ - [ARM] Allowed "Restore the Great Idea" to invite Greece out of NATO and remove its NATO benefits (Issue #5929).
  - [AST] Replaced the republic flag with the A New Constitution focus check.
+ - [AST] Reverted republic flag to focus check change, since that would fail once the focus tree changes.
+ - [AST] Fixed an issue where the Liberals would lose the Nationals coalition, while Labor would keep it.
+ - [AST] Kept bankrupt AI from accepting investment offers, named the Thai exercise doctrine bonuses, restored missing refusal logs and the disappointing exercise option text, and limited the Bomber Agreement countermeasures bonus to By Blood Alone.
+ - [BLR] Fixed currency crisis recovery, explained spirit removal, and rebalanced monetary penalties (Issue #5983).
  - [CHI] Fixed NEC, Toshiba, Panasonic, Japan Marine United, and Mitsubishi partnership decisions to grant a one-time research bonus (Issue #5454).
  - [CHI] Fixed Assuage Japanese Concerns being unreachable and Japan-track national spirits, including RCEP Founding Member, being hidden, and the J-10A, J-10C, JH-7A, J-15 and Type 055 designs losing their MIO designer (Issue #5483)
  - [CHI] Fixed the Local Government Debt decision tab disappearing after taking Provincial Debt Swap (Issue #5557).
  - [CHI] Lowered the Belt and Road engagement needed for African Continental Integration from 30 to 12 and for Gulf Yuan Settlement from 20 to 16, which the tree could not reach (Issue #5577).
+ - [CHI]/[JAP] Fixed four China and Japan national spirits showing no icon.
  - [CZE] Fixed Czech gasoline engines being unusable on any variant.
  - [CZE] Fixed Škoda Superb exports outside the Volkswagen Group paying the partner rate (Issue #5369).
+ - [CZE] Fixed the Austrian and Hungarian monarchy pressure decisions hiding their 50 political power price; it now shows as the decision cost.
  - [CZE]/[UKR] Fixed the NATO Send Strike Aircraft decision and the Czech Modern Fighters event delivering no F-16s.
  - [EGY] Moved Egypt's capital from Helwan back to Cairo.
  - [ENG] Fixed Close Proximity with NATO overlapping Reservist Corps Act after The Queen's Speech, Social Housing and Fostering Home Ownership reappearing after Thriving Rural Scene, and Thales and BAE Systems being ignored as Watchkeeper WK450 and Nimrod MRA4 designers (Issue #5042).
@@ -174,7 +229,9 @@ Bugfix:
  - [ENG] Made Operation Barras take 35 days and work whichever side holds Sierra Leone, sending infantry equipment if the civil war is still on (Issue #5680).
  - [ENG] Replaced the DLC tech prerequisite for the moonbase focus with a non-DLC tech.
  - [ERI] Added missing port in Eritrea.
+ - [FRA]/[ISR]/[LBA]/[POL]/[SAU]/[USA] Fixed French aid to Greece and Lebanon charging the receiver instead of France, and added previews for France's conditional treasury costs when either recipient accepts; fixed investment gratitude from Lebanon and EU partners targeting the receiver itself, Israeli arms deals sending Israel's confirmation event to the buyer, Libyan influence events missing their target, Visegrad support decisions adding twice the shown support, the Visegrad breakup releasing members and costing stability twice, NASA cooperation stacking with Roscosmos, Saudi Arabia being paid for the American fighters it bought, the US lobbying decisions running at the same time, and the Chase-Stearns Merger event trigger using `Tag` instead of `tag`.
  - [GER] Fixed the Anti-NATO focus always bypassing.
+ - [GER] Fixed Heer focus "Invest in Universitat der Bundeswehr Hamburg" not providing any army leader skill increase (Issue #5971)
  - [GRE] Fixed the austerity tensions spirit being granted twice.
  - [GRE] Mitigated a case where Resolution Crisis could not complete without manually inflating debt.
  - [HOL] Fixed American, British, French, Russian, and Chinese carrier deals queuing a blank, statless hull (Issue #5528).
@@ -201,6 +258,7 @@ Bugfix:
  - [SOV] Moved the 2014 date check of Zhirinovsky's Military Operation in Ukraine from its war event to the focus, so the focus no longer brings sanctions without a war (Issue #5792).
  - [SPR] Fixed Portuguese and Andorran demand routing and stale responses, Portugal's missing Falangist refusal, incorrect Barcelona crackdown results, Basque ETA opinion caps, and locked regiment rows in Spanish templates. Spanish AI now checks regional opinion in convention and citizenship events, rechecks delayed citizenship revocations and refunds unsafe ones, subsidizes regions close to revolt on any path, and weighs Foreign Legion and Regulares recruitment by its AI path.
  - [SYR] Fixed weekly corruption costs, double civilian investment at maximum corruption, the Alawite uprising queuing only once per war, duplicate anime boom and Al-Nusra events, and a party popularity boost that never applied.
+ - [UKR] Fixed 31 Ukraine decisions whose timer did nothing: repeatable ones now use it as a cooldown, and the National Guard, International Legion, police regiment and Ternopil corvette decisions now take their cost at once and deliver the unit or ship when the timer ends.
  - [UKR] Fixed BTR-3RK and RK-2 Stuhna-P development decisions that skipped the required tech or granted it before creating the variant.
  - [UKR] Fixed Kharkiv Military Industry and the Kharkiv plant national spirits never returning after Ukraine retakes Kharkiv from separatists (Issue #5403).
  - [UKR] Fixed overlapping provisional republic focuses and moved battalion support subunits in 4 focus templates.
@@ -223,8 +281,11 @@ Database:
  - Rewrote weekly resource export income as one calculation per resource, with no change to the amounts.
  - Tweaked AK-74 family models to use fewer AK-74N in starting OOBs and more AK-74M in focus trees.
  - Starting utility vehicle stockpile improvements for the following: ARG, AUS, BRA, CAN, CBD, DEN, ECU, EGY, ELS, GRE, IND, KOR, LEB, MEX, MOR, NRY, PHI, PRU, SAU, SIA, TAI, TUN, TUR, USA.
- - [AST] Made it a little easier for the Republic movement to succeed with AI.
- - [AST] Added AI decision tweak to occasionally buff stability.
+ - [AST] Howard is now pro-American. Other traits have been added for the new leaders, and some have been made random.
+ - [AST] Various decisions now have treasury checks.
+ - [AST] Shared focus filters have been tweaked.
+ - [AST] Ideas that modified influence defense have been tweaked, a hidden spirit increasing influence defence by 25% has been added on start.
+ - [AST] Scripted election leader file has been changed to include leaders not already implemented by events.
  - [BLR]/[GEO]/[UKR] Added small stockpiles of AS VALs.
  - [CHI] Updated starting equipment parent versioning, 3D models, modules, removed Su-30MKK from CHI history file and added it to SOV instead, updated 3 OOBs entries regarding this model's creator and granted license to it to CHI from SOV.
  - [CHI] Added Type 69 (RPG-7 Copy) and HJ-73 (9K11 Malyutka copy) variants.
@@ -240,13 +301,15 @@ Database:
  - [SAF] Reworked all starting OOBs, splitted starting Utility vehicles and MRAPs, added some trucks to stockpiles.
  - [SHA] Added a new starting tank-designer equipment OOB.
  - [SOV] Added small numbers of MRAPs to the starting OOB.
- - [SOV] Added the 2S25 Sprut-SD tank-designer design.
+ - [SOV] Added the 2S25 Sprut-SD NSB design and KamAZ-4350 utility vehicle variant.
  - [SOV] Predefined more equipment for starting units.
+ - [SOV] Polish pass on all Russian BBA designs. MiG-23BN, MiG-23ML & Su-27P variants were added in the process and added to relevant OOB's.
  - [UKR] Added 2 opinion modifiers with ROM and 1 with MLV.
  - [UKR] Delayed the An-BFV aircraft development decision and required 3rd Gen A2A missiles, with a 25% discount from Su-27-1M or MiG-29MU2.
  - [UKR] Updated the namelist for Ukrainian air force units.
  - [UKR] Updated all templates and names for scripted units for Ukraine and separatists/self-proclaimed republics.
  - [UKR] Added 1 Recon Air Regiment in Odesa state.
+ - [UKR] Changed the designs of some aircraft, added three new aircraft which are Su-24MU, Su-27UP2M and An-BK-1 Horlytsia, Changed BTR-4 Smoke launchers to a better version.
  - [USA] Added John Kiriakou as a recruitable operative.
  - [USA] Made Raytheon cover SPAA/SAM vehicles and Northrop Grumman cover carrier fighters and carrier AWACS (Issue #5495).
  - [USA] Updated starting equipment parent versioning, 3D models, modules, M48A5 availability for SPR, MOR, GRE, and TUR stockpiles, and M47/M48 cannon module localization.
@@ -264,16 +327,20 @@ Graphics:
  - Removed 70 unused heavy armor model definitions (Issue #5423).
  - Removed an unused, misnamed Commonwealth motorized model definition (Issue #5424).
  - Removed duplicate model definitions (Issue #5374, #5375, #5376).
+ - Added various new equipment icons
+ - [AST] A few improvements have been made to existing leader portraits. New icon for the Democrats.
  - [HOL] Added icons to the Pim Fortuyn balance of power sides (Issue #4825).
  - [LBA] Finished and assigned pictures for Libya's civil war, elections, and army events. (Issue #4909)
+ - [RAJ] Added unique GFX for MiG-21 Bison
+ - [ROM] Added unique GFX for MiG-21 LanceR A & C
  - [SIA] Added Thailand-specific pictures to eight country events and four news events.
+ - [SOV] Added unique GFX for MiG-21MF
  - [UKR] Added a second set of aviation and other equipment icons.
  - [UKR] Renamed 116 equipment icons to quoted GFX_ form so they resolve in tank, SPART, and designer pools.
 
 Localization:
  - Updated tooltips for economic factors such as currency strength.
  - Corrected the Air Base tooltip to show its capacity of 24 planes per level (Issue #5273).
- - Updated tooltips for economic factors such as currency strenght.
  - Added missing English names for national spirits and defense companies (Issue #5415).
  - Fixed the BTR-60 PKT machine gun count showing 3,00 rounds instead of 2,000, and removed four duplicate decision cost keys.
  - Fixed the EU voting cooldown and Domestic Independence game rule descriptions stating the wrong defaults.
@@ -283,8 +350,11 @@ Localization:
  - Updated the nuclear bomb logistics tooltip to explain the MD nuclear system.
  - Updated tooltip text for workforce statistics by renaming 'Naval Factories' to 'Naval Yards'.
  - Fixed missing text icons in decision costs, party names, and Algerian, Bosnian, Iranian, Russian, and Ukrainian tooltips.
+ - Simplified the inflation tooltip and corrected its outdated currency and deflation rules.
  - [BUL] Correct spelling of 'Hristiana' in names list (Issue #5329).
+ - [ENG] Added a description to the starting missiong "Losing Productivity" that also explains how to get rid of the mission (Issue #5986)
  - [UKR] Added a UAE flag to the BTR-3U decision and updated An-LBL and An-BFV aircraft names.
+ - [UKR] Changed some localisation for Helicopter and Aicraft modules
 
 Performance:
  - Moved startup tax overrides and small-economy debt relief before the first money update (Issue #5659).
@@ -293,6 +363,9 @@ Performance:
  - Inverted neighbor-at-war checks to enemy-is-neighbor checks.
  - Reduced hourly checks when evaluating whether the AI should take Neo-Imperialism intervention laws.
  - Reduced neighbor-country checks in French communist demand decisions for AI.
+ - Power Status ideas now update at the start of February, May, August, and November instead of over the following weeks, and regional power selection no longer re-sorts the regional country lists.
+ - Sped up the ledger: column sorting uses native array sorting instead of a scripted quicksort, faction and subject totals use collections, and one player's ledger clicks no longer refresh other players' ledgers.
+ - Rebuilt the research slot screen rows as two data-driven lists, started research slot loss missions from the weekly update instead of engine polling, stopped AI treasury, debt, and investment changes from refreshing the screen, and cleared the slot alert as soon as an upgrade starts; a slot you still hold now shows Unlocked while its loss mission runs (Issue #3692, #4040, #6116).
 
 User Interface:
  - Added a Map Mode Colors choice to Automation Settings with red-green and blue-yellow options, and recolored the EU, Influence, SCO, Reserve Currency, Ruling Party, and economy map modes to stay readable for colorblind players, with economy maps now running from dark (worse) to bright (better) (Issue #4065, #4448).
