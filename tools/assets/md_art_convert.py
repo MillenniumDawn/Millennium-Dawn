@@ -261,7 +261,7 @@ def main() -> int:
             args.source, args.name, args.flags_dir, not args.no_verify
         )
     else:
-        allowed = (
+        allowed: list[tuple[int, int]] = (
             [COUNTRY_EVENT_SIZE, NEWS_EVENT_SIZE]
             if args.command == "event"
             else [PORTRAIT_SIZE]

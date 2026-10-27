@@ -6,6 +6,7 @@ import sys
 import pytest
 import sync_dynamic_tokens as sync
 from shared.suite import read_text as read
+from shared.suite import run_tool_script
 from shared.suite import write_text as write
 
 
@@ -100,6 +101,16 @@ def test_nothing_to_add_when_every_token_is_present(monkeypatch, tmp_path, capsy
 
     assert read(output) == "  MD_alpha  \n\n"
     assert "All 1 tokens already present" in capsys.readouterr().out
+
+
+def test_the_script_appends_the_tokens_it_finds(tmp_path):
+    log = write(tmp_path / "error.log", "Token MD_alpha is a dynamic token\n")
+    output = tmp_path / "tokens.txt"
+
+    result = run_tool_script("sync_dynamic_tokens.py", log, "-o", output)
+
+    assert result.returncode == 0, result.stderr
+    assert read(output) == "MD_alpha\n"
 
 
 def test_default_output_is_the_synchronised_tokens_file():

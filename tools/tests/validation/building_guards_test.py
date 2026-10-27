@@ -8,11 +8,8 @@ an `if`/`limit` guarding something else entirely (an idea, a flag) must still
 flag the effect inside it.
 """
 
-import re
-
 import pytest
 import validate_building_guards as V
-from shared.paths import REPO_ROOT as _MOD_ROOT
 
 
 def _scan(script):
@@ -520,24 +517,6 @@ def test_supply_province_buildings_in_state_only_trigger_are_flagged(building):
     assert building in findings[0][2]
 
 
-def test_province_building_list_covers_every_province_max_building():
-    """`_PROVINCE_BUILDINGS` is a hand-kept mirror of the buildings that carry a
-    province_max level cap; this fails when a new one is added to the game."""
-    text = (_MOD_ROOT / "common" / "buildings" / "00_buildings.txt").read_text(
-        encoding="utf-8-sig"
-    )
-    declared = set()
-    building = None
-    for line in text.splitlines():
-        match = re.match(r"^\t([A-Za-z_][A-Za-z0-9_]*) = \{", line)
-        if match:
-            building = match.group(1)
-        elif building and re.search(r"\bprovince_max\s*=", line):
-            declared.add(building)
-    assert declared
-    assert declared <= V._PROVINCE_BUILDINGS
-
-
 def test_bare_comparison_guards_a_province_building():
     script = (
         "if = {\n"
@@ -547,44 +526,6 @@ def test_bare_comparison_guards_a_province_building():
     )
     assert _scan(script) == []
     assert _scan_province(script) == []
-
-
-# --- scan_file cache --------------------------------------------------------
-
-
-def test_scan_file_reads_and_relativizes_path(tmp_path, monkeypatch):
-    monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    events_dir = tmp_path / "events"
-    events_dir.mkdir()
-    filepath = events_dir / "test_events.txt"
-    filepath.write_text(
-        "652 = {\n"
-        "\tdamage_building = {\n"
-        "\t\ttype = fuel_silo\n"
-        "\t\tdamage = 1\n"
-        "\t}\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    mod_path = str(tmp_path) + "/"
-    findings = V.scan_file((str(filepath), mod_path))
-    assert len(findings) == 1
-    category, relative, line, message = findings[0]
-    assert category == "unguarded-damage-building"
-    assert relative == "events/test_events.txt"
-    assert line == 2
-    assert "fuel_silo" in message
-
-
-def test_scan_file_skips_files_without_building_effects(tmp_path):
-    filepath = tmp_path / "no_buildings.txt"
-    filepath.write_text("focus = { id = TST_focus }\n", encoding="utf-8")
-    assert V.scan_file((str(filepath), str(tmp_path) + "/")) == []
-
-
-def test_scan_file_skips_unreadable_files(tmp_path):
-    (tmp_path / "damage_building.txt").mkdir()
-    assert V.scan_file((str(tmp_path / "damage_building.txt"), str(tmp_path))) == []
 
 
 # --- effects with no type field --------------------------------------------

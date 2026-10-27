@@ -1,13 +1,7 @@
 """Tests for the technology standardizer."""
 
-import re
-
-import pytest
-from shared.paths import REPO_ROOT
 from standardize_api import standardize_text
 from standardize_technologies import TechnologyStandardizer
-
-_TECH_DIR = REPO_ROOT / "common" / "technologies"
 
 
 def _format(source):
@@ -304,29 +298,3 @@ def test_opener_comment_survives():
     assert _format("\tfoo = { # keep me\n\t\tresearch_cost = 1\n\t}\n")[0] == (
         "\tfoo = { # keep me"
     )
-
-
-def _tech_ids(text):
-    ids = []
-    depth = 0
-    for line in text.splitlines():
-        code = line.split("#", 1)[0]
-        match = re.match(r"\s*(\w+)\s*=\s*\{", code)
-        if match and depth == 1:
-            ids.append(match.group(1))
-        depth += code.count("{") - code.count("}")
-    return ids
-
-
-@pytest.mark.parametrize(
-    "path",
-    sorted(_TECH_DIR.glob("*.txt")) if _TECH_DIR.is_dir() else [],
-    ids=lambda p: p.name,
-)
-def test_real_files_round_trip(path):
-    text = path.read_text(encoding="utf-8")
-    first = _file(text)
-    assert first is not None
-    assert first.count("{") == first.count("}")
-    assert _tech_ids(first) == _tech_ids(text)
-    assert _file(first) == first

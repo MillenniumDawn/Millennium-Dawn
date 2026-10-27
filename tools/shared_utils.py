@@ -30,6 +30,19 @@ from typing import (
     Tuple,
 )
 
+WORD_BLOCK_START_RE = re.compile(r"^(\w+)\s*=\s*\{")
+WORD_BLOCK_LINE_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+IDENTIFIER_BLOCK_START_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+IDENTIFIER_BLOCK_LINE_RE = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE
+)
+COUNTRY_TAG_ASSIGNMENT_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+COUNTRY_TAG_ASSIGNMENT_LINE_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+MODIFIER_OPEN_RE = re.compile(r"\bmodifier\s*=\s*\{")
+TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+AVAILABLE_OPEN_RE = re.compile(r"\bavailable\s*=\s*\{")
+
 
 class Colors:
     HEADER = "\033[95m"
@@ -382,6 +395,8 @@ def count_braces(text: str) -> Tuple[int, int]:
     """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
     strings and after an unquoted ``#`` comment."""
     code = strip_inline_comment(text)
+    if '"' not in code:
+        return code.count("{"), code.count("}")
     opens = closes = 0
     in_str = False
     for i, c in enumerate(code):
@@ -417,6 +432,8 @@ def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
     unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    if '"' not in text:
+        return " ".join(text.split())
     result: List[str] = []
     in_str = False
     prev_space = False
@@ -456,6 +473,10 @@ def _normalize_oneline_braces(text: str) -> str:
 
 
 _COMPARISON_OPS = {"!=", "==", ">=", "<="}
+# The tokens normalize_spacing pads, two-character forms first.
+_SPACED_TOKEN_RE = re.compile(
+    "|".join(re.escape(op) for op in sorted(_COMPARISON_OPS)) + r"|\{\}|[{}=<>]"
+)
 
 
 def normalize_spacing(line: str) -> str:
@@ -475,28 +496,30 @@ def normalize_spacing(line: str) -> str:
 
     indent = code[: len(code) - len(code.lstrip())]
 
-    out: List[str] = []
-    in_str = False
-    i = 0
-    n = len(code)
-    while i < n:
-        c = code[i]
-        if c == '"' and (i == 0 or code[i - 1] != "\\"):
-            in_str = not in_str
-            out.append(c)
-        elif in_str:
-            out.append(c)
-        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
-            out.append(f" {code[i : i + 2]} ")
-            i += 2
-            continue
-        elif c in "{}=<>":
-            out.append(f" {c} ")
-        else:
-            out.append(c)
-        i += 1
-
-    body = collapse_ws_outside_quotes("".join(out))
+    if '"' not in code:
+        body = " ".join(_SPACED_TOKEN_RE.sub(r" \g<0> ", code).split())
+    else:
+        out: List[str] = []
+        in_str = False
+        i = 0
+        n = len(code)
+        while i < n:
+            c = code[i]
+            if c == '"' and (i == 0 or code[i - 1] != "\\"):
+                in_str = not in_str
+                out.append(c)
+            elif in_str:
+                out.append(c)
+            elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+                out.append(f" {code[i : i + 2]} ")
+                i += 2
+                continue
+            elif c in "{}=<>":
+                out.append(f" {c} ")
+            else:
+                out.append(c)
+            i += 1
+        body = collapse_ws_outside_quotes("".join(out))
     return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
 
 
@@ -524,9 +547,19 @@ def collapse_or_compact(
         first = block_lines[0]
         indent = first[: len(first) - len(first.lstrip())]
 
-    for line in block_lines:
-        if strip_inline_comment(line) != line:
-            return reindent_by_brace_depth(compact_block(block_lines), indent)
+    one_line = _one_line_form(block_lines, indent)
+    if one_line is not None:
+        return [one_line]
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return reindent_by_brace_depth(compact_block(block_lines), indent)
+    multi = compact_block(collapse_nested_blocks(block_lines))
+    return reindent_by_brace_depth(multi, indent)
+
+
+def _one_line_form(block_lines: List[str], indent: str) -> Optional[str]:
+    """The block on one line when it passes the single-leaf test, else None."""
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return None
 
     text = " ".join(line.strip() for line in block_lines if line.strip())
 
@@ -546,16 +579,14 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        multi = compact_block(collapse_nested_blocks(block_lines))
-        return reindent_by_brace_depth(multi, indent)
+        return None
 
     unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
     for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
         if len(group.split()) > 1:
-            multi = compact_block(collapse_nested_blocks(block_lines))
-            return reindent_by_brace_depth(multi, indent)
+            return None
 
-    return [f"{indent}{_normalize_oneline_braces(text)}"]
+    return f"{indent}{_normalize_oneline_braces(text)}"
 
 
 def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
@@ -593,8 +624,9 @@ def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
             return out
 
         child = collapse_nested_blocks(block_lines[i:j])
-        collapsed = collapse_or_compact(child)
-        out.extend(collapsed if len(collapsed) == 1 else child)
+        first = child[0]
+        one_line = _one_line_form(child, first[: len(first) - len(first.lstrip())])
+        out.extend(child if one_line is None else [one_line])
         i = j
 
     out.append(block_lines[last])
@@ -1365,7 +1397,7 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
-_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
 
 
 def iter_flat_matches(

@@ -1,5 +1,6 @@
 """Tests for `report_lib.markdown`."""
 
+import pytest
 from report_lib import (
     ReportContext,
     Severity,
@@ -91,12 +92,73 @@ def test_tools_section_collapses_with_a_baseline_classification():
     assert "| Tool suite | New |" not in body
 
 
-def test_tools_section_keeps_an_incomplete_suite_visible():
-    runs = [_tools_run("Linux"), _tools_run("macOS", status="no_output")]
-    body = render(runs, [], _ctx())
+@pytest.mark.parametrize(
+    ("suite", "heading", "noun"),
+    [("mod", "Validator", "validator"), ("tools", "Tool suite", "tool suite")],
+)
+@pytest.mark.parametrize("status", ["unknown", "no_output"])
+@pytest.mark.parametrize("with_baseline", [False, True])
+@pytest.mark.parametrize("concise", [False, True])
+@pytest.mark.parametrize("with_failures", [False, True])
+def test_summary_shows_incomplete_without_counting_as_passed(
+    suite, heading, noun, status, with_baseline, concise, with_failures
+):
+    runs = [
+        ValidatorRun(name="passing", title="Passing", status="passed", suite=suite),
+        ValidatorRun(name="unfinished", title="Unfinished", status=status, suite=suite),
+    ]
+    if with_failures:
+        runs.append(
+            ValidatorRun(
+                name="failed", title="Failed", status="failed", errors=2, suite=suite
+            )
+        )
+    body = render(
+        runs,
+        [],
+        _ctx(),
+        baseline_stats=BaselineStats() if with_baseline else None,
+        include_validator_sections=not concise,
+    )
+    if with_baseline:
+        assert f"| {heading} | New | Errors | Warnings |" in body
+        assert "| ⚠️ Unfinished (incomplete) | 0 | 0 | 0 |" in body
+    else:
+        assert f"| {heading} | Errors | Warnings |" in body
+        assert "| ⚠️ Unfinished (incomplete) | 0 | 0 |" in body
+    assert ("| ❌ Failed |" in body) is with_failures
+    assert "| ✅ Passing |" not in body
+    assert "| ✅ Unfinished |" not in body
+    assert f"✅ 1 other {noun} completed successfully." in body
+    assert f"✅ 2 other {noun}s completed successfully." not in body
     assert "All tools based tests have succeeded!" not in body
-    assert "| ✅ Tools tests (macOS) | 0 | 0 |" in body
-    assert "✅ 1 other tool suite completed successfully." in body
+
+
+@pytest.mark.parametrize("suite", ["mod", "tools"])
+@pytest.mark.parametrize("with_baseline", [False, True])
+@pytest.mark.parametrize("concise", [False, True])
+def test_summary_shows_all_incomplete_runs(suite, with_baseline, concise):
+    runs = [
+        ValidatorRun(name="unknown", title="Unknown", status="unknown", suite=suite),
+        ValidatorRun(
+            name="no-output", title="No output", status="no_output", suite=suite
+        ),
+    ]
+    body = render(
+        runs,
+        [],
+        _ctx(),
+        baseline_stats=BaselineStats() if with_baseline else None,
+        include_validator_sections=not concise,
+    )
+    if with_baseline:
+        assert "| ⚠️ Unknown (incomplete) | 0 | 0 | 0 |" in body
+        assert "| ⚠️ No output (incomplete) | 0 | 0 | 0 |" in body
+    else:
+        assert "| ⚠️ Unknown (incomplete) | 0 | 0 |" in body
+        assert "| ⚠️ No output (incomplete) | 0 | 0 |" in body
+    assert "completed successfully" not in body
+    assert "All tools based tests have succeeded!" not in body
 
 
 def test_render_omits_the_tools_section_without_tools_runs():
@@ -521,7 +583,22 @@ def test_step_summary_lists_new_findings():
     assert error_details.startswith("<details open>")
     assert warning_details.startswith("<details>")
     assert "**NEW**" in body
-    assert "1 finding(s) could not be compared (no file/line)." in body
+    assert "1 finding(s) could not be compared (no category or message)." in body
+
+
+def test_severity_changes_get_their_own_groups_and_a_red_verdict():
+    run = ValidatorRun(name="events", title="Events", status="failed", errors=1)
+    raised = make_issue(baseline_status="raised")
+    lowered = make_issue(severity=Severity.WARNING, line=9, baseline_status="lowered")
+    stats = _stats(new_errors=0, new_warnings=0, raised=[raised], lowered=[lowered])
+
+    body = render([run], [raised, lowered], _ctx(), baseline_stats=stats)
+
+    assert "> ❌ 1 warning raised to error against the main baseline" in body
+    assert "<summary>⬆️ Warnings on main, errors now (1)</summary>" in body
+    assert "<summary>⬇️ Errors on main, warnings now (1)</summary>" in body
+    assert "**RAISED**" in body and "**LOWERED**" in body
+    assert "No new findings against the main baseline" not in body
 
 
 def test_step_summary_collapses_warnings_by_default():
@@ -630,7 +707,7 @@ def test_baseline_section_notes_unclassified_findings():
         baseline_stats=_stats(new_errors=0, unclassified=2),
     )
     assert "✅ No new findings against the main baseline." in body
-    assert "2 finding(s) could not be compared (no file/line)." in body
+    assert "2 finding(s) could not be compared (no category or message)." in body
 
 
 def test_concise_comment_lists_new_findings():
@@ -655,29 +732,68 @@ def test_concise_comment_lists_new_findings():
     assert "step summary" in body
 
 
-def test_summary_table_adds_new_column_with_baseline():
+def test_every_section_counts_new_warnings_like_the_verdict():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="failed", errors=3, warnings=1
         ),
         ValidatorRun(name="ideas", title="Ideas", status="failed", errors=1),
     ]
-    new_issue, stats = _new_error()
-    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    new_error = make_issue(baseline_status="new")
+    new_warning = make_issue(severity=Severity.WARNING, line=80, baseline_status="new")
+    stats = _stats(new_issues=[new_error, new_warning], new_errors=1, new_warnings=1)
+    body = render(runs, [new_error, new_warning], _ctx(), baseline_stats=stats)
+    assert "1 new error against the main baseline" in body
+    assert "1 new warning" in body
+    assert "| ❌ Missing Key | 2 | 1 | 1 |" in body
     assert "| Validator | New | Errors | Warnings |" in body
-    assert "| ❌ Events | 1 | 3 | 1 |" in body
+    assert "| ❌ Events | 2 | 3 | 1 |" in body
     assert "| ❌ Ideas | 0 | 1 | 0 |" in body
-    assert "| **Total** | **1** | **4** | **1** |" in body
+    assert "| **Total** | **2** | **4** | **1** |" in body
 
 
-def test_summary_table_sorts_new_error_validators_first():
+def test_summary_table_sorts_validators_with_new_findings_first():
     runs = [
         ValidatorRun(name="ideas", title="Ideas", status="failed", errors=9),
-        ValidatorRun(name="events", title="Events", status="failed", errors=1),
+        ValidatorRun(name="events", title="Events", status="warnings", warnings=1),
     ]
-    new_issue, stats = _new_error()
-    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
-    assert body.index("| ❌ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+    new_warning = make_issue(severity=Severity.WARNING, baseline_status="new")
+    stats = _stats(new_issues=[new_warning], new_errors=0, new_warnings=1)
+    body = render(runs, [new_warning], _ctx(), baseline_stats=stats)
+    assert body.index("| ⚠️ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+
+
+@pytest.mark.parametrize(
+    ("baseline_status", "shown"), [("available", True), ("unavailable", False)]
+)
+def test_tooling_change_notice_explains_existing_findings(baseline_status, shown):
+    ctx = _ctx()
+    ctx.baseline_status = baseline_status
+    ctx.tooling_changed = True
+    runs = [ValidatorRun(name="events", title="Events", status="passed")]
+    body = render(runs, [], ctx)
+    assert ("This PR changes validator code." in body) is shown
+
+
+@pytest.mark.parametrize(
+    ("effect", "line"),
+    [
+        pytest.param(None, "is unavailable: main has no scan", id="no main scan"),
+        pytest.param({}, "that code changes no findings.", id="no change"),
+        pytest.param(
+            {"a": (1, 0), "b": (2, 3)},
+            "adds/drops: `b` +2/-3, `a` +1/-0.",
+            id="largest change first",
+        ),
+    ],
+)
+def test_tooling_change_notice_reports_the_effect_on_main(effect, line):
+    ctx = _ctx()
+    ctx.baseline_status = "available"
+    ctx.tooling_changed = True
+    ctx.tool_effect = effect
+    runs = [ValidatorRun(name="events", title="Events", status="passed")]
+    assert line in render(runs, [], ctx)
 
 
 def test_unavailable_baseline_is_explicit():

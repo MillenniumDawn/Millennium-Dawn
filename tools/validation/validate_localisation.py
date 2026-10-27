@@ -12,11 +12,12 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
+from typing import AbstractSet, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from linting.fix_loc_yaml import check_line
 from shared_utils import (
     extract_block_from_text,
     iter_statements,
@@ -310,11 +311,49 @@ _STRETCHED_WORD_EXEMPTIONS = frozenset(
 _DANGLING_DESCRIPTION_EXEMPTIONS = frozenset(
     validation_config("validate_localisation", "dangling_description_exemptions")
 )
+_SPACED_EN_DASH_EXEMPT_FILES = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exempt_files")
+)
+_SPACED_EN_DASH_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exemptions")
+)
+# A spaced en dash between two numbers is a range ("1959 – 2015"), not an em dash stand-in.
+_SPACED_EN_DASH_RE = re.compile(r"(?<!\d) \u2013 |(?<=\d) \u2013 (?!\d)")
 
 
-def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
+def _event_description_keys(text: str) -> Set[str]:
+    keys: Set[str] = set()
+    for event_type, _, event_body in iter_statements(strip_comments(text)):
+        if event_body is None or event_type not in (
+            "country_event",
+            "news_event",
+            "state_event",
+            "unit_leader_event",
+            "operative_leader_event",
+        ):
+            continue
+        for field, value, description in iter_statements(event_body):
+            if field != "desc":
+                continue
+            if value:
+                keys.add(value)
+            elif description is not None:
+                keys.update(
+                    value
+                    for field, value, _ in iter_statements(description)
+                    if field == "text" and value
+                )
+    return keys
+
+
+def _prose_findings(
+    key: str, value: str, event_description_keys: AbstractSet[str]
+) -> Iterator[Tuple[str, str]]:
     if value in _PLACEHOLDER_VALUES:
-        yield "loc-placeholder", f"{key}: placeholder value '{value}' needs finished text"
+        yield (
+            "loc-placeholder",
+            f"{key}: placeholder value '{value}' needs finished text",
+        )
     # Runtime text is opaque, not empty; deleting it invents adjacency and endings.
     prose = _PROSE_COLOR_RE.sub("", value.replace("§§", "\0"))
     prose = _PROSE_REFERENCE_RE.sub("\0", prose).replace(r"\n", "\n")
@@ -330,7 +369,10 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
             and prose[previous.end() : match.start()].strip(" \t") == ""
             and f"{key}:{folded}" not in _REPEATED_WORD_EXEMPTIONS
         ):
-            yield "loc-repeated-word", f"{key}: repeated word '{word}' (review in context)"
+            yield (
+                "loc-repeated-word",
+                f"{key}: repeated word '{word}' (review in context)",
+            )
         if (
             has_tripled_letter
             and word.isascii()
@@ -339,12 +381,16 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
             and not _ROMAN_WORD_RE.fullmatch(word)
             and word not in _STRETCHED_WORD_EXEMPTIONS
         ):
-            yield "loc-tripled-letter", f"{key}: tripled letter in '{word}' (review in context)"
+            yield (
+                "loc-tripled-letter",
+                f"{key}: tripled letter in '{word}' (review in context)",
+            )
         previous = match
         previous_folded = folded
     if (
-        key.endswith(("_desc", ".d"))
+        (key.endswith("_desc") or key in event_description_keys)
         and previous is not None
+        and (previous.start() == 0 or prose[previous.start() - 1] not in "-–")
         and previous.group().lower() in _DANGLING_WORDS
         and not prose[previous.end() :].strip()
         and f"{key}:{previous.group().lower()}" not in _DANGLING_DESCRIPTION_EXEMPTIONS
@@ -355,7 +401,9 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
         )
 
 
-def _scan_prose_text(text: str, basename: str) -> List[Issue]:
+def _scan_prose_text(
+    text: str, basename: str, event_description_keys: AbstractSet[str] = frozenset()
+) -> List[Issue]:
     results: List[Issue] = []
     for line_idx, key, value in _iter_loc_values(text):
         for _ in range(value.count("\u2014")):
@@ -368,6 +416,20 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if (
+            basename not in _SPACED_EN_DASH_EXEMPT_FILES
+            and key not in _SPACED_EN_DASH_EXEMPTIONS
+        ):
+            for _ in _SPACED_EN_DASH_RE.finditer(value):
+                results.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="loc-spaced-en-dash",
+                        message="Spaced en dash used as an em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                        file=basename,
+                        line=line_idx + 2,
+                    )
+                )
         for _ in range(value.count("`")):
             results.append(
                 Issue(
@@ -388,7 +450,7 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
-        for category, message in _prose_findings(key, value):
+        for category, message in _prose_findings(key, value, event_description_keys):
             results.append(
                 Issue(
                     severity=Severity.WARNING,
@@ -903,19 +965,29 @@ def process_txt_for_script_var_reads(args: Tuple[str]) -> List[Tuple[str, str, i
     return _scan_script_var_reads_text(text, os.path.basename(filename))
 
 
-def _scan_shared_yml_file(args) -> Tuple:
-    """Pool worker: run every yml check on one file after a single read.
+def _scan_yaml_text(text: str, filename: str) -> List[Issue]:
+    return [
+        Issue(
+            severity=Severity.ERROR,
+            category=f"loc-yaml-{kind.replace('_', '-')}",
+            message=description,
+            file=filename,
+            line=line_num,
+        )
+        for line_num, line in enumerate(text.split("\n"), 1)
+        for _, kind, description in check_line(line, line_num)
+    ]
 
-    Reads the file once and shares the comment-stripped text across the
-    brackets, syntax, mandatory, typo, and prose scans instead of one read
-    plus strip pass per check. Variable references scan the raw lines and
-    substitution keys are harvested from the same stripped text; the syntax
-    color exemption resolves parent-side once the repo-wide substitution set
-    is known.
-    Returns (brackets, syntax_pairs, mandatory, typos, prose, var_refs, subst).
-    """
-    filename, valid_colors = args
+
+def _scan_shared_yml_file(
+    args, *, event_description_keys: AbstractSet[str] = frozenset()
+) -> Tuple:
+    """Run every yml check after one read; YAML checks never use content exemptions."""
+    filename, valid_colors, skip_content, relative_path = args
     raw = read_text_strict(filename)
+    yaml_issues = _scan_yaml_text(raw, relative_path)
+    if skip_content:
+        return ([], [], [], [], [], [], set(), yaml_issues)
     text = strip_comments(raw)
     basename = os.path.basename(filename)
     return (
@@ -923,9 +995,10 @@ def _scan_shared_yml_file(args) -> Tuple:
         _scan_syntax_text(text, basename, valid_colors),
         _scan_mandatory_text(text, basename),
         _scan_typos_text(text, basename),
-        _scan_prose_text(text, basename),
+        _scan_prose_text(text, basename, event_description_keys),
         _scan_var_refs_text(raw, basename),
         _scan_subst_keys_text(text),
+        yaml_issues,
     )
 
 
@@ -1131,44 +1204,64 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
     def _get_yml_files(self) -> List[str]:
-        return self._collect_files(
-            ["localisation/english/**/*.yml"],
-            extra_skip=functools.partial(_should_skip, mod_path=self.mod_path),
-        )
+        return self._collect_files(["localisation/english/**/*.yml"])
 
     def _get_shared_yml_scan(self) -> dict:
-        """Run every yml check in one pool pass over the yml file set.
-
-        Reads each file once and shares the stripped text across all scans;
-        each file runs exactly the scans its own check would have run, so
-        findings are unchanged. The syntax color exemption against $KEY$
-        substitution resolves parent-side once the repo-wide set is known.
-        """
+        """Share file reads while preserving content exemptions, not YAML exemptions."""
         memo = getattr(self, "_shared_yml_memo", None)
         if memo is not None:
             return memo
         self._log_section("Sharing per-file reads across localisation checks...")
 
         yml_files = self._get_yml_files()
+        event_description_keys: Set[str] = set()
+        if yml_files:
+            for filename in self._collect_files(
+                ["events/**/*.txt"], ignore_staged=True
+            ):
+                event_description_keys.update(
+                    _event_description_keys(read_text_strict(filename))
+                )
+        scan = functools.partial(
+            _scan_shared_yml_file,
+            event_description_keys=frozenset(event_description_keys),
+        )
         valid_colors = get_all_colors(self.mod_path)
-        args_list = [(f, valid_colors) for f in yml_files]
+        args_list = [
+            (
+                f,
+                valid_colors,
+                _should_skip(f, mod_path=self.mod_path),
+                Path(f).relative_to(self.mod_path).as_posix(),
+            )
+            for f in yml_files
+        ]
 
         brackets_all: List[str] = []
         syntax_all: List = []
         mandatory_all: List[str] = []
         typos_all: List[str] = []
         prose_all: List[Issue] = []
+        yaml_all: List[Issue] = []
         var_refs_all: List[Tuple[str, str, int]] = []
         subst_all: Set[str] = set()
         syntax_tagged: List = []
-        for brackets, pairs, mandatory, typos, prose, var_refs, subst in self._pool_map(
-            _scan_shared_yml_file, args_list, chunksize=10
-        ):
+        for (
+            brackets,
+            pairs,
+            mandatory,
+            typos,
+            prose,
+            var_refs,
+            subst,
+            yaml_issues,
+        ) in self._pool_map(scan, args_list, chunksize=10):
             brackets_all.extend(brackets)
             syntax_tagged.extend(pairs)
             mandatory_all.extend(mandatory)
             typos_all.extend(typos)
             prose_all.extend(prose)
+            yaml_all.extend(yaml_issues)
             var_refs_all.extend(var_refs)
             subst_all.update(subst)
         subst_keys = frozenset(subst_all)
@@ -1181,6 +1274,7 @@ class Validator(BaseValidator):
             "mandatory": mandatory_all,
             "typos": typos_all,
             "prose": prose_all,
+            "yaml": yaml_all,
             "var_refs": var_refs_all,
             "subst": subst_keys,
         }
@@ -1219,6 +1313,14 @@ class Validator(BaseValidator):
             "Localisation color syntax issues:",
         )
 
+    def validate_yaml_syntax(self):
+        self._log_section("Checking localisation YAML syntax...")
+        self._report(
+            self._get_shared_yml_scan()["yaml"],
+            "✓ No localisation YAML syntax issues",
+            "Localisation YAML syntax issues:",
+        )
+
     def validate_mandatory_line(self):
         self._log_section("Checking mandatory l_english: line in loc files...")
 
@@ -1246,6 +1348,7 @@ class Validator(BaseValidator):
         self._log_section("Checking localisation prose conventions...")
         categories = {
             "loc-em-dash": "Em dashes",
+            "loc-spaced-en-dash": "Spaced en dashes",
             "loc-backtick-apostrophe": "Backtick apostrophes",
             "loc-unbalanced-quote": "Unbalanced escaped quotes",
             "loc-repeated-word": "Repeated words",
@@ -1631,6 +1734,7 @@ class Validator(BaseValidator):
         self.validate_duplicated_keys(duplicated, skipped_keys)
         self.validate_brackets()
         self.validate_syntax()
+        self.validate_yaml_syntax()
         self.validate_mandatory_line()
         self.validate_typo_watchlist()
         self.validate_prose_conventions()

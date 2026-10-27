@@ -142,6 +142,49 @@ state, so without it every repeat returns the same branch. `fire_only_once = yes
 decisions are exempt. Write `fixed_random_seed = yes` when the repeat should be
 deterministic.
 
+## Cost-aware AI weights
+
+A decision that charges the treasury, raises debt, or moves a tax rate needs an
+`ai_will_do` that checks whether the country can pay. Zero it under the bankruptcy
+mission and halve it on a high deficit:
+
+```
+ ai_will_do = {
+  base = 10
+  modifier = { add = 5 has_war = yes }
+  modifier = { factor = 0.5 ai_has_high_deficit = yes }
+  modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+ }
+```
+
+- Modifiers run in order on a running total. Put every `factor = 0` modifier after the
+  adds, or a later `add` brings the zeroed weight back.
+- Leave the weight off when skipping the decision costs the AI more than the charge.
+- Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
+
+The Spanish decisions in `common/decisions/Spain.txt` are the reference.
+
+## Prices
+
+- A plain political power price goes in `cost = N`, not in an effect.
+- A custom cost that covers several resources (treasury and PP, command power and
+  PP) stays a `custom_cost_trigger` with its combined `custom_cost_text` and an
+  `ai_hint_pp_cost` for the PP part.
+- The engine charges nothing for a `custom_cost_trigger`. Charge every resource it
+  checks in `complete_effect`, which runs when the decision is taken. Call a scripted
+  payment effect there if needed. A charge in `remove_effect`, `timeout_effect`, or
+  `cancel_effect` is not an entry cost: the country may no longer have the resources
+  when that effect runs. A tooltip preview does not charge anything.
+- `cost` and a non-PP custom cost can sit together; vanilla does this
+  (`AUS_arm_border_guards_decision`).
+
+## Timers
+
+- `days_remove = N` keeps a decision active for N days. Use it only when something
+  reads the timer: a `remove_effect` that runs at the end, a `modifier` or
+  `targeted_modifier` that lasts while it is active, or a `has_decision` check.
+- For a cooldown before a repeatable decision comes back, use `days_re_enable`.
+
 ## Formables
 
 Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a
@@ -156,7 +199,6 @@ URA_world_opr = {
  icon = GFX_decision_sovfed_button
 
  cost = 50
- days_remove = 400
 
  visible = {
   country_exists = OPR

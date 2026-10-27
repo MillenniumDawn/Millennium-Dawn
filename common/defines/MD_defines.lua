@@ -38,7 +38,7 @@
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 1.44 -- Reduced from 1.8 as of v.12.2
 	NDefines.NDiplomacy.TENSION_ANNEX_CORE = -0.5
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.30  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.02						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.019						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
@@ -151,8 +151,8 @@
 
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
-	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.85 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 40 -- 30
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.3 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 30 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -803,6 +803,7 @@
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
 	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.90		-- vanilla
+	NDefines.NAI.PRODUCTION_EQUIPMENT_SURPLUS_FACTOR = 0.85	-- 0.8; spare stock the AI aims for, as a share of fielded equipment
 	NDefines.NAI.CALL_ALLY_BASE_DESIRE = 25					-- 20
 	NDefines.NAI.CALL_ALLY_DEMOCRATIC_DESIRE = 25			-- 50
 	NDefines.NAI.CALL_ALLY_FASCIST_DESIRE = 25				-- -10
@@ -923,7 +924,7 @@
 	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
 	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
-	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 0				-- 3 is vanilla, updated this from 8 to 20 for more AI production control
+	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 4				-- 3 is vanilla -- setting this to 4 so the AI is focusing on industrial base on the early game
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
@@ -980,8 +981,19 @@
 	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 30 -- 10; a month of focus progress banks while the slot sits empty
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
+	NDefines.NAI.CONSTRUCTION_PRIO_INFRASTRUCTURE = 0.25				-- 0.20 vanilla; base prio for infrastructure in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_CIV_FACTORY = 0.90					-- 0.80 vanilla; base prio for civilian factories in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_MIL_FACTORY = 0.65					-- 0.70 vanilla; base prio for military factories in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_SUPPLY_BUILDING = 1.10				-- vanilla; base prio for supply buildings (supply hubs, ports) in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_RAILWAY = 4.5						-- 4.00 vanilla; base prio for railways in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_RAILWAY_GUN_REPAIR = 0.00			-- 15.00 vanilla; base prio for railway gun repairs in the construction queue
+	NDefines.NAI.CONSTRUCTION_PRIO_UNSPECIFIED = 0.75					-- 0.50 vanilla; base prio for every other building, including all MD-only buildings
+	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_OCCUPIED_TERRITORY = 1.00		-- vanilla; factor prio with this if occupied territory
+	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_OWNED_NONCORE = 1.50			-- vanilla; factor prio with this if owned non-core territory
+	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_OWNED_CORE = 2.50				-- 2.00 vanilla; factor prio with this if owned core territory
+	NDefines.NAI.CONSTRUCTION_PRIO_FACTOR_REPAIRING = 0.20				-- 0.30 vanilla; factor prio with this if building is being repaired
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
-		'fossil_powerplant', 'industrial_complex', 'internet_station', 'microchip_plant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'agriculture_district', 'arms_factory'
+		'fossil_powerplant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'industrial_complex', 'internet_station', 'microchip_plant', 'arms_factory', 'dockyard', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'rail_terminal', 'agriculture_district'
 	}
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories

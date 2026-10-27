@@ -19,7 +19,17 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 `dev` includes a smaller `test` group, which is all the CI test jobs install.
 
-Python quality checks run on `tools/` in pre-commit and CI:
+ImageMagick is also required for art conversion and its integration tests. Install
+it with your system package manager: `sudo apt-get install imagemagick` on
+Debian/Ubuntu, or `brew install imagemagick` on macOS. On Windows, use the
+[ImageMagick installer](https://imagemagick.org/script/download.php#windows) and
+enable its PATH option. Setup checks for a working `magick` or ImageMagick
+`convert`, rejects unrelated programs with those names, and fails if neither is
+available. It does not install system packages. After installing, reopen your
+terminal and run `python tools/dev_setup.py --check`.
+
+CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
+and pylint on staged files only, plus mypy:
 
 ```bash
 python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
@@ -77,10 +87,108 @@ platform-native writes. `.gitattributes` and `.editorconfig` keep the repository
 Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
 The suite runs in parallel workers, so a test writes only under `tmp_path`, never
 into the real repository tree. Another worker may be scanning that tree.
+A test that reads live game files goes in `tools/tests/content/`. CI runs that
+directory once, in the `Content tests` job, on tools or game content changes. The
+tools test jobs skip it and check out only the game paths listed in the
+`tools-tests` checkout in `test-suite.yml`, which three live readers need:
+`estimate_gdp` loads `common/buildings/00_buildings.txt` and
+`common/scripted_effects/00_money_system.txt` at import, the common-mistakes lint
+cases resolve names from `common/decisions`, `common/modifiers`,
+`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`,
+and `balance/set_energy_tech_scurves_test.py` dry-runs against
+`common/technologies/industry.txt`. Every other test builds its input under
+`tmp_path` or skips when the live tree is absent, so a new live reader belongs in
+`tools/tests/content/` or needs its path added to that checkout.
 Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
 updates its regression expectations; a broken implementation gets fixed instead.
+
+### Test Structure
+
+One test file per tool module, or one per group of related checks when a module's
+tests outgrow a file. `tests/validation/validate_decisions_test.py` is the model.
+
+A test lives in the file of the module it tests. Do not add a `*_coverage_test.py`
+that gathers tests for several modules. Import the module under test normally,
+never as a second copy through `spec_from_file_location`: a patch on one copy does
+not reach the other.
+
+The exception is a contract several modules share. It is one table over those
+modules, not a copy in each file. `tests/docs_checks/checker_cli_test.py` is the
+model: every docs checker's `main()` hands its arguments to `run()`, prints the
+report and exits 0 or 1.
+
+A module that carries its own table of cases, such as `SELF_TEST_CASES` in the
+docs checkers, is tested by running that table once. The test file adds only the
+cases it leaves out.
+
+A test checks one behavior. A test that asserts many unrelated things in a row is
+split into tests or table rows, so a failure names what broke.
+
+A check's cases are rows of one parametrized table: a dict of case name to case, used
+for both the values and the ids. A comment above the table names the columns. A new
+case is a new row, not a new function.
+
+```python
+# check: {case: (decisions, what each finding must match)}
+_CHECK_CASES = {
+    "validate_missing_log": {
+        "logged": ([_flat(_effect(_LOG))], []),
+        "unquoted log": ([_flat(_effect(_UNQUOTED))], [_NO_LOG % "complete_effect"]),
+    },
+}
+```
+
+A table holds these rows and no others:
+
+- One row the check flags and one row it passes.
+- One row for each code path through the check that no other row runs.
+- One row for each rule the check applies that coverage cannot see. To find them,
+  name the one-line change to the validator that the row would catch. If no other row
+  fails under that change, the row stays. This covers each alternative or literal in a
+  regex or tuple, comment, quoted-string and CRLF handling, nesting depth, and
+  report-once, per-block and scope-order rules.
+
+The row that pins a rule must be one whose expected result changes when the rule
+breaks. A row that expects no finding does not pin a pattern that could just stop
+matching.
+
+A row that only repeats another row's rule with different incidental input does not
+belong. A named regression is a row like any other.
+
+Beside its tables, a validator's test file has:
+
+- One test proving `run_validations` calls every `validate_*` check, through
+  `checks_called_by_run`.
+- One run against a real tree, with no mocked source, for each check that reads its
+  data from the mod.
+- A severity assertion wherever the severity is a decision: an ERROR that gates CI, or
+  a WARNING held back until a backlog clears.
+
+Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
+`run_validator` construct a validator on `tmp_path`. `write_tree` writes a dict of
+files. `assert_findings` matches findings one to one: a string is a whole finding, a
+tuple is fragments of one. `event_block` and `decision_factory` build one event or one
+decision file from its fields. `decisions_results_for`, `call_site_scan`, `yml_scan`
+and `variable_scan` run one check or one section of a shared scan. `run_tool_script`
+runs a tool as its own process.
+
+A tool with a `main()` is tested in process, with `sys.argv` patched. At most one
+test per tool runs the script itself, through `run_tool_script`. Keep one where it
+exists: only a script run catches an import that works only under pytest's path. Do
+not add more, and do not repeat an in-process case as a subprocess.
+
+A rule that depends on an external binary, such as ImageMagick, is tested on a stub
+of that binary, so it runs on every machine. At most a couple of tests drive the real
+binary, and they skip where it is missing. `tests/md_art_convert_test.py` is the
+model.
+
+Removing a test as cleanup is its own change. The test must be dead or fail the row
+rules above, and the missed-line and partial-branch totals from `coverage json` must
+not rise. Run the suite with `--cov-context=test` to see which rows share a path.
+Shared paths only pick candidates: equal coverage does not show that two rows check
+the same rule.
 
 ## Quick Start
 
@@ -348,7 +456,9 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+Internal package used by `generate_validation_report.py` to render PR report artifacts. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+
+`publish_validation_report.py` runs in a separate trusted workflow to synchronize the PR comment. Validation runs, including forks, have read-only repository permissions. The publisher verifies the artifact's run and PR before writing; it never executes artifact content. Checks API support remains available through the CLI but is not used by CI.
 
 | Module            | Responsibility                                                                                 |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -385,7 +495,8 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                          |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                             |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                              |
+| **generate_validation_report.py** | CI: renders the PR report and comment payload for the trusted publisher                                                                                                                                                                                                                                                                                                                                                                                      |
+| **publish_validation_report.py**  | CI: trusted publisher that synchronizes the PR report comment                                                                                                                                                                                                                                                                                                                                                                                                |
 | **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                     |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                               |

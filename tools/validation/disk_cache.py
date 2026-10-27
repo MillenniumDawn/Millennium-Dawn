@@ -24,6 +24,7 @@ every write.
 
 from __future__ import annotations
 
+import functools
 import hashlib
 import os
 import pickle
@@ -46,7 +47,9 @@ from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
 # the token shape requires a version bump to avoid stale 3-tuple entries).
 # v9 stores checkout-relative keys and records the checkout root on each
 # payload so embedded paths rehome when the cache is restored at another root.
-CACHE_VERSION = 9
+# v10 is a rowid table: rows hold pickles up to megabytes, and a WITHOUT ROWID
+# b-tree keeps whole rows in its interior pages, so concurrent inserts crawled.
+CACHE_VERSION = 10
 
 
 # Cache entries include the owning validator and shared cache/parser code so a
@@ -54,7 +57,9 @@ CACHE_VERSION = 9
 _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
+    "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
     "building_guards_scan_v5": "validate_building_guards.py",
+    "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
     "dlc_guards_scan": "validate_dlc_guards.py",
@@ -62,6 +67,7 @@ _VALIDATOR_NAMESPACES = {
     "events": "validate_events.py",
     "focus_tree": "validate_focus_tree.py",
     "gfx_ref": "validate_gfx_references.py",
+    "graphical_culture_registry": "validate_graphical_cultures.py",
     "history_techs": "validate_history.py",
     "ideas": "validate_ideas.py",
     "influence_calls_scan_v2": "validate_influence_calls.py",
@@ -91,6 +97,7 @@ _CACHE_RECORD = "md.cache.v9"
 # These helpers are called inside cached computations, so their source changes
 # must invalidate the owning namespace without making unrelated namespaces cold.
 _HELPER_DEPENDENCIES = {
+    "ai_weight_order_scan_v1": ("guard_scan.py",),
     "building_guards_scan_v5": ("guard_scan.py",),
     "dlc_guards_scan": ("validate_history.py",),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
@@ -204,7 +211,8 @@ def _unpack(mod_path: str, blob: bytes) -> Any:
     return _rehome_mod_paths(payload, old_root, mod_path)
 
 
-def _fingerprint_paths(namespace: str) -> list[Path]:
+@functools.lru_cache(maxsize=None)
+def _fingerprint_paths(namespace: str) -> tuple[Path, ...]:
     paths = [
         Path(__file__),
         Path(__file__).parent.parent / "shared_utils.py",
@@ -219,7 +227,7 @@ def _fingerprint_paths(namespace: str) -> list[Path]:
         paths.extend(Path(__file__).parent.glob("*.py"))
     for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
         paths.append(Path(__file__).parent / dependency)
-    return sorted(set(paths))
+    return tuple(sorted(set(paths)))
 
 
 def _validator_code_fingerprint(namespace: str = "") -> str:
@@ -307,7 +315,7 @@ def _connect(mod_path: str) -> Optional[sqlite3.Connection]:
                 " tag TEXT NOT NULL,"
                 " value BLOB NOT NULL,"
                 " PRIMARY KEY (namespace, key)"
-                ") WITHOUT ROWID"
+                ")"
             )
         except (OSError, sqlite3.Error):
             return None

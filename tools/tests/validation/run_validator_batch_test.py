@@ -391,7 +391,8 @@ def test_main_impact_selects_by_changed_files(tmp_path, monkeypatch, capsys):
     )
 
     assert code == 0
-    assert ran == [["events"]]
+    # validate_decisions imports the cost helpers from validate_events.
+    assert ran == [["events", "decisions"]]
 
 
 def test_main_impact_forces_the_disk_cache_off(tmp_path, monkeypatch):
@@ -453,7 +454,9 @@ def test_main_batch_forwards_the_changed_group_selection(tmp_path, monkeypatch):
     )
 
     assert code == 0
-    assert [[spec.name for spec in specs] for specs in ran] == [["decisions", "mios"]]
+    assert [[spec.name for spec in specs] for specs in ran] == [
+        ["decisions", "oob-units", "mios"]
+    ]
 
 
 def test_manifest_records_selection_and_execution_outcomes(
