@@ -15477,7 +15477,7 @@ UKR_reactivate_sov_category = {
 			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
 			OR = {
 				check_variable = { ukraine_has_9k11_stockpile > 0 }
-				has_equipment = { Heavy_Anti_tank_2 > 17 }
+				check_variable = { ukraine_has_9p148_stockpile > 0 }
 			}
 		}
 
@@ -15516,15 +15516,16 @@ UKR_reactivate_sov_category = {
 				}
 			}
 			if = {
-				limit = { has_equipment = { Heavy_Anti_tank_2 > 17 } }
-				# Only the 9P148 Konkurs actually removed are rebuilt (Barrier-S is a Heavy_Anti_tank_2 too)
-				set_temp_variable = { ukr_konkurs_before = num_equipment@Heavy_Anti_tank_2 }
-				add_equipment_to_stockpile = { type = Heavy_Anti_tank_2 variant_name = "9P148 Konkurs" amount = -18 producer = SOV }
+				limit = { check_variable = { ukraine_has_9p148_stockpile > 0 } }
+				set_temp_variable = { ukr_sov_amount = 18 }
+				if = {
+					limit = { check_variable = { ukraine_has_9p148_stockpile < 18 } }
+					set_temp_variable = { ukr_sov_amount = ukraine_has_9p148_stockpile }
+				}
+				subtract_from_variable = { ukraine_has_9p148_stockpile = ukr_sov_amount tooltip = ukraine_storage_9p148_rebuilt_tt }
 				hidden_effect = {
-					set_temp_variable = { ukr_konkurs_taken = num_equipment@Heavy_Anti_tank_2 }
-					multiply_temp_variable = { ukr_konkurs_taken = -1 }
-					add_to_temp_variable = { ukr_konkurs_taken = ukr_konkurs_before }
-					add_to_variable = { ukraine_barrier_v_batch = ukr_konkurs_taken }
+					add_to_variable = { ukraine_barrier_v_batch = ukr_sov_amount }
+					UKR_storage_refresh = yes
 				}
 			}
 		}
