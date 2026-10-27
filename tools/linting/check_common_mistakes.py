@@ -239,6 +239,15 @@ _DECISION_LOG_FILLER_WORDS = {
 }
 _RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
 _RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
+# A log with no "Decision" word still names its decision when it is the standard
+# prefix, filler words, and one id that ends the string. Longer free text is not
+# a copied id.
+_LOG_FILLER_ALT = "|".join(sorted(_DECISION_LOG_FILLER_WORDS))
+_RE_LOG_BARE_ID = re.compile(
+    r'log\s*=\s*"\[GetDateText\]:\s*\[\w+\.GetName\]:'
+    rf"(?:\s+(?:{_LOG_FILLER_ALT})\b)*\s+(?!(?:{_LOG_FILLER_ALT})\b)([\w-]+)\s*\"",
+    re.IGNORECASE,
+)
 # Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
 # would truncate at the dot.
 _RE_EVENT_DEF_OPEN = re.compile(
@@ -3204,11 +3213,13 @@ def _decision_log_token_span(line):
     """Return (token, start, end) for the id referenced by a
     `log = "...Decision ..."` line, skipping leading filler words
     (_DECISION_LOG_FILLER_WORDS), or None if the line has no such log
-    statement (or nothing substantive follows the filler words).
+    statement (or nothing substantive follows the filler words). A log with
+    no "Decision" word counts when it is only the standard prefix and one id.
     """
     marker = _RE_LOG_DECISION_MARKER.search(line)
     if not marker:
-        return None
+        bare = _RE_LOG_BARE_ID.search(line)
+        return (bare.group(1), bare.start(1), bare.end(1)) if bare else None
     pos = marker.end()
     while True:
         m = _RE_NEXT_WORD.match(line, pos)

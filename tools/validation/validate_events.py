@@ -19,10 +19,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
-from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
-from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
-from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
+    IS_AI_NO_RE,
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
@@ -33,6 +31,9 @@ from shared_utils import (
     strip_inline_comment,
     validation_config,
 )
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
@@ -301,7 +302,6 @@ def _extract_event_log_id_mismatches(
 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
-_IS_AI_NO_RE = re.compile(r"\bis_ai\s*=\s*no\b")
 
 # Per-worker copies of costly_scripted_effects and stored_variable_signs, set
 # once by the Pool initializer.
@@ -1687,7 +1687,7 @@ def find_cost_blind_options(
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
         trigger = _event_trigger_body(body) or ""
-        if len(options) < 2 or first_flat_match(trigger, _IS_AI_NO_RE):
+        if len(options) < 2 or first_flat_match(trigger, IS_AI_NO_RE):
             continue
         country = _receiver_tag(trigger)
         splits = [
