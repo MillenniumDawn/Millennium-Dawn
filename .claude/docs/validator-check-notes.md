@@ -103,10 +103,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
-- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+- `decision-ai-will-do-ignores-cost` (ERROR): the decision twin of
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
-  country that cannot pay.
+  country that cannot pay. A decision that must stay unguarded, such as a deadline the
+  AI cannot miss, needs a reason in `ai_cost_exempt`.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -128,13 +129,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
-- `decision-money-charged-late` (WARNING): money a non-mission `remove_effect` charges
+- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges
   itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
   the `modify_*` payment effects count. A scripted effect that pays for a building on
   delivery is intended and is not followed. A treasury custom cost that
-  `decision-custom-cost-not-charged` already reports as late is not repeated. A
-  deliberate pay-on-completion decision is reported too. `timeout_effect` and
-  `cancel_effect` are not read.
+  `decision-custom-cost-not-charged` already reports as late is not repeated. An
+  outcome rather than a price, such as an annexation inheriting debt, needs a reason in
+  `late_charge_exempt`. `timeout_effect` and `cancel_effect` are not read.
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
@@ -597,9 +598,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR, except
-  `shadowed-branch`, a WARNING until its existing findings are fixed. It scans
-  `common`, `events`, `history`, and `music`.
+  core batch through `validate_common_mistakes.py` and report ERROR, with
+  `shadowed-branch` as its own category. It scans `common`, `events`, `history`, and
+  `music`.
 - Shadowed branches: the parser blanks quoted strings, so a limit with a quoted value
   never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
   skipped, since the rotation check already reports their duplicate branches.

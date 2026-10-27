@@ -247,6 +247,10 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     },
     "validate_money_charged_after_entry": {
         "charged on removal": ([_flat(_PAID_ON_REMOVE)], _LATE),
+        "exempt id": (
+            [_flat(_PAID_ON_REMOVE, token=sorted(V._LATE_CHARGE_EXEMPT)[0])],
+            [],
+        ),
         "payment effect on removal": (
             [
                 _flat(
@@ -499,6 +503,10 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     # Issue #5738.
     "validate_ai_will_do_ignores_cost": {
         "flat weight": ([_flat(_PAID, _WEIGHT)], _ignores("treasury cost")),
+        "exempt id": (
+            [_flat(_PAID, _WEIGHT, token=sorted(V._AI_COST_EXEMPT)[0])],
+            [],
+        ),
         "scripted effect": (
             [_flat(_effect("\t\tpay_the_bill = yes\n"), _WEIGHT)],
             _ignores("treasury cost"),
@@ -980,6 +988,7 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
 
     validator.validate_ai_will_do_ignores_cost()
 
+    assert {i.severity for i in validator._issues} == {V.Severity.ERROR}
     assert issue_rows(validator) == [
         (
             "decision-ai-will-do-ignores-cost",
@@ -2527,13 +2536,13 @@ _FINDINGS_MOD = {
 # WARNINGs held back until their backlog clears.
 _BACKLOG_WARNINGS = (
     "decision-duplicate-log",
-    "decision-money-charged-late",
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
 )
+_PROMOTED_ERRORS = ("missing-decision-log", "decision-money-charged-late")
 _REPORTED_CATEGORIES = (
     "missing-decision-localisation",
-    "missing-decision-log",
+    *_PROMOTED_ERRORS,
     "decision-log-not-first",
     *_BACKLOG_WARNINGS,
     "bare-trigger-name",
@@ -2577,8 +2586,9 @@ def test_full_run_reports_every_finding_category(tmp_path):
     for marker in _REPORTED_CATEGORIES:
         assert any(marker in category for category in categories), marker
     assert "unannounced-decision-category" not in categories
-    missing_log = [i for i in validator._issues if i.category == "missing-decision-log"]
-    assert {issue.severity for issue in missing_log} == {V.Severity.ERROR}
+    for category in _PROMOTED_ERRORS:
+        severities = {i.severity for i in validator._issues if i.category == category}
+        assert severities == {V.Severity.ERROR}, category
     for category in _BACKLOG_WARNINGS:
         severities = {i.severity for i in validator._issues if i.category == category}
         assert severities == {V.Severity.WARNING}, category
