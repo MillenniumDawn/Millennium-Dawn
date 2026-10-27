@@ -107,6 +107,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
   country that cannot pay.
+- AI reach: this check and the AI factor check skip a decision the AI cannot see. That
+  is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
+  `available`, or in its category's own `visible`, `available`, or `allowed`. The match
+  may sit inside `hidden_trigger` or a tooltip wrapper, as in
+  `hidden_trigger = { always = no }`. Under a tag scope, `OR`, `NOT`, `AND`, or `if` it
+  is conditional, so the decision stays reachable.
 - `decision-custom-cost-not-charged` (WARNING): a `custom_cost_trigger` that checks
   treasury, political power, command power, manpower, or equipment needs a matching
   charge in `complete_effect`. A charge found only in `remove_effect` is reported as
@@ -122,6 +128,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
+- `decision-money-charged-late` (WARNING): money a non-mission `remove_effect` charges
+  itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
+  the `modify_*` payment effects count. A scripted effect that pays for a building on
+  delivery is intended and is not followed. A treasury custom cost that
+  `decision-custom-cost-not-charged` already reports as late is not repeated. A
+  deliberate pay-on-completion decision is reported too. `timeout_effect` and
+  `cancel_effect` are not read.
+- `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
+  `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
+  the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
+  not its name. Only `hidden_trigger` and the
+  tooltip wrappers are looked through. A gate within 0.1 of the charge, such as `> 1.4`
+  for 1.5, is how the mod writes `>=` and passes. Known gaps: the long `var = treasury`
+  form, `NOT = { treasury < N }`, a gate inside `OR` or `AND`, and a charge inside an
+  `if` or built from a variable.
+- `decision-trigger-reads-temp-variable` (WARNING): `custom_cost_trigger`, `available`,
+  or `visible` reads a name in a `check_variable` that the decision's effects set only
+  with `*_temp_variable`. A name the trigger sets, or that any scripted trigger sets as
+  a temp variable, is exempt, since MD triggers such as `calculate_ai_interest` can set
+  one. Known gaps: a name set persistently elsewhere in the mod still counts as temp,
+  and a value read inside a math block is not seen.
+- `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
+  reported by the same pass as `decision-log-not-first`.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -572,6 +601,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
   skipped, since the rotation check already reports their duplicate branches.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
+- The decision log id check also reads a log with no `Decision` word, when the string is
+  only the standard prefix, filler words, and one id. Longer text is skipped, so a log
+  such as `... <other_decision> setup finished` is a known gap.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
