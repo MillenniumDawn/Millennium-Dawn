@@ -8201,8 +8201,6 @@ rus_empire_gover_change_fin = {
 		end_wars = no
 		end_civil_wars = no
 	}
-	set_temp_variable = { treasury_change = -25 }
-	modify_treasury_effect = yes
 }
 ###########RUSSIAN EMPIRE - POLAND GOVERNMENT CHANGE###########
 rus_empire_gover_change_pol = {
@@ -8232,8 +8230,6 @@ rus_empire_gover_change_pol = {
 			}
 		}
 	}
-	set_temp_variable = { treasury_change = -25 }
-	modify_treasury_effect = yes
 }
 ###########RUSSIAN EMPIRE - ARMENIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_arm = {
@@ -8259,8 +8255,6 @@ rus_empire_gover_change_arm = {
 		end_wars = no
 		end_civil_wars = no
 	}
-	set_temp_variable = { treasury_change = -12 }
-	modify_treasury_effect = yes
 	hidden_effect = {
 		ARM = {
 			if = {
@@ -8365,8 +8359,6 @@ rus_empire_gover_change_mon = {
 		end_wars = no
 		end_civil_wars = no
 	}
-	set_temp_variable = { treasury_change = -12 }
-	modify_treasury_effect = yes
 }
 ###########RUSSIAN EMPIRE - CZECHIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_cze = {
@@ -8396,8 +8388,6 @@ rus_empire_gover_change_cze = {
 			}
 		}
 	}
-	set_temp_variable = { treasury_change = -12 }
-	modify_treasury_effect = yes
 }
 ###########RUSSIAN EMPIRE - SLOVAKIA GOVERNMENT CHANGE###########
 rus_empire_gover_change_slo = {
@@ -8425,8 +8415,6 @@ rus_empire_gover_change_slo = {
 		end_wars = no
 		end_civil_wars = no
 	}
-	set_temp_variable = { treasury_change = -15 }
-	modify_treasury_effect = yes
 }
 ###########JIRINOVSKIY - CREATE NOVOROSSIYA###########
 jirik_ukraine_novorossia = {
@@ -8579,7 +8567,7 @@ jirik_ukraine_crimea = {
 					transfer_state = 669
 				}
 			}
-			else_if = {
+			if = {
 				limit = { UKR = { owns_state = 1112 } }
 				CRM = {
 					add_state_core = 1112
@@ -8619,7 +8607,7 @@ jirik_kazak_kazah = {
 			if = {
 				limit = {
 					original_tag = SOV
-					NOT = { has_country_flag = SUB_kazaks_brigade_added }
+					NOT = { has_template = "Cossack Regiment" }
 				}
 				division_template = {
 					name = "Cossack Regiment"
@@ -8629,7 +8617,6 @@ jirik_kazak_kazah = {
 						L_Inf_Bat = { x = 0 y = 2 }
 					}
 				}
-				set_country_flag = SUB_kazaks_brigade_added
 			}
 			718 = {
 				create_unit = {
@@ -8648,7 +8635,7 @@ jirik_kazak_kazah = {
 			if = {
 				limit = {
 					original_tag = SOV
-					NOT = { has_country_flag = SUB_kazaks_brigade_added }
+					NOT = { has_template = "Cossack Regiment" }
 				}
 				division_template = {
 					name = "Cossack Regiment"
@@ -8658,7 +8645,6 @@ jirik_kazak_kazah = {
 						L_Inf_Bat = { x = 0 y = 2 }
 					}
 				}
-				set_country_flag = SUB_kazaks_brigade_added
 			}
 			719 = {
 				create_unit = {
@@ -8677,7 +8663,7 @@ jirik_kazak_kazah = {
 			if = {
 				limit = {
 					original_tag = SOV
-					NOT = { has_country_flag = SUB_kazaks_brigade_added }
+					NOT = { has_template = "Cossack Regiment" }
 				}
 				division_template = {
 					name = "Cossack Regiment"
@@ -8687,7 +8673,6 @@ jirik_kazak_kazah = {
 						L_Inf_Bat = { x = 0 y = 2 }
 					}
 				}
-				set_country_flag = SUB_kazaks_brigade_added
 			}
 			715 = {
 				create_unit = {
@@ -10819,8 +10804,6 @@ warsaw_pact_boost_communism_effect = {
 }
 
 warsaw_pact_commies_arm_influence_bonus_effect = {
-	set_temp_variable = { treasury_change = -18 }
-	modify_treasury_effect = yes
 	var:nation_to_influence = {
 		set_temp_variable = { percent_change = 6 }
 		change_influence_percentage = yes
@@ -10903,13 +10886,12 @@ warsaw_pact_perevorot_core_effect = {
 # fires set_autonomy + news event sov_warsaw_pact.4 + country event sov_warsaw_pact.5
 # once the communist side wins the civil war. This lets SOV send volunteers normally
 # during the civil war instead of being locked out by an early puppet relationship.
+# Does NOT pay treasury: the caller charges the 15 in its complete_effect.
 warsaw_pact_perevorot_finish_effect = {
 	event_target:warsaw_target = {
 		set_country_flag = SOV_warsaw_pact_pending_puppet
 		set_variable = { SOV_warsaw_pact_overlord_id = ROOT.id }
 	}
-	set_temp_variable = { treasury_change = -15 }
-	modify_treasury_effect = yes
 }
 
 SOV_government_change = {
@@ -11157,4 +11139,237 @@ SOV_computing_sovereignty_milestone_2025 = {
 		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
 		SOV_computing_sovereignty_apply_mature_nodes = yes
 	}
+}
+
+# Clears every variable and flag of the current reunification talks or reconquest
+SOV_clear_reunification_effort = {
+	clr_country_flag = reunification_talks_in_progress
+	clr_country_flag = SOV_reunification_demand_rerolled
+	clr_country_flag = SOV_reunification_demand_western_elites
+	clr_country_flag = SOV_reunification_demand_tax_autonomy
+	clr_country_flag = SOV_reunification_demand_resource_rights
+	clr_country_flag = SOV_reunification_demand_cossack_self_rule
+	clr_country_flag = SOV_reunification_demand_federal_subsidies
+	clr_country_flag = SOV_reunification_demand_separatist_amnesty
+	clr_country_flag = SOV_reunification_demand_garrison_retention
+	clr_country_flag = SOV_reunification_demand_regional_parliament
+	clear_variable = reunification_target
+	clear_variable = reunification_progress
+	clear_variable = reunification_offered_demand
+}
+
+# Rolls a demand that is not active, pending, or the one just rejected into reunification_offered_demand (0 if none is left)
+SOV_roll_reunification_demand = {
+	set_temp_variable = { previous_demand = reunification_offered_demand }
+	set_variable = { reunification_offered_demand = 0 }
+	random_list = {
+		10 = {
+			modifier = { factor = 3 var:reunification_target = { tag = KAE } }
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_western_elites_idea
+					has_country_flag = SOV_reunification_demand_western_elites
+					check_variable = { previous_demand = 1 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 1 }
+		}
+		10 = {
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_tax_autonomy_idea
+					has_country_flag = SOV_reunification_demand_tax_autonomy
+					check_variable = { previous_demand = 2 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 2 }
+		}
+		10 = {
+			modifier = { factor = 3 var:reunification_target = { tag = CSB } }
+			modifier = { factor = 3 var:reunification_target = { tag = ESB } }
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_resource_rights_idea
+					has_country_flag = SOV_reunification_demand_resource_rights
+					check_variable = { previous_demand = 3 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 3 }
+		}
+		10 = {
+			modifier = { factor = 3 var:reunification_target = { tag = DON } }
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_cossack_self_rule_idea
+					has_country_flag = SOV_reunification_demand_cossack_self_rule
+					check_variable = { previous_demand = 4 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 4 }
+		}
+		10 = {
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_federal_subsidies_idea
+					has_country_flag = SOV_reunification_demand_federal_subsidies
+					check_variable = { previous_demand = 5 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 5 }
+		}
+		10 = {
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_separatist_amnesty_idea
+					has_country_flag = SOV_reunification_demand_separatist_amnesty
+					check_variable = { previous_demand = 6 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 6 }
+		}
+		10 = {
+			modifier = { factor = 2 var:reunification_target = { tag = CSB } }
+			modifier = { factor = 2 var:reunification_target = { tag = ESB } }
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_garrison_retention_idea
+					has_country_flag = SOV_reunification_demand_garrison_retention
+					check_variable = { previous_demand = 7 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 7 }
+		}
+		10 = {
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = SOV_reunification_demand_regional_parliament_idea
+					has_country_flag = SOV_reunification_demand_regional_parliament
+					check_variable = { previous_demand = 8 }
+				}
+			}
+			set_variable = { reunification_offered_demand = 8 }
+		}
+	}
+}
+
+SOV_accept_offered_reunification_demand = {
+	custom_effect_tooltip = SOV_reunification_demand_offered_tt
+	if = {
+		limit = { check_variable = { reunification_offered_demand = 1 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_western_elites_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_western_elites }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 2 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_tax_autonomy_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_tax_autonomy }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 3 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_resource_rights_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_resource_rights }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 4 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_cossack_self_rule_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_cossack_self_rule }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 5 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_federal_subsidies_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_federal_subsidies }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 6 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_separatist_amnesty_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_separatist_amnesty }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 7 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_garrison_retention_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_garrison_retention }
+	}
+	else_if = {
+		limit = { check_variable = { reunification_offered_demand = 8 } }
+		effect_tooltip = { add_timed_idea = { idea = SOV_reunification_demand_regional_parliament_idea days = 1095 } }
+		hidden_effect = { set_country_flag = SOV_reunification_demand_regional_parliament }
+	}
+}
+
+SOV_complete_reunification_talks = {
+	var:reunification_target = {
+		ROOT = {
+			annex_country = {
+				target = PREV
+				transfer_troops = yes
+			}
+		}
+	}
+	add_timed_idea = { idea = reunification_strains_idea days = 365 }
+	if = { limit = { has_country_flag = SOV_reunification_demand_western_elites } add_timed_idea = { idea = SOV_reunification_demand_western_elites_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_tax_autonomy } add_timed_idea = { idea = SOV_reunification_demand_tax_autonomy_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_resource_rights } add_timed_idea = { idea = SOV_reunification_demand_resource_rights_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_cossack_self_rule } add_timed_idea = { idea = SOV_reunification_demand_cossack_self_rule_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_federal_subsidies } add_timed_idea = { idea = SOV_reunification_demand_federal_subsidies_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_separatist_amnesty } add_timed_idea = { idea = SOV_reunification_demand_separatist_amnesty_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_garrison_retention } add_timed_idea = { idea = SOV_reunification_demand_garrison_retention_idea days = 1095 } }
+	if = { limit = { has_country_flag = SOV_reunification_demand_regional_parliament } add_timed_idea = { idea = SOV_reunification_demand_regional_parliament_idea days = 1095 } }
+	SOV_clear_reunification_effort = yes
+	country_event = { id = sov_dissolution.2 days = 1 }
+}
+
+# Monthly while dissolved: records that a shard existed, then fires the reunification once SOV holds every shard core again
+SOV_check_russia_reunification = {
+	if = {
+		limit = {
+			OR = {
+				country_exists = KAE
+				country_exists = DON
+				country_exists = CSB
+				country_exists = ESB
+			}
+		}
+		set_country_flag = SOV_russia_fragmented
+	}
+	else_if = {
+		limit = {
+			has_country_flag = SOV_russia_fragmented
+			NOT = {
+				any_state = {
+					OR = {
+						is_core_of = KAE
+						is_core_of = DON
+						is_core_of = CSB
+						is_core_of = ESB
+					}
+					NOT = { is_owned_by = ROOT }
+				}
+			}
+		}
+		set_country_flag = SOV_russia_reunified
+		country_event = sov_dissolution.17
+	}
+}
+
+# Installs rul_party_temp (with disable_elections) after the lost war, replacing the leader and discrediting SOV_failed_ruling_party
+SOV_install_post_defeat_regime = {
+	custom_effect_tooltip = SOV_post_defeat_regime_tt
+	change_ruling_party_effect = yes
+	set_temp_variable = { party_index = SOV_failed_ruling_party }
+	set_temp_variable = { party_popularity_increase = -0.10 }
+	set_temp_variable = { temp_outlook_increase = -0.10 }
+	change_relative_party_popularity = yes
+	set_temp_variable = { party_index = ruling_party }
+	set_temp_variable = { party_popularity_increase = 0.15 }
+	set_temp_variable = { temp_outlook_increase = 0.15 }
+	change_relative_party_popularity = yes
+	clear_variable = SOV_failed_ruling_party
 }
