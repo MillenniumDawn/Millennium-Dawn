@@ -65,10 +65,9 @@ at a time. The vanilla schema is `policies/documentation.info`.
 - `equipment_bonus` applies to variants the MIO designs and `production_bonus` to lines
   it produces. Unlike traits, key each block by equipment group, category, archetype, or
   type.
-- `same_as_mio` keys a block to every department of the attached MIO. The validator
-  cannot see that scope, so check each stat against the departments `allowed` admits.
-  Split a policy by `allowed` when a stat only bites on some of them, as the `_aa` and
-  `_cnc` land policies do.
+- `same_as_mio` keys a block to every department of the attached MIO, including ones
+  `allowed` never names. The validator cannot see that scope. When a stat bites on only
+  some departments, key it by archetype or type instead.
 - Without `name`, the loc key is `TAG_<token>` (the owner's tag), else `<token>`.
   Without `icon`, the sprite is `GFX_TAG_<token>`, then `GFX_<token>`, then
   `GFX_idea_unknown`.
