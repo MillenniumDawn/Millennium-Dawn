@@ -457,7 +457,7 @@ focus_tree = {
 
 		prerequisite = { focus = PER_irost_budget_increase focus = PER_mutual_benefits }
 
-		search_filters = { FOCUS_FILTER_IRANIAN_NUCLEAR_DEV FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_ADD_BUILDING }
+		search_filters = { FOCUS_FILTER_IRANIAN_NUCLEAR_DEV FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_ADD_BUILDING FOCUS_FILTER_EXPENDITURE }
 
 		available = { 976 = { is_owned_and_controlled_by = PER } }
 
@@ -471,6 +471,16 @@ focus_tree = {
 				}
 			}
 			newline = yes
+			one_random_air_facility = yes
+			newline = yes
+			if = {
+				limit = {
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_bomb }
+				}
+				sp:sp_nuclear_bomb = { add_project_progress_ratio = 0.25 }
+				newline = yes
+			}
 			add_ideas = natanz_nuclear_facility_idea
 			hidden_effect = {
 				country_event = {
@@ -480,7 +490,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -886,6 +902,15 @@ focus_tree = {
 				}
 			}
 			newline = yes
+			if = {
+				limit = {
+					has_dlc = "Gotterdammerung"
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_warhead_program }
+				}
+				sp:sp_nuclear_warhead_program = { add_project_progress_ratio = 0.20 }
+				newline = yes
+			}
 			set_temp_variable = { treasury_change = -27.00 }
 			modify_treasury_effect = yes
 		}
@@ -6898,6 +6923,7 @@ focus_tree = {
 		}
 	}
 
+
 	focus = {
 		id = PER_artesh_navy
 		icon = {
@@ -6921,7 +6947,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY }
 
 		dynamic = yes
-		
+
 		available = {
 			has_tech = tech_point_defense_system_1
 		}
@@ -6937,7 +6963,7 @@ focus_tree = {
 				category = CAT_naval
 			}
 			newline = yes
-			custom_effect_tooltip = PER_damavand_two_effect_tt
+			custom_effect_tooltip = PER_jamaran_effect_tt
 			hidden_effect = {
 				create_equipment_variant = {
 					name = "Moudge Class"
@@ -6956,15 +6982,21 @@ focus_tree = {
 						fixed_ship_auxillary_slot_2 = module_naval_missile_mount_quad
 						front_1_custom_slot = module_ciws_1
 						rear_1_custom_slot = module_light_helipad_1
-						fixed_ship_missile_ammo_slot = module_naval_ammo_anti_ship_air_defense_1
+						fixed_ship_missile_ammo_slot = module_naval_ammo_balanced_1
 					}
 					role_icon_index = 12
 					icon = "GFX_PER_frigate_hull_7_medium"
 				}
-				load_oob = PER_damavand_2_caspian
+				create_ship = {
+					type = frigate_hull_2
+					equipment_variant = "Moudge Class"
+					creator = PER
+					name = "IRIS Jamaran (76)"
+				}
 			}
 		}
-ai_will_do = {
+
+		ai_will_do = {
 			base = 1
 			modifier = {
 				factor = 2
@@ -6976,6 +7008,7 @@ ai_will_do = {
 			}
 		}
 	}
+
 
 	focus = {
 		id = PER_jask_base
@@ -7275,8 +7308,47 @@ ai_will_do = {
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_RESEARCH }
 
+		available = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = gen_4_light
+				has_tech = drone_2
+				has_tech = air_weapons_2
+				has_tech = tgp_recon_2
+			}
+			else = {
+				has_tech = Air_UAV1
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_prioritize_drones"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				create_equipment_variant = {
+					name = "Mohajer-6"
+					type = small_plane_suicide_airframe_2
+					parent_version = 0
+					modules = {
+						fixed_main_weapon_slot = avionics_drone_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = weap_mp_light_hardpoint_2
+						engine_type_slot = engine_prop_single_1
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_straight
+						special_slot_type_2 = spec_recon_2
+					}
+					icon = "GFX_PER_AIR_Mohajer_6"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Mohajer-6"
+					type = Air_UAV1
+					parent_version = 0
+					icon = "GFX_PER_AIR_Mohajer_6"
+				}
+			}
 			add_tech_bonus = {
 				name = PER_prioritize_drones
 				bonus = 1.0
@@ -7776,7 +7848,7 @@ ai_will_do = {
 				}
 				add_equipment_to_stockpile = {
 					type = medium_tank_chassis_1
-					variant_name = "Zulfiqar"
+					variant_name = "Zulfiqar-1"
 					amount = 500
 					producer = PER
 				}
@@ -8259,6 +8331,15 @@ ai_will_do = {
 				value = 1
 			}
 			newline = yes
+			if = {
+				limit = {
+					has_dlc = "Gotterdammerung"
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_warhead_program }
+				}
+				sp:sp_nuclear_warhead_program = { add_project_progress_ratio = 0.25 }
+				newline = yes
+			}
 			add_tech_bonus = {
 				name = PER_mouse_in_the_corner
 				bonus = 1.5
@@ -8972,14 +9053,14 @@ ai_will_do = {
 					}
 					SOV = {
 						add_equipment_to_stockpile = {
-							type = medium_plane_airframe_2
-							variant_name = "Su-30 "
+							type = medium_plane_fighter_airframe_2
+							variant_name = "Su-30"
 							producer = SOV
 							amount = -40
 						}
 					}
 					add_equipment_to_stockpile = {
-						type = medium_plane_airframe_2
+						type = medium_plane_fighter_airframe_2
 						variant_name = "Su-30"
 						amount = 40
 						producer = SOV
@@ -15282,6 +15363,7 @@ ai_will_do = {
 		cost = 10
 
 		prerequisite = { focus = PER_repairing_region focus = PER_calm_the_nerves }
+		prerequisite = { focus = PER_artesh_navy }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY }
 
@@ -15300,34 +15382,34 @@ ai_will_do = {
 			custom_effect_tooltip = PER_caspian_fleet_TT
 			hidden_effect = {
 				create_ship = {
-					type = corvette_hull_1
-					equipment_variant = "Hamzeh Class"
+					type = frigate_hull_2
+					equipment_variant = "Moudge Class"
 					creator = PER
-					name = "IRIS Hamzeh"
+					name = "IRIS Damavand (77)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Paykan"
+					name = "IRIS Paykan (P224)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Joshan"
+					name = "IRIS Joshan (P225)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Derafsh"
+					name = "IRIS Derafsh (P233)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Separ"
+					name = "IRIS Separ (P234)"
 				}
 			}
 			newline = yes
@@ -25289,6 +25371,7 @@ ai_will_do = {
 			newline = yes
 			set_temp_variable = { treasury_change = -36.5 }
 			modify_treasury_effect = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -25662,6 +25745,7 @@ ai_will_do = {
 			add_to_variable = { PER_agriculture_district_income_tax_modifier = 0.1 tooltip = agriculture_district_income_tax_modifier_tt }
 			newline = yes
 			add_stability = -0.03
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {

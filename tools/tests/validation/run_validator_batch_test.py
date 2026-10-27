@@ -454,7 +454,9 @@ def test_main_batch_forwards_the_changed_group_selection(tmp_path, monkeypatch):
     )
 
     assert code == 0
-    assert [[spec.name for spec in specs] for specs in ran] == [["decisions", "mios"]]
+    assert [[spec.name for spec in specs] for specs in ran] == [
+        ["decisions", "oob-units", "mios"]
+    ]
 
 
 def test_manifest_records_selection_and_execution_outcomes(

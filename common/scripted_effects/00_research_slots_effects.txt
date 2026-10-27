@@ -6,111 +6,47 @@ research_slot_init_for_country = {
 	set_variable = { research_slots_from_gdp_c = 0 }
 	set_variable = { next_slot_from_gdp_c = 1 }
 
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^1 } }
+	# Thresholds only rise, so stopping at the first unmet slot grants every met one
+	while_loop_effect = {
+		limit = {
+			check_variable = { next_slot_from_gdp < 10 }
+			check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
+		}
 		add_research_slot = 1
 		add_to_variable = { research_slots_from_gdp = 1 }
 		add_to_variable = { next_slot_from_gdp = 1 }
 	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^2 } }
+	while_loop_effect = {
+		limit = {
+			check_variable = { next_slot_from_gdp_c < 7 }
+			check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
+			check_variable = { var = GLOBAL.gdp_c_slot_civs^next_slot_from_gdp_c value = industrial_complex_total compare = less_than_or_equals }
+		}
 		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
+		add_to_variable = { research_slots_from_gdp_c = 1 }
+		add_to_variable = { next_slot_from_gdp_c = 1 }
 	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^3 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^4 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^5 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^6 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^7 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^8 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
-	if = {
-		limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^9 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp = 1 }
-		add_to_variable = { next_slot_from_gdp = 1 }
-	}
+}
 
+## SCOPE: Country
+# Runs after the weekly GDP refresh instead of letting the engine poll the missions' activation
+activate_research_slot_loss_missions = {
 	if = {
-		limit = { check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^1 } }
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
+		limit = {
+			NOT = { has_active_mission = gdp_lose_slot }
+			check_variable = { gdp_total < GLOBAL.gdp_slot^research_slots_from_gdp }
+		}
+		activate_mission = gdp_lose_slot
 	}
 	if = {
 		limit = {
-			check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^2 }
-			num_of_civilian_factories > 1
+			NOT = { has_active_mission = gdp_c_lose_slot }
+			OR = {
+				check_variable = { gdp_per_capita < GLOBAL.gdp_c_slot^research_slots_from_gdp_c }
+				check_variable = { industrial_complex_total < GLOBAL.gdp_c_slot_civs^research_slots_from_gdp_c }
+			}
 		}
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^3 }
-			num_of_civilian_factories > 2
-		}
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^4 }
-			num_of_civilian_factories > 5
-		}
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
-	}
-	if = {
-		limit = { check_variable = {
-			gdp_per_capita > GLOBAL.gdp_c_slot^5 }
-			num_of_civilian_factories > 10
-		}
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
-	}
-	if = {
-		limit = {
-			check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^6 }
-			num_of_civilian_factories > 30
-		}
-		add_research_slot = 1
-		add_to_variable = { research_slots_from_gdp_c = 1 }
-		add_to_variable = { next_slot_from_gdp_c = 1 }
+		activate_mission = gdp_c_lose_slot
 	}
 }
 

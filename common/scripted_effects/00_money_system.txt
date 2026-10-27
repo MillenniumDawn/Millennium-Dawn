@@ -296,9 +296,9 @@ update_money_dirty_variable = {
 		force_update_map_mode = { mapmode = reserve_currency_map_mode }
 
 		md_check_research_slot_alert = yes
+		add_to_variable = { global.research_screen_ui = 1 }
 	}
 	add_to_variable = { global.update_monie_ui = 1 }
-	add_to_variable = { global.research_screen_ui = 1 }
 }
 
 # Effect: expense_modifier_calculations
@@ -358,6 +358,8 @@ calculate_tax_rate = {
 				multiply = -0.01
 			}
 		}
+
+		calculate_expected_tax_rates = yes
 
 		# Average Tax Rate
 		set_variable = {
@@ -2578,6 +2580,8 @@ update_military_rate = {
 		}
 	}
 
+	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
+
 	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
 	for_each_loop = {
 		array = array_defence_spend
@@ -2591,6 +2595,7 @@ update_military_rate = {
 				multiply = global.spending_ladder_defence^i
 				divide = gdp_defence_modifier_industry
 				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+				multiply = military_spending_cost_multiplier
 			}
 		}
 	}
@@ -6028,6 +6033,31 @@ calculate_tax_adjustments = {
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
+	# Hold hikes that would add to recent tax transition penalties, unless the deficit is severe; a debt crisis below still raises
+	if = {
+		limit = {
+			check_variable = { policy_transition_tax_stability < -0.1 }
+			check_variable = { treasury_rate > -5 }
+			check_variable = { budget_balance_ratio > -0.15 }
+		}
+		if = {
+			limit = {
+				check_variable = { pop_tax_change = 1 }
+				NOT = { check_variable = { population_tax_rate < expected_population_tax_rate } }
+				NOT = { check_variable = { policy_transition_population_tax_peak > population_tax_rate } }
+			}
+			set_temp_variable = { pop_tax_change = 0 }
+		}
+		if = {
+			limit = {
+				check_variable = { corp_tax_change = 1 }
+				NOT = { check_variable = { corporate_tax_rate < expected_corporate_tax_rate } }
+				NOT = { check_variable = { policy_transition_corporate_tax_peak > corporate_tax_rate } }
+			}
+			set_temp_variable = { corp_tax_change = 0 }
+		}
+	}
+
 	# Debt crisis escalation: force tax increases when debt service is unsustainable or debt is excessive
 	if = {
 		limit = {
@@ -6101,10 +6131,16 @@ calculate_ai_taxes_desire = {
 	}
 
 	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = population_tax_rate }
 		add_to_variable = { population_tax_rate = pop_tax_change }
+		clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+		population_tax_transition_check = yes
 	}
 	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = corporate_tax_rate }
 		add_to_variable = { corporate_tax_rate = corp_tax_change }
+		clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
+		corporate_tax_transition_check = yes
 	}
 
 	clamp_variable = { var = population_tax_rate min = 0 max = 50 }
