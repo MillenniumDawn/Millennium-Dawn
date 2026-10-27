@@ -239,7 +239,8 @@ def process_file_for_all_flags(
 def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
     """Collect every country-flag write/read in *text*, with focus context.
 
-    Returns (set_sites, read_sites, cleared, long_form_reads).
+    Returns (set_sites, read_sites, cleared, long_form_reads, trees), where
+    trees is (rel, focus tree ids the file defines, tree ids it loads).
 
     A set site is (rel, line, focus_id, disqualifier). ``disqualifier`` is None
     only for a short-form set sitting unconditionally in the completion_reward of
@@ -319,15 +320,19 @@ def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
                     dq = "foreign-scope"
         set_sites.setdefault(flag, []).append((rel, src.line(m.start()), focus_id, dq))
 
-    # A tree reload without keep_completed wipes completion while a flag would
-    # survive, so findings in such a file carry a caution rather than a verdict.
-    tree_reload = set()
+    loaded_trees = set()
     for m in _LOAD_FOCUS_TREE_RE.finditer(text):
-        if not (m.group(1) and _KEEP_COMPLETED_RE.search(m.group(1))):
-            tree_reload.add(rel)
-            break
+        tree = m.group(2) or next(iter(_TREE_KEY_RE.findall(m.group(1))), "")
+        loaded_trees.add(tree)
+    defined_trees = set(_FOCUS_TREE_ID_RE.findall(text)) if in_focus_dir else set()
 
-    return set_sites, read_sites, cleared, long_form_reads, tree_reload
+    return (
+        set_sites,
+        read_sites,
+        cleared,
+        long_form_reads,
+        (rel, defined_trees, loaded_trees),
+    )
 
 
 def process_file_for_focus_flag_sites(args: Tuple[str, str]):
@@ -335,7 +340,7 @@ def process_file_for_focus_flag_sites(args: Tuple[str, str]):
     filename, mod_path = args
     text = _read_script_text(filename, mod_path, require="country_flag")
     if text is None or "country_flag" not in text:
-        return {}, {}, set(), set(), set()
+        return {}, {}, set(), set(), ("", set(), set())
     rel = os.path.relpath(filename, mod_path)
     in_focus_dir = _FOCUS_DIR_MARKER in rel + os.sep
     return disk_cache.per_file_cached_by_content(
@@ -653,8 +658,13 @@ _MODIFY_CFLAG_RE = word_start_re("modify_country_flag", r"\s*=\s*\{([^{}]*)\}")
 _CFLAG_INNER_FLAG_RE = re.compile(r"\bflag\s*=\s*([^\s{}=]+)")
 _BYPASS_BLOCK_RE = word_start_re("bypass", r"\s*=\s*\{")
 _JOINT_REWARD_RE = re.compile(r"\bcompletion_reward_joint_(?:originator|member)\b")
-_LOAD_FOCUS_TREE_RE = word_start_re("load_focus_tree", r"\s*=\s*(?:\{([^{}]*)\}|\S+)")
-_KEEP_COMPLETED_RE = re.compile(r"\bkeep_completed\s*=\s*yes\b")
+_LOAD_FOCUS_TREE_RE = word_start_re(
+    "load_focus_tree", r"\s*=\s*(?:\{([^{}]*)\}|([^\s{}]+))"
+)
+_TREE_KEY_RE = re.compile(r"\btree\s*=\s*([A-Za-z0-9_]+)")
+_FOCUS_TREE_ID_RE = re.compile(
+    r"^focus_tree\s*=\s*\{\s*id\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE
+)
 # Blocks that make an enclosed effect conditional. A flag set under one of these
 # is not implied by focus completion, so has_completed_focus is not equivalent.
 _CONDITIONAL_BLOCK_NAMES = frozenset(
@@ -1810,15 +1820,26 @@ class Validator(BaseValidator):
         read_sites: Dict[str, List] = {}
         cleared: Set[str] = set()
         long_form: Set[str] = set()
-        tree_reload: Set[str] = set()
-        for f_sets, f_reads, f_cleared, f_long, f_reload in all_results:
+        defined_trees: Dict[str, Set[str]] = {}
+        loaded_trees: Set[str] = set()
+        loading_files: Set[str] = set()
+        for f_sets, f_reads, f_cleared, f_long, f_trees in all_results:
             for flag, sites in f_sets.items():
                 set_sites.setdefault(flag, []).extend(sites)
             for flag, sites in f_reads.items():
                 read_sites.setdefault(flag, []).extend(sites)
             cleared |= f_cleared
             long_form |= f_long
-            tree_reload |= f_reload
+            f_rel, f_defined, f_loaded = f_trees
+            defined_trees[f_rel] = f_defined
+            loaded_trees |= f_loaded
+            if f_loaded:
+                loading_files.add(f_rel)
+        # keep_completed only keeps focuses the new tree also has, so a flag set
+        # in a tree that is loaded or swapped out outlives its focus.
+        swapped = loading_files | {
+            rel for rel, trees in defined_trees.items() if trees & loaded_trees
+        }
 
         loc_keys = self._load_localisation_keys()
         dynamic = self._build_dynamic_flag_matchers(list(set_sites))
@@ -1832,7 +1853,7 @@ class Validator(BaseValidator):
             if len(sites) != 1:
                 continue
             rel, line, focus_id, disqualifier = sites[0]
-            if disqualifier or not focus_id:
+            if disqualifier or not focus_id or rel in swapped:
                 continue
             readers = read_sites.get(flag)
             if not readers:
@@ -1853,8 +1874,6 @@ class Validator(BaseValidator):
                 f"{len(readers)} read(s) with `has_completed_focus = {focus_id}`: "
                 f"{reader_text}"
             )
-            if rel in tree_reload:
-                msg += "; caution: this file reloads a focus tree without keep_completed = yes"
             if flag in loc_keys:
                 msg += "; flag has a loc key - the effect tooltip line changes"
             issues.append((msg, rel, line))

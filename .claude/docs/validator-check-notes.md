@@ -631,8 +631,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
   foreign-scope set, any `clr_country_flag` or `modify_country_flag`, a timed or valued
-  form, a focus with `bypass`, and joint rewards. A file that reloads a tree gets a
-  caution, since `load_focus_tree` without `keep_completed = yes` wipes completion.
+  form, a focus with `bypass`, joint rewards, and a set in a file that loads a focus
+  tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
+  focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
   - `untooltipped-available-check`: a bare `check_variable` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
