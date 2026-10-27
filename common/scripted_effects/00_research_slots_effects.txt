@@ -28,6 +28,28 @@ research_slot_init_for_country = {
 	}
 }
 
+## SCOPE: Country
+# Runs after the weekly GDP refresh instead of letting the engine poll the missions' activation
+activate_research_slot_loss_missions = {
+	if = {
+		limit = {
+			NOT = { has_active_mission = gdp_lose_slot }
+			check_variable = { gdp_total < GLOBAL.gdp_slot^research_slots_from_gdp }
+		}
+		activate_mission = gdp_lose_slot
+	}
+	if = {
+		limit = {
+			NOT = { has_active_mission = gdp_c_lose_slot }
+			OR = {
+				check_variable = { gdp_per_capita < GLOBAL.gdp_c_slot^research_slots_from_gdp_c }
+				check_variable = { industrial_complex_total < GLOBAL.gdp_c_slot_civs^research_slots_from_gdp_c }
+			}
+		}
+		activate_mission = gdp_c_lose_slot
+	}
+}
+
 add_research_buff = {
 	if = {
 		limit = { has_idea = research_idea_1 }
