@@ -76,6 +76,8 @@ country_event = {
 			modifier = { factor = 0.5 check_variable = { debt_ratio > 1.5 } }
 			modifier = { factor = 0 check_variable = { debt_ratio > 2.0 } }
 			modifier = { factor = 0 has_opinion = { target = FROM value < -20 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -117,6 +119,8 @@ country_event = {
 			modifier = { factor = 0.5 check_variable = { debt_ratio > 1.0 } }
 			modifier = { factor = 0 check_variable = { debt_ratio > 1.5 } }
 			modifier = { factor = 0 has_opinion = { target = FROM value < 0 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -158,6 +162,8 @@ country_event = {
 			modifier = { factor = 0 NOT = { is_in_faction_with = FROM } }
 			modifier = { factor = 0 check_variable = { debt_ratio > 0.8 } }
 			modifier = { factor = 0 has_opinion = { target = FROM value < 20 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -368,6 +374,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: News_influence.0.b executed"
 		set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 		# Bonus of PP for the first rejection after this you need to wait 90 days
+		set_country_flag = { flag = recently_refused_aid_from@FROM days = 180 value = 1 }
+		#Blocks influencer from sending aid again for 180 days
 		if = {
 			limit = { NOT = { has_country_flag = recently_refused_aid } }
 			add_political_power = 100
@@ -376,9 +384,9 @@ country_event = {
 		else = {
 			custom_effect_tooltip = recently_refused_economic_aid_tt
 		}
+		newline = yes
+		custom_effect_tooltip = refused_aid_donor_cooldown_tt
 
-		set_temp_variable = { arg_popularity = 0.02 }
-		add_ruling_outlook_popularity = yes
 
 		# Returns Funds to the Influencer Nation
 		if = {
@@ -516,6 +524,7 @@ country_event = {
 			modifier = { add = 2 event_target:influence_target = { check_variable = { domestic_influence_amount > 30 } } }
 			modifier = { factor = 1.3 has_government = communism }
 			modifier = { factor = 0.7 has_government = democratic }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -540,6 +549,7 @@ country_event = {
 			modifier = { factor = 1.3 has_government = democratic }
 			modifier = { factor = 1.3 has_government = communism }
 			modifier = { factor = 0.7 num_of_factories < 30 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
 		event_target:influence_target = {
@@ -566,6 +576,7 @@ country_event = {
 			modifier = { add = 4 event_target:influence_target = { OR = { check_variable = { influence_array^1 = CHI } check_variable = { influence_array^1 = SOV } check_variable = { influence_array^1 = PER } } } }
 			modifier = { add = 2 has_idea = great_power }
 			modifier = { factor = 0.8 num_of_factories < 30 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		trigger = {
 			event_target:influence_target = {
@@ -599,6 +610,7 @@ country_event = {
 			base = 2
 			modifier = { add = 3 event_target:influence_target = { OR = { check_variable = { influence_array^2 = CHI } check_variable = { influence_array^2 = SOV } check_variable = { influence_array^2 = PER } } } }
 			modifier = { add = 1 has_idea = super_power }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		trigger = {
 			event_target:influence_target = {
@@ -624,7 +636,10 @@ country_event = {
 	#Let's not bother
 	option = {
 		name = influence.3.f
-		ai_chance = { base = 0 }
+		ai_chance = {
+			base = 0
+			modifier = { add = 8 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -1546,6 +1561,10 @@ country_event = {
 				}
 			}
 		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	#abort planning
@@ -1794,6 +1813,7 @@ country_event = {
 			modifier = { factor = 0.7 has_government = fascism }
 			modifier = { factor = 1.3 num_of_factories < 30 }
 			modifier = { factor = 0.5 has_war = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1833,6 +1853,7 @@ country_event = {
 			modifier = { factor = 0.5 has_government = nationalist }
 			modifier = { factor = 0.7 num_of_factories < 30 }
 			modifier = { factor = 0.5 is_in_faction_with = event_target:coup_contest_sender }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1894,6 +1915,7 @@ country_event = {
 			modifier = { factor = 0.5 has_government = nationalist }
 			modifier = { factor = 1.2 has_country_leader = { name = "Donald Trump" } }
 			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1978,6 +2000,7 @@ country_event = {
 			modifier = { factor = 0.3 threat > 0.70 }
 			modifier = { factor = 0 num_of_military_factories < 50 }
 			modifier = { factor = 0 is_in_faction_with = event_target:coup_contest_sender }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -1996,6 +2019,7 @@ country_event = {
 				add = 20
 				has_opinion = { target = event_target:coup_contest_sender value > 0 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 }
@@ -2060,6 +2084,7 @@ country_event = {
 			modifier = { factor = 0.6 has_government = nationalist }
 			modifier = { factor = 0.6 num_of_military_factories < 25 }
 			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -2087,6 +2112,8 @@ country_event = {
 			modifier = { factor = 1.4 has_government = democratic }
 			modifier = { factor = 1.3 has_government = neutrality }
 			modifier = { factor = 0.7 has_government = communism }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -2161,6 +2188,7 @@ country_event = {
 			modifier = { factor = 0.3 threat > 0.70 }
 			modifier = { factor = 0 num_of_military_factories < 50 }
 			modifier = { factor = 0 is_in_faction_with = event_target:coup_contest_sender }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -2417,6 +2445,7 @@ country_event = {
 			modifier = { factor = 1.3 has_government = neutrality }
 			modifier = { factor = 0.7 has_government = communism }
 			modifier = { factor = 0.7 has_idea = super_power }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -2468,6 +2497,7 @@ country_event = {
 			modifier = { factor = 1.3 has_government = democratic }
 			modifier = { factor = 1.2 has_government = communism }
 			modifier = { factor = 0.5 num_of_military_factories < 20 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -2521,6 +2551,7 @@ country_event = {
 			modifier = { factor = 0 NOT = { is_in_faction_with = event_target:military_aid_target } }
 			modifier = { factor = 0 has_war = yes }
 			modifier = { factor = 0 num_of_military_factories < 30 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 

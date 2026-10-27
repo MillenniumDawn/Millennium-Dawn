@@ -8,6 +8,7 @@ import argparse
 import os
 import re
 import sys
+from collections.abc import Mapping, Sequence
 
 import pytest
 import validate_decisions as V
@@ -67,7 +68,18 @@ _RANDOM_LIST = (
 )
 
 _BILL = "pay_the_bill = {\n\tadd_to_variable = { treasury = -3 }\n}\n"
-_EFFECTS = costly_scripted_effects([_BILL])
+_CUSTOM_BILLS = (
+    "pay_command_power = { add_command_power = -20 }\n"
+    "forward_command_power = { pay_command_power = yes }\n"
+    "pay_manpower = { set_temp_variable = { troops = -100 } add_manpower = troops }\n"
+    "pay_equipment = { add_equipment_to_stockpile = { type = infantry_equipment amount = -100 } }\n"
+    "preview_command_power = { effect_tooltip = { add_command_power = -20 } }\n"
+    "foreign_command_power = { FROM = { add_command_power = -20 } }\n"
+)
+_PAYMENT = (
+    "modify_treasury_effect = { add_to_variable = { treasury = treasury_change } }\n"
+)
+_EFFECTS = costly_scripted_effects([_BILL, _CUSTOM_BILLS, _PAYMENT])
 _CHARGE = "\t\tadd_to_variable = { treasury = -5 }\n"
 _WEIGHT = "\tai_will_do = { base = 10 }\n"
 _BANKRUPTCY_WEIGHT = (
@@ -82,6 +94,59 @@ _SELECTABLE = _MISSION + "\tselectable_mission = yes\n"
 _TREASURY_GATE = "\tcustom_cost_trigger = { check_variable = { treasury > 5 } }\n"
 _PAID = _effect(_CHARGE)
 _PAID_ON_REMOVE = _effect(_CHARGE, "remove_effect")
+# Scripted triggers by name: the body is what a decision's gate or read resolves to.
+_TRIGGERS = {
+    "treasury_higher_than_50": " custom_trigger_tooltip = { tooltip = tip"
+    " check_variable = { treasury > 49 } } ",
+    "calculate_fee": " set_temp_variable = { fee = 5 } ",
+}
+_TOOLTIPPED_GATE = (
+    "\tavailable = { custom_trigger_tooltip = { tooltip = tip"
+    " check_variable = { treasury > 1 } } }\n"
+)
+_APPLY = "\t\tmodify_treasury_effect = yes\n"
+
+
+def _take(*amounts):
+    """A complete_effect that charges each literal treasury amount."""
+    return _effect(
+        "".join(
+            f"\t\tset_temp_variable = {{ treasury_change = -{amount} }}\n{_APPLY}"
+            for amount in amounts
+        )
+    )
+
+
+def _floor(amount, block="custom_cost_trigger"):
+    return f"\t{block} = {{ check_variable = {{ treasury > {amount} }} }}\n"
+
+
+_LATE = [
+    (
+        "dec_one - remove_effect charges treasury, charge it in complete_effect",
+        "X.txt",
+        0,
+    )
+]
+
+
+def _below(gate, charge):
+    message = f"dec_one - treasury gate {gate} is below the {charge} it charges"
+    return [(message + " in complete_effect", "X.txt", 0)]
+
+
+def _temp_read(block):
+    message = f"dec_one - {block} reads pay, a temp variable only the effects set"
+    return (message + ", so it is always 0 here", "X.txt", 0)
+
+
+def _reads(block, name="pay"):
+    return f"\t{block} = {{ check_variable = {{ treasury > {name} }} }}\n"
+
+
+def _sets(name="pay", block="complete_effect", op="set_temp_variable"):
+    return _effect(f"\t\t{op} = {{ {name} = 5 }}\n", block)
+
 
 _UNLOCK_MISSED = (
     "md_setter - X.txt: complete_effect announces 1 unlock(s) but not md_missed"
@@ -92,6 +157,16 @@ _AI_ONLY_AVAILABLE = "\tavailable = {\n\t\tis_ai = yes\n\t}\n"
 
 def _ignores(what):
     return [(f"dec_one - ai_will_do ignores the {what}", "X.txt", 0)]
+
+
+def _unpaid(kind: str) -> list[object]:
+    return [
+        (
+            f"dec_one - custom cost checks {kind} but has no charge in complete_effect",
+            "X.txt",
+            0,
+        )
+    ]
 
 
 def _setter(*unlocks, flag="set_country_flag = md_gate_flag"):
@@ -106,7 +181,7 @@ def _gated(token, block="visible", check="has_country_flag = md_gate_flag"):
 _ANNOUNCED = [_setter("md_announced"), _gated("md_announced")]
 
 # check: {case: (decisions, what each finding must match)}
-_CHECK_CASES = {
+_CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]] = {
     "validate_missing_log": {
         "logged": ([_flat(_effect(_LOG))], []),
         "unquoted log": (
@@ -154,6 +229,191 @@ _CHECK_CASES = {
             ],
             [("custom_effect_tooltip",)],
         ),
+        "two logs at the block's level": (
+            [_flat(_effect(_LOG + _LOG))],
+            [("complete_effect has 2 log lines",)],
+        ),
+        "a nested second log": (
+            [
+                _flat(
+                    _effect(
+                        _LOG + "\t\tif = {\n\t\t\tlimit = { has_war = yes }\n"
+                        "\t" + _LOG + "\t\t}\n"
+                    )
+                )
+            ],
+            [],
+        ),
+    },
+    "validate_money_charged_after_entry": {
+        "charged on removal": ([_flat(_PAID_ON_REMOVE)], _LATE),
+        "payment effect on removal": (
+            [
+                _flat(
+                    _effect(
+                        "\t\tset_temp_variable = { treasury_change = -5 }\n" + _APPLY,
+                        "remove_effect",
+                    )
+                )
+            ],
+            _LATE,
+        ),
+        # A construction effect pays when the building is delivered; that is intended.
+        "scripted effect that charges": (
+            [_flat(_effect("\t\tpay_the_bill = yes\n", "remove_effect"))],
+            [],
+        ),
+        "charged when taken": ([_flat(_PAID)], []),
+        "payout on removal": (
+            [
+                _flat(
+                    _effect("\t\tadd_to_variable = { treasury = 5 }\n", "remove_effect")
+                )
+            ],
+            [],
+        ),
+        "political power on removal": (
+            [_flat(_effect(_SPEND_50, "remove_effect"))],
+            [],
+        ),
+        "charged on cancellation": ([_flat(_effect(_CHARGE, "cancel_effect"))], []),
+        "selectable mission": ([_flat(_SELECTABLE, _PAID_ON_REMOVE)], []),
+        "plain mission": ([_flat(_MISSION, _PAID_ON_REMOVE)], []),
+        # validate_custom_cost_charged already reports this one as late.
+        "late custom cost": ([_flat(_TREASURY_GATE, _PAID_ON_REMOVE)], []),
+        "paid up front and again on removal": (
+            [_flat(_TREASURY_GATE, _PAID, _PAID_ON_REMOVE)],
+            _LATE,
+        ),
+    },
+    "validate_treasury_gate_below_charge": {
+        "gate below the charge": ([_flat(_floor(1.75), _take(2))], _below(1.75, 2)),
+        "gate at the charge": ([_flat(_floor(2), _take(2))], []),
+        "gate with >=": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { check_variable = { treasury >= 1 } }\n",
+                    _take(2),
+                )
+            ],
+            _below(1, 2),
+        ),
+        # `> 0.4` for a 0.5 charge is how the mod writes `>= 0.5`.
+        "gate 0.1 under the charge": ([_flat(_floor(0.4), _take(0.5))], []),
+        "gate 0.11 under the charge": (
+            [_flat(_floor(0.39), _take(0.5))],
+            _below(0.39, 0.5),
+        ),
+        # The scripted trigger's name says 50, its body 49.
+        "scripted gate read from its body": (
+            [_flat("\tavailable = { treasury_higher_than_50 = yes }\n", _take(50))],
+            _below(49, 50),
+        ),
+        "tooltip wrapper": ([_flat(_TOOLTIPPED_GATE, _take(2))], _below(1, 2)),
+        "highest gate counts": (
+            [_flat(_floor(1, "available"), _floor(5), _take(5))],
+            [],
+        ),
+        "gate inside an OR": (
+            [
+                _flat(
+                    "\tavailable = { OR = { check_variable = { treasury > 1 }"
+                    " has_war = yes } }\n",
+                    _take(2),
+                )
+            ],
+            [],
+        ),
+        "no treasury gate": ([_flat(_take(2))], []),
+        "charges add up": ([_flat(_floor(3), _take(2, 2))], _below(3, 4)),
+        "charge inside an if": (
+            [
+                _flat(
+                    _floor(1),
+                    _effect(
+                        "\t\tif = {\n\t\t\tlimit = { has_war = yes }\n"
+                        "\t\t\tset_temp_variable = { treasury_change = -2 }\n"
+                        "\t\t\tmodify_treasury_effect = yes\n\t\t}\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "charge rewritten before it is applied": (
+            [
+                _flat(
+                    _floor(1),
+                    _effect(
+                        "\t\tset_temp_variable = { treasury_change = -2 }\n"
+                        "\t\tmultiply_temp_variable = { treasury_change = -3 }\n"
+                        + _APPLY
+                    ),
+                )
+            ],
+            [],
+        ),
+        "computed charge": (
+            [
+                _flat(
+                    _floor(1),
+                    _effect(
+                        "\t\tset_temp_variable = { treasury_change = { value = gdp_total"
+                        " multiply = -0.03 } }\n" + _APPLY
+                    ),
+                )
+            ],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _floor(1), _take(2))], []),
+    },
+    "validate_trigger_reads_temp_variable": {
+        "custom cost reads it": (
+            [_flat(_reads("custom_cost_trigger"), _sets())],
+            [_temp_read("custom_cost_trigger")],
+        ),
+        "available and visible read it": (
+            [_flat(_reads("available"), _reads("visible"), _sets())],
+            [_temp_read("available"), _temp_read("visible")],
+        ),
+        "set in remove_effect": (
+            [_flat(_reads("available"), _sets(block="remove_effect"))],
+            [_temp_read("available")],
+        ),
+        "reads a stored variable": (
+            [_flat(_reads("available", "stored"), _sets())],
+            [],
+        ),
+        "also set persistently": (
+            [
+                _flat(
+                    _reads("available"),
+                    _sets(),
+                    _sets(block="remove_effect", op="set_variable"),
+                )
+            ],
+            [],
+        ),
+        "trigger sets it": (
+            [
+                _flat(
+                    "\tavailable = { set_temp_variable = { pay = 5 }"
+                    " check_variable = { treasury > pay } }\n",
+                    _sets(),
+                )
+            ],
+            [],
+        ),
+        "scripted trigger sets it": (
+            [
+                _flat(
+                    "\tavailable = { calculate_fee = yes"
+                    " check_variable = { treasury > fee } }\n",
+                    _sets("fee"),
+                )
+            ],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _reads("available"), _sets())], []),
     },
     "validate_custom_cost_ai_hint": {
         "custom_cost_trigger": (
@@ -201,6 +461,11 @@ _CHECK_CASES = {
     },
     "validate_random_seed": {
         "random_list": ([_flat(_effect(_RANDOM_LIST))], [("dec_one",)]),
+        # A roll inside effect_tooltip renders but never runs.
+        "random_list in effect_tooltip": (
+            [_flat(_effect("\t\teffect_tooltip = {\n" + _RANDOM_LIST + "\t\t}\n"))],
+            [],
+        ),
         "random in remove_effect": (
             [_flat(_effect(_RANDOM, "remove_effect"))],
             [("dec_one",)],
@@ -282,6 +547,245 @@ _CHECK_CASES = {
             [],
         ),
         "plain mission": ([_flat(_MISSION, _PAID)], []),
+        # An is_ai = no under a tag scope is about that country, not the caller.
+        "is_ai = no for another country": (
+            [
+                _flat(
+                    _PAID,
+                    _WEIGHT,
+                    "\tvisible = {\n\t\tAFG = {\n\t\t\tif = {\n"
+                    "\t\t\t\tlimit = { is_ai = no }\n\t\t\t\tinfluence_higher_15 = yes\n"
+                    "\t\t\t}\n\t\t}\n\t}\n",
+                )
+            ],
+            _ignores("treasury cost"),
+        ),
+        "gate in a custom_override_tooltip": (
+            [
+                _flat(
+                    _PAID,
+                    _WEIGHT,
+                    "\tavailable = { custom_override_tooltip = { tooltip = tip"
+                    " always = no } }\n",
+                )
+            ],
+            [],
+        ),
+        "gate in a hidden_trigger": (
+            [
+                _flat(
+                    _PAID,
+                    _WEIGHT,
+                    "\tavailable = { hidden_trigger = { always = no } }\n",
+                )
+            ],
+            [],
+        ),
+    },
+    "validate_custom_cost_charged": {
+        "charged when taken": ([_flat(_TREASURY_GATE, _PAID)], []),
+        "scripted charge": (
+            [_flat(_TREASURY_GATE, _effect("\t\tpay_the_bill = yes\n"))],
+            [],
+        ),
+        "charged on removal": (
+            [_flat(_TREASURY_GATE, _PAID_ON_REMOVE)],
+            [
+                (
+                    "dec_one - custom cost charges treasury in remove_effect, not"
+                    " complete_effect",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "never charged": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = {\n\t\tcommand_power > 49\n"
+                    "\t\thas_political_power > 74\n\t}\n",
+                    _effect(_SPEND),
+                )
+            ],
+            [
+                (
+                    "dec_one - custom cost checks command power but has no charge in complete_effect",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "equipment handed over": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { has_equipment = { infantry_equipment > 99 } }\n",
+                    _effect(
+                        "\t\tadd_equipment_to_stockpile = { type = infantry_equipment"
+                        " amount = -100 }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "ROOT payment inside a hidden effect": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { command_power > 19 }\n",
+                    _effect(
+                        "\t\thidden_effect = { ROOT = { add_command_power = -20 } }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "enabled branch": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { command_power > 19 }\n",
+                    _effect(
+                        "\t\tif = { limit = { always = yes } add_command_power = -20 }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "negated false limit allows payment": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { command_power > 19 }\n",
+                    _effect(
+                        "\t\tif = { limit = { NOT = { always = no } } add_command_power = -20 }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "no custom cost": ([_flat(_PAID)], []),
+        "human-only decision still needs payment": (
+            [_flat(_TREASURY_GATE, "\tai_will_do = { base = 0 }\n")],
+            _unpaid("treasury"),
+        ),
+        "scripted command power": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { command_power > 19 }\n",
+                    _effect("\t\tforward_command_power = yes\n"),
+                )
+            ],
+            [],
+        ),
+        "scripted manpower": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { has_manpower > 99 }\n",
+                    _effect("\t\tpay_manpower = yes\n"),
+                )
+            ],
+            [],
+        ),
+        "scripted equipment": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { has_equipment = { infantry_equipment > 99 } }\n",
+                    _effect("\t\tpay_equipment = yes\n"),
+                )
+            ],
+            [],
+        ),
+        "nested math charge": (
+            [
+                _flat(
+                    _TREASURY_GATE,
+                    _effect(
+                        "\t\tset_temp_variable = { bill = { value = times_taken multiply = { value = gdp_total multiply = -0.002 } } }\n"
+                        "\t\tadd_to_variable = { treasury = bill }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "nested math income": (
+            [
+                _flat(
+                    _TREASURY_GATE,
+                    _effect(
+                        "\t\tset_temp_variable = { var = bill value = { value = times_taken multiply = { value = gdp_total multiply = 0.002 } } }\n"
+                        "\t\tadd_to_variable = { treasury = bill }\n"
+                    ),
+                )
+            ],
+            _unpaid("treasury"),
+        ),
+        "scripted charge on removal": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { command_power > 19 }\n",
+                    _effect("\t\tpay_command_power = yes\n", "remove_effect"),
+                )
+            ],
+            [
+                (
+                    "dec_one - custom cost charges command power in remove_effect, not complete_effect",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "payment only on timeout or cancellation": (
+            [
+                _flat(
+                    _SELECTABLE,
+                    _TREASURY_GATE,
+                    _effect(_CHARGE, "timeout_effect"),
+                    _effect(_CHARGE, "cancel_effect"),
+                )
+            ],
+            _unpaid("treasury"),
+        ),
+        "selectable mission must pay when taken": (
+            [_flat(_SELECTABLE, _TREASURY_GATE, _PAID_ON_REMOVE)],
+            [
+                (
+                    "dec_one - custom cost charges treasury in remove_effect, not complete_effect",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        **{
+            f"not an executed owner charge: {name}": (
+                [
+                    _flat(
+                        "\tcustom_cost_trigger = { command_power > 19 }\n",
+                        _effect(f"\t\t{body}\n"),
+                    )
+                ],
+                _unpaid("command power"),
+            )
+            for name, body in {
+                "preview": "effect_tooltip = { add_command_power = -20 }",
+                "foreign scope": "FROM = { add_command_power = -20 }",
+                "quoted log": 'log = "add_command_power = -20"',
+                "scripted preview": "preview_command_power = yes",
+                "scripted foreign scope": "foreign_command_power = yes",
+                "disabled branch": "if = { limit = { always = no } add_command_power = -20 }",
+                "zero chance": "random = { chance = 0 add_command_power = -20 }",
+                "income": "add_command_power = 20",
+                "zero": "add_command_power = -0",
+            }.items()
+        },
+        "equipment transfer": (
+            [
+                _flat(
+                    "\tcustom_cost_trigger = { has_equipment = { infantry_equipment > 99 } }\n",
+                    _effect(
+                        "\t\tsend_equipment = { type = infantry_equipment amount = 100 target = UKR }\n"
+                    ),
+                )
+            ],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _TREASURY_GATE)], []),
     },
     # Only the inconsistent case is a defect: a block that announces one unlock
     # and misses a sibling gated on the flag it just set.
@@ -457,6 +961,7 @@ _CHECK_CASES = {
 def test_decision_check(monkeypatch, check, decisions, expected):
     monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}))
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
+    monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
@@ -483,6 +988,126 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
             2,
         )
     ]
+
+
+def test_custom_cost_check_loads_scripted_charges_and_keeps_warnings(tmp_path):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/scripted_effects/00_bills.txt": _CUSTOM_BILLS,
+            "common/decisions/Bills.txt": "bills_category = {\n"
+            + _nested(
+                "paid",
+                "\t\tcustom_cost_trigger = { command_power > 19 }\n"
+                + _block("complete_effect", "forward_command_power = yes"),
+            )
+            + _nested("unpaid", "\t\tcustom_cost_trigger = { command_power > 19 }\n")
+            + "}\n",
+        },
+    )
+
+    validator.validate_custom_cost_charged()
+
+    assert issue_rows(validator) == [
+        (
+            "decision-custom-cost-not-charged",
+            "unpaid - custom cost checks command power but has no charge in complete_effect",
+            "common/decisions/Bills.txt",
+            8,
+        )
+    ]
+    assert (validator.warnings_found, validator.errors_found) == (1, 0)
+
+
+_GATE_TRIGGERS = (
+    "treasury_higher_than_2 = {\n\tcustom_trigger_tooltip = {\n\t\ttooltip = tip\n"
+    "\t\tcheck_variable = { treasury > 2 }\n\t}\n}\n"
+    "calculate_pay = {\n\tset_temp_variable = { pay = 5 }\n}\n"
+)
+
+
+def test_gate_and_temp_variable_checks_read_the_mods_scripted_triggers(tmp_path):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/scripted_triggers/00_gates.txt": _GATE_TRIGGERS,
+            "common/decisions/Gates.txt": "gates_category = {\n"
+            + _nested(
+                "low_gate",
+                _block("available", "treasury_higher_than_2 = yes")
+                + _block(
+                    "complete_effect",
+                    "set_temp_variable = { treasury_change = -3 }\n"
+                    "modify_treasury_effect = yes",
+                ),
+            )
+            + _nested(
+                "fee_read",
+                _block("available", "check_variable = { treasury > fee }")
+                + _block("complete_effect", "set_temp_variable = { fee = 5 }"),
+            )
+            + _nested(
+                "pay_read",
+                _block(
+                    "available",
+                    "calculate_pay = yes\ncheck_variable = { treasury > pay }",
+                )
+                + _block("complete_effect", "set_temp_variable = { pay = 5 }"),
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_treasury_gate_below_charge()
+    validator.validate_trigger_reads_temp_variable()
+
+    assert [row[:3] for row in issue_rows(validator)] == [
+        (
+            "decision-treasury-gate-below-charge",
+            "low_gate - treasury gate 2 is below the 3 it charges in complete_effect",
+            "common/decisions/Gates.txt",
+        ),
+        (
+            "decision-trigger-reads-temp-variable",
+            "fee_read - available reads fee, a temp variable only the effects set,"
+            " so it is always 0 here",
+            "common/decisions/Gates.txt",
+        ),
+    ]
+    assert (validator.warnings_found, validator.errors_found) == (2, 0)
+
+
+# A category's own gate blocks hide its decisions from the AI; a tag scope does not.
+_AI_CATEGORY_CASES = {
+    "flat is_ai = no": ("\tvisible = {\n\t\tis_ai = no\n\t}\n", False),
+    "flat always = no": ("\tallowed = {\n\t\talways = no\n\t}\n", False),
+    "inside a hidden_trigger": (
+        "\tavailable = {\n\t\thidden_trigger = { is_ai = no }\n\t}\n",
+        False,
+    ),
+    "under a tag scope": ("\tvisible = {\n\t\tAFG = { is_ai = no }\n\t}\n", True),
+    "no gate": ("", True),
+}
+
+
+@pytest.mark.parametrize(
+    ("gate", "reachable"),
+    list(_AI_CATEGORY_CASES.values()),
+    ids=list(_AI_CATEGORY_CASES),
+)
+def test_category_gate_hides_its_decisions_from_the_ai(tmp_path, gate, reachable):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/categories/cat.txt": f"cat = {{\n{gate}}}\n",
+            "common/decisions/d.txt": "cat = {\n" + _nested("in_cat") + "}\n",
+        },
+    )
+
+    validator.validate_ai_factors()
+
+    flagged = any("in_cat" in row[1] for row in issue_rows(validator))
+    assert flagged is reachable
 
 
 _SLOT = "cyber_op_slot_[SLOT]_[TYPE]"
@@ -534,7 +1159,7 @@ def test_unused_decisions(monkeypatch, tokens, decisions, missions, unused):
     monkeypatch.setattr(
         V.Validator,
         "_get_activation_removal_scan",
-        lambda self: (decisions, missions, set(), set()),
+        lambda self: (decisions, missions, set(), set(), set()),
     )
     factories = [
         decision_factory(_flat("\tallowed = { always = no }\n", token=token))
@@ -605,7 +1230,7 @@ def test_ai_only_localisation(monkeypatch, decisions, loc_keys, state, expected)
         "_load_localisation_keys": loc_keys,
         "_get_ai_only_by_category": set(),
         "_get_ai_only_categories": dict.fromkeys(state.get("categories", ()), "c.txt"),
-        "_get_activation_removal_scan": (set(), set(), set(), unlocks),
+        "_get_activation_removal_scan": (set(), set(), set(), unlocks, set()),
     }
     for name, value in patched.items():
         monkeypatch.setattr(V.Validator, name, lambda self, value=value: value)
@@ -1623,19 +2248,27 @@ def test_quoted_brace_does_not_truncate_decision_block(tmp_path):
     assert V.DecisionFactory(dec=decisions[0]).cost == "42"
 
 
-# case: (file, text, (decisions, missions, removals, unlock references))
-_ACTIVATION_SCAN_CASES = {
+# case: (file, text, (decisions, missions, removals, unlock references, checked))
+_ACTIVATION_SCAN_CASES: dict[
+    str,
+    tuple[str, str, tuple[set[str], set[str], set[str], list[object], set[str]]],
+] = {
     # The substring gate must admit a file that only removes targeted decisions.
     "remove_targeted_decision only": (
         "effects.txt",
         "some_effect = {\n"
         "\tremove_targeted_decision = { target = ROOT decision = my_targeted_dec }\n}\n",
-        (set(), set(), {"my_targeted_dec"}, []),
+        (set(), set(), {"my_targeted_dec"}, [], set()),
+    ),
+    "plain activate_decision": (
+        "effects.txt",
+        "some_effect = {\n\tactivate_decision = my_timed_dec\n}\n",
+        ({"my_timed_dec"}, set(), set(), [], set()),
     ),
     "skipped file": (
         "events/FR_loc_events.txt",
         "remove_decision = some_decision\n",
-        (set(), set(), set(), []),
+        (set(), set(), set(), [], set()),
     ),
 }
 
@@ -1665,6 +2298,7 @@ def test_activation_scan_uses_only_shipped_content_roots(tmp_path):
         {"shipped_mission"},
         set(),
         [],
+        set(),
     )
 
 
@@ -1843,6 +2477,15 @@ _FINDING_DECISIONS = {
     "orphan_modifiers": "\t\ttargets_dynamic = yes\n\t\ttarget_non_existing = yes\n",
     "skip_ai_available": _block("available", "is_ai = no"),
     "skip_ai_visible": _block("visible", "always = no"),
+    "late_money": _block("remove_effect", "add_to_variable = { treasury = -5 }"),
+    "low_gate": _block("available", "check_variable = { treasury > 1 }")
+    + _block(
+        "complete_effect",
+        "set_temp_variable = { treasury_change = -2 }\nmodify_treasury_effect = yes",
+    ),
+    "temp_read": _block("available", "check_variable = { treasury > pay }")
+    + _block("complete_effect", "set_temp_variable = { pay = 5 }"),
+    "double_log": _block("complete_effect", 'log = "first"\nlog = "second"'),
 }
 _FINDINGS_MOD = {
     "common/decisions/categories/categories.txt": "cat_allowed = {\n"
@@ -1881,10 +2524,18 @@ _FINDINGS_MOD = {
     + "".join(f'\tspriteType = {{ name = "GFX_filler_{i}" }}\n' for i in range(1000))
     + "}\n",
 }
+# WARNINGs held back until their backlog clears.
+_BACKLOG_WARNINGS = (
+    "decision-duplicate-log",
+    "decision-money-charged-late",
+    "decision-treasury-gate-below-charge",
+    "decision-trigger-reads-temp-variable",
+)
 _REPORTED_CATEGORIES = (
     "missing-decision-localisation",
     "missing-decision-log",
     "decision-log-not-first",
+    *_BACKLOG_WARNINGS,
     "bare-trigger-name",
     "missing-decision-war-hint",
     "missing-decision-icon",
@@ -1928,8 +2579,14 @@ def test_full_run_reports_every_finding_category(tmp_path):
     assert "unannounced-decision-category" not in categories
     missing_log = [i for i in validator._issues if i.category == "missing-decision-log"]
     assert {issue.severity for issue in missing_log} == {V.Severity.ERROR}
+    for category in _BACKLOG_WARNINGS:
+        severities = {i.severity for i in validator._issues if i.category == category}
+        assert severities == {V.Severity.WARNING}, category
     for token in ("manual_unused", "pp_hidden", "orphan_modifiers"):
         assert any(token in message for message in messages), token
+    assert not any(
+        "category_ai_skip" in message and "AI factor" in message for message in messages
+    )
     assert any("from_move" in m and "move the FROM" in m for m in messages)
 
 
@@ -1938,8 +2595,19 @@ def test_clean_mod_passes_full_staged_and_strict_runs(tmp_path, monkeypatch):
         "common/decisions/categories/cat.txt": "cat = { }\n",
         "common/decisions/clean.txt": "cat = {\n"
         + _nested("clean_decision", "\t\tai_will_do = { base = 0 }\n")
+        + _nested(
+            "paid_decision",
+            _block("available", "check_variable = { treasury > 2 }")
+            + _block(
+                "complete_effect",
+                _LOG.strip() + "\nset_temp_variable = { treasury_change = -2 }"
+                "\nmodify_treasury_effect = yes",
+            )
+            + "\t\tai_will_do = { base = 0 }\n",
+        )
         + "}\n",
-        "localisation/english/clean.yml": 'l_english:\nclean_decision:0 "Clean"\n',
+        "localisation/english/clean.yml": 'l_english:\nclean_decision:0 "Clean"\n'
+        'paid_decision:0 "Paid"\n',
     }
     clean = _mod(tmp_path, files)
     assert clean.run_all_validations() == 0
@@ -2048,6 +2716,55 @@ def test_orphaned_remove_effect_skips_every_exempt_shape(tmp_path):
     validator.validate_orphaned_remove_effect()
 
     assert validator._issues == []
+
+
+_TIMER = "\t\tdays_remove = 30\n"
+# case: (decision token, decision body, reported)
+_TIMER_CASES = {
+    "nothing reads the timer": (
+        "timer_dec",
+        _TIMER + _block("ai_will_do", "base = 1\nmodifier = { factor = 0 }"),
+        True,
+    ),
+    "remove_effect at the end": ("timer_dec", _TIMER + _ONE_LINE_REMOVE, False),
+    "modifier while active": (
+        "timer_dec",
+        _TIMER + _block("modifier", "stability_factor = 0.1"),
+        False,
+    ),
+    "targeted modifier while active": (
+        "timer_dec",
+        _TIMER + _block("targeted_modifier", "tag = FROM"),
+        False,
+    ),
+    "has_decision reads the timer": ("checked_timer", _TIMER, False),
+    "mission": ("timer_dec", _TIMER + _MISSION_DAYS, False),
+}
+
+
+@pytest.mark.parametrize(
+    ("token", "body", "reported"), _TIMER_CASES.values(), ids=_TIMER_CASES
+)
+def test_timer_without_remove_effect(tmp_path, token, body, reported):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/timers.txt": "cat = {\n" + _nested(token, body) + "}\n",
+            "events/checks.txt": "checks = { has_decision = checked_timer }\n",
+        },
+    )
+
+    validator.validate_timer_without_remove_effect()
+
+    expected = (
+        "decision-days-remove-without-effect",
+        f"{token} - days_remove = 30 but no remove_effect, modifier, or has_decision"
+        " check reads the timer",
+        "common/decisions/timers.txt",
+        2,
+    )
+    assert issue_rows(validator) == [expected] * reported
+    assert validator.warnings_found == reported
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):
