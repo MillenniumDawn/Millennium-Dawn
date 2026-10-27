@@ -147,6 +147,11 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
     Peninsular Army, and Gibraltar or the western Mediterranean islands the Mediterranean
     Squadron. The capstones, Thalassocracy, An Army on Four Continents and Global Reach,
     need most of a service's regions.
+  - **Naval Support decisions** help a small fleet. Bartolomeu Dias Frigates now delivers the two
+    Dutch Karel Doorman hulls. After 2006 the player can buy another second-hand frigate for 1.5
+    billion once a year, join an alliance naval exercise for navy experience in peacetime, or ask
+    allied navies for cover in a war: 120 days of better naval coordination, detection and
+    amphibious invasion.
 - **Programme of Government**: the policy tree: financial, industrial and social policy, each
   a set of two-sided forks. Taking a side commits the country to it, and reversing it needs
   the other bloc to win a majority first. The reversal undoes the focuses as well as the
