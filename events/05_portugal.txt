@@ -626,7 +626,8 @@ country_event = {
 
 	trigger = {
 		original_tag = POR
-		country_exists = AGL
+		POR_angola_stands = yes
+		POR_angola_war_on = no
 	}
 
 	option = {
@@ -639,10 +640,11 @@ country_event = {
 				has_country_flag = POR_took_side_in_angola
 			}
 		}
-		set_temp_variable = { percent_change = 6 }
-		set_temp_variable = { tag_index = ROOT.id }
-		set_temp_variable = { influence_target = AGL.id }
-		change_influence_percentage = yes
+		set_temp_variable = { POR_influence_pct = 6 }
+		every_other_country = {
+			limit = { OR = { original_tag = AGL original_tag = UNI } }
+			POR_influence_here = yes
+		}
 		add_political_power = 50
 		ai_chance = { base = 100 }
 	}
@@ -1216,11 +1218,15 @@ country_event = {
 	title = portugal.88.t
 	desc = {
 		text = portugal.88.d_agl
-		trigger = { tag = AGL }
+		trigger = { tag = AGL POR_angola_war_on = yes }
 	}
 	desc = {
 		text = portugal.88.d_uni
-		trigger = { tag = UNI }
+		trigger = { tag = UNI POR_angola_war_on = yes }
+	}
+	desc = {
+		text = portugal.88.d_peace
+		trigger = { OR = { tag = AGL tag = UNI } POR_angola_war_on = no }
 	}
 	desc = {
 		text = portugal.88.d_gub
@@ -1248,7 +1254,7 @@ country_event = {
 		custom_effect_tooltip = TT_IF_WE_ACCEPT
 		effect_tooltip = {
 			if = {
-				limit = { OR = { tag = AGL tag = UNI } }
+				limit = { OR = { tag = AGL tag = UNI } POR_angola_war_on = yes }
 				add_opinion_modifier = { target = FROM modifier = supported_our_claim }
 				custom_effect_tooltip = POR_offer_backing_accepted_tt
 			}
@@ -1279,7 +1285,7 @@ country_event = {
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		effect_tooltip = {
 			if = {
-				limit = { OR = { tag = AGL tag = UNI } }
+				limit = { OR = { tag = AGL tag = UNI } POR_angola_war_on = yes }
 				custom_effect_tooltip = POR_offer_backing_declined_tt
 			}
 			else = { custom_effect_tooltip = POR_offer_treaty_declined_tt }
@@ -1304,19 +1310,17 @@ country_event = {
 		text = portugal.89.d_backing
 		trigger = {
 			FROM = { OR = { tag = AGL tag = UNI } }
-			AGL = { has_war_with = UNI }
-		}
-	}
-	desc = {
-		text = portugal.89.d_war_over
-		trigger = {
-			FROM = { OR = { tag = AGL tag = UNI } }
-			NOT = { AGL = { has_war_with = UNI } }
+			POR_angola_war_on = yes
 		}
 	}
 	desc = {
 		text = portugal.89.d_treaty
-		trigger = { FROM = { OR = { tag = GUB tag = MOZ tag = TIM tag = EGU } } }
+		trigger = {
+			OR = {
+				FROM = { OR = { tag = GUB tag = MOZ tag = TIM tag = EGU } }
+				AND = { FROM = { OR = { tag = AGL tag = UNI } } POR_angola_war_on = no }
+			}
+		}
 	}
 	picture = GFX_handshake_black
 
@@ -1325,21 +1329,12 @@ country_event = {
 	option = {
 		name = portugal.89.a
 		log = "[GetDateText]: [This.GetName]: portugal.89.a executed"
-		# A commitment made after the Angolan war has ended would never be resolved.
 		if = {
-			limit = {
-				FROM = { tag = AGL }
-				has_completed_focus = POR_recognise_luanda
-				AGL = { has_war_with = UNI }
-			}
+			limit = { FROM = { OR = { tag = AGL tag = UNI } } has_completed_focus = POR_recognise_luanda }
 			POR_recognise_luanda_terms = yes
 		}
 		else_if = {
-			limit = {
-				FROM = { tag = UNI }
-				has_completed_focus = POR_support_unita
-				UNI = { has_war_with = AGL }
-			}
+			limit = { FROM = { tag = UNI } has_completed_focus = POR_support_unita }
 			POR_support_unita_terms = yes
 		}
 		else_if = {
@@ -1358,16 +1353,6 @@ country_event = {
 			limit = { FROM = { tag = EGU } has_completed_focus = POR_malabo_accord }
 			POR_malabo_accord_terms = yes
 		}
-		else_if = {
-			limit = { FROM = { tag = AGL } has_completed_focus = POR_recognise_luanda }
-			custom_effect_tooltip = POR_offer_war_over_tt
-			uncomplete_national_focus = { focus = POR_recognise_luanda refund_political_power = no }
-		}
-		else_if = {
-			limit = { FROM = { tag = UNI } has_completed_focus = POR_support_unita }
-			custom_effect_tooltip = POR_offer_war_over_tt
-			uncomplete_national_focus = { focus = POR_support_unita refund_political_power = no }
-		}
 	}
 }
 
@@ -1376,11 +1361,16 @@ country_event = {
 	title = portugal.90.t
 	desc = {
 		text = portugal.90.d_backing
-		trigger = { FROM = { OR = { tag = AGL tag = UNI } } }
+		trigger = { FROM = { OR = { tag = AGL tag = UNI } } POR_angola_war_on = yes }
 	}
 	desc = {
 		text = portugal.90.d_treaty
-		trigger = { FROM = { OR = { tag = GUB tag = MOZ tag = TIM tag = EGU } } }
+		trigger = {
+			OR = {
+				FROM = { OR = { tag = GUB tag = MOZ tag = TIM tag = EGU } }
+				AND = { FROM = { OR = { tag = AGL tag = UNI } } POR_angola_war_on = no }
+			}
+		}
 	}
 	picture = GFX_treaty_rejected
 

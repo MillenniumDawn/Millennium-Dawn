@@ -8958,26 +8958,14 @@ focus_tree = {
 		prerequisite = { focus = POR_campaigns }
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = {
-			country_exists = AGL
-			country_exists = UNI
-		}
+		available = { POR_angola_stands = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_estoril_observers"
-			set_temp_variable = { percent_change = 6 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = AGL.id }
-			change_influence_percentage = yes
-			set_temp_variable = { percent_change = 6 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = UNI.id }
-			change_influence_percentage = yes
-			AGL = {
-				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
-			}
-			UNI = {
+			set_temp_variable = { POR_influence_pct = 6 }
+			every_other_country = {
+				limit = { OR = { original_tag = AGL original_tag = UNI } }
+				POR_influence_here = yes
 				add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 				reverse_add_opinion_modifier = { target = ROOT modifier = diplomatic_support }
 			}
@@ -9007,23 +8995,17 @@ focus_tree = {
 		prerequisite = { focus = POR_estoril_observers }
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_RESOURCE }
 
-		available = {
-			country_exists = AGL
-			country_exists = UNI
-		}
+		available = { POR_angola_stands = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_luena_memorandum"
 			custom_effect_tooltip = POR_luena_memorandum_effect_tt
 			newline = yes
-			set_temp_variable = { percent_change = 10 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = AGL.id }
-			change_influence_percentage = yes
-			set_temp_variable = { percent_change = 15 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = UNI.id }
-			change_influence_percentage = yes
+			set_temp_variable = { POR_influence_pct = 12 }
+			every_other_country = {
+				limit = { OR = { original_tag = AGL original_tag = UNI } }
+				POR_influence_here = yes
+			}
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = POR_shadow_network }
 			add_to_variable = { POR_shadow_influence_coup_modifier = 0.10 tooltip = influence_coup_modifier_tt }
@@ -9063,27 +9045,36 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			country_exists = AGL
-			country_exists = UNI
-			AGL = { has_war_with = UNI }
+			POR_angola_stands = yes
 			custom_trigger_tooltip = {
 				tooltip = POR_not_yet_committed_tt
-				AGL = { NOT = { has_country_flag = POR_opposed_by_portugal } }
-				UNI = { NOT = { has_country_flag = POR_backed_by_portugal } }
+				NOT = { any_other_country = { original_tag = AGL has_country_flag = POR_opposed_by_portugal } }
+				NOT = { any_other_country = { original_tag = UNI has_country_flag = POR_backed_by_portugal } }
 			}
 			custom_trigger_tooltip = {
 				tooltip = POR_luanda_not_refused_tt
-				AGL = { NOT = { has_country_flag = POR_refused_portugal } }
+				NOT = { POR_luanda_refused_us = yes }
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_recognise_luanda"
-			AGL = { country_event = { id = portugal.88 days = 1 } }
+			every_other_country = {
+				limit = {
+					OR = {
+						original_tag = AGL
+						AND = { original_tag = UNI NOT = { country_exists = AGL } }
+					}
+				}
+				country_event = { id = portugal.88 days = 1 }
+			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = { POR_recognise_luanda_terms = yes }
-			newline = yes
-			custom_effect_tooltip = POR_realpolitik_unlock_uni_tt
+			if = {
+				limit = { POR_angola_war_on = yes }
+				newline = yes
+				custom_effect_tooltip = POR_realpolitik_unlock_uni_tt
+			}
 			newline = yes
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = { custom_effect_tooltip = POR_offer_refused_tt }
@@ -9112,30 +9103,36 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INSURGENCY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
-			country_exists = AGL
-			country_exists = UNI
-			AGL = { has_war_with = UNI }
+			POR_angola_stands = yes
 			custom_trigger_tooltip = {
 				tooltip = POR_not_yet_committed_tt
-				AGL = { NOT = { has_country_flag = POR_backed_by_portugal } }
-				UNI = { NOT = { has_country_flag = POR_opposed_by_portugal } }
+				NOT = { any_other_country = { original_tag = AGL has_country_flag = POR_backed_by_portugal } }
+				NOT = { any_other_country = { original_tag = UNI has_country_flag = POR_opposed_by_portugal } }
 			}
 			custom_trigger_tooltip = {
 				tooltip = POR_unita_not_refused_tt
-				UNI = { NOT = { has_country_flag = POR_refused_portugal } }
+				NOT = { POR_unita_refused_us = yes }
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_support_unita"
-			UNI = { country_event = { id = portugal.88 days = 1 } }
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = { POR_support_unita_terms = yes }
-			newline = yes
-			custom_effect_tooltip = POR_realpolitik_unlock_agl_tt
-			newline = yes
-			custom_effect_tooltip = TT_IF_THEY_REJECT
-			effect_tooltip = { custom_effect_tooltip = POR_offer_refused_tt }
+			if = {
+				limit = { POR_angola_war_on = yes }
+				UNI = { country_event = { id = portugal.88 days = 1 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				effect_tooltip = { POR_support_unita_terms = yes }
+				newline = yes
+				custom_effect_tooltip = POR_realpolitik_unlock_agl_tt
+				newline = yes
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = { custom_effect_tooltip = POR_offer_refused_tt }
+			}
+			else = {
+				POR_support_unita_terms = yes
+				newline = yes
+				custom_effect_tooltip = POR_realpolitik_unlock_agl_tt
+			}
 		}
 
 		ai_will_do = {
@@ -9963,20 +9960,17 @@ focus_tree = {
 		prerequisite = { focus = POR_campaigns }
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = {
-			country_exists = AGL
-			296 = { is_owned_by = AGL }
-		}
+		available = { POR_angola_holds_cabinda = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_treaty_of_simulambuco"
-			set_temp_variable = { percent_change = 8 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = AGL.id }
-			change_influence_percentage = yes
-			AGL = {
-				add_opinion_modifier = { target = ROOT modifier = cultural_exchange }
-				reverse_add_opinion_modifier = { target = ROOT modifier = cultural_exchange }
+			set_temp_variable = { POR_influence_pct = 8 }
+			296 = {
+				owner = {
+					POR_influence_here = yes
+					add_opinion_modifier = { target = ROOT modifier = cultural_exchange }
+					reverse_add_opinion_modifier = { target = ROOT modifier = cultural_exchange }
+				}
 			}
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = POR_shadow_network }
@@ -10007,16 +10001,13 @@ focus_tree = {
 		prerequisite = { focus = POR_treaty_of_simulambuco }
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_INSURGENCY }
 
-		available = {
-			country_exists = AGL
-			296 = { is_owned_by = AGL }
-		}
+		available = { POR_angola_holds_cabinda = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_flec_of_cabinda"
 			296 = { add_resistance = 20 }
 			newline = yes
-			AGL = { add_opinion_modifier = { target = ROOT modifier = supported_opposition } }
+			296 = { owner = { add_opinion_modifier = { target = ROOT modifier = supported_opposition } } }
 			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = POR_shadow_network }
 			add_to_variable = { POR_shadow_operation_risk = -0.10 tooltip = operation_risk_tt }
@@ -10046,18 +10037,13 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_ANNEXATION }
 
 		available = {
-			country_exists = AGL
-			296 = { is_owned_by = AGL }
+			POR_angola_holds_cabinda = yes
 			NOT = { country_exists = CAB }
-			custom_trigger_tooltip = {
-				tooltip = POR_cabinda_ready_tt
-				AGL = { OR = { has_civil_war = yes has_war_with = UNI surrender_progress > 0.19 } }
-			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POR_republic_of_cabinda"
-			AGL = { release = CAB }
+			296 = { owner = { release = CAB } }
 			newline = yes
 			if = {
 				limit = { NOT = { is_in_array = { POR_network_target_array = CAB.id } } }

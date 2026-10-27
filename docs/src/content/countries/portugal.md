@@ -214,7 +214,8 @@ sends an officer on a 120-day tour of a war Portugal has a hand in. The Imperial
 opened by its focus, asks each Lusophone subject to join a federation. The Spanish Spoils are
 described below. Counter-Intelligence belongs to the other side: a country carrying the second
 or third tier of the Portuguese Presence spirit can spend 90 days purging Portugal's network
-there.
+there, but only while Portugal has completed Lusophone Realpolitik and holds more than 39 network strength
+in it. Portugal is told which country rolled up the network.
 
 Backing a side in a war that was already running, such as Angola's, pays out when that side wins:
 at least 25% influence there (more for an underdog), better trade relations, an infiltrated
@@ -258,8 +259,9 @@ country's operation list until Portugal has an intelligence network there.
 **The campaigns** are the list of places to use the instruments, eight chains. Each one opens
 with a diplomatic focus that gives influence and opinion, runs through one cooperation focus
 (Angola, Guinea-Bissau, São Tomé and Cape Verde) or two (the rest) that add influence and
-modifiers, and ends in a choice between a friendly road and a hostile one. None of them grant infiltration; that is done by hand through the operations. Angola is the war that is already running on day one and Portugal observes it
-from Estoril with a foot in both camps. Guinea-Bissau is the coup state, where every officer
+modifiers, and ends in a choice between a friendly road and a hostile one. None of them grant infiltration; that is done by hand through the operations. Angola starts in a civil war that usually ends within a few years, so its chain works with or without
+the war. Portugal observes from Estoril, helps carry out the settlement and bids for the
+reconstruction, oil and diamond contracts. Guinea-Bissau is the coup state, where every officer
 above major did his staff course in Lisbon and two tons of cocaine a week come ashore in
 the Bijagós. Mozambique is the dam Portugal still owned in 2000, the training mission and the
 Rovuma gas. East Timor only exists from 2002. Equatorial Guinea joins the club in 2014 and
@@ -273,10 +275,12 @@ Angola it is an offer the other side can refuse; a refusal uncompletes the focus
 road opens, and that country will not hear the offer again for a year. The hostile focus
 usually asks nobody. It costs exposure and a clear opinion penalty with the target, and it opens
 the Lusophone Realpolitik decisions and operations against that country. Angola is the
-exception, because the hostile road against one side is the friendly road to the other. Support
-UNITA (against Angola) and Recognise Luanda (against UNITA) are offers the backed side can refuse.
-Only if it accepts do they cost exposure and open the decisions against the other side. The
-other hostile roads are the
+exception. While its civil war lasts, the hostile road against one side is the friendly road to the other:
+Support UNITA (against Angola) and Recognise Luanda (against UNITA) are offers the backed side can refuse,
+and only if it accepts do they cost exposure and open the decisions against the other side. Once the war
+is over, Recognise Luanda is a standing treaty that Luanda can refuse, and Support UNITA funds UNITA as an
+opposition party without asking anyone: it costs exposure, stability in Luanda and opinion, and opens the
+decisions against Angola. The other hostile roads are the
 Night of the Generals, the Return of RENAMO, the Petitioners, Severo Moto's Hour, the Malongo
 Fields against Cabinda, the Question of Praia and the Sixteenth of July.
 

@@ -658,11 +658,51 @@ POR_ideology_allows_war_on_morocco = {
 	}
 }
 
+# The Angolan government is AGL, or UNI once UNITA has won the civil war.
+POR_angola_stands = {
+	OR = {
+		country_exists = AGL
+		country_exists = UNI
+	}
+}
+
+POR_angola_war_on = {
+	country_exists = AGL
+	country_exists = UNI
+	AGL = { has_war_with = UNI }
+}
+
+POR_angola_holds_cabinda = {
+	296 = { owner = { OR = { original_tag = AGL original_tag = UNI } } }
+}
+
+# Offers go to AGL during the war and to whichever government is left afterwards.
+POR_luanda_refused_us = {
+	any_other_country = {
+		OR = {
+			original_tag = AGL
+			AND = { original_tag = UNI NOT = { country_exists = AGL } }
+		}
+		has_country_flag = POR_refused_portugal
+	}
+}
+
+POR_unita_refused_us = {
+	POR_angola_war_on = yes
+	UNI = { has_country_flag = POR_refused_portugal }
+}
+
 # Target scope: open after POR's hostile focus, or the Iberian Union for the Hispanic world.
 POR_ops_target_open = {
 	OR = {
 		AND = { original_tag = AGL POR = { has_completed_focus = POR_support_unita } }
-		AND = { original_tag = UNI POR = { has_completed_focus = POR_recognise_luanda } }
+		AND = {
+			original_tag = UNI
+			OR = {
+				AND = { country_exists = AGL POR = { has_completed_focus = POR_recognise_luanda } }
+				AND = { NOT = { country_exists = AGL } POR = { has_completed_focus = POR_support_unita } }
+			}
+		}
 		AND = { original_tag = MOZ POR = { has_completed_focus = POR_return_of_renamo } }
 		AND = { original_tag = GUB POR = { has_completed_focus = POR_night_of_the_generals } }
 		AND = { original_tag = VER POR = { has_completed_focus = POR_question_of_praia } }

@@ -2793,26 +2793,67 @@ POR_sell_royal_navy_ships = {
 	}
 }
 
+# Target scope, ROOT = POR; reads POR_influence_pct from ROOT.
+POR_influence_here = {
+	ROOT = {
+		set_temp_variable = { percent_change = POR_influence_pct }
+		set_temp_variable = { tag_index = THIS.id }
+		set_temp_variable = { influence_target = PREV.id }
+		change_influence_percentage = yes
+	}
+}
+
+# While the war lasts this backs Luanda and pays out when it ends. Afterwards it is a treaty with whoever governs.
 POR_recognise_luanda_terms = {
-	set_temp_variable = { POR_commit_heat = 10 }
-	AGL = { POR_commit_here = yes }
-	UNI = { POR_mark_opposed = yes }
-	set_temp_variable = { percent_change = 8 }
-	set_temp_variable = { tag_index = ROOT.id }
-	set_temp_variable = { influence_target = AGL.id }
-	change_influence_percentage = yes
+	if = {
+		limit = { POR_angola_war_on = yes }
+		set_temp_variable = { POR_commit_heat = 10 }
+		AGL = { POR_commit_here = yes }
+		UNI = { POR_mark_opposed = yes }
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = AGL.id }
+		change_influence_percentage = yes
+	}
+	else = {
+		custom_effect_tooltip = POR_treaty_effect_tt
+		set_temp_variable = { POR_influence_pct = 10 }
+		set_temp_variable = { int_investment_change = 8 }
+		modify_international_investment_effect = yes
+		every_other_country = {
+			limit = { OR = { original_tag = AGL original_tag = UNI } }
+			set_country_flag = POR_treaty@ROOT
+			add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+			reverse_add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+			add_opinion_modifier = { target = ROOT modifier = POR_standing_treaty_trade }
+			POR_influence_here = yes
+		}
+	}
 	set_temp_variable = { treasury_change = -5 }
 	modify_treasury_effect = yes
 }
 
+# While the war lasts this backs UNITA and pays out if it wins. Afterwards it funds UNITA as the opposition.
 POR_support_unita_terms = {
-	set_temp_variable = { POR_commit_heat = 20 }
-	UNI = { POR_commit_here = yes }
-	AGL = { POR_mark_opposed = yes }
-	set_temp_variable = { percent_change = 10 }
-	set_temp_variable = { tag_index = ROOT.id }
-	set_temp_variable = { influence_target = UNI.id }
-	change_influence_percentage = yes
+	if = {
+		limit = { POR_angola_war_on = yes }
+		set_temp_variable = { POR_commit_heat = 20 }
+		UNI = { POR_commit_here = yes }
+		AGL = { POR_mark_opposed = yes }
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = ROOT.id }
+		set_temp_variable = { influence_target = UNI.id }
+		change_influence_percentage = yes
+	}
+	else = {
+		set_temp_variable = { POR_heat_add = 20 }
+		POR_add_exposure = yes
+		every_other_country = {
+			limit = { OR = { original_tag = AGL original_tag = UNI } }
+			add_opinion_modifier = { target = ROOT modifier = interfering_in_local_affairs }
+			add_stability = -0.03
+		}
+	}
 	set_temp_variable = { treasury_change = -5 }
 	modify_treasury_effect = yes
 }
