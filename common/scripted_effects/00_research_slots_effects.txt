@@ -29,18 +29,32 @@ research_slot_init_for_country = {
 }
 
 ## SCOPE: Country
-# Runs after the weekly GDP refresh instead of letting the engine poll the missions' activation
-activate_research_slot_loss_missions = {
+# Runs after the weekly GDP refresh; the missions are allowed = no, so only this starts or cancels them
+update_research_slot_loss_missions = {
 	if = {
-		limit = {
-			NOT = { has_active_mission = gdp_lose_slot }
-			check_variable = { gdp_total < GLOBAL.gdp_slot^research_slots_from_gdp }
+		limit = { has_active_mission = gdp_lose_slot }
+		if = {
+			limit = { check_variable = { gdp_total > GLOBAL.gdp_slot^research_slots_from_gdp } }
+			remove_mission = gdp_lose_slot
 		}
+	}
+	else_if = {
+		limit = { check_variable = { gdp_total < GLOBAL.gdp_slot^research_slots_from_gdp } }
 		activate_mission = gdp_lose_slot
 	}
+
 	if = {
+		limit = { has_active_mission = gdp_c_lose_slot }
+		if = {
+			limit = {
+				check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^research_slots_from_gdp_c }
+				check_variable = { var = GLOBAL.gdp_c_slot_civs^research_slots_from_gdp_c value = industrial_complex_total compare = less_than_or_equals }
+			}
+			remove_mission = gdp_c_lose_slot
+		}
+	}
+	else_if = {
 		limit = {
-			NOT = { has_active_mission = gdp_c_lose_slot }
 			OR = {
 				check_variable = { gdp_per_capita < GLOBAL.gdp_c_slot^research_slots_from_gdp_c }
 				check_variable = { industrial_complex_total < GLOBAL.gdp_c_slot_civs^research_slots_from_gdp_c }
