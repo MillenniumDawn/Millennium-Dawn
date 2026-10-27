@@ -71,6 +71,15 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
+					POR_crowns_candidate = yes
+					country_exists = POR
+					POR = { has_war_with = ROOT }
+				}
+				set_country_flag = { flag = POR_crowns_defeated value = 1 days = 180 }
+			}
+
+			if = {
+				limit = {
 					country_exists = POR
 					POR = { has_war_with = ROOT }
 					FROM = {
@@ -128,6 +137,45 @@ on_actions = {
 		}
 	}
 
+	# ROOT is the winner, FROM the annexed crown. The event follows a day later, once it is gone.
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = POR
+					ROOT = {
+						original_tag = POR
+						has_country_flag = POR_monarchy_restored
+					}
+					FROM = {
+						POR_crowns_candidate = yes
+						has_country_flag = POR_crowns_defeated
+					}
+				}
+				FROM = { POR = { country_event = { id = portugal.290 days = 1 } } }
+			}
+		}
+	}
+
+	# ROOT is the new puppet, FROM its overlord.
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = POR
+					POR_crowns_candidate = yes
+					has_country_flag = POR_crowns_defeated
+					FROM = {
+						original_tag = POR
+						has_country_flag = POR_monarchy_restored
+					}
+				}
+				clr_country_flag = POR_crowns_defeated
+				POR = { country_event = { id = portugal.291 days = 1 } }
+			}
+		}
+	}
+
 	on_weekly_POR = {
 		effect = {
 			if = {
@@ -155,6 +203,7 @@ on_actions = {
 			POR_update_overseas_doctrine = yes
 			POR_update_money_ideas = yes
 			POR_tangier_watch = yes
+			POR_update_league = yes
 			POR_peace_watch = yes
 
 			if = {

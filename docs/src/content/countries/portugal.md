@@ -363,7 +363,8 @@ Gibraltar, which London is likely to grant if Portugal kept the oldest alliance,
 British base and military access; ask Morocco for Tanger-Tetouan-Al Hoceima, which Rabat will refuse,
 giving Portugal a war goal; and ask Andorra to join. A week after taking the Moroccan region,
 Portugal can end that war with a white peace that keeps it, or refuse and fight on against a Morocco
-defending its own cores harder. The union's formal name follows the government (the Iberian Union,
+defending its own cores harder. If Portugal already holds the region without a core, for example
+after puppeting Morocco early, the Tangier Zone focus gives the core. The union's formal name follows the government (the Iberian Union,
 Socialist Union, Confederation, State or Emirate), and so does the proclamation focus.
 
 The European Federation, if it forms without Portugal: bilateral agreements and an associated
@@ -466,17 +467,16 @@ Malta. NATO only defends a member from an attacker outside the alliance, so a de
 Italy brings in the rest of NATO only once Portugal has left it. The focuses warn when that
 applies. Mare Nostrum cores the conquests.
 
-**The League of Crowns.** Once the monarchy is restored, Portugal can fund royalist movements in
-the United Kingdom, France, Italy, Germany, Austria, Greece, Romania, Bulgaria, Serbia, Hungary
-and Czechia. Funding raises the Monarchists' popularity by 2% every four months. A country led by
-a player is asked first and can refuse. When an AI country's Monarchists pass 20% and its
-stability is below 50%, Portugal can back a restoration. It succeeds 35% of the time: the
-Monarchists take power and suspend elections. In France this also opens France's own
-restoration of the kingdom. Otherwise the Monarchists lose popularity and the country holds
-Portugal responsible. Portugal can found the League of Crowns, a defensive alliance whose leader
-alone declares its wars. Portugal has to be in no alliance to found it, so it leaves NATO first.
-It can invite any monarchist-led country in no other alliance, so a NATO member has to leave NATO
-first too. Most AI countries that stop being democratic leave NATO on their own.
+**The League of Crowns.** Once the monarchy is restored, a Portuguese victory over the United
+Kingdom, France, Italy, Spain, Germany, Austria, Greece, Romania, Bulgaria, Serbia, Hungary,
+Czechia, Belgium, the Netherlands, Denmark, Norway, Sweden or Brazil can end in a choice. When
+Portugal annexes one of them in the peace deal, it can keep the land and carry a three-year
+stability, war support and political power penalty, release the country as a puppet, or release
+it as an independent monarchy and found the League of Crowns. When Portugal puppets one, it can
+keep the puppet or free it into the League. The League option needs Portugal to be in no
+alliance, or to lead the League already. It gives Portugal an industrial pact for three years and
+a League of Crowns bonus to stability, political power gain, war support and trade opinion that
+grows with each member, up to eight. Later victories add new members to the same League.
 
 ## Peace Treaties
 

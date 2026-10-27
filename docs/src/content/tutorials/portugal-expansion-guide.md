@@ -129,10 +129,11 @@ After any Gates of Iberia focus, the Crown of Aragon claims the old Aragonese Me
 
 Italy is in NATO. Fight it while Portugal is still a member and the war stays with Italy.
 
-Last, the League of Crowns. Fund royalist movements across Europe, back a restoration when a
-country is weak, and invite the new monarchies into a defensive league. Founding it means
-leaving NATO, so do it after your wars on NATO members are over. A country led by a player is
-only ever offered help, so you cannot overthrow a friend's republic.
+Last, the League of Crowns. Beat a European country such as France, Italy or the United
+Kingdom and annex or puppet it. Portugal is then offered the choice to keep the land, keep the
+puppet, or free the country as a restored monarchy and found the League. Founding it means
+leaving NATO, so do it after your wars on NATO members are over. Each new member makes the
+League's bonuses stronger.
 
 ## Ending the Wars
 

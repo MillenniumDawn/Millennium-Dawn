@@ -2227,7 +2227,10 @@ country_event = {
 	option = {
 		name = portugal.106.a
 		log = "[GetDateText]: [This.GetName]: portugal.106.a executed"
-		FROM = { transfer_state = 374 }
+		FROM = {
+			transfer_state = 374
+			374 = { add_core_of = PREV }
+		}
 		add_stability = -0.10
 		add_war_support = -0.05
 		add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
@@ -2317,6 +2320,7 @@ country_event = {
 		trigger = { 374 = { is_fully_controlled_by = ROOT } }
 		log = "[GetDateText]: [This.GetName]: portugal.108.a executed"
 		transfer_state = 374
+		374 = { add_core_of = ROOT }
 		if = {
 			limit = { has_war_with = MOR }
 			white_peace = MOR
@@ -2814,102 +2818,6 @@ country_event = {
 	}
 }
 
-# A player-led country is offered royalist funding
-country_event = {
-	id = portugal.135
-	title = portugal.135.t
-	desc = portugal.135.d
-	picture = GFX_monarchist_rally
-
-	is_triggered_only = yes
-
-	option = {
-		name = portugal.135.a
-		log = "[GetDateText]: [This.GetName]: portugal.135.a executed"
-		set_temp_variable = { party_index = 23 }
-		set_temp_variable = { party_popularity_increase = 0.03 }
-		set_temp_variable = { temp_outlook_increase = 0.03 }
-		change_relative_party_popularity = yes
-		add_opinion_modifier = { target = FROM modifier = POR_crown_patron }
-		ai_chance = { base = 0 }
-	}
-
-	option = {
-		name = portugal.135.b
-		log = "[GetDateText]: [This.GetName]: portugal.135.b executed"
-		ai_chance = { base = 100 }
-	}
-}
-
-# The restoration backed by Portugal succeeds
-country_event = {
-	id = portugal.136
-	hidden = yes
-
-	is_triggered_only = yes
-
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: portugal.136 fired"
-		POR_crown_takes_power = yes
-		add_stability = -0.05
-		add_opinion_modifier = { target = FROM modifier = POR_crown_patron }
-		news_event = { id = portugal_news.21 hours = 6 }
-	}
-}
-
-# Invitation to the League of Crowns
-country_event = {
-	id = portugal.137
-	title = portugal.137.t
-	desc = portugal.137.d
-	picture = GFX_proposition_of_the_monarch
-
-	is_triggered_only = yes
-
-	option = {
-		name = portugal.137.a
-		log = "[GetDateText]: [This.GetName]: portugal.137.a executed"
-		FROM = { add_to_faction = ROOT }
-		ai_chance = {
-			base = 60
-			modifier = {
-				factor = 2
-				has_opinion = { target = FROM value > 50 }
-			}
-			modifier = {
-				factor = 0.2
-				has_opinion = { target = FROM value < 0 }
-			}
-		}
-	}
-
-	option = {
-		name = portugal.137.b
-		log = "[GetDateText]: [This.GetName]: portugal.137.b executed"
-		FROM = { country_event = { id = portugal.140 days = 1 } }
-		ai_chance = { base = 40 }
-	}
-}
-
-# The restoration backed by Portugal fails
-country_event = {
-	id = portugal.138
-	hidden = yes
-
-	is_triggered_only = yes
-
-	immediate = {
-		log = "[GetDateText]: [This.GetName]: portugal.138 fired"
-		set_temp_variable = { party_index = 23 }
-		set_temp_variable = { party_popularity_increase = -0.05 }
-		set_temp_variable = { temp_outlook_increase = 0 }
-		change_relative_party_popularity = yes
-		add_stability = -0.03
-		add_opinion_modifier = { target = FROM modifier = supported_opposition }
-		news_event = { id = portugal_news.22 hours = 6 }
-	}
-}
-
 # Sardinia refuses Portuguese protection
 country_event = {
 	id = portugal.139
@@ -2945,45 +2853,79 @@ country_event = {
 	}
 }
 
-# An invitation to the League of Crowns is declined
+# A defeated crown is annexed
 country_event = {
-	id = portugal.140
-	title = portugal.140.t
-	desc = portugal.140.d
-	picture = GFX_treaty_rejected
+	id = portugal.290
+	title = portugal.290.t
+	desc = portugal.290.d
+	picture = GFX_proposition_of_the_monarch
 
 	is_triggered_only = yes
 
 	option = {
-		name = portugal.140.a
-		log = "[GetDateText]: [This.GetName]: portugal.140.a executed"
+		name = portugal.290.a
+		log = "[GetDateText]: [This.GetName]: portugal.290.a executed"
+		add_timed_idea = { idea = POR_crowns_overreach days = 1095 }
+		ai_chance = {
+			base = 25
+			modifier = {
+				factor = 0
+				POR_can_host_league = yes
+			}
+		}
+	}
+
+	option = {
+		name = portugal.290.b
+		log = "[GetDateText]: [This.GetName]: portugal.290.b executed"
+		release = FROM
+		FROM = { POR_puppet_under_root = yes }
+		ai_chance = { base = 25 }
+	}
+
+	option = {
+		name = portugal.290.c
+		trigger = { POR_can_host_league = yes }
+		log = "[GetDateText]: [This.GetName]: portugal.290.c executed"
+		release = FROM
+		POR_found_or_join_league = yes
+		custom_effect_tooltip = POR_league_buff_tt
+		ai_chance = { base = 50 }
 	}
 }
 
-# A European monarchy is restored
-news_event = {
-	id = portugal_news.21
-	title = portugal_news.21.t
-	desc = portugal_news.21.d
-	picture = GFX_news_return_of_the_king
+# A defeated crown is made a puppet
+country_event = {
+	id = portugal.291
+	title = portugal.291.t
+	desc = portugal.291.d
+	picture = GFX_proposition_of_the_monarch
 
-	major = yes
 	is_triggered_only = yes
 
-	option = { name = portugal_news.21.a }
-}
+	trigger = { FROM = { is_subject_of = ROOT } }
 
-# A royalist plot fails
-news_event = {
-	id = portugal_news.22
-	title = portugal_news.22.t
-	desc = portugal_news.22.d
-	picture = GFX_monarchist_sentiment
+	option = {
+		name = portugal.291.a
+		log = "[GetDateText]: [This.GetName]: portugal.291.a executed"
+		add_political_power = 25
+		ai_chance = {
+			base = 40
+			modifier = {
+				factor = 0
+				POR_can_host_league = yes
+			}
+		}
+	}
 
-	major = yes
-	is_triggered_only = yes
-
-	option = { name = portugal_news.22.a }
+	option = {
+		name = portugal.291.b
+		trigger = { POR_can_host_league = yes }
+		log = "[GetDateText]: [This.GetName]: portugal.291.b executed"
+		POR_found_or_join_league = yes
+		custom_effect_tooltip = POR_league_buff_tt
+		ai_chance = { base = 60 }
+	}
 }
 
 # SPR capitulated to Portugal's side
