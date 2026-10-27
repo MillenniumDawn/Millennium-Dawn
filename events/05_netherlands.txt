@@ -12504,6 +12504,226 @@ country_event = { # The Marengo Trial Reaches a Verdict
 		ai_chance = { base = 1 }
 	}
 }
+
+country_event = { # Bolle Jos Surfaces in Freetown
+	id = HOL_mocro.9
+	title = HOL_mocro.9.t
+	desc = HOL_mocro.9.d
+	picture = GFX_harbor
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		has_country_flag = HOL_mocro_maffia_active
+		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
+		check_variable = { strength_of_cartels > 49 }
+		NOT = { has_global_flag = GLOBAL_bolle_jos_resolved }
+		country_exists = SIE
+		NOT = { has_war_with = SIE }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event HOL_mocro.9"
+		set_global_flag = GLOBAL_bolle_jos_at_large
+		SIE = { country_event = { id = HOL_mocro.10 days = 2 } }
+	}
+
+	option = { # He cannot hide forever
+		name = HOL_mocro.9.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.9.a executed"
+		custom_effect_tooltip = HOL_bolle_jos_decisions_unlocked_tt
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # A Dutch Investor in Freetown
+	id = HOL_mocro.10
+	title = HOL_mocro.10.t
+	desc = HOL_mocro.10.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+
+	option = { # His money is welcome here
+		name = HOL_mocro.10.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.10.a executed"
+		set_country_flag = SIE_sheltering_bolle_jos
+		add_ideas = SIE_bolle_jos_patronage
+		increase_corruption = yes
+		HOL = {
+			set_temp_variable = { cart_influence_change = 2 }
+			modify_cartel_variables_effect = yes
+		}
+		ai_chance = { base = 95 }
+	}
+
+	option = { # Hand him over to the Dutch
+		name = HOL_mocro.10.b
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.10.b executed"
+		add_political_power = -25
+		add_opinion_modifier = { target = HOL modifier = medium_increase }
+		HOL = { country_event = { id = HOL_mocro.12 days = 1 } }
+		ai_chance = { base = 5 }
+	}
+}
+
+country_event = { # Dutch Extradition Request
+	id = HOL_mocro.11
+	title = HOL_mocro.11.t
+	desc = HOL_mocro.11.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+
+	option = { # Extradite him
+		name = HOL_mocro.11.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.11.a executed"
+		HOL = { country_event = { id = HOL_mocro.12 days = 1 } }
+		ai_chance = {
+			base = 20
+			modifier = {
+				factor = 2
+				check_variable = { HOL_bolle_jos_pressure > 0 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { HOL_bolle_jos_pressure > 1 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { HOL_bolle_jos_pressure > 2 }
+			}
+			modifier = {
+				factor = 2
+				has_opinion = { target = HOL value > 25 }
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_idea = corruption_level_08
+					has_idea = corruption_level_09
+					has_idea = corruption_level_10
+				}
+			}
+		}
+	}
+
+	option = { # He is under our protection
+		name = HOL_mocro.11.b
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.11.b executed"
+		add_political_power = 25
+		HOL = { country_event = { id = HOL_mocro.13 days = 1 } }
+		ai_chance = { base = 80 }
+	}
+}
+
+country_event = { # Bolle Jos Extradited
+	id = HOL_mocro.12
+	title = HOL_mocro.12.t
+	desc = HOL_mocro.12.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	option = { # Justice catches up with him
+		name = HOL_mocro.12.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.12.a executed"
+		HOL_bolle_jos_captured_effect = yes
+		SIE = { reverse_add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Freetown Refuses
+	id = HOL_mocro.13
+	title = HOL_mocro.13.t
+	desc = HOL_mocro.13.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = HOL_bolle_jos_extradition_refused
+	}
+
+	option = { # Keep the channel open
+		name = HOL_mocro.13.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.13.a executed"
+		add_political_power = -25
+		SIE = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
+		ai_chance = { base = 1 }
+	}
+
+	option = { # Then we raise the stakes
+		name = HOL_mocro.13.b
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.13.b executed"
+		add_war_support = 0.02
+		SIE = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		custom_effect_tooltip = HOL_bolle_jos_pressure_unlocked_tt
+		ai_chance = { base = 2 }
+	}
+}
+
+country_event = { # Commandos Seize Bolle Jos
+	id = HOL_mocro.14
+	title = HOL_mocro.14.t
+	desc = HOL_mocro.14.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+
+	immediate = {
+		SIE = { country_event = { id = HOL_mocro.16 days = 1 } }
+	}
+
+	option = { # Bring him home
+		name = HOL_mocro.14.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.14.a executed"
+		HOL_bolle_jos_captured_effect = yes
+		add_war_support = 0.03
+		add_named_threat = { threat = 1 name = HOL_bolle_jos_raid_threat }
+		SIE = { add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty } }
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Raid in Freetown Fails
+	id = HOL_mocro.15
+	title = HOL_mocro.15.t
+	desc = HOL_mocro.15.d
+	picture = GFX_special_forces
+	is_triggered_only = yes
+
+	immediate = {
+		SIE = { country_event = { id = HOL_mocro.16 days = 1 } }
+	}
+
+	option = { # A costly failure
+		name = HOL_mocro.15.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.15.a executed"
+		add_stability = -0.03
+		add_war_support = -0.05
+		SIE = {
+			clr_country_flag = bolle_jos_located_by@ROOT
+			add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
+		}
+		set_country_flag = { flag = HOL_bolle_jos_raid_cooldown days = 180 value = 1 }
+		set_temp_variable = { cart_influence_change = 3 }
+		modify_cartel_variables_effect = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Dutch Forces Violate Our Sovereignty
+	id = HOL_mocro.16
+	title = HOL_mocro.16.t
+	desc = HOL_mocro.16.d
+	picture = GFX_african_demonstration
+	is_triggered_only = yes
+
+	option = { # We will remember this
+		name = HOL_mocro.16.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.16.a executed"
+		add_stability = -0.03
+		ai_chance = { base = 1 }
+	}
+}
 country_event = {
 	id = HOL_politics.82
 	title = HOL_politics.82.t
