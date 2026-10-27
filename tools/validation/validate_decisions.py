@@ -13,8 +13,19 @@ import re
 import sys
 from collections import Counter
 from functools import partial
+from itertools import chain
 from pathlib import Path
-from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
+from typing import (
+    AbstractSet,
+    Any,
+    Dict,
+    Iterator,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -26,6 +37,8 @@ from linting.check_common_mistakes import (
     _war_at_scope,
 )
 from shared_utils import (
+    ALWAYS_NO_RE,
+    IS_AI_NO_RE,
     ai_only_decision_categories,
     atomic_write_text,
     blank_quoted_strings,
@@ -35,7 +48,10 @@ from shared_utils import (
     flat_block_text,
     has_flat_is_ai,
     iter_flat_offsets,
+    iter_statement_ops,
+    iter_statements,
     line_of,
+    read_script,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
@@ -616,6 +632,18 @@ _CATEGORY_BLOCK_RE = re.compile(
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+# The scripted effects that move money; a decision calls them with its own amount.
+_PAYMENT_EFFECTS = frozenset(
+    {
+        "modify_treasury_effect",
+        "modify_debt_effect",
+        "modify_international_investment_effect",
+        "modify_corporate_tax_rate_effect",
+        "modify_population_tax_rate_effect",
+    }
+)
+# `treasury > 1.4` for a 1.5 charge is how the mod writes `>= 1.5`.
+_GATE_SLACK = 0.1
 # What a custom_cost_trigger can check, by the cost kind that pays for it.
 _CUSTOM_COST_CLAIMS = {
     "treasury": re.compile(r"\btreasury\s*>"),
@@ -626,6 +654,19 @@ _CUSTOM_COST_CLAIMS = {
 }
 _TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
+_CATEGORY_AI_GATES = ("visible", "available", "allowed")
+# Wrappers that only add or hide a tooltip: what sits inside still has to hold.
+_SEE_THROUGH_TRIGGERS = frozenset(
+    {"custom_trigger_tooltip", "custom_override_tooltip", "hidden_trigger"}
+)
+_NUMBER_RE = re.compile(r"-?\d*\.?\d+")
+_TREASURY_CHARGE_RE = re.compile(r"treasury_change\s*=\s*-(\d*\.?\d+)")
+_VARIABLE_WRITE_RE = re.compile(
+    r"\b(?:set|add_to|subtract_from|multiply|divide|modulo|round|clamp)_(temp_)?variable"
+    r"\s*=\s*\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.]*)"
+)
+_CHECK_VARIABLE_RE = re.compile(r"\bcheck_variable\s*=\s*\{([^{}]*)\}")
+_IDENTIFIER_RE = re.compile(r"[A-Za-z_]\w*")
 
 # FROM-usage detection (hoisted from validate_targets_no_trigger /
 # validate_from_without_targets).
@@ -1295,8 +1336,9 @@ class DecisionFactory:
         self.ai_hint_pp_cost = extract_value_single_line(dec, "ai_hint_pp_cost")
         self.cost = extract_value_single_line(dec, "cost")
         self.has_tooltip = "tooltip =" in dec
-        self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", dec))
-        self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", dec))
+        rolls = _strip_effect_tooltip_blocks(dec) if "random" in dec else ""
+        self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", rolls))
+        self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", rolls))
         self.fire_only_once = "fire_only_once = yes" in dec
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
@@ -1571,6 +1613,109 @@ def _remove_available_block_for_token(content: str, token: str):
     return content[:body_start] + new_decision_body + content[dec_end:]
 
 
+def _hides_from_ai(gate: str) -> bool:
+    """True when `is_ai = no` or `always = no` always holds in a trigger block.
+
+    That is at depth 0 or inside a tooltip wrapper, as in
+    `hidden_trigger = { always = no }`. A tag scope, `OR`, `NOT`, `AND` or `if`
+    makes the match conditional.
+    """
+    if any(first_flat_match(gate, pattern) for pattern in (IS_AI_NO_RE, ALWAYS_NO_RE)):
+        return True
+    return any(
+        block is not None and key in _SEE_THROUGH_TRIGGERS and _hides_from_ai(block)
+        for key, _scalar, block in iter_statements(flat_block_text(gate))
+    )
+
+
+def _category_hides_from_ai(category: str) -> bool:
+    """A category block gated by its own `visible`, `available` or `allowed`."""
+    body, _end = extract_block_from_text(category, 0)
+    return any(
+        _hides_from_ai(direct_child_block(body, field)) for field in _CATEGORY_AI_GATES
+    )
+
+
+def _unpaid_custom_costs(
+    d: DecisionFactory, effects: Dict[str, str], stored: Dict[str, int]
+) -> Tuple[Set[str], Set[str]]:
+    """Resources a custom_cost_trigger checks that complete_effect never charges.
+
+    Also returns the ones remove_effect charges instead.
+    """
+    trigger = blank_quoted_strings(d.custom_cost_trigger)
+    claims = {
+        kind for kind, claim in _CUSTOM_COST_CLAIMS.items() if claim.search(trigger)
+    }
+    if not claims:
+        return set(), set()
+    missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
+    return missing, missing & effect_costs(d.remove_effect[1:-1], effects, stored)
+
+
+def _treasury_floors(
+    trigger: str, called_floors: Mapping[str, float]
+) -> Iterator[float]:
+    """Literal treasury minimums a trigger block always requires.
+
+    Looks through tooltip wrappers. NOT, OR, `if` and scope blocks are skipped,
+    since what sits in them need not hold. `called_floors` maps a scripted
+    trigger to the minimum its own body requires.
+    """
+    for key, scalar, block in iter_statements(flat_block_text(trigger)):
+        if block is None:
+            if scalar == "yes" and key in called_floors:
+                yield called_floors[key]
+        elif key in _SEE_THROUGH_TRIGGERS:
+            yield from _treasury_floors(block, called_floors)
+        elif key == "check_variable":
+            for name, operator, value, _nested in iter_statement_ops(block):
+                if (
+                    name == "treasury"
+                    and operator in (">", ">=")
+                    and value is not None
+                    and _NUMBER_RE.fullmatch(value)
+                ):
+                    yield float(value)
+
+
+def _literal_treasury_charge(effect: str) -> float:
+    """Treasury an effect block takes at its own level, from literal amounts.
+
+    Reads `set_temp_variable = { treasury_change = -M }` and counts it once per
+    `modify_treasury_effect = yes` that follows. Any other write to
+    `treasury_change` makes the amount unknown until the next literal.
+    """
+    charge = pending = 0.0
+    for key, scalar, block in iter_statements(flat_block_text(effect)):
+        if key == "modify_treasury_effect" and scalar == "yes":
+            charge += pending
+        elif key.endswith("_temp_variable") and block and "treasury_change" in block:
+            literal = _TREASURY_CHARGE_RE.fullmatch(block.strip())
+            pending = (
+                float(literal[1]) if literal and key == "set_temp_variable" else 0.0
+            )
+    return charge
+
+
+def _variables_written(text: str) -> Tuple[Set[str], Set[str]]:
+    """(temp, persistent) variable names the variable effects in `text` write."""
+    temp: Set[str] = set()
+    persistent: Set[str] = set()
+    for match in _VARIABLE_WRITE_RE.finditer(text):
+        (temp if match[1] else persistent).add(match[2])
+    return temp, persistent
+
+
+def _variables_read(trigger: str) -> Set[str]:
+    """Names mentioned inside the trigger's `check_variable` comparisons."""
+    return {
+        name
+        for match in _CHECK_VARIABLE_RE.finditer(blank_quoted_strings(trigger))
+        for name in _IDENTIFIER_RE.findall(match[1])
+    }
+
+
 class Validator(BaseValidator):
     TITLE = "DECISION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1595,6 +1740,7 @@ class Validator(BaseValidator):
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
         self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
+        self._scripted_triggers: Optional[Dict[str, str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
@@ -1603,6 +1749,19 @@ class Validator(BaseValidator):
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
         return self._cost_lookups
+
+    def _get_scripted_triggers(self) -> Dict[str, str]:
+        """Body of every `common/scripted_triggers` definition, read once per run."""
+        if self._scripted_triggers is None:
+            bodies: Dict[str, str] = {}
+            for path in self._collect_files(
+                ["common/scripted_triggers/**/*.txt"], ignore_staged=True
+            ):
+                for name, _scalar, body in iter_statements(read_script(path)):
+                    if body is not None:
+                        bodies[name] = body
+            self._scripted_triggers = bodies
+        return self._scripted_triggers
 
     def _get_ai_only_categories(self) -> Dict[str, str]:
         """AI-only decision category names, mapped to their defining filename."""
@@ -1814,8 +1973,17 @@ class Validator(BaseValidator):
         )
 
     def _ai_reachable(self, factories: List[DecisionFactory]) -> List[DecisionFactory]:
-        """Decisions with no `is_ai = no` or `always = no` on them or their category."""
-        categories = parse_decision_categories(self.mod_path)
+        """Decisions the AI can see: no unconditional `is_ai = no` or `always = no`.
+
+        Only a match at depth 0 of the decision's `visible` or `available`, or of
+        its category's gate blocks, hides it. One inside a tag scope or an `if`
+        is about another country, so the AI still takes the decision.
+        """
+        hidden_categories = {
+            cat
+            for cat, text in parse_decision_categories(self.mod_path).items()
+            if _category_hides_from_ai(text)
+        }
         # Reverse index: decision token -> parent category. A scan per decision
         # over the category map added ~1.5s on this mod.
         decision_to_category: Dict[str, str] = {}
@@ -1826,13 +1994,10 @@ class Validator(BaseValidator):
         return [
             d
             for d in factories
-            if not any(
-                "is_ai = no" in gate or "always = no" in gate
-                for gate in (
-                    d.available,
-                    d.visible,
-                    categories.get(decision_to_category.get(d.token, ""), ""),
-                )
+            if not (
+                _hides_from_ai(d.visible)
+                or _hides_from_ai(d.available)
+                or decision_to_category.get(d.token) in hidden_categories
             )
         ]
 
@@ -2815,34 +2980,51 @@ class Validator(BaseValidator):
         )
 
     def validate_log_not_first(self):
-        """Flag effect blocks whose log is not the block's first statement.
+        """Flag effect blocks whose log is late, and blocks that log twice.
 
-        The log goes at the top so the game log reads in firing order. Only a
-        log at the block's own level counts: one nested inside an `if` /
-        `hidden_effect` records which branch ran and belongs where it sits.
+        The log goes at the top so the game log reads in firing order, and one
+        log is enough. Only a log at the block's own level counts: one nested
+        inside an `if` / `hidden_effect` records which branch ran and belongs
+        where it sits.
         """
-        self._log_section("Checking decision effect blocks for a log placed late...")
+        self._log_section(
+            "Checking decision effect blocks for a late or repeated log..."
+        )
 
-        results = []
+        late = []
+        repeated = []
         for dec in parse_all_decision_factories(self.mod_path):
             for block_name in EFFECT_BLOCKS:
                 block = getattr(dec, block_name)
                 if not block:
                     continue
                 statements = _block_level_statements(block)
+                logs = statements.count("log")
+                if logs > 1:
+                    repeated.append(
+                        f"{dec.token} - {dec.source_basename}: {block_name} has "
+                        f"{logs} log lines, keep one at the top"
+                    )
                 if "log" not in statements or statements[0] == "log":
                     continue
-                results.append(
+                late.append(
                     f"{dec.token} - {dec.source_basename}: {block_name} logs "
                     f"after {statements[0]}, move the log to the top of the block"
                 )
 
         self._report(
-            results,
+            late,
             "✓ Every decision effect block logs first",
             "Decision effect blocks whose log is not the first statement:",
             Severity.WARNING,
             category="decision-log-not-first",
+        )
+        self._report(
+            repeated,
+            "✓ Every decision effect block logs once",
+            "Decision effect blocks with more than one log line:",
+            Severity.WARNING,
+            category="decision-duplicate-log",
         )
 
     def validate_visible_in_missions(self):
@@ -3146,15 +3328,9 @@ class Validator(BaseValidator):
                 continue
             if d.mission_subtype and not d.selectable_mission:
                 continue
-            claims = {
-                kind
-                for kind, claim in _CUSTOM_COST_CLAIMS.items()
-                if claim.search(blank_quoted_strings(d.custom_cost_trigger))
-            }
-            missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
+            missing, late = _unpaid_custom_costs(d, effects, stored)
             if not missing:
                 continue
-            late = missing & effect_costs(d.remove_effect[1:-1], effects, stored)
             parts = []
             if late:
                 parts.append(
@@ -3179,6 +3355,156 @@ class Validator(BaseValidator):
             " complete_effect):",
             severity=Severity.WARNING,
             category="decision-custom-cost-not-charged",
+        )
+
+    def validate_money_charged_after_entry(self):
+        """Flag decisions whose `remove_effect` charges money.
+
+        The country may no longer have the money when the decision ends, and
+        nothing gated it. Treasury, debt, investment and tax rate follow
+        `effect_costs`, so a payout is not a finding. Only charges the decision
+        writes itself count, through the `modify_*` payment effects. A scripted
+        effect that pays for a building on delivery is intended and is not
+        followed. A treasury custom cost that `validate_custom_cost_charged`
+        already reports as late is left to it. Missions are skipped: their
+        `remove_effect` is a timeout outcome.
+        """
+        self._log_section("Checking decisions for money charged after entry...")
+
+        effects, stored = self._get_cost_lookups()
+        payments = {
+            name: body for name, body in effects.items() if name in _PAYMENT_EFFECTS
+        }
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if d.mission_subtype or not d.remove_effect:
+                continue
+            late = effect_costs(d.remove_effect[1:-1], payments, stored) & _MONEY_COSTS
+            late -= _unpaid_custom_costs(d, effects, stored)[1]
+            if not late:
+                continue
+            results.append(
+                (
+                    f"{d.token} - remove_effect charges {', '.join(sorted(late))},"
+                    " charge it in complete_effect",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No decision charges money after entry",
+            "Decisions that charge money in remove_effect (charge it in"
+            " complete_effect):",
+            severity=Severity.WARNING,
+            category="decision-money-charged-late",
+        )
+
+    def validate_treasury_gate_below_charge(self):
+        """Flag a treasury minimum that sits below the charge it guards.
+
+        The highest literal `treasury > N` in `available` and
+        `custom_cost_trigger`, scripted triggers resolved from their bodies, must
+        reach what `complete_effect` takes with a literal `treasury_change`.
+        Otherwise the button lights up for a country that ends below zero. A
+        gate within 0.1 of the charge is the `>= charge` idiom and passes.
+        Non-literal charges and gates are skipped, and so is a gate inside `NOT`,
+        `OR`, an `if` or a scope. Plain missions are skipped.
+        """
+        self._log_section("Checking treasury gates against the charge they guard...")
+
+        triggers = self._get_scripted_triggers()
+        called_floors = {
+            name: floor
+            for name, body in triggers.items()
+            if (floor := max(_treasury_floors(body, {}), default=None)) is not None
+        }
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            charge = _literal_treasury_charge(d.complete_effect)
+            if not charge:
+                continue
+            gate = max(
+                chain(
+                    _treasury_floors(d.available, called_floors),
+                    _treasury_floors(d.custom_cost_trigger, called_floors),
+                ),
+                default=None,
+            )
+            if gate is None or round(charge - gate, 6) <= _GATE_SLACK:
+                continue
+            results.append(
+                (
+                    f"{d.token} - treasury gate {gate:g} is below the {charge:g}"
+                    " it charges in complete_effect",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No treasury gate sits below its charge",
+            "Decisions whose treasury gate is lower than their charge (raise the"
+            " gate to the charge):",
+            severity=Severity.WARNING,
+            category="decision-treasury-gate-below-charge",
+        )
+
+    def validate_trigger_reads_temp_variable(self):
+        """Flag a trigger that reads a temp variable only the effects set.
+
+        A temp variable lives for one effect run, so `custom_cost_trigger`,
+        `available` and `visible` always read 0 from it. Only names the decision
+        writes with `*_temp_variable` effects and never with a persistent one
+        count. A name the trigger sets itself, or that any scripted trigger
+        sets, is left alone. Plain missions are skipped.
+        """
+        self._log_section("Checking triggers that read a temp variable...")
+
+        trigger_written: Set[str] = set()
+        for body in self._get_scripted_triggers().values():
+            trigger_written |= _variables_written(body)[0]
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            temp_only: Set[str] = set()
+            for block in EFFECT_BLOCKS:
+                temp_only |= _variables_written(getattr(d, block))[0]
+            temp_only -= _variables_written(d.raw)[1] | trigger_written
+            if not temp_only:
+                continue
+            for name, trigger in (
+                ("custom_cost_trigger", d.custom_cost_trigger),
+                ("available", d.available),
+                ("visible", d.visible),
+            ):
+                read = (temp_only - _variables_written(trigger)[0]) & _variables_read(
+                    trigger
+                )
+                if read:
+                    results.append(
+                        (
+                            f"{d.token} - {name} reads {', '.join(sorted(read))}, a temp"
+                            " variable only the effects set, so it is always 0 here",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ No trigger reads a temp variable set only by the effects",
+            "Decisions whose trigger reads a temp variable that only the effects set:",
+            severity=Severity.WARNING,
+            category="decision-trigger-reads-temp-variable",
         )
 
     def validate_state_target_with_targets(self):
@@ -3604,6 +3930,9 @@ class Validator(BaseValidator):
         self.validate_custom_cost_ai_hint()
         self.validate_ai_will_do_ignores_cost()
         self.validate_custom_cost_charged()
+        self.validate_money_charged_after_entry()
+        self.validate_treasury_gate_below_charge()
+        self.validate_trigger_reads_temp_variable()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
