@@ -41,6 +41,7 @@ def _selected(path):
 # are stages:[manual] in the config and intentionally absent here.
 _GOLDEN = {
     "common/national_focus/france.txt": {
+        "validate_agency_upgrades",
         "validate_style",
         "validate_ideas",
         "validate_events",
@@ -53,6 +54,7 @@ _GOLDEN = {
         "validate_events",
     },
     "events/Syria.txt": {
+        "validate_agency_upgrades",
         "validate_style",
         "validate_ideas",
         "validate_events",
@@ -60,6 +62,7 @@ _GOLDEN = {
         "validate_characters",
     },
     "common/decisions/Sudan.txt": {
+        "validate_agency_upgrades",
         "validate_style",
         "validate_ideas",
         "validate_events",
@@ -94,6 +97,7 @@ _GOLDEN = {
         "validate_events",
     },
     "common/scripted_effects/00_x.txt": {
+        "validate_agency_upgrades",
         "validate_style",
         "validate_oob_units",
         "validate_ideas",
@@ -160,6 +164,7 @@ _GOLDEN = {
         "validate_events",
     },
     "history/countries/x.txt": {
+        "validate_agency_upgrades",
         "validate_style",
         "validate_ideas",
         "validate_oob_units",
@@ -190,8 +195,11 @@ def test_style_runs_on_normal_txt():
     assert "validate_style" in _selected("common/national_focus/france.txt")
 
 
-def test_interface_sprite_changes_run_mio_validation():
-    assert _selected("interface/mio_icons.gfx") == {"validate_mios"}
+def test_interface_sprite_changes_run_reference_validation():
+    assert _selected("interface/mio_icons.gfx") == {
+        "validate_agency_upgrades",
+        "validate_mios",
+    }
 
 
 def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
@@ -213,12 +221,18 @@ def test_dispatcher_keeps_gfx_through_main_filter(tmp_path, monkeypatch):
     assert mio_calls == ["interface/mio_icons.gfx"]
 
 
-def test_agency_upgrades_exact_file_match():
+def test_agency_upgrades_routes_definitions_and_call_sources():
     spec = _BY_SCRIPT["validate_agency_upgrades"]
-    assert spec.matches(["common/on_actions/MD_auto_agency_on_actions.txt"])
     assert spec.matches(["common/intelligence_agency_upgrades/x.txt"])
-    # An unrelated on_actions file must NOT trigger it.
+    assert spec.matches(["common/national_focus/x.txt"])
+    assert spec.matches(["common/decisions/x.txt"])
+    assert spec.matches(["common/factions/goals/x.txt"])
+    assert spec.matches(["common/scripted_effects/x.txt"])
+    assert spec.matches(["events/x.txt"])
+    assert spec.matches(["history/countries/x.txt"])
+    assert spec.matches(["interface/x.gfx"])
     assert not spec.matches(["common/on_actions/00_on_actions.txt"])
+    assert not spec.matches(["localisation/english/x_l_english.yml"])
 
 
 def test_ai_equipment_is_warning_only():

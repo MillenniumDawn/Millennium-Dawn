@@ -40,12 +40,7 @@ def _categories(validator):
 
 def test_agency_helpers_cover_calls_and_unreadable_inputs(tmp_path):
     assert agency._read(tmp_path / "missing.txt") == ""
-    assert agency._line_of("a\nb\n", 2) == 2
-    assert agency.Validator._short_token("MD_auto_agency_12_upgrade_x") == "upgrade_x"
-    assert (
-        agency.Validator._short_token("MD_auto_agency_12_upgrade_x_name") == "upgrade_x"
-    )
-    assert agency.Validator._short_token("literal") == "literal"
+    assert agency.line_of("a\nb\n", 2) == 2
 
     text = """# create_intelligence_agency = { icon = GFX_ignored }
 create_intelligence_agency = {
@@ -65,57 +60,30 @@ upgrade_intelligence_agency = upgrade_other
     assert missing == ([], [])
 
 
-def test_agency_full_run_reports_every_integration_group(tmp_path):
+def test_agency_full_run_reports_definition_picture_and_call_issues(tmp_path):
     _write(
         tmp_path,
         "common/intelligence_agency_upgrades/upgrades.txt",
         """\tupgrade_good = {
-\t\tlevel = { }
-\t\tlevel = { }
+\t\tpicture = GFX_good
 \t}
 \tupgrade_no_picture = {
-\t\tlevel = { }
+\t}
+\tupgrade_missing_picture = {
+\t\tpicture = GFX_missing
 \t}
 """,
     )
     _write(
         tmp_path,
-        agency.ON_ACTIONS_FILE,
-        """global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_good
-global.agency_names^0 = token:MD_auto_agency_0_wrong_name
-global.agency_gfx^0 = token:MD_auto_agency_0_wrong_gfx
-global.agency_max_upgrades^0 = 1
-global.agency_upgrades^1 = token:MD_auto_agency_1_upgrade_unknown
-global.agency_gfx^1 = token:MD_auto_agency_1_upgrade_unknown_gfx
-global.agency_names^2 = token:MD_auto_agency_2_upgrade_unknown_name
-resize_array = { array = global.agency_upgrades value = 0 size = 3 }
-""",
+        "common/intelligence_agency_upgrades/duplicate.txt",
+        "\tupgrade_good = {\n\t\tpicture = GFX_good\n\t}\n",
     )
-    _write(
-        tmp_path,
-        agency.LOC_FILE,
-        'MD_auto_agency_0_upgrade_good: "Good"\n'
-        'MD_auto_agency_0_upgrade_good_gfx: "GFX_other"\n',
-    )
-    _write(
-        tmp_path,
-        "interface/agency.gfx",
-        'spriteType = { name = "GFX_good" }\n',
-    )
-    _write(
-        tmp_path,
-        agency.SCRIPTED_GUI_FILE,
-        """scripted_gui = {
-\tcheck = {
-\t\thas_done_agency_upgrade = upgrade_unknown
-\t}
-}
-""",
-    )
+    _write(tmp_path, "interface/agency.gfx", 'spriteType = { name = "GFX_good" }\n')
     _write(
         tmp_path,
         "events/calls.txt",
-        """create_intelligence_agency = { icon = GFX_missing }
+        """create_intelligence_agency = { icon = GFX_missing_logo }
 upgrade_intelligence_agency = upgrade_unknown
 """,
     )
@@ -123,48 +91,42 @@ upgrade_intelligence_agency = upgrade_unknown
     validator = _validator(agency.Validator, tmp_path)
     validator.run_all_validations()
     assert _categories(validator) == {
-        "agency-upgrades-registry",
-        "agency-upgrades-max-levels",
-        "agency-upgrades-loc-gfx",
-        "agency-upgrades-array-size",
-        "agency-upgrades-prereqs",
+        "agency-upgrades-duplicates",
+        "agency-upgrades-pictures",
         "agency-upgrades-calls",
     }
-    assert any("upgrade_no_picture" in issue.message for issue in validator._issues)
-    assert any("index ^1 missing" in issue.message for issue in validator._issues)
+    messages = [issue.message for issue in validator._issues]
+    assert any(
+        "upgrade_good" in message and "more than once" in message
+        for message in messages
+    )
+    assert any("upgrade_no_picture" in message for message in messages)
+    assert any("GFX_missing" in message for message in messages)
+    assert any("GFX_missing_logo" in message for message in messages)
+    assert any("upgrade_unknown" in message for message in messages)
 
 
 def test_agency_success_and_staged_empty_boundaries(tmp_path, monkeypatch):
     _write(
         tmp_path,
         "common/intelligence_agency_upgrades/upgrades.txt",
-        "\tupgrade_good = {\n\t\tpicture = GFX_good\n\t\tlevel = { }\n\t}\n",
+        "\tupgrade_good = {\n\t\tpicture = GFX_good\n\t}\n",
     )
     _write(
         tmp_path,
-        agency.ON_ACTIONS_FILE,
-        "global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_good\n"
-        "global.agency_names^0 = token:MD_auto_agency_0_upgrade_good_name\n"
-        "global.agency_gfx^0 = token:MD_auto_agency_0_upgrade_good_gfx\n"
-        "resize_array = { array = global.agency_upgrades value = 0 size = 1 }\n",
+        "interface/agency.gfx",
+        'spriteType = { name = "GFX_good" }\nspriteType = { name = "GFX_logo" }\n',
     )
     _write(
         tmp_path,
-        agency.LOC_FILE,
-        'MD_auto_agency_0_upgrade_good: "Good"\n'
-        'MD_auto_agency_0_upgrade_good_name: "Good name"\n'
-        'MD_auto_agency_0_upgrade_good_gfx: "GFX_good"\n',
+        "history/countries/TST - Test.txt",
+        "create_intelligence_agency = { icon = GFX_logo }\n"
+        "upgrade_intelligence_agency = upgrade_good\n",
     )
-    _write(tmp_path, "interface/agency.gfx", 'spriteType = { name = "GFX_good" }\n')
-    _write(tmp_path, agency.SCRIPTED_GUI_FILE, "scripted_gui = { check = { } }\n")
 
     clean = _validator(agency.Validator, tmp_path)
     assert clean.run_all_validations() == 0
     assert clean._issues == []
-
-    missing_gui = _validator(agency.Validator, tmp_path / "missing-gui")
-    missing_gui._validate_scripted_gui_prereqs()
-    assert missing_gui._issues == []
 
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/intelligence_agency_upgrades/upgrades.txt"
@@ -172,130 +134,6 @@ def test_agency_success_and_staged_empty_boundaries(tmp_path, monkeypatch):
     staged = _validator(agency.Validator, tmp_path, staged_only=True)
     staged.run_all_validations()
     assert staged._issues == []
-
-
-def _agency_completion_cache_fixture(tmp_path, triggers: str, effects: str):
-    _write(
-        tmp_path,
-        agency.ON_ACTIONS_FILE,
-        "global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_a\n"
-        "global.agency_upgrades^1 = token:MD_auto_agency_1_upgrade_b\n",
-    )
-    _write(tmp_path, agency.SCRIPTED_TRIGGERS_FILE, triggers)
-    _write(tmp_path, agency.SCRIPTED_EFFECTS_FILE, effects)
-    validator = _validator(agency.Validator, tmp_path)
-    validator._collect_registry()
-    validator._validate_completion_cache()
-    return validator
-
-
-def _slot_trigger(
-    idx: int, read_idx: int | None = None, max_idx: int | None = None
-) -> str:
-    read_idx = idx if read_idx is None else read_idx
-    max_idx = idx if max_idx is None else max_idx
-    return (
-        f"MD_auto_agency_slot_available_{idx}_trigger = {{\n"
-        f"\tNOT = {{\n"
-        f"\t\tcheck_variable = {{\n"
-        f"\t\t\tvar = agency_upgrades_completed_and_queued^{read_idx}\n"
-        f"\t\t\tvalue = global.agency_max_upgrades^{max_idx}\n"
-        f"\t\t\tcompare = greater_than_or_equals\n"
-        f"\t\t}}\n"
-        f"\t}}\n"
-        f"}}\n"
-    )
-
-
-def _seed_branch(idx: int, upgrade: str) -> str:
-    return (
-        f"\tif = {{\n"
-        f"\t\tlimit = {{ has_done_agency_upgrade = {upgrade} }}\n"
-        f"\t\tset_variable = {{ agency_upgrades_completed_and_queued^{idx} = 1 }}\n"
-        f"\t}}\n"
-    )
-
-
-def _can_upgrade_block(indices) -> str:
-    branches = "".join(
-        f"\t\tAND = {{\n"
-        f"\t\t\tMD_auto_agency_slot_available_{i}_trigger = yes\n"
-        f"\t\t\tMD_auto_agency_can_select_upgrade_{i}_trigger = yes\n"
-        f"\t\t}}\n"
-        for i in indices
-    )
-    return f"MD_auto_agency_can_upgrade = {{\n\tOR = {{\n{branches}\t}}\n}}\n"
-
-
-def test_agency_completion_cache_accepts_a_fully_wired_pair(tmp_path):
-    triggers = _slot_trigger(0) + _slot_trigger(1) + _can_upgrade_block([0, 1])
-    effects = (
-        "MD_auto_agency_seed_completed_cache = {\n"
-        + _seed_branch(0, "upgrade_a")
-        + _seed_branch(1, "upgrade_b")
-        + "}\n"
-    )
-    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
-    assert validator._issues == []
-
-
-def test_agency_completion_cache_flags_missing_and_mismatched_wiring(tmp_path):
-    # Index 1 has no slot trigger, no can_upgrade branch and no seed branch;
-    # index 0 reads the wrong array slot and seeds from the wrong upgrade.
-    triggers = _slot_trigger(0, read_idx=1, max_idx=1) + _can_upgrade_block([0])
-    effects = (
-        "MD_auto_agency_seed_completed_cache = {\n"
-        + _seed_branch(0, "upgrade_b")
-        + "}\n"
-    )
-    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
-    messages = [issue.message for issue in validator._issues]
-    assert _categories(validator) == {"agency-upgrades-completion-cache"}
-    assert any(
-        "does not read agency_upgrades_completed_and_queued^0" in m for m in messages
-    )
-    assert any(
-        "does not compare against global.agency_max_upgrades^0" in m for m in messages
-    )
-    assert any(
-        "MD_auto_agency_slot_available_1_trigger definition" in m for m in messages
-    )
-    assert any(
-        "MD_auto_agency_slot_available_1_trigger = yes branch" in m for m in messages
-    )
-    assert any(
-        "MD_auto_agency_can_select_upgrade_1_trigger = yes branch" in m
-        for m in messages
-    )
-    assert any("never seeds" in m and "^1" in m for m in messages)
-    assert any(
-        "seeds index ^0 from 'upgrade_b' but the registry has 'upgrade_a'" in m
-        for m in messages
-    )
-
-
-def test_agency_completion_cache_flags_orphans_and_missing_blocks(tmp_path):
-    triggers = _slot_trigger(0) + _slot_trigger(1) + _slot_trigger(9)
-    effects = (
-        "MD_auto_agency_seed_completed_cache = {\n"
-        + _seed_branch(0, "upgrade_a")
-        + _seed_branch(1, "upgrade_b")
-        + _seed_branch(9, "upgrade_ghost")
-        + "}\n"
-    )
-    validator = _agency_completion_cache_fixture(tmp_path, triggers, effects)
-    messages = [issue.message for issue in validator._issues]
-    assert any("MD_auto_agency_can_upgrade block not found" in m for m in messages)
-    assert any(
-        "MD_auto_agency_slot_available_9_trigger is defined but index ^9 is not registered"
-        in m
-        for m in messages
-    )
-    assert any("seeds index ^9 but it is not registered" in m for m in messages)
-
-    missing = _validator(agency.Validator, tmp_path / "missing")
-    missing._validate_completion_cache()
-    assert missing._issues == []
 
 
 def test_cosmetic_workers_cover_comments_dynamic_and_missing_files(tmp_path):
