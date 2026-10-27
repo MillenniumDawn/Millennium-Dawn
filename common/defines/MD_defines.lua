@@ -38,7 +38,7 @@
 	NDefines.NDiplomacy.TENSION_ANNEX_CLAIM = 1.44 -- Reduced from 1.8 as of v.12.2
 	NDefines.NDiplomacy.TENSION_ANNEX_CORE = -0.5
 	NDefines.NDiplomacy.TENSION_VOLUNTEER_FORCE_DIVISION = 0.30  -- Reduced from 0.50
-	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.02						-- Each months tension decays this much
+	NDefines.NDiplomacy.TENSION_DECAY_DAILY = 0.019						-- Each months tension decays this much
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_START_DATE = "2000.1.1.12" 	-- Starting at this date, the tension values will be scaled down (will be equal to 1 before that)
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MONTHLY_FACTOR = 0		-- Timed tension scale will be modified by this amount starting with TENSION_TIME_SCALE_START_DATE
 	NDefines.NDiplomacy.TENSION_TIME_SCALE_MIN = 0 					-- Timed tension scale won't decrease under this value
