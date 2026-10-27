@@ -77,6 +77,7 @@ _TARGETED_BLOCK_RE = re.compile(
 )
 _DECISION_NAME_RE = re.compile(r"\bdecision\s*=\s*(\S+)")
 _MISSION_NAME_RE = re.compile(r"\bactivate_mission\s*=\s*(\S+)")
+_ACTIVATE_DECISION_RE = re.compile(r"\bactivate_decision\s*=\s*(\S+)")
 _BRACKETED_LOC_RE = re.compile(r"^\[([A-Za-z0-9_]+)\]$")
 _SCRIPTED_LOC_RE = re.compile(r"\bname\s*=\s*([A-Za-z0-9_]+)")
 
@@ -568,6 +569,8 @@ def _scan_activations_and_removals(
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
+    if "activate_decision" in text_file:
+        decisions.update(_ACTIVATE_DECISION_RE.findall(text_file))
     if "activate_mission" in text_file:
         missions.update(_MISSION_NAME_RE.findall(text_file))
     if "remove_decision" in text_file or "remove_targeted_decision" in text_file:
