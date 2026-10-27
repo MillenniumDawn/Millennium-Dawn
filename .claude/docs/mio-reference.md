@@ -52,6 +52,30 @@ Trait layout:
   wrong pick locks it out.
 - Spread `organization_modifier` and `production_bonus` traits across tree depth.
 
+## Policies
+
+Policies live in `common/military_industrial_organization/policies/`. A MIO attaches one
+at a time. The vanilla schema is `policies/documentation.info`.
+
+- `allowed` is mandatory and runs once per MIO at game start. A policy it rejects never
+  comes back for that MIO. Put conditions that change in play, such as `has_mio_size` or
+  `FROM = { has_doctrine = ... }`, in `available`.
+- `visible` hides the policy and `available` greys it out. Both run in MIO scope when the
+  policy screen opens.
+- `equipment_bonus` applies to variants the MIO designs and `production_bonus` to lines
+  it produces. Unlike traits, key each block by equipment group, category, archetype, or
+  type.
+- `same_as_mio` keys a block to every department of the attached MIO. The validator
+  cannot see that scope, so check each stat against the departments `allowed` admits.
+  Split a policy by `allowed` when a stat only bites on some of them, as the `_aa` and
+  `_cnc` land policies do.
+- Without `name`, the loc key is `TAG_<token>` (the owner's tag), else `<token>`.
+  Without `icon`, the sprite is `GFX_TAG_<token>`, then `GFX_<token>`, then
+  `GFX_idea_unknown`.
+- `cost` and `cooldown` default to `DEFAULT_INITIAL_POLICY_ATTACH_COST` (50) and
+  `DEFAULT_INITIAL_ATTACH_POLICY_COOLDOWN` (365 days) in `common/defines/MD_defines.lua`.
+- `organization_modifier` takes the keys below. `on_add` and `on_remove` run in MIO scope.
+
 ## Modifier keys
 
 ### `organization_modifier`

@@ -439,6 +439,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   split. `mio-equipment-type-unknown` (WARNING) suppresses the bonus check for its block.
   - Scope in `organizations/`: the trait's `limit_to_equipment_type`, else the org's
     `equipment_type`, else that of the org named by `include`.
+  - Scope in `policies/` and company traits: each named block is its own scope. A
+    policy's `same_as_mio` block reaches the attached MIO's departments, so it gets no
+    check. Outside `policies/` it is an unknown type.
   - `NON_STAT_BONUS_KEYS` excludes the per-archetype production keys.
     `zero_base_exempt_stats` in the config is empty on purpose: confirm in game before
     adding a stat. The naval `*_factor` keys stay out of it. Vanilla declares their base
