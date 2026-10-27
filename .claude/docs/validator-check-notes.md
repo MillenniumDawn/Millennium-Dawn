@@ -107,6 +107,50 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
   country that cannot pay.
+- AI reach: this check and the AI factor check skip a decision the AI cannot see. That
+  is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
+  `available`, or in its category's own `visible`, `available`, or `allowed`. The match
+  may sit inside `hidden_trigger` or a tooltip wrapper, as in
+  `hidden_trigger = { always = no }`. Under a tag scope, `OR`, `NOT`, `AND`, or `if` it
+  is conditional, so the decision stays reachable.
+- `decision-custom-cost-not-charged` (WARNING): a `custom_cost_trigger` that checks
+  treasury, political power, command power, manpower, or equipment needs a matching
+  charge in `complete_effect`. A charge found only in `remove_effect` is reported as
+  late; timeout and cancellation payments do not satisfy the check either. All five
+  resource kinds follow scripted effects in the choosing country's scope, including
+  nested math and equipment transfers. Previews, quoted text, foreign-country writes,
+  literal `always = no` branches, and zero-chance random blocks do not count as payment.
+  Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
+  resource variables and scripted cost triggers still need manual review.
+- `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
+  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
+  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
+  cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
+  `has_decision` in the decision's own block also exempts it.
+- `decision-money-charged-late` (WARNING): money a non-mission `remove_effect` charges
+  itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
+  the `modify_*` payment effects count. A scripted effect that pays for a building on
+  delivery is intended and is not followed. A treasury custom cost that
+  `decision-custom-cost-not-charged` already reports as late is not repeated. A
+  deliberate pay-on-completion decision is reported too. `timeout_effect` and
+  `cancel_effect` are not read.
+- `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
+  `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
+  the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
+  not its name. Only `hidden_trigger` and the
+  tooltip wrappers are looked through. A gate within 0.1 of the charge, such as `> 1.4`
+  for 1.5, is how the mod writes `>=` and passes. Known gaps: the long `var = treasury`
+  form, `NOT = { treasury < N }`, a gate inside `OR` or `AND`, and a charge inside an
+  `if` or built from a variable.
+- `decision-trigger-reads-temp-variable` (WARNING): `custom_cost_trigger`, `available`,
+  or `visible` reads a name in a `check_variable` that the decision's effects set only
+  with `*_temp_variable`. A name the trigger sets, or that any scripted trigger sets as
+  a temp variable, is exempt, since MD triggers such as `calculate_ai_interest` can set
+  one. Known gaps: a name set persistently elsewhere in the mod still counts as temp,
+  and a value read inside a math block is not seen.
+- `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
+  reported by the same pass as `decision-log-not-first`.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -170,10 +214,47 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   conditions. `original_tag`, foreign-scope tags, and tags mentioned only inside
   `OR` or `NOT` do not prove the receiver.
   - Display-only `effect_tooltip` costs and temp writes do not execute.
-  - Known gaps: stored negative values built from math or arrays, unsubstituted
+  - Skipped: an option at `base = 0` with no `add` while another option can win, and
+    a cost kind every option always pays, or every option pays only sometimes. A kind
+    some options always pay and others only sometimes pay is not shared. An
+    `if`/`else` chain or `random_list` whose every arm charges counts as always, and
+    so does a charge behind the `MD_skip_treasury_cost` flag or an unset
+    `skip_payment`. Tax rate is never shared, since options can move it apart.
+  - Known gaps: a shared cost of different sizes is skipped too, so the dearer
+    option goes unreported. So is a kind every option pays only sometimes, at
+    different odds. Charges that depend on a variable set in each arm stay
+    conditional. Costs behind conditions that can never hold still count. Stored negative values built from math or arrays, unsubstituted
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
+- `event-corruption-pp-cost` (WARNING, opt-in with
+  `--check-corruption-pp-costs`): event options with a literal negative
+  `add_political_power` and `decrease_corruption` in the choosing country, without a
+  recognized local guard. Each decrease refunds 150 PP at level 1, so only a charge
+  above 150 PP per decrease is reported. Event/option triggers and nested `if`
+  limits can supply a lower corruption-level bound; fewer decreases must run than
+  that bound. A direct
+  level-1 exclusion supplies a bound of 2, so repeated decreases still need review.
+  Entry bounds are discarded when event `immediate` effects can change corruption.
+  Option bounds are discarded when a literal corruption-idea change precedes a
+  decrease in that option. Nested `if` bounds expire after a corruption-idea change
+  before a later decrease; a guard evaluated after an earlier change can establish a
+  fresh bound. Every relevant operation must be guarded before nested limits suppress
+  an option. Numeric state scopes are excluded; only explicit `ROOT` effects are
+  followed back to the choosing country. Numeric weights directly under `random_list`
+  remain in the choosing country's scope. Run:
+
+  ```sh
+  python3 tools/validation/validate_events.py --path . --check-corruption-pp-costs \
+    --workers 1 --no-color --no-cache --output /tmp/event-corruption-audit.txt
+  ```
+
+  This runs all event checks; review the `event-corruption-pp-cost` diagnostics.
+  Findings are review candidates, not proven content bugs. Dynamic PP costs,
+  scripted-effect bodies, caller conditions, surrounding conditions in foreign scopes,
+  and indirect corruption mutations are not followed. Mutually exclusive branches are
+  aggregated. These gaps keep the check opt-in. No decisions are checked.
+
 - Other gaps from #5738 are not checked:
   - Double building charges need both payments resolved to the same country and
     reachable path. Adjacent costs alone do not prove a double charge.
@@ -403,6 +484,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `validate_ai_equipment.py` applies the same rules to `target_variant` designs.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
   proof the runtime design is legal.
+- Explicit variant definitions are cached per source file by content and indexed by
+  producer, equipment type, and name. English default model names stay separate.
+  Staged edits widen reference checks only when the resulting identities or
+  producer/DLC/date context change. Equipment and English name edits still widen them.
+- `duplicate-equipment-variant` (WARNING): repeated explicit creation of the same
+  producer, equipment type, and name in potentially overlapping contexts. The finding
+  cites both sites. Different producers or types, mutually exclusive DLC/if branches,
+  event options, random outcomes, and tooltip-only effects do not count. Unresolved
+  producers and dynamic names or types are not checked. Separate events can overlap,
+  but the check does not prove both execute, so this is advisory.
 - `validate_ai_equipment.py` runs without `--strict` locally and with it in CI.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
@@ -503,9 +594,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  core batch through `validate_common_mistakes.py` and report ERROR, except
+  `shadowed-branch`, a WARNING until its existing findings are fixed. It scans
   `common`, `events`, `history`, and `music`.
+- Shadowed branches: the parser blanks quoted strings, so a limit with a quoted value
+  never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
+  skipped, since the rotation check already reports their duplicate branches.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
+- The decision log id check also reads a log with no `Decision` word, when the string is
+  only the standard prefix, filler words, and one id. Longer text is skipped, so a log
+  such as `... <other_decision> setup finished` is a known gap.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`

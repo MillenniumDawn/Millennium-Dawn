@@ -22,7 +22,8 @@ def _script(*lines):
 def _messages(tmp_path, rel, *lines):
     path = tmp_path / rel
     _write(path, _script(*lines))
-    return [message for _fp, _line, message in checker.check_file(str(path))]
+    errors, warnings = checker.check_file(str(path))
+    return [message for _fp, _line, message in errors + warnings]
 
 
 def _matching(messages, needle):
@@ -294,8 +295,8 @@ _DIVISION = "use multiplication instead of division (/ 100 -> * 0.01)"
     ],
 )
 def test_check_file_line_checks(tmp_path, scoped_refs, rel_path, text, expected):
-    findings = checker.check_file(write_under_str(tmp_path, rel_path, text))
-    assert [(line, message) for _path, line, message in findings] == expected
+    errors, _warnings = checker.check_file(write_under_str(tmp_path, rel_path, text))
+    assert [(line, message) for _path, line, message in errors] == expected
 
 
 def test_focus_file_dispatch_covers_the_focus_only_checks(tmp_path, scoped_refs):
@@ -376,6 +377,20 @@ def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
     assert _matching(messages, "advances the counter by 2")
 
 
+def test_political_leaders_duplicate_branch_is_reported_once(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "common/scripted_effects/MD_TAG_political_leaders.txt",
+        "set_leader_TAG = {",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } } }",
+        "\telse_if = { limit = { check_variable = { ruling_party = 1 } } }",
+        "}",
+    )
+
+    assert len(messages) == 1
+    assert _matching(messages, "duplicate set_")
+
+
 def test_provincial_building_checks_only_run_for_common_and_events(
     tmp_path, scoped_refs
 ):
@@ -406,7 +421,7 @@ def test_check_file_ignores_a_path_it_cannot_read(tmp_path):
     directory = tmp_path / "common" / "unreadable.txt"
     directory.mkdir(parents=True)
 
-    assert checker.check_file(str(directory)) == []
+    assert checker.check_file(str(directory)) == ([], [])
 
 
 # ---------------------------------------------------------------------------
@@ -505,6 +520,23 @@ def test_main_reports_issues_and_exits_nonzero(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "is_at_war is not a HOI4 trigger" in out
     assert "Found 1 issue(s)" in out
+
+
+def test_main_prints_warnings_without_failing(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "common" / "shadow.txt"
+    _write(
+        path,
+        _script(
+            "test_effect = {",
+            "\tif = { limit = { has_idea = a } add_stability = 0.1 }",
+            "\telse_if = { limit = { has_idea = a } add_stability = 0.2 }",
+            "}",
+        ),
+    )
+
+    assert _run_main(monkeypatch, tmp_path, str(path)) == 0
+
+    assert "3: warning: else_if never runs" in capsys.readouterr().out
 
 
 def test_main_reports_an_empty_run(tmp_path, monkeypatch, capsys):

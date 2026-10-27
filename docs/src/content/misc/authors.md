@@ -195,6 +195,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Barracuda            | @Barracuda                      | @SBeausoleil      | -             | -                             |
 | JohnsonvilleF221     | @JohnsonvilleF221               | @JohnsonvilleF221 | -             | -                             |
 | Skjold               | @Skjold                         | @Skjold89         | -             | -                             |
+| Zei33                | -                               | @Zei33            | -             | -                             |
 
 # Fellow Modders/Teams
 
