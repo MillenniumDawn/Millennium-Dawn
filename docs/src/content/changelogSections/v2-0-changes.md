@@ -1152,7 +1152,7 @@ v2.0.0
 - Fixed CZE infantry entity animation wired to charge_rifle instead of charge_mg to match the mesh animation set
 - Fixed ENG George Zambellas portrait referencing wrong filename casing
 - Deleted stray empty test file and entirely-commented-out \_\_\_MD_infantry_units.asset/.gfx
-- Fixed a double underscore in a UKR entity filename and a spelling error in the MD tanks and vehicles filename
+- Fixed UKR entity filename double-underscore typo (UKR\_\_MD\_ to UKR_MD\_) and \_\_\_MD_tanks_and_vechicles spelling
 - Removed unused Eastern European special forces technology sprite entries that referenced missing DDS files
 - Fixed and restored all 3D models that were previously broken in the 1.12.x build
   - Restored landmarks now rendering: Big Ben, Statue of Liberty, Mount Fuji, Golden Gate Bridge, Minot ICBM silos
