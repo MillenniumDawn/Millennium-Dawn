@@ -30,11 +30,15 @@ EU_update_vars = {
 	hidden_effect = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
-		# population_total_m, not population_total: hundred-thousand sums lose precision
-		set_variable = { var = global.var_EUpopTotal value = 0 }
-		for_each_scope_loop = {
-			array = global.EU_member
-			add_to_variable = { global.var_EUpopTotal = THIS.population_total_m }
+		# population_total_m, not max_manpower_k: the engine value wraps negative above ~922M people (#4879)
+		set_variable = {
+			global.var_EUpopTotal = {
+				value = 0
+				every_collection = {
+					named_collection = eu_members_collection
+					add = population_total_m
+				}
+			}
 		}
 
 		set_variable = { var = global.var_europeanism value = 0 }
@@ -1044,8 +1048,8 @@ election_POTEF_in_member_state = {
 		set_variable = {
 			POTEF_pop_vote^i = {
 				value = party_pop_array^i
-				multiply = population_total_m
 				multiply = 1000 # thousands, as the POTEF vote tooltip shows
+				multiply = population_total_m
 			}
 		}
 		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }
@@ -1192,14 +1196,17 @@ clear_potef_electoral_values = {
 }
 
 update_EU_average_gdpc_lvl = { # For calcuations that don't have set_EU_gdp
-	set_variable = { global.EU_gdp_capita = 0 }
-	for_each_scope_loop = {
-		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		add_to_variable = { global.EU_gdp_capita = THIS.gdp_total }
-	}
-	if = { limit = { check_variable = { global.var_EUpopTotal > 0 } }
-		divide_variable = { global.EU_gdp_capita = global.var_EUpopTotal }
+	set_variable = {
+		global.EU_gdp_capita = {
+			value = 0
+			every_collection = {
+				named_collection = eu_members_collection
+				add = gdp_total
+			}
+			if = { limit = { value = global.var_EUpopTotal greater_than = 0 }
+				divide = global.var_EUpopTotal
+			}
+		}
 	}
 	update_eu_dirty_variable = yes
 }
@@ -1229,13 +1236,16 @@ update_EU_average_eco_lvl = {
 
 set_EU_gdp = {
 	# Calculate the EU Total GDP
-	set_variable = { global.EU_gdp = 0 }
-	for_each_scope_loop = {
-		array = global.EU_member
-		add_to_variable = { global.EU_gdp = THIS.gdp_total } #This value is for display purposes
+	set_variable = {
+		global.EU_gdp = {
+			value = 0
+			every_collection = {
+				named_collection = eu_members_collection
+				add = gdp_total
+			}
+			max = 0.001
+		}
 	}
-
-	clamp_variable = { var = global.EU_gdp min = 0.001 }
 
 	# Calculate the individual ratio of GDP per nation
 	for_each_scope_loop = {
@@ -1649,11 +1659,15 @@ election_EU_Parliament = {
 		election_EU_Parliament_in_member_state = yes
 	}
 
-	set_variable = { global.MEP_Total = 0 } # Recalculate to account for roundings
-	for_each_scope_loop = {
-		array = global.EU_member
-		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-		add_to_variable = { global.MEP_Total = THIS.MEP_Total }
+	# Recalculate to account for roundings
+	set_variable = {
+		global.MEP_Total = {
+			value = 0
+			every_collection = {
+				named_collection = eu_members_collection
+				add = MEP_Total
+			}
+		}
 	}
 
 	### check political groups
