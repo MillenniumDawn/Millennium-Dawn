@@ -415,7 +415,6 @@ def test_target_uses_remaining_paid_work_and_exact_36_month_lookahead(
     _choose_target(race)
     variables = country["vars"]
     assert variables["ai_race_ai_target_stage"] == target
-    assert variables["ai_race_ai_planning_purchase"] == int(target > stage)
     assert variables["ai_race_ai_recovery"] == 0
     if earliest:
         assert variables["ai_race_ai_earliest_entry_month"] == earliest * 12 + 1
@@ -434,7 +433,6 @@ def test_paid_capacity_damage_selects_recovery_before_expansion(criterion):
     _choose_target(race)
     assert country["vars"]["ai_race_ai_target_stage"] == 1
     assert country["vars"]["ai_race_ai_recovery"] == 1
-    assert country["vars"]["ai_race_ai_planning_purchase"] == 0
     assert country["vars"]["ai_race_ai_readiness"] == pytest.approx(0.9)
 
 
@@ -941,9 +939,7 @@ def test_ai_research_selects_first_missing_required_tech_with_one_year_date_limi
     known, year, target, expected
 ):
     race, country = _planner(year=year)
-    country["vars"].update(
-        ai_race_ai_target_stage=target, ai_race_ai_planning_purchase=1
-    )
+    country["vars"]["ai_race_ai_target_stage"] = target
     country["techs"] = {
         f"artificial_intelligence_{level}" for level in range(1, known + 1)
     }
@@ -958,7 +954,7 @@ def test_ai_research_selects_first_missing_required_tech_with_one_year_date_limi
 
 def test_research_does_not_skip_a_blocked_prerequisite_to_a_later_available_tech():
     race, country = _planner(year=2020)
-    country["vars"].update(ai_race_ai_target_stage=3, ai_race_ai_planning_purchase=1)
+    country["vars"]["ai_race_ai_target_stage"] = 3
     country["techs"].clear()
     country["researchable"] = {"artificial_intelligence_2", "artificial_intelligence_8"}
     race.run("ai_race_ai_choose_research", 1)
@@ -994,7 +990,7 @@ def test_support_research_tracks_the_largest_capacity_gap_without_granting_techn
     _capacity(race, country, 1, [0.75, 1, 1, 0.5, 1, 1])
     country["researchable"] = {"basic_computing", "construction1"}
     race.run("ai_race_ai_update_plan", 1)
-    assert country["vars"]["ai_race_ai_support_need"] == 4
+    assert race.temps["ai_race_ai_support_need"] == 4
     assert country["vars"]["ai_race_ai_support_tech"] == 201
     assert "basic_computing" not in country["techs"]
 
@@ -1426,7 +1422,7 @@ def test_wartime_support_research_skips_civilian_expansion_for_paid_material_rec
     country["war"] = True
     country["researchable"] = {"construction1", "internet_2", "basic_computing"}
     race.run("ai_race_ai_update_plan", 1)
-    assert country["vars"]["ai_race_ai_support_need"] == 4
+    assert race.temps["ai_race_ai_support_need"] == 4
     assert country["vars"]["ai_race_ai_support_tech"] == 201
     assert country["vars"]["ai_race_ai_research_target"] == 0
     assert country["vars"]["ai_race_ai_savings_target"] == 0

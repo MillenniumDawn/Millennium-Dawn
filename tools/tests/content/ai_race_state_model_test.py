@@ -28,27 +28,6 @@ def _race_text(directory):
     )
 
 
-COUNTRY_CAPABILITIES = (
-    "capability",
-    "compute",
-    "talent",
-    "deployment",
-    "control_capacity",
-    "public_confidence",
-)
-COUNTRY_DERIVED_STATE = (
-    "ai_race_public_alarm",
-    "ai_race_control_debt",
-    "ai_race_frontier_gap",
-    "ai_race_rank",
-)
-GLOBAL_STATE = (
-    "global.ai_race_frontier_capability",
-    "global.ai_race_temperature",
-    "global.ai_race_frontier_pressure",
-    "global.ai_race_epoch",
-    "global.ai_race_last_processed_quarter",
-)
 UPSTREAM_PREFIXES = (
     "energy_",
     "unfulfilled_energy_",
@@ -215,15 +194,11 @@ def test_modes_cleanup_and_participant_reentry_have_live_routes():
     assert "name = disabled" in rule
 
 
-def test_country_adapters_use_one_energy_guard_and_all_ai_technology_tiers():
+def test_capability_rebuild_counts_every_ai_technology_tier():
     effects = _race_text("common/scripted_effects")
     rebuild = _named_block(effects, "ai_race_rebuild_country_metrics")
 
-    assert rebuild.count("check_variable = { energy_difference_variable < 0 }") == 1
-    assert "check_variable = { energy_balance < 0 }" not in rebuild
-    assert "unfulfilled_energy_demand_var" not in rebuild
-
-    assert rebuild.count("ai_race_count_ai_technology = yes") == 2
+    assert rebuild.count("ai_race_count_ai_technology = yes") == 1
     ladder = _named_block(effects, "ai_race_count_ai_technology")
     for tier in range(1, 15):
         assert (
@@ -235,11 +210,6 @@ def test_country_adapters_use_one_energy_guard_and_all_ai_technology_tiers():
             == 1
         )
         assert f"has_tech = artificial_intelligence_{tier} }}" in ladder
-
-    first_clear = rebuild.index("clear_variable = ai_race_capability_external")
-    first_owner_read = rebuild.index("resource_produced@microchips")
-    first_total = rebuild.index("set_variable = { ai_race_capability =")
-    assert first_clear < first_owner_read < first_total
 
 
 def test_rebuild_is_idempotent_and_quarter_wrapper_owns_replay_mutation():
@@ -253,16 +223,9 @@ def test_rebuild_is_idempotent_and_quarter_wrapper_owns_replay_mutation():
     assert not any(
         target.endswith("_stock") for target in _variable_write_targets(metrics)
     )
-    for capability in COUNTRY_CAPABILITIES:
-        assert f"clear_variable = ai_race_{capability}_external" in metrics
-        assert (
-            f"set_variable = {{ ai_race_{capability} = ai_race_{capability}_stock }}"
-            in metrics
-        )
-        assert (
-            f"add_to_variable = {{ ai_race_{capability} = ai_race_{capability}_external }}"
-            in metrics
-        )
+    assert (
+        "value = ai_race_capability_stock add = ai_race_capability_external" in metrics
+    )
 
     for scheduled in (
         "global.ai_race_epoch",
@@ -282,16 +245,9 @@ def test_ranking_replay_guards_and_clamps_match_the_documented_bounds():
     ranking = _named_block(effects, "ai_race_rebuild_frontier_and_ranking")
     dispatch = _named_block(effects, "ai_race_monthly_dispatch")
 
-    for capability in COUNTRY_CAPABILITIES:
-        for suffix in ("_stock", "_external", ""):
-            variable = f"ai_race_{capability}{suffix}"
-            assert (
-                f"clamp_variable = {{ var = {variable} min = 0 max = 100 }}"
-                in repair_country
-            )
-    for variable in COUNTRY_DERIVED_STATE[:2]:
+    for suffix in ("_stock", "_external", ""):
         assert (
-            f"clamp_variable = {{ var = {variable} min = 0 max = 100 }}"
+            f"clamp_variable = {{ var = ai_race_capability{suffix} min = 0 max = 100 }}"
             in repair_country
         )
     assert (
@@ -302,11 +258,10 @@ def test_ranking_replay_guards_and_clamps_match_the_documented_bounds():
         "clamp_variable = { var = ai_race_rank min = 0 max = global.ai_race_all_initialized^num }"
         in repair_country
     )
-    for variable in GLOBAL_STATE[:3]:
-        assert (
-            f"clamp_variable = {{ var = {variable} min = 0 max = 100 }}"
-            in repair_global
-        )
+    assert (
+        "clamp_variable = { var = global.ai_race_frontier_capability min = 0 max = 100 }"
+        in repair_global
+    )
 
     assert "ai_race_sort_participants = yes" in ranking
     assert "global.ai_race_first_finisher_id" not in ranking

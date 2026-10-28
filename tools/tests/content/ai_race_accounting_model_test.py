@@ -888,9 +888,11 @@ def test_prepare_freezes_every_due_and_corrects_only_the_cached_race_cost(
     assert runtime.ledger() == before
     assert runtime.temps["ai_race_bill_total"] == expected
     assert runtime.temps["treasury_rate_gain"] == D(109) - expected
-    assert [runtime.temps[f"ai_race_bill_{stage}"] for stage in range(1, 5)] == [
-        expected / 4
-    ] * 4
+    assert runtime.temps["ai_race_bill_prepared"] == int(bool(expected))
+    if expected:
+        assert [runtime.temps[f"ai_race_bill_{stage}"] for stage in range(1, 5)] == [
+            expected / 4
+        ] * 4
 
 
 def test_script_commit_posts_zero_rounded_installments_once_and_only_after_accrual(

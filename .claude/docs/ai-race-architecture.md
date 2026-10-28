@@ -20,10 +20,8 @@ reference; tests discover feature source independently of how many files it occu
 ## Ownership and scope
 
 The race owns `ai_race_*` variables, `AI_RACE_*` country flags, its registries, declarative AI
-preferences, and operating dynamic modifier. USA and China use national baselines from
-technology, microchips, research slots, and their starting policies. Other countries use
-technology, research slots, industry, Network Infrastructure, energy, and material supply.
-Buildings, queues, research projects, trade, investment offers, and sovereign debt remain owned
+preferences, and operating dynamic modifier. National capability is 5 per AI technology tier
+for every country; physical readiness then scales the funded stock. Buildings, queues, research projects, trade, investment offers, and sovereign debt remain owned
 by their existing systems.
 
 If Corporate History later joins upstream, its modes remain independent of the AI
