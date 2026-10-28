@@ -198,27 +198,16 @@ def test_reactor_stockpile_guard_does_not_suppress_urgent_purchases(weeks, expec
 
 
 @pytest.mark.parametrize(
-    "mode,production,expected",
-    [("full", 0, False), ("full", 10, True), ("outcomes_only", 0, True)],
+    "mode,production", [("full", 0), ("full", 5), ("outcomes_only", 0)]
 )
-def test_insufficient_enrichment_can_use_the_existing_reactor_market(
-    mode, production, expected
-):
+def test_enrichment_does_not_block_a_reactor_fuel_deficit(mode, production):
     race, country = _recovering(mode)
     country["vars"].update(
-        enrichment_facilities=1, total_nuclear_reactor_fuel_production=production
+        enrichment_facilities=1,
+        total_nuclear_reactor_fuel_production=production,
+        treasury=50,
     )
-    action = _parse_race_script(
-        _named_block(
-            DIPLOMACY.read_text(encoding="utf-8"), "purchase_reactor_grade_material"
-        )
-    )["purchase_reactor_grade_material"]
-    assert (
-        race.condition(
-            _modifier(_body(action, "ai_desire"), "has_enrichment_facilities"), 1
-        )
-        is expected
-    )
+    assert _reactor_weight(race) > 0
 
 
 def test_reactor_recovery_checks_zero_consumption_before_division():
@@ -281,6 +270,19 @@ def _reactor_desire():
     return [value for key, _, value in _body(action, "ai_desire") if key == "modifier"]
 
 
+def _reactor_weight(race):
+    weight = 0
+    for modifier in _reactor_desire():
+        guards = [entry for entry in modifier if entry[0] not in {"add", "factor"}]
+        if race.condition(guards, 1):
+            for key, _, operand in modifier:
+                if key == "add":
+                    weight += race.value(operand, 1)
+                elif key == "factor":
+                    weight *= race.value(operand, 1)
+    return weight
+
+
 @pytest.mark.parametrize("opinion,allied", [(0, False), (150, True)])
 @pytest.mark.parametrize(
     "treasury,bankrupt,expected",
@@ -299,16 +301,7 @@ def test_the_affordability_veto_stops_a_buyer_who_cannot_pay(
     )
     if bankrupt:
         country["missions"].add("bankruptcy_incoming_collapse")
-    weight = 0
-    for modifier in _reactor_desire():
-        guards = [entry for entry in modifier if entry[0] not in {"add", "factor"}]
-        if race.condition(guards, 1):
-            for key, _, operand in modifier:
-                if key == "add":
-                    weight += race.value(operand, 1)
-                elif key == "factor":
-                    weight *= race.value(operand, 1)
-    assert weight == expected + (35 if expected and allied else 0)
+    assert _reactor_weight(race) == expected + (35 if expected and allied else 0)
 
 
 def _reactor_completion():
