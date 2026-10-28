@@ -2789,7 +2789,7 @@ class Validator(BaseValidator):
                 [],
                 "✓ No scheduled event carries a redundant date bound",
                 f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-                Severity.WARNING,
+                Severity.ERROR,
                 category="scheduled-event-date-bound",
             )
             return
@@ -2810,7 +2810,7 @@ class Validator(BaseValidator):
             results,
             "✓ No scheduled event carries a redundant date bound",
             f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="scheduled-event-date-bound",
         )
 

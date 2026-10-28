@@ -229,25 +229,41 @@ def test_date_gated_event_needs_a_schedule(
 
 
 # A second fire path may need the guard, so only sole-source events count.
-# case: ((id, file) fires, finding)
+# case: ((id, file) fires, date-bound scan result, finding)
 _DATE_BOUND_CASES = {
-    "scheduled only": ([("foo.1", _YEARLY)], ("foo.1", _YEARLY)),
-    "also fired from a focus": ([("foo.1", _YEARLY), ("foo.1", _FOCUS_FILE)], None),
-    "also fired from an event": ([("foo.1", _YEARLY), ("foo.1", _EVENT_FILE)], None),
-    "no yearly effects file": ([("foo.1", _EVENT_FILE)], _SKIPPED),
+    "scheduled only": (
+        [("foo.1", _YEARLY)],
+        [("foo.1", _EVENT_FILE, 10)],
+        ("foo.1", _YEARLY),
+    ),
+    "also fired from a focus": (
+        [("foo.1", _YEARLY), ("foo.1", _FOCUS_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        None,
+    ),
+    "also fired from an event": (
+        [("foo.1", _YEARLY), ("foo.1", _EVENT_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        None,
+    ),
+    "no yearly effects file": (
+        [("foo.1", _EVENT_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        _SKIPPED,
+    ),
+    "nothing carries a date bound": ([("foo.1", _YEARLY)], [], None),
 }
 
 
 @pytest.mark.parametrize(
-    ("fires", "finding"), _DATE_BOUND_CASES.values(), ids=_DATE_BOUND_CASES
+    ("fires", "bounded", "finding"), _DATE_BOUND_CASES.values(), ids=_DATE_BOUND_CASES
 )
-def test_scheduled_event_needs_no_date_bound(monkeypatch, fires, finding):
-    validator = _stub(monkeypatch, fires, lambda fn: [("foo.1", _EVENT_FILE, 10)])
+def test_scheduled_event_needs_no_date_bound(monkeypatch, fires, bounded, finding):
+    validator = _stub(monkeypatch, fires, lambda fn: bounded)
 
     validator.validate_scheduled_date_bounds()
 
-    # Warning-only until the backlog is cleared.
-    _assert_reported(validator, finding, V.Severity.WARNING)
+    _assert_reported(validator, finding, V.Severity.ERROR)
 
 
 def _on_actions_validator(tmp_path, monkeypatch, body):
