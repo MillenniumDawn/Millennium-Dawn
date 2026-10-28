@@ -1773,21 +1773,22 @@ def _statement_corruption_level_bound(
     statements = list(iter_statements(block))
     if key == "OR":
         bounds = [
-            _statement_corruption_level_bound(*branch, country=country)
-            for branch in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
-        return (
-            min(bounds)
-            if bounds and all(bound is not None for bound in bounds)
-            else None
-        )
+        proven = [bound for bound in bounds if bound is not None]
+        return min(proven) if proven and len(proven) == len(bounds) else None
     if (
         key in {"AND", "ROOT", "THIS", "hidden_trigger", "custom_trigger_tooltip"}
         or key == country
     ):
         bounds = [
-            _statement_corruption_level_bound(*statement, country=country)
-            for statement in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
         proven = [bound for bound in bounds if bound is not None]
         return max(proven) if proven else None
