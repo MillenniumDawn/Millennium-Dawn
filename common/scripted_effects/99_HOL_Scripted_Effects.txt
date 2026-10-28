@@ -721,3 +721,32 @@ HOL_update_party_programmes = {
 		add_dynamic_modifier = { modifier = HOL_liberal_society_modifier }
 	}
 }
+
+# Scope: HOL. Ends the Bolle Jos chain once he is in Dutch custody.
+HOL_bolle_jos_captured_effect = {
+	HOL_bolle_jos_end_chain_effect = yes
+	add_stability = 0.03
+	add_political_power = 50
+	set_temp_variable = { cart_strength_change = -10 }
+	set_temp_variable = { cart_influence_change = -8 }
+	modify_cartel_variables_effect = yes
+}
+
+# Scope: any. Closes the Bolle Jos chain and removes his patronage from Sierra Leone.
+HOL_bolle_jos_end_chain_effect = {
+	clr_global_flag = HOL_bolle_jos_at_large
+	set_global_flag = HOL_bolle_jos_resolved
+	if = {
+		limit = { country_exists = SIE }
+		SIE = {
+			clr_country_flag = HOL_bolle_jos_sheltered
+			clr_country_flag = HOL_bolle_jos_located_by@HOL
+			clr_country_flag = HOL_bolle_jos_capture_failed_by@HOL
+			clear_variable = HOL_bolle_jos_pressure
+			if = {
+				limit = { has_idea = HOL_bolle_jos_patronage }
+				remove_ideas = HOL_bolle_jos_patronage
+			}
+		}
+	}
+}
