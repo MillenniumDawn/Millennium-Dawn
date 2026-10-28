@@ -2813,6 +2813,18 @@ _AIRBASE_CASES = {
         None,
         [],
     ),
+    "commented air base": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1.replace(
+                    "\t\t\tair_base", "\t\t\t# air_base = 5\n\t\t\tair_base"
+                )
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
     "dated air base is not the start level": (
         {
             _SWE_AIR: _air_oob((10, [25])),
