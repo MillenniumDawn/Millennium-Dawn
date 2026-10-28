@@ -6,10 +6,12 @@ import validate_scripted_localisation as V
 from shared.suite import write_under
 
 
-def _scan_loc_tokens(text, is_scripted_loc_file, defined_names=frozenset()):
+def _scan_loc_tokens(text, is_scripted_loc_file, defined_names=None):
     """The token scan as the used-localisation worker composes it."""
     bracketed, explicit = V._scan_loc_token_candidates(text, is_scripted_loc_file)
-    return V._filter_bracket_loc_candidates(bracketed, defined_names) | explicit
+    return (
+        V._filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
+    )
 
 
 def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path):
@@ -104,8 +106,8 @@ def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
 
 
 def test_scoped_bracketed_invocation_tracks_member_name():
-    assert _scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
-        "MD_auto_agency_status"
+    assert _scan_loc_tokens("[THIS.example_scripted_loc]", False) == {
+        "example_scripted_loc"
     }
 
 
