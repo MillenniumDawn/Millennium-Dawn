@@ -208,11 +208,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   a guard. An event with the guard and no schedule is dead content. Exempt: events
   reachable from a scheduled ancestor, fires from focuses or decisions, `random_events`
   pools, and chance-rolled `random` polls. A `date <` bound alone is an expiry guard.
-- `scheduled-event-date-bound` (ERROR): an event the yearly effects schedule still
-  carrying a `date` comparison in its own trigger is redundant since the slot fixes
-  the year, and a `date <` bound can silently drop the fire when `random_days`
-  spills past it. Only events whose sole fire source is the yearly effects are
-  reported; a second fire path (focus, decision, chain) may need the guard.
+- `scheduled-event-date-bound` (ERROR): a `date` comparison in an event's own
+  trigger is redundant when only the yearly effects fire it. The yearly slot fixes
+  the schedule; a `date <` bound can silently drop a fire when `random_days`
+  spills past it. Events with another fire path (focus, decision, chain, or
+  on_action `random_events` pool) may need the guard and are exempt.
 - `event-fire-type-mismatch`, `malformed-event-fire` (ERROR).
 - `event-option-log-without-effect` (ERROR): an option with a log but no effects is
   dead code. Tooltips count as effects. `fix_event_option_logs.py` removes dead logs.

@@ -2769,7 +2769,8 @@ class Validator(BaseValidator):
         the day, so a `date` comparison on the event is redundant, and a
         `date <` bound can silently drop the event when `random_days` spills
         past it. Only events whose sole fire source is the yearly effects are
-        reported: a second fire path (focus, decision, chain) may need the guard.
+        reported: a second fire path (focus, decision, chain, `random_events`
+        pool) may need the guard.
         """
         self._log_section(
             "Checking scheduled events for redundant date bounds in their trigger..."
@@ -2799,12 +2800,13 @@ class Validator(BaseValidator):
             self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
             return
 
+        pool_ids = self._get_random_event_ids()
         results = [
             f"{eid} - {self._rel_posix(filename)}:{line} is scheduled from "
             f"{_YEARLY_EFFECTS_REL}, so the date bound in its trigger is redundant "
             "(remove it; drop the trigger block if nothing else is left)"
             for eid, filename, line in sorted(bounded)
-            if sources.get(eid) == {_YEARLY_EFFECTS_REL}
+            if sources.get(eid) == {_YEARLY_EFFECTS_REL} and eid not in pool_ids
         ]
         self._report(
             results,
