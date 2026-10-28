@@ -34,7 +34,7 @@ def test_mistake_is_reported_with_relative_path_and_line(tmp_path):
     assert validator.errors_found == 1
 
 
-def test_shadowed_branch_is_a_warning_while_the_backlog_is_triaged(tmp_path):
+def test_shadowed_branch_is_its_own_error_category(tmp_path):
     _write(
         tmp_path,
         "common/scripted_effects/shadow.txt",
@@ -48,9 +48,9 @@ def test_shadowed_branch_is_a_warning_while_the_backlog_is_triaged(tmp_path):
     validator.run_validations()
 
     assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
-        ("shadowed-branch", "warning", "common/scripted_effects/shadow.txt", 3)
+        ("shadowed-branch", "error", "common/scripted_effects/shadow.txt", 3)
     ]
-    assert validator.errors_found == 0
+    assert validator.errors_found == 1
 
 
 def _findings(validator):

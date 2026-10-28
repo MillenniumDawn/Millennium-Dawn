@@ -326,6 +326,16 @@ energy_calc_generation = {
 	set_variable = { maximum_renewable_energy_var = { value = maximum_renewable_energy_var_base multiply = temp_renewable_energy_gain_m } }
 
 	set_variable = { renewable_energy_display_var = energy_sum }
+	# Output at full staffing, for the employment priority tooltip
+	if = {
+		limit = { is_ai = no }
+		set_variable = {
+			renewable_energy_max = {
+				value = renewable_energy_display_var
+				divide = { value = renewable_energy_infra_manpower_fulfillment clamp = { min = 0.001 max = 1 } }
+			}
+		}
+	}
 
 	# Base amount of GW/h one battery park can store, scaled by storage size modifier
 	set_variable = {
@@ -395,6 +405,16 @@ energy_calc_generation = {
 	}
 
 	multiply_variable = { fossil_pp_energy_generation = fossil_powerplants_manpower_fulfillment }
+
+	# Output at full staffing, for the employment priority tooltip
+	if = {
+		limit = { is_ai = no }
+		set_variable = { fossil_pp_energy_max = 0 }
+		if = {
+			limit = { NOT = { has_country_flag = disable_fossil_fuel_power_plant_flag } }
+			set_variable = { fossil_pp_energy_max = { value = number_of_fossil_pps multiply = fossil_pp_energy_per_plant_display } }
+		}
+	}
 
 	# Implements the No Fuel Killswitch
 	set_temp_variable = { no_fuel_killswitch_var = 1 }
@@ -496,11 +516,16 @@ energy_calc_generation = {
 				multiply = temp_energy_gain_m
 			}
 		}
+		if = {
+			limit = { is_ai = no }
+			set_variable = { nuclear_energy_max = { value = nuclear_reactors multiply = nuclear_energy_per_reactor_display } }
+		}
 	}
 	else = {
 		# Set only to production when nuclear power is disabled
 		set_variable = { nuclear_fuel_consumption = 0 }
 		set_variable = { nuclear_energy_generation = 0 }
+		set_variable = { nuclear_energy_max = 0 }
 		set_variable = { net_nuclear_fuel_display = total_nuclear_reactor_fuel_production }
 	}
 
