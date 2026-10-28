@@ -539,9 +539,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
-  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
-  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
-  define or doctrine change surfaces on the full CI run.
+  sizes and `allowed_battalion_groups`. Staged mode checks only staged template files,
+  so a define or doctrine change surfaces on the full CI run.
+- `template-misplaced-support` (WARNING): a `support` block lists a sub-unit with
+  `divisional = no`, or a `regimental_support` block lists one with `regimental = no`.
+  The game drops that unit from the template. Ships as WARNING for its backlog of
+  1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
+  on the full CI run only.
 
 ## validate_party_loc.py
 

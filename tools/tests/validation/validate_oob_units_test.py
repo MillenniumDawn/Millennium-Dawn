@@ -35,6 +35,7 @@ from validate_oob_units import (
     build_variant_name_index,
     build_variant_registry,
     check_attributed_archetypes,
+    check_misplaced_support,
     check_named_variant_refs,
     check_oob_variant_refs,
     check_template_slots,
@@ -2592,6 +2593,81 @@ def test_template_slots(raw, rel, expected):
     assert findings == [
         (line, category, _PREFIX + message) for line, category, message in expected
     ]
+
+
+_MISPLACED = "template-misplaced-support"
+_BARRED = {"support": {"Arty_Battery"}, "regimental_support": {"hq_engineer"}}
+_SUPPORT_UNITS = """sub_units = {
+\tArty_Battery = {
+\t\tgroup = support
+\t\tdivisional = no
+\t}
+\thq_engineer = {
+\t\tgroup = support
+\t\tregimental = no
+\t}
+}
+"""
+
+
+def _dropped(block, unit, flag):
+    return f"{block} lists '{unit}', which sets {flag} = no, so the game drops it"
+
+
+# case: (template text, (line, message) per finding)
+_MISPLACED_CASES = {
+    "regimental company in support": (
+        _paradrop_template("Test Brigade", "Arty_Battery"),
+        [(7, _dropped("support", "Arty_Battery", "divisional"))],
+    ),
+    "divisional company in regimental support": (
+        _paradrop_template("Test Brigade", "hq_engineer", block="regimental_support"),
+        [(7, _dropped("regimental_support", "hq_engineer", "regimental"))],
+    ),
+    "each company in the block it allows": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regimental_support")
+        + _paradrop_template("Test Brigade", "hq_engineer"),
+        [],
+    ),
+    "company without a placement flag": (
+        _paradrop_template("Test Brigade", "Weapons_company"),
+        [],
+    ),
+    "flags apply to support blocks only": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regiments"),
+        [],
+    ),
+    "each misplaced entry is its own finding": (
+        _paradrop_template("Test Brigade", "Arty_Battery", repeat=2),
+        [
+            (7, _dropped("support", "Arty_Battery", "divisional")),
+            (8, _dropped("support", "Arty_Battery", "divisional")),
+        ],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "raw, expected", _MISPLACED_CASES.values(), ids=_MISPLACED_CASES
+)
+def test_misplaced_support(raw, expected):
+    text = strip_comments(raw)
+    assert check_misplaced_support(text, _build_block_nodes(text), _BARRED) == [
+        (line, _MISPLACED, _PREFIX + message) for line, message in expected
+    ]
+
+
+def test_misplaced_support_reads_flags_from_unit_files(tmp_path):
+    _write(tmp_path, "common/units/MD_regimental_support.txt", _SUPPORT_UNITS)
+    _write(tmp_path, _OOB, _paradrop_template("Test Brigade", "Arty_Battery"))
+    validator = _validator(tmp_path)
+    validator._build_canonical_units()
+    validator.validate_template_slots()
+    assert [
+        (issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == _MISPLACED
+    ] == [("warning", _OOB, 7)]
 
 
 def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
