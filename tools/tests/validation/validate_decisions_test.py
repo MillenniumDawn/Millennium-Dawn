@@ -248,7 +248,12 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     "validate_money_charged_after_entry": {
         "charged on removal": ([_flat(_PAID_ON_REMOVE)], _LATE),
         "exempt id": (
-            [_flat(_PAID_ON_REMOVE, token=sorted(V._LATE_CHARGE_EXEMPT)[0])],
+            [
+                _flat(
+                    _PAID_ON_REMOVE,
+                    token=sorted(V._LATE_CHARGE_EXEMPT - V._AI_COST_EXEMPT)[0],
+                )
+            ],
             [],
         ),
         "payment effect on removal": (
@@ -504,7 +509,13 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     "validate_ai_will_do_ignores_cost": {
         "flat weight": ([_flat(_PAID, _WEIGHT)], _ignores("treasury cost")),
         "exempt id": (
-            [_flat(_PAID, _WEIGHT, token=sorted(V._AI_COST_EXEMPT)[0])],
+            [
+                _flat(
+                    _PAID,
+                    _WEIGHT,
+                    token=sorted(V._AI_COST_EXEMPT - V._LATE_CHARGE_EXEMPT)[0],
+                )
+            ],
             [],
         ),
         "scripted effect": (
@@ -1810,11 +1821,36 @@ def test_icon_type_message(tmp_path, slot, value, sprites, vanilla, fragments):
         assert all(fragment in message for fragment in fragments), message
 
 
+_ICON_POLITICS = "\t\ticon = politics\n"
+
+
 def test_texture_missing_from_disk_is_counted_not_reported(tmp_path):
     textures = SpriteSizeIndex({"GFX_decision_politics": str(tmp_path / "gone.dds")})
 
     assert V._icon_type_message("decision", "d", "politics", textures) is None
     assert textures.unreadable == 1
+
+
+def test_icon_with_a_missing_texture_is_a_warning_at_its_line(tmp_path, monkeypatch):
+    textures = {f"GFX_filler_{i}": "unused.dds" for i in range(1000)}
+    textures["GFX_decision_politics"] = str(tmp_path / "gone.dds")
+    monkeypatch.setattr(
+        V, "build_sprite_size_index", lambda *a, **k: SpriteSizeIndex(textures)
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/d.txt": "cat = {\n"
+            + _nested("dec_one", _ICON_POLITICS)
+            + "}\n"
+        },
+    )
+
+    validator.validate_icon_types()
+
+    assert [(i.category, i.severity, i.line) for i in validator._issues] == [
+        ("decision-icon-unmeasured", V.Severity.WARNING, 3)
+    ]
 
 
 def test_icon_checks_skip_themselves_without_a_sprite_index(tmp_path, monkeypatch):

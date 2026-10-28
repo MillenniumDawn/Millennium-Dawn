@@ -1498,6 +1498,10 @@ _REDUNDANT_FLAG_CASES = {
         },
         None,
     ),
+    "tree loaded from a file with no flags": (
+        {"common/decisions/loader.txt": "e = { load_focus_tree = tag_focus }\n"},
+        None,
+    ),
     "flag with a loc key": (_DONE_LOC, _redundant([_read_at(1)], suffix=_HAS_LOC)),
     "two readers": (
         {_READER: _DONE_READER + "\n" + _DONE_READER + "\n"},

@@ -3847,25 +3847,38 @@ class Validator(BaseValidator):
             _extract_decision_icons, [(f, self.mod_path) for f in files]
         )
 
-        results = []
+        results, unmeasured = [], []
         for filepath, refs in zip(files, ref_lists):
+            rel = os.path.relpath(filepath, self.mod_path)
             for owner, kind, value, line in refs:
+                unreadable = sprites.unreadable
                 msg = _icon_type_message(kind, owner, value, sprites)
-                if not msg:
-                    continue
-                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+                if msg:
+                    results.append((msg, rel, line))
+                # The size read failed: the texture is missing or not in this checkout.
+                elif sprites.unreadable > unreadable:
+                    unmeasured.append(
+                        (
+                            f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> its "
+                            "texture is not on disk, so its slot size is unchecked",
+                            rel,
+                            line,
+                        )
+                    )
 
-        if sprites.unreadable:
-            self.log(
-                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
-                "warning",
-            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
             Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+        self._report(
+            unmeasured,
+            "✓ Every decision icon's texture could be measured",
+            "Decision icons whose texture is not on disk:",
+            Severity.WARNING,
+            category="decision-icon-unmeasured",
         )
 
     def validate_category_desc_images(self):

@@ -81,7 +81,9 @@ _MATH_PRECISION_SHORTHAND_RE = re.compile(
 _SIX_DECIMALS_RE = re.compile(r"\.\d{6}")
 
 
-def _read_script_text(filename: str, mod_path: str, require: str = "") -> str | None:
+def _read_script_text(
+    filename: str, mod_path: str, require: Tuple[str, ...] = ()
+) -> str | None:
     if should_skip_file(filename, mod_path=mod_path):
         return None
     try:
@@ -89,7 +91,7 @@ def _read_script_text(filename: str, mod_path: str, require: str = "") -> str | 
     except OSError:
         return None
     # Cleaning only removes text, so a token missing from the raw file stays missing.
-    if require not in text:
+    if require and not any(token in text for token in require):
         return None
     return blank_quoted_strings(strip_comments(text))
 
@@ -338,8 +340,9 @@ def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
 def process_file_for_focus_flag_sites(args: Tuple[str, str]):
     """Pool worker for the redundant focus-flag check. See _scan_focus_flag_sites."""
     filename, mod_path = args
-    text = _read_script_text(filename, mod_path, require="country_flag")
-    if text is None or "country_flag" not in text:
+    tokens = ("country_flag", "load_focus_tree")
+    text = _read_script_text(filename, mod_path, require=tokens)
+    if text is None or not any(token in text for token in tokens):
         return {}, {}, set(), set(), ("", set(), set())
     rel = os.path.relpath(filename, mod_path)
     in_focus_dir = _FOCUS_DIR_MARKER in rel + os.sep
@@ -1831,7 +1834,8 @@ class Validator(BaseValidator):
             cleared |= f_cleared
             long_form |= f_long
             f_rel, f_defined, f_loaded = f_trees
-            defined_trees[f_rel] = f_defined
+            if f_defined:
+                defined_trees[f_rel] = f_defined
             loaded_trees |= f_loaded
             if f_loaded:
                 loading_files.add(f_rel)

@@ -100,6 +100,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `tools/assets/resize_decision_icons.py --dry-run` shows the fix: it resizes in place
   when nothing else uses the texture, else writes a resized sibling and repoints. It
   skips vanilla art.
+- `decision-icon-unmeasured` (WARNING): an icon whose texture is not on disk, so its
+  slot size is unchecked. In CI this means the art lives outside the shipped trees
+  (see `validation-pipeline.md`); confirm the size locally.
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
@@ -107,7 +110,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
   country that cannot pay. A decision that must stay unguarded, such as a deadline the
-  AI cannot miss, needs a reason in `ai_cost_exempt`.
+  AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
+  decision, not one cost, so re-check its reason when the decision gains a new cost.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -135,7 +139,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   delivery is intended and is not followed. A treasury custom cost that
   `decision-custom-cost-not-charged` already reports as late is not repeated. An
   outcome rather than a price, such as an annexation inheriting debt, needs a reason in
-  `late_charge_exempt`. `timeout_effect` and `cancel_effect` are not read.
+  `late_charge_exempt`, which also skips the whole decision. `timeout_effect` and
+  `cancel_effect` are not read.
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
