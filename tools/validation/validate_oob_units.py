@@ -2505,6 +2505,9 @@ def read_air_wing_placements(mod_path: str) -> Dict[str, List[Tuple[str, int, in
                 continue
             for idx in wings["children"]:
                 state = nodes[idx]
+                # Carrier wings are keyed by a quoted ship name, not a state id.
+                if not (state["label"] or "").isdigit():
+                    continue
                 planes = 0
                 for wing in state["children"]:
                     amount = _top_level_value(

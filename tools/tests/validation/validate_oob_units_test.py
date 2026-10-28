@@ -2918,6 +2918,11 @@ _AIRBASE_CASES = {
         None,
         [(_SWE_AIR, 2, "state 99 starts with 1 planes, but air_base 0 holds 0")],
     ),
+    "carrier wing is not a state": (
+        {_SWE_AIR: _air_oob(('"HSwMS Test (R01)"', [25]), (10, [24]))},
+        None,
+        [],
+    ),
     "vanilla capacity without the define": (
         {_SWE_AIR: _air_oob((10, [25])), "common/defines/MD_defines.lua": ""},
         None,
