@@ -2762,6 +2762,121 @@ def test_full_run_reports_both_categories_for_every_template_source(tmp_path, re
     ]
 
 
+# --- air base capacity ------------------------------------------------------
+
+_AIRBASE = "airbase-over-capacity"
+_SWE_AIR = "history/units/SWE_2000_bba.txt"
+_NOR_AIR = "history/units/NOR_2000_bba.txt"
+_STATE_10 = "history/states/10-Test.txt"
+_BUILDINGS_1 = "\t\tbuildings = {\n\t\t\tair_base = 1\n\t\t}\n"
+
+
+def _state_file(history):
+    return f"state = {{\n\tid = 10\n\thistory = {{\n{history}\t}}\n}}\n"
+
+
+def _air_oob(*states):
+    """`air_wings` with one wing per amount: ``(state id, [amounts])`` pairs."""
+    body = ""
+    for state_id, amounts in states:
+        body += f"\t{state_id} = {{\n"
+        for amount in amounts:
+            body += (
+                f'\t\tsmall_plane_airframe_1 = {{ owner = "SWE" amount = {amount} }}\n'
+            )
+        body += "\t}\n"
+    return "air_wings = {\n" + body + "}\n"
+
+
+_OVER = "state 10 starts with 25 planes, but air_base 1 holds 24"
+
+# case: (files over the base tree, staged files or None, (file, line, message))
+_AIRBASE_CASES = {
+    "over capacity": ({_SWE_AIR: _air_oob((10, [25]))}, None, [(_SWE_AIR, 2, _OVER)]),
+    "at capacity": ({_SWE_AIR: _air_oob((10, [24]))}, None, []),
+    "wings in one state add up": (
+        {_SWE_AIR: _air_oob((10, [12, 13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "state repeated in one file": (
+        {_SWE_AIR: _air_oob((10, [12]), (10, [13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "commented wing": (
+        {
+            _SWE_AIR: _air_oob((10, [24])).replace(
+                "\t}", "\t\t# small_plane_airframe_1 = { amount = 1 }\n\t}"
+            )
+        },
+        None,
+        [],
+    ),
+    "dated air base is not the start level": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1
+                + "\t\t2010.1.1 = {\n\t\t\tbuildings = {\n\t\t\t\tair_base = 5\n"
+                "\t\t\t}\n\t\t}\n"
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "unknown state": (
+        {_SWE_AIR: _air_oob((99, [1]))},
+        None,
+        [(_SWE_AIR, 2, "state 99 starts with 1 planes, but air_base 0 holds 0")],
+    ),
+    "vanilla capacity without the define": (
+        {_SWE_AIR: _air_oob((10, [25])), "common/defines/MD_defines.lua": ""},
+        None,
+        [],
+    ),
+    "shared base": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        None,
+        [
+            (_NOR_AIR, 2, _OVER.replace("planes", "planes (shared with SWE)")),
+            (_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)")),
+        ],
+    ),
+    "staged file counts unstaged wings": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        [_SWE_AIR],
+        [(_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)"))],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files, staged, expected", _AIRBASE_CASES.values(), ids=_AIRBASE_CASES
+)
+def test_airbase_capacity(tmp_path, files, staged, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/defines/MD_defines.lua": (
+                "\tNDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24\n"
+            ),
+            _STATE_10: _state_file(_BUILDINGS_1),
+            **files,
+        },
+    )
+    validator = _validator(tmp_path, staged_only=staged is not None)
+    if staged is not None:
+        validator.staged_files = [str(tmp_path / rel) for rel in staged]
+
+    validator.validate_airbase_capacity()
+
+    assert [
+        (issue.severity, issue.category, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+    ] == [("warning", _AIRBASE, *finding) for finding in expected]
+
+
 def test_clean_mod_passes_every_oob_check(tmp_path):
     _write_units(tmp_path)
     write_tree(
