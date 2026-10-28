@@ -41,3 +41,5 @@ Steps:
    What NOT to write: padding filler ("Fixed an issue where the AI would not behave correctly" — say what specifically, e.g. "Fixed AI sending volunteers to countries it cannot reach"); internal terminology players don't know ("immediate block", "trigger scope"); future tense ("Will add" — use "Added"); a duplicate of an entry already covering the same change.
 
 5. Insert the new entries into `Changelog.txt` under the existing top-most version heading. Merge into existing categories if they already exist; append new categories after existing ones. Do not create a new version heading unless $ARGUMENTS contains a version string (e.g., `v1.13.0`), in which case add a new version heading above the current top-most one.
+
+6. Run `python3 tools/merge_changelog.py --fix`, then `--preview`. If a reported duplicate or shared phrase includes your new entries, merge them into the existing entry instead of adding a parallel one.
