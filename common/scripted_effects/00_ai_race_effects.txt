@@ -151,7 +151,7 @@ ai_race_rebuild_derived_state = {
 			var:ai_race_participant = {
 				ai_race_rebuild_country_metrics = yes
 				ai_race_refresh_operating_state = yes
-				ai_race_refresh_offer = yes
+				if = { limit = { ai_race_full_mode = yes } ai_race_refresh_offer = yes }
 				ai_race_refresh_effective_capability = yes
 			}
 		}
@@ -383,35 +383,29 @@ ai_race_sort_participants = {
 			}
 		}
 	}
-	set_temp_variable = { ai_race_sort_remaining = global.ai_race_sort_input^num }
 	while_loop_effect = {
-		limit = { check_variable = { ai_race_sort_remaining > 0 } }
+		limit = { check_variable = { global.ai_race_sort_input^num > 0 } }
 		set_temp_variable = { ai_race_candidate_found = 0 }
 		for_each_loop = {
 			array = global.ai_race_sort_input
 			value = ai_race_sort_country
 			var:ai_race_sort_country = {
+				set_temp_variable = { ai_race_this_id = THIS.id }
 				if = {
-					limit = { NOT = { is_in_array = { global.ai_race_sorted_work = THIS } } }
-					set_temp_variable = { ai_race_this_id = THIS.id }
-					if = {
-						limit = { ai_race_candidate_is_better = yes }
-						set_temp_variable = { ai_race_candidate_found = 1 }
-						set_temp_variable = { ai_race_candidate_id = THIS.id }
-						set_temp_variable = { ai_race_candidate_stage = ai_race_stage }
-						set_temp_variable = { ai_race_candidate_months = ai_race_stage_months }
-						set_temp_variable = { ai_race_candidate_capability = ai_race_effective_capability }
-					}
+					limit = { ai_race_candidate_is_better = yes }
+					set_temp_variable = { ai_race_candidate_found = 1 }
+					set_temp_variable = { ai_race_candidate_id = THIS.id }
+					set_temp_variable = { ai_race_candidate_stage = ai_race_stage }
+					set_temp_variable = { ai_race_candidate_months = ai_race_stage_months }
+					set_temp_variable = { ai_race_candidate_capability = ai_race_effective_capability }
 				}
 			}
 		}
-		if = {
-			limit = { check_variable = { ai_race_candidate_found = 1 } }
-			var:ai_race_candidate_id = { add_to_array = { global.ai_race_sorted_work = THIS } }
+		var:ai_race_candidate_id = {
+			add_to_array = { global.ai_race_sorted_work = THIS }
+			remove_from_array = { global.ai_race_sort_input = THIS }
 		}
-		subtract_from_temp_variable = { ai_race_sort_remaining = 1 }
 	}
-	clear_array = global.ai_race_sort_input
 }
 
 # Capacity and investment quotes
@@ -551,13 +545,14 @@ ai_race_refresh_capacity_sample = {
 	set_variable = { ai_race_oil_available = { value = resource@oil add = ai_race_accounted_oil max = 0 } }
 }
 
+# Outcomes Only reads no capacity state, so only Full mode samples it.
 ai_race_refresh_operating_state = {
 	if = {
-		limit = { has_country_flag = energy_state_bases_initialized }
-		calculate_energy_use = yes
-	}
-	if = {
 		limit = { ai_race_full_mode = yes }
+		if = {
+			limit = { has_country_flag = energy_state_bases_initialized }
+			calculate_energy_use = yes
+		}
 		set_temp_variable = { ai_race_requirement_stage = ai_race_stage }
 		ai_race_load_stage_requirements = yes
 		set_variable = { ai_race_current_required_months = ai_race_requirement_months }
@@ -645,7 +640,6 @@ ai_race_refresh_operating_state = {
 			add_dynamic_modifier = { modifier = ai_race_operating_modifier }
 		}
 	}
-	else = { ai_race_refresh_capacity_sample = yes }
 }
 
 # Callers refresh operating state first; offers reuse its capacity sample without accruing expenses.
@@ -1318,7 +1312,7 @@ ai_race_run_monthly_work = {
 			ai_race_rebuild_country_metrics = yes
 			ai_race_refresh_operating_state = yes
 			ai_race_monthly_progress = yes
-			ai_race_refresh_offer = yes
+			if = { limit = { ai_race_full_mode = yes } ai_race_refresh_offer = yes }
 			ai_race_refresh_effective_capability = yes
 			ai_race_refresh_gui = yes
 		}

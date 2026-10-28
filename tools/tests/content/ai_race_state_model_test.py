@@ -886,12 +886,14 @@ class RaceScript:
                 if "max" in data:
                     value = min(value, self.value(data["max"], identifier))
                 scope[name] = value
-            elif key == "add_to_array":
+            elif key in {"add_to_array", "remove_from_array"}:
                 name, _op, raw = operand[0]
                 scope, name = self._scope(name, identifier)
-                scope.setdefault(name, []).append(
-                    identifier if raw == "THIS" else self.value(raw, identifier)
-                )
+                member = identifier if raw == "THIS" else self.value(raw, identifier)
+                if key == "add_to_array":
+                    scope.setdefault(name, []).append(member)
+                elif member in scope.get(name, []):
+                    scope[name].remove(member)
             elif key in {
                 "set_country_flag",
                 "set_global_flag",

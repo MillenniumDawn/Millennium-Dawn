@@ -712,7 +712,7 @@ def test_script_quote_snapshots_gdp_and_divides_principal_into_520_payments(scri
     _ordered(
         operating, "calculate_energy_use = yes", "ai_race_refresh_capacity_sample = yes"
     )
-    assert operating.count("ai_race_refresh_capacity_sample = yes") == 2
+    assert operating.count("ai_race_refresh_capacity_sample = yes") == 1
     callers = [scripts["progression"], scripts["actions"]]
     offers = 0
     for text in callers:
