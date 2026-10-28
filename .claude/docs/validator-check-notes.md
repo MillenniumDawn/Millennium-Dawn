@@ -100,13 +100,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `tools/assets/resize_decision_icons.py --dry-run` shows the fix: it resizes in place
   when nothing else uses the texture, else writes a resized sibling and repoints. It
   skips vanilla art.
+- `decision-icon-unmeasured` (WARNING): an icon whose texture is not on disk, so its
+  slot size is unchecked. In CI this means the art lives outside the shipped trees
+  (see `validation-pipeline.md`); confirm the size locally.
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
-- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+- `decision-ai-will-do-ignores-cost` (ERROR): the decision twin of
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
-  country that cannot pay.
+  country that cannot pay. A decision that must stay unguarded, such as a deadline the
+  AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
+  decision, not one cost, so re-check its reason when the decision gains a new cost.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -128,12 +133,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
-- `decision-money-charged-late` (WARNING): money a non-mission `remove_effect` charges
+- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges
   itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
   the `modify_*` payment effects count. A scripted effect that pays for a building on
   delivery is intended and is not followed. A treasury custom cost that
-  `decision-custom-cost-not-charged` already reports as late is not repeated. A
-  deliberate pay-on-completion decision is reported too. `timeout_effect` and
+  `decision-custom-cost-not-charged` already reports as late is not repeated. An
+  outcome rather than a price, such as an annexation inheriting debt, needs a reason in
+  `late_charge_exempt`, which also skips the whole decision. `timeout_effect` and
   `cancel_effect` are not read.
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
@@ -439,6 +445,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   split. `mio-equipment-type-unknown` (WARNING) suppresses the bonus check for its block.
   - Scope in `organizations/`: the trait's `limit_to_equipment_type`, else the org's
     `equipment_type`, else that of the org named by `include`.
+  - Scope in `policies/` and company traits: each named block is its own scope. A
+    policy's `same_as_mio` block reaches the attached MIO's departments, so it gets no
+    check. Outside `policies/` it is an unknown type.
   - `NON_STAT_BONUS_KEYS` excludes the per-archetype production keys.
     `zero_base_exempt_stats` in the config is empty on purpose: confirm in game before
     adding a stat. The naval `*_factor` keys stay out of it. Vanilla declares their base
@@ -594,9 +603,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR, except
-  `shadowed-branch`, a WARNING until its existing findings are fixed. It scans
-  `common`, `events`, `history`, and `music`.
+  core batch through `validate_common_mistakes.py` and report ERROR, with
+  `shadowed-branch` as its own category. It scans `common`, `events`, `history`, and
+  `music`.
 - Shadowed branches: the parser blanks quoted strings, so a limit with a quoted value
   never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
   skipped, since the rotation check already reports their duplicate branches.
@@ -627,8 +636,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
   foreign-scope set, any `clr_country_flag` or `modify_country_flag`, a timed or valued
-  form, a focus with `bypass`, and joint rewards. A file that reloads a tree gets a
-  caution, since `load_focus_tree` without `keep_completed = yes` wipes completion.
+  form, a focus with `bypass`, joint rewards, and a set in a file that loads a focus
+  tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
+  focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
   - `untooltipped-available-check`: a bare `check_variable` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
