@@ -536,7 +536,9 @@ class RaceScript:
         if isinstance(name, list):
             result = 0
             matched = False
-            for key, _op, operand in name:
+            for index, (key, _op, operand) in enumerate(name):
+                if key == "value" and index:
+                    raise AssertionError("value is only the base of a math expression")
                 if key in {"if", "else"}:
                     if key == "if":
                         matched = False
@@ -1039,6 +1041,16 @@ def test_harness_rejects_math_blocks_inside_variable_comparisons():
     )["trigger"]
     with pytest.raises(AssertionError, match="check_variable needs a scalar value"):
         race.condition(script, 1)
+
+
+def test_harness_rejects_value_statements_inside_math_conditionals():
+    race = RaceScript()
+    race.country(1)
+    expression = _parse_race_script(
+        "math = { value = 1 if = { limit = { value = 1 equals = 1 } value = 2 } }"
+    )["math"]
+    with pytest.raises(AssertionError, match="value is only the base"):
+        race.value(expression, 1)
 
 
 @pytest.mark.parametrize("initial, expected", [(0, 23), (1, 15), (2, 18)])
