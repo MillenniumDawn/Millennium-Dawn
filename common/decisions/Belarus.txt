@@ -2455,15 +2455,26 @@ BLR_Foreign_azot_trade_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision cancel_BLR_trade"
-			BLR = { country_event = belarus_azot.4 }
+			var:BLR_azot_exporter = {
+				country_event = belarus_azot.4
+				subtract_from_variable = { current_azot_capacity = 1 }
+			}
 			remove_ideas = BLR_azot_fertilizers_idea
-			subtract_from_variable = { BLR.current_azot_capacity = 1 }
 		}
 
 		ai_will_do = {
 			base = 0
 			modifier = {
-				THIS = { has_opinion = { target = BLR value < -10 } }
+				OR = {
+					AND = {
+						check_variable = { BLR_azot_exporter = BLR }
+						has_opinion = { target = BLR value < -10 }
+					}
+					AND = {
+						check_variable = { BLR_azot_exporter = SOV }
+						has_opinion = { target = SOV value < -10 }
+					}
+				}
 				add = 10
 			}
 		}
