@@ -12506,7 +12506,7 @@ country_event = { # The Marengo Trial Reaches a Verdict
 	}
 }
 
-country_event = { # Bolle Jos Surfaces in Freetown
+country_event = { # Bolle Jos Spotted in Sierra Leone
 	id = HOL_mocro.9
 	title = HOL_mocro.9.t
 	desc = HOL_mocro.9.d
@@ -12517,40 +12517,52 @@ country_event = { # Bolle Jos Surfaces in Freetown
 	trigger = {
 		original_tag = HOL
 		has_country_flag = HOL_mocro_maffia_active
+		has_country_flag = HOL_bolle_jos_most_wanted
 		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
-		check_variable = { strength_of_cartels > 49 }
-		NOT = { has_global_flag = GLOBAL_bolle_jos_resolved }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
 		country_exists = SIE
+		SIE = { has_country_flag = HOL_bolle_jos_sheltered }
 		NOT = { has_war_with = SIE }
 	}
 
 	immediate = {
 		log = "[GetDateText]: [Root.GetName]: event HOL_mocro.9"
-		set_global_flag = GLOBAL_bolle_jos_at_large
-		SIE = { country_event = { id = HOL_mocro.10 days = 2 } }
+		set_global_flag = HOL_bolle_jos_at_large
 	}
 
 	option = { # He cannot hide forever
 		name = HOL_mocro.9.a
 		log = "[GetDateText]: [This.GetName]: HOL_mocro.9.a executed"
-		custom_effect_tooltip = HOL_bolle_jos_decisions_unlocked_tt
+		set_country_flag = { flag = HOL_bolle_jos_extradition_cooldown days = 90 value = 1 }
+		SIE = { country_event = { id = HOL_mocro.11 days = 1 } }
+		unlock_decision_tooltip = HOL_request_bolle_jos_extradition
+		if = {
+			limit = { NOT = { has_dlc = "La Resistance" } }
+			unlock_decision_tooltip = HOL_locate_bolle_jos_fallback
+		}
 		ai_chance = { base = 1 }
 	}
 }
 
-country_event = { # A Dutch Investor in Freetown
+country_event = { # A Turkish Investor Named Omar Sheriff
 	id = HOL_mocro.10
 	title = HOL_mocro.10.t
 	desc = HOL_mocro.10.d
 	picture = GFX_african_meeting
 	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		country_exists = HOL
+		HOL = { has_country_flag = HOL_bolle_jos_most_wanted }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
 
 	option = { # His money is welcome here
 		name = HOL_mocro.10.a
 		log = "[GetDateText]: [This.GetName]: HOL_mocro.10.a executed"
-		set_country_flag = SIE_sheltering_bolle_jos
-		add_ideas = SIE_bolle_jos_patronage
-		increase_corruption = yes
+		set_country_flag = HOL_bolle_jos_sheltered
+		add_ideas = HOL_bolle_jos_patronage
 		HOL = {
 			set_temp_variable = { cart_influence_change = 2 }
 			modify_cartel_variables_effect = yes
@@ -12564,7 +12576,10 @@ country_event = { # A Dutch Investor in Freetown
 		add_political_power = -25
 		add_opinion_modifier = { target = HOL modifier = medium_increase }
 		HOL = { country_event = { id = HOL_mocro.12 days = 1 } }
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -12649,7 +12664,10 @@ country_event = { # Freetown Refuses
 		log = "[GetDateText]: [This.GetName]: HOL_mocro.13.a executed"
 		add_political_power = -25
 		SIE = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = { # Then we raise the stakes
@@ -12657,7 +12675,8 @@ country_event = { # Freetown Refuses
 		log = "[GetDateText]: [This.GetName]: HOL_mocro.13.b executed"
 		add_war_support = 0.02
 		SIE = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
-		custom_effect_tooltip = HOL_bolle_jos_pressure_unlocked_tt
+		unlock_decision_tooltip = HOL_pressure_sierra_leone_bolle_jos
+		unlock_decision_tooltip = HOL_offer_sierra_leone_development_deal
 		ai_chance = { base = 2 }
 	}
 }
@@ -12701,7 +12720,8 @@ country_event = { # Raid in Freetown Fails
 		add_stability = -0.03
 		add_war_support = -0.05
 		SIE = {
-			clr_country_flag = bolle_jos_located_by@ROOT
+			clr_country_flag = HOL_bolle_jos_located_by@ROOT
+			clr_country_flag = HOL_bolle_jos_capture_failed_by@ROOT
 			add_opinion_modifier = { target = ROOT modifier = violated_territorial_sovereignty }
 		}
 		set_country_flag = { flag = HOL_bolle_jos_raid_cooldown days = 180 value = 1 }
@@ -12725,6 +12745,159 @@ country_event = { # Dutch Forces Violate Our Sovereignty
 		ai_chance = { base = 1 }
 	}
 }
+
+country_event = { # Bolle Jos Taken in Freetown
+	id = HOL_mocro.17
+	title = HOL_mocro.17.t
+	desc = HOL_mocro.17.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	option = { # Justice catches up with him
+		name = HOL_mocro.17.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.17.a executed"
+		HOL_bolle_jos_captured_effect = yes
+		SIE = { add_opinion_modifier = { target = ROOT modifier = medium_decrease } }
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Capture Attempt Fails
+	id = HOL_mocro.18
+	title = HOL_mocro.18.t
+	desc = HOL_mocro.18.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+
+	option = { # Send in the commandos
+		name = HOL_mocro.18.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.18.a executed"
+		add_political_power = -25
+		SIE = { set_country_flag = HOL_bolle_jos_capture_failed_by@ROOT }
+		set_temp_variable = { cart_influence_change = 1 }
+		modify_cartel_variables_effect = yes
+		custom_effect_tooltip = HOL_bolle_jos_raid_unlocked_tt
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Shooting in Scheveningen
+	id = HOL_mocro.19
+	title = HOL_mocro.19.t
+	desc = HOL_mocro.19.d
+	picture = GFX_drug_dillers_apprehended
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
+
+	option = { # Another young man with a gun
+		name = HOL_mocro.19.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.19.a executed"
+		set_country_flag = HOL_bolle_jos_known
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # A Broker Named Bolle Jos
+	id = HOL_mocro.20
+	title = HOL_mocro.20.t
+	desc = HOL_mocro.20.d
+	picture = GFX_harbor
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		has_country_flag = HOL_bolle_jos_known
+		has_country_flag = HOL_mocro_maffia_active
+		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
+
+	option = { # He will not stay ahead of us
+		name = HOL_mocro.20.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.20.a executed"
+		set_country_flag = HOL_bolle_jos_fugitive
+		set_temp_variable = { cart_influence_change = 1 }
+		modify_cartel_variables_effect = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Bolle Jos Settles in Turkey
+	id = HOL_mocro.21
+	title = HOL_mocro.21.t
+	desc = HOL_mocro.21.d
+	picture = GFX_cartels_stacks
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		has_country_flag = HOL_bolle_jos_fugitive
+		has_country_flag = HOL_mocro_maffia_active
+		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
+
+	option = { # Money opens every door
+		name = HOL_mocro.21.a
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Bolle Jos Added to the Most Wanted Lists
+	id = HOL_mocro.22
+	title = HOL_mocro.22.t
+	desc = HOL_mocro.22.d
+	picture = GFX_drug_dealers_trial
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		has_country_flag = HOL_bolle_jos_fugitive
+		has_country_flag = HOL_mocro_maffia_active
+		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
+
+	option = { # Every police force in Europe is looking now
+		name = HOL_mocro.22.a
+		log = "[GetDateText]: [This.GetName]: HOL_mocro.22.a executed"
+		set_country_flag = HOL_bolle_jos_most_wanted
+		set_temp_variable = { cart_influence_change = -1 }
+		modify_cartel_variables_effect = yes
+		ai_chance = { base = 1 }
+	}
+}
+
+country_event = { # Sentenced to 24 Years in Absentia
+	id = HOL_mocro.23
+	title = HOL_mocro.23.t
+	desc = HOL_mocro.23.d
+	picture = GFX_court
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = HOL
+		has_country_flag = HOL_bolle_jos_most_wanted
+		has_country_flag = HOL_mocro_maffia_active
+		NOT = { has_country_flag = CARTEL_defeated_the_cartels }
+		NOT = { has_global_flag = HOL_bolle_jos_resolved }
+	}
+
+	option = { # Now we only need to bring him home
+		name = HOL_mocro.23.a
+		ai_chance = { base = 1 }
+	}
+}
+
 country_event = {
 	id = HOL_politics.82
 	title = HOL_politics.82.t
