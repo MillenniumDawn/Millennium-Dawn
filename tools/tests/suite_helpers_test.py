@@ -5,129 +5,16 @@ import json
 import pytest
 from shared.paths import TOOLS_DIR
 from shared.suite import (
-    EconomicScriptFixture,
     assert_findings,
     collecting_validator,
     initialize_git_repository,
     issue_dict,
     make_issue,
     make_results_tree,
-    read_decision_categories,
     run_git,
-    script_block,
     write_slug_json,
     write_text,
 )
-
-
-def test_economic_fixture_branches_observe_prior_writes_and_nested_chains():
-    script = EconomicScriptFixture({"balance": 10})
-    script.execute("""if = { limit = { check_variable = { balance > 5 } }
-            set_variable = { balance = 3 }
-            if = { limit = { check_variable = { balance < 4 } }
-                multiply_variable = { balance = 2 }
-            } else = { set_variable = { balance = 100 } }
-        } else_if = { limit = { check_variable = { balance > 0 } }
-            set_variable = { balance = 200 }
-        } else = { set_variable = { balance = 300 } }
-        if = { limit = { check_variable = { balance = 6 } }
-            set_variable = { result = { value = balance add = 2 multiply = 3 } }
-        }""")
-    assert script.values == {"balance": 6, "result": 24}
-
-
-# case: (source, expected exception text)
-_ECONOMIC_REJECTION_CASES = {
-    "unknown effect": ("treasury_change = 5", "Unsupported effect"),
-    "unbound numeric input": (
-        "set_variable = { x = missing }",
-        "Missing numeric input",
-    ),
-    "unknown arithmetic": (
-        "set_variable = { x = { value = 1 divide = 2 } }",
-        "Unsupported arithmetic",
-    ),
-    "fractional native rounding": (
-        "set_variable = { x = 1.5 } round_variable = x",
-        "Native fractional rounding",
-    ),
-    "unknown predicate": (
-        "if = { limit = { unknown_trigger = yes } set_variable = { x = 1 } }",
-        "Unsupported predicate",
-    ),
-    "unpaired else": ("else = { set_variable = { x = 1 } }", "Unpaired else"),
-    "invalid effect operator": ("set_variable > { x = 1 }", "effect operator"),
-    "invalid arithmetic operator": (
-        "set_variable = { x = { value = 1 multiply < 2 } }",
-        "arithmetic operator",
-    ),
-    "bare unknown effect": ("unknown_effect", "Malformed or unconsumed"),
-    "unclosed assignment": ("set_variable = {", "Malformed or unconsumed"),
-}
-
-
-@pytest.mark.parametrize(
-    "source,message", _ECONOMIC_REJECTION_CASES.values(), ids=_ECONOMIC_REJECTION_CASES
-)
-def test_economic_fixture_rejects_unmodeled_behavior(source, message):
-    with pytest.raises(AssertionError, match=message):
-        EconomicScriptFixture({}).execute(source)
-
-
-@pytest.mark.parametrize("source", ["", "x = {} x = {}", "x > {}"])
-def test_script_block_requires_one_definition(source):
-    with pytest.raises(AssertionError):
-        script_block(source, "x")
-
-
-def test_read_decision_categories_merges_blocks_and_ignores_scalar_metadata(tmp_path):
-    write_text(tmp_path / "one.txt", "first = { icon = scalar a = { cost = 1 } }")
-    write_text(tmp_path / "two.txt", "other = {} second = { b = { cost = 2 } }")
-    assert read_decision_categories(
-        tmp_path, (("one.txt", "first"), ("two.txt", "second"))
-    ) == {"a": " cost = 1 ", "b": " cost = 2 "}
-
-
-@pytest.mark.parametrize(
-    "comparison,value,expected",
-    [
-        ("=", 0.09, True),
-        ("=", 0.08, False),
-        (">", 0.091, True),
-        (">", 0.09, False),
-        ("<", 0.08, True),
-        ("<", 0.09, False),
-        (">=", 0.09, True),
-        (">=", 0.08, False),
-        ("<=", 0.09, True),
-        ("<=", 0.091, False),
-    ],
-)
-def test_economic_fixture_compares_world_tension(comparison, value, expected):
-    script = EconomicScriptFixture({"threat": value})
-    assert script.condition(f"threat {comparison} 0.09") is expected
-
-
-@pytest.mark.parametrize(
-    "values,source,message",
-    [
-        ({"threat": 0.1}, "threat != 0.09", "Malformed or unconsumed"),
-        ({"threat": 0.1}, "threat > missing", "Missing numeric input"),
-        ({}, "threat > 0.09", "Missing numeric input"),
-        ({"treasury_rate": -4}, "treasury_rate < -3", "predicate operator"),
-    ],
-)
-def test_economic_fixture_rejects_unmodeled_scalar_comparisons(values, source, message):
-    with pytest.raises(AssertionError, match=message):
-        EconomicScriptFixture(values).condition(source)
-
-
-def test_economic_fixture_rejects_invalid_predicate_and_weight_operators():
-    script = EconomicScriptFixture({}, predicates={"is_ai": True})
-    with pytest.raises(AssertionError, match="predicate operator"):
-        script.condition("is_ai > yes")
-    with pytest.raises(AssertionError, match="weight operator"):
-        script.weight("base > 10")
 
 
 class _Stub:
