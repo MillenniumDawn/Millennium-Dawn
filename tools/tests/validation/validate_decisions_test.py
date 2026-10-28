@@ -2483,6 +2483,7 @@ _FINDING_DECISIONS = {
     "nonselect_mission": _MISSION_DAYS + "\t\tai_will_do = { base = 1 }\n",
     "custom_cost": _block("custom_cost_trigger", "has_political_power > 10"),
     "target_no_set": _block("target_trigger", "has_war = yes"),
+    "cosmetic_targets": _block("targets", "GER FRA"),
     "from_no_trigger": _GER_TARGET + _block("visible", _FROM_WAR),
     "root_visible": _GER_TARGET + _block("visible", "has_war = yes"),
     "from_duplicate": _GER_TARGET
@@ -2571,6 +2572,7 @@ _FINDINGS_MOD = {
 }
 # WARNINGs held back until their backlog clears.
 _BACKLOG_WARNINGS = (
+    "decision-cosmetic-targeting",
     "decision-duplicate-log",
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",

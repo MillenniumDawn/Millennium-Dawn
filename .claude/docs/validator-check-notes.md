@@ -73,6 +73,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   stale name leaves the tooltip empty while the unlock still happens. The category form
   takes the bare token only.
 - `validate_formable_commitment_sync` (ERROR): contract in `formable-reference.md`.
+- `decision-cosmetic-targeting` (WARNING): a single explicit country target is a
+  candidate for a normal decision with a custom icon. Multiple explicit country
+  targets without unquoted `FROM` use need review for target-dependent behavior.
+  State/map targeting, script-only `allowed = { always = no }`, target arrays, and
+  dynamic country variants are skipped. For multiple targets, an enabled
+  `war_with_target_on_*` hint also counts as target use. Comments and quoted text
+  such as logs do not count as script use. This is advisory: localisation and called
+  scripts may consume `FROM`, and a single-target decision may depend on it too.
+  Verify those dependencies and visibility before removing targeting. The check
+  neither follows those references nor rewrites decisions or creates icons.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
