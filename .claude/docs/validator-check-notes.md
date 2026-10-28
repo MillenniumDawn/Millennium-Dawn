@@ -73,6 +73,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   stale name leaves the tooltip empty while the unlock still happens. The category form
   takes the bare token only.
 - `validate_formable_commitment_sync` (ERROR): contract in `formable-reference.md`.
+- `decision-cosmetic-targeting` (WARNING): a single explicit country target is a
+  candidate for a normal decision with a custom icon. Multiple explicit country
+  targets without unquoted `FROM` use need review for target-dependent behavior.
+  State/map targeting, script-only `allowed = { always = no }`, target arrays, and
+  dynamic country variants are skipped. For multiple targets, an enabled
+  `war_with_target_on_*` hint also counts as target use. Comments and quoted text
+  such as logs do not count as script use. This is advisory: localisation and called
+  scripts may consume `FROM`, and a single-target decision may depend on it too.
+  Verify those dependencies and visibility before removing targeting. The check
+  neither follows those references nor rewrites decisions or creates icons.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
@@ -133,14 +143,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
-- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges
-  itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
-  the `modify_*` payment effects count. A scripted effect that pays for a building on
-  delivery is intended and is not followed. A treasury custom cost that
+- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges,
+  by the cost rules of `decision-ai-will-do-ignores-cost`, directly or through the
+  scripted effects it calls. Building payments are not followed, since they are paid on
+  delivery: an effect that holds `add_building_construction`, `add_offsite_building`, or
+  `skip_payment`, or calls one that does. A treasury custom cost that
   `decision-custom-cost-not-charged` already reports as late is not repeated. An
-  outcome rather than a price, such as an annexation inheriting debt, needs a reason in
-  `late_charge_exempt`, which also skips the whole decision. `timeout_effect` and
-  `cancel_effect` are not read.
+  outcome rather than a price, such as an annexation inheriting debt or a charge per
+  subject converted at the end, needs a reason in `late_charge_exempt`, which also
+  skips the whole decision. `timeout_effect` and `cancel_effect` are not read. Known
+  gap: a building built in the decision itself and paid through a separate effect still
+  counts (Syria's cotton investment is exempt for this).
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
@@ -539,9 +552,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
-  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
-  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
-  define or doctrine change surfaces on the full CI run.
+  sizes and `allowed_battalion_groups`. Staged mode checks only staged template files,
+  so a define or doctrine change surfaces on the full CI run.
+- `template-misplaced-support` (WARNING): a `support` block lists a sub-unit with
+  `divisional = no`, or a `regimental_support` block lists one with `regimental = no`.
+  The game drops that unit from the template. Ships as WARNING for its backlog of
+  1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
+  on the full CI run only.
 
 ## validate_party_loc.py
 

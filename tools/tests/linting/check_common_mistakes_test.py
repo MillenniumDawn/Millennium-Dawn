@@ -60,6 +60,7 @@ from check_common_mistakes import (
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
     _check_shadowed_branches,
+    _check_stat_effect_magnitude,
     _check_tautological_or,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
@@ -1889,6 +1890,27 @@ _COUNT_CASES: dict[
             ],
         ),
     ],
+    _check_stat_effect_magnitude: [
+        ("fraction not flagged", 0, ["\tadd_stability = 0.05\n"]),
+        ("negative fraction not flagged", 0, ["\tadd_stability = -0.1\n"]),
+        ("stability of 1 flagged", 1, ["\tadd_stability = 1\n"]),
+        ("stability of -1 flagged", 1, ["\tadd_stability = -1\n"]),
+        ("war support of 15 flagged", 1, ["\tadd_war_support = 15\n"]),
+        ("variable not flagged", 0, ["\tadd_stability = var_name\n"]),
+        ("decimal magnitude flagged", 1, ["\tadd_stability = 1.5\n"]),
+        ("expression not flagged", 0, ["\tadd_stability = 5 * 0.01\n"]),
+        ("comment not flagged", 0, ["\t# add_stability = 1\n"]),
+        (
+            "whole number before a closing brace flagged",
+            1,
+            ["\tTAG = { add_stability = 1 }\n"],
+        ),
+        (
+            "whole number inside a log string not flagged",
+            0,
+            ['\tlog = "add_stability = 1"\n'],
+        ),
+    ],
     _check_else_with_limit: [
         (
             "limit directly inside else flagged",
@@ -2772,6 +2794,12 @@ _EXPECTED = {
             "else_if never runs -- the branch at line 2 already matches whenever this limit holds, and if/else_if stops at the first match",
         )
     ],
+    "war support 15": [
+        (
+            1,
+            "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
+        )
+    ],
 }
 
 
@@ -3311,6 +3339,11 @@ _EXACT_CASES = [
         "shadowed else_if",
         _check_shadowed_branches,
         _chain("has_idea = a", "has_idea = a"),
+    ),
+    _exact(
+        "war support 15",
+        _check_stat_effect_magnitude,
+        ["\tadd_war_support = 15\n"],
     ),
 ]
 
