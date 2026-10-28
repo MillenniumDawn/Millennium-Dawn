@@ -4220,9 +4220,9 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns (errors, warnings), each a
-    list of (filepath, line_num, message) tuples. Shadowed branches are warnings
-    while the existing ones are triaged."""
+    """Check a single file for common mistakes. Returns (errors, shadowed), each a
+    list of (filepath, line_num, message) tuples. Shadowed branches are kept apart
+    so the validator can report them under their own category."""
     issues = []
 
     try:
@@ -4481,10 +4481,10 @@ def check_file(filepath):
         issues.extend(_check_bare_statement_token(lines))
 
     # The leader rotation check already reports duplicate branches in these files.
-    warnings = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
     return (
         [(filepath, ln, msg) for ln, msg in issues],
-        [(filepath, ln, msg) for ln, msg in warnings],
+        [(filepath, ln, msg) for ln, msg in shadowed],
     )
 
 
@@ -4540,13 +4540,12 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = sorted(issue for errors, _ in results for issue in errors)
-    warnings = sorted(issue for _, file_warnings in results for issue in file_warnings)
+    all_issues = sorted(
+        issue for errors, shadowed in results for issue in errors + shadowed
+    )
 
     for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
-    for filepath, line_num, message in warnings:
-        print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
 
