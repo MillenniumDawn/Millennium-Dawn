@@ -37,9 +37,6 @@ EU_update_vars = {
 			add_to_variable = { global.var_EUpopTotal = THIS.population_total_m }
 		}
 
-		# Already millions, which is what the population tooltip and GDP per capita expect
-		set_variable = { global.var_EUpopTotalDisplay = global.var_EUpopTotal }
-
 		set_variable = { var = global.var_europeanism value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
@@ -1201,8 +1198,9 @@ update_EU_average_gdpc_lvl = { # For calcuations that don't have set_EU_gdp
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
 		add_to_variable = { global.EU_gdp_capita = THIS.gdp_total }
 	}
-	clamp_variable = { var = global.var_EUpopTotalDisplay min = 0.001 }
-	divide_variable = { global.EU_gdp_capita = global.var_EUpopTotalDisplay }
+	if = { limit = { check_variable = { global.var_EUpopTotal > 0 } }
+		divide_variable = { global.EU_gdp_capita = global.var_EUpopTotal }
+	}
 	update_eu_dirty_variable = yes
 }
 
