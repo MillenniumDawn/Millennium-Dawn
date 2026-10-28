@@ -30,19 +30,15 @@ EU_update_vars = {
 	hidden_effect = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
-		# population_total, not max_manpower_k: the engine value wraps negative above ~922M people (#4879)
+		# population_total_m, not population_total: hundred-thousand sums lose precision
 		set_variable = { var = global.var_EUpopTotal value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = { global.var_EUpopTotal = THIS.population_total }
+			add_to_variable = { global.var_EUpopTotal = THIS.population_total_m }
 		}
 
-		set_variable = {
-			global.var_EUpopTotalDisplay = {
-				value = global.var_EUpopTotal
-				multiply = 0.1
-			}
-		}
+		# Already millions, which is what the population tooltip and GDP per capita expect
+		set_variable = { global.var_EUpopTotalDisplay = global.var_EUpopTotal }
 
 		set_variable = { var = global.var_europeanism value = 0 }
 		for_each_scope_loop = {
@@ -50,7 +46,7 @@ EU_update_vars = {
 			# Population share of the Union (0-1), summing to 1 across all members
 			set_variable = {
 				EU_pop_ratio = {
-					value = THIS.population_total
+					value = THIS.population_total_m
 					if = { limit = { value = global.var_EUpopTotal greater_than = 0 }
 						divide = global.var_EUpopTotal
 					}
@@ -1051,8 +1047,8 @@ election_POTEF_in_member_state = {
 		set_variable = {
 			POTEF_pop_vote^i = {
 				value = party_pop_array^i
-				multiply = population_total
-				multiply = 100 # thousands, as the POTEF vote tooltip shows
+				multiply = population_total_m
+				multiply = 1000 # thousands, as the POTEF vote tooltip shows
 			}
 		}
 		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }
