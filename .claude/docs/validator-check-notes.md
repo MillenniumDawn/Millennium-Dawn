@@ -133,20 +133,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
-- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges
-  itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
-  the `modify_*` payment effects count. A scripted effect that pays for a building on
-  delivery is intended and is not followed. A treasury custom cost that
+- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges,
+  by the cost rules of `decision-ai-will-do-ignores-cost`, directly or through the
+  scripted effects it calls. Building payments are not followed, since they are paid on
+  delivery: an effect that holds `add_building_construction`, `add_offsite_building`, or
+  `skip_payment`, or calls one that does. A treasury custom cost that
   `decision-custom-cost-not-charged` already reports as late is not repeated. An
-  outcome rather than a price, such as an annexation inheriting debt, needs a reason in
-  `late_charge_exempt`, which also skips the whole decision. `timeout_effect` and
-  `cancel_effect` are not read.
-- `decision-money-charged-late-in-effect` (WARNING): the same check for a charge made
-  inside another scripted effect the `remove_effect` calls. Building payments are not
-  followed: an effect that holds `add_building_construction`, `add_offsite_building`, or
-  `skip_payment`, or calls one that does. Known gaps: a building built in the decision
-  itself and paid through a separate effect (Syria's cotton investment) still counts,
-  and so does a city upgrade script that charges for its level.
+  outcome rather than a price, such as an annexation inheriting debt or a charge per
+  subject converted at the end, needs a reason in `late_charge_exempt`, which also
+  skips the whole decision. `timeout_effect` and `cancel_effect` are not read. Known
+  gap: a building built in the decision itself and paid through a separate effect still
+  counts (Syria's cotton investment is exempt for this).
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,

@@ -641,16 +641,6 @@ _CATEGORY_BLOCK_RE = re.compile(
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
-# The scripted effects that move money; a decision calls them with its own amount.
-_PAYMENT_EFFECTS = frozenset(
-    {
-        "modify_treasury_effect",
-        "modify_debt_effect",
-        "modify_international_investment_effect",
-        "modify_corporate_tax_rate_effect",
-        "modify_population_tax_rate_effect",
-    }
-)
 # `treasury > 1.4` for a 1.5 charge is how the mod writes `>= 1.5`.
 _GATE_SLACK = 0.1
 # What a custom_cost_trigger can check, by the cost kind that pays for it.
@@ -3388,47 +3378,39 @@ class Validator(BaseValidator):
 
         The country may no longer have the money when the decision ends, and
         nothing gated it. Treasury, debt, investment and tax rate follow
-        `effect_costs`, so a payout is not a finding. Charges the decision writes
-        itself, through the `modify_*` payment effects, are errors. Charges made
-        inside another scripted effect are warnings under
-        `decision-money-charged-late-in-effect`. A scripted effect that pays for
-        a building on delivery is intended and is not followed. A treasury custom
-        cost that `validate_custom_cost_charged` already reports as late is left
-        to it. Missions are skipped: their `remove_effect` is a timeout outcome.
-        So are ids in `late_charge_exempt`.
+        `effect_costs`, so a payout is not a finding. Scripted effects the
+        decision calls are followed, except a building payment, which is paid on
+        delivery by design. A treasury custom cost that
+        `validate_custom_cost_charged` already reports as late is left to it.
+        Missions are skipped: their `remove_effect` is a timeout outcome. So are
+        ids in `late_charge_exempt`.
         """
         self._log_section("Checking decisions for money charged after entry...")
 
         effects, stored = self._get_cost_lookups()
-        payments = {
-            name: body for name, body in effects.items() if name in _PAYMENT_EFFECTS
-        }
         buildings = self._get_building_payments()
         followed = {
             name: body for name, body in effects.items() if name not in buildings
         }
         results = []
-        in_effect = []
 
         for d in parse_all_decision_factories(self.mod_path):
             if d.mission_subtype or not d.remove_effect:
                 continue
             if d.token in _LATE_CHARGE_EXEMPT:
                 continue
-            body = d.remove_effect[1:-1]
-            unpaid = _unpaid_custom_costs(d, effects, stored)[1]
-            late = (effect_costs(body, payments, stored) & _MONEY_COSTS) - unpaid
-            hidden = (effect_costs(body, followed, stored) & _MONEY_COSTS) - unpaid
-            for found, kinds in ((results, late), (in_effect, hidden - late)):
-                if kinds:
-                    found.append(
-                        (
-                            f"{d.token} - remove_effect charges"
-                            f" {', '.join(sorted(kinds))}, charge it in complete_effect",
-                            d.source_path,
-                            d.line,
-                        )
-                    )
+            late = effect_costs(d.remove_effect[1:-1], followed, stored) & _MONEY_COSTS
+            late -= _unpaid_custom_costs(d, effects, stored)[1]
+            if not late:
+                continue
+            results.append(
+                (
+                    f"{d.token} - remove_effect charges {', '.join(sorted(late))},"
+                    " charge it in complete_effect",
+                    d.source_path,
+                    d.line,
+                )
+            )
 
         self._report(
             results,
@@ -3437,14 +3419,6 @@ class Validator(BaseValidator):
             " complete_effect):",
             severity=Severity.ERROR,
             category="decision-money-charged-late",
-        )
-        self._report(
-            in_effect,
-            "✓ No decision charges money after entry through a scripted effect",
-            "Decisions whose remove_effect calls a scripted effect that charges"
-            " money (charge it in complete_effect):",
-            severity=Severity.WARNING,
-            category="decision-money-charged-late-in-effect",
         )
 
     def validate_treasury_gate_below_charge(self):

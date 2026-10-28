@@ -1046,8 +1046,8 @@ def test_late_charge_check_follows_scripted_effects_but_not_buildings(tmp_path):
 
     assert [(i.severity, i.category, i.message) for i in validator._issues] == [
         (
-            V.Severity.WARNING,
-            "decision-money-charged-late-in-effect",
+            V.Severity.ERROR,
+            "decision-money-charged-late",
             "dec_pay_the_bill - remove_effect charges treasury,"
             " charge it in complete_effect",
         )
