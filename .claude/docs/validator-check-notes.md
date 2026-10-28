@@ -141,6 +141,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   outcome rather than a price, such as an annexation inheriting debt, needs a reason in
   `late_charge_exempt`, which also skips the whole decision. `timeout_effect` and
   `cancel_effect` are not read.
+- `decision-money-charged-late-in-effect` (WARNING): the same check for a charge made
+  inside another scripted effect the `remove_effect` calls. Building payments are not
+  followed: an effect that holds `add_building_construction`, `add_offsite_building`, or
+  `skip_payment`, or calls one that does. Known gaps: a building built in the decision
+  itself and paid through a separate effect (Syria's cotton investment) still counts,
+  and so does a city upgrade script that charges for its level.
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
