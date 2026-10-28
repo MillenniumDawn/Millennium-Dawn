@@ -359,6 +359,22 @@ def test_event_file_dispatch_covers_the_event_only_checks(tmp_path, scoped_refs)
     assert _matching(messages, "log references Event test.2")
 
 
+def test_stat_effect_magnitude_is_wired(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "events/MD_stat.txt",
+        "country_event = {",
+        "\toption = {",
+        "\t\tadd_war_support = 15",
+        "\t}",
+        "}",
+    )
+    assert messages == [
+        "add_war_support = 15 is at least 100% -- "
+        "add_war_support takes a fraction (0.05 is 5%)"
+    ]
+
+
 def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
     messages = _messages(
         tmp_path,
