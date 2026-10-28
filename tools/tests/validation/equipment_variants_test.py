@@ -441,6 +441,14 @@ def test_starting_history_for_event_recipients(gate):
             'if = { limit = { NOT = { has_dlc = "Designer" } } } else = { set_technology = { naval_tech = 1 } }',
             0,
         ),
+        (
+            'if = { limit = { has_dlc = "Designer" } if = { limit = { NOT = { has_dlc = "Designer" } } } else = { set_technology = { naval_tech = 1 } } }',
+            0,
+        ),
+        (
+            'if = { limit = { NOT = { has_dlc = "Designer" } } if = { limit = { has_war = yes } } else = { set_technology = { naval_tech = 1 } } }',
+            1,
+        ),
     ],
 )
 def test_history_only_guaranteed_starting_grants(history, expected):

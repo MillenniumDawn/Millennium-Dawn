@@ -1140,6 +1140,10 @@ _DIRECT_COST_RE = re.compile(
     + r")\s*=\s*\{"
 )
 _EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+# A building effect, or a payment a caller can waive with skip_payment for a free build.
+_BUILDING_PAYMENT_RE = re.compile(
+    r"\b(?:add_building_construction|add_offsite_building|skip_payment)\b"
+)
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
 _STORED_LITERAL_RE = re.compile(
     r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
@@ -1456,17 +1460,34 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
                 break
             bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
             pos = end
-    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    costly = _with_callers(
+        {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}, bodies
+    )
+    return {name: bodies[name] for name in costly}
+
+
+def building_payment_effects(bodies: Dict[str, str]) -> Set[str]:
+    """Scripted effects that build or pay for a building, and every effect calling one.
+
+    `bodies` maps each scripted effect to its whole body, nested scopes included.
+    """
+    return _with_callers(
+        {name for name, body in bodies.items() if _BUILDING_PAYMENT_RE.search(body)},
+        bodies,
+    )
+
+
+def _with_callers(names: Set[str], bodies: Dict[str, str]) -> Set[str]:
+    """`names` plus every effect in `bodies` that calls one of them, at any depth."""
     while True:
         callers = {
             name
             for name, body in bodies.items()
-            if name not in costly
-            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+            if name not in names and not names.isdisjoint(_EFFECT_CALL_RE.findall(body))
         }
         if not callers:
-            return {name: bodies[name] for name in costly}
-        costly |= callers
+            return names
+        names |= callers
 
 
 def _disabled_cost_branch(key: str, body: str) -> bool:
@@ -1773,21 +1794,22 @@ def _statement_corruption_level_bound(
     statements = list(iter_statements(block))
     if key == "OR":
         bounds = [
-            _statement_corruption_level_bound(*branch, country=country)
-            for branch in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
-        return (
-            min(bounds)
-            if bounds and all(bound is not None for bound in bounds)
-            else None
-        )
+        proven = [bound for bound in bounds if bound is not None]
+        return min(proven) if proven and len(proven) == len(bounds) else None
     if (
         key in {"AND", "ROOT", "THIS", "hidden_trigger", "custom_trigger_tooltip"}
         or key == country
     ):
         bounds = [
-            _statement_corruption_level_bound(*statement, country=country)
-            for statement in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
         proven = [bound for bound in bounds if bound is not None]
         return max(proven) if proven else None
