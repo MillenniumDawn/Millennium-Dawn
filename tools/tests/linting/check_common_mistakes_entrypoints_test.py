@@ -522,7 +522,7 @@ def test_main_reports_issues_and_exits_nonzero(tmp_path, monkeypatch, capsys):
     assert "Found 1 issue(s)" in out
 
 
-def test_main_prints_warnings_without_failing(tmp_path, monkeypatch, capsys):
+def test_main_fails_on_a_shadowed_branch(tmp_path, monkeypatch, capsys):
     path = tmp_path / "common" / "shadow.txt"
     _write(
         path,
@@ -534,9 +534,11 @@ def test_main_prints_warnings_without_failing(tmp_path, monkeypatch, capsys):
         ),
     )
 
-    assert _run_main(monkeypatch, tmp_path, str(path)) == 0
+    assert _run_main(monkeypatch, tmp_path, str(path)) == 1
 
-    assert "3: warning: else_if never runs" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "3: else_if never runs" in out
+    assert "Found 1 issue(s)" in out
 
 
 def test_main_reports_an_empty_run(tmp_path, monkeypatch, capsys):
