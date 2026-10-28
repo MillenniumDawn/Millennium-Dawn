@@ -482,6 +482,10 @@ _MIDGAME_GATE_RE = re.compile(
 _UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
     validation_config("validate_decisions", "unannounced_category_exempt")
 )
+_AI_COST_EXEMPT = frozenset(validation_config("validate_decisions", "ai_cost_exempt"))
+_LATE_CHARGE_EXEMPT = frozenset(
+    validation_config("validate_decisions", "late_charge_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -3263,9 +3267,10 @@ class Validator(BaseValidator):
 
         The decision twin of the event check (issue #5738), with the same cost
         and guard detection. Skipped: decisions the AI cannot see or never
-        takes, plain missions, and a selectable mission's `remove_effect`, which
-        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
-        broke country, so those findings carry a note.
+        takes, plain missions, a selectable mission's `remove_effect`, which
+        is a timeout outcome, and ids in `ai_cost_exempt`. A treasury
+        `custom_cost_trigger` already stops a broke country, so those findings
+        carry a note.
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
 
@@ -3273,6 +3278,8 @@ class Validator(BaseValidator):
         results = []
 
         for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.token in _AI_COST_EXEMPT:
+                continue
             if d.mission_subtype and not d.selectable_mission:
                 continue
             if weight_stays_zero(d.ai_factor):
@@ -3304,7 +3311,7 @@ class Validator(BaseValidator):
             "✓ No decision AI weights ignoring money costs",
             "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
             " deficit modifier):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-ai-will-do-ignores-cost",
         )
 
@@ -3367,7 +3374,8 @@ class Validator(BaseValidator):
         effect that pays for a building on delivery is intended and is not
         followed. A treasury custom cost that `validate_custom_cost_charged`
         already reports as late is left to it. Missions are skipped: their
-        `remove_effect` is a timeout outcome.
+        `remove_effect` is a timeout outcome. So are ids in
+        `late_charge_exempt`.
         """
         self._log_section("Checking decisions for money charged after entry...")
 
@@ -3379,6 +3387,8 @@ class Validator(BaseValidator):
 
         for d in parse_all_decision_factories(self.mod_path):
             if d.mission_subtype or not d.remove_effect:
+                continue
+            if d.token in _LATE_CHARGE_EXEMPT:
                 continue
             late = effect_costs(d.remove_effect[1:-1], payments, stored) & _MONEY_COSTS
             late -= _unpaid_custom_costs(d, effects, stored)[1]
@@ -3398,7 +3408,7 @@ class Validator(BaseValidator):
             "✓ No decision charges money after entry",
             "Decisions that charge money in remove_effect (charge it in"
             " complete_effect):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-money-charged-late",
         )
 
@@ -3837,25 +3847,38 @@ class Validator(BaseValidator):
             _extract_decision_icons, [(f, self.mod_path) for f in files]
         )
 
-        results = []
+        results, unmeasured = [], []
         for filepath, refs in zip(files, ref_lists):
+            rel = os.path.relpath(filepath, self.mod_path)
             for owner, kind, value, line in refs:
+                unreadable = sprites.unreadable
                 msg = _icon_type_message(kind, owner, value, sprites)
-                if not msg:
-                    continue
-                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+                if msg:
+                    results.append((msg, rel, line))
+                # The size read failed: the texture is missing or not in this checkout.
+                elif sprites.unreadable > unreadable:
+                    unmeasured.append(
+                        (
+                            f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> its "
+                            "texture is not on disk, so its slot size is unchecked",
+                            rel,
+                            line,
+                        )
+                    )
 
-        if sprites.unreadable:
-            self.log(
-                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
-                "warning",
-            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
             Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+        self._report(
+            unmeasured,
+            "✓ Every decision icon's texture could be measured",
+            "Decision icons whose texture is not on disk:",
+            Severity.WARNING,
+            category="decision-icon-unmeasured",
         )
 
     def validate_category_desc_images(self):

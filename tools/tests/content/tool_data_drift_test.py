@@ -146,6 +146,18 @@ def test_unannounced_category_exemptions_are_still_live():
     )
 
 
+def test_decision_cost_exemptions_are_still_live():
+    tokens = {
+        d.token for d in validate_decisions.parse_all_decision_factories(str(REPO_ROOT))
+    }
+    exempt = validate_decisions._AI_COST_EXEMPT | validate_decisions._LATE_CHARGE_EXEMPT
+    stale = sorted(exempt - tokens)
+    assert not stale, (
+        "ai_cost_exempt or late_charge_exempt names decisions that no longer "
+        f"exist: {stale}. Remove them from validation_config.json."
+    )
+
+
 def _tech_ids(text):
     ids = []
     depth = 0

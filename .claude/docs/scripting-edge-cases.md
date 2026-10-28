@@ -8,9 +8,9 @@ relevant to the effects and triggers you are changing.
 - Verify effects, modifiers, sprites, and triggers against their definitions. Existing
   usage alone is not proof that a name is valid. Match exact case, including file paths
   and unit names, for Linux compatibility.
-- `NOT = { A B }` means not both, not neither. Use separate `NOT` blocks or
-  `NOT = { OR = { A B } }` for neither. `NOR` is not a HOI4 trigger, and `NRY` is
-  Norway's country tag, not a logical operator.
+- `NOT = { A B }` is NOR: true only when every child is false. `NOT = { OR = { A B } }`
+  says the same thing explicitly. Use `NOT = { AND = { A B } }` for not both. `NOR` is
+  not a HOI4 trigger, and `NRY` is Norway's country tag, not a logical operator.
 - `threat` uses a 0.0 to 1.0 scale. Write `threat > 0.40`, not `threat > 40`.
 - `is_in_faction` accepts `yes` or `no`. Membership with a country uses
   `is_in_faction_with = TAG`. `add_to_faction = TAG` takes a country, not a faction name.
