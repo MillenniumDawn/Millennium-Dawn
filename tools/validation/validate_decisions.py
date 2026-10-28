@@ -2101,6 +2101,67 @@ class Validator(BaseValidator):
             "Decisions with target_root_trigger/target_trigger but no targets (checks every country daily):",
         )
 
+    def validate_cosmetic_targeting(self) -> None:
+        """Warn about static country targeting that may only provide a flag overlay."""
+        self._log_section("Checking decisions for cosmetic country targeting...")
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            raw = strip_comments(d.raw)
+            body = raw[raw.index("{") + 1 : -1]
+            fields = {
+                key: block if block is not None else scalar or ""
+                for key, scalar, block in iter_statements(body)
+            }
+            targets = fields.get("targets", "").split()
+            if not targets or any(
+                re.fullmatch(r"[A-Z][A-Z0-9]{2}", tag) is None for tag in targets
+            ):
+                continue
+            if (
+                fields.get("target_array")
+                or fields.get("targets_dynamic") == "yes"
+                or fields.get("state_target", "no") != "no"
+                or fields.get("on_map_mode") in ("map_only", "map_and_decisions_view")
+                or first_flat_match(fields.get("allowed", ""), ALWAYS_NO_RE)
+            ):
+                continue
+
+            if len(targets) == 1:
+                advice = (
+                    f"single country target {targets[0]}; consider a normal decision"
+                    " with a custom icon"
+                )
+            else:
+                if re.search(r"\bFROM\b", blank_quoted_strings(body), re.IGNORECASE):
+                    continue
+                if any(
+                    fields.get(f"war_with_target_on_{when}") == "yes"
+                    for when in ("complete", "remove", "timeout")
+                ):
+                    continue
+                advice = (
+                    f"{len(targets)} country targets but no explicit FROM use;"
+                    " use FROM for target-dependent behavior, or review whether"
+                    " targeting is only cosmetic"
+                )
+            results.append(
+                (
+                    f"{d.token} - {advice}; verify localisation and called scripts"
+                    " before changing targeting",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No potentially cosmetic country targeting",
+            "Decisions with potentially cosmetic country targeting:",
+            severity=Severity.WARNING,
+            category="decision-cosmetic-targeting",
+        )
+
     def validate_targets_no_trigger(self):
         """Flag decisions whose visible/available contains FROM checks but lack a target_trigger.
 
@@ -3937,6 +3998,7 @@ class Validator(BaseValidator):
         self.validate_ai_factors()
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
+        self.validate_cosmetic_targeting()
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_from_checks_in_visible()
