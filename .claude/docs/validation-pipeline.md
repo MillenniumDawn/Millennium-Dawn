@@ -140,8 +140,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
   four `hashFiles` sites must match, and each checkout must hold those files.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
-  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
-  `python3 tools/merge_changelog.py --fix` repairs it.
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order
+  and warns, without failing, about exact repeats and untidy entries;
+  `python3 tools/merge_changelog.py --fix` repairs both. Its sparse checkout holds only
+  `Changelog.txt` and `check_changelog.py`, so that script imports no other tools.
 - The report uploads `report.md` and `comment.json` in `validation-report`.
   `validation-report.yml` publishes the comment after the Test Suite completes,
   including failed runs. It checks out only the default branch's trusted code and

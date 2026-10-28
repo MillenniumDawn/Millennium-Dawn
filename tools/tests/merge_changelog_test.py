@@ -4,13 +4,8 @@ from pathlib import Path
 
 import merge_changelog
 import pytest
-from check_changelog import check_lines
-from merge_changelog import (
-    clean_lines,
-    consolidation_candidates,
-    duplicate_warnings,
-    merge_text,
-)
+from check_changelog import check_lines, duplicate_warnings
+from merge_changelog import consolidation_candidates, merge_text
 from shared.suite import initialize_git_repository, run_git
 
 SCRIPT = Path(__file__).resolve().parents[1] / "merge_changelog.py"
@@ -171,31 +166,6 @@ def test_pr_entry_whose_category_main_dropped_stays_unresolved():
     theirs = changelog(" - A\n", " - PR entry\n")
 
     assert merge_text(changelog(" - A\n"), ours, theirs) is None
-
-
-@pytest.mark.parametrize(
-    ("content", "expected", "removed"),
-    [
-        ("  -  Added  a   tank\n", " - Added a tank.\n", []),
-        ("- [KOR][NKO] Reworked OOBs\n", " - [KOR]/[NKO] Reworked OOBs.\n", []),
-        (
-            " - [SIA/CBD]Added a border war\n",
-            " - [SIA]/[CBD] Added a border war.\n",
-            [],
-        ),
-        (" - Fixed a tooltip (Issue #5)\n", " - Fixed a tooltip (Issue #5)\n", []),
-        (" - Renamed icons to `GFX_`\n", " - Renamed icons to `GFX_`\n", []),
-        (" - [ENG] Kept [brackets] later\n", " - [ENG] Kept [brackets] later.\n", []),
-        (" - A.\n  - A.\n - B.\n", " - A.\n - B.\n", [" - A."]),
-        (" - A.\n\n  Bugfix:  \n - A.\n", " - A.\n\nBugfix:\n - A.\n", []),
-        (" - [ERI] Added an OOB.\n - [ETH] Added an OOB.\n", None, []),
-        (" - [ENG] Added a tank.\n - Added a tank.\n", None, []),
-    ],
-)
-def test_clean_lines(content, expected, removed):
-    lines, dropped = clean_lines((top(content) + OLD_VERSION).splitlines(True))
-    assert "".join(lines) == top(expected or content) + OLD_VERSION
-    assert dropped == removed
 
 
 @pytest.mark.parametrize(

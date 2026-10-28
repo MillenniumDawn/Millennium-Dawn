@@ -227,7 +227,9 @@ Resolve conflict markers first.
   by the first country tag. Equal tags keep their order. Blank lines between
   entries are dropped and repeated blank lines become one.
 
-The Git merge driver applies only the ordering after a successful merge.
+The Git merge driver applies only the ordering after a successful merge. The
+changelog lint warns, without failing, about exact repeats and about entries
+`--fix` would tidy.
 
 `--preview` writes nothing. It reports exact repeats, entries that differ only
 by tag, near-identical entries, and wording shared by three or more entries in

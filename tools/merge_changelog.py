@@ -21,10 +21,16 @@ import tempfile
 from pathlib import Path
 
 from linting.check_changelog import (
+    BULLET_RE,
     CATEGORY_RE,
     ENTRY_RE,
+    TAG_PREFIX_RE,
     VERSION_RE,
+    WORD_RE,
+    clean_lines,
+    duplicate_warnings,
     order_lines,
+    top_entries,
     top_version,
 )
 
@@ -32,10 +38,7 @@ CONFLICT_RE = re.compile(r"^(?:<<<<<<< |\|{7} |=======\s*$|>>>>>>> )", re.M)
 TOKEN_PATTERN = re.compile(r"\w+|\s+|[^\w\s]")
 # Minimum difflib ratio for a changed line to count as an edit, not a new entry.
 SIMILARITY = 0.6
-BULLET_RE = re.compile(r"^\s*-\s*")
-TAG_PREFIX_RE = re.compile(r"(?:\[[\w/]+\]\s*/?\s*)+")
 ISSUE_RE = re.compile(r"#\d+")
-WORD_RE = re.compile(r"\w+")
 DOCS_VERSION_RE = re.compile(r"^## v\d", re.M)
 BETA_PAGE = Path("docs/src/content/misc/beta-changelogs.md")
 RELEASE_DIR = Path("docs/src/content/changelogSections")
@@ -304,55 +307,6 @@ def merge_text(base, ours, theirs):
     return "".join(merged)
 
 
-def clean_entry(line):
-    """Normalize one entry: ' - ' bullet, single spaces, [A]/[B] tags, closing period."""
-    text = " ".join(BULLET_RE.sub("", line).split())
-    prefix = TAG_PREFIX_RE.match(text)
-    if prefix:
-        tags = "/".join(f"[{tag}]" for tag in WORD_RE.findall(prefix.group()))
-        text = f"{tags} {text[prefix.end() :]}".rstrip()
-    if re.search(r"[\w%]$", text):
-        text += "."
-    return f" - {text}"
-
-
-def clean_lines(lines):
-    """Tidy the top version and drop entries that repeat one in the same category.
-
-    Returns the cleaned lines and the removed entries. Older versions stay intact.
-    """
-    top = top_version(lines)
-    cleaned = []
-    removed = []
-    seen = set()
-    category = None
-    for line in top:
-        ending = line[len(line.rstrip("\r\n")) :]
-        if CATEGORY_RE.match(line):
-            category = line.strip()
-            cleaned.append(category + ending)
-        elif ENTRY_RE.match(line):
-            entry = clean_entry(line)
-            if (category, entry) in seen:
-                removed.append(entry)
-                continue
-            seen.add((category, entry))
-            cleaned.append(entry + ending)
-        else:
-            cleaned.append(line.rstrip() + ending)
-    return cleaned + lines[len(top) :], removed
-
-
-def _entries(lines):
-    """(line number, category name, cleaned entry) for each top-version entry."""
-    category = "(no category)"
-    for lineno, line in enumerate(top_version(lines), start=1):
-        if CATEGORY_RE.match(line):
-            category = line.strip()[:-1].rstrip()
-        elif ENTRY_RE.match(line):
-            yield lineno, category, clean_entry(line)
-
-
 def _split(entry):
     """Tags and text of a cleaned entry."""
     text = entry[3:]
@@ -370,27 +324,9 @@ def _keep(entries):
     return f"; keep {', '.join(kept)}" if kept else ""
 
 
-def duplicate_warnings(lines):
-    """Warnings for top-version entries that repeat an earlier entry word for word."""
-    first = {}
-    warnings = []
-    for lineno, category, entry in _entries(lines):
-        if entry not in first:
-            first[entry] = (lineno, category)
-            continue
-        line, where = first[entry]
-        note = (
-            "--fix removes it"
-            if where == category
-            else f"keep one of {where} and {category}"
-        )
-        warnings.append(f"line {lineno}: warning: duplicate of line {line}; {note}")
-    return warnings
-
-
 def consolidation_candidates(lines):
     """Near-duplicate entries and shared phrases a human could merge into one entry."""
-    entries = list(_entries(lines))
+    entries = list(top_entries(lines))
     candidates = []
     for index, (lineno, _, entry) in enumerate(entries):
         tags, text = _split(entry)
