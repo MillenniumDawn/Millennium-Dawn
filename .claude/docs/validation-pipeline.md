@@ -99,7 +99,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
-  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+  and only `gfx/flags`, `gfx/interface/decisions`, and `gfx/texticons` from the art
+  trees. Size checks report art outside them as `decision-icon-unmeasured`.
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips

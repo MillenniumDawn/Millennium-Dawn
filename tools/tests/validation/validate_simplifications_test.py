@@ -1417,8 +1417,8 @@ def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
 
 _MERGE_USA = "consecutive `USA = { }` blocks can be merged into one"
 _NOT_TWO = (
-    "NOT with 2 children is ambiguous (semantics disputed NAND vs NOR); "
-    "write `NOT = { OR = { ... } }` or one NOT per trigger"
+    "NOT with 2 children is NOR (true only when every child is false); "
+    "write `NOT = { OR = { ... } }` to say so, or `NOT = { AND = { ... } }` for not all"
 )
 
 # Quoted braces, a brace-only string, an escaped quote, an unclosed block, a
