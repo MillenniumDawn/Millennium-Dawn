@@ -2,13 +2,12 @@ GEO_support_afghanistan = {
 	allowed = { original_tag = GEO }
 	enable = {
 		NOT = { has_war_with = AFG }
-		AFG = { NOT = { has_country_flag = AFG_new_war } }
-		AFG = { NOT = { has_government = fascism } }
+		AFG = {
+			NOT = { has_country_flag = AFG_new_war }
+			NOT = { has_government = fascism }
+		}
 	}
-	abort = {
-		has_war_with = AFG
-		NOT = { has_government = fascism }
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "AFG" value = 50 }
 	ai_strategy = { type = support id = "AFG" value = 150 }
@@ -19,26 +18,17 @@ GEO_breakaway_states = {
 	allowed = { original_tag = GEO }
 	enable = {
 		NOT = {
-			is_in_faction_with = ABK
-			is_in_faction_with = SOO
+			OR = {
+				is_in_faction_with = ABK
+				is_in_faction_with = SOO
+			}
 		}
 		OR = {
 			country_exists = ABK
 			country_exists = SOO
 		}
 	}
-	abort = {
-		OR = {
-			AND = {
-				is_in_faction_with = ABK
-				is_in_faction_with = SOO
-			}
-			NOT = {
-				country_exists = ABK
-				country_exists = SOO
-			}
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = contain id = "SOV" value = 50 }
 	ai_strategy = { type = antagonize id = "SOV" value = 25 }
@@ -50,7 +40,6 @@ GEO_breakaway_states = {
 GEO_dont_declare_on_turkey = {
 	allowed = { original_tag = GEO }
 	enable = {
-		original_tag = GEO
 		has_wargoal_against = TUR
 		strength_ratio = {
 			tag = TUR
@@ -65,7 +54,6 @@ GEO_dont_declare_on_turkey = {
 GEO_dont_declare_on_azeri = {
 	allowed = { original_tag = GEO }
 	enable = {
-		original_tag = GEO
 		has_wargoal_against = AZE
 		strength_ratio = {
 			tag = AZE
@@ -77,11 +65,63 @@ GEO_dont_declare_on_azeri = {
 	ai_strategy = { type = conquer id = "AZE" value = -300 }
 	ai_strategy = { type = declare_war id = "AZE" value = -300 }
 }
+GEO_dont_declare_on_russia = {
+	allowed = { original_tag = GEO }
+	enable = {
+		has_wargoal_against = SOV
+		strength_ratio = {
+			tag = SOV
+			ratio < 1.0
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "SOV" value = -300 }
+	ai_strategy = { type = declare_war id = "SOV" value = -300 }
+}
+GEO_dont_declare_on_armenia = {
+	allowed = { original_tag = GEO }
+	enable = {
+		has_wargoal_against = ARM
+		strength_ratio = {
+			tag = ARM
+			ratio < 1.0
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "ARM" value = -300 }
+	ai_strategy = { type = declare_war id = "ARM" value = -300 }
+}
+GEO_avoid_unready_war_with_breakaways = {
+	allowed = { original_tag = GEO }
+	enable = {
+		OR = {
+			has_wargoal_against = ABK
+			has_wargoal_against = SOO
+		}
+		OR = {
+			ABK = { is_guaranteed_by = SOV }
+			SOO = { is_guaranteed_by = SOV }
+			ABK = { is_in_faction_with = SOV }
+			SOO = { is_in_faction_with = SOV }
+		}
+		strength_ratio = {
+			tag = SOV
+			ratio < 1.0
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "ABK" value = -300 }
+	ai_strategy = { type = declare_war id = "ABK" value = -300 }
+	ai_strategy = { type = conquer id = "SOO" value = -300 }
+	ai_strategy = { type = declare_war id = "SOO" value = -300 }
+}
 #Armenia Content
 GEO_anti_armenia_coalition = {
 	allowed = { original_tag = GEO }
 	enable = {
-		original_tag = GEO
 		has_idea = GLOBAL_aze_prepare_anti_arm
 		country_exists = ARM
 	}
@@ -116,7 +156,10 @@ GEO_againts_armenian_expansion_azer_puppet = {
 GEO_send_troops_to_iraq_support = {
 	allowed = { original_tag = GEO }
 	enable = {
-		has_completed_focus = GEO_send_troops_toiraq
+		OR = {
+			has_completed_focus = GEO_send_troops_toiraq
+			has_completed_focus = GEO_iraq_stuff_prepare
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -127,7 +170,23 @@ GEO_send_troops_to_iraq_support = {
 GEO_USA_send_troops_to_iraq_support = {
 	allowed = { original_tag = USA }
 	enable = {
-		GEO = { has_completed_focus = GEO_send_troops_toiraq }
+		GEO = {
+			OR = {
+				has_completed_focus = GEO_send_troops_toiraq
+				has_completed_focus = GEO_iraq_stuff_prepare
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "GEO" value = 15 }
+	ai_strategy = { type = support id = "GEO" value = 25 }
+}
+
+GEO_USA_raid_rustavi_two = {
+	allowed = { original_tag = USA }
+	enable = {
+		GEO = { has_completed_focus = GEO_rustavitwo }
 	}
 	abort_when_not_enabled = yes
 

@@ -1,7 +1,6 @@
 FRA_we_want_modern_armor = { #tell FRA AI to research modern composite for the Leclerc SXXI
 	allowed = { original_tag = FRA }
 	enable = {
-		country_exists = FRA
 		NOT = { has_tech = armor_tech_3 }
 	}
 	abort_when_not_enabled = yes
@@ -11,8 +10,13 @@ FRA_we_want_modern_armor = { #tell FRA AI to research modern composite for the L
 FRA_befriend_the_francosphere = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
-		NOT = { has_completed_focus = FRA_aggressive_expansionism } #France going this route should prevent all from befriending
+		NOT = {
+			OR = {
+				has_completed_focus = FRA_cold_war_round2
+				has_completed_focus = FRA_crusade_time #France going this route should prevent all from befriending
+				has_completed_focus = FRA_reclaim_empire
+			}
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -119,7 +123,7 @@ FRA_intervene_in_central_african_republic = {
 				has_civil_war = yes
 				has_war_with = SEL
 				has_war_with = BAL
-				has_war_with = LOG
+				has_war_with = LGN
 			}
 		}
 		has_completed_focus = FRA_CAR_intervention
@@ -166,36 +170,14 @@ FRA_support_egypt_against_jihadists = {
 	ai_strategy = { type = support id = "EGY" value = 100 }
 }
 
-FRA_factory_target = {
-	allowed = { tag = FRA }
-	enable = {
-		original_tag = FRA
-		num_of_civilian_factories < 130
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = building_target id = industrial_complex value = 130 }
-}
 FRA_focus_on_europe = {
-	allowed = { tag = FRA }
+	allowed = { original_tag = FRA }
 	enable = {
 		original_tag = FRA
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = area_priority id = europe value = 100 }
-}
-
-FRA_office_target = {
-	allowed = { tag = FRA }
-	enable = {
-		original_tag = FRA
-		num_of_available_civilian_factories > 29
-		check_variable = { office_park_total < 30 }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = building_target id = offices value = 30 }
 }
 
 # France unique AI for combat units
@@ -212,16 +194,24 @@ FRA_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 8 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 12 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 3 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 1 }
 }
 
 FRA_protect_andorra_monaco = {
 	allowed = {
 		original_tag = FRA
-		NOT = { has_global_flag = GAME_RULE_microstates_removed }
+		NOT = {
+			OR = {
+				has_game_rule = { rule = remove_micro_states option = tiny }
+				has_game_rule = { rule = remove_micro_states option = smaller }
+				has_game_rule = { rule = remove_micro_states option = insignificant }
+			}
+		}
 	}
 	enable = {
-		FRA = { has_government = democratic }
+		has_government = democratic
 		OR = {
 			country_exists = ADO
 			country_exists = MNC
@@ -238,11 +228,9 @@ FRA_protect_andorra_monaco = {
 FRA_united_kingdom_french_relations = {
 	allowed = { original_tag = FRA }
 	enable = {
-		NOT = {
-			has_government = nationalist
-			has_government = fascism
-		}
 		country_exists = ENG
+		NOT = { has_government = nationalist }
+		NOT = { has_government = fascism }
 		NOT = { ENG = { has_government = nationalist } }
 	}
 	abort_when_not_enabled = yes
@@ -254,7 +242,6 @@ FRA_united_kingdom_french_relations = {
 FRA_support_senegal_in_civil_war = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		SEN = {
 			OR = {
 				has_civil_war = yes
@@ -274,7 +261,6 @@ FRA_support_senegal_in_civil_war = {
 FRA_intervene_in_mali = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		MAL = {
 			OR = {
 				has_civil_war = yes
@@ -294,7 +280,6 @@ FRA_intervene_in_mali = {
 FRA_intervene_in_drc = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		UGA = {
 			OR = {
 				has_civil_war = yes
@@ -315,7 +300,6 @@ FRA_intervene_in_drc = {
 FRA_support_the_european_union = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		OR = {
 			has_government = democratic
 			is_historical_focus_on = yes
@@ -339,7 +323,6 @@ FRA_support_the_european_union = {
 FRA_support_ukraine_against_russia = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
 		OR = {
 			has_government = democratic
 			is_historical_focus_on = yes
@@ -460,14 +443,16 @@ FRA_support_afghanistan_against_taliban = {
 	allowed = { original_tag = FRA }
 	enable = {
 		NOT = { has_war_with = AFG }
-		AFG = { NOT = { has_government = fascism } }
-		AFG = { NOT = { has_country_flag = AFG_new_war } }
+		AFG = {
+			NOT = { has_government = fascism }
+			NOT = { has_country_flag = AFG_new_war }
+		}
 		OR = {
 			AND = {
-				USA = { has_country_flag = Operation_enduring_freedom }
+				USA = { has_country_flag = USA_wot_enduring_freedom }
 				OR = {
-					has_country_flag = partially_supported_us_nine_eleven
-					has_country_flag = fully_supported_us_nine_eleven
+					has_country_flag = wot_supported_us_partially
+					has_country_flag = wot_supported_us_fully
 				}
 			}
 			date > 2002.6.1
@@ -481,7 +466,7 @@ FRA_support_afghanistan_against_taliban = {
 }
 
 FRA_help_georgia = {
-	allowed = { tag = SOV }
+	allowed = { original_tag = SOV }
 	enable = {
 		GEO = {
 			has_volunteers_amount_from = {
@@ -506,11 +491,11 @@ FRA_help_georgia = {
 
 #Armenia Content
 FRA_againts_armenian_expansion_italy_puppet = {
-	allowed = { tag = FRA }
+	allowed = { original_tag = FRA }
 	enable = {
 		is_subject = no
 		has_war = no
-		ITA = { is_subject_of = ARM } 
+		ITA = { is_subject_of = ARM }
 		NOT = {
 			has_government = neutrality
 		}
@@ -527,11 +512,11 @@ FRA_againts_armenian_expansion_italy_puppet = {
 	ai_strategy = { type = influence id = "ITA" value = 200 }
 }
 FRA_againts_armenian_expansion_poland_puppet = {
-	allowed = { tag = FRA }
+	allowed = { original_tag = FRA }
 	enable = {
 		is_subject = no
 		has_war = no
-		POL = { is_subject_of = ARM } 
+		POL = { is_subject_of = ARM }
 		NOT = {
 			has_government = neutrality
 		}
@@ -552,26 +537,181 @@ FRA_againts_armenian_expansion_poland_puppet = {
 FRA_confederate_states_america_help = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FAR
+		has_war = no
 		country_exists = CSA
-		FRA = {
-			has_war = no
-		}
 	}
 	abort_when_not_enabled = yes
+
 	ai_strategy = { type = send_volunteers_desire id = "CSA" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "CSA" value = 400 }
 }
 FRA_new_york_help = {
 	allowed = { original_tag = FRA }
 	enable = {
-		original_tag = FRA
+		has_war = no
 		country_exists = NYK
-		FRA = {
-			has_war = no
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
+}
+
+FRA_comoros_guarantee = {
+	allowed = { original_tag = FRA }
+	enable = {
+		COM = {
+			has_idea = COM_naval_treaty_with_france_idea
+			NOT = { has_completed_focus = COM_antagonize_france }
+			NOT = { has_completed_focus = COM_naval_treaty_with_china }
 		}
 	}
 	abort_when_not_enabled = yes
-	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
-	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
+
+	ai_strategy = { type = befriend id = "COM" value = 50 }
+	ai_strategy = { type = support id = "COM" value = 50 }
+	ai_strategy = { type = diplo_action_desire id = "COM" value = 50 target = guarantee }
+}
+
+# FRA Air Doctrine — "tout Rafale" (see common/ai_equipment/FRA_plane.txt)
+
+FRA_air_doctrine = {
+	allowed = { original_tag = FRA }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = heavy_fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 4 }
+	ai_strategy = { type = unit_ratio id = cas value = 2 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 1 }
+	ai_strategy = { type = unit_ratio id = suicide value = 2 }
+
+	# Light airframes share AI buckets with the Rafale (Mirage 2000 = interceptor like Rafale C) - block them so only Rafale fills those ratios (same pattern as GER.txt)
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+}
+
+
+FRA_keep_rafale_m_line = {
+	allowed = { original_tag = FRA }
+	enable = { has_navy_size = { unit = carrier size > 0 } }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = cv_medium_plane_airframe value = 1 }
+}
+
+# Guaranteed Rafale B / C lines: unit_ratio alone never opened a Rafale C line in testing (likely because the ~200 Mirage 2000/F1 already fill the interceptor ratio)
+FRA_keep_rafale_lines = {
+	allowed = { original_tag = FRA }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_airframe value = 1 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_fighter_airframe value = 1 }
+}
+
+
+FRA_missile_ratios = {
+	allowed = {
+		original_tag = FRA
+		has_dlc = "Gotterdammerung"
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = sam_missile value = 1000 }
+	ai_strategy = { type = role_ratio id = missile value = 0 }
+	ai_strategy = { type = role_ratio id = ballistic_missile value = 0 }
+	ai_strategy = { type = role_ratio id = nuclear_missile value = 250 }
+}
+
+FRA_commune_confront_the_west = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_COMMUNE_FOCUS_PATH
+			has_idea = FRA_commune_reborn_idea
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "USA" value = 200 }
+	ai_strategy = { type = antagonize id = "ENG" value = 100 }
+	ai_strategy = { type = antagonize id = "GER" value = 75 }
+	ai_strategy = { type = befriend id = "CHI" value = 150 }
+	ai_strategy = { type = befriend id = "SOV" value = 100 }
+	ai_strategy = { type = befriend id = "CUB" value = 100 }
+	ai_strategy = { type = befriend id = "VEN" value = 75 }
+}
+FRA_restoration_break_with_europe = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_KINGDOM_FOCUS_PATH
+			has_global_flag = FRA_EMPIRE_FOCUS_PATH
+			has_idea = FRA_kingdom_restored_idea
+			has_idea = FRA_empire_restored_idea
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "GER" value = 150 }
+	ai_strategy = { type = antagonize id = "ENG" value = 100 }
+	ai_strategy = { type = antagonize id = "USA" value = 100 }
+	ai_strategy = { type = antagonize id = "BEL" value = 50 }
+	ai_strategy = { type = antagonize id = "HOL" value = 50 }
+	ai_strategy = { type = befriend id = "SPR" value = 50 }
+}
+FRA_nationalist_republic_alignment = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_NATIONAL_RALLY_FOCUS_PATH
+			has_completed_focus = FRA_FN
+		}
+		NOT = {
+			OR = {
+				has_idea = FRA_kingdom_restored_idea
+				has_idea = FRA_empire_restored_idea
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "SOV" value = 100 }
+	ai_strategy = { type = antagonize id = "USA" value = 75 }
+	ai_strategy = { type = antagonize id = "GER" value = 50 }
+	ai_strategy = { type = befriend id = "HUN" value = 75 }
+}
+FRA_atlanticist_alignment = {
+	allowed = { original_tag = FRA }
+	enable = {
+		FRA_ai_atlanticist_path = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "USA" value = 100 }
+	ai_strategy = { type = befriend id = "GER" value = 150 }
+	ai_strategy = { type = befriend id = "ENG" value = 100 }
+	ai_strategy = { type = befriend id = "ITA" value = 75 }
+	ai_strategy = { type = antagonize id = "SOV" value = 50 }
+}
+FRA_sovereignist_distance_from_the_bloc = {
+	allowed = { original_tag = FRA }
+	enable = {
+		OR = {
+			has_global_flag = FRA_GAULLIST_FOCUS_PATH
+			has_global_flag = FRA_FRANCE_UNBOWED_FOCUS_PATH
+			has_completed_focus = FRA_RPF
+			has_completed_focus = FRA_LFI
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "USA" value = 100 }
+	ai_strategy = { type = antagonize id = "GER" value = 50 }
+	ai_strategy = { type = befriend id = "BRA" value = 50 }
+	ai_strategy = { type = befriend id = "MEX" value = 25 }
 }

@@ -3,6 +3,9 @@ scripted_gui = {
 		window_name = "open_research_slot_gui"
 		context_type = player_context
 		parent_window_token = technology_tab
+		dirty = global.research_screen_ui
+
+		ai_enabled = { always = no }
 
 		effects = {
 			open_research_slot_button_click = {
@@ -13,6 +16,7 @@ scripted_gui = {
 				else = {
 					clr_country_flag = open_research_screen
 				}
+				add_to_variable = { global.research_screen_ui = 1 }
 			}
 		}
 	}
@@ -21,40 +25,31 @@ scripted_gui = {
 		window_name = "research_slot_gui_screen"
 		context_type = player_context
 		parent_window_token = technology_tab
+		dirty = global.research_screen_ui
 
 		visible = {
-			ROOT = {
-				OR = {
-					is_ai = yes
-					has_country_flag = open_research_screen
-				}
+			has_country_flag = open_research_screen
+		}
+
+		ai_enabled = { always = no }
+
+		dynamic_lists = {
+			research_slot_gdp_grid = {
+				array = global.research_slot_gdp_rows
+				entry_container = "research_slot_gdp_entry"
+			}
+			research_slot_gdp_c_grid = {
+				array = global.research_slot_gdp_c_rows
+				entry_container = "research_slot_gdp_c_entry"
 			}
 		}
 
 		triggers = {
 			gdp_slot_gain_industry_size_click_enabled = {
-				check_variable = { next_slot_from_gdp < 10 }
-				NOT = { has_decision = gdp_gain_slot }
-				custom_trigger_tooltip = {
-					tooltip = gdp_gain_industry_size_flag_tt
-					NOT = { has_country_flag = gdp_gain_industry_slot_flag }
-				}
-				custom_trigger_tooltip = {
-					tooltip = gdp_gain_slot.tt
-					check_variable = { gdp_total > GLOBAL.gdp_slot^next_slot_from_gdp }
-				}
+				can_gain_gdp_research_slot = yes
 			}
 			gdp_slot_gain_developmental_size_click_enabled = {
-				check_variable = { next_slot_from_gdp_c < 7 }
-				NOT = { has_decision = gdp_c_gain_slot }
-				custom_trigger_tooltip = {
-					tooltip = gdp_gain_dev_size_flag_tt
-					NOT = { has_country_flag = gdp_gain_developmental_size_flag }
-				}
-				custom_trigger_tooltip = {
-					tooltip = gdp_c_gain_slot.tt
-					check_variable = { gdp_per_capita > GLOBAL.gdp_c_slot^next_slot_from_gdp_c }
-				}
+				can_gain_gdp_c_research_slot = yes
 			}
 		}
 		effects = {
@@ -64,12 +59,22 @@ scripted_gui = {
 					add_research_slot = 1
 					add_to_variable = { research_slots_from_gdp = 1 }
 					add_to_variable = { next_slot_from_gdp = 1 }
-					medium_expenditure = yes
 					calculate_new_education_spending_tooltip = yes
 				}
 				line = yes
+				medium_expenditure = yes
 				set_country_flag = { flag = gdp_gain_industry_slot_flag value = 1 days = 240 }
 				activate_decision = gdp_gain_slot
+				hidden_effect = { md_check_research_slot_alert = yes }
+				add_to_variable = { global.research_screen_ui = 1 }
+				if = {
+					limit = { has_decision = gdp_gain_slot }
+					newline = yes
+					line = yes
+					# FIXME: This should use days_decision_timeout but this doesn't seem to work in this scope?
+					set_country_flag = { flag = gdp_gain_industry_slot value = 1 days = 90 }
+					custom_effect_tooltip = gdp_gain_slot_to_complete_tt
+				}
 			}
 			gdp_slot_gain_developmental_size_click = {
 				custom_effect_tooltip = once_the_decision_completes_rs_tt
@@ -77,14 +82,23 @@ scripted_gui = {
 					add_research_slot = 1
 					add_to_variable = { research_slots_from_gdp_c = 1 }
 					add_to_variable = { next_slot_from_gdp_c = 1 }
-					medium_expenditure = yes
 					calculate_new_education_spending_tooltip = yes
 				}
 				line = yes
+				medium_expenditure = yes
 				set_country_flag = { flag = gdp_gain_developmental_size_flag value = 1 days = 240 }
 				activate_decision = gdp_c_gain_slot
+				hidden_effect = { md_check_research_slot_alert = yes }
+				add_to_variable = { global.research_screen_ui = 1 }
+
+				if = {
+					limit = { has_decision = gdp_c_gain_slot }
+					newline = yes
+					line = yes
+					set_country_flag = { flag = gdp_c_gain_industry_slot value = 1 days = 90 }
+					custom_effect_tooltip = gdp_c_gain_slot_to_complete_tt
+				}
 			}
 		}
-
 	}
 }

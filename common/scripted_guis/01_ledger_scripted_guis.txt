@@ -1,0 +1,388 @@
+scripted_gui = {
+	ledger_open_button_sg = {
+		window_name = "ledger_open_container"
+		parent_window_name = "MapmodesInterface_Ingame"
+		dirty = ledger_ui_dirty_var
+		visible = {
+			is_ai = no
+			NOT = { has_game_rule = { rule = allow_enable_ledger option = no } }
+		}
+
+		effects = {
+			ledger_open_btn_click = {
+				open_ledger = yes
+			}
+		}
+	}
+
+	ledger_sg = {
+		window_name = "ledger_container"
+		dirty = ledger_ui_dirty_var
+
+		visible = {
+			is_ai = no
+			check_variable = { ledger_open > 0 }
+		}
+
+		# the country and header lists, plus the tab strip, which shares the header list entry
+		dynamic_lists = {
+			# this is the main grid that contains added countries
+			country_list = {
+				array = country_array
+				change_scope = yes
+				entry_container = "ledger_country_entry_[?Root.ledger_open]"
+			}
+			ledger_header_list = {
+				array = ledger_header_array
+				entry_container = "ledger_header_[?Root.ledger_open]"
+			}
+			ledger_tab_list = {
+				array = ledger_header_array
+				entry_container = "ledger_tabs_[?Root.ledger_open]"
+			}
+		}
+
+		properties = {
+			#change flag textures to actual flag texture
+			flag = { image = "[This.GetFlag]" }
+			next_page = { image = "[NextButton]" }
+			previous_page = { image = "[PreviousButton]" }
+		}
+
+		effects = {
+			close_click = {
+				clear_variable = ledger_open
+				update_ledger_dirty_var = yes
+			}
+			next_page_click = {
+				if = {
+					limit = { check_variable = { ledger_open = 7 } }
+					update_ledger_country_array = yes
+				}
+				add_to_variable = {
+					ledger_open = 1
+				}
+				if = {
+					limit = { check_variable = { ledger_open > 7 } }
+					set_variable = { ledger_open = 1 }
+				}
+				if = {
+					limit = { check_variable = { ledger_open = 7 } }
+					update_ledger_faction_array = yes
+				}
+				update_ledger_dirty_var = yes
+			}
+			previous_page_click = {
+				if = {
+					limit = { check_variable = { ledger_open = 7 } }
+					update_ledger_country_array = yes
+				}
+				subtract_from_variable = {
+					ledger_open = 1
+				}
+				if = {
+					limit = { check_variable = { ledger_open < 1 } }
+					set_variable = { ledger_open = 7 }
+				}
+				if = {
+					limit = { check_variable = { ledger_open = 7 } }
+					update_ledger_faction_array = yes
+				}
+				update_ledger_dirty_var = yes
+			}
+			ledger_tab_1_click = {
+				set_temp_variable = { ledger_page = 1 }
+				ledger_set_page = yes
+			}
+			ledger_tab_2_click = {
+				set_temp_variable = { ledger_page = 2 }
+				ledger_set_page = yes
+			}
+			ledger_tab_3_click = {
+				set_temp_variable = { ledger_page = 3 }
+				ledger_set_page = yes
+			}
+			ledger_tab_4_click = {
+				set_temp_variable = { ledger_page = 4 }
+				ledger_set_page = yes
+			}
+			ledger_tab_5_click = {
+				set_temp_variable = { ledger_page = 5 }
+				ledger_set_page = yes
+			}
+			ledger_tab_6_click = {
+				set_temp_variable = { ledger_page = 6 }
+				ledger_set_page = yes
+			}
+			ledger_tab_7_click = {
+				set_temp_variable = { ledger_page = 7 }
+				ledger_set_page = yes
+			}
+			country_header_click = {
+				update_ledger_country_array = yes
+			}
+			ideology_header_click = {
+				set_temp_variable = { sort_var = 46 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = current_party_ideology_group } }
+				create_sorted_array = yes
+			}
+			stability_header_click = {
+				set_temp_variable = { sort_var = 1 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = stability } }
+				create_sorted_array = yes
+			}
+			war_support_header_click = {
+				set_temp_variable = { sort_var = 2 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = has_war_support } }
+				create_sorted_array = yes
+			}
+			industry_header_2_click = {
+				set_temp_variable = { sort_var = 4 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_factories } }
+				create_sorted_array = yes
+			}
+			population_header_click = {
+				set_temp_variable = { sort_var = 5 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = population_total_m } }
+				create_sorted_array = yes
+			}
+			research_slots_header_click = {
+				set_temp_variable = { sort_var = 6 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = amount_research_slots } }
+				create_sorted_array = yes
+			}
+			num_battalions_header_click = {
+				set_temp_variable = { sort_var = 7 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_battalions } }
+				create_sorted_array = yes
+			}
+			num_divisions_header_click = {
+				set_temp_variable = { sort_var = 8 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_divisions } }
+				create_sorted_array = yes
+			}
+			manpower_header_click = {
+				set_temp_variable = { sort_var = 9 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = manpower_k } }
+				create_sorted_array = yes
+			}
+			army_xp_header_click = {
+				set_temp_variable = { sort_var = 10 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = army_experience } }
+				create_sorted_array = yes
+			}
+			command_power_header_click = {
+				set_temp_variable = { sort_var = 11 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = command_power } }
+				create_sorted_array = yes
+			}
+			casualties_header_click = {
+				set_temp_variable = { sort_var = 12 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = casualties_k } }
+				create_sorted_array = yes
+			}
+			land_doctrine_level_header_click = {
+				set_temp_variable = { sort_var = 13 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = land_doctrine_level } }
+				create_sorted_array = yes
+			}
+			navy_header_4_click = {
+				set_temp_variable = { sort_var = 14 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_ships } }
+				create_sorted_array = yes
+			}
+			air_header_4_click = {
+				set_temp_variable = { sort_var = 15 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = deployed_airforce_manpower_k } }
+				create_sorted_array = yes
+			}
+			navy_xp_header_click = {
+				set_temp_variable = { sort_var = 16 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = navy_experience } }
+				create_sorted_array = yes
+			}
+			air_xp_header_click = {
+				set_temp_variable = { sort_var = 17 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = air_experience } }
+				create_sorted_array = yes
+			}
+			num_of_nukes_header_click = {
+				set_temp_variable = { sort_var = 18 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_nukes } }
+				create_sorted_array = yes
+			}
+			nuclear_reactors_header_click = {
+				set_temp_variable = { sort_var = 19 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = nuclear_reactors } }
+				create_sorted_array = yes
+			}
+			rocket_sites_header_click = {
+				set_temp_variable = { sort_var = 20 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = rocket_sites } }
+				create_sorted_array = yes
+			}
+			faction_header_5_click = {
+				set_temp_variable = { sort_var = 21 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_leader } }
+				create_sorted_array = yes
+			}
+			num_civilian_factories_header_click = {
+				set_temp_variable = { sort_var = 22 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_civilian_factories } }
+				create_sorted_array = yes
+			}
+			consumer_goods_header_click = {
+				set_temp_variable = { sort_var = 23 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = actual_consumer_goods_percent_display } }
+				create_sorted_array = yes
+			}
+			military_factories_header_click = {
+				set_temp_variable = { sort_var = 24 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_military_factories } }
+				create_sorted_array = yes
+			}
+			naval_factories_header_click = {
+				set_temp_variable = { sort_var = 25 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_naval_factories } }
+				create_sorted_array = yes
+			}
+			industry_header_5_click = {
+				set_temp_variable = { sort_var = 4 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_factories } }
+				create_sorted_array = yes
+			}
+			fuel_header_click = {
+				set_temp_variable = { sort_var = 26 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = fuel_k } }
+				create_sorted_array = yes
+			}
+			faction_header_6_click = {
+				set_temp_variable = { sort_var = 21 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_leader } }
+				create_sorted_array = yes
+			}
+			owned_states_header_click = {
+				set_temp_variable = { sort_var = 27 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_owned_states } }
+				create_sorted_array = yes
+			}
+			controlled_states_header_click = {
+				set_temp_variable = { sort_var = 28 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_of_controlled_states } }
+				create_sorted_array = yes
+			}
+			owned_controlled_states_header_click = {
+				set_temp_variable = { sort_var = 29 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_owned_controlled_states } }
+				create_sorted_array = yes
+			}
+			occupied_states_header_click = {
+				set_temp_variable = { sort_var = 30 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_occupied_states } }
+				create_sorted_array = yes
+			}
+			core_states_header_click = {
+				set_temp_variable = { sort_var = 31 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_core_states } }
+				create_sorted_array = yes
+			}
+			controlled_states_including_subjects_header_click = {
+				set_temp_variable = { sort_var = 32 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = num_controlled_states_including_subjects } }
+				create_sorted_array = yes
+			}
+			# Economy
+			gdp_header_click = {
+				set_temp_variable = { sort_var = 33 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = gdp_total } }
+				create_sorted_array = yes
+			}
+			gdp_capita_header_click = {
+				set_temp_variable = { sort_var = 34 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = gdp_per_capita } }
+				create_sorted_array = yes
+			}
+			total_productivity_header_click = {
+				set_temp_variable = { sort_var = 47 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = overall_productivity } }
+				create_sorted_array = yes
+			}
+			debt_header_click = {
+				set_temp_variable = { sort_var = 35 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = debt } }
+				create_sorted_array = yes
+			}
+			interest_rate_header_click = {
+				set_temp_variable = { sort_var = 48 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = interest_rate } }
+				create_sorted_array = yes
+			}
+			treasury_header_click = {
+				set_temp_variable = { sort_var = 36 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = treasury } }
+				create_sorted_array = yes
+			}
+			investment_return_header_click = {
+				set_temp_variable = { sort_var = 49 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = roi_rate } }
+				create_sorted_array = yes
+			}
+			gross_income_header_click = {
+				set_temp_variable = { sort_var = 37 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = display_income } }
+				create_sorted_array = yes
+			}
+			expense_header_click = {
+				set_temp_variable = { sort_var = 38 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = display_expense } }
+				create_sorted_array = yes
+			}
+			offices_header_click = {
+				set_temp_variable = { sort_var = 39 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = office_park_total } }
+				create_sorted_array = yes
+			}
+
+			# Faction
+			faction_header_7_click = {
+				update_ledger_faction_array = yes
+			}
+			faction_members_header_click = {
+				set_temp_variable = { sort_var = 40 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_members^num } }
+				create_sorted_array = yes
+			}
+			faction_battalions_header_click = {
+				set_temp_variable = { sort_var = 41 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_battalions } }
+				create_sorted_array = yes
+			}
+			faction_ships_header_click = {
+				set_temp_variable = { sort_var = 42 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_ships } }
+				create_sorted_array = yes
+			}
+			faction_airforce_header_click = {
+				set_temp_variable = { sort_var = 43 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_air } }
+				create_sorted_array = yes
+			}
+			faction_industry_header_click = {
+				set_temp_variable = { sort_var = 44 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_industry } }
+				create_sorted_array = yes
+			}
+			faction_states_header_click = {
+				set_temp_variable = { sort_var = 45 }
+				for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = faction_controlled_states } }
+				create_sorted_array = yes
+			}
+		}
+
+		triggers = {
+			major_overlay_visible = {
+				is_major = yes
+			}
+		}
+	}
+}

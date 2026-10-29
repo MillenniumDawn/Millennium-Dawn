@@ -1,0 +1,272 @@
+faction_goal_transform_nato_forces = {
+	name = transform_nato_forces
+	description = transform_nato_forces_desc
+	category = long_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		has_faction_template = faction_template_nato
+		OR = {
+			has_war = yes
+			threat > 0.10
+		}
+	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_mechanized_cache = 1 }
+		set_temp_variable = { faction_goal_force_tank_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		check_variable = {
+			var = faction_goal_mechanized_battalions_cache
+			value = 1000
+			compare = greater_than_or_equals
+			tooltip = faction_goal_mechanized_bats_at_least_tt
+		}
+		check_variable = {
+			var = faction_goal_tank_battalions_cache
+			value = 750
+			compare = greater_than_or_equals
+			tooltip = faction_goal_tank_bats_at_least_tt
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+nato_goal_check_russia = {
+	name = check_russia
+	description = check_russia_desc
+	category = long_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		has_faction_template = faction_template_nato
+		country_exists = SOV
+		SOV = {
+			has_added_tension_amount > 25
+		}
+		NOT = {
+			is_in_faction_with = SOV
+		}
+	}
+	completed = {
+		OR = {
+			NOT = { country_exists = SOV }
+			# SOV is a puppet and is a subject of someone in your faction
+			SOV = {
+				is_subject = yes
+				OVERLORD = {
+					is_in_faction_with = ROOT
+				}
+			}
+			# separate entry as its different from puppet check
+			SOV = {
+				NOT = { has_at_least_major_power_status = yes }
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+nato_goal_check_china = {
+	name = check_china
+	description = check_china_desc
+	category = long_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		has_faction_template = faction_template_nato
+		country_exists = CHI
+		CHI = {
+			has_added_tension_amount > 25
+		}
+		NOT = {
+			is_in_faction_with = CHI
+		}
+	}
+	completed = {
+		OR = {
+			NOT = { country_exists = CHI }
+			# CHI is a puppet and is a subject of someone in your faction
+			CHI = {
+				is_subject = yes
+				OVERLORD = {
+					is_in_faction_with = ROOT
+				}
+			}
+			# separate entry as its different from puppet check
+			CHI = {
+				NOT = { has_at_least_major_power_status = yes }
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+faction_goal_democracy_in_europe = {
+	name = democracy_in_europe
+	description = democracy_in_europe_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		has_faction_template = faction_template_nato
+	}
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		custom_override_tooltip = {
+			tooltip = democracy_in_europe_completed_tt
+			faction_leader = { check_variable = { faction_goal_democracy_in_europe_cache = 1 } }
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			add = 5
+			capital_scope = {
+				is_on_continent = europe
+			}
+		}
+		modifier = {
+			add = 10
+			OR = {
+				original_tag = USA
+				original_tag = CAN
+			}
+			has_government = democratic
+			has_elections = yes
+		}
+	}
+}
+
+faction_goal_help_ukraine = {
+	name = help_ukraine_name
+	description = help_ukraine_name_desc
+	category = medium_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		has_faction_template = faction_template_nato
+		UKR = {
+			has_defensive_war_with = SOV
+			OR = {
+				has_government = democratic
+				has_government = neutrality
+			}
+		}
+	}
+	completed = {
+		UKR = {
+			has_war = no
+			is_subject = no
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		add_faction_initiative = 1
+		every_faction_member = {
+			army_experience = 50
+		}
+	}
+	ai_will_do = {
+		base = 5
+	}
+}
+
+faction_goal_defeat_taliban = {
+	name = nato_defeat_taliban
+	description = nato_defeat_taliban_desc
+	category = short_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		has_faction_template = faction_template_nato
+		USA = { has_country_flag = USA_wot_speech_given }
+	}
+	completed = {
+		OR = {
+			NOT = { country_exists = TAL }
+			# CHI is a puppet and is a subject of someone in your faction
+			TAL = {
+				is_subject = yes
+				OVERLORD = {
+					is_in_faction_with = ROOT
+				}
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+
+	ai_will_do = {
+		base = 1
+	}
+}
+
+faction_goal_stabilizing_balkans = {
+	name = stabilizing_balkans
+	description = stabilizing_balkans_desc
+	category = short_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		has_faction_template = faction_template_nato
+		country_exists = SER
+	}
+	completed = {
+		SER = {
+			has_government = democratic
+			has_stability > 0.65
+			custom_trigger_tooltip = {
+				tooltip = TT_SER_montenegro_independence_violent
+				NOT = { has_country_flag = SER_montenegro_independence_violent }
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 50
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		every_faction_member = {
+			add_political_power = 100
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}

@@ -1,136 +1,67 @@
 on_actions = {
-	on_startup = {
+	on_daily_HEZ = {
 		effect = {
-			HEZ = {
-				#Calculate weekly income with variables
-				# X = Sum of Hezbollah influence in all countries (except AoR members) (total_influence_in_countries)
-				# manpower = X
-				# money = X*0.001
-				# small arms = X*2
-				# C&C = X*0.5 (Round)
-				# MANPADS = X*0.25 (Round)
-				# ATGM = X*0.25 (Round)
-				# MBT = X*0.004 (Round)
-				# APC = X*0.01 (Round)
-				# IFV = X*0.008 (Round)
-				# Utility Vehicle = X*0.02 (Round)
-				#MANPOWER
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_variable = { x = 1 }
-				round_temp_variable = x
-				add_manpower = x
-				set_variable = { hezbollah_weekly_manpower = x }
-
-				#MONEY
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.001 }
-				set_temp_variable = { treasury_change = x }
-				modify_treasury_effect = yes
-				set_variable = { hezbollah_weekly_money = x }
-				#SMALL ARMS
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 2 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_small_arms = x }
-				# C&C
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.5 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_cnc = x }
-				# MANPADS
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.25 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_manpads = x }
-				# ATGM
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.25 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_atgm = x }
-				# MBT
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.004 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_mbt = x }
-				# APC
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.01 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_apc = x }
-				# IFV
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.008 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_ifv = x }
-				# Utility Vehicle
-				set_temp_variable = { x = total_influence_in_countries }
-				multiply_temp_variable = { x = 0.015 }
-				round_temp_variable = x
-				set_variable = { hezbollah_weekly_mrf = x }
+			if = {
+				limit = {
+					is_ai = no
+					has_country_flag = international_hezbollah_tab_open
+				}
+				update_hez_international_dirty_variable = yes
 			}
 		}
 	}
-	on_weekly_HEZ = {
+	on_monthly_HEZ = {
 		effect = {
-			#Hezbollah's Gains from Influence
-			set_variable = { total_influence_in_countries = 0 }
+			clear_array = HEZ_influenced_nations
 			every_other_country = {
 				limit = {
 					NOT = { is_ally_with = HEZ }
 					is_influencer = yes
 				}
-				if = {
-					limit = {
-						check_variable = { influence_array^0 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^0 } }
+				add_to_array = { HEZ.HEZ_influenced_nations = THIS.id }
+			}
+		}
+	}
+	on_weekly_HEZ = {
+		effect = {
+			#AI for International Hezbollah GUI
+			if = {
+				limit = {
+					is_ai = yes
+					has_government = communism
+					has_completed_focus = HEZ_International_Hezbollah
+					NOT = { has_country_flag = shared_mission_in_progress }
 				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^1 = HEZ }
+				HEZ_ai_pick_operation = yes
+			}
+			# Weekly income mechanic
+			set_variable = { total_influence_in_countries = 0 }
+			for_each_loop = {
+				array = HEZ.HEZ_influenced_nations
+				value = nation_id
+				var:nation_id = {
+					for_each_loop = {
+						array = influence_array
+						value = influencer_id
+						index = slot
+
+						if = {
+							limit = { var:influencer_id = { original_tag = ROOT } }
+							add_to_variable = { HEZ.total_influence_in_countries = influence_array_val^slot }
+						}
 					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^1 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^2 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^2 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^3 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^3 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^4 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^4 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^5 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^5 } }
-				}
-				else_if = {
-					limit = {
-						check_variable = { influence_array^6 = HEZ }
-					}
-					HEZ = { add_to_variable = { total_influence_in_countries = PREV.influence_array_val^6 } }
 				}
 			}
 
 			#Calculate weekly income with variables
-			# X = Sum of Hezbollah influence in all countries (except AoR members) (total_influence_in_countries)
+			# X = Sum of Hezbollah's influence in all countries (except AoR members) (total_influence_in_countries)
 			# manpower = X
 			# money = X*0.001
 			# small arms = X*2
 			# C&C = X*0.5 (Round)
 			# MANPADS = X*0.25 (Round)
 			# ATGM = X*0.25 (Round)
+			# MLRS = X*0.015 (Round)
 			# MBT = X*0.004 (Round)
 			# APC = X*0.01 (Round)
 			# IFV = X*0.008 (Round)
@@ -138,7 +69,6 @@ on_actions = {
 
 			#MANPOWER
 			set_temp_variable = { x = total_influence_in_countries }
-			multiply_variable = { x = 1 }
 			round_temp_variable = x
 			add_manpower = x
 			set_variable = { hezbollah_weekly_manpower = x }
@@ -155,7 +85,7 @@ on_actions = {
 			multiply_temp_variable = { x = 2 }
 			round_temp_variable = x
 			add_equipment_to_stockpile = {
-				type = infantry_weapons
+				type = infantry_weapons_1
 				amount = x
 				producer = SOV
 			}
@@ -166,7 +96,7 @@ on_actions = {
 			multiply_temp_variable = { x = 0.5 }
 			round_temp_variable = x
 			add_equipment_to_stockpile = {
-				type = command_control_equipment1
+				type = cnc_equipment_2
 				amount = x
 				producer = SOV
 			}
@@ -188,84 +118,92 @@ on_actions = {
 			multiply_temp_variable = { x = 0.25 }
 			round_temp_variable = x
 			add_equipment_to_stockpile = {
-				type = Anti_tank_0
+				type = Anti_tank_1
 				amount = x
 				producer = SOV
 			}
 			set_variable = { hezbollah_weekly_atgm = x }
 
+			# MLRS
+			set_temp_variable = { mlrs_amount = total_influence_in_countries }
+			multiply_temp_variable = { mlrs_amount = 0.015 }
+			round_temp_variable = mlrs_amount
+			set_variable = { hezbollah_weekly_mlrs = mlrs_amount }
+
 			# MBT
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.004 }
-			round_temp_variable = x
+			set_temp_variable = { mbt_amount = total_influence_in_countries }
+			multiply_temp_variable = { mbt_amount = 0.004 }
+			round_temp_variable = mbt_amount
+			set_variable = { hezbollah_weekly_mbt = mbt_amount }
+
+			# APC
+			set_temp_variable = { apc_amount = total_influence_in_countries }
+			multiply_temp_variable = { apc_amount = 0.01 }
+			round_temp_variable = apc_amount
+			set_variable = { hezbollah_weekly_apc = apc_amount }
+
+			# IFV
+			set_temp_variable = { ifv_amount = total_influence_in_countries }
+			multiply_temp_variable = { ifv_amount = 0.008 }
+			round_temp_variable = ifv_amount
+			set_variable = { hezbollah_weekly_ifv = ifv_amount }
+
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				add_equipment_to_stockpile = {
 					type = medium_tank_chassis_0
-					variant_name = "T-55"
-					amount = x
+					variant_name = "T-55A"
+					amount = mbt_amount
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_amphibious_chassis_1
+					variant_name = "M113"
+					amount = apc_amount
+					producer = USA
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_flame_chassis_0
+					variant_name = "BMP-1"
+					amount = ifv_amount
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_rocket_chassis_0
+					variant_name = "BM-21 Grad"
+					amount = mlrs_amount
 					producer = SOV
 				}
 			}
 			else = {
 				add_equipment_to_stockpile = {
 					type = MBT_1
-					amount = x
+					amount = mbt_amount
 					producer = SOV
 				}
-			}
-			set_variable = { hezbollah_weekly_mbt = x }
-
-			# APC
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.01 }
-			round_temp_variable = x
-			if = {
-				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = {
-					type = medium_tank_amphibious_chassis_1
-					variant_name = "M113"
-					amount = x
-					producer = USA
-				}
-			}
-			else = {
 				add_equipment_to_stockpile = {
 					type = APC_2
-					amount = x
+					amount = apc_amount
 					producer = USA
 				}
-			}
-			set_variable = { hezbollah_weekly_apc = x }
-
-			# IFV
-			set_temp_variable = { x = total_influence_in_countries }
-			multiply_temp_variable = { x = 0.008 }
-			round_temp_variable = x
-			if = {
-				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = {
-					type = medium_tank_flame_chassis_0
-					variant_name = "BMP-1"
-					amount = x
-					producer = SOV
-				}
-			}
-			else = {
 				add_equipment_to_stockpile = {
 					type = IFV_2
-					amount = x
+					amount = ifv_amount
+					producer = SOV
+				}
+				add_equipment_to_stockpile = {
+					type = SP_R_arty_2
+					amount = mlrs_amount
 					producer = SOV
 				}
 			}
-			set_variable = { hezbollah_weekly_ifv = x }
 
 			# Utility Vehicle
 			set_temp_variable = { x = total_influence_in_countries }
 			multiply_temp_variable = { x = 0.015 }
 			round_temp_variable = x
 			add_equipment_to_stockpile = {
-				type = util_vehicle_0
+				type = util_vehicle_1
 				amount = x
 				producer = PER
 			}

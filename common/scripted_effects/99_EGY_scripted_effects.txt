@@ -32,23 +32,23 @@ EGY_update_military_standing = {
 	#Corruption above level 5 is -20 points per level
 	set_variable = { EGY_military_standing_corruption = 0 }
 	if = {
-		limit = { has_idea = systematic_corruption }
+		limit = { has_idea = corruption_level_06 }
 		add_to_variable = { EGY_military_standing_corruption = 20 }
 	}
 	else_if = {
-		limit = { has_idea = unrestrained_corruption }
+		limit = { has_idea = corruption_level_07 }
 		add_to_variable = { EGY_military_standing_corruption = 40 }
 	}
 	else_if = {
-		limit = { has_idea = rampant_corruption }
+		limit = { has_idea = corruption_level_08 }
 		add_to_variable = { EGY_military_standing_corruption = 60 }
 	}
 	else_if = {
-		limit = { has_idea = crippling_corruption }
+		limit = { has_idea = corruption_level_09 }
 		add_to_variable = { EGY_military_standing_corruption = 80 }
 	}
 	else_if = {
-		limit = { has_idea = paralyzing_corruption }
+		limit = { has_idea = corruption_level_10 }
 		add_to_variable = { EGY_military_standing_corruption = 100 }
 	}
 	add_to_variable = { EGY_military_standing_value = EGY_military_standing_corruption }
@@ -80,9 +80,9 @@ EGY_update_military_standing = {
 	if = { # Muslim Brotherhood, Coptic, & Shi'ites
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 12 }
-				is_in_array = { ruling_party = 9 }
-				is_in_array = { ruling_party = 8 }
+				check_variable = { ruling_party = 12 }
+				check_variable = { ruling_party = 9 }
+				check_variable = { ruling_party = 8 }
 			}
 		}
 		set_variable = { EGY_military_standing_party = -100 }
@@ -90,8 +90,8 @@ EGY_update_military_standing = {
 	else_if = {
 		limit = { # Salafists
 			OR = {
-				is_in_array = { ruling_party = 10 }
-				is_in_array = { ruling_party = 11 }
+				check_variable = { ruling_party = 10 }
+				check_variable = { ruling_party = 11 }
 			}
 		}
 		set_variable = { EGY_military_standing_party = -50 }
@@ -99,27 +99,27 @@ EGY_update_military_standing = {
 	else_if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 0 }
-				is_in_array = { ruling_party = 1 }
-				is_in_array = { ruling_party = 2 }
-				is_in_array = { ruling_party = 3 }
-				is_in_array = { ruling_party = 7 }
-				is_in_array = { ruling_party = 21 }
+				western_autocrats_are_in_power = yes
+				check_variable = { ruling_party = 1 }
+				check_variable = { ruling_party = 2 }
+				check_variable = { ruling_party = 3 }
+				check_variable = { ruling_party = 7 }
+				check_variable = { ruling_party = 21 }
 			}
 		}
 		set_variable = { EGY_military_standing_party = 50 }
 	}
 	else_if = {
-		limit = { is_in_array = { ruling_party = 22 } }
+		limit = { check_variable = { ruling_party = 22 } }
 		set_variable = { EGY_military_standing_party = 100 }
 	}
 	add_to_variable = { EGY_military_standing_value = EGY_military_standing_party }
 }
 
 coptic_events = {
-	random_list = {
-		60 = { add_to_variable = { event_counter_1_coptic = 1 } }
-		40 = { }
+	random = {
+		chance = 60
+		add_to_variable = { event_counter_1_coptic = 1 }
 	}
 	if = {
 		limit = { check_variable = { event_counter_1_coptic > 5 } }
@@ -137,22 +137,14 @@ coptic_events = {
 modify_coptic_opinion_effect = {
 	custom_effect_tooltip = modify_coptic_opinion_effect_tt
 	add_to_variable = { EGY_coptic_people_opinion = coptic_opinion_change }
-	clamp_variable = {
-		var = EGY_coptic_people_opinion
-		min = 0
-		max = 100
-	}
+	clamp_variable = { var = EGY_coptic_people_opinion min = 0 max = 100 }
 	update_coptic_ideas = yes
 }
 
 modify_coptic_pol_influence_effect = {
 	custom_effect_tooltip = modify_coptic_pol_influence_effect_tt
 	add_to_variable = { EGY_copts_political_influence = coptic_pol_influence_change }
-	clamp_variable = {
-		var = EGY_copts_political_influence
-		min = 0
-		max = 100
-	}
+	clamp_variable = { var = EGY_copts_political_influence min = 0 max = 100 }
 }
 
 check_broken_economy_conditions_for_reducing = {
@@ -257,8 +249,9 @@ update_coptic_ideas = {
 			if = {
 				limit = {
 					check_variable = { EGY_coptic_people_opinion < 20 }
-					EGY = { 
+					EGY = {
 						owns_state = 217
+						has_civil_war = no
 						NOT = {
 							has_country_flag = copts_revolted
 						}
@@ -270,11 +263,12 @@ update_coptic_ideas = {
 					start_civil_war = {
 						ideology = neutrality
 						set_cosmetic_tag = EGY_COPTIC
+						set_variable = { dynamic_flag_variant = 8 }
 						size = 0
 						load_focus_tree = egypt_focus
 						states = { 217 }
 						add_equipment_to_stockpile = {
-							type = Inf_equipment
+							type = infantry_weapons_type
 							amount = 10000
 							producer = EGY
 						}
@@ -296,24 +290,41 @@ update_coptic_ideas = {
 							create_unit = {
 								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
 								owner = ROOT
-							}
-							create_unit = {
-								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-							create_unit = {
-								division = "name = \"Coptic Militia\" division_template = \"Coptic Militia\" start_experience_factor = 1.0"
-								owner = ROOT
+								count = 3
 							}
 						}
-						clear_array = ruling_party
-						add_to_array = { ruling_party = 13 }
-						update_government_coalition_strength = yes
-						update_party_name = yes
-						set_coalition_drift = yes
+						set_temp_variable = { rul_party_temp = 13 }
+						change_ruling_party_effect = yes
 					}
 				}
 			}
 		}
+	}
+}
+
+EGY_lower_slums_level = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = EGY_slums_5_level } }
+		remove_dynamic_modifier = { modifier = EGY_slums_5_level }
+		add_dynamic_modifier = { modifier = EGY_slums_4_level }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = EGY_slums_4_level } }
+		remove_dynamic_modifier = { modifier = EGY_slums_4_level }
+		add_dynamic_modifier = { modifier = EGY_slums_3_level }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = EGY_slums_3_level } }
+		remove_dynamic_modifier = { modifier = EGY_slums_3_level }
+		add_dynamic_modifier = { modifier = EGY_slums_2_level }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = EGY_slums_2_level } }
+		remove_dynamic_modifier = { modifier = EGY_slums_2_level }
+		add_dynamic_modifier = { modifier = EGY_slums_1_level }
+	}
+	else_if = {
+		limit = { has_dynamic_modifier = { modifier = EGY_slums_1_level } }
+		remove_dynamic_modifier = { modifier = EGY_slums_1_level }
 	}
 }

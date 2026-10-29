@@ -1,4 +1,4 @@
-﻿add_namespace = UAR
+add_namespace = UAR
 add_namespace = UAR_news
 
 #Country invited to join UAR
@@ -14,7 +14,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: UAR.1.a executed"
 		name = UAR.1.a
 		ai_chance = {
-			factor = 50
+			base = 50
 			modifier = {
 				factor = 0.25
 				has_government = democratic
@@ -128,6 +128,7 @@ country_event = {
 			}
 		}
 		drop_cosmetic_tag = yes
+		clear_variable = dynamic_flag_variant
 		effect_tooltip = {
 			if = {
 				limit = {
@@ -159,7 +160,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: UAR.1.b executed"
 		name = UAR.1.b
 		ai_chance = {
-			factor = 50
+			base = 50
 			modifier = {
 				factor = 1.75
 				has_government = democratic
@@ -238,7 +239,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: UAR.2.a executed"
 		name = UAR.2.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 		if = {
 			limit = {
 				OR = {
@@ -257,18 +258,7 @@ country_event = {
 				autonomy_state = autonomy_uar_state
 			}
 		}
-		#Calculate the total GDP of all Arabic countries
-		set_variable = { total_arabic_gdp = 0 }
-		for_each_scope_loop = {
-			array = global.arabic_countries
-			add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-		}
-		#Calculate the GDP of UAR and their puppets
-		set_variable = { total_uar_gdp = gdp_total }
-		for_each_scope_loop = {
-			array = ROOT.subjects
-			add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-		}
+		update_arabic_country_gdp_total_effect = yes
 	}
 }
 
@@ -282,10 +272,9 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR.3.a executed"
 		name = UAR.3.a
 		ai_chance = {
-			factor = 75
+			base = 75
 			modifier = {
 				factor = 0.25
 				has_government = nationalist
@@ -296,7 +285,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: UAR.3.b executed"
 		name = UAR.3.b
 		ai_chance = {
-			factor = 25
+			base = 25
 			modifier = {
 				factor = 1.75
 				has_government = nationalist
@@ -310,6 +299,8 @@ country_event = {
 				check_variable = { debt_ratio > 0.7 }
 			}
 		}
+		set_temp_variable = { wargoal_on = FROM }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = FROM
 			type = puppet_wargoal_focus
@@ -332,25 +323,15 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: UAR.4.a executed"
 		name = UAR.4.a
 		ai_chance = {
-			factor = 80
+			base = 80
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				emerging_autocracy_are_in_power = yes
 			}
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				nationalist_fascist_are_in_power = yes
 			}
 			modifier = {
@@ -364,7 +345,8 @@ country_event = {
 		}
 		if = {
 			limit = {
-				any_country = {
+				any_of_scopes = {
+					array = global.arabic_countries
 					has_country_flag = UAR_created_arab_liberation_front
 				}
 			}
@@ -381,13 +363,13 @@ country_event = {
 			}
 		}
 		else = {
-			create_faction = UAR_arab_liberation_front
+			create_faction_from_template = faction_template_arab_liberation_front
 			set_country_flag = UAR_created_arab_liberation_front
 			every_other_country = {
 				limit = {
 					NOT = { has_country_flag = united_neo_baathist_uar }
 					NOT = { has_country_flag = united_baathist_uar }
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 					OR = {
 						has_idea = minor_power
 						has_idea = non_power
@@ -403,28 +385,17 @@ country_event = {
 		}
 	}
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR.4.b executed"
 		name = UAR.4.b
 		ai_chance = {
-			factor = 20
+			base = 20
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				emerging_autocracy_are_in_power = yes
 			}
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				nationalist_fascist_are_in_power = yes
 			}
 			modifier = {
@@ -452,25 +423,15 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: UAR.5.a executed"
 		name = UAR.5.a
 		ai_chance = {
-			factor = 60
+			base = 60
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				emerging_autocracy_are_in_power = yes
 			}
 			modifier = {
 				factor = 0
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				nationalist_fascist_are_in_power = yes
 			}
 			modifier = {
@@ -495,42 +456,22 @@ country_event = {
 			}
 			modifier = {
 				factor = 0.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				has_government = communism
 			}
 			modifier = {
 				factor = 1.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				has_government = communism
 			}
 			modifier = {
 				factor = 0.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				has_government = nationalist
 			}
 			modifier = {
 				factor = 1.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				has_government = nationalist
 			}
 		}
@@ -540,10 +481,9 @@ country_event = {
 		set_country_flag = UAR_joined_arab_liberation_front
 	}
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR.5.b executed"
 		name = UAR.5.b
 		ai_chance = {
-			factor = 40
+			base = 40
 			modifier = {
 				factor = 1.8
 				has_war = yes
@@ -566,42 +506,22 @@ country_event = {
 			}
 			modifier = {
 				factor = 1.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				has_government = communism
 			}
 			modifier = {
 				factor = 0.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				has_government = communism
 			}
 			modifier = {
 				factor = 1.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_baathist_uar
-						has_country_flag = united_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_baathist_uar = yes
 				has_government = nationalist
 			}
 			modifier = {
 				factor = 0.5
-				any_country = {
-					OR = {
-						has_country_flag = formed_neo_baathist_uar
-						has_country_flag = united_neo_baathist_uar
-					}
-				}
+				any_arabic_country_formed_the_neo_baathist_uar = yes
 				has_government = nationalist
 			}
 		}
@@ -620,7 +540,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: UAR.6.a executed"
 		name = UAR.6.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 		random_country = {
 			limit = {
 				OR = {
@@ -629,6 +549,9 @@ country_event = {
 				}
 			}
 			ROOT = {
+				set_temp_variable = { wargoal_on = PREV }
+				set_temp_variable = { wargoal_type = 2 }
+				add_threat_from_wargoal_effect = yes
 				create_wargoal = {
 					target = PREV
 					type = annex_everything
@@ -648,9 +571,12 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR.7.a executed"
 		name = UAR.7.a
-		ai_chance = { factor = 100 }
+		log = "[GetDateText]: [This.GetName]: UAR.7.a"
+		ai_chance = { base = 100 }
+		set_temp_variable = { wargoal_on = FROM }
+		set_temp_variable = { wargoal_type = 2 }
+		add_threat_from_wargoal_effect = yes
 		create_wargoal = {
 			target = FROM
 			type = annex_everything
@@ -670,9 +596,8 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.1.a executed"
 		name = UAR_news.1.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -688,9 +613,8 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.2.a executed"
 		name = UAR_news.2.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -706,9 +630,8 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.3.a executed"
 		name = UAR_news.3.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -724,9 +647,8 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.4.a executed"
 		name = UAR_news.4.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -742,9 +664,9 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.5.a executed"
+
 		name = UAR_news.5.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -760,9 +682,8 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.6.a executed"
 		name = UAR_news.6.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }
 
@@ -778,8 +699,7 @@ news_event = {
 	major = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: UAR_news.7.a executed"
 		name = UAR_news.7.a
-		ai_chance = { factor = 100 }
+		ai_chance = { base = 100 }
 	}
 }

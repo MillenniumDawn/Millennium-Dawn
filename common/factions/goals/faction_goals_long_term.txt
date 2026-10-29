@@ -1,0 +1,720 @@
+#category = short_term medium_term or long_term
+
+faction_goal_resource_control = {
+	name = resource_control_goal_name
+	description = resource_control_goal_desc
+	category = long_term
+	group = resources_to_market_icon
+	visible = {
+
+	}
+	available = {
+		faction_leader = {
+			custom_trigger_tooltip = {
+				tooltip = faction_goal_resource_control_available_tt
+				check_variable = { faction_goal_resource_control_available_cache = 1 }
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
+	completed = {
+		if = {
+			limit = { is_in_faction = yes }
+			faction_leader = {
+				check_variable = {
+					var = faction_goal_resource_control_completed_cache
+					value = 1
+					compare = greater_than_or_equals
+					tooltip = faction_goal_resource_control_completed_tt
+				}
+			}
+		}
+		else = { always = no }
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		every_faction_member = {
+			tooltip = INFLUENCE_TOP_THREE
+			visible_when_empty = yes
+			limit = {
+				faction_influence_rank < 4
+			}
+			add_political_power = 100
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+faction_goal_eastern_european_security = {
+	name = eastern_european_security_goal_name
+	description = eastern_european_security_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	allowed = {
+		tag = SOV
+	}
+	completed = {
+		count_triggers = {
+				amount = 6
+
+			POL = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			ROM = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			HUN = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			CZE = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			BUL = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			GRE = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			SER = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			TUR = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			SLV = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			CRO = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			BOS = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			KOS = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			ALB = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			FYR = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			MLV = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			PMR = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+			SLO = {
+				is_subject_of = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 1000
+		newline = yes
+		custom_effect_tooltip = INFLUENCE_ABOVE_30_PERCENT
+		every_faction_member = {
+			limit = { faction_influence_ratio > 0.3 }
+			add_political_power = 200
+			add_faction_initiative = 1
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			date > 1938.1.1
+		}
+		modifier = {
+			add = 9 # SOV should always prio this
+			date > 1938.1.1
+			original_tag = SOV
+		}
+	}
+}
+
+### Units/Deployment
+faction_goal_strategic_bombing_campaign = {
+	name = strategic_bombing_campaign_goal_name
+	description = strategic_bombing_campaign_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_AIR_XP
+	visible = {
+		has_war = yes
+	}
+	available = {
+		faction_leader = {
+			OR = {
+				check_variable = {
+					var = faction_goal_strategic_bombers_cache
+					value = 200
+					compare = less_than
+					tooltip = faction_goal_strat_bombers_below_tt
+				}
+				check_variable = {
+					var = faction_goal_recently_bombed_states_cache
+					value = 3
+					compare = less_than
+					tooltip = faction_goal_recently_bombed_states_below_tt
+				}
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_strategic_bombing_campaign_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_strategic_bombers_cache
+				value = 200
+				compare = greater_than_or_equals
+				tooltip = faction_goal_strat_bombers_at_least_tt
+			}
+			check_variable = {
+				var = faction_goal_recently_bombed_states_cache
+				value = 3
+				compare = greater_than_or_equals
+				tooltip = faction_goal_recently_bombed_states_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_collection_element = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_army_size = {
+							size > 49
+							type = strategic_bomber
+						}
+					}
+				}
+				name = ALL_FACTION_MEMBERS_WITH_50_BOMBERS
+			}
+			add_faction_initiative = 1
+			add_war_support = 0.1
+			air_experience = 50
+			add_mastery = {
+				amount = 100
+				track = heavy_aircraft
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # Powers with few military factories should probably not care about expensive bombers
+			num_of_military_factories > 49
+		}
+		modifier = {
+			add = 1 # Factions with decent number of military factories should probably start caring more about strat bombing - because they can
+			faction_leader = {
+				check_variable = { faction_goal_military_factories_cache > 149 }
+			}
+		}
+	}
+}
+
+
+### War Waging
+
+faction_goal_liberate_territory = {
+	name = liberate_territory_goal_name
+	description = liberate_territory_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_ANNEXATION
+	visible = {
+		faction_leader = {
+			check_variable = { faction_goal_liberate_visible_cache = 1 }
+		}
+	}
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_liberate_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_stability = 0.1
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 4 # If lots of territory, prioritize this
+			faction_leader = {
+				check_variable = { faction_goal_liberate_ai_4_cache = 1 }
+			}
+		}
+		modifier = {
+			add = 5 # If even more territory, prioritize this A LOT
+			faction_leader = {
+				check_variable = { faction_goal_liberate_ai_10_cache = 1 }
+			}
+		}
+	}
+}
+
+faction_goal_great_offensive = {
+	name = great_offensive_goal_name
+	description = great_offensive_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_ANNEXATION
+	visible = {
+		faction_leader = {
+			check_variable = { faction_goal_great_offensive_visible_cache = 1 }
+		}
+	}
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_great_offensive_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = ENEMY_FACTION_CORE_STATES_CONTROLLED_BY_US
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_war_support = 0.1
+		}
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				any_controlled_state = {
+					owner = {
+						has_war_with = ROOT
+					}
+					is_core_of = OWNER
+				}
+			}
+			add_faction_initiative = 1
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # If healthy equipment stockpiles, go for it
+			stockpile_ratio = {
+				archetype = infantry_weapons_type
+				ratio > 1
+			}
+			stockpile_ratio = {
+				archetype = artillery_equipment
+				ratio > 1
+			}
+		}
+		modifier = {
+			add = 1 # If we're in a secure position we can probably push
+			faction_leader = {
+				check_variable = { faction_goal_great_offensive_secure_cache = 1 }
+			}
+		}
+	}
+}
+
+faction_goal_defeating_our_enemies = {
+	name = defeating_our_enemies_goal_name
+	description = defeating_our_enemies_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_ANNEXATION
+	visible = {
+		NOT = { has_country_flag = peace_winner_flag }
+	}
+	completed = {
+		custom_trigger_tooltip = {
+			tooltip = is_victor_in_pc_tt
+			ROOT = { has_country_flag = peace_winner_flag }
+		}
+
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_war_support = 0.1
+		}
+		newline = yes
+		custom_effect_tooltip = PEACE_CONFERENCE_WINNERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				has_country_flag = peace_winner_flag
+			}
+			add_faction_initiative = 1
+		}
+	}
+}
+### Tech
+
+### Ideology based
+
+# Defeat of Communism
+faction_goal_defeat_of_communism = {
+	name = defeat_of_communism_goal_name
+	description = defeat_of_communism_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		faction_leader = { check_variable = { faction_goal_no_communist_members_cache = 1 } }
+	}
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = faction_goal_communist_states_available_tt
+			faction_leader = { check_variable = { faction_goal_communist_states_available_cache = 1 } }
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_communist_states_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_AMOUNT_OF_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_popularity = {
+				ideology = communism
+				popularity = -0.15
+			}
+			add_political_power = 100
+		}
+	}
+}
+
+# Defeat of Fascism
+faction_goal_defeat_of_fascism = {
+	name = defeat_of_fascism_goal_name
+	description = defeat_of_fascism_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		faction_leader = { check_variable = { faction_goal_no_fascist_members_cache = 1 } }
+	}
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = faction_goal_fascist_states_available_tt
+			faction_leader = { check_variable = { faction_goal_fascist_states_available_cache = 1 } }
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_fascist_states_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_AMOUNT_OF_FASCIST_CONTROLLED_STATES_SAME_CONTINENT
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.15
+			}
+			add_political_power = 100
+		}
+	}
+}
+
+# Defeat of Anti-communists
+faction_goal_defeat_of_anti_communists = {
+	name = defeat_of_anti_communists_goal_name
+	description = defeat_of_anti_communists_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		faction_leader = { check_variable = { faction_goal_no_anti_communist_members_cache = 1 } }
+	}
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = faction_goal_anti_communist_states_available_tt
+			faction_leader = { check_variable = { faction_goal_anti_communist_states_available_cache = 1 } }
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_anti_communist_states_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_AMOUNT_OF_ANTI_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 500
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_popularity = {
+				ideology = communism
+				popularity = 0.2
+			}
+			add_political_power = 100
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # If war with communists you probably hate them
+			any_enemy_country = {
+				has_government = communism
+			}
+		}
+	}
+}
+
+faction_goal_long_live_the_revolution = {
+	name = long_live_the_revolution
+	description = long_live_the_revolution_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		has_faction_template = faction_template_pol_rep
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_long_live_revolution_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = FACTION_MEMBERS_ABOVE_75_COMMUNISM
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_ideas = POL_long_live_the_revolution_idea
+		}
+	}
+	ai_will_do = {
+		base = 5
+		modifier = { # Don't force when at war
+			add = -4
+			has_war = yes
+		}
+	}
+}
+
+faction_goal_the_family_reunited = {
+	name = the_family_reunited_goal_name
+	description = the_family_reunited_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_ANNEXATION
+	visible = {
+		has_faction_template = faction_template_cze_tne
+	}
+	completed = {
+		count_triggers = {
+			amount = 5
+
+			POL = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			HUN = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			AUS = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			UKR = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			SPR = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			MEX = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+			CRO = {
+				OR = {
+					is_subject_of = CZE
+					is_in_faction_with = CZE
+				}
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_ideas = CZE_the_family_reunited_idea
+		}
+	}
+}
+
+faction_goal_dominate_the_middle_east = {
+	name = dominate_the_middle_east_goal_name
+	description = dominate_the_middle_east_goal_desc
+	category = long_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	allowed = {
+		ROOT = {
+			capital_scope = {
+				is_on_continent = middle_east
+			}
+  	  	}
+	}
+	visible = {
+		ROOT = {
+			capital_scope = {
+				is_on_continent = middle_east
+			}
+  	  	}
+	}
+	completed = {
+		count_triggers = {
+				amount = 8
+				215 = { is_controlled_by_ROOT_or_ally = yes } #Cairo
+				207 = { is_controlled_by_ROOT_or_ally = yes } #Jerusalem
+				177 = { is_controlled_by_ROOT_or_ally = yes } #Hejaz
+				176 = { is_controlled_by_ROOT_or_ally = yes } #Riyadh
+				557 = { is_controlled_by_ROOT_or_ally = yes } #Baghdad
+				186 = { is_controlled_by_ROOT_or_ally = yes } #Damascus
+				179 = { is_controlled_by_ROOT_or_ally = yes } #Dubai
+				386 = { is_controlled_by_ROOT_or_ally = yes } #Algiers
+				202 = { is_controlled_by_ROOT_or_ally = yes } #Beirut
+				391 = { is_controlled_by_ROOT_or_ally = yes } #Tripoli
+				388 = { is_controlled_by_ROOT_or_ally = yes } #Tunis
+				195 = { is_controlled_by_ROOT_or_ally = yes } #Sanaa
+				182 = { is_controlled_by_ROOT_or_ally = yes } #Masqat
+				377 = { is_controlled_by_ROOT_or_ally = yes } #Casablanca
+				934 = { is_controlled_by_ROOT_or_ally = yes } #Istanbul
+				405 = { is_controlled_by_ROOT_or_ally = yes } #Tehran
+
+
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 1000
+		newline = yes
+		custom_effect_tooltip = INFLUENCE_ABOVE_30_PERCENT
+		every_faction_member = {
+			limit = { faction_influence_ratio > 0.3 }
+			add_political_power = 200
+			add_faction_initiative = 1
+		}
+	}
+	ai_will_do = {
+		base = 0
+		}
+	}

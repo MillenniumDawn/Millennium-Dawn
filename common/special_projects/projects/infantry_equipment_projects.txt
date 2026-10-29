@@ -1,23 +1,31 @@
-# Author(s): Kalkalash
+# Author(s): Kalkalash, TheGeneral
 #Special projects related to infantry equipment tech tab
 sp_caseless_ammunition = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_infantry_equipment
 
 	ai_will_do = {
 		base = 1
-	}
+		modifier = {
+			factor = 3
+			ROOT = {
+				threat > 0.4
+			}
+		}
 
-	visible = {
-		FROM = {
-			has_tech = infantry_weapons1
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = infantry_weapons4
+			has_tech = infantry_weapons_5
 		}
 	}
 
@@ -31,7 +39,7 @@ sp_caseless_ammunition = {
 
 	project_output = {
 		equipment_bonus = {
-			Inf_equipment = {
+			infantry_weapons_type = {
 				build_cost_ic = -0.10
 				reliability = -0.04
 				instant = yes
@@ -77,7 +85,7 @@ sp_caseless_ammunition = {
 
 				iteration_output = {
 					equipment_bonus = {
-						Inf_equipment = {
+						infantry_weapons_type = {
 							reliability = 0.025
 						}
 					}
@@ -93,28 +101,207 @@ sp_caseless_ammunition = {
 	}
 
 }
-
-sp_fire_support_land_drone = {
+sp_smart_bullets = {
+	allowed = { always = yes }
 	specialization = specialization_land
+	icon = GFX_sp_smart_bullets
 
 	project_tags = sp_tag_infantry_equipment
 
 	ai_will_do = {
 		base = 1
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
+		}
 	}
 
-	visible = {
-		FROM = {
-			OR = {
-				has_tech = land_Drone_equipment2
-				has_tech = support_weapons4
+	special_project_parent = {
+		sp_caseless_ammunition
+	}
+
+	breakthrough_cost = {
+		specialization_land = 2
+	}
+
+	resource_cost = {
+		resources = {
+			composites = 2
+			microchips = 3
+			aluminium = 4
+		}
+	}
+
+	prototype_time = sp_time.prototype.very_long
+
+	complexity = sp_complexity.large
+
+	project_output = {
+		equipment_bonus = {
+			infantry_weapons_type = {
+				soft_attack = 0.15
+				build_cost_ic = 0.05
+				instant = yes
+			}
+		}
+	}
+
+	generic_prototype_rewards = {
+		sp_land_generic_reward_scientist_xp_1
+		sp_land_generic_reward_scientist_xp_2
+		sp_land_generic_reward_scientist_xp_3
+		sp_land_generic_reward_army_xp_1
+		sp_land_generic_reward_army_xp_2
+		sp_land_generic_reward_army_xp_3
+		sp_land_generic_reward_major_progress_1
+		sp_land_generic_reward_major_progress_2
+		sp_land_generic_reward_major_progress_3
+		sp_land_generic_reward_test_failure_1
+		sp_land_generic_reward_test_failure_2
+		sp_land_generic_reward_test_failure_3
+		sp_land_generic_reward_infantry_tech_1
+		sp_land_generic_reward_infantry_tech_2
+		sp_land_generic_reward_infantry_tech_3
+		sp_land_generic_reward_resource_scarcity
+		sp_land_generic_reward_critical_failure
+	}
+
+	unique_prototype_rewards = {
+		sp_caseless_ammunition_reward_new_propellant = {
+			fire_only_once = yes
+
+			threshold = {
+				min = 0
+				max = 100
+			}
+
+			weight = {
+				base = 1
+			}
+
+			option = {
+				token = sp_caseless_ammunition_reward_new_propellant_option
+
+				iteration_output = {
+					equipment_bonus = {
+						infantry_weapons_type = {
+							reliability = 0.025
+						}
+					}
+
+					country_effects = {
+						FROM = {
+							add_project_progress_ratio = constant:sp_progress.gain.low
+						}
+					}
+				}
+			}
+		}
+	}
+
+}
+sp_recon_land_drone = {
+	allowed = { always = yes }
+	specialization = specialization_land
+	icon = GFX_sp_land_recondrone
+
+	project_tags = { sp_tag_infantry_equipment sp_tag_drones }
+
+	ai_will_do = {
+		base = 1
+		modifier = {
+			factor = 4
+			ROOT = {
+				has_manpower < 100000
+				threat > 0.4
+			}
+		}
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
 			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = land_Drone_equipment3
+			has_tech = land_drone_equipment_tech_3
+		}
+	}
+
+	breakthrough_cost = {
+		specialization_land = 2
+	}
+
+	prototype_time = sp_time.prototype.medium
+
+	complexity = sp_complexity.medium
+
+	project_output = {
+		enable_subunits = {
+			Drone_Recce_Comp
+		}
+		enable_equipments = {
+			land_drone_equipment_1
+		}
+		enable_equipment_modules = {
+			walker_tank_module_recon_drone_1
+		}
+	}
+
+	generic_prototype_rewards = {
+		sp_land_generic_reward_scientist_xp_1
+		sp_land_generic_reward_scientist_xp_2
+		sp_land_generic_reward_scientist_xp_3
+		sp_land_generic_reward_army_xp_1
+		sp_land_generic_reward_army_xp_2
+		sp_land_generic_reward_army_xp_3
+		sp_land_generic_reward_major_progress_1
+		sp_land_generic_reward_major_progress_2
+		sp_land_generic_reward_major_progress_3
+		sp_land_generic_reward_test_failure_1
+		sp_land_generic_reward_test_failure_2
+		sp_land_generic_reward_test_failure_3
+		sp_land_generic_reward_infantry_tech_1
+		sp_land_generic_reward_infantry_tech_2
+		sp_land_generic_reward_infantry_tech_3
+		sp_land_generic_reward_resource_scarcity
+		sp_land_generic_reward_critical_failure
+	}
+}
+sp_fire_support_land_drone = {
+	allowed = { always = yes }
+	specialization = specialization_land
+	icon = GFX_sp_fire_support_land_drone
+
+	project_tags = { sp_tag_infantry_equipment sp_tag_drones }
+
+	ai_will_do = {
+		base = 1
+		modifier = {
+			factor = 4
+			ROOT = {
+				has_manpower < 100000
+				threat > 0.4
+			}
+		}
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
+		}
+	}
+
+	available = {
+		FROM = {
+			has_tech = land_drone_equipment_tech_3
 		}
 	}
 
@@ -128,9 +315,8 @@ sp_fire_support_land_drone = {
 
 	project_output = {
 		country_effects = {
-			custom_effect_tooltip = {
-				localization_key = SP_UNLOCK_TECH
-				TECH = rc_fire_support_drone
+			set_technology = {
+				rc_fire_support_drone = 1
 			}
 		}
 	}
@@ -177,8 +363,8 @@ sp_fire_support_land_drone = {
 							name = sp_fire_support_land_drone_reward_improved_communication_tech_bonus
 							bonus = 0.15
 							uses = 1
-							category = CAT_computing_tech
-							category = CAT_internet_tech
+							category = CAT_information_technology
+							category = CAT_internet
 						}
 					}
 				}
@@ -193,8 +379,8 @@ sp_fire_support_land_drone = {
 							name = sp_fire_support_land_drone_reward_improved_communication_tech_bonus
 							bonus = 0.15
 							uses = 1
-							category = CAT_cnc
-							category = CAT_l_drone
+							category = CAT_command_and_control_equipment
+							category = CAT_land_drones
 						}
 					}
 				}
@@ -205,26 +391,25 @@ sp_fire_support_land_drone = {
 }
 
 sp_tactical_augmented_reality = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_infantry_equipment
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			OR = {
-				has_tech = command_control_equipment3
-				has_tech = night_vision_4
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
 			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = command_control_equipment4
+			has_tech = cnc_equipment_5
 		}
 	}
 
@@ -238,9 +423,8 @@ sp_tactical_augmented_reality = {
 
 	project_output = {
 		country_effects = {
-			custom_effect_tooltip = {
-				localization_key = SP_UNLOCK_TECH
-				TECH = augmented_vision_1
+			set_technology = {
+				augmented_vision_1 = 1
 			}
 		}
 	}
@@ -311,23 +495,25 @@ sp_tactical_augmented_reality = {
 }
 
 sp_double_shot_rifle = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_infantry_equipment
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			has_tech = special_forces2
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = special_forces4
+			has_tech = special_forces_tech_4
 		}
 	}
 
@@ -491,7 +677,7 @@ sp_double_shot_rifle = {
 
 				iteration_output = {
 					equipment_bonus = {
-						Inf_equipment = {
+						infantry_weapons_type = {
 							soft_attack = 0.02
 						}
 					}
@@ -503,7 +689,7 @@ sp_double_shot_rifle = {
 
 				iteration_output = {
 					equipment_bonus = {
-						Inf_equipment = {
+						infantry_weapons_type = {
 							defense = 0.02
 						}
 					}
@@ -515,27 +701,26 @@ sp_double_shot_rifle = {
 }
 
 sp_experimental_exoskeleton = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
-	project_tags = sp_tag_infantry_equipment
+	project_tags = sp_tag_mech_suits
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			OR = {
-				has_tech = body_armor_2010
-				has_tech = advanced_industrial_robotics
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
 			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = body_armor_2010
-			has_tech = advanced_industrial_robotics
+			has_tech = body_armor_3
+			has_tech = robotics_2
 		}
 	}
 
@@ -549,9 +734,8 @@ sp_experimental_exoskeleton = {
 
 	project_output = {
 		country_effects = {
-			custom_effect_tooltip = {
-				localization_key = SP_UNLOCK_TECH
-				TECH = exoskeleton_1
+			set_technology = {
+				exoskeleton_1 = 1
 			}
 		}
 	}
@@ -624,23 +808,25 @@ sp_experimental_exoskeleton = {
 }
 
 sp_active_camouflage = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_infantry_equipment
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			has_tech = camouflage3
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = camouflage4
+			has_tech = camouflage_4
 		}
 	}
 
@@ -654,9 +840,8 @@ sp_active_camouflage = {
 
 	project_output = {
 		country_effects = {
-			custom_effect_tooltip = {
-				localization_key = SP_UNLOCK_TECH
-				TECH = camouflage5
+			set_technology = {
+				camouflage_5 = 1
 			}
 		}
 	}
@@ -732,7 +917,7 @@ sp_active_camouflage = {
 						SP_Arty_Bat = {
 							defense = 0.03
 						}
-						SP_Arty_Battery = {
+						SP_arty_battery = {
 							defense = 0.03
 						}
 						SP_AA_Bat = {
@@ -792,7 +977,7 @@ sp_active_camouflage = {
 						SP_Arty_Bat = {
 							air_attack = 0.03
 						}
-						SP_Arty_Battery = {
+						SP_arty_battery = {
 							air_attack = 0.03
 						}
 						SP_AA_Bat = {
@@ -819,23 +1004,25 @@ sp_active_camouflage = {
 }
 
 sp_truck_modular_seating = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_armored_vehicles
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			has_tech = util_vehicle_1
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = util_vehicle_3
+			has_tech = util_vehicle_4
 		}
 	}
 
@@ -849,7 +1036,12 @@ sp_truck_modular_seating = {
 
 	project_output = {
 		equipment_bonus = {
-			util_vehicle_equipment = {
+			util_vehicle_type = {
+				build_cost_ic = 0.05
+				breakthrough = 0.10
+				instant = yes
+			}
+			heavy_util_vehicle_type = {
 				build_cost_ic = 0.05
 				breakthrough = 0.10
 				instant = yes
@@ -916,23 +1108,25 @@ sp_truck_modular_seating = {
 }
 
 sp_utility_vehicle_electric_engines = {
+	allowed = { always = yes }
 	specialization = specialization_land
 
 	project_tags = sp_tag_armored_vehicles
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			has_tech = util_vehicle_3
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			has_tech = util_vehicle_5
+			has_tech = util_vehicle_6
 		}
 	}
 
@@ -946,7 +1140,12 @@ sp_utility_vehicle_electric_engines = {
 
 	project_output = {
 		equipment_bonus = {
-			util_vehicle_equipment = {
+			util_vehicle_type = {
+				fuel_consumption = -0.50
+				build_cost_ic = 0.10		#Use this since resource cost can't be changed
+				instant = yes
+			}
+			heavy_util_vehicle_type = {
 				fuel_consumption = -0.50
 				build_cost_ic = 0.10		#Use this since resource cost can't be changed
 				instant = yes
@@ -996,11 +1195,8 @@ sp_utility_vehicle_electric_engines = {
 							name = sp_utility_vehicle_electric_engines_reward_fuel_efficiency_option_tech_bonus
 							bonus = 0.25
 							uses = 1
-							category = CAT_fuel_oil
+							category = CAT_fuel_efficiency
 						}
-					}
-
-					country_effects = {
 						FROM = {
 							add_project_progress_ratio = constant:sp_progress.gain.low
 						}
@@ -1013,24 +1209,37 @@ sp_utility_vehicle_electric_engines = {
 }
 
 sp_coilgun_memes = {
+	allowed = { has_dlc = "No Step Back" }
 	specialization = specialization_land
-	icon = GFX_sp_coilgun
+	icon = GFX_sp_railgun_rifles
 	project_tags = sp_tag_infantry_equipment
+
+	visible = {
+		has_game_rule = {
+			rule = rule_futuristic_special_projects
+			option = yes
+		}
+	}
 
 	ai_will_do = {
 		base = 1
-	}
 
-	visible = {
-		FROM = {
-			is_special_project_completed = sp:sp_railgun_cannon
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
 		}
 	}
 
 	available = {
 		FROM = {
-			is_special_project_completed = sp:sp_railgun_cannon_2
+			has_tech = infantry_weapons_8
 		}
+	}
+
+	special_project_parent = {
+		sp_railgun_cannon
 	}
 
 	breakthrough_cost = {
@@ -1110,6 +1319,75 @@ sp_coilgun_memes = {
 		sp_land_generic_reward_infantry_tech_1
 		sp_land_generic_reward_infantry_tech_2
 		sp_land_generic_reward_infantry_tech_3
+		sp_land_generic_reward_resource_scarcity
+		sp_land_generic_reward_critical_failure
+	}
+}
+sp_airless_tires = {
+	allowed = { always = yes }
+	specialization = specialization_land
+	icon = GFX_sp_airless_tire
+
+	project_tags = sp_tag_armored_vehicles
+
+	ai_will_do = {
+		base = 1
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
+		}
+	}
+
+	available = {
+		FROM = {
+			has_tech = util_vehicle_6
+		}
+	}
+
+	breakthrough_cost = {
+		specialization_land = 1
+	}
+
+	prototype_time = sp_time.prototype.long
+
+	complexity = sp_complexity.large
+
+	project_output = {
+		equipment_bonus = {
+			util_vehicle_type = {
+				build_cost_ic = 0.10
+				reliability = 0.25
+				maximum_speed = 0.10
+				instant = yes
+			}
+			heavy_util_vehicle_type = {
+				build_cost_ic = 0.10
+				reliability = 0.25
+				maximum_speed = 0.10
+				instant = yes
+			}
+		}
+	}
+
+	generic_prototype_rewards = {
+		sp_land_generic_reward_scientist_xp_1
+		sp_land_generic_reward_scientist_xp_2
+		sp_land_generic_reward_scientist_xp_3
+		sp_land_generic_reward_army_xp_1
+		sp_land_generic_reward_army_xp_2
+		sp_land_generic_reward_army_xp_3
+		sp_land_generic_reward_major_progress_1
+		sp_land_generic_reward_major_progress_2
+		sp_land_generic_reward_major_progress_3
+		sp_land_generic_reward_test_failure_1
+		sp_land_generic_reward_test_failure_2
+		sp_land_generic_reward_test_failure_3
+		sp_land_generic_reward_motorised_tech_1
+		sp_land_generic_reward_motorised_tech_2
+		sp_land_generic_reward_motorised_tech_3
 		sp_land_generic_reward_resource_scarcity
 		sp_land_generic_reward_critical_failure
 	}

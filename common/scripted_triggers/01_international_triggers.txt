@@ -1,39 +1,108 @@
-counter_terror_system_open = {
+# Auto-vote flags for UN Security Council votes
+# Used by UNSC.100 and recognition.11 to skip sending vote events to AI nations
+# that have opted into automatic voting.
+has_auto_sc_vote = {
 	OR = {
-		is_ai = yes
-		has_country_flag = counterterror_open
+		has_country_flag = auto_accept_all_sc_votes
+		has_country_flag = auto_reject_all_sc_votes
+		has_country_flag = auto_abstain_all_sc_votes
 	}
 }
 
-country_recognization_system_open = {
+# Auto-vote flags for UN General Assembly votes
+# Used by UN.100 and recognition.14 to skip sending vote events to AI nations
+# that have opted into automatic voting.
+has_auto_ga_vote = {
 	OR = {
-		is_ai = yes
-		has_country_flag = state_menu_open
+		has_country_flag = auto_accept_all_ga_votes
+		has_country_flag = auto_reject_all_ga_votes
+		has_country_flag = auto_abstain_all_ga_votes
 	}
 }
 
-pmc_system_open = {
-	OR = {
-		is_ai = yes
-		has_country_flag = pmc_menu_open
-	}
-}
-
+# selected_pmc: 1 Blackwater, 2 Wagner, 3 Aegis, 4 Constellis, 5 MD
 is_major_company = {
-	OR = {
-		has_country_flag = blackwater_sel
-		has_country_flag = wagner_sel
-		has_country_flag = aegis_sel
-		has_country_flag = constellis_sel
-		has_country_flag = md_sel
+	custom_trigger_tooltip = {
+		tooltip = pmc_company_selected_tt
+		check_variable = { selected_pmc > 0 }
 	}
+}
+
+is_blackwater_selected = {
+	check_variable = { selected_pmc = 1 }
+}
+
+is_wagner_selected = {
+	check_variable = { selected_pmc = 2 }
+}
+
+is_aegis_selected = {
+	check_variable = { selected_pmc = 3 }
+}
+
+is_constellis_selected = {
+	check_variable = { selected_pmc = 4 }
+}
+
+is_md_pmc_selected = {
+	check_variable = { selected_pmc = 5 }
+}
+
+has_passed_sc_vote = {
+	NOT = { has_global_flag = security_council_veto }
+	check_variable = { var = global.security_council_vote_yes^num value = global.un_sc_required_yes compare = greater_than_or_equals }
+}
+
+is_eligible_current_sc_voter = {
+	exists = yes
+	NOT = { has_idea = lacks_international_recognition }
+	NOT = { has_idea = non_state_actor }
+	NOT = { check_variable = { global.current_sc_vote_nation = THIS.id } }
+}
+
+can_seek_permanent_unsc_seat = {
+	has_dynamic_modifier = { modifier = united_nations_member }
+	NOT = { has_idea = p5_member }
+	NOT = { has_idea = lacks_international_recognition }
+	NOT = { has_idea = non_state_actor }
+}
+
+can_campaign_for_permanent_unsc_seat = {
+	OR = {
+		has_completed_focus = ALG_seek_security_council_seat
+		has_completed_focus = KOR_seek_security_council_seat
+		has_completed_focus = BRA_a_global_power
+		has_completed_focus = RAJ_seek_permanent_unsc_seat
+		has_completed_focus = JAP_seek_permanent_unsc_seat
+		has_completed_focus = GER_seek_permanent_unsc_seat
+	}
+	can_seek_permanent_unsc_seat = yes
+}
+
+is_on_un_sec_council = {
+	OR = {
+		is_in_array = { global.p5_sc_members = THIS }
+		is_in_array = { global.security_council_members = THIS }
+	}
+}
+
+un_sc_voting_result_trigger = {
+	custom_trigger_tooltip = {
+		tooltip = ongoing_sc_vote_tt
+		check_variable = { var = global.security_council_vote_yes^num value = global.un_sc_required_yes compare = greater_than_or_equals }
+		NOT = { has_global_flag = security_council_veto }
+	}
+}
+
+un_ga_2_3_required = {
+	check_variable = { var = global.general_assembly_vote_yes^num value = global.un_2_3_number compare = greater_than_or_equals }
 }
 
 is_full_state = {
-	NOT = {
-		has_idea = Non_State_Actor
-		has_idea = Lacks_International_Recognition
-		has_idea = rival_government
+	custom_trigger_tooltip = {
+		tooltip = is_un_is_recognized_nation
+		NOT = { has_idea = non_state_actor }
+		NOT = { has_idea = lacks_international_recognition }
 	}
 }
 
@@ -62,5 +131,108 @@ pmc_can_recruit = {
 				compare = greater_than_or_equals
 			}
 		}
+	}
+}
+
+has_target_in_region = {
+	var:global.active_terror_hq^selected_org = {
+		set_temp_variable = { region_check_nation = controller }
+	}
+	OR = {
+		var:selected_ct_nation = { is_neighbor_of = var:region_check_nation }
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = europe } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = europe } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = africa } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = africa } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = asia } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = asia } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = south_america } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = south_america } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = north_america } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = north_america } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = middle_east } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = middle_east } }
+		}
+		AND = {
+			var:region_check_nation = { capital_scope = { is_on_continent = australia } }
+			var:selected_ct_nation = { capital_scope = { is_on_continent = australia } }
+		}
+	}
+}
+
+has_target_in_region_intel = {
+	country_exists = FROM
+	var:global.active_terror_hq^selected_org = {
+		set_temp_variable = { test_checker = controller }
+		OR = {
+			FROM = { is_neighbor_of = var:test_checker }
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = europe } }
+				FROM = { capital_scope = { is_on_continent = europe } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = africa } }
+				FROM = { capital_scope = { is_on_continent = africa } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = asia } }
+				FROM = { capital_scope = { is_on_continent = asia } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = south_america } }
+				FROM = { capital_scope = { is_on_continent = south_america } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = north_america } }
+				FROM = { capital_scope = { is_on_continent = north_america } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = middle_east } }
+				FROM = { capital_scope = { is_on_continent = middle_east } }
+			}
+			AND = {
+				var:test_checker = { capital_scope = { is_on_continent = australia } }
+				FROM = { capital_scope = { is_on_continent = australia } }
+			}
+		}
+	}
+}
+
+has_target_in_country = {
+	set_temp_variable = { current_target = global.active_terror_hq^selected_org }
+
+	var:selected_ct_nation = {
+		controls_state = var:current_target
+	}
+}
+
+has_target_in_country_intel = {
+	set_temp_variable = { current_target = global.active_terror_hq^selected_org }
+
+	FROM = {
+		controls_state = var:current_target
+	}
+}
+
+is_valid_ct_nation_target = {
+	exists = yes
+	NOT = { tag = ROOT }
+}
+
+has_valid_ct_nation_selected = {
+	var:selected_ct_nation = {
+		exists = yes
+		NOT = { tag = PREV }
 	}
 }

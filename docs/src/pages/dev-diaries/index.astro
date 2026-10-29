@@ -1,0 +1,86 @@
+---
+import { getCollection, getEntry } from "astro:content";
+import { BaseLayout } from "@/app/layouts";
+import { compareDevDiaryVersionsDesc } from "@/shared/lib/content/dev-diary-version";
+import { truncateAtWord } from "@/shared/lib/content/truncate-at-word";
+import { getDevDiaryPath } from "@/shared/lib/routing/content-routes";
+import { STATIC_PAGE_META } from "@/shared/lib/seo/page-meta";
+import { BODY_TEXT_CLASS, PAGE_TITLE_CLASS, SECTION_TITLE_CLASS } from "@/shared/ui/tailwind";
+import { DevDiaryList } from "@/widgets/dev-diary-list";
+
+const EXCERPT_MAX = 140;
+
+const entries = await getCollection("devDiaries");
+
+const grouped = new Map<string, typeof entries>();
+for (const entry of entries) {
+  const version = entry.data.version;
+  const bucket = grouped.get(version) ?? [];
+  bucket.push(entry);
+  grouped.set(version, bucket);
+}
+
+const inRepoGroups = [...grouped.entries()]
+  .sort(([versionA], [versionB]) => compareDevDiaryVersionsDesc(versionA, versionB))
+  .map(([version, versionEntries]) => {
+    const sortedEntries = [...versionEntries].sort(
+      (a, b) => b.data.date.getTime() - a.data.date.getTime(),
+    );
+    const dateFormatter = new Intl.DateTimeFormat("en-US", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+
+    return {
+      title: `${version} Dev Diaries`,
+      entries: sortedEntries.map((entry) => ({
+        title: entry.data.title,
+        url: getDevDiaryPath(entry),
+        excerpt: entry.data.description
+          ? truncateAtWord(entry.data.description, EXCERPT_MAX)
+          : undefined,
+        date: dateFormatter.format(entry.data.date),
+      })),
+    };
+  })
+  .filter((group) => group.entries.length > 0);
+
+const externalEntry = await getEntry("devDiaryExternal", "index");
+const externalGroups =
+  externalEntry?.data.filter((group) => (group.entries?.length ?? 0) > 0) ?? [];
+
+const pageMeta = STATIC_PAGE_META.devDiaries;
+
+const headings = inRepoGroups.map((group) => ({
+  depth: 2,
+  slug: group.title.toLowerCase().replace(/[^a-z0-9]+/g, "-"),
+  text: group.title,
+}));
+---
+
+<BaseLayout
+  title={pageMeta.title}
+  pageId={pageMeta.pageId}
+  description={pageMeta.description}
+  canonicalPath={pageMeta.canonicalPath}
+  toc="auto"
+  headings={headings}
+>
+  <h1 class={PAGE_TITLE_CLASS}>Dev Diary Lists</h1>
+  <p class={BODY_TEXT_CLASS}>
+    The Millennium Dawn team rarely writes dev diaries due to release cadence. This section keeps an archive of
+    in-repository and external diary entries.
+  </p>
+
+  <DevDiaryList groups={inRepoGroups} />
+
+  {
+    externalGroups.length > 0 && (
+      <div class="mt-16 border-t border-border-light pt-12">
+        <h2 class={`${SECTION_TITLE_CLASS} mb-8`}>Earlier dev diaries (external)</h2>
+        <DevDiaryList groups={externalGroups} />
+      </div>
+    )
+  }
+</BaseLayout>

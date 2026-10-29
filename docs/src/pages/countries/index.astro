@@ -1,0 +1,128 @@
+---
+import { getImage } from "astro:assets";
+import { getCollection, getEntry, render } from "astro:content";
+import { BaseLayout } from "@/app/layouts";
+import { getInternalImageAsset } from "@/shared/lib/media/image-assets";
+import { cssUrl, stripBase, withBase } from "@/shared/lib/routing/urls";
+import { getCountryPath, getEntryBodyClass, getEntryPageId } from "@/shared/lib/routing/content-routes";
+import {
+  BODY_TEXT_CLASS,
+  COUNTRY_CARD_ARTICLE_CLASS,
+  COUNTRY_FLAG_OVERLAY_CLASS,
+  INHERIT_LINK_CLASS,
+  PAGE_TITLE_CLASS,
+  SECTION_TITLE_CLASS,
+} from "@/shared/ui/tailwind";
+import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
+
+const focusCountries = (await getCollection("countries"))
+  .filter((country) => country.data.unique_focus_tree)
+  .slice()
+  .sort((a, b) => (a.data.grid_order ?? 0) - (b.data.grid_order ?? 0));
+
+const isWip = (country: (typeof focusCountries)[number]): boolean => {
+  const statusSection = (country.data.infobox ?? []).find(
+    (group) => (group.section ?? "").toLowerCase() === "status",
+  );
+  if (!statusSection) return false;
+  return statusSection.stats.some(
+    (stat) => (stat.label ?? "").toLowerCase() === "content" && (stat.value ?? "").trim().toUpperCase() === "WIP",
+  );
+};
+
+const pageEntry = await getEntry("pages", "countries");
+if (!pageEntry) {
+  throw new Error("Missing pages/countries content entry");
+}
+const { Content: PageContent } = await render(pageEntry);
+const canonicalPath = pageEntry.data.permalink ?? "/countries/";
+
+const countryCardLinkClass = [
+  INHERIT_LINK_CLASS,
+  "hover:text-primary",
+  "hover:no-underline",
+  "before:absolute",
+  "before:inset-0",
+  "before:z-10",
+].join(" ");
+
+const CARD_FLAG_WIDTH = 440;
+const CARD_FLAG_HEIGHT = 220;
+
+const countryCards = await Promise.all(
+  focusCountries.map(async (country) => {
+    let flagBackgroundCss: string | undefined;
+    const flagImage = country.data.flag_image;
+
+    if (flagImage) {
+      const assetPath = stripBase(flagImage);
+      const flagMeta = getInternalImageAsset(assetPath);
+      if (flagMeta) {
+        const optimized = await getImage({
+          src: flagMeta,
+          format: "webp",
+          quality: 75,
+          width: CARD_FLAG_WIDTH,
+          height: CARD_FLAG_HEIGHT,
+        });
+        flagBackgroundCss = cssUrl(optimized.src);
+      } else if (assetPath.startsWith("/assets/images/")) {
+        flagBackgroundCss = cssUrl(assetPath);
+      }
+    }
+
+    return { country, flagBackgroundCss, isWip: isWip(country) };
+  }),
+);
+---
+
+<BaseLayout
+  title={pageEntry.data.title}
+  pageId={getEntryPageId(pageEntry)}
+  description={pageEntry.data.description}
+  canonicalPath={canonicalPath}
+  seo={pageEntry.data.seo ?? true}
+  robots={pageEntry.data.robots}
+  bodyClass={getEntryBodyClass(pageEntry)}
+  toc="off"
+>
+  <h1 class={PAGE_TITLE_CLASS}>Countries</h1>
+  <p class={BODY_TEXT_CLASS}>The following countries are playable in Millennium Dawn: Modern Day Mod.</p>
+
+  <h2 class={SECTION_TITLE_CLASS}>Unique Focus Trees</h2>
+  <div
+    class="mb-xl mt-md grid gap-md [grid-template-columns:repeat(auto-fill,minmax(220px,1fr))]"
+    role="list"
+    aria-label="Countries with unique focus trees"
+  >
+    {
+      countryCards.map(({ country, flagBackgroundCss, isWip }) => (
+        <article
+          class={COUNTRY_CARD_ARTICLE_CLASS}
+          role="listitem"
+          style={flagBackgroundCss ? `--country-flag-image: ${flagBackgroundCss};` : undefined}
+        >
+          {flagBackgroundCss && <span class={COUNTRY_FLAG_OVERLAY_CLASS} aria-hidden="true" />}
+          <p class="m-0 text-[1.05rem] font-semibold leading-[1.35] text-text">
+            <a class={countryCardLinkClass} href={withBase(getCountryPath(country))}>
+              {country.data.title}
+            </a>
+            {isWip && (
+              <span
+                class="ml-2 align-middle rounded-full border border-border bg-surface-muted px-[0.55rem] py-[0.15rem] text-[0.62rem] font-semibold uppercase tracking-[0.08em] text-text-muted"
+                aria-label="This country page is a work in progress"
+              >
+                WIP
+              </span>
+            )}
+          </p>
+          {country.data.grid_note && (
+            <p class="m-0 text-[0.86rem] leading-[1.55] text-text-secondary">{country.data.grid_note}</p>
+          )}
+        </article>
+      ))
+    }
+  </div>
+
+  <MarkdownContent Content={PageContent} />
+</BaseLayout>

@@ -16,14 +16,6 @@ GER_spy_on_SOV = { #Spy on SOV, infiltrate Russian army
 	enable = {
 		NOT = { SOV = { is_subject_of = GER } }
 	}
-	abort = {
-		OR = {
-			SOV = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = SOV }
-		}
-	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 80 mission = build_intel_network mission_target = SOV }
 	ai_strategy = { type = operative_operation value = 80 operation = operation_capture_cipher operation_target = SOV }
@@ -32,14 +24,6 @@ GER_spy_on_SER = { #Spy on SER
 	allowed = { original_tag = GER }
 	enable = {
 		NOT = { SER = { is_subject_of = GER } }
-	}
-	abort = {
-		OR = {
-			SER = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = SER }
-		}
 	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 30 mission = build_intel_network mission_target = SER }
@@ -50,38 +34,9 @@ GER_spy_on_PER = { #Spy on SOV, infiltrate Russian army
 	enable = {
 		NOT = { PER = { is_subject_of = GER } }
 	}
-	abort = {
-		OR = {
-			PER = {
-				is_in_faction_with = GER
-			}
-			NOT = { country_exists = PER }
-		}
-	}
 	abort_when_not_enabled = yes
 	ai_strategy = { type = operative_mission value = 30 mission = build_intel_network mission_target = PER }
 	ai_strategy = { type = operative_operation value = 30 operation = operation_capture_cipher operation_target = PER }
-}
-
-###Building###
-GER_office_target = {
-	allowed = { original_tag = GER }
-	enable = {
-		num_of_available_civilian_factories > 35
-		check_variable = { office_park_total < 60 }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = building_target id = offices value = 60 }
-}
-GER_factory_target = {
-	allowed = { original_tag = GER }
-	enable = {
-		num_of_civilian_factories < 70
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = building_target id = industrial_complex value = 70 }
 }
 
 ##Diplomacy
@@ -89,6 +44,7 @@ GER_factory_target = {
 GER_Transatlantic = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		OR = {
 			western_conservatism_are_in_coalition = yes
 			western_conservatism_are_in_power = yes
@@ -105,8 +61,10 @@ GER_Transatlantic = {
 		}
 		country_exists = USA
 		NOT = { has_war_with = USA }
-		USA = { NOT = { has_government = fascism } }
-		USA = { has_idea = NATO_member }
+		USA = {
+			NOT = { has_government = fascism }
+			has_idea = NATO_member
+		}
 	}
 	abort_when_not_enabled = yes
 
@@ -118,13 +76,14 @@ GER_Transatlantic = {
 GER_support_baltics_LAT = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		has_idea = EU_member
 		OR = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LAT = {
+		LAT = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -141,13 +100,14 @@ GER_support_baltics_LAT = {
 GER_support_baltics_EST = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		has_idea = EU_member
 		OR = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			EST = {
+		EST = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -164,13 +124,14 @@ GER_support_baltics_EST = {
 GER_support_baltics_LIT = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		has_idea = EU_member
 		OR = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LIT = {
+		LIT = {
+			OR = {
 				has_government = democratic
 				has_government = neutrality
 			}
@@ -187,14 +148,13 @@ GER_support_baltics_LIT = {
 GER_stationate_baltics = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		OR = {
 			has_government = democratic
 			has_government = neutrality
 		}
-		OR = {
-			LIT = {
-				has_idea = NATO_member
-			}
+		LIT = {
+			has_idea = NATO_member
 		}
 	}
 	abort_when_not_enabled = yes
@@ -213,6 +173,7 @@ GER_stationate_baltics = {
 GER_support_ukraine_against_russia = {
 	allowed = { original_tag = GER }
 	enable = {
+		NOT = { GER_ai_republic_collapse_path = yes }
 		OR = {
 			has_government = democratic
 			has_government = neutrality
@@ -334,9 +295,7 @@ GER_ISR_relations = {
 	ai_strategy = { type = support id = "ISR" value = 70 }
 }
 
-
-
-#Balkan Relations 
+#Balkan Relations
 
 GER_support_kosovo_against_SER = {
 	allowed = { original_tag = GER }
@@ -359,14 +318,14 @@ GER_support_bosnian_against_rsk = {
 	allowed = { original_tag = GER }
 	enable = {
 		BOS = {
-			has_country_flag = defeat_all_serbs
+			has_country_flag = BOS_defeat_all_serbs
 			OR = {
 				has_idea = BOS_EUFOR
 				has_idea = BOS_SFOR
 			}
 		}
 		RSK = { has_war_with = BOS }
-		has_idea = bos_sfor_vol_troops
+		has_idea = BOS_sfor_vol_troops
 	}
 	abort_when_not_enabled = yes
 
@@ -410,11 +369,11 @@ GER_KOS_relations = {
 }
 #Armenia Content
 GER_againts_armenian_expansion_italy_puppet = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
 		is_subject = no
 		has_war = no
-		ITA = { is_subject_of = ARM } 
+		ITA = { is_subject_of = ARM }
 		NOT = {
 			has_government = neutrality
 		}
@@ -431,11 +390,11 @@ GER_againts_armenian_expansion_italy_puppet = {
 	ai_strategy = { type = influence id = "ITA" value = 200 }
 }
 GER_againts_armenian_expansion_poland_puppet = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
 		is_subject = no
 		has_war = no
-		POL = { is_subject_of = ARM } 
+		POL = { is_subject_of = ARM }
 		NOT = {
 			has_government = neutrality
 		}
@@ -484,7 +443,6 @@ GER_lakota_help = {
 GER_reduce_Swiss_border_garrison = {
 	allowed = { original_tag = GER }
 	enable = {
-		original_tag = GER
 		OR = {
 			SWI = { has_government = democratic }
 			SWI = { has_government = neutrality }
@@ -502,7 +460,6 @@ GER_reduce_Swiss_border_garrison = {
 GER_reduce_Austria_border_garrison = {
 	allowed = { original_tag = GER }
 	enable = {
-		original_tag = GER
 		OR = {
 			AUS = { has_government = democratic }
 			AUS = { has_government = neutrality }
@@ -534,13 +491,12 @@ USA_german_bases = {
 		type = put_unit_buffers
 		ratio = 0.05
 		states = {
-			40 41 42 43 964 
+			40 41 42 43 964
 		}
 		subtract_fronts_from_need = no
 		subtract_invasions_from_need = no
 	}
 }
-
 
 ENG_german_bases = {
 	allowed = { original_tag = ENG }
@@ -566,9 +522,8 @@ ENG_german_bases = {
 
 #german forces in peace#
 German_garrisons_in_peace = {
-	allowed = { tag = GER }
+	allowed = { original_tag = GER }
 	enable = {
-		tag = GER
 		has_idea = NATO_member
 		OR = {
 			has_war = no
@@ -591,11 +546,12 @@ German_garrisons_in_peace = {
 ##Germany unique AI for combat units
 GER_default_naval_breakdown = {
 	allowed = { original_tag = GER }
-	enable = { 
+	enable = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
@@ -610,35 +566,76 @@ GER_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 2 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 4 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 1 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 1 }
 }
 
-#German army 
+#German army
 GER_rebuild_army = {
 	allowed = { original_tag = GER }
-	enable = { 
+	enable = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
 	}
 
-	abort = {
-		num_divisions > 50
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
 	ai_strategy = { type = role_ratio id = ifv_mechanized value = 20 }
-	ai_strategy = { type = role_ratio id = mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
 	ai_strategy = { type = role_ratio id = armor value = 40 }
 	ai_strategy = { type = role_ratio id = marines value = 5 }
-	ai_strategy = { type = role_ratio id = Air_helicopters value = 5 }
 	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = 5 }
-	ai_strategy = { type = force_build_armies value = 50 } #Keep AI building Units
+	ai_strategy = { type = role_ratio id = Special_Forces value = 3 }
+}
+
+GER_air_doctrine = {
+	allowed = { original_tag = GER }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = heavy_fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = cas value = 7 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
+	ai_strategy = { type = unit_ratio id = suicide value = 3 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 0 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 0 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
+}
+
+GER_air_doctrine_pre_f35 = {
+	allowed = { original_tag = GER }
+	enable = { NOT = { has_tech = gen_5_light } }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+}
+
+GER_keep_f35_line = {
+	allowed = { original_tag = GER }
+	enable = { has_tech = gen_5_light }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 4 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = small_plane_strike_airframe value = 2 }
+}
+
+GER_keep_typhoon_line = {
+	allowed = { original_tag = GER }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_airframe value = 3 }
 }
 
 GER_air_force_breakdown = {
@@ -647,37 +644,13 @@ GER_air_force_breakdown = {
 		OR = {
 			has_defensive_war = yes
 			threat > 0.6
-			any_country = {
+			any_of_scopes = {
+				array = potential_and_current_enemies
 				is_justifying_wargoal_against = GER
 			}
 		}
 	}
 	abort_when_not_enabled = yes
-	##Air Unit Factors
-	#unit ratios - set the base number of planes per airfield / cv slot that the nation wants
-	ai_strategy = { type = unit_ratio id = cas value = 8 }
-	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
-	ai_strategy = { type = unit_ratio id = heavy_fighter value = 4 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
-	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
-	ai_strategy = { type = unit_ratio id = suicide value = 4 }
-
-	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
-	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -80 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -25 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = 0 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -25 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -80 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
-	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -75 }
-	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -70 }
-	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -70 }
-	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -90 }
-	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -95 }
-	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -80 }
 
 	ai_strategy = { type = air_factory_balance value = 100 }
 }
@@ -756,4 +729,63 @@ support_civil_war_Italia = {
 
 	ai_strategy = { type = send_volunteers_desire id = "ITA" value = 100 }
 	ai_strategy = { type = support id = "ITA" value = 100 }
+}
+
+GER_avoid_unready_wars = {
+	allowed = { original_tag = GER }
+	enable = {
+		NOT = { GER_ai_war_ready = yes }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = conquer id = "AUS" value = -4000 }
+	ai_strategy = { type = declare_war id = "AUS" value = -4000 }
+	ai_strategy = { type = conquer id = "BEL" value = -4000 }
+	ai_strategy = { type = declare_war id = "BEL" value = -4000 }
+	ai_strategy = { type = conquer id = "CAM" value = -4000 }
+	ai_strategy = { type = declare_war id = "CAM" value = -4000 }
+	ai_strategy = { type = conquer id = "CAN" value = -4000 }
+	ai_strategy = { type = declare_war id = "CAN" value = -4000 }
+	ai_strategy = { type = conquer id = "CHI" value = -4000 }
+	ai_strategy = { type = declare_war id = "CHI" value = -4000 }
+	ai_strategy = { type = conquer id = "CZE" value = -4000 }
+	ai_strategy = { type = declare_war id = "CZE" value = -4000 }
+	ai_strategy = { type = conquer id = "DEN" value = -4000 }
+	ai_strategy = { type = declare_war id = "DEN" value = -4000 }
+	ai_strategy = { type = conquer id = "DRC" value = -4000 }
+	ai_strategy = { type = declare_war id = "DRC" value = -4000 }
+	ai_strategy = { type = conquer id = "ENG" value = -4000 }
+	ai_strategy = { type = declare_war id = "ENG" value = -4000 }
+	ai_strategy = { type = conquer id = "FRA" value = -4000 }
+	ai_strategy = { type = declare_war id = "FRA" value = -4000 }
+	ai_strategy = { type = conquer id = "ITA" value = -4000 }
+	ai_strategy = { type = declare_war id = "ITA" value = -4000 }
+	ai_strategy = { type = conquer id = "LIC" value = -4000 }
+	ai_strategy = { type = declare_war id = "LIC" value = -4000 }
+	ai_strategy = { type = conquer id = "LUX" value = -4000 }
+	ai_strategy = { type = declare_war id = "LUX" value = -4000 }
+	ai_strategy = { type = conquer id = "MEX" value = -4000 }
+	ai_strategy = { type = declare_war id = "MEX" value = -4000 }
+	ai_strategy = { type = conquer id = "MIC" value = -4000 }
+	ai_strategy = { type = declare_war id = "MIC" value = -4000 }
+	ai_strategy = { type = conquer id = "NAM" value = -4000 }
+	ai_strategy = { type = declare_war id = "NAM" value = -4000 }
+	ai_strategy = { type = conquer id = "PAP" value = -4000 }
+	ai_strategy = { type = declare_war id = "PAP" value = -4000 }
+	ai_strategy = { type = conquer id = "POL" value = -4000 }
+	ai_strategy = { type = declare_war id = "POL" value = -4000 }
+	ai_strategy = { type = conquer id = "SOV" value = -4000 }
+	ai_strategy = { type = declare_war id = "SOV" value = -4000 }
+	ai_strategy = { type = conquer id = "SWE" value = -4000 }
+	ai_strategy = { type = declare_war id = "SWE" value = -4000 }
+	ai_strategy = { type = conquer id = "SWI" value = -4000 }
+	ai_strategy = { type = declare_war id = "SWI" value = -4000 }
+	ai_strategy = { type = conquer id = "TNZ" value = -4000 }
+	ai_strategy = { type = declare_war id = "TNZ" value = -4000 }
+	ai_strategy = { type = conquer id = "TOG" value = -4000 }
+	ai_strategy = { type = declare_war id = "TOG" value = -4000 }
+	ai_strategy = { type = conquer id = "UKR" value = -4000 }
+	ai_strategy = { type = declare_war id = "UKR" value = -4000 }
+	ai_strategy = { type = conquer id = "USA" value = -4000 }
+	ai_strategy = { type = declare_war id = "USA" value = -4000 }
 }

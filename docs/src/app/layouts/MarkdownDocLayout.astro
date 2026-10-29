@@ -1,0 +1,62 @@
+---
+import type { MarkdownHeading } from "astro";
+import type { ArticleSeoMeta } from "@/shared/lib/seo";
+import BaseLayout from "./BaseLayout.astro";
+import { resolveToc } from "@/shared/lib/content/content-helpers";
+import { getEntryBodyClass, getEntryPageId } from "@/shared/lib/routing/content-routes";
+import { PAGE_TITLE_CLASS } from "@/shared/ui/tailwind";
+
+interface RoutedEntryLike {
+  id: string;
+  data: {
+    title: string;
+    description?: string;
+    toc?: "auto" | "off";
+    seo?: boolean;
+    robots?: string;
+    page_id?: string;
+    body_class?: string;
+  };
+}
+
+interface Props {
+  entry: RoutedEntryLike;
+  canonicalPath: string;
+  headings?: MarkdownHeading[];
+  toc?: "auto" | "off";
+  ogType?: "website" | "article";
+  seoArticle?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
+  /** When true, renders the entry title as the page H1 (plain markdown pages only). */
+  showPageTitle?: boolean;
+}
+
+const {
+  entry,
+  canonicalPath,
+  headings = [],
+  toc,
+  ogType,
+  seoArticle,
+  extraJsonLd,
+  showPageTitle = false,
+}: Props = Astro.props;
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  canonicalPath={canonicalPath}
+  toc={toc ?? resolveToc(entry.data.toc)}
+  seo={entry.data.seo ?? true}
+  robots={entry.data.robots}
+  bodyClass={getEntryBodyClass(entry)}
+  pageId={getEntryPageId(entry)}
+  headings={headings}
+  ogType={ogType}
+  seoArticle={seoArticle}
+  extraJsonLd={extraJsonLd}
+>
+  {showPageTitle && <h1 class={PAGE_TITLE_CLASS}>{entry.data.title}</h1>}
+  <slot />
+</BaseLayout>

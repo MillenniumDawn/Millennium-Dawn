@@ -1,0 +1,122 @@
+# BRICS membership effects. Mirrors the NATO join-via-event pattern (01_NATO_effects.txt).
+# India forms BRICS and takes the RAJ_brics_leadership modifier, but nothing here is hardcoded to RAJ:
+# leader-side work (faction, opinion, strength, dirty GUI, bank/currency inheritance) runs on
+# whoever currently holds RAJ_brics_leadership, so a future leadership transfer needs no changes here.
+
+# Applicant-side entry point for the focus-driven custom content. The country that wants to join calls
+# this; it fires the request to the BRICS leader, who accepts or rejects in brics_join.1 and grants full
+# membership on acceptance. The applicant is FROM in that event.
+BRICS_join_via_event = {
+	set_country_flag = BRICS_application_pending
+	random_scope_in_array = {
+		array = global.BRICS_potential
+		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+		country_event = brics_join.1
+	}
+}
+
+# Apply-to-join entry point for the traditional (non-focus) path. Grants OBSERVER status directly;
+# leader-side opinion and strength bookkeeping runs inside BRICS_join_observer. Full membership stays
+# reserved for the focus-driven custom content (BRICS_join_via_event) and the leader's promotion offers.
+# Guarded so a repeat click cannot stack opinion modifiers or duplicate the observer array entry.
+BRICS_request_observer_status_via_event = {
+	if = {
+		limit = {
+			NOT = { has_idea = RAJ_BRICS_observer }
+			NOT = { has_idea = RAJ_BRICS_associate }
+			NOT = { has_idea = RAJ_BRICS }
+		}
+		BRICS_join_observer = yes
+	}
+}
+
+# Become a full member. Operates on THIS (the joining country). Handles promotion from a lower tier.
+# Called by brics_join.2 (application accepted) and indian_event.71 (invite or associate -> full promotion accepted).
+BRICS_join = {
+	if = {
+		limit = { has_idea = RAJ_BRICS_associate }
+		remove_ideas = RAJ_BRICS_associate
+		remove_from_array = { global.BRICS_associates = THIS.id }
+	}
+	if = {
+		limit = { has_idea = RAJ_BRICS_observer }
+		remove_ideas = RAJ_BRICS_observer
+		remove_from_array = { global.BRICS_observers = THIS.id }
+	}
+	clr_country_flag = BRICS_application_pending
+	add_ideas = RAJ_BRICS
+
+	# RAJ_BRICS on_add registers the BRICS_full_members array; has_idea = RAJ_BRICS is the full-member check.
+	# Leader-side work, on whoever holds RAJ_brics_leadership. THIS = leader, PREV = the joining country.
+	random_scope_in_array = {
+		array = global.BRICS_potential
+		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+		if = { limit = { has_idea = RAJ_BRICS_bank } PREV = { add_ideas = RAJ_BRICS_bank } }
+		if = { limit = { has_idea = RAJ_BRICS_cur } PREV = { add_ideas = RAJ_BRICS_cur } }
+		if = { limit = { is_faction_leader = yes } add_to_faction = PREV }
+		add_opinion_modifier = { target = PREV modifier = RAJ_brics_member_opinion }
+		reverse_add_opinion_modifier = { target = PREV modifier = RAJ_brics_member_opinion }
+		BRICS_update_brics_strength = yes
+	}
+	custom_effect_tooltip = RAJ_brics_full_member_tt
+	hidden_effect = { news_event = { id = brics_join.4 hours = 12 } }
+}
+
+# Become an associate member. Operates on THIS. Handles promotion from observer.
+# Called by indian_event.74 (invite or observer -> associate promotion accepted).
+BRICS_join_associate = {
+	if = {
+		limit = { has_idea = RAJ_BRICS_observer }
+		remove_ideas = RAJ_BRICS_observer
+		remove_from_array = { global.BRICS_observers = THIS.id }
+	}
+	clr_country_flag = BRICS_application_pending
+	add_ideas = RAJ_BRICS_associate
+	add_to_array = { global.BRICS_associates = THIS.id }
+	random_scope_in_array = {
+		array = global.BRICS_potential
+		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+		add_opinion_modifier = { target = PREV modifier = RAJ_brics_associate_opinion }
+		reverse_add_opinion_modifier = { target = PREV modifier = RAJ_brics_associate_opinion }
+		BRICS_update_brics_strength = yes
+	}
+	custom_effect_tooltip = RAJ_brics_associate_member_tt
+}
+
+# Become an observer. Operates on THIS. Called by indian_event.77.
+BRICS_join_observer = {
+	clr_country_flag = BRICS_application_pending
+	add_ideas = RAJ_BRICS_observer
+	add_to_array = { global.BRICS_observers = THIS.id }
+	random_scope_in_array = {
+		array = global.BRICS_potential
+		limit = { has_dynamic_modifier = { modifier = RAJ_brics_leadership } }
+		add_opinion_modifier = { target = PREV modifier = RAJ_brics_observer_opinion }
+		reverse_add_opinion_modifier = { target = PREV modifier = RAJ_brics_observer_opinion }
+		BRICS_update_brics_strength = yes
+	}
+	custom_effect_tooltip = RAJ_brics_observer_tt
+}
+
+BRICS_update_brics_strength = {
+	set_variable = {
+		global.brics_strength = {
+			value = global.BRICS_full_members^num
+			add = {
+				value = global.BRICS_associates^num
+				multiply = 0.5
+			}
+			add = {
+				value = global.BRICS_observers^num
+				multiply = 0.25
+			}
+			multiply = 0.2
+			clamp = { min = 0 max = 0.15 }
+		}
+	}
+
+	set_variable = { global.brics_pp = global.brics_strength }
+	add_to_variable = { global.brics_pp = 0.10 }
+	set_variable = { global.brics_trade = global.brics_strength }
+	add_to_variable = { global.brics_trade = 0.15 }
+}

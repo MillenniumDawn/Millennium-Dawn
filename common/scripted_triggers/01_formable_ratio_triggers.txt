@@ -1,29 +1,33 @@
 # Author(s): AngriestBird
 
-# Function: formable_nation_check
-# Purpose: The check allows us to simplify and streamline the beahvior of the code down to one specific catch all
-formable_nation_check = {
-	OR = {
-		var:tag_check = {
+# Function: state_owned_or_puppet_owned_by_root
+# Purpose: State-scoped trigger. Returns true if the state is owned by ROOT or by a subject of ROOT.
+# Used inside count_triggers blocks in *_integrate_start available checks so puppet-held cores count toward the 80% threshold.
+state_owned_or_puppet_owned_by_root = {
+	owner = {
+		OR = {
+			tag = ROOT
 			is_subject_of = ROOT
-			has_war = no
 		}
-		AND = {
-			var:tag_check = {
-				all_core_state = {
-					OR = {
-						is_owned_and_controlled_by = ROOT
-						is_core_of = ROOT
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = general_integrate_tt
-				var:tag_check = {
-					ROOT = {
-						check_variable = { core_compliance@PREV > 50 }
-						check_variable = { core_resistance@PREV < 30 }
-					}
+	}
+}
+
+# Function: formable_purchase_state_is_purchasable
+# Purpose: State-scoped trigger, ROOT = the prospective buyer. True while the state's current holder
+# can still be sold a formable core state. Shared by <TAG>_buy_core_state's target_trigger and
+# cancel_trigger and by formable_purchase_deliver_offer so all three agree on one definition.
+formable_purchase_state_is_purchasable = {
+	NOT = { is_owned_by = ROOT }
+	owner = {
+		NOT = { is_subject_of = ROOT }
+		NOT = { has_war_with = ROOT }
+		NOT = { has_country_flag = formable_purchase_offer_pending }
+		NOT = { check_variable = { formable_offer_buyer_id > 0 } }
+		NOT = {
+			ROOT = {
+				OR = {
+					has_country_flag = formable_purchase_cooldown@PREV
+					has_country_flag = formable_purchase_refused@PREV
 				}
 			}
 		}

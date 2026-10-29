@@ -1,0 +1,53 @@
+on_actions = {
+
+
+	on_weekly_NKO = {
+		effect = {
+			# Save migration — activate for games that completed the KOMID focus
+			# before this mechanic shipped.
+			if = {
+				limit = {
+					has_completed_focus = NKO_create_komid
+					NOT = { has_country_flag = NKO_arms_export_active }
+				}
+				NKO_arms_export_initialize = yes
+			}
+			if = {
+				limit = { has_country_flag = NKO_arms_export_active }
+				NKO_arms_export_rebuild_targets = yes
+				NKO_rebuild_patrons = yes
+				NKO_expeditionary_mastery_tick = yes
+			}
+		}
+	}
+
+	on_monthly_NKO = {
+		effect = {
+			# Russia requests artillery shells while at war.
+			if = {
+				limit = {
+					has_country_flag = NKO_arms_export_active
+					country_exists = SOV
+					SOV = { has_war = yes }
+					NOT = { has_war_with = SOV }
+					NOT = { has_country_flag = NKO_arms_export_russia_offer_cooldown }
+				}
+				country_event = { id = NKO_export.1 days = 3 }
+				set_country_flag = { flag = NKO_arms_export_russia_offer_cooldown value = 1 days = 180 }
+			}
+		}
+	}
+
+	on_civil_war_started = {
+		effect = {
+			if = {
+				limit = { original_tag = NKO }
+				NKO_arms_export_suppress_for_collapse = yes
+			}
+			if = {
+				limit = { FROM = { original_tag = NKO } }
+				FROM = { NKO_arms_export_suppress_for_collapse = yes }
+			}
+		}
+	}
+}

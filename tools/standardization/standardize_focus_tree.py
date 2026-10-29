@@ -1,0 +1,1034 @@
+#!/usr/bin/env python3
+
+"""
+Millennium Dawn Focus Tree Standardizer
+Reformats focus blocks and focus tree properties (shortcuts, inlay windows, offsets, positions), leaving everything else untouched
+"""
+
+import argparse
+import re
+import sys
+import time
+from typing import Any
+
+from common_utils import (
+    PROP_NAME_RE,
+    collapse_blank_runs,
+    compact_icon,
+    compact_search_filters,
+    format_elapsed,
+    join_groups,
+    read_lines_for_standardization,
+    render_standardized,
+    resolve_output_file_and_backup,
+)
+from shared_utils import (
+    add_standard_file_arguments,
+    atomic_write_text,
+    blank_quoted_strings,
+    collapse_or_compact,
+    convert_root_factor_to_base,
+    extract_block,
+    log_message,
+    reindent_by_brace_depth,
+    strip_inline_comment,
+)
+
+
+def is_empty_block(block_lines):
+    """Check if a block contains only braces and whitespace (no meaningful content)"""
+    if not block_lines:
+        return True
+    content = "".join(line.strip() for line in block_lines)
+    # Remove the property name and braces, check if anything remains
+    inner = re.sub(r"^[^{]*\{(.*)\}$", r"\1", content, flags=re.DOTALL)
+    return inner.strip() == ""
+
+
+# Property dispatch tables for extract_focus_properties.
+# Single-line props: map script name -> props dict key.
+_SINGLE_LINE_PROPS = {
+    "id": "id",
+    "text_icon": "text_icon",
+    "overlay": "overlay",
+    "x": "x",
+    "y": "y",
+    "relative_position_id": "relative_position_id",
+    "cost": "cost",
+}
+
+# Single-line list props: a focus-level attribute that may repeat (one line per
+# value). Each occurrence is appended to the list in original order.
+_SINGLE_LINE_LIST_PROPS = {
+    "will_lead_to_war_with": "will_lead_to_war_with",
+}
+
+_REPEATABLE_PROPERTY_KEYS = frozenset(
+    {
+        "icon",
+        "offset",
+        "prerequisites",
+        "mutually_exclusive",
+        "will_lead_to_war_with",
+        "other",
+    }
+)
+
+# Block props: map script name -> (props key, style).
+# Styles: "scalar" overwrites; "list" appends; "skip_empty_scalar"/"skip_empty_list"
+# drop blocks that contain only whitespace.
+_BLOCK_PROPS = {
+    "offset": ("offset", "list"),
+    "allow_branch": ("allow_branch", "scalar"),
+    "search_filters": ("search_filters", "scalar"),
+    "prerequisite": ("prerequisites", "list"),
+    "mutually_exclusive": ("mutually_exclusive", "skip_empty_list"),
+    "joint_trigger": ("joint_trigger", "scalar"),
+    "available": ("available", "skip_empty_scalar"),
+    "cancel": ("cancel", "skip_empty_scalar"),
+    "select_effect": ("select_effect", "scalar"),
+    "bypass": ("bypass", "skip_empty_scalar"),
+    "bypass_effect": ("bypass_effect", "scalar"),
+    "completion_reward": ("completion_reward", "scalar"),
+    "completion_reward_joint_originator": (
+        "completion_reward_joint_originator",
+        "scalar",
+    ),
+    "completion_reward_joint_member": ("completion_reward_joint_member", "scalar"),
+    "ai_will_do": ("ai_will_do", "scalar"),
+}
+
+_DEFAULT_REMOVALS = {
+    "cancel_if_invalid = yes",
+    "continue_if_invalid = no",
+    "available_if_capitulated = no",
+}
+
+# Empty commented-out placeholders are dropped, not kept and re-sorted into the
+# `other` slot away from the position that gave them their meaning.
+_COMMENTED_EMPTY_BLOCK_RE = re.compile(
+    r"^#\s*(allow_branch|available|bypass|bypass_effect|cancel|visible"
+    r"|mutually_exclusive)\s*=\s*\{\s*\}$"
+)
+
+# Matches an existing log line so we can correct a wrong focus ID or missing prefix.
+# Handles [Root.GetName] / [This.GetName] (any capitalisation) and an optional "Focus " prefix.
+_LOG_FOCUS_RE = re.compile(
+    r'(log\s*=\s*"\[GetDateText\]:\s*\[[Rr]oot\.[Gg]etName\]:\s*)(?:[Ff]ocus\s+)?([\w-]+)(")'
+)
+
+# Country-specific dynamic modifiers use an uppercase country tag followed by a
+# lowercase snake_case identifier. The optional `_modifier` suffix is part of
+# many existing dynamic modifier IDs, so it is valid here.
+# A second uppercase tag segment marks a shared/joint modifier (CHI_NKO_shared_modifier).
+_MODIFIER_TAG_PREFIX_RE = re.compile(r"^[A-Z]{2,4}_")
+_MODIFIER_NAME_RE = re.compile(r"^[A-Z]{2,4}_([A-Z]{2,4}_)?[a-z][a-z0-9_]*$")
+_MODIFIER_TAG_SEGMENT_RE = re.compile(r"[A-Z]{2,4}")
+_MODIFIER_ID_RE = re.compile(r"\s*id\s*=\s*(\S+)")
+_MODIFIER_VALUE_RE = re.compile(r"\bMODIFIER\s*=\s*(\S+)")
+_ACRONYM_BOUNDARY_RE = re.compile(r"([A-Z])([A-Z][a-z])")
+_CAMEL_BOUNDARY_RE = re.compile(r"([a-z0-9])([A-Z])")
+
+
+def validate_modifier_naming(lines, filepath, check_naming=True):
+    """Check country-specific MODIFIER values in every focus block follow TAG_snake_case."""
+    if not check_naming:
+        return 0
+
+    violations = 0
+    index = 0
+    while index < len(lines):
+        match = _BLOCK_DISPATCH_RE.match(lines[index].rstrip())
+        if not match:
+            index += 1
+            continue
+
+        block_type = match.group(1)
+        block_lines, next_index = extract_block(lines, index)
+        if block_type not in _FOCUS_BLOCK_TYPES or not block_lines:
+            index = next_index
+            continue
+
+        focus_id = ""
+        for line in block_lines:
+            id_match = _MODIFIER_ID_RE.match(strip_inline_comment(line))
+            if id_match:
+                focus_id = id_match.group(1)
+                break
+
+        for line_offset, line in enumerate(block_lines):
+            code = blank_quoted_strings(strip_inline_comment(line))
+            modifier_match = _MODIFIER_VALUE_RE.search(code)
+            if not modifier_match:
+                continue
+            name = modifier_match.group(1)
+            if not _MODIFIER_TAG_PREFIX_RE.match(name) or _MODIFIER_NAME_RE.match(name):
+                continue
+
+            parts = name.split("_")
+            prefix = [parts[0]]
+            # a second uppercase tag segment marks a joint modifier and keeps its case
+            if len(parts) > 2 and _MODIFIER_TAG_SEGMENT_RE.fullmatch(parts[1]):
+                prefix.append(parts[1])
+            rest = "_".join(parts[len(prefix) :])
+            rest = _ACRONYM_BOUNDARY_RE.sub(r"\1_\2", rest)
+            rest = _CAMEL_BOUNDARY_RE.sub(r"\1_\2", rest)
+            suggested = f"{'_'.join(prefix)}_{rest.lower()}"
+
+            log_message(
+                "ERROR",
+                f"{filepath}:{index + line_offset + 1} - {block_type} '{focus_id}' uses"
+                f" non-standard MODIFIER name '{name}' — use '{suggested}' (TAG_snake_case)",
+            )
+            violations += 1
+
+        index = next_index
+
+    return violations
+
+
+def _split_block(block_lines, *, allow_trailing_comment=False):
+    """Split an extracted block into (header, inner_lines, close_line).
+
+    Returns ``None`` when the shape is not recognizable. A trailing
+    inline comment is split only when explicitly allowed: duplicate
+    block merging keeps commented lines opaque so braces inside the
+    comment cannot change merge semantics.
+    """
+    first = block_lines[0]
+    if len(block_lines) == 1:
+        raw_code = strip_inline_comment(first)
+        has_comment = raw_code != first
+        if has_comment and not allow_trailing_comment:
+            return None
+
+        code = raw_code.rstrip("\r\n")
+        if "{" not in code or code.count("{") != code.count("}"):
+            return None
+
+        open_idx = code.index("{")
+        close_idx = code.rindex("}")
+        indent = code[: len(code) - len(code.lstrip())]
+        inner = code[open_idx + 1 : close_idx].strip()
+        inner_lines = [f"{indent}\t{inner}"] if inner else []
+        close = f"{indent}}}"
+        if has_comment:
+            comment = first[len(raw_code) :].rstrip("\r\n")
+            if comment:
+                close = f"{close} {comment.lstrip()}"
+        return code[: open_idx + 1], inner_lines, close
+    if block_lines[-1].strip() != "}":
+        return None
+    return first, block_lines[1:-1], block_lines[-1]
+
+
+# Weight blocks are not merged. The trigger/effect argument below does not hold
+# for a scoring block: folding two of them under one header yields a single
+# `ai_will_do` carrying two `base` lines, which is not what either block meant.
+_UNMERGEABLE_PROPERTY_KEYS = frozenset({"ai_will_do"})
+
+
+def _merge_duplicate_blocks(first, second, key=None):
+    """The engine ANDs duplicate trigger blocks and runs duplicate effect
+    blocks in order, so concatenating inner lines under one header preserves
+    semantics. Falls back to emitting both blocks when a shape is opaque."""
+    if key in _UNMERGEABLE_PROPERTY_KEYS:
+        return first + second
+    a = _split_block(first)
+    b = _split_block(second)
+    if a is None or b is None:
+        return first + second
+    header, inner_a, close = a
+    return [header] + inner_a + b[1] + [close]
+
+
+def extract_focus_properties(focus_lines):
+    """Extract properties from focus block lines"""
+    props: dict[str, Any] = {
+        "id": "",
+        "icon": "",
+        "text_icon": "",
+        "overlay": "",
+        "x": "",
+        "y": "",
+        "relative_position_id": "",
+        "offset": [],
+        "allow_branch": [],
+        "cost": "",
+        "prerequisites": [],
+        "mutually_exclusive": [],
+        "will_lead_to_war_with": [],
+        "joint_trigger": [],
+        "available": [],
+        "cancel": [],
+        "select_effect": [],
+        "bypass": [],
+        "bypass_effect": [],
+        "completion_reward": [],
+        "completion_reward_joint_originator": [],
+        "completion_reward_joint_member": [],
+        "search_filters": "",
+        "ai_will_do": [],
+        "other": [],
+        # props key -> comments written above it. The formatter reorders
+        # properties, so a comment has to travel with the one it describes.
+        "comments": {},
+    }
+
+    pending: list[str] = []
+
+    def claim(key: str, index: int | None = None) -> None:
+        if pending:
+            comments = props["comments"]
+            if key in _REPEATABLE_PROPERTY_KEYS:
+                comments.setdefault(key, {})[index] = list(pending)
+            else:
+                comments.setdefault(key, []).extend(pending)
+            pending.clear()
+
+    i = 1  # Skip opening brace
+    while i < len(focus_lines) - 1:  # Skip closing brace
+        line = focus_lines[i].strip()
+
+        if line in _DEFAULT_REMOVALS or _COMMENTED_EMPTY_BLOCK_RE.match(line):
+            i += 1
+            continue
+
+        # Blank lines carry no anchor — dropping them here keeps a comment
+        # attached to the next real property instead of to the blank, and the
+        # formatter re-adds canonical spacing anyway.
+        if not line:
+            i += 1
+            continue
+
+        if line.startswith("#"):
+            pending.append(focus_lines[i].rstrip())
+            i += 1
+            continue
+
+        match = PROP_NAME_RE.match(line)
+        prop_name = match.group(1) if match else None
+
+        if prop_name == "icon":
+            # Icon may repeat, and each entry can be a single line or a block.
+            # Store uniformly as list[list[str]] — single-line entries become a
+            # one-element sublist so downstream code can treat every entry the same.
+            if "{" in line:
+                block_lines, next_i = extract_block(focus_lines, i)
+                entry = block_lines
+                i = next_i
+            else:
+                entry = [line]
+                i += 1
+            icon_entries = props["icon"]
+            if not isinstance(icon_entries, list):
+                icon_entries = []
+                props["icon"] = icon_entries
+            icon_entries.append(entry)
+            claim("icon", len(icon_entries) - 1)
+            continue
+
+        if prop_name in _SINGLE_LINE_PROPS:
+            props[_SINGLE_LINE_PROPS[prop_name]] = line
+            claim(_SINGLE_LINE_PROPS[prop_name])
+            i += 1
+            continue
+
+        if prop_name in _SINGLE_LINE_LIST_PROPS:
+            key = _SINGLE_LINE_LIST_PROPS[prop_name]
+            props[key].append(line)
+            claim(key, len(props[key]) - 1)
+            i += 1
+            continue
+
+        if prop_name in _BLOCK_PROPS:
+            key, style = _BLOCK_PROPS[prop_name]
+            block_lines, next_i = extract_block(focus_lines, i)
+            skip_empty = style.startswith("skip_empty_")
+            if not skip_empty or not is_empty_block(block_lines):
+                # Claim only when the block survives, so a dropped empty block
+                # hands its comments to whatever is emitted next instead of
+                # stranding them on a key that never renders.
+                if style.endswith("list"):
+                    props[key].append(block_lines)
+                    claim(key, len(props[key]) - 1)
+                elif props[key]:
+                    claim(key)
+                    props[key] = _merge_duplicate_blocks(props[key], block_lines, key)
+                else:
+                    claim(key)
+                    props[key] = block_lines
+            i = next_i
+            continue
+
+        props["other"].append(focus_lines[i].rstrip())
+        claim("other", len(props["other"]) - 1)
+        i += 1
+
+    if pending:
+        props["comments"]["__trailing__"] = list(pending)
+
+    return props
+
+
+def _fix_log_id(line: str, focus_id: str) -> str:
+    """Correct a log line: ensure 'Focus ' prefix and replace the focus ID."""
+    return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
+
+
+def _effect_has_statements(effect_block):
+    """True when an effect block runs anything besides its log line."""
+    if len(effect_block) == 1:
+        split = _split_block(effect_block, allow_trailing_comment=True)
+        inner = split[1] if split is not None else []
+    else:
+        inner = effect_block[1:-1]
+    for line in inner:
+        stripped = strip_inline_comment(line).strip()
+        if stripped and not stripped.startswith("log ="):
+            return True
+    return False
+
+
+def effect_block_with_log(effect_block, focus_id):
+    """Return an effect block's lines, injecting a log line as the first
+    statement if the block doesn't already contain one, or correcting a
+    mismatched focus ID / missing 'Focus ' prefix in an existing log line.
+    An empty or log-only block is dropped: a log with nothing beside it
+    records an effect that never runs (#4456)."""
+    if not effect_block or not _effect_has_statements(effect_block):
+        return []
+    if focus_id and not any("log =" in line for line in effect_block):
+        log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
+        if len(effect_block) == 1:
+            # Expand `prop = { ... }` so the log lands INSIDE the braces, not
+            # after them. _split_block bails on an inline comment (whose braces
+            # would misplace the split), leaving such a block unlogged.
+            split = _split_block(effect_block, allow_trailing_comment=True)
+            if split is not None:
+                header, inner_lines, close = split
+                effect_block = [header, log_line, *inner_lines, close]
+        else:
+            new_block = []
+            for i, line in enumerate(effect_block):
+                new_block.append(line)
+                if i == 0 and "{" in line:
+                    new_block.append(log_line)
+            effect_block = new_block
+    elif focus_id:
+        # Log line already exists — correct wrong ID or missing 'Focus ' prefix.
+        effect_block = [
+            _fix_log_id(line, focus_id) if "log =" in line else line
+            for line in effect_block
+        ]
+    return collapse_or_compact(effect_block[:])
+
+
+def _passthrough_single_line(block_lines, indent):
+    """A one-line block has no interior lines for the property loops below to
+    read, so reformatting it would emit an empty block — keep it verbatim."""
+    if len(block_lines) != 1:
+        return None
+    return [f"{indent}{block_lines[0].strip()}"]
+
+
+def _extract_offset_fields(block_lines):
+    """Scan an offset block's inner lines for x, y, and trigger, collecting
+    everything else in source order. Shared by every offset-shaped block
+    (top-level and the one nested inside a focus)."""
+    x_val = ""
+    y_val = ""
+    trigger_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("x ="):
+            x_val = line
+        elif line.startswith("y ="):
+            y_val = line
+        elif line.startswith("trigger ="):
+            trigger_block, next_i = extract_block(block_lines, i)
+            trigger_lines = trigger_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    return x_val, y_val, trigger_lines, other_lines
+
+
+def format_focus_offset_block(block_lines):
+    """Format an offset block within a focus."""
+    return _format_offset_block(block_lines, "\t\t")
+
+
+def _emit_comments(lines, props, key, index=None):
+    """Emit comments written above a property or a repeated property entry."""
+    comments = props.get("comments", {}).get(key, {})
+    if index is None:
+        lines.extend(comments)
+    else:
+        lines.extend(comments.get(index, ()))
+
+
+def format_focus_block(props, block_type="focus"):
+    """Format focus according to Millennium Dawn standard.
+
+    Each numbered step below builds one group; `join_groups` then separates the
+    groups that produced lines with a single blank. Property order follows the
+    Code Stylization Guide, and an absent property costs no blank line."""
+    groups = []
+
+    # 1. ID, icon, text_icon, overlay (no blank line between them)
+    identity = []
+    _emit_comments(identity, props, "id")
+    if props["id"]:
+        identity.append(f"\t\t{props['id']}")
+    if props["icon"]:
+        # `icon` is always list[list[str]] — emit each entry in order.
+        for index, icon_block in enumerate(props["icon"]):
+            _emit_comments(identity, props, "icon", index)
+            icon_lines = compact_icon(icon_block)
+            if "\n" in icon_lines:
+                for icon_line in icon_lines.split("\n"):
+                    if icon_line.strip():
+                        identity.append(icon_line)
+            else:
+                identity.append(f"\t\t{icon_lines}")
+    _emit_comments(identity, props, "text_icon")
+    if props["text_icon"]:
+        identity.append(f"\t\t{props['text_icon']}")
+    _emit_comments(identity, props, "overlay")
+    if props["overlay"]:
+        identity.append(f"\t\t{props['overlay']}")
+    groups.append(identity)
+
+    # 2. Position group (x, y, relative_position_id - no blank lines between them)
+    position = []
+    _emit_comments(position, props, "x")
+    if props["x"]:
+        position.append(f"\t\t{props['x']}")
+    _emit_comments(position, props, "y")
+    if props["y"]:
+        position.append(f"\t\t{props['y']}")
+    _emit_comments(position, props, "relative_position_id")
+    if props["relative_position_id"]:
+        position.append(f"\t\t{props['relative_position_id']}")
+    for index, offset_block in enumerate(props["offset"]):
+        _emit_comments(position, props, "offset", index)
+        position.extend(format_focus_offset_block(offset_block[:]))
+    groups.append(position)
+
+    # 3. Cost
+    cost = []
+    _emit_comments(cost, props, "cost")
+    if props["cost"]:
+        cost.append(f"\t\t{props['cost']}")
+    groups.append(cost)
+
+    # 4. Allow branch (before prerequisites)
+    allow_branch = []
+    _emit_comments(allow_branch, props, "allow_branch")
+    if props["allow_branch"]:
+        allow_branch.extend(collapse_or_compact(props["allow_branch"][:]))
+    groups.append(allow_branch)
+
+    # 5. Prerequisites and related conditions (grouped together, no internal spacing)
+    conditions = []
+    for index, prereq in enumerate(props["prerequisites"]):
+        _emit_comments(conditions, props, "prerequisites", index)
+        conditions.extend(collapse_or_compact(prereq[:]))
+    for index, mutex in enumerate(props["mutually_exclusive"]):
+        _emit_comments(conditions, props, "mutually_exclusive", index)
+        conditions.extend(collapse_or_compact(mutex[:]))
+    # will_lead_to_war_with is a single-line property (may repeat — one per target)
+    for index, war_target in enumerate(props["will_lead_to_war_with"]):
+        _emit_comments(conditions, props, "will_lead_to_war_with", index)
+        conditions.append(f"\t\t{war_target}")
+    groups.append(conditions)
+
+    # 6. Search filters (right after condition group, before available)
+    search_filters = []
+    _emit_comments(search_filters, props, "search_filters")
+    if props["search_filters"]:
+        search_filters.append(f"\t\t{compact_search_filters(props['search_filters'])}")
+    groups.append(search_filters)
+
+    # 7-10. Joint trigger, then available / bypass / cancel
+    for key in ("joint_trigger", "available", "bypass", "cancel"):
+        group = []
+        _emit_comments(group, props, key)
+        if props[key]:
+            group.extend(collapse_or_compact(props[key][:]))
+        groups.append(group)
+
+    # 11. Other properties (preserve as-is)
+    other = []
+    for index, line in enumerate(props["other"]):
+        _emit_comments(other, props, "other", index)
+        other.append(line)
+    groups.append(other)
+
+    # id lines may carry a trailing comment — keep it out of the log string
+    focus_id = props["id"].split("=")[1].split("#")[0].strip() if props["id"] else ""
+
+    # 12. Completion reward (add log if missing)
+    completion_reward = []
+    _emit_comments(completion_reward, props, "completion_reward")
+    completion_reward.extend(
+        effect_block_with_log(props["completion_reward"], focus_id)
+    )
+    groups.append(completion_reward)
+
+    # 13-14. Completion reward joint originator / member
+    for key in ("completion_reward_joint_originator", "completion_reward_joint_member"):
+        group = []
+        _emit_comments(group, props, key)
+        if props[key]:
+            group.extend(collapse_or_compact(props[key][:]))
+        groups.append(group)
+
+    # 15-16. Select effect and bypass effect (add log if missing)
+    for key in ("select_effect", "bypass_effect"):
+        group = []
+        _emit_comments(group, props, key)
+        group.extend(effect_block_with_log(props[key], focus_id))
+        groups.append(group)
+
+    # 17. AI will do (always last)
+    ai_will_do = []
+    _emit_comments(ai_will_do, props, "ai_will_do")
+    if props["ai_will_do"]:
+        ai_will_do.extend(
+            collapse_or_compact(convert_root_factor_to_base(props["ai_will_do"][:]))
+        )
+    else:
+        ai_will_do.append("\t\tai_will_do = { base = 1 }")
+    groups.append(ai_will_do)
+
+    trailing = []
+    _emit_comments(trailing, props, "__trailing__")
+    groups.append(trailing)
+
+    return [f"\t{block_type} = {{"] + collapse_blank_runs(join_groups(groups)) + ["\t}"]
+
+
+def _finish_block_with_trigger(
+    lines, trigger_lines, other_lines, close_indent="\t", trigger_indent=None
+):
+    """Append compacted trigger lines, other lines, and a closing brace."""
+    if trigger_lines:
+        lines.extend(collapse_or_compact(trigger_lines[:], indent=trigger_indent))
+
+    lines.extend(line for line in other_lines if line.strip())
+    lines.append(f"{close_indent}}}")
+    return lines
+
+
+def _format_offset_block(block_lines, indent):
+    passthrough = _passthrough_single_line(block_lines, indent)
+    if passthrough is not None:
+        return passthrough
+
+    x_val, y_val, trigger_lines, other_lines = _extract_offset_fields(block_lines)
+    lines = [f"{indent}offset = {{"]
+    if x_val:
+        lines.append(f"{indent}\t{x_val}")
+    if y_val:
+        lines.append(f"{indent}\t{y_val}")
+    return _finish_block_with_trigger(
+        lines, trigger_lines, other_lines, indent, f"{indent}\t"
+    )
+
+
+def format_shortcut_block(block_lines):
+    """Format shortcut block according to standard"""
+    passthrough = _passthrough_single_line(block_lines, "\t")
+    if passthrough is not None:
+        return passthrough
+
+    lines = []
+    lines.append("\tshortcut = {")
+
+    name = ""
+    target = ""
+    scroll_wheel_factor = ""
+    trigger_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("name ="):
+            name = line
+        elif line.startswith("target ="):
+            target = line
+        elif line.startswith("scroll_wheel_factor ="):
+            scroll_wheel_factor = line
+        elif line.startswith("trigger ="):
+            trigger_block, next_i = extract_block(block_lines, i)
+            trigger_lines = trigger_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    if name:
+        lines.append(f"\t\t{name}")
+    if target:
+        lines.append(f"\t\t{target}")
+    if scroll_wheel_factor:
+        lines.append(f"\t\t{scroll_wheel_factor}")
+
+    return _finish_block_with_trigger(lines, trigger_lines, other_lines)
+
+
+def format_inlay_window_block(block_lines):
+    """Format inlay_window block according to standard"""
+    passthrough = _passthrough_single_line(block_lines, "\t")
+    if passthrough is not None:
+        return passthrough
+
+    lines = []
+    lines.append("\tinlay_window = {")
+
+    window_id = ""
+    position_lines = []
+    override_position_lines = []
+    other_lines = []
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith("id ="):
+            window_id = line
+        elif line.startswith("position ="):
+            position_block, next_i = extract_block(block_lines, i)
+            position_lines = position_block
+            i = next_i
+            continue
+        elif line.startswith("override_position ="):
+            override_block, next_i = extract_block(block_lines, i)
+            override_position_lines = override_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    if window_id:
+        lines.append(f"\t\t{window_id}")
+
+    if position_lines:
+        compacted_position = collapse_or_compact(position_lines[:])
+        for line in compacted_position:
+            lines.append(line)
+
+    if override_position_lines:
+        compacted_override = collapse_or_compact(override_position_lines[:])
+        for line in compacted_override:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
+def format_offset_block(block_lines):
+    """Format a top-level offset block."""
+    return _format_offset_block(block_lines, "\t")
+
+
+def format_continuous_focus_position_block(block_lines):
+    """Format continuous_focus_position block according to standard"""
+    x_val = ""
+    y_val = ""
+
+    # Handle single-line blocks like `continuous_focus_position = { x = 5700 y = 2000 }`
+    # by tokenising the contents between the braces.
+    if len(block_lines) == 1 and "{" in block_lines[0] and "}" in block_lines[0]:
+        inner = block_lines[0].split("{", 1)[1].rsplit("}", 1)[0].strip()
+        for match in re.finditer(r"(x|y)\s*=\s*(\S+)", inner):
+            key, value = match.group(1), match.group(2)
+            if key == "x":
+                x_val = value
+            elif key == "y":
+                y_val = value
+
+    # Multi-line blocks: one property per line.
+    for line in block_lines:
+        stripped = line.strip()
+        if stripped.startswith("x ="):
+            x_val = stripped.split("=")[1].strip()
+        elif stripped.startswith("y ="):
+            y_val = stripped.split("=")[1].strip()
+
+    if x_val and y_val:
+        return [f"\tcontinuous_focus_position = {{ x = {x_val} y = {y_val} }}"]
+
+    # Fallback: return rstripped lines so no stray newlines survive.
+    return [line.rstrip("\r\n") for line in block_lines]
+
+
+def format_initial_show_position_block(block_lines):
+    """Format initial_show_position block according to standard"""
+    lines = []
+    lines.append("\tinitial_show_position = {")
+
+    x_val = ""
+    y_val = ""
+    focus_val = ""
+    offset_lines = []
+    other_lines = []
+
+    # Handle single-line blocks like `initial_show_position = { x = 2 y = 0 }`
+    # by extracting the contents between the braces and tokenising them.
+    if len(block_lines) == 1 and "{" in block_lines[0] and "}" in block_lines[0]:
+        inner = block_lines[0].split("{", 1)[1].rsplit("}", 1)[0].strip()
+        for match in re.finditer(r"(x|y|focus)\s*=\s*(\S+)", inner):
+            key, value = match.group(1), match.group(2)
+            if key == "x":
+                x_val = f"x = {value}"
+            elif key == "y":
+                y_val = f"y = {value}"
+            elif key == "focus":
+                focus_val = f"focus = {value}"
+
+    if len(block_lines) > 1:
+        x_val, y_val, _, _ = _extract_offset_fields(block_lines)
+
+    i = 1  # Skip opening brace
+    while i < len(block_lines) - 1:  # Skip closing brace
+        line = block_lines[i].strip()
+
+        if line.startswith(("x =", "y =")):
+            pass
+        elif line.startswith("focus ="):
+            focus_val = line
+        elif line.startswith("offset ="):
+            offset_block, next_i = extract_block(block_lines, i)
+            offset_lines = offset_block
+            i = next_i
+            continue
+        else:
+            other_lines.append(block_lines[i])
+
+        i += 1
+
+    # Prefer single-line output when the block has only simple coordinates.
+    if focus_val and not x_val and not y_val and not offset_lines and not other_lines:
+        return [f"\tinitial_show_position = {{ {focus_val} }}"]
+
+    if x_val and y_val and not focus_val and not offset_lines and not other_lines:
+        x_num = x_val.split("=", 1)[1].strip()
+        y_num = y_val.split("=", 1)[1].strip()
+        return [f"\tinitial_show_position = {{ x = {x_num} y = {y_num} }}"]
+
+    if x_val:
+        lines.append(f"\t\t{x_val}")
+    if y_val:
+        lines.append(f"\t\t{y_val}")
+    if focus_val:
+        lines.append(f"\t\t{focus_val}")
+
+    if offset_lines:
+        compacted_offset = collapse_or_compact(offset_lines[:])
+        for line in compacted_offset:
+            lines.append(line)
+
+    for line in other_lines:
+        if line.strip():
+            lines.append(line)
+
+    lines.append("\t}")
+    return lines
+
+
+# Dispatch tables for standardize_focus_tree's main loop.
+_FOCUS_BLOCK_TYPES = {"focus", "shared_focus", "joint_focus"}
+
+_SIMPLE_BLOCK_HANDLERS = {
+    "shortcut": format_shortcut_block,
+    "inlay_window": format_inlay_window_block,
+    "offset": format_offset_block,
+    "continuous_focus_position": format_continuous_focus_position_block,
+    "initial_show_position": format_initial_show_position_block,
+}
+
+# Order preserved for the SUCCESS log output at end of standardization.
+_BLOCK_COUNT_ORDER = (
+    "focus",
+    "shared_focus",
+    "joint_focus",
+    "continuous_focus_position",
+    "initial_show_position",
+    "shortcut",
+    "inlay_window",
+    "offset",
+)
+
+_BLOCK_DISPATCH_RE = re.compile(r"^\s*(" + "|".join(_BLOCK_COUNT_ORDER) + r")\s*=\s*\{")
+
+
+def add_check_naming_argument(parser: argparse.ArgumentParser) -> None:
+    """Register --check-naming so this module and standardize.py cannot drift."""
+    parser.add_argument(
+        "--check-naming",
+        action=argparse.BooleanOptionalAction,
+        default=False,
+        help="Enforce TAG_snake_case for country-specific MODIFIER names (default: off)",
+    )
+
+
+def format_focus_tree_lines(lines, verbose: bool = False):
+    """Reformat focus tree lines in memory, returning (output_lines, counts)."""
+    output_lines = []
+    i = 0
+    counts = {block_type: 0 for block_type in _BLOCK_COUNT_ORDER}
+
+    while i < len(lines):
+        line = lines[i].rstrip()
+        match = _BLOCK_DISPATCH_RE.match(line)
+
+        if not match:
+            output_lines.append(line)
+            i += 1
+            continue
+
+        block_type = match.group(1)
+        log_message("DEBUG", f"Found {block_type} block at line {i + 1}", verbose)
+
+        block_lines, next_i = extract_block(lines, i)
+        if block_lines:
+            if block_type in _FOCUS_BLOCK_TYPES:
+                props = extract_focus_properties(block_lines)
+                formatted_lines = format_focus_block(props, block_type)
+                counts[block_type] += 1
+                log_message(
+                    "DEBUG",
+                    f"Processed {block_type} block {counts[block_type]}: "
+                    f"{props.get('id', 'unknown')}",
+                    verbose,
+                )
+            else:
+                formatted_lines = _SIMPLE_BLOCK_HANDLERS[block_type](block_lines)
+                counts[block_type] += 1
+                log_message(
+                    "DEBUG",
+                    f"Processed {block_type} block {counts[block_type]}",
+                    verbose,
+                )
+            # shared_focus/joint_focus are top-level definitions (no
+            # focus_tree wrapper), so render them at column 0.
+            indent = "" if block_type in {"shared_focus", "joint_focus"} else "\t"
+            output_lines.extend(reindent_by_brace_depth(formatted_lines, indent))
+
+        i = next_i
+
+    # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
+    focus_block_pattern = re.compile(r"^\t?(focus|shared_focus|joint_focus)\s*=\s*{")
+    final_lines: list[str] = []
+    for idx, line in enumerate(output_lines):
+        if focus_block_pattern.match(line) and final_lines:
+            # Find the previous non-empty line
+            prev_idx = len(final_lines) - 1
+            while prev_idx >= 0 and final_lines[prev_idx].strip() == "":
+                prev_idx -= 1
+            # If the previous content line is a closing brace and there's no blank line, add one
+            if (
+                prev_idx >= 0
+                and final_lines[prev_idx].strip() == "}"
+                and final_lines[-1].strip() != ""
+            ):
+                final_lines.append("")
+        final_lines.append(line)
+
+    return final_lines, counts
+
+
+def standardize_focus_tree(
+    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
+):
+    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
+    start_time = time.time()
+
+    lines = read_lines_for_standardization(input_file, verbose=verbose)
+    if lines is None:
+        return False
+
+    output_lines, counts = format_focus_tree_lines(lines, verbose)
+
+    # Naming convention check runs before writing so a failed standardization
+    # cannot silently leave a partially reformatted file behind.
+    violations = validate_modifier_naming(lines, input_file, check_naming)
+    if violations:
+        log_message(
+            "ERROR", f"Standardization rejected: {violations} naming violation(s)"
+        )
+        return False
+
+    try:
+        output = render_standardized(output_lines)
+        atomic_write_text(output_file, output)
+
+        time_str = format_elapsed(time.time() - start_time)
+
+        log_message("SUCCESS", f"Standardization completed in {time_str}")
+        log_message("SUCCESS", f"Processed {counts['focus']} focus blocks")
+        for block_type in _BLOCK_COUNT_ORDER:
+            if block_type == "focus":
+                continue  # already logged above, unconditionally
+            if counts[block_type] > 0:
+                log_message(
+                    "SUCCESS", f"Processed {counts[block_type]} {block_type} blocks"
+                )
+        log_message("SUCCESS", f"Output written to: {output_file}")
+
+    except Exception as e:
+        log_message("ERROR", f"Failed to write {output_file}: {e}")
+        return False
+
+    return True
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Standardize HOI4 focus tree files - reformats focus blocks and all focus tree properties"
+    )
+    add_standard_file_arguments(parser, input_help="Input focus tree file")
+    add_check_naming_argument(parser)
+
+    args = parser.parse_args()
+
+    output_file = resolve_output_file_and_backup(args)
+
+    log_message(
+        "INFO",
+        f"Starting focus block standardization of {args.input_file}",
+        args.verbose,
+    )
+
+    if standardize_focus_tree(
+        args.input_file, output_file, args.verbose, args.check_naming
+    ):
+        log_message("SUCCESS", f"Standardization completed: {output_file}")
+    else:
+        log_message("ERROR", "Standardization failed")
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

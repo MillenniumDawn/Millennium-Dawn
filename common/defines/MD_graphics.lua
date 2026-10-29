@@ -1,6 +1,6 @@
 
 	NDefines.NWiki.BASE_URL = ""
-	NDefines.NWiki.FORUM_URL = "https://gitlab.com/Millennium_Dawn/Millennium_Dawn/-/wikis/home"
+	NDefines.NWiki.FORUM_URL = "https://millenniumdawn.github.io/Millennium-Dawn/"
 
 	NDefines.NMapIcons.STATES_PRIORITY_VICTORY_POINTS = 0
 
@@ -46,7 +46,7 @@
 	NDefines.NGraphics.DRAW_SHADOWS_FADE_LENGTH = 50
 	NDefines.NGraphics.DRAW_FOW_CUTOFF = 310
 	NDefines.NGraphics.DRAW_FOW_FADE_LENGTH = 220
-	
+
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_COUNTRY_CENTER_THICKNESS = 0
 	NDefines_Graphics.NGraphics.GRADIENT_BORDERS_THICKNESS_DIPLOMACY = 5
 	NDefines_Graphics.NGraphics.BORDER_WIDTH = 1.0
@@ -90,5 +90,5 @@
 
 	NDefines.NFrontend.CAMERA_LOOKAT_SETTINGS_X = 2058.0
 	NDefines.NFrontend.CAMERA_MIN_HEIGHT = 30.0
-	
+
 	NDefines.NGraphics.ACCLIMATIZATION_CAMO_SHOW_AT = 0.05				-- The moment at which the division gains enough acclimatization to change it's model to the camouflage one.

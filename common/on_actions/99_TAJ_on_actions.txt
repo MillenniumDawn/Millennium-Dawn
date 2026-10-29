@@ -1,4 +1,111 @@
 on_actions = {
+	# on_annex can fire while TAJ still exists, so country_exists = TAJ in
+	# TAJ_drug_flow_update would still read true here - remove outright instead.
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+				}
+				SOV = { remove_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+			}
+		}
+	}
+
+	on_subject_annexed = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+				}
+				SOV = { remove_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+			}
+		}
+	}
+
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_subject_free = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_release_as_puppet = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_release_as_free = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_government_change = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = TAJ
+						has_completed_focus = TAJ_appoint_rustam
+					}
+				}
+				ROOT = { TAJ_rustams_governance_update = yes }
+			}
+		}
+	}
+
 	on_daily_TAJ = {
 		effect = {
 			if = {
@@ -15,27 +122,18 @@ on_actions = {
 				multiply_variable = { badakhshan_resistance_garrison_requirement = 0.03 }
 				set_variable = { badakhshan_resistance_garrison_damage = TAJ_badakhshan_unrest_var }
 				multiply_variable = { badakhshan_resistance_garrison_damage = 0.019 }
-				multiply_variable = { badakhshan_resistance_garrison_damage = 0.019 }
 				subtract_from_variable = { badakhshan_resistance_garrison_damage = 0.999 }
-			}
-		}
-	}
-	on_weekly_TAJ = {
-		effect = {
-			if = { # Fail safe
-				limit = {
-					check_variable = {
-						TAJ_badakhshan_unrest_var < 0
-					}
-				}
-				set_variable = {
-					TAJ_badakhshan_unrest_var = 0
-				}
 			}
 		}
 	}
 	on_monthly_TAJ = {
 		effect = {
+			# Every emerging subideology sits in the communism ideology group, so a swap
+			# between them never reaches on_government_change.
+			if = {
+				limit = { has_completed_focus = TAJ_appoint_rustam }
+				TAJ_rustams_governance_update = yes
+			}
 			if = {
 				limit = {
 					has_country_flag = TAJ_monthly_distribution
@@ -62,7 +160,6 @@ on_actions = {
 					# Get some cash
 					set_temp_variable = { treasury_change = gdp_total }
 					multiply_temp_variable = { treasury_change = 0.01 }
-					set_temp_variable = { temp_reparation = treasury_change }
 					modify_treasury_effect = yes
 					newline = yes
 					# Get some manpower
@@ -70,14 +167,14 @@ on_actions = {
 					# Get some rifles
 					newline = yes
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 75
 						producer = SOV
 					}
 					newline = yes
 					# Get some utility trucks
 					add_equipment_to_stockpile = {
-						type = util_vehicle_0
+						type = util_vehicle_1
 						amount = 15
 						producer = C01
 					}
@@ -92,7 +189,6 @@ on_actions = {
 					# Get some cash
 					set_temp_variable = { treasury_change = gdp_total }
 					multiply_temp_variable = { treasury_change = 0.02 }
-					set_temp_variable = { temp_reparation = treasury_change }
 					modify_treasury_effect = yes
 					newline = yes
 					# Get some manpower
@@ -100,14 +196,14 @@ on_actions = {
 					# Get some rifles
 					newline = yes
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 175
 						producer = SOV
 					}
 					newline = yes
 					# Get some utility trucks
 					add_equipment_to_stockpile = {
-						type = util_vehicle_0
+						type = util_vehicle_1
 						amount = 35
 						producer = C01
 					}
@@ -126,7 +222,6 @@ on_actions = {
 					# Get some cash
 					set_temp_variable = { treasury_change = gdp_total }
 					multiply_temp_variable = { treasury_change = 0.03 }
-					set_temp_variable = { temp_reparation = treasury_change }
 					modify_treasury_effect = yes
 					newline = yes
 					# Get some manpower
@@ -134,14 +229,14 @@ on_actions = {
 					# Get some rifles
 					newline = yes
 					add_equipment_to_stockpile = {
-						type = infantry_weapons
+						type = infantry_weapons_1
 						amount = 275
 						producer = SOV
 					}
 					newline = yes
 					# Get some utility trucks
 					add_equipment_to_stockpile = {
-						type = util_vehicle_0
+						type = util_vehicle_1
 						amount = 55
 						producer = C01
 					}
@@ -254,19 +349,17 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = {
-						has_country_flag = TAJ_radicalism_ended
-						neutrality_neutral_muslim_brotherhood_are_in_power = yes
-						salafist_caliphate_are_in_power = yes
-						salafist_kingdom_are_in_power = yes
+						OR = {
+							has_country_flag = TAJ_radicalism_ended
+							neutrality_neutral_muslim_brotherhood_are_in_power = yes
+							salafist_caliphate_are_in_power = yes
+							salafist_kingdom_are_in_power = yes
+						}
 					}
 				}
-				random_list = {
-					35 = {
-						TAJ_check_radicalism = yes
-					}
-					65 = {
-						# Nothing
-					}
+				random = {
+					chance = 35
+					TAJ_check_radicalism = yes
 				}
 				if = {
 					limit = {
@@ -298,76 +391,8 @@ on_actions = {
 						has_country_flag = TAJ_ciilwar_ISIK
 					}
 				}
-				country_event = {
-					id = tajik_radicalism.16
-				}
+				country_event = tajik_radicalism.16
 				set_country_flag = TAJ_ciilwar_ISIK
-			}
-			#Tajik Lore Events Triggers
-			#Year 2000
-			if = {
-				limit = { check_variable = { global.year = 2000 } }
-				#Month April
-				if = {
-					limit = { check_variable = { global.month = 4 } }
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.0 } }
-						country_event = { id = tajik_lore.0 }
-						set_country_flag = TAJ_tajik_lore.0
-					}
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.1 } }
-						#activate_decision = TAJ_Nadyrov_s_Funding_Proposal_mission
-						set_country_flag = TAJ_tajik_lore.1
-					}
-				}
-			}
-			#Year 2001
-			if = {
-				limit = { check_variable = { global.year = 2001 } }
-				#Month February
-				if = {
-					limit = { check_variable = { global.month = 2 } }
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.3 } }
-						country_event = { id = tajik_lore.3 days = 4 random_hours = 8 }
-						set_country_flag = TAJ_tajik_lore.3
-					}
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.4 } }
-						country_event = { id = tajik_lore.4 days = 9 random_hours = 8 }
-						set_country_flag = TAJ_tajik_lore.4
-					}
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.5 } }
-						country_event = { id = tajik_lore.5 days = 18 random_hours = 5 }
-						set_country_flag = TAJ_tajik_lore.5
-					}
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.6 } }
-						country_event = { id = tajik_lore.6 days = 24 random_hours = 10 }
-						set_country_flag = TAJ_tajik_lore.6
-					}
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.8 } }
-						UZB = { country_event = { id = tajik_lore.8 days = 25 random_hours = 10 } }
-						set_country_flag = TAJ_tajik_lore.8
-					}
-				}
-			}
-			#Year 2002 late
-			if = {
-				limit = { check_variable = { global.year = 2002 } }
-				#Month May
-				if = {
-					limit = { check_variable = { global.month = 9 } }
-					if = {
-						limit = { NOT = { has_country_flag = TAJ_tajik_lore.9 } }
-						UZB = { country_event = { id = tajik_lore.9 days = 0 random_hours = 0 } }
-						set_country_flag = TAJ_tajik_lore.9
-						set_country_flag = TAJ_tajik_lore.11
-					}
-				}
 			}
 		}
 	}

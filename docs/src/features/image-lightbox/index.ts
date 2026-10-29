@@ -1,0 +1,1 @@
+export { initImageLightbox } from "./model";

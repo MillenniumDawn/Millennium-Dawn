@@ -1,250 +1,416 @@
 # Improved by KyCb(rockon)
-###UNIT LIMITER###
-division_limiter = {
-	allowed = {
-		has_global_flag = GAME_RULE_division_limiter_enabled
-		ai_for_units_is_not_disabled = yes
-	}
+default_army_production_strategy = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { num_of_military_factories < 11 }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = L_Inf value = 30 }
+	ai_strategy = { type = role_ratio id = Militia value = 1 }
+	ai_strategy = { type = role_ratio id = infantry value = 25 }
+	ai_strategy = { type = role_ratio id = garrison value = 1 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 50 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
+	ai_strategy = { type = role_ratio id = armor value = 35 }
+	ai_strategy = { type = role_ratio id = marines value = 15 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 2 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 10 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 20 }
+}
+
+default_army_production_strategy_maj = {
+	allowed = { ai_for_units_is_not_disabled = yes }
 	enable = {
-		set_temp_variable = { upper_limit = num_of_factories } #100 - Base factory total
-		if = {
-			limit = { check_variable = { num_of_factories > 4 } }
-			add_to_temp_variable = { upper_limit = 5 }
-		}
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.75 }
-		}
-		#If not has war 100 Divisions, if has war 175
-
-		if = {
-			limit = {
-				OR = {
-					has_country_flag = ai_yes_unit_build
-					has_country_flag = AI_is_threatened
-				}
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } #If the AI didn't have divisions it is now 125
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } #If the major is 86.25
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #if the nation is in the EU 51.75
-		}
-		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #If the nation is also in NATO 31.05
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } #38 if true
-		}
-
-		if = { limit = { num_of_military_factories > 35 }
-			multiply_temp_variable = { upper_limit = 1.15 }
-		}
-		else_if = { limit = { num_of_military_factories > 25 }
-			multiply_temp_variable = { upper_limit = 1.1 }
-		}
-		else_if = { limit = { num_of_military_factories > 15 }
-			multiply_temp_variable = { upper_limit = 1.05 }
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } #73.9
-		}
-		if = {
-			limit = {
-				OR = {
-					tag = SOV
-					tag = USA
-					tag = CHI
-					tag = RAJ
-				}
-			}
-			multiply_temp_variable = { upper_limit = 1.2 }
-		}
-		if = {
-			limit = {
-				is_in_faction_with = CHI
-				date < 2006.6.1
-				NOT = {
-					tag = SOV
-				}
-			}
-			multiply_temp_variable = { upper_limit = 1.00 }
-		}
-
-		round_temp_variable = upper_limit #27
-		check_variable = { num_divisions > upper_limit }
+		num_of_military_factories > 10
+		num_of_military_factories < 30
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_army id = L_Inf value = -500 }
-	ai_strategy = { type = build_army id = infantry value = -500 }
-	ai_strategy = { type = build_army id = garrison value = -500 }
-	ai_strategy = { type = build_army id = apc_mechanized value = -500 }
-	ai_strategy = { type = build_army id = ifv_mechanized value = -500 }
-	ai_strategy = { type = build_army id = armor value = -500 }
-	ai_strategy = { type = build_army id = marines value = -500 }
-	ai_strategy = { type = build_army id = Air_helicopters value = -500 }
-	ai_strategy = { type = build_army id = Air_mech value = -500 }
-	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
+	ai_strategy = { type = role_ratio id = infantry value = 15 }
+	ai_strategy = { type = role_ratio id = garrison value = 1 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 35 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 50 }
+	ai_strategy = { type = role_ratio id = armor value = 40 }
+	ai_strategy = { type = role_ratio id = marines value = 25 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 2 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 15 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 25 }
 }
 
-division_limiter_potato_edition = {
-	allowed = {
-		has_global_flag = GAME_RULE_division_limiter_potato_edition_enabled
-		ai_for_units_is_not_disabled = yes
-	}
-	enable = {
-		set_temp_variable = { upper_limit = num_of_factories } #100
-		multiply_temp_variable = { upper_limit = 0.5 } #50
-		if = { limit = { has_war = yes }
-			multiply_temp_variable = { upper_limit = 1.87 } #93.5
-		}
-
-		if = { limit = { num_of_military_factories > 30 }
-			multiply_temp_variable = { upper_limit = 1.15 }
-		}
-		else_if = { limit = { num_of_military_factories > 20 }
-			multiply_temp_variable = { upper_limit = 1.1 }
-		}
-		else_if = { limit = { num_of_military_factories > 10 }
-			multiply_temp_variable = { upper_limit = 1.05 }
-		}
-
-		if = {
-			limit = {
-				OR = {
-					has_country_flag = ai_yes_unit_build
-					has_country_flag = AI_is_threatened
-				}
-			}
-			multiply_temp_variable = { upper_limit = 1.25 } #101.563
-		}
-		if = { limit = { is_major = yes }
-			multiply_temp_variable = { upper_limit = 1.15 } #116.8
-		}
-		if = { limit = { has_idea = NATO_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #87.59
-		}
-		if = { limit = { has_idea = EU_member }
-			multiply_temp_variable = { upper_limit = 0.8 } #65.6925
-		}
-		if = { limit = { threat > 0.50 }
-			multiply_temp_variable = { upper_limit = 1.25 } #82.115
-		}
-		else = {
-			multiply_temp_variable = { upper_limit = 0.85 } #82.115
-		}
-
-		if = { limit = { is_in_faction = yes }
-			multiply_temp_variable = { upper_limit = 0.90 } #73.9
-		}
-		if = { limit = { is_in_faction_with = CHI NOT = { tag = SOV } }
-			multiply_temp_variable = { upper_limit = 0.80 } #59.12
-		}
-		if = { limit = { is_in_faction_with = SOV NOT = { tag = CHI } }
-			multiply_temp_variable = { upper_limit = 0.80 } #59.12
-		}
-		round_temp_variable = upper_limit #59
-		check_variable = { num_divisions > upper_limit }
-	}
+default_army_production_strategy_global = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { num_of_military_factories > 29 }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = build_army id = L_Inf value = -500 }
-	ai_strategy = { type = build_army id = infantry value = -500 }
-	ai_strategy = { type = build_army id = garrison value = -500 }
-	ai_strategy = { type = build_army id = apc_mechanized value = -500 }
-	ai_strategy = { type = build_army id = ifv_mechanized value = -500 }
-	ai_strategy = { type = build_army id = armor value = -500 }
-	ai_strategy = { type = build_army id = marines value = -500 }
-	ai_strategy = { type = build_army id = Air_helicopters value = -500 }
-	ai_strategy = { type = build_army id = Air_mech value = -500 }
-	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 5 }
+	ai_strategy = { type = role_ratio id = infantry value = 30 }
+	ai_strategy = { type = role_ratio id = garrison value = 1 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 30 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 35 }
+	ai_strategy = { type = role_ratio id = armor value = 25 }
+	ai_strategy = { type = role_ratio id = marines value = 10 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = 1 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 6 }
 }
 
-ai_default_no_build_units = {
+# National army mixes add to the tiers above. They do not replace them.
+armor_heavy_army_composition = {
 	allowed = {
 		ai_for_units_is_not_disabled = yes
-	}
-	enable = {
-		NOT = {
-			has_country_flag = ai_yes_unit_build
-			has_country_flag = AI_is_threatened
-		}
-	}
-	abort = {
 		OR = {
-			has_country_flag = ai_yes_unit_build
-			has_country_flag = AI_is_threatened
-			has_war = yes
+			original_tag = CHI
+			original_tag = UKR
+			original_tag = USA
 		}
-	}
-
-	ai_strategy = { type = role_ratio id = L_Inf value = -500 }
-	ai_strategy = { type = role_ratio id = infantry value = -500 }
-	ai_strategy = { type = role_ratio id = garrison value = -500 }
-	ai_strategy = { type = role_ratio id = apc_mechanized value = -500 }
-	ai_strategy = { type = role_ratio id = ifv_mechanized value = -500 }
-	ai_strategy = { type = role_ratio id = armor value = -500 }
-	ai_strategy = { type = role_ratio id = marines value = -500 }
-	ai_strategy = { type = role_ratio id = Air_helicopters value = -500 }
-	ai_strategy = { type = role_ratio id = Air_mech value = -500 }
-	ai_strategy = { type = role_ratio id = Special_Forces value = -500 }
-}
-
-ai_build_units = {
-	allowed = {
-		ai_for_units_is_not_disabled = yes
-	}
-	enable = {
-		OR = {
-			has_war = yes
-			has_country_flag = ai_yes_unit_build
-			has_country_flag = AI_is_threatened
-		}
-	}
-	abort = {
-		OR = {
-			NOT = { has_country_flag = ai_yes_unit_build }
-			NOT = { has_country_flag = AI_is_threatened }
-		}
-	}
-
-	ai_strategy = { type = force_build_armies value = 100 }
-}
-
-MD_spare_unit_factor = {
-	allowed = {
-		ai_for_units_is_not_disabled = yes
 	}
 	enable = { always = yes }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = spare_unit_factor value = 30 }
+	ai_strategy = { type = role_ratio id = armor value = 20 }
+	ai_strategy = { type = role_ratio id = marines value = 10 }
+}
+
+naval_major_army_composition = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		OR = {
+			original_tag = ENG
+			original_tag = FRA
+			original_tag = ITA
+			original_tag = JAP
+		}
+	}
+	enable = { num_of_military_factories > 10 }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = marines value = 20 }
+	ai_strategy = { type = role_ratio id = Air_helicopters value = -2 }
+	ai_strategy = { type = force_build_armies value = 35 }
+}
+
+default_area_priority = {
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+	ai_strategy = { type = area_priority id = europe value = 50 }
+	ai_strategy = { type = area_priority id = north_america value = 50 }
+	ai_strategy = { type = area_priority id = south_america value = 50 }
+	ai_strategy = { type = area_priority id = asia value = 50 }
+	ai_strategy = { type = area_priority id = middle_east value = 50 }
+	ai_strategy = { type = area_priority id = africa value = 50 }
+	ai_strategy = { type = area_priority id = pacific value = 50 }
+	ai_strategy = { type = area_priority id = oceania value = 50 }
+}
+
+default_AI_needs_to_live = {
+	enable = { surrender_progress > 0.49 }
+	abort_when_not_enabled = yes
+	ai_strategy = { type = role_ratio id = L_Inf value = 150 }
+	ai_strategy = { type = build_army id = L_Inf value = 150 }
+}
+
+focus_on_l_inf_units = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		num_of_military_factories < 11 # only produce shit units if you are shit
+		has_equipment = { infantry_weapons_type > 2000 }
+		has_equipment = { util_vehicle_type > 100 }
+		has_equipment = { cnc_equipment_type > 300 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = L_Inf value = 100 }
+	ai_strategy = { type = build_army id = L_Inf value = 50 }
+}
+
+dont_build_marines_without_sea = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		num_of_naval_factories < 1
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = marines value = -50 }
+	ai_strategy = { type = build_army id = marines value = -50 }
+}
+
+focus_on_apc_mechanized = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_equipment = { medium_tank_amphibious_chassis > 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
+	ai_strategy = { type = build_army id = apc_mechanized value = 10 }
+}
+
+focus_on_ifv_mechanized = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_equipment = { medium_tank_flame_chassis > 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 10 }
+	ai_strategy = { type = build_army id = ifv_mechanized value = 10 }
+}
+
+focus_on_armor = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_equipment = { medium_tank_chassis > 750 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = armor value = 10 }
+	ai_strategy = { type = build_army id = armor value = 10 }
+}
+
+default_air_unit_production_low_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		country_uses_generic_air_production_ai = yes
+	}
+	enable = { num_of_military_factories < 25 }
+	abort_when_not_enabled = yes
+	#Focus production around light multi-role fighters, to allow for a cheap and flexible air force for poor counties
+	ai_strategy = { type = unit_ratio id = fighter value = 15 }
+	ai_strategy = { type = unit_ratio id = cas value = 5 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 15 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 5 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
+	ai_strategy = { type = unit_ratio id = suicide value = 2 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 1 }
+}
+
+default_air_unit_production_mod_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		country_uses_generic_air_production_ai = yes
+	}
+	#Focus on AS fighters being mediums, MR / CAS being lights, and start making a small amount of large planes
+	enable = {
+		num_of_military_factories > 24
+		num_of_military_factories < 50
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 5 }
+	ai_strategy = { type = unit_ratio id = cas value = 15 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 10 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 30 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 30 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 2 }
+	ai_strategy = { type = unit_ratio id = suicide value = 5 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 5 }
+}
+
+default_air_unit_production_high_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		country_uses_generic_air_production_ai = yes
+	}
+	enable = { num_of_military_factories > 49 }
+	abort_when_not_enabled = yes
+	#Swap production over to primarily medium and large aircraft, with some light aircraft mixed in
+	ai_strategy = { type = unit_ratio id = fighter value = 10 }
+	ai_strategy = { type = unit_ratio id = cas value = 10 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 10 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 15 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 35 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 5 }
+	ai_strategy = { type = unit_ratio id = suicide value = 10 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 15 }
+}
+
+default_air_units_production_cv_variants_low_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+	}
+	enable = {
+		num_of_naval_factories > 0
+		OR = {
+			check_variable = { num_ships_with_type@helicopter_operator > 0 }
+			check_variable = { num_ships_with_type@carrier > 0 }
+		}
+		num_of_military_factories < 25
+	}
+	abort_when_not_enabled = yes
+	#Prioritize building naval strike aircraft for naval battles, with some fighter cover
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 5 }
+	ai_strategy = { type = unit_ratio id = cv_naval_bomber value = 30 }
+	ai_strategy = { type = unit_ratio id = cv_interceptor value = 10 }
+}
+
+default_air_units_production_cv_variants_mod_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+	}
+	enable = {
+		num_of_naval_factories > 0
+		OR = {
+			check_variable = { num_ships_with_type@helicopter_operator > 0 }
+			check_variable = { num_ships_with_type@carrier > 0 }
+		}
+		num_of_military_factories > 24
+		num_of_military_factories < 50
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 5 }
+	ai_strategy = { type = unit_ratio id = cv_naval_bomber value = 40 }
+	ai_strategy = { type = unit_ratio id = cv_interceptor value = 10 }
+}
+
+default_air_units_production_cv_variants_high_mils = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+	}
+	enable = {
+		num_of_naval_factories > 0
+		OR = {
+			check_variable = { num_ships_with_type@helicopter_operator > 0 }
+			check_variable = { num_ships_with_type@carrier > 0 }
+		}
+		num_of_military_factories > 49
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 20 }
+	ai_strategy = { type = unit_ratio id = cv_naval_bomber value = 50 }
+	ai_strategy = { type = unit_ratio id = cv_interceptor value = 30 }
+}
+
+default_garrison_strategy = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+	ai_strategy = { type = garrison value = 10 }
+}
+
+###UNIT LIMITER###
+division_limiter = {
+	allowed = {
+		NOT = { has_game_rule = { rule = allow_division_limiter option = no } }
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		check_variable = { num_divisions > division_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_army id = L_Inf value = -500 }
+	ai_strategy = { type = build_army id = infantry value = -500 }
+	ai_strategy = { type = build_army id = garrison value = -500 }
+	ai_strategy = { type = build_army id = apc_mechanized value = -500 }
+	ai_strategy = { type = build_army id = ifv_mechanized value = -500 }
+	ai_strategy = { type = build_army id = armor value = -500 }
+	ai_strategy = { type = build_army id = marines value = -500 }
+	ai_strategy = { type = build_army id = Air_helicopters value = -500 }
+	ai_strategy = { type = build_army id = Air_mech value = -500 }
+	ai_strategy = { type = build_army id = Special_Forces value = -500 }
+}
+
+under_division_cap_recruitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		check_variable = { num_divisions < division_limiter_limit }
+		ai_is_threatened = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = ai_wanted_divisions_factor value = 0.15 }
+}
+
+minor_wartime_recruitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		is_major = no
+		check_variable = { num_divisions < division_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 20 }
+}
+
+threatened_peacetime_recruitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = no
+		ai_is_threatened = yes
+		check_variable = { num_divisions < division_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 25 }
+}
+
+ai_subject_defensive_build = {
+	# Gives subjects a small defensive baseline on top of the generic production strategies.
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		is_subject = yes
+		has_war = no
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = garrison value = 5 }
+	ai_strategy = { type = role_ratio id = L_Inf value = 10 }
+	ai_strategy = { type = role_ratio id = infantry value = 5 }
+	ai_strategy = { type = force_build_armies value = 25 }
+}
+
+ukrainian_separatist_army_focus = {
+	allowed = {
+		OR = {
+			original_tag = DPR
+			original_tag = DRP
+			AND = {
+				tag = HPR
+				original_tag = HPR
+			}
+			original_tag = LPR
+			original_tag = OPR
+			original_tag = SEU
+		}
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = L_Inf value = 20 }
+	ai_strategy = { type = role_ratio id = Militia value = 50 }
+	ai_strategy = { type = role_ratio id = infantry value = 5 }
+	ai_strategy = { type = role_ratio id = garrison value = 10 }
+	ai_strategy = { type = role_ratio id = marines value = -20 }
+	ai_strategy = { type = force_build_armies value = 150 }
 }
 
 hate_terrorists = {
 	allowed = {
-		NOT = {
-			original_tag = AQY
-			original_tag = TAL
-			original_tag = TTP
-			original_tag = NUS
-		}
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = AQY }
+		NOT = { original_tag = TAL }
+		NOT = { original_tag = TTP }
+		NOT = { original_tag = NUS }
 	}
 	enable = {
 		has_opinion_modifier = AlQaida_Are_Terrorists
-		NOT = {
-			original_tag = AQY
-			original_tag = TAL
-			original_tag = TTP
-			original_tag = NUS
-		}
 	}
-	abort = {
-		NOT = { has_opinion_modifier = AlQaida_Are_Terrorists }
-	}
+	abort_when_not_enabled = yes
+
 	ai_strategy = { type = antagonize id = "AQY" value = 100 }
 	ai_strategy = { type = antagonize id = "TAL" value = 100 }
 	ai_strategy = { type = antagonize id = "TTP" value = 100 }
@@ -341,13 +507,699 @@ UNAMSIL_equipment = {
 	ai_strategy = { type = support id = "SIE" value = 100 }
 }
 
-everyone_hates_isis = {
+#CONSOLIDATED STRATEGIES - Moved from individual country files to reduce duplication
+
+#Baltic and Eastern European states alliance with USA
+baltic_eastern_europe_alliance_with_usa = {
+	allowed = {
+		OR = {
+			original_tag = EST
+			original_tag = LAT
+			original_tag = LIT
+			original_tag = ALB
+			original_tag = BLR
+			original_tag = BUL
+			original_tag = ROM
+			original_tag = UKR
+			original_tag = MNT
+		}
+	}
 	enable = {
-		has_opinion_modifier = ISIS_Are_Terrorists
+		NOT = { has_war_with = USA }
+		OR = {
+			has_government = democratic
+			has_government = neutrality
+		}
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = antagonize id = "ISI" value = 100 }
-	ai_strategy = { type = contain id = "ISI" value = 100 }
-	ai_strategy = { type = alliance id = "ISI" value = -100 }
+	ai_strategy = { type = befriend id = "USA" value = 200 }
+	ai_strategy = { type = support id = "USA" value = 200 }
+}
+
+#Baltic inter-state cooperation
+baltic_states_cooperation = {
+	allowed = {
+		OR = {
+			original_tag = EST
+			original_tag = LAT
+			original_tag = LIT
+		}
+	}
+	enable = {
+		#at least one other Baltic state must exist
+		count_triggers = {
+			amount = 2
+			country_exists = EST
+			country_exists = LAT
+			country_exists = LIT
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = befriend id = "EST" value = 150 }
+	ai_strategy = { type = befriend id = "LAT" value = 150 }
+	ai_strategy = { type = befriend id = "LIT" value = 150 }
+	ai_strategy = { type = alliance id = "EST" value = 150 }
+	ai_strategy = { type = alliance id = "LAT" value = 150 }
+	ai_strategy = { type = alliance id = "LIT" value = 150 }
+}
+
+#US Civil War - International Support
+us_civil_war_international_support = {
+	allowed = {
+		OR = {
+			original_tag = CHI
+			original_tag = ENG
+			original_tag = FRA
+			original_tag = GER
+			original_tag = GRE
+			original_tag = HEZ
+			original_tag = IRE
+			original_tag = ITA
+			original_tag = PER
+			original_tag = RAJ
+			original_tag = SOV
+			original_tag = SPR
+			original_tag = VEN
+		}
+	}
+	enable = {
+		has_war = no
+		OR = {
+			country_exists = CAL
+			country_exists = NYK
+			country_exists = TEX
+			country_exists = FLA
+			country_exists = CAS
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = send_volunteers_desire id = "CAL" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "CAL" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "TEX" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "TEX" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "FLA" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "FLA" value = 400 }
+	ai_strategy = { type = send_volunteers_desire id = "CAS" value = 1000 }
+	ai_strategy = { type = send_lend_lease_desire id = "CAS" value = 400 }
+}
+
+# Production only: role ratios here flip as stock moves and delete training lines.
+MD_desperately_need_guns = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		has_equipment = { infantry_weapons_type < 1 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 2500 }
+	ai_strategy = { type = equipment_production_factor id = anti_tank value = -150 }
+	ai_strategy = { type = equipment_production_factor id = artillery value = -150 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = -150 }
+	ai_strategy = { type = equipment_production_factor id = armor value = -150 }
+}
+
+MD_excess_inf_equipment = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		has_equipment = { infantry_weapons_type > 49900 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = -150 }
+}
+
+MD_poor_production_strategy = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		num_of_military_factories < 6
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 300 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_type value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = train_equipment value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = L_AT_Equipment value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = H_AT_Equipment value = 40 }
+	ai_strategy = { type = equipment_variant_production_factor id = AA_Equipment value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_amphibious_chassis value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_flame_chassis value = 10 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_artillery_chassis value = 10 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_aa_chassis value = 10 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_chassis value = 10 }
+	ai_strategy = { type = equipment_variant_production_factor id = artillery_equipment value = 40 }
+	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = -50 }
+}
+
+MD_default_production_strategy = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		num_of_military_factories > 5
+		num_of_military_factories < 11
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 200 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 80 }
+	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_type value = 80 }
+	ai_strategy = { type = equipment_variant_production_factor id = train_equipment value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = L_AT_Equipment value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = H_AT_Equipment value = 40 }
+	ai_strategy = { type = equipment_variant_production_factor id = AA_Equipment value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_amphibious_chassis value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_flame_chassis value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_artillery_chassis value = 30 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_aa_chassis value = 30 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_chassis value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = artillery_equipment value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = -50 }
+}
+
+MD_default_production_mandatory_spread_strategy = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		num_of_military_factories > 5
+		num_of_military_factories < 11
+		# we have good equipment
+		has_equipment = { medium_tank_chassis > 0 }
+		has_equipment = { medium_tank_amphibious_chassis > 0 }
+		has_equipment = { medium_tank_flame_chassis > 0 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories id = infantry value = 1 }
+	ai_strategy = { type = equipment_production_min_factories id = motorized value = 1 }
+}
+
+MD_major_production_strategy = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 10
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 600 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_type value = 50 }
+	ai_strategy = { type = equipment_variant_production_factor id = train_equipment value = 10 }
+	ai_strategy = { type = equipment_variant_production_factor id = L_AT_Equipment value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = H_AT_Equipment value = 30 }
+	ai_strategy = { type = equipment_variant_production_factor id = AA_Equipment value = 20 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_amphibious_chassis value = 60 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_flame_chassis value = 80 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_artillery_chassis value = 30 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_aa_chassis value = 30 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_chassis value = 80 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_destroyer_chassis value = 15 }
+	ai_strategy = { type = equipment_variant_production_factor id = artillery_equipment value = 5 }
+	# Transport helicopters sit below core equipment in every tier.
+	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = -50 }
+
+	ai_strategy = { type = equipment_production_min_factories id = infantry value = 2 }
+	ai_strategy = { type = equipment_production_min_factories id = train value = 1 }
+	ai_strategy = { type = equipment_production_min_factories id = motorized value = 1 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_tank_amphibious_chassis value = 1 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_tank_flame_chassis value = 1 }
+	ai_strategy = { type = equipment_production_min_factories id = armor value = 1 }
+}
+
+MD_low_apc_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 7
+		has_equipment = { infantry_weapons_type > 999 }
+		has_equipment = { medium_tank_amphibious_chassis < 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_amphibious_chassis value = 400 }
+}
+
+MD_low_ifv_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 9
+		has_equipment = { infantry_weapons_type > 999 }
+		has_equipment = { medium_tank_flame_chassis < 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_flame_chassis value = 400 }
+}
+
+# Adds to MD_major_production_strategy for -80, a fifth of normal production.
+MD_high_apc_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 10
+		has_equipment = { medium_tank_amphibious_chassis > 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_amphibious_chassis value = -140 }
+}
+
+MD_high_ifv_stockpile = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		num_of_military_factories > 10
+		has_equipment = { medium_tank_flame_chassis > 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = medium_tank_flame_chassis value = -160 }
+}
+
+# Production only: role ratios here flip as stock moves and delete training lines.
+MD_wartime_low_infantry_weapons = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { infantry_weapons_type < 1000 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = infantry_weapons_type value = 500 }
+	ai_strategy = { type = equipment_production_min_factories id = infantry value = 4 }
+}
+
+MD_wartime_low_command_equipment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { cnc_equipment_type < 500 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_factor id = infantry value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 500 }
+}
+
+MD_wartime_low_utility_vehicles = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { util_vehicle_type < 400 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = util_vehicle_type value = 400 }
+}
+
+MD_wartime_low_light_at = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { L_AT_Equipment < 200 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = L_AT_Equipment value = 400 }
+}
+
+MD_wartime_low_aa = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		has_equipment = { AA_Equipment < 200 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = AA_Equipment value = 400 }
+}
+
+MD_build_command_equipment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { has_equipment = { cnc_equipment_type < 750 } }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_factor id = infantry value = 100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cnc_equipment_type value = 500 }
+}
+
+#Aircraft
+chinese_russian_airframe_production = {
+	allowed = {
+		OR = {
+			original_tag = CHI
+			AND = {
+				original_tag = SOV
+				has_dlc = "By Blood Alone"
+			}
+		}
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -75 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -80 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -100 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 150 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -100 }
+}
+
+AI_air_default_priority_low_military = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+		NOT = { original_tag = SOV }
+	}
+	enable = {
+		num_of_military_factories < 25
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -100 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -100 }
+
+	ai_strategy = { type = equipment_production_min_factories id = tactical_bomber value = 2 }
+
+	ai_strategy = { type = air_factory_balance value = 20 }
+}
+
+AI_air_default_priority_mod_military = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+		NOT = { original_tag = SOV }
+	}
+	enable = {
+		num_of_military_factories > 24
+		num_of_military_factories < 50
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = -80 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -80 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -95 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -95 }
+
+	ai_strategy = { type = air_factory_balance value = 40 }
+}
+
+AI_air_default_priority_high_military = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+		NOT = { original_tag = SOV }
+	}
+	enable = {
+		num_of_military_factories > 49
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -75 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -80 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -90 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -99 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = 150 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -80 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -100 }
+
+	ai_strategy = { type = air_factory_balance value = 70 }
+}
+
+AI_air_default_war_panic_fighter_production_light = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		NOT = { original_tag = USA }
+		NOT = { original_tag = CHI }
+		NOT = { original_tag = SOV }
+	}
+	enable = {
+		OR = {
+			has_equipment = { small_plane_airframe < 200 }
+			has_equipment = { small_plane_strike_airframe < 200 }
+			has_equipment = { small_plane_cas_airframe < 200 }
+			has_equipment = { small_plane_naval_bomber_airframe < 200 }
+			has_equipment = { small_plane_suicide_airframe < 200 }
+		}
+		has_war = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = 200 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = 200 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = 200 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = 200 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = 200 }
+}
+
+MD_dont_build_transport_helicopter_strong = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		OR = {
+			has_equipment = { heavy_tank_amphibious_chassis > 300 }
+			AND = {
+				num_of_military_factories < 30
+				has_equipment = { heavy_tank_amphibious_chassis > 100 }
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	# Adds to the tier value for -100, which stops production.
+	ai_strategy = { type = equipment_variant_production_factor id = heavy_tank_amphibious_chassis value = -50 }
+}
+
+# What spare factories build once every need is met.
+default_surplus_management = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_surplus_management id = infantry_weapons_type value = 10 }
+	ai_strategy = { type = equipment_production_surplus_management id = cnc_equipment_type value = 5 }
+	ai_strategy = { type = equipment_production_surplus_management id = util_vehicle_type value = 5 }
+	ai_strategy = { type = equipment_production_surplus_management id = artillery_equipment value = 5 }
+	ai_strategy = { type = equipment_production_surplus_management id = AA_Equipment value = 3 }
+	ai_strategy = { type = equipment_production_surplus_management id = L_AT_Equipment value = 2 }
+	ai_strategy = { type = equipment_production_surplus_management id = convoy value = 5 }
+}
+
+MD_need_trains = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+
+	enable = {
+		has_equipment = { train_equipment < 200 }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = train_equipment value = 100 }
+}
+
+plane_limiter = {
+	allowed = {
+		NOT = { has_game_rule = { rule = allow_division_limiter option = no } }
+		ai_for_units_is_not_disabled = yes
+	}
+	enable = {
+		check_variable = { plane_limiter_deployed_size > plane_limiter_limit }
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_naval_bomber_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_suicide_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_airframe value = -90 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_fighter_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = medium_plane_air_transport_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_air_transport_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_awacs_airframe value = -99 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = large_plane_maritime_patrol_airframe value = -100 }
+
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_naval_bomber_airframe value = -50 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_small_plane_suicide_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_fighter_airframe value = -95 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_cas_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_maritime_patrol_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_air_transport_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = cv_medium_plane_scout_airframe value = -100 }
+}
+
+### WARTIME AI BEHAVIOR IMPROVEMENTS ###
+# Inspired by Ebby Warfare Overhaul
+
+# When at war with enough divisions, shift composition toward offensive units
+wartime_offensive_composition = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		num_divisions > 24
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = infantry value = -5 }
+	ai_strategy = { type = role_ratio id = garrison value = -5 }
+	ai_strategy = { type = role_ratio id = apc_mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = ifv_mechanized value = 10 }
+	ai_strategy = { type = role_ratio id = armor value = 10 }
+	ai_strategy = { type = role_ratio id = Air_mech value = 5 }
+	ai_strategy = { type = role_ratio id = Special_Forces value = 3 }
+}
+
+# Majors at war should build armies more aggressively
+major_wartime_commitment = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = {
+		has_war = yes
+		is_major = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 35 }
+}
+
+major_peacetime_force_build = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		OR = {
+			original_tag = USA
+			original_tag = UKR
+			original_tag = SOV
+			original_tag = CHI
+			original_tag = GER
+		}
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = force_build_armies value = 50 }
+}
+
+# Wartime air superiority push — boost fighters and CAS when at war with enough industry
+wartime_air_superiority = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		country_uses_generic_air_production_ai = yes
+	}
+	enable = {
+		has_war = yes
+		num_of_military_factories > 10
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 6 }
+	ai_strategy = { type = unit_ratio id = cas value = 8 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 4 }
+	ai_strategy = { type = air_factory_balance value = 5 }
 }

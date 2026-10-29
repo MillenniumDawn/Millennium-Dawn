@@ -1,0 +1,45 @@
+---
+import type { CollectionEntry } from "astro:content";
+import type { MarkdownHeading } from "astro";
+import BaseLayout from "./BaseLayout.astro";
+import { resolveToc } from "@/shared/lib/content/content-helpers";
+import { buildArticleJsonLd } from "@/shared/lib/seo";
+
+interface Props {
+  entry: CollectionEntry<"devDiaries">;
+  canonicalPath: string;
+  headings?: MarkdownHeading[];
+  toc?: "auto" | "off";
+}
+
+const { entry, canonicalPath, headings = [], toc }: Props = Astro.props;
+const publishedTime = entry.data.date.toISOString();
+const seoArticle = {
+  publishedTime,
+  author: entry.data.author,
+};
+const articleJsonLd = buildArticleJsonLd({
+  headline: entry.data.title,
+  description: entry.data.description,
+  canonicalPath,
+  datePublished: publishedTime,
+  author: entry.data.author,
+});
+---
+
+<BaseLayout
+  title={entry.data.title}
+  description={entry.data.description}
+  canonicalPath={canonicalPath}
+  toc={toc ?? resolveToc(entry.data.toc)}
+  seo={entry.data.seo ?? true}
+  robots={entry.data.robots}
+  bodyClass={entry.data.body_class ?? "dev-diary-page"}
+  pageId={entry.data.page_id ?? "dev-diary"}
+  headings={headings}
+  ogType="article"
+  seoArticle={seoArticle}
+  extraJsonLd={[articleJsonLd]}
+>
+  <slot />
+</BaseLayout>

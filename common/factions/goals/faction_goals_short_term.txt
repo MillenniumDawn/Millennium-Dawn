@@ -1,0 +1,488 @@
+#category = short_term medium_term or long_term
+
+faction_goal_industrial_warfare = {
+	name = industrial_warfare
+	description = industrial_warfare_desc
+	category = short_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		OR = {
+			has_government = democratic
+			has_government = communism
+		}
+
+	}
+	completed = {
+		all_allied_country = {
+			arms_factory > 14
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 50
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		every_faction_member = {
+			add_ideas = industrialized_warfare_idea
+		}
+	}
+	ai_will_do = {
+		base = 0
+	}
+}
+
+# Faction Growth
+
+faction_goal_growing_the_faction = {
+	name = growing_the_faction
+	description = growing_the_faction_desc
+	category = short_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		num_faction_members < 5
+	}
+	completed = {
+		num_faction_members > 4
+	}
+	complete_effect = {
+		add_faction_power_projection = 50
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			num_faction_members < 5
+		}
+		modifier = {
+			add = 1
+			num_faction_members < 4
+		}
+		modifier = {
+			add = 3
+			num_faction_members < 3
+		}
+	}
+}
+
+faction_goal_spy_master = {
+	name = spy_master_goal_name
+	description = spy_master_goal_desc
+	category = short_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	allowed = {
+		has_dlc = "La Resistance"
+	}
+	visible = {
+		is_spymaster = no
+		any_allied_country = {
+			is_spymaster = no
+		}
+	}
+	completed = {
+		OR = {
+			is_spymaster = yes
+			any_allied_country = {
+				is_spymaster = yes
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 50
+		newline = yes
+		custom_effect_tooltip = THE_SPY_MASTER
+		add_faction_initiative = 1
+		newline = yes
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = no
+			}
+			create_intelligence_agency = yes
+		}
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				NOT = { has_done_agency_upgrade = upgrade_form_department }
+			}
+			upgrade_intelligence_agency = upgrade_form_department
+		}
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				has_done_agency_upgrade = upgrade_form_department
+				NOT = { has_done_agency_upgrade = upgrade_crypto_strength }
+			}
+			upgrade_intelligence_agency = upgrade_crypto_strength
+		}
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				has_done_agency_upgrade = upgrade_crypto_strength
+				NOT = { has_done_agency_upgrade = upgrade_crypto_strength_2 }
+			}
+			add_faction_initiative = 1
+			upgrade_intelligence_agency = upgrade_crypto_strength_2
+		}
+		every_faction_member = {
+			limit = {
+				has_intelligence_agency = yes
+				NOT = { agency_upgrade_number > 30 }
+				has_done_agency_upgrade = upgrade_crypto_strength_2
+			}
+			add_faction_initiative = 1
+			gain_random_agency_upgrade = yes
+		}
+		every_faction_member = { # Fallback in case someone completed everything
+			visible_when_empty = yes
+			limit = {
+				has_intelligence_agency = yes
+				agency_upgrade_number > 30
+			}
+			add_faction_initiative = 1
+			add_political_power = 100
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 2
+			has_intelligence_agency = yes
+		}
+	}
+}
+
+faction_goal_ensure_military_r_d = {
+	name = ensure_military_r_d_goal_name
+	description = ensure_military_r_d_goal_desc
+	category = short_term
+	group = FOCUS_FILTER_RESEARCH
+	visible = {
+		faction_leader = {
+			check_variable = { faction_goal_facilities_visible_cache = 1 }
+		}
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_facilities_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_facilities_completed_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_collection_element = {
+			input = {
+				input = collection:faction_controlled_states_collection
+				operators = {
+					limit = {
+						OR = {
+							land_facility > 0
+							naval_facility > 0
+							air_facility > 0
+						}
+					}
+				}
+				name = COLLECTION_FACTION_ANY_FACILITY
+			}
+			custom_effect_tooltip = OWNS_LISTED_STATE
+			add_faction_influence_ratio = 0.05
+		}
+		every_faction_member = {
+			every_scientist = {
+				visible_when_empty = yes
+				limit = {
+					has_scientist_level = {
+						level > 0
+						specialization = specialization_land
+					}
+					is_active_scientist = yes
+				}
+				add_scientist_xp = {
+					experience = constant:sp_scientist_xp_gain.very_high
+					specialization = specialization_land
+				}
+			}
+			every_scientist = {
+				visible_when_empty = yes
+				limit = {
+					has_scientist_level = {
+						level > 0
+						specialization = specialization_naval
+					}
+					is_active_scientist = yes
+				}
+				add_scientist_xp = {
+					experience = constant:sp_scientist_xp_gain.very_high
+					specialization = specialization_naval
+				}
+			}
+			every_scientist = {
+				visible_when_empty = yes
+				limit = {
+					has_scientist_level = {
+						level > 0
+						specialization = specialization_air
+					}
+					is_active_scientist = yes
+				}
+				add_scientist_xp = {
+					experience = constant:sp_scientist_xp_gain.very_high
+					specialization = specialization_air
+				}
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+
+### Industry
+
+faction_goal_a_great_fortress = {
+	name = a_great_fortress_goal_name
+	description = a_great_fortress_goal_desc
+	category = short_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		threat > 0.10
+	}
+	available = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_great_fortress_available_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+		faction_goal_update_great_fortress_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_great_fortress_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_great_fortress_completed_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			limit = {
+				NOT = { has_idea = combined_defense_industries_idea }
+			}
+			add_timed_idea = {
+				idea = combined_defense_industries_idea
+				years = 1
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+
+### Units
+
+faction_goal_an_armored_fist = {
+	name = an_armored_fist_goal_name
+	description = an_armored_fist_goal_desc
+	category = short_term
+	group = FOCUS_FILTER_ARMY_XP
+	visible = {
+	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_tank_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		if = {
+			limit = { is_in_faction = yes }
+			check_variable = {
+				var = faction_goal_tank_battalions_cache
+				value = 10
+				compare = greater_than_or_equals
+				tooltip = faction_goal_tank_bats_at_least_tt
+			}
+		}
+		else = { always = no }
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			army_experience = 50
+			random_character = {
+				tooltip = ONE_PANZER_GENERAL
+				visible_when_empty = yes
+				limit = {
+					is_unit_leader = yes
+					OR = {
+						has_trait = panzer_leader
+						has_trait = panzer_expert
+					}
+				}
+				gain_xp = 400
+				add_attack = 1
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+faction_goal_an_infantry_army = {
+	name = an_infantry_army_goal_name
+	description = an_infantry_army_goal_desc
+	category = short_term
+	group = FOCUS_FILTER_ARMY_XP
+	select_effect = {
+		set_temp_variable = { faction_goal_force_infantry_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_infantry_battalions_cache
+				value = 250
+				compare = greater_than_or_equals
+				tooltip = faction_goal_infantry_bats_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			army_experience = 50
+			random_character = {
+				tooltip = ONE_INFANTRY_GENERAL
+				visible_when_empty = yes
+				limit = {
+					is_unit_leader = yes
+					OR = {
+						has_trait = infantry_leader
+						has_trait = infantry_expert
+					}
+				}
+				gain_xp = 400
+				add_logistics = 1
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+faction_goal_no_terrorism = {
+	name = faction_goal_no_terrorism_name
+	description = faction_goal_no_terrorism_desc
+	category = short_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	allowed = {
+		has_dlc = "La Resistance"
+	}
+	completed = {
+		has_intelligence_agency = yes
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		every_faction_member = {
+			limit = { has_intelligence_agency = yes }
+			army_experience = 50
+			upgrade_intelligence_agency = upgrade_anti_partisan
+			upgrade_intelligence_agency = upgrade_passive_defense
+		}
+	}
+}
+
+faction_goal_unlock_research = {
+	name = faction_goal_unlock_research_name
+	description = faction_goal_unlock_research_desc
+	category = short_term
+	group = FOCUS_FILTER_INTERNAL_AFFAIRS
+	available = { num_faction_members > 2 }
+	visible = { NOT = { has_faction_research_unlocked = yes } }
+	select_effect = {
+		faction_goal_select_unlock_research = yes
+	}
+	completed = {
+		check_variable = {
+			var = faction_goal_researched_technologies_cache
+			value = unlock_military_techs_researched_target
+			compare = greater_than
+			tooltip = "GOAL_T_TRIGGER_A"
+		}
+	}
+	complete_effect = {
+		set_faction_research_unlocked = yes
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 1000 # They should always do this if they can
+	}
+}
+
+faction_goal_unlock_military = {
+	name = faction_goal_unlock_military_name
+	description = faction_goal_unlock_military_desc
+	category = short_term
+	group = FOCUS_FILTER_INTERNAL_AFFAIRS
+	available = { num_faction_members > 2 }
+	visible = { NOT = { has_faction_military_unlocked = yes } }
+	select_effect = {
+		faction_goal_select_unlock_military = yes
+	}
+	completed = {
+		faction_leader = {
+			if = {
+				limit = {
+					has_variable = unlock_target
+				}
+				check_variable = {
+					var = faction_goal_armies_cache
+					value = unlock_target
+					compare = greater_than
+					tooltip = "GOAL_T_TRIGGER_B"
+				}
+			}
+			else = {
+				check_variable = {
+					var = faction_goal_armies_cache
+					value = 0
+					compare = greater_than
+					tooltip = "GOAL_T_TRIGGER_B"
+				}
+			}
+		}
+	}
+	complete_effect = {
+		set_faction_military_unlocked = yes
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 1000 # They should always do this if they can
+	}
+}

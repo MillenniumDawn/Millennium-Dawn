@@ -1,21 +1,16 @@
 libya_oil_nationalisation = {
-
 	libya_nationalise_oil_fields = {
-
 		icon = eng_trade_unions_demand
-
 		cost = 50
-
 		days_remove = 30
 		days_re_enable = 45
 
 		visible = {
 			check_variable = { lba_oil_nationalisation < 1 }
+			NOT = { has_country_flag = libya_noc_dismantled }
 		}
 
-		available = {
-			NOT = { has_decision = libya_sell_oil_fields }
-		}
+		available = { NOT = { has_decision = libya_sell_oil_fields } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_nationalise_oil_fields"
@@ -32,7 +27,7 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 			#If we have loads of money, nationalise
 			modifier = {
 				factor = 5
@@ -42,18 +37,18 @@ libya_oil_nationalisation = {
 			modifier = {
 				factor = 0
 				OR = {
-					is_in_array = { ruling_party = 2 }
-					is_in_array = { ruling_party = 15 }
-					is_in_array = { ruling_party = 16 }
+					check_variable = { ruling_party = 2 }
+					check_variable = { ruling_party = 15 }
+					check_variable = { ruling_party = 16 }
 				}
 			}
 			#Communists always want to nationalise
 			modifier = {
-				factor = 0
+				factor = 5
 				OR = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 19 }
-					is_in_array = { ruling_party = 21 }
+					check_variable = { ruling_party = 4 }
+					check_variable = { ruling_party = 19 }
+					check_variable = { ruling_party = 21 }
 				}
 				check_variable = { interest_rate < 8 }
 			}
@@ -62,25 +57,23 @@ libya_oil_nationalisation = {
 				factor = 5
 				check_variable = { domestic_influence_amount < 30 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	libya_sell_oil_fields = {
-
 		icon = gre_paying_ifc_debt
-
 		cost = 50
-
 		days_remove = 30
 		days_re_enable = 45
 
 		visible = {
 			check_variable = { lba_oil_nationalisation > 0 }
+			NOT = { has_country_flag = libya_noc_dismantled }
 		}
 
-		available = {
-			NOT = { has_decision = libya_nationalise_oil_fields }
-		}
+		available = { NOT = { has_decision = libya_nationalise_oil_fields } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_sell_oil_fields"
@@ -91,12 +84,9 @@ libya_oil_nationalisation = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove libya_sell_oil_fields"
-			random_country = {
+			random_other_country = {
 				limit = {
-					NOT = { original_tag = ROOT }
-					any_owned_state = {
-						oil > 0
-					}
+					any_owned_state = { oil > 0 }
 					NOT = { has_idea = non_power }
 				}
 				set_temp_variable = { percent_change = 2 }
@@ -108,7 +98,7 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 1
+			base = 1
 			#If we are broke, sell
 			modifier = {
 				factor = 5
@@ -118,18 +108,18 @@ libya_oil_nationalisation = {
 			modifier = {
 				factor = 5
 				OR = {
-					is_in_array = { ruling_party = 2 }
-					is_in_array = { ruling_party = 15 }
-					is_in_array = { ruling_party = 16 }
+					check_variable = { ruling_party = 2 }
+					check_variable = { ruling_party = 15 }
+					check_variable = { ruling_party = 16 }
 				}
 			}
 			#Communists don't sell
 			modifier = {
 				factor = 0
 				OR = {
-					is_in_array = { ruling_party = 4 }
-					is_in_array = { ruling_party = 19 }
-					is_in_array = { ruling_party = 21 }
+					check_variable = { ruling_party = 4 }
+					check_variable = { ruling_party = 19 }
+					check_variable = { ruling_party = 21 }
 				}
 			}
 			#Don't sell if our influence is too low
@@ -141,32 +131,22 @@ libya_oil_nationalisation = {
 	}
 
 	libya_develop_el_sahara_fields_1 = {
-
 		name = libya_develop_el_sahara_fields
 		desc = libya_develop_el_sahara_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
+		visible = { NOT = { has_completed_focus = LBA_attract_private_oil_companies } }
 
 		available = {
 			owns_state = 391
 			controls_state = 391
-			391 = {
-				fuel_silo > 0
-			}
+			391 = { fuel_silo > 0 }
 			has_tech = excavation1
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_el_sahara_fields_1"
@@ -183,7 +163,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -197,47 +176,54 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_el_sahara_fields_2 = {
-
 		name = libya_develop_el_sahara_fields
 		desc = libya_develop_el_sahara_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_el_sahara_fields_1_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 391
 			controls_state = 391
-			391 = {
-				fuel_silo > 1
-			}
+			391 = { fuel_silo > 1 }
 			has_tech = excavation2
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_el_sahara_fields_2"
@@ -254,7 +240,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -268,47 +253,54 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_el_sahara_fields_3 = {
-
 		name = libya_develop_el_sahara_fields
 		desc = libya_develop_el_sahara_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_el_sahara_fields_2_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 391
 			controls_state = 391
-			391 = {
-				fuel_silo > 2
-			}
+			391 = { fuel_silo > 2 }
 			has_tech = excavation3
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_el_sahara_fields_3"
@@ -325,7 +317,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -339,47 +330,54 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_el_sahara_fields_4 = {
-
 		name = libya_develop_el_sahara_fields
 		desc = libya_develop_el_sahara_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_el_sahara_fields_3_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 391
 			controls_state = 391
-			391 = {
-				fuel_silo > 3
-			}
+			391 = { fuel_silo > 3 }
 			has_tech = excavation4
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_el_sahara_fields_4"
@@ -396,7 +394,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -410,47 +407,54 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_el_sahara_fields_5 = {
-
 		name = libya_develop_el_sahara_fields
 		desc = libya_develop_el_sahara_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_el_sahara_fields_4_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 391
 			controls_state = 391
-			391 = {
-				fuel_silo > 4
-			}
+			391 = { fuel_silo > 4 }
 			has_tech = excavation5
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_el_sahara_fields_5"
@@ -467,7 +471,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -480,43 +483,50 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_west_waha_fields_1 = {
-
 		name = libya_develop_west_waha_fields
 		desc = libya_develop_west_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
+		visible = { NOT = { has_completed_focus = LBA_attract_private_oil_companies } }
 
 		available = {
 			owns_state = 919
 			controls_state = 919
-			919 = {
-				fuel_silo > 0
-			}
+			919 = { fuel_silo > 0 }
 			has_tech = excavation1
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 919
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 919 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_west_waha_fields_1"
@@ -533,7 +543,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -547,47 +556,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_west_waha_fields_2 = {
-
 		name = libya_develop_west_waha_fields
 		desc = libya_develop_west_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_west_waha_fields_1_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 919
 			controls_state = 919
-			919 = {
-				fuel_silo > 1
-			}
+			919 = { fuel_silo > 1 }
 			has_tech = excavation2
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 919
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 919 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_west_waha_fields_2"
@@ -604,7 +621,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -618,47 +634,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_west_waha_fields_3 = {
-
 		name = libya_develop_west_waha_fields
 		desc = libya_develop_west_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_west_waha_fields_2_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 919
 			controls_state = 919
-			919 = {
-				fuel_silo > 2
-			}
+			919 = { fuel_silo > 2 }
 			has_tech = excavation3
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 919
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 919 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_west_waha_fields_3"
@@ -675,7 +699,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -689,47 +712,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_west_waha_fields_4 = {
-
 		name = libya_develop_west_waha_fields
 		desc = libya_develop_west_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_west_waha_fields_3_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 919
 			controls_state = 919
-			919 = {
-				fuel_silo > 3
-			}
+			919 = { fuel_silo > 3 }
 			has_tech = excavation4
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 919
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 919 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_west_waha_fields_4"
@@ -746,7 +777,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -760,47 +790,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_west_waha_fields_5 = {
-
 		name = libya_develop_west_waha_fields
 		desc = libya_develop_west_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_west_waha_fields_4_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 919
 			controls_state = 919
-			919 = {
-				fuel_silo > 4
-			}
+			919 = { fuel_silo > 4 }
 			has_tech = excavation5
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 919
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 919 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_west_waha_fields_5"
@@ -817,7 +855,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -830,43 +867,51 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_east_waha_fields_1 = {
-
 		name = libya_develop_east_waha_fields
 		desc = libya_develop_east_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
+		visible = { NOT = { has_completed_focus = LBA_attract_private_oil_companies } }
 
 		available = {
 			owns_state = 397
 			controls_state = 397
-			397 = {
-				fuel_silo > 0
-			}
+			397 = { fuel_silo > 0 }
 			has_tech = excavation1
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 397
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 397 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_east_waha_fields_1"
@@ -883,7 +928,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -897,47 +941,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_east_waha_fields_2 = {
-
 		name = libya_develop_east_waha_fields
 		desc = libya_develop_east_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_east_waha_fields_1_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 397
 			controls_state = 397
-			397 = {
-				fuel_silo > 1
-			}
+			397 = { fuel_silo > 1 }
 			has_tech = excavation2
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 397
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 397 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_east_waha_fields_2"
@@ -954,7 +1006,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -968,47 +1019,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_east_waha_fields_3 = {
-
 		name = libya_develop_east_waha_fields
 		desc = libya_develop_east_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_east_waha_fields_2_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 397
 			controls_state = 397
-			397 = {
-				fuel_silo > 2
-			}
+			397 = { fuel_silo > 2 }
 			has_tech = excavation3
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 397
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 397 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_east_waha_fields_3"
@@ -1025,7 +1084,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -1039,47 +1097,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_east_waha_fields_4 = {
-
 		name = libya_develop_east_waha_fields
 		desc = libya_develop_east_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_east_waha_fields_3_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 397
 			controls_state = 397
-			397 = {
-				fuel_silo > 3
-			}
+			397 = { fuel_silo > 3 }
 			has_tech = excavation4
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 397
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 397 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_east_waha_fields_4"
@@ -1096,7 +1162,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -1110,47 +1175,55 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_develop_east_waha_fields_5 = {
-
 		name = libya_develop_east_waha_fields
 		desc = libya_develop_east_waha_fields_desc
-
 		icon = oil
-
 		cost = 50
-
 		days_remove = 30
-
 		fire_only_once = yes
 
 		visible = {
 			has_country_flag = libya_develop_east_waha_fields_4_done
+			NOT = { has_completed_focus = LBA_attract_private_oil_companies }
 		}
 
 		available = {
 			owns_state = 397
 			controls_state = 397
-			397 = {
-				fuel_silo > 4
-			}
+			397 = { fuel_silo > 4 }
 			has_tech = excavation5
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 397
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 397 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_east_waha_fields_5"
@@ -1167,7 +1240,6 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = -0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
@@ -1180,26 +1252,81 @@ libya_oil_nationalisation = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			#Avoid if this would worsen tribal balance
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { fezzan_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { fezzan_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	libya_develop_oil_fields_with_foreign_aid = {
+		icon = oil
+		cost = 50
+		days_remove = 30
+		days_re_enable = 360
+		visible = { has_completed_focus = LBA_attract_private_oil_companies }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_develop_oil_fields_with_foreign_aid"
+			random_other_country = {
+				limit = {
+					any_owned_state = { oil > 0 }
+					NOT = { has_idea = non_power }
+				}
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = THIS }
+				set_temp_variable = { influence_target = ROOT }
+				change_influence_percentage = yes
+			}
 		}
 
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_develop_oil_fields_with_foreign_aid"
+			random_owned_state = {
+				limit = { NOT = { has_state_category = state_inhospitable } }
+				add_resource = {
+					type = oil
+					amount = 8
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 100
+			#Don't sell if our influence is too low
+			modifier = {
+				factor = 0
+				check_variable = { domestic_influence_amount < 30 }
+			}
+		}
 	}
 
 	libya_dig_wadi_ash_shati = {
-
 		icon = steel
-
 		cost = 50
-
 		days_remove = 60
-
 		days_re_enable = 30
-
 		fixed_random_seed = no
 
 		visible = {
@@ -1216,11 +1343,7 @@ libya_oil_nationalisation = {
 			}
 		}
 
-		highlight_states = {
-			highlight_state_targets = {
-				state = 392
-			}
-		}
+		highlight_states = { highlight_state_targets = { state = 392 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_dig_wadi_ash_shati"
@@ -1235,86 +1358,90 @@ libya_oil_nationalisation = {
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
-			newline = yes
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove libya_dig_wadi_ash_shati"
 			if = {
-				limit = { has_tech = excavation1 }
-				set_temp_variable = { motherlode_chance = 2.5 }
-			}
-			else_if = {
-				limit = { has_tech = excavation2 }
-				set_temp_variable = { motherlode_chance = 5 }
-			}
-			else_if = {
-				limit = { has_tech = excavation3 }
-				set_temp_variable = { motherlode_chance = 7.5 }
-			}
-			else_if = {
-				limit = { has_tech = excavation4 }
-				set_temp_variable = { motherlode_chance = 10 }
-			}
-			else_if = {
-				limit = { has_tech = excavation5 }
-				set_temp_variable = { motherlode_chance = 12.5 }
-			}
-			else_if = {
-				limit = { has_tech = excavation6 }
-				set_temp_variable = { motherlode_chance = 15 }
+				limit = { has_tech = excavation8 }
+				set_temp_variable = { motherlode_chance = 20 }
 			}
 			else_if = {
 				limit = { has_tech = excavation7 }
 				set_temp_variable = { motherlode_chance = 17.5 }
 			}
 			else_if = {
-				limit = { has_tech = excavation8 }
-				set_temp_variable = { motherlode_chance = 20 }
+				limit = { has_tech = excavation6 }
+				set_temp_variable = { motherlode_chance = 15 }
 			}
-			else = {
-				set_temp_variable = { motherlode_chance = 0 }
+			else_if = {
+				limit = { has_tech = excavation5 }
+				set_temp_variable = { motherlode_chance = 12.5 }
 			}
+			else_if = {
+				limit = { has_tech = excavation4 }
+				set_temp_variable = { motherlode_chance = 10 }
+			}
+			else_if = {
+				limit = { has_tech = excavation3 }
+				set_temp_variable = { motherlode_chance = 7.5 }
+			}
+			else_if = {
+				limit = { has_tech = excavation2 }
+				set_temp_variable = { motherlode_chance = 5 }
+			}
+			else_if = {
+				limit = { has_tech = excavation1 }
+				set_temp_variable = { motherlode_chance = 2.5 }
+			}
+			else = { set_temp_variable = { motherlode_chance = 0 } }
 			set_temp_variable = { normal_chance = 85 }
 			subtract_from_temp_variable = { normal_chance = motherlode_chance }
 			random_list = {
-				15 = {
-					country_event = { id = LibyaFocus.30 }
-				}
-				normal_chance = {
-					country_event = { id = LibyaFocus.31 }
-				}
-				motherlode_chance = {
-					country_event = { id = LibyaFocus.32 }
-				}
+				15 = { country_event = LibyaFocus.30 }
+				normal_chance = { country_event = LibyaFocus.31 }
+				motherlode_chance = { country_event = LibyaFocus.32 }
 			}
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			#Always do this unless we are broke
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0.1
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.45 }
+					check_variable = { cyrenaica_loyalty < 0.45 }
+				}
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = LBA_tribalism_disabled }
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.25 }
+					check_variable = { cyrenaica_loyalty < 0.25 }
+				}
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 }
 
 libya_gaddafi_family = {
-
 	libya_gaddafi_family_exile_muhammad_muammar = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muhammad_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 2 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = muhammad_muammar_gaddafi_exile }
@@ -1335,28 +1462,20 @@ libya_gaddafi_family = {
 			set_country_flag = muhammad_muammar_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_muhammad_muammar_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_muhammad_muammar_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_muhammad_muammar = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muhammad_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 2 }
 				is_ai = yes
 			}
 			has_country_flag = muhammad_muammar_gaddafi_exile
@@ -1370,10 +1489,6 @@ libya_gaddafi_family = {
 			}
 		}
 
-		available = {
-
-		}
-
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_recall_muhammad_muammar"
 			set_temp_variable = { family_instability_change = 20 }
@@ -1381,30 +1496,21 @@ libya_gaddafi_family = {
 			clr_country_flag = muhammad_muammar_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_muhammad_muammar_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_muhammad_muammar_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_father_to_son_talk_muhammad_muammar = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muhammad_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 2 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = muhammad_muammar_gaddafi_dead }
@@ -1429,55 +1535,50 @@ libya_gaddafi_family = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_recall_muhammad_muammar"
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_father_to_son_talk_muhammad_muammar"
 			random_list = {
 				25 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.5 }
+					country_event = LibyaFamily.5
 				}
 				60 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.6 }
+					country_event = LibyaFamily.6
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.7 }
+					country_event = LibyaFamily.7
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_sensor_internet_muhammad_muammar = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muhammad_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 2 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = muhammad_muammar_gaddafi_dead }
@@ -1519,26 +1620,22 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_saif_al_islam = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_islam_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 3 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = saif_al_islam_gaddafi_exile }
@@ -1558,28 +1655,20 @@ libya_gaddafi_family = {
 			set_country_flag = saif_al_islam_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_saif_al_islam_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_saif_al_islam_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_saif_al_islam = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_islam_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 3 }
 				is_ai = yes
 			}
 			has_country_flag = saif_al_islam_gaddafi_exile
@@ -1599,34 +1688,27 @@ libya_gaddafi_family = {
 			clr_country_flag = saif_al_islam_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_saif_al_islam_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_saif_al_islam_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_showcase_art_saif_al_islam = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_islam_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 3 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = saif_al_islam_gaddafi_dead }
@@ -1654,7 +1736,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.8 }
+					country_event = LibyaFamily.8
 					custom_effect_tooltip = saif_al_islam_artshow_great_success_tt
 				}
 				60 = {
@@ -1662,7 +1744,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 10 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.9 }
+					country_event = LibyaFamily.9
 					custom_effect_tooltip = saif_al_islam_artshow_success_tt
 				}
 				15 = {
@@ -1670,35 +1752,30 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.10 }
+					country_event = LibyaFamily.10
 					custom_effect_tooltip = saif_al_islam_artshow_failure_tt
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_discuss_succession_saif_al_islam = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_islam_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 3 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = saif_al_islam_gaddafi_dead }
@@ -1731,7 +1808,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.11 }
+					country_event = LibyaFamily.11
 					custom_effect_tooltip = saif_al_islam_succession_talk_great_success_tt
 				}
 				60 = {
@@ -1739,42 +1816,37 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.12 }
+					country_event = LibyaFamily.12
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.13 }
+					country_event = LibyaFamily.13
 					custom_effect_tooltip = saif_al_islam_succession_talk_failure_tt
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_sue_sunday_telegraph_saif_al_islam = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_islam_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 3 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = saif_al_islam_gaddafi_dead }
@@ -1801,46 +1873,47 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = -15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.14 }
+					country_event = LibyaFamily.14
 				}
 				60 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = -10 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.15 }
+					country_event = LibyaFamily.15
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 10 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.16 }
+					country_event = LibyaFamily.16
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 50
+			#Fire only once decision - AI should take it early to reduce instability
 			modifier = {
-				factor = 0
-				has_stability > 0.20
+				factor = 2
+				check_variable = { gaddafi_family_instability > 30 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { gaddafi_family_instability > 60 }
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_al_saadi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_al_saadi_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 4 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = al_saadi_gaddafi_exile }
@@ -1860,28 +1933,20 @@ libya_gaddafi_family = {
 			set_country_flag = al_saadi_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_al_saadi_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_al_saadi_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_al_saadi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_al_saadi_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 4 }
 				is_ai = yes
 			}
 			has_country_flag = al_saadi_gaddafi_exile
@@ -1901,30 +1966,21 @@ libya_gaddafi_family = {
 			clr_country_flag = al_saadi_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_al_saadi_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_al_saadi_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_improve_football_career_al_saadi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_al_saadi_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 4 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = al_saadi_gaddafi_dead }
@@ -1953,7 +2009,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.22 }
+					country_event = LibyaFamily.22
 					custom_effect_tooltip = al_saadi_football_career_great_success_tt
 				}
 				60 = {
@@ -1961,42 +2017,37 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.23 }
+					country_event = LibyaFamily.23
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.24 }
+					country_event = LibyaFamily.24
 					custom_effect_tooltip = al_saadi_football_career_talk_failure_tt
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_create_new_city_al_saadi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_al_saadi_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 4 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = al_saadi_gaddafi_dead }
@@ -2013,9 +2064,7 @@ libya_gaddafi_family = {
 				NOT = { has_country_flag = al_saadi_gaddafi_exile }
 				tooltip = al_saadi_gaddafi_not_exiled
 			}
-			NOT = {
-				has_idea = international_sanctions
-			}
+			NOT = { has_idea = international_sanctions }
 		}
 
 		complete_effect = {
@@ -2029,9 +2078,7 @@ libya_gaddafi_family = {
 				60 = {
 					set_temp_variable = { family_instability_change = 10 }
 					libya_gaddafi_family_modify_instability = yes
-					391 = {
-						add_extra_state_shared_building_slots = 1
-					}
+					391 = { add_extra_state_shared_building_slots = 1 }
 				}
 				15 = {
 					set_temp_variable = { family_instability_change = 15 }
@@ -2042,28 +2089,23 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_send_to_rehab_al_saadi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_al_saadi_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 4 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = al_saadi_gaddafi_dead }
@@ -2091,7 +2133,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.27 }
+					country_event = LibyaFamily.27
 					custom_effect_tooltip = al_saadi_rehab_great_success_tt
 				}
 				60 = {
@@ -2099,40 +2141,36 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.28 }
+					country_event = LibyaFamily.28
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.29 }
+					country_event = LibyaFamily.29
 					custom_effect_tooltip = al_saadi_rehab_failure_tt
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_mutassim = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_mutassim_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 5 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = mutassim_gaddafi_exile }
@@ -2152,46 +2190,36 @@ libya_gaddafi_family = {
 			if = {
 				limit = { has_country_flag = mutassim_gaddafi_suspected_revolutionary }
 				clr_country_flag = mutassim_gaddafi_suspected_revolutionary
-				LBA_mutassim_gaddafi_dummy = {
-					custom_effect_tooltip = gaddafi_family_lose_suspected_revolutionary_tt
-				}
+				LBA_mutassim_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_lose_suspected_revolutionary_tt }
 				if = {
 					limit = { has_country_flag = mutassim_gaddafi_77th_tank_battalion }
 					clr_country_flag = mutassim_gaddafi_77th_tank_battalion
-					LBA_mutassim_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_lose_77th_tank_battalion_tt
-					}
+					LBA_mutassim_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_lose_77th_tank_battalion_tt }
 				}
 			}
 			set_country_flag = mutassim_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_mutassim_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_mutassim_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				has_stability < 0.30
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_recall_mutassim = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_mutassim_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 5 }
 				is_ai = yes
 			}
 			has_country_flag = mutassim_gaddafi_exile
@@ -2211,32 +2239,26 @@ libya_gaddafi_family = {
 			clr_country_flag = mutassim_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_mutassim_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_mutassim_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				has_stability < 0.30
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_national_security_advisor_mutassim = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_mutassim_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 5 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = mutassim_gaddafi_dead }
@@ -2266,34 +2288,27 @@ libya_gaddafi_family = {
 			libya_gaddafi_family_modify_instability = yes
 			set_country_flag = mutassim_gaddafi_national_security_advisor
 			update_gaddafi_family_ideas = yes
-			LBA_mutassim_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_gain_national_security_advisor_tt
-			}
+			LBA_mutassim_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_national_security_advisor_tt }
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_additional_equipment_mutassim = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_mutassim_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 5 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = mutassim_gaddafi_dead }
@@ -2317,53 +2332,49 @@ libya_gaddafi_family = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_send_to_rehab_al_saadi"
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_additional_equipment_mutassim"
 			random_list = {
 				25 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.32 }
+					country_event = LibyaFamily.32
 				}
 				60 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.33 }
+					country_event = LibyaFamily.33
 				}
 				15 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.34 }
+					country_event = LibyaFamily.34
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_hannibal = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_hannibal_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 6 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = hannibal_gaddafi_exile }
@@ -2383,28 +2394,20 @@ libya_gaddafi_family = {
 			set_country_flag = hannibal_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_hannibal = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_hannibal_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 6 }
 				is_ai = yes
 			}
 			has_country_flag = hannibal_gaddafi_exile
@@ -2424,30 +2427,21 @@ libya_gaddafi_family = {
 			clr_country_flag = hannibal_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_civilian_education_hannibal = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_hannibal_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 6 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = hannibal_gaddafi_dead }
@@ -2476,20 +2470,14 @@ libya_gaddafi_family = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_civilian_education_hannibal"
 			clr_country_flag = hannibal_gaddafi_bachelor_of_marine_navigation
 			set_country_flag = hannibal_gaddafi_master_of_shipping_economics_and_logistics
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_lose_bachelor_of_marine_navigation_tt
-			}
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_gain_master_of_shipping_economics_and_logistics_tt
-			}
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_lose_bachelor_of_marine_navigation_tt }
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_master_of_shipping_economics_and_logistics_tt }
 			random_list = {
 				25 = {
 					set_temp_variable = { family_instability_change = 5 }
 					libya_gaddafi_family_modify_instability = yes
 					random_owned_state = {
-						limit = {
-							is_coastal = yes
-						}
+						limit = { is_coastal = yes }
 						add_building_construction = {
 							type = dockyard
 							level = 1
@@ -2506,36 +2494,29 @@ libya_gaddafi_family = {
 					set_temp_variable = { family_instability_change = 20 }
 					libya_gaddafi_family_modify_instability = yes
 					set_country_flag = hannibal_gaddafi_scholarly_challenged
-					LBA_hannibal_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_gain_scholarly_challenged_tt
-					}
+					LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_scholarly_challenged_tt }
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_military_education_hannibal = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_hannibal_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 6 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = hannibal_gaddafi_dead }
@@ -2564,12 +2545,8 @@ libya_gaddafi_family = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_military_education_hannibal"
 			clr_country_flag = hannibal_gaddafi_bachelor_of_marine_navigation
 			set_country_flag = hannibal_gaddafi_graduate_of_kuznetsov
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_lose_bachelor_of_marine_navigation_tt
-			}
-			LBA_hannibal_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_gain_graduate_of_kuznetsov_tt
-			}
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_lose_bachelor_of_marine_navigation_tt }
+			LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_graduate_of_kuznetsov_tt }
 			random_list = {
 				25 = {
 					set_temp_variable = { family_instability_change = 5 }
@@ -2584,34 +2561,28 @@ libya_gaddafi_family = {
 					set_temp_variable = { family_instability_change = 20 }
 					libya_gaddafi_family_modify_instability = yes
 					set_country_flag = hannibal_gaddafi_scholarly_challenged
-					LBA_hannibal_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_gain_scholarly_challenged_tt
-					}
+					LBA_hannibal_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_scholarly_challenged_tt }
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_ayesha = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_ayesha_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 7 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = ayesha_gaddafi_exile }
@@ -2631,28 +2602,20 @@ libya_gaddafi_family = {
 			set_country_flag = ayesha_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_ayesha_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_ayesha_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_ayesha = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_ayesha_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 7 }
 				is_ai = yes
 			}
 			has_country_flag = ayesha_gaddafi_exile
@@ -2672,30 +2635,21 @@ libya_gaddafi_family = {
 			clr_country_flag = ayesha_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_ayesha_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_ayesha_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_send_legal_aid_ayesha = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_ayesha_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 7 }
 				is_ai = yes
 			}
 			NOT = {
@@ -2725,7 +2679,6 @@ libya_gaddafi_family = {
 					set_temp_variable = { influence_target = THIS }
 				}
 			}
-			set_temp_variable = { tag_index = ROOT }
 			random_list = {
 				25 = {
 					set_temp_variable = { family_instability_change = 5 }
@@ -2748,28 +2701,23 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_military_training_aid_ayesha = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_ayesha_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 7 }
 				is_ai = yes
 			}
 			NOT = {
@@ -2796,7 +2744,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 5 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.41 }
+					country_event = LibyaFamily.41
 					custom_effect_tooltip = ayesha_gaddafi_military_education_great_success_tt
 				}
 				60 = {
@@ -2804,7 +2752,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.42 }
+					country_event = LibyaFamily.42
 					effect_tooltip = { army_experience = 50 }
 				}
 				15 = {
@@ -2812,33 +2760,29 @@ libya_gaddafi_family = {
 						set_temp_variable = { family_instability_change = 20 }
 						libya_gaddafi_family_modify_instability = yes
 					}
-					country_event = { id = LibyaFamily.43 }
+					country_event = LibyaFamily.43
 					custom_effect_tooltip = ayesha_gaddafi_military_education_failure_tt
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_saif_al_arab = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_arab_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 8 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = saif_al_arab_gaddafi_exile }
@@ -2858,28 +2802,20 @@ libya_gaddafi_family = {
 			set_country_flag = saif_al_arab_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_saif_al_arab_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_saif_al_arab_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_saif_al_arab = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_arab_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 8 }
 				is_ai = yes
 			}
 			has_country_flag = saif_al_arab_gaddafi_exile
@@ -2899,30 +2835,21 @@ libya_gaddafi_family = {
 			clr_country_flag = saif_al_arab_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_saif_al_arab_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_saif_al_arab_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_business_trip_saif_al_arab = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_arab_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 8 }
 				is_ai = yes
 			}
 			NOT = {
@@ -2967,28 +2894,23 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_tech_seminar_saif_al_arab = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_arab_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 8 }
 				is_ai = yes
 			}
 			NOT = {
@@ -3015,6 +2937,7 @@ libya_gaddafi_family = {
 					set_temp_variable = { family_instability_change = 5 }
 					libya_gaddafi_family_modify_instability = yes
 					add_tech_bonus = {
+						name = libya_gaddafi_family_tech_seminar_saif_al_arab
 						bonus = 0.50
 						uses = 2
 						category = CAT_industry
@@ -3024,6 +2947,7 @@ libya_gaddafi_family = {
 					set_temp_variable = { family_instability_change = 10 }
 					libya_gaddafi_family_modify_instability = yes
 					add_tech_bonus = {
+						name = libya_gaddafi_family_tech_seminar_saif_al_arab
 						bonus = 0.50
 						uses = 1
 						category = CAT_industry
@@ -3037,28 +2961,23 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_military_expo_saif_al_arab = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 90
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_saif_al_arab_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 8 }
 				is_ai = yes
 			}
 			NOT = {
@@ -3100,26 +3019,22 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_exile_khamis = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_exile_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_khamis_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 9 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = khamis_gaddafi_exile }
@@ -3146,28 +3061,20 @@ libya_gaddafi_family = {
 			set_country_flag = khamis_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_khamis_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_sent_to_exile_tt
-			}
+			LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_sent_to_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_recall_khamis = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		desc = libya_gaddafi_family_recall_desc
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_khamis_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 9 }
 				is_ai = yes
 			}
 			has_country_flag = khamis_gaddafi_exile
@@ -3187,28 +3094,21 @@ libya_gaddafi_family = {
 			clr_country_flag = khamis_gaddafi_exile
 			libya_find_next_gaddafi_heir = yes
 			update_gaddafi_family_ideas = yes
-			LBA_khamis_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt
-			}
+			LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_recalled_from_exile_tt }
 		}
 
-		ai_will_do = {
-			factor = 0
-		}
-
+		ai_will_do = { base = 0 }
 	}
 
 	libya_gaddafi_family_give_military_command_khamis = {
-
-		icon = GFX_zsr_parlament
-
+		fixed_random_seed = no
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_khamis_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 9 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = khamis_gaddafi_dead }
@@ -3286,26 +3186,22 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_khamis_brigade_khamis = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_khamis_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 9 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = khamis_gaddafi_dead }
@@ -3316,6 +3212,7 @@ libya_gaddafi_family = {
 				}
 			}
 			NOT = { has_country_flag = khamis_gaddafi_underage }
+			has_character = LBA_khamis_gaddafi_dummy
 		}
 
 		available = {
@@ -3323,9 +3220,8 @@ libya_gaddafi_family = {
 				NOT = { has_country_flag = khamis_gaddafi_exile }
 				tooltip = khamis_gaddafi_not_exiled
 			}
-			LBA_khamis_gaddafi_dummy = {
-				is_army_leader = yes
-			}
+			has_character = LBA_khamis_gaddafi_dummy
+			LBA_khamis_gaddafi_dummy = { is_army_leader = yes }
 		}
 
 		complete_effect = {
@@ -3345,37 +3241,30 @@ libya_gaddafi_family = {
 				}
 			}
 			custom_effect_tooltip = libya_gaddafi_family_khamis_brigade_khamis_tt
-			hidden_effect = {
-				load_oob = "LBA_khamis_nsb"
-			}
-			LBA_khamis_gaddafi_dummy = {
-				custom_effect_tooltip = gaddafi_family_gain_khamis_brigade_tt
-			}
+			hidden_effect = { load_oob = "LBA_khamis_nsb" }
+			LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_khamis_brigade_tt }
 			set_country_flag = khamis_gaddafi_khamis_brigade
 			update_gaddafi_family_ideas = yes
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_aecom_khamis = {
-
-		icon = GFX_zsr_parlament
-
+		fixed_random_seed = no
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_khamis_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 9 }
 				is_ai = yes
 			}
 			NOT = { has_country_flag = khamis_gaddafi_dead }
@@ -3402,12 +3291,8 @@ libya_gaddafi_family = {
 				25 = {
 					set_temp_variable = { family_instability_change = 5 }
 					libya_gaddafi_family_modify_instability = yes
-					LBA_khamis_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_gain_war_industrialist_tt
-					}
-					LBA_khamis_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_gain_captain_of_industry_tt
-					}
+					LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_war_industrialist_tt }
+					LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_captain_of_industry_tt }
 					set_country_flag = khamis_gaddafi_war_industrialist
 					set_country_flag = khamis_gaddafi_captain_of_industry
 					update_gaddafi_family_ideas = yes
@@ -3415,9 +3300,7 @@ libya_gaddafi_family = {
 				60 = {
 					set_temp_variable = { family_instability_change = 10 }
 					libya_gaddafi_family_modify_instability = yes
-					LBA_khamis_gaddafi_dummy = {
-						custom_effect_tooltip = gaddafi_family_gain_captain_of_industry_tt
-					}
+					LBA_khamis_gaddafi_dummy = { custom_effect_tooltip = gaddafi_family_gain_captain_of_industry_tt }
 					set_country_flag = khamis_gaddafi_captain_of_industry
 					update_gaddafi_family_ideas = yes
 				}
@@ -3430,28 +3313,23 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_hold_un_speech_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3478,7 +3356,7 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.53 }
+					country_event = LibyaFamily.53
 				}
 				60 = {
 					effect_tooltip = {
@@ -3487,7 +3365,7 @@ libya_gaddafi_family = {
 						set_temp_variable = { percent_change = 5 }
 						change_domestic_influence_percentage = yes
 					}
-					country_event = { id = LibyaFamily.54 }
+					country_event = LibyaFamily.54
 				}
 				15 = {
 					effect_tooltip = {
@@ -3498,34 +3376,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.55 }
+					country_event = LibyaFamily.55
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_throw_money_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3551,7 +3424,7 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.56 }
+					country_event = LibyaFamily.56
 				}
 				60 = {
 					effect_tooltip = {
@@ -3559,7 +3432,7 @@ libya_gaddafi_family = {
 						libya_gaddafi_family_modify_instability = yes
 						add_stability = 0.025
 					}
-					country_event = { id = LibyaFamily.57 }
+					country_event = LibyaFamily.57
 				}
 				15 = {
 					effect_tooltip = {
@@ -3570,34 +3443,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.58 }
+					country_event = LibyaFamily.58
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_design_car_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3622,19 +3490,20 @@ libya_gaddafi_family = {
 						libya_gaddafi_family_modify_instability = yes
 						custom_effect_tooltip = libya_gaddafi_family_design_car_gaddafi_tt
 					}
-					country_event = { id = LibyaFamily.59 }
+					country_event = LibyaFamily.59
 				}
 				60 = {
 					effect_tooltip = {
 						set_temp_variable = { family_instability_change = 15 }
 						libya_gaddafi_family_modify_instability = yes
 						add_tech_bonus = {
-							category = Cat_UTIL
+							name = libya_gaddafi_family_design_car_gaddafi
+							category = CAT_utility_vehicles
 							bonus = 0.50
 							uses = 1
 						}
 					}
-					country_event = { id = LibyaFamily.60 }
+					country_event = LibyaFamily.60
 				}
 				15 = {
 					effect_tooltip = {
@@ -3645,34 +3514,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.61 }
+					country_event = LibyaFamily.61
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_state_visit_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3693,7 +3557,7 @@ libya_gaddafi_family = {
 				random_other_country = {
 					limit = {
 						OR = {
-							has_idea = superpower
+							has_idea = super_power
 							has_idea = large_power
 							has_idea = great_power
 						}
@@ -3711,7 +3575,7 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.62 }
+					country_event = LibyaFamily.62
 				}
 				60 = {
 					effect_tooltip = {
@@ -3719,7 +3583,7 @@ libya_gaddafi_family = {
 						libya_gaddafi_family_modify_instability = yes
 						add_political_power = 200
 					}
-					country_event = { id = LibyaFamily.63 }
+					country_event = LibyaFamily.63
 				}
 				15 = {
 					effect_tooltip = {
@@ -3730,34 +3594,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.64 }
+					country_event = LibyaFamily.64
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_do_black_magic_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3790,7 +3649,7 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.65 }
+					country_event = LibyaFamily.65
 				}
 				60 = {
 					effect_tooltip = {
@@ -3798,7 +3657,7 @@ libya_gaddafi_family = {
 						libya_gaddafi_family_modify_instability = yes
 						add_war_support = 0.10
 					}
-					country_event = { id = LibyaFamily.66 }
+					country_event = LibyaFamily.66
 				}
 				15 = {
 					effect_tooltip = {
@@ -3809,34 +3668,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.67 }
+					country_event = LibyaFamily.67
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_meet_women_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3862,7 +3716,7 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.68 }
+					country_event = LibyaFamily.68
 				}
 				60 = {
 					effect_tooltip = {
@@ -3875,7 +3729,7 @@ libya_gaddafi_family = {
 							}
 						}
 					}
-					country_event = { id = LibyaFamily.69 }
+					country_event = LibyaFamily.69
 				}
 				15 = {
 					effect_tooltip = {
@@ -3886,34 +3740,29 @@ libya_gaddafi_family = {
 							days = 360
 						}
 					}
-					country_event = { id = LibyaFamily.70 }
+					country_event = LibyaFamily.70
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_hold_tv_speech_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fixed_random_seed = no
-
 		days_re_enable = 180
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -3925,7 +3774,7 @@ libya_gaddafi_family = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_hold_tv_speech_gaddafi"
 			random_list = {
-				25 = {
+				30 = {
 					set_temp_variable = { family_instability_change = -10 }
 					libya_gaddafi_family_modify_instability = yes
 				}
@@ -3933,34 +3782,43 @@ libya_gaddafi_family = {
 					set_temp_variable = { family_instability_change = -5 }
 					libya_gaddafi_family_modify_instability = yes
 				}
-				15 = {
-					set_temp_variable = { family_instability_change = 10 }
+				10 = {
+					set_temp_variable = { family_instability_change = 5 }
 					libya_gaddafi_family_modify_instability = yes
 				}
 			}
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 10
+			#AI should proactively manage family instability before stability crashes
 			modifier = {
-				factor = 0
-				has_stability > 0.20
+				factor = 3
+				check_variable = { gaddafi_family_instability > 50 }
+			}
+			modifier = {
+				factor = 3
+				check_variable = { gaddafi_family_instability > 100 }
+			}
+			modifier = {
+				factor = 2
+				check_variable = { gaddafi_family_instability > 150 }
+			}
+			modifier = {
+				factor = 2
+				has_stability < 0.30
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_abolish_switzerland_gaddafi = {
-
-		icon = GFX_zsr_parlament
-
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
-
 		cost = 25
 
 		visible = {
 			OR = {
-				has_country_flag = LBA_show_muammar_gaddafi_decisions
+				check_variable = { LBA_gaddafi_family_ui_selected = 1 }
 				is_ai = yes
 			}
 			has_country_leader = {
@@ -4018,19 +3876,16 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				has_stability < 0.25
 			}
 		}
-
 	}
 
 	libya_gaddafi_family_anti_government_protests = {
-
-		icon = GFX_zsr_unrest
-
+		icon = GFX_decision_zsr_unrest
 		days_mission_timeout = 180
 
 		activation = {
@@ -4042,148 +3897,24 @@ libya_gaddafi_family = {
 
 		cancel_trigger = {
 			hidden_trigger = {
-				has_civil_war = yes
-				NOT = { is_ruled_by_a_gaddafi = yes }
+				OR = {
+					has_civil_war = yes
+					NOT = { is_ruled_by_a_gaddafi = yes }
+				}
 			}
 		}
 
-		available = {
-			has_stability > 0.199
-		}
+		available = { has_stability > 0.199 }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout libya_gaddafi_family_anti_government_protests"
-			#Find the strongest non-government party
-			set_temp_variable = { opposition_party_index = 0 }
-			set_temp_variable = { opposition_party_popularity = 0 }
-			for_each_loop = {
-				array = party_pop_array
-				value = v
-				index = i
-				break = break
-				if = {
-					limit = {
-						check_variable = { v > opposition_party_popularity }
-						NOT = { is_in_array = { ruling_party = i } }
-						NOT = { is_in_array = { gov_coalition_array = i } }
-					}
-					set_temp_variable = { opposition_party_index = i }
-					set_temp_variable = { opposition_party_popularity = v }
-				}
-			}
-
-			#Set size for the civil war (2xpopularity)
-			if = {
-				limit = { has_country_flag = LBA_military_used_on_protesters }
-				multiply_temp_variable = { opposition_party_popularity = 3 }
-			}
-			else = {
-				multiply_temp_variable = { opposition_party_popularity = 2 }
-			}
-			clamp_temp_variable = {
-				var = opposition_party_popularity
-				min = 0
-				max = 0.8
-			}
-			custom_effect_tooltip = start_civil_war_against_the_strongest_opposition_tt
-
-			hidden_effect = {
-				#Start the civil war
-				if = {
-					limit = {
-						check_variable = { opposition_party_index < 4 }
-					}
-					start_civil_war = {
-						ideology = democratic
-						size = opposition_party_popularity
-					}
-				}
-				if = {
-					limit = {
-						check_variable = { opposition_party_index > 3 }
-						check_variable = { opposition_party_index < 10 }
-					}
-					start_civil_war = {
-						ideology = communism
-						size = opposition_party_popularity
-					}
-				}
-				if = {
-					limit = {
-						check_variable = { opposition_party_index > 9 }
-						check_variable = { opposition_party_index < 12 }
-					}
-					start_civil_war = {
-						ideology = fascism
-						size = opposition_party_popularity
-					}
-				}
-				if = {
-					limit = {
-						check_variable = { opposition_party_index > 11 }
-						check_variable = { opposition_party_index < 20 }
-					}
-					start_civil_war = {
-						ideology = neutrality
-						size = opposition_party_popularity
-					}
-				}
-				if = {
-					limit = {
-						check_variable = { opposition_party_index > 19 }
-					}
-					start_civil_war = {
-						ideology = nationalist
-						size = opposition_party_popularity
-					}
-				}
-
-				#Set the revolting side correctly
-				random_enemy_country = {
-					limit = { original_tag = ROOT }
-					set_temp_variable = { rul_party_temp = opposition_party_index }
-					change_ruling_party_effect = yes
-					set_cosmetic_tag = GNA_NTC
-					set_country_flag = LBA_fall_of_gaddafi
-					set_country_flag = LBA_this_is_libyan_rebels
-					if = {
-						limit = {
-							ROOT = { has_country_flag = LBA_democratic_reform }
-						}
-						set_country_flag = LBA_democratic_reform
-					}
-				}
-			}
-			set_global_flag = first_libyan_civil_war
-			if = {
-				limit = { has_country_flag = LBA_military_used_on_protesters }
-				hidden_effect = {
-					every_country = {
-						limit = {
-							has_idea = NATO_member
-						}
-						set_country_flag = intervene_in_libya
-					}
-					clr_country_flag = LBA_military_used_on_protesters
-				}
-			}
-			hidden_effect = { news_event = { id = LibyaFocusNews.14 hours = 6 } }
+			custom_effect_tooltip = libya_gaddafi_family_anti_government_protests_tt
+			country_event = LibyaCivilWar.15
 		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_anti_government_protests"
-		}
-
-		ai_will_do = {
-			factor = 5
-		}
-
 	}
 
 	libya_gaddafi_family_deploy_military = {
-
 		icon = GFX_decision_generic_army_support_new
-
 		cost = 50
 
 		visible = {
@@ -4202,107 +3933,25 @@ libya_gaddafi_family = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
+			modifier = {
+				factor = 0
+				LBA_ai_any_path = yes
+			}
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
-
 	}
-
-	libya_gaddafi_family_anti_government_protests_join_rebels = {
-
-		icon = GFX_zsr_unrest
-
-		visible = {
-			has_active_mission = libya_gaddafi_family_anti_government_protests
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_gaddafi_family_anti_government_protests_join_rebels"
-			#Find the strongest non-government party
-			set_temp_variable = { opposition_party_index = 0 }
-			set_temp_variable = { opposition_party_popularity = 0 }
-			for_each_loop = {
-				array = party_pop_array
-				value = v
-				index = i
-				break = break
-				if = {
-					limit = {
-						check_variable = { v > opposition_party_popularity }
-						NOT = { is_in_array = { ruling_party = i } }
-						NOT = { is_in_array = { gov_coalition_array = i } }
-					}
-					set_temp_variable = { opposition_party_index = i }
-					set_temp_variable = { opposition_party_popularity = v }
-				}
-			}
-			#Set size for the civil war (2xpopularity)
-			if = {
-				limit = { has_country_flag = LBA_military_used_on_protesters }
-				multiply_temp_variable = { opposition_party_popularity = 3 }
-			}
-			else = {
-				multiply_temp_variable = { opposition_party_popularity = 2 }
-			}
-			clamp_temp_variable = {
-				var = opposition_party_popularity
-				min = 0
-				max = 0.8
-			}
-			multiply_temp_variable = { opposition_party_popularity = -1 }
-			add_to_temp_variable = { opposition_party_popularity = 1 }
-			custom_effect_tooltip = libya_gaddafi_family_anti_government_protests_join_rebels_tt
-
-			hidden_effect = {
-				set_temp_variable = { rul_party_temp = opposition_party_index }
-				set_temp_variable = { change_leader_temp = 1 }
-				change_ruling_party_effect = yes
-				set_cosmetic_tag = GNA_NTC
-				set_country_flag = LBA_fall_of_gaddafi
-				set_country_flag = LBA_this_is_libyan_rebels
-				add_popularity = {
-					ideology = communism
-					popularity = -0.3
-				}
-				start_civil_war = {
-					ideology = communism
-					size = opposition_party_popularity
-				}
-			}
-			set_global_flag = first_libyan_civil_war
-			if = {
-				limit = { has_country_flag = LBA_military_used_on_protesters }
-				hidden_effect = {
-					every_country = {
-						limit = {
-							has_idea = NATO_member
-						}
-						set_country_flag = intervene_in_libya
-					}
-					clr_country_flag = LBA_military_used_on_protesters
-				}
-			}
-			hidden_effect = { news_event = { id = LibyaFocusNews.14 hours = 6 } }
-		}
-
-		ai_will_do = {
-			factor = 0
-		}
-
-	}
-
 }
 
 libya_libyan_tribalism = {
-
 	libya_tribalism_decentralise_state = {
-
 		icon = GFX_decision_generic_political_discourse
-
 		cost = 50
-
-		available = {
-			NOT = { has_idea = bureau_01 }
-		}
+		days_re_enable = 180
+		available = { NOT = { has_idea = bureau_01 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_decentralise_state"
@@ -4313,169 +3962,543 @@ libya_libyan_tribalism = {
 			libya_change_cyrenaica_loyalty = yes
 			libya_change_fezzan_loyalty = yes
 			libya_update_tribalism_modifiers = yes
+			newline = yes
+			custom_effect_tooltip = libya_tribalism_decentralise_state_tt
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
+			#Use when at least one tribe is struggling
 			modifier = {
-				add = 5
-				check_variable = { tripolitania_loyalty < 0.60 }
-				check_variable = { cyrenaica_loyalty < 0.60 }
-				check_variable = { fezzan_loyalty < 0.60 }
+				add = 30
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.35 }
+					check_variable = { cyrenaica_loyalty < 0.35 }
+					check_variable = { fezzan_loyalty < 0.35 }
+				}
+			}
+			#Higher priority when multiple tribes are low
+			modifier = {
+				add = 50
+				check_variable = { tripolitania_loyalty < 0.35 }
+				check_variable = { cyrenaica_loyalty < 0.35 }
+			}
+			#Even higher when all three are struggling (win-win-win!)
+			modifier = {
+				add = 100
+				check_variable = { tripolitania_loyalty < 0.35 }
+				check_variable = { cyrenaica_loyalty < 0.35 }
+				check_variable = { fezzan_loyalty < 0.35 }
 			}
 		}
-
 	}
 
 	libya_tribalism_placate_tripolitanians = {
-
 		icon = decision_generic_decision
-
 		cost = 50
-
 		fixed_random_seed = no
-
 		days_re_enable = 30
 
 		visible = {
-			OR = {
-				owns_state = 393
-				owns_state = 391
-				owns_state = 919
+			owns_any_state_of = {
+				393
+				391
+				919
 			}
 		}
 
 		available = {
 			NOT = { country_exists = TRP }
+			NOT = { has_idea = corruption_level_10 }
+			NOT = { has_idea = corruption_level_09 }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_placate_tripolitanians"
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_tripolitania_loyalty = yes
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_cyrenaica_loyalty = yes
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_fezzan_loyalty = yes
 			random = {
-				chance = 10
+				chance = 15
 				increase_corruption = yes
 			}
 			libya_update_tribalism_modifiers = yes
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
+			#Base urgency - start caring when getting low
 			modifier = {
-				add = 5
-				check_variable = { tripolitania_loyalty < 0.60 }
+				add = 15
+				check_variable = { tripolitania_loyalty < 0.35 }
+			}
+			#Higher urgency - this is getting serious
+			modifier = {
+				add = 35
+				check_variable = { tripolitania_loyalty < 0.25 }
+			}
+			#Critical - very close to civil war threshold (10%)
+			modifier = {
+				add = 100
+				check_variable = { tripolitania_loyalty < 0.15 }
+			}
+			#Cross-reference: Don't placate if it would endanger other tribes
+			modifier = {
+				factor = 0.1
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.30 }
+					check_variable = { fezzan_loyalty < 0.30 }
+				}
+			}
+			#Never placate if it would push others into danger zone
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { cyrenaica_loyalty < 0.20 }
+					check_variable = { fezzan_loyalty < 0.20 }
+				}
 			}
 		}
-
 	}
 
 	libya_tribalism_placate_cyrenaicans = {
-
 		icon = decision_generic_decision
-
 		cost = 50
-
 		fixed_random_seed = no
-
 		days_re_enable = 30
 
 		visible = {
-			OR = {
-				owns_state = 396
-				owns_state = 395
-				owns_state = 397
-				owns_state = 1100
+			owns_any_state_of = {
+				396
+				395
+				397
+				1100
 			}
 		}
 
 		available = {
 			NOT = { country_exists = CYR }
+			NOT = { has_idea = corruption_level_10 }
+			NOT = { has_idea = corruption_level_09 }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_placate_cyrenaicans"
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_tripolitania_loyalty = yes
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_cyrenaica_loyalty = yes
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_fezzan_loyalty = yes
 			random = {
-				chance = 10
+				chance = 15
 				increase_corruption = yes
 			}
 			libya_update_tribalism_modifiers = yes
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
+			#Base urgency - start caring when getting low
 			modifier = {
-				add = 5
-				check_variable = { cyrenaica_loyalty < 0.60 }
+				add = 15
+				check_variable = { cyrenaica_loyalty < 0.35 }
+			}
+			#Higher urgency - this is getting serious
+			modifier = {
+				add = 35
+				check_variable = { cyrenaica_loyalty < 0.25 }
+			}
+			#Critical - very close to civil war threshold (10%)
+			modifier = {
+				add = 100
+				check_variable = { cyrenaica_loyalty < 0.15 }
+			}
+			#Cross-reference: Don't placate if it would endanger other tribes
+			modifier = {
+				factor = 0.1
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.30 }
+					check_variable = { fezzan_loyalty < 0.30 }
+				}
+			}
+			#Never placate if it would push others into danger zone
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.20 }
+					check_variable = { fezzan_loyalty < 0.20 }
+				}
 			}
 		}
-
 	}
 
 	libya_tribalism_placate_fezzans = {
-
 		icon = decision_generic_decision
-
 		cost = 50
-
 		fixed_random_seed = no
-
 		days_re_enable = 30
 
 		visible = {
-			OR = {
-				owns_state = 392
-				owns_state = 918
-				owns_state = 920
+			owns_any_state_of = {
+				392
+				918
+				920
 			}
 		}
 
 		available = {
 			NOT = { country_exists = FEZ }
+			NOT = { has_idea = corruption_level_10 }
+			NOT = { has_idea = corruption_level_09 }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_placate_fezzans"
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_tripolitania_loyalty = yes
-			set_temp_variable = { loyalty_change = -0.10 }
+			set_temp_variable = { loyalty_change = -0.05 }
 			libya_change_cyrenaica_loyalty = yes
 			set_temp_variable = { loyalty_change = 0.10 }
 			libya_change_fezzan_loyalty = yes
 			random = {
-				chance = 10
+				chance = 15
 				increase_corruption = yes
 			}
 			libya_update_tribalism_modifiers = yes
 		}
 
 		ai_will_do = {
-			factor = 0
+			base = 0
+			#Base urgency - start caring when getting low
 			modifier = {
-				add = 5
-				check_variable = { fezzan_loyalty < 0.60 }
+				add = 15
+				check_variable = { fezzan_loyalty < 0.35 }
+			}
+			#Higher urgency - this is getting serious
+			modifier = {
+				add = 35
+				check_variable = { fezzan_loyalty < 0.25 }
+			}
+			#Critical - very close to civil war threshold (10%)
+			modifier = {
+				add = 100
+				check_variable = { fezzan_loyalty < 0.15 }
+			}
+			#Cross-reference: Don't placate if it would endanger other tribes
+			modifier = {
+				factor = 0.1
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.30 }
+					check_variable = { cyrenaica_loyalty < 0.30 }
+				}
+			}
+			#Never placate if it would push others into danger zone
+			modifier = {
+				factor = 0
+				OR = {
+					check_variable = { tripolitania_loyalty < 0.20 }
+					check_variable = { cyrenaica_loyalty < 0.20 }
+				}
+			}
+		}
+	}
+
+	libya_tribalism_military_crackdown = {
+		icon = oppression
+		state_target = yes
+		targets = { 391 918 395 }
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		days_re_enable = 360
+		days_remove = 360
+
+		target_root_trigger = {
+			#has_completed_focus = LBA_establish_military_zones
+			owns_any_state_of = {
+				391
+				918
+				395
 			}
 		}
 
+		target_trigger = { FROM = { NOT = { is_core_of = ROOT } } }
+		modifier = { personnel_cost_multiplier_modifier = 0.075 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_military_crackdown"
+			add_command_power = -50
+			if = {
+				limit = { FROM = { state = 391 } }
+				every_owned_state = {
+					limit = { is_core_of = TRP }
+					add_dynamic_modifier = {
+						modifier = LBA_military_crackdown_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 395 } }
+				every_owned_state = {
+					limit = { is_core_of = CYR }
+					add_dynamic_modifier = {
+						modifier = LBA_military_crackdown_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 918 } }
+				every_owned_state = {
+					limit = { is_core_of = FEZ }
+					add_dynamic_modifier = {
+						modifier = LBA_military_crackdown_modifier
+						days = 360
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	libya_tribalism_use_military_as_workforce = {
+		icon = GFX_decision_generic_factory
+		state_target = yes
+		targets = { 391 918 395 }
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		days_re_enable = 360
+		days_remove = 360
+
+		target_root_trigger = {
+			has_completed_focus = LBA_establish_military_zones
+			OR = {
+				owns_state = 391
+				owns_state = 918
+				owns_state = 395
+			}
+		}
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		modifier = {
+			personnel_cost_multiplier_modifier = 0.05
+			army_org_factor = -0.10
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_use_military_as_workforce"
+			add_command_power = -50
+			if = {
+				limit = { FROM = { state = 391 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_tripolitania_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				every_owned_state = {
+					limit = { is_core_of = TRP }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_workforce_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 395 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_cyrenaica_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				every_owned_state = {
+					limit = { is_core_of = CYR }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_workforce_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 918 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_fezzan_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				every_owned_state = {
+					limit = { is_core_of = FEZ }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_workforce_modifier
+						days = 360
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	libya_tribalism_use_military_as_security = {
+		icon = generic_military
+		state_target = yes
+		targets = { 391 918 395 }
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		days_re_enable = 360
+		days_remove = 360
+		target_root_trigger = { has_completed_focus = LBA_establish_military_zones owns_any_state_of = { 391 918 395 } }
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+		}
+
+		modifier = { personnel_cost_multiplier_modifier = 0.10 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_use_military_as_security"
+			add_command_power = -50
+			if = {
+				limit = { FROM = { state = 391 } }
+				every_owned_state = {
+					limit = { is_core_of = TRP }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_security_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 395 } }
+				every_owned_state = {
+					limit = { is_core_of = CYR }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_security_modifier
+						days = 360
+					}
+				}
+			}
+			if = {
+				limit = { FROM = { state = 918 } }
+				every_owned_state = {
+					limit = { is_core_of = FEZ }
+					add_dynamic_modifier = {
+						modifier = LBA_military_as_security_modifier
+						days = 360
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	libya_tribalism_demobilise_soldiers = {
+		icon = eng_blackshirt_march
+		state_target = yes
+		targets = { 391 918 395 }
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		days_re_enable = 180
+
+		target_root_trigger = {
+			has_completed_focus = LBA_establish_military_zones
+			OR = {
+				owns_state = 391
+				owns_state = 918
+				owns_state = 395
+			}
+		}
+
+		available = {
+			OR = {
+				has_idea = partial_draft_army
+				has_idea = draft_army
+			}
+			has_manpower > 500
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_demobilise_soldiers"
+			add_command_power = -50
+			add_manpower = -500
+			if = {
+				limit = { FROM = { state = 391 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_tripolitania_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				random_owned_state = {
+					limit = { is_core_of = TRP }
+					add_manpower = 500
+				}
+			}
+			if = {
+				limit = { FROM = { state = 395 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_cyrenaica_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				random_owned_state = {
+					limit = { is_core_of = CYR }
+					add_manpower = 500
+				}
+			}
+			if = {
+				limit = { FROM = { state = 918 } }
+				set_temp_variable = { loyalty_change = 0.10 }
+				libya_change_fezzan_loyalty = yes
+				libya_update_tribalism_modifiers = yes
+				random_owned_state = {
+					limit = { is_core_of = FEZ }
+					add_manpower = 500
+				}
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	libya_tribalism_end_tribalism = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 50
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = libya_tribalism_end_tribalism_trp_tt
+				check_variable = { tripolitania_loyalty > 0.99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = libya_tribalism_end_tribalism_cyr_tt
+				check_variable = { cyrenaica_loyalty > 0.99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = libya_tribalism_end_tribalism_fez_tt
+				check_variable = { fezzan_loyalty > 0.99 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_end_tribalism"
+			custom_effect_tooltip = LBA_federation_tt
+			hidden_effect = { lba_disable_tribalism = yes }
+		}
+
+		ai_will_do = { base = 10 }
 	}
 
 	libya_tribalism_tripolitanian_revolt = {
-
-		icon = GFX_zsr_unrest
-
+		icon = GFX_decision_zsr_unrest
+		war_with_on_timeout = TRP
 		days_mission_timeout = 90
 
 		activation = {
+			NOT = { has_country_flag = LBA_tribalism_disabled }
 			OR = {
 				AND = {
 					has_civil_war = yes
@@ -4491,27 +4514,17 @@ libya_libyan_tribalism = {
 		}
 
 		available = {
-			OR = {
-				AND = {
-					has_civil_war = no
-					custom_trigger_tooltip = {
-						check_variable = { tripolitania_loyalty > 0.10 }
-						tooltip = TT_tripolitania_loyalty_more_than_10
-					}
-				}
-				custom_trigger_tooltip = {
-					check_variable = { tripolitania_loyalty > 0.30 }
-					tooltip = TT_tripolitania_loyalty_more_than_30
-				}
+			custom_trigger_tooltip = {
+				check_variable = { tripolitania_loyalty > 0.10 }
+				tooltip = TT_tripolitania_loyalty_more_than_10
 			}
 		}
 
 		cancel_trigger = {
-			country_exists = TRP
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_tripolitanian_revolt"
+			OR = {
+				country_exists = TRP
+				has_country_flag = LBA_tribalism_disabled
+			}
 		}
 
 		timeout_effect = {
@@ -4532,28 +4545,23 @@ libya_libyan_tribalism = {
 			hidden_effect = {
 				TRP = {
 					every_owned_state = {
-						remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } }
 					}
 				}
 			}
-			country_event = { id = LibyaFocus.95 }
+			country_event = LibyaFocus.95
 		}
-
-		ai_will_do = {
-			factor = 5
-		}
-
 	}
 
 	libya_tribalism_cyrenaica_revolt = {
-
-		icon = GFX_zsr_unrest
-
+		icon = GFX_decision_zsr_unrest
+		war_with_on_timeout = CYR
 		days_mission_timeout = 90
 
 		activation = {
+			NOT = { has_country_flag = LBA_tribalism_disabled }
 			OR = {
 				AND = {
 					has_civil_war = yes
@@ -4569,27 +4577,17 @@ libya_libyan_tribalism = {
 		}
 
 		available = {
-			OR = {
-				AND = {
-					has_civil_war = no
-					custom_trigger_tooltip = {
-						check_variable = { cyrenaica_loyalty > 0.10 }
-						tooltip = TT_cyrenaica_loyalty_more_than_10
-					}
-				}
-				custom_trigger_tooltip = {
-					check_variable = { cyrenaica_loyalty > 0.30 }
-					tooltip = TT_cyrenaica_loyalty_more_than_30
-				}
+			custom_trigger_tooltip = {
+				check_variable = { cyrenaica_loyalty > 0.10 }
+				tooltip = TT_cyrenaica_loyalty_more_than_10
 			}
 		}
 
 		cancel_trigger = {
-			country_exists = CYR
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_cyrenaica_revolt"
+			OR = {
+				country_exists = CYR
+				has_country_flag = LBA_tribalism_disabled
+			}
 		}
 
 		timeout_effect = {
@@ -4609,28 +4607,23 @@ libya_libyan_tribalism = {
 			hidden_effect = {
 				CYR = {
 					every_owned_state = {
-						remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } }
 					}
 				}
 			}
-			country_event = { id = LibyaFocus.96 }
+			country_event = LibyaFocus.96
 		}
-
-		ai_will_do = {
-			factor = 5
-		}
-
 	}
 
 	libya_tribalism_fezzan_revolt = {
-
-		icon = GFX_zsr_unrest
-
+		icon = GFX_decision_zsr_unrest
+		war_with_on_timeout = FEZ
 		days_mission_timeout = 90
 
 		activation = {
+			NOT = { has_country_flag = LBA_tribalism_disabled }
 			OR = {
 				AND = {
 					has_civil_war = yes
@@ -4646,27 +4639,17 @@ libya_libyan_tribalism = {
 		}
 
 		available = {
-			OR = {
-				AND = {
-					has_civil_war = no
-					custom_trigger_tooltip = {
-						check_variable = { fezzan_loyalty > 0.10 }
-						tooltip = TT_fezzan_loyalty_more_than_10
-					}
-				}
-				custom_trigger_tooltip = {
-					check_variable = { fezzan_loyalty > 0.30 }
-					tooltip = TT_fezzan_loyalty_more_than_30
-				}
+			custom_trigger_tooltip = {
+				check_variable = { fezzan_loyalty > 0.10 }
+				tooltip = TT_fezzan_loyalty_more_than_10
 			}
 		}
 
 		cancel_trigger = {
-			country_exists = FEZ
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_fezzan_revolt"
+			OR = {
+				country_exists = FEZ
+				has_country_flag = LBA_tribalism_disabled
+			}
 		}
 
 		timeout_effect = {
@@ -4685,23 +4668,17 @@ libya_libyan_tribalism = {
 			hidden_effect = {
 				FEZ = {
 					every_owned_state = {
-						remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier }
-						remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_loyal_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_neutral_dynamic_modifier } }
+						if = { limit = { has_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } } remove_dynamic_modifier = { modifier = libya_tribalism_bad_dynamic_modifier } }
 					}
 				}
 			}
-			country_event = { id = LibyaFocus.97 }
+			country_event = LibyaFocus.97
 		}
-
-		ai_will_do = {
-			factor = 5
-		}
-
 	}
 
 	libya_tribalism_dismantle_libya = {
-
 		icon = break_treaty
 
 		visible = {
@@ -4721,9 +4698,7 @@ libya_libyan_tribalism = {
 			}
 		}
 
-		available = {
-			has_war = no
-		}
+		available = { has_war = no }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_tribalism_dismantle_libya"
@@ -4732,81 +4707,46 @@ libya_libyan_tribalism = {
 			if = {
 				limit = { NOT = { country_exists = TRP } }
 				every_core_state = {
-					limit = {
-						NOT = { is_core_of = TRP }
-					}
+					limit = { NOT = { is_core_of = TRP } }
 					remove_core_of = LBA
 				}
-				hidden_effect = {
-					TRP = {
-						every_core_state = {
-							remove_core_of = TRP
-						}
-					}
-				}
+				hidden_effect = { TRP = { every_core_state = { remove_core_of = TRP } } }
 				set_cosmetic_tag = TRP
 				set_capital = { state = 391 }
 			}
 			if = {
 				limit = { NOT = { country_exists = CYR } }
 				every_core_state = {
-					limit = {
-						NOT = { is_core_of = CYR }
-					}
+					limit = { NOT = { is_core_of = CYR } }
 					remove_core_of = CYR
 				}
-				hidden_effect = {
-					CYR = {
-						every_core_state = {
-							remove_core_of = CYR
-						}
-					}
-				}
+				hidden_effect = { CYR = { every_core_state = { remove_core_of = CYR } } }
 				set_cosmetic_tag = CYR
 				set_capital = { state = 395 }
 			}
 			if = {
 				limit = { NOT = { country_exists = FEZ } }
 				every_core_state = {
-					limit = {
-						NOT = { is_core_of = FEZ }
-					}
+					limit = { NOT = { is_core_of = FEZ } }
 					remove_core_of = FEZ
 				}
-				hidden_effect = {
-					FEZ = {
-						every_core_state = {
-							remove_core_of = FEZ
-						}
-					}
-				}
+				hidden_effect = { FEZ = { every_core_state = { remove_core_of = FEZ } } }
 				set_cosmetic_tag = FEZ
 				set_capital = { state = 392 }
 			}
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 }
 
 libya_libyan_foreign_policy = {
-
 	libya_core_northern_chad = {
-
 		icon = generic_nationalism
-
 		cost = 45
-
 		days_remove = 55
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_islamic_state_of_sahel
-		}
+		visible = { has_completed_focus = LBA_islamic_state_of_sahel }
 
 		available = {
 			has_completed_focus = LBA_topple_chad
@@ -4829,28 +4769,22 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_core_northern_niger = {
-
 		icon = generic_nationalism
-
 		cost = 300
-
 		days_remove = 365
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_islamic_state_of_sahel
-		}
+		visible = { has_completed_focus = LBA_islamic_state_of_sahel }
 
 		available = {
 			has_completed_focus = LBA_topple_niger
@@ -4875,28 +4809,22 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_core_algerian_sahara = {
-
 		icon = generic_nationalism
-
 		cost = 40
-
 		days_remove = 45
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_islamic_state_of_sahel
-		}
+		visible = { has_completed_focus = LBA_islamic_state_of_sahel }
 
 		available = {
 			has_completed_focus = LBA_topple_algeria
@@ -4923,28 +4851,22 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_core_northern_mali = {
-
 		icon = generic_nationalism
-
 		cost = 100
-
 		days_remove = 120
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_islamic_state_of_sahel
-		}
+		visible = { has_completed_focus = LBA_islamic_state_of_sahel }
 
 		available = {
 			has_completed_focus = LBA_infiltrate_mali
@@ -4975,28 +4897,22 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_core_mauritanian_sahara = {
-
 		icon = generic_nationalism
-
 		cost = 140
-
 		days_remove = 170
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_islamic_state_of_sahel
-		}
+		visible = { has_completed_focus = LBA_islamic_state_of_sahel }
 
 		available = {
 			has_completed_focus = LBA_expand_to_mauritania
@@ -5007,39 +4923,34 @@ libya_libyan_foreign_policy = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete libya_core_northern_mali"
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_core_mauritanian_sahara"
 			set_temp_variable = { treasury_change = -12 }
 			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove libya_core_northern_mali"
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_core_mauritanian_sahara"
 			add_state_core = 370
 			add_state_core = 413
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	libya_core_palestine = {
-
 		icon = generic_nationalism
-
 		cost = 300
-
 		days_remove = 360
-
 		fire_only_once = yes
-
-		visible = {
-			has_completed_focus = LBA_claim_jerusalem_for_arabs
-		}
+		visible = { has_completed_focus = LBA_claim_jerusalem_for_arabs }
 
 		available = {
 			any_owned_state = {
@@ -5056,25 +4967,21 @@ libya_libyan_foreign_policy = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove libya_core_palestine"
-			PAL = {
-				every_core_state = {
-					add_core_of = LBA
-				}
-			}
+			PAL = { every_core_state = { add_core_of = LBA } }
 		}
 
 		ai_will_do = {
-			factor = 100
+			base = 100
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_pacify_cyrenaica = {
-
 		icon = generic_nationalism
 
 		visible = {
@@ -5102,22 +5009,16 @@ libya_libyan_foreign_policy = {
 				add_core_of = ROOT
 			}
 			if = {
-				limit = {
-					NOT = { has_country_flag = LBA_tribalism_disabled }
-				}
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
 				set_temp_variable = { loyalty_change = 0.25 }
 				libya_change_cyrenaica_loyalty = yes
 			}
 		}
 
-		ai_will_do = {
-			factor = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	libya_pacify_tripolitania = {
-
 		icon = generic_nationalism
 
 		visible = {
@@ -5145,30 +5046,20 @@ libya_libyan_foreign_policy = {
 				add_core_of = ROOT
 			}
 			if = {
-				limit = {
-					391 = {
-						is_capital = no
-					}
-				}
+				limit = { 391 = { is_capital = no } }
 				set_capital = { state = 391 }
 			}
 			if = {
-				limit = {
-					NOT = { has_country_flag = LBA_tribalism_disabled }
-				}
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
 				set_temp_variable = { loyalty_change = 0.25 }
 				libya_change_tripolitania_loyalty = yes
 			}
 		}
 
-		ai_will_do = {
-			factor = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	libya_pacify_fezzan = {
-
 		icon = generic_nationalism
 
 		visible = {
@@ -5196,22 +5087,16 @@ libya_libyan_foreign_policy = {
 				add_core_of = ROOT
 			}
 			if = {
-				limit = {
-					NOT = { has_country_flag = LBA_tribalism_disabled }
-				}
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
 				set_temp_variable = { loyalty_change = 0.25 }
 				libya_change_fezzan_loyalty = yes
 			}
 		}
 
-		ai_will_do = {
-			factor = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	libya_pacify_tuaregs = {
-
 		icon = generic_nationalism
 
 		visible = {
@@ -5219,25 +5104,17 @@ libya_libyan_foreign_policy = {
 			918 = { NOT = { is_core_of = ROOT } }
 		}
 
-		available = {
-			918 = {	compliance > 30 }
-		}
+		available = { 918 = { compliance > 30 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_pacify_tuaregs"
-			918 = {
-				add_core_of = ROOT
-			}
+			918 = { add_core_of = ROOT }
 		}
 
-		ai_will_do = {
-			factor = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	libya_pacify_toubou = {
-
 		icon = generic_nationalism
 
 		visible = {
@@ -5267,28 +5144,28 @@ libya_libyan_foreign_policy = {
 					owns_state = 920
 					920 = { NOT = { is_core_of = ROOT } }
 				}
-				920 = {	compliance > 30	}
+				920 = { compliance > 30 }
 			}
 			if = {
 				limit = {
 					owns_state = 1100
 					1100 = { NOT = { is_core_of = ROOT } }
 				}
-				1100 = { compliance > 30	}
+				1100 = { compliance > 30 }
 			}
 			if = {
 				limit = {
 					owns_state = 1101
 					1101 = { NOT = { is_core_of = ROOT } }
 				}
-				1101 = { compliance > 30	}
+				1101 = { compliance > 30 }
 			}
 			if = {
 				limit = {
 					owns_state = 580
 					580 = { NOT = { is_core_of = ROOT } }
 				}
-				580 = {	compliance > 30	}
+				580 = { compliance > 30 }
 			}
 		}
 
@@ -5324,34 +5201,21 @@ libya_libyan_foreign_policy = {
 			}
 		}
 
-		ai_will_do = {
-			factor = 1000
-		}
-
+		ai_will_do = { base = 1000 }
 	}
 
 	libya_liberate_minorities = {
-
 		icon = generic_independence
-
 		cost = 100
-
 		days_remove = 30
-
 		target_array = global.libya_diplo_targets
-
 		war_with_target_on_remove = yes
+		target_root_trigger = { has_completed_focus = LBA_protect_toubou_and_tuaregs }
 
 		target_trigger = {
 			FROM = {
 				NOT = { is_subject_of = ROOT }
 				NOT = { is_in_faction_with = ROOT }
-			}
-		}
-
-		visible = {
-			has_completed_focus = LBA_protect_toubou_and_tuaregs
-			FROM = {
 				any_owned_state = {
 					OR = {
 						is_core_of = TUA
@@ -5363,22 +5227,20 @@ libya_libyan_foreign_policy = {
 		}
 
 		available = {
+			is_subject = no
 			FROM = {
 				OR = {
 					has_elections = no
 					has_stability < 0.20
 					has_government = fascism
 					has_government = nationalist
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
+					has_idea = corruption_level_10
+					has_idea = corruption_level_09
 				}
 			}
 			OR = {
 				is_neighbor_of = FROM
-				any_country = {
-					is_subject_of = ROOT
-					is_neighbor_of = FROM
-				}
+				any_subject_country = { is_neighbor_of = FROM }
 			}
 		}
 
@@ -5399,9 +5261,7 @@ libya_libyan_foreign_policy = {
 								NOT = { country_exists = TUA }
 							}
 							every_owned_state = {
-								limit = {
-									is_core_of = TIE
-								}
+								limit = { is_core_of = TIE }
 								transfer_state_to = TIE
 							}
 						}
@@ -5411,9 +5271,7 @@ libya_libyan_foreign_policy = {
 								NOT = { country_exists = TIE }
 							}
 							every_owned_state = {
-								limit = {
-									is_core_of = TUA
-								}
+								limit = { is_core_of = TUA }
 								transfer_state_to = TUA
 							}
 						}
@@ -5423,15 +5281,11 @@ libya_libyan_foreign_policy = {
 								country_exists = TIE
 							}
 							every_owned_state = {
-								limit = {
-									is_core_of = TIE
-								}
+								limit = { is_core_of = TIE }
 								transfer_state_to = TIE
 							}
 							every_owned_state = {
-								limit = {
-									is_core_of = TUA
-								}
+								limit = { is_core_of = TUA }
 								transfer_state_to = TUA
 							}
 						}
@@ -5459,11 +5313,11 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
-				any_neighbor_country = {
-					has_war_with = ROOT
+				any_enemy_country = {
+					is_neighbor_of = ROOT
 					has_capitulated = no
 				}
 			}
@@ -5472,31 +5326,20 @@ libya_libyan_foreign_policy = {
 				is_subject = yes
 			}
 		}
-
 	}
 
 	libya_launch_oef = {
-
 		icon = decision_humvee
-
 		cost = 100
-
 		days_remove = 30
-
 		target_array = global.oef_trans_sahara_targets
-
 		war_with_target_on_remove = yes
+		target_root_trigger = { has_completed_focus = LBA_oef_trans_sahara }
 
 		target_trigger = {
 			FROM = {
 				NOT = { is_subject_of = ROOT }
 				NOT = { is_in_faction_with = ROOT }
-			}
-		}
-
-		visible = {
-			has_completed_focus = LBA_oef_trans_sahara
-			FROM = {
 				NOT = { has_war_with = ROOT }
 				OR = {
 					salafist_caliphate_are_in_power = yes
@@ -5506,6 +5349,7 @@ libya_libyan_foreign_policy = {
 		}
 
 		available = {
+			is_subject = no
 			FROM = {
 				OR = {
 					salafist_caliphate_are_in_power = yes
@@ -5514,10 +5358,7 @@ libya_libyan_foreign_policy = {
 			}
 			OR = {
 				is_neighbor_of = FROM
-				any_country = {
-					is_subject_of = ROOT
-					is_neighbor_of = FROM
-				}
+				any_subject_country = { is_neighbor_of = FROM }
 			}
 		}
 
@@ -5530,11 +5371,11 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
-				any_neighbor_country = {
-					has_war_with = ROOT
+				any_enemy_country = {
+					is_neighbor_of = ROOT
 					has_capitulated = no
 				}
 			}
@@ -5543,15 +5384,11 @@ libya_libyan_foreign_policy = {
 				is_subject = yes
 			}
 		}
-
 	}
 
 	libya_build_rail_to_tunisia = {
-
 		icon = border_war
-
 		cost = 100
-
 		fire_only_once = yes
 
 		visible = {
@@ -5583,25 +5420,23 @@ libya_libyan_foreign_policy = {
 				limit = { has_idea = LBA_libyan_gauge_railroads }
 				custom_effect_tooltip = libya_build_rail_to_tunisia_tt_2
 			}
-			country_event = { id = LibyaFocus.33 }
+			country_event = LibyaFocus.33
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_build_rail_to_egypt = {
-
 		icon = border_war
-
 		cost = 100
-
 		fire_only_once = yes
 
 		visible = {
@@ -5633,25 +5468,23 @@ libya_libyan_foreign_policy = {
 				limit = { has_idea = LBA_libyan_gauge_railroads }
 				custom_effect_tooltip = libya_build_rail_to_tunisia_tt_2
 			}
-			country_event = { id = LibyaFocus.33 }
+			country_event = LibyaFocus.33
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_build_rail_to_niger = {
-
 		icon = border_war
-
 		cost = 100
-
 		fire_only_once = yes
 
 		visible = {
@@ -5684,25 +5517,23 @@ libya_libyan_foreign_policy = {
 			set_variable = { LBA_target_of_rail_project = NGR.id }
 			set_variable = { LBA_influence_gain_from_rails = 5 }
 			custom_effect_tooltip = libya_build_rail_to_niger_tt
-			country_event = { id = LibyaFocus.33 }
+			country_event = LibyaFocus.33
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_build_rail_to_chad = {
-
 		icon = border_war
-
 		cost = 100
-
 		fire_only_once = yes
 
 		visible = {
@@ -5731,68 +5562,44 @@ libya_libyan_foreign_policy = {
 			set_variable = { LBA_target_of_rail_project = CHA.id }
 			set_variable = { LBA_influence_gain_from_rails = 5 }
 			custom_effect_tooltip = libya_build_rail_to_chad_tt
-			country_event = { id = LibyaFocus.33 }
+			country_event = LibyaFocus.33
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
 	libya_negotiations_with_un = {
-
 		icon = political_discourse
-
 		fire_only_once = yes
-
 		days_mission_timeout = 730
-
 		is_good = yes
-
-		allowed = {
-			always = no
-		}
-		activation = {
-			has_completed_focus = LBA_negotiations_with_un
-		}
-
-		available = {
-			always = no
-		}
+		allowed = { always = no }
+		activation = { has_completed_focus = LBA_negotiations_with_un }
+		available = { always = no }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout libya_negotiations_with_un"
 			custom_effect_tooltip = libya_negotiations_with_un_tt
 		}
 
-		ai_will_do = {
-			factor = 5
-		}
-
+		ai_will_do = { base = 5 }
 	}
 
 	libya_casablanca_accords = {
-
 		icon = political_discourse
-
 		fire_only_once = yes
-
 		days_mission_timeout = 365
-
 		selectable_mission = yes
-
-		allowed = {
-			always = no
-		}
-
-		activation = {
-			has_completed_focus = LBA_casablanca_accords
-		}
+		allowed = { always = no }
+		activation = { has_completed_focus = LBA_casablanca_accords }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -5813,24 +5620,23 @@ libya_libyan_foreign_policy = {
 			hidden_effect = { news_event = { id = LibyaFocusNews.16 hours = 12 } }
 			if = {
 				limit = { has_country_flag = libya_western_sahara_peace_plan_annexation }
-				set_temp_variable = { tag_index = ROOT }
 				set_temp_variable = { influence_target = MOR }
 				set_temp_variable = { percent_change = 10 }
 				change_influence_percentage = yes
 				if = {
-					limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_SHA } }
+					limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_@SHA } }
 					custom_effect_tooltip = libya_casablanca_accords_SHA_resistance_tt
 					if = {
 						limit = {
 							NOT = { is_in_faction = yes }
 							NOT = { MOR = { is_in_faction = yes } }
 						}
-						create_faction = LBA_west_sahara_task_force
+						create_faction_from_template = faction_template_wstf
 						add_to_faction = MOR
 						MOR = { set_country_flag = LBA_casablanca_acccords_temp_alliance }
 						if = {
 							limit = {
-								has_country_flag = libya_casablanca_accords_signed_by_ALG
+								has_country_flag = libya_casablanca_accords_signed_by_@ALG
 								NOT = { ALG = { is_in_faction = yes } }
 							}
 							add_to_faction = ALG
@@ -5844,30 +5650,14 @@ libya_libyan_foreign_policy = {
 				limit = { has_country_flag = libya_western_sahara_peace_plan_autonomy }
 				effect_tooltip = {
 					MOR = {
-						373 = {
-							transfer_state_to = SHA
-						}
-						if = {
-							limit = {
-								has_global_flag = GAME_RULE_allow_colored_puppets
-							}
-							set_autonomy = {
-								target = SHA
-								autonomy_state = autonomy_autonomous_state_colored
-							}
-						}
-						else = {
-							set_autonomy = {
-								target = SHA
-								autonomy_state = autonomy_autonomous_state
-							}
+						373 = { transfer_state_to = SHA }
+						set_autonomy = {
+							target = SHA
+							autonomy_state = autonomy_autonomous_state
 						}
 					}
-					SHA = {
-						set_capital = { state = 373 }
-					}
+					SHA = { set_capital = { state = 373 } }
 				}
-				set_temp_variable = { tag_index = ROOT }
 				set_temp_variable = { influence_target = MOR }
 				set_temp_variable = { percent_change = 5 }
 				change_influence_percentage = yes
@@ -5879,23 +5669,23 @@ libya_libyan_foreign_policy = {
 			}
 			if = {
 				limit = { has_country_flag = libya_western_sahara_peace_plan_independence }
-				set_temp_variable = { tag_index = ROOT }
 				set_temp_variable = { influence_target = SHA }
 				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
 				if = {
-					limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_MOR } }
+					limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_@MOR } }
 					custom_effect_tooltip = libya_casablanca_accords_MOR_resistance_tt
 					if = {
 						limit = {
 							NOT = { is_in_faction = yes }
 							NOT = { SHA = { is_in_faction = yes } }
 						}
-						create_faction = LBA_west_sahara_task_force
+						create_faction_from_template = faction_template_wstf
 						add_to_faction = SHA
 						SHA = { set_country_flag = LBA_casablanca_acccords_temp_alliance }
 						if = {
 							limit = {
-								has_country_flag = libya_casablanca_accords_signed_by_ALG
+								has_country_flag = libya_casablanca_accords_signed_by_@ALG
 								NOT = { ALG = { is_in_faction = yes } }
 							}
 							add_to_faction = ALG
@@ -5904,33 +5694,29 @@ libya_libyan_foreign_policy = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
+					limit = { has_country_flag = libya_casablanca_accords_signed_by_@MOR }
 					MOR = { country_event = { id = LibyaFocus.92 hours = 6 } }
 				}
 				SHA = { country_event = { id = LibyaFocus.92 hours = 6 } }
 			}
 			if = {
 				limit = { has_country_flag = libya_western_sahara_peace_plan_mauritania }
-				set_temp_variable = { tag_index = ROOT }
 				set_temp_variable = { influence_target = MAU }
 				set_temp_variable = { percent_change = 10 }
+				change_influence_percentage = yes
 				if = {
 					limit = {
 						OR = {
-							NOT = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
-							NOT = { has_country_flag = libya_casablanca_accords_signed_by_SHA }
+							NOT = { has_country_flag = libya_casablanca_accords_signed_by_@MOR }
+							NOT = { has_country_flag = libya_casablanca_accords_signed_by_@SHA }
 						}
 					}
 					if = {
-						limit = {
-							NOT = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
-						}
+						limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_@MOR } }
 						custom_effect_tooltip = libya_casablanca_accords_MOR_resistance_tt
 					}
 					if = {
-						limit = {
-							NOT = { has_country_flag = libya_casablanca_accords_signed_by_SHA }
-						}
+						limit = { NOT = { has_country_flag = libya_casablanca_accords_signed_by_@SHA } }
 						custom_effect_tooltip = libya_casablanca_accords_SHA_resistance_tt
 					}
 					if = {
@@ -5938,12 +5724,12 @@ libya_libyan_foreign_policy = {
 							NOT = { is_in_faction = yes }
 							NOT = { MAU = { is_in_faction = yes } }
 						}
-						create_faction = LBA_west_sahara_task_force
+						create_faction_from_template = faction_template_wstf
 						add_to_faction = MAU
 						MAU = { set_country_flag = LBA_casablanca_acccords_temp_alliance }
 						if = {
 							limit = {
-								has_country_flag = libya_casablanca_accords_signed_by_ALG
+								has_country_flag = libya_casablanca_accords_signed_by_@ALG
 								NOT = { ALG = { is_in_faction = yes } }
 							}
 							add_to_faction = ALG
@@ -5952,7 +5738,7 @@ libya_libyan_foreign_policy = {
 					}
 				}
 				if = {
-					limit = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
+					limit = { has_country_flag = libya_casablanca_accords_signed_by_@MOR }
 					MOR = { country_event = { id = LibyaFocus.93 hours = 6 } }
 				}
 				MAU = { country_event = { id = LibyaFocus.93 hours = 12 } }
@@ -5969,16 +5755,11 @@ libya_libyan_foreign_policy = {
 			hidden_effect = { news_event = { id = LibyaFocusNews.18 hours = 12 } }
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_draft_solution = {
-
 		icon = political_discourse
-
 		fire_only_once = yes
 
 		visible = {
@@ -5986,22 +5767,15 @@ libya_libyan_foreign_policy = {
 			has_active_mission = libya_casablanca_accords
 		}
 
-		available = {
-		}
-
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_casablanca_accords_draft_solution"
 			country_event = LibyaFocus.59
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_hold_negotiations = {
-
 		icon = political_discourse
 
 		visible = {
@@ -6028,31 +5802,24 @@ libya_libyan_foreign_policy = {
 				set_country_flag = libya_casablanca_accords_at_least_one_neg
 			}
 			custom_effect_tooltip = libya_casablanca_accords_hold_negotiations_tt
-			hidden_effect = {
-				libya_update_casablanca_accords_acceptance = yes
-			}
+			hidden_effect = { libya_update_casablanca_accords_acceptance = yes }
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_convince_morocco = {
-
+		fixed_random_seed = no
 		icon = political_discourse
-
 		cost = 50
-
 		days_re_enable = 30
 
 		visible = {
 			country_exists = MOR
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
-				NOT = { has_country_flag = libya_casablanca_accords_signed_by_MOR }
-				has_country_flag = libya_casablanca_accords_MOR_left
+				NOT = { has_country_flag = libya_casablanca_accords_signed_by_@MOR }
+				has_country_flag = libya_casablanca_accords_left_@MOR
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6067,7 +5834,6 @@ libya_libyan_foreign_policy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_casablanca_accords_convince_morocco"
 			custom_effect_tooltip = libya_casablanca_accords_convince_target_tt
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = MOR }
 			set_temp_variable = { percent_change = -10 }
 			change_influence_percentage = yes
@@ -6078,36 +5844,27 @@ libya_libyan_foreign_policy = {
 			}
 			effect_tooltip = {
 				random_list = {
-					Morocco_acceptance = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt
-					}
-					Morocco_acceptance_neg = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt
-					}
+					Morocco_acceptance = { custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt }
+					Morocco_acceptance_neg = { custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt }
 				}
 			}
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_convince_sahrawi = {
-
+		fixed_random_seed = no
 		icon = political_discourse
-
 		cost = 50
-
 		days_re_enable = 30
 
 		visible = {
 			country_exists = SHA
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
-				NOT = { has_country_flag = libya_casablanca_accords_signed_by_SHA }
-				has_country_flag = libya_casablanca_accords_SHA_left
+				NOT = { has_country_flag = libya_casablanca_accords_signed_by_@SHA }
+				has_country_flag = libya_casablanca_accords_left_@SHA
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6122,7 +5879,6 @@ libya_libyan_foreign_policy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_casablanca_accords_convince_sahrawi"
 			custom_effect_tooltip = libya_casablanca_accords_convince_target_tt
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = SHA }
 			set_temp_variable = { percent_change = -10 }
 			change_influence_percentage = yes
@@ -6133,36 +5889,27 @@ libya_libyan_foreign_policy = {
 			}
 			effect_tooltip = {
 				random_list = {
-					Sahrawi_acceptance = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt
-					}
-					Sahrawi_acceptance_neg = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt
-					}
+					Sahrawi_acceptance = { custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt }
+					Sahrawi_acceptance_neg = { custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt }
 				}
 			}
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_convince_algeria = {
-
+		fixed_random_seed = no
 		icon = political_discourse
-
 		cost = 50
-
 		days_re_enable = 30
 
 		visible = {
 			country_exists = ALG
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
-				NOT = { has_country_flag = libya_casablanca_accords_signed_by_ALG }
-				has_country_flag = libya_casablanca_accords_ALG_left
+				NOT = { has_country_flag = libya_casablanca_accords_signed_by_@ALG }
+				has_country_flag = libya_casablanca_accords_left_@ALG
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6177,7 +5924,6 @@ libya_libyan_foreign_policy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_casablanca_accords_convince_algeria"
 			custom_effect_tooltip = libya_casablanca_accords_convince_target_tt
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = ALG }
 			set_temp_variable = { percent_change = -10 }
 			change_influence_percentage = yes
@@ -6188,36 +5934,27 @@ libya_libyan_foreign_policy = {
 			}
 			effect_tooltip = {
 				random_list = {
-					Algeria_acceptance = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt
-					}
-					Algeria_acceptance_neg = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt
-					}
+					Algeria_acceptance = { custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt }
+					Algeria_acceptance_neg = { custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt }
 				}
 			}
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_casablanca_accords_convince_mauritania = {
-
+		fixed_random_seed = no
 		icon = political_discourse
-
 		cost = 50
-
 		days_re_enable = 30
 
 		visible = {
 			country_exists = MAU
 			has_completed_focus = LBA_casablanca_accords
 			OR = {
-				NOT = { has_country_flag = libya_casablanca_accords_signed_by_MAU }
-				has_country_flag = libya_casablanca_accords_MAU_left
+				NOT = { has_country_flag = libya_casablanca_accords_signed_by_@MAU }
+				has_country_flag = libya_casablanca_accords_left_@MAU
 			}
 			has_active_mission = libya_casablanca_accords
 		}
@@ -6232,7 +5969,6 @@ libya_libyan_foreign_policy = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete libya_casablanca_accords_convince_mauritania"
 			custom_effect_tooltip = libya_casablanca_accords_convince_target_tt
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = MAU }
 			set_temp_variable = { percent_change = -10 }
 			change_influence_percentage = yes
@@ -6243,34 +5979,21 @@ libya_libyan_foreign_policy = {
 			}
 			effect_tooltip = {
 				random_list = {
-					Mauritania_acceptance = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt
-					}
-					Mauritania_acceptance_neg = {
-						custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt
-					}
+					Mauritania_acceptance = { custom_effect_tooltip = libya_casablanca_accords_convince_accept_tt }
+					Mauritania_acceptance_neg = { custom_effect_tooltip = libya_casablanca_accords_convince_reject_tt }
 				}
 			}
 		}
 
-		ai_will_do = {
-			factor = 100
-		}
-
+		ai_will_do = { base = 100 }
 	}
 
 	libya_anti_colonial_start_revolution = {
-
-		icon = GFX_anti_nationalism
-
+		icon = GFX_decision_zsr_revol
 		cost = 200
-
 		days_re_enable = 720
-
 		days_remove = 90
-
 		target_array = global.countries
-
 		war_with_target_on_remove = yes
 
 		target_root_trigger = {
@@ -6297,9 +6020,7 @@ libya_libyan_foreign_policy = {
 				NOT = { is_in_faction_with = ROOT }
 				NOT = { is_subject_of = ROOT }
 			}
-			has_equipment = {
-				infantry_weapons > 999
-			}
+			has_equipment = { infantry_weapons_1 > 999 }
 		}
 
 		complete_effect = {
@@ -6308,10 +6029,10 @@ libya_libyan_foreign_policy = {
 			multiply_temp_variable = { treasury_change = -0.25 }
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = infantry_weapons
+				type = infantry_weapons_1
 				amount = -1000
 			}
-			FROM = { country_event = { id = LibyaFocus.81 } }
+			FROM = { country_event = LibyaFocus.81 }
 			custom_effect_tooltip = libya_anti_colonial_start_revolution_tt_1
 		}
 
@@ -6332,29 +6053,140 @@ libya_libyan_foreign_policy = {
 		}
 
 		ai_will_do = {
-			factor = 5
+			base = 5
 			modifier = {
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
-
 	}
 
+	libya_demand_tuareg_territory = {
+		icon = generic_independence
+		cost = 100
+		days_remove = 30
+		target_array = global.libya_diplo_targets
+		war_with_target_on_remove = yes
+		target_root_trigger = { has_completed_focus = LBA_liberate_tuareg }
+
+		target_trigger = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { is_in_faction_with = ROOT }
+				any_owned_state = { is_core_of = TUA }
+				NOT = { has_war_with = ROOT }
+			}
+		}
+
+		available = {
+			is_subject = no
+			OR = {
+				is_neighbor_of = FROM
+				any_subject_country = { is_neighbor_of = FROM }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_demand_tuareg_territory"
+			FROM = { country_event = { id = LibyaFocus.109 hours = 6 } }
+			custom_effect_tooltip = libya_liberate_minorities_tt
+			FROM = {
+				effect_tooltip = {
+					every_owned_state = {
+						limit = { is_core_of = TUA }
+						transfer_state_to = ROOT
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				any_enemy_country = {
+					is_neighbor_of = ROOT
+					has_capitulated = no
+				}
+			}
+			modifier = {
+				factor = 0
+				is_subject = yes
+			}
+		}
+	}
+
+	libya_demand_toubou_territory = {
+		icon = generic_independence
+		cost = 100
+		days_remove = 30
+		target_array = global.libya_diplo_targets
+		war_with_target_on_remove = yes
+		target_root_trigger = { has_completed_focus = LBA_liberate_toubou }
+
+		target_trigger = {
+			FROM = {
+				NOT = { is_subject_of = ROOT }
+				NOT = { is_in_faction_with = ROOT }
+				any_owned_state = { is_core_of = TIE }
+				NOT = { has_war_with = ROOT }
+			}
+		}
+
+		available = {
+			is_subject = no
+			OR = {
+				is_neighbor_of = FROM
+				any_subject_country = { is_neighbor_of = FROM }
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_demand_toubou_territory"
+			FROM = { country_event = { id = LibyaFocus.112 hours = 6 } }
+			custom_effect_tooltip = libya_liberate_minorities_tt
+			FROM = {
+				effect_tooltip = {
+					every_owned_state = {
+						limit = { is_core_of = TIE }
+						transfer_state_to = ROOT
+					}
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				any_enemy_country = {
+					is_neighbor_of = ROOT
+					has_capitulated = no
+				}
+			}
+			modifier = {
+				factor = 0
+				is_subject = yes
+			}
+		}
+	}
 }
 
 aozou_strip_occupation_decisions = {
-
 	generic_occupy_aouzou_strip = {
-
 		icon = conter_send_button
 
-		visible = {
+		allowed = {
 			OR = {
 				original_tag = LBA
 				original_tag = CHA
 				original_tag = TIE
 			}
+		}
+
+		visible = {
 			NOT = { owns_state = 580 }
 			580 = {
 				owner = {
@@ -6371,6 +6203,7 @@ aozou_strip_occupation_decisions = {
 		}
 
 		available = {
+			is_subject = no
 			if = {
 				limit = { original_tag = LBA }
 				OR = {
@@ -6385,20 +6218,747 @@ aozou_strip_occupation_decisions = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision complete generic_occupy_aouzou_strip [FROM.GetName]"
-			580 = { owner = { country_event = { id = LibyaFocus.104 } } }
+			log = "[GetDateText]: [Root.GetName]: Decision complete generic_occupy_aouzou_strip [ROOT.GetName]"
+			580 = { owner = { country_event = LibyaFocus.104 } }
 			custom_effect_tooltip = generic_occupy_aouzou_strip_tt
 			580 = { transfer_state_to = ROOT }
 		}
 
 		ai_will_do = {
-			factor = 1000
+			base = 1000
 			modifier = {
 				factor = 0
 				has_war = yes
 			}
 		}
+	}
+}
 
+libya_aftermath_of_civil_war = {
+	libya_integrate_militias_mission = {
+		fixed_random_seed = no
+
+		activation = {
+			has_global_flag = first_libyan_civil_war_over
+			OR = {
+				has_dynamic_modifier = { modifier = LBA_tribal_militias }
+				has_dynamic_modifier = { modifier = LBA_jihadist_militias }
+				has_dynamic_modifier = { modifier = LBA_islamist_militias }
+				has_dynamic_modifier = { modifier = LBA_secularist_militias }
+				has_dynamic_modifier = { modifier = LBA_reformist_militias }
+			}
+			has_war = no
+		}
+
+		available = { hidden_trigger = { always = no } }
+		cancel_trigger = { has_war = yes }
+		is_good = yes
+		days_mission_timeout = 90
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision libya_integrate_militias_mission"
+			if = {
+				limit = { NOT = { has_country_flag = libya_LNA_formed } }
+				set_country_flag = libya_LNA_formed
+				custom_effect_tooltip = libya_integrate_militias_mission_create_LNA_tt
+			}
+			random_list = {
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_tribal_militias } }
+					}
+					libya_remove_tribal_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_jihadist_militias } }
+					}
+					libya_remove_jihadist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_islamist_militias } }
+					}
+					libya_remove_islamist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_secularist_militias } }
+					}
+					libya_remove_secularist_independence = yes
+				}
+				10 = {
+					modifier = {
+						factor = 0
+						NOT = { has_dynamic_modifier = { modifier = LBA_reformist_militias } }
+					}
+					libya_remove_reformist_independence = yes
+				}
+			}
+		}
 	}
 
+	libya_attack_ansar_al_sharia_in_benghazi = {
+		icon = GFX_decision_infiltrate_state
+		days_re_enable = 60
+		days_remove = 14
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+
+		visible = {
+			ASL = { owns_state = 395 }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			has_border_war = no
+			OR = {
+				AND = {
+					controls_state = 396
+					divisions_in_state = {
+						size > 3
+						state = 396
+					}
+				}
+				AND = {
+					controls_state = 397
+					divisions_in_state = {
+						size > 3
+						state = 397
+					}
+				}
+			}
+			has_manpower > 1000
+			396 = { NOT = { has_dynamic_modifier = { modifier = LBA_shura_council_of_derna } } }
+			397 = { NOT = { has_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } } }
+			395 = { NOT = { has_border_war = yes } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_benghazi"
+			add_command_power = -50
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_benghazi [FROM.GetName]"
+			if = {
+				limit = {
+					controls_state = 396
+					NOT = { controls_state = 395 }
+					396 = { NOT = { has_border_war = yes } }
+					395 = { NOT = { has_border_war = yes } }
+					divisions_in_state = { size > 0 state = 396 }
+				}
+				start_border_war = {
+					change_state_after_war = yes
+					attacker = {
+						state = 396
+						num_provinces = 2
+					}
+					defender = {
+						state = 395
+						num_provinces = 3
+					}
+				}
+			}
+			else_if = {
+				limit = {
+					controls_state = 397
+					NOT = { controls_state = 395 }
+					397 = { NOT = { has_border_war = yes } }
+					395 = { NOT = { has_border_war = yes } }
+					divisions_in_state = { size > 0 state = 397 }
+				}
+				start_border_war = {
+					change_state_after_war = yes
+					attacker = {
+						state = 397
+						num_provinces = 2
+					}
+					defender = {
+						state = 395
+						num_provinces = 3
+					}
+				}
+			}
+			else = { country_event = border_war_operation_blocked.1 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_attack_ansar_al_sharia_in_derna = {
+		fixed_random_seed = no
+		icon = GFX_decision_infiltrate_state
+		days_re_enable = 60
+		days_remove = 14
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		highlight_states = { highlight_state_targets = { state = 396 } }
+
+		visible = {
+			396 = { has_dynamic_modifier = { modifier = LBA_shura_council_of_derna } }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			has_border_war = no
+			divisions_in_state = {
+				size > 3
+				state = 396
+			}
+			has_manpower > 1000
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_derna"
+			add_command_power = -50
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_derna [FROM.GetName]"
+			if = {
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
+				custom_effect_tooltip = libya_attack_ansar_al_sharia_in_derna_tt
+				set_temp_variable = { chance_of_success = cyrenaica_loyalty }
+				multiply_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 1 }
+				subtract_from_temp_variable = { chance_of_failure = chance_of_success }
+			}
+			else = {
+				set_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 0.25 }
+			}
+			random_list = {
+				chance_of_success = {
+					396 = {
+						if = { limit = { has_dynamic_modifier = { modifier = LBA_shura_council_of_derna } } remove_dynamic_modifier = { modifier = LBA_shura_council_of_derna } }
+					}
+				}
+				chance_of_failure = { libya_add_jihadist_independence = yes }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_attack_ansar_al_sharia_in_ajdabiya = {
+		fixed_random_seed = no
+		icon = GFX_decision_infiltrate_state
+		days_re_enable = 60
+		days_remove = 14
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		highlight_states = { highlight_state_targets = { state = 397 } }
+
+		visible = {
+			397 = { has_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			has_border_war = no
+			divisions_in_state = {
+				size > 3
+				state = 397
+			}
+			OR = {
+				owns_state = 395
+				owns_state = 919
+			}
+			has_manpower > 1000
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_ajdabiya"
+			add_command_power = -50
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_ajdabiya [FROM.GetName]"
+			if = {
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
+				custom_effect_tooltip = libya_attack_ansar_al_sharia_in_ajdabiya_tt
+				set_temp_variable = { chance_of_success = cyrenaica_loyalty }
+				multiply_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 1 }
+				subtract_from_temp_variable = { chance_of_failure = chance_of_success }
+			}
+			else = {
+				set_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 0.25 }
+			}
+			random_list = {
+				chance_of_success = {
+					397 = {
+						if = { limit = { has_dynamic_modifier = { modifier = LBA_shura_council_of_derna } } remove_dynamic_modifier = { modifier = LBA_shura_council_of_derna } }
+					}
+				}
+				chance_of_failure = { libya_add_jihadist_independence = yes }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_attack_ansar_al_sharia_in_kufra = {
+		icon = GFX_decision_infiltrate_state
+		days_remove = 90
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+		highlight_states = { highlight_state_targets = { state = 1100 } }
+
+		visible = {
+			1100 = { has_dynamic_modifier = { modifier = LBA_southern_insurgency } }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			has_border_war = no
+			divisions_in_state = {
+				size > 3
+				state = 1100
+			}
+			397 = { NOT = { has_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } } }
+		}
+
+		modifier = { personnel_cost_multiplier_modifier = 0.10 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_kufra"
+			add_command_power = -50
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_kufra [FROM.GetName]"
+			1100 = {
+				if = { limit = { has_dynamic_modifier = { modifier = LBA_southern_insurgency } } remove_dynamic_modifier = { modifier = LBA_southern_insurgency } }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_attack_ansar_al_sharia_in_sirte = {
+		icon = GFX_decision_infiltrate_state
+		days_re_enable = 60
+		days_remove = 14
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+
+		visible = {
+			ASL = { owns_state = 919 }
+			NOT = { has_war_with = ASL }
+		}
+
+		available = {
+			has_border_war = no
+			OR = {
+				AND = {
+					controls_state = 391
+					divisions_in_state = {
+						size > 3
+						state = 391
+					}
+				}
+				AND = {
+					controls_state = 397
+					divisions_in_state = {
+						size > 3
+						state = 397
+					}
+					397 = { NOT = { has_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } } }
+				}
+			}
+			has_manpower > 1000
+			919 = { NOT = { has_border_war = yes } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_sirte"
+			add_command_power = -50
+			add_manpower = -1000
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_sirte [FROM.GetName]"
+			if = {
+				limit = { 392 = { is_demilitarized_zone = yes } }
+				custom_effect_tooltip = libya_attack_ansar_al_sharia_in_sirte_tooltip
+				if = {
+					limit = {
+						controls_state = 391
+						NOT = { controls_state = 919 }
+						391 = { NOT = { has_border_war = yes } }
+						919 = { NOT = { has_border_war = yes } }
+						divisions_in_state = { size > 0 state = 391 }
+					}
+					start_border_war = {
+						change_state_after_war = yes
+						attacker = {
+							state = 391
+							num_provinces = 2
+						}
+						defender = {
+							state = 919
+							num_provinces = 2
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						controls_state = 397
+						NOT = { controls_state = 919 }
+						397 = { NOT = { has_border_war = yes } }
+						919 = { NOT = { has_border_war = yes } }
+						divisions_in_state = { size > 0 state = 397 }
+					}
+					start_border_war = {
+						change_state_after_war = yes
+						attacker = {
+							state = 397
+							num_provinces = 2
+						}
+						defender = {
+							state = 919
+							num_provinces = 2
+						}
+					}
+				}
+				else = { country_event = border_war_operation_blocked.1 }
+			}
+			else = {
+				if = {
+					limit = {
+						controls_state = 391
+						NOT = { controls_state = 919 }
+						391 = { NOT = { has_border_war = yes } }
+						919 = { NOT = { has_border_war = yes } }
+						divisions_in_state = { size > 0 state = 391 }
+					}
+					start_border_war = {
+						change_state_after_war = yes
+						attacker = {
+							state = 391
+							num_provinces = 2
+						}
+						defender = {
+							state = 919
+							num_provinces = 2
+						}
+					}
+				}
+				else_if = {
+					limit = {
+						controls_state = 397
+						NOT = { controls_state = 919 }
+						397 = { NOT = { has_border_war = yes } }
+						919 = { NOT = { has_border_war = yes } }
+						divisions_in_state = { size > 0 state = 397 }
+					}
+					start_border_war = {
+						change_state_after_war = yes
+						attacker = {
+							state = 397
+							num_provinces = 2
+						}
+						defender = {
+							state = 919
+							num_provinces = 2
+						}
+					}
+				}
+				else = { country_event = border_war_operation_blocked.1 }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_attack_ansar_al_sharia_in_sabha = {
+		fixed_random_seed = no
+		icon = GFX_decision_infiltrate_state
+		days_re_enable = 60
+		days_remove = 14
+		custom_cost_trigger = { command_power > 50 }
+		custom_cost_text = command_power_more_than_50
+
+		visible = {
+			392 = { is_demilitarized_zone = yes }
+			NOT = { has_war_with = ASL }
+			has_border_war = no
+		}
+
+		available = {
+			any_country_division = {
+				OR = {
+					division_has_majority_template = Special_Forces
+					division_has_majority_template = L_Air_Inf_Bat
+				}
+			}
+			has_deployed_air_force_size = {
+				size > 0
+				type = air_transport
+			}
+			OR = {
+				has_deployed_air_force_size = {
+					size > 0
+					type = cas
+				}
+				has_deployed_air_force_size = {
+					size > 0
+					type = tactical_bomber
+				}
+				has_deployed_air_force_size = {
+					size > 0
+					type = strategic_bomber
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_attack_ansar_al_sharia_in_sabha"
+			add_command_power = -50
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove libya_attack_ansar_al_sharia_in_sabha [FROM.GetName]"
+			if = {
+				limit = { NOT = { has_country_flag = LBA_tribalism_disabled } }
+				custom_effect_tooltip = libya_attack_ansar_al_sharia_in_sabha_tt
+				set_temp_variable = { chance_of_success = fezzan_loyalty }
+				multiply_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 1 }
+				subtract_from_temp_variable = { chance_of_failure = chance_of_success }
+			}
+			else = {
+				set_temp_variable = { chance_of_success = 0.75 }
+				set_temp_variable = { chance_of_failure = 0.25 }
+			}
+			random_list = {
+				chance_of_success = { 392 = { set_demilitarized_zone = no } }
+				chance_of_failure = {
+					392 = {
+						set_demilitarized_zone = no
+						if = {
+							limit = { air_base > 1 }
+							remove_building = {
+								type = air_base
+								level = 2
+							}
+						}
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	libya_operation_dignity_mission = {
+		icon = GFX_decision_infiltrate_state
+		activation = { always = no }
+		available = { NOT = { country_exists = ASL } }
+
+		cancel_trigger = {
+			OR = {
+				has_war = yes
+				has_country_leader = {
+					character = LBA_khalifa_haftar
+					ruling_only = yes
+				}
+				NOT = { has_character = LBA_khalifa_haftar }
+			}
+		}
+
+		is_good = no
+		war_with_on_timeout = ASL
+		days_mission_timeout = 600
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete libya_operation_dignity_mission"
+			add_popularity = {
+				ideology = fascism
+				popularity = -0.15
+			}
+			set_temp_variable = { temp_opinion = 20 }
+			change_the_military_opinion = yes
+			add_stability = 0.10
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout libya_operation_dignity_mission [FROM.GetName]"
+			custom_effect_tooltip = libya_operation_dignity_mission_tooltip
+			if = {
+				limit = { has_dynamic_modifier = { modifier = LBA_secularist_militias } }
+				remove_dynamic_modifier = { modifier = LBA_secularist_militias }
+			}
+			if = {
+				limit = { has_template = "Liwa al-Jaysh" }
+				delete_unit_template_and_units = {
+					division_template = "Liwa al-Jaysh"
+					disband = no
+				}
+			}
+			set_cosmetic_tag = LBA_GENERAL_NATIONAL_CONGRESS
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			hidden_effect = {
+				if = {
+					limit = {
+						has_war = no
+						country_exists = ASL
+						ASL = { has_war = no }
+					}
+					hidden_effect = {
+						start_civil_war = {
+							ruling_party = ROOT
+							ideology = nationalist
+							army_ratio = 0
+							states = all
+							states_filter = {
+								is_owned_by = ROOT
+								OR = {
+									state = 395
+									state = 396
+									state = 397
+									state = 579
+								}
+							}
+							set_country_flag = LBA_this_is_LNA
+							set_cosmetic_tag = LBA_LIBYAN_NATIONAL_ARMY
+							clr_country_flag = dynamic_flag
+							clr_country_flag = dynamic_rebel_flag
+							set_temp_variable = { rul_party_temp = 22 }
+							change_ruling_party_effect = yes
+							LBA = {
+								LBA_khalifa_haftar = { set_nationality = PREV.PREV }
+								LBA_abdulrazek_alnadoori = { set_nationality = PREV.PREV }
+								LBA_fawzi_almansouri = { set_nationality = PREV.PREV }
+								LBA_saqr_geroushi = { set_nationality = PREV.PREV }
+								LBA_faraj_al_mahdawi = { set_nationality = PREV.PREV }
+							}
+							if = {
+								limit = { ROOT = { has_completed_focus = LBA_libyan_national_army } }
+								unlock_national_focus = LBA_libyan_national_army
+							}
+							else = { complete_national_focus = LBA_libyan_national_army }
+							complete_national_focus = LBA_call_back_haftar
+							if = {
+								limit = { has_dlc = "No Step Back" }
+								load_oob = "LBA_LNA_forces_nsb"
+							} else = {
+								load_oob = "LBA_LNA_forces_nonnsb"
+							}
+						}
+						if = {
+							limit = { country_exists = LNA }
+							LNA = {
+								declare_war_on = {
+									target = ASL
+									type = civil_war
+								}
+								add_civil_war_target = ASL
+							}
+						}
+						declare_war_on = {
+							target = ASL
+							type = civil_war
+						}
+						add_civil_war_target = ASL
+						if = {
+							limit = { ASL = { NOT = { has_template = "Liwa al-Shuhada" } } }
+							ASL = {
+								division_template = {
+									name = "Liwa al-Shuhada"
+									regiments = {
+										Mot_Militia_Bat = { x = 0 y = 0 }
+										Mot_Militia_Bat = { x = 0 y = 1 }
+										Mot_Militia_Bat = { x = 0 y = 2 }
+									}
+									support = {
+										L_Recce_Comp = { x = 0 y = 0 }
+									}
+								}
+							}
+						}
+						if = {
+							limit = { 396 = { has_dynamic_modifier = { modifier = LBA_shura_council_of_derna } } }
+							ASL = {
+								set_province_controller = 1204
+								396 = {
+									create_unit = {
+										division = "name = \"Quat Himayat Darnah\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+										owner = ASL
+										id = 1204
+										allow_spawning_on_enemy_provs = yes
+									}
+								}
+							}
+						}
+						if = {
+							limit = { 397 = { has_dynamic_modifier = { modifier = LBA_shura_council_of_ajdabiya } } }
+							ASL = {
+								set_province_controller = 1127
+								397 = {
+									create_unit = {
+										division = "name = \"Quat Himayat Agdabiya\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+										owner = ASL
+										id = 1127
+										allow_spawning_on_enemy_provs = yes
+									}
+								}
+							}
+						}
+						if = {
+							limit = { 1100 = { has_dynamic_modifier = { modifier = LBA_southern_insurgency } } }
+							ASL = {
+								set_province_controller = 1057
+								1100 = {
+									create_unit = {
+										division = "name = \"Katibat Rafallah al-Sihatiu\" division_template = \"Liwa al-Shuhada\" start_experience_factor = 0.1 start_equipment_factor = 0.75"
+										owner = ASL
+										id = 1057
+										allow_spawning_on_enemy_provs = yes
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
+LBA_ai_path_category = {
+	LBA_rally_the_salafists = {
+		icon = generic_decision
+		cost = 25
+		days_re_enable = 30
+		visible = { has_global_flag = LBA_GRAND_MUFTI_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			NOT = { has_completed_focus = LBA_grand_mufti_rule }
+			check_variable = { party_pop_array^10 < 0.35 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision LBA_rally_the_salafists"
+			set_temp_variable = { party_index = 10 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			set_temp_variable = { temp_outlook_increase = 0.03 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
 }

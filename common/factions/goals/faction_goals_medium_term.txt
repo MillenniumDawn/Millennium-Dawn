@@ -1,0 +1,1204 @@
+#category = short_term medium_term or long_term
+
+faction_goal_secure_european_continent = {
+	allowed = { original_tag = GER }
+	name = secure_european_continent_goal_name
+	description = secure_european_continent_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_ANNEXATION
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_secure_europe_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_CONTINENTAL_EUROPE_DEFEATED_OR_FACTION_MEMBERS
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_faction_member = {
+			tooltip = INFLUENCE_ABOVE_30_PERCENT
+			visible_when_empty = yes
+			limit = {
+				faction_influence_ratio > 0.3
+			}
+			add_faction_initiative = 1
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 9
+			is_historical_focus_on = yes
+		}
+	}
+}
+
+faction_goal_high_seas_fleet = {
+	name = high_seas_fleet_goal_name
+	description = high_seas_fleet_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	allowed = {
+		OR = {
+			tag = GER
+			tag = ITA
+			tag = HUN
+			tag = ROM
+			tag = BUL
+		}
+	}
+	select_effect = {
+		set_temp_variable = { faction_goal_force_capital_ships_cache = 1 }
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		has_war_with_major = yes
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_capital_ships_cache
+				value = 20
+				compare = greater_than_or_equals
+				tooltip = faction_goal_capital_ships_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		every_collection_element = {
+			input = collection:faction_members_collection
+			navy_experience = 50
+			add_tech_bonus = {
+				name = high_seas_fleet_tech_bonus
+				bonus = 0.5
+				uses = 2
+				category = CAT_naval
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 1 # If they have a bunch of naval factories, go for it
+			num_of_naval_factories > 29
+		}
+	}
+}
+
+faction_goal_secure_the_oil_supply = {
+	name = secure_the_oil_supply_goal_name
+	description = secure_the_oil_supply_goal_desc
+	category = medium_term
+	group = resources_to_market_icon
+	allowed = {
+		tag = JAP
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_secure_oil_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_secure_oil_completed_tt
+			}
+		}
+	}
+	complete_effect = {
+		every_collection_element = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_resources_in_country = {
+							resource = oil
+							amount > 69
+						}
+					}
+				}
+				name = AT_LEAST_70_OIL
+			}
+			custom_effect_tooltip = AT_LEAST_70_OIL
+			add_faction_initiative = 1
+			add_faction_influence_ratio = 0.15
+			add_tech_bonus = {
+				name = secure_the_oil_supply_tech_bonus
+				bonus = 0.75
+				uses = 1
+				category = CAT_excavation
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 9 # Mid game prio
+			date > 1941.1.1
+		}
+	}
+}
+
+faction_goal_nato_expansion = {
+	name = nato_expansion
+	description = nato_expansion_desc
+	category = medium_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	allowed = {
+		has_faction_template = faction_template_nato
+	}
+	visible = {
+		num_faction_members < 20
+	}
+	completed = {
+		num_faction_members > 19
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 0
+	}
+}
+
+faction_goal_nato_gdp_per_capita = {
+	name = nato_gdp_per_capita
+	description = nato_gdp_per_capita_desc
+	category = long_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	allowed = {
+		has_faction_template = faction_template_nato
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		custom_override_tooltip = {
+			tooltip = nato_25_per_capita_or_more_tt
+			faction_leader = { check_variable = { faction_goal_nato_gdp_condition_cache = 1 } }
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 0
+	}
+}
+
+faction_goal_crush_the_democracy = {
+	name = crush_the_democracy_goal_name
+	description = crush_the_democracy_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_CONSOLIDATION
+	visible = {
+		has_elections = no
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_crush_democracy_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = FACTION_MEMBERS_BELOW_30_DEMOCRACY
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_stability = 0.05
+			add_ideas = POL_communist_mindset_idea
+		}
+	}
+}
+
+faction_goal_secure_east_asia_continent = {
+	allowed = { original_tag = JAP }
+	name = secure_east_asia_continent_goal_name
+	description = secure_east_asia_continent_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_ANNEXATION
+	select_effect = {
+		faction_goal_update_daily_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_secure_east_asia_condition_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = COLLECTION_CONTINENTAL_EAST_ASIA_DEFEATED_OR_FACTION_MEMBERS
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_faction_member = {
+			tooltip = INFLUENCE_ABOVE_30_PERCENT
+			visible_when_empty = yes
+			limit = {
+				faction_influence_ratio > 0.3
+			}
+			add_faction_initiative = 1
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 9
+			is_historical_focus_on = yes
+		}
+	}
+}
+
+### Faction Growth
+
+faction_goal_a_large_faction = {
+	name = a_large_faction_goal_name
+	description = a_large_faction_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		num_faction_members > 4
+		# not for NATO
+		NOT = { has_faction_template = faction_template_nato }
+	}
+	completed = {
+		num_faction_members > 9
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+### Units/Deployment
+
+faction_goal_marine_corps = {
+	name = marine_corps_goal_name
+	description = marine_corps_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	available = {
+		check_variable = {
+			var = faction_goal_marine_battalions_cache
+			value = 150
+			compare = less_than
+			tooltip = faction_goal_marine_bats_below_tt
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		if = {
+			limit = { is_in_faction = yes }
+			check_variable = {
+				var = faction_goal_marine_battalions_cache
+				value = 150
+				compare = greater_than_or_equals
+				tooltip = faction_goal_marine_bats_at_least_tt
+			}
+		}
+		else = { always = no }
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_collection_element = {
+			input = collection:faction_members_collection
+			random_character = {
+				tooltip = ONE_GENERAL
+				visible_when_empty = yes
+				limit = {
+					is_army_leader = yes
+					is_field_marshal = no
+					NOT = { has_trait = cavalry_officer }
+					NOT = { has_trait = panzer_leader }
+					NOT = { has_trait = naval_invader }
+				}
+				gain_xp = 400
+				add_attack = 1
+				add_trait = { trait = naval_invader }
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = marine_corps_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_landing_craft
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 10
+			OR = {
+				controls_a_coastal_state = yes
+				any_allied_country = {
+					controls_a_coastal_state = yes
+				}
+			}
+		}
+		modifier = {
+			add = 5
+			controls_a_coastal_state = yes
+		}
+	}
+}
+
+faction_goal_airborne_corps = {
+	name = airborne_corps_goal_name
+	description = airborne_corps_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_AIR_XP
+	available = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_airborne_battalions_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_airborne_bats_below_tt
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_airborne_battalions_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_airborne_bats_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		effect_tooltip = {
+			random_character = {
+				tooltip = ONE_GENERAL
+				visible_when_empty = yes
+				limit = {
+					is_army_leader = yes
+					is_field_marshal = no
+					NOT = { has_trait = cavalry_officer }
+					NOT = { has_trait = panzer_leader }
+					NOT = { has_trait = commando }
+				}
+				gain_xp = 400
+				add_attack = 1
+				add_trait = { trait = commando }
+			}
+		}
+		hidden_effect = {
+			every_faction_member = {
+				random_character = {
+					tooltip = ONE_GENERAL
+					visible_when_empty = yes
+					limit = {
+						is_army_leader = yes
+						is_field_marshal = no
+						NOT = { has_trait = cavalry_officer }
+						NOT = { has_trait = panzer_leader }
+						NOT = { has_trait = commando }
+					}
+					gain_xp = 400
+					add_attack = 1
+					add_trait = { trait = commando }
+				}
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			has_equipment = {
+				large_plane_air_transport_airframe > 0
+			}
+		}
+	}
+}
+
+faction_goal_submarine_force = {
+	name = submarine_force_goal_name
+	description = submarine_force_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	available = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_submarines_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_submarines_below_tt
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_submarines_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_submarines_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_collection_element = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_army_size = {
+							size > 24
+							type = submarine
+						}
+					}
+				}
+				name = ALL_FACTION_MEMBERS_WITH_25_SUBMARINES
+			}
+			random_character = {
+				tooltip = ONE_ADMIRAL
+				visible_when_empty = yes
+				limit = {
+					is_navy_leader = yes
+					NOT = { has_trait = seawolf }
+					NOT = { has_trait = ironside }
+					NOT = { has_trait = battleship_adherent }
+					NOT = { has_trait = gunnery_expert }
+					NOT = { has_trait = aviation_enthusiast }
+				}
+				gain_xp = 400
+				add_attack = 1
+				add_trait = { trait = seawolf }
+			}
+			add_mastery = {
+				amount = 100
+				track = submarines
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = submarine_force_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_submarines
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # Powers with no dockyards should probably not care about navy
+			num_of_naval_factories > 0
+		}
+		modifier = {
+			add = 1 # Powers with a less dockyard capacity should probably try to build subs rather than contest the high seas
+			num_of_naval_factories > 10
+		}
+		modifier = {
+			add = -1 # Powers with more dockyard capacity should probably try to contest the high seas instead of building subs
+			num_of_naval_factories > 25
+		}
+		modifier = {
+			add = -1 # Powers with more dockyard capacity should probably try to contest the high seas instead of building subs
+			num_of_naval_factories > 50
+		}
+	}
+}
+
+faction_goal_convoy_escort_force = {
+	name = convoy_escort_force_goal_name
+	description = convoy_escort_force_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	available = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_screen_ships_cache
+				value = 100
+				compare = less_than
+				tooltip = faction_goal_screen_ships_below_tt
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_screen_ships_cache
+				value = 100
+				compare = greater_than_or_equals
+				tooltip = faction_goal_screen_ships_at_least_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_collection_element = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_army_size = {
+							size > 24
+							type = screen_ship
+						}
+					}
+				}
+				name = ALL_FACTION_MEMBERS_WITH_25_SCREENING_SHIPS
+			}
+			random_character = {
+				tooltip = ONE_ADMIRAL
+				visible_when_empty = yes
+				limit = {
+					is_navy_leader = yes
+					NOT = { has_trait = fleet_protector }
+					NOT = { has_trait = seawolf }
+					NOT = { has_trait = ironside }
+					NOT = { has_trait = battleship_adherent }
+					NOT = { has_trait = gunnery_expert }
+					NOT = { has_trait = aviation_enthusiast }
+				}
+				gain_xp = 400
+				add_attack = 1
+				add_trait = { trait = fleet_protector }
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = convoy_escort_force_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_naval
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # Powers with no dockyards should probably not care about navy
+			num_of_naval_factories > 0
+		}
+		modifier = {
+			add = 1 # Powers with threatened convoys should care more
+			convoy_threat > 0.2
+		}
+		modifier = {
+			add = 8 # Powers with very threatened convoys should care -a lot-
+			convoy_threat > 0.5
+		}
+	}
+}
+
+faction_goal_air_superiority = {
+	name = air_superiority_goal_name
+	description = air_superiority_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_AIR_XP
+	visible = {
+		OR = {
+			has_war = yes
+			threat > 0.10
+		}
+	}
+	available = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_fighters_cache
+				value = 1000
+				compare = less_than
+				tooltip = faction_goal_fighters_below_tt
+			}
+		}
+	}
+	select_effect = {
+		faction_goal_update_member_metrics_cache = yes
+	}
+	completed = {
+		if = {
+			limit = { is_in_faction = yes }
+			faction_leader = {
+				check_variable = {
+					var = faction_goal_fighters_cache
+					value = 1000
+					compare = greater_than_or_equals
+					tooltip = faction_goal_fighters_at_least_tt
+				}
+			}
+		}
+		else = { always = no }
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		every_collection_element = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_army_size = {
+							size > 249
+							type = fighter
+						}
+					}
+				}
+				name = ALL_FACTION_MEMBERS_WITH_250_FIGHTERS
+			}
+			air_experience = 50
+			add_mastery = {
+				amount = 100
+				track = fighter_aircraft
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_tech_bonus = {
+				name = air_superiority_tech_bonus
+				bonus = 0.5
+				uses = 1
+				category = CAT_aircraft
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1 # Powers with few military factories should probably not care about expensive planes
+			num_of_military_factories > 39
+		}
+		modifier = {
+			add = 1 # Factions with decent number of military factories should probably start caring a lot about contesting air superiority - because they can
+			faction_leader = {
+				check_variable = { faction_goal_military_factories_cache > 149 }
+			}
+		}
+	}
+}
+
+### Industry
+
+faction_goal_industrial_expansion = {
+	name = industrial_expansion_goal_name
+	description = industrial_expansion_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_INDUSTRY
+	visible = {
+		faction_leader = { check_variable = { faction_goal_industrial_visible_cache = 1 } }
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_industrial_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_industrial_expansion_completed_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		every_faction_member = {
+			tooltip = AT_LEAST_50_CIVS
+			visible_when_empty = yes
+			limit = {
+				num_of_civilian_factories > 49
+			}
+			add_tech_bonus = {
+				name = industrial_expansion_tech_bonus
+				bonus = 0.5
+				uses = 2
+				category = CAT_industry
+			}
+		}
+	}
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 2
+			is_major = yes
+		}
+		modifier = {
+			add = 1
+			date < 1938.1.1
+		}
+	}
+}
+
+faction_goal_a_military_base = {
+	name = a_military_base_goal_name
+	description = a_military_base_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_INDUSTRY
+	visible = {
+		faction_leader = { check_variable = { faction_goal_military_base_visible_cache = 1 } }
+	}
+	select_effect = {
+		faction_goal_update_weekly_condition_caches = yes
+	}
+	completed = {
+		faction_leader = {
+			check_variable = {
+				var = faction_goal_military_base_completed_cache
+				value = 1
+				compare = greater_than_or_equals
+				tooltip = faction_goal_military_base_completed_tt
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		every_faction_member = {
+			tooltip = AT_LEAST_50_MILS
+			visible_when_empty = yes
+			limit = {
+				num_of_military_factories > 49
+			}
+			add_tech_bonus = {
+				name = a_military_base_tech_bonus
+				bonus = 0.5
+				uses = 2
+				category = CAT_industry
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 1
+			date > 1938.1.1
+		}
+		modifier = {
+			add = 1
+			is_major = yes
+		}
+	}
+}
+
+### War Waging
+
+faction_goal_war_on_communism = {
+	name = war_on_communism_goal_name
+	description = war_on_communism_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_POLITICAL_CHARACTER
+	visible = {
+		any_other_country = {
+			has_government = communism
+			is_on_same_continent_as = ROOT
+		}
+	}
+	completed = {
+		ROOT = {
+			any_enemy_country = {
+				has_government = communism
+				is_on_same_continent_as = ROOT
+			}
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 200
+		newline = yes
+		custom_effect_tooltip = THE_FACTION_LEADER
+		add_faction_initiative = 1
+		newline = yes
+		custom_effect_tooltip = ALL_FACTION_MEMBERS
+		every_faction_member = {
+			add_war_support = 0.05
+		}
+	}
+	ai_will_do = {
+		base = 1
+	}
+}
+
+### Strategic Bases
+
+# Ill leave it as an example
+# Panama
+faction_goal_control_panama_canal = {
+	name = control_panama_canal_goal_name
+	description = control_panama_canal_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	allowed = {
+		NOT = {
+			OR = {
+				original_tag = USA
+				is_in_faction_with = USA
+			}
+		}
+	}
+	visible = {
+		faction_leader = { check_variable = { faction_goal_panama_visible_cache = 1 } }
+	}
+	available = {
+		853 = { is_controlled_by_ROOT_or_ally = no }
+	}
+	completed = {
+		853 = { is_controlled_by_ROOT_or_ally = yes }
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				controls_state = 853
+			}
+			add_faction_initiative = 1
+		}
+		every_faction_member = {
+			navy_experience = 50
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			factor = 2 # Target of opportunity - already at war anyway
+			853 = {
+				owner = {
+					has_war_with = ROOT
+				}
+			}
+		}
+		modifier = {
+			add = 1 # If at war with a north american power prioritize this
+			NOT = {
+				any_controlled_state = {
+					is_on_continent = north_america
+				}
+			}
+			any_enemy_country = {
+				capital_scope = {
+					is_on_continent = north_america
+				}
+			}
+		}
+		modifier = {
+			add = 10 # If USA
+			original_tag = USA
+		}
+	}
+}
+
+# Gibraltar
+faction_goal_control_gibraltar = {
+	name = control_gibraltar_goal_name
+	description = control_gibraltar_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	allowed = {
+		NOT = {
+			OR = {
+				original_tag = ENG
+				is_in_faction_with = ENG
+			}
+		}
+	}
+	visible = {
+		faction_leader = { check_variable = { faction_goal_gibraltar_visible_cache = 1 } }
+	}
+	available = {
+		19 = { is_controlled_by_ROOT_or_ally = no }
+	}
+	completed = {
+		19 = { is_controlled_by_ROOT_or_ally = yes }
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				controls_state = 19
+			}
+			add_faction_initiative = 1
+		}
+		every_faction_member = {
+			navy_experience = 50
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 2 # Target of opportunity - already at war anyway
+			19 = {
+				controller = {
+					has_war_with = ROOT
+				}
+			}
+		}
+	}
+}
+
+# Bosporus
+faction_goal_control_bosporus = {
+	name = control_bosporus_goal_name
+	description = control_bosporus_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_ANNEXATION
+	allowed = {
+		NOT = {
+			OR = {
+				original_tag = TUR
+				is_in_faction_with = TUR
+			}
+		}
+	}
+	visible = {
+		faction_leader = { check_variable = { faction_goal_bosporus_visible_cache = 1 } }
+	}
+	available = {
+		155 = { is_controlled_by_ROOT_or_ally = no }
+		934 = { is_controlled_by_ROOT_or_ally = no }
+	}
+	completed = {
+		OR = {
+			155 = { is_controlled_by_ROOT_or_ally = yes }
+			934 = { is_controlled_by_ROOT_or_ally = yes }
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				OR = {
+					controls_state = 934
+					controls_state = 155
+				}
+			}
+			add_faction_initiative = 1
+		}
+		every_faction_member = {
+			navy_experience = 50
+			add_ideas = bosporus_controlled
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 2 # Target of opportunity - already at war anyway
+			155 = {
+				owner = {
+					has_war_with = ROOT
+				}
+			}
+		}
+		modifier = {
+			add = 1 # If at war with SOV prioritize this
+			any_enemy_country = {
+				original_tag = SOV
+			}
+		}
+		modifier = {
+			add = 1 # If SOV
+			original_tag = SOV
+		}
+	}
+}
+
+# Suez Canal
+faction_goal_control_suez_canal = {
+	name = control_suez_canal_goal_name
+	description = control_suez_canal_goal_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	allowed = {
+		NOT = {
+			OR = {
+				original_tag = ENG
+				is_in_faction_with = ENG
+				original_tag = EGY
+				is_in_faction_with = EGY
+			}
+		}
+	}
+	visible = {
+		faction_leader = { check_variable = { faction_goal_suez_visible_cache = 1 } }
+	}
+	available = {
+		214 = { is_controlled_by_ROOT_or_ally = no }
+		213 = { is_controlled_by_ROOT_or_ally = no }
+	}
+	completed = {
+		OR = {
+			214 = { is_controlled_by_ROOT_or_ally = yes }
+			213 = { is_controlled_by_ROOT_or_ally = yes }
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				OR = {
+					controls_state = 214
+					controls_state = 213
+				}
+			}
+			add_faction_initiative = 1
+		}
+		every_faction_member = {
+			navy_experience = 50
+			random_owned_controlled_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = naval_base
+					level = 1
+					province = { all_provinces = yes limit_to_coastal = yes limit_to_naval_base = yes first = yes }
+				}
+			}
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			factor = 2 # Target of opportunity - already at war anyway
+			214 = {
+				owner = {
+					has_war_with = ROOT
+				}
+			}
+		}
+	}
+}
+
+# mandeb
+faction_goal_control_mandeb = {
+	name = control_mandeb_goal_name
+	description = control_mandeb_goal_name_desc
+	category = medium_term
+	group = FOCUS_FILTER_NAVY_XP
+	allowed = {
+		NOT = {
+			OR = {
+				original_tag = YEM
+				is_in_faction_with = YEM
+				original_tag = DJI
+				is_in_faction_with = DJI
+			}
+		}
+	}
+	visible = {
+		faction_leader = { check_variable = { faction_goal_mandeb_visible_cache = 1 } }
+	}
+	available = {
+		1020 = { is_controlled_by_ROOT_or_ally = no }
+		197 = { is_controlled_by_ROOT_or_ally = no }
+	}
+	completed = {
+		OR = {
+			1020 = { is_controlled_by_ROOT_or_ally = yes }
+			197 = { is_controlled_by_ROOT_or_ally = yes }
+		}
+	}
+	complete_effect = {
+		add_faction_power_projection = 100
+		newline = yes
+		custom_effect_tooltip = TARGET_STATE_CONTROLLERS
+		every_faction_member = {
+			visible_when_empty = yes
+			limit = {
+				OR = {
+					controls_state = 1020
+					controls_state = 197
+				}
+			}
+			add_faction_initiative = 1
+		}
+		every_faction_member = {
+			navy_experience = 50
+		}
+	}
+	ai_will_do = {
+		base = 0
+		modifier = {
+			add = 2 # Target of opportunity - already at war anyway
+			1020 = {
+				owner = {
+					has_war_with = ROOT
+				}
+			}
+		}
+		modifier = {
+			add = 2 # Target of opportunity - already at war anyway
+			197 = {
+				owner = {
+					has_war_with = ROOT
+				}
+			}
+		}
+	}
+}

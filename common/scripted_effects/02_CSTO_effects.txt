@@ -1,11 +1,10 @@
 # Scripted effects for CSTO
 CSTO_join = {
-	add_to_array = { global.CSTO_member = THIS }
 	add_ideas = CSTO_member
 	ROOT = { add_to_tech_sharing_group = CSTO_Tech_Share }
-	random_country = {
+	random_scope_in_array = {
+		array = global.CSTO_member
 		limit = {
-			has_idea = CSTO_member
 			is_faction_leader = yes
 		}
 		add_to_faction = ROOT
@@ -14,9 +13,23 @@ CSTO_join = {
 }
 
 CSTO_leave = {
-	remove_from_array = { global.CSTO_member = THIS }
 	remove_ideas = CSTO_member
 	ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
 	leave_faction = yes
 	hidden_effect = { news_event = { id = CSTO.5 hours = 6 } }
+}
+
+# Convert CSTO from defensive to offensive alliance
+# Must be called from Russia (SOV) scope
+CSTO_convert_to_offensive = {
+	log = "[GetDateText]: [Root.GetName]: Converting CSTO to offensive alliance"
+	set_country_flag = CSTO_is_offensive
+
+	# Change call to war rule to allow offensive wars
+	set_faction_rule = call_to_war_rule_always
+
+	# Notify members
+	hidden_effect = {
+		news_event = { id = CSTO.6 hours = 6 }
+	}
 }

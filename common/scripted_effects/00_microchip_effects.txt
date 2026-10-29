@@ -1,0 +1,699 @@
+microchip_startup = {
+	set_variable = { country_microchip_production_var = 0 }
+	set_variable = { country_composite_production_var = 0 }
+	set_variable = { country_base_civilian_microchip_consumption_var = 0 }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = 0 }
+	set_variable = { country_extra_microchip_per_plant = 0 }
+	set_variable = { country_extra_composite_per_plant = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { resource_produced@microchips > 0 }
+				check_variable = { resource_produced@composites > 0 }
+			}
+		}
+		add_dynamic_modifier = { modifier = advanced_production_modifier }
+	}
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
+
+	# Apply modifiers for pre-researched starting technologies
+	if = {
+		limit = { has_tech = microchip_production_2 }
+		md_tech_microchip_production_2_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_3 }
+		md_tech_microchip_production_3_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_4 }
+		md_tech_microchip_production_4_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_5 }
+		md_tech_microchip_production_5_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_6 }
+		md_tech_microchip_production_6_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_7 }
+		md_tech_microchip_production_7_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_8 }
+		md_tech_microchip_production_8_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_9 }
+		md_tech_microchip_production_9_effect = yes
+	}
+	if = {
+		limit = { has_tech = microchip_production_10 }
+		md_tech_microchip_production_10_effect = yes
+	}
+
+	if = {
+		limit = { has_tech = composite_production_2 }
+		md_tech_composite_production_2_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_3 }
+		md_tech_composite_production_3_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_4 }
+		md_tech_composite_production_4_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_5 }
+		md_tech_composite_production_5_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_6 }
+		md_tech_composite_production_6_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_7 }
+		md_tech_composite_production_7_effect = yes
+	}
+	if = {
+		limit = { has_tech = composite_production_8 }
+		md_tech_composite_production_8_effect = yes
+	}
+}
+
+microchip_update = {
+	if = { limit = { check_variable = { microchip_plant_total > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
+
+		#Gather total resources remaining
+		set_temp_variable = { country_tech_remaining = resource@tungsten }
+		set_temp_variable = { country_rare_remaining = resource@chromium }
+
+		#Starting produced needs to be set manually, else math has a seizure. Math will never be perfect, because it ignores all the stacked modifiers
+		#But I just don't care anymore, because I just want this to work, damnit
+		set_temp_variable = {
+			country_microchip_produced = {
+				value = microchip_plant_total
+				multiply = {
+					value = 20
+					add = country_extra_microchip_per_plant
+				}
+			}
+		}
+
+		set_temp_variable = { country_microchip_reducer = 0 }
+
+		#Gather overall production demand
+		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
+		if = {
+			limit = {
+				OR = {
+					check_variable = { country_tech_remaining < 0 }
+					check_variable = { country_rare_remaining < 0 }
+				}
+			}
+			#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+			#Deficit now is positive, and can be used easily in the cost math since it's positive
+			multiply_temp_variable = { country_tech_remaining = -1 }
+			multiply_temp_variable = { country_rare_remaining = -1 }
+
+			set_temp_variable = {
+				country_microchip_reducer = {
+					value = 0
+					add = {
+						value = 0
+						max = {
+							value = 0
+							max = country_rare_remaining
+						}
+					}
+					add = {
+						value = 0
+						max = {
+							value = 0
+							max = {
+								value = country_tech_remaining
+								multiply = 1.25
+								round = yes
+							}
+						}
+					}
+				}
+			}
+
+			set_variable = { country_microchip_production_var = country_microchip_reducer }
+
+			set_temp_variable = {
+				country_microchip_reducer_max = {
+					value = country_microchip_produced
+					multiply = 0.95
+					round = yes
+				}
+			}
+		}
+		else = {
+			#There should be no reduction here, because we have a surplus of all inputs
+			set_variable = { country_microchip_production_var = 0 }
+		}
+
+		#If running a power deficit, reduce the amount of chips made for power loss
+		if = {
+			limit = {
+				check_variable = { energy_difference_variable < 0 }
+			}
+
+			set_variable = {
+				country_microchip_production_var = {
+					value = country_microchip_production_var
+					add = {
+						value = country_microchip_produced
+						subtract = country_microchip_production_var
+						multiply = unfulfilled_energy_demand_dynmod_var
+					}
+					round = yes
+				}
+			}
+		}
+
+		if = {
+			limit = { check_variable = { country_microchip_reducer_max = 0 } }
+			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+		}
+
+		if = { limit = { original_tag = TAI }
+			if = {
+				limit = { check_variable = { country_microchip_production_var > 0 } }
+
+				subtract_from_variable = { country_microchip_production_var = tai_chip_resource_use_improvements }
+			}
+			if = {
+				limit = {
+					has_dynamic_modifier = the_great_chip_race_modifier
+					check_variable = { resource_produced@microchips > 0 }
+				}
+				set_variable = {
+					tai_microchip_prod_boost_var = {
+						value = CHI.resource_produced@microchips
+						divide = resource_produced@microchips
+						clamp = { min = 0.05 max = 0.6 }
+					}
+				}
+
+				set_variable = {
+					tai_microchip_const_boost_var = {
+						value = CHI.resource_produced@microchips
+						divide = resource_produced@microchips
+						multiply = 0.5
+						clamp = { min = 0.05 max = 0.6 }
+					}
+				}
+			}
+		}
+
+		# if we have no production or import of a required material (none avaiabile at all), then halt production
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						check_variable = { resource_produced@chromium = 0 }
+						check_variable = { resource_imported@chromium = 0 }
+					}
+					AND = {
+						check_variable = { resource_produced@tungsten = 0 }
+						check_variable = { resource_imported@tungsten = 0 }
+					}
+				}
+			}
+			set_variable = { country_microchip_production_var = country_microchip_produced }
+			set_temp_variable = { country_microchip_reducer_max = country_microchip_produced }
+		}
+
+		clamp_variable = { var = country_microchip_production_var min = 0 max = country_microchip_reducer_max }
+	}
+	else = {
+		set_variable = { country_microchip_production_var = 0 }
+	}
+}
+
+composite_update = {
+	if = { limit = { check_variable = { resource_produced@composites > 0 } }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = advanced_production_modifier } } }
+			add_dynamic_modifier = { modifier = advanced_production_modifier }
+		}
+
+		#Gather total resources remaining
+		set_temp_variable = { country_rare_remaining = resource@chromium }
+		set_temp_variable = { country_rubber_remaining = resource@rubber }
+
+		set_temp_variable = {
+			country_composite_produced = {
+				value = composite_plant_total
+				multiply = {
+					value = 20
+					add = country_extra_composite_per_plant
+				}
+			}
+		}
+
+		set_temp_variable = { country_composite_reducer = 0 }
+
+		#Gather overall production demand
+		#Math is here. Unless you know the math, PLEASE do not mess with these variables
+		#First, check if we even need to do all this. If there is a surplus of both tech and precious metals, there is no need to adjust production
+		if = {
+			limit = {
+				OR = {
+					check_variable = { country_rare_remaining < 0 }
+					check_variable = { country_rubber_remaining < 0 }
+				}
+			}
+			#Invert the numbers here for a fast check. Surplus now can't be higher than demand, since it's negative
+			#Deficit now is positive, and can be used easily in the cost math since it's positive
+			multiply_temp_variable = { country_rare_remaining = -1 }
+			multiply_temp_variable = { country_rubber_remaining = -1 }
+
+			set_temp_variable = {
+				country_composite_reducer = {
+					value = 0
+					add = {
+						value = 0
+						max = {
+							value = 0
+							max = country_rare_remaining
+						}
+					}
+					add = {
+						value = 0
+						max = {
+							value = 0
+							max = {
+								value = country_rubber_remaining
+								multiply = 1.5
+								round = yes
+							}
+						}
+					}
+				}
+			}
+
+			set_variable = { country_composite_production_var = country_composite_reducer }
+
+			set_temp_variable = {
+				country_composite_reducer_max = {
+					value = country_composite_produced
+					multiply = 0.95
+					round = yes
+				}
+			}
+			#Clamp the max at -90% of production, this number can be adjusted
+			clamp_variable = {
+				var = country_composite_production_var
+				min = 0
+				max = country_composite_reducer_max
+			}
+		} else = {
+			#There should be no reduction here, because we have a surplus of all inputs
+			set_variable = { country_composite_production_var = 0 }
+		}
+	}
+	else = {
+		set_variable = { country_composite_production_var = 0 }
+	}
+}
+
+civilian_microchip_consumption = {
+	if = {
+		limit = {
+			NOT = {
+				has_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+			}
+		}
+		add_dynamic_modifier = { modifier = civilian_microchip_consumption_modifier }
+	}
+
+	#Set the basic population consumption numbers. This is based off the population total and GPD/C
+	#Higher GDP/C will increase the multiplier applied to the population
+	#IE, high pop but low GDP/C should result in a lower consumption amount than a low pop, high GDP/C nation
+	#Since higher GDP/C = higher developed = higher population technology demand
+	set_temp_variable = {
+		base_chip_consumption = {
+			value = population_total
+			multiply = gdp_per_capita
+			multiply = 0.00025
+			add = {
+				value = population_total
+				multiply = gdp_per_capita
+				multiply = 0.00025
+				multiply = modifier@civilian_chip_consumption_modifier
+			}
+			add = {
+				value = office_park_total
+				multiply = offices_manpower_fulfillment
+				multiply = 0.25
+				add = {
+					value = office_park_total
+					multiply = offices_manpower_fulfillment
+					multiply = 0.25
+					multiply = modifier@industry_chip_consumption_modifier
+				}
+			}
+			round = yes
+		}
+	}
+
+	set_temp_variable = {
+		total_microchips = {
+			value = resource_produced@microchips
+			subtract = resource_exported@microchips
+			add = resource_imported@microchips
+		}
+	}
+
+	#Check if at war. If at war, the military gets priority for the microchip demand
+	#If not at war, civs get priority
+	set_temp_variable = { base_stab_adjust = 0 }
+	if = {
+		limit = { has_war = yes }
+		set_temp_variable = {
+			total_microchips = {
+				value = total_microchips
+				subtract = resource_consumed@microchips
+			}
+		}
+
+		if = {
+			limit = { check_variable = { total_microchips < 1 } }
+			#Nothing left for civilians, since there is military deficit and we at war, yo
+			set_temp_variable = {
+				base_chip_consumption = {
+					value = base_chip_consumption
+					multiply = -1
+				}
+			}
+			set_temp_variable = { base_stab_adjust = base_chip_consumption }
+			set_temp_variable = { base_chip_consumption = 0 }
+		} else = {
+			set_temp_variable = {
+				total_chip_buffer = {
+					value = total_microchips
+					subtract = base_chip_consumption
+				}
+			}
+
+			if = {
+				#total chip buffer here is how many in the hole we are
+				#this number now becomes the instability modifier, and add tos base_chip_consumption to remove the deficits
+				limit = { check_variable = { total_chip_buffer < 0 } }
+				#we have a deficit of chips after civ consumption, run the math
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+				set_temp_variable = {
+					base_chip_consumption = {
+						value = base_chip_consumption
+						add = total_chip_buffer
+					}
+				}
+
+			} else = {
+				#we have enough chips!
+				set_temp_variable = { base_stab_adjust = total_chip_buffer }
+			}
+		}
+	} else = {
+		#Civis get their chips first here, so we will allow a deficit during peacetime for mil production
+		#This can still lead to instability, if civ demand is not met, but if it is met, hey, we're happy!
+		set_temp_variable = {
+			total_microchips = {
+				value = total_microchips
+				subtract = base_chip_consumption
+			}
+		}
+		set_temp_variable = { base_stab_adjust = total_microchips }
+	}
+
+	set_temp_variable = {
+		base_stab_adjust = {
+			value = base_stab_adjust
+			multiply = 0.001
+			clamp = { min = -0.15 max = 0.15 }
+		}
+	}
+
+	#Set how much is consumed here. During military conflict, civs will just consume what is left
+	#this will prevent the civilian population from deficiting the military during wartime, at the cost of stability
+	#Insert other potential economic consequences here, but basically, you better have the chips
+	set_variable = { country_base_civilian_microchip_consumption_var = base_chip_consumption }
+	set_variable = { country_base_microchip_civ_consumption_stab_var = base_stab_adjust }
+}
+
+
+md_tech_microchip_production_2_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_2 }
+		}
+		set_country_flag = md_applied_microchip_production_2
+		set_variable = { country_extra_microchip_per_plant = 1 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_3_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_3 }
+		}
+		set_country_flag = md_applied_microchip_production_3
+		set_variable = { country_extra_microchip_per_plant = 2 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_4_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_4 }
+		}
+		set_country_flag = md_applied_microchip_production_4
+		set_variable = { country_extra_microchip_per_plant = 3 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_5_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_5 }
+		}
+		set_country_flag = md_applied_microchip_production_5
+		set_variable = { country_extra_microchip_per_plant = 4 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_6_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_6 }
+		}
+		set_country_flag = md_applied_microchip_production_6
+		set_variable = { country_extra_microchip_per_plant = 5 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_7_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_7 }
+		}
+		set_country_flag = md_applied_microchip_production_7
+		set_variable = { country_extra_microchip_per_plant = 6 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_8_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_8 }
+		}
+		set_country_flag = md_applied_microchip_production_8
+		set_variable = { country_extra_microchip_per_plant = 7 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_9_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_9 }
+		}
+		set_country_flag = md_applied_microchip_production_9
+		set_variable = { country_extra_microchip_per_plant = 8 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_microchip_production_10_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_microchip_production_10 }
+		}
+		set_country_flag = md_applied_microchip_production_10
+		set_variable = { country_extra_microchip_per_plant = 9 }
+		modify_building_resources = {
+			building = microchip_plant
+			resource = microchips
+			amount = 1
+		}
+	}
+}
+
+md_tech_composite_production_2_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_2 }
+		}
+		set_country_flag = md_applied_composite_production_2
+		set_variable = { country_extra_composite_per_plant = 1 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 1
+		}
+	}
+}
+
+md_tech_composite_production_3_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_3 }
+		}
+		set_country_flag = md_applied_composite_production_3
+		set_variable = { country_extra_composite_per_plant = 2 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 1
+		}
+	}
+}
+
+md_tech_composite_production_4_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_4 }
+		}
+		set_country_flag = md_applied_composite_production_4
+		set_variable = { country_extra_composite_per_plant = 4 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 2
+		}
+	}
+}
+
+md_tech_composite_production_5_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_5 }
+		}
+		set_country_flag = md_applied_composite_production_5
+		set_variable = { country_extra_composite_per_plant = 6 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 2
+		}
+	}
+}
+
+md_tech_composite_production_6_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_6 }
+		}
+		set_country_flag = md_applied_composite_production_6
+		set_variable = { country_extra_composite_per_plant = 8 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 2
+		}
+	}
+}
+
+md_tech_composite_production_7_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_7 }
+		}
+		set_country_flag = md_applied_composite_production_7
+		set_variable = { country_extra_composite_per_plant = 10 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 2
+		}
+	}
+}
+
+md_tech_composite_production_8_effect = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = md_applied_composite_production_8 }
+		}
+		set_country_flag = md_applied_composite_production_8
+		set_variable = { country_extra_composite_per_plant = 12 }
+		modify_building_resources = {
+			building = composite_plant
+			resource = composites
+			amount = 2
+		}
+	}
+}

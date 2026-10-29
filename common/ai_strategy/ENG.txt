@@ -1,8 +1,7 @@
 ENG_the_commonwealth_of_nations = {
 	allowed = { original_tag = ENG }
 	enable = {
-		original_tag = ENG
-		has_idea = commonwealth_of_nations_member
+		has_dynamic_modifier = { modifier = Commonwealth_member_modifier }
 	}
 	abort_when_not_enabled = yes
 
@@ -71,7 +70,6 @@ ENG_nigeria_custom_nation = {
 ENG_contain_argentina = {
 	allowed = { original_tag = ENG }
 	enable = {
-		original_tag = ENG
 		country_exists = ARG
 	}
 	abort_when_not_enabled = yes
@@ -97,14 +95,16 @@ ENG_support_afghanistan_against_taliban = {
 	allowed = { original_tag = ENG }
 	enable = {
 		NOT = { has_war_with = AFG }
-		AFG = { NOT = { has_government = fascism } }
-		AFG = { NOT = { has_country_flag = AFG_new_war } }
+		AFG = {
+			NOT = { has_government = fascism }
+			NOT = { has_country_flag = AFG_new_war }
+		}
 		OR = {
 			AND = {
-				USA = { has_country_flag = Operation_enduring_freedom }
+				USA = { has_country_flag = USA_wot_enduring_freedom }
 				OR = {
-					has_country_flag = partially_supported_us_nine_eleven
-					has_country_flag = fully_supported_us_nine_eleven
+					has_country_flag = wot_supported_us_partially
+					has_country_flag = wot_supported_us_fully
 				}
 			}
 			date > 2002.6.1
@@ -137,13 +137,7 @@ ENG_support_fsa = {
 		NOT = { has_war_with = FSA }
 		FSA = { NOT = { has_government = fascism } }
 	}
-	abort = {
-		OR = {
-			NOT = { country_exists = FSA }
-			has_war_with = FSA
-			FSA = { has_government = fascism }
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = befriend id = "FSA" value = 50 }
 	ai_strategy = { type = protect id = "FSA" value = 50 }
@@ -159,15 +153,7 @@ ENG_support_pakistan_against_the_jihadists = {
 			has_country_flag = fighting_jihadis
 		}
 	}
-	abort = {
-		PAK = {
-			OR = {
-				NOT = { has_civil_war = yes }
-				has_government = fascism
-				NOT = { has_country_flag = fighting_jihadis }
-			}
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = send_volunteers_desire id = "PAK" value = 300 }
 	ai_strategy = { type = support id = "PAK" value = 300 }
@@ -182,15 +168,7 @@ ENG_support_egypt_against_jihadists = {
 			has_country_flag = fighting_jihadis
 		}
 	}
-	abort = {
-		EGY = {
-			OR = {
-				NOT = { has_civil_war = yes }
-				has_government = fascism
-				NOT = { has_country_flag = fighting_jihadis }
-			}
-		}
-	}
+	abort_when_not_enabled = yes
 
 	ai_strategy = { type = send_volunteers_desire id = "EGY" value = 300 }
 	ai_strategy = { type = support id = "EGY" value = 300 }
@@ -199,17 +177,20 @@ ENG_support_egypt_against_jihadists = {
 ##England unique AI for combat units
 ENG_default_naval_breakdown = {
 	allowed = { original_tag = ENG }
-	enable = { original_tag = ENG }
+	enable = { always = yes }
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = naval_corvettes value = 12 }
 	ai_strategy = { type = role_ratio id = naval_frigate value = 12 }
-	ai_strategy = { type = role_ratio id = naval_destroyer value = 25 }
+	ai_strategy = { type = role_ratio id = naval_destroyer value = 15 }
+	ai_strategy = { type = role_ratio id = naval_screen_destroyer value = 12 }
 	ai_strategy = { type = role_ratio id = naval_stealth_destroyer value = 5 }
 	ai_strategy = { type = role_ratio id = naval_attack_submarine value = 25 }
 	ai_strategy = { type = role_ratio id = naval_missile_submarine value = 7 }
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 10 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 3 }
+	ai_strategy = { type = role_ratio id = naval_battlecruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_battleship value = 1 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 1 }
 
 }
@@ -218,14 +199,14 @@ ENG_support_bosnian_against_rsk = {
 	allowed = { original_tag = ENG }
 	enable = {
 		BOS = {
-			has_country_flag = defeat_all_serbs
+			has_country_flag = BOS_defeat_all_serbs
 			OR = {
 				has_idea = BOS_EUFOR
 				has_idea = BOS_SFOR
 			}
 		}
 		RSK = { has_war_with = BOS }
-		has_idea = bos_sfor_vol_troops
+		has_idea = BOS_sfor_vol_troops
 	}
 	abort_when_not_enabled = yes
 
@@ -249,7 +230,6 @@ ENG_support_bosnian_against_rsk = {
 ENG_new_york_help = {
 	allowed = { original_tag = ENG }
 	enable = {
-		original_tag = ENG
 		country_exists = NYK
 		ENG = {
 			has_war = no
@@ -262,7 +242,6 @@ ENG_new_york_help = {
 ENG_new_england_help = {
 	allowed = { original_tag = ENG }
 	enable = {
-		original_tag = ENG
 		country_exists = NEN
 		ENG = {
 			has_war = no
@@ -271,4 +250,86 @@ ENG_new_england_help = {
 	abort_when_not_enabled = yes
 	ai_strategy = { type = send_volunteers_desire id = "NEN" value = 1000 }
 	ai_strategy = { type = send_lend_lease_desire id = "NEN" value = 400 }
+}
+
+ENG_air_doctrine = {
+	allowed = { original_tag = ENG }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = heavy_fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 5 }
+	ai_strategy = { type = unit_ratio id = cas value = 3 }
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 2 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 1 }
+	ai_strategy = { type = unit_ratio id = suicide value = 2 }
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 0 }
+	ai_strategy = { type = unit_ratio id = strategic_bomber value = 0 }
+}
+
+ENG_air_doctrine_f35 = {
+	allowed = { original_tag = ENG }
+	enable = { has_tech = gen_5_light }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = unit_ratio id = tactical_bomber value = 6 }
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 2 }
+}
+
+ENG_block_light_airframes = {
+	allowed = { original_tag = ENG }
+	enable = { NOT = { has_tech = gen_5_light } }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_cas_airframe value = -100 }
+}
+
+ENG_keep_typhoon_line = {
+	allowed = { original_tag = ENG }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_airframe value = 3 }
+}
+
+ENG_keep_f35b_line = {
+	allowed = { original_tag = ENG }
+	enable = { has_tech = gen_5_light }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = small_plane_strike_airframe value = 2 }
+}
+
+ENG_keep_cv_line = {
+	allowed = { original_tag = ENG }
+	enable = {
+		OR = {
+			has_navy_size = { unit = carrier size > 0 }
+			has_navy_size = { unit = helicopter_operator size > 0 }
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = cv_small_plane_strike_airframe value = 1 }
+}
+
+ENG_cancel_war_neighbours = {
+	allowed = { original_tag = ENG }
+	enable = {
+		has_war = yes
+		surrender_progress > 0.15
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = "ARG" value = -4000 }
+	ai_strategy = { type = declare_war id = "IRE" value = -4000 }
+	ai_strategy = { type = declare_war id = "ZIM" value = -4000 }
+	ai_strategy = { type = declare_war id = "EGU" value = -4000 }
+	ai_strategy = { type = declare_war id = "SIE" value = -4000 }
+	ai_strategy = { type = declare_war id = "SCO" value = -4000 }
+	ai_strategy = { type = declare_war id = "WAS" value = -4000 }
+	ai_strategy = { type = declare_war id = "NIR" value = -4000 }
 }

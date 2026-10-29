@@ -1,4 +1,31 @@
 on_actions = {
+	on_unit_leader_created = {
+		effect = {
+			if = {
+				limit = {
+					is_army_leader = yes
+					FROM = {
+						original_tag = PER
+						has_completed_focus = PER_military_diarchy
+					}
+				}
+				add_trait = { trait = PER_unit_leader_trait_concessions_to_army }
+			}
+		}
+	}
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = USA }
+					NOT = { country_exists = USA }
+					country_exists = PER
+					PER = { has_dynamic_modifier = { modifier = PER_us_sanctions } }
+				}
+				PER = { remove_dynamic_modifier = { modifier = PER_us_sanctions } }
+			}
+		}
+	}
 	on_state_control_changed = {
 		effect = {
 			if = {
@@ -21,6 +48,11 @@ on_actions = {
 	}
 	on_weekly_PER = {
 		effect = {
+			PER_election_weekly_tick = yes
+			if = {
+				limit = { is_ai = no }
+				update_per_irgc_dirty_variable = yes
+			}
 			if = {
 				limit = {
 					has_country_flag = PER_protests_ongoing
@@ -28,13 +60,9 @@ on_actions = {
 						PER_protest_exhaustion > 19
 					}
 				}
-				random_list = {
-					30 = {
-						country_event = iranian_events.202
-					}
-					70 = {
-						# Nothing happens
-					}
+				random = {
+					chance = 30
+					country_event = iranian_events.202
 				}
 			}
 			if = {
@@ -47,13 +75,9 @@ on_actions = {
 							PER_protest_exhaustion < 10
 						}
 					}
-					random_list = {
-						70 = {
-							PER_trigger_protest = yes
-						}
-						30 = {
-							# Nothing happens
-						}
+					random = {
+						chance = 70
+						PER_trigger_protest = yes
 					}
 				}
 				else_if = { # Protests are tired
@@ -62,13 +86,9 @@ on_actions = {
 							PER_protest_exhaustion > 15
 						}
 					}
-					random_list = {
-						20 = {
-							PER_trigger_protest = yes
-						}
-						80 = {
-							# Nothing happens
-						}
+					random = {
+						chance = 20
+						PER_trigger_protest = yes
 					}
 				}
 				else_if = { # Protests are starting to tire
@@ -77,13 +97,9 @@ on_actions = {
 							PER_protest_exhaustion > 9
 						}
 					}
-					random_list = {
-						40 = {
-							PER_trigger_protest = yes
-						}
-						60 = {
-							# Nothing happens
-						}
+					random = {
+						chance = 40
+						PER_trigger_protest = yes
 					}
 				}
 			}
@@ -96,13 +112,9 @@ on_actions = {
 				limit = {
 					has_idea = PER_neutral_political_scene
 				}
-				random_list = {
-					50 = {
-						PER_neutral_politics = yes
-					}
-					50 = {
-						# Nothing happens
-					}
+				random = {
+					chance = 50
+					PER_neutral_politics = yes
 				}
 			}
 
@@ -112,9 +124,11 @@ on_actions = {
 					country_exists = NTR
 					country_exists = IRS
 					NOT = {
-						#country_exists = ISI
-						has_global_flag = NTR_IRS_stop_fighting
-						has_global_flag = IRQ_hamas_of_iraq
+						OR = {
+							#country_exists = ISI
+							has_global_flag = NTR_IRS_stop_fighting
+							has_global_flag = IRQ_hamas_of_iraq
+						}
 					}
 				}
 				set_global_flag = NTR_IRS_stop_fighting
@@ -122,11 +136,15 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					NTR = { num_of_controlled_states > 3 }
+					country_exists = NTR
+					NTR = {
+						num_of_controlled_states > 3
+					}
 					NOT = {
-						country_exists = HII
-						has_global_flag = IRQ_hamas_of_iraq
-						has_global_flag = IRQ_hamas_of_iraq
+						OR = {
+							country_exists = HII
+							has_global_flag = IRQ_hamas_of_iraq
+						}
 					}
 				}
 				set_global_flag = IRQ_hamas_of_iraq
@@ -137,9 +155,11 @@ on_actions = {
 					ISI = { num_of_controlled_states > 3 }
 					country_exists = ISI
 					NOT = {
-						country_exists = IAI
-						country_exists = IRS
-						ISI = { has_country_flag = IRQ_IAI_spawn_trigger }
+						OR = {
+							country_exists = IAI
+							country_exists = IRS
+							ISI = { has_country_flag = IRQ_IAI_spawn_trigger }
+						}
 					}
 				}
 				#need to fix something before i want this to run
@@ -151,37 +171,35 @@ on_actions = {
 			if = {
 				limit = {
 					HAM = {
-						neutrality_neutral_muslim_brotherhood_are_not_in_power = yes
+						neutrality_neutral_muslim_brotherhood_are_in_power = no
 						check_variable = { hamas_arms_value > 1100 }
 					}
 				}
-				news_event = {
-					id = axis_of_resistance_events.13
-					days = 0
-				}
+				news_event = axis_of_resistance_events.13
 				HAM = {
-					set_country_flag = PER_PAL_coup
 					end_puppet = HAM
 					set_temp_variable = { rul_party_temp = 12 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = neutrality elections_allowed = no }
 					set_temp_variable = { party_index = 12 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Qassam Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
 							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
+
 							L_Inf_Bat = { x = 1 y = 0 }
 							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
 						}
-						support = {
+						regimental_support = {
 							armor_Comp = { x = 0 y = 0 }
 						}
 					}
@@ -216,41 +234,42 @@ on_actions = {
 			else_if = {
 				limit = {
 					HAM = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PFLP_arms_value > 1100
 						}
 					}
 				}
-				news_event = {
-					id = axis_of_resistance_events.15
-					days = 0
-				}
+				news_event = axis_of_resistance_events.15
 				HAM = {
-					set_country_flag = PER_PAL_coup
 					end_puppet = HAM
 					set_temp_variable = { rul_party_temp = 4 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 4 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Quds Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
-							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
-							Mot_Militia_Bat = { x = 1 y = 0 }
-							Mot_Militia_Bat = { x = 1 y = 1 }
+
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
+							Mot_Militia_Bat = { x = 2 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 2 }
 						}
-						support = {
+						regimental_support = {
 							armor_Comp = { x = 0 y = 0 }
-							Arty_Battery = { x = 0 y = 1 }
+
+							armor_Comp = { x = 1 y = 0 }
+
+							Arty_Battery = { x = 2 y = 0 }
 						}
 					}
 					capital_scope = {
@@ -269,7 +288,7 @@ on_actions = {
 			else_if = {
 				limit = {
 					HAM = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PRC_arms_value > 1100
 						}
@@ -280,28 +299,29 @@ on_actions = {
 					days = 0
 				}
 				HAM = {
-					set_country_flag = PER_PAL_coup
 					end_puppet = HAM
 					set_temp_variable = { rul_party_temp = 8 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 8 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Abu Ali Mustafa Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
 							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
+
 							L_Inf_Bat = { x = 1 y = 0 }
 							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
 						}
-						support = {
+						regimental_support = {
 							armor_Comp = { x = 0 y = 0 }
 							Arty_Battery = { x = 0 y = 1 }
 						}
@@ -322,7 +342,7 @@ on_actions = {
 			else_if = {
 				limit = {
 					HAM = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PIJ_arms_value > 1100
 						}
@@ -333,30 +353,31 @@ on_actions = {
 					days = 0
 				}
 				HAM = {
-					set_country_flag = PER_PAL_coup
 					end_puppet = HAM
 					set_temp_variable = { rul_party_temp = 9 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 9 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Nasser Salah al-Deen Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
-							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
-							Mot_Militia_Bat = { x = 1 y = 0 }
-							Mot_Militia_Bat = { x = 1 y = 1 }
+
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
+							Mot_Militia_Bat = { x = 2 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 2 }
 						}
-						support = {
-							armor_Comp = { x = 0 y = 0 }
-							Arty_Battery = { x = 0 y = 1 }
+						regimental_support = {
+							armor_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 					}
 					capital_scope = {
@@ -389,7 +410,7 @@ on_actions = {
 					clr_country_flag = military_supply_target
 					add_equipment_to_stockpile = {
 						amount = arms_hard_varible
-						type = Inf_equipment
+						type = infantry_weapons_type
 						producer = PER
 					}
 					add_equipment_to_stockpile = {
@@ -409,7 +430,7 @@ on_actions = {
 			if = {
 				limit = {
 					PAL = {
-						neutrality_neutral_muslim_brotherhood_are_not_in_power = yes
+						neutrality_neutral_muslim_brotherhood_are_in_power = no
 						check_variable = { hamas_arms_value > 1100 }
 					}
 				}
@@ -418,28 +439,29 @@ on_actions = {
 					days = 0
 				}
 				PAL = {
-					set_country_flag = PER_PAL_coup
 					end_puppet = PAL
 					set_temp_variable = { rul_party_temp = 12 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = neutrality elections_allowed = no }
 					set_temp_variable = { party_index = 12 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Qassam Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
 							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
+
 							L_Inf_Bat = { x = 1 y = 0 }
 							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
 						}
-						support = {
+						regimental_support = {
 							armor_Comp = { x = 0 y = 0 }
 						}
 					}
@@ -459,7 +481,7 @@ on_actions = {
 			else_if = {
 				limit = {
 					PAL = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PFLP_arms_value > 1100
 						}
@@ -473,26 +495,28 @@ on_actions = {
 					end_puppet = PAL
 					set_temp_variable = { rul_party_temp = 4 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 4 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Quds Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
-							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
-							Mot_Militia_Bat = { x = 1 y = 0 }
-							Mot_Militia_Bat = { x = 1 y = 1 }
+
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
+							Mot_Militia_Bat = { x = 2 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 2 }
 						}
-						support = {
-							armor_Comp = { x = 0 y = 0 }
-							Arty_Battery = { x = 0 y = 1 }
+						regimental_support = {
+							armor_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 					}
 					capital_scope = {
@@ -511,7 +535,7 @@ on_actions = {
 			else_if = {
 				limit = {
 					PAL = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PRC_arms_value > 1100
 						}
@@ -525,24 +549,26 @@ on_actions = {
 					end_puppet = PAL
 					set_temp_variable = { rul_party_temp = 8 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 8 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Abu Ali Mustafa Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
 							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
+
 							L_Inf_Bat = { x = 1 y = 0 }
 							L_Inf_Bat = { x = 1 y = 1 }
+							L_Inf_Bat = { x = 1 y = 2 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
 						}
-						support = {
+						regimental_support = {
 							armor_Comp = { x = 0 y = 0 }
 							Arty_Battery = { x = 0 y = 1 }
 						}
@@ -563,7 +589,7 @@ on_actions = {
 			else_if = {
 				limit = {
 					PAL = {
-						emerging_communist_state_are_not_in_power = yes
+						emerging_communist_state_are_in_power = no
 						check_variable = {
 							PIJ_arms_value > 1100
 						}
@@ -577,26 +603,28 @@ on_actions = {
 					end_puppet = PAL
 					set_temp_variable = { rul_party_temp = 9 }
 					set_temp_variable = { change_leader_temp = 1 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_politics = { ruling_party = communism elections_allowed = no }
 					set_temp_variable = { party_index = 9 }
 					set_temp_variable = { party_popularity_increase = 0.05 }
 					set_temp_variable = { temp_outlook_increase = 0.05 }
-					add_relative_party_popularity = yes
+					change_relative_party_popularity = yes
 					division_template = {
 						name = "Al-Nasser Salah al-Deen Brigades"
 						regiments = {
 							L_Inf_Bat = { x = 0 y = 0 }
 							L_Inf_Bat = { x = 0 y = 1 }
-							L_Inf_Bat = { x = 0 y = 2 }
-							L_Inf_Bat = { x = 0 y = 3 }
-							Mot_Militia_Bat = { x = 1 y = 0 }
-							Mot_Militia_Bat = { x = 1 y = 1 }
+
+							L_Inf_Bat = { x = 1 y = 0 }
+							L_Inf_Bat = { x = 1 y = 1 }
+
 							Mot_Militia_Bat = { x = 2 y = 0 }
+							Mot_Militia_Bat = { x = 2 y = 1 }
+							Mot_Militia_Bat = { x = 2 y = 2 }
 						}
-						support = {
-							armor_Comp = { x = 0 y = 0 }
-							Arty_Battery = { x = 0 y = 1 }
+						regimental_support = {
+							armor_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 					}
 					capital_scope = {
@@ -629,7 +657,7 @@ on_actions = {
 					clr_country_flag = military_supply_target
 					add_equipment_to_stockpile = {
 						amount = arms_hard_varible
-						type = Inf_equipment
+						type = infantry_weapons_type
 						producer = PER
 					}
 					add_equipment_to_stockpile = {
@@ -646,62 +674,8 @@ on_actions = {
 				PER = { add_to_faction = PAL }
 			}
 
-			# For Election
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = PER_majles_abolished
-					}
-					check_variable = {
-						PER_election_var > 0
-					}
-				}
-				add_to_variable = { var = PER_election_var value = -1 }
-				clamp_variable = { var = PER_election_var min = 0 max = 48 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = PER_majles_abolished
-					}
-					check_variable = {
-						PER_election_var = 0
-					}
-				}
-				add_to_variable = { var = PER_election_var value = 48 }
-				clamp_variable = { var = PER_election_var min = 0 max = 48 }
-				country_event = {
-					id = PER_majlis.1
-					days = 18
-				}
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = PER_majles_abolished
-					}
-					check_variable = {
-						PER_election_var > 0
-					}
-				}
-				add_to_variable = { var = PER_session_var value = -1 }
-				clamp_variable = { var = PER_session_var min = 0 max = 48 }
-			}
-			if = {
-				limit = {
-					NOT = {
-						has_country_flag = PER_majles_abolished
-					}
-					check_variable = {
-						PER_session_var = 0
-					}
-				}
-				add_to_variable = { var = PER_session_var value = 18 }
-				clamp_variable = { var = PER_session_var min = 0 max = 48 }
-				country_event = {
-					id = PER_majlis.2
-				}
-			}
+			PER_majlis_monthly_tick = yes
+
 			# Jordan Shale Oil
 			if = {
 				limit = {
@@ -734,7 +708,7 @@ on_actions = {
 			# Basij Fervor stuff
 			if = {
 				limit = {
-					has_country_flag = PER_basij_fervor_decisions
+					has_completed_focus = PER_basij_autonomy
 					NOT = {
 						has_country_flag = PER_basij_variable_stop
 					}
@@ -744,7 +718,7 @@ on_actions = {
 			}
 			if = {
 				limit = {
-					has_country_flag = PER_basij_fervor_decisions
+					has_completed_focus = PER_basij_autonomy
 					has_country_flag = PER_basij_fervor_drain
 				}
 				add_to_variable = { var = islamic_propaganda_status value = -10 }

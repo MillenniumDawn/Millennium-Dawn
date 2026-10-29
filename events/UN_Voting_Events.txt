@@ -1,0 +1,2611 @@
+add_namespace = UN
+add_namespace = UNSC
+
+#1-100 series events - events for voting
+#200 series events - events for swaying nations during
+#300 series events - events for warnings about UN programs or other changes
+#400 series events - events that fire after a UN GA Vote is held over implementing something
+#400 series events are used to let nations either reject or accept a non-binding vote
+
+#event to scope SC votes
+country_event = {
+	id = UNSC.100
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.security_council_members
+			# Dead members cannot finish the mission, and the vote subject is recused.
+			limit = { is_eligible_current_sc_voter = yes }
+			set_global_flag = current_ongoing_sc_vote
+			set_country_flag = has_sc_mission
+			activate_mission = UN_SC_voting_mission
+		}
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+			var:v = {
+				if = {
+					limit = { is_eligible_current_sc_voter = yes }
+					if = {
+						limit = { NOT = { has_auto_sc_vote = yes } }
+						country_event = UNSC.1
+					} else = {
+						process_auto_sc_vote = yes
+					}
+					if = {
+						limit = {
+							NOT = { has_country_flag = has_sc_mission }
+						}
+						activate_mission = UN_SC_voting_mission_result_timer
+					}
+				}
+			}
+		}
+	}
+}
+#event for SC votes
+country_event = {
+	id = UNSC.1
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 1 } }
+		text = UNSC.1.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 2 } }
+		text = UNSC.2.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 3 } }
+		text = UNSC.3.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
+		text = UNSC.4.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 6 } }
+		text = UNSC.6.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 7 } }
+		text = UNSC.7.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_sc_vote_type = 8 } }
+		text = UNSC.8.t
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 1 } }
+		text = UNSC.1.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 2 } }
+		text = UNSC.2.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 3 } }
+		text = UNSC.3.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 4 } }
+		text = UNSC.4.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 6 } }
+		text = UNSC.6.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 7 } }
+		text = UNSC.7.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_sc_vote_type = 8 } }
+		text = UNSC.8.d
+	}
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 4
+	#Abstain
+	option = {
+		name = UNSC.1.c
+		# Answered after an early mission completion: the tally is already resolved and cleared
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_abstain = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting in SC vote type [?global.current_sc_vote_type]"
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_opinion = {
+					target = FROM
+					value < 5
+				}
+				has_opinion = {
+					target = FROM
+					value > -5
+				}
+			}
+			modifier = {
+				add = 1000
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_war_with = FROM
+			}
+			modifier = {
+				add = -10000
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_war_with = ALN
+			}
+			modifier = {
+				add = 5
+				check_variable = { global.current_sc_vote_type > 1 }
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_opinion = {
+					target = FROM
+					value < 20
+				}
+				has_opinion = {
+					target = FROM
+					value > -20
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type = 8 }
+			}
+			modifier = {
+				add = 10000
+				check_variable = { global.current_sc_vote_type = 8 }
+				tag = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_opinion = { target = FROM value > -20 }
+				has_opinion = { target = FROM value < 20 }
+			}
+		}
+	}
+
+	#Yes
+	option = {
+		name = UNSC.1.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes in SC vote type [?global.current_sc_vote_type]"
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_yes = THIS }
+		}
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_opinion = {
+					target = FROM
+					value < -5
+				}
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 30
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_neighbor_of = FROM
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+			modifier = {
+				add = -10000
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_war_with = ALN
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type > 1 }
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_opinion = {
+					target = FROM
+					value < -20
+				}
+			}
+			modifier = {
+				add = 200
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_country_flag = recognition_campaign_UNSC@FROM
+			}
+			modifier = {
+				add = 60
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_opinion = { target = FROM value > 49 }
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_opinion = { target = FROM value > 0 }
+			}
+			modifier = {
+				add = 5
+				check_variable = { global.current_sc_vote_type = 8 }
+				sender_influence_higher_5 = yes
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type = 8 }
+				sender_influence_higher_15 = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type = 8 }
+				sender_influence_higher_30 = yes
+			}
+			modifier = {
+				add = 30
+				check_variable = { global.current_sc_vote_type = 8 }
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_sc_vote_type = 8 }
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_sc_vote_type = 8 }
+				is_in_faction_with = FROM
+			}
+			#Handing over a wanted man and submitting to inspections are easy things to vote for, but not
+			#free ones: a friend of the subject still has to weigh them against the No-side modifiers.
+			modifier = {
+				add = 30
+				check_variable = { global.current_sc_vote_type = 7 }
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_sc_vote_type = 6 }
+			}
+		}
+	}
+
+	#No
+	option = {
+		name = UNSC.1.b
+		if = {
+			limit = { has_global_flag = current_ongoing_sc_vote }
+			add_to_array = { global.security_council_vote_no = THIS }
+			if = {
+				limit = { is_in_array = { global.p5_sc_members = THIS } }
+				set_global_flag = security_council_veto
+			}
+		}
+		log = "[GetDateText]: [THIS.GetName] has voted no in SC vote type [?global.current_sc_vote_type]"
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 1000
+				tag = FROM
+				check_variable = { global.current_sc_vote_type < 8 }
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type < 8 }
+				FROM = { has_government = ROOT }
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_opinion = {
+					target = FROM
+					value > 5
+				}
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_war = yes
+			}
+			modifier = {
+				add = 200
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type < 8 }
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_non_aggression_pact_with = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_guaranteed = FROM
+			}
+			modifier = {
+				add = 10000
+				check_variable = { global.current_sc_vote_type = 1 }
+				has_war_with = ALN
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_sc_vote_type > 1 }
+				check_variable = { global.current_sc_vote_type < 8 }
+				has_opinion = {
+					target = FROM
+					value > 20
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_sc_vote_type = 8 }
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_opinion = { target = FROM value < -49 }
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_sc_vote_type = 8 }
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_sc_vote_type = 8 }
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+}
+
+#SC Resolution Passed - Notification to Security Council members
+country_event = {
+	id = UNSC.10
+	title = UNSC.10.t
+	desc = UNSC.10.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	option = { name = UNSC.10.a }
+}
+
+#SC Resolution Passed - Warning to subject nation
+country_event = {
+	id = UNSC.11
+	title = UNSC.11.t
+	desc = UNSC.11.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	option = { name = UNSC.11.a }
+}
+
+#SC Resolution Failed - generic news for types 1-4 and 6-8. The finisher fires
+#this before clearing the tallies, so the desc triggers can still read the veto
+#flag and the yes count to explain why a majority-yes vote still failed.
+news_event = {
+	id = UNSC.12
+	title = UNSC.12.t
+	desc = {
+		trigger = { has_global_flag = security_council_veto }
+		text = UNSC.12.d_veto
+	}
+	desc = {
+		trigger = { always = yes }
+		text = UNSC.12.d
+	}
+	picture = GFX_UN_event_global_2
+	is_triggered_only = yes
+
+	option = { name = UNSC.12.a }
+}
+
+news_event = {
+	id = UNSC.13
+	title = UNSC.13.t
+	desc = UNSC.13.d
+	picture = GFX_UN_event_global_2
+	is_triggered_only = yes
+	major = yes
+
+	option = { name = UNSC.13.a }
+}
+
+#event to scope GA votes
+country_event = {
+	id = UN.100
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		random_scope_in_array = {
+			array = global.UN_general_assembly
+			# A dead holder never completes the mission, so the ongoing flag leaks and voting stalls forever.
+			limit = { exists = yes }
+			set_global_flag = current_ongoing_ga_vote
+			set_country_flag = has_ga_mission
+			activate_mission = UN_GA_voting_mission
+		}
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			var:v = {
+				if = {
+					limit = { NOT = { has_auto_ga_vote = yes } }
+					country_event = UN.6
+				} else = {
+					process_auto_ga_vote = yes
+				}
+				if = {
+					limit = {
+						NOT = { has_country_flag = has_ga_mission }
+					}
+					activate_mission = UN_GA_voting_mission_result_timer
+				}
+			}
+		}
+	}
+}
+#events for GA votes
+country_event = {
+	id = UN.6
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+		text = UN.6.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+		text = UN.7.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 8 } }
+		text = UN.8.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 9 } }
+		text = UN.9.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 10 } }
+		text = UN.10.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 11 } }
+		text = UN.11.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 12 } }
+		text = UN.12.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 13 } }
+		text = UN.13.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 14 } }
+		text = UN.14.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 15 } }
+		text = UN.15.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 16 } }
+		text = UN.16.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 17 } }
+		text = UN.17.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 18 } }
+		text = UN.18.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 19 } }
+		text = UN.19.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 20 } }
+		text = UN.20.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 21 } }
+		text = UN.21.t
+	}
+	title = {
+		trigger = { check_variable = { global.current_ga_vote_type = 22 } }
+		text = UN.22.t
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 6 } }
+		text = UN.6.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 7 } }
+		text = UN.7.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 8 } }
+		text = UN.8.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 9 } }
+		text = UN.9.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 10 } }
+		text = UN.10.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 11 } }
+		text = UN.11.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 12 } }
+		text = UN.12.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 13 } }
+		text = UN.13.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 14 } }
+		text = UN.14.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 15 } }
+		text = UN.15.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 16 } }
+		text = UN.16.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 17 } }
+		text = UN.17.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 18 } }
+		text = UN.18.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 19 } }
+		text = UN.19.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 20 } }
+		text = UN.20.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 21 } }
+		text = UN.21.d
+	}
+	desc = {
+		trigger = { check_variable = { global.current_ga_vote_type = 22 } }
+		text = UN.22.d
+	}
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 4
+	#Abstain
+	option = {
+		name = UN.6.c
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_abstain = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has abstained from voting in GA vote type [?global.current_ga_vote_type]"
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 22 }
+			}
+			modifier = {
+				add = 1000
+				OR = {
+					check_variable = { global.current_ga_vote_type = 6 }
+					check_variable = { global.current_ga_vote_type = 22 }
+				}
+				tag = FROM
+			}
+		}
+	}
+
+	#Yes
+	option = {
+		name = UN.6.a
+		log = "[GetDateText]: [THIS.GetName] has voted yes in GA vote type [?global.current_ga_vote_type]"
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_yes = THIS }
+		}
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 1
+				check_variable = { global.current_ga_vote_type = 6 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { global.current_ga_vote_type = 22 }
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_ga_vote_type = 22 }
+				has_opinion = { target = FROM value > 49 }
+			}
+			modifier = {
+				add = 40
+				check_variable = { global.current_ga_vote_type = 22 }
+				has_opinion = { target = FROM value > 0 }
+			}
+			modifier = {
+				add = 5
+				check_variable = { global.current_ga_vote_type = 22 }
+				sender_influence_higher_5 = yes
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 22 }
+				sender_influence_higher_15 = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 22 }
+				sender_influence_higher_30 = yes
+			}
+			modifier = {
+				add = 30
+				check_variable = { global.current_ga_vote_type = 22 }
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 22 }
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_ga_vote_type = 22 }
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 200
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 6 }
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 22 } }
+				}
+				is_ally_with = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 6 }
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 22 } }
+				}
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_on_same_continent_as = FROM
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = { has_government = ROOT }
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_ga_vote_type > 9 }
+				check_variable = { global.current_ga_vote_type < 22 }
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 20
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+					check_variable = { global.current_ga_vote_type = 16 }
+					check_variable = { global.current_ga_vote_type = 20 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+				}
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 15
+				OR = {
+					check_variable = { global.current_ga_vote_type = 11 }
+					check_variable = { global.current_ga_vote_type = 13 }
+					check_variable = { global.current_ga_vote_type = 17 }
+					check_variable = { global.current_ga_vote_type = 21 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 11 }
+					check_variable = { global.current_ga_vote_type = 14 }
+					check_variable = { global.current_ga_vote_type = 16 }
+				}
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 13 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 14 }
+					check_variable = { global.current_ga_vote_type = 18 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 17 }
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_offensive_war = no
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 20 }
+				is_in_faction_with = FROM
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 21 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 21 }
+				num_of_civilian_factories > 30
+			}
+		}
+	}
+
+	#No
+	option = {
+		name = UN.6.b
+		if = {
+			limit = { has_global_flag = current_ongoing_ga_vote }
+			add_to_array = { global.general_assembly_vote_no = THIS }
+		}
+		log = "[GetDateText]: [THIS.GetName] has voted no in GA vote type [?global.current_ga_vote_type]"
+		international_systems_update = yes
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = -10
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_non_aggression_pact_with = FROM
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 6 }
+				FROM = { has_war = yes }
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+				FROM = { has_government = ROOT }
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				is_on_same_continent_as = FROM
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 6 }
+				any_of_scopes = {
+					array = allies
+					has_opinion = {
+						target = FROM
+						value < -10
+					}
+				}
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_opinion = {
+					target = FROM
+					value < -11
+				}
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_ga_vote_type = 6 }
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				is_puppet_of = FROM
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				is_guaranteed_by = FROM
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 6 }
+				check_variable = { global.current_ga_vote_type < 10 }
+				has_opinion = {
+					target = FROM
+					value > -1
+				}
+			}
+			modifier = {
+				add = 20
+				OR = {
+					AND = { check_variable = { global.current_ga_vote_type > 9 } check_variable = { global.current_ga_vote_type < 14 } }
+					AND = { check_variable = { global.current_ga_vote_type > 16 } check_variable = { global.current_ga_vote_type < 19 } }
+					AND = { check_variable = { global.current_ga_vote_type > 19 } check_variable = { global.current_ga_vote_type < 22 } }
+				}
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { global.current_ga_vote_type = 10 }
+					check_variable = { global.current_ga_vote_type = 12 }
+				}
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type > 9 }
+				check_variable = { global.current_ga_vote_type < 22 }
+				has_opinion = {
+					target = FROM
+					value < -10
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 11 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type > 12 }
+				check_variable = { global.current_ga_vote_type < 15 }
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type > 13 }
+				check_variable = { global.current_ga_vote_type < 16 }
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 14 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 15 }
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 25
+				OR = {
+					check_variable = { global.current_ga_vote_type = 16 }
+					check_variable = { global.current_ga_vote_type = 19 }
+				}
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 16 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 16 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 17 }
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type > 16 }
+				check_variable = { global.current_ga_vote_type < 19 }
+				is_major = yes
+			}
+			modifier = {
+				add = 25
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 18 }
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { global.current_ga_vote_type = 19 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 19 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 20 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { global.current_ga_vote_type = 21 }
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 21 }
+				amount_research_slots < 3
+			}
+			modifier = {
+				add = 10
+				check_variable = { global.current_ga_vote_type = 22 }
+			}
+			modifier = {
+				add = 40
+				check_variable = { global.current_ga_vote_type = 22 }
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				add = 100
+				check_variable = { global.current_ga_vote_type = 22 }
+				has_opinion = { target = FROM value < -49 }
+			}
+			modifier = {
+				add = 500
+				check_variable = { global.current_ga_vote_type = 22 }
+				has_war_with = FROM
+			}
+			modifier = {
+				add = 50
+				check_variable = { global.current_ga_vote_type = 22 }
+				is_in_array = { potential_and_current_enemies = FROM }
+			}
+		}
+	}
+}
+
+#400 series events - events that fire after a UN GA Vote is held over implementing something
+#Nations that voted no or abstained on a passed non-binding resolution get a chance to accept it
+country_event = {
+	id = UN.410
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 10 } }
+		text = UN.410.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 11 } }
+		text = UN.411.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 12 } }
+		text = UN.412.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 13 } }
+		text = UN.413.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 14 } }
+		text = UN.414.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 15 } }
+		text = UN.415.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 16 } }
+		text = UN.416.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 17 } }
+		text = UN.417.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 18 } }
+		text = UN.418.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 19 } }
+		text = UN.419.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 20 } }
+		text = UN.420.t
+	}
+	title = {
+		trigger = { check_variable = { ga_resolution_vote_type = 21 } }
+		text = UN.421.t
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 10 } }
+		text = UN.410.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 11 } }
+		text = UN.411.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 12 } }
+		text = UN.412.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 13 } }
+		text = UN.413.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 14 } }
+		text = UN.414.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 15 } }
+		text = UN.415.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 16 } }
+		text = UN.416.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 17 } }
+		text = UN.417.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 18 } }
+		text = UN.418.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 19 } }
+		text = UN.419.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 20 } }
+		text = UN.420.d
+	}
+	desc = {
+		trigger = { check_variable = { ga_resolution_vote_type = 21 } }
+		text = UN.421.d
+	}
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	#Accept the Resolution
+	option = {
+		name = UN.410.a
+		log = "[GetDateText]: [THIS.GetName] has accepted the passed UNGA resolution type [?ga_resolution_vote_type]"
+		if = {
+			limit = { check_variable = { ga_resolution_vote_type = 10 } }
+			add_timed_idea = { idea = unga_resolution_poverty_reduction days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 11 } }
+			add_timed_idea = { idea = unga_resolution_food_security days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 12 } }
+			add_timed_idea = { idea = unga_resolution_global_health days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 13 } }
+			add_timed_idea = { idea = unga_resolution_education_initiative days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 14 } }
+			add_timed_idea = { idea = unga_resolution_clean_energy days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 15 } }
+			add_timed_idea = { idea = unga_resolution_economic_growth days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 16 } }
+			add_timed_idea = { idea = unga_resolution_infrastructure days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 17 } }
+			add_timed_idea = { idea = unga_resolution_reduced_inequality days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 18 } }
+			add_timed_idea = { idea = unga_resolution_climate_action days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 19 } }
+			add_timed_idea = { idea = unga_resolution_peace_institutions days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 20 } }
+			add_timed_idea = { idea = unga_resolution_trade_partnerships days = 365 }
+		} else_if = {
+			limit = { check_variable = { ga_resolution_vote_type = 21 } }
+			add_timed_idea = { idea = unga_resolution_digital_development days = 365 }
+		}
+		clear_variable = ga_resolution_proposer
+		clear_variable = ga_resolution_vote_type
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 15
+				OR = {
+					AND = { check_variable = { ga_resolution_vote_type > 9 } check_variable = { ga_resolution_vote_type < 14 } }
+					check_variable = { ga_resolution_vote_type = 17 }
+					check_variable = { ga_resolution_vote_type = 21 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 10 }
+					check_variable = { ga_resolution_vote_type = 12 }
+				}
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 11 }
+					check_variable = { ga_resolution_vote_type = 14 }
+					check_variable = { ga_resolution_vote_type = 16 }
+				}
+				num_of_civilian_factories < 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 13 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 14 }
+					check_variable = { ga_resolution_vote_type = 18 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 15 }
+				num_of_civilian_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 15 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 20
+				OR = {
+					check_variable = { ga_resolution_vote_type = 16 }
+					check_variable = { ga_resolution_vote_type = 20 }
+				}
+				has_war = no
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 17 }
+				has_stability < 0.5
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 18 }
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				add = 25
+				check_variable = { ga_resolution_vote_type = 19 }
+				has_war = no
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 19 }
+				has_offensive_war = no
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 20 }
+				is_in_faction = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 21 }
+				amount_research_slots > 3
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 21 }
+				num_of_civilian_factories > 30
+			}
+		}
+	}
+
+	#Reject the Resolution
+	option = {
+		name = UN.410.b
+		log = "[GetDateText]: [THIS.GetName] has rejected the passed UNGA resolution type [?ga_resolution_vote_type]"
+		if = {
+			limit = { check_variable = { ga_resolution_proposer > 0 } }
+			var:ga_resolution_proposer = {
+				add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution }
+				add_opinion_modifier = { target = ROOT modifier = unga_rejected_resolution_trade }
+			}
+		}
+		clear_variable = ga_resolution_proposer
+		clear_variable = ga_resolution_vote_type
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 20
+				OR = {
+					AND = { check_variable = { ga_resolution_vote_type > 9 } check_variable = { ga_resolution_vote_type < 14 } }
+					AND = { check_variable = { ga_resolution_vote_type > 16 } check_variable = { ga_resolution_vote_type < 19 } }
+					AND = { check_variable = { ga_resolution_vote_type > 19 } check_variable = { ga_resolution_vote_type < 22 } }
+				}
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				OR = {
+					check_variable = { ga_resolution_vote_type = 10 }
+					check_variable = { ga_resolution_vote_type = 12 }
+				}
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 11 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type > 12 }
+				check_variable = { ga_resolution_vote_type < 15 }
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type > 13 }
+				check_variable = { ga_resolution_vote_type < 16 }
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 14 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 15 }
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 25
+				OR = {
+					check_variable = { ga_resolution_vote_type = 16 }
+					check_variable = { ga_resolution_vote_type = 19 }
+				}
+				has_war = yes
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 16 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 16 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 17 }
+				has_stability > 0.7
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type > 16 }
+				check_variable = { ga_resolution_vote_type < 19 }
+				is_major = yes
+			}
+			modifier = {
+				add = 25
+				check_variable = { ga_resolution_vote_type = 18 }
+				num_of_military_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 18 }
+				num_of_civilian_factories > 50
+			}
+			modifier = {
+				add = 20
+				check_variable = { ga_resolution_vote_type = 19 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 19 }
+				num_of_military_factories > 30
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 20 }
+				has_offensive_war = yes
+			}
+			modifier = {
+				add = 15
+				check_variable = { ga_resolution_vote_type = 21 }
+				num_of_civilian_factories < 15
+			}
+			modifier = {
+				add = 10
+				check_variable = { ga_resolution_vote_type = 21 }
+				amount_research_slots < 3
+			}
+		}
+	}
+}
+
+#UNSC sway scoping event
+country_event = {
+	id = UNSC.200
+	title = UNSC.200.t
+	desc = UNSC.200.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	option = {
+		name = UNSC.200.a
+		log = "[GetDateText]: [This.GetName]: UNSC.200.a"
+		var:sway_target = {
+			country_event = UNSC.201
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_1
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UNSC.200.b
+		log = "[GetDateText]: [This.GetName]: UNSC.200.b"
+		var:sway_target = {
+			country_event = UNSC.202
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_2
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UNSC.200.c
+		log = "[GetDateText]: [This.GetName]: UNSC.200.c"
+		var:sway_target = {
+			country_event = UNSC.203
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_3
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UNSC.200.e
+		log = "[GetDateText]: [This.GetName]: UNSC.200.e"
+		trigger = { NOT = { has_idea = un_vote_sway_cost } }
+		custom_effect_tooltip = un_change_vote_too_offer_4
+		var:sway_target = {
+			country_event = UNSC.204
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+			custom_effect_tooltip = nation_will_receive_tt
+			effect_tooltip = { add_ideas = un_vote_sway_assistance }
+		}
+		custom_effect_tooltip = nation_will_receive_tt
+		effect_tooltip = { add_ideas = un_vote_sway_cost }
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 1000 }
+	}
+}
+#UNSC Sway Events
+country_event = {
+	id = UNSC.201
+	title = UNSC.201.t
+	desc = UNSC.201.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UNSC.201.b
+		log = "[GetDateText]: [This.GetName]: UNSC.201.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_country_flag = trade_agreement@FROM
+			}
+			modifier = {
+				add = 5
+				has_country_flag = mutual_investment_treaty_@FROM
+			}
+			modifier = {
+				add = 5
+				NOT = { is_embargoed_by = FROM }
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UNSC.201.a
+		log = "[GetDateText]: [This.GetName]: UNSC.201.a"
+		sc_sway_direction_effect = yes
+		if = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				is_embargoed_by = FROM
+			}
+			FROM = {
+				diplomatic_relation = {
+					country = PREV
+					relation = embargo
+					active = no
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			FROM = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			set_temp_variable = { receiver_nation = FROM.id }
+			set_temp_variable = { sender_nation = THIS.id }
+			set_improved_trade_agreement = yes
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			FROM = {
+				set_country_flag = mutual_investment_treaty_@PREV
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				change_influence_percentage = yes
+				# Permanent Investment Targets
+				set_temp_variable = { target_nation = THIS.id }
+				set_temp_variable = { adding_nation = PREV.id }
+				change_permanent_investment_target = yes
+			}
+			set_country_flag = mutual_investment_treaty_@FROM
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			# Permanent Investment Targets
+			set_temp_variable = { target_nation = THIS.id }
+			set_temp_variable = { adding_nation = FROM.id }
+			change_permanent_investment_target = yes
+		}
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			modifier = {
+				add = 5
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.202
+	title = UNSC.202.t
+	desc = UNSC.202.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UNSC.202.b
+		log = "[GetDateText]: [This.GetName]: UNSC.202.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate > 0 }
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UNSC.202.a
+		log = "[GetDateText]: [This.GetName]: UNSC.202.a"
+		sc_sway_direction_effect = yes
+		set_temp_variable = { gdp_value_tracker = gdp_total }
+		multiply_temp_variable = { gdp_value_tracker = 0.0025 }
+		set_temp_variable = { treasury_change = gdp_value_tracker }
+		modify_treasury_effect = yes
+		multiply_temp_variable = { treasury_change = -1 }
+		FROM = {
+			modify_treasury_effect = yes
+		}
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate < 0.001 }
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.203
+	title = UNSC.203.t
+	desc = UNSC.203.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UNSC.203.b
+		log = "[GetDateText]: [This.GetName]: UNSC.203.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				has_military_access_to = FROM
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UNSC.203.a
+		log = "[GetDateText]: [This.GetName]: UNSC.203.a"
+		sc_sway_direction_effect = yes
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		if = {
+			limit = {
+				NOT = {
+					has_military_access_to = FROM
+				}
+			}
+			FROM = {
+				give_military_access = PREV
+			}
+		}
+		FROM = {
+			diplomatic_relation = {
+				country = PREV
+				relation = offer_air_base_access
+				active = yes
+			}
+		}
+		full_satellite_system_access = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_military_access_to = FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+country_event = {
+	id = UNSC.204
+	title = UNSC.204.t
+	desc = UNSC.204.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UNSC.204.b
+		log = "[GetDateText]: [This.GetName]: UNSC.204.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 5
+				has_idea = un_vote_sway_assistance
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UNSC.204.a
+		log = "[GetDateText]: [This.GetName]: UNSC.204.a"
+		sc_sway_direction_effect = yes
+		clear_variable = current_sway_direction
+		add_timed_idea = {
+			idea = un_vote_sway_assistance
+			days = 365
+		}
+		FROM = {
+			if = {
+				limit = {
+					has_idea = un_vote_sway_cost
+				}
+				modify_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			} else = {
+				add_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}
+		}
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = { has_idea = un_vote_sway_assistance }
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+
+#UNGA sway scoping event
+country_event = {
+	id = UN.200
+	title = UN.200.t
+	desc = UN.200.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	option = {
+		name = UN.200.a
+		log = "[GetDateText]: [This.GetName]: UN.200.a"
+		var:sway_target = {
+			country_event = UN.201
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_1
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UN.200.b
+		log = "[GetDateText]: [This.GetName]: UN.200.b"
+		var:sway_target = {
+			country_event = UN.202
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_2
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UN.200.c
+		log = "[GetDateText]: [This.GetName]: UN.200.c"
+		var:sway_target = {
+			country_event = UN.203
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+		}
+		custom_effect_tooltip = un_change_vote_too_offer_3
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 0 }
+	}
+
+	option = {
+		name = UN.200.e
+		log = "[GetDateText]: [This.GetName]: UN.200.e"
+		trigger = { NOT = { has_idea = un_vote_sway_cost } }
+		custom_effect_tooltip = un_change_vote_too_offer_4
+		var:sway_target = {
+			country_event = UN.204
+			set_variable = { current_sway_direction = ROOT.current_vote_sway }
+			custom_effect_tooltip = nation_will_receive_tt
+			effect_tooltip = { add_ideas = un_vote_sway_assistance }
+		}
+		custom_effect_tooltip = nation_will_receive_tt
+		effect_tooltip = { add_ideas = un_vote_sway_cost }
+		clear_variable = sway_target
+		clear_variable = current_vote_sway
+		ai_chance = { base = 1000 }
+	}
+}
+#UNGA Sway Events
+country_event = {
+	id = UN.201
+	title = UN.201.t
+	desc = UN.201.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UN.201.b
+		log = "[GetDateText]: [This.GetName]: UN.201.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_country_flag = trade_agreement@FROM
+			}
+			modifier = {
+				add = 5
+				has_country_flag = mutual_investment_treaty_@FROM
+			}
+			modifier = {
+				add = 5
+				NOT = { is_embargoed_by = FROM }
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UN.201.a
+		log = "[GetDateText]: [This.GetName]: UN.201.a"
+		un_sway_direction_effect = yes
+		if = {
+			limit = {
+				has_dlc = "By Blood Alone"
+				is_embargoed_by = FROM
+			}
+			FROM = {
+				diplomatic_relation = {
+					country = PREV
+					relation = embargo
+					active = no
+				}
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			FROM = {
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				change_influence_percentage = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			set_temp_variable = { receiver_nation = FROM.id }
+			set_temp_variable = { sender_nation = THIS.id }
+			set_improved_trade_agreement = yes
+		}
+		if = {
+			limit = {
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			FROM = {
+				set_country_flag = mutual_investment_treaty_@PREV
+				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { tag_index = PREV.id }
+				change_influence_percentage = yes
+				# Permanent Investment Targets
+				set_temp_variable = { target_nation = THIS.id }
+				set_temp_variable = { adding_nation = PREV.id }
+				change_permanent_investment_target = yes
+			}
+			set_country_flag = mutual_investment_treaty_@FROM
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+			reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { tag_index = FROM.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			# Permanent Investment Targets
+			set_temp_variable = { target_nation = THIS.id }
+			set_temp_variable = { adding_nation = FROM.id }
+			change_permanent_investment_target = yes
+		}
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = trade_agreement@FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_country_flag = mutual_investment_treaty_@FROM }
+			}
+			modifier = {
+				add = 5
+				is_embargoed_by = FROM
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.202
+	title = UN.202.t
+	desc = UN.202.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UN.202.b
+		log = "[GetDateText]: [This.GetName]: UN.202.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				sender_influence_higher_50 = no
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value < 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate > 0 }
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UN.202.a
+		log = "[GetDateText]: [This.GetName]: UN.202.a"
+		un_sway_direction_effect = yes
+		set_temp_variable = { gdp_value_tracker = gdp_total }
+		multiply_temp_variable = { gdp_value_tracker = 0.0025 }
+		set_temp_variable = { treasury_change = gdp_value_tracker }
+		modify_treasury_effect = yes
+		multiply_temp_variable = { treasury_change = -1 }
+		FROM = {
+			modify_treasury_effect = yes
+		}
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 15
+				sender_influence_higher_50 = yes
+			}
+			modifier = {
+				add = 5
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 15
+				check_variable = { treasury_rate < 0.001 }
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.203
+	title = UN.203.t
+	desc = UN.203.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UN.203.b
+		log = "[GetDateText]: [This.GetName]: UN.203.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 5
+				has_military_access_to = FROM
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 5
+				is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UN.203.a
+		log = "[GetDateText]: [This.GetName]: UN.203.a"
+		un_sway_direction_effect = yes
+		clear_variable = current_sway_direction
+		international_systems_update = yes
+		if = {
+			limit = {
+				NOT = {
+					has_military_access_to = FROM
+				}
+			}
+			FROM = {
+				give_military_access = PREV
+			}
+		}
+		FROM = {
+			diplomatic_relation = {
+				country = PREV
+				relation = OFFER_AIR_BASE_ACCESS
+				active = yes
+			}
+		}
+		full_satellite_system_access = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 5
+				NOT = { has_military_access_to = FROM }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.GNSS_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_mil_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 5
+				NOT = { is_in_array = { array = FROM.COM_civ_treaty_array value = THIS.id } }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+country_event = {
+	id = UN.204
+	title = UN.204.t
+	desc = UN.204.d
+	picture = GFX_UN_gen_assembly
+	is_triggered_only = yes
+
+	timeout_days = 2
+	option = {
+		name = UN.204.b
+		log = "[GetDateText]: [This.GetName]: UN.204.b"
+		clear_variable = current_sway_direction
+		FROM = {
+			add_opinion_modifier = {
+				target = PREV
+				modifier = rejected_our_vote_request
+			}
+		}
+		if = {
+			limit = { sender_influence_higher_50 = yes }
+			add_political_power = -250
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				OR = {
+					check_variable = { current_sway_direction = 1 }
+					check_variable = { current_sway_direction = 2 }
+				}
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value < 1
+				}
+			}
+			modifier = {
+				add = 5
+				has_idea = un_vote_sway_assistance
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = no
+			}
+			modifier = { factor = 0.25 sender_influence_higher_50 = yes has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = UN.204.a
+		log = "[GetDateText]: [This.GetName]: UN.204.a"
+		un_sway_direction_effect = yes
+		clear_variable = current_sway_direction
+		add_timed_idea = {
+			idea = un_vote_sway_assistance
+			days = 365
+		}
+		FROM = {
+			if = {
+				limit = {
+					has_idea = un_vote_sway_cost
+				}
+				modify_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			} else = {
+				add_timed_idea = {
+					idea = un_vote_sway_cost
+					days = 365
+				}
+			}
+		}
+		international_systems_update = yes
+		#Apply the agreed upon deal here
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				check_variable = { current_sway_direction = 3 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = FROM
+					value > 0
+				}
+			}
+			modifier = {
+				add = 5
+				NOT = { has_idea = un_vote_sway_assistance }
+			}
+			modifier = {
+				add = 10
+				sender_influence_higher_50 = yes
+			}
+		}
+	}
+}
+
+#Removed from Programs for Requirements
+country_event = {
+	id = UN.300
+	title = UN.300.t
+	desc = UN.300.d
+	picture = GFX_computer
+	is_triggered_only = yes
+
+	option = { name = UN.300.a }
+}
+
+country_event = {
+	id = UN.301
+	title = UN.301.t
+	desc = UN.301.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	option = { name = UN.301.a }
+}
+
+country_event = {
+	id = UN.302
+	title = UN.302.t
+	desc = UN.302.d
+	picture = GFX_generic_factory
+	is_triggered_only = yes
+
+	option = { name = UN.302.a }
+}

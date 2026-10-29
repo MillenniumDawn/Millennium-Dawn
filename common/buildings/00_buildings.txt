@@ -7,15 +7,22 @@
 # Dockyard (dockyard) - $7.50
 # Offices (offices) - $12
 # Infrastructure (infrastructure) - $3.50
+# Agriculture District (agriculture_district) - $3.75
 # Air Base (air_base) - $2.50
 # Sam Site (anti_air_building) - $3.25
-# Renewable Energy Infrastructure (synthetic_refinery) - $8.50
+# Renewable Energy Infrastructure (renewable_energy_infra) - $8.50
 # Fuel Silo (fuel_silo) - $3.00
 # Radar Station (radar_station) - $1.75
 # Network Infrastructure (internet_station) - $3.00
 # Missile Launch Site (rocket_site) - $6.00
 # Nuclear Reactor (nuclear_reactor) - $9.00
 # Fossil Fuel Powerplant (fossil_powerplant) - $3.25
+# Microchip Plant (microchip_plant) - $10.50
+# Composite Plant (composite_plant) - $8.50
+# Synthetic Refinery (synthetic_refinery) - $6.00
+# Reinforced Electrical Grid (energy_infrastructure) - $6.50
+# High Capacity Electrical Grid (industrial_infrastructure) - $6.50
+# Rail Terminal (rail_terminal) - $2.50
 # Building Slots Minimum: $1.00 per slot
 # -- Provincial Bulidings
 # Naval Base (naval_base) - $0.50 per level
@@ -23,6 +30,9 @@
 # Coastal Bunker (coastal_bunker) - $0.50 per level
 # Supply Hub (supply_node) - $2.50
 # Railways (rail_way) - $0.01 per province
+# Enrichment Facility (enrichment_facility) - $15.50
+# Research Facilities (land_facility / naval_facility / air_facility / nuclear_facility) - $15.00
+
 
 buildings = {
 	# show_on_map:
@@ -32,14 +42,15 @@ buildings = {
 	# 0 Civilian Industry
 	industrial_complex = {
 		show_on_map = 6
-		base_cost = 38000
-		base_cost_conversion = 28000
+		base_cost = 33150
+		base_cost_conversion = 24000
 		general_production = 1
 		icon_frame = 1
 		level_cap = {
 			shares_slots = yes
 			state_max = 50
 		}
+
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -62,18 +73,19 @@ buildings = {
 	}
 	# 2 Infrastructure
 	infrastructure = {
-		base_cost = 7500
+		base_cost = 10000
+		per_level_extra_cost = 4500
 		icon_frame = 3
 		infrastructure = yes
 		damage_factor = 1
 		value = 1
 		show_modifier = yes
 		level_cap = {
-			state_max = 5
+			state_max = 6
 		}
 		country_modifiers = {
 			modifiers = {
-				max_fuel_building = 1.5 #k
+				max_fuel_building = 2.5 #k
 			}
 		}
 	}
@@ -81,13 +93,13 @@ buildings = {
 	internet_station = {
 		show_on_map = 1
 		base_cost = 5000
-		per_level_extra_cost = 1250
-		icon_frame = 4
+		per_level_extra_cost = 1450
+		icon_frame = 32
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
 		level_cap = {
-			state_max = 6
+			state_max = 11
 		}
 		state_modifiers = {
 			state_productivity_growth_modifier = 0.05
@@ -100,7 +112,7 @@ buildings = {
 		base_cost = 45000
 		only_costal = yes
 		naval_production = 1
-		icon_frame = 5
+		icon_frame = 4
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -113,10 +125,11 @@ buildings = {
 	air_base = {
 		show_on_map = 1
 		base_cost = 6000
-		icon_frame = 6
+		icon_frame = 5
 		air_base = yes
 		damage_factor = 1
 		value = 1
+		allied_build = yes
 		infrastructure_construction_effect = yes
 		level_cap = {
 			state_max = 10
@@ -126,10 +139,11 @@ buildings = {
 	radar_station = {
 		show_on_map = 1
 		base_cost = 6000
-		icon_frame = 7
+		icon_frame = 11
 		radar = yes
 		damage_factor = 1
 		value = 1
+		allied_build = yes
 		infrastructure_construction_effect = yes
 		level_cap = {
 			state_max = 6
@@ -139,12 +153,13 @@ buildings = {
 	anti_air_building = {
 		show_on_map = 1
 		base_cost = 6000
-		icon_frame = 8
+		icon_frame = 9
 		anti_air = yes
 		disabled_in_dmz = yes
 		air_defence = 1
 		damage_factor = 1
 		value = 1
+		allied_build = yes
 		infrastructure_construction_effect = yes
 		level_cap = {
 			state_max = 5
@@ -155,15 +170,15 @@ buildings = {
 	nuclear_reactor = {
 		show_on_map = 1
 		base_cost = 50000
-		icon_frame = 12
+		icon_frame = 27
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
 		tags = { nuclear }
 		country_modifiers = {
 			modifiers = {
-				nuclear_energy_gain = 2 #in gigawatts
-				nuclear_fuel_consumption = 20 #weekly consumption
+				nuclear_energy_gain = 4 #in gigawatts
+				nuclear_fuel_consumption = 40 #weekly consumption
 			}
 		}
 		level_cap = {
@@ -172,12 +187,35 @@ buildings = {
 		}
 	}
 
-	# 9 Renewable Energy Infrastructure (renewable building)
 	synthetic_refinery = {
 		show_on_map = 1
-		base_cost = 50000
-		icon_frame = 21
+		base_cost = 32000
+		icon_frame = 38
+		#local_resources_oil = 1 # May use local_resources_ + any resource name
+		local_resources_rubber = 3 # May use local_resources_ + any resource name
 		refinery = yes
+		value = 5
+		infrastructure_construction_effect = yes
+
+		show_modifier = yes
+
+		country_modifiers = {
+			modifiers = {
+				fuel_gain_from_states = 2.0 #per hour
+			}
+		}
+
+		level_cap = {
+			shares_slots = yes
+			state_max = 2
+		}
+	}
+
+	# 9 Renewable Energy Infrastructure (renewable building)
+	renewable_energy_infra = {
+		show_on_map = 1
+		base_cost = 50000
+		icon_frame = 10
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -191,11 +229,32 @@ buildings = {
 			state_max = 20
 		}
 	}
-	# 10 - Strategic Fuel Reserve
+
+	# Battery storage for the national energy system
+	battery_park = {
+		show_on_map = 0
+		base_cost = 20000
+		icon_frame = 25
+		damage_factor = 1
+		value = 1
+		infrastructure_construction_effect = yes
+		show_modifier = yes
+		country_modifiers = {
+			modifiers = {
+				battery_park_storage_capacity = 100
+			}
+		}
+		level_cap = {
+			shares_slots = no
+			state_max = 20
+		}
+	}
+
+	# 10 - Strategic Resource Reserve
 	fuel_silo = {
 		show_on_map = 1
 		base_cost = 4000
-		icon_frame = 13
+		icon_frame = 14
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -205,6 +264,7 @@ buildings = {
 		country_modifiers = {
 			modifiers = {
 				max_fuel_building = 200.0 #k
+				resource_storage_max_capacity = 500
 			}
 		}
 		level_cap = {
@@ -216,7 +276,7 @@ buildings = {
 	offices = {
 		#base_cost = 9000
 		base_cost = 40000
-		icon_frame = 14
+		icon_frame = 35
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -235,7 +295,7 @@ buildings = {
 		spawn_point = naval_base_spawn
 		only_costal = yes
 		is_port = yes
-		icon_frame = 15
+		icon_frame = 6
 		value = 1
 		infrastructure_construction_effect = yes
 		level_cap = {
@@ -249,7 +309,7 @@ buildings = {
 		base_cost = 3000
 		per_level_extra_cost = 500
 		disabled_in_dmz = yes
-		icon_frame = 16
+		icon_frame = 7
 		land_fort = 1
 		value = 1
 		allied_build = yes
@@ -266,7 +326,7 @@ buildings = {
 		per_level_extra_cost = 500
 		disabled_in_dmz = yes
 		only_costal = yes
-		icon_frame = 17
+		icon_frame = 8
 		naval_fort = 1
 		value = 1
 		allied_build = yes
@@ -280,7 +340,7 @@ buildings = {
 		show_on_map = 1
 		base_cost = 20000
 		disabled_in_dmz = yes
-		icon_frame = 18
+		icon_frame = 15
 		centered = yes
 		supply_node = yes
 		damage_factor = 0.1
@@ -293,10 +353,11 @@ buildings = {
 	}
 	# 16 Railways
 	rail_way = {
-		base_cost = 1000
-		per_level_extra_cost = 5000
+		# 5x vanilla (170/130) at every level; upgrades were 16-24x.
+		base_cost = 850
+		per_level_extra_cost = 650
 		disabled_in_dmz = yes
-		icon_frame = 19
+		icon_frame = 16
 		allied_build = yes
 		infrastructure_construction_effect = yes
 		level_cap = {
@@ -306,14 +367,14 @@ buildings = {
 	# 17 Fossil Fuel Powerplant
 	fossil_powerplant = {
 		show_on_map = 1
-		base_cost = 10000
-		icon_frame = 20
+		base_cost = 9500
+		icon_frame = 34
 		centered = yes
 		# Represents the Consumption of Fossil Fuels per Powerplant
 		# NOTE: This is an hourly rate so the building actually consumes (20*24) = 480 fuel a day
 		country_modifiers = {
 			modifiers = {
-				fossil_energy_gain = 1 #in gigawatts
+				fossil_energy_gain = 2 #in gigawatts //this remains in place till I remove it please
 				fossil_fuel_consumption = 20
 			}
 		}
@@ -330,7 +391,7 @@ buildings = {
 	agriculture_district = {
 		base_cost = 15000
 		per_level_extra_cost = 1250
-		icon_frame = 22
+		icon_frame = 33
 		damage_factor = 1
 		value = 1
 		infrastructure_construction_effect = yes
@@ -356,7 +417,7 @@ buildings = {
 		show_on_map = 1
 		base_cost = 45000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 27
+		icon_frame = 18
 		value = 1
 		spawn_point = naval_base_spawn
 		specialization = { specialization_naval }
@@ -379,7 +440,7 @@ buildings = {
 		show_on_map = 1
 		base_cost = 45000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 24
+		icon_frame = 19
 		value = 1
 		spawn_point = special_project_facility_spawn
 		specialization = { specialization_land }
@@ -401,7 +462,7 @@ buildings = {
 		show_on_map = 1
 		base_cost = 45000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 25
+		icon_frame = 17
 		value = 1
 		spawn_point = special_project_facility_spawn
 		specialization = { specialization_air }
@@ -424,7 +485,7 @@ buildings = {
 		show_on_map = 1
 		base_cost = 45000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 26
+		icon_frame = 20
 		value = 1
 		spawn_point = special_project_facility_spawn
 		specialization = { specialization_nuclear }
@@ -445,7 +506,7 @@ buildings = {
 	rocket_site = {
 		show_on_map = 1
 		base_cost = 6400
-		icon_frame = 11
+		icon_frame = 12
 		rocket_production = 0
 		rocket_launch_capacity = 2
 		value = 1
@@ -466,11 +527,10 @@ buildings = {
 		show_on_map = 1
 		base_cost = 20000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 1 # TODO: Add a dam icon
+		icon_frame = 25
 		value = 5
 		tags = { dam_building }
 		spawn_point = dam_spawn
-		damage_factor = -1
 		is_buildable = no
 		province_damage_modifiers = { flooded }
 		only_display_if_exists = yes
@@ -486,15 +546,57 @@ buildings = {
 		}
 	}
 
+	microchip_plant = {
+		show_on_map = 0
+		base_cost = 45000
+		per_level_extra_cost = 4000
+		icon_frame = 36
+		local_resources_microchips = 20
+		level_cap = {
+			shares_slots = yes
+			state_max = 5
+		}
+		country_modifiers = {
+			modifiers = {
+				country_resource_cost_tungsten = 3
+				country_resource_cost_chromium = 2
+			}
+		}
+		damage_factor = 1
+		value = 1
+		infrastructure_construction_effect = yes
+	}
+
+	composite_plant = {
+		show_on_map = 0
+		base_cost = 45000
+		per_level_extra_cost = 4000
+		icon_frame = 37
+		local_resources_composites = 20
+		level_cap = {
+			shares_slots = yes
+			state_max = 5
+		}
+		country_modifiers = {
+			modifiers = {
+				country_resource_cost_rubber = 1
+				country_resource_cost_chromium = 1
+				country_resource_cost_oil = 1
+			}
+		}
+		damage_factor = 1
+		value = 1
+		infrastructure_construction_effect = yes
+	}
+
 	dam_mountain = {
 		show_on_map = 1
 		base_cost = 20000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 1
+		icon_frame = 25
 		value = 5
 		tags = { dam_building }
 		spawn_point = dam_spawn
-		damage_factor = -1
 		is_buildable = no
 		province_damage_modifiers = { flooded }
 		only_display_if_exists = yes
@@ -514,11 +616,10 @@ buildings = {
 		show_on_map = 1
 		base_cost = 20000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 1
+		icon_frame = 26
 		value = 5
 		tags = { locks_building }
 		spawn_point = locks_spawn
-		damage_factor = -1
 		is_buildable = no
 		#province_damage_modifiers = { flooded }
 		state_damage_modifier = { canal_damaged_modifier }
@@ -528,20 +629,16 @@ buildings = {
 			province_max = 1
 		}
 		show_modifier = yes
-		state_modifiers = {
-
-		}
 	}
 
 	# TEMP
 	mega_gun_emplacement = {
-		# Requires the DLC for this building. We may remove this unless we want to include the Saddam cannon.
 		dlc_allowed = { has_dlc = Gotterdammerung }
 		hide_if_missing_tech = yes
 		show_on_map = 1
 		base_cost = 20000
 		damage_factor = 0 # This building can't be damaged by regular strat bombing
-		icon_frame = 10
+		icon_frame = 24
 		value = 1
 		is_buildable = no
 		disabled_in_dmz = yes
@@ -553,7 +650,6 @@ buildings = {
 			shares_slots = no
 			exclusive_with = rocket_site
 		}
-		#Building utilizes equipment "explosive_ammo_equipment" as ammunition for the air mission barrage
 	}
 
 	stronghold_network = {
@@ -577,6 +673,133 @@ buildings = {
 			enemy_attrition = 0.15
 			state_production_speed_bunker_factor = 0.1
 			state_production_speed_coastal_bunker_factor = 0.1
+		}
+	}
+
+	naval_supply_hub = {
+		show_on_map = 1
+		base_cost = 12500
+		icon_frame = 28
+		disabled_in_dmz = yes
+		naval_supply_hub = yes
+		allied_build = yes
+		infrastructure_construction_effect = yes
+		only_costal = yes
+		tags = { naval_buildings_tag }
+		building_prerequisite = {
+			building_dependency = {
+				building = naval_base
+				level = 8
+			}
+		}
+		level_cap = {
+			province_max = 1
+		}
+	}
+
+	naval_headquarters = {
+		dlc_allowed = { has_dlc = "No Compromise, No Surrender" }
+		show_on_map = 1
+		base_cost = 10000
+		per_controlled_building_extra_cost = 5000
+		spawn_point = naval_base_spawn
+		icon_frame = 29
+		value = 1
+		naval_headquarter = yes
+		disabled_in_dmz = yes
+		allied_build = yes
+		infrastructure_construction_effect = yes
+		only_costal = yes
+		is_port = yes
+		tags = { naval_buildings_tag }
+		building_prerequisite = {
+			building_dependency = {
+				building = naval_base
+				level = 8
+			}
+		}
+		level_cap = {
+			state_max = 1
+			province_max = 1
+			shares_slots = yes
+		}
+		modules = {
+			naval_leader_module
+		}
+	}
+	energy_infrastructure = {
+		base_cost = 33000
+		icon_frame = 30
+		value = 1
+
+		show_modifier = yes
+
+		infrastructure_construction_effect = yes
+		level_cap = {
+			state_max = 1
+			shares_slots = yes
+			group_by = infrastructure_keystone
+		}
+		state_modifiers = {
+			state_renewable_energy_generation_modifier = 0.10
+			state_fossil_fuel_energy_generation_modifier = 0.10
+			state_nuclear_energy_generation_modifier = 0.10
+		}
+	}
+
+	industrial_infrastructure = {
+		base_cost = 36000
+		icon_frame = 31
+		value = 1
+
+		show_modifier = yes
+
+		infrastructure_construction_effect = yes
+		level_cap = {
+			state_max = 1
+			shares_slots = yes
+			group_by = infrastructure_keystone
+		}
+		state_modifiers = {
+			local_resource_gain_efficiency_per_infrastructure = 0.15
+		}
+	}
+
+	rail_terminal = {
+		show_on_map = 0
+		base_cost = 4000
+		per_level_extra_cost = 2500
+		icon_frame = 22
+		damage_factor = 1
+		value = 1
+		infrastructure_construction_effect = yes
+		show_modifier = yes
+		level_cap = {
+			state_max = 5
+		}
+		state_modifiers = {
+			state_productivity_growth_modifier = 0.025
+			local_supplies = 0.05
+			local_building_slots_factor = 0.05
+		}
+	}
+
+	enrichment_facility = {
+		hide_if_missing_tech = yes
+		show_on_map = 0
+		icon_frame = 13
+		damage_factor = 1
+		base_cost = 45000
+		value = 1
+		show_modifier = yes
+		level_cap = {
+			state_max = 1
+		}
+
+		country_modifiers = {
+			modifiers = {
+				nuclear_reactor_fuel_production = 350
+			}
 		}
 	}
 }

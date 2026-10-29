@@ -41,9 +41,9 @@ defined_text = {
 
 ```yaml
 l_english:
- some_localisation: "[my_scripted_loc]"
- FRA_localization_key: "France-exclusive localisation"
- fallback_localization_key: "Generic localisation"
+  some_localisation: "[my_scripted_loc]"
+  FRA_localization_key: "France-exclusive localisation"
+  fallback_localization_key: "Generic localisation"
 ```
 
 ## Advanced Features
@@ -81,7 +81,7 @@ Temporary variables set in trigger blocks remain available when displaying the l
 ## Best Practices
 
 1. **Fallback Options**: Always include a fallback `text` block without triggers as the last option
-2. **Performance**: Avoid overly complex trigger conditions
+2. **Performance**: Avoid overly complex trigger conditions as this is checked hourly and avoid having a fallback option of "" as that is the same as defining nothing at all
 3. **Organization**: Group related scripted localisation in the same file
 4. **Naming**: Use descriptive names that indicate the content type (e.g., `country_status_descriptor`, `war_outcome_text`)
 5. **Documentation**: Comment complex logic within your scripted localisation files

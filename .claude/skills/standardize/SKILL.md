@@ -1,0 +1,31 @@
+---
+name: standardize
+description: "Auto-standardize a MD focus/event/decision/idea/MIO/technology file with the tools/standardization/ scripts and report what changed. Use when asked to standardize, reformat, or bring a mod file up to MD conventions. Takes the file path as argument."
+---
+
+Standardize a Millennium Dawn mod file using the standardization tools.
+
+File to standardize: $ARGUMENTS
+
+Steps:
+
+1. Determine the file type from the path:
+   - `common/national_focus/` or filename contains "focus" → `focus`
+   - `events/` → `event`
+   - `common/decisions/` → `decision`
+   - `common/ideas/` → `idea`
+   - `common/military_industrial_organization/organizations/` → `mio`
+   - `common/technologies/` → `technology`
+     If the type cannot be determined, ask the user to clarify.
+
+2. Run from the `tools/standardization/` directory:
+
+   ```
+   python3 standardize.py <type> <absolute_file_path> --backup --verbose
+   ```
+
+   For focus trees, add `--check-naming` to also enforce `TAG_snake_case` on country-specific `MODIFIER` names. It scans the whole file, so a tree carrying pre-existing violations will fail without writing anything — only use it when you intend to clean those up.
+
+3. Report what changed: list each block that was reformatted and what was fixed (missing logging, property reordering, removed performance-hurting patterns, etc.)
+
+4. If any issues were warned about but not auto-fixed, list them so the user can address them manually.

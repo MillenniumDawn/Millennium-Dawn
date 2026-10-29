@@ -1,0 +1,39 @@
+on_actions = {
+	on_weekly_COM = {
+		effect = {
+			if = {
+				limit = { check_variable = { COM_volunteer_nations^num > 0 } }
+				set_variable = { COM_volunteer_nation_total = 0 }
+				clear_array = COM_volunteer_nations_to_remove
+				for_each_scope_loop = {
+					array = COM_volunteer_nations
+					if = {
+						limit = {
+							has_war = yes
+							has_volunteers_amount_from = { tag = COM count > 0 }
+						}
+						add_to_variable = { COM.COM_volunteer_nation_total = 0 }
+					}
+					else = {
+						COM = {
+							add_to_array = {
+								array = COM_volunteer_nations_to_remove
+								value = PREV
+							}
+						}
+					}
+				}
+				for_each_scope_loop = {
+					array = COM_volunteer_nations_to_remove
+					COM = {
+						remove_from_array = {
+							array = COM_volunteer_nations
+							value = PREV
+						}
+					}
+				}
+				clear_array = COM_volunteer_nations_to_remove
+			}
+		}
+	}
+}

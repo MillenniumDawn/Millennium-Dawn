@@ -1,35 +1,9 @@
 modify_batka_support = {
-	add_to_variable = { batka = modify_batka }
-
 	custom_effect_tooltip = BLR_batka_tt
+	add_to_variable = { batka = modify_batka }
+	clamp_variable = { var = batka min = 0 max = 100 }
 
-	clamp_variable = {
-		var = batka
-		min = 0
-		max = 100
-	}
-
-	if = {
-		limit = {
-			OR = {
-				has_idea = BLR_batka_very_weak
-				has_idea = BLR_batka_weak
-				has_idea = BLR_batka_medium
-				has_idea = BLR_batka_strong
-				has_idea = BLR_batka_very_strong
-			}
-		}
-		hidden_effect = {
-			remove_ideas = {
-				BLR_batka_very_weak
-				BLR_batka_weak
-				BLR_batka_medium
-				BLR_batka_strong
-				BLR_batka_very_strong
-			}
-		}
-	}
-
+	batka_deleted = yes
 	if = {
 		limit = { check_variable = { batka > 79 } }
 		add_ideas = BLR_batka_very_strong
@@ -60,66 +34,30 @@ modify_batka_support = {
 		add_ideas = BLR_batka_very_weak
 	}
 }
-modify_tracktors_support = {
-	add_to_variable = { tracktors = modify_tracktors }
-
-	custom_effect_tooltip = tracktors_TT
-
-	clamp_variable = {
-		var = tracktors
-		min = 0
-		max = 30000
-	}
+BLR_modify_tractors_support = {
+	custom_effect_tooltip = BLR_tractors_TT
+	add_to_variable = { BLR_tractors = BLR_modify_tractors }
+	clamp_variable = { var = BLR_tractors min = 0 max = 30000 }
 }
 
 modify_white_legion_support = {
-	add_to_variable = { white_legion = modify_white_legion }
-
 	custom_effect_tooltip = BLR_white_legions_TT
-
-	clamp_variable = {
-		var = white_legion
-		min = 0
-		max = 4000
-	}
+	add_to_variable = { white_legion = modify_white_legion }
+	clamp_variable = { var = white_legion min = 0 max = 4000 }
 }
 
 batka_deleted = {
-	if = {
-		limit = {
-		has_idea = BLR_batka_very_weak
+	hidden_effect = {
+		remove_ideas = {
+			BLR_batka_very_weak
+			BLR_batka_weak
+			BLR_batka_medium
+			BLR_batka_strong
+			BLR_batka_very_strong
 		}
-		remove_ideas = BLR_batka_very_weak
-
-	}
-	if = {
-		limit = {
-		has_idea = BLR_batka_weak
-		}
-		remove_ideas = BLR_batka_weak
-
-	}
-		if = {
-		limit = {
-		has_idea = BLR_batka_medium
-		}
-		remove_ideas = BLR_batka_medium
-
-	}
-	if = {
-		limit = {
-		has_idea = BLR_batka_very_strong
-		}
-		remove_ideas = BLR_batka_very_strong
-
-	}
-	if = {
-		limit = {
-		has_idea = BLR_batka_strong
-		}
-		remove_ideas = BLR_batka_strong
 	}
 }
+
 KGB_idea_belarus = {
 	if = {
 		limit = { has_idea = BLR_kgb2 }
@@ -163,6 +101,38 @@ AGRO_idea_belarus = {
 		}
 	}
 }
+BLR_remove_unstable_currency = {
+	if = {
+		limit = { has_idea = BLR_unstable_national_currency }
+		remove_ideas = BLR_unstable_national_currency
+	}
+	if = {
+		limit = { has_idea = BLR_unstable_national_currency2 }
+		remove_ideas = BLR_unstable_national_currency2
+	}
+	if = {
+		limit = { has_idea = BLR_unstable_national_currency3 }
+		remove_ideas = BLR_unstable_national_currency3
+	}
+	if = {
+		limit = { has_idea = BLR_unstable_national_currency4 }
+		remove_ideas = BLR_unstable_national_currency4
+	}
+}
+
+BLR_idea_currency_crisis = {
+	if = {
+		limit = {
+			OR = {
+				has_idea = BLR_unstable_national_currency
+				has_idea = BLR_unstable_national_currency2
+				has_idea = BLR_unstable_national_currency3
+			}
+		}
+		BLR_remove_unstable_currency = yes
+		add_ideas = BLR_unstable_national_currency4
+	}
+}
 BLR_idea_army = {
 	if = {
 		limit = { has_idea = BLR_reforming_army2 }
@@ -194,4 +164,24 @@ BLR_idea_army = {
 	}
 }
 
-
+# Attaches only the political modifier the current government still qualifies for. The backing
+# variables live on the country and survive detachment, so a path's accumulated focus bonuses
+# return intact if its ideology comes back.
+BLR_update_political_modifiers = {
+	if = { limit = { has_dynamic_modifier = { modifier = BLR_belarus_nati_modifier } } remove_dynamic_modifier = { modifier = BLR_belarus_nati_modifier } }
+	if = { limit = { has_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier } } remove_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier } }
+	if = {
+		limit = {
+			has_completed_focus = BLR_constitution_from_1994
+			has_government = nationalist
+		}
+		add_dynamic_modifier = { modifier = BLR_belarus_nati_modifier }
+	}
+	else_if = {
+		limit = {
+			has_completed_focus = BLR_Communism_start
+			emerging_communist_state_are_in_power = yes
+		}
+		add_dynamic_modifier = { modifier = BLR_belarus_kommi_modifier }
+	}
+}

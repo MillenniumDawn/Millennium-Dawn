@@ -3,53 +3,27 @@ ideas = {
 		#European Union
 		EU_member = {
 			picture = european_union_member
+			allowed_civil_war = { always = yes }
 			on_add = {
 				log = "[GetDateText]: [Root.GetName]: add idea EU_member"
-				add_to_array = { global.EU_member = THIS }
+				if = {
+					limit = { NOT = { is_in_array = { global.EU_member = THIS } } }
+					add_to_array = { global.EU_member = THIS }
+				}
+				EU_init_default_europeanism = yes
+				EU_adopt_passed_laws = yes
 			}
 			on_remove = {
 				log = "[GetDateText]: [Root.GetName]: remove idea EU_member"
-				remove_from_array = { global.EU_member = THIS }
-			}
-
-			allowed = {
-				OR = {
-					original_tag = POR
-					original_tag = SPR
-					original_tag = IRE
-					original_tag = ENG
-					original_tag = FRA
-					original_tag = BEL
-					original_tag = ICE
-					original_tag = HOL
-					original_tag = GER
-					original_tag = SWI
-					original_tag = AUS
-					original_tag = DEN
-					original_tag = ITA
-					original_tag = NOR
-					original_tag = MLT
-					original_tag = POL
-					original_tag = SWE
-					original_tag = SLV
-					original_tag = SLO
-					original_tag = HUN
-					original_tag = CRO
-					original_tag = BOS
-					original_tag = SER
-					original_tag = ALB
-					original_tag = GRE
-					original_tag = BUL
-					original_tag = TUR
-					original_tag = FIN
-					original_tag = EST
-					original_tag = LAT
-					original_tag = LIT
-					original_tag = BLR
-					original_tag = UKR
-					original_tag = ROM
-					original_tag = CYP
+				if = {
+					limit = { is_in_array = { global.EU_member = THIS } }
+					remove_from_array = { global.EU_member = THIS }
 				}
+
+				# Clear EU Configuration as a Safety Measure
+				set_country_flag = EUU_do_not_remove_eu_idea
+				leaving_EU = yes
+				clr_country_flag = EUU_do_not_remove_eu_idea
 			}
 
 			modifier = {
@@ -62,45 +36,32 @@ ideas = {
 				consumer_goods_factor = -0.05
 			}
 		}
-		un_member = {
 
-
-			modifier = {
-				political_power_gain = 0.25
-			}
-		}
-		the_euro = {
-
-			picture = the_euro
-
-			allowed = { always = no }
-			allowed_civil_war = { always = yes }
-			cancel = {
-				#please add here exception for some countries like Andorra, San Marino, Vatican, Monaco if you need this.
-				NOT = { has_idea = EU_member }
-				# Disabled if not in the EU
-				has_global_flag = GAME_RULE_eu_disabled
-			}
-
-			modifier = {
-				economic_cycles_cost_factor = 0.5
-				trade_opinion_factor = 0.2
-				consumer_goods_factor = -0.01
-				interest_rate_multiplier_modifier = -2
-				econ_cycle_upg_cost_multiplier_modifier = 0.50
-			}
-		}
 		#The permanent members of the United Nations Security Council
 		p5_member = {
+			picture = p5_member
 
+			on_add = {
+				log = "[GetDateText]: [Root.GetName]: Idea p5_member added"
+				if = {
+					limit = { NOT = { is_in_array = { global.p5_sc_members = THIS } } }
+					add_to_array = { global.p5_sc_members = THIS }
+				}
+				if = {
+					limit = { NOT = { is_in_array = { global.security_council_members = THIS } } }
+					add_to_array = { global.security_council_members = THIS }
+				}
+			}
 
-			allowed = {
-				OR = {
-					tag = USA
-					tag = ENG
-					tag = SOV
-					tag = CHI
-					tag = FRA
+			on_remove = {
+				log = "[GetDateText]: [Root.GetName]: Idea p5_member removed"
+				if = {
+					limit = { is_in_array = { global.p5_sc_members = THIS } }
+					remove_from_array = { global.p5_sc_members = THIS }
+				}
+				if = {
+					limit = { is_in_array = { global.security_council_members = THIS } }
+					remove_from_array = { global.security_council_members = THIS }
 				}
 			}
 
@@ -110,40 +71,15 @@ ideas = {
 		}
 		#Group of Seven
 		g7_member = {
-			allowed = {
-				OR = {
-					original_tag = USA
-					original_tag = CAN
-					original_tag = ENG
-					original_tag = FRA
-					original_tag = ITA
-					original_tag = GER
-					original_tag = JAP
-				}
-			}
 
 			modifier = {
 				political_power_gain = 0.1
 				#stability_factor = -0.05
 			}
 		}
-		#Commonwealth
-		commonwealth_of_nations_member = {
-
-			picture = commonwealth_member
-			allowed = {
-				always = no
-			}
-			modifier = {
-				political_power_gain = 0.15
-				justify_war_goal_time = 0.15
-			}
-		}
 		#GUAM Organization
 		idea_GUAM_member_state = {
-
 			picture = GUAM
-			allowed = { always = no }
 			modifier = {
 				political_power_factor = 0.03
 				trade_opinion_factor = 0.10
@@ -151,9 +87,7 @@ ideas = {
 			}
 		}
 		idea_GUAM_member_state_2 = {
-
 			picture = GUAM
-			allowed = { always = no }
 			modifier = {
 				political_power_factor = 0.05
 				trade_opinion_factor = 0.20
@@ -164,7 +98,6 @@ ideas = {
 		CIS_member_state_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			modifier = {
 				custom_modifier_tooltip = CIS_all_spirits_idea_tt
 			}
@@ -181,12 +114,68 @@ ideas = {
 				}
 			}
 		}
+		# Antarctic Treaty
+		at_member = {
+			on_add = {
+				if = {
+					limit = { NOT = { is_in_array = { global.at_members = THIS } } }
+					add_to_array = { global.at_members = THIS }
+				}
+				if = {
+					limit = { NOT = { has_dynamic_modifier = { modifier = antarctica_laboratory_dynamic_modifier } } }
+					add_dynamic_modifier = { modifier = antarctica_laboratory_dynamic_modifier }
+				}
+				antarctica_rebuild_regular_at_member_list = yes
+			}
+
+			on_remove = {
+				if = {
+					limit = { is_in_array = { global.at_members = THIS } }
+					remove_from_array = { global.at_members = THIS }
+				}
+				if = {
+					limit = { is_in_array = { global.atcp_members = THIS } }
+					remove_from_array = { global.atcp_members = THIS }
+				}
+				clr_country_flag = is_antarctica_atcp_consultative_member
+				clr_country_flag = antarctica_atcp_application_pending
+				antarctica_rebuild_regular_at_member_list = yes
+				antarctica_clear_laboratory_country_effects = yes
+			}
+
+			modifier = {
+				political_power_gain = 0.15
+				research_speed_factor = 0.08
+				opinion_gain_monthly_factor = 0.05
+			}
+		}
+
+		antarctica_small_treaty_admin_cost_1 = {
+			picture = BRA_dasp
+			allowed_civil_war = { always = yes }
+			modifier = {
+				political_power_cost = 0.15
+				antarctica_lab_iteration_progress_modifier = 0.04
+				education_cost_multiplier_modifier = 0.025
+				bureaucracy_cost_multiplier_modifier = 0.025
+			}
+		}
+
+		antarctica_small_treaty_admin_cost_2 = {
+			picture = BRA_dasp
+			allowed_civil_war = { always = yes }
+			modifier = {
+				political_power_cost = 0.3
+				antarctica_lab_iteration_progress_modifier = 0.08
+				education_cost_multiplier_modifier = 0.05
+				bureaucracy_cost_multiplier_modifier = 0.05
+			}
+		}
 	}
 	hidden_ideas = {
 		CIS_united_anti_air_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			modifier = {
 				supply_combat_penalties_on_core_factor = -0.03
 				army_core_attack_factor = 0.01
@@ -201,7 +190,6 @@ ideas = {
 		CIS_anti_terror_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			modifier = {
 				fascism_drift = -0.01
 				stability_factor = 0.01
@@ -215,7 +203,6 @@ ideas = {
 		CIS_bank_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			modifier = {
 				econ_cycle_upg_cost_multiplier_modifier = -0.02
 				trade_opinion_factor = 0.10
@@ -229,7 +216,6 @@ ideas = {
 		CIS_council_leaders_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			modifier = {
 				political_power_factor = 0.05
 			}
@@ -242,7 +228,6 @@ ideas = {
 		CIS_confederation_member_idea = {
 
 			picture = CIS_member_idea
-			allowed = { always = no }
 			cancel = {
 				OR = {
 					NOT = {

@@ -1,0 +1,479 @@
+scripted_gui = {
+	countrydiplomacyview_influence = {
+		context_type = selected_country_context
+		parent_window_token = selected_country_view_diplomacy
+
+		window_name = "MD_countrydiplomacyview_influence"
+
+		triggers = {
+			# Column 1:
+			# Auto Spread
+			opt_influence_action_button_click_enabled = {
+				if = {
+					limit = {
+						ROOT = {
+							original_tag = ISR
+						}
+					}
+					NOT = {
+						OR = {
+							has_idea = full_isr_boycotte
+							has_idea = pol_isr_boycotte
+						}
+					}
+				}
+				if = { limit = { ROOT = { NOT = { is_in_array = { auto_influence_array = PREV.id } } } }
+					custom_trigger_tooltip = {
+						tooltip = influence_spread_has_slot_available_TT
+						ROOT = { check_variable = { auto_influence_users < auto_influence_cap } }
+					}
+					custom_trigger_tooltip = {
+						tooltip = must_wait_30_days_to_cancel_tt
+						ROOT = { NOT = { has_country_flag = recently_set_autoinfluence@PREV } }
+					}
+				}
+				else = {
+					custom_trigger_tooltip = {
+						tooltip = influence_auto_spread_in_this_nation_TT
+						ROOT = { is_in_array = { auto_influence_array = PREV.id } }
+					}
+				}
+				ERI_is_not_transitional_government = yes
+			}
+
+			# Manual Spread
+			opt_influence_action_button_right_click_enabled = {
+				ROOT = { has_political_power > 50 }
+				# Recently Sent Aid
+				custom_trigger_tooltip = {
+					tooltip = influence_spread_influence_TT
+					ROOT = { NOT = { has_country_flag = spread_influence@PREV } }
+				}
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_aid_button_click_enabled = {
+				if = {
+					limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
+				}
+				else = {
+					#selected country have lower GDP/C than us
+					custom_trigger_tooltip = {
+						set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+						multiply_temp_variable = { gdp_total_temp = 2 }
+						check_variable = { gdp_total_temp > THIS.gdp_total }
+						tooltip = gdp_total_cannot_be_double_ours
+					}
+					#Num of Civ Greater
+					custom_trigger_tooltip = {
+						tooltip = more_civs_than_other
+						check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+					}
+					#Recently Sent Aid
+					custom_trigger_tooltip = {
+						tooltip = influence_aid_button_TT
+						ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+					}
+					ERI_is_not_transitional_government = yes
+				}
+			}
+
+			opt_target_other_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_three_influencer_tt
+					OR = {
+						check_variable = { influence_array^0 = ROOT }
+						check_variable = { influence_array^1 = ROOT }
+						check_variable = { influence_array^2 = ROOT }
+					}
+				}
+				ROOT = { has_political_power > 99 }
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_aid_military_button_click_enabled = {
+				#Our Country is a top 7 influencer
+				is_influencer = yes
+				#ROOT has_war
+				PREV = {
+					if = {
+						limit = {
+							ENG = {
+								has_idea = ENG_the_macabre_alliance
+							}
+							original_tag = COL
+						}
+						original_tag = COL
+					}
+					else = {
+						ai_is_threatened = yes
+					}
+				}
+				#ROOT has_idea = defense_industry
+				OR = {
+					ROOT = { has_idea = defense_industry }
+					ROOT = { num_of_military_factories > 10 }
+				}
+				#ROOT Has NOT Sent military aid in the past month
+				custom_trigger_tooltip = {
+					tooltip = influence_military_aid_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				#Target has not received aid from us in the past 90 days, OR is losing a war badly
+				custom_trigger_tooltip = {
+					tooltip = influence_recently_received_aid_TT
+					OR = {
+						NOT = { has_country_flag = received_military_aid_recently@ROOT }
+						AND = {
+							has_war = yes
+							surrender_progress > 0.30
+						}
+					}
+				}
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_military_supply_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = opt_military_supply_button_TT
+					ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+				}
+				ROOT = {
+					tag = PER
+					has_political_power > 1
+				}
+				#Our Country is a top 7 influencer
+				is_influencer = yes
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_manipulate_politics_button_click_enabled = {
+				if = {
+					limit = {
+						ROOT = {
+							original_tag = PER
+							has_completed_focus = PER_puppeteer_iraqi_politcs
+							OR = {
+								emerging_hardline_shiite_are_in_power = yes
+								emerging_moderate_shiite_are_in_power = yes
+							}
+						}
+						PREV = { original_tag = IRQ }
+					}
+					is_top3_twenty_influencer = yes
+					ROOT = { has_political_power > 49 }
+				}
+				else_if = {
+					limit = {
+						ROOT = { original_tag = PER }
+						PREV = { original_tag = AFG }
+					}
+					is_top3_twenty_influencer = yes
+					ROOT = { has_political_power > 1 }
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							original_tag = ENG
+							has_idea = ENG_the_macabre_alliance
+						}
+						PREV = { original_tag = COL }
+					}
+					ROOT = { has_political_power > 74 }
+				}
+				else = {
+					is_top3_thirty_influencer = yes
+					ROOT = { has_political_power > 99 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = influence_manipulate_politics_TT
+					ROOT = { NOT = { has_country_flag = recently_manipulated_politics@PREV } }
+				}
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_coup_button_click_enabled = {
+				PREV = {
+					NOT = { has_government = ROOT }
+					NOT = { is_subject_of = ROOT }
+				}
+				ROOT = { has_political_power > 200 }
+				is_top_fifty_influencer = yes
+				ERI_is_not_transitional_government = yes
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = rule_disable_western_outlook_features
+							option = yes
+						}
+					}
+					ROOT = { NOT = { has_government = democratic } }
+				}
+			}
+
+			opt_economic_exploitation_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_influencer_fifty_percent
+					check_variable = { influence_array^0 = ROOT }
+					check_variable = { influence_array_val^0 > 49.999 }
+				}
+				NOT = { is_subject_of = ROOT }
+				ROOT = { has_political_power > 75 }
+				#Not twice
+				NOT = { has_country_flag = country_exploited }
+				ERI_is_not_transitional_government = yes
+			}
+
+			opt_make_puppet_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_top_influencer_eighty_percent
+					check_variable = { influence_array^0 = ROOT }
+					check_variable = { influence_array_val^0 > 79.999 }
+				}
+				PREV = {
+					has_government = ROOT
+					NOT = { is_subject_of = ROOT }
+					is_subject = no
+					has_war = no
+				}
+				# Must be independent
+				ROOT = {
+					is_subject = no
+				}
+				if = {
+					limit = {
+						ROOT = { original_tag = IRQ }
+						PREV = { original_tag = KUR }
+					}
+					custom_trigger_tooltip = {
+						tooltip = IRQ_federalized_TT
+						ROOT = { NOT = { has_country_flag = IRQ_federalized } }
+					}
+				}
+				if = {
+					limit = {
+						ROOT = { original_tag = CHI }
+						PREV = { original_tag = NKO }
+					}
+					custom_trigger_tooltip = {
+						tooltip = CHI_NKO_no_influence_puppet_TT
+						always = no
+					}
+				}
+				if = {
+					limit = {
+						has_game_rule = {
+							rule = rule_disable_western_outlook_features
+							option = yes
+						}
+					}
+					ROOT = { NOT = { has_government = democratic } }
+				}
+			}
+
+			# Hide Influence Buttons
+			opt_influence_action_button_visible = { NOT = { tag = ROOT } }
+			opt_aid_button_visible = { NOT = { tag = ROOT } }
+			opt_aid_military_button_visible = { NOT = { tag = ROOT } }
+			opt_target_other_button_visible = { NOT = { tag = ROOT } }
+			opt_manipulate_politics_button_visible = { NOT = { tag = ROOT } }
+			opt_coup_button_visible = { NOT = { tag = ROOT } }
+			opt_economic_exploitation_button_visible = { NOT = { tag = ROOT } }
+			opt_make_puppet_button_visible = { NOT = { tag = ROOT } }
+			opt_military_supply_button_visible = {
+				NOT = { tag = ROOT }
+				ROOT = { has_completed_focus = PER_palestinian_frontism }
+				PREV = { has_country_flag = military_supply_target }
+			}
+		}
+
+		effects = {
+			#Spread Influence Action - Generic Influence Action
+			opt_influence_action_button_click = {
+				ROOT = {
+					if = { limit = { NOT = { is_in_array = { auto_influence_array = PREV.id } } }
+						create_new_auto_influencer_request = yes
+						spread_influence_cooldown_effect = yes
+					}
+					else = {
+						remove_auto_influencer_request = yes
+					}
+					update_auto_influence_array = yes
+
+					set_country_flag = { flag = recently_set_autoinfluence@PREV days = 30 value = 1 }
+				}
+			}
+
+			opt_influence_action_button_shift_click = {
+				ROOT = {
+					clear_array = auto_influence_array
+					set_variable = { auto_influence_users = 0 }
+					resize_array = { array = auto_influence_array value = 0 size = 10 } # ONLY 4 MORE SLOTS ARE AVAILABLE
+					update_auto_influence_array = yes
+				}
+			}
+
+			#Spread Influence Action - supporting auto-influence action
+			opt_influence_action_button_right_click = {
+				ROOT = {
+					add_political_power = -50
+
+					set_temp_variable = { percent_change = global.percent_change_value }
+					set_temp_variable = { influence_target = PREV.id }
+					change_influence_percentage = yes
+					spread_influence_cooldown_effect = yes
+				}
+			}
+
+			# Economic Aid Section
+			# Gift an nation a percentage of their GDP to gain some influence and assist them
+			opt_aid_button_click = {
+				ROOT = { # Player Nation
+					save_event_target_as = influence_sender
+					PREV = { # THIS Nation
+						save_event_target_as = influence_recipient
+						if = {
+							limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+							# MP path: the cooldown flag is set in mp_economic_aid_transfer,
+							# only after an aid amount is actually chosen (influence.2 has no cancel option).
+							ROOT = { country_event = influence.2 }
+						}
+						else = {
+							country_event = influence.0
+							ROOT = {
+								set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+							}
+						}
+					}
+				}
+				update_money_dirty_variable = yes
+			}
+
+			# Send Military Equipment
+			# Similar to Economic Aid but it is related to military equipment
+			opt_aid_military_button_click = {
+				ROOT = {
+					save_event_target_as = influence_sender
+					set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+					PREV = {
+						country_event = influence.50
+					}
+				}
+			}
+
+			# Send Military Supply
+			# Weapons that are sent to overthrow a nation
+			opt_military_supply_button_click = {
+				ROOT = { # Player Nation
+					set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+					PREV = { save_event_target_as = military_supply_target }
+					country_event = influence.56
+				}
+			}
+
+			# Target Selected Nation's Influencers:
+			# It allows us to target one of their influencer
+			opt_target_other_button_click = {
+				ROOT = {
+					save_event_target_as = influence_sender
+					PREV = {
+						country_event = influence.7
+					}
+				}
+			}
+
+			opt_manipulate_politics_button_click = {
+				# All branching (special cases, party/outlook update, influence cost, opinion mod)
+				# and the pp cost live in manipulate_politics_action so the AI flow stays in sync.
+				manipulate_politics_action = yes
+
+				ROOT = {
+					set_country_flag = { flag = recently_manipulated_politics@PREV days = 28 value = 1 }
+					add_political_power = manipulate_politics_pp_cost
+				}
+			}
+			opt_coup_button_click = {
+				ROOT = {
+					save_event_target_as = influence_sender
+					PREV = {
+						country_event = influence.44
+					}
+				}
+			}
+
+			opt_make_puppet_button_click = {
+				# Eventually remove explotation idea (shouldn't double up)
+				for_loop_effect = {
+					end = influence_array^num
+					value = v
+
+					meta_effect = {
+						text = {
+							remove_ideas = tribute_idea_[THISTAG]
+						}
+						THISTAG = "[?var:influence_array^v.GetTag]"
+					}
+				}
+
+				ROOT = {
+					set_autonomy = {
+						target = PREV
+						autonomy_state = autonomy_associated_state
+						freedom_level = 0.875
+						end_wars = no
+						end_civil_wars = no
+					}
+					add_named_threat = { threat = 3 name = created_puppet_loc }
+					PREV = {
+						set_temp_variable = { overlord_to_match = ROOT.id }
+						effect_puppet_match_ruling_party_to_overlord = yes
+					}
+				}
+				every_neighbor_country = {
+					limit = { NOT = { is_subject_of = ROOT } }
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = puppeted_neighbor
+					}
+				}
+			}
+
+			opt_economic_exploitation_button_click = {
+				meta_effect = {
+					text = {
+						add_timed_idea = {
+							idea = tribute_idea_[ROOTTAG]
+							days = 180
+						}
+					}
+					ROOTTAG = "[ROOT.GetTag]"
+				}
+
+				add_political_power = -75
+
+				#remove 10% influence
+				set_temp_variable = { percent_change = -5 }
+				set_temp_variable = { influence_target = PREV.id }
+				change_influence_percentage = yes
+
+				#Timer until next exploit
+				set_country_flag = { flag = country_exploited value = 1 days = 180 }
+				#opinions
+				add_opinion_modifier = { target = ROOT modifier = exploited_us }
+				every_neighbor_country = {
+					limit = { NOT = { is_subject_of = ROOT } }
+					add_opinion_modifier = { target = ROOT modifier = exploited_neighbor }
+				}
+				every_allied_country = {
+					add_opinion_modifier = { target = ROOT modifier = exploited_ally }
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,47 @@
+# European Federation of States: per-country flag change on joining EFS.
+# Each EU member country adopts its EFS-branded cosmetic tag (EFS_<TAG>).
+# If the country is already a constituent of a formed nation (BLT, SCA, IBR),
+# it adopts that formable's EFS-branded tag instead.
+# Members without EFS art get an EFS_<TAG> tag that has no flag art or color.
+EFS_flag_category = {
+	EFS_update_flag = {
+		icon = GFX_decision_generic_form_nation
+		cost = 0
+		visible = { NOT = { has_country_flag = EFS_flag_change } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EFS_update_flag"
+			# NOTE: Do the special cases here where we do not switch the tags and then fall back to original_tag
+			if = {
+				limit = { has_country_flag = is_IBR }
+				set_cosmetic_tag = EFS_IBR
+			}
+			else_if = {
+				limit = { has_country_flag = is_SCA }
+				set_cosmetic_tag = EFS_SCA
+			}
+			else_if = {
+				limit = { has_country_flag = is_BLT }
+				set_cosmetic_tag = EFS_BLT
+			}
+			else_if = {
+				limit = { has_cosmetic_tag = ENG_England }
+				set_cosmetic_tag = EFS_ENG_england
+			}
+			else = {
+				meta_effect = {
+					text = {
+						set_cosmetic_tag = EFS_[TAG]
+					}
+					TAG = "[?original_tag.GetTag]"
+				}
+			}
+			newline = yes
+			set_temp_variable = { special_formable_id = 102 }
+			commit_special_formable = yes
+			set_country_flag = EFS_flag_change
+			custom_effect_tooltip = tooltip_change_flag
+		}
+
+		ai_will_do = { base = 10000 }
+	}
+}

@@ -69,6 +69,8 @@ resistance_50 = {
 	margin = 2
 	state_modifier = {
 		resistance_damage_to_garrison = 1
+		local_supplies_for_controller = -0.2
+		army_speed_factor_for_controller = -0.2
 	}
 }
 
@@ -79,8 +81,8 @@ resistance_75 = {
 	threshold = 75
 	margin = 2
 	state_modifier = {
-		army_speed_factor_for_controller = -0.5
-		local_supplies_for_controller = -0.5
+		army_speed_factor_for_controller = -0.3
+		local_supplies_for_controller = -0.3
 		attrition_for_controller = 0.3
 		disable_strategic_redeployment_for_controller = 1
 	}
@@ -106,15 +108,6 @@ resistance_90 = {
 			set_temp_variable = { occupier_country = THIS }
 			set_temp_variable = { occupied_country = FROM }
 			set_temp_variable = { new_occupied_country = FROM }
-
-			if = { #warsaw achievement
-				limit = {
-					var:occupied_country = { original_tag = POL }
-				}
-				set_global_flag = warsaw_liberated_self_flag
-			}
-
-
 			set_temp_variable = { civil_war_country_picked = 0 }
 			if = {
 				## pick an existing civil war country
@@ -295,7 +288,7 @@ resistance_90 = {
 					# create resistance units, number is relative to size of industry
 					set_temp_variable = { num_units_to_create = building_level@arms_factory }
 					add_to_temp_variable = { num_units_to_create = building_level@industrial_complex }
-					divide_temp_variable = { num_units_to_create = 3 }
+					multiply_temp_variable = { num_units_to_create = 0.33333 }
 					add_to_temp_variable = { num_units_to_create = 2 }
 					round_temp_variable = num_units_to_create
 					clamp_temp_variable = { var = num_units_to_create min = 2 max = 6 }
@@ -315,7 +308,7 @@ resistance_90 = {
 					limit = {
 						is_owned_and_controlled_by = occupied_country
 						is_core_of = occupied_country
-						not = { is_in_array = { checked_neighbours = this } }
+						NOT = { is_in_array = { checked_neighbours = this } }
 					}
 					add_to_temp_array = { checked_neighbours = this }
 

@@ -3,12 +3,9 @@ BOL_ethnic_divide_decisions = {
 	BOL_increase_mestizo_opinion = {
 		available = {
 			NOT = {
-				has_country_flag = BOL_doing_decision
+				has_decision = BOL_increase_indigenous_opinion
 			}
 			has_capitulated = no
-		}
-		ai_will_do = {
-			base = 1
 		}
 
 		cost = 100
@@ -18,9 +15,6 @@ BOL_ethnic_divide_decisions = {
 		days_remove = 25
 		days_re_enable = 0
 
-		complete_effect = {
-			set_country_flag = BOL_doing_decision
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove BOL_increase_mestizo_opinion"
 			add_to_variable = {
@@ -28,18 +22,18 @@ BOL_ethnic_divide_decisions = {
 				value = 10
 			}
 			custom_effect_tooltip = BOL_increase_mestizo_opinion_10_tt
-			clr_country_flag = BOL_doing_decision
+		}
+
+		ai_will_do = {
+			base = 1
 		}
 	}
 	BOL_increase_indigenous_opinion = {
 		available = {
 			NOT = {
-				has_country_flag = BOL_doing_decision
+				has_decision = BOL_increase_indigenous_opinion
 			}
 			has_capitulated = no
-		}
-		ai_will_do = {
-			base = 1
 		}
 
 		cost = 100
@@ -49,9 +43,6 @@ BOL_ethnic_divide_decisions = {
 		days_remove = 25
 		days_re_enable = 0
 
-		complete_effect = {
-			set_country_flag = BOL_doing_decision
-		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove BOL_increase_indigenous_opinion: [From.GetName]"
 			add_to_variable = {
@@ -59,18 +50,22 @@ BOL_ethnic_divide_decisions = {
 				value = 10
 			}
 			custom_effect_tooltip = BOL_increase_indigenous_opinion_10_tt
-			clr_country_flag = BOL_doing_decision
+		}
+
+		ai_will_do = {
+			base = 1
 		}
 	}
 }
 
 BOL_oil_reserve_decisions = {
 	BOL_explore_oil_reserves_in_santa_cruz = {
-		icon = GFX_decision_civil_support # TODO: Add icon here for this
+		icon = GFX_decision_oil
 
 		cost = 50
 
 		days_remove = 100
+		fire_only_once = yes
 
 		highlight_states = {
 			highlight_state_targets = {
@@ -86,6 +81,12 @@ BOL_oil_reserve_decisions = {
 			has_tech = excavation2
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_explore_oil_reserves_in_santa_cruz"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove BOL_explore_oil_reserves_in_santa_cruz"
 			add_resource = {
@@ -93,11 +94,14 @@ BOL_oil_reserve_decisions = {
 				amount = 8
 				state = 899
 			}
-			set_temp_variable = { treasury_change = -5 }
 		}
 
 		ai_will_do = {
 			base = 10
+			modifier = {
+				factor = 2
+				is_currently_importing_oil = yes
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -106,11 +110,12 @@ BOL_oil_reserve_decisions = {
 	}
 
 	BOL_explore_oil_reserves_in_pando_el_beni = {
-		icon = GFX_decision_civil_support # TODO: Add icon here for this
+		icon = GFX_decision_oil
 
 		cost = 50
 
 		days_remove = 100
+		fire_only_once = yes
 
 		highlight_states = {
 			highlight_state_targets = {
@@ -126,6 +131,12 @@ BOL_oil_reserve_decisions = {
 			has_tech = excavation2
 		}
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_explore_oil_reserves_in_pando_el_beni"
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove BOL_explore_oil_reserves_in_pando_el_beni"
 			add_resource = {
@@ -133,15 +144,277 @@ BOL_oil_reserve_decisions = {
 				amount = 8
 				state = 898
 			}
-			set_temp_variable = { treasury_change = -5 }
 		}
 
 		ai_will_do = {
 			base = 10
 			modifier = {
+				factor = 2
+				is_currently_importing_oil = yes
+			}
+			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
+	}
+}
+
+BOL_ai_path_category = {
+	BOL_rally_the_mas = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { BOL_ai_historical_path = yes }
+
+		available = {
+			has_civil_war = no
+			date > 2005.1.1
+			check_variable = { party_pop_array^5 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_rally_the_mas"
+			set_temp_variable = { party_index = 5 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_mas_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { BOL_ai_historical_path = yes }
+
+		available = {
+			has_civil_war = no
+			date > 2005.12.18
+			emerging_anarchist_communism_are_in_power = no
+			check_variable = { party_pop_array^5 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_mas_take_the_country"
+			set_temp_variable = { rul_party_temp = 5 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_rally_the_media_luna = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = BOL_MEDIA_LUNA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^1 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_rally_the_media_luna"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_media_luna_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = BOL_MEDIA_LUNA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_conservatism_are_in_power = no
+			check_variable = { party_pop_array^1 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_media_luna_take_the_country"
+			set_temp_variable = { rul_party_temp = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_rally_the_mnr = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = BOL_REFORMIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^2 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_rally_the_mnr"
+			set_temp_variable = { party_index = 2 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_mnr_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = BOL_REFORMIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_liberals_are_in_power = no
+			check_variable = { party_pop_array^2 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_mnr_take_the_country"
+			set_temp_variable = { rul_party_temp = 2 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_rally_the_generals = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = BOL_MILITARY_JUNTA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^22 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_rally_the_generals"
+			set_temp_variable = { party_index = 22 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_generals_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = BOL_MILITARY_JUNTA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			nationalist_military_junta_are_in_power = no
+			check_variable = { party_pop_array^22 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_generals_take_the_country"
+			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_rally_the_katarists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = BOL_WIPHALA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^19 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_rally_the_katarists"
+			set_temp_variable = { party_index = 19 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	BOL_katarists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = BOL_WIPHALA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			neutrality_neutral_communism_are_in_power = no
+			check_variable = { party_pop_array^19 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision BOL_katarists_take_the_country"
+			set_temp_variable = { rul_party_temp = 19 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

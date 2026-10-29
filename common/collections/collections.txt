@@ -1,0 +1,473 @@
+# Collections
+
+eu_potential_countries_collection = {
+	input = constant:country_groups.all_eu_available_countries
+	operators = {
+		limit = { NOT = { has_idea = EU_member } }
+	}
+	name = COLLECTION_EU_POTENTIAL_COUNTRIES
+}
+
+eu_members_collection = {
+	input = constant:country_groups.all_eu_available_countries
+	operators = {
+		limit = { has_idea = EU_member }
+	}
+	name = COLLECTION_EU_MEMBERS
+}
+
+world_at_peace_countries_collection = {
+	input = game:all_countries
+	operators = {
+		limit = {
+			has_war = no
+		}
+	}
+	name = COLLECTION_COUNTRIES_AT_PEACE
+}
+
+faction_members_collection = {
+	input = game:scope
+	operators = {
+		faction_members
+	}
+	name = COLLECTION_FACTION_MEMBERS
+}
+
+faction_enemy_owned_core_states_recently_bombed_collection = {
+	input = game:all_countries
+	operators = {
+		limit = { has_war_with = ROOT }
+		owned_states
+		limit = {
+			is_core_of = OWNER
+			days_since_last_strategic_bombing < 30
+		}
+	}
+	name = ENEMY_FACTION_STATES_BOMBED
+}
+
+faction_enemy_owned_core_states_collection = {
+	input = game:all_countries
+	operators = {
+		limit = { has_war_with = ROOT }
+		owned_states
+		limit = { is_core_of = OWNER }
+	}
+	name = ENEMY_FACTION_CORE_STATES
+}
+
+world_democratic_countries_collection = {
+	input = game:all_countries
+	name = COLLECTION_WORLD_DEMOCRATIC_COUNTRIES
+	operators = {
+		limit = {
+			has_government = democratic
+		}
+	}
+}
+
+world_uncapitulated_democratic_countries_and_dominions_collection = {
+	input = game:all_countries
+	name = COLLECTION_UNCAPITULATED_DEMOCRATIC_COUNTRIES_AND_DOMINIONS
+	operators = {
+		limit = {
+			has_government = democratic
+			has_capitulated = no
+			is_subject = no
+		}
+	}
+}
+
+world_non_western_countries_in_middle_east_collection = {
+	input = game:all_countries
+	name = COLLECTION_NON_COMMUNIST_COUNTRIES
+	operators = {
+		limit = {
+			NOT = { has_government = democratic }
+			is_on_same_continent_as = PER
+		}
+	}
+}
+
+world_communist_countries_collection = {
+	input = game:all_countries
+	name = COLLECTION_WORLD_COMMUNIST_COUNTRIES
+	operators = {
+		limit = {
+			has_government = communism
+		}
+	}
+}
+
+# New Order in Asia etc
+
+countries_asia_collection = {
+	input = game:all_countries
+	name = COLLECTION_COUNTRIES_ASIA
+	operators = {
+		limit = {
+			capital_scope = { is_on_continent = asia }
+		}
+	}
+}
+
+communist_countries_asia_collection = {
+	input = game:all_countries
+	name = COLLECTION_COUNTRIES_ASIA_COMMUNIST
+	operators = {
+		limit = {
+			capital_scope = { is_on_continent = asia }
+			has_government = communism
+		}
+	}
+}
+
+world_non_communist_countries_collection = {
+	input = game:all_countries
+	name = COLLECTION_NON_COMMUNIST_COUNTRIES
+	operators = {
+		limit = {
+			NOT = { has_government = communism }
+		}
+	}
+}
+
+post_soviet_states_collection = {
+	input = game:all_countries
+	name = COLLECTION_POST_SOVIET_STATES
+	operators = {
+		limit = {
+			OR = {
+				original_tag = SOV
+				original_tag = BLR
+				original_tag = UKR
+				original_tag = EST
+				original_tag = LIT
+				original_tag = LAT
+				original_tag = GEO
+				original_tag = SOO
+				original_tag = ABK
+				original_tag = KAZ
+				original_tag = UZB
+				original_tag = TRK
+				original_tag = TAJ
+				original_tag = KYR
+				original_tag = AZE
+				original_tag = ARM
+				original_tag = NKR
+			}
+		}
+	}
+}
+
+# CFA franc zone nations whose GDP the French custodian draws income from
+FRA_cfa_franc_nations_collection = {
+	input = game:all_countries
+	operators = {
+		limit = {
+			has_country_flag = french_africa_nation_flag
+			OR = {
+				has_idea = cfa_franc
+				has_idea = cfa_franc_2
+			}
+		}
+	}
+}
+
+# States
+faction_owned_core_states_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		owned_states
+		limit = {
+			is_core_of = PREV
+		}
+	}
+	name = COLLECTION_FACTION_OWNED_CORE_STATES
+}
+
+faction_controlled_non_core_states_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			NOT = { is_core_of = PREV }
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_NON_CORE_STATES
+}
+
+POL_between_the_seas_states_collection = {
+	input = game:all_states
+	name = COLLECTION_POL_BETWEEN_THE_SEAS_STATES
+	operators = {
+		limit = {
+			OR = {
+				region = 37 # baltics
+				region = 38 # Western Poland
+				region = 39 # Eastern Poland
+				region = 27 # Northern Balkans
+				region = 26 # Eastern Balkans
+				region = 131 # Belarus
+				region = 130 # Ukraine
+			}
+		}
+	}
+}
+
+china_potential_core_states_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			OR = {
+				is_core_of = CHI
+				is_core_of = TAI
+			}
+		}
+	}
+}
+
+states_in_africa_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			OR = {
+				is_on_continent = africa
+				region = 151
+				region = 127
+				region = 150
+				region = 126
+				region = 128
+			}
+		}
+	}
+	name = COLLECTION_STATES_IN_AFRICA
+}
+
+faction_states_in_africa_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			OR = {
+				is_on_continent = africa
+				region = 151
+				region = 127
+				region = 150
+				region = 126
+				region = 128
+			}
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_AFRICA
+}
+
+states_in_americas_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			OR = {
+				is_on_continent = north_america
+				is_on_continent = south_america
+			}
+		}
+	}
+	name = COLLECTION_STATES_IN_AMERICAS
+}
+
+faction_states_in_americas_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			OR = {
+				is_on_continent = north_america
+				is_on_continent = south_america
+			}
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_AMERICAS
+}
+
+states_in_europe_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			is_on_continent = europe
+		}
+	}
+	name = COLLECTION_STATES_IN_EUROPE
+}
+
+faction_states_in_europe_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			is_on_continent = europe
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_EUROPE
+}
+
+states_in_asia_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			is_on_continent = asia
+		}
+	}
+	name = COLLECTION_STATES_IN_ASIA
+}
+
+faction_states_in_asia_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			is_on_continent = asia
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_ASIA
+}
+
+states_in_middle_east_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			is_on_continent = middle_east
+		}
+	}
+	name = COLLECTION_STATES_IN_MIDDLE_EAST
+}
+
+faction_states_in_middle_east_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+		limit = {
+			is_on_continent = middle_east
+		}
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES_IN_MIDDLE_EAST
+}
+
+faction_controlled_states_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		controlled_states
+	}
+	name = COLLECTION_FACTION_CONTROLLED_STATES
+}
+
+states_on_my_continent_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			is_on_same_continent_as = ROOT
+		}
+	}
+	name = COLLECTION_STATES_MY_CONTINENT
+}
+non_fascist_controlled_states_on_my_continent_collection = {
+	input = collection:states_on_my_continent_collection
+	operators = {
+		limit = {
+			controller = { NOT = { has_government = fascism } }
+		}
+	}
+	name = COLLECTION_NON_FASCIST_STATES_MY_CONTINENT
+}
+
+# New Order in east Asia
+communist_controlled_states_my_continent_collection = {
+	input = collection:states_on_my_continent_collection
+	name = COLLECTION_AMOUNT_OF_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
+	operators = {
+		limit = {
+			controller = {
+				has_government = communism
+			}
+		}
+	}
+}
+
+fascist_controlled_states_my_continent_collection = {
+	input = collection:states_on_my_continent_collection
+	name = COLLECTION_AMOUNT_OF_FASCIST_CONTROLLED_STATES_SAME_CONTINENT
+	operators = {
+		limit = {
+			controller = {
+				has_government = fascism
+			}
+		}
+	}
+}
+
+anti_communist_controlled_states_my_continent_collection = {
+	input = collection:states_on_my_continent_collection
+	name = COLLECTION_STATES_MY_CONTINENT_CONTROLLED_DEMOCRATIC_FASCIST
+	operators = {
+		limit = {
+			controller = {
+				OR = {
+					has_government = fascism
+					has_government = democratic
+				}
+			}
+		}
+	}
+}
+
+# Balkans Factions
+
+# African Union
+african_states_collection = {
+	input = game:all_states
+	operators = {
+		limit = {
+			is_on_continent = africa
+		}
+	}
+}
+
+# Islamic World
+
+all_islamic_countries_collection = {
+	input = constant:country_groups.islamic_world
+	name = COLLECTION_FACTION_ISLAMIC_COUNTRIES
+}
+
+islamic_faction_members_collection = {
+	input = constant:country_groups.islamic_world
+	operators = {
+		limit = {
+			OR = {
+				tag = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+	name = COLLECTION_ISLAMIC_FACTION_MEMBERS
+}
+
+# Southeast Asia
+
+all_asean_countries_collection = {
+	input = constant:country_groups.asean_members
+	name = COLLECTION_ASEAN_COUNTRIES
+}
+
+asean_faction_members_collection = {
+	input = constant:country_groups.asean_members
+	operators = {
+		limit = {
+			OR = {
+				tag = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+	name = COLLECTION_ASEAN_FACTION_MEMBERS
+}

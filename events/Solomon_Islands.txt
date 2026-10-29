@@ -1,0 +1,363 @@
+add_namespace = Solomon_Islands
+add_namespace = Solomon_IslandsNews
+
+#ethnic clashes in Honira
+country_event = {
+	id = Solomon_Islands.0
+	title = Solomon_Islands.0.t
+	desc = Solomon_Islands.0.d
+	picture = GFX_SLO_rebels
+	is_triggered_only = yes
+
+	option = {
+		name = Solomon_Islands.0.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.0.a executed"
+		add_stability = -0.04
+		hidden_effect = {
+			country_event = {
+				id = Solomon_Islands.1
+				days = 10
+				random_days = 30
+			}
+		}
+	}
+}
+
+country_event = {
+	id = Solomon_Islands.1
+	title = Solomon_Islands.1.t
+	desc = Solomon_Islands.1.d
+	picture = GFX_SLO_milita_generic
+	is_triggered_only = yes
+
+	option = {
+		name = Solomon_Islands.1.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.1.a executed"
+		add_stability = -0.06
+		hidden_effect = {
+			country_event = {
+				id = Solomon_Islands.2
+				days = 40
+				random_days = 30
+			}
+		}
+	}
+}
+
+country_event = {
+	id = Solomon_Islands.2
+	title = Solomon_Islands.2.t
+	desc = Solomon_Islands.2.d
+	picture = GFX_SLO_rebels2
+	is_triggered_only = yes
+	option = {
+		name = Solomon_Islands.2.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.2.a executed"
+		hidden_effect = {
+			retire_country_leader = yes
+			set_temp_variable = { rul_party_temp = 14 }
+			change_ruling_party_effect = yes
+			news_event = {
+				id = Solomon_IslandsNews.1002
+				days = 2
+				random_hours = 6
+			}
+		}
+		create_country_leader = {
+			name = "Manasseh Sogavare"
+			picture = "manasseh_sogavare.dds"
+			ideology = Neutral_conservatism
+			traits = {
+				neutrality_Neutral_conservatism
+				economist
+			}
+		}
+		remove_ideas = SOL_munda_accords
+		ai_chance = {
+			base = 1
+		}	
+	}
+	option = {
+		name = Solomon_Islands.2.b
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.2.b executed"
+		custom_effect_tooltip = SOL_worsening_ethnic_tensions_TT
+		newline = yes
+		add_timed_idea = {
+			idea = SOL_agreement_with_the_gangs
+			days = 400
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+}
+
+#2003 intervention
+country_event = {
+	id = Solomon_Islands.5
+	title = Solomon_Islands.5.t
+	desc = Solomon_Islands.5.d
+	picture = GFX_SOL_collapse
+	is_triggered_only = yes
+
+	trigger = {
+		country_exists = SOL
+		SOL = {
+			controls_state = 1225
+			controls_state = 533
+			has_idea = SOL_aftermath_of_the_tensions
+			is_puppet = no
+		}
+	}
+
+	immediate = {
+		hidden_effect = {
+			add_stability = -0.3
+			add_threat = 4
+			533 = {
+				if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1
+				}
+				}
+			}
+		}
+	}
+
+	#request intervention from AST
+	option = {
+		name = Solomon_Islands.5.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.5.a executed"
+		swap_ideas = {
+			remove_idea = SOL_aftermath_of_the_tensions
+			add_idea = SOL_collapsing_state
+		}
+		decrease_two_level_economic_growth = yes
+		newline = yes
+		AST = {
+			country_event = solomon_islands_intervention.2
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	#civil war
+	option = {
+		name = Solomon_Islands.5.b
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.5.b executed"
+		custom_effect_tooltip = SOL_Lead_to_hostilities_TT
+		newline = yes
+		swap_ideas = {
+			remove_idea = SOL_aftermath_of_the_tensions
+			add_idea = SOL_collapsing_state
+		}
+		decrease_two_level_economic_growth = yes
+		hidden_effect = {
+			country_event = {
+				id = Solomon_Islands.9
+				days = 8 
+			}
+		}
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+#AST accepts
+country_event = {
+	id = Solomon_Islands.6
+	title = Solomon_Islands.6.t
+	desc = Solomon_Islands.6.d
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	option = {
+		name = Solomon_Islands.6.a
+	}
+}
+
+#AST refuses
+country_event = {
+	id = Solomon_Islands.7
+	title = Solomon_Islands.7.t
+	desc = Solomon_Islands.7.d
+	picture = GFX_SOL_collapse
+	is_triggered_only = yes
+
+	option = {
+		name = Solomon_Islands.7.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.7.a executed"
+		hidden_effect = {
+			country_event = {
+				id = Solomon_Islands.9
+				days = 8
+			}
+		}
+	}
+}
+
+#the intervention fails
+country_event = {
+	id = Solomon_Islands.8
+	title = Solomon_Islands.8.t
+	desc = Solomon_Islands.8.d
+	picture = GFX_SOL_collapse
+	is_triggered_only = yes
+
+	option = {
+		name = Solomon_Islands.8.a
+		log = "[GetDateText]: [This.GetName]: Solomon_Islands.8.a executed"
+		if = {
+				limit = { has_idea = SOL_collapsing_state }
+				swap_ideas = {
+					remove_idea = SOL_collapsing_state
+					add_idea = SOL_collapsed_state
+				}
+			}
+		else = {
+			swap_ideas = {
+				remove_idea = SOL_collapsing_state_1
+				add_idea = SOL_collapsed_state
+			}
+		}
+		hidden_effect = {
+			country_event = {
+				id = Solomon_Islands.9
+				days = 8
+			}
+		}
+	}
+}
+
+#civil war
+country_event = {
+	id = Solomon_Islands.9
+	is_triggered_only = yes
+	hidden = yes
+	immediate = {
+
+		start_civil_war = {
+			ruling_party = ROOT
+			ideology = neutrality
+			size = 0.5
+			capital = 1225
+			states = {
+				1225
+			}
+		}
+
+		set_country_flag = SOL_CW_Active
+
+		division_template = {
+			name = "Ol faetman"
+			regiments = {
+				L_Inf_Bat = { x = 0 y = 0 }
+				L_Inf_Bat = { x = 0 y = 1 }
+				Militia_Bat = { x = 1 y = 0 }
+				Militia_Bat = { x = 1 y = 1 }
+				Mot_Militia_Bat = { x = 2 y = 0 }
+			}
+			priority = 2
+		}
+
+		division_template = {
+			name = "Milisia"
+			regiments = {
+				Militia_Bat = { x = 0 y = 0 }
+			}
+			priority = 2
+		}
+
+		random_country_with_original_tag = {
+			original_tag_to_check = SOL
+			limit = {
+				has_government = neutrality
+				NOT = {
+					has_country_flag = SOL_CW_Active
+				}
+			}
+
+			set_country_flag = SOL_IFM_id
+			set_cosmetic_tag = SOL_IFM
+
+			retire_country_leader = yes
+			if = {
+				limit = {
+					ROOT = {
+						NOT = {
+							OR = {
+								has_government = nationalist
+								has_country_leader = { name = "Jimmy 'Rasta' Lusibaea" ruling_only = yes }
+							}
+						}
+					}
+				}
+				set_temp_variable = { rul_party_temp = 20 }
+				change_ruling_party_effect = yes
+
+				create_country_leader = {
+					name = "Andrew Te'e"
+					picture = "Portrait_Andrew_Tee.dds"
+					ideology = Nat_Autocracy
+					traits = {
+						nationalist_Nat_Autocracy
+						ruthless
+					}
+				}
+			}
+			else = {
+				set_temp_variable = { rul_party_temp = 13 }
+				change_ruling_party_effect = yes
+
+				create_country_leader = {
+					name = "Harold Keke"
+					picture = "harold_keke.dds"
+					ideology = Neutral_Autocracy
+					traits = {
+						neutrality_Neutral_Autocracy
+					}
+				}
+			}
+
+			capital_scope = {
+				create_unit = {
+					division = "name = \"Armed grup blong Isatabu\" division_template = \"Ol faetman\"start_experience_factor = 0.1 start_equipment_factor = 0.8"
+					owner = ROOT
+					allow_spawning_on_enemy_provs = yes
+				}
+			}
+		}
+
+		set_province_controller = 16318
+
+		1225 = {
+			create_unit = {
+				division = "name = \"Malaita Igel Fos\" division_template = \"Ol faetman\"start_experience_factor = 0.1 start_equipment_factor = 0.8"
+				owner = SOL
+			}
+		}
+	}
+	
+}
+
+#news events
+news_event = {
+	id = Solomon_IslandsNews.1002
+	title = Solomon_IslandsNews.1002.t
+	desc = Solomon_IslandsNews.1002.d
+	picture = GFX_SLO_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	show_major = {
+		has_country_flag = oceania_nation_flag 
+	}
+
+	option = {
+		name = Solomon_IslandsNews.1002.a
+	}
+}
