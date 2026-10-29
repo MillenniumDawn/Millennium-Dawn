@@ -76,7 +76,7 @@ def test_selected_specs_filters_by_changed_groups():
         if spec.name
         in {s.name for s in rvb.selected_specs("targeted-a", {"localisation"})}
     }
-    assert selected == {"decisions", "mios"}
+    assert selected == {"decisions", "mios", "oob-units"}
     # An unknown or empty group list selects the whole batch (dispatch flow).
     assert len(rvb.selected_specs("targeted-a", None)) == len(vb.BATCHES["targeted-a"])
 

@@ -75,73 +75,72 @@ def test_lg_endpoints_and_midpoint():
     assert sc.lg(2120, 2010, 0.1) > 1 - 1e-3
 
 
-def test_chain_logistics_independent():
-    # Renewable, fission and fusion helpers each hit 0.5 at their own tmid
-    assert sc.Lr(2016) == pytest.approx(0.5)
-    assert sc.Lfis(2002) == pytest.approx(0.5)
-    assert sc.Lfus(2053) == pytest.approx(0.5)
-    # And they are different curves (steepness differs)
+def test_chain_logistics_start_at_zero_one_step_before_first_tech():
+    assert sc.START == {"ren": 1985, "nuc": 1980, "fos": 1980}
+    for curve, key in (
+        (sc.Lf, "fos"),
+        (sc.Lr, "ren"),
+        (sc.Lfis, "nuc"),
+        (sc.Lfus, "nuc"),
+    ):
+        assert curve(sc.START[key]) == pytest.approx(0.0)
+    # each helper is its own logistic, shifted down by its start value
+    assert sc.Lr(sc.R_T) == pytest.approx(0.5 - sc.lg(1985, sc.R_T, sc.R_K))
     assert sc.Lf(2080) != sc.Lr(2080)
 
 
 # --- cumulative buffs -------------------------------------------------------
 
 
-def test_cum_power_fossil_is_pf_times_Lf():
+def test_researched_counts_chain_techs_by_year():
+    assert sc.researched("fos", 1985) == 0
+    assert sc.researched("fos", 2000) == 2
+    assert sc.researched("ren", 2080) == len(sc.CHAINS["ren"]["techs"])
+
+
+def test_cum_power_fossil_is_pf_times_Lf_plus_minimum():
     pf = 0.30
     for t in (1990, 2010, 2020, 2060):
-        assert sc.cum_power("fos", t, pf, 0.0, 0.0, 0.0) == pytest.approx(pf * sc.Lf(t))
-
-
-def test_cum_power_nuclear_sums_fission_and_fusion():
-    pfis, pfus = 2.0, 1.5
-    for t in (1990, 2010, 2050, 2080):
-        assert sc.cum_power("nuc", t, 0.0, 0.0, pfis, pfus) == pytest.approx(
-            pfis * sc.Lfis(t) + pfus * sc.Lfus(t)
+        assert sc.cum_power("fos", t, pf, 0.0, 0.0, 0.0) == pytest.approx(
+            pf * sc.Lf(t) + sc.MIN_GAIN * sc.researched("fos", t)
         )
 
 
-def test_cum_speed_uses_speed_ratio():
-    pf = 0.30
-    p = sc.cum_power("nuc", 2050, pf, 1.0, 1.0, 0.0)
-    assert sc.cum_speed("nuc", 2050, pf, 1.0, 1.0, 0.0) == pytest.approx(
-        sc.SPEED_RATIO["nuc"] * p
+def test_cum_power_nuclear_sums_fission_and_fusion_plus_minimum():
+    pfis, pfus = 2.0, 1.5
+    for t in (1990, 2010, 2050, 2080):
+        assert sc.cum_power("nuc", t, 0.0, 0.0, pfis, pfus) == pytest.approx(
+            pfis * sc.Lfis(t)
+            + pfus * sc.Lfus(t)
+            + sc.MIN_GAIN * sc.researched("nuc", t)
+        )
+
+
+def test_cum_speed_scales_only_the_curve():
+    amps = (0.30, 1.0, 1.0, 0.0)
+    assert sc.cum_speed("nuc", 2050, *amps) == pytest.approx(
+        sc.SPEED_RATIO["nuc"] * sc.curve("nuc", 2050, *amps)
+        + sc.MIN_GAIN * sc.researched("nuc", 2050)
     )
 
 
-def test_cum_infra_normalises_to_2080_asymptote():
-    pf = 0.30
-    pr = 1.0
-    pfis = 1.0
-    pfus = 0.0
-    amps = (pf, pr, pfis, pfus)
-    # renewable at 2080: cum_infra == INFRA_CAP
-    full = sc.cum_infra("ren", 2080, *amps)
-    assert full == pytest.approx(sc.INFRA_CAP)
-    # partial year: scales as cum_power(2030)/cum_power(2080) * INFRA_CAP
-    mid = sc.cum_infra("ren", 2030, *amps)
-    expected = (
-        sc.INFRA_CAP
-        * sc.cum_power("ren", 2030, *amps)
-        / sc.cum_power("ren", 2080, *amps)
+def test_cum_infra_gives_minimum_per_tech_and_reaches_cap():
+    amps = (0.30, 1.0, 1.0, 0.0)
+    assert sc.cum_infra("ren", 2080, *amps) == pytest.approx(sc.INFRA_CAP)
+    techs = len(sc.CHAINS["ren"]["techs"])
+    rest = -sc.INFRA_CAP - sc.MIN_GAIN * techs
+    share = sc.curve("ren", 2030, *amps) / sc.curve("ren", 2080, *amps)
+    assert sc.cum_infra("ren", 2030, *amps) == pytest.approx(
+        -(sc.MIN_GAIN * sc.researched("ren", 2030) + rest * share)
     )
-    assert mid == pytest.approx(expected)
-
-
-def test_cum_infra_zero_asymptote_returns_zero():
-    # if a chain's 2080 cum_power is 0 (zero amplitudes), infra stays at 0
-    assert sc.cum_infra("ren", 2080, 0.0, 0.0, 0.0, 0.0) == 0.0
-    # also when full <= 0 (degenerate), returns 0 cleanly
-    assert sc.cum_infra("ren", 2080, 0.0, 0.0, 0.0, -1.0) == 0.0
 
 
 # --- metric & amplitude solving --------------------------------------------
 
 
-def test_metric_at_zero_amplitudes_equals_base():
-    # With zero power/speed buffs the metric reduces to BASE[k]
+def test_metric_before_any_tech_equals_base():
     for k in ("fos", "ren", "nuc"):
-        assert sc.metric(k, 2010, 0.0, 0.0, 0.0, 0.0) == pytest.approx(sc.BASE[k])
+        assert sc.metric(k, 1985, 0.0, 0.0, 0.0, 0.0) == pytest.approx(sc.BASE[k])
 
 
 def test_metric_monotone_in_power():
@@ -160,15 +159,18 @@ def test_solve_amplitudes_matches_design_crossovers():
     fos_2014 = sc.metric("fos", 2014, *amps)
     assert nuc_2014 == pytest.approx(fos_2014, rel=0.02)
 
-    # 2020: renewable ~ fossil
-    ren_2019 = sc.metric("ren", 2019, *amps)
-    fos_2019 = sc.metric("fos", 2019, *amps)
-    assert ren_2019 == pytest.approx(fos_2019, rel=0.02)
+    # 2015: renewable ~ fossil
+    ren_2014 = sc.metric("ren", 2014, *amps)
+    assert ren_2014 == pytest.approx(fos_2014, rel=0.02)
 
     # 2060: nuclear (fusion on) ~ renewable
-    ren_2060 = sc.metric("ren", 2060, *amps)
-    nuc_2060 = sc.metric("nuc", 2060, *amps)
-    assert nuc_2060 == pytest.approx(ren_2060, rel=0.02)
+    ren_2059 = sc.metric("ren", 2059, *amps)
+    nuc_2059 = sc.metric("nuc", 2059, *amps)
+    assert nuc_2059 == pytest.approx(ren_2059, rel=0.02)
+
+    # 2015-2055: renewables lead nuclear by at most 1.5x
+    for y in range(2015, 2056):
+        assert sc.metric("ren", y, *amps) <= 1.5 * sc.metric("nuc", y, *amps), y
 
     # 2080: nuclear still above renewable (fusion plateau holds the lead)
     ren_2080 = sc.metric("ren", 2080, *amps)
@@ -192,13 +194,11 @@ def test_increments_chain_order_and_floors():
         chain_techs = [t for t, (k, *_rest) in edits.items() if k == key]
         assert chain_techs == c["techs"]
 
-    # Each per-tech power increment is non-negative (>= 0.001 floor)
+    # every tech grants at least MIN_GAIN on each buff
     for tech, (key, p, s, iv) in edits.items():
-        assert p >= 0.001
-        assert s >= 0.001
-        # infra is non-positive relief and never more extreme than INFRA_CAP
-        assert iv <= 0.0
-        assert iv >= sc.INFRA_CAP - 1e-9
+        assert p >= sc.MIN_GAIN, tech
+        assert s >= sc.MIN_GAIN, tech
+        assert -sc.MIN_GAIN >= iv >= sc.INFRA_CAP, tech
 
 
 @skip_no_scipy

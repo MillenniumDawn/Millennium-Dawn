@@ -392,17 +392,66 @@ def test_main_posts_comment_for_unknown_run(tmp_path, monkeypatch):
     assert not cleared
 
 
-def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("specs", "skipped", "posts"),
+    [
+        pytest.param({}, False, True, id="missing results"),
+        pytest.param({}, True, False, id="no tests selected"),
+        pytest.param(
+            {"events": {"log": "validator started"}},
+            True,
+            True,
+            id="incomplete result is not hidden",
+        ),
+        pytest.param(
+            {"events": {"issues": [_issue_dict("warning", message="warning")]}},
+            True,
+            True,
+            id="findings are not hidden",
+        ),
+    ],
+)
+def test_main_handles_empty_validation(tmp_path, monkeypatch, specs, skipped, posts):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    (tmp_path / "validation-results").mkdir()
+    monkeypatch.setenv("GITHUB_RUN_ID", "7")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+    make_results_tree(tmp_path, specs)
     posted, cleared = _comment_spies(monkeypatch)
+    extra = ["--comment-output", str(tmp_path / "comment.json")]
+    if skipped:
+        extra.append("--no-tests-selected")
 
-    code = generate_validation_report.main(_post_argv(tmp_path))
+    code = generate_validation_report.main(_post_argv(tmp_path, *extra))
 
     assert code == 0
-    assert len(posted) == 1
-    assert "_No validator results found._" in posted[0][3]
-    assert not cleared
+    assert len(posted) == int(posts)
+    assert len(cleared) == int(not posts)
+    if not specs and posts:
+        assert "_No validator results found._" in posted[0][3]
+    payload = json.loads((tmp_path / "comment.json").read_text(encoding="utf-8"))
+    assert payload == {
+        "pr_number": "42",
+        "commit_sha": "abc1234deadbeef",  # pragma: allowlist secret
+        "run_id": "7",
+        "run_attempt": "2",
+        "should_post": posts,
+        "body": (tmp_path / "report.md").read_text(encoding="utf-8"),
+    }
+
+
+def test_main_writes_comment_payload_without_api_credentials(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+    posted, cleared = _comment_spies(monkeypatch)
+
+    code = generate_validation_report.main(
+        _argv(tmp_path) + ["--comment-output", str(tmp_path / "comment.json")]
+    )
+
+    assert code == 0
+    assert (tmp_path / "comment.json").is_file()
+    assert not posted and not cleared
 
 
 def test_main_hands_tools_suite_runs_to_the_checks_api(tmp_path, monkeypatch):
@@ -476,13 +525,16 @@ def test_main_post_comment_requires_repository(tmp_path, monkeypatch):
     assert code == 1
 
 
-def test_main_fails_when_the_report_cannot_be_written(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("output", ["--output", "--comment-output"])
+def test_main_fails_when_the_report_cannot_be_written(
+    tmp_path, monkeypatch, capsys, output
+):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
     blocked = tmp_path / "blocked"
     blocked.mkdir()
     argv = _argv(tmp_path)
-    argv[argv.index("--output") + 1] = str(blocked)
+    argv += [output, str(blocked)]
 
     code = generate_validation_report.main(argv)
 

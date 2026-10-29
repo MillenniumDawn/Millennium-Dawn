@@ -136,6 +136,8 @@ def _quoted_scalar(text: str, lo: int, hi: int, key: str) -> Optional[str]:
 def blank_comments(text: str) -> str:
     """Replace every ``#`` comment with spaces, preserving line lengths and
     offsets so character positions still map to the original line numbers."""
+    if "#" not in text:
+        return text
     lines = []
     for line in text.split("\n"):
         code = strip_inline_comment(line)

@@ -108,6 +108,7 @@ _FULL_SUITE_PREFIXES = (
     "resources/documentation/",
     ".github/actions/",
     ".github/workflows/test-suite.yml",
+    ".github/workflows/validation-report.yml",
     ".github/workflows/nightly-pr-validation.yml",
     ".github/workflows/pr-cache-cleanup.yml",
     ".github/workflows/validator-cache.yml",

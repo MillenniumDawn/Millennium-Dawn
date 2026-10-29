@@ -1,0 +1,827 @@
+# Own-choice budget law and tax changes add decaying costs. Scripted law changes set spending_law_scripted_change; scripted tax changes never call the tax checks
+# Parliament bills the country tables itself (Rada, Knesset) set spending_law_bill_passed or spending_law_bill_forced and still count
+
+@policy_transition_cost_per_level = 0.10
+@policy_transition_cost_cap = 0.30
+@policy_transition_cost_decay = 0.01
+@policy_transition_cut_per_level = 0.05
+@policy_transition_cut_cap = -0.20
+@policy_transition_tax_cap = -0.20
+@policy_transition_penalty_recovery = 0.005
+@policy_transition_population_tax_per_point = 0.02
+@policy_transition_corporate_tax_per_point = 0.012
+@policy_transition_tax_memory_step = 1
+@policy_transition_mandate_factor = 0.5
+@policy_transition_tax_bonus_per_point = 0.005
+@policy_transition_tax_bonus_cap = 0.10
+@policy_transition_productivity_per_point = 0.01
+@policy_transition_productivity_cap = 0.1
+@policy_transition_productivity_decay = 0.01
+@policy_transition_investment_per_point = -0.02
+@policy_transition_investment_cap = -0.20
+@policy_transition_investment_recovery = 0.02
+
+policy_transition_ensure_modifier = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = policy_transition_costs } } }
+		hidden_effect = { add_dynamic_modifier = { modifier = policy_transition_costs } }
+		custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = policy_transition_costs }
+	}
+	else = {
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = policy_transition_costs }
+	}
+}
+
+# Pushes changed values into the modifier now instead of at the next daily refresh, so the budget sees them at once
+policy_transition_refresh = {
+	hidden_effect = { force_update_dynamic_modifier = yes }
+}
+
+# A bill passed by parliament (Rada, Knesset) counts as a mandate; one pushed through by a bribe does not
+policy_transition_apply_mandate = {
+	if = {
+		limit = {
+			OR = {
+				has_idea = policy_reform_mandate
+				has_country_flag = spending_law_bill_passed
+			}
+		}
+		multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
+	}
+}
+
+# Charges only the part of a move away from the expected level: > 0 raises above it, < 0 cuts below it
+policy_transition_charged_levels = {
+	set_temp_variable = { policy_transition_delta = 0 }
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { check_variable = { spending_new_level > policy_transition_old } }
+		set_temp_variable = {
+			policy_transition_delta = {
+				value = spending_new_level
+				subtract = { value = policy_transition_old max = policy_transition_expected }
+				max = 0
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { spending_new_level < policy_transition_old } }
+		set_temp_variable = {
+			policy_transition_delta = {
+				value = policy_transition_old
+				min = policy_transition_expected
+				subtract = spending_new_level
+				max = 0
+				multiply = -1
+			}
+		}
+	}
+}
+
+policy_transition_raise_amount = {
+	set_temp_variable = { policy_transition_amount = { value = policy_transition_delta multiply = @policy_transition_cost_per_level } }
+	policy_transition_apply_mandate = yes
+}
+
+# Limits temp policy_transition_amount to the room left under the cap, given temp policy_transition_current
+policy_transition_limit_raise = {
+	set_temp_variable = { policy_transition_room = { value = @policy_transition_cost_cap subtract = policy_transition_current } }
+	if = {
+		limit = { check_variable = { policy_transition_amount > policy_transition_room } }
+		set_temp_variable = { policy_transition_amount = policy_transition_room }
+	}
+}
+
+policy_transition_limit_war_support = {
+	set_temp_variable = { policy_transition_room = { value = @policy_transition_cut_cap subtract = policy_transition_war_support } }
+	if = {
+		limit = { check_variable = { policy_transition_amount < policy_transition_room } }
+		set_temp_variable = { policy_transition_amount = policy_transition_room }
+	}
+}
+
+policy_transition_cut_amount = {
+	set_temp_variable = { policy_transition_amount = { value = policy_transition_delta multiply = @policy_transition_cut_per_level } }
+	policy_transition_apply_mandate = yes
+}
+
+# Cuts, tax hikes and tax cut bonuses have separate caps; the dynamic modifier shows their sum
+policy_transition_sync_stability = {
+	set_temp_variable = {
+		policy_transition_change = {
+			value = policy_transition_cut_stability
+			add = policy_transition_tax_stability
+			add = policy_transition_tax_bonus
+			subtract = policy_transition_stability
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { policy_transition_change = 0 } } }
+		policy_transition_ensure_modifier = yes
+		add_to_variable = { var = policy_transition_stability value = policy_transition_change tooltip = stability_factor_tt }
+	}
+}
+
+# Applied through temp policy_transition_amount so the law preview shows the Stability line
+policy_transition_add_cut_penalty = {
+	set_temp_variable = { policy_transition_room = { value = @policy_transition_cut_cap subtract = policy_transition_cut_stability } }
+	if = {
+		limit = { check_variable = { policy_transition_amount < policy_transition_room } }
+		set_temp_variable = { policy_transition_amount = policy_transition_room }
+	}
+	if = {
+		limit = { check_variable = { policy_transition_amount < 0 } }
+		policy_transition_ensure_modifier = yes
+		add_to_variable = { policy_transition_cut_stability = policy_transition_amount }
+		add_to_variable = { var = policy_transition_stability value = policy_transition_amount tooltip = stability_factor_tt }
+		policy_transition_refresh = yes
+	}
+}
+
+policy_transition_add_tax_penalty = {
+	add_to_variable = { policy_transition_tax_stability = policy_transition_amount }
+	clamp_variable = { var = policy_transition_tax_stability min = @policy_transition_tax_cap max = 0 }
+	policy_transition_sync_stability = yes
+}
+
+# Iran's Majlis can veto a law change and revert it days later; remember what each category's own change was charged
+# Temp policy_transition_category: 1 bureau, 2 police, 3 education, 4 health, 5 social
+policy_transition_remember_charge = {
+	if = {
+		limit = { original_tag = PER policy_transition_own_choice = yes }
+		if = {
+			limit = { check_variable = { policy_transition_category = 1 } }
+			set_variable = { policy_transition_pending_bureau = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_bureau = 0 } } clear_variable = policy_transition_pending_bureau }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 2 } }
+			set_variable = { policy_transition_pending_police = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_police = 0 } } clear_variable = policy_transition_pending_police }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 3 } }
+			set_variable = { policy_transition_pending_education = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_education = 0 } } clear_variable = policy_transition_pending_education }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 4 } }
+			set_variable = { policy_transition_pending_health = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_health = 0 } } clear_variable = policy_transition_pending_health }
+		}
+		else = {
+			set_variable = { policy_transition_pending_social = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_social = 0 } } clear_variable = policy_transition_pending_social }
+		}
+	}
+}
+
+# Majlis veto: the category's change is reverted, so its charge is taken back as far as it has not decayed yet
+# Refunds only when a removed level is flagged, since that is when the veto actually reverts the law
+policy_transition_refund_vetoed_change = {
+	set_temp_variable = { policy_transition_refund = 0 }
+	if = {
+		limit = { check_variable = { policy_transition_category = 1 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_bureau_01 has_country_flag = PER_removed_bureau_02 has_country_flag = PER_removed_bureau_03 has_country_flag = PER_removed_bureau_04 has_country_flag = PER_removed_bureau_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_bureau }
+		}
+		clear_variable = policy_transition_pending_bureau
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 2 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_police_01 has_country_flag = PER_removed_police_02 has_country_flag = PER_removed_police_03 has_country_flag = PER_removed_police_04 has_country_flag = PER_removed_police_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_police }
+		}
+		clear_variable = policy_transition_pending_police
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 3 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_edu_01 has_country_flag = PER_removed_edu_02 has_country_flag = PER_removed_edu_03 has_country_flag = PER_removed_edu_04 has_country_flag = PER_removed_edu_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_education }
+		}
+		clear_variable = policy_transition_pending_education
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 4 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_health_01 has_country_flag = PER_removed_health_02 has_country_flag = PER_removed_health_03 has_country_flag = PER_removed_health_04 has_country_flag = PER_removed_health_05 has_country_flag = PER_removed_health_06 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_health }
+		}
+		clear_variable = policy_transition_pending_health
+	}
+	else = {
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_social_01 has_country_flag = PER_removed_social_02 has_country_flag = PER_removed_social_03 has_country_flag = PER_removed_social_04 has_country_flag = PER_removed_social_05 has_country_flag = PER_removed_social_06 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_social }
+		}
+		clear_variable = policy_transition_pending_social
+	}
+	if = {
+		limit = { check_variable = { policy_transition_refund > 0 } }
+		if = {
+			limit = { check_variable = { policy_transition_category = 1 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_bureau_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 2 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_police_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 3 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_education_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 4 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_health_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
+			}
+		}
+		else = {
+			set_temp_variable = { policy_transition_room = { value = policy_transition_social_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
+			}
+		}
+		policy_transition_refresh = yes
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_refund < 0 } }
+		set_temp_variable = { policy_transition_room = { value = policy_transition_cut_stability multiply = -1 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 min = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { policy_transition_cut_stability = policy_transition_amount }
+			add_to_variable = { var = policy_transition_stability value = policy_transition_amount tooltip = stability_factor_tt }
+		}
+		policy_transition_refresh = yes
+	}
+	policy_transition_clear_if_empty = yes
+}
+
+# Given temp policy_transition_old, _expected and _current: applies a cut and leaves a raise in temp policy_transition_amount for the caller
+policy_transition_civilian_change = {
+	policy_transition_charged_levels = yes
+	if = {
+		limit = { check_variable = { policy_transition_delta > 0 } }
+		policy_transition_raise_amount = yes
+		policy_transition_limit_raise = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			policy_transition_ensure_modifier = yes
+		}
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_delta < 0 } }
+		policy_transition_cut_amount = yes
+		policy_transition_add_cut_penalty = yes
+	}
+}
+
+# Called from law on_add with temp spending_new_level, before <cat>_law is updated
+bureau_transition_check = {
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = bureau_law }
+		set_temp_variable = { policy_transition_old = bureau_law }
+		set_temp_variable = { policy_transition_expected = expected_adm_spending }
+		set_temp_variable = { policy_transition_current = policy_transition_bureau_cost }
+		policy_transition_civilian_change = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
+		}
+	}
+	set_temp_variable = { policy_transition_category = 1 }
+	policy_transition_remember_charge = yes
+}
+
+police_transition_check = {
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = police_law }
+		set_temp_variable = { policy_transition_old = police_law }
+		set_temp_variable = { policy_transition_expected = expected_police_spending }
+		set_temp_variable = { policy_transition_current = policy_transition_police_cost }
+		policy_transition_civilian_change = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
+		}
+	}
+	set_temp_variable = { policy_transition_category = 2 }
+	policy_transition_remember_charge = yes
+}
+
+education_transition_check = {
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = education_law }
+		set_temp_variable = { policy_transition_old = education_law }
+		set_temp_variable = { policy_transition_expected = expected_edu_spending }
+		set_temp_variable = { policy_transition_current = policy_transition_education_cost }
+		policy_transition_civilian_change = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
+		}
+	}
+	set_temp_variable = { policy_transition_category = 3 }
+	policy_transition_remember_charge = yes
+}
+
+health_transition_check = {
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = health_law }
+		set_temp_variable = { policy_transition_old = health_law }
+		set_temp_variable = { policy_transition_expected = expected_health_spending }
+		set_temp_variable = { policy_transition_current = policy_transition_health_cost }
+		policy_transition_civilian_change = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
+		}
+	}
+	set_temp_variable = { policy_transition_category = 4 }
+	policy_transition_remember_charge = yes
+}
+
+social_transition_check = {
+	set_temp_variable = { policy_transition_amount = 0 }
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = social_law }
+		set_temp_variable = { policy_transition_old = social_law }
+		set_temp_variable = { policy_transition_expected = expected_welfare_spending }
+		set_temp_variable = { policy_transition_current = policy_transition_social_cost }
+		policy_transition_civilian_change = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
+		}
+	}
+	set_temp_variable = { policy_transition_category = 5 }
+	policy_transition_remember_charge = yes
+}
+
+military_transition_check = {
+	if = {
+		limit = { policy_transition_own_choice = yes has_variable = military_law }
+		set_temp_variable = { policy_transition_old = military_law }
+		set_temp_variable = { policy_transition_expected = expected_military_law }
+		policy_transition_charged_levels = yes
+		if = {
+			limit = {
+				check_variable = { policy_transition_delta > 0 }
+				has_war = no
+			}
+			policy_transition_raise_amount = yes
+			set_temp_variable = { policy_transition_current = policy_transition_military_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_military_cost value = policy_transition_amount tooltip = military_spending_cost_multiplier_modifier_tt }
+				policy_transition_refresh = yes
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_delta < 0 } }
+			policy_transition_cut_amount = yes
+			policy_transition_limit_war_support = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_war_support value = policy_transition_amount tooltip = war_support_factor_tt }
+				policy_transition_refresh = yes
+			}
+		}
+	}
+}
+
+# Weekly; integer steps that follow 18 + 4 ln(1 + GDPc) and 16 + 3 ln(1 + GDPc), since script has no log
+calculate_expected_tax_rates = {
+	if = {
+		limit = { check_variable = { gdp_per_capita > 65 } }
+		set_variable = { expected_population_tax_rate = 35 }
+		set_variable = { expected_corporate_tax_rate = 29 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 45 } }
+		set_variable = { expected_population_tax_rate = 33 }
+		set_variable = { expected_corporate_tax_rate = 27 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 30 } }
+		set_variable = { expected_population_tax_rate = 32 }
+		set_variable = { expected_corporate_tax_rate = 26 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 20 } }
+		set_variable = { expected_population_tax_rate = 30 }
+		set_variable = { expected_corporate_tax_rate = 25 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 12 } }
+		set_variable = { expected_population_tax_rate = 28 }
+		set_variable = { expected_corporate_tax_rate = 24 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 7 } }
+		set_variable = { expected_population_tax_rate = 26 }
+		set_variable = { expected_corporate_tax_rate = 22 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 4 } }
+		set_variable = { expected_population_tax_rate = 24 }
+		set_variable = { expected_corporate_tax_rate = 21 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 2 } }
+		set_variable = { expected_population_tax_rate = 22 }
+		set_variable = { expected_corporate_tax_rate = 19 }
+	}
+	else_if = {
+		limit = { check_variable = { gdp_per_capita > 1 } }
+		set_variable = { expected_population_tax_rate = 21 }
+		set_variable = { expected_corporate_tax_rate = 18 }
+	}
+	else = {
+		set_variable = { expected_population_tax_rate = 20 }
+		set_variable = { expected_corporate_tax_rate = 17 }
+	}
+	if = {
+		limit = { has_idea = depression }
+		subtract_from_variable = { expected_corporate_tax_rate = 4 }
+	}
+	else_if = {
+		limit = { has_idea = recession }
+		subtract_from_variable = { expected_corporate_tax_rate = 3 }
+	}
+	else_if = {
+		limit = { has_idea = stagnation }
+		subtract_from_variable = { expected_corporate_tax_rate = 1 }
+	}
+	else_if = {
+		limit = { has_idea = fast_growth }
+		add_to_variable = { expected_corporate_tax_rate = 1 }
+	}
+	else_if = {
+		limit = { has_idea = economic_boom }
+		add_to_variable = { expected_corporate_tax_rate = 2 }
+	}
+}
+
+# Temp policy_transition_tax_raised: points above max(previous rate, recent peak, expected rate)
+# Temp policy_transition_tax_lowered: points below min(previous rate, recent low, expected rate)
+# The recent peak is a rate above expected that we cut from, the recent low a rate below expected that we raised from
+policy_transition_tax_points = {
+	set_temp_variable = { policy_transition_tax_raised = 0 }
+	set_temp_variable = { policy_transition_tax_lowered = 0 }
+	if = {
+		limit = { check_variable = { policy_transition_tax_new > previous_tax_rate } }
+		set_temp_variable = {
+			policy_transition_tax_raised = {
+				value = policy_transition_tax_new
+				subtract = { value = previous_tax_rate max = policy_transition_tax_expected max = policy_transition_tax_peak_temp }
+				max = 0
+			}
+		}
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_tax_new < previous_tax_rate } }
+		set_temp_variable = {
+			policy_transition_tax_lowered = {
+				value = previous_tax_rate
+				min = policy_transition_tax_expected
+				min = policy_transition_tax_low_temp
+				subtract = policy_transition_tax_new
+				max = 0
+			}
+		}
+	}
+}
+
+policy_transition_add_tax_bonus = {
+	add_to_variable = { policy_transition_tax_bonus = policy_transition_amount }
+	clamp_variable = { var = policy_transition_tax_bonus min = 0 max = @policy_transition_tax_bonus_cap }
+	policy_transition_sync_stability = yes
+}
+
+# Call after a tax change with temp previous_tax_rate
+population_tax_transition_check = {
+	set_temp_variable = { policy_transition_tax_new = population_tax_rate }
+	set_temp_variable = { policy_transition_tax_expected = expected_population_tax_rate }
+	set_temp_variable = { policy_transition_tax_peak_temp = policy_transition_population_tax_peak }
+	set_temp_variable = { policy_transition_tax_low_temp = 100 }
+	if = {
+		limit = { has_variable = policy_transition_population_tax_low }
+		set_temp_variable = { policy_transition_tax_low_temp = policy_transition_population_tax_low }
+	}
+	policy_transition_tax_points = yes
+	if = {
+		limit = {
+			check_variable = { population_tax_rate < previous_tax_rate }
+			check_variable = { previous_tax_rate > expected_population_tax_rate }
+			NOT = { check_variable = { policy_transition_tax_peak_temp > previous_tax_rate } }
+		}
+		set_variable = { policy_transition_population_tax_peak = previous_tax_rate }
+	}
+	else_if = {
+		limit = {
+			check_variable = { population_tax_rate > previous_tax_rate }
+			check_variable = { previous_tax_rate < expected_population_tax_rate }
+			NOT = { check_variable = { policy_transition_tax_low_temp < previous_tax_rate } }
+		}
+		set_variable = { policy_transition_population_tax_low = previous_tax_rate }
+	}
+	if = {
+		limit = {
+			check_variable = { population_tax_rate > previous_tax_rate }
+			check_variable = { policy_transition_tax_bonus > 0 }
+		}
+		set_temp_variable = { policy_transition_amount = { value = population_tax_rate subtract = previous_tax_rate multiply = @policy_transition_tax_bonus_per_point multiply = -1 } }
+		policy_transition_add_tax_bonus = yes
+	}
+	if = {
+		limit = { check_variable = { policy_transition_tax_raised > 0 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_raised multiply = @policy_transition_population_tax_per_point multiply = -1 } }
+		policy_transition_apply_mandate = yes
+		policy_transition_add_tax_penalty = yes
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_tax_lowered > 0 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_lowered multiply = @policy_transition_tax_bonus_per_point } }
+		policy_transition_add_tax_bonus = yes
+	}
+	policy_transition_clear_if_empty = yes
+	if = {
+		limit = { is_ai = no }
+		policy_transition_refresh = yes
+	}
+}
+
+corporate_tax_transition_check = {
+	set_temp_variable = { policy_transition_tax_new = corporate_tax_rate }
+	set_temp_variable = { policy_transition_tax_expected = expected_corporate_tax_rate }
+	set_temp_variable = { policy_transition_tax_peak_temp = policy_transition_corporate_tax_peak }
+	set_temp_variable = { policy_transition_tax_low_temp = 100 }
+	if = {
+		limit = { has_variable = policy_transition_corporate_tax_low }
+		set_temp_variable = { policy_transition_tax_low_temp = policy_transition_corporate_tax_low }
+	}
+	policy_transition_tax_points = yes
+	if = {
+		limit = {
+			check_variable = { corporate_tax_rate < previous_tax_rate }
+			check_variable = { previous_tax_rate > expected_corporate_tax_rate }
+			NOT = { check_variable = { policy_transition_tax_peak_temp > previous_tax_rate } }
+		}
+		set_variable = { policy_transition_corporate_tax_peak = previous_tax_rate }
+	}
+	else_if = {
+		limit = {
+			check_variable = { corporate_tax_rate > previous_tax_rate }
+			check_variable = { previous_tax_rate < expected_corporate_tax_rate }
+			NOT = { check_variable = { policy_transition_tax_low_temp < previous_tax_rate } }
+		}
+		set_variable = { policy_transition_corporate_tax_low = previous_tax_rate }
+	}
+	if = {
+		limit = {
+			check_variable = { corporate_tax_rate > previous_tax_rate }
+			OR = {
+				check_variable = { policy_transition_productivity > 0 }
+				check_variable = { policy_transition_investment_cost < 0 }
+			}
+		}
+		set_temp_variable = { policy_transition_tax_restored = { value = corporate_tax_rate subtract = previous_tax_rate } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_restored multiply = @policy_transition_productivity_per_point } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_productivity min = policy_transition_amount multiply = -1 } }
+		if = {
+			limit = { check_variable = { policy_transition_amount < 0 } }
+			add_to_variable = { var = policy_transition_productivity value = policy_transition_amount tooltip = productivity_growth_modifier_tt }
+		}
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_restored multiply = @policy_transition_investment_per_point multiply = -1 } }
+		set_temp_variable = { policy_transition_room = { value = policy_transition_investment_cost multiply = -1 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_amount min = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_investment_cost value = policy_transition_amount tooltip = receiving_investment_cost_modifier_tt }
+		}
+	}
+	if = {
+		limit = { check_variable = { policy_transition_tax_raised > 0 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_raised multiply = @policy_transition_corporate_tax_per_point multiply = -1 } }
+		policy_transition_apply_mandate = yes
+		policy_transition_add_tax_penalty = yes
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_tax_lowered > 0 } }
+		policy_transition_ensure_modifier = yes
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_lowered multiply = @policy_transition_productivity_per_point } }
+		set_temp_variable = { policy_transition_room = { value = @policy_transition_productivity_cap subtract = policy_transition_productivity } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_amount min = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_productivity value = policy_transition_amount tooltip = productivity_growth_modifier_tt }
+		}
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_lowered multiply = @policy_transition_investment_per_point } }
+		set_temp_variable = { policy_transition_room = { value = @policy_transition_investment_cap subtract = policy_transition_investment_cost } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_amount max = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount < 0 } }
+			add_to_variable = { var = policy_transition_investment_cost value = policy_transition_amount tooltip = receiving_investment_cost_modifier_tt }
+		}
+	}
+	policy_transition_clear_if_empty = yes
+	# The AI's budget picks the change up at the daily refresh
+	if = {
+		limit = { is_ai = no }
+		policy_transition_refresh = yes
+	}
+}
+
+# Monthly for countries with the modifier or a remembered tax peak or low
+policy_transition_monthly_decay = {
+	hidden_effect = {
+		if = {
+			limit = { has_dynamic_modifier = { modifier = policy_transition_costs } }
+			if = {
+				limit = { check_variable = { policy_transition_bureau_cost > 0 } }
+				set_variable = { policy_transition_bureau_cost = { value = policy_transition_bureau_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_police_cost > 0 } }
+				set_variable = { policy_transition_police_cost = { value = policy_transition_police_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_education_cost > 0 } }
+				set_variable = { policy_transition_education_cost = { value = policy_transition_education_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_health_cost > 0 } }
+				set_variable = { policy_transition_health_cost = { value = policy_transition_health_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_social_cost > 0 } }
+				set_variable = { policy_transition_social_cost = { value = policy_transition_social_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_military_cost > 0 } }
+				set_variable = { policy_transition_military_cost = { value = policy_transition_military_cost subtract = @policy_transition_cost_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_cut_stability < 0 } }
+				set_variable = { policy_transition_cut_stability = { value = policy_transition_cut_stability add = @policy_transition_penalty_recovery min = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_tax_stability < 0 } }
+				set_variable = { policy_transition_tax_stability = { value = policy_transition_tax_stability add = @policy_transition_penalty_recovery min = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_tax_bonus > 0 } }
+				set_variable = { policy_transition_tax_bonus = { value = policy_transition_tax_bonus subtract = @policy_transition_penalty_recovery max = 0 } }
+			}
+			set_variable = { policy_transition_stability = { value = policy_transition_cut_stability add = policy_transition_tax_stability add = policy_transition_tax_bonus } }
+			if = {
+				limit = { check_variable = { policy_transition_productivity > 0 } }
+				set_variable = { policy_transition_productivity = { value = policy_transition_productivity subtract = @policy_transition_productivity_decay max = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_investment_cost < 0 } }
+				set_variable = { policy_transition_investment_cost = { value = policy_transition_investment_cost add = @policy_transition_investment_recovery min = 0 } }
+			}
+			if = {
+				limit = { check_variable = { policy_transition_war_support < 0 } }
+				set_variable = { policy_transition_war_support = { value = policy_transition_war_support add = @policy_transition_penalty_recovery min = 0 } }
+			}
+			policy_transition_clear_if_empty = yes
+		}
+		if = {
+			limit = { has_variable = policy_transition_population_tax_peak }
+			subtract_from_variable = { policy_transition_population_tax_peak = @policy_transition_tax_memory_step }
+			if = {
+				limit = { NOT = { check_variable = { policy_transition_population_tax_peak > population_tax_rate } } }
+				clear_variable = policy_transition_population_tax_peak
+			}
+		}
+		if = {
+			limit = { has_variable = policy_transition_corporate_tax_peak }
+			subtract_from_variable = { policy_transition_corporate_tax_peak = @policy_transition_tax_memory_step }
+			if = {
+				limit = { NOT = { check_variable = { policy_transition_corporate_tax_peak > corporate_tax_rate } } }
+				clear_variable = policy_transition_corporate_tax_peak
+			}
+		}
+		if = {
+			limit = { has_variable = policy_transition_population_tax_low }
+			add_to_variable = { policy_transition_population_tax_low = @policy_transition_tax_memory_step }
+			if = {
+				limit = { NOT = { check_variable = { policy_transition_population_tax_low < population_tax_rate } } }
+				clear_variable = policy_transition_population_tax_low
+			}
+		}
+		if = {
+			limit = { has_variable = policy_transition_corporate_tax_low }
+			add_to_variable = { policy_transition_corporate_tax_low = @policy_transition_tax_memory_step }
+			if = {
+				limit = { NOT = { check_variable = { policy_transition_corporate_tax_low < corporate_tax_rate } } }
+				clear_variable = policy_transition_corporate_tax_low
+			}
+		}
+	}
+}
+
+# Drops the modifier as soon as every value is back at zero instead of showing an empty spirit until the monthly check
+policy_transition_clear_if_empty = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = policy_transition_costs }
+			NOT = { check_variable = { policy_transition_bureau_cost > 0 } }
+			NOT = { check_variable = { policy_transition_police_cost > 0 } }
+			NOT = { check_variable = { policy_transition_education_cost > 0 } }
+			NOT = { check_variable = { policy_transition_health_cost > 0 } }
+			NOT = { check_variable = { policy_transition_social_cost > 0 } }
+			NOT = { check_variable = { policy_transition_military_cost > 0 } }
+			check_variable = { policy_transition_cut_stability = 0 }
+			check_variable = { policy_transition_tax_stability = 0 }
+			check_variable = { policy_transition_tax_bonus = 0 }
+			NOT = { check_variable = { policy_transition_war_support < 0 } }
+			check_variable = { policy_transition_productivity = 0 }
+			check_variable = { policy_transition_investment_cost = 0 }
+		}
+		hidden_effect = { policy_transition_clear_costs = yes }
+	}
+}
+
+# Drops the modifier and its values; the tax peak and low fade on their own
+policy_transition_clear_costs = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = policy_transition_costs } }
+		remove_dynamic_modifier = { modifier = policy_transition_costs }
+	}
+	clear_variable = policy_transition_bureau_cost
+	clear_variable = policy_transition_police_cost
+	clear_variable = policy_transition_education_cost
+	clear_variable = policy_transition_health_cost
+	clear_variable = policy_transition_social_cost
+	clear_variable = policy_transition_military_cost
+	clear_variable = policy_transition_cut_stability
+	clear_variable = policy_transition_tax_stability
+	clear_variable = policy_transition_stability
+	clear_variable = policy_transition_war_support
+	clear_variable = policy_transition_tax_bonus
+	clear_variable = policy_transition_productivity
+	clear_variable = policy_transition_investment_cost
+	clear_variable = policy_transition_pending_bureau
+	clear_variable = policy_transition_pending_police
+	clear_variable = policy_transition_pending_education
+	clear_variable = policy_transition_pending_health
+	clear_variable = policy_transition_pending_social
+}
+
+# New nations, civil war splinters and annexed countries start over
+clear_policy_transition = {
+	policy_transition_clear_costs = yes
+	clear_variable = policy_transition_population_tax_peak
+	clear_variable = policy_transition_corporate_tax_peak
+	clear_variable = policy_transition_population_tax_low
+	clear_variable = policy_transition_corporate_tax_low
+}
+
+# Re-granting restarts the 365 days instead of doing nothing
+grant_reform_mandate = {
+	if = {
+		limit = { has_idea = policy_reform_mandate }
+		hidden_effect = { remove_ideas = policy_reform_mandate }
+	}
+	add_timed_idea = { idea = policy_reform_mandate days = 365 }
+}

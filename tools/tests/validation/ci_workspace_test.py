@@ -179,7 +179,7 @@ def test_workspace_archive_ships_the_declared_paths_without_git(tmp_path):
         (REPO_ROOT / ".github/workflows/test-suite.yml").read_text(encoding="utf-8")
     )
     workspace_paths = workflow["env"]["WORKSPACE_PATHS"]
-    shipped = [".workspace-manifest", ".validation_cache/v9/cache.db"]
+    shipped = [".workspace-manifest", ".validation_cache/v10/cache.db"]
     for entry in workspace_paths.split():
         entry = entry.replace("*", "descriptor")
         shipped.append(entry if PurePosixPath(entry).suffix else f"{entry}/probe")

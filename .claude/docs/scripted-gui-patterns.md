@@ -133,8 +133,7 @@ update_<system>_dirty_variable = {
   Use one per system.
 - Call it at the end of every click handler and state-changing effect, including the
   close and toggle-off paths. The `is_ai = no` guard rule is in `scripted-gui-rules.md`.
-- References: `update_ledger_dirty_var`, `update_nato_dirty_variable`,
-  `update_mio_catalog_dirty_variable`.
+- References: `update_nato_dirty_variable`, `update_mio_catalog_dirty_variable`.
 
 ## Filter checkbox
 

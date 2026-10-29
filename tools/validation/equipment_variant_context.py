@@ -12,6 +12,7 @@ from linting.check_common_mistakes import (
 
 _TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!]=?|=|[^\s{}=<>!]+')
 _DATE = re.compile(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?")
+_TAG = re.compile(r"[A-Z]{3}")
 _WRAPPERS = {
     "AND",
     "hidden_trigger",
@@ -22,9 +23,9 @@ _WRAPPERS = {
 
 def script_nodes(text):
     tokens = [
-        (match.group(), line)
+        (token, line)
         for line, code in enumerate(blank_comments(text).splitlines(), 1)
-        for match in _TOKEN.finditer(code)
+        for token in _TOKEN.findall(code)
     ]
     return _parse_script_nodes(tokens, 0)[0]
 
@@ -36,6 +37,8 @@ def value(node, key):
 
 def event_pool_targets(text):
     """Bare event lists are omitted by the shared assignment-only AST parser."""
+    if "events" not in text:
+        return set()
     return {
         event
         for block in re.finditer(
@@ -68,7 +71,7 @@ def countries(nodes):
 def scope_country(key, current, root):
     if key == "ROOT":
         return root
-    if re.fullmatch(r"[A-Z]{3}", key):
+    if _TAG.fullmatch(key):
         return frozenset({key})
     if (
         _scope_frame_kind(key) == "foreign"

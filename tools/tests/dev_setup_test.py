@@ -19,6 +19,7 @@ CHECKS = {
     "check_hooks_installed": True,
     "check_pip_packages": True,
     "check_dev_packages": True,
+    "check_imagemagick": True,
     "check_bun": True,
     "check_docs_deps": True,
 }
@@ -156,6 +157,19 @@ def test_resolve_tool_survives_an_unreadable_candidate(monkeypatch, tmp_path):
     monkeypatch.setattr(dev_setup.Path, "exists", boom)
 
     assert dev_setup._resolve_tool("bun") == ["bun"]
+
+
+@pytest.mark.parametrize("binary", ["/tools/magick", "/tools/convert", None])
+def test_imagemagick_check_uses_the_art_tools_probe(monkeypatch, capsys, binary):
+    calls = []
+    monkeypatch.setattr(
+        dev_setup,
+        "find_imagemagick",
+        lambda *names: calls.append(names) or binary,
+    )
+    assert dev_setup.check_imagemagick() is (binary is not None)
+    assert calls == [("magick", "convert")]
+    assert (binary or "MISSING") in capsys.readouterr().out
 
 
 # ── interpreter / venv probes ───────────────────────────────────────────────
@@ -751,6 +765,15 @@ def test_check_mode_with_docs_fails_on_a_missing_docs_dependency(
     setup_env.state["check_docs_deps"] = False
 
     assert run_main(monkeypatch, "--check", "--docs") == 1
+
+
+@pytest.mark.parametrize("args", [(), ("--check",)])
+def test_missing_imagemagick_fails_setup_without_installing_system_packages(
+    setup_env, monkeypatch, args
+):
+    setup_env.state["check_imagemagick"] = False
+    assert run_main(monkeypatch, *args) == 1
+    assert not any(name.startswith("install_") for name in setup_env.calls)
 
 
 def test_main_reexecs_into_the_local_venv(setup_env, monkeypatch, tmp_path):

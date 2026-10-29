@@ -10,7 +10,7 @@ import os
 
 import pytest
 import validate_file_paths as vfp
-from shared.suite import initialize_git_repository, write_text
+from shared.suite import run_git, write_text
 
 _MANIFEST = """
 directory
@@ -87,10 +87,15 @@ def test_corrupt_paths_manifest_reads_as_absent(tmp_path, monkeypatch):
 
 
 def test_tracked_content_paths_reads_the_git_index(tmp_path):
-    write_text(tmp_path / "common" / "ideas" / "00_ideas.txt", "x")
+    tracked_path = tmp_path / "common" / "ideas" / "00_ideas.txt"
+    write_text(tracked_path, "x")
     write_text(tmp_path / "tools" / "helper.py", "x")
     write_text(tmp_path / "README.md", "x")
-    initialize_git_repository(str(tmp_path), "-A")
+    run_git(tmp_path, "init", "--quiet")
+    run_git(tmp_path, "add", "-A")
+
+    tracked_path.unlink()
+    write_text(tmp_path / "common" / "ideas" / "99_untracked.txt", "x")
 
     tracked = vfp.tracked_content_paths(str(tmp_path))
     assert tracked == ["common/ideas/00_ideas.txt"]
