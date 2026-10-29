@@ -559,6 +559,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   The game drops that unit from the template. Ships as WARNING for its backlog of
   1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
   on the full CI run only.
+- `airbase-over-capacity` (WARNING): the planes `history/units` `air_wings` place in a
+  state exceed its undated `air_base` level times `NBuildings.AIRBASE_CAPACITY_MULT`
+  (vanilla 200, one slot per plane). Totals add every country's OOB, so each file
+  sharing an overfull base gets its own finding. Every file with `air_wings` counts as
+  a starting placement; today all are `set_air_oob` targets. Staged mode reports only
+  staged OOB files, so a state or define change surfaces on the full CI run. WARNING
+  until the starting backlog clears.
 
 ## validate_party_loc.py
 
