@@ -12,6 +12,7 @@ GRE_default_naval_breakdown = {
 	ai_strategy = { type = role_ratio id = naval_helicopter_operator value = 10 }
 	ai_strategy = { type = role_ratio id = naval_carrier value = 2 }
 	ai_strategy = { type = role_ratio id = naval_cruiser value = 2 }
+	ai_strategy = { type = role_ratio id = naval_mine_sweeper value = 5 }
 }
 
 GRE_antagonize_turkey = {
@@ -25,10 +26,29 @@ GRE_antagonize_turkey = {
 	ai_strategy = { type = antagonize id = "TUR" value = 50 }
 }
 
+GRE_counter_turkish_alignment = {
+	allowed = { original_tag = GRE }
+	enable = {
+		country_exists = TUR
+		TUR = {
+			OR = {
+				has_completed_focus = TUR_right_wing_victory
+				has_completed_focus = TUR_great_east
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = antagonize id = "TUR" value = 50 }
+	ai_strategy = { type = contain id = "TUR" value = 50 }
+	ai_strategy = { type = front_unit_request tag = TUR value = 10 }
+}
+
 GRE_support_albania = {
 	allowed = { original_tag = GRE }
 	enable = {
 		country_exists = ALB
+		NOT = { has_wargoal_against = ALB }
 		ALB = {
 			NOT = { has_government = fascism }
 			NOT = { has_government = nationalist }
@@ -39,26 +59,19 @@ GRE_support_albania = {
 	ai_strategy = { type = support id = "ALB" value = 50 }
 	ai_strategy = { type = befriend id = "ALB" value = 50 }
 }
-#CIVIL WAR IN AMERICA
-GRE_new_york_help = {
+
+GRE_protect_cyprus = {
 	allowed = { original_tag = GRE }
 	enable = {
-		country_exists = NYK
-		has_war = no
+		country_exists = CYP
+		NOT = { has_war_with = CYP }
+		NOT = { has_wargoal_against = CYP }
+		CYP = { NOT = { has_opinion = { target = GRE value < 0 } } }
 	}
 	abort_when_not_enabled = yes
-	ai_strategy = { type = send_volunteers_desire id = "NYK" value = 1000 }
-	ai_strategy = { type = send_lend_lease_desire id = "NYK" value = 400 }
-}
-GRE_california_help = {
-	allowed = { original_tag = GRE }
-	enable = {
-		country_exists = CAL
-		has_war = no
-	}
-	abort_when_not_enabled = yes
-	ai_strategy = { type = send_volunteers_desire id = "CAL" value = 1000 }
-	ai_strategy = { type = send_lend_lease_desire id = "CAL" value = 400 }
+
+	ai_strategy = { type = befriend id = "CYP" value = 100 }
+	ai_strategy = { type = protect id = "CYP" value = 50 }
 }
 
 GRE_avoid_unready_war_with_tur = {
@@ -72,18 +85,4 @@ GRE_avoid_unready_war_with_tur = {
 
 	ai_strategy = { type = conquer id = "TUR" value = -4000 }
 	ai_strategy = { type = declare_war id = "TUR" value = -4000 }
-}
-
-GRE_prepare_war_with_tur = {
-	allowed = { original_tag = GRE }
-	enable = {
-		has_wargoal_against = TUR
-		NOT = { has_war_with = TUR }
-		strength_ratio = { tag = TUR ratio > 1 }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = prepare_for_war id = "TUR" value = 200 }
-	ai_strategy = { type = conquer id = "TUR" value = 200 }
-	ai_strategy = { type = declare_war id = "TUR" value = 200 }
 }
