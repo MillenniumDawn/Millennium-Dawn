@@ -26,7 +26,11 @@ from shared_utils import run_validator_main
 from sprite_index import SpriteSizeIndex
 from validate_events import costly_scripted_effects
 
-_OPT_IN_CHECKS = {"validate_missing_icons", "validate_unannounced_categories"}
+_OPT_IN_CHECKS = {
+    "validate_missing_icons",
+    "validate_unannounced_categories",
+    "validate_naming_style",
+}
 
 
 def _flat(*parts, token="dec_one"):
@@ -2494,7 +2498,10 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
 
 @pytest.mark.parametrize(
     "flags",
-    ({}, {"missing_icons": True, "unannounced_categories": True}),
+    (
+        {},
+        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
+    ),
     ids=("default", "opt-in checks"),
 )
 def test_run_validations_calls_every_check(tmp_path, monkeypatch, flags):
@@ -2511,6 +2518,8 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
+    assert parser.parse_args(["--naming-style"]).naming_style
+    assert not parser.parse_args([]).naming_style
 
 
 _ICON = "\t\ticon = icon\n"
@@ -2857,6 +2866,98 @@ def test_timer_without_remove_effect(tmp_path, token, body, reported):
     )
     assert issue_rows(validator) == [expected] * reported
     assert validator.warnings_found == reported
+
+
+_DECISIONS_FILE = "common/decisions/ser.txt"
+_VOJ_PREFIX_ROW = (
+    "decision-prefix-owner",
+    "Decision VOJ_integrate has the VOJ prefix but allowed admits SER",
+    _DECISIONS_FILE,
+    2,
+)
+# case: (category, category allowed, decision, decision allowed, rows as
+#        (category, message, file, line))
+_NAMING_CASES = {
+    "lowercase ids": ("SER_main", "", "SER_invite_bosnia", "original_tag = SER", []),
+    "uppercase decision": (
+        "SER_main",
+        "",
+        "SER_The_Confederacy",
+        "original_tag = SER",
+        [
+            (
+                "decision-id-case",
+                "Decision SER_The_Confederacy is not lowercase after its prefix",
+                _DECISIONS_FILE,
+                2,
+            )
+        ],
+    ),
+    "uppercase category": (
+        "SER_Political",
+        "",
+        "SER_invite_bosnia",
+        "",
+        [
+            (
+                "decision-id-case",
+                "Category SER_Political is not lowercase after its prefix",
+                "common/decisions/categories/cats.txt",
+                1,
+            )
+        ],
+    ),
+    "decision allowed names another country": (
+        "SER_main",
+        "",
+        "VOJ_integrate",
+        "original_tag = SER",
+        [_VOJ_PREFIX_ROW],
+    ),
+    "category lock names another country": (
+        "SER_main",
+        "original_tag = SER",
+        "VOJ_integrate",
+        "",
+        [_VOJ_PREFIX_ROW],
+    ),
+    "prefix that is not a country": (
+        "SER_main",
+        "",
+        "SUB_annex",
+        "original_tag = SER",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("category", "category_allowed", "token", "allowed", "rows"),
+    _NAMING_CASES.values(),
+    ids=_NAMING_CASES,
+)
+def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows):
+    category_body = (
+        f"\tallowed = {{ {category_allowed} }}\n" if category_allowed else ""
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
+            'VOJ = "countries/Vojvodina.txt"\n',
+            "common/decisions/categories/cats.txt": f"{category} = {{\n"
+            + category_body
+            + "}\n",
+            _DECISIONS_FILE: f"{category} = {{\n"
+            + _nested(token, _block("allowed", allowed) if allowed else "")
+            + "}\n",
+        },
+    )
+
+    validator.validate_naming_style()
+
+    assert issue_rows(validator) == rows
+    assert validator.warnings_found == len(rows)
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):
