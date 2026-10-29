@@ -778,9 +778,27 @@ random_renewable_variable_calculation = {
 # - temp_change - number of battery parks to add
 # - skip_payment - (optional) set to 1 to skip treasury charge
 build_battery_park_effect = {
+	set_temp_variable = { battery_park_builds_built = 0 }
+	for_each_scope_loop = {
+		array = owned_controlled_states
+		if = {
+			limit = { check_variable = { building_level@battery_park < 20 } }
+			set_temp_variable = {
+				battery_park_state_free_levels = {
+					value = 20
+					subtract = building_level@battery_park
+				}
+			}
+			add_to_temp_variable = { battery_park_builds_built = battery_park_state_free_levels }
+		}
+	}
+	if = {
+		limit = { check_variable = { battery_park_builds_built > temp_change } }
+		set_temp_variable = { battery_park_builds_built = temp_change }
+	}
 	custom_effect_tooltip = build_battery_park_effect_TT
 	hidden_effect = {
-		set_temp_variable = { battery_park_builds_remaining = temp_change }
+		set_temp_variable = { battery_park_builds_remaining = battery_park_builds_built }
 		set_temp_variable = { battery_park_builds_built = 0 }
 		while_loop_effect = {
 			limit = { check_variable = { battery_park_builds_remaining > 0 } }
