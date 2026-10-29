@@ -43,6 +43,8 @@
 @money_control_factor_scaling = 0.238
 # Adjusts the percentage of refugees off of your total population
 @refugee_percentage_adjuster = 0.005
+# Base monthly population growth: POPULATION_YEARLY_GROWTH_BASE in MD_defines.lua over 12. monthly_population modifiers scale it
+@base_monthly_population_growth = 0.0005
 # Minimum workers per building
 @minimum_workers_per_building = 0.00001
 # Resource Sales Rate Constant
@@ -296,9 +298,9 @@ update_money_dirty_variable = {
 		force_update_map_mode = { mapmode = reserve_currency_map_mode }
 
 		md_check_research_slot_alert = yes
+		add_to_variable = { global.research_screen_ui = 1 }
 	}
 	add_to_variable = { global.update_monie_ui = 1 }
-	add_to_variable = { global.research_screen_ui = 1 }
 }
 
 # Effect: expense_modifier_calculations
@@ -1014,6 +1016,11 @@ calculate_additional_income_rate = {
 
 			add_to_variable = { additional_income_rate = CARTEL_drug_trade_money }
 		}
+	}
+	if = {
+		limit = { has_country_flag = HOL_bolle_jos_sheltered }
+		set_variable = { HOL_bolle_jos_income = { value = gdp_total multiply = 0.003 } }
+		add_to_variable = { additional_income_rate = HOL_bolle_jos_income }
 	}
 	if = {
 		limit = { has_idea = agrarian_economy }
@@ -4780,6 +4787,110 @@ update_state_variables = {
 	calculate_gdp = yes
 }
 
+# Effect: register_sector_demand
+# Purpose: Adds one sector's job demand to the totals and to its priority level for solve_workforce_priority_share
+# Input (temp): sector_priority (1-10), sector_max_workers (millions)
+register_sector_demand = {
+	add_to_temp_variable = { workforce_demand_by_priority^sector_priority = sector_max_workers }
+	add_to_temp_variable = { open_demand = sector_max_workers }
+	set_temp_variable = { sector_weight = { value = sector_max_workers multiply = sector_priority } }
+	add_to_temp_variable = { open_weight = sector_weight }
+	# Sector counts only feed the fulfillment forecast, which only players see
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { sector_max_workers > 0 }
+		}
+		add_to_temp_variable = { workforce_sectors_by_priority^sector_priority = 1 }
+		add_to_temp_variable = { open_priority_sum = sector_priority }
+	}
+}
+
+# Effect: solve_workforce_priority_share
+# Purpose: Finds workforce_priority_share, the fulfillment each priority point buys (fulfillment = priority * share, max 100%).
+#          Levels that reach 100% take only the jobs they have, and the workers left over go to the lower levels.
+# Input (temp): workforce_total, open_demand, open_weight (demand * priority) and open_priority_sum from register_sector_demand,
+#               workforce_demand_by_priority, workforce_sectors_by_priority
+# Output (temp): workforce_priority_share
+# Output (player): workforce_fulfillment_per_growth, the average fulfillment gained per 100% of population growth
+solve_workforce_priority_share = {
+	set_temp_variable = { workforce_pool = workforce_total }
+	clamp_temp_variable = { var = workforce_pool min = 0 max = @math_expressions_max }
+
+	# Enough workers for every job: all sectors are full and priorities do not matter
+	set_temp_variable = { workforce_priority_share = 1 }
+	if = {
+		limit = { check_variable = { open_demand > workforce_pool } }
+		set_temp_variable = { workforce_remaining = workforce_pool }
+		# Highest level first: it is full once its share reaches 1 / priority
+		for_loop_effect = {
+			start = 10
+			end = 1
+			add = -1
+			compare = greater_than_or_equals
+			value = priority_level
+			break = share_found
+			set_temp_variable = {
+				workforce_priority_share = {
+					value = workforce_remaining
+					divide = { value = open_weight clamp = { min = 0.0001 max = @math_expressions_max } }
+				}
+			}
+			set_temp_variable = { level_fill = { value = workforce_priority_share multiply = priority_level } }
+			if = {
+				limit = { check_variable = { level_fill < 1 } }
+				set_temp_variable = { share_found = 1 }
+			}
+			else = {
+				subtract_from_temp_variable = { workforce_remaining = workforce_demand_by_priority^priority_level }
+				set_temp_variable = { level_weight = workforce_demand_by_priority^priority_level }
+				multiply_temp_variable = { level_weight = priority_level }
+				subtract_from_temp_variable = { open_weight = level_weight }
+				set_temp_variable = { level_sectors = workforce_sectors_by_priority^priority_level }
+				multiply_temp_variable = { level_sectors = priority_level }
+				subtract_from_temp_variable = { open_priority_sum = level_sectors }
+			}
+		}
+		# Fulfillment of the sectors still short of workers moves by priority * (extra workers / open_weight)
+		if = {
+			limit = { is_ai = no }
+			set_variable = {
+				workforce_fulfillment_per_growth = {
+					value = open_priority_sum
+					multiply = workforce_pool
+					divide = { value = open_weight clamp = { min = 0.0001 max = @math_expressions_max } }
+					divide = 15
+				}
+			}
+		}
+	}
+	else_if = {
+		limit = { is_ai = no }
+		set_variable = { workforce_fulfillment_per_growth = 0 }
+	}
+}
+
+# Effect: assign_sector_workers
+# Purpose: Gives one sector its workers from workforce_priority_share and takes them out of workforce_total
+# Input (temp): sector_priority (1-10), sector_max_workers (millions), workforce_priority_share
+# Output (temp): sector_workers (millions), sector_fulfillment (1 for a sector with no jobs)
+assign_sector_workers = {
+	set_temp_variable = { sector_workers = 0 }
+	set_temp_variable = { sector_fulfillment = 1 }
+	if = {
+		limit = { check_variable = { sector_max_workers > 0 } }
+		set_temp_variable = {
+			sector_fulfillment = {
+				value = sector_priority
+				multiply = workforce_priority_share
+				clamp = { min = 0 max = 1 }
+			}
+		}
+		set_temp_variable = { sector_workers = { value = sector_max_workers multiply = sector_fulfillment } }
+		subtract_from_temp_variable = { workforce_total = sector_workers }
+	}
+}
+
 # Effect: calculate_gdp
 # Purpose: Sums per-building GDP contributions into gdp_total and derives gdp_per_capita
 calculate_gdp = {
@@ -4985,122 +5096,67 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_internet_station = 0.012 }
 	set_temp_variable = { workers_per_rail_terminal = 0.015 }
 
-	# Power Plants — allocated first so the grid is staffed before any industrial demand
+	# Workforce allocation by priority
+	# Each sector asks for max_workers_in_<sector> and has a priority from 1 to 10.
+	# Fulfillment is priority * workforce_priority_share, capped at 100%, so a priority 10 sector is staffed 10 times as readily as a priority 1 sector.
+	clear_temp_array = workforce_demand_by_priority
+	resize_temp_array = { array = workforce_demand_by_priority size = 11 }
+	clear_temp_array = workforce_sectors_by_priority
+	resize_temp_array = { array = workforce_sectors_by_priority size = 11 }
+	set_temp_variable = { open_demand = 0 }
+	set_temp_variable = { open_weight = 0 }
+	set_temp_variable = { open_priority_sum = 0 }
+
+	# Power Plants
 	# Nuclear Reactors
-	if = { limit = { check_variable = { nuclear_reactors = 0 } }
-		set_variable = { nuclear_reactors_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_nuclear_reactors = {
+			value = nuclear_reactors
+			multiply = workers_per_nuclear_reactor
+			multiply = {
+				value = 1
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_nuclear_reactors = {
-				value = nuclear_reactors
-				multiply = workers_per_nuclear_reactor
-				multiply = {
-					value = 1
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
-		}
-		set_variable = {
-			workers_in_nuclear_reactors = {
-				value = max_workers_in_nuclear_reactors
-				multiply = nuclear_reactor_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			nuclear_reactors_manpower_fulfillment = {
-				value = workers_in_nuclear_reactors
-				divide = { value = max_workers_in_nuclear_reactors clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_nuclear_reactors }
-	}
+	set_temp_variable = { sector_priority = nuclear_reactor_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_nuclear_reactors }
+	register_sector_demand = yes
 
 	# Fossil Power Plants
-	if = { limit = { check_variable = { number_of_fossil_pps = 0 } }
-		set_variable = { fossil_powerplants_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_fossil_powerplants = {
+			value = number_of_fossil_pps
+			multiply = workers_per_fossil_powerplant
+			multiply = {
+				value = 1
+				add = modifier@buildings_worker_requirement_modifier
+				add = modifier@infrastructure_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_fossil_powerplants = {
-				value = number_of_fossil_pps
-				multiply = workers_per_fossil_powerplant
-				multiply = {
-					value = 1
-					add = modifier@buildings_worker_requirement_modifier
-					add = modifier@infrastructure_workforce_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
-		}
-		set_variable = {
-			workers_in_fossil_powerplants = {
-				value = max_workers_in_fossil_powerplants
-				multiply = fossil_powerplant_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			fossil_powerplants_manpower_fulfillment = {
-				value = workers_in_fossil_powerplants
-				divide = { value = max_workers_in_fossil_powerplants clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_fossil_powerplants }
-	}
+	set_temp_variable = { sector_priority = fossil_powerplant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_fossil_powerplants }
+	register_sector_demand = yes
 
 	# Renewable Energy Infrastructure
-	if = { limit = { check_variable = { renewable_energy_infra = 0 } }
-		set_variable = { renewable_energy_infra_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_renewable_energy = {
-				value = renewable_energy_infra
-				multiply = workers_per_renewable_energy
-				multiply = {
-					value = 1
-					add = modifier@buildings_worker_requirement_modifier
-					add = modifier@infrastructure_workforce_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
+	set_variable = {
+		max_workers_in_renewable_energy = {
+			value = renewable_energy_infra
+			multiply = workers_per_renewable_energy
+			multiply = {
+				value = 1
+				add = modifier@buildings_worker_requirement_modifier
+				add = modifier@infrastructure_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
-		set_variable = {
-			workers_in_renewable_energy = {
-				value = max_workers_in_renewable_energy
-				multiply = renewable_energy_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			renewable_energy_infra_manpower_fulfillment = {
-				value = workers_in_renewable_energy
-				divide = { value = max_workers_in_renewable_energy clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_renewable_energy }
 	}
-	set_variable = {
-		state_renewable_energy_var = {
-			value = state_renewable_energy_var
-			multiply = renewable_energy_infra_manpower_fulfillment
-		}
-	}
-	set_variable = {
-		minimum_renewable_energy_var_base = {
-			value = minimum_renewable_energy_var_base
-			multiply = renewable_energy_infra_manpower_fulfillment
-		}
-	}
-	set_variable = {
-		maximum_renewable_energy_var_base = {
-			value = maximum_renewable_energy_var_base
-			multiply = renewable_energy_infra_manpower_fulfillment
-		}
-	}
+	set_temp_variable = { sector_priority = renewable_energy_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_renewable_energy }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		mil_facs_worker_requirement_multiplier = {
@@ -5115,57 +5171,25 @@ calculate_gdp = {
 	set_variable = { workers_per_mil_fac_display = { value = workers_per_mil_fac multiply = 1000 } }
 	set_variable = { workers_per_dockyard_display = { value = workers_per_dockyard multiply = 1000 } }
 
-	if = { limit = { check_variable = { military_factory_total = 0 } }
-		set_variable = { military_factories_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_mil_facs = {
+			value = military_factory_total
+			multiply = workers_per_mil_fac
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_mil_facs = {
-				value = military_factory_total
-				multiply = workers_per_mil_fac
-			}
-		}
-		set_variable = {
-			workers_in_mil_facs = {
-				value = max_workers_in_mil_facs
-				multiply = military_factory_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			military_factories_manpower_fulfillment = {
-				value = workers_in_mil_facs
-				divide = { value = max_workers_in_mil_facs clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_mil_facs }
-	}
+	set_temp_variable = { sector_priority = military_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_mil_facs }
+	register_sector_demand = yes
 
-	if = { limit = { check_variable = { naval_factory_total = 0 } }
-		set_variable = { naval_factories_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_dockyards = {
+			value = naval_factory_total
+			multiply = workers_per_dockyard
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_dockyards = {
-				value = naval_factory_total
-				multiply = workers_per_dockyard
-			}
-		}
-		set_variable = {
-			workers_in_dockyards = {
-				value = max_workers_in_dockyards
-				multiply = naval_factory_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			naval_factories_manpower_fulfillment = {
-				value = workers_in_dockyards
-				divide = { value = max_workers_in_dockyards clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_dockyards }
-	}
+	set_temp_variable = { sector_priority = naval_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_dockyards }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		worker_requirement_gdp_multiplier = {
@@ -5190,31 +5214,15 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_civ_fac_display = { value = workers_per_civ_fac multiply = 1000 } }
 
-	if = { limit = { check_variable = { industrial_complex_total = 0 } }
-		set_variable = { civilian_factories_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_civ_facs = {
+			value = industrial_complex_total
+			multiply = workers_per_civ_fac
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_civ_facs = {
-				value = industrial_complex_total
-				multiply = workers_per_civ_fac
-			}
-		}
-		set_variable = {
-			workers_in_civ_facs = {
-				value = max_workers_in_civ_facs
-				multiply = civilian_factory_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			civilian_factories_manpower_fulfillment = {
-				value = workers_in_civ_facs
-				divide = { value = max_workers_in_civ_facs clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_civ_facs }
-	}
+	set_temp_variable = { sector_priority = civilian_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_civ_facs }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_office = {
@@ -5230,31 +5238,15 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_office_display = { value = workers_per_office multiply = 1000 } }
 
-	if = { limit = { check_variable = { office_park_total = 0 } }
-		set_variable = { offices_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_offices = {
+			value = office_park_total
+			multiply = workers_per_office
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_offices = {
-				value = office_park_total
-				multiply = workers_per_office
-			}
-		}
-		set_variable = {
-			workers_in_offices = {
-				value = max_workers_in_offices
-				multiply = office_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			offices_manpower_fulfillment = {
-				value = workers_in_offices
-				divide = { value = max_workers_in_offices clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_offices }
-	}
+	set_temp_variable = { sector_priority = office_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_offices }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_agriculture_district = {
@@ -5270,32 +5262,15 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_agriculture_district_display = { value = workers_per_agriculture_district multiply = 1000 } }
 
-	if = { limit = { check_variable = { agriculture_district_total = 0 } }
-		set_variable = { agriculture_district_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_agriculture_district = {
+			value = agriculture_district_total
+			multiply = workers_per_agriculture_district
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_agriculture_district = {
-				value = agriculture_district_total
-				multiply = workers_per_agriculture_district
-			}
-		}
-
-		set_variable = {
-			workers_in_agriculture_district = {
-				value = max_workers_in_agriculture_district
-				multiply = agriculture_district_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			agriculture_district_manpower_fulfillment = {
-				value = workers_in_agriculture_district
-				divide = { value = max_workers_in_agriculture_district clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_agriculture_district }
-	}
+	set_temp_variable = { sector_priority = agriculture_district_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_agriculture_district }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_microchip_plant = {
@@ -5311,32 +5286,15 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_microchip_plant_display = { value = workers_per_microchip_plant multiply = 1000 } }
 
-	if = { limit = { check_variable = { microchip_plant_total = 0 } }
-		set_variable = { microchip_plant_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_microchip_plant = {
+			value = microchip_plant_total
+			multiply = workers_per_microchip_plant
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_microchip_plant = {
-				value = microchip_plant_total
-				multiply = workers_per_microchip_plant
-			}
-		}
-
-		set_variable = {
-			workers_in_microchip_plant = {
-				value = max_workers_in_microchip_plant
-				multiply = microchip_plant_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			microchip_plant_manpower_fulfillment = {
-				value = workers_in_microchip_plant
-				divide = { value = max_workers_in_microchip_plant clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_microchip_plant }
-	}
+	set_temp_variable = { sector_priority = microchip_plant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_microchip_plant }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_composite_plant = {
@@ -5352,32 +5310,15 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_composite_plant_display = { value = workers_per_composite_plant multiply = 1000 } }
 
-	if = { limit = { check_variable = { composite_plant_total = 0 } }
-		set_variable = { composite_plant_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_composite_plant = {
+			value = composite_plant_total
+			multiply = workers_per_composite_plant
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_composite_plant = {
-				value = composite_plant_total
-				multiply = workers_per_composite_plant
-			}
-		}
-
-		set_variable = {
-			workers_in_composite_plant = {
-				value = max_workers_in_composite_plant
-				multiply = composite_plant_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			composite_plant_manpower_fulfillment = {
-				value = workers_in_composite_plant
-				divide = { value = max_workers_in_composite_plant clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_composite_plant }
-	}
+	set_temp_variable = { sector_priority = composite_plant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_composite_plant }
+	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_synthetic_refinery = {
@@ -5393,103 +5334,53 @@ calculate_gdp = {
 	}
 	set_variable = { workers_per_synthetic_refinery_display = { value = workers_per_synthetic_refinery multiply = 1000 } }
 
-	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
-		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_synthetic_refinery = {
+			value = synthetic_refinery_total
+			multiply = workers_per_synthetic_refinery
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_synthetic_refinery = {
-				value = synthetic_refinery_total
-				multiply = workers_per_synthetic_refinery
-			}
-		}
-
-		set_variable = {
-			workers_in_synthetic_refinery = {
-				value = max_workers_in_synthetic_refinery
-				multiply = synthetic_refinery_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			synthetic_refinery_manpower_fulfillment = {
-				value = workers_in_synthetic_refinery
-				divide = { value = max_workers_in_synthetic_refinery clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_synthetic_refinery }
-	}
+	set_temp_variable = { sector_priority = synthetic_refinery_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_synthetic_refinery }
+	register_sector_demand = yes
 
 	# Internet Stations
-	if = { limit = { check_variable = { internet_station_total = 0 } }
-		set_variable = { internet_stations_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_internet_stations = {
+			value = internet_station_total
+			multiply = workers_per_internet_station
+			multiply = {
+				value = 1
+				add = modifier@buildings_worker_requirement_modifier
+				add = modifier@infrastructure_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_internet_stations = {
-				value = internet_station_total
-				multiply = workers_per_internet_station
-				multiply = {
-					value = 1
-					add = modifier@buildings_worker_requirement_modifier
-					add = modifier@infrastructure_workforce_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
-		}
-		set_variable = {
-			workers_in_internet_stations = {
-				value = max_workers_in_internet_stations
-				multiply = internet_station_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			internet_stations_manpower_fulfillment = {
-				value = workers_in_internet_stations
-				divide = { value = max_workers_in_internet_stations clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_internet_stations }
-	}
+	set_temp_variable = { sector_priority = internet_station_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_internet_stations }
+	register_sector_demand = yes
 
 	# Rail Terminals
-	if = { limit = { check_variable = { rail_terminal_total = 0 } }
-		set_variable = { rail_terminal_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_rail_terminals = {
+			value = rail_terminal_total
+			multiply = workers_per_rail_terminal
+			multiply = {
+				value = 1
+				add = modifier@buildings_worker_requirement_modifier
+				add = modifier@infrastructure_workforce_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
+			}
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_rail_terminals = {
-				value = rail_terminal_total
-				multiply = workers_per_rail_terminal
-				multiply = {
-					value = 1
-					add = modifier@buildings_worker_requirement_modifier
-					add = modifier@infrastructure_workforce_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
-		}
-		set_variable = {
-			workers_in_rail_terminals = {
-				value = max_workers_in_rail_terminals
-				multiply = rail_terminal_employment_var
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			rail_terminal_manpower_fulfillment = {
-				value = workers_in_rail_terminals
-				divide = { value = max_workers_in_rail_terminals clamp = { min = 0.001 max = @math_expressions_max } }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_rail_terminals }
-	}
+	set_temp_variable = { sector_priority = rail_terminal_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_rail_terminals }
+	register_sector_demand = yes
 
-	# Healthcare Sector — Workforce
+	# Healthcare Sector
 	set_temp_variable = { healthcare_workforce_level_scalar = global.health_workers^health_law }
-
-	set_temp_variable = {
+	set_variable = {
 		max_workers_in_healthcare = {
 			value = population_total
 			multiply = 0.003
@@ -5501,68 +5392,184 @@ calculate_gdp = {
 			}
 		}
 	}
+	set_temp_variable = { sector_priority = healthcare_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_healthcare }
+	register_sector_demand = yes
 
-	if = { limit = { check_variable = { max_workers_in_healthcare < 0.001 } }
-		set_variable = { workers_in_healthcare = 0 }
-		set_variable = { healthcare_manpower_fulfillment = 1 }
-	}
-	else = {
-		set_variable = {
-			workers_in_healthcare = {
-				value = max_workers_in_healthcare
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
-		set_variable = {
-			healthcare_manpower_fulfillment = {
-				value = workers_in_healthcare
-				divide = { value = max_workers_in_healthcare clamp = { min = 0.001 max = @math_expressions_max } }
-				clamp = { min = 0.1 max = 1 }
-			}
-		}
-		subtract_from_temp_variable = { workforce_total = workers_in_healthcare }
-	}
-
-	# Bureaucracy — civil servants required by government administration level
+	# Bureaucracy: civil servants required by the government administration level
 	set_temp_variable = { workers_per_bureau = global.bureau_workers^bureau_law }
-
-	if = { limit = { check_variable = { workers_per_bureau = 0 } }
-		set_variable = { bureaucracy_manpower_fulfillment = 1 }
+	set_variable = {
+		max_workers_in_bureaucracy = {
+			value = population_total_m
+			multiply = workers_per_bureau
+			clamp = { min = 0 max = @math_expressions_max }
+		}
 	}
-	else = {
-		set_temp_variable = {
-			max_workers_in_bureaucracy = {
-				value = population_total_m
-				multiply = workers_per_bureau
-				clamp = { min = 0 max = @math_expressions_max }
-			}
-		}
+	set_temp_variable = { sector_priority = bureaucracy_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_bureaucracy }
+	register_sector_demand = yes
 
-		set_variable = {
-			workers_in_bureaucracy = {
-				value = max_workers_in_bureaucracy
-				clamp = { min = 0 max = workforce_total }
-			}
-		}
+	# Share out the workforce, then give every sector its workers
+	solve_workforce_priority_share = yes
 
-		set_variable = {
-			bureaucracy_manpower_fulfillment = {
-				value = workers_in_bureaucracy
-				divide = { value = max_workers_in_bureaucracy clamp = { min = 0.001 max = @math_expressions_max } }
-				clamp = { min = 0.1 max = 1 }
-			}
-		}
+	set_temp_variable = { sector_priority = nuclear_reactor_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_nuclear_reactors }
+	assign_sector_workers = yes
+	set_variable = { workers_in_nuclear_reactors = sector_workers }
+	set_variable = { nuclear_reactors_manpower_fulfillment = sector_fulfillment }
 
-		subtract_from_temp_variable = { workforce_total = workers_in_bureaucracy }
+	set_temp_variable = { sector_priority = fossil_powerplant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_fossil_powerplants }
+	assign_sector_workers = yes
+	set_variable = { workers_in_fossil_powerplants = sector_workers }
+	set_variable = { fossil_powerplants_manpower_fulfillment = sector_fulfillment }
 
-		# Salary cost — civil servant wages add to total bureaucracy expenditure
-		add_to_variable = {
-			var = bureaucracy_gain
-			value = {
-				value = workers_in_bureaucracy
-				multiply = @bureau_salary_per_worker
-			}
+	set_temp_variable = { sector_priority = renewable_energy_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_renewable_energy }
+	assign_sector_workers = yes
+	set_variable = { workers_in_renewable_energy = sector_workers }
+	set_variable = { renewable_energy_infra_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		state_renewable_energy_var = {
+			value = state_renewable_energy_var
+			multiply = renewable_energy_infra_manpower_fulfillment
 		}
+	}
+	set_variable = {
+		minimum_renewable_energy_var_base = {
+			value = minimum_renewable_energy_var_base
+			multiply = renewable_energy_infra_manpower_fulfillment
+		}
+	}
+	set_variable = {
+		maximum_renewable_energy_var_base = {
+			value = maximum_renewable_energy_var_base
+			multiply = renewable_energy_infra_manpower_fulfillment
+		}
+	}
+
+	set_temp_variable = { sector_priority = military_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_mil_facs }
+	assign_sector_workers = yes
+	set_variable = { workers_in_mil_facs = sector_workers }
+	set_variable = { military_factories_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = naval_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_dockyards }
+	assign_sector_workers = yes
+	set_variable = { workers_in_dockyards = sector_workers }
+	set_variable = { naval_factories_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = civilian_factory_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_civ_facs }
+	assign_sector_workers = yes
+	set_variable = { workers_in_civ_facs = sector_workers }
+	set_variable = { civilian_factories_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = office_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_offices }
+	assign_sector_workers = yes
+	set_variable = { workers_in_offices = sector_workers }
+	set_variable = { offices_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = agriculture_district_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_agriculture_district }
+	assign_sector_workers = yes
+	set_variable = { workers_in_agriculture_district = sector_workers }
+	set_variable = { agriculture_district_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = microchip_plant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_microchip_plant }
+	assign_sector_workers = yes
+	set_variable = { workers_in_microchip_plant = sector_workers }
+	set_variable = { microchip_plant_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = composite_plant_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_composite_plant }
+	assign_sector_workers = yes
+	set_variable = { workers_in_composite_plant = sector_workers }
+	set_variable = { composite_plant_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = synthetic_refinery_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_synthetic_refinery }
+	assign_sector_workers = yes
+	set_variable = { workers_in_synthetic_refinery = sector_workers }
+	set_variable = { synthetic_refinery_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = internet_station_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_internet_stations }
+	assign_sector_workers = yes
+	set_variable = { workers_in_internet_stations = sector_workers }
+	set_variable = { internet_stations_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = rail_terminal_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_rail_terminals }
+	assign_sector_workers = yes
+	set_variable = { workers_in_rail_terminals = sector_workers }
+	set_variable = { rail_terminal_manpower_fulfillment = sector_fulfillment }
+
+	set_temp_variable = { sector_priority = healthcare_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_healthcare }
+	assign_sector_workers = yes
+	set_variable = { workers_in_healthcare = sector_workers }
+	set_variable = { healthcare_manpower_fulfillment = { value = sector_fulfillment clamp = { min = 0.1 max = 1 } } }
+
+	set_temp_variable = { sector_priority = bureaucracy_priority }
+	set_temp_variable = { sector_max_workers = max_workers_in_bureaucracy }
+	assign_sector_workers = yes
+	set_variable = { workers_in_bureaucracy = sector_workers }
+	set_variable = { bureaucracy_manpower_fulfillment = { value = sector_fulfillment clamp = { min = 0.1 max = 1 } } }
+
+	clamp_temp_variable = { var = workforce_total min = 0 max = @math_expressions_max }
+
+	# Share of the workforce each sector employs now and could employ when fully staffed, for the employment menu
+	if = {
+		limit = { is_ai = no }
+		set_temp_variable = { workforce_share_scale = { value = 1 divide = { value = workforce_total_display clamp = { min = 0.001 max = @math_expressions_max } } } }
+		set_variable = { nuclear_reactor_workforce_share = { value = workers_in_nuclear_reactors multiply = workforce_share_scale } }
+		set_variable = { nuclear_reactor_workforce_max_share = { value = max_workers_in_nuclear_reactors multiply = workforce_share_scale } }
+		set_variable = { fossil_powerplant_workforce_share = { value = workers_in_fossil_powerplants multiply = workforce_share_scale } }
+		set_variable = { fossil_powerplant_workforce_max_share = { value = max_workers_in_fossil_powerplants multiply = workforce_share_scale } }
+		set_variable = { renewable_energy_workforce_share = { value = workers_in_renewable_energy multiply = workforce_share_scale } }
+		set_variable = { renewable_energy_workforce_max_share = { value = max_workers_in_renewable_energy multiply = workforce_share_scale } }
+		set_variable = { military_factory_workforce_share = { value = workers_in_mil_facs multiply = workforce_share_scale } }
+		set_variable = { military_factory_workforce_max_share = { value = max_workers_in_mil_facs multiply = workforce_share_scale } }
+		set_variable = { naval_factory_workforce_share = { value = workers_in_dockyards multiply = workforce_share_scale } }
+		set_variable = { naval_factory_workforce_max_share = { value = max_workers_in_dockyards multiply = workforce_share_scale } }
+		set_variable = { civilian_factory_workforce_share = { value = workers_in_civ_facs multiply = workforce_share_scale } }
+		set_variable = { civilian_factory_workforce_max_share = { value = max_workers_in_civ_facs multiply = workforce_share_scale } }
+		set_variable = { office_workforce_share = { value = workers_in_offices multiply = workforce_share_scale } }
+		set_variable = { office_workforce_max_share = { value = max_workers_in_offices multiply = workforce_share_scale } }
+		set_variable = { agriculture_district_workforce_share = { value = workers_in_agriculture_district multiply = workforce_share_scale } }
+		set_variable = { agriculture_district_workforce_max_share = { value = max_workers_in_agriculture_district multiply = workforce_share_scale } }
+		set_variable = { microchip_plant_workforce_share = { value = workers_in_microchip_plant multiply = workforce_share_scale } }
+		set_variable = { microchip_plant_workforce_max_share = { value = max_workers_in_microchip_plant multiply = workforce_share_scale } }
+		set_variable = { composite_plant_workforce_share = { value = workers_in_composite_plant multiply = workforce_share_scale } }
+		set_variable = { composite_plant_workforce_max_share = { value = max_workers_in_composite_plant multiply = workforce_share_scale } }
+		set_variable = { synthetic_refinery_workforce_share = { value = workers_in_synthetic_refinery multiply = workforce_share_scale } }
+		set_variable = { synthetic_refinery_workforce_max_share = { value = max_workers_in_synthetic_refinery multiply = workforce_share_scale } }
+		set_variable = { internet_station_workforce_share = { value = workers_in_internet_stations multiply = workforce_share_scale } }
+		set_variable = { internet_station_workforce_max_share = { value = max_workers_in_internet_stations multiply = workforce_share_scale } }
+		set_variable = { rail_terminal_workforce_share = { value = workers_in_rail_terminals multiply = workforce_share_scale } }
+		set_variable = { rail_terminal_workforce_max_share = { value = max_workers_in_rail_terminals multiply = workforce_share_scale } }
+		set_variable = { healthcare_workforce_share = { value = workers_in_healthcare multiply = workforce_share_scale } }
+		set_variable = { healthcare_workforce_max_share = { value = max_workers_in_healthcare multiply = workforce_share_scale } }
+		set_variable = { bureaucracy_workforce_share = { value = workers_in_bureaucracy multiply = workforce_share_scale } }
+		set_variable = { bureaucracy_workforce_max_share = { value = max_workers_in_bureaucracy multiply = workforce_share_scale } }
+	}
+
+	# Civil servant wages add to total bureaucracy expenditure
+	add_to_variable = {
+		var = bureaucracy_gain
+		value = {
+			value = workers_in_bureaucracy
+			multiply = @bureau_salary_per_worker
+		}
+	}
+	if = {
+		limit = { is_ai = no }
+		set_variable = { bureaucracy_wages_current = { value = workers_in_bureaucracy multiply = @bureau_salary_per_worker } }
+		set_variable = { bureaucracy_wages_max = { value = max_workers_in_bureaucracy multiply = @bureau_salary_per_worker } }
 	}
 
 	# Average Worker Fulfillment
@@ -5633,56 +5640,48 @@ calculate_gdp = {
 		gdp_from_civs = {
 			value = industrial_complex_total
 			multiply = { value = @gdp_civ_base_factor add = { value = @gdp_civ_prod_factor multiply = modifier@civilian_factories_productivity } }
-			multiply = civilian_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_mils = {
 			value = military_factory_total
 			multiply = { value = @gdp_mil_base_factor add = { value = @gdp_mil_prod_factor multiply = modifier@military_factories_productivity } }
-			multiply = military_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_dockyards = {
 			value = naval_factory_total
 			multiply = { value = @gdp_dockyard_base_factor add = { value = @gdp_dockyard_prod_factor multiply = modifier@dockyard_productivity } }
-			multiply = naval_factories_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_offices = {
 			value = office_park_total
 			multiply = { value = @gdp_office_base_factor add = { value = @gdp_office_prod_factor multiply = modifier@offices_productivity } }
-			multiply = offices_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_agriculture_district = {
 			value = agriculture_district_total
 			multiply = { value = @gdp_agriculture_district_base_factor add = { value = @gdp_agriculture_district_prod_factor multiply = modifier@agricolture_productivity_modifier } }
-			multiply = agriculture_district_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_microchip_plant = {
 			value = microchip_plant_total
 			multiply = { value = @gdp_microchip_base_factor add = { value = @gdp_microchip_prod_factor multiply = modifier@microchip_plant_productivity_modifier } }
-			multiply = microchip_plant_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_composite_plant = {
 			value = composite_plant_total
 			multiply = { value = @gdp_composite_base_factor add = { value = @gdp_composite_prod_factor multiply = modifier@composite_plant_productivity_modifier } }
-			multiply = composite_plant_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_synthetic_refinery = {
 			value = synthetic_refinery_total
 			multiply = { value = @gdp_synthetic_base_factor add = { value = @gdp_synthetic_prod_factor multiply = modifier@synthetic_refinery_productivity_modifier } }
-			multiply = synthetic_refinery_manpower_fulfillment
 		}
 	}
 
@@ -5690,37 +5689,76 @@ calculate_gdp = {
 		gdp_from_nuclear_reactors = {
 			value = nuclear_reactors
 			multiply = @gdp_nuclear_reactor_factor
-			multiply = nuclear_reactors_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_fossil_powerplants = {
 			value = number_of_fossil_pps
 			multiply = @gdp_fossil_powerplant_factor
-			multiply = fossil_powerplants_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_renewable_energy = {
 			value = renewable_energy_infra
 			multiply = @gdp_renewable_energy_factor
-			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_internet_stations = {
 			value = internet_station_total
 			multiply = @gdp_internet_station_factor
-			multiply = internet_stations_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_rail_terminals = {
 			value = rail_terminal_total
 			multiply = @gdp_rail_terminal_factor
-			multiply = rail_terminal_manpower_fulfillment
 		}
 	}
+
+	# Maximum and current GDP of each building type for the employment priority tooltips
+	if = {
+		limit = { is_ai = no }
+		set_variable = { civilian_factory_gdp_max = gdp_from_civs }
+		set_variable = { civilian_factory_gdp_current = { value = gdp_from_civs multiply = civilian_factories_manpower_fulfillment } }
+		set_variable = { military_factory_gdp_max = gdp_from_mils }
+		set_variable = { military_factory_gdp_current = { value = gdp_from_mils multiply = military_factories_manpower_fulfillment } }
+		set_variable = { naval_factory_gdp_max = gdp_from_dockyards }
+		set_variable = { naval_factory_gdp_current = { value = gdp_from_dockyards multiply = naval_factories_manpower_fulfillment } }
+		set_variable = { office_gdp_max = gdp_from_offices }
+		set_variable = { office_gdp_current = { value = gdp_from_offices multiply = offices_manpower_fulfillment } }
+		set_variable = { agriculture_district_gdp_max = gdp_from_agriculture_district }
+		set_variable = { agriculture_district_gdp_current = { value = gdp_from_agriculture_district multiply = agriculture_district_manpower_fulfillment } }
+		set_variable = { microchip_plant_gdp_max = gdp_from_microchip_plant }
+		set_variable = { microchip_plant_gdp_current = { value = gdp_from_microchip_plant multiply = microchip_plant_manpower_fulfillment } }
+		set_variable = { composite_plant_gdp_max = gdp_from_composite_plant }
+		set_variable = { composite_plant_gdp_current = { value = gdp_from_composite_plant multiply = composite_plant_manpower_fulfillment } }
+		set_variable = { synthetic_refinery_gdp_max = gdp_from_synthetic_refinery }
+		set_variable = { synthetic_refinery_gdp_current = { value = gdp_from_synthetic_refinery multiply = synthetic_refinery_manpower_fulfillment } }
+		set_variable = { nuclear_reactor_gdp_max = gdp_from_nuclear_reactors }
+		set_variable = { nuclear_reactor_gdp_current = { value = gdp_from_nuclear_reactors multiply = nuclear_reactors_manpower_fulfillment } }
+		set_variable = { fossil_powerplant_gdp_max = gdp_from_fossil_powerplants }
+		set_variable = { fossil_powerplant_gdp_current = { value = gdp_from_fossil_powerplants multiply = fossil_powerplants_manpower_fulfillment } }
+		set_variable = { renewable_energy_gdp_max = gdp_from_renewable_energy }
+		set_variable = { renewable_energy_gdp_current = { value = gdp_from_renewable_energy multiply = renewable_energy_infra_manpower_fulfillment } }
+		set_variable = { internet_station_gdp_max = gdp_from_internet_stations }
+		set_variable = { internet_station_gdp_current = { value = gdp_from_internet_stations multiply = internet_stations_manpower_fulfillment } }
+		set_variable = { rail_terminal_gdp_max = gdp_from_rail_terminals }
+		set_variable = { rail_terminal_gdp_current = { value = gdp_from_rail_terminals multiply = rail_terminal_manpower_fulfillment } }
+	}
+	multiply_temp_variable = { gdp_from_civs = civilian_factories_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_mils = military_factories_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_dockyards = naval_factories_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_offices = offices_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_agriculture_district = agriculture_district_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_microchip_plant = microchip_plant_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_composite_plant = composite_plant_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_synthetic_refinery = synthetic_refinery_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_nuclear_reactors = nuclear_reactors_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_fossil_powerplants = fossil_powerplants_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_renewable_energy = renewable_energy_infra_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_internet_stations = internet_stations_manpower_fulfillment }
+	multiply_temp_variable = { gdp_from_rail_terminals = rail_terminal_manpower_fulfillment }
 
 	# Healthcare Sector — GDP Contribution
 	# Formula: population_total * 0.01 * gdp_per_capita * level_mult * fulfillment
@@ -5738,9 +5776,14 @@ calculate_gdp = {
 			multiply = 0.01
 			multiply = gdp_per_capita
 			multiply = health_gdp_level_mult
-			multiply = healthcare_manpower_fulfillment
 		}
 	}
+	if = {
+		limit = { is_ai = no }
+		set_variable = { healthcare_gdp_max = gdp_from_healthcare }
+		set_variable = { healthcare_gdp_current = { value = gdp_from_healthcare multiply = healthcare_manpower_fulfillment } }
+	}
+	multiply_temp_variable = { gdp_from_healthcare = healthcare_manpower_fulfillment }
 
 	# Store as persistent variable for corporate tax calculation in calculate_tax_gain
 	set_variable = { healthcare_gdp_var = gdp_from_healthcare }
@@ -6353,8 +6396,47 @@ calculate_migration_mechanic_values = {
 			}
 		}
 	}
+
+	# Growth modifiers other than migration, read before the line below replaces the migration part
+	if = {
+		limit = { is_ai = no }
+		set_temp_variable = { other_growth_rate = { value = modifier@monthly_population subtract = gov_pop_monthly_population add = monthly_population_floor_modifier } }
+	}
+
 	# Government Policy Impact carries net migration plus the growth floor top-up
 	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
+
+	# Flat monthly people and the next month's change in workforce fulfillment, for the employment panel
+	if = {
+		limit = { is_ai = no }
+		# People per 100% of monthly_population
+		set_temp_variable = { people_per_growth = { value = population_total_m multiply = @base_monthly_population_growth multiply = 1000000 } }
+
+		set_variable = { immigrants_per_month = { value = immigration_capacity multiply = global.world_immigration_fill multiply = people_per_growth } }
+		set_variable = { emigrants_per_month = { value = emigration_pressure multiply = global.world_emigration_share multiply = people_per_growth } }
+		set_variable = { net_migrants_per_month = { value = net_immigration_rate multiply = people_per_growth } }
+		set_variable = { natural_growth_per_month = people_per_growth }
+		set_variable = { other_growth_per_month = { value = other_growth_rate multiply = people_per_growth } }
+		set_variable = {
+			population_change_per_month = {
+				value = natural_growth_per_month
+				add = immigrants_per_month
+				subtract = emigrants_per_month
+				add = other_growth_per_month
+			}
+		}
+
+		set_variable = { fulfillment_change_natural = { value = @base_monthly_population_growth multiply = workforce_fulfillment_per_growth } }
+		set_variable = { fulfillment_change_migration = { value = net_immigration_rate multiply = @base_monthly_population_growth multiply = workforce_fulfillment_per_growth } }
+		set_variable = { fulfillment_change_other = { value = other_growth_rate multiply = @base_monthly_population_growth multiply = workforce_fulfillment_per_growth } }
+		set_variable = {
+			fulfillment_change_total = {
+				value = fulfillment_change_natural
+				add = fulfillment_change_migration
+				add = fulfillment_change_other
+			}
+		}
+	}
 }
 
 # Effect: update_world_migration_balance

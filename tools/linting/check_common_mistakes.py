@@ -4,6 +4,8 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
+  - add_stability / add_war_support set to a numeric literal of magnitude 1 or
+    more (both take a fraction; a variable or an expression is left alone)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
@@ -81,6 +83,8 @@ Detects mechanically-checkable rule violations:
   - add_opinion_modifier / add_relation_modifier naming an undefined modifier
   - a bare word inside a trigger/effect block (NOT = { my_trigger }), a
     scripted call missing "= yes" that the parser rejects
+  - an else_if whose limit implies an earlier branch's limit in the same chain
+    (the same statements, or a stricter > / < bound), so it never runs
 """
 
 import os
@@ -187,6 +191,9 @@ _RE_RELATION_MODIFIER = re.compile(
 )
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
+_RE_BARE_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+_RE_STAT_EFFECT_VALUE = re.compile(r"\b(add_stability|add_war_support)\s*=\s*(\S+)")
+_RE_STAT_EFFECT_MATH = re.compile(r"\s*[-+*/]")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
 # always true. Captures both tokens + values; caller checks token match in code.
 _RE_TAUTOLOGICAL_OR = re.compile(
@@ -236,6 +243,15 @@ _DECISION_LOG_FILLER_WORDS = {
 }
 _RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
 _RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
+# A log with no "Decision" word still names its decision when it is the standard
+# prefix, filler words, and one id that ends the string. Longer free text is not
+# a copied id.
+_LOG_FILLER_ALT = "|".join(sorted(_DECISION_LOG_FILLER_WORDS))
+_RE_LOG_BARE_ID = re.compile(
+    r'log\s*=\s*"\[GetDateText\]:\s*\[\w+\.GetName\]:'
+    rf"(?:\s+(?:{_LOG_FILLER_ALT})\b)*\s+(?!(?:{_LOG_FILLER_ALT})\b)([\w-]+)\s*\"",
+    re.IGNORECASE,
+)
 # Event ids are namespace.number (dots), unlike focus/decision ids -- \w+ alone
 # would truncate at the dot.
 _RE_EVENT_DEF_OPEN = re.compile(
@@ -3119,6 +3135,36 @@ def _check_random_select_amount_literal(lines):
     return issues
 
 
+def _check_stat_effect_magnitude(lines):
+    """Flag add_stability / add_war_support set to a literal of magnitude 1 or more.
+
+    Both effects take a fraction. A variable or an expression is left alone.
+    """
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "add_stability", "add_war_support"):
+        if src[i].strip().startswith("#"):
+            continue
+        code = src.depth_code[i]
+        for match in _RE_STAT_EFFECT_VALUE.finditer(code):
+            token = match.group(2).rstrip("}")
+            if not _RE_BARE_NUMBER.match(token):
+                continue
+            if _RE_STAT_EFFECT_MATH.match(code[match.end() :]):
+                continue
+            if abs(float(token)) < 1:
+                continue
+            effect = match.group(1)
+            issues.append(
+                (
+                    i + 1,
+                    f"{effect} = {token} is at least 100% -- "
+                    f"{effect} takes a fraction (0.05 is 5%)",
+                )
+            )
+    return issues
+
+
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
     src = _source(lines)
@@ -3201,11 +3247,13 @@ def _decision_log_token_span(line):
     """Return (token, start, end) for the id referenced by a
     `log = "...Decision ..."` line, skipping leading filler words
     (_DECISION_LOG_FILLER_WORDS), or None if the line has no such log
-    statement (or nothing substantive follows the filler words).
+    statement (or nothing substantive follows the filler words). A log with
+    no "Decision" word counts when it is only the standard prefix and one id.
     """
     marker = _RE_LOG_DECISION_MARKER.search(line)
     if not marker:
-        return None
+        bare = _RE_LOG_BARE_ID.search(line)
+        return (bare.group(1), bare.start(1), bare.end(1)) if bare else None
     pos = marker.end()
     while True:
         m = _RE_NEXT_WORD.match(line, pos)
@@ -4075,6 +4123,106 @@ def _check_leader_rotation(lines):
     return sorted(issues)
 
 
+def _condition_key(node):
+    """A comparable form of one trigger statement, or None when it holds a quoted
+    value: the parser sees every quoted string as "", so two of them never compare."""
+    if node.value is not None:
+        return None if node.value == '""' else (node.key, node.op, node.value)
+    children = tuple(_condition_key(child) for child in node.children)
+    return None if None in children else (node.key, node.op, children)
+
+
+def _strict_bound(node):
+    """(subject, op, number) for a bare or check_variable `X > N` / `X < N`."""
+    subject = (node.key,)
+    if node.key == "check_variable" and len(node.children) == 1:
+        node = node.children[0]
+        subject = ("check_variable", node.key)
+    if node.op in ("<", ">") and node.value and _RE_BARE_NUMBER.match(node.value):
+        return subject, node.op, float(node.value)
+    return None
+
+
+def _covers(later, earlier):
+    """True when the later condition holds only if the earlier one does."""
+    if later[0] is not None and later[0] == earlier[0]:
+        return True
+    if later[1] is None or earlier[1] is None:
+        return False
+    subject, op, number = later[1]
+    earlier_subject, earlier_op, earlier_number = earlier[1]
+    if subject != earlier_subject or op != earlier_op:
+        return False
+    return number >= earlier_number if op == ">" else number <= earlier_number
+
+
+def _nested_branches(branch):
+    """else_if/else written inside a branch body, before any inner if claims them."""
+    found = []
+    for child in branch.children:
+        if child.key == "if":
+            break
+        if child.key in ("else_if", "else") and child.value is None:
+            found.append(child)
+            found.extend(_nested_branches(child))
+    return found
+
+
+def _branch_chains(nodes):
+    for index, node in enumerate(nodes):
+        if node.key != "if" or node.value is not None:
+            continue
+        chain = [node, *_nested_branches(node)]
+        for follower in nodes[index + 1 :]:
+            if follower.key not in ("else_if", "else"):
+                break
+            chain.append(follower)
+        yield chain
+
+
+def _check_shadowed_branches(lines):
+    """Flag an else_if that an earlier branch of its chain always takes first.
+
+    if/else_if stops at the first branch whose limit holds. When every condition
+    of an earlier limit also holds whenever a later limit does (the same statement,
+    or a stricter `>` / `<` bound on the same value), the later branch never runs.
+    """
+    issues = []
+    src = _source(lines)
+    if "else_if" not in src.raw:
+        return issues
+
+    def walk(nodes):
+        for chain in _branch_chains(nodes):
+            earlier = []
+            for branch in chain:
+                limit = _first_child(branch, "limit")
+                if limit is None:
+                    continue
+                conditions = [
+                    (_condition_key(child), _strict_bound(child))
+                    for child in limit.children
+                ]
+                if branch.key == "else_if":
+                    for line, before in earlier:
+                        if all(any(_covers(c, b) for c in conditions) for b in before):
+                            issues.append(
+                                (
+                                    branch.line,
+                                    f"else_if never runs -- the branch at line {line} "
+                                    "already matches whenever this limit holds, and "
+                                    "if/else_if stops at the first match",
+                                )
+                            )
+                            break
+                earlier.append((branch.line, conditions))
+        for node in nodes:
+            walk(node.children)
+
+    walk(src.tree)
+    return issues
+
+
 def classify_file_path(filepath):
     """Return which per-directory checks apply to `filepath`.
 
@@ -4106,14 +4254,16 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns list of (filepath, line_num, message) tuples."""
+    """Check a single file for common mistakes. Returns (errors, shadowed), each a
+    list of (filepath, line_num, message) tuples. Shadowed branches are kept apart
+    so the validator can report them under their own category."""
     issues = []
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = _Source(f.readlines())
     except Exception:
-        return issues
+        return issues, []
 
     (
         is_ideas,
@@ -4347,6 +4497,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_wrong_stat_trigger(lines))
+    issues.extend(_check_stat_effect_magnitude(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
@@ -4364,7 +4515,12 @@ def check_file(filepath):
         issues.extend(_check_nested_province_block(lines))
         issues.extend(_check_bare_statement_token(lines))
 
-    return [(filepath, ln, msg) for ln, msg in issues]
+    # The leader rotation check already reports duplicate branches in these files.
+    shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    return (
+        [(filepath, ln, msg) for ln, msg in issues],
+        [(filepath, ln, msg) for ln, msg in shadowed],
+    )
 
 
 def main():
@@ -4419,10 +4575,11 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = [issue for file_issues in results for issue in file_issues]
+    all_issues = sorted(
+        issue for errors, shadowed in results for issue in errors + shadowed
+    )
 
-    sorted_issues = sorted(all_issues)
-    for filepath, line_num, message in sorted_issues:
+    for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")

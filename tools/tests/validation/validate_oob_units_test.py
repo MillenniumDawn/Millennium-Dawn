@@ -32,9 +32,10 @@ from validate_oob_units import (
     _parse_division_string,
     _runs_in_if_true_branch,
     _scope_label,
-    build_variant_dlc_index,
     build_variant_name_index,
+    build_variant_registry,
     check_attributed_archetypes,
+    check_misplaced_support,
     check_named_variant_refs,
     check_oob_variant_refs,
     check_template_slots,
@@ -650,11 +651,88 @@ def _variant_source(tag, variants):
 
 _MIG_VARIANTS = [("medium_plane_airframe_1", "MiG-X")]
 
+_DEFAULT_EQUIPMENT_NAME_CASES = {
+    "country name": (
+        ' SOV_medium_plane_airframe_1: "MiG-X"\n',
+        {"SOV_medium_plane_airframe_1": "MiG-X"},
+    ),
+    "generic name": (
+        ' medium_plane_airframe_1: "Medium aircraft"\n',
+        {"medium_plane_airframe_1": "Medium aircraft"},
+    ),
+    "numbered key with BOM and CRLF": (
+        '\ufeffl_english:\r\n SOV_medium_plane_airframe_1:0 "MiG-X" # comment\r\n',
+        {"SOV_medium_plane_airframe_1": "MiG-X"},
+    ),
+    "escaped quotes and hash in name": (
+        r' SOV_medium_plane_airframe_1: "MiG-\"X\" #1"',
+        {"SOV_medium_plane_airframe_1": r"MiG-\"X\" #1"},
+    ),
+    "unrelated keys and archetypes": (
+        '# SOV_medium_plane_airframe_1: "Commented"\n'
+        ' SOV_ghost_airframe: "Unknown type"\n'
+        ' SOV_plane_archetype: "Archetype"\n'
+        ' SOV_medium_plane_airframe_1_desc: "Description"\n'
+        ' sov_medium_plane_airframe_1: "Wrong tag case"\n',
+        {},
+    ),
+    "last definition wins": (
+        ' SOV_medium_plane_airframe_1: "Old"\n SOV_medium_plane_airframe_1: "New"\n',
+        {"SOV_medium_plane_airframe_1": "New"},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "localisation, expected",
+    _DEFAULT_EQUIPMENT_NAME_CASES.values(),
+    ids=_DEFAULT_EQUIPMENT_NAME_CASES,
+)
+def test_default_equipment_name_index(localisation, expected):
+    assert (
+        oob.build_default_equipment_name_index(
+            [
+                "equipments = { medium_plane_airframe_1 = { archetype = plane_archetype } plane_archetype = { is_archetype = yes } }"
+            ],
+            [localisation],
+        )
+        == expected
+    )
+
+
+_NAMED_VARIANT_CONSUMERS = {
+    "air wing": (
+        '696 = { medium_plane_airframe_1 = { owner = "UKR" creator = "SOV" '
+        'amount = 12 version_name = "MiG-X" } }'
+    ),
+    "forced equipment": (
+        "division = { force_equipment_variants = { medium_plane_airframe_1 = "
+        '{ owner = UKR creator = SOV version_name = "MiG-X" } } }'
+    ),
+    "serialized forced equipment": (
+        'create_unit = { division = "division_template = \\"Air\\" '
+        "start_equipment_factor = 1 force_equipment_variants = { "
+        "medium_plane_airframe_1 = { owner = UKR creator = SOV "
+        'version_name = \\"MiG-X\\" } }" owner = ROOT }'
+    ),
+    "stockpile": (
+        "add_equipment_to_stockpile = { type = medium_plane_airframe_1 "
+        'variant_name = "MiG-X" amount = 12 producer = SOV }'
+    ),
+    "production version": (
+        "add_equipment_production = { equipment = { type = medium_plane_airframe_1 "
+        'creator = "SOV" version_name = "MiG-X" } amount = 12 }'
+    ),
+    "production variant with outer producer": (
+        "add_equipment_production = { producer = SOV equipment = { "
+        'type = medium_plane_airframe_1 variant_name = "MiG-X" } amount = 12 }'
+    ),
+}
+
 # check: (consumer text, producer definition sources, (kind, line, message fragments))
 _NAMED_VARIANT_CASES = {
     "air wing matches producer type and name": (
-        '696 = { medium_plane_airframe_1 = { owner = "UKR" creator = "SOV" '
-        'amount = 12 version_name = "MiG-X" } }',
+        _NAMED_VARIANT_CONSUMERS["air wing"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
@@ -723,8 +801,7 @@ _NAMED_VARIANT_CASES = {
         ],
     ),
     "force equipment variants resolves literal entry": (
-        "division = { force_equipment_variants = { medium_plane_airframe_1 = "
-        '{ owner = UKR creator = SOV version_name = "MiG-X" } } }',
+        _NAMED_VARIANT_CONSUMERS["forced equipment"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
@@ -741,10 +818,7 @@ _NAMED_VARIANT_CASES = {
         ],
     ),
     "serialized create unit force equipment variant resolves": (
-        'create_unit = { division = "division_template = \\"Air\\" '
-        "start_equipment_factor = 1 force_equipment_variants = { "
-        "medium_plane_airframe_1 = { owner = UKR creator = SOV "
-        'version_name = \\"MiG-X\\" } }" owner = ROOT }',
+        _NAMED_VARIANT_CONSUMERS["serialized forced equipment"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
@@ -763,14 +837,12 @@ _NAMED_VARIANT_CASES = {
         ],
     ),
     "stockpile variant name resolves": (
-        "add_equipment_to_stockpile = { type = medium_plane_airframe_1 "
-        'variant_name = "MiG-X" amount = 12 producer = SOV }',
+        _NAMED_VARIANT_CONSUMERS["stockpile"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
     "production version name resolves": (
-        "add_equipment_production = { equipment = { type = medium_plane_airframe_1 "
-        'creator = "SOV" version_name = "MiG-X" } amount = 12 }',
+        _NAMED_VARIANT_CONSUMERS["production version"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
@@ -787,8 +859,7 @@ _NAMED_VARIANT_CASES = {
         ],
     ),
     "production variant name uses outer producer": (
-        "add_equipment_production = { producer = SOV equipment = { "
-        'type = medium_plane_airframe_1 variant_name = "MiG-X" } amount = 12 }',
+        _NAMED_VARIANT_CONSUMERS["production variant with outer producer"],
         [_variant_source("SOV", _MIG_VARIANTS)],
         [],
     ),
@@ -870,7 +941,7 @@ def test_named_variant_refs(content, sources, expected):
         content,
         by_tag,
         wildcard,
-        variant_dlc_index=build_variant_dlc_index(sources),
+        variant_registry=build_variant_registry(sources),
     )
 
     assert len(findings) == len(expected)
@@ -882,6 +953,128 @@ def test_named_variant_refs(content, sources, expected):
         )
         for finding, (kind, line, fragments) in zip(findings, expected)
     ] == [(kind, line, True) for kind, line, _ in expected]
+
+
+@pytest.mark.parametrize(
+    "content", _NAMED_VARIANT_CONSUMERS.values(), ids=_NAMED_VARIANT_CONSUMERS
+)
+@pytest.mark.parametrize(
+    "definition", ["explicit", "country default", "generic default"]
+)
+@pytest.mark.parametrize(
+    "wrong_type", [False, True], ids=["matching type", "wrong type"]
+)
+def test_named_variant_identity_across_consumers(
+    tmp_path, content, definition, wrong_type
+):
+    requested_type = (
+        "small_plane_airframe_1" if wrong_type else "medium_plane_airframe_1"
+    )
+    history = (
+        'create_equipment_variant = { name = "MiG-X" type = transport_helicopter_1 }'
+    )
+    localisation = "l_english:\n"
+    if definition == "explicit":
+        history += '\ncreate_equipment_variant = { name = "MiG-X" type = medium_plane_airframe_1 }'
+    else:
+        prefix = "SOV_" if definition == "country default" else ""
+        localisation += f' {prefix}medium_plane_airframe_1: "MiG-X"\n'
+    consumer_path = "history/units/UKR_2000_bba.txt"
+    write_tree(
+        tmp_path,
+        {
+            "common/units/equipment/planes.txt": (
+                "equipments = { medium_plane_airframe_1 = {} "
+                "small_plane_airframe_1 = {} transport_helicopter_1 = {} }"
+            ),
+            "history/countries/SOV - Russia.txt": history,
+            "localisation/english/nested/equipment_l_english.yml": localisation,
+            "localisation/english/nested/other_l_english.yml": 'l_english:\n UKR_medium_plane_airframe_1: "Other producer"\n',
+            "localisation/french/equipment_l_french.yml": 'l_french:\n SOV_small_plane_airframe_1: "MiG-X"\n',
+            consumer_path: content.replace("medium_plane_airframe_1", requested_type),
+        },
+    )
+    validator = _validator(tmp_path, staged_only=True)
+    validator.staged_files = [str(tmp_path / consumer_path)]
+    validator.validate_oob_variant_references()
+
+    assert validator.warnings_found == 0
+    assert validator.errors_found == int(wrong_type)
+    assert [
+        (issue.category, issue.file, issue.line, issue.severity)
+        for issue in validator._issues
+    ] == (
+        [
+            (
+                "NAMED VARIANT: name exists for a different equipment type",
+                consumer_path,
+                1,
+                "error",
+            )
+        ]
+        if wrong_type
+        else []
+    )
+
+
+# case: (default name keys, explicit variants, expected finding kinds)
+_DEFAULT_VARIANT_CASES = {
+    "producer default resolves": ({"SOV_medium_plane_airframe_1": "MiG-X"}, [], []),
+    "generic default resolves without a country override": (
+        {"medium_plane_airframe_1": "MiG-X"},
+        [],
+        [],
+    ),
+    "another producer does not satisfy the name": (
+        {"UKR_medium_plane_airframe_1": "MiG-X"},
+        [],
+        ["wrong_variant_type"],
+    ),
+    "another type does not satisfy the name": (
+        {"SOV_small_plane_airframe_1": "MiG-X"},
+        [],
+        ["wrong_variant_type"],
+    ),
+    "country name overrides generic name": (
+        {"medium_plane_airframe_1": "MiG-X", "SOV_medium_plane_airframe_1": "Other"},
+        [],
+        ["wrong_variant_type"],
+    ),
+    "names remain case sensitive": (
+        {"SOV_medium_plane_airframe_1": "mig-X"},
+        [],
+        ["wrong_variant_type"],
+    ),
+    "two default equipment types can share a name": (
+        {"SOV_medium_plane_airframe_1": "MiG-X", "SOV_small_plane_airframe_1": "MiG-X"},
+        [],
+        [],
+    ),
+    "explicit variant still resolves beside a different default": (
+        {"SOV_medium_plane_airframe_1": "Other"},
+        _MIG_VARIANTS,
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "defaults, variants, expected",
+    _DEFAULT_VARIANT_CASES.values(),
+    ids=_DEFAULT_VARIANT_CASES,
+)
+@pytest.mark.parametrize("contextual", [False, True])
+def test_named_variant_default_identity(defaults, variants, expected, contextual):
+    sources = [_variant_source("SOV", [("transport_helicopter_1", "MiG-X"), *variants])]
+    by_tag, wildcard = build_variant_name_index(sources)
+    findings = check_named_variant_refs(
+        _NAMED_VARIANT_CONSUMERS["stockpile"],
+        by_tag,
+        wildcard,
+        variant_registry=build_variant_registry(sources) if contextual else None,
+        default_equipment_names=defaults,
+    )
+    assert [finding.kind for finding in findings] == expected
 
 
 def test_named_variant_refs_respect_dlc_country_context():
@@ -896,7 +1089,7 @@ def test_named_variant_refs_respect_dlc_country_context():
         ),
     )
     by_tag, wildcard = build_variant_name_index([source])
-    context_index = build_variant_dlc_index([source])
+    context_index = build_variant_registry([source])
     content = (
         "add_equipment_to_stockpile = { type = small_plane_airframe_1 "
         'variant_name = "MiG-X" amount = 12 producer = SOV }'
@@ -908,7 +1101,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_nonbba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )
         == []
     )
@@ -918,7 +1111,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_bba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )[0].kind
         == "wrong_variant_type"
     )
@@ -1033,6 +1226,17 @@ _VARIANT_REFERENCE_RUN_CASES = {
             )
         ],
     ),
+    "stockpile uses a default without any explicit variants": (
+        {
+            _SWE_HISTORY: "",
+            "localisation/english/equipment_l_english.yml": 'l_english:\n SWE_frigate_hull_2: "Base Class"\n',
+            "history/units/SWE_2000_nsb.txt": (
+                "add_equipment_to_stockpile = { type = frigate_hull_2 "
+                'variant_name = "Base Class" producer = SWE amount = 1 }'
+            ),
+        },
+        [],
+    ),
     "stockpile name on the wrong equipment type": (
         {
             "history/units/SWE_2000_nsb.txt": (
@@ -1073,43 +1277,86 @@ def test_oob_variant_references(tmp_path, files, expected):
     assert all(issue.severity == "error" for issue in validator._issues)
 
 
+_DEFAULT_SHIP_LOC = 'l_english:\n SWE_frigate_hull_2: "Naresuan Class"\n'
+_DEFAULT_SHIP_LOC_PATH = "localisation/english/equipment_l_english.yml"
+_SHIP_EQUIPMENT_PATH = "common/units/equipment/MD_ships.txt"
+
+# case: (definition path, original definition, replacement or deletion, category, severity)
+_STAGED_VARIANT_DEFINITION_CASES = {
+    "staged rename": (
+        _SWE_HISTORY,
+        _SWE_VARIANT,
+        'create_equipment_variant = { name = "Renamed Class" type = frigate_hull_2 }',
+        "NAMED VARIANT: unresolved producer, type, and name",
+        "warning",
+    ),
+    "staged type change": (
+        _SWE_HISTORY,
+        _SWE_VARIANT,
+        _SWE_VARIANT.replace("frigate_hull_2", "destroyer_hull_2"),
+        "NAMED VARIANT: name exists for a different equipment type",
+        "error",
+    ),
+    "default name rename": (
+        _DEFAULT_SHIP_LOC_PATH,
+        _DEFAULT_SHIP_LOC,
+        _DEFAULT_SHIP_LOC.replace("Naresuan Class", "Renamed Class"),
+        "NAMED VARIANT: name exists for a different equipment type",
+        "error",
+    ),
+    "default name deletion": (
+        _DEFAULT_SHIP_LOC_PATH,
+        _DEFAULT_SHIP_LOC,
+        None,
+        "NAMED VARIANT: name exists for a different equipment type",
+        "error",
+    ),
+    "default equipment deletion": (
+        _SHIP_EQUIPMENT_PATH,
+        _FRIGATES,
+        None,
+        "NAMED VARIANT: name exists for a different equipment type",
+        "error",
+    ),
+}
+
+
 @pytest.mark.parametrize(
-    "updated_variant, expected_category, expected_severity",
-    [
-        (
-            'create_equipment_variant = { name = "Renamed Class" type = frigate_hull_2 }',
-            "NAMED VARIANT: unresolved producer, type, and name",
-            "warning",
-        ),
-        (
-            'create_equipment_variant = { name = "Naresuan Class" type = destroyer_hull_2 }',
-            "NAMED VARIANT: name exists for a different equipment type",
-            "error",
-        ),
-    ],
-    ids=["staged rename", "staged type change"],
+    "definition_path, original, updated, expected_category, expected_severity",
+    _STAGED_VARIANT_DEFINITION_CASES.values(),
+    ids=_STAGED_VARIANT_DEFINITION_CASES,
 )
 def test_staged_variant_definition_change_rescans_unchanged_consumers(
-    tmp_path, monkeypatch, updated_variant, expected_category, expected_severity
+    tmp_path,
+    monkeypatch,
+    definition_path,
+    original,
+    updated,
+    expected_category,
+    expected_severity,
 ):
     monkeypatch.delenv("MD_STAGED_FILES", raising=False)
-    variant_path = "history/countries/SWE - Sweden.txt"
     consumer_path = "history/units/SWE_2000_nsb.txt"
-    _write(
+    write_tree(
         tmp_path,
-        variant_path,
-        'create_equipment_variant = { name = "Naresuan Class" type = frigate_hull_2 }',
+        {
+            _SWE_HISTORY: _SWE_VARIANT.replace("frigate_hull_2", "destroyer_hull_2"),
+            _SHIP_EQUIPMENT_PATH: _FRIGATES,
+            _DEFAULT_SHIP_LOC_PATH: (
+                _DEFAULT_SHIP_LOC if definition_path != _SWE_HISTORY else "l_english:\n"
+            ),
+            consumer_path: "add_equipment_to_stockpile = { type = frigate_hull_2 "
+            'variant_name = "Naresuan Class" producer = SWE amount = 1 }',
+            definition_path: original,
+        },
     )
-    _write(
-        tmp_path,
-        consumer_path,
-        "add_equipment_to_stockpile = { type = frigate_hull_2 "
-        'variant_name = "Naresuan Class" producer = SWE amount = 1 }',
-    )
-    initialize_git_repository(tmp_path, "history/countries", "history/units")
-    _write(tmp_path, variant_path, updated_variant)
-    run_git(tmp_path, "add", variant_path)
-    monkeypatch.setenv("MD_STAGED_FILES", variant_path)
+    initialize_git_repository(tmp_path, "history", "common", "localisation")
+    if updated is None:
+        (tmp_path / definition_path).unlink()
+    else:
+        _write(tmp_path, definition_path, updated)
+    run_git(tmp_path, "add", definition_path)
+    monkeypatch.setenv("MD_STAGED_FILES", definition_path)
 
     validator = _validator(tmp_path, staged_only=True)
     validator.validate_oob_variant_references()
@@ -1160,6 +1407,134 @@ def test_staged_variant_definition_change_rescans_unchanged_ship(
             "error",
         )
     ]
+
+
+_EVENT_VARIANT_PATH = "events/Purchase.txt"
+_SCOPED_VARIANT = "SWE = {\n" + _SWE_VARIANT + "}\n"
+_DLC_VARIANT = 'if = { limit = { has_dlc = "Man the Guns" }\n' + _SCOPED_VARIANT + "}\n"
+
+# case: (original sources, replacement sources, rescan unchanged consumers)
+_STAGED_VARIANT_SCOPE_CASES = {
+    "unrelated edit without variants": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: "add_political_power = 2\n"},
+        False,
+    ),
+    "unrelated edit beside a variant": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 2\n"},
+        False,
+    ),
+    "comment inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("type =", "# a comment\n\ttype =")},
+        False,
+    ),
+    "whitespace inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\t", "    ")},
+        False,
+    ),
+    "module edit preserves variant identity": (
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = old }\n}")},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = new }\n}")},
+        False,
+    ),
+    "variant name edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("Naresuan Class", "Renamed Class")},
+        True,
+    ),
+    "variant type edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("frigate_hull_2", "destroyer_hull_2")},
+        True,
+    ),
+    "variant addition": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        True,
+    ),
+    "variant block deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: "add_political_power = 1\n"},
+        True,
+    ),
+    "variant file deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {},
+        True,
+    ),
+    "variant file addition": (
+        {},
+        {_SWE_HISTORY: _SWE_VARIANT},
+        True,
+    ),
+    "producer scope edit": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT.replace("SWE =", "CHI =")},
+        True,
+    ),
+    "DLC condition edit": (
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT},
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT.replace("Man the Guns", "By Blood Alone")},
+        True,
+    ),
+    "history date edit": (
+        {_SWE_HISTORY: "2000.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        {_SWE_HISTORY: "2017.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        True,
+    ),
+    "file rename changes producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/NOR - Norway.txt": _SWE_VARIANT},
+        True,
+    ),
+    "file rename preserves producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/SWE - Renamed.txt": _SWE_VARIANT},
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize("scope", ["staged", "branch"])
+@pytest.mark.parametrize(
+    "original, updated, rescan",
+    _STAGED_VARIANT_SCOPE_CASES.values(),
+    ids=_STAGED_VARIANT_SCOPE_CASES,
+)
+def test_staged_variant_reference_scope(
+    tmp_path, monkeypatch, original, updated, rescan, scope
+):
+    consumer_path = "history/units/SWE_2000_nsb.txt"
+    write_tree(
+        tmp_path,
+        {
+            consumer_path: "add_equipment_to_stockpile = { type = frigate_hull_2 "
+            'variant_name = "Missing Class" producer = SWE amount = 1 }',
+            **original,
+        },
+    )
+    initialize_git_repository(tmp_path, ".")
+    run_git(tmp_path, "branch", "-M", "main")
+    run_git(tmp_path, "switch", "-c", "feature")
+    for path in original.keys() - updated.keys():
+        (tmp_path / path).unlink()
+    write_tree(tmp_path, updated)
+    run_git(tmp_path, "add", ".")
+    if scope == "branch":
+        run_git(tmp_path, "commit", "-m", "change sources")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "\n".join(dict.fromkeys([*original, *updated]))
+    )
+
+    validator = _validator(tmp_path, staged_only=True)
+    validator.validate_oob_variant_references()
+
+    assert [issue.file for issue in validator._issues] == (
+        [consumer_path] if rescan else []
+    )
 
 
 def test_unresolved_named_variant_is_reported_as_warning(tmp_path):
@@ -1533,7 +1908,7 @@ def _esc(value):
     return _BS + '"' + value + _BS + '"'
 
 
-def _division(template="Militia", extra=" start_equipment_factor = 1.0"):
+def _division(template: str | None = "Militia", extra=" start_equipment_factor = 1.0"):
     body = "name = " + _esc("1st Brigade")
     if template is not None:
         body += " division_template = " + _esc(template)
@@ -2220,6 +2595,81 @@ def test_template_slots(raw, rel, expected):
     ]
 
 
+_MISPLACED = "template-misplaced-support"
+_BARRED = {"support": {"Arty_Battery"}, "regimental_support": {"hq_engineer"}}
+_SUPPORT_UNITS = """sub_units = {
+\tArty_Battery = {
+\t\tgroup = support
+\t\tdivisional = no
+\t}
+\thq_engineer = {
+\t\tgroup = support
+\t\tregimental = no
+\t}
+}
+"""
+
+
+def _dropped(block, unit, flag):
+    return f"{block} lists '{unit}', which sets {flag} = no, so the game drops it"
+
+
+# case: (template text, (line, message) per finding)
+_MISPLACED_CASES = {
+    "regimental company in support": (
+        _paradrop_template("Test Brigade", "Arty_Battery"),
+        [(7, _dropped("support", "Arty_Battery", "divisional"))],
+    ),
+    "divisional company in regimental support": (
+        _paradrop_template("Test Brigade", "hq_engineer", block="regimental_support"),
+        [(7, _dropped("regimental_support", "hq_engineer", "regimental"))],
+    ),
+    "each company in the block it allows": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regimental_support")
+        + _paradrop_template("Test Brigade", "hq_engineer"),
+        [],
+    ),
+    "company without a placement flag": (
+        _paradrop_template("Test Brigade", "Weapons_company"),
+        [],
+    ),
+    "flags apply to support blocks only": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regiments"),
+        [],
+    ),
+    "each misplaced entry is its own finding": (
+        _paradrop_template("Test Brigade", "Arty_Battery", repeat=2),
+        [
+            (7, _dropped("support", "Arty_Battery", "divisional")),
+            (8, _dropped("support", "Arty_Battery", "divisional")),
+        ],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "raw, expected", _MISPLACED_CASES.values(), ids=_MISPLACED_CASES
+)
+def test_misplaced_support(raw, expected):
+    text = strip_comments(raw)
+    assert check_misplaced_support(text, _build_block_nodes(text), _BARRED) == [
+        (line, _MISPLACED, _PREFIX + message) for line, message in expected
+    ]
+
+
+def test_misplaced_support_reads_flags_from_unit_files(tmp_path):
+    _write(tmp_path, "common/units/MD_regimental_support.txt", _SUPPORT_UNITS)
+    _write(tmp_path, _OOB, _paradrop_template("Test Brigade", "Arty_Battery"))
+    validator = _validator(tmp_path)
+    validator._build_canonical_units()
+    validator.validate_template_slots()
+    assert [
+        (issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == _MISPLACED
+    ] == [("warning", _OOB, 7)]
+
+
 def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
     write_tree(
         tmp_path,
@@ -2386,6 +2836,138 @@ def test_full_run_reports_both_categories_for_every_template_source(tmp_path, re
         ("error", _SLOT, rel, 5),
         ("warning", _LOCKED, rel, 14),
     ]
+
+
+# --- air base capacity ------------------------------------------------------
+
+_AIRBASE = "airbase-over-capacity"
+_SWE_AIR = "history/units/SWE_2000_bba.txt"
+_NOR_AIR = "history/units/NOR_2000_bba.txt"
+_STATE_10 = "history/states/10-Test.txt"
+_BUILDINGS_1 = "\t\tbuildings = {\n\t\t\tair_base = 1\n\t\t}\n"
+
+
+def _state_file(history):
+    return f"state = {{\n\tid = 10\n\thistory = {{\n{history}\t}}\n}}\n"
+
+
+def _air_oob(*states):
+    """`air_wings` with one wing per amount: ``(state id, [amounts])`` pairs."""
+    body = ""
+    for state_id, amounts in states:
+        body += f"\t{state_id} = {{\n"
+        for amount in amounts:
+            body += (
+                f'\t\tsmall_plane_airframe_1 = {{ owner = "SWE" amount = {amount} }}\n'
+            )
+        body += "\t}\n"
+    return "air_wings = {\n" + body + "}\n"
+
+
+_OVER = "state 10 starts with 25 planes, but air_base 1 holds 24"
+
+# case: (files over the base tree, staged files or None, (file, line, message))
+_AIRBASE_CASES = {
+    "over capacity": ({_SWE_AIR: _air_oob((10, [25]))}, None, [(_SWE_AIR, 2, _OVER)]),
+    "at capacity": ({_SWE_AIR: _air_oob((10, [24]))}, None, []),
+    "wings in one state add up": (
+        {_SWE_AIR: _air_oob((10, [12, 13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "state repeated in one file": (
+        {_SWE_AIR: _air_oob((10, [12]), (10, [13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "commented wing": (
+        {
+            _SWE_AIR: _air_oob((10, [24])).replace(
+                "\t}", "\t\t# small_plane_airframe_1 = { amount = 1 }\n\t}"
+            )
+        },
+        None,
+        [],
+    ),
+    "commented air base": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1.replace(
+                    "\t\t\tair_base", "\t\t\t# air_base = 5\n\t\t\tair_base"
+                )
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "dated air base is not the start level": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1
+                + "\t\t2010.1.1 = {\n\t\t\tbuildings = {\n\t\t\t\tair_base = 5\n"
+                "\t\t\t}\n\t\t}\n"
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "unknown state": (
+        {_SWE_AIR: _air_oob((99, [1]))},
+        None,
+        [(_SWE_AIR, 2, "state 99 starts with 1 planes, but air_base 0 holds 0")],
+    ),
+    "carrier wing is not a state": (
+        {_SWE_AIR: _air_oob(('"HSwMS Test (R01)"', [25]), (10, [24]))},
+        None,
+        [],
+    ),
+    "vanilla capacity without the define": (
+        {_SWE_AIR: _air_oob((10, [25])), "common/defines/MD_defines.lua": ""},
+        None,
+        [],
+    ),
+    "shared base": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        None,
+        [
+            (_NOR_AIR, 2, _OVER.replace("planes", "planes (shared with SWE)")),
+            (_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)")),
+        ],
+    ),
+    "staged file counts unstaged wings": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        [_SWE_AIR],
+        [(_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)"))],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files, staged, expected", _AIRBASE_CASES.values(), ids=_AIRBASE_CASES
+)
+def test_airbase_capacity(tmp_path, files, staged, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/defines/MD_defines.lua": (
+                "\tNDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24\n"
+            ),
+            _STATE_10: _state_file(_BUILDINGS_1),
+            **files,
+        },
+    )
+    validator = _validator(tmp_path, staged_only=staged is not None)
+    if staged is not None:
+        validator.staged_files = [str(tmp_path / rel) for rel in staged]
+
+    validator.validate_airbase_capacity()
+
+    assert [
+        (issue.severity, issue.category, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+    ] == [("warning", _AIRBASE, *finding) for finding in expected]
 
 
 def test_clean_mod_passes_every_oob_check(tmp_path):

@@ -17,7 +17,7 @@ on:
         required: false
         type: string
       head_sha:
-        description: "PR head SHA to validate"
+        description: "PR head SHA to validate (required with pr_number)"
         required: false
         type: string
       base_sha:
@@ -44,6 +44,7 @@ env:
     gfx/flags
     gfx/interface/decisions
     gfx/interface/equipmentdesigner/graphic_db
+    gfx/texticons
     map/adjacency_rules.txt
     music
     tools
@@ -116,6 +117,10 @@ jobs:
         run: |
           pr_number="${INPUT_PR_NUMBER:-$EVENT_PR_NUMBER}"
           requested_head_sha="$INPUT_HEAD_SHA"
+          if [ -n "$INPUT_PR_NUMBER" ] && [ -z "$requested_head_sha" ]; then
+            echo "::error::PR dispatch must pin head_sha to bind its report"
+            exit 1
+          fi
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
@@ -193,6 +198,8 @@ jobs:
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
           # The report and base scan run the head's scripts with these flags.
+          grep -Fq -- --comment-output tools/generate_validation_report.py ||
+            missing+=("--comment-output")
           grep -Fq -- --main-tools-baseline \
             tools/generate_validation_report.py ||
             missing+=("--main-tools-baseline")
@@ -483,6 +490,7 @@ jobs:
             bun.lock
             .jscpd.json
             .github/workflows/test-suite.yml
+            .github/workflows/validation-report.yml
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/pr-cache-cleanup.yml
             .github/workflows/validator-cache.yml
@@ -1216,8 +1224,6 @@ jobs:
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
-      pull-requests: write
-      checks: write
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
       HEAD_SHA: >-
@@ -1226,6 +1232,15 @@ jobs:
       BASELINE_SHA: >-
         ${{ needs.detect-changes.outputs.baseline-sha || github.sha }}
       TOOLING_CHANGED: ${{ needs.detect-changes.outputs.tooling-changed }}
+      NO_TESTS_SELECTED: >-
+        ${{ needs.detect-changes.result == 'success' &&
+        needs.validate-paths.result == 'skipped' &&
+        needs.prepare-workspace.result == 'skipped' &&
+        needs.tools-tests.result == 'skipped' &&
+        needs.content-tests.result == 'skipped' &&
+        needs.tools-quality.result == 'skipped' &&
+        needs.mod-tests.result == 'skipped' &&
+        needs.docs-quality.result == 'skipped' }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.full_suite == 'true') &&
@@ -1313,9 +1328,8 @@ jobs:
           name: changed-files
           path: changed-files
 
-      - name: Generate and post validation report
+      - name: Generate validation report
         env:
-          GITHUB_TOKEN: ${{ github.token }}
           TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
         run: |
           workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
@@ -1323,12 +1337,12 @@ jobs:
           args=(
             --results-dir validation-results
             --output report.md
+            --comment-output comment.json
             --pr-number "$PR_NUMBER"
             --commit-sha "$HEAD_SHA"
             --workflow-run-url "$workflow_url"
             --github-repository "${{ github.repository }}"
             --validation-scope "$VALIDATION_SCOPE"
-            --checks-api
             --print
           )
           args+=(
@@ -1336,6 +1350,9 @@ jobs:
             --baseline-toolshash "$TOOLSHASH"
             --baseline-commit "$BASELINE_SHA"
           )
+          if [ "$NO_TESTS_SELECTED" = true ]; then
+            args+=(--no-tests-selected)
+          fi
           if [ "$TOOLING_CHANGED" = true ]; then
             args+=(--tooling-changed)
           fi
@@ -1351,17 +1368,6 @@ jobs:
           if [ -d main-tools-baseline ]; then
             args+=(--main-tools-baseline main-tools-baseline)
           fi
-          if [ -n "$PR_NUMBER" ]; then
-            # A run for an older head must not replace the newer head's
-            # comment. An unreadable head keeps the old behavior.
-            pr_url="repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER"
-            live_head=$(gh api "$pr_url" --jq '.head.sha' || true)
-            if [ -z "$live_head" ] || [ "$live_head" = "$HEAD_SHA" ]; then
-              args+=(--post-comment)
-            else
-              echo "::notice::PR head moved to $live_head; comment left as is"
-            fi
-          fi
           python3 tools/generate_validation_report.py "${args[@]}"
 
       - name: Upload combined report
@@ -1369,7 +1375,10 @@ jobs:
         if: always()
         with:
           name: validation-report
-          path: report.md
+          path: |
+            report.md
+            comment.json
+          if-no-files-found: error
           retention-days: 30
 
   gate:

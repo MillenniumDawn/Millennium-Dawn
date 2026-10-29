@@ -54,8 +54,11 @@ add_namespace = ukraine_develop_btr4
 add_namespace = ukraine_develop_2s22
 add_namespace = ukraine_equipment_develop_domestic_atgm
 add_namespace = ukraine_light_transport_tender
+add_namespace = ukraine_strat_bombers_problem
 add_namespace = ukraine_modernize_planes_restore_an_71
 add_namespace = ukraine_sevastopol
+add_namespace = ukraine_gongadze
+add_namespace = ukraine_yushchenko
 ##############MAIDAN##############
 #Start Protest
 country_event = {
@@ -6164,22 +6167,11 @@ country_event = {
 		name = ukraine_kommi.4.a
 		log = "[GetDateText]: [This.GetName]: ukraine_kommi.4.a executed"
 		UKR = {
-			if = {
-				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-				set_autonomy = {
-					target = ROOT
-					autonomy_state = autonomy_associated_state_colored
-					end_wars = no
-					end_civil_wars = no
-				}
-			}
-			else = {
-				set_autonomy = {
-					target = ROOT
-					autonomy_state = autonomy_associated_state
-					end_wars = no
-					end_civil_wars = no
-				}
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_associated_state
+				end_wars = no
+				end_civil_wars = no
 			}
 		}
 	}
@@ -6839,6 +6831,748 @@ country_event = {
 
 	option = { name = ukraine_rada.2.b }
 }
+#The majority recalls Speaker Tkachenko, 21 January 2000
+country_event = {
+	id = ukraine_rada.3
+	title = ukraine_rada.3.t
+	desc = ukraine_rada.3.d
+	picture = GFX_ukrainian_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		has_government = neutrality
+	}
+
+	option = { # Recognise the vote of the majority
+		name = ukraine_rada.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.3.a executed"
+		add_political_power = -30
+		add_stability = 0.03
+		set_temp_variable = { party_index = 4 } #Communist Party of Ukraine
+		set_temp_variable = { party_popularity_increase = -0.015 }
+		set_temp_variable = { temp_outlook_increase = -0.015 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 0 } #SDPU(o), which assembled the majority
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 18 } #Socialist Party
+		set_temp_variable = { target_party_index = 14 } #People's Democratic Party
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+		country_event = { id = ukraine_rada.4 days = 11 }
+		ai_chance = {
+			base = 70
+			modifier = { add = 60 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 40 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { add = 40 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = { # Leave the chamber to the left
+		name = ukraine_rada.3.b
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.3.b executed"
+		add_stability = -0.05
+		set_temp_variable = { tension_change = 4 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 4 } #Communist Party of Ukraine
+		set_temp_variable = { party_popularity_increase = 0.02 }
+		set_temp_variable = { temp_outlook_increase = 0.02 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 14 } #People's Democratic Party
+		set_temp_variable = { target_party_index = 18 } #Socialist Party
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+		ai_chance = {
+			base = 20
+			modifier = { add = 50 has_global_flag = UKR_COMMUNIST_FOCUS_PATH }
+			modifier = { add = 50 has_global_flag = UKR_SOCIALIST_FOCUS_PATH }
+			modifier = { factor = 0 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+#Ivan Plyushch elected Speaker, 1 February 2000
+country_event = {
+	id = ukraine_rada.4
+	title = ukraine_rada.4.t
+	desc = ukraine_rada.4.d
+	picture = GFX_verkhovna_rada_vote
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.4.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.4.a executed"
+		add_political_power = 25
+		add_stability = 0.02
+		set_temp_variable = { party_index = 0 } #SDPU(o) takes the first deputy speaker's chair
+		set_temp_variable = { funder_party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		boost_party_popularity = yes
+	}
+}
+#Solidarity registers, the Peasant Party and Hromada factions end, 29 February 2000
+country_event = {
+	id = ukraine_rada.5
+	title = ukraine_rada.5.t
+	desc = ukraine_rada.5.d
+	picture = GFX_verkhovna_rada_vote
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { # Share them out among the majority groups
+		name = ukraine_rada.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.5.a executed"
+		add_political_power = -20
+		set_temp_variable = { party_index = 18 } #Socialist Party, which carried the Peasant Party
+		set_temp_variable = { target_party_index = 15 } #Labour Ukraine
+		set_temp_variable = { party_popularity_fraction = 0.12 }
+		move_party_popularity = yes
+		set_temp_variable = { party_index = 3 } #Fatherland, which carried the Hromada remnant
+		set_temp_variable = { party_popularity_increase = -0.01 }
+		set_temp_variable = { temp_outlook_increase = -0.01 }
+		change_relative_party_popularity = yes
+		set_temp_variable = { party_index = 15 } #Labour Ukraine
+		set_temp_variable = { party_popularity_increase = 0.01 }
+		set_temp_variable = { temp_outlook_increase = 0.01 }
+		change_relative_party_popularity = yes
+		ai_chance = {
+			base = 70
+			modifier = { add = 50 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = { # Leave them to the left
+		name = ukraine_rada.5.b
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.5.b executed"
+		add_stability = -0.02
+		set_temp_variable = { party_index = 14 } #People's Democratic Party
+		set_temp_variable = { target_party_index = 18 } #Socialist Party
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+		ai_chance = {
+			base = 20
+			modifier = { add = 50 has_global_flag = UKR_SOCIALIST_FOCUS_PATH }
+			modifier = { add = 30 has_global_flag = UKR_COMMUNIST_FOCUS_PATH }
+			modifier = { factor = 0 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+#The Independents group dissolves, 16 March 2000
+country_event = {
+	id = ukraine_rada.6
+	title = ukraine_rada.6.t
+	desc = ukraine_rada.6.d
+	picture = GFX_ukrainian_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.6.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.6.a executed"
+		add_political_power = 15
+		set_temp_variable = { party_index = 14 } #People's Democratic Party
+		set_temp_variable = { target_party_index = 13 } #Democratic Union, which runs the Revival of Regions group
+		set_temp_variable = { party_popularity_fraction = 0.08 }
+		move_party_popularity = yes
+	}
+}
+#All-Ukrainian referendum on popular initiative, 16 April 2000
+country_event = {
+	id = ukraine_rada.7
+	title = ukraine_rada.7.t
+	desc = ukraine_rada.7.d
+	picture = GFX_ukr_2000
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		has_government = neutrality
+	}
+
+	option = { # Press the Rada to write the result into the constitution
+		name = ukraine_rada.7.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.7.a executed"
+		add_political_power = 50
+		add_stability = -0.05
+		set_temp_variable = { tension_change = 5 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 3 } #Fatherland
+		set_temp_variable = { target_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { target_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+		ai_chance = {
+			base = 30
+			modifier = { add = 40 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # Take the mandate and leave the constitution alone
+		name = ukraine_rada.7.b
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.7.b executed"
+		add_political_power = 25
+		add_stability = 0.02
+		ai_chance = {
+			base = 70
+			modifier = { add = 60 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+		}
+	}
+}
+#Labour Ukraine registers as a party, 21 June 2000
+country_event = {
+	id = ukraine_rada.8
+	title = ukraine_rada.8.t
+	desc = ukraine_rada.8.d
+	picture = GFX_verkhovna_rada_vote
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.8.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.8.a executed"
+		set_temp_variable = { party_index = 14 } #People's Democratic Party
+		set_temp_variable = { target_party_index = 15 } #Labour Ukraine
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		move_party_popularity = yes
+	}
+}
+#The Apple Party forms its own faction, 15 September 2000
+country_event = {
+	id = ukraine_rada.9
+	title = ukraine_rada.9.t
+	desc = ukraine_rada.9.d
+	picture = GFX_ukrainian_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { # Take them into the majority
+		name = ukraine_rada.9.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.9.a executed"
+		add_political_power = -10
+		set_temp_variable = { add_col_one = 16 } #Neutral_Libertarian - Apple Party
+		add_coalition_members_effect = yes
+		set_temp_variable = { party_index = 16 } #Apple Party
+		set_temp_variable = { funder_party_index = 14 } #People's Democratic Party
+		set_temp_variable = { party_popularity_fraction = 0.25 }
+		boost_party_popularity = yes
+		ai_chance = {
+			base = 70
+			modifier = { add = 50 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = { # Let them vote bill by bill
+		name = ukraine_rada.9.b
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.9.b executed"
+		set_temp_variable = { party_index = 16 } #Apple Party
+		set_temp_variable = { funder_party_index = 14 } #People's Democratic Party
+		set_temp_variable = { party_popularity_fraction = 0.1 }
+		boost_party_popularity = yes
+		ai_chance = { base = 30 }
+	}
+}
+#The Party of Regional Revival becomes the Party of Regions, 3 March 2001
+country_event = {
+	id = ukraine_rada.10
+	title = ukraine_rada.10.t
+	desc = ukraine_rada.10.d
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.10.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.10.a executed"
+		set_country_flag = UKR_party_of_regions_renamed
+		update_party_name = yes
+		set_temp_variable = { party_index = 4 } #Communist Party of Ukraine
+		set_temp_variable = { target_party_index = 6 } #Party of Regions
+		set_temp_variable = { party_popularity_fraction = 0.04 }
+		move_party_popularity = yes
+	}
+}
+#Anatoliy Kinakh forms a government of industrialists, 29 May 2001
+country_event = {
+	id = ukraine_rada.13
+	title = ukraine_rada.13.t
+	desc = ukraine_rada.13.d
+	picture = GFX_ukrainian_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.13.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.13.a executed"
+		add_political_power = 25
+		add_stability = 0.03
+		set_temp_variable = { party_index = 14 } #People's Democratic Party
+		set_temp_variable = { funder_party_index = 18 } #Socialist Party
+		set_temp_variable = { party_popularity_fraction = 0.2 }
+		boost_party_popularity = yes
+	}
+}
+#The Tymoshenko Bloc is assembled out of the anti-Kuchma opposition, 9 July 2001
+country_event = {
+	id = ukraine_rada.14
+	title = ukraine_rada.14.t
+	desc = ukraine_rada.14.d
+	picture = GFX_verkhovna_rada_vote
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_rada.14.a
+		log = "[GetDateText]: [This.GetName]: ukraine_rada.14.a executed"
+		set_temp_variable = { tension_change = 2 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 3 } #Fatherland
+		set_temp_variable = { funder_party_index = 2 } #Reforms and Order
+		set_temp_variable = { party_popularity_fraction = 0.03 }
+		boost_party_popularity = yes
+	}
+}
+##############GONGADZE##############
+#The investigations that precede the murder, 10 July 2000
+country_event = {
+	id = ukraine_gongadze.1
+	title = ukraine_gongadze.1.t
+	desc = ukraine_gongadze.1.d
+	picture = GFX_ukr_imopeachment
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		has_government = neutrality
+	}
+
+	option = { # Send in the tax inspectors
+		name = ukraine_gongadze.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.1.a executed"
+		add_political_power = -20
+		add_stability = -0.01
+		set_country_flag = UKR_gongadze_pressured
+		country_event = { id = ukraine_gongadze.2 days = 30 }
+		ai_chance = {
+			base = 55
+			modifier = { add = 40 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 30 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+
+	option = { # Let him write
+		name = ukraine_gongadze.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.1.b executed"
+		set_temp_variable = { tension_change = 1 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { funder_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.05 }
+		boost_party_popularity = yes
+		country_event = { id = ukraine_gongadze.3 days = 36 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 50 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 20 has_stability < 0.4 }
+			modifier = { factor = 0.4 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+		}
+	}
+}
+#The pressure path: the murder follows either way, 9 August 2000
+country_event = {
+	id = ukraine_gongadze.2
+	title = ukraine_gongadze.2.t
+	desc = ukraine_gongadze.2.d
+	picture = GFX_secretariat_president_of_ukraine
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		has_country_flag = UKR_gongadze_pressured
+	}
+
+	option = { # Let the siloviki make it personal
+		name = ukraine_gongadze.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.2.a executed"
+		add_stability = -0.03
+		set_temp_variable = { tension_change = 3 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { funder_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.08 }
+		boost_party_popularity = yes
+		ai_chance = {
+			base = 50
+			modifier = { add = 40 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 25 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # Keep it to the paperwork
+		name = ukraine_gongadze.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.2.b executed"
+		add_political_power = -25
+		add_stability = -0.01
+		ai_chance = {
+			base = 50
+			modifier = { add = 40 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 30 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+#The neutral path: the only road on which Gongadze can survive, 15 August 2000
+country_event = {
+	id = ukraine_gongadze.3
+	title = ukraine_gongadze.3.t
+	desc = ukraine_gongadze.3.d
+	picture = GFX_ukr_imopeachment
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		NOT = { has_country_flag = UKR_gongadze_pressured }
+	}
+
+	option = { # A seat on the anti-corruption committee
+		name = ukraine_gongadze.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.3.a executed"
+		add_political_power = -30
+		random_list = {
+			65 = { country_event = { id = ukraine_gongadze.4 days = 20 } }
+			35 = { country_event = { id = ukraine_gongadze.5 days = 20 } }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 45 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 25 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = { # Frighten him off for good
+		name = ukraine_gongadze.3.b
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.3.b executed"
+		add_stability = -0.02
+		set_temp_variable = { tension_change = 2 }
+		UKR_add_political_tension = yes
+		random_list = {
+			35 = { country_event = { id = ukraine_gongadze.4 days = 20 } }
+			65 = { country_event = { id = ukraine_gongadze.5 days = 20 } }
+		}
+		ai_chance = {
+			base = 50
+			modifier = { add = 45 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 25 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+}
+#Gongadze survives: no body, no tapes, no Ukraine without Kuchma
+country_event = {
+	id = ukraine_gongadze.4
+	title = ukraine_gongadze.4.t
+	desc = ukraine_gongadze.4.d
+	picture = GFX_ukrainian_institute_event
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_gongadze.4.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.4.a executed"
+		set_country_flag = UKR_gongadze_survives
+		add_political_power = 20
+		add_stability = 0.02
+		set_temp_variable = { party_index = 0 } #SDPU(o), whose media pressure is noticed
+		set_temp_variable = { target_party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { party_popularity_fraction = 0.06 }
+		move_party_popularity = yes
+	}
+}
+#Gongadze goes underground and is killed on the historical date
+country_event = {
+	id = ukraine_gongadze.5
+	title = ukraine_gongadze.5.t
+	desc = ukraine_gongadze.5.d
+	picture = GFX_ukrainian_institute_event
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_gongadze.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.5.a executed"
+		set_temp_variable = { tension_change = 2 }
+		UKR_add_political_tension = yes
+	}
+}
+#The body in the Tarashcha forest, 2 November 2000
+country_event = {
+	id = ukraine_gongadze.6
+	title = ukraine_gongadze.6.t
+	desc = ukraine_gongadze.6.d
+	picture = GFX_ukrainian_institute_event
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		NOT = { has_country_flag = UKR_gongadze_survives }
+	}
+
+	option = { # Dispute the identification
+		name = ukraine_gongadze.6.a
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.6.a executed"
+		add_timed_idea = { idea = UKR_tarashcha_shadow_idea days = 365 }
+		set_temp_variable = { tension_change = 6 }
+		UKR_add_political_tension = yes
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { funder_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.08 }
+		boost_party_popularity = yes
+		ai_chance = {
+			base = 60
+			modifier = { add = 45 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 30 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # Confirm it and open a murder case
+		name = ukraine_gongadze.6.b
+		log = "[GetDateText]: [This.GetName]: ukraine_gongadze.6.b executed"
+		add_timed_idea = { idea = UKR_tarashcha_shadow_idea days = 180 }
+		add_political_power = -40
+		set_temp_variable = { tension_change = 3 }
+		UKR_add_political_tension = yes
+		ai_chance = {
+			base = 40
+			modifier = { add = 45 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 25 has_stability < 0.4 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+##############YUSHCHENKO##############
+#The prime minister refuses to endorse a crackdown, 6 February 2001
+country_event = {
+	id = ukraine_yushchenko.1
+	title = ukraine_yushchenko.1.t
+	desc = ukraine_yushchenko.1.d
+	picture = GFX_ukr_yushenko
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		has_government = neutrality
+		has_idea = UKR_yushenko_premier_idea
+		NOT = { has_country_flag = UKR_gongadze_survives }
+	}
+
+	option = { # Summon him
+		name = ukraine_yushchenko.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.1.a executed"
+		set_country_flag = UKR_yushchenko_summoned
+		add_political_power = -15
+		country_event = { id = ukraine_yushchenko.2 days = 7 }
+		ai_chance = {
+			base = 60
+			modifier = { add = 45 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 30 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = { # Court his voters instead
+		name = ukraine_yushchenko.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.1.b executed"
+		add_stability = 0.01
+		country_event = { id = ukraine_yushchenko.2 days = 7 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 45 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 25 has_stability < 0.4 }
+			modifier = { factor = 0.4 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+		}
+	}
+}
+#The Administration answers in public, 13 February 2001
+country_event = {
+	id = ukraine_yushchenko.2
+	title = ukraine_yushchenko.2.t
+	desc = {
+		text = ukraine_yushchenko.2.d_summoned
+		trigger = { has_country_flag = UKR_yushchenko_summoned }
+	}
+	desc = {
+		text = ukraine_yushchenko.2.d_ignored
+		trigger = { NOT = { has_country_flag = UKR_yushchenko_summoned } }
+	}
+	picture = GFX_secretariat_president_of_ukraine
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { # Put his signature on it
+		name = ukraine_yushchenko.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.2.a executed"
+		add_stability = 0.02
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine, compromised by the letter
+		set_temp_variable = { target_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.08 }
+		move_party_popularity = yes
+		country_event = { id = ukraine_yushchenko.3 days = 35 }
+		ai_chance = {
+			base = 60
+			modifier = { add = 45 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 30 has_country_flag = UKR_yushchenko_summoned }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # Sign it ourselves
+		name = ukraine_yushchenko.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.2.b executed"
+		add_political_power = -25
+		set_temp_variable = { party_index = 1 } #People's Movement of Ukraine
+		set_temp_variable = { funder_party_index = 0 } #SDPU(o)
+		set_temp_variable = { party_popularity_fraction = 0.08 }
+		boost_party_popularity = yes
+		country_event = { id = ukraine_yushchenko.3 days = 35 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 45 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+#The clans price the prime minister's head, 20 March 2001
+country_event = {
+	id = ukraine_yushchenko.3
+	title = ukraine_yushchenko.3.t
+	desc = ukraine_yushchenko.3.d
+	picture = GFX_ukr_kuchma
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { # Let them name their price
+		name = ukraine_yushchenko.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.3.a executed"
+		set_country_flag = UKR_yushchenko_sold
+		add_political_power = 30
+		add_stability = -0.02
+		country_event = { id = ukraine_yushchenko.4 days = 31 }
+		ai_chance = {
+			base = 60
+			modifier = { add = 45 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 35 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # The prime minister is not for sale
+		name = ukraine_yushchenko.3.b
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.3.b executed"
+		add_political_power = -40
+		add_stability = 0.01
+		country_event = { id = ukraine_yushchenko.4 days = 31 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 50 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+#The Administration decides, 20 April 2001
+country_event = {
+	id = ukraine_yushchenko.4
+	title = ukraine_yushchenko.4.t
+	desc = ukraine_yushchenko.4.d
+	picture = GFX_ukr_yushenko
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = UKR
+		NOT = { has_country_flag = UKRH_yushchenko_out }
+	}
+
+	option = { # Dismiss him
+		name = ukraine_yushchenko.4.a
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.4.a executed"
+		set_country_flag = UKRH_yushchenko_out
+		if = {
+			limit = { has_idea = UKR_yushenko_premier_idea }
+			remove_ideas = UKR_yushenko_premier_idea
+		}
+		add_political_power = 25
+		add_stability = -0.02
+		country_event = { id = ukr_history.5 days = 6 }
+		ai_chance = {
+			base = 60
+			modifier = { add = 50 has_global_flag = UKR_HISTORICAL_FOCUS_PATH }
+			modifier = { add = 40 has_country_flag = UKR_yushchenko_sold }
+			modifier = { add = 30 has_global_flag = UKR_REGIONS_FOCUS_PATH }
+			modifier = { factor = 0 has_stability < 0.3 }
+		}
+	}
+
+	option = { # Keep him, take his appointments
+		name = ukraine_yushchenko.4.b
+		log = "[GetDateText]: [This.GetName]: ukraine_yushchenko.4.b executed"
+		set_country_flag = UKR_yushchenko_clipped
+		add_political_power = -50
+		add_stability = 0.02
+		ai_chance = {
+			base = 40
+			modifier = { add = 50 has_global_flag = UKR_DEMOCRATIC_FOCUS_PATH }
+			modifier = { add = 25 has_stability < 0.4 }
+			modifier = { factor = 0 has_country_flag = UKR_yushchenko_sold }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
 ##############NAZBOLS##############
 #Puppet
 country_event = {
@@ -6851,22 +7585,11 @@ country_event = {
 	option = {
 		name = ukraine_nazbol.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_nazbol.1.a executed"
-		if = {
-			limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-			set_autonomy = {
-				target = ROOT
-				autonomy_state = autonomy_autonomous_state_colored
-				end_wars = no
-				end_civil_wars = no
-			}
-		}
-		else = {
-			set_autonomy = {
-				target = ROOT
-				autonomy_state = autonomy_autonomous_state
-				end_wars = no
-				end_civil_wars = no
-			}
+		set_autonomy = {
+			target = ROOT
+			autonomy_state = autonomy_autonomous_state
+			end_wars = no
+			end_civil_wars = no
 		}
 	}
 
@@ -8492,10 +9215,14 @@ country_event = {
 			set_country_flag = UKR_zelensky_formed
 			update_party_name = yes
 		}
-		set_temp_variable = { party_index = 16 }
-		set_temp_variable = { party_popularity_increase = 0.12 }
-		set_temp_variable = { temp_outlook_increase = 0.08 }
-		change_relative_party_popularity = yes
+		# the popularity tooltip is built before the flag renames party 16, so it would still say Yabluko
+		custom_effect_tooltip = UKR_zelenskiy_popularity_TT
+		hidden_effect = {
+			set_temp_variable = { party_index = 16 }
+			set_temp_variable = { party_popularity_increase = 0.12 }
+			set_temp_variable = { temp_outlook_increase = 0.08 }
+			change_relative_party_popularity = yes
+		}
 	}
 }
 
@@ -14681,7 +15408,7 @@ news_event = {
 					suspension_type_slot = tank_wheeled_suspension_medium
 					armor_type_slot = tank_steel_armor_gen2
 					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = smoke_launchers
+					special_type_slot_1 = smoke_launchers_2
 					special_type_slot_5 = afv_reverse_doors
 					special_type_slot_2 = afv_atgm_gen2
 					special_type_slot_4 = tank_battlestation_2_thermal
@@ -14740,7 +15467,7 @@ news_event = {
 					suspension_type_slot = tank_wheeled_suspension_medium
 					armor_type_slot = tank_steel_armor_gen2
 					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = smoke_launchers
+					special_type_slot_1 = smoke_launchers_2
 					special_type_slot_3 = afv_troop_capacity
 					special_type_slot_4 = tank_battlestation_2_thermal
 					ammunition_load_slot = mixed_autocannon_ammo_2
@@ -14833,7 +15560,7 @@ news_event = {
 					armor_type_slot = tank_steel_armor_gen2
 					engine_type_slot = tank_diesel_engine_gen3
 					special_type_slot_1 = afv_atgm_gen3
-					special_type_slot_2 = smoke_launchers
+					special_type_slot_2 = smoke_launchers_2
 					special_type_slot_3 = afv_troop_capacity
 					special_type_slot_4 = tank_battlestation_2_thermal
 					ammunition_load_slot = mixed_autocannon_ammo_2
@@ -15362,21 +16089,29 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-
+		if = {
+			limit = {
+					NOT = { has_tech = AT_upgrade_2 }
+			}
+			set_technology = { AT_upgrade_2 = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { is_special_project_completed = sp:sp_ground_fireandforget }
+			}
+			complete_special_project = sp:sp_ground_fireandforget
+		}
+		set_technology = { anti_tank_3 = 1 }
 		create_equipment_variant = {
 			name = "RK-2 Stuhna-P"
-			type = Anti_tank_2
-
+			type = Anti_tank_3
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 5
-				L_AT_Reliability = 4
+				L_AT_fire_control = 2
+				L_AT_warhead = 1
+				L_AT_Reliability = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_INF_Stuhna"
 		}
 	}
@@ -15396,27 +16131,40 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-
+		if = {
+			limit = {
+				NOT = { has_tech = AT_upgrade_2 }
+			}
+			set_technology = { AT_upgrade_2 = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { is_special_project_completed = sp:sp_ground_fireandforget }
+			}
+			complete_special_project = sp:sp_ground_fireandforget
+		}
+		if = {
+			limit = {
+				NOT = { has_tech = Anti_tank_3 }
+			}
+			set_technology = { Anti_tank_3 = 1 }
+		}
 		create_equipment_variant = {
 			name = "RK-2 Stuhna-P"
-			type = Anti_tank_2
-
+			type = Anti_tank_3
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 5
-				L_AT_Reliability = 4
+				L_AT_fire_control = 2
+				L_AT_warhead = 1
+				L_AT_Reliability = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_INF_Stuhna"
 		}
 
 		add_equipment_production = {
 			equipment = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				version_name = "RK-2 Stuhna-P"
 			}
 			requested_factories = 1
@@ -15496,27 +16244,40 @@ country_event = {
 				}
 			}
 		}
-
+		if = {
+			limit = {
+				NOT = { has_tech = AT_upgrade_2 }
+			}
+			set_technology = { AT_upgrade_2 = 1 }
+		}
+		if = {
+			limit = {
+				NOT = { is_special_project_completed = sp:sp_ground_fireandforget }
+			}
+			complete_special_project = sp:sp_ground_fireandforget
+		}
+		if = {
+			limit = {
+				NOT = { has_tech = Anti_tank_3 }
+			}
+			set_technology = { Anti_tank_3 = 1 }
+		}
 		create_equipment_variant = {
 			name = "RK-2 Stuhna-P"
-			type = Anti_tank_2
-
+			type = Anti_tank_3
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 5
-				L_AT_Reliability = 4
+				L_AT_fire_control = 2
+				L_AT_warhead = 1
+				L_AT_Reliability = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_INF_Stuhna"
 		}
 
 		add_equipment_production = {
 			equipment = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				version_name = "RK-2 Stuhna-P"
 			}
 			requested_factories = 1
@@ -15556,9 +16317,9 @@ country_event = {
 			type = Anti_tank_2
 
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 5
+				L_AT_fire_control = 2
+				L_AT_warhead = 2
+				L_AT_Reliability = 4
 			}
 
 			parent_version = 0
@@ -15590,9 +16351,9 @@ country_event = {
 			type = Anti_tank_2
 
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 5
+				L_AT_fire_control = 2
+				L_AT_warhead = 2
+				L_AT_Reliability = 4
 			}
 
 			parent_version = 0
@@ -15690,9 +16451,9 @@ country_event = {
 			type = Anti_tank_2
 
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 5
+				L_AT_fire_control = 2
+				L_AT_warhead = 2
+				L_AT_Reliability = 4
 			}
 
 			parent_version = 0
@@ -15741,12 +16502,12 @@ country_event = {
 
 		create_equipment_variant = {
 			name = "RK-2M Stuhna-PM"
-			type = Anti_tank_2
+			type = Anti_tank_3
 
 			upgrades = {
-				L_AT_fire_control = 5
-				L_AT_warhead = 5
-				L_AT_Reliability = 5
+				L_AT_fire_control = 3
+				L_AT_warhead = 4
+				L_AT_Reliability = 3
 			}
 
 			parent_version = 1
@@ -15777,12 +16538,12 @@ country_event = {
 
 		create_equipment_variant = {
 			name = "RK-2M Stuhna-PM"
-			type = Anti_tank_2
+			type = Anti_tank_3
 
 			upgrades = {
-				L_AT_fire_control = 5
-				L_AT_warhead = 5
-				L_AT_Reliability = 5
+				L_AT_fire_control = 3
+				L_AT_warhead = 4
+				L_AT_Reliability = 3
 			}
 
 			parent_version = 1
@@ -15851,21 +16612,22 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-
+		if = {
+			limit = {
+					NOT = { has_tech = Heavy_Anti_tank_3 }
+			}
+			set_technology = { Heavy_Anti_tank_3 = 1 }
+		}
 		create_equipment_variant = {
 			name = "Barrier-S"
-			type = Heavy_Anti_tank_2
-
+			type = Heavy_Anti_tank_3
 			upgrades = {
-				H_AT_fire_control = 3
-				H_AT_warhead = 3
-				H_AT_Reliability = 2
+				H_AT_fire_control = 2
+				H_AT_warhead = 1
+				H_AT_Reliability = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_SPAT_Barrier_S"
 			model = "SOV_MTLB_entity"
 		}
@@ -15886,28 +16648,28 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-
+		if = {
+			limit = {
+				NOT = { has_tech = Heavy_Anti_tank_3 }
+			}
+			set_technology = { Heavy_Anti_tank_3 = 1 }
+		}
 		create_equipment_variant = {
 			name = "Barrier-S"
-			type = Heavy_Anti_tank_2
-
+			type = Heavy_Anti_tank_3
 			upgrades = {
-				H_AT_fire_control = 3
-				H_AT_warhead = 3
-				H_AT_Reliability = 2
+				H_AT_fire_control = 2
+				H_AT_warhead = 1
+				H_AT_Reliability = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_SPAT_Barrier_S"
 			model = "SOV_MTLB_entity"
 		}
-
 		add_equipment_production = {
 			equipment = {
-				type = Heavy_Anti_tank_2
+				type = Heavy_Anti_tank_3
 				version_name = "Barrier-S"
 			}
 			requested_factories = 1
@@ -15946,17 +16708,13 @@ country_event = {
 		create_equipment_variant = {
 			name = "Bulava"
 			type = Anti_tank_3
-
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 2
+				L_AT_fire_control = 5
+				L_AT_warhead = 4
+				L_AT_Reliability = 3
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_Anti_tank_4_medium"
 		}
 	}
@@ -15980,17 +16738,13 @@ country_event = {
 		create_equipment_variant = {
 			name = "Bulava"
 			type = Anti_tank_3
-
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 2
+				L_AT_fire_control = 5
+				L_AT_warhead = 4
+				L_AT_Reliability = 3
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_Anti_tank_4_medium"
 		}
 
@@ -16072,7 +16826,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 100
 				producer = UKR
@@ -16102,7 +16856,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 250
 				producer = UKR
@@ -16135,7 +16889,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 250
 				producer = UKR
@@ -16149,7 +16903,7 @@ country_event = {
 			target = AZE
 			cost_factor = 1
 			equipment = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				version_name = "Skif"
 			}
 		}
@@ -16184,7 +16938,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 200
 				producer = UKR
@@ -16214,7 +16968,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 500
 				producer = UKR
@@ -16247,7 +17001,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 500
 				producer = UKR
@@ -16261,7 +17015,7 @@ country_event = {
 			target = SAU
 			cost_factor = 1
 			equipment = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				version_name = "Skif"
 			}
 		}
@@ -16326,7 +17080,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 150
 				producer = UKR
@@ -16359,7 +17113,7 @@ country_event = {
 			modify_treasury_effect = yes
 
 			add_equipment_to_stockpile = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				variant_name = "Skif"
 				amount = 150
 				producer = UKR
@@ -16373,7 +17127,7 @@ country_event = {
 			target = GEO
 			cost_factor = 1
 			equipment = {
-				type = Anti_tank_2
+				type = Anti_tank_3
 				version_name = "Skif"
 			}
 		}
@@ -16397,12 +17151,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukraine_equipment_develop_domestic_atgm.13.a executed"
 
 		if = {
-			limit = { NOT = { has_tech = Heavy_Anti_tank_3 } }
+			limit = { NOT = { has_tech = Heavy_Anti_tank_4 } }
 			add_tech_bonus = {
 				name = ukraine_equipment_develop_domestic_atgm.13.name
 				bonus = 0.15
 				uses = 1
-				technology = Heavy_Anti_tank_3
+				technology = Heavy_Anti_tank_4
 			}
 		}
 
@@ -16423,7 +17177,7 @@ country_event = {
 		original_tag = UKR
 		controls_state = 698 #Kyiv
 		has_country_flag = UKR_equipment_develop_domestic_bulava_atgm_flag
-		has_tech = Anti_tank_3
+		has_tech = Anti_tank_4
 	}
 
 	option = {
@@ -16447,24 +17201,19 @@ country_event = {
 
 		create_equipment_variant = {
 			name = "Bulava"
-			type = Anti_tank_3
-
+			type = Anti_tank_4
 			upgrades = {
-				L_AT_fire_control = 3
-				L_AT_warhead = 3
-				L_AT_Reliability = 2
+				L_AT_fire_control = 1
+				L_AT_warhead = 1
 			}
-
 			parent_version = 0
-
 			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-
 			icon = "GFX_UKR_Anti_tank_4_medium"
 		}
 
 		add_equipment_production = {
 			equipment = {
-				type = Anti_tank_3
+				type = Anti_tank_4
 				version_name = "Bulava"
 			}
 			requested_factories = 1
@@ -23557,14 +24306,17 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = { neutrality_neutral_conservatism_are_in_power = yes }
+	trigger = {
+		neutrality_neutral_conservatism_are_in_power = yes
+		NOT = { has_country_flag = UKR_gongadze_survives }
+	}
 
 	option = {
 		name = ukr_history.1.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.1.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.008 }
-		set_temp_variable = { temp_outlook_increase = -0.008 }
+		set_temp_variable = { party_popularity_increase = -0.0026 }
+		set_temp_variable = { temp_outlook_increase = -0.0026 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.003 }
@@ -23575,9 +24327,10 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.003 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.002 }
-		set_temp_variable = { temp_outlook_increase = 0.002 }
+		set_temp_variable = { party_popularity_increase = 0.0012 }
+		set_temp_variable = { temp_outlook_increase = 0.0012 }
 		change_relative_party_popularity = yes
+		country_event = { id = ukraine_gongadze.6 days = 47 }
 		hidden_effect = { recalculate_party = yes }
 	}
 
@@ -23592,8 +24345,8 @@ country_event = {
 		}
 
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.0032 }
-		set_temp_variable = { temp_outlook_increase = -0.0032 }
+		set_temp_variable = { party_popularity_increase = -0.001 }
+		set_temp_variable = { temp_outlook_increase = -0.001 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.0012 }
@@ -23604,11 +24357,12 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.0012 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.0008 }
-		set_temp_variable = { temp_outlook_increase = 0.0008 }
+		set_temp_variable = { party_popularity_increase = 0.0005 }
+		set_temp_variable = { temp_outlook_increase = 0.0005 }
 		change_relative_party_popularity = yes
 		add_political_power = -50
 		add_stability = 0.01
+		country_event = { id = ukraine_gongadze.6 days = 47 }
 		hidden_effect = { recalculate_party = yes }
 	}
 }
@@ -23621,31 +24375,35 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = { neutrality_neutral_conservatism_are_in_power = yes }
+	trigger = {
+		neutrality_neutral_conservatism_are_in_power = yes
+		NOT = { has_country_flag = UKR_gongadze_survives }
+	}
 
 	option = {
 		name = ukr_history.2.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.2.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.04 }
-		set_temp_variable = { temp_outlook_increase = -0.04 }
+		set_temp_variable = { party_popularity_increase = -0.0129 }
+		set_temp_variable = { temp_outlook_increase = -0.0129 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		set_temp_variable = { temp_outlook_increase = 0.03 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.01 }
-		set_temp_variable = { temp_outlook_increase = 0.01 }
+		set_temp_variable = { party_popularity_increase = 0.013 }
+		set_temp_variable = { temp_outlook_increase = 0.013 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.01 }
-		set_temp_variable = { temp_outlook_increase = 0.01 }
+		set_temp_variable = { party_popularity_increase = 0.0055 }
+		set_temp_variable = { temp_outlook_increase = 0.0055 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0151 }
+		set_temp_variable = { temp_outlook_increase = -0.0151 }
 		change_relative_party_popularity = yes
+		add_timed_idea = { idea = UKR_cassette_scandal_idea days = 540 }
 		hidden_effect = { recalculate_party = yes }
 	}
 
@@ -23660,26 +24418,27 @@ country_event = {
 		}
 
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.028 }
-		set_temp_variable = { temp_outlook_increase = -0.028 }
+		set_temp_variable = { party_popularity_increase = -0.009 }
+		set_temp_variable = { temp_outlook_increase = -0.009 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.021 }
 		set_temp_variable = { temp_outlook_increase = 0.021 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.007 }
-		set_temp_variable = { temp_outlook_increase = 0.007 }
+		set_temp_variable = { party_popularity_increase = 0.0091 }
+		set_temp_variable = { temp_outlook_increase = 0.0091 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.007 }
-		set_temp_variable = { temp_outlook_increase = 0.007 }
+		set_temp_variable = { party_popularity_increase = 0.0038 }
+		set_temp_variable = { temp_outlook_increase = 0.0038 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.007 }
-		set_temp_variable = { temp_outlook_increase = -0.007 }
+		set_temp_variable = { party_popularity_increase = -0.0106 }
+		set_temp_variable = { temp_outlook_increase = -0.0106 }
 		change_relative_party_popularity = yes
 		add_political_power = -75
+		add_timed_idea = { idea = UKR_cassette_scandal_idea days = 540 }
 		hidden_effect = { recalculate_party = yes }
 	}
 }
@@ -23692,38 +24451,41 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = { neutrality_neutral_conservatism_are_in_power = yes }
+	trigger = {
+		neutrality_neutral_conservatism_are_in_power = yes
+		NOT = { has_country_flag = UKR_gongadze_survives }
+	}
 
 	option = {
 		name = ukr_history.3.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.3.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
+		set_temp_variable = { party_popularity_increase = -0.0064 }
+		set_temp_variable = { temp_outlook_increase = -0.0064 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.01 }
-		set_temp_variable = { temp_outlook_increase = 0.01 }
+		set_temp_variable = { party_popularity_increase = 0.0055 }
+		set_temp_variable = { temp_outlook_increase = 0.0055 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
 		set_temp_variable = { temp_outlook_increase = 0.005 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0075 }
+		set_temp_variable = { temp_outlook_increase = -0.0075 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.004 }
 		set_temp_variable = { temp_outlook_increase = 0.004 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.004 }
-		set_temp_variable = { temp_outlook_increase = 0.004 }
+		set_temp_variable = { party_popularity_increase = 0.001 }
+		set_temp_variable = { temp_outlook_increase = 0.001 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
-		set_temp_variable = { party_popularity_increase = 0.002 }
-		set_temp_variable = { temp_outlook_increase = 0.002 }
+		set_temp_variable = { party_popularity_increase = 0.0014 }
+		set_temp_variable = { temp_outlook_increase = 0.0014 }
 		change_relative_party_popularity = yes
 		hidden_effect = { recalculate_party = yes }
 	}
@@ -23739,32 +24501,32 @@ country_event = {
 		}
 
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0032 }
+		set_temp_variable = { temp_outlook_increase = -0.0032 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.005 }
-		set_temp_variable = { temp_outlook_increase = 0.005 }
+		set_temp_variable = { party_popularity_increase = 0.0028 }
+		set_temp_variable = { temp_outlook_increase = 0.0028 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 18 }
 		set_temp_variable = { party_popularity_increase = 0.0025 }
 		set_temp_variable = { temp_outlook_increase = 0.0025 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.0025 }
-		set_temp_variable = { temp_outlook_increase = -0.0025 }
+		set_temp_variable = { party_popularity_increase = -0.0038 }
+		set_temp_variable = { temp_outlook_increase = -0.0038 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.002 }
 		set_temp_variable = { temp_outlook_increase = 0.002 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = 0.002 }
-		set_temp_variable = { temp_outlook_increase = 0.002 }
+		set_temp_variable = { party_popularity_increase = 0.0005 }
+		set_temp_variable = { temp_outlook_increase = 0.0005 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
-		set_temp_variable = { party_popularity_increase = 0.001 }
-		set_temp_variable = { temp_outlook_increase = 0.001 }
+		set_temp_variable = { party_popularity_increase = 0.0007 }
+		set_temp_variable = { temp_outlook_increase = 0.0007 }
 		change_relative_party_popularity = yes
 		add_political_power = -100
 		add_stability = 0.02
@@ -23784,24 +24546,24 @@ country_event = {
 		name = ukr_history.4.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.4.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = 0.015 }
-		set_temp_variable = { temp_outlook_increase = 0.015 }
+		set_temp_variable = { party_popularity_increase = 0.0149 }
+		set_temp_variable = { temp_outlook_increase = 0.0149 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0076 }
+		set_temp_variable = { temp_outlook_increase = -0.0076 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 18 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0063 }
+		set_temp_variable = { temp_outlook_increase = -0.0063 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 20 }
-		set_temp_variable = { party_popularity_increase = -0.003 }
-		set_temp_variable = { temp_outlook_increase = -0.003 }
+		set_temp_variable = { party_popularity_increase = -0.0008 }
+		set_temp_variable = { temp_outlook_increase = -0.0008 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
-		set_temp_variable = { party_popularity_increase = -0.002 }
-		set_temp_variable = { temp_outlook_increase = -0.002 }
+		set_temp_variable = { party_popularity_increase = -0.0014 }
+		set_temp_variable = { temp_outlook_increase = -0.0014 }
 		change_relative_party_popularity = yes
 		hidden_effect = { recalculate_party = yes }
 	}
@@ -23819,33 +24581,34 @@ country_event = {
 		name = ukr_history.5.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.5.a executed"
 		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.035 }
-		set_temp_variable = { temp_outlook_increase = 0.035 }
+		set_temp_variable = { party_popularity_increase = 0.045 }
+		set_temp_variable = { temp_outlook_increase = 0.045 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.015 }
-		set_temp_variable = { temp_outlook_increase = -0.015 }
+		set_temp_variable = { party_popularity_increase = -0.0048 }
+		set_temp_variable = { temp_outlook_increase = -0.0048 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.01 }
 		set_temp_variable = { temp_outlook_increase = 0.01 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 4 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0141 }
+		set_temp_variable = { temp_outlook_increase = -0.0141 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0151 }
+		set_temp_variable = { temp_outlook_increase = -0.0151 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 15 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0108 }
+		set_temp_variable = { temp_outlook_increase = -0.0108 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { remove_col_one = 1 }
 		remove_coalition_members_effect = yes
 		set_temp_variable = { remove_col_one = 2 }
 		remove_coalition_members_effect = yes
+		country_event = { id = ukraine_rada.13 days = 33 }
 		hidden_effect = { recalculate_party = yes }
 	}
 }
@@ -23860,43 +24623,46 @@ country_event = {
 
 	trigger = {
 		neutrality_neutral_conservatism_are_in_power = yes
-		has_completed_focus = UKR_deal_yushenko
+		OR = {
+			has_completed_focus = UKR_deal_yushenko
+			has_country_flag = UKRH_yushchenko_out
+		}
 	}
 
 	option = {
 		name = ukr_history.6.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.6.a executed"
 		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.025 }
-		set_temp_variable = { temp_outlook_increase = 0.025 }
+		set_temp_variable = { party_popularity_increase = 0.035 }
+		set_temp_variable = { temp_outlook_increase = 0.035 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.015 }
-		set_temp_variable = { temp_outlook_increase = -0.015 }
+		set_temp_variable = { party_popularity_increase = -0.0048 }
+		set_temp_variable = { temp_outlook_increase = -0.0048 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.01 }
 		set_temp_variable = { temp_outlook_increase = 0.01 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 17 }
-		set_temp_variable = { party_popularity_increase = -0.008 }
-		set_temp_variable = { temp_outlook_increase = -0.008 }
+		set_temp_variable = { party_popularity_increase = -0.0089 }
+		set_temp_variable = { temp_outlook_increase = -0.0089 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 4 }
-		set_temp_variable = { party_popularity_increase = -0.007 }
-		set_temp_variable = { temp_outlook_increase = -0.007 }
+		set_temp_variable = { party_popularity_increase = -0.0098 }
+		set_temp_variable = { temp_outlook_increase = -0.0098 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 13 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0025 }
+		set_temp_variable = { temp_outlook_increase = -0.0025 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 21 }
-		set_temp_variable = { party_popularity_increase = 0.003 }
-		set_temp_variable = { temp_outlook_increase = 0.003 }
+		set_temp_variable = { party_popularity_increase = 0.0021 }
+		set_temp_variable = { temp_outlook_increase = 0.0021 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 16 }
-		set_temp_variable = { party_popularity_increase = -0.003 }
-		set_temp_variable = { temp_outlook_increase = -0.003 }
+		set_temp_variable = { party_popularity_increase = -0.0079 }
+		set_temp_variable = { temp_outlook_increase = -0.0079 }
 		change_relative_party_popularity = yes
 		set_variable = { conservatism_leader = 1 } # Viktor Yushchenko
 		hidden_effect = { recalculate_party = yes }
@@ -23920,20 +24686,20 @@ country_event = {
 		name = ukr_history.7.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.7.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = 0.025 }
-		set_temp_variable = { temp_outlook_increase = 0.025 }
+		set_temp_variable = { party_popularity_increase = 0.0249 }
+		set_temp_variable = { temp_outlook_increase = 0.0249 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0077 }
+		set_temp_variable = { temp_outlook_increase = -0.0077 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 15 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0108 }
+		set_temp_variable = { temp_outlook_increase = -0.0108 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 13 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0025 }
+		set_temp_variable = { temp_outlook_increase = -0.0025 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { add_col_one = 6 }
 		add_coalition_members_effect = yes
@@ -23969,8 +24735,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.015 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.015 }
-		set_temp_variable = { temp_outlook_increase = -0.015 }
+		set_temp_variable = { party_popularity_increase = -0.0048 }
+		set_temp_variable = { temp_outlook_increase = -0.0048 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = -0.015 }
@@ -24060,8 +24826,8 @@ country_event = {
 		name = ukr_history.10.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.10.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.025 }
-		set_temp_variable = { temp_outlook_increase = -0.025 }
+		set_temp_variable = { party_popularity_increase = -0.008 }
+		set_temp_variable = { temp_outlook_increase = -0.008 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.015 }
@@ -24089,8 +24855,8 @@ country_event = {
 		name = ukr_history.11.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.11.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
+		set_temp_variable = { party_popularity_increase = -0.0064 }
+		set_temp_variable = { temp_outlook_increase = -0.0064 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.015 }
@@ -24173,8 +24939,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.008 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.007 }
-		set_temp_variable = { temp_outlook_increase = -0.007 }
+		set_temp_variable = { party_popularity_increase = -0.0023 }
+		set_temp_variable = { temp_outlook_increase = -0.0023 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
 		set_temp_variable = { party_popularity_increase = -0.005 }
@@ -24227,8 +24993,8 @@ country_event = {
 		name = ukr_history.15.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.15.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.017 }
-		set_temp_variable = { temp_outlook_increase = -0.017 }
+		set_temp_variable = { party_popularity_increase = -0.0055 }
+		set_temp_variable = { temp_outlook_increase = -0.0055 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.01 }
@@ -24272,8 +25038,8 @@ country_event = {
 		}
 
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.0085 }
-		set_temp_variable = { temp_outlook_increase = -0.0085 }
+		set_temp_variable = { party_popularity_increase = -0.0027 }
+		set_temp_variable = { temp_outlook_increase = -0.0027 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 6 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
@@ -24322,8 +25088,8 @@ country_event = {
 		name = ukr_history.16.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.16.a executed"
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.02 }
-		set_temp_variable = { temp_outlook_increase = -0.02 }
+		set_temp_variable = { party_popularity_increase = -0.0064 }
+		set_temp_variable = { temp_outlook_increase = -0.0064 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
 		set_temp_variable = { party_popularity_increase = 0.015 }
@@ -24394,8 +25160,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.01 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0032 }
+		set_temp_variable = { temp_outlook_increase = -0.0032 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
@@ -24467,8 +25233,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.015 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0032 }
+		set_temp_variable = { temp_outlook_increase = -0.0032 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 4 }
 		set_temp_variable = { party_popularity_increase = -0.008 }
@@ -24540,8 +25306,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.02 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0032 }
+		set_temp_variable = { temp_outlook_increase = -0.0032 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
@@ -24573,8 +25339,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = -0.008 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.004 }
-		set_temp_variable = { temp_outlook_increase = -0.004 }
+		set_temp_variable = { party_popularity_increase = -0.0013 }
+		set_temp_variable = { temp_outlook_increase = -0.0013 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.002 }
@@ -24983,8 +25749,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.015 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.015 }
-		set_temp_variable = { temp_outlook_increase = -0.015 }
+		set_temp_variable = { party_popularity_increase = -0.0048 }
+		set_temp_variable = { temp_outlook_increase = -0.0048 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 4 }
 		set_temp_variable = { party_popularity_increase = -0.01 }
@@ -26176,8 +26942,8 @@ country_event = {
 		set_temp_variable = { temp_outlook_increase = 0.01 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0032 }
+		set_temp_variable = { temp_outlook_increase = -0.0032 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 2 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
@@ -26262,24 +27028,24 @@ country_event = {
 		name = ukr_history.63.a
 		log = "[GetDateText]: [Root.GetName]: ukr_history.63.a executed"
 		set_temp_variable = { party_index = 3 }
-		set_temp_variable = { party_popularity_increase = 0.03 }
-		set_temp_variable = { temp_outlook_increase = 0.03 }
+		set_temp_variable = { party_popularity_increase = 0.015 }
+		set_temp_variable = { temp_outlook_increase = 0.015 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 14 }
-		set_temp_variable = { party_popularity_increase = -0.015 }
-		set_temp_variable = { temp_outlook_increase = -0.015 }
+		set_temp_variable = { party_popularity_increase = -0.0048 }
+		set_temp_variable = { temp_outlook_increase = -0.0048 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 1 }
-		set_temp_variable = { party_popularity_increase = 0.01 }
-		set_temp_variable = { temp_outlook_increase = 0.01 }
+		set_temp_variable = { party_popularity_increase = 0.013 }
+		set_temp_variable = { temp_outlook_increase = 0.013 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 0 }
-		set_temp_variable = { party_popularity_increase = -0.01 }
-		set_temp_variable = { temp_outlook_increase = -0.01 }
+		set_temp_variable = { party_popularity_increase = -0.0151 }
+		set_temp_variable = { temp_outlook_increase = -0.0151 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 15 }
-		set_temp_variable = { party_popularity_increase = -0.005 }
-		set_temp_variable = { temp_outlook_increase = -0.005 }
+		set_temp_variable = { party_popularity_increase = -0.0054 }
+		set_temp_variable = { temp_outlook_increase = -0.0054 }
 		change_relative_party_popularity = yes
 		set_temp_variable = { party_index = 4 }
 		set_temp_variable = { party_popularity_increase = 0.005 }
@@ -26287,6 +27053,7 @@ country_event = {
 		change_relative_party_popularity = yes
 		set_temp_variable = { remove_col_one = 3 }
 		remove_coalition_members_effect = yes
+		country_event = { id = ukraine_rada.14 days = 146 }
 		hidden_effect = { recalculate_party = yes }
 	}
 }
@@ -26612,73 +27379,105 @@ country_event = {
 	title = ukraine_modernize_planes_restore_an_71.1.name
 	desc = ukraine_modernize_planes_restore_an_71.1.desc
 	picture = GFX_UKR_Modernize_Planes_Restore_An_71_Radar
-
+ 
 	is_triggered_only = yes
-
+ 
 	trigger = { original_tag = UKR }
-
+ 
 	option = {
 		name = ukraine_modernize_planes_restore_an_71.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.a executed"
-
+ 
 		ai_chance = {
 			base = 50
 			modifier = { factor = 0.5 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 2 has_country_flag = UKR_strategic_industry_eastern_export_dependence }
 			modifier = { factor = 0.5 has_country_flag = UKR_strategic_industry_western_diversification }
 		}
-
+ 
 		trigger = {
 			country_exists = SOV
 			NOT = { has_war_with = SOV }
 		}
-
-		set_temp_variable = { treasury_change = -0.2 }
-		modify_treasury_effect = yes
-
-		set_temp_variable = { percent_change = 0.04 }
-		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = ROOT.id }
-		change_influence_percentage = yes
-
-		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_tt
-
-		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
+ 
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			set_temp_variable = { treasury_change = -0.15 }
+			modify_treasury_effect = yes
+ 
+			set_temp_variable = { percent_change = 0.04 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = ROOT.id }
+			change_influence_percentage = yes
+ 
+			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_fast_tt
+ 
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 120 }
+		}
+		else = {
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+ 
+			set_temp_variable = { percent_change = 0.04 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = ROOT.id }
+			change_influence_percentage = yes
+ 
+			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_slow_tt
+ 
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
+		}
 	}
-
+ 
 	option = {
 		name = ukraine_modernize_planes_restore_an_71.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.b executed"
-
+ 
 		ai_chance = {
 			base = 50
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 2 has_country_flag = UKR_strategic_industry_western_diversification }
 			modifier = { factor = 0.5 has_country_flag = UKR_strategic_industry_eastern_export_dependence }
+			modifier = {
+				factor = 0.5
+				ISR = { has_opinion = { target = UKR value < 20 } }
+			}
 		}
-
+ 
 		trigger = {
 			country_exists = ISR
 			NOT = { has_war_with = ISR }
 		}
-
-		set_temp_variable = { treasury_change = -0.5 }
-		modify_treasury_effect = yes
-
+ 
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			set_temp_variable = { treasury_change = -0.4 }
+			modify_treasury_effect = yes
+ 
+			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_fast_tt
+ 
+			country_event = { id = ukraine_modernize_planes_restore_an_71.5 days = 100 }
+		}
+		else = {
+			set_temp_variable = { treasury_change = -0.6 }
+			modify_treasury_effect = yes
+ 
+			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_slow_tt
+ 
+			country_event = { id = ukraine_modernize_planes_restore_an_71.5 days = 150 }
+		}
+ 
 		set_temp_variable = { percent_change = -0.02 }
 		set_temp_variable = { tag_index = SOV.id }
 		set_temp_variable = { influence_target = ROOT.id }
 		change_influence_percentage = yes
-
-		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_tt
-
-		set_country_flag = UKR_an_71_phalcon_radar_flag
-
-		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 270 }
+ 
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_mission_tt
+		activate_mission = UKR_restore_an_71_phalcon_mission
 	}
 }
-
+ 
 country_event = {
 	id = ukraine_modernize_planes_restore_an_71.2
 	title = ukraine_modernize_planes_restore_an_71.2.name
@@ -26710,10 +27509,7 @@ country_event = {
 
 		if = {
 			limit = { has_dlc = "By Blood Alone" }
-			if = {
-				limit = { NOT = { has_tech = awacs_1 } }
-				set_technology = { awacs_1 = 1 popup = no }
-			}
+			UKR_an_71_complete_awacs_project = yes
 			if = {
 				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
 				create_equipment_variant = {
@@ -26779,10 +27575,7 @@ country_event = {
 			}
 		}
 		else = {
-			if = {
-				limit = { NOT = { has_tech = awacs_plane1 } }
-				set_technology = { awacs_plane1 = 1 popup = no }
-			}
+			UKR_an_71_complete_awacs_project = yes
 			add_equipment_to_stockpile = { type = awacs_equipment_1 amount = 1 producer = UKR }
 		}
 
@@ -26811,10 +27604,7 @@ country_event = {
 
 		if = {
 			limit = { has_dlc = "By Blood Alone" }
-			if = {
-				limit = { NOT = { has_tech = awacs_1 } }
-				set_technology = { awacs_1 = 1 popup = no }
-			}
+			UKR_an_71_complete_awacs_project = yes
 			if = {
 				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
 				create_equipment_variant = {
@@ -27153,8 +27943,76 @@ country_event = {
 	}
 }
 
-add_namespace = ukraine_strat_bombers_problem
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.5
+	hidden = yes
 
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.5 executed"
+
+		set_country_flag = UKR_an_71_phalcon_ready_flag
+	}
+}
+
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.6
+	title = ukraine_modernize_planes_restore_an_71.6.name
+	desc = ukraine_modernize_planes_restore_an_71.6.desc
+	picture = GFX_UKR_Modernize_Planes_Restore_An_71_Radar
+ 
+	is_triggered_only = yes
+ 
+	trigger = { original_tag = UKR }
+ 
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.6.a
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.6.a executed"
+ 
+		clr_country_flag = UKR_an_71_phalcon_ready_flag
+		clr_country_flag = UKR_an_71_phalcon_radar_flag
+ 
+		# Israel returns part of the money, the rest of the Kvant work is paid as usual
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			set_temp_variable = { treasury_change = 0.2 }
+			modify_treasury_effect = yes
+ 
+			set_temp_variable = { treasury_change = -0.15 }
+			modify_treasury_effect = yes
+		}
+		else = {
+			set_temp_variable = { treasury_change = 0.3 }
+			modify_treasury_effect = yes
+ 
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+		}
+ 
+		if = {
+			limit = { country_exists = SOV }
+			set_temp_variable = { percent_change = 0.02 }
+			set_temp_variable = { tag_index = SOV.id }
+			set_temp_variable = { influence_target = ROOT.id }
+			change_influence_percentage = yes
+		}
+ 
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_after_israel_tt
+ 
+		if = {
+			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 90 }
+		}
+		else = {
+			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 150 }
+		}
+	}
+}
+
+### Strategic Aviation Events ###
 country_event = {
 	id = ukraine_strat_bombers_problem.1
 	title = ukraine_strat_bombers_problem.1.t

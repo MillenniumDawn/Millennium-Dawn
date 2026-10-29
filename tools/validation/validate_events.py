@@ -19,10 +19,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
-from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
-from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
-from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
+    IS_AI_NO_RE,
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
@@ -33,6 +31,9 @@ from shared_utils import (
     strip_inline_comment,
     validation_config,
 )
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
@@ -301,7 +302,6 @@ def _extract_event_log_id_mismatches(
 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
-_IS_AI_NO_RE = re.compile(r"\bis_ai\s*=\s*no\b")
 
 # Per-worker copies of costly_scripted_effects and stored_variable_signs, set
 # once by the Pool initializer.
@@ -1140,6 +1140,10 @@ _DIRECT_COST_RE = re.compile(
     + r")\s*=\s*\{"
 )
 _EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+# A building effect, or a payment a caller can waive with skip_payment for a free build.
+_BUILDING_PAYMENT_RE = re.compile(
+    r"\b(?:add_building_construction|add_offsite_building|skip_payment)\b"
+)
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
 _STORED_LITERAL_RE = re.compile(
     r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
@@ -1456,17 +1460,34 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
                 break
             bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
             pos = end
-    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    costly = _with_callers(
+        {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}, bodies
+    )
+    return {name: bodies[name] for name in costly}
+
+
+def building_payment_effects(bodies: Dict[str, str]) -> Set[str]:
+    """Scripted effects that build or pay for a building, and every effect calling one.
+
+    `bodies` maps each scripted effect to its whole body, nested scopes included.
+    """
+    return _with_callers(
+        {name for name, body in bodies.items() if _BUILDING_PAYMENT_RE.search(body)},
+        bodies,
+    )
+
+
+def _with_callers(names: Set[str], bodies: Dict[str, str]) -> Set[str]:
+    """`names` plus every effect in `bodies` that calls one of them, at any depth."""
     while True:
         callers = {
             name
             for name, body in bodies.items()
-            if name not in costly
-            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+            if name not in names and not names.isdisjoint(_EFFECT_CALL_RE.findall(body))
         }
         if not callers:
-            return {name: bodies[name] for name in costly}
-        costly |= callers
+            return names
+        names |= callers
 
 
 def _disabled_cost_branch(key: str, body: str) -> bool:
@@ -1687,7 +1708,7 @@ def find_cost_blind_options(
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
         trigger = _event_trigger_body(body) or ""
-        if len(options) < 2 or first_flat_match(trigger, _IS_AI_NO_RE):
+        if len(options) < 2 or first_flat_match(trigger, IS_AI_NO_RE):
             continue
         country = _receiver_tag(trigger)
         splits = [
@@ -1773,21 +1794,22 @@ def _statement_corruption_level_bound(
     statements = list(iter_statements(block))
     if key == "OR":
         bounds = [
-            _statement_corruption_level_bound(*branch, country=country)
-            for branch in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
-        return (
-            min(bounds)
-            if bounds and all(bound is not None for bound in bounds)
-            else None
-        )
+        proven = [bound for bound in bounds if bound is not None]
+        return min(proven) if proven and len(proven) == len(bounds) else None
     if (
         key in {"AND", "ROOT", "THIS", "hidden_trigger", "custom_trigger_tooltip"}
         or key == country
     ):
         bounds = [
-            _statement_corruption_level_bound(*statement, country=country)
-            for statement in statements
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
         ]
         proven = [bound for bound in bounds if bound is not None]
         return max(proven) if proven else None
@@ -2769,7 +2791,8 @@ class Validator(BaseValidator):
         the day, so a `date` comparison on the event is redundant, and a
         `date <` bound can silently drop the event when `random_days` spills
         past it. Only events whose sole fire source is the yearly effects are
-        reported: a second fire path (focus, decision, chain) may need the guard.
+        reported: a second fire path (focus, decision, chain, `random_events`
+        pool) may need the guard.
         """
         self._log_section(
             "Checking scheduled events for redundant date bounds in their trigger..."
@@ -2789,7 +2812,7 @@ class Validator(BaseValidator):
                 [],
                 "✓ No scheduled event carries a redundant date bound",
                 f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-                Severity.WARNING,
+                Severity.ERROR,
                 category="scheduled-event-date-bound",
             )
             return
@@ -2799,18 +2822,19 @@ class Validator(BaseValidator):
             self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
             return
 
+        pool_ids = self._get_random_event_ids()
         results = [
             f"{eid} - {self._rel_posix(filename)}:{line} is scheduled from "
             f"{_YEARLY_EFFECTS_REL}, so the date bound in its trigger is redundant "
             "(remove it; drop the trigger block if nothing else is left)"
             for eid, filename, line in sorted(bounded)
-            if sources.get(eid) == {_YEARLY_EFFECTS_REL}
+            if sources.get(eid) == {_YEARLY_EFFECTS_REL} and eid not in pool_ids
         ]
         self._report(
             results,
             "✓ No scheduled event carries a redundant date bound",
             f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="scheduled-event-date-bound",
         )
 
