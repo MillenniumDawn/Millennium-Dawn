@@ -891,7 +891,7 @@ on_startup_euu_action = {
 }
 
 EU_enlargement_statuses_refresh = {
-	clear_array = global.EU_fulfilled_potential_members
+	clear_array = global.EU_display_potential_members
 	for_each_scope_loop = { 
 		array = global.EU_all_potential_members
 		if = {
@@ -916,9 +916,29 @@ EU_enlargement_statuses_refresh = {
 				is_puppet = no
 				NOT = { is_in_array = { global.Unrecognised_States = THIS } }
 			}
-			add_to_array = { global.EU_fulfilled_potential_members = THIS }
+			add_to_array = { ROOT.EU_display_potential_members = THIS }
 		}
 	}
+}
+EU_enlargement_display_constructor = {
+	clear_array = ROOT.EU_display_potential_members
+	if = {
+		limit = { has_country_flag = EU_display_all_potential_members }
+		for_each_scope_loop = {
+			array = global.EU_all_potential_members
+			add_to_array = { ROOT.EU_display_potential_members = THIS }
+	if = {
+		limit = { has_country_flag = EU_display_fulfilled_potential_members }
+		EU_enlargement_statuses_refresh = yes
+	}
+	if = {
+		limit = { has_country_flag = EU_display_historical_potential_members }
+		for_each_scope_loop = {
+			array = global.EU_historical_potential_members
+			add_to_array = { ROOT.EU_display_potential_members = THIS }
+		}
+	}
+	update_eu_dirty_variable = yes
 }
 
 set_the_eu_parliament_delay = {
