@@ -330,6 +330,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
+- `unneeded-bankruptcy-guard` (WARNING): a charge another nation's event sends back to
+  the sender, directly or through a reply event, counts as a cost. Known gaps: only
+  direct treasury and debt charges count, branches gated on the receiver's tag are not
+  told apart, and such a charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 

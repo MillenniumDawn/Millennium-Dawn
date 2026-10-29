@@ -268,6 +268,9 @@ _CONTROL_FLOW_SCOPES = frozenset(
 )
 # 3-letter all-caps tokens that are logic keywords, not country tags.
 _NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
+# A scope block in an event option that can charge someone other than the
+# receiver: FROM (the sender) or a literal tag. Chains such as FROM.FROM stay out.
+_PAYER_SCOPE_RE = re.compile(r"(?<![\w.:@])(FROM|[A-Z]{3})\s*=\s*\{")
 
 
 def _top_level_search_filters(body: str) -> Set[str]:
@@ -648,16 +651,65 @@ def _is_flavor_only(option_bodies: List[str]) -> bool:
     return True
 
 
-def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: ids of the events in one file that the target cannot answer."""
+def _option_charges(option: str) -> Tuple[Set[str], Set[Tuple[str, str]]]:
+    """(scopes an event option charges, (scope, event id) for each reply it fires).
+
+    A charge is a direct treasury or debt cost; a building effect may run under
+    skip_payment, so called effects are not followed. A FROM or tag block counts
+    only its own text, without the blocks nested in it, and a cost outside every
+    such block falls on ROOT, the receiver. Replies are fires into FROM or a tag.
+    """
+    spans: List[Tuple[str, int, int]] = []
+    for m in _PAYER_SCOPE_RE.finditer(option):
+        _, end = _extract_block(option, m.start())
+        if end != -1:
+            spans.append((m.group(1), m.start(), end))
+
+    def own_text(start: int, end: int) -> str:
+        parts, pos = [], max(start, 0)
+        for _, s, e in spans:
+            if start < s and e <= end and s >= pos:
+                parts.append(option[pos:s])
+                pos = e
+        parts.append(option[pos:end])
+        return "".join(parts)
+
+    charged: Set[str] = set()
+    if _MODIFY_TREASURY_RE.search(option) or _MODIFY_DEBT_RE.search(option):
+        for label, start, end in [("ROOT", -1, len(option)), *spans]:
+            if _body_money_cost(own_text(start, end), frozenset())[1]:
+                charged.add(label)
+
+    replies: Set[Tuple[str, str]] = set()
+    previews = _effect_tooltip_spans(option, 0, len(option))
+    for ce in _COUNTRY_EVENT_RE.finditer(option):
+        tm = _FIRE_TARGET_RE.match(option, ce.start())
+        if not tm or any(s <= ce.start() < e for s, e in previews):
+            continue
+        label, pos = _enclosing_block_label(option, ce.start())
+        while label in _CONTROL_FLOW_SCOPES:
+            label, pos = _enclosing_block_label(option, pos)
+        if label == "FROM" or (label and _LITERAL_TAG_RE.match(label)):
+            replies.add((label, tm.group(1)))
+    return charged, replies
+
+
+_EventCharges = Dict[str, Tuple[FrozenSet[str], FrozenSet[Tuple[str, str]]]]
+
+
+def _event_facts_in_file(args: Tuple[str, str]) -> Tuple[List[str], _EventCharges]:
+    """Pool worker: for one file, the ids of the events the target cannot
+    answer, and per event the scopes its options charge and the replies they
+    fire (see _option_charges)."""
     filepath, mod_path = args
     raw = _read_mod_text(filepath, mod_path)
     if not raw:
-        return []
+        return [], {}
     text = strip_comments(raw)
 
-    def _compute() -> List[str]:
+    def _compute() -> Tuple[List[str], _EventCharges]:
         found: List[str] = []
+        charges: _EventCharges = {}
         for m in _EVENT_BLOCK_RE.finditer(text):
             body, end = _extract_block(text, m.start())
             if end == -1:
@@ -683,15 +735,23 @@ def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
                 or _is_flavor_only(options)
             ):
                 found.append(idm.group(1))
-        return found
+            charged: Set[str] = set()
+            replies: Set[Tuple[str, str]] = set()
+            for option in options:
+                option_charged, option_replies = _option_charges(option)
+                charged |= option_charged
+                replies |= option_replies
+            if charged or replies:
+                charges[idm.group(1)] = (frozenset(charged), frozenset(replies))
+        return found, charges
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.notification_events.v4", filepath, text, _compute
+        mod_path, "focus_tree.event_facts", filepath, text, _compute
     )
 
 
 def _country_event_target_is_foreign(
-    body: str, ce_pos: int, owner_tags: FrozenSet[str]
+    body: str, ce_pos: int, owner_tags: FrozenSet[str], through_hidden: bool = False
 ) -> bool:
     """True if the country_event at *ce_pos* fires into another nation's scope
     and the player can see it happen.
@@ -705,7 +765,8 @@ def _country_event_target_is_foreign(
 
     The walk carries on past that verdict to the reward root, because a
     hidden_effect anywhere above the fire swallows every tooltip under it —
-    there is nothing a TT_IF_THEY_ACCEPT could render.
+    there is nothing a TT_IF_THEY_ACCEPT could render. *through_hidden* is
+    for checks about what the fire does, which a hidden_effect does not stop.
     """
     foreign: Optional[bool] = None
     pos = ce_pos
@@ -713,7 +774,7 @@ def _country_event_target_is_foreign(
         label, opener = _enclosing_block_label(body, pos)
         if label is None:
             return bool(foreign)
-        if label == "hidden_effect":
+        if label == "hidden_effect" and not through_hidden:
             return False
         if foreign is None and label not in _CONTROL_FLOW_SCOPES:
             if label in _SELF_SCOPES:
@@ -727,6 +788,24 @@ def _country_event_target_is_foreign(
             else:
                 foreign = False
         pos = opener
+
+
+def _fire_charges_sender(
+    body: str,
+    ce_pos: int,
+    payers: Dict[str, FrozenSet[str]],
+    owner_tags: FrozenSet[str],
+) -> bool:
+    """True if the fire at *ce_pos* sends another nation an event that charges
+    the sender, as FROM or by the owner's tag."""
+    tm = _FIRE_TARGET_RE.match(body, ce_pos)
+    return bool(
+        tm
+        and payers.get(tm.group(1), frozenset()) & (owner_tags | {"FROM"})
+        and _country_event_target_is_foreign(
+            body, ce_pos, owner_tags, through_hidden=True
+        )
+    )
 
 
 def _brace_pairs(text: str) -> Dict[int, int]:
@@ -905,6 +984,16 @@ class _FocusFile:
             blocks.append(_FocusBlock(focus_id, body, start, end, line))
         return blocks
 
+    @cached_property
+    def owner_tags(self) -> FrozenSet[str]:
+        """Tags the tree's `country = { }` blocks name."""
+        tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(self.text):
+            cbody, _ = _block_at(self.text, cm.start(), self.pairs)
+            if cbody:
+                tags.update(_TAG_ASSIGN_RE.findall(cbody))
+        return frozenset(tags)
+
     def _cached(self, tag: str, scan, *payload, fingerprint: Optional[str] = None):
         content = self.text if fingerprint is None else f"{self.text}\x00{fingerprint}"
         return disk_cache.per_file_cached_by_content(
@@ -929,23 +1018,29 @@ class _FocusFile:
         )
 
     def ai_guards(
-        self, staffable_map: Dict[str, FrozenSet[str]], money_effects: FrozenSet[str]
+        self,
+        staffable_map: Dict[str, FrozenSet[str]],
+        money_effects: FrozenSet[str],
+        payers: Dict[str, FrozenSet[str]],
     ) -> List[Dict]:
         # The maps are part of the key, so entries invalidate when
-        # scripted-effect definitions change.
-        fingerprint = (
-            ";".join(
-                f"{name}:{','.join(sorted(types))}"
-                for name, types in sorted(staffable_map.items())
+        # scripted-effect or event definitions change.
+        def joined(mapping: Dict[str, FrozenSet[str]]) -> str:
+            return ";".join(
+                f"{name}:{','.join(sorted(values))}"
+                for name, values in sorted(mapping.items())
             )
-            + "|"
-            + ",".join(sorted(money_effects))
+
+        fingerprint = (
+            f"{joined(staffable_map)}|{','.join(sorted(money_effects))}"
+            f"|{joined(payers)}"
         )
         return self._cached(
-            "focus_tree.ai_guards.v7",
+            "focus_tree.ai_guards.v8",
             _scan_ai_guards,
             staffable_map,
             money_effects,
+            payers,
             fingerprint=fingerprint,
         )
 
@@ -986,6 +1081,7 @@ def _scan_ai_guards(
     source: _FocusFile,
     staffable_map: Dict[str, FrozenSet[str]],
     money_effects: FrozenSet[str],
+    payers: Dict[str, FrozenSet[str]],
 ) -> List[Dict]:
     """Per-focus facts for the ai_will_do guard checks.
 
@@ -995,7 +1091,9 @@ def _scan_ai_guards(
     previews), the money its rewards spend (spend / has_cost / unknown, with
     *money_effects* naming the scripted effects that spend money), whether an
     effect_tooltip previews a cost the focus commits to but pays elsewhere
-    (a cross-country offer settled in the event), and the
+    (a cross-country offer settled in the event), whether it sends another
+    nation an event that charges the sender (*payers* maps an event id to the
+    FROM or tag scopes it charges), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
     scripted triggers are not recognized).
@@ -1012,6 +1110,7 @@ def _scan_ai_guards(
         has_cost = False
         unknown_cost = False
         previewed_cost = False
+        event_cost = False
         for rbody, _, _ in _iter_reward_blocks(
             source.text, fstart, fend, pairs=source.pairs
         ):
@@ -1058,6 +1157,14 @@ def _scan_ai_guards(
                 )[1]
                 for s0, e0 in spans
             )
+            if payers and not event_cost:
+                event_cost = any(
+                    not previewed(ce.start())
+                    and _fire_charges_sender(
+                        rbody, ce.start(), payers, source.owner_tags
+                    )
+                    for ce in _COUNTRY_EVENT_RE.finditer(rbody)
+                )
 
         guards: Set[str] = set()
         am = _AI_WILL_DO_START.search(fbody)
@@ -1101,6 +1208,7 @@ def _scan_ai_guards(
                 "has_cost": has_cost,
                 "unknown": unknown_cost,
                 "previewed_cost": previewed_cost,
+                "event_cost": event_cost,
             }
         )
     return out
@@ -1135,12 +1243,6 @@ def _scan_cross_country_fires(
     text = source.text
     if "country_event" not in text:
         return []
-    owner_tags: Set[str] = set()
-    for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
-        cbody, _ = _block_at(text, cm.start(), source.pairs)
-        if cbody:
-            owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
-    owner_frozen = frozenset(owner_tags)
 
     out: List[Dict] = []
     for focus_id, fbody, fstart, fend, fline in source.blocks:
@@ -1161,7 +1263,7 @@ def _scan_cross_country_fires(
                     if tm and tm.group(1) in notifications:
                         continue
                     if _country_event_target_is_foreign(
-                        rbody, ce.start(), owner_frozen
+                        rbody, ce.start(), source.owner_tags
                     ):
                         flagged = True
                         break
@@ -1459,7 +1561,14 @@ def _parse_focus_text(source: _FocusFile) -> Dict:
 
 def _scan_focus_file(
     args: Tuple[
-        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool, bool
+        str,
+        str,
+        Dict[str, FrozenSet[str]],
+        FrozenSet[str],
+        FrozenSet[str],
+        Dict[str, FrozenSet[str]],
+        bool,
+        bool,
     ],
 ) -> Dict[str, Any]:
     """Pool worker: every per-file focus scan from one read of the file.
@@ -1473,6 +1582,7 @@ def _scan_focus_file(
         staffable_map,
         money_effects,
         notifications,
+        payers,
         icons,
         reportable,
     ) = args
@@ -1487,7 +1597,7 @@ def _scan_focus_file(
     return {
         **indexes,
         "missing_search_filters": source.missing_search_filters(),
-        "ai_guards": source.ai_guards(staffable_map, money_effects),
+        "ai_guards": source.ai_guards(staffable_map, money_effects, payers),
         "cross_country_fires": source.cross_country_fires(notifications),
         "pp_malus": source.pp_malus(),
         "structural": source.structural(),
@@ -1570,7 +1680,7 @@ class Validator(BaseValidator):
             self._scans = []
             return self._scans
         staffable, money = self._scripted_effect_data_for_guards()
-        notifications = self._notification_event_ids()
+        notifications, payers = self._event_facts()
         self._scans = self._pool_map(
             _scan_focus_file,
             [
@@ -1580,6 +1690,7 @@ class Validator(BaseValidator):
                     staffable,
                     money,
                     notifications,
+                    payers,
                     self.missing_icons,
                     report,
                 )
@@ -2038,11 +2149,12 @@ class Validator(BaseValidator):
         or a money-spending scripted effect), not the focus completion time —
         so a focus spending at least the threshold without the guard is
         flagged, a focus carrying the guard with no money cost is flagged as
-        unneeded, and a money/building focus tagged neither economic nor
-        military is flagged as miscategorized. Effect chains are resolved to a
-        fixed point so a wrapper of any depth stays visible; guards written via
-        wrapper scripted triggers are not recognized. All are per-file
-        aggregates so the backlog stays readable.
+        unneeded (a previewed cost, or one another nation's event charges back
+        to the sender, still counts), and a money/building focus tagged neither
+        economic nor military is flagged as miscategorized. Effect chains are
+        resolved to a fixed point so a wrapper of any depth stays visible;
+        guards written via wrapper scripted triggers are not recognized. All
+        are per-file aggregates so the backlog stays readable.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
@@ -2089,7 +2201,7 @@ class Validator(BaseValidator):
                     underguarded_by_file[rel].append((d["id"], d["line"], d["spend"]))
                 elif d["unknown"]:
                     unknown_spend_by_file[rel].append((d["id"], d["line"]))
-            elif not d["has_cost"] and not d["previewed_cost"]:
+            elif not (d["has_cost"] or d["previewed_cost"] or d["event_cost"]):
                 unneeded_by_file[rel].append((d["id"], d["line"]))
 
             if (
@@ -2158,21 +2270,42 @@ class Validator(BaseValidator):
             category="focus-filter-mismatch",
         )
 
-    def _notification_event_ids(self) -> FrozenSet[str]:
-        """Event ids the target cannot answer: hidden, fewer than 2 options,
-        options tag-routed one per recipient (see _is_tag_routed), or options
-        that are pure flavor with no outcome at all (see _is_flavor_only).
+    def _event_facts(self) -> Tuple[FrozenSet[str], Dict[str, FrozenSet[str]]]:
+        """(notification ids, payers), from one pass over the event files.
 
-        Firing one of these into a foreign scope is a notification, not an
-        offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
+        Notifications are the events the target cannot answer: hidden, fewer
+        than 2 options, options tag-routed one per recipient (see
+        _is_tag_routed), or options that are pure flavor with no outcome at
+        all (see _is_flavor_only). Firing one of these into a foreign scope is
+        a notification, not an offer, so it never needs a TT_IF_THEY_ACCEPT
+        tooltip.
+
+        Payers maps an event id to the FROM or tag scopes that end up paying:
+        the ones its options charge, and the ones they fire a reply into when
+        the reply charges its own receiver.
         """
         files = self._collect_files(["events/*.txt"], ignore_staged=True)
         per_file = self._pool_map(
-            _notification_ids_in_file,
+            _event_facts_in_file,
             [(fp, self.mod_path) for fp in files],
             chunksize=10,
         )
-        return frozenset(event_id for ids in per_file for event_id in ids)
+        notifications: Set[str] = set()
+        charges: _EventCharges = {}
+        for ids, file_charges in per_file:
+            notifications.update(ids)
+            charges.update(file_charges)
+        payers: Dict[str, FrozenSet[str]] = {}
+        for event_id, (charged, replies) in charges.items():
+            scopes = {
+                scope
+                for scope, reply in replies
+                if "ROOT" in charges.get(reply, (frozenset(), frozenset()))[0]
+            }
+            scopes.update(charged - {"ROOT"})
+            if scopes:
+                payers[event_id] = frozenset(scopes)
+        return frozenset(notifications), payers
 
     def validate_cross_country_event_tooltips(self):
         """Flag focuses that fire an event to another nation without a
