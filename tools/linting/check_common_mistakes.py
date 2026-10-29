@@ -4,6 +4,8 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
+  - add_stability / add_war_support set to a numeric literal of magnitude 1 or
+    more (both take a fraction; a variable or an expression is left alone)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
@@ -190,6 +192,8 @@ _RE_RELATION_MODIFIER = re.compile(
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 _RE_BARE_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+_RE_STAT_EFFECT_VALUE = re.compile(r"\b(add_stability|add_war_support)\s*=\s*(\S+)")
+_RE_STAT_EFFECT_MATH = re.compile(r"\s*[-+*/]")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
 # always true. Captures both tokens + values; caller checks token match in code.
 _RE_TAUTOLOGICAL_OR = re.compile(
@@ -3131,6 +3135,36 @@ def _check_random_select_amount_literal(lines):
     return issues
 
 
+def _check_stat_effect_magnitude(lines):
+    """Flag add_stability / add_war_support set to a literal of magnitude 1 or more.
+
+    Both effects take a fraction. A variable or an expression is left alone.
+    """
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "add_stability", "add_war_support"):
+        if src[i].strip().startswith("#"):
+            continue
+        code = src.depth_code[i]
+        for match in _RE_STAT_EFFECT_VALUE.finditer(code):
+            token = match.group(2).rstrip("}")
+            if not _RE_BARE_NUMBER.match(token):
+                continue
+            if _RE_STAT_EFFECT_MATH.match(code[match.end() :]):
+                continue
+            if abs(float(token)) < 1:
+                continue
+            effect = match.group(1)
+            issues.append(
+                (
+                    i + 1,
+                    f"{effect} = {token} is at least 100% -- "
+                    f"{effect} takes a fraction (0.05 is 5%)",
+                )
+            )
+    return issues
+
+
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
     src = _source(lines)
@@ -4220,9 +4254,9 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns (errors, warnings), each a
-    list of (filepath, line_num, message) tuples. Shadowed branches are warnings
-    while the existing ones are triaged."""
+    """Check a single file for common mistakes. Returns (errors, shadowed), each a
+    list of (filepath, line_num, message) tuples. Shadowed branches are kept apart
+    so the validator can report them under their own category."""
     issues = []
 
     try:
@@ -4463,6 +4497,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_wrong_stat_trigger(lines))
+    issues.extend(_check_stat_effect_magnitude(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
@@ -4481,10 +4516,10 @@ def check_file(filepath):
         issues.extend(_check_bare_statement_token(lines))
 
     # The leader rotation check already reports duplicate branches in these files.
-    warnings = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
     return (
         [(filepath, ln, msg) for ln, msg in issues],
-        [(filepath, ln, msg) for ln, msg in warnings],
+        [(filepath, ln, msg) for ln, msg in shadowed],
     )
 
 
@@ -4540,13 +4575,12 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = sorted(issue for errors, _ in results for issue in errors)
-    warnings = sorted(issue for _, file_warnings in results for issue in file_warnings)
+    all_issues = sorted(
+        issue for errors, shadowed in results for issue in errors + shadowed
+    )
 
     for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
-    for filepath, line_num, message in warnings:
-        print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
 

@@ -35,6 +35,7 @@ from validate_oob_units import (
     build_variant_name_index,
     build_variant_registry,
     check_attributed_archetypes,
+    check_misplaced_support,
     check_named_variant_refs,
     check_oob_variant_refs,
     check_template_slots,
@@ -2594,6 +2595,81 @@ def test_template_slots(raw, rel, expected):
     ]
 
 
+_MISPLACED = "template-misplaced-support"
+_BARRED = {"support": {"Arty_Battery"}, "regimental_support": {"hq_engineer"}}
+_SUPPORT_UNITS = """sub_units = {
+\tArty_Battery = {
+\t\tgroup = support
+\t\tdivisional = no
+\t}
+\thq_engineer = {
+\t\tgroup = support
+\t\tregimental = no
+\t}
+}
+"""
+
+
+def _dropped(block, unit, flag):
+    return f"{block} lists '{unit}', which sets {flag} = no, so the game drops it"
+
+
+# case: (template text, (line, message) per finding)
+_MISPLACED_CASES = {
+    "regimental company in support": (
+        _paradrop_template("Test Brigade", "Arty_Battery"),
+        [(7, _dropped("support", "Arty_Battery", "divisional"))],
+    ),
+    "divisional company in regimental support": (
+        _paradrop_template("Test Brigade", "hq_engineer", block="regimental_support"),
+        [(7, _dropped("regimental_support", "hq_engineer", "regimental"))],
+    ),
+    "each company in the block it allows": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regimental_support")
+        + _paradrop_template("Test Brigade", "hq_engineer"),
+        [],
+    ),
+    "company without a placement flag": (
+        _paradrop_template("Test Brigade", "Weapons_company"),
+        [],
+    ),
+    "flags apply to support blocks only": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regiments"),
+        [],
+    ),
+    "each misplaced entry is its own finding": (
+        _paradrop_template("Test Brigade", "Arty_Battery", repeat=2),
+        [
+            (7, _dropped("support", "Arty_Battery", "divisional")),
+            (8, _dropped("support", "Arty_Battery", "divisional")),
+        ],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "raw, expected", _MISPLACED_CASES.values(), ids=_MISPLACED_CASES
+)
+def test_misplaced_support(raw, expected):
+    text = strip_comments(raw)
+    assert check_misplaced_support(text, _build_block_nodes(text), _BARRED) == [
+        (line, _MISPLACED, _PREFIX + message) for line, message in expected
+    ]
+
+
+def test_misplaced_support_reads_flags_from_unit_files(tmp_path):
+    _write(tmp_path, "common/units/MD_regimental_support.txt", _SUPPORT_UNITS)
+    _write(tmp_path, _OOB, _paradrop_template("Test Brigade", "Arty_Battery"))
+    validator = _validator(tmp_path)
+    validator._build_canonical_units()
+    validator.validate_template_slots()
+    assert [
+        (issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == _MISPLACED
+    ] == [("warning", _OOB, 7)]
+
+
 def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
     write_tree(
         tmp_path,
@@ -2760,6 +2836,138 @@ def test_full_run_reports_both_categories_for_every_template_source(tmp_path, re
         ("error", _SLOT, rel, 5),
         ("warning", _LOCKED, rel, 14),
     ]
+
+
+# --- air base capacity ------------------------------------------------------
+
+_AIRBASE = "airbase-over-capacity"
+_SWE_AIR = "history/units/SWE_2000_bba.txt"
+_NOR_AIR = "history/units/NOR_2000_bba.txt"
+_STATE_10 = "history/states/10-Test.txt"
+_BUILDINGS_1 = "\t\tbuildings = {\n\t\t\tair_base = 1\n\t\t}\n"
+
+
+def _state_file(history):
+    return f"state = {{\n\tid = 10\n\thistory = {{\n{history}\t}}\n}}\n"
+
+
+def _air_oob(*states):
+    """`air_wings` with one wing per amount: ``(state id, [amounts])`` pairs."""
+    body = ""
+    for state_id, amounts in states:
+        body += f"\t{state_id} = {{\n"
+        for amount in amounts:
+            body += (
+                f'\t\tsmall_plane_airframe_1 = {{ owner = "SWE" amount = {amount} }}\n'
+            )
+        body += "\t}\n"
+    return "air_wings = {\n" + body + "}\n"
+
+
+_OVER = "state 10 starts with 25 planes, but air_base 1 holds 24"
+
+# case: (files over the base tree, staged files or None, (file, line, message))
+_AIRBASE_CASES = {
+    "over capacity": ({_SWE_AIR: _air_oob((10, [25]))}, None, [(_SWE_AIR, 2, _OVER)]),
+    "at capacity": ({_SWE_AIR: _air_oob((10, [24]))}, None, []),
+    "wings in one state add up": (
+        {_SWE_AIR: _air_oob((10, [12, 13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "state repeated in one file": (
+        {_SWE_AIR: _air_oob((10, [12]), (10, [13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "commented wing": (
+        {
+            _SWE_AIR: _air_oob((10, [24])).replace(
+                "\t}", "\t\t# small_plane_airframe_1 = { amount = 1 }\n\t}"
+            )
+        },
+        None,
+        [],
+    ),
+    "commented air base": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1.replace(
+                    "\t\t\tair_base", "\t\t\t# air_base = 5\n\t\t\tair_base"
+                )
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "dated air base is not the start level": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1
+                + "\t\t2010.1.1 = {\n\t\t\tbuildings = {\n\t\t\t\tair_base = 5\n"
+                "\t\t\t}\n\t\t}\n"
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "unknown state": (
+        {_SWE_AIR: _air_oob((99, [1]))},
+        None,
+        [(_SWE_AIR, 2, "state 99 starts with 1 planes, but air_base 0 holds 0")],
+    ),
+    "carrier wing is not a state": (
+        {_SWE_AIR: _air_oob(('"HSwMS Test (R01)"', [25]), (10, [24]))},
+        None,
+        [],
+    ),
+    "vanilla capacity without the define": (
+        {_SWE_AIR: _air_oob((10, [25])), "common/defines/MD_defines.lua": ""},
+        None,
+        [],
+    ),
+    "shared base": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        None,
+        [
+            (_NOR_AIR, 2, _OVER.replace("planes", "planes (shared with SWE)")),
+            (_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)")),
+        ],
+    ),
+    "staged file counts unstaged wings": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        [_SWE_AIR],
+        [(_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)"))],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files, staged, expected", _AIRBASE_CASES.values(), ids=_AIRBASE_CASES
+)
+def test_airbase_capacity(tmp_path, files, staged, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/defines/MD_defines.lua": (
+                "\tNDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24\n"
+            ),
+            _STATE_10: _state_file(_BUILDINGS_1),
+            **files,
+        },
+    )
+    validator = _validator(tmp_path, staged_only=staged is not None)
+    if staged is not None:
+        validator.staged_files = [str(tmp_path / rel) for rel in staged]
+
+    validator.validate_airbase_capacity()
+
+    assert [
+        (issue.severity, issue.category, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+    ] == [("warning", _AIRBASE, *finding) for finding in expected]
 
 
 def test_clean_mod_passes_every_oob_check(tmp_path):

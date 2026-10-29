@@ -359,6 +359,22 @@ def test_event_file_dispatch_covers_the_event_only_checks(tmp_path, scoped_refs)
     assert _matching(messages, "log references Event test.2")
 
 
+def test_stat_effect_magnitude_is_wired(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "events/MD_stat.txt",
+        "country_event = {",
+        "\toption = {",
+        "\t\tadd_war_support = 15",
+        "\t}",
+        "}",
+    )
+    assert messages == [
+        "add_war_support = 15 is at least 100% -- "
+        "add_war_support takes a fraction (0.05 is 5%)"
+    ]
+
+
 def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
     messages = _messages(
         tmp_path,
@@ -522,7 +538,7 @@ def test_main_reports_issues_and_exits_nonzero(tmp_path, monkeypatch, capsys):
     assert "Found 1 issue(s)" in out
 
 
-def test_main_prints_warnings_without_failing(tmp_path, monkeypatch, capsys):
+def test_main_fails_on_a_shadowed_branch(tmp_path, monkeypatch, capsys):
     path = tmp_path / "common" / "shadow.txt"
     _write(
         path,
@@ -534,9 +550,11 @@ def test_main_prints_warnings_without_failing(tmp_path, monkeypatch, capsys):
         ),
     )
 
-    assert _run_main(monkeypatch, tmp_path, str(path)) == 0
+    assert _run_main(monkeypatch, tmp_path, str(path)) == 1
 
-    assert "3: warning: else_if never runs" in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "3: else_if never runs" in out
+    assert "Found 1 issue(s)" in out
 
 
 def test_main_reports_an_empty_run(tmp_path, monkeypatch, capsys):
