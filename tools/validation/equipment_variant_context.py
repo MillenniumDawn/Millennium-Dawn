@@ -139,20 +139,23 @@ def branches(nodes, dlcs):
         reachable = True
         nested = []
         while True:
+            arm = []
+            own = []
+            inner = False
+            for child in node.children:
+                # An else after an inner if chain belongs to that chain.
+                if child.key in {"else_if", "else"}:
+                    (arm if inner else own).append(child)
+                    continue
+                if child.key != "limit":
+                    arm.append(child)
+                inner = child.key == "if"
             limit = _first_child(node, "limit")
             truth = dlc_truth(limit.children, dlcs) if limit else None
             if reachable and (truth is None or truth):
-                outcomes.append(
-                    [
-                        child
-                        for child in node.children
-                        if child.key not in {"limit", "else", "else_if"}
-                    ]
-                )
+                outcomes.append(arm)
             reachable = reachable and (truth is None or not truth)
-            nested = [
-                child for child in node.children if child.key in {"else_if", "else"}
-            ] + nested
+            nested = own + nested
             if nested:
                 node = nested.pop(0)
             elif index < len(nodes) and nodes[index].key in {"else_if", "else"}:

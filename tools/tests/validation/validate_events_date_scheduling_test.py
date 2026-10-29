@@ -7,7 +7,12 @@ carries a date bound of its own.
 
 import pytest
 import validate_events as V
-from shared.suite import assert_findings, collecting_validator, event_block
+from shared.suite import (
+    assert_findings,
+    build_validator,
+    collecting_validator,
+    event_block,
+)
 from shared.suite import write_under_str as _write
 
 _YEARLY = V._YEARLY_EFFECTS_REL
@@ -145,6 +150,7 @@ def _stub(monkeypatch, fires, scanned):
         "_collect_files": lambda *a, **k: ["f.txt"],
         "_rel_posix": lambda path: path,
         "_get_event_fires": lambda: [(eid, path, 5) for eid, path in fires],
+        "_get_random_event_ids": lambda: set(),
         "_pool_map": lambda fn, args, **k: [scanned(fn)],
     }
     for name, stub in stubs.items():
@@ -229,25 +235,88 @@ def test_date_gated_event_needs_a_schedule(
 
 
 # A second fire path may need the guard, so only sole-source events count.
-# case: ((id, file) fires, finding)
+# case: ((id, file) fires, date-bound scan result, finding)
 _DATE_BOUND_CASES = {
-    "scheduled only": ([("foo.1", _YEARLY)], ("foo.1", _YEARLY)),
-    "also fired from a focus": ([("foo.1", _YEARLY), ("foo.1", _FOCUS_FILE)], None),
-    "also fired from an event": ([("foo.1", _YEARLY), ("foo.1", _EVENT_FILE)], None),
-    "no yearly effects file": ([("foo.1", _EVENT_FILE)], _SKIPPED),
+    "scheduled only": (
+        [("foo.1", _YEARLY)],
+        [("foo.1", _EVENT_FILE, 10)],
+        ("foo.1", _YEARLY),
+    ),
+    "also fired from a focus": (
+        [("foo.1", _YEARLY), ("foo.1", _FOCUS_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        None,
+    ),
+    "also fired from an event": (
+        [("foo.1", _YEARLY), ("foo.1", _EVENT_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        None,
+    ),
+    "no yearly effects file": (
+        [("foo.1", _EVENT_FILE)],
+        [("foo.1", _EVENT_FILE, 10)],
+        _SKIPPED,
+    ),
+    "nothing carries a date bound": ([("foo.1", _YEARLY)], [], None),
 }
 
 
 @pytest.mark.parametrize(
-    ("fires", "finding"), _DATE_BOUND_CASES.values(), ids=_DATE_BOUND_CASES
+    ("fires", "bounded", "finding"), _DATE_BOUND_CASES.values(), ids=_DATE_BOUND_CASES
 )
-def test_scheduled_event_needs_no_date_bound(monkeypatch, fires, finding):
-    validator = _stub(monkeypatch, fires, lambda fn: [("foo.1", _EVENT_FILE, 10)])
+def test_scheduled_event_needs_no_date_bound(monkeypatch, fires, bounded, finding):
+    validator = _stub(monkeypatch, fires, lambda fn: bounded)
 
     validator.validate_scheduled_date_bounds()
 
-    # Warning-only until the backlog is cleared.
-    _assert_reported(validator, finding, V.Severity.WARNING)
+    _assert_reported(validator, finding, V.Severity.ERROR)
+
+
+# case: (pool member, staged event file, errors)
+_RANDOM_POOL_CASES = {
+    "sole yearly source stays reported": (None, False, 1),
+    "another event in the pool stays reported": ("other.1", False, 1),
+    "pooled event keeps its bound unreported": ("probe.1", False, 0),
+    "staged event sees the unstaged pool": ("probe.1", True, 0),
+}
+
+
+@pytest.mark.parametrize(
+    ("member", "staged", "errors"),
+    _RANDOM_POOL_CASES.values(),
+    ids=_RANDOM_POOL_CASES,
+)
+def test_random_pool_fires_exempt_the_date_bound(tmp_path, member, staged, errors):
+    event_path = _write(
+        tmp_path,
+        _EVENT_FILE,
+        _event("probe.1", "trigger = {\n\t\tdate > 2005.1.1\n\t}"),
+    )
+    _write(
+        tmp_path,
+        _YEARLY,
+        "trigger_year_2005_events = {\n"
+        "\tGER = {\n\t\tcountry_event = { id = probe.1 days = 30 }\n\t}\n}\n",
+    )
+    if member:
+        _write(
+            tmp_path,
+            _ON_ACTION_FILE,
+            "on_actions = {\n\ton_monthly = {\n\t\trandom_events = {\n"
+            f"\t\t\t100 = {member}\n\t\t}}\n\t}}\n}}\n",
+        )
+    validator = build_validator(V.Validator, tmp_path)
+    if staged:
+        validator.staged_only = True
+        validator.staged_files = [event_path]
+
+    validator.validate_scheduled_date_bounds()
+
+    assert validator.errors_found == errors
+    assert validator.warnings_found == 0
+    assert [(issue.severity, issue.category) for issue in validator._issues] == [
+        (V.Severity.ERROR, "scheduled-event-date-bound")
+    ] * errors
 
 
 def _on_actions_validator(tmp_path, monkeypatch, body):

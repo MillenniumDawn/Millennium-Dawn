@@ -1,28 +1,52 @@
 #!/usr/bin/env python3
-"""Git merge driver for Changelog.txt.
+"""Git merge driver and cleanup tool for Changelog.txt.
 
 Runs a normal three-way merge, then resolves the conflicts that come from both
 sides adding or extending changelog entries. Exits 1 when a conflict needs a
 human, so the caller skips the merge instead of duplicating entries.
 
 Register it as: merge_changelog.py %O %A %B
-Fix top-version ordering: merge_changelog.py --fix [Changelog.txt]
+Clean and sort the top version: merge_changelog.py --fix [Changelog.txt]
+Report duplicates and consolidation candidates: merge_changelog.py --preview
+Fix, then write the docs page: merge_changelog.py --beta | --release NAME
 """
 
 import argparse
 import difflib
+import json
 import re
 import subprocess
 import sys
 import tempfile
 from pathlib import Path
 
-from linting.check_changelog import CATEGORY_RE, order_lines, top_version
+from linting.check_changelog import (
+    BULLET_RE,
+    CATEGORY_RE,
+    ENTRY_RE,
+    TAG_PREFIX_RE,
+    VERSION_RE,
+    WORD_RE,
+    clean_lines,
+    duplicate_warnings,
+    order_lines,
+    top_entries,
+    top_version,
+)
 
 CONFLICT_RE = re.compile(r"^(?:<<<<<<< |\|{7} |=======\s*$|>>>>>>> )", re.M)
 TOKEN_PATTERN = re.compile(r"\w+|\s+|[^\w\s]")
 # Minimum difflib ratio for a changed line to count as an edit, not a new entry.
 SIMILARITY = 0.6
+ISSUE_RE = re.compile(r"#\d+")
+DOCS_VERSION_RE = re.compile(r"^## v\d", re.M)
+BETA_PAGE = Path("docs/src/content/misc/beta-changelogs.md")
+RELEASE_DIR = Path("docs/src/content/changelogSections")
+NEAR_DUPLICATE = 0.9
+# Shortest entry text that counts as contained in a longer entry.
+CONTAINED_LENGTH = 30
+PHRASE_WORDS = 5
+PHRASE_ENTRIES = 3
 
 
 def _edits(base, other):
@@ -283,17 +307,159 @@ def merge_text(base, ours, theirs):
     return "".join(merged)
 
 
+def _split(entry):
+    """Tags and text of a cleaned entry."""
+    text = entry[3:]
+    prefix = TAG_PREFIX_RE.match(text)
+    if not prefix:
+        return [], text
+    return WORD_RE.findall(prefix.group()), text[prefix.end() :]
+
+
+def _keep(entries):
+    """The tags and issue references a merged entry must keep."""
+    tags = [f"[{tag}]" for entry in entries for tag in _split(entry)[0]]
+    issues = [issue for entry in entries for issue in ISSUE_RE.findall(entry)]
+    kept = list(dict.fromkeys(tags + issues))
+    return f"; keep {', '.join(kept)}" if kept else ""
+
+
+def consolidation_candidates(lines):
+    """Near-duplicate entries and shared phrases a human could merge into one entry."""
+    entries = list(top_entries(lines))
+    candidates = []
+    for index, (lineno, _, entry) in enumerate(entries):
+        tags, text = _split(entry)
+        matcher = difflib.SequenceMatcher(None, autojunk=False)
+        matcher.set_seq2(text.lower())
+        for other_lineno, _, other in entries[:index]:
+            other_tags, other_text = _split(other)
+            if entry == other:
+                continue
+            pair = f"lines {other_lineno} and {lineno}"
+            if text.lower() == other_text.lower() and tags != other_tags:
+                combined = "/".join(
+                    f"[{tag}]" for tag in dict.fromkeys(other_tags + tags)
+                )
+                candidates.append(
+                    f"{pair}: same entry for other tags; combine as {combined} {other_text}"
+                )
+                continue
+            shorter, longer = sorted((text.lower(), other_text.lower()), key=len)
+            matcher.set_seq1(other_text.lower())
+            if (len(shorter) >= CONTAINED_LENGTH and shorter in longer) or (
+                matcher.real_quick_ratio() >= NEAR_DUPLICATE
+                and matcher.quick_ratio() >= NEAR_DUPLICATE
+                and matcher.ratio() >= NEAR_DUPLICATE
+            ):
+                candidates.append(
+                    f"{pair}: near-duplicate entries{_keep([other, entry])}"
+                )
+
+    phrases = {}
+    for lineno, category, entry in entries:
+        words = WORD_RE.findall(_split(entry)[1].lower())
+        for start in range(len(words) - PHRASE_WORDS + 1):
+            phrase = " ".join(words[start : start + PHRASE_WORDS])
+            phrases.setdefault((category, phrase), {})[lineno] = entry
+    groups = []
+    for (category, phrase), found in sorted(
+        phrases.items(), key=lambda item: -len(item[1])
+    ):
+        if len(found) < PHRASE_ENTRIES:
+            break
+        group = next(
+            (group for group in groups if group[2].keys() & found.keys()), None
+        )
+        if group:
+            group[2].update(found)
+        else:
+            groups.append((category, phrase, dict(found)))
+    for category, phrase, found in sorted(groups, key=lambda group: min(group[2])):
+        numbers = ", ".join(str(lineno) for lineno in sorted(found))
+        candidates.append(
+            f'lines {numbers}: {len(found)} {category} entries share "{phrase}"; '
+            f"consider one summary entry{_keep([found[line] for line in sorted(found)])}"
+        )
+    return candidates
+
+
+def render_markdown(lines, heading):
+    """The top version as a docs Markdown section: '##' heading, '###' categories, '-' lists."""
+    markdown = [f"## {heading}\n"]
+    for line in top_version(lines):
+        text = line.strip()
+        if not text or VERSION_RE.match(text.lstrip("\ufeff")):
+            continue
+        if CATEGORY_RE.match(line):
+            markdown.append(f"\n### {text[:-1].rstrip()}\n\n")
+        elif ENTRY_RE.match(line):
+            markdown.append(f"- {BULLET_RE.sub('', text)}\n")
+        else:
+            markdown.append(f"\n{text}\n")
+    return "".join(markdown)
+
+
+def replace_versions(page, markdown):
+    """Swap a docs page's version sections for markdown, keeping its frontmatter and intro."""
+    match = DOCS_VERSION_RE.search(page)
+    head = page[: match.start()] if match else page
+    return f"{head.rstrip()}\n\n{markdown}"
+
+
+def release_page(root, version, name):
+    """Path and current text of the release page, with frontmatter for a new one."""
+    major, minor = version.lstrip("v").split(".")[:2]
+    slug = f"v{major}-{minor}-{re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')}"
+    path = root / RELEASE_DIR / f"{slug}.md"
+    if path.exists():
+        return path, path.read_bytes().decode("utf-8")
+    orders = [
+        int(match.group(1))
+        for page in (root / RELEASE_DIR).glob("*.md")
+        if (
+            match := re.search(
+                r"^order:\s*(\d+)", page.read_text(encoding="utf-8"), re.M
+            )
+        )
+    ]
+    title = json.dumps(f"{version} '{name}'", ensure_ascii=False)
+    order = max(orders, default=0) + 1
+    return (
+        path,
+        f"---\ntitle: {title}\npage_id: changelog-{slug}\norder: {order}\n---\n",
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--fix", action="store_true", help="Fix top-version ordering")
+    modes = parser.add_mutually_exclusive_group()
+    modes.add_argument(
+        "--fix", action="store_true", help="Clean and sort the top version"
+    )
+    modes.add_argument(
+        "--preview",
+        action="store_true",
+        help="Report duplicates and consolidation candidates without writing",
+    )
+    modes.add_argument(
+        "--beta", action="store_true", help="Fix, then update the beta changelog page"
+    )
+    modes.add_argument(
+        "--release", metavar="NAME", help="Fix, then write the NAME release page"
+    )
     parser.add_argument("paths", nargs="*", metavar="PATH")
     args = parser.parse_args()
-    if args.fix and len(args.paths) > 1:
-        parser.error("--fix accepts at most one changelog path")
-    if not args.fix and len(args.paths) != 3:
+    cleanup = args.fix or args.preview or args.beta or args.release is not None
+    if cleanup and len(args.paths) > 1:
+        parser.error("cleanup modes accept at most one changelog path")
+    if not cleanup and len(args.paths) != 3:
         parser.error("merge driver requires BASE OURS THEIRS")
+    if args.release is not None and not re.search(r"[A-Za-z0-9]", args.release):
+        parser.error("--release needs a release name")
+    removed = []
     try:
-        if args.fix:
+        if cleanup:
             ours = Path(args.paths[0] if args.paths else "Changelog.txt")
             merged = ours.read_bytes().decode("utf-8")
         else:
@@ -306,13 +472,52 @@ def main():
         if CONFLICT_RE.search(merged):
             print("Resolve changelog conflict markers before sorting.", file=sys.stderr)
             return 1
-        ordered = "".join(order_lines(merged.splitlines(keepends=True)))
-        ours.write_bytes(ordered.encode("utf-8"))
+        lines = merged.splitlines(keepends=True)
+        if args.preview:
+            for message in duplicate_warnings(lines) + consolidation_candidates(lines):
+                print(f"{ours}: {message}")
+            return 0
+        if cleanup:
+            lines, removed = clean_lines(lines)
+        lines = order_lines(lines)
+        page = None
+        if args.beta or args.release is not None:
+            version = next(
+                (
+                    line.strip().lstrip("\ufeff")
+                    for line in top_version(lines)
+                    if VERSION_RE.match(line.lstrip("\ufeff"))
+                ),
+                None,
+            )
+            if version is None:
+                print("Add a version heading before writing docs.", file=sys.stderr)
+                return 1
+            if args.beta:
+                page = ours.parent / BETA_PAGE
+                heading = version
+                text = page.read_bytes().decode("utf-8")
+            else:
+                page, text = release_page(ours.parent, version, args.release)
+                heading = f'{version} - "{args.release}"'
+            text = replace_versions(text, render_markdown(lines, heading))
+        ours.write_bytes("".join(lines).encode("utf-8"))
+        if page:
+            page.write_bytes(text.encode("utf-8"))
     except (OSError, UnicodeError) as error:
         print(f"Cannot update changelog: {error}", file=sys.stderr)
         return 1
-    if args.fix:
-        print(f"Fixed changelog ordering: {ours}")
+    if cleanup:
+        for entry in removed:
+            print(
+                f"{ours}: warning: removed duplicate entry: {entry[3:]}",
+                file=sys.stderr,
+            )
+        for message in duplicate_warnings(lines):
+            print(f"{ours}: {message}", file=sys.stderr)
+        print(f"Fixed changelog: {ours}")
+    if page:
+        print(f"Updated changelog page: {page}")
     return 0
 
 
