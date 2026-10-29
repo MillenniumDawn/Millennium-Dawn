@@ -256,6 +256,8 @@ The following page is a non-exhaustive list of contributors from over the years 
 - **MrGnodski** - Hungary Camo
 - **Owl** - Various monuments from "Landmarks Project Revived"
 - **RTmanfre** - Italian 3D models/textures and other models
+- **LADIRE - Laboratorio di Disegno e Restauro** - [Tomb of Cyrus the Great 3D Model](https://sketchfab.com/3d-models/tomba-di-ciro-ii-il-grande-a-pasargade-iran-5644d98b98e64f958839263cc485bf1f) (CC BY-NC 4.0)
+
 
 # Musicians
 

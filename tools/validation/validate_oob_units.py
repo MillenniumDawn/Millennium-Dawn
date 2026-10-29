@@ -191,6 +191,9 @@ _REWARD_MASTERY_RE = re.compile(
 _SLOT_COORD_RE = re.compile(r"\b([xy])\s*=\s*(\d+)")
 _TEMPLATE_SLOT = "template-slot"
 _TEMPLATE_LOCKED_ROW = "template-locked-row"
+_TEMPLATE_MISPLACED_SUPPORT = "template-misplaced-support"
+# A sub-unit that sets the flag to no cannot sit in that template block.
+_SUPPORT_BLOCK_FLAGS = {"support": "divisional", "regimental_support": "regimental"}
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
@@ -253,6 +256,14 @@ _TEMPLATE_SOURCE_ROOTS = (
     "common/resistance_compliance_modifiers/",
     "common/special_projects/",
     "common/ideas/",
+)
+_AIRBASE_OVER_CAPACITY = "airbase-over-capacity"
+_AIR_OOB_PATTERN = "history/units/*.txt"
+_STATE_HISTORY_PATTERN = "history/states/*.txt"
+# Vanilla NDefines.NBuildings value: planes per air base level.
+_VANILLA_AIRBASE_CAPACITY_MULT = 200
+_AIRBASE_CAPACITY_RE = re.compile(
+    r"^\s*NDefines\.NBuildings\.AIRBASE_CAPACITY_MULT\s*=\s*(\d+)", re.M
 )
 
 
@@ -399,31 +410,37 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
     return equipment
 
 
-def _parse_parachutable_units_file(content: str) -> Set[str]:
-    """Sub-unit names declared `can_be_parachuted = yes` in one units file."""
+def _parse_unit_flags_file(content: str) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    """Sub-unit names declared `can_be_parachuted = yes` in one units file, and
+    per support block the names whose flag bars them from it."""
     text = blank_comments(content)
     parachutable = set()
+    barred: Dict[str, Set[str]] = {block: set() for block in _SUPPORT_BLOCK_FLAGS}
     for lo, hi in _iter_named_blocks(text, 0, len(text), "sub_units"):
         for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
             if _scalar(text, blo, bhi, "can_be_parachuted") == "yes":
                 parachutable.add(name)
-    return parachutable
+            for block, flag in _SUPPORT_BLOCK_FLAGS.items():
+                if _scalar(text, blo, bhi, flag) == "no":
+                    barred[block].add(name)
+    return parachutable, barred
 
 
 def _parse_canonical_unit_source(
     content: str,
-) -> Tuple[Set[str], Set[str], Set[str]]:
+) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
     return (
         _parse_canonical_units_file(content),
         _parse_equipment_names_file(content),
-        _parse_parachutable_units_file(content),
+        *_parse_unit_flags_file(content),
     )
 
 
 def _parse_canonical_unit_sources(
     mod_path: str,
-) -> List[Tuple[Set[str], Set[str], Set[str]]]:
-    """Parse each unit source once for the canonical and paradrop unit indexes."""
+) -> List[Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]]:
+    """Parse each unit source once for the canonical, paradrop, and support
+    placement unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
@@ -431,7 +448,7 @@ def _parse_canonical_unit_sources(
 
         def compute(
             source_content: str = content,
-        ) -> Tuple[Set[str], Set[str], Set[str]]:
+        ) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
             return _parse_canonical_unit_source(source_content)
 
         parsed.append(
@@ -2380,8 +2397,38 @@ def check_template_slots(
     return findings
 
 
-def _check_template_slots_file(args: Tuple[str, str, TemplateLimits]) -> List[Issue]:
-    filepath, mod_path, limits = args
+def check_misplaced_support(
+    text: str, nodes: List[Dict], barred: Dict[str, Set[str]]
+) -> List[Tuple[int, str, str]]:
+    """``(line, category, message)`` per sub-unit in a support block its own
+    flags bar it from. The game drops it from the template."""
+    findings = []
+    for node in nodes:
+        if node["label"] != "division_template":
+            continue
+        name = _top_level_value(text, node["start"] + 1, node["end"], "name")
+        for block_idx in node["children"]:
+            block = nodes[block_idx]["label"]
+            for unit_idx in nodes[block_idx]["children"]:
+                unit = nodes[unit_idx]["label"]
+                if unit in barred.get(block, ()):
+                    findings.append(
+                        (
+                            nodes[unit_idx]["line"],
+                            _TEMPLATE_MISPLACED_SUPPORT,
+                            f"template '{name}' (line {node['line']}): {block} "
+                            f"lists '{unit}', which sets "
+                            f"{_SUPPORT_BLOCK_FLAGS[block]} = no, so the game "
+                            f"drops it",
+                        )
+                    )
+    return findings
+
+
+def _check_template_slots_file(
+    args: Tuple[str, str, TemplateLimits, Dict[str, Set[str]]],
+) -> List[Issue]:
+    filepath, mod_path, limits, barred = args
     raw = _read_text(filepath, mod_path)
     # Most candidates only name a template inside a create_unit string.
     if not _DIVISION_TEMPLATE_DEF_TEXT_RE.search(raw):
@@ -2406,7 +2453,111 @@ def _check_template_slots_file(args: Tuple[str, str, TemplateLimits]) -> List[Is
             line=line,
         )
         for line, category, message in check_template_slots(text, nodes, rel, limits)
+        + check_misplaced_support(text, nodes, barred)
     ]
+
+
+def read_airbase_capacity(mod_path: str) -> Dict[str, Tuple[int, int]]:
+    """State id -> (air_base level, plane capacity) from undated state history."""
+    per_level = _VANILLA_AIRBASE_CAPACITY_MULT
+    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
+        for value in _AIRBASE_CAPACITY_RE.findall(_read_text(path, mod_path)):
+            per_level = int(value)
+    capacity: Dict[str, Tuple[int, int]] = {}
+    for path in _limit_sources(mod_path, _STATE_HISTORY_PATTERN):
+        text = strip_comments(_read_text(path, mod_path))
+        nodes = _build_block_nodes(text)
+        for state in nodes:
+            if state["parent"] != -1 or state["label"] != "state":
+                continue
+            state_id = _top_level_value(text, state["start"] + 1, state["end"], "id")
+            if not state_id:
+                continue
+            level = 0
+            for history in state["children"]:
+                if nodes[history]["label"] != "history":
+                    continue
+                for idx in nodes[history]["children"]:
+                    buildings = nodes[idx]
+                    if buildings["label"] != "buildings":
+                        continue
+                    value = _top_level_value(
+                        text, buildings["start"] + 1, buildings["end"], "air_base"
+                    )
+                    if value and value.isdigit():
+                        level = int(value)
+            capacity[state_id] = (level, level * per_level)
+    return capacity
+
+
+def read_air_wing_placements(mod_path: str) -> Dict[str, List[Tuple[str, int, int]]]:
+    """OOB file -> (state id, line, planes) for each state its air_wings use."""
+    placements: Dict[str, List[Tuple[str, int, int]]] = {}
+    for path in _limit_sources(mod_path, _AIR_OOB_PATTERN):
+        raw = _read_text(path, mod_path)
+        if "air_wings" not in raw:
+            continue
+        text = strip_comments(raw)
+        nodes = _build_block_nodes(text)
+        rows = []
+        for wings in nodes:
+            if wings["parent"] != -1 or wings["label"] != "air_wings":
+                continue
+            for idx in wings["children"]:
+                state = nodes[idx]
+                # Carrier wings are keyed by a quoted ship name, not a state id.
+                if not (state["label"] or "").isdigit():
+                    continue
+                planes = 0
+                for wing in state["children"]:
+                    amount = _top_level_value(
+                        text, nodes[wing]["start"] + 1, nodes[wing]["end"], "amount"
+                    )
+                    if amount and amount.isdigit():
+                        planes += int(amount)
+                rows.append((state["label"], state["line"], planes))
+        if rows:
+            rel = normalize_path_separators(os.path.relpath(path, mod_path))
+            placements[rel] = rows
+    return placements
+
+
+def check_airbase_capacity(
+    placements: Dict[str, List[Tuple[str, int, int]]],
+    capacity: Dict[str, Tuple[int, int]],
+) -> List[Issue]:
+    """One finding per OOB file and state whose starting planes, summed over
+    every country based there, exceed the state's air base capacity."""
+    planes: Dict[str, int] = {}
+    tags: Dict[str, Set[str]] = {}
+    for rel, rows in placements.items():
+        for state_id, _line, count in rows:
+            planes[state_id] = planes.get(state_id, 0) + count
+            tags.setdefault(state_id, set()).add(os.path.basename(rel)[:3])
+    issues = []
+    for rel, rows in sorted(placements.items()):
+        tag = os.path.basename(rel)[:3]
+        reported: Set[str] = set()
+        for state_id, line, _count in rows:
+            level, limit = capacity.get(state_id, (0, 0))
+            if planes[state_id] <= limit or state_id in reported:
+                continue
+            reported.add(state_id)
+            others = sorted(tags[state_id] - {tag})
+            shared = f" (shared with {', '.join(others)})" if others else ""
+            issues.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category=_AIRBASE_OVER_CAPACITY,
+                    message=(
+                        f"state {state_id} starts with {planes[state_id]} planes"
+                        f"{shared}, but air_base {level} holds {limit}"
+                    ),
+                    file=rel,
+                    line=line,
+                )
+            )
+    return issues
 
 
 def _read_division_template_entries(
@@ -3179,6 +3330,7 @@ class Validator(BaseValidator):
         self.canonical = set()
         self.canonical_lower = {}
         self.parachutable = set()
+        self.barred_support: Dict[str, Set[str]] = {}
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
         self._variant_sources_by_scope: Dict[
@@ -3190,17 +3342,19 @@ class Validator(BaseValidator):
         self._log_section("Building canonical unit name set...")
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
-        self.canonical = {
-            name for sub_units, _, _ in unit_sources for name in sub_units
+        self.canonical = {name for sub_units, *_ in unit_sources for name in sub_units}
+        self.parachutable = {name for _, _, para, _ in unit_sources for name in para}
+        self.barred_support = {
+            block: {name for *_, barred in unit_sources for name in barred[block]}
+            for block in _SUPPORT_BLOCK_FLAGS
         }
-        self.parachutable = {name for _, _, para in unit_sources for name in para}
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
         # Namelist keys also accept equipment-type names (air namelists use
         # `small_plane_airframe` rather than the sub_unit name `light_fighter`).
         self.namelist_canonical = set(self.canonical)
         self.namelist_canonical.update(
-            name for _, equipment_names, _ in unit_sources for name in equipment_names
+            name for _, equipment_names, *_ in unit_sources for name in equipment_names
         )
         self.namelist_canonical_lower = {
             name.lower(): name for name in self.namelist_canonical
@@ -3836,7 +3990,8 @@ class Validator(BaseValidator):
         )
 
     def validate_template_slots(self):
-        """Flag division_template layouts the designer hides or keeps locked."""
+        """Flag division_template layouts the designer hides, keeps locked, or
+        drops units from."""
         self._log_section("Checking division template slot layout...")
 
         files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
@@ -3854,7 +4009,7 @@ class Validator(BaseValidator):
         )
         results = self._pool_flat_map(
             _check_template_slots_file,
-            [(f, self.mod_path, limits) for f in files],
+            [(f, self.mod_path, limits, self.barred_support) for f in files],
             chunksize=20,
         )
 
@@ -3871,6 +4026,54 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category=_TEMPLATE_LOCKED_ROW,
         )
+        self._report(
+            [
+                issue
+                for issue in results
+                if issue.category == _TEMPLATE_MISPLACED_SUPPORT
+            ],
+            "✓ No division template puts a sub-unit in a support block it cannot use",
+            "Division templates with support sub-units the game drops:",
+            severity=Severity.WARNING,
+            category=_TEMPLATE_MISPLACED_SUPPORT,
+        )
+
+    def validate_airbase_capacity(self):
+        """Flag starting air wings that overfill a state's air bases."""
+        self._log_section("Checking starting air base capacity...")
+
+        checked = {
+            normalize_path_separators(os.path.relpath(path, self.mod_path))
+            for path in self._collect_files([_AIR_OOB_PATTERN])
+        }
+        if not checked:
+            return
+        # Totals cover every OOB, so a staged file still sees shared bases.
+        placements = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.air_wing_placements",
+            self._collect_files([_AIR_OOB_PATTERN], ignore_staged=True),
+            lambda: read_air_wing_placements(self.mod_path),
+        )
+        capacity = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.airbase_capacity",
+            self._collect_files(
+                [_DEFINES_PATTERN, _STATE_HISTORY_PATTERN], ignore_staged=True
+            ),
+            lambda: read_airbase_capacity(self.mod_path),
+        )
+        self._report(
+            [
+                issue
+                for issue in check_airbase_capacity(placements, capacity)
+                if issue.file in checked
+            ],
+            "✓ All starting air wings fit their air bases",
+            "Starting air wings over air base capacity:",
+            severity=Severity.WARNING,
+            category=_AIRBASE_OVER_CAPACITY,
+        )
 
     def run_validations(self):
         self._build_canonical_units()
@@ -3885,6 +4088,7 @@ class Validator(BaseValidator):
         self.validate_created_units()
         self.validate_airborne_templates()
         self.validate_template_slots()
+        self.validate_airbase_capacity()
 
 
 def _add_extra_args(parser):
