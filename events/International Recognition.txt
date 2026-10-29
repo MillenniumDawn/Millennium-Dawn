@@ -54,21 +54,7 @@ country_event = {
 	option = {
 		name = recognition.71.a
 		log = "[GetDateText]: [This.GetName]: recognition.71.a executed"
-		remove_ideas = lacks_international_recognition
-		if = {
-			limit = { has_idea = non_state_actor }
-			remove_ideas = non_state_actor
-		}
-		if = {
-			limit = { NOT = { is_in_array = { global.UN_general_assembly = THIS } } }
-			add_to_array = { global.UN_general_assembly = THIS }
-			add_dynamic_modifier = { modifier = united_nations_member }
-			recompute_un_2_3_number = yes
-			international_systems_force_update = yes
-		}
-		clr_country_flag = recent_un_ascension_attempt
-		remove_stale_ga_membership_votes_for_this = yes
-		international_systems_update = yes
+		un_admit_member = yes
 	}
 }
 
@@ -131,12 +117,6 @@ country_event = {
 				modifier = recognises_us
 			}
 			recognition_grant_increment = yes
-			ROOT = {
-				if = {
-					limit = { NOT = { is_in_array = { recognised_countries = PREV } } }
-					add_to_array = { recognised_countries = PREV }
-				}
-			}
 		}
 		ai_chance = {
 			base = 1
@@ -203,14 +183,14 @@ country_event = {
 				add = 1
 				any_country = {
 					has_country_flag = pressured_to_recognize_@ROOT
-					check_variable = { THIS.Granted_Recognition < 5 }
+					check_variable = { recognised_by^num < 5 }
 				}
 			}
 			modifier = {
 				add = 5
 				any_country = {
 					has_country_flag = pressured_to_recognize_@ROOT
-					check_variable = { THIS.Granted_Recognition < 70 }
+					check_variable = { recognised_by^num < 70 }
 				}
 			}
 			modifier = {
@@ -230,38 +210,38 @@ country_event = {
 					any_country = {
 						has_country_flag = pressured_to_recognize_@ROOT
 						OR = {
-							has_country_flag = original_owner_@THIS
-							has_country_flag = supports_original_owner_@THIS
+							is_in_array = { original_owners = ROOT }
+							is_in_array = { original_owner_supporters = ROOT }
 							AND = {
-								USA = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = USA } }
 								ROOT = { check_variable = { influence_array^0 = USA } }
 							}
 							AND = {
-								CHI = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = CHI } }
 								ROOT = { check_variable = { influence_array^0 = CHI } }
 							}
 							AND = {
-								SOV = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = SOV } }
 								ROOT = { check_variable = { influence_array^0 = SOV } }
 							}
 							AND = {
-								RAJ = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = RAJ } }
 								ROOT = { check_variable = { influence_array^0 = RAJ } }
 							}
 							AND = {
-								SAU = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = SAU } }
 								ROOT = { check_variable = { influence_array^0 = SAU } }
 							}
 							AND = {
-								SAF = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = SAF } }
 								ROOT = { check_variable = { influence_array^0 = SAF } }
 							}
 							AND = {
-								PER = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = PER } }
 								ROOT = { check_variable = { influence_array^0 = PER } }
 							}
 							AND = {
-								BRA = { NOT = { is_in_array = { recognised_countries = PREV } } }
+								NOT = { is_in_array = { recognised_by = BRA } }
 								ROOT = { check_variable = { influence_array^0 = BRA } }
 							}
 						}
@@ -285,7 +265,7 @@ country_event = {
 			array = global.UN_general_assembly
 			limit = {
 				exists = yes
-				has_country_flag = original_owner_@PREV
+				is_in_array = { PREV.original_owners = THIS }
 			}
 			country_event = recognition.11
 			PREV = { set_temp_variable = { recog_owner_found = 1 } }
@@ -360,7 +340,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 			modifier = {
 				factor = 10
@@ -414,7 +394,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 		}
 	}
@@ -432,7 +412,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 		}
 	}
@@ -451,7 +431,7 @@ country_event = {
 			array = global.UN_general_assembly
 			limit = {
 				exists = yes
-				has_country_flag = original_owner_@PREV
+				is_in_array = { PREV.original_owners = THIS }
 			}
 			country_event = recognition.14
 			PREV = { set_temp_variable = { recog_owner_found = 1 } }
@@ -492,9 +472,12 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		if = {
-			limit = { check_variable = { prev_owner > 0 } }
-			var:prev_owner = { country_event = recognition.31 }
+		for_each_scope_loop = {
+			array = original_owners
+			if = {
+				limit = { exists = yes }
+				country_event = recognition.31
+			}
 		}
 	}
 }
@@ -516,11 +499,13 @@ country_event = {
 	option = {
 		name = recognition.31.b
 		log = "[GetDateText]: [This.GetName]: recognition.31.b"
-		if = {
-			limit = { NOT = { is_in_array = { recognised_countries = FROM } } }
-			add_to_array = { recognised_countries = FROM }
+		FROM = {
+			if = {
+				limit = { NOT = { is_in_array = { recognised_by = PREV } } }
+				add_to_array = { recognised_by = PREV }
+			}
+			country_event = recognition.16
 		}
-		FROM = { country_event = recognition.16 }
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -529,7 +514,7 @@ country_event = {
 			}
 			modifier = {
 				add = 15
-				FROM = { check_variable = { Granted_Recognition > 70 } }
+				FROM = { check_variable = { recognised_by^num > 70 } }
 			}
 			modifier = {
 				add = 10
@@ -568,25 +553,27 @@ country_event = {
 			# Good relations with the original owner
 			modifier = {
 				add = 4
-				# TODO: Replace this with a check for a "if original_owner_from var is defined apply this"
-				any_country = {
-					has_country_flag = original_owner_@FROM
+				any_of_scopes = {
+					array = FROM.original_owners
+					exists = yes
 					ROOT = { has_opinion = { target = PREV value > 25 } }
 				}
 			}
 			# Same faction as original owner — strong refusal
 			modifier = {
 				add = 8
-				any_country = {
-					has_country_flag = original_owner_@FROM
+				any_of_scopes = {
+					array = FROM.original_owners
+					exists = yes
 					is_in_faction_with = ROOT
 				}
 			}
 			# Ideologically aligned with original owner
 			modifier = {
 				add = 3
-				any_country = {
-					has_country_flag = original_owner_@FROM
+				any_of_scopes = {
+					array = FROM.original_owners
+					exists = yes
 					has_government = ROOT
 				}
 			}
@@ -603,17 +590,13 @@ country_event = {
 		name = recognition.16.b
 		log = "[GetDateText]: [This.GetName]: recognition.16.b executed"
 		add_political_power = -25
-		if = {
-			limit = { NOT = { is_in_array = { recognised_countries = FROM } } }
-			add_to_array = { recognised_countries = FROM }
-		}
 		custom_effect_tooltip = TT_ALL_UN_MEMBERS
 		every_collection_element = {
 			input = { input = collection:un_general_assembly_members_collection }
 			if = {
 				limit = {
 					NOT = { tag = ROOT }
-					is_in_array = { recognised_countries = FROM }
+					is_in_array = { FROM.recognised_by = THIS }
 				}
 				add_opinion_modifier = {
 					target = ROOT
@@ -622,7 +605,7 @@ country_event = {
 			} else_if = {
 				limit = {
 					NOT = { tag = ROOT }
-					has_country_flag = supports_original_owner_@FROM
+					is_in_array = { FROM.original_owner_supporters = THIS }
 				}
 				add_opinion_modifier = {
 					target = ROOT
@@ -630,10 +613,11 @@ country_event = {
 				}
 			}
 		}
-		random_country = {
+		random_scope_in_array = {
+			array = FROM.original_owners
 			limit = {
-				has_country_flag = original_owner_@FROM
-				NOT = { is_in_array = { recognised_countries = FROM } }
+				exists = yes
+				NOT = { is_in_array = { FROM.recognised_by = THIS } }
 			}
 			add_opinion_modifier = {
 				target = ROOT
@@ -679,15 +663,16 @@ country_event = {
 			# Rival of the original owner — opportunistic recognition
 			modifier = {
 				add = 4
-				any_country = {
-					has_country_flag = original_owner_@FROM
+				any_of_scopes = {
+					array = FROM.original_owners
+					exists = yes
 					ROOT = { has_opinion = { target = PREV value < -25 } }
 				}
 			}
 			# Already recognized by many — bandwagon effect
 			modifier = {
 				add = 2
-				FROM = { check_variable = { Granted_Recognition > 10 } }
+				FROM = { check_variable = { recognised_by^num > 10 } }
 			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
@@ -701,10 +686,10 @@ country_event = {
 
 	immediate = {
 		set_variable = { recognition_campaign_acceptances = 0 }
-		every_collection_element = {
-			input = { input = collection:un_general_assembly_members_collection }
+		for_each_scope_loop = {
+			array = original_owners
 			if = {
-				limit = { has_country_flag = original_owner_@ROOT }
+				limit = { exists = yes }
 				set_variable = { recognition_campaign_ally_joined@ROOT = 0 }
 			}
 		}
@@ -713,17 +698,17 @@ country_event = {
 			if = {
 				limit = {
 					NOT = { tag = ROOT }
-					NOT = { is_in_array = { recognised_countries = ROOT } }
-					NOT = { has_country_flag = original_owner_@ROOT }
+					NOT = { is_in_array = { ROOT.recognised_by = THIS } }
+					NOT = { is_in_array = { ROOT.original_owners = THIS } }
 				}
 				country_event = recognition.18
 			}
 		}
 		ROOT = { country_event = { id = recognition.21 days = 3 } }
-		every_collection_element = {
-			input = { input = collection:un_general_assembly_members_collection }
+		for_each_scope_loop = {
+			array = original_owners
 			if = {
-				limit = { has_country_flag = original_owner_@ROOT }
+				limit = { exists = yes }
 				country_event = { id = recognition.19 days = 7 }
 			}
 		}
@@ -743,11 +728,11 @@ country_event = {
 			base = 0
 			modifier = {
 				add = 100
-				has_country_flag = original_owner_@FROM
+				is_in_array = { FROM.original_owners = THIS }
 			}
 			modifier = {
 				add = 25
-				has_country_flag = supports_original_owner_@FROM
+				is_in_array = { FROM.original_owner_supporters = THIS }
 			}
 		}
 	}
@@ -755,19 +740,19 @@ country_event = {
 	option = {
 		name = recognition.18.b
 		log = "[GetDateText]: [This.GetName]: recognition.18.b"
-		add_to_array = { recognised_countries = FROM }
-		random_country = {
+		random_scope_in_array = {
+			array = FROM.original_owners
 			limit = {
-				has_country_flag = original_owner_@FROM
-				NOT = { is_in_array = { recognised_countries = FROM } }
+				exists = yes
+				NOT = { is_in_array = { FROM.recognised_by = THIS } }
 			}
 			add_opinion_modifier = { target = ROOT modifier = recognises_them }
 		}
-		every_collection_element = {
-			input = { input = collection:un_general_assembly_members_collection }
+		for_each_scope_loop = {
+			array = FROM.original_owners
 			if = {
 				limit = {
-					has_country_flag = original_owner_@FROM
+					exists = yes
 					is_ally_with = ROOT
 				}
 				set_variable = { recognition_campaign_ally_joined@FROM = 1 }
@@ -801,11 +786,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = original_owner_@FROM
+				is_in_array = { FROM.original_owners = THIS }
 			}
 			modifier = {
 				factor = 0
-				has_country_flag = supports_original_owner_@FROM
+				is_in_array = { FROM.original_owner_supporters = THIS }
 			}
 		}
 	}
@@ -940,7 +925,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 50
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 			modifier = {
 				factor = 10
@@ -990,7 +975,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 0
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 		}
 	}
@@ -1008,7 +993,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 0
-				is_in_array = { recognised_countries = FROM.FROM }
+				FROM.FROM = { is_in_array = { recognised_by = PREV } }
 			}
 		}
 	}
