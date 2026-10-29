@@ -226,32 +226,6 @@ on_startup_international = {
 			set_country_flag = is_antarctica_atcp_consultative_member
 		}
 
-		# Pre-seeded recognitions reflecting real-world state at the 2000 game start.
-		# Each block adds the breakaway's tag to recognised_countries on the granter side AND bumps
-		# Granted_Recognition on the breakaway side. recognised_countries is a permanent ledger — only an
-		# explicit rescind removes an entry, never a periodic refresh.
-
-		# Abkhazia (ABK) — Russia formally recognised in 2008; pre-seeded for game start so the
-		# breakaway doesn't begin from absolute zero.
-		if = {
-			limit = {
-				country_exists = ABK
-				country_exists = SOV
-			}
-			SOV = { add_to_array = { recognised_countries = ABK } }
-			ABK = { add_to_variable = { Granted_Recognition = 1 } }
-		}
-
-		# South Ossetia (SOO) — same as ABK, recognised by Russia.
-		if = {
-			limit = {
-				country_exists = SOO
-				country_exists = SOV
-			}
-			SOV = { add_to_array = { recognised_countries = SOO } }
-			SOO = { add_to_variable = { Granted_Recognition = 1 } }
-		}
-
 		# Stagger initial AI campaign cooldowns so unrecognised states don't all fire on month 1.
 		# random_list spreads each NSA's first action across the opening 9 months.
 		for_each_scope_loop = {
@@ -2507,29 +2481,30 @@ apply_recognition_pp = {
 	add_political_power = pp_delta
 }
 
-# Runs on THIS (the breakaway) when it gains one recognition. PREV must be the recognising
-# country. Bumps Granted_Recognition, grants political power scaled by the recogniser's power
-# tier, and fires milestone news events when crossing 25 / 50 / 100 recognising states.
-# Equality-on-bump-by-1 is the milestone gate.
+# Runs on THIS (the breakaway) when PREV recognizes it. Adds PREV to recognised_by, grants political
+# power scaled by PREV's power tier, and notifies once when recognition reaches the UN-ascension threshold.
 recognition_grant_increment = {
-	add_to_variable = { Granted_Recognition = 1 }
-
-	if = { limit = { PREV = { has_idea = non_power } } add_political_power = 5 }
-	else_if = { limit = { PREV = { has_idea = minor_power } } add_political_power = 10 }
-	else_if = { limit = { PREV = { has_idea = regional_power } } add_political_power = 15 }
-	else_if = { limit = { PREV = { has_idea = large_power } } add_political_power = 25 }
-	else_if = { limit = { PREV = { has_idea = great_power } } add_political_power = 50 }
-	else_if = { limit = { PREV = { has_idea = super_power } } add_political_power = 100 }
-
-	# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 	if = {
-		limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
-		set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
-		multiply_temp_variable = { recog_threshold = 0.4 }
+		limit = { NOT = { is_in_array = { recognised_by = PREV } } }
+		add_to_array = { recognised_by = PREV }
+
+		if = { limit = { PREV = { has_idea = non_power } } add_political_power = 5 }
+		else_if = { limit = { PREV = { has_idea = minor_power } } add_political_power = 10 }
+		else_if = { limit = { PREV = { has_idea = regional_power } } add_political_power = 15 }
+		else_if = { limit = { PREV = { has_idea = large_power } } add_political_power = 25 }
+		else_if = { limit = { PREV = { has_idea = great_power } } add_political_power = 50 }
+		else_if = { limit = { PREV = { has_idea = super_power } } add_political_power = 100 }
+
+		# One-time notification when recognition first reaches the UN-ascension threshold (40% of GA)
 		if = {
-			limit = { check_variable = { Granted_Recognition > recog_threshold } }
-			set_country_flag = un_ascension_eligible_notified
-			country_event = { id = recognition.45 days = 10 }
+			limit = { NOT = { has_country_flag = un_ascension_eligible_notified } }
+			set_temp_variable = { recog_threshold = { value = 0 every_collection = { named_collection = un_general_assembly_members_collection add = 1 } } }
+			multiply_temp_variable = { recog_threshold = 0.4 }
+			if = {
+				limit = { check_variable = { recognised_by^num > recog_threshold } }
+				set_country_flag = un_ascension_eligible_notified
+				country_event = { id = recognition.45 days = 10 }
+			}
 		}
 	}
 	international_systems_update = yes

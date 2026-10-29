@@ -47,12 +47,12 @@ recog_ai_evaluate_actions = {
 	if = { limit = { has_political_power > 200 }
 		if = {
 			limit = {
-				check_variable = { Granted_Recognition > recog_threshold }
+				check_variable = { recognised_by^num > recog_threshold }
 				NOT = { has_country_flag = recent_un_ascension_attempt }
 			}
 			if = {
 				limit = { is_debug = yes }
-				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — initiating UN Ascension vote (support = [?Granted_Recognition], threshold = [?recog_threshold])"
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — initiating UN Ascension vote (support = [?recognised_by^num], threshold = [?recog_threshold])"
 			}
 			set_country_flag = { flag = recent_un_ascension_attempt days = 365 value = 1 }
 			set_temp_variable = { sc_new_vote_type = 5 }
@@ -114,7 +114,7 @@ recog_ai_consider_grants = {
 		limit = {
 			is_ai = yes
 			has_civil_war = no
-			NOT = { is_in_array = { recognised_countries = PREV } }
+			NOT = { is_in_array = { PREV.recognised_by = THIS } }
 			NOT = { is_in_array = { PREV.original_owners = THIS } }
 			NOT = { is_in_array = { PREV.original_owner_supporters = THIS } }
 			NOT = { has_country_flag = recog_ai_grant_cooldown }
@@ -125,7 +125,6 @@ recog_ai_consider_grants = {
 		random = {
 			chance = 30
 			add_political_power = -25
-			add_to_array = { recognised_countries = PREV }
 			set_country_flag = { flag = recog_ai_grant_cooldown days = 180 value = 1 }
 			save_event_target_as = recog_ai_recogniser
 
@@ -138,7 +137,7 @@ recog_ai_consider_grants = {
 					array = original_owners
 					limit = {
 						exists = yes
-						NOT = { is_in_array = { recognised_countries = PREV } }
+						NOT = { is_in_array = { PREV.recognised_by = THIS } }
 					}
 					add_opinion_modifier = { target = event_target:recog_ai_recogniser modifier = recognises_them }
 				}
