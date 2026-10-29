@@ -2344,11 +2344,11 @@ class Validator(BaseValidator):
             _aggregate(
                 unneeded_by_file,
                 "focus(es) whose ai_will_do lowers the weight on bankruptcy or a"
-                " high deficit without a matching cost (the focus `cost` is time,"
-                " not a price)",
+                " high deficit without a matching cost",
             ),
             "No focuses carry an unneeded treasury check",
-            "Files with treasury checks on focuses that cost no money:",
+            "Files with treasury checks on focuses that cost no money (the focus"
+            " `cost` is time, not a price):",
             Severity.WARNING,
             category="unneeded-treasury-guard",
         )

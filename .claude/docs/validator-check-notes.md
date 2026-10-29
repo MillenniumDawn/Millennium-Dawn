@@ -262,8 +262,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   country. A political power cost justifies the bankruptcy check only. A war, a
   spending law change, or a money modifier the script names commits money and
   justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
-  Known gaps: reply-chain and delayed own-event costs, money modifiers on an idea the
-  option adds, and upkeep from a free build.
+  A free build costs nothing here, even for a building with upkeep, matching the
+  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
+  modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a

@@ -1911,8 +1911,7 @@ _DEAL_EVENT = event_block("deal.1", f"option = {{ FROM = {{ {_CHARGE} }} }}")
 _UNNEEDED_TREASURY_CHECK = (
     "unneeded-treasury-guard",
     "1 focus(es) whose ai_will_do lowers the weight on bankruptcy or a high"
-    " deficit without a matching cost (the focus `cost` is time, not a price):"
-    " TAG_focus_a (line 3)",
+    " deficit without a matching cost: TAG_focus_a (line 3)",
 )
 
 # case: (extra scripted effects, other focus fields, reward, modifiers,
