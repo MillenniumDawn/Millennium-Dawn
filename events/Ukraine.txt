@@ -1328,9 +1328,36 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.a executed"
 		trigger = {
 			NOT = { country_exists = CRM }
+			owns_state = 1112
 			UKR = {
 				owns_state = 669
 				NOT = { has_country_flag = UKR_crimea_2004_departed }
+				NOT = {
+					AND = {
+						has_army_manpower = { size > 1000000 }
+						set_temp_variable = { ukr_tank_count = num_equipment_in_armies@medium_tank_chassis }
+						add_to_temp_variable = { ukr_tank_count = num_equipment@medium_tank_chassis }
+						check_variable = { ukr_tank_count > 5000 }
+						set_temp_variable = { ukr_artillery_count = num_equipment_in_armies@artillery_equipment }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@artillery_equipment }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment_in_armies@medium_tank_artillery_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@medium_tank_artillery_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment_in_armies@medium_tank_rocket_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@medium_tank_rocket_chassis }
+						check_variable = { ukr_artillery_count > 5000 }
+						check_variable = { num_battalions_with_type@SP_AA_Bat > 150 }
+						698 = { anti_air_building > 3 }
+						696 = { anti_air_building > 3 }
+						1087 = { anti_air_building > 3 }
+						695 = { anti_air_building > 3 }
+						controls_state = 693
+						controls_state = 1030
+						controls_state = 1075
+						controls_state = 1076
+						has_deployed_air_force_size = { size > 1000 }
+						has_navy_size = { size > 100 }
+					}
+				}
 			}
 		}
 		UKR = { set_country_flag = UKR_crimea_2014_chain_active }
@@ -1483,8 +1510,10 @@ country_event = {
 		clr_country_flag = UKR_crimea_2014_chain_active
 		ai_chance = {
 			base = 100
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				add = 20
+				strength_ratio = { tag = SOV ratio < 0.25 }
+			}
 		}
 	}
 
@@ -1492,6 +1521,7 @@ country_event = {
 		name = ukraine_maidan_crm_annex.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan_crm_annex.1.b executed"
 		clr_country_flag = UKR_crimea_2014_chain_active
+		# Army strength, NATO and each Ukrainian deterrent shift weight from standing down to fighting
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -1499,9 +1529,53 @@ country_event = {
 				has_war_with = SOV
 			}
 			modifier = {
-				add = 5
+				add = 10
+				strength_ratio = { tag = SOV ratio > 0.5 }
+			}
+			modifier = {
+				add = 15
+				strength_ratio = { tag = SOV ratio > 0.8 }
+			}
+			modifier = {
+				add = 10
 				has_idea = NATO_member
 			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_sapsan
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_develop_nota_flag
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_country_flag = UKR_developed_an_lbl_flag
+					has_country_flag = UKR_developed_an_bfv_flag
+				}
+			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_hur_reform
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_completed_focus = UKR_ukrainian_armed_forces_reform
+					has_completed_focus = UKR_poroshenko_army_reform
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support < 0.3
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		declare_war_on = {
 			target = CRM
@@ -27379,60 +27453,60 @@ country_event = {
 	title = ukraine_modernize_planes_restore_an_71.1.name
 	desc = ukraine_modernize_planes_restore_an_71.1.desc
 	picture = GFX_UKR_Modernize_Planes_Restore_An_71_Radar
- 
+
 	is_triggered_only = yes
- 
+
 	trigger = { original_tag = UKR }
- 
+
 	option = {
 		name = ukraine_modernize_planes_restore_an_71.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.a executed"
- 
+
 		ai_chance = {
 			base = 50
 			modifier = { factor = 0.5 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 2 has_country_flag = UKR_strategic_industry_eastern_export_dependence }
 			modifier = { factor = 0.5 has_country_flag = UKR_strategic_industry_western_diversification }
 		}
- 
+
 		trigger = {
 			country_exists = SOV
 			NOT = { has_war_with = SOV }
 		}
- 
+
 		if = {
 			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
 			set_temp_variable = { treasury_change = -0.15 }
 			modify_treasury_effect = yes
- 
+
 			set_temp_variable = { percent_change = 0.04 }
 			set_temp_variable = { tag_index = SOV.id }
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
- 
+
 			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_fast_tt
- 
+
 			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 120 }
 		}
 		else = {
 			set_temp_variable = { treasury_change = -0.25 }
 			modify_treasury_effect = yes
- 
+
 			set_temp_variable = { percent_change = 0.04 }
 			set_temp_variable = { tag_index = SOV.id }
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
- 
+
 			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_slow_tt
- 
+
 			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
 		}
 	}
- 
+
 	option = {
 		name = ukraine_modernize_planes_restore_an_71.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.b executed"
- 
+
 		ai_chance = {
 			base = 50
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -27444,40 +27518,40 @@ country_event = {
 				ISR = { has_opinion = { target = UKR value < 20 } }
 			}
 		}
- 
+
 		trigger = {
 			country_exists = ISR
 			NOT = { has_war_with = ISR }
 		}
- 
+
 		if = {
 			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
 			set_temp_variable = { treasury_change = -0.4 }
 			modify_treasury_effect = yes
- 
+
 			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_fast_tt
- 
+
 			country_event = { id = ukraine_modernize_planes_restore_an_71.5 days = 100 }
 		}
 		else = {
 			set_temp_variable = { treasury_change = -0.6 }
 			modify_treasury_effect = yes
- 
+
 			custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_slow_tt
- 
+
 			country_event = { id = ukraine_modernize_planes_restore_an_71.5 days = 150 }
 		}
- 
+
 		set_temp_variable = { percent_change = -0.02 }
 		set_temp_variable = { tag_index = SOV.id }
 		set_temp_variable = { influence_target = ROOT.id }
 		change_influence_percentage = yes
- 
+
 		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_mission_tt
 		activate_mission = UKR_restore_an_71_phalcon_mission
 	}
 }
- 
+
 country_event = {
 	id = ukraine_modernize_planes_restore_an_71.2
 	title = ukraine_modernize_planes_restore_an_71.2.name
@@ -27963,35 +28037,35 @@ country_event = {
 	title = ukraine_modernize_planes_restore_an_71.6.name
 	desc = ukraine_modernize_planes_restore_an_71.6.desc
 	picture = GFX_UKR_Modernize_Planes_Restore_An_71_Radar
- 
+
 	is_triggered_only = yes
- 
+
 	trigger = { original_tag = UKR }
- 
+
 	option = {
 		name = ukraine_modernize_planes_restore_an_71.6.a
 		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.6.a executed"
- 
+
 		clr_country_flag = UKR_an_71_phalcon_ready_flag
 		clr_country_flag = UKR_an_71_phalcon_radar_flag
- 
+
 		# Israel returns part of the money, the rest of the Kvant work is paid as usual
 		if = {
 			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
 			set_temp_variable = { treasury_change = 0.2 }
 			modify_treasury_effect = yes
- 
+
 			set_temp_variable = { treasury_change = -0.15 }
 			modify_treasury_effect = yes
 		}
 		else = {
 			set_temp_variable = { treasury_change = 0.3 }
 			modify_treasury_effect = yes
- 
+
 			set_temp_variable = { treasury_change = -0.25 }
 			modify_treasury_effect = yes
 		}
- 
+
 		if = {
 			limit = { country_exists = SOV }
 			set_temp_variable = { percent_change = 0.02 }
@@ -27999,9 +28073,9 @@ country_event = {
 			set_temp_variable = { influence_target = ROOT.id }
 			change_influence_percentage = yes
 		}
- 
+
 		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_after_israel_tt
- 
+
 		if = {
 			limit = { has_country_flag = UKR_restore_an_71_with_project_flag }
 			country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 90 }
@@ -28647,7 +28721,37 @@ country_event = {
 	option = {
 		name = ukraine_sevastopol.1.c
 		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.c executed"
-		trigger = { UKR = { NOT = { has_idea = NATO_member } } }
+		trigger = {
+			UKR = {
+				NOT = { has_idea = NATO_member }
+				NOT = {
+					AND = {
+						has_army_manpower = { size > 1000000 }
+						set_temp_variable = { ukr_tank_count = num_equipment_in_armies@medium_tank_chassis }
+						add_to_temp_variable = { ukr_tank_count = num_equipment@medium_tank_chassis }
+						check_variable = { ukr_tank_count > 5000 }
+						set_temp_variable = { ukr_artillery_count = num_equipment_in_armies@artillery_equipment }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@artillery_equipment }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment_in_armies@medium_tank_artillery_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@medium_tank_artillery_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment_in_armies@medium_tank_rocket_chassis }
+						add_to_temp_variable = { ukr_artillery_count = num_equipment@medium_tank_rocket_chassis }
+						check_variable = { ukr_artillery_count > 5000 }
+						check_variable = { num_battalions_with_type@SP_AA_Bat > 150 }
+						698 = { anti_air_building > 3 }
+						696 = { anti_air_building > 3 }
+						1087 = { anti_air_building > 3 }
+						695 = { anti_air_building > 3 }
+						controls_state = 693
+						controls_state = 1030
+						controls_state = 1075
+						controls_state = 1076
+						has_deployed_air_force_size = { size > 1000 }
+						has_navy_size = { size > 100 }
+					}
+				}
+			}
+		}
 		UKR = {
 			add_opinion_modifier = {
 				target = SOV
