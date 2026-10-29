@@ -68,6 +68,11 @@ _RANDOM_LIST = (
 )
 
 _BILL = "pay_the_bill = {\n\tadd_to_variable = { treasury = -3 }\n}\n"
+_BUILD = (
+    "build_a_factory = {\n\trandom_owned_state = {\n"
+    "\t\tadd_building_construction = { type = arms_factory level = 1 }\n\t}\n"
+    "\tadd_to_variable = { treasury = -3 }\n}\n"
+)
 _CUSTOM_BILLS = (
     "pay_command_power = { add_command_power = -20 }\n"
     "forward_command_power = { pay_command_power = yes }\n"
@@ -79,7 +84,7 @@ _CUSTOM_BILLS = (
 _PAYMENT = (
     "modify_treasury_effect = { add_to_variable = { treasury = treasury_change } }\n"
 )
-_EFFECTS = costly_scripted_effects([_BILL, _CUSTOM_BILLS, _PAYMENT])
+_EFFECTS = costly_scripted_effects([_BILL, _BUILD, _CUSTOM_BILLS, _PAYMENT])
 _CHARGE = "\t\tadd_to_variable = { treasury = -5 }\n"
 _WEIGHT = "\tai_will_do = { base = 10 }\n"
 _BANKRUPTCY_WEIGHT = (
@@ -267,9 +272,13 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             ],
             _LATE,
         ),
-        # A construction effect pays when the building is delivered; that is intended.
         "scripted effect that charges": (
             [_flat(_effect("\t\tpay_the_bill = yes\n", "remove_effect"))],
+            _LATE,
+        ),
+        # A construction effect pays when the building is delivered; that is intended.
+        "building effect that charges": (
+            [_flat(_effect("\t\tbuild_a_factory = yes\n", "remove_effect"))],
             [],
         ),
         "charged when taken": ([_flat(_PAID)], []),
@@ -981,6 +990,9 @@ def test_decision_check(monkeypatch, check, decisions, expected):
     monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}))
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
     monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
+    monkeypatch.setattr(
+        V.Validator, "_get_building_payments", lambda self: {"build_a_factory"}
+    )
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
@@ -1006,6 +1018,38 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
             "dec_bill - ai_will_do ignores the treasury cost",
             "common/decisions/Bills.txt",
             2,
+        )
+    ]
+
+
+def test_late_charge_check_follows_scripted_effects_but_not_buildings(tmp_path):
+    waived = (
+        "pay_unless_waived = {\n\tif = {\n"
+        "\t\tlimit = { NOT = { check_variable = { skip_payment = 1 } } }\n"
+        "\t\tadd_to_variable = { treasury = -3 }\n\t}\n}\n"
+    )
+    calls = ("pay_the_bill", "build_a_factory", "pay_unless_waived")
+    validator = _mod(
+        tmp_path,
+        {
+            "common/scripted_effects/00_bills.txt": _BILL + _BUILD + waived,
+            "common/decisions/Bills.txt": "bills_category = {\n"
+            + "".join(
+                _nested(f"dec_{call}", _block("remove_effect", f"{call} = yes"))
+                for call in calls
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_money_charged_after_entry()
+
+    assert [(i.severity, i.category, i.message) for i in validator._issues] == [
+        (
+            V.Severity.ERROR,
+            "decision-money-charged-late",
+            "dec_pay_the_bill - remove_effect charges treasury,"
+            " charge it in complete_effect",
         )
     ]
 
