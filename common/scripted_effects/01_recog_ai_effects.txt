@@ -14,6 +14,7 @@ recog_ai_monthly = {
 		if = {
 			limit = {
 				is_ai = yes
+				is_subject = no
 				has_civil_war = no
 				has_idea = lacks_international_recognition
 				NOT = { has_country_flag = recog_ai_cooldown }
@@ -90,13 +91,13 @@ recog_ai_evaluate_actions = {
 		}
 		else_if = {
 			limit = {
-				check_variable = { prev_owner > 0 }
+				check_variable = { original_owners^num > 0 }
 				NOT = { has_country_flag = recent_independence_request }
 				has_political_power > 350
 			}
 			if = {
 				limit = { is_debug = yes }
-				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — asking for independence from [?prev_owner] (PP = [?political_power])"
+				log = "[GetDateText]: [THIS.GetTag]: Recognition AI — asking for independence from [?original_owners^0.GetTag] (PP = [?political_power])"
 			}
 			add_political_power = -350
 			set_country_flag = { flag = recent_independence_request days = 365 value = 1 }
@@ -114,8 +115,8 @@ recog_ai_consider_grants = {
 			is_ai = yes
 			has_civil_war = no
 			NOT = { is_in_array = { recognised_countries = PREV } }
-			NOT = { has_country_flag = original_owner_@PREV }
-			NOT = { has_country_flag = supports_original_owner_@PREV }
+			NOT = { is_in_array = { PREV.original_owners = THIS } }
+			NOT = { is_in_array = { PREV.original_owner_supporters = THIS } }
 			NOT = { has_country_flag = recog_ai_grant_cooldown }
 			has_political_power > 50
 			has_opinion = { target = PREV value > 30 }
@@ -134,9 +135,9 @@ recog_ai_consider_grants = {
 				recognition_grant_increment = yes
 
 				random_scope_in_array = {
-					array = global.UN_general_assembly
+					array = original_owners
 					limit = {
-						has_country_flag = original_owner_@PREV
+						exists = yes
 						NOT = { is_in_array = { recognised_countries = PREV } }
 					}
 					add_opinion_modifier = { target = event_target:recog_ai_recogniser modifier = recognises_them }
