@@ -4,17 +4,22 @@ from pathlib import Path
 
 import merge_changelog
 import pytest
-from check_changelog import check_lines
-from merge_changelog import merge_text
+from check_changelog import check_lines, duplicate_warnings
+from merge_changelog import consolidation_candidates, merge_text
 from shared.suite import initialize_git_repository, run_git
 
 SCRIPT = Path(__file__).resolve().parents[1] / "merge_changelog.py"
 PARTY_LINE = " - Standardized party names for the countries: DEN, EGY{}\n"
 TANK_LINE = " - [GER] Added the Leopard 2A8 tank variant{}\n"
+OLD_VERSION = "\nv2.0.1\nContent:\n - [USA] Old\n - Global old\n - Global old\n"
 
 
 def changelog(*content):
     return "v2.0.1\n\nContent:\n" + "".join(content) + "\nBugfix:\n - Fixed a bug\n"
+
+
+def top(*content):
+    return "v2.1.0\n\nContent:\n" + "".join(content)
 
 
 def test_both_sides_append_to_the_same_section():
@@ -163,6 +168,49 @@ def test_pr_entry_whose_category_main_dropped_stays_unresolved():
     assert merge_text(changelog(" - A\n"), ours, theirs) is None
 
 
+@pytest.mark.parametrize(
+    ("content", "messages"),
+    [
+        (" - A.\n - A.\n", ["line 5: warning: duplicate of line 4; --fix removes it"]),
+        (
+            " - A.\n\nAI:\n - A.\n",
+            ["line 7: warning: duplicate of line 4; keep one of Content and AI"],
+        ),
+        (
+            " - [ERI] Added an OOB.\n - [ETH] Added an OOB.\n",
+            [
+                "lines 4 and 5: same entry for other tags; "
+                "combine as [ERI]/[ETH] Added an OOB."
+            ],
+        ),
+        (
+            " - Updated currency tooltips for strength.\n"
+            " - Updated currency tooltips for strenght.\n",
+            ["lines 4 and 5: near-duplicate entries"],
+        ),
+        (
+            " - [AST] Added an AI tweak to buff stability.\n\nAI:\n"
+            " - [AST] Added an AI tweak to buff stability. AI holds elections (Issue #7).\n",
+            ["lines 4 and 7: near-duplicate entries; keep [AST], #7"],
+        ),
+        (
+            " - [ALG] Halved spending on a high deficit and stopped it.\n"
+            " - [CUB] Halved healthcare on a high deficit and skipped it.\n"
+            " - Added a tank.\n"
+            " - [DEN] Halved weights on a high deficit and paused (Issue #6000).\n",
+            [
+                'lines 4, 5, 7: 3 Content entries share "on a high deficit and"; '
+                "consider one summary entry; keep [ALG], [CUB], [DEN], #6000"
+            ],
+        ),
+        (" - [ALG] Added a tank.\n - [CUB] Added a plane.\n", []),
+    ],
+)
+def test_preview_messages(content, messages):
+    lines = (top(content) + OLD_VERSION).splitlines(True)
+    assert duplicate_warnings(lines) + consolidation_candidates(lines) == messages
+
+
 def commit_changelog(repository, branch, text):
     run_git(repository, "checkout", "--quiet", "-B", branch, "base")
     (repository / "Changelog.txt").write_bytes(text.encode("utf-8"))
@@ -211,24 +259,84 @@ def _run_main(monkeypatch, *args):
     return merge_changelog.main()
 
 
-def test_fix_cli_sorts_without_losing_duplicates_or_touching_history(
+def test_fix_cli_cleans_sorts_and_warns_without_touching_history(
     tmp_path, monkeypatch, capsys
 ):
     path = tmp_path / "Changelog.txt"
-    old = "\nv2.0.1\nContent:\n - [USA] Old\n - Global old\n"
     path.write_bytes(
-        changelog(" - [USA] U\n", " - Global\n", " - Global\n").encode() + old.encode()
+        (
+            top(" - [USA] U\n", " - Global\n", "  - Global\n", "\nAI:\n - [USA] U.\n")
+            + OLD_VERSION
+        ).encode()
     )
     monkeypatch.chdir(tmp_path)
     assert _run_main(monkeypatch, "--fix") == 0
     assert (
         path.read_bytes()
-        == (changelog(" - Global\n", " - Global\n", " - [USA] U\n") + old).encode()
+        == (
+            top(" - Global.\n", " - [USA] U.\n", "\nAI:\n - [USA] U.\n") + OLD_VERSION
+        ).encode()
     )
-    assert "Fixed changelog ordering" in capsys.readouterr().out
+    output = capsys.readouterr()
+    assert "Fixed changelog: Changelog.txt" in output.out
+    assert output.err.splitlines() == [
+        "Changelog.txt: warning: removed duplicate entry: Global.",
+        "Changelog.txt: line 8: warning: duplicate of line 5; keep one of Content and AI",
+    ]
     first = path.read_bytes()
     assert _run_main(monkeypatch, "--fix", path) == 0
     assert path.read_bytes() == first
+    assert check_lines(first.decode().splitlines()) == []
+
+
+def test_preview_cli_reports_without_writing(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "Changelog.txt"
+    original = top(" - [USA] U\n", "  - [USA] U\n").encode()
+    path.write_bytes(original)
+    assert _run_main(monkeypatch, "--preview", path) == 0
+    assert path.read_bytes() == original
+    assert "line 5: warning: duplicate of line 4" in capsys.readouterr().out
+
+
+def test_beta_cli_replaces_version_sections_and_keeps_intro(tmp_path, monkeypatch):
+    path = tmp_path / "Changelog.txt"
+    path.write_bytes(
+        top(" - [USA] U\n", " - Global\n", "\nAI:\n - Smarter AI\n").encode()
+    )
+    page = tmp_path / merge_changelog.BETA_PAGE
+    page.parent.mkdir(parents=True)
+    intro = (
+        "---\ntitle: Beta Changelog\n---\n\n## Purpose of this Page\n\nBeta changes.\n"
+    )
+    page.write_text(intro + "\n## v2.0.9\n\n### Content\n\n- Old beta entry\n")
+    assert _run_main(monkeypatch, "--beta", path) == 0
+    assert page.read_text() == (
+        intro + "\n## v2.1.0\n\n### Content\n\n- Global.\n- [USA] U.\n"
+        "\n### AI\n\n- Smarter AI.\n"
+    )
+    first = page.read_bytes()
+    assert _run_main(monkeypatch, "--beta", path) == 0
+    assert page.read_bytes() == first
+
+
+def test_release_cli_writes_the_next_page_and_keeps_its_order(tmp_path, monkeypatch):
+    path = tmp_path / "Changelog.txt"
+    path.write_bytes(top(" - Global\n").encode())
+    sections = tmp_path / merge_changelog.RELEASE_DIR
+    sections.mkdir(parents=True)
+    (sections / "v2-0-changes.md").write_text("---\ntitle: v2.0.0\norder: 14\n---\n")
+    (sections / "v2-0-hotfixes.md").write_text("---\norder: 15\nhidden: true\n---\n")
+    assert _run_main(monkeypatch, "--release", "The Next Chapter", path) == 0
+    page = sections / "v2-1-the-next-chapter.md"
+    assert page.read_text() == (
+        "---\ntitle: \"v2.1.0 'The Next Chapter'\"\n"
+        "page_id: changelog-v2-1-the-next-chapter\norder: 16\n---\n\n"
+        '## v2.1.0 - "The Next Chapter"\n\n### Content\n\n- Global.\n'
+    )
+    first = page.read_bytes()
+    (sections / "v2-2-later.md").write_text("---\norder: 20\n---\n")
+    assert _run_main(monkeypatch, "--release", "The Next Chapter", path) == 0
+    assert page.read_bytes() == first
 
 
 def test_driver_cli_sorts_both_sides_insertions(tmp_path, monkeypatch):
@@ -273,7 +381,16 @@ def test_fix_cli_reports_unreadable_input(tmp_path, monkeypatch, capsys, content
     assert "Cannot update changelog" in capsys.readouterr().err
 
 
-@pytest.mark.parametrize("args", [[], ["--fix", "a", "b"]])
+@pytest.mark.parametrize(
+    "args",
+    [
+        [],
+        ["--fix", "a", "b"],
+        ["--beta", "a", "b"],
+        ["--fix", "--beta"],
+        ["--release", " "],
+    ],
+)
 def test_cli_rejects_invalid_arguments(monkeypatch, args):
     with pytest.raises(SystemExit) as exc:
         _run_main(monkeypatch, *args)

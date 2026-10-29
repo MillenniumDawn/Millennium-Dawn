@@ -58,7 +58,12 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
-from validate_events import effect_costs, load_cost_lookups, uncovered_costs
+from validate_events import (
+    building_payment_effects,
+    effect_costs,
+    load_cost_lookups,
+    uncovered_costs,
+)
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -482,6 +487,10 @@ _MIDGAME_GATE_RE = re.compile(
 _UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
     validation_config("validate_decisions", "unannounced_category_exempt")
 )
+_AI_COST_EXEMPT = frozenset(validation_config("validate_decisions", "ai_cost_exempt"))
+_LATE_CHARGE_EXEMPT = frozenset(
+    validation_config("validate_decisions", "late_charge_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -632,16 +641,6 @@ _CATEGORY_BLOCK_RE = re.compile(
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
-# The scripted effects that move money; a decision calls them with its own amount.
-_PAYMENT_EFFECTS = frozenset(
-    {
-        "modify_treasury_effect",
-        "modify_debt_effect",
-        "modify_international_investment_effect",
-        "modify_corporate_tax_rate_effect",
-        "modify_population_tax_rate_effect",
-    }
-)
 # `treasury > 1.4` for a 1.5 charge is how the mod writes `>= 1.5`.
 _GATE_SLACK = 0.1
 # What a custom_cost_trigger can check, by the cost kind that pays for it.
@@ -1741,6 +1740,7 @@ class Validator(BaseValidator):
         self._ai_only_categories: Optional[Dict[str, str]] = None
         self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
+        self._building_payments: Optional[Set[str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
@@ -1762,6 +1762,19 @@ class Validator(BaseValidator):
                         bodies[name] = body
             self._scripted_triggers = bodies
         return self._scripted_triggers
+
+    def _get_building_payments(self) -> Set[str]:
+        """building_payment_effects over `common/scripted_effects`, read once per run."""
+        if self._building_payments is None:
+            bodies: Dict[str, str] = {}
+            for path in self._collect_files(
+                ["common/scripted_effects/**/*.txt"], ignore_staged=True
+            ):
+                for name, _scalar, body in iter_statements(read_script(path)):
+                    if body is not None:
+                        bodies[name] = body
+            self._building_payments = building_payment_effects(bodies)
+        return self._building_payments
 
     def _get_ai_only_categories(self) -> Dict[str, str]:
         """AI-only decision category names, mapped to their defining filename."""
@@ -2086,6 +2099,67 @@ class Validator(BaseValidator):
             results,
             "✓ No targeted decisions without targets",
             "Decisions with target_root_trigger/target_trigger but no targets (checks every country daily):",
+        )
+
+    def validate_cosmetic_targeting(self) -> None:
+        """Warn about static country targeting that may only provide a flag overlay."""
+        self._log_section("Checking decisions for cosmetic country targeting...")
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            raw = strip_comments(d.raw)
+            body = raw[raw.index("{") + 1 : -1]
+            fields = {
+                key: block if block is not None else scalar or ""
+                for key, scalar, block in iter_statements(body)
+            }
+            targets = fields.get("targets", "").split()
+            if not targets or any(
+                re.fullmatch(r"[A-Z][A-Z0-9]{2}", tag) is None for tag in targets
+            ):
+                continue
+            if (
+                fields.get("target_array")
+                or fields.get("targets_dynamic") == "yes"
+                or fields.get("state_target", "no") != "no"
+                or fields.get("on_map_mode") in ("map_only", "map_and_decisions_view")
+                or first_flat_match(fields.get("allowed", ""), ALWAYS_NO_RE)
+            ):
+                continue
+
+            if len(targets) == 1:
+                advice = (
+                    f"single country target {targets[0]}; consider a normal decision"
+                    " with a custom icon"
+                )
+            else:
+                if re.search(r"\bFROM\b", blank_quoted_strings(body), re.IGNORECASE):
+                    continue
+                if any(
+                    fields.get(f"war_with_target_on_{when}") == "yes"
+                    for when in ("complete", "remove", "timeout")
+                ):
+                    continue
+                advice = (
+                    f"{len(targets)} country targets but no explicit FROM use;"
+                    " use FROM for target-dependent behavior, or review whether"
+                    " targeting is only cosmetic"
+                )
+            results.append(
+                (
+                    f"{d.token} - {advice}; verify localisation and called scripts"
+                    " before changing targeting",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No potentially cosmetic country targeting",
+            "Decisions with potentially cosmetic country targeting:",
+            severity=Severity.WARNING,
+            category="decision-cosmetic-targeting",
         )
 
     def validate_targets_no_trigger(self):
@@ -3263,9 +3337,10 @@ class Validator(BaseValidator):
 
         The decision twin of the event check (issue #5738), with the same cost
         and guard detection. Skipped: decisions the AI cannot see or never
-        takes, plain missions, and a selectable mission's `remove_effect`, which
-        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
-        broke country, so those findings carry a note.
+        takes, plain missions, a selectable mission's `remove_effect`, which
+        is a timeout outcome, and ids in `ai_cost_exempt`. A treasury
+        `custom_cost_trigger` already stops a broke country, so those findings
+        carry a note.
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
 
@@ -3273,6 +3348,8 @@ class Validator(BaseValidator):
         results = []
 
         for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.token in _AI_COST_EXEMPT:
+                continue
             if d.mission_subtype and not d.selectable_mission:
                 continue
             if weight_stays_zero(d.ai_factor):
@@ -3304,7 +3381,7 @@ class Validator(BaseValidator):
             "✓ No decision AI weights ignoring money costs",
             "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
             " deficit modifier):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-ai-will-do-ignores-cost",
         )
 
@@ -3362,25 +3439,28 @@ class Validator(BaseValidator):
 
         The country may no longer have the money when the decision ends, and
         nothing gated it. Treasury, debt, investment and tax rate follow
-        `effect_costs`, so a payout is not a finding. Only charges the decision
-        writes itself count, through the `modify_*` payment effects. A scripted
-        effect that pays for a building on delivery is intended and is not
-        followed. A treasury custom cost that `validate_custom_cost_charged`
-        already reports as late is left to it. Missions are skipped: their
-        `remove_effect` is a timeout outcome.
+        `effect_costs`, so a payout is not a finding. Scripted effects the
+        decision calls are followed, except a building payment, which is paid on
+        delivery by design. A treasury custom cost that
+        `validate_custom_cost_charged` already reports as late is left to it.
+        Missions are skipped: their `remove_effect` is a timeout outcome. So are
+        ids in `late_charge_exempt`.
         """
         self._log_section("Checking decisions for money charged after entry...")
 
         effects, stored = self._get_cost_lookups()
-        payments = {
-            name: body for name, body in effects.items() if name in _PAYMENT_EFFECTS
+        buildings = self._get_building_payments()
+        followed = {
+            name: body for name, body in effects.items() if name not in buildings
         }
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
             if d.mission_subtype or not d.remove_effect:
                 continue
-            late = effect_costs(d.remove_effect[1:-1], payments, stored) & _MONEY_COSTS
+            if d.token in _LATE_CHARGE_EXEMPT:
+                continue
+            late = effect_costs(d.remove_effect[1:-1], followed, stored) & _MONEY_COSTS
             late -= _unpaid_custom_costs(d, effects, stored)[1]
             if not late:
                 continue
@@ -3398,7 +3478,7 @@ class Validator(BaseValidator):
             "✓ No decision charges money after entry",
             "Decisions that charge money in remove_effect (charge it in"
             " complete_effect):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-money-charged-late",
         )
 
@@ -3837,25 +3917,38 @@ class Validator(BaseValidator):
             _extract_decision_icons, [(f, self.mod_path) for f in files]
         )
 
-        results = []
+        results, unmeasured = [], []
         for filepath, refs in zip(files, ref_lists):
+            rel = os.path.relpath(filepath, self.mod_path)
             for owner, kind, value, line in refs:
+                unreadable = sprites.unreadable
                 msg = _icon_type_message(kind, owner, value, sprites)
-                if not msg:
-                    continue
-                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+                if msg:
+                    results.append((msg, rel, line))
+                # The size read failed: the texture is missing or not in this checkout.
+                elif sprites.unreadable > unreadable:
+                    unmeasured.append(
+                        (
+                            f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> its "
+                            "texture is not on disk, so its slot size is unchecked",
+                            rel,
+                            line,
+                        )
+                    )
 
-        if sprites.unreadable:
-            self.log(
-                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
-                "warning",
-            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
             Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+        self._report(
+            unmeasured,
+            "✓ Every decision icon's texture could be measured",
+            "Decision icons whose texture is not on disk:",
+            Severity.WARNING,
+            category="decision-icon-unmeasured",
         )
 
     def validate_category_desc_images(self):
@@ -3905,6 +3998,7 @@ class Validator(BaseValidator):
         self.validate_ai_factors()
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
+        self.validate_cosmetic_targeting()
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_from_checks_in_visible()

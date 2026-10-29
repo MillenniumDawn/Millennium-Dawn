@@ -15,7 +15,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
 - Keep the session working directory fixed. Use absolute paths or per-command flags.
-- Development builds may invalidate saves. Do not add legacy migration support.
+- Ignore save-game compatibility unless the request explicitly asks for it. Do not add
+  or maintain migration or compatibility steps, and do not weigh save breakage when
+  choosing a fix. Development builds may invalidate saves.
 
 ## KISS: Keep It Simple
 
