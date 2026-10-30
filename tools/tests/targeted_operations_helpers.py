@@ -845,13 +845,47 @@ MANIFEST_DEFECT_ERRORS = {
 }
 
 
-def write_manifest_root(root: Path, data: dict) -> Path:
-    """Write a manifest beside the TOP sources that load_manifest cross-checks."""
-    for folder in ("common/scripted_triggers", "common/scripted_effects"):
-        target = root / folder
+LEADER_ROLES = {
+    "head_of_state",
+    "head_of_government",
+    "senior_political",
+    "state_security_official",
+}
+
+
+def write_manifest_root(root: Path, data: dict, stub_from: dict = None) -> Path:
+    """Write a manifest beside the TOP sources that load_manifest cross-checks.
+
+    With stub_from, write minimal serving and retirement bindings for that
+    manifest's leaders instead of copying game content, for tool-only checkouts.
+    """
+    triggers = root / "common/scripted_triggers"
+    effects = root / "common/scripted_effects"
+    for target in (triggers, effects):
         target.mkdir(parents=True, exist_ok=True)
-        for path in (ROOT / folder).glob("*targeted_operations*.txt"):
-            shutil.copyfile(path, target / path.name)
+    if stub_from is None:
+        for folder, target in (
+            ("common/scripted_triggers", triggers),
+            ("common/scripted_effects", effects),
+        ):
+            for path in (ROOT / folder).glob("*targeted_operations*.txt"):
+                shutil.copyfile(path, target / path.name)
+    else:
+        leaders = [
+            target["id"]
+            for target in stub_from["targets"]
+            if target["leader_role"] in LEADER_ROLES
+        ]
+        (triggers / "targeted_operations_stub.txt").write_text(
+            "".join(f"TOP_person_{ident}_serving = {{\n}}\n" for ident in leaders),
+            encoding="utf-8",
+        )
+        (effects / "targeted_operations_stub.txt").write_text(
+            "".join(
+                f"check_variable = {{ TOP_target = {ident} }}\n" for ident in leaders
+            ),
+            encoding="utf-8",
+        )
     manifest_path = root / "tools/data/targeted_operations.json"
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     with manifest_path.open("w", encoding="utf-8", newline="") as stream:

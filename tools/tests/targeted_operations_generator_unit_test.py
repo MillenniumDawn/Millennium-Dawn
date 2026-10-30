@@ -62,11 +62,11 @@ def manifest():
 def test_manifest_rejects_ambiguous_or_cross_group_identities(
     tmp_path, manifest, defect
 ):
-    GENERATOR.load_manifest(write_manifest_root(tmp_path, manifest))
+    GENERATOR.load_manifest(write_manifest_root(tmp_path, manifest, manifest))
     data = deepcopy(manifest)
     mutate_manifest(data, defect)
     with pytest.raises(ValueError, match=re.escape(MANIFEST_DEFECT_ERRORS[defect])):
-        GENERATOR.load_manifest(write_manifest_root(tmp_path, data))
+        GENERATOR.load_manifest(write_manifest_root(tmp_path, data, manifest))
 
 
 def test_facility_overrides_can_add_or_remove_known_objectives(manifest):
