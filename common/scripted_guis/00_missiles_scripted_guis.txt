@@ -3807,7 +3807,7 @@ scripted_gui = {
 				is_full_state = yes
 				custom_trigger_tooltip = {
 					tooltip = has_recog_tt
-					is_in_array = { recognised_countries = var:open_state }
+					var:open_state = { is_in_array = { recognised_by = ROOT } }
 				}
 				custom_trigger_tooltip = {
 					tooltip = recent_pressure_tt
@@ -3830,7 +3830,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = not_recog_tt
-					NOT = { is_in_array = { recognised_countries = var:open_state } }
+					NOT = { var:open_state = { is_in_array = { recognised_by = ROOT } } }
 				}
 
 				has_political_power > 25
@@ -3845,7 +3845,7 @@ scripted_gui = {
 				}
 				custom_trigger_tooltip = {
 					tooltip = has_recog_tt
-					is_in_array = { recognised_countries = var:open_state }
+					var:open_state = { is_in_array = { recognised_by = ROOT } }
 				}
 				has_political_power > 25
 			}
@@ -3883,13 +3883,14 @@ scripted_gui = {
 				}
 				has_political_power > 200
 				has_civil_war = no
+				is_subject = no
 			}
 			un_ask_for_independence_button_visible = {
 				has_idea = lacks_international_recognition
 			}
 			un_ask_for_independence_button_click_enabled = {
 				has_political_power > 350
-				check_variable = { prev_owner > 0 }
+				check_variable = { original_owners^num > 0 }
 
 				custom_trigger_tooltip = {
 					tooltip = has_not_recently_requested_independence
@@ -3898,6 +3899,7 @@ scripted_gui = {
 					}
 				}
 				has_civil_war = no
+				is_subject = no
 			}
 			ir_nation_unre_guide_visible = {
 				has_idea = lacks_international_recognition
@@ -3911,41 +3913,42 @@ scripted_gui = {
 			# International System
 			grant_recog_button_click = {
 				add_political_power = -25
-				meta_effect = {
-					text = {
-						add_to_array = { recognised_countries = var:open_state }
 
-						if = {
-							limit = {
-								NOT = { has_country_flag = original_owner_[stname] }
-								NOT = { has_country_flag = supports_original_owner_[stname] }
-							}
-							custom_effect_tooltip = TT_ALL_UN_MEMBERS
-							every_collection_element = {
-								input = { input = collection:un_general_assembly_members_collection }
-								if = {
-									limit = {
-										has_country_flag = supports_original_owner_[stname]
-										NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
-									}
-									add_opinion_modifier = { target = ROOT modifier = recognises_them }
-								} else_if = {
-									limit = { is_in_array = { recognised_countries = var:ROOT.open_state } }
-									add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
-								}
-							}
-
-							random_country = {
-								limit = {
-									has_country_flag = original_owner_[stname]
-									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
-								}
-								add_opinion_modifier = { target = ROOT modifier = recognises_them }
-								country_event = recognition.1
-							}
+				if = {
+					limit = {
+						var:open_state = {
+							NOT = { is_in_array = { original_owners = ROOT } }
+							NOT = { is_in_array = { original_owner_supporters = ROOT } }
 						}
 					}
-					stname = "[?var:open_state.GetTag]"
+					custom_effect_tooltip = TT_ALL_UN_MEMBERS
+					every_collection_element = {
+						input = { input = collection:un_general_assembly_members_collection }
+						if = {
+							limit = {
+								var:ROOT.open_state = {
+									is_in_array = { original_owner_supporters = PREV }
+									NOT = { is_in_array = { recognised_by = PREV } }
+								}
+							}
+							add_opinion_modifier = { target = ROOT modifier = recognises_them }
+						} else_if = {
+							limit = { var:ROOT.open_state = { is_in_array = { recognised_by = PREV } } }
+							add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
+						}
+					}
+
+					var:open_state = {
+						random_scope_in_array = {
+							array = original_owners
+							limit = {
+								exists = yes
+								NOT = { is_in_array = { PREV.recognised_by = THIS } }
+							}
+							add_opinion_modifier = { target = ROOT modifier = recognises_them }
+							country_event = recognition.1
+						}
+					}
 				}
 				var:open_state = {
 					add_opinion_modifier = {
@@ -3957,24 +3960,21 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			pressure_countries_recog_button_click = {
-				meta_effect = {
-					text = {
-						every_collection_element = {
-							input = { input = collection:un_general_assembly_members_collection }
-							if = {
-								limit = {
-									is_influencer = yes
-									NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
-									NOT = { has_country_flag = pressured_to_recognize_[stname] }
-									NOT = { tag = ROOT }
-									is_full_state = yes
-								}
-								set_country_flag = pressured_to_recognize_[stname]
-								country_event = recognition.8
+				every_collection_element = {
+					input = { input = collection:un_general_assembly_members_collection }
+					if = {
+						limit = {
+							is_influencer = yes
+							var:ROOT.open_state = {
+								NOT = { is_in_array = { recognised_by = PREV } }
+								NOT = { has_country_flag = pressured_to_recognize_@PREV }
 							}
+							NOT = { tag = ROOT }
+							is_full_state = yes
 						}
+						var:ROOT.open_state = { set_country_flag = pressured_to_recognize_@PREV }
+						country_event = recognition.8
 					}
-					stname = "[?var:open_state.GetTag]"
 				}
 				set_variable = { recognition_pressure_end@var:open_state = global.num_days }
 				add_to_variable = { recognition_pressure_end@var:open_state = 180 }
@@ -3982,27 +3982,21 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			rescind_recog_button_click = {
-				meta_effect = {
-					text = {
-						remove_from_array = { recognised_countries = var:open_state }
-
-						random_country = {
-							limit = {
-								has_country_flag = original_owner_[stname]
-								NOT = { is_in_array = { recognised_countries = var:ROOT.open_state } }
-							}
-							add_opinion_modifier = {
-								target = ROOT
-								modifier = withdrew_recognition_them
-							}
-							country_event = recognition.4
-						}
-					}
-					stname = "[?var:open_state.GetTag]"
-				}
 				var:open_state = {
+					remove_from_array = { recognised_by = ROOT }
+					random_scope_in_array = {
+						array = original_owners
+						limit = {
+							exists = yes
+							NOT = { is_in_array = { PREV.recognised_by = THIS } }
+						}
+						add_opinion_modifier = {
+							target = ROOT
+							modifier = withdrew_recognition_them
+						}
+						country_event = recognition.4
+					}
 					add_opinion_modifier = { modifier = withdrew_recognition target = ROOT }
-					subtract_from_variable = { var = Granted_Recognition value = 1 }
 					country_event = recognition.3
 				}
 				international_systems_update = yes
@@ -9465,7 +9459,7 @@ scripted_gui = {
 					}
 					custom_trigger_tooltip = {
 						tooltip = not_recog_checker_tt
-						NOT = { is_in_array = { recognised_countries = ROOT } }
+						NOT = { is_in_array = { ROOT.recognised_by = THIS } }
 					}
 				}
 				has_political_power > 200
