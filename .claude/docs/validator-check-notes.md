@@ -672,6 +672,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `add_relation_modifier`.
 - Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
   and a `#` comment swallowed into a `log` string.
+- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+  finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
+  rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
+  clears it. The scan strips comments, so comment-only lines are not checked. Four
+  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
+  tracked in #6248.
 
 ## validate_variables.py
 
