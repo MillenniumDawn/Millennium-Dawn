@@ -403,8 +403,9 @@ class HistoryStandardizer(BaseStandardizer):
             "open_line": open_line,
             "close_line": close_line,
             "indent": indent,
-            "leader_top": [],  # start_politics_input / startup_politics / create_country_leader
+            "leader_top": [],  # start_politics_input / create_country_leader
             "politics_top": [],  # set_popularities / set_politics
+            "politics_startup": [],  # startup_politics, which reads the system vars
             "equipment": [],  # list of (domain_rank, stmt)
             "opinion": [],  # add_opinion_modifier / reverse_add_opinion_modifier
             "ideas": [],  # list of (token, text)
@@ -466,12 +467,10 @@ class HistoryStandardizer(BaseStandardizer):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
             elif head in ("set_oob", "set_air_oob", "set_naval_oob"):
                 props["equipment"].append((self._equipment_domain(lines), stmt))
-            elif head in (
-                "start_politics_input",
-                "startup_politics",
-                "create_country_leader",
-            ):
+            elif head in ("start_politics_input", "create_country_leader"):
                 props["leader_top"].append(stmt)
+            elif head == "startup_politics":
+                props["politics_startup"].append(stmt)
             elif head in ("set_popularities", "set_politics"):
                 props["politics_top"].append(stmt)
             elif head in ("add_opinion_modifier", "reverse_add_opinion_modifier"):
@@ -602,6 +601,7 @@ class HistoryStandardizer(BaseStandardizer):
                     self._emit_stmt(var_stmt, out)
 
         self._emit_group("System Variables", props["system_vars"], indent, out)
+        self._emit_top(props["politics_startup"], out)
         self._emit_group("Special Projects", props["special_projects"], indent, out)
         self._emit_group("Technologies", props["technologies"], indent, out)
         self._emit_equipment(props, indent, out)

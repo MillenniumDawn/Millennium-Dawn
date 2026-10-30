@@ -80,10 +80,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KOS_for_freedom"
-			add_autonomy_ratio = {
-				value = 0.05
-				localization = influence_for_autonomy_decision_autonomy
-			}
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 			SER = {
 				add_stability = -0.02
 			}
@@ -111,10 +109,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KOS_break_away"
-			add_autonomy_ratio = {
-				value = 0.05
-				localization = influence_for_autonomy_decision_autonomy
-			}
+			set_temp_variable = { percent_change = 5 }
+			change_domestic_influence_percentage = yes
 			custom_effect_tooltip = KOS_breakaway
 		}
 
@@ -195,10 +191,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus KOS_Referendum"
 			if = {
 				limit = { country_exists = SER }
-				SER = {
-					country_event = { id = ser_kos.1 days = 1 }
-					end_puppet = KOS
-				}
+				SER = { country_event = { id = ser_kos.1 days = 1 } }
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
 				effect_tooltip = {
 					SER = { add_stability = -0.09 }
@@ -1379,7 +1372,7 @@ focus_tree = {
 
 		cost = 5
 
-		prerequisite = { focus = KOS_new_research }
+		prerequisite = { focus = KOS_small_arms }
 
 		search_filters = { FOCUS_FILTER_STABILITY }
 
@@ -1687,13 +1680,16 @@ focus_tree = {
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
 					Militia_Bat = { x = 0 y = 2 }
-					Militia_Bat = { x = 0 y = 3 }
+
 					Militia_Bat = { x = 1 y = 0 }
 					Militia_Bat = { x = 1 y = 1 }
 					Militia_Bat = { x = 1 y = 2 }
-					Militia_Bat = { x = 1 y = 3 }
+
 					Militia_Bat = { x = 2 y = 0 }
 					Militia_Bat = { x = 2 y = 1 }
+
+					Militia_Bat = { x = 3 y = 0 }
+					Militia_Bat = { x = 3 y = 1 }
 				}
 				priority = 2
 			}
@@ -1725,6 +1721,8 @@ focus_tree = {
 		prerequisite = { focus = KOS_Referendum }
 
 		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
+
+		bypass = { has_dynamic_modifier = { modifier = united_nations_member } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KOS_struggle_for_recognition"
@@ -1826,26 +1824,38 @@ focus_tree = {
 		prerequisite = { focus = KOS_campaign_east_europe }
 		prerequisite = { focus = KOS_campaign_south_america }
 
-		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_COUNTER_DEBUFF }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY }
 
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = KOS_all_recognize
-				has_country_flag = KOS_russia_rec
-				has_country_flag = KOS_ukraine_rec
-				has_country_flag = KOS_belarus_rec
-				has_country_flag = KOS_chile_rec
-				has_country_flag = KOS_argentina_rec
-				has_country_flag = KOS_brazil_rec
-				has_country_flag = KOS_indonesia_rec
-				has_country_flag = KOS_india_rec
-				has_country_flag = KOS_china_rec
+				OR = { NOT = { country_exists = SOV } is_in_array = { recognised_by = SOV } }
+				OR = { NOT = { country_exists = UKR } is_in_array = { recognised_by = UKR } }
+				OR = { NOT = { country_exists = BLR } is_in_array = { recognised_by = BLR } }
+				OR = { NOT = { country_exists = CHL } is_in_array = { recognised_by = CHL } }
+				OR = { NOT = { country_exists = ARG } is_in_array = { recognised_by = ARG } }
+				OR = { NOT = { country_exists = BRA } is_in_array = { recognised_by = BRA } }
+				OR = { NOT = { country_exists = IND } is_in_array = { recognised_by = IND } }
+				OR = { NOT = { country_exists = RAJ } is_in_array = { recognised_by = RAJ } }
+				OR = { NOT = { country_exists = CHI } is_in_array = { recognised_by = CHI } }
 			}
+			custom_trigger_tooltip = {
+				tooltip = is_un_ascension_warning_tt
+				NOT = { has_country_flag = recent_un_ascension_attempt }
+			}
+			is_subject = no
 		}
+
+		bypass = { NOT = { has_idea = lacks_international_recognition } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KOS_recognized_state"
-			remove_ideas = lacks_international_recognition
+			custom_effect_tooltip = un_ascent_effect_tt
+			set_country_flag = { flag = recent_un_ascension_attempt days = 365 value = 1 }
+			set_temp_variable = { sc_new_vote_type = 5 }
+			set_temp_variable = { sc_new_vote_nation = THIS }
+			update_sc_vote = yes
+			international_systems_update = yes
 		}
 
 		ai_will_do = { base = 12 }

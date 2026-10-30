@@ -23,6 +23,21 @@ relevant to the effects and triggers you are changing.
 - Modifier names: use the engine reference or [MD Custom Modifiers](md-custom-modifiers.md).
   Sprites: resolve the `name` in `interface/*.gfx` and check its texture exists.
 
+## HOI4 Syntax Only
+
+HOI4 script is not EU4, CK3, or Victoria 3 script. Do not carry over constructs from
+those games:
+
+- Scripted effects and triggers take no parameters. `my_effect = { mission = X }` with
+  `$mission$` inside is EU4/CK3 syntax. Call `my_effect = yes`, pass values through temp
+  variables, or substitute names with `meta_effect`/`meta_trigger`
+  ([Meta-Effect Patterns](meta-effect-patterns.md)). Otherwise write the blocks out.
+- Saved scopes use `save_event_target_as` and `event_target:`, not `save_scope_as` and
+  `scope:`.
+- Tooltips use `custom_effect_tooltip` and `custom_trigger_tooltip`, not `custom_tooltip`.
+- Variables use `set_variable`, `add_to_variable`, and `check_variable`, not
+  `change_variable`, `export_to_variable`, or `which =`.
+
 ## Relief Must Reduce the Actual Penalty
 
 Read the backing entry in `common/dynamic_modifiers/` before changing a penalty
