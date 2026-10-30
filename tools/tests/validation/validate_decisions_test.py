@@ -91,6 +91,18 @@ _BANKRUPTCY_WEIGHT = (
     "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0 "
     "has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
 )
+_DEFICIT_WEIGHT = (
+    "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0.5 "
+    "ai_has_high_deficit = yes }\n\t}\n"
+)
+_UNNEEDED_BANKRUPTCY = [
+    (
+        "dec_one - ai_will_do lowers the weight on bankruptcy, but the decision has"
+        " no money or political power cost",
+        "X.txt",
+        0,
+    )
+]
 _ZERO_BASE_ADD = (
     "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { add = 5 has_war = yes }\n\t}\n"
 )
@@ -610,6 +622,80 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [],
         ),
     },
+    "validate_unneeded_treasury_guard": {
+        "free decision": (
+            [_flat(_effect(_GAIN), _BANKRUPTCY_WEIGHT)],
+            _UNNEEDED_BANKRUPTCY,
+        ),
+        "treasury charge": ([_flat(_PAID, _BANKRUPTCY_WEIGHT)], []),
+        "scripted charge": (
+            [_flat(_effect("\t\tpay_the_bill = yes\n"), _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "charge back to ROOT from a state scope": (
+            [
+                _flat(
+                    _effect(
+                        "\t\trandom_owned_state = { ROOT = { pay_the_bill = yes } }\n"
+                    ),
+                    _BANKRUPTCY_WEIGHT,
+                )
+            ],
+            [],
+        ),
+        "bankruptcy check on a political power price": (
+            [_flat("\tcost = 25\n", _effect(_GAIN), _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "deficit check on a political power price": (
+            [_flat("\tcost = 25\n", _effect(_GAIN), _DEFICIT_WEIGHT)],
+            [
+                (
+                    "dec_one - ai_will_do lowers the weight on high deficit, but the"
+                    " decision has no money cost",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "money modifier while active": (
+            [
+                _flat(
+                    "\tdays_remove = 30\n",
+                    "\tmodifier = { social_cost_multiplier_modifier = 0.1 }\n",
+                    _effect(_GAIN),
+                    _DEFICIT_WEIGHT,
+                )
+            ],
+            [],
+        ),
+        "treasury custom cost": (
+            [_flat(_TREASURY_GATE, _effect(_GAIN), _DEFICIT_WEIGHT)],
+            [],
+        ),
+        "remove_effect charge": (
+            [_flat("\tdays_remove = 30\n", _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "selectable mission's timeout charge": (
+            [_flat(_SELECTABLE, _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _BANKRUPTCY_WEIGHT)], []),
+        "AI never takes it": (
+            [
+                _flat(
+                    "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { factor = 0"
+                    " has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
+                )
+            ],
+            [],
+        ),
+        "player only": (
+            [_flat(_BANKRUPTCY_WEIGHT, "\tavailable = { is_ai = no }\n")],
+            [],
+        ),
+    },
     "validate_custom_cost_charged": {
         "charged when taken": ([_flat(_TREASURY_GATE, _PAID)], []),
         "scripted charge": (
@@ -987,7 +1073,7 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     ],
 )
 def test_decision_check(monkeypatch, check, decisions, expected):
-    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}))
+    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}, set()))
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
     monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
     monkeypatch.setattr(
@@ -1017,6 +1103,46 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
             "decision-ai-will-do-ignores-cost",
             "dec_bill - ai_will_do ignores the treasury cost",
             "common/decisions/Bills.txt",
+            2,
+        )
+    ]
+
+
+def test_unneeded_treasury_guard_shares_the_cost_pass(tmp_path, monkeypatch):
+    walks = []
+    walk = V.ai_weight_cost_checks
+    monkeypatch.setattr(
+        V,
+        "ai_weight_cost_checks",
+        lambda weights: walks.append(weights) or walk(weights),
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/Free.txt": "free_category = {\n"
+            + _nested(
+                "dec_free",
+                _block("complete_effect", "add_political_power = 10")
+                + _block(
+                    "ai_will_do",
+                    "base = 10\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_ai_will_do_ignores_cost()
+    validator.validate_unneeded_treasury_guard()
+
+    assert len(walks) == 1
+    assert {i.severity for i in validator._issues} == {V.Severity.WARNING}
+    assert issue_rows(validator) == [
+        (
+            "decision-unneeded-treasury-guard",
+            "dec_free - ai_will_do lowers the weight on high deficit, but the"
+            " decision has no money cost",
+            "common/decisions/Free.txt",
             2,
         )
     ]
