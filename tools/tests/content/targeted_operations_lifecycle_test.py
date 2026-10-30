@@ -310,3 +310,37 @@ def test_country_case_arrays_use_registry_capacity_at_startup():
     assert {name: len(country_vars[name]) for name in organization_arrays} == {
         name: group_capacity for name in organization_arrays
     }
+
+
+def test_only_human_countries_allocate_top_arrays_on_ct_rotation():
+    effects = _parse_race_script(
+        read_top_source(ROOT, "common/scripted_effects")
+        + (ROOT / "common/scripted_effects/00_ct_effects.txt").read_text(
+            encoding="utf-8"
+        )
+    )
+    human_init = (
+        "if",
+        "=",
+        [
+            ("limit", "=", [("is_ai", "=", "no")]),
+            ("TOP_country_initialize", "=", "yes"),
+        ],
+    )
+    startup = effects["counter_terror_nation_startup"]
+    assert human_init in startup
+    assert ("TOP_country_initialize", "=", "yes") not in startup
+    first = next(
+        value for name, _, value in effects["TOP_country_tick"] if name == "if"
+    )
+    assert human_init in first
+    assert ("TOP_country_initialize", "=", "yes") not in first
+    liaison = effects["TOP_prepare_ai_liaison_source"]
+    assert liaison[0] == (
+        "if",
+        "=",
+        [
+            ("limit", "=", [("is_ai", "=", "yes")]),
+            ("TOP_country_initialize", "=", "yes"),
+        ],
+    )
