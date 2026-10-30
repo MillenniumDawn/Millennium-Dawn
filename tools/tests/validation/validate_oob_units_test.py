@@ -32,9 +32,10 @@ from validate_oob_units import (
     _parse_division_string,
     _runs_in_if_true_branch,
     _scope_label,
-    build_variant_dlc_index,
     build_variant_name_index,
+    build_variant_registry,
     check_attributed_archetypes,
+    check_misplaced_support,
     check_named_variant_refs,
     check_oob_variant_refs,
     check_template_slots,
@@ -940,7 +941,7 @@ def test_named_variant_refs(content, sources, expected):
         content,
         by_tag,
         wildcard,
-        variant_dlc_index=build_variant_dlc_index(sources),
+        variant_registry=build_variant_registry(sources),
     )
 
     assert len(findings) == len(expected)
@@ -1070,7 +1071,7 @@ def test_named_variant_default_identity(defaults, variants, expected, contextual
         _NAMED_VARIANT_CONSUMERS["stockpile"],
         by_tag,
         wildcard,
-        variant_dlc_index=build_variant_dlc_index(sources) if contextual else None,
+        variant_registry=build_variant_registry(sources) if contextual else None,
         default_equipment_names=defaults,
     )
     assert [finding.kind for finding in findings] == expected
@@ -1088,7 +1089,7 @@ def test_named_variant_refs_respect_dlc_country_context():
         ),
     )
     by_tag, wildcard = build_variant_name_index([source])
-    context_index = build_variant_dlc_index([source])
+    context_index = build_variant_registry([source])
     content = (
         "add_equipment_to_stockpile = { type = small_plane_airframe_1 "
         'variant_name = "MiG-X" amount = 12 producer = SOV }'
@@ -1100,7 +1101,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_nonbba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )
         == []
     )
@@ -1110,7 +1111,7 @@ def test_named_variant_refs_respect_dlc_country_context():
             by_tag,
             wildcard,
             source_path="history/units/UKR_2000_bba.txt",
-            variant_dlc_index=context_index,
+            variant_registry=context_index,
         )[0].kind
         == "wrong_variant_type"
     )
@@ -1406,6 +1407,134 @@ def test_staged_variant_definition_change_rescans_unchanged_ship(
             "error",
         )
     ]
+
+
+_EVENT_VARIANT_PATH = "events/Purchase.txt"
+_SCOPED_VARIANT = "SWE = {\n" + _SWE_VARIANT + "}\n"
+_DLC_VARIANT = 'if = { limit = { has_dlc = "Man the Guns" }\n' + _SCOPED_VARIANT + "}\n"
+
+# case: (original sources, replacement sources, rescan unchanged consumers)
+_STAGED_VARIANT_SCOPE_CASES = {
+    "unrelated edit without variants": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: "add_political_power = 2\n"},
+        False,
+    ),
+    "unrelated edit beside a variant": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT + "add_political_power = 2\n"},
+        False,
+    ),
+    "comment inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("type =", "# a comment\n\ttype =")},
+        False,
+    ),
+    "whitespace inside a variant": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\t", "    ")},
+        False,
+    ),
+    "module edit preserves variant identity": (
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = old }\n}")},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("\n}", "\nmodules = { engine = new }\n}")},
+        False,
+    ),
+    "variant name edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("Naresuan Class", "Renamed Class")},
+        True,
+    ),
+    "variant type edit": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: _SWE_VARIANT.replace("frigate_hull_2", "destroyer_hull_2")},
+        True,
+    ),
+    "variant addition": (
+        {_EVENT_VARIANT_PATH: "add_political_power = 1\n"},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        True,
+    ),
+    "variant block deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {_SWE_HISTORY: "add_political_power = 1\n"},
+        True,
+    ),
+    "variant file deletion": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {},
+        True,
+    ),
+    "variant file addition": (
+        {},
+        {_SWE_HISTORY: _SWE_VARIANT},
+        True,
+    ),
+    "producer scope edit": (
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT},
+        {_EVENT_VARIANT_PATH: _SCOPED_VARIANT.replace("SWE =", "CHI =")},
+        True,
+    ),
+    "DLC condition edit": (
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT},
+        {_EVENT_VARIANT_PATH: _DLC_VARIANT.replace("Man the Guns", "By Blood Alone")},
+        True,
+    ),
+    "history date edit": (
+        {_SWE_HISTORY: "2000.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        {_SWE_HISTORY: "2017.1.1 = {\n" + _SWE_VARIANT + "}\n"},
+        True,
+    ),
+    "file rename changes producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/NOR - Norway.txt": _SWE_VARIANT},
+        True,
+    ),
+    "file rename preserves producer": (
+        {_SWE_HISTORY: _SWE_VARIANT},
+        {"history/countries/SWE - Renamed.txt": _SWE_VARIANT},
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize("scope", ["staged", "branch"])
+@pytest.mark.parametrize(
+    "original, updated, rescan",
+    _STAGED_VARIANT_SCOPE_CASES.values(),
+    ids=_STAGED_VARIANT_SCOPE_CASES,
+)
+def test_staged_variant_reference_scope(
+    tmp_path, monkeypatch, original, updated, rescan, scope
+):
+    consumer_path = "history/units/SWE_2000_nsb.txt"
+    write_tree(
+        tmp_path,
+        {
+            consumer_path: "add_equipment_to_stockpile = { type = frigate_hull_2 "
+            'variant_name = "Missing Class" producer = SWE amount = 1 }',
+            **original,
+        },
+    )
+    initialize_git_repository(tmp_path, ".")
+    run_git(tmp_path, "branch", "-M", "main")
+    run_git(tmp_path, "switch", "-c", "feature")
+    for path in original.keys() - updated.keys():
+        (tmp_path / path).unlink()
+    write_tree(tmp_path, updated)
+    run_git(tmp_path, "add", ".")
+    if scope == "branch":
+        run_git(tmp_path, "commit", "-m", "change sources")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "\n".join(dict.fromkeys([*original, *updated]))
+    )
+
+    validator = _validator(tmp_path, staged_only=True)
+    validator.validate_oob_variant_references()
+
+    assert [issue.file for issue in validator._issues] == (
+        [consumer_path] if rescan else []
+    )
 
 
 def test_unresolved_named_variant_is_reported_as_warning(tmp_path):
@@ -2466,6 +2595,81 @@ def test_template_slots(raw, rel, expected):
     ]
 
 
+_MISPLACED = "template-misplaced-support"
+_BARRED = {"support": {"Arty_Battery"}, "regimental_support": {"hq_engineer"}}
+_SUPPORT_UNITS = """sub_units = {
+\tArty_Battery = {
+\t\tgroup = support
+\t\tdivisional = no
+\t}
+\thq_engineer = {
+\t\tgroup = support
+\t\tregimental = no
+\t}
+}
+"""
+
+
+def _dropped(block, unit, flag):
+    return f"{block} lists '{unit}', which sets {flag} = no, so the game drops it"
+
+
+# case: (template text, (line, message) per finding)
+_MISPLACED_CASES = {
+    "regimental company in support": (
+        _paradrop_template("Test Brigade", "Arty_Battery"),
+        [(7, _dropped("support", "Arty_Battery", "divisional"))],
+    ),
+    "divisional company in regimental support": (
+        _paradrop_template("Test Brigade", "hq_engineer", block="regimental_support"),
+        [(7, _dropped("regimental_support", "hq_engineer", "regimental"))],
+    ),
+    "each company in the block it allows": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regimental_support")
+        + _paradrop_template("Test Brigade", "hq_engineer"),
+        [],
+    ),
+    "company without a placement flag": (
+        _paradrop_template("Test Brigade", "Weapons_company"),
+        [],
+    ),
+    "flags apply to support blocks only": (
+        _paradrop_template("Test Brigade", "Arty_Battery", block="regiments"),
+        [],
+    ),
+    "each misplaced entry is its own finding": (
+        _paradrop_template("Test Brigade", "Arty_Battery", repeat=2),
+        [
+            (7, _dropped("support", "Arty_Battery", "divisional")),
+            (8, _dropped("support", "Arty_Battery", "divisional")),
+        ],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "raw, expected", _MISPLACED_CASES.values(), ids=_MISPLACED_CASES
+)
+def test_misplaced_support(raw, expected):
+    text = strip_comments(raw)
+    assert check_misplaced_support(text, _build_block_nodes(text), _BARRED) == [
+        (line, _MISPLACED, _PREFIX + message) for line, message in expected
+    ]
+
+
+def test_misplaced_support_reads_flags_from_unit_files(tmp_path):
+    _write(tmp_path, "common/units/MD_regimental_support.txt", _SUPPORT_UNITS)
+    _write(tmp_path, _OOB, _paradrop_template("Test Brigade", "Arty_Battery"))
+    validator = _validator(tmp_path)
+    validator._build_canonical_units()
+    validator.validate_template_slots()
+    assert [
+        (issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == _MISPLACED
+    ] == [("warning", _OOB, 7)]
+
+
 def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
     write_tree(
         tmp_path,
@@ -2632,6 +2836,138 @@ def test_full_run_reports_both_categories_for_every_template_source(tmp_path, re
         ("error", _SLOT, rel, 5),
         ("warning", _LOCKED, rel, 14),
     ]
+
+
+# --- air base capacity ------------------------------------------------------
+
+_AIRBASE = "airbase-over-capacity"
+_SWE_AIR = "history/units/SWE_2000_bba.txt"
+_NOR_AIR = "history/units/NOR_2000_bba.txt"
+_STATE_10 = "history/states/10-Test.txt"
+_BUILDINGS_1 = "\t\tbuildings = {\n\t\t\tair_base = 1\n\t\t}\n"
+
+
+def _state_file(history):
+    return f"state = {{\n\tid = 10\n\thistory = {{\n{history}\t}}\n}}\n"
+
+
+def _air_oob(*states):
+    """`air_wings` with one wing per amount: ``(state id, [amounts])`` pairs."""
+    body = ""
+    for state_id, amounts in states:
+        body += f"\t{state_id} = {{\n"
+        for amount in amounts:
+            body += (
+                f'\t\tsmall_plane_airframe_1 = {{ owner = "SWE" amount = {amount} }}\n'
+            )
+        body += "\t}\n"
+    return "air_wings = {\n" + body + "}\n"
+
+
+_OVER = "state 10 starts with 25 planes, but air_base 1 holds 24"
+
+# case: (files over the base tree, staged files or None, (file, line, message))
+_AIRBASE_CASES = {
+    "over capacity": ({_SWE_AIR: _air_oob((10, [25]))}, None, [(_SWE_AIR, 2, _OVER)]),
+    "at capacity": ({_SWE_AIR: _air_oob((10, [24]))}, None, []),
+    "wings in one state add up": (
+        {_SWE_AIR: _air_oob((10, [12, 13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "state repeated in one file": (
+        {_SWE_AIR: _air_oob((10, [12]), (10, [13]))},
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "commented wing": (
+        {
+            _SWE_AIR: _air_oob((10, [24])).replace(
+                "\t}", "\t\t# small_plane_airframe_1 = { amount = 1 }\n\t}"
+            )
+        },
+        None,
+        [],
+    ),
+    "commented air base": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1.replace(
+                    "\t\t\tair_base", "\t\t\t# air_base = 5\n\t\t\tair_base"
+                )
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "dated air base is not the start level": (
+        {
+            _SWE_AIR: _air_oob((10, [25])),
+            _STATE_10: _state_file(
+                _BUILDINGS_1
+                + "\t\t2010.1.1 = {\n\t\t\tbuildings = {\n\t\t\t\tair_base = 5\n"
+                "\t\t\t}\n\t\t}\n"
+            ),
+        },
+        None,
+        [(_SWE_AIR, 2, _OVER)],
+    ),
+    "unknown state": (
+        {_SWE_AIR: _air_oob((99, [1]))},
+        None,
+        [(_SWE_AIR, 2, "state 99 starts with 1 planes, but air_base 0 holds 0")],
+    ),
+    "carrier wing is not a state": (
+        {_SWE_AIR: _air_oob(('"HSwMS Test (R01)"', [25]), (10, [24]))},
+        None,
+        [],
+    ),
+    "vanilla capacity without the define": (
+        {_SWE_AIR: _air_oob((10, [25])), "common/defines/MD_defines.lua": ""},
+        None,
+        [],
+    ),
+    "shared base": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        None,
+        [
+            (_NOR_AIR, 2, _OVER.replace("planes", "planes (shared with SWE)")),
+            (_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)")),
+        ],
+    ),
+    "staged file counts unstaged wings": (
+        {_SWE_AIR: _air_oob((10, [13])), _NOR_AIR: _air_oob((10, [12]))},
+        [_SWE_AIR],
+        [(_SWE_AIR, 2, _OVER.replace("planes", "planes (shared with NOR)"))],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "files, staged, expected", _AIRBASE_CASES.values(), ids=_AIRBASE_CASES
+)
+def test_airbase_capacity(tmp_path, files, staged, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/defines/MD_defines.lua": (
+                "\tNDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24\n"
+            ),
+            _STATE_10: _state_file(_BUILDINGS_1),
+            **files,
+        },
+    )
+    validator = _validator(tmp_path, staged_only=staged is not None)
+    if staged is not None:
+        validator.staged_files = [str(tmp_path / rel) for rel in staged]
+
+    validator.validate_airbase_capacity()
+
+    assert [
+        (issue.severity, issue.category, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+    ] == [("warning", _AIRBASE, *finding) for finding in expected]
 
 
 def test_clean_mod_passes_every_oob_check(tmp_path):

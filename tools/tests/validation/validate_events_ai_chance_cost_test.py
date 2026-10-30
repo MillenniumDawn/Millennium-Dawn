@@ -7,13 +7,15 @@ from multiprocessing import get_context
 from pathlib import Path
 
 import pytest
+import validate_events
 import validator_common
 from shared.suite import write_under_str as _write
 from validate_events import (
     Validator,
     _add_extra_args,
     costly_scripted_effects,
-    find_cost_blind_options,
+    find_option_cost_weights,
+    money_commitment_effects,
     stored_variable_signs,
 )
 
@@ -99,6 +101,12 @@ _SCRIPTED_EFFECTS = (
 _EFFECTS = costly_scripted_effects([_SCRIPTED_EFFECTS])
 # What stored_variable_signs reports for a variable only ever set negative.
 _STORED = stored_variable_signs(["set_variable = { TAG_project_cost = -4 }\n"])
+_COMMITMENTS = money_commitment_effects(
+    {
+        "TAG_raise_spending": "set_country_flag = spending_law_scripted_change",
+        "TAG_reform": "TAG_raise_spending = yes",
+    }
+)
 
 
 def _option(name: str, body: str) -> str:
@@ -119,7 +127,7 @@ def _two_options(cost_body: str) -> str:
 
 
 def _found(text: str):
-    return find_cost_blind_options(text, _EFFECTS, _STORED)
+    return find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)[0]
 
 
 def _validator(tmp_path, **kwargs):
@@ -195,11 +203,49 @@ _TREASURY_BLIND = "foo.1.a - ai_chance ignores the treasury cost"
 _BUDGET = "common/scripted_effects/00_budget_effects.txt"
 
 
+_BLIND_AND_UNNEEDED = _event(
+    _option("foo.1.a", _PP_COST + _FLAT), _option("foo.1.b", _AWARE)
+)
+_COST_CATEGORIES = {"event-ai-chance-ignores-cost", "event-unneeded-treasury-guard"}
+
+
 def test_check_is_off_without_the_flag(tmp_path):
-    _write(tmp_path, "events/Ev.txt", _two_options(_PP_COST + _FLAT))
+    _write(tmp_path, "events/Ev.txt", _BLIND_AND_UNNEEDED)
     v = _validator(tmp_path)
     v.run_validations()
-    assert not [i for i in v._issues if i.category == "event-ai-chance-ignores-cost"]
+    assert not [i for i in v._issues if i.category in _COST_CATEGORIES]
+
+
+def test_both_cost_checks_share_one_scan(tmp_path, monkeypatch):
+    _write(tmp_path, "events/Ev.txt", _BLIND_AND_UNNEEDED)
+    loads = []
+    load = validate_events.load_cost_lookups
+    monkeypatch.setattr(
+        validate_events,
+        "load_cost_lookups",
+        lambda validator: loads.append(validator) or load(validator),
+    )
+    v = _validator(tmp_path, check_ai_chance_costs=True)
+
+    v.validate_ai_chance_ignores_cost()
+    v.validate_unneeded_treasury_checks()
+
+    assert len(loads) == 1
+    assert [(i.category, i.severity, i.message, i.line) for i in v._issues] == [
+        (
+            "event-ai-chance-ignores-cost",
+            validator_common.Severity.WARNING,
+            _PP_BLIND,
+            8,
+        ),
+        (
+            "event-unneeded-treasury-guard",
+            validator_common.Severity.WARNING,
+            "foo.1.b - ai_chance lowers the weight on bankruptcy, but the option has"
+            " no money or political power cost",
+            12,
+        ),
+    ]
 
 
 # case: (files, (message, line) per finding in Ev.txt)
@@ -871,21 +917,26 @@ def test_unrelated_neutral_or_foreign_modifiers_do_not_cover_costs(condition, we
 
 
 @pytest.mark.parametrize(
-    "condition",
+    "condition,flagged",
     [
-        "has_active_mission = bankruptcy_incoming_collapse",
-        "ai_has_high_deficit = yes",
-        "check_variable = { treasury < 15 }",
-        "check_variable = { var = ROOT.treasury value = 15 compare = less_than }",
-        "ROOT = { ai_has_high_deficit = yes }",
-        "THIS = { ai_has_high_deficit = yes }",
-        "OR = { ai_has_high_deficit = yes has_war = yes }",
-        "NOT = { ai_has_high_deficit = yes }",
+        ("has_war = yes", True),
+        ("has_active_mission = bankruptcy_incoming_collapse", False),
+        ("ai_has_high_deficit = yes", False),
+        ("check_variable = { treasury < 15 }", False),
+        (
+            "check_variable = { var = ROOT.treasury value = 15 compare = less_than }",
+            False,
+        ),
+        ("ROOT = { ai_has_high_deficit = yes }", False),
+        ("THIS = { ai_has_high_deficit = yes }", False),
+        ("OR = { ai_has_high_deficit = yes has_war = yes }", False),
+        ("NOT = { ai_has_high_deficit = yes }", False),
     ],
 )
-def test_financial_modifiers_cover_treasury_costs(condition):
+def test_financial_modifiers_cover_treasury_costs(condition, flagged):
     body = "\t\tsmall_expenditure = yes\n" + _weighted(condition)
-    assert _found(_two_options(body)) == []
+    found = [costs for _name, _line, costs, _gated in _found(_two_options(body))]
+    assert found == (["treasury"] if flagged else [])
 
 
 @pytest.mark.parametrize(
@@ -906,6 +957,96 @@ def test_financial_modifiers_cover_treasury_costs(condition):
 )
 def test_each_cost_kind_accepts_its_relevant_modifier(cost, condition):
     assert _found(_two_options(f"\t\t{cost}\n" + _weighted(condition))) == []
+
+
+_BANKRUPT = "has_active_mission = bankruptcy_incoming_collapse"
+_DEFICIT = "ai_has_high_deficit = yes"
+_NO_COST = "but the option has no money or political power cost"
+
+# case: (event, (option, line, reason) per unneeded treasury check)
+_UNNEEDED_CASES = {
+    "bankruptcy check on a free option": (
+        _two_options(_weighted(_BANKRUPT)),
+        [("foo.1.a", 7, f"lowers the weight on bankruptcy, {_NO_COST}")],
+    ),
+    "bankruptcy check on a political power cost": (
+        _two_options(_PP_COST + _weighted(_BANKRUPT)),
+        [],
+    ),
+    "deficit check on a political power cost": (
+        _two_options(_PP_COST + _weighted(_DEFICIT)),
+        [
+            (
+                "foo.1.a",
+                8,
+                "lowers the weight on high deficit, but the option has no money cost",
+            )
+        ],
+    ),
+    "deficit check on a debt cost": (
+        _two_options("\t\tadd_to_variable = { debt = 5 }\n" + _weighted(_DEFICIT)),
+        [],
+    ),
+    "both checks on a free option": (
+        _two_options(
+            f"\t\tai_chance = {{ base = 5 modifier = {{ factor = 0.25 {_BANKRUPT} }}"
+            f" modifier = {{ factor = 0.5 {_DEFICIT} }} }}\n"
+        ),
+        [
+            (
+                "foo.1.a",
+                7,
+                f"lowers the weight on bankruptcy and high deficit, {_NO_COST}",
+            )
+        ],
+    ),
+    "negative add": (
+        _two_options(_weighted(_BANKRUPT, "add = -2")),
+        [("foo.1.a", 7, f"lowers the weight on bankruptcy, {_NO_COST}")],
+    ),
+    "raising add": (_two_options(_weighted(_BANKRUPT, "add = 10")), []),
+    "factor above 1": (_two_options(_weighted(_BANKRUPT, "factor = 2")), []),
+    "variable factor": (_two_options(_weighted(_BANKRUPT, "factor = score")), []),
+    "inside NOT": (_two_options(_weighted(f"NOT = {{ {_BANKRUPT} }}")), []),
+    "the sender's bankruptcy": (
+        _two_options(_weighted(f"FROM = {{ {_BANKRUPT} }}")),
+        [],
+    ),
+    "scripted treasury cost": (
+        _two_options("\t\tsmall_expenditure = yes\n" + _weighted(_BANKRUPT)),
+        [],
+    ),
+    "charge back to ROOT from a state scope": (
+        _two_options(
+            "\t\trandom_owned_state = { ROOT = { small_expenditure = yes } }\n"
+            + _weighted(_BANKRUPT)
+        ),
+        [],
+    ),
+    "a war": (
+        _two_options("\t\tdeclare_war_on = { target = GER }\n" + _weighted(_DEFICIT)),
+        [],
+    ),
+    "a spending law change behind a caller": (
+        _two_options("\t\tTAG_reform = yes\n" + _weighted(_DEFICIT)),
+        [],
+    ),
+    "an option the AI never picks": (
+        _two_options(
+            f"\t\tai_chance = {{ base = 0 modifier = {{ factor = 0.25 {_BANKRUPT} }} }}\n"
+        ),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _UNNEEDED_CASES.values(), ids=_UNNEEDED_CASES
+)
+def test_unneeded_treasury_checks(text, expected):
+    assert (
+        find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)[1] == expected
+    )
 
 
 def test_mixed_costs_report_only_the_uncovered_kind():
