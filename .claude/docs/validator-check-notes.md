@@ -251,6 +251,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   conditions. `original_tag`, foreign-scope tags, and tags mentioned only inside
   `OR` or `NOT` do not prove the receiver.
   - Display-only `effect_tooltip` costs and temp writes do not execute.
+  - Both AI cost checks skip events whose option tag gates are pairwise disjoint.
+    Conjunctive `tag` or `original_tag` requirements and direct `NOT` exclusions can
+    prove that no receiver sees two options. Different identity fields, `OR` gates,
+    and foreign-country checks do not prove a split.
   - Skipped: an option at `base = 0` with no `add` while another option can win, and
     a cost kind every option always pays, or every option pays only sometimes. A kind
     some options always pay and others only sometimes pay is not shared. An
