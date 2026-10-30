@@ -931,12 +931,12 @@ def format_focus_tree_lines(lines, verbose: bool = False):
                     f"Processed {block_type} block {counts[block_type]}",
                     verbose,
                 )
-            # shared_focus/joint_focus are top-level definitions (no
-            # focus_tree wrapper), so render them at column 0.
-            indent = "" if block_type in {"shared_focus", "joint_focus"} else "\t"
-            output_lines.extend(reindent_by_brace_depth(formatted_lines, indent))
+            output_lines.extend(formatted_lines)
 
         i = next_i
+
+    # One pass covers the blocks and the comments and tree properties between them.
+    output_lines = reindent_by_brace_depth(output_lines)
 
     # Post-processing: ensure blank lines between consecutive focus/shared_focus/joint_focus blocks
     focus_block_pattern = re.compile(r"^\t?(focus|shared_focus|joint_focus)\s*=\s*{")
