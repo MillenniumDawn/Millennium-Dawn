@@ -69,9 +69,11 @@ Blocs and system:
 
 ## Bankruptcy guard
 
-A focus whose `completion_reward` spends real treasury (about 5bn or more through
-`modify_treasury_effect`, or a money-costing scripted or building effect) takes
-`FOCUS_FILTER_EXPENDITURE` and this modifier in `ai_will_do`:
+A focus whose `completion_reward` spends real treasury takes `FOCUS_FILTER_EXPENDITURE`
+and this modifier in `ai_will_do`. Real treasury is about 5bn or more through a literal
+`treasury_change` and `modify_treasury_effect`, or any call to a money-costing scripted
+or building effect. A scripted charge such as `GRE_pay_or_defer` counts at any size,
+since the validator cannot size it:
 
 ```
 modifier = {
