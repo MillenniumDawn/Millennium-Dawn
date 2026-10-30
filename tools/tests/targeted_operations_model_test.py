@@ -1,5 +1,5 @@
 import pytest
-from targeted_operations_helpers import RaceScript, _parse_race_script
+from targeted_operations_helpers import ScriptModel, _parse_race_script
 from targeted_operations_helpers import (
     _extract_block as _extract_block,
 )
@@ -13,7 +13,7 @@ from targeted_operations_helpers import (
 
 @pytest.mark.parametrize("reference", ("TOP_history_rows", "global.TOP_history_rows"))
 def test_array_membership_treats_unset_history_as_empty(reference):
-    script = RaceScript()
+    script = ScriptModel()
     script.countries = {1: {"vars": {}}}
     script.globals = {}
     script.temps = {}
