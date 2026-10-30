@@ -122,6 +122,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   country that cannot pay. A decision that must stay unguarded, such as a deadline the
   AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
   decision, not one cost, so re-check its reason when the decision gains a new cost.
+- `decision-unneeded-treasury-guard` (WARNING): the decision twin of
+  `event-unneeded-treasury-guard`, read over the whole decision, with the same gaps.
+  `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost is
+  money, and a money modifier in the `modifier` block commits money.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -251,6 +255,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
+- `event-unneeded-treasury-guard` (WARNING, opt-in with `--check-ai-chance-costs`): an
+  `ai_chance` modifier that lowers the weight on bankruptcy or a high deficit, on an
+  option with no money cost. Costs come from the whole option, nested scopes included,
+  so a charge back to ROOT from a state scope counts, and so does one to another
+  country. A political power cost justifies the bankruptcy check only. A war, a
+  spending law change, or a money modifier the script names commits money and
+  justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
+  A free build costs nothing here, even for a building with upkeep, matching the
+  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
+  modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -330,6 +344,14 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
+- `unneeded-treasury-guard` (WARNING): the focus twin of
+  `event-unneeded-treasury-guard`, over the completion rewards. The focus `cost` is
+  completion time, never a price. A literal political power loss justifies the
+  bankruptcy check. A building effect after `skip_payment = 1` in the same or an
+  enclosing block costs nothing. A charge another nation's event sends back to the
+  sender, directly or through a reply event, counts. Known gaps: partner-event
+  branches gated on the receiver's tag are not told apart, and a partner-event charge
+  never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 

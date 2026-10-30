@@ -38,12 +38,15 @@ from sprite_index import build_sprite_index
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     FACTOR_ZERO_RE,
+    MONEY_COMMITMENT_RE,
     BaseValidator,
     Severity,
     case_mismatch,
     casefold_index,
+    lowering_treasury_checks,
     run_validator_main,
     strip_comments,
+    unneeded_treasury_checks,
 )
 
 # Opening of a focus_tree or top-level focus definition block
@@ -203,6 +206,12 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # segment unknown. The `_tt` loc key is never called with `= yes`.
 _MODIFY_TREASURY_RE = word_start_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
 _MODIFY_DEBT_RE = word_start_re("modify_debt_effect", r"\s*=\s*yes\b")
+# Building effects charge nothing once the caller sets this temp variable.
+_SKIP_PAYMENT_RE = re.compile(r"\bskip_payment\s*=\s*1\b")
+_PAYMENT_TOKEN_RE = re.compile(
+    r'"[^"\n]*"|(?P<open>\{)|(?P<close>\})'
+    rf"|(?P<skip>{_SKIP_PAYMENT_RE.pattern})|\b(?P<key>[A-Za-z0-9_]+)\s*="
+)
 _SEARCH_FILTERS_RE = word_start_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
 _BRACE_RE = re.compile(r"[{}]")
 _BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
@@ -268,6 +277,9 @@ _CONTROL_FLOW_SCOPES = frozenset(
 )
 # 3-letter all-caps tokens that are logic keywords, not country tags.
 _NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
+# A scope block in an event option that can charge someone other than the
+# receiver: FROM (the sender) or a literal tag. Chains such as FROM.FROM stay out.
+_PAYER_SCOPE_RE = re.compile(r"(?<![\w.:@])(FROM|[A-Z]{3})\s*=\s*\{")
 
 
 def _top_level_search_filters(body: str) -> Set[str]:
@@ -346,8 +358,33 @@ def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, in
         pos = tend
 
 
+def _payment_keys(body: str, waived_at_start: bool) -> Iterator[Tuple[int, str, bool]]:
+    """(offset, key, waived) for each `key =` in *body*, in one forward pass.
+
+    Waived means a skip_payment = 1 set earlier in the key's block or one
+    enclosing it is in force; one set in a branch beside it is not.
+    """
+    stack = [-1]
+    waived = {-1} if waived_at_start else set()
+    for m in _PAYMENT_TOKEN_RE.finditer(body):
+        kind = m.lastgroup
+        if kind == "open":
+            stack.append(m.start())
+        elif kind == "close":
+            if len(stack) > 1:
+                stack.pop()
+        elif kind == "skip":
+            # The set sits in its set_temp_variable block; its holder is the parent.
+            waived.add(stack[-2] if len(stack) > 1 else -1)
+        elif kind == "key":
+            yield m.start(), m["key"], not waived.isdisjoint(stack)
+
+
 def _body_money_cost(
-    body: str, money_effects: FrozenSet[str]
+    body: str,
+    money_effects: FrozenSet[str],
+    waivable: FrozenSet[str] = frozenset(),
+    waived_at_start: bool = False,
 ) -> Tuple[float, bool, bool]:
     """Money an effect body spends. Returns (spend, has_cost, unknown).
 
@@ -358,7 +395,9 @@ def _body_money_cost(
                computed or variable-referenced treasury_change, a
                treasury_change touched by anything other than a plain set, a
                debt change, a corruption-style modify_treasury_effect variant,
-               or a called effect in *money_effects*).
+               or a called effect in *money_effects*, unless it is *waivable*
+               and a skip_payment = 1 is in force; *waived_at_start* says one
+               already is when the body begins).
     An amount whose sign is still known to be positive after scaling is income,
     not an unknown cost, so it counts as neither.
     Amounts inside effect_tooltip previews (outcomes applied elsewhere) are
@@ -491,8 +530,12 @@ def _body_money_cost(
             break
 
     if money_effects and not money_effects.isdisjoint(_REWARD_KEY_RE.findall(body)):
-        for m in _REWARD_KEY_RE.finditer(body):
-            if m.group(1) in money_effects and not previewed(m.start()):
+        for pos, key, waived in _payment_keys(body, waived_at_start):
+            if (
+                key in money_effects
+                and not previewed(pos)
+                and not (waived and key in waivable)
+            ):
                 has_cost = True
                 unknown = True
                 break
@@ -563,11 +606,26 @@ def _scripted_effect_facts(
     )
 
 
+class _EffectFacts(NamedTuple):
+    """Scripted-effect facts through call chains.
+
+    A waivable effect checks skip_payment itself, so a caller's
+    skip_payment = 1 makes it free. A commitment effect commits money
+    (MONEY_COMMITMENT_RE).
+    """
+
+    staffable: Dict[str, FrozenSet[str]]
+    money: FrozenSet[str]
+    waivable: FrozenSet[str]
+    commitments: FrozenSet[str]
+
+
 def _resolve_scripted_effect_chains(
     effect_bodies: Dict[str, str],
     direct_staffable: Dict[str, FrozenSet[str]],
     direct_money: FrozenSet[str],
-) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+) -> _EffectFacts:
+    """_EffectFacts from each effect's body and its direct builds and spends."""
     known_effects = set(effect_bodies)
     calls = {
         name: set(_REWARD_KEY_RE.findall(body)) & known_effects
@@ -587,15 +645,25 @@ def _resolve_scripted_effect_chains(
                 staffable[name] = resolved
                 changed = True
 
-    money = set(direct_money)
-    changed = True
-    while changed:
-        changed = False
-        for name, dependencies in calls.items():
-            if name not in money and dependencies & money:
-                money.add(name)
-                changed = True
-    return staffable, frozenset(money)
+    def with_callers(names: Set[str]) -> FrozenSet[str]:
+        changed = True
+        while changed:
+            changed = False
+            for name, dependencies in calls.items():
+                if name not in names and dependencies & names:
+                    names.add(name)
+                    changed = True
+        return frozenset(names)
+
+    waivable = frozenset(
+        name for name, body in effect_bodies.items() if _SKIP_PAYMENT_RE.search(body)
+    )
+    commitments = {
+        name for name, body in effect_bodies.items() if MONEY_COMMITMENT_RE.search(body)
+    }
+    return _EffectFacts(
+        staffable, with_callers(set(direct_money)), waivable, with_callers(commitments)
+    )
 
 
 def _is_tag_routed(option_bodies: List[str]) -> bool:
@@ -648,16 +716,82 @@ def _is_flavor_only(option_bodies: List[str]) -> bool:
     return True
 
 
-def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: ids of the events in one file that the target cannot answer."""
-    filepath, mod_path = args
+def _option_charges(
+    option: str, money_effects: FrozenSet[str], waivable: FrozenSet[str]
+) -> Tuple[Set[str], Set[Tuple[str, str]]]:
+    """(scopes an event option charges, (scope, event id) for each reply it fires).
+
+    A charge is a treasury or debt cost, or a call to one of *money_effects*
+    (see _body_money_cost for skip_payment). A FROM or tag block counts only
+    its own text, without the blocks nested in it, and a cost outside every
+    such block falls on ROOT, the receiver. Replies are fires into FROM or a
+    tag.
+    """
+    spans: List[Tuple[str, int, int]] = []
+    for m in _PAYER_SCOPE_RE.finditer(option):
+        _, end = _extract_block(option, m.start())
+        if end != -1:
+            spans.append((m.group(1), m.start(), end))
+
+    def own_text(start: int, end: int) -> str:
+        parts, pos = [], max(start, 0)
+        for _, s, e in spans:
+            if start < s and e <= end and s >= pos:
+                parts.append(option[pos:s])
+                pos = e
+        parts.append(option[pos:end])
+        return "".join(parts)
+
+    charged: Set[str] = set()
+    if (
+        _MODIFY_TREASURY_RE.search(option)
+        or _MODIFY_DEBT_RE.search(option)
+        or not money_effects.isdisjoint(_REWARD_KEY_RE.findall(option))
+    ):
+        waived_at: Dict[int, bool] = {}
+        if _SKIP_PAYMENT_RE.search(option):
+            waived_at = {pos: waived for pos, _, waived in _payment_keys(option, False)}
+        for label, start, end in [("ROOT", -1, len(option)), *spans]:
+            if _body_money_cost(
+                own_text(start, end),
+                money_effects,
+                waivable,
+                waived_at.get(start, False),
+            )[1]:
+                charged.add(label)
+
+    replies: Set[Tuple[str, str]] = set()
+    previews = _effect_tooltip_spans(option, 0, len(option))
+    for ce in _COUNTRY_EVENT_RE.finditer(option):
+        tm = _FIRE_TARGET_RE.match(option, ce.start())
+        if not tm or any(s <= ce.start() < e for s, e in previews):
+            continue
+        label, pos = _enclosing_block_label(option, ce.start())
+        while label in _CONTROL_FLOW_SCOPES:
+            label, pos = _enclosing_block_label(option, pos)
+        if label == "FROM" or (label and _LITERAL_TAG_RE.match(label)):
+            replies.add((label, tm.group(1)))
+    return charged, replies
+
+
+_EventCharges = Dict[str, Tuple[FrozenSet[str], FrozenSet[Tuple[str, str]]]]
+
+
+def _event_facts_in_file(
+    args: Tuple[str, str, FrozenSet[str], FrozenSet[str]],
+) -> Tuple[List[str], _EventCharges]:
+    """Pool worker: for one file, the ids of the events the target cannot
+    answer, and per event the scopes its options charge and the replies they
+    fire (see _option_charges)."""
+    filepath, mod_path, money_effects, waivable = args
     raw = _read_mod_text(filepath, mod_path)
     if not raw:
-        return []
+        return [], {}
     text = strip_comments(raw)
 
-    def _compute() -> List[str]:
+    def _compute() -> Tuple[List[str], _EventCharges]:
         found: List[str] = []
+        charges: _EventCharges = {}
         for m in _EVENT_BLOCK_RE.finditer(text):
             body, end = _extract_block(text, m.start())
             if end == -1:
@@ -683,15 +817,29 @@ def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
                 or _is_flavor_only(options)
             ):
                 found.append(idm.group(1))
-        return found
+            charged: Set[str] = set()
+            replies: Set[Tuple[str, str]] = set()
+            for option in options:
+                option_charged, option_replies = _option_charges(
+                    option, money_effects, waivable
+                )
+                charged |= option_charged
+                replies |= option_replies
+            if charged or replies:
+                charges[idm.group(1)] = (frozenset(charged), frozenset(replies))
+        return found, charges
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.notification_events.v4", filepath, text, _compute
+        mod_path,
+        "focus_tree.event_facts",
+        filepath,
+        f"{text}\x00{','.join(sorted(money_effects))}|{','.join(sorted(waivable))}",
+        _compute,
     )
 
 
 def _country_event_target_is_foreign(
-    body: str, ce_pos: int, owner_tags: FrozenSet[str]
+    body: str, ce_pos: int, owner_tags: FrozenSet[str], through_hidden: bool = False
 ) -> bool:
     """True if the country_event at *ce_pos* fires into another nation's scope
     and the player can see it happen.
@@ -705,7 +853,8 @@ def _country_event_target_is_foreign(
 
     The walk carries on past that verdict to the reward root, because a
     hidden_effect anywhere above the fire swallows every tooltip under it —
-    there is nothing a TT_IF_THEY_ACCEPT could render.
+    there is nothing a TT_IF_THEY_ACCEPT could render. *through_hidden* is
+    for checks about what the fire does, which a hidden_effect does not stop.
     """
     foreign: Optional[bool] = None
     pos = ce_pos
@@ -713,7 +862,7 @@ def _country_event_target_is_foreign(
         label, opener = _enclosing_block_label(body, pos)
         if label is None:
             return bool(foreign)
-        if label == "hidden_effect":
+        if label == "hidden_effect" and not through_hidden:
             return False
         if foreign is None and label not in _CONTROL_FLOW_SCOPES:
             if label in _SELF_SCOPES:
@@ -727,6 +876,24 @@ def _country_event_target_is_foreign(
             else:
                 foreign = False
         pos = opener
+
+
+def _fire_charges_sender(
+    body: str,
+    ce_pos: int,
+    payers: Dict[str, FrozenSet[str]],
+    owner_tags: FrozenSet[str],
+) -> bool:
+    """True if the fire at *ce_pos* sends another nation an event that charges
+    the sender, as FROM or by the owner's tag."""
+    tm = _FIRE_TARGET_RE.match(body, ce_pos)
+    return bool(
+        tm
+        and payers.get(tm.group(1), frozenset()) & (owner_tags | {"FROM"})
+        and _country_event_target_is_foreign(
+            body, ce_pos, owner_tags, through_hidden=True
+        )
+    )
 
 
 def _brace_pairs(text: str) -> Dict[int, int]:
@@ -905,6 +1072,16 @@ class _FocusFile:
             blocks.append(_FocusBlock(focus_id, body, start, end, line))
         return blocks
 
+    @cached_property
+    def owner_tags(self) -> FrozenSet[str]:
+        """Tags the tree's `country = { }` blocks name."""
+        tags: Set[str] = set()
+        for cm in _FT_COUNTRY_BLOCK_RE.finditer(self.text):
+            cbody, _ = _block_at(self.text, cm.start(), self.pairs)
+            if cbody:
+                tags.update(_TAG_ASSIGN_RE.findall(cbody))
+        return frozenset(tags)
+
     def _cached(self, tag: str, scan, *payload, fingerprint: Optional[str] = None):
         content = self.text if fingerprint is None else f"{self.text}\x00{fingerprint}"
         return disk_cache.per_file_cached_by_content(
@@ -929,23 +1106,31 @@ class _FocusFile:
         )
 
     def ai_guards(
-        self, staffable_map: Dict[str, FrozenSet[str]], money_effects: FrozenSet[str]
+        self, effects: _EffectFacts, payers: Dict[str, FrozenSet[str]]
     ) -> List[Dict]:
         # The maps are part of the key, so entries invalidate when
-        # scripted-effect definitions change.
-        fingerprint = (
-            ";".join(
-                f"{name}:{','.join(sorted(types))}"
-                for name, types in sorted(staffable_map.items())
+        # scripted-effect or event definitions change.
+        def joined(mapping: Dict[str, FrozenSet[str]]) -> str:
+            return ";".join(
+                f"{name}:{','.join(sorted(values))}"
+                for name, values in sorted(mapping.items())
             )
-            + "|"
-            + ",".join(sorted(money_effects))
+
+        fingerprint = "|".join(
+            [
+                joined(effects.staffable),
+                *(
+                    ",".join(sorted(names))
+                    for names in (effects.money, effects.waivable, effects.commitments)
+                ),
+                joined(payers),
+            ]
         )
         return self._cached(
-            "focus_tree.ai_guards.v7",
+            "focus_tree.ai_guards.v9",
             _scan_ai_guards,
-            staffable_map,
-            money_effects,
+            effects,
+            payers,
             fingerprint=fingerprint,
         )
 
@@ -983,23 +1168,26 @@ def _scan_focus_icons(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
 
 
 def _scan_ai_guards(
-    source: _FocusFile,
-    staffable_map: Dict[str, FrozenSet[str]],
-    money_effects: FrozenSet[str],
+    source: _FocusFile, effects: _EffectFacts, payers: Dict[str, FrozenSet[str]]
 ) -> List[Dict]:
     """Per-focus facts for the ai_will_do guard checks.
 
     Returns one dict per focus: id, line, search filters, the staffable
     building types its rewards construct (directly or via a scripted effect
-    from *staffable_map*, and never from inside an effect_tooltip, which only
-    previews), the money its rewards spend (spend / has_cost / unknown, with
-    *money_effects* naming the scripted effects that spend money), whether an
+    from *effects*, and never from inside an effect_tooltip, which only
+    previews), the money its rewards spend (spend / has_cost / unknown), whether an
     effect_tooltip previews a cost the focus commits to but pays elsewhere
-    (a cross-country offer settled in the event), and the
+    (a cross-country offer settled in the event), whether it sends another
+    nation an event that charges the sender (*payers* maps an event id to the
+    FROM or tag scopes it charges), whether a literal political power loss
+    appears, whether it commits money (MONEY_COMMITMENT_RE, directly or via
+    a commitment effect), the treasury checks its ai_will_do lowers the weight
+    on (see lowering_treasury_checks), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
     scripted triggers are not recognized).
     """
+    staffable_map, money_effects, waivable, commitments = effects
     out: List[Dict] = []
     for focus_id, fbody, fstart, fend, fline in source.blocks:
         if focus_id is None:
@@ -1012,6 +1200,9 @@ def _scan_ai_guards(
         has_cost = False
         unknown_cost = False
         previewed_cost = False
+        event_cost = False
+        pp_cost = False
+        commits_money = False
         for rbody, _, _ in _iter_reward_blocks(
             source.text, fstart, fend, pairs=source.pairs
         ):
@@ -1048,18 +1239,33 @@ def _scan_ai_guards(
                         if t in _STAFFABLE_TRIGGERS
                     )
                 bpos = bend
-            s, hc, u = _body_money_cost(rbody, called_money)
+            s, hc, u = _body_money_cost(rbody, called_money, waivable)
             spend += s
             has_cost = has_cost or hc
             unknown_cost = unknown_cost or u
             previewed_cost = previewed_cost or any(
                 _body_money_cost(
-                    rbody[rbody.index("{", s0) + 1 : e0 - 1], called_money
+                    rbody[rbody.index("{", s0) + 1 : e0 - 1], called_money, waivable
                 )[1]
                 for s0, e0 in spans
             )
+            if payers and not event_cost:
+                event_cost = any(
+                    not previewed(ce.start())
+                    and _fire_charges_sender(
+                        rbody, ce.start(), payers, source.owner_tags
+                    )
+                    for ce in _COUNTRY_EVENT_RE.finditer(rbody)
+                )
+            pp_cost = pp_cost or bool(_PP_MALUS_RE.search(rbody))
+            commits_money = (
+                commits_money
+                or bool(MONEY_COMMITMENT_RE.search(rbody))
+                or not commitments.isdisjoint(keys)
+            )
 
         guards: Set[str] = set()
+        treasury_checks: Set[str] = set()
         am = _AI_WILL_DO_START.search(fbody)
         if am:
             abody, _ = _extract_block(fbody, am.start())
@@ -1087,6 +1293,7 @@ def _scan_ai_guards(
                         for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
                             if _is_conjunctive_guard(mbody, gm.start()):
                                 guards.add("bankruptcy_incoming_collapse")
+                    treasury_checks |= lowering_treasury_checks(mbody)
                     mpos = mend
 
         out.append(
@@ -1101,6 +1308,10 @@ def _scan_ai_guards(
                 "has_cost": has_cost,
                 "unknown": unknown_cost,
                 "previewed_cost": previewed_cost,
+                "event_cost": event_cost,
+                "pp_cost": pp_cost,
+                "commits_money": commits_money,
+                "treasury_checks": treasury_checks,
             }
         )
     return out
@@ -1135,12 +1346,6 @@ def _scan_cross_country_fires(
     text = source.text
     if "country_event" not in text:
         return []
-    owner_tags: Set[str] = set()
-    for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
-        cbody, _ = _block_at(text, cm.start(), source.pairs)
-        if cbody:
-            owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
-    owner_frozen = frozenset(owner_tags)
 
     out: List[Dict] = []
     for focus_id, fbody, fstart, fend, fline in source.blocks:
@@ -1161,7 +1366,7 @@ def _scan_cross_country_fires(
                     if tm and tm.group(1) in notifications:
                         continue
                     if _country_event_target_is_foreign(
-                        rbody, ce.start(), owner_frozen
+                        rbody, ce.start(), source.owner_tags
                     ):
                         flagged = True
                         break
@@ -1459,7 +1664,7 @@ def _parse_focus_text(source: _FocusFile) -> Dict:
 
 def _scan_focus_file(
     args: Tuple[
-        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool, bool
+        str, str, _EffectFacts, FrozenSet[str], Dict[str, FrozenSet[str]], bool, bool
     ],
 ) -> Dict[str, Any]:
     """Pool worker: every per-file focus scan from one read of the file.
@@ -1467,15 +1672,7 @@ def _scan_focus_file(
     A file whose findings are not reported only feeds the repo-wide focus
     registry and relative_position_id targets.
     """
-    (
-        filepath,
-        mod_path,
-        staffable_map,
-        money_effects,
-        notifications,
-        icons,
-        reportable,
-    ) = args
+    filepath, mod_path, effects, notifications, payers, icons, reportable = args
     source = _FocusFile(filepath, mod_path)
     indexes = {
         "parse": source.parse(),
@@ -1487,7 +1684,7 @@ def _scan_focus_file(
     return {
         **indexes,
         "missing_search_filters": source.missing_search_filters(),
-        "ai_guards": source.ai_guards(staffable_map, money_effects),
+        "ai_guards": source.ai_guards(effects, payers),
         "cross_country_fires": source.cross_country_fires(notifications),
         "pp_malus": source.pp_malus(),
         "structural": source.structural(),
@@ -1512,9 +1709,7 @@ class Validator(BaseValidator):
         self._registry: Optional[_FocusRegistry] = None
         self._staged_paths: Optional[Set[str]] = None
         self.layout_counts: Dict[str, int] = {}
-        self._scripted_effect_data: Optional[
-            Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]
-        ] = None
+        self._scripted_effect_data: Optional[_EffectFacts] = None
         if self.staged_only:
             self.staged_files = (
                 get_staged_files(
@@ -1569,17 +1764,17 @@ class Validator(BaseValidator):
         if not any(reportable) and not (self.staged_only and self._get_staged_paths()):
             self._scans = []
             return self._scans
-        staffable, money = self._scripted_effect_data_for_guards()
-        notifications = self._notification_event_ids()
+        effects = self._scripted_effect_data_for_guards()
+        notifications, payers = self._event_facts()
         self._scans = self._pool_map(
             _scan_focus_file,
             [
                 (
                     f,
                     self.mod_path,
-                    staffable,
-                    money,
+                    effects,
                     notifications,
+                    payers,
                     self.missing_icons,
                     report,
                 )
@@ -1976,11 +2171,9 @@ class Validator(BaseValidator):
     # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
-    def _scripted_effect_data_for_guards(
-        self,
-    ) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
-        """(staffable map, money-effect names), both resolved through call
-        chains from one read of common/scripted_effects/."""
+    def _scripted_effect_data_for_guards(self) -> _EffectFacts:
+        """_resolve_scripted_effect_chains from one read of
+        common/scripted_effects/."""
         if self._scripted_effect_data is not None:
             return self._scripted_effect_data
 
@@ -2012,7 +2205,7 @@ class Validator(BaseValidator):
         add_building_construction of a staffable type, so new builder-effect
         variants are picked up without a hardcoded list.
         """
-        return self._scripted_effect_data_for_guards()[0]
+        return self._scripted_effect_data_for_guards().staffable
 
     def _money_cost_effect_names(self) -> FrozenSet[str]:
         """Scripted-effect names that (transitively) reduce the treasury or
@@ -2024,7 +2217,7 @@ class Validator(BaseValidator):
         (non-literal) treasury_change is treated as a cost even though its sign
         is unknown, so a handful of computed-income effects may be included.
         """
-        return self._scripted_effect_data_for_guards()[1]
+        return self._scripted_effect_data_for_guards().money
 
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
@@ -2037,12 +2230,16 @@ class Validator(BaseValidator):
         the money the reward actually costs (summed negative treasury_change,
         or a money-spending scripted effect), not the focus completion time —
         so a focus spending at least the threshold without the guard is
-        flagged, a focus carrying the guard with no money cost is flagged as
-        unneeded, and a money/building focus tagged neither economic nor
-        military is flagged as miscategorized. Effect chains are resolved to a
-        fixed point so a wrapper of any depth stays visible; guards written via
-        wrapper scripted triggers are not recognized. All are per-file
-        aggregates so the backlog stays readable.
+        flagged, a focus whose ai_will_do lowers the weight on bankruptcy or a
+        high deficit with no money cost is flagged as unneeded (a previewed
+        cost, one another nation's event charges back to the sender, and a
+        MONEY_COMMITMENT_RE effect still count, and so does a political power
+        loss for bankruptcy; the focus `cost` never does), and a
+        money/building focus tagged neither
+        economic nor military is flagged as miscategorized. Effect chains are
+        resolved to a fixed point so a wrapper of any depth stays visible;
+        guards written via wrapper scripted triggers are not recognized. All
+        are per-file aggregates so the backlog stays readable.
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
@@ -2083,13 +2280,20 @@ class Validator(BaseValidator):
                     )
                 )
 
-            has_guard = "bankruptcy_incoming_collapse" in d["guards"]
-            if not has_guard:
+            if "bankruptcy_incoming_collapse" not in d["guards"]:
                 if d["spend"] >= _MONEY_SPEND_THRESHOLD:
                     underguarded_by_file[rel].append((d["id"], d["line"], d["spend"]))
                 elif d["unknown"]:
                     unknown_spend_by_file[rel].append((d["id"], d["line"]))
-            elif not d["has_cost"] and not d["previewed_cost"]:
+
+            if unneeded_treasury_checks(
+                d["treasury_checks"],
+                d["has_cost"]
+                or d["previewed_cost"]
+                or d["event_cost"]
+                or d["commits_money"],
+                d["pp_cost"],
+            ):
                 unneeded_by_file[rel].append((d["id"], d["line"]))
 
             if (
@@ -2139,12 +2343,14 @@ class Validator(BaseValidator):
         self._report(
             _aggregate(
                 unneeded_by_file,
-                "focus(es) with a bankruptcy guard but no money cost (guard unneeded)",
+                "focus(es) whose ai_will_do lowers the weight on bankruptcy or a"
+                " high deficit without a matching cost",
             ),
-            "No focuses carry an unneeded bankruptcy guard",
-            "Files with an unneeded bankruptcy guard (no treasury cost):",
+            "No focuses carry an unneeded treasury check",
+            "Files with treasury checks on focuses that cost no money (the focus"
+            " `cost` is time, not a price):",
             Severity.WARNING,
-            category="unneeded-bankruptcy-guard",
+            category="unneeded-treasury-guard",
         )
         self._report(
             _aggregate(
@@ -2158,21 +2364,43 @@ class Validator(BaseValidator):
             category="focus-filter-mismatch",
         )
 
-    def _notification_event_ids(self) -> FrozenSet[str]:
-        """Event ids the target cannot answer: hidden, fewer than 2 options,
-        options tag-routed one per recipient (see _is_tag_routed), or options
-        that are pure flavor with no outcome at all (see _is_flavor_only).
+    def _event_facts(self) -> Tuple[FrozenSet[str], Dict[str, FrozenSet[str]]]:
+        """(notification ids, payers), from one pass over the event files.
 
-        Firing one of these into a foreign scope is a notification, not an
-        offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
+        Notifications are the events the target cannot answer: hidden, fewer
+        than 2 options, options tag-routed one per recipient (see
+        _is_tag_routed), or options that are pure flavor with no outcome at
+        all (see _is_flavor_only). Firing one of these into a foreign scope is
+        a notification, not an offer, so it never needs a TT_IF_THEY_ACCEPT
+        tooltip.
+
+        Payers maps an event id to the FROM or tag scopes that end up paying:
+        the ones its options charge, and the ones they fire a reply into when
+        the reply charges its own receiver.
         """
         files = self._collect_files(["events/*.txt"], ignore_staged=True)
+        effects = self._scripted_effect_data_for_guards()
         per_file = self._pool_map(
-            _notification_ids_in_file,
-            [(fp, self.mod_path) for fp in files],
+            _event_facts_in_file,
+            [(fp, self.mod_path, effects.money, effects.waivable) for fp in files],
             chunksize=10,
         )
-        return frozenset(event_id for ids in per_file for event_id in ids)
+        notifications: Set[str] = set()
+        charges: _EventCharges = {}
+        for ids, file_charges in per_file:
+            notifications.update(ids)
+            charges.update(file_charges)
+        payers: Dict[str, FrozenSet[str]] = {}
+        for event_id, (charged, replies) in charges.items():
+            scopes = {
+                scope
+                for scope, reply in replies
+                if "ROOT" in charges.get(reply, (frozenset(), frozenset()))[0]
+            }
+            scopes.update(charged - {"ROOT"})
+            if scopes:
+                payers[event_id] = frozenset(scopes)
+        return frozenset(notifications), payers
 
     def validate_cross_country_event_tooltips(self):
         """Flag focuses that fire an event to another nation without a
