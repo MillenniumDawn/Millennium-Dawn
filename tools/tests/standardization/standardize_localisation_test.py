@@ -260,3 +260,142 @@ def test_main_exits_one_when_the_file_has_no_language_header(tmp_path, monkeypat
     with pytest.raises(SystemExit) as exit_info:
         standardize_localisation.main()
     assert exit_info.value.code == 1
+
+
+_CATEGORISED_LOC = """l_english:
+ # user note
+ # National Focus
+ TST_focus_tree: "TST Tree"
+ TST_focus: "Focus"
+ TST_focus_desc: "Description"
+ TST_idea: "Idea"
+ TST_modifier: "Modifier"
+ TST_opinion: "Opinion"
+ TST_category: "Category"
+ TST_decision: "Decision"
+ tst_events.1: "Event"
+ TST_character: "Character"
+ TST_org: "Organization"
+ TST_mio: "MIO"
+ TST_trait: "Trait"
+ TST_variable: "Variable"
+ TST_gui: "GUI"
+ unknown_tt: "Tooltip"
+ TST_live: "Live"
+ dead_key: "Dead"
+ # trailing note
+"""
+
+
+def _categorised_mod(tmp_path):
+    """A mod whose script defines one key of every indexed category."""
+    root = tmp_path / "mod"
+    for relative, content in {
+        "common/national_focus/focus.txt": "focus = {\n\tid = TST_focus\n}\n",
+        "common/ideas/ideas.txt": "ideas = {\n\t\tTST_idea = {\n\t\t}\n}\n",
+        "common/dynamic_modifiers/modifiers.txt": "TST_modifier = {\n}\n",
+        "common/opinion_modifiers/opinions.txt": "\tTST_opinion = {\n\t}\n",
+        "common/decisions/categories/sub.txt": "TST_category = {\n\tTST_decision = {\n\t}\n}\n",
+        "events/events.txt": "add_namespace = tst_events\n",
+        "common/characters/characters.txt": "\tTST_character = {\n\t}\n",
+        "common/military_industrial_organization/organizations/mio.txt": "TST_org = {\n\tname = TST_mio\n}\n",
+        "common/unit_leader/traits.txt": "\tTST_trait = {\n\t}\n",
+        "common/scripted_effects/effects.txt": "set_variable = { TST_variable = 1 }\n",
+        "common/scripted_effects/references.txt": "pdx_tooltip = TST_live\n",
+        "interface/window.gui": "TST_gui = {\n}\n",
+    }.items():
+        _write(root / relative, content)
+    loc = _write(
+        root / "localisation/english/MD_focus_TST_l_english.yml", _CATEGORISED_LOC
+    )
+    return root, loc
+
+
+def test_index_and_references_read_every_script_folder(tmp_path):
+    root, _loc = _categorised_mod(tmp_path)
+    index = _build_index(root, verbose=True)
+    references = _build_reference_tokens(root, verbose=True)
+    assert "TST_focus" in index["National Focus"]
+    assert "TST_decision" in index["Decisions"]
+    assert "tst_events" in index["Events"]
+    assert "TST_gui" in references
+    assert standardize_localisation._scan_dir(root / "missing", recursive=False) == []
+
+
+@pytest.mark.parametrize(
+    "key, category",
+    [
+        ("tst_events.1", "Events"),
+        ("TST_focus_desc", "National Focus"),
+        ("unknown_tt", "Tooltips"),
+        ("TST_live", "Other"),
+        ("dead_key", "Unreferenced"),
+    ],
+)
+def test_keys_are_filed_by_what_defines_or_references_them(tmp_path, key, category):
+    root, _loc = _categorised_mod(tmp_path)
+    index = _build_index(root, verbose=False)
+    references = _build_reference_tokens(root, verbose=False)
+    assert _find_category(key, index, references) == category
+
+
+def test_a_desc_key_is_unreferenced_without_its_base(tmp_path):
+    root, _loc = _categorised_mod(tmp_path)
+    references = _build_reference_tokens(root, verbose=False)
+    assert standardize_localisation._referenced("dead_key_desc", references) is False
+
+
+def test_standardized_file_keeps_comments_orders_sections_and_is_idempotent(tmp_path):
+    root, loc = _categorised_mod(tmp_path)
+    standardizer = LocalisationStandardizer(root, verbose=True)
+    assert standardizer.standardize_file(loc, loc)
+    once = loc.read_text(encoding="utf-8-sig")
+    assert once.startswith("l_english:")
+    assert " # user note" in once
+    assert " # trailing note" in once
+    assert once.index("# National Focus") < once.index("# Ideas")
+    assert ' TST_focus_tree: "TST Tree"' in once
+    assert standardizer.standardize_file(loc, loc)
+    assert loc.read_text(encoding="utf-8-sig") == once
+
+
+def test_standardize_fails_without_a_header_or_an_input(tmp_path):
+    root = tmp_path / "mod"
+    bad = _write(root / "bad.yml", "\n")
+    standardizer = LocalisationStandardizer(root)
+    assert not standardizer.standardize_file(bad, bad)
+    assert not standardizer.standardize_file(root / "missing.yml", bad)
+
+
+def test_standardize_fails_when_the_write_fails(tmp_path, monkeypatch):
+    root = tmp_path / "mod"
+    good = _write(root / "good.yml", 'l_english:\n key: "value"\n')
+
+    def fail_write(*_args, **_kwargs):
+        raise OSError("disk")
+
+    monkeypatch.setattr(standardize_localisation, "atomic_write_text", fail_write)
+    assert not LocalisationStandardizer(root).standardize_file(good, good)
+
+
+def test_main_with_an_explicit_root_writes_the_output_and_a_backup(
+    tmp_path, monkeypatch
+):
+    root, loc = _categorised_mod(tmp_path)
+    output = tmp_path / "out.yml"
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "standardize_localisation.py",
+            str(loc),
+            "--mod-root",
+            str(root),
+            "--output",
+            str(output),
+            "--backup",
+        ],
+    )
+    standardize_localisation.main()
+    assert output.read_bytes().startswith(b"\xef\xbb\xbf")
+    assert list(loc.parent.glob("MD_focus_TST_l_english.yml.backup.*"))

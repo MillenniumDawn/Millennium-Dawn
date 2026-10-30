@@ -43,6 +43,8 @@ _IN_PR_HEADING = "Findings in your PR"
 _CATEGORY_HEADING = "Findings by category"
 # Statuses that mean a run produced no usable result, so it cannot count as passed.
 _INCOMPLETE_STATUSES = {"unknown", "no_output"}
+# Baseline statuses the New Findings section lists.
+_LISTED_STATUSES = {"new", "raised", "lowered"}
 
 
 def render(
@@ -110,16 +112,14 @@ def render(
         parts.append(categories)
         parts.append("")
 
-    new_errors = (
-        _new_error_counts(baseline_stats) if baseline_stats is not None else None
-    )
+    new_counts = _new_counts(baseline_stats) if baseline_stats is not None else None
 
-    summary = _render_summary_table(runs, new_errors)
+    summary = _render_summary_table(runs, new_counts)
     if summary:
         parts.append(summary)
         parts.append("")
 
-    tools_section = _render_tools_section(runs, new_errors)
+    tools_section = _render_tools_section(runs, new_counts)
     if tools_section:
         parts.append(tools_section)
         parts.append("")
@@ -184,10 +184,11 @@ def _count_label(errors: int, warnings: int) -> str:
     return ", ".join(parts) or "0 issues"
 
 
-def _new_error_counts(stats: "BaselineStats") -> Dict[str, int]:
+def _new_counts(stats: "BaselineStats") -> Dict[str, int]:
+    """New findings per validator, errors and warnings, as the verdict counts them."""
     counts: Dict[str, int] = defaultdict(int)
     for issue in stats.new_issues:
-        if issue.severity == Severity.ERROR and issue.validator:
+        if issue.validator:
             counts[issue.validator] += 1
     return counts
 
@@ -206,10 +207,10 @@ def _severity_icon(errors: int, warnings: int) -> str:
 def _error_verdict_with_baseline(
     total_errors: int, total_warnings: int, stats: "BaselineStats"
 ) -> str:
-    line = (
-        f"{_plural(stats.new_errors, 'new error')} against the main baseline "
-        f"must be fixed before merge."
-    )
+    blocking = [_plural(stats.new_errors, "new error")] if stats.new_errors else []
+    if stats.raised:
+        blocking.append(f"{_plural(len(stats.raised), 'warning')} raised to error")
+    line = f"{' and '.join(blocking)} against the main baseline must be fixed before merge."
     extras = [f"{_plural(total_errors, 'error')} total"]
     if stats.new_warnings:
         extras.append(_plural(stats.new_warnings, "new warning"))
@@ -263,7 +264,7 @@ def _render_verdict(
     )
 
     if baseline_stats is not None:
-        if baseline_stats.new_errors:
+        if baseline_stats.new_errors or baseline_stats.raised:
             line = _error_verdict_with_baseline(
                 total_errors, total_warnings, baseline_stats
             )
@@ -324,7 +325,12 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     if scope_label:
         bits.append(f"**Scope:** {scope_label}")
     if ctx.baseline_status == "available":
-        bits.append("**Baseline comparison:** available")
+        source = (
+            f"main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else "available"
+        )
+        if ctx.baseline_scanned_here:
+            source += " (scanned in this run)"
+        bits.append(f"**Baseline comparison:** {source}")
     elif ctx.baseline_status == "unavailable":
         bits.append("**Baseline comparison:** unavailable")
     if ctx.changed_files_status == "available":
@@ -334,13 +340,36 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     return " · ".join(bits)
 
 
+def _tool_effect_line(effect: Optional[Dict[str, Tuple[int, int]]]) -> str:
+    if effect is None:
+        return (
+            "What that code does to main's findings is unavailable: main has no "
+            "scan of this commit with its own validators."
+        )
+    if not effect:
+        return "On main's content, that code changes no findings."
+    ranked = sorted(effect.items(), key=lambda item: (-sum(item[1]), item[0]))
+    parts = [
+        f"`{category}` +{added}/-{dropped}" for category, (added, dropped) in ranked
+    ]
+    return "On main's content, that code adds/drops: " + ", ".join(parts) + "."
+
+
 def _render_availability_notice(ctx: ReportContext) -> str:
     bits: List[str] = []
     if ctx.baseline_status == "unavailable":
+        commit = f" of main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else ""
         bits.append(
-            "Baseline comparison unavailable (cold cache or validator generation "
-            "mismatch). Findings are not annotated NEW vs EXISTING."
+            f"Baseline comparison unavailable (no complete baseline{commit} for "
+            "this validator code). Findings are not annotated NEW vs EXISTING."
         )
+    if ctx.tooling_changed and ctx.baseline_status == "available":
+        bits.append(
+            "This PR changes validator code. Both commits were scanned with the "
+            "PR's validators, so findings that code adds to unchanged content read "
+            "EXISTING, not NEW."
+        )
+        bits.append(_tool_effect_line(ctx.tool_effect))
     if ctx.changed_files_status == "unavailable":
         bits.append(
             "Changed-file list was not available. Findings are not tagged IN YOUR PR."
@@ -356,11 +385,11 @@ def _render_availability_notice(ctx: ReportContext) -> str:
 
 
 def _run_sort_key(
-    r: ValidatorRun, new_errors: Optional[Dict[str, int]] = None
+    r: ValidatorRun, new_counts: Optional[Dict[str, int]] = None
 ) -> Tuple[int, int, str]:
-    """New errors first when classified, then errors, warnings, clean."""
-    n = (new_errors or {}).get(r.name, 0)
-    if new_errors is not None:
+    """New findings first when classified, then errors, warnings, clean."""
+    n = (new_counts or {}).get(r.name, 0)
+    if new_counts is not None:
         rank = 0 if n else (1 if r.errors else (2 if r.warnings else 3))
         return (rank, -n, r.title.lower())
     rank = 0 if r.errors else (1 if r.warnings else 2)
@@ -373,8 +402,13 @@ def _table_row(
     warnings: int,
     new_count: Optional[int] = None,
     bold: bool = False,
+    incomplete: bool = False,
 ) -> str:
     icon = "" if bold else f"{_severity_icon(errors, warnings)} "
+    if incomplete:
+        title += " (incomplete)"
+        if not errors and not warnings and not bold:
+            icon = "⚠️ "
     label = f"**{title}**" if bold else f"{icon}{title}"
     err = f"**{errors:,}**" if bold else f"{errors:,}"
     warn = f"**{warnings:,}**" if bold else f"{warnings:,}"
@@ -385,7 +419,7 @@ def _table_row(
 
 
 def _render_tools_section(
-    runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
+    runs: List[ValidatorRun], new_counts: Optional[Dict[str, int]] = None
 ) -> str:
     """Findings only; omitted when no tools suite ran, one line when all passed."""
     tools_runs = [r for r in runs if r.suite == "tools"]
@@ -398,7 +432,7 @@ def _render_tools_section(
     if not total_errors and not total_warnings and not incomplete:
         return "## Tools tests\n\n✅ All tools based tests have succeeded!"
 
-    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
+    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_counts))
     table_runs = [
         r
         for r in sorted_runs
@@ -411,20 +445,25 @@ def _render_tools_section(
             f"\n\n✅ {_plural(passed, 'other tool suite')} completed successfully."
         )
 
-    if new_errors is not None:
+    if new_counts is not None:
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
-        rows = [
-            _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
-            for r in table_runs
-        ]
     else:
         header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
+    rows = [
+        _table_row(
+            r.title,
+            r.errors,
+            r.warnings,
+            new_counts.get(r.name, 0) if new_counts is not None else None,
+            incomplete=r.status in _INCOMPLETE_STATUSES,
+        )
+        for r in table_runs
+    ]
     return "## Tools tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 def _render_summary_table(
-    runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
+    runs: List[ValidatorRun], new_counts: Optional[Dict[str, int]] = None
 ) -> str:
     mod_runs = [r for r in runs if r.suite != "tools"]
     if not mod_runs:
@@ -432,32 +471,40 @@ def _render_summary_table(
 
     runs = mod_runs
     total_errors, total_warnings = _totals(runs)
-    if total_errors == 0 and total_warnings == 0:
+    incomplete = [r for r in runs if r.status in _INCOMPLETE_STATUSES]
+    if total_errors == 0 and total_warnings == 0 and not incomplete:
         return ""
 
-    sorted_runs = sorted(runs, key=lambda r: _run_sort_key(r, new_errors))
-    table_runs = [r for r in sorted_runs if r.errors or r.warnings]
-    passed = sum(1 for r in runs if not r.errors and not r.warnings)
+    sorted_runs = sorted(runs, key=lambda r: _run_sort_key(r, new_counts))
+    table_runs = [
+        r
+        for r in sorted_runs
+        if r.errors or r.warnings or r.status in _INCOMPLETE_STATUSES
+    ]
+    passed = len(runs) - len(table_runs)
     passed_note = ""
     if passed:
         passed_note = (
             f"\n\n✅ {_plural(passed, 'other validator')} completed successfully."
         )
 
-    if new_errors is not None:
+    if new_counts is not None:
         header = "| Validator | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
-        rows = [
-            _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
-            for r in table_runs
-        ]
-        total_new = sum(new_errors.get(r.name, 0) for r in runs)
-        rows.append(
-            _table_row("Total", total_errors, total_warnings, total_new, bold=True)
-        )
+        total_new = sum(new_counts.get(r.name, 0) for r in runs)
     else:
         header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
-        rows.append(_table_row("Total", total_errors, total_warnings, bold=True))
+        total_new = None
+    rows = [
+        _table_row(
+            r.title,
+            r.errors,
+            r.warnings,
+            new_counts.get(r.name, 0) if new_counts is not None else None,
+            incomplete=r.status in _INCOMPLETE_STATUSES,
+        )
+        for r in table_runs
+    ]
+    rows.append(_table_row("Total", total_errors, total_warnings, total_new, bold=True))
     return "## Mod tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
@@ -556,15 +603,15 @@ def _render_in_pr_section(
 
     Always rendered, so a standing backlog surfaces in the files a PR touches
     instead of staying invisible behind the new-vs-baseline comparison. With
-    ``exclude_new`` the new findings are dropped here, since the New Findings
-    section above already lists them.
+    ``exclude_new`` the new and changed-severity findings are dropped here,
+    since the New Findings section above already lists them.
     """
     in_pr = [
         i
         for i in issues
         if i.in_diff
         and i.severity in (Severity.ERROR, Severity.WARNING)
-        and not (exclude_new and i.baseline_status == "new")
+        and not (exclude_new and i.baseline_status in _LISTED_STATUSES)
     ]
     if not in_pr:
         return ""
@@ -602,35 +649,40 @@ def _render_baseline_section(
     """New-findings section for the PR comment and the step summary."""
     lines: List[str] = [f"## {_NEW_FINDINGS_HEADING}", ""]
 
-    if not stats.new_issues:
+    if not (stats.new_issues or stats.raised or stats.lowered):
         lines.append("✅ No new findings against the main baseline.")
-        if stats.unclassified:
-            lines.append(
-                f"_{stats.unclassified} finding(s) could not be compared "
-                "(no file/line)._"
-            )
-        return "\n".join(lines)
 
     new_errors = [i for i in stats.new_issues if i.severity == Severity.ERROR]
     new_warnings = [i for i in stats.new_issues if i.severity != Severity.ERROR]
+    groups = (
+        ("❌ New errors", "error", new_errors, True, None),
+        (
+            "⬆️ Warnings on main, errors now",
+            "",
+            stats.raised,
+            True,
+            "more raised finding",
+        ),
+        ("⚠️ New warnings", "warning", new_warnings, False, None),
+        (
+            "⬇️ Errors on main, warnings now",
+            "",
+            stats.lowered,
+            False,
+            "more lowered finding",
+        ),
+    )
     remaining = max_visible
-    error_lines, error_overflow = _render_new_severity_group(
-        "❌ New errors", "error", new_errors, ctx, remaining, open_by_default=True
-    )
-    remaining = max(0, remaining - (len(new_errors) - error_overflow))
-    warning_lines, _warning_overflow = _render_new_severity_group(
-        "⚠️ New warnings",
-        "warning",
-        new_warnings,
-        ctx,
-        remaining,
-        open_by_default=False,
-    )
-    lines.extend(error_lines)
-    lines.extend(warning_lines)
+    for heading, word, group, open_by_default, overflow_word in groups:
+        group_lines, overflow = _render_new_severity_group(
+            heading, word, group, ctx, remaining, open_by_default, overflow_word
+        )
+        remaining = max(0, remaining - (len(group) - overflow))
+        lines.extend(group_lines)
     if stats.unclassified:
         lines.append(
-            f"_{stats.unclassified} finding(s) could not be compared (no file/line)._"
+            f"_{stats.unclassified} finding(s) could not be compared "
+            "(no category or message)._"
         )
     return "\n".join(lines)
 
@@ -780,8 +832,8 @@ def _file_ref(issue: Issue, ctx: ReportContext) -> str:
 def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
     marker = "❌" if issue.severity == Severity.ERROR else "⚠️"
     tags = []
-    if issue.baseline_status == "new":
-        tags.append("**NEW**")
+    if issue.baseline_status in _LISTED_STATUSES:
+        tags.append(f"**{issue.baseline_status.upper()}**")
     if issue.in_diff:
         tags.append("**IN YOUR PR**")
     tag_str = f" {' '.join(tags)}" if tags else ""

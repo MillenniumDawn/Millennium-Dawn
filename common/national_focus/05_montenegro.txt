@@ -1017,7 +1017,7 @@ focus_tree = {
 				limit = { has_dlc = "By Blood Alone" }
 				add_equipment_to_stockpile = {
 					type = small_plane_airframe_2
-					variant_name = "MiG-29 Fulcrum"
+					variant_name = "MiG-29"
 					amount = 20
 					producer = SOV
 				}
@@ -1055,7 +1055,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus MNT_mlrs"
-			set_technology = { air_defense = 1 }
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				set_technology = { air_defense = 1 }
+			}
+			else = { set_technology = { air_defense_non_got = 1 } }
 			one_anti_air = yes
 		}
 
@@ -1826,20 +1830,29 @@ focus_tree = {
 
 		available = {
 			OR = {
-				USA = {
-					MNT = { influence_higher_15 = yes }
-				}
 				ENG = {
-					MNT = { influence_higher_15 = yes }
+					has_opinion = {
+						target = MNT
+						value > 49
+					}
 				}
 				ITA = {
-					MNT = { influence_higher_15 = yes }
+					has_opinion = {
+						target = MNT
+						value > 49
+					}
 				}
 				FRA = {
-					MNT = { influence_higher_15 = yes }
+					has_opinion = {
+						target = MNT
+						value > 49
+					}
 				}
 				GER = {
-					MNT = { influence_higher_15 = yes }
+					has_opinion = {
+						target = MNT
+						value > 49
+					}
 				}
 			}
 		}
@@ -1847,15 +1860,25 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus MNT_european_intragrate"
 			custom_effect_tooltip = MNT_western_path_tt
-			if = {
-				limit = {
-					OR = {
-						FRA = { has_idea = EU_member }
-						ITA = { has_idea = EU_member }
-						GER = { has_idea = EU_member }
-					}
+			if = { limit = { any_owned_state = { free_building_slots = { building = infrastructure size > 0 include_locked = no } } }
+				if = {
+					limit = { FRA = { has_idea = EU_member } }
+					FRA = { country_event = { id = EUevent.23 days = 2 } }
 				}
-				invest_in_EU_single_market_infra = yes
+				if = {
+					limit = { ITA = { has_idea = EU_member } }
+					ITA = { country_event = { id = EUevent.23 days = 9 } }
+				}
+				if = {
+					limit = { GER = { has_idea = EU_member } }
+					GER = { country_event = { id = EUevent.23 days = 16 } }
+				}
+				if = {
+					limit = { ENG = { has_idea = EU_member } }
+					ENG = { country_event = { id = EUevent.23 days = 23 } }
+				}
+				custom_effect_tooltip = TT_IF_EACH_ACCEPTS
+				custom_effect_tooltip = EUevent.23_tt
 			}
 			every_other_country = {
 				limit = { has_government = democratic }
@@ -3815,6 +3838,7 @@ focus_tree = {
 				idea = MNT_privatisation
 				days = 90
 			}
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {

@@ -7819,8 +7819,11 @@ focus_tree = {
 						instant_build = yes
 					}
 					add_extra_state_shared_building_slots = 1
-					custom_effect_tooltip = ENG_gate_burton_energy_tt
-					add_to_variable = { number_of_battery_parks_state_var = 1 }
+					add_building_construction = {
+						type = battery_park
+						level = 1
+						instant_build = yes
+					}
 				}
 				newline = yes
 				custom_effect_tooltip = ENG_codify_service_economy_halved_tt
@@ -7833,8 +7836,11 @@ focus_tree = {
 						instant_build = yes
 					}
 					add_extra_state_shared_building_slots = 3
-					custom_effect_tooltip = ENG_gate_burton_energy_tt
-					add_to_variable = { number_of_battery_parks_state_var = 1 }
+					add_building_construction = {
+						type = battery_park
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 			newline = yes
@@ -8185,6 +8191,7 @@ focus_tree = {
 			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_international_bankers_opinion = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -12223,6 +12230,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.025 }
 			change_relative_party_popularity = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -13417,7 +13425,11 @@ focus_tree = {
 				set_technology = { internet_4 = 1 }
 			}
 			else_if = {
-				limit = { NOT = { has_tech = lte } }
+				limit = {
+					NOT = { has_tech = lte }
+					NOT = { has_tech = wimax }
+					NOT = { is_researching_technology = wimax }
+				}
 				set_technology = { lte = 1 }
 			}
 			else_if = {
@@ -20687,7 +20699,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = ENG_the_sun_which_never_set
 
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = ENG_the_sun_which_never_set }
 
@@ -20699,26 +20711,50 @@ focus_tree = {
 				has_idea = intervention_global_interventionism
 			}
 			has_stability > 0.70
-			country_exists = SIE
+			OR = {
+				country_exists = SIE
+				country_exists = AFR
+			}
 			NOT = { has_war_with = SIE }
+			NOT = { has_war_with = AFR }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus ENG_operation_barras"
-			unlock_decision_tooltip = ENG_seize_sierra_leone_resources
 			add_to_variable = { ENG_fp_count = 1 }
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { influence_target = SIE }
-			change_influence_percentage = yes
-			newline = yes
-			add_relation_modifier = {
-				target = SIE
-				modifier = generic_increased_military_support
+			if = {
+				limit = { country_exists = SIE }
+				unlock_decision_tooltip = ENG_seize_sierra_leone_resources
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = SIE }
+				change_influence_percentage = yes
+				newline = yes
+				add_relation_modifier = {
+					target = SIE
+					modifier = generic_increased_military_support
+				}
+				if = {
+					limit = { SIE = { has_war_with = AFR } }
+					newline = yes
+					SIE = {
+						add_equipment_to_stockpile = { type = infantry_weapons_type amount = 1000 producer = ENG }
+					}
+				}
+				newline = yes
+				custom_effect_tooltip = ENG_seize_sierra_leone_TT
+				newline = yes
+				SIE = { country_event = britain_md.13 }
 			}
-			newline = yes
-			custom_effect_tooltip = ENG_seize_sierra_leone_TT
-			newline = yes
-			SIE = { country_event = britain_md.13 }
+			else = {
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = AFR }
+				change_influence_percentage = yes
+				newline = yes
+				add_relation_modifier = {
+					target = AFR
+					modifier = generic_increased_military_support
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -21008,18 +21044,9 @@ focus_tree = {
 				set_temp_variable = { tag_index = ENG }
 				set_temp_variable = { influence_target = GAM }
 				change_influence_percentage = yes
-				if = {
-					limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-					set_autonomy = {
-						target = GAM
-						autonomy_state = autonomy_associated_state_colored
-					}
-				}
-				else = {
-					set_autonomy = {
-						target = GAM
-						autonomy_state = autonomy_associated_state
-					}
+				set_autonomy = {
+					target = GAM
+					autonomy_state = autonomy_associated_state
 				}
 			}
 		}
@@ -21844,7 +21871,7 @@ focus_tree = {
 				ENG = {
 					set_autonomy = {
 						target = ADS
-						autonomy_state = autonomy_associated_state_colored
+						autonomy_state = autonomy_associated_state
 					}
 				}
 				ADS = {
@@ -21873,11 +21900,13 @@ focus_tree = {
 							Special_Forces = { x = 0 y = 0 }
 							Special_Forces = { x = 0 y = 1 }
 							Special_Forces = { x = 0 y = 2 }
-							Special_Forces = { x = 0 y = 3 }
+
 							Special_Forces = { x = 1 y = 0 }
 							Special_Forces = { x = 1 y = 1 }
 							Special_Forces = { x = 1 y = 2 }
-							Special_Forces = { x = 1 y = 3 }
+
+							Special_Forces = { x = 2 y = 0 }
+							Special_Forces = { x = 2 y = 1 }
 						}
 						priority = 2
 					}
@@ -22072,21 +22101,32 @@ focus_tree = {
 							Militia_Bat = { x = 0 y = 0 }
 							Militia_Bat = { x = 0 y = 1 }
 							Militia_Bat = { x = 0 y = 2 }
-							Arty_Bat = { x = 0 y = 3 }
+
 							Militia_Bat = { x = 1 y = 0 }
 							Militia_Bat = { x = 1 y = 1 }
 							Militia_Bat = { x = 1 y = 2 }
-							Arty_Bat = { x = 1 y = 3 }
+
 							Militia_Bat = { x = 2 y = 0 }
 							Militia_Bat = { x = 2 y = 1 }
 							Militia_Bat = { x = 2 y = 2 }
-							Arty_Bat = { x = 2 y = 3 }
+
+							Arty_Bat = { x = 3 y = 0 }
+							Arty_Bat = { x = 3 y = 1 }
+							Arty_Bat = { x = 3 y = 2 }
+						}
+						regimental_support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+
+							L_Recce_Comp = { x = 1 y = 0 }
+							Arty_Battery = { x = 1 y = 1 }
+
+							L_Recce_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 						support = {
-							L_Recce_Comp = { x = 0 y = 0 }
+							combat_service_support_company = { x = 0 y = 0 }
 							L_Engi_Comp = { x = 0 y = 1 }
-							combat_service_support_company = { x = 0 y = 2 }
-							Arty_Battery = { x = 0 y = 3 }
 						}
 					}
 					9 = {
@@ -22144,21 +22184,32 @@ focus_tree = {
 							Militia_Bat = { x = 0 y = 0 }
 							Militia_Bat = { x = 0 y = 1 }
 							Militia_Bat = { x = 0 y = 2 }
-							Arty_Bat = { x = 0 y = 3 }
+
 							Militia_Bat = { x = 1 y = 0 }
 							Militia_Bat = { x = 1 y = 1 }
 							Militia_Bat = { x = 1 y = 2 }
-							Arty_Bat = { x = 1 y = 3 }
+
 							Militia_Bat = { x = 2 y = 0 }
 							Militia_Bat = { x = 2 y = 1 }
 							Militia_Bat = { x = 2 y = 2 }
-							Arty_Bat = { x = 2 y = 3 }
+
+							Arty_Bat = { x = 3 y = 0 }
+							Arty_Bat = { x = 3 y = 1 }
+							Arty_Bat = { x = 3 y = 2 }
+						}
+						regimental_support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+
+							L_Recce_Comp = { x = 1 y = 0 }
+							Arty_Battery = { x = 1 y = 1 }
+
+							L_Recce_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 						support = {
-							L_Recce_Comp = { x = 0 y = 0 }
+							combat_service_support_company = { x = 0 y = 0 }
 							L_Engi_Comp = { x = 0 y = 1 }
-							combat_service_support_company = { x = 0 y = 2 }
-							Arty_Battery = { x = 0 y = 3 }
 						}
 					}
 					16 = {
@@ -22206,21 +22257,32 @@ focus_tree = {
 							Militia_Bat = { x = 0 y = 0 }
 							Militia_Bat = { x = 0 y = 1 }
 							Militia_Bat = { x = 0 y = 2 }
-							Arty_Bat = { x = 0 y = 3 }
+
 							Militia_Bat = { x = 1 y = 0 }
 							Militia_Bat = { x = 1 y = 1 }
 							Militia_Bat = { x = 1 y = 2 }
-							Arty_Bat = { x = 1 y = 3 }
+
 							Militia_Bat = { x = 2 y = 0 }
 							Militia_Bat = { x = 2 y = 1 }
 							Militia_Bat = { x = 2 y = 2 }
-							Arty_Bat = { x = 2 y = 3 }
+
+							Arty_Bat = { x = 3 y = 0 }
+							Arty_Bat = { x = 3 y = 1 }
+							Arty_Bat = { x = 3 y = 2 }
+						}
+						regimental_support = {
+							L_Recce_Comp = { x = 0 y = 0 }
+							Arty_Battery = { x = 0 y = 1 }
+
+							L_Recce_Comp = { x = 1 y = 0 }
+							Arty_Battery = { x = 1 y = 1 }
+
+							L_Recce_Comp = { x = 2 y = 0 }
+							Arty_Battery = { x = 2 y = 1 }
 						}
 						support = {
-							L_Recce_Comp = { x = 0 y = 0 }
+							combat_service_support_company = { x = 0 y = 0 }
 							L_Engi_Comp = { x = 0 y = 1 }
-							combat_service_support_company = { x = 0 y = 2 }
-							Arty_Battery = { x = 0 y = 3 }
 						}
 					}
 					17 = {

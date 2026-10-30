@@ -45,32 +45,34 @@ If a change does not fit an existing category, use the closest match. Do not inv
 ## Entry Format
 
 ```
- Category:
-  - [TAG] Past-tense verb. Specific object name. (Issue #N)
+Category:
+ - [TAG] Past-tense verb. Specific object name. (Issue #N)
 ```
 
 **Rules:**
 
-- **1 space** before the category name.
-- Prefix each entry with **two spaces**, a **hyphen**, and one **space**.
+- Category names start at **column 0**.
+- Prefix each entry with **one space**, a **hyphen**, and one **space**.
 - **`[TAG]` prefix** for country-specific changes; no prefix for global changes.
 - **Past tense**: describe what changed, not what will change.
 - **Specific**: name the exact focus ID, event ID, decision ID, or mechanic.
 - **No em dashes**: use a period to end the sentence.
 - **Issue reference**: include `(Issue #N)` when the change resolves or relates to a GitHub issue.
 
+Run `python3 tools/merge_changelog.py --fix` to apply the spacing and ordering rules. Run `python3 tools/merge_changelog.py --preview` to find duplicates and entries worth merging.
+
 ## Examples
 
 ```
- Bugfix:
-  - [ENG] Fixed typo ENG_elisabeth_ruling_monarch → ENG_elizabeth_ruling_monarch in country history, which blocked completion of the Queen's Family focus tree branch (Issue #894)
-  - Converted 24 hidden events (AFG, ALG, BDI, CHI, CTR, Iran, JAP, KOR, KUR, LAR, LBR, SYR, SUD, TAL, USA, BOS) from option-based to immediate-only pattern, and removed dead localisation keys for converted events (Issue #1389)
+Bugfix:
+ - [ENG] Fixed typo ENG_elisabeth_ruling_monarch → ENG_elizabeth_ruling_monarch in country history, which blocked completion of the Queen's Family focus tree branch (Issue #894)
+ - Converted 24 hidden events (AFG, ALG, BDI, CHI, CTR, Iran, JAP, KOR, KUR, LAR, LBR, SYR, SUD, TAL, USA, BOS) from option-based to immediate-only pattern, and removed dead localisation keys for converted events (Issue #1389)
 
- AI:
-  - Added employment-based staffing triggers to prevent AI from taking construction focuses when it cannot staff the resulting building
+AI:
+ - Added employment-based staffing triggers to prevent AI from taking construction focuses when it cannot staff the resulting building
 
- Content:
-  - [HKG] Major Hong Kong content expansion: ~142-focus tree across 12 branches
+Content:
+ - [HKG] Major Hong Kong content expansion: ~142-focus tree across 12 branches
 ```
 
 ## What Makes a Good Entry

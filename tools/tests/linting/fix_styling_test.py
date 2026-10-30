@@ -1,9 +1,8 @@
 """Tests for fix_styling: the fix_line rules, the file-level fixers, and main().
 
 fix_line only rewrites lines the shared line_spacing_warnings detection flags,
-so checker and fixer cannot drift. The legacy whole-file passes (leading-space
-indent conversion, comment-alignment collapse) and the changed-lines scope are
-explicit opt-ins. The file-level cases cover what fix_file writes back, what it
+so checker and fixer cannot drift. The brace-depth reindent, the legacy
+comment-alignment collapse, and the changed-lines scope are explicit opt-ins. The file-level cases cover what fix_file writes back, what it
 can only report, and dry-run/apply agreement on BOM'd and CRLF files.
 """
 
@@ -33,9 +32,53 @@ def test_pads_inline_block():
     assert fixes == 1
 
 
-def test_leading_spaces_become_tabs_only_behind_the_flag():
-    assert fix_line("    x = { y = 1 }") == ("    x = { y = 1 }", 0)
-    assert fix_line("    x = { y = 1 }", fix_indent=True) == ("\tx = { y = 1 }", 1)
+@pytest.mark.parametrize(
+    ("folder", "content", "kwargs", "expected", "fixes"),
+    [
+        ("common", "a = {\n    b = 1\n}\n", {}, "a = {\n    b = 1\n}\n", 0),
+        (
+            "common",
+            "a = {\n    b = 1\n}\n",
+            {"fix_indent": True},
+            "a = {\n\tb = 1\n}\n",
+            1,
+        ),
+        ("common", " a = 1\n", {"fix_indent": True}, "a = 1\n", 1),
+        (
+            "events",
+            "a = {\r\n\t\tb = 1\r\n}\r\n",
+            {"fix_indent": True},
+            "a = {\r\n\tb = 1\r\n}\r\n",
+            1,
+        ),
+        (
+            "history",
+            "a = {\n\t\tb = 1\n\t\tc = 1\n}\n",
+            {"fix_indent": True, "only_lines": {3}},
+            "a = {\n\t\tb = 1\n\tc = 1\n}\n",
+            1,
+        ),
+        (
+            "interface",
+            "a = {\n\t\tb = 1\n}\n",
+            {"fix_indent": True},
+            "a = {\n\t\tb = 1\n}\n",
+            0,
+        ),
+    ],
+    ids=["needs-flag", "spaces", "single-space", "crlf", "changed-lines", "interface"],
+)
+def test_fix_indent_sets_brace_depth(
+    tmp_path, folder, content, kwargs, expected, fixes
+):
+    path = tmp_path / folder / "x.txt"
+    path.parent.mkdir()
+    path.write_bytes(content.encode())
+
+    _fp, count, _unfixable = fix_file(str(path), **kwargs)
+
+    assert path.read_bytes() == expected.encode()
+    assert count == fixes
 
 
 def test_tab_before_equals_is_fixed():
@@ -95,13 +138,6 @@ def test_comment_alignment_collapse_runs_without_spacing_warning():
     )
     assert fixed == "\tattacker = 0.25 #aligned note\n"
     assert fixes == 1
-
-
-def test_single_leading_space_is_left_alone():
-    """One space is not a full tab, so the rewrite is a no-op and costs no fix."""
-    fixed, fixes = fix_line(" x = { y = 1 }\n", fix_indent=True)
-    assert fixed == " x = { y = 1 }\n"
-    assert fixes == 0
 
 
 def test_fix_file_rewrites_and_counts(tmp_path):

@@ -195,6 +195,14 @@ Write only the properties the focus uses. An empty commented-out slot marker
 - Structure with clear `visible` and `available` conditions
 - Include `ai_will_do`
 
+## Naming
+
+- Name decisions and categories `TAG_lowercase_words`. Keep everything after the prefix
+  lowercase, even a wrapped tag: `SER_invite_kos`, not `SER_invite_KOS`.
+- Start each effect block's log with `Decision <id>` (`Mission <id>` in a mission),
+  naming the decision the block sits in.
+- Do not rename existing ids to fit these rules.
+
 ## Example Decision
 
 ```hoiscript
@@ -293,6 +301,20 @@ BRA_idea_higher_minimum_wage_1 = {
     }
 }
 ```
+
+## Removable Spirit Footer
+
+Every starting national spirit the player can fix ends its description with a footer that says how. Good examples are Armenia, Transnistria, and Iran.
+
+```yaml
+TAG_spirit_desc: "Last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."
+```
+
+- Use the fixed wording: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, or `will never be §RRemoved§!`
+- Name the source as `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, or a `§Y<threshold>§!` for a variable. An event fired by a focus names the focus
+- List up to three sources. With more, name the branch by its root focus
+- Tiered spirits get the footer on every tier
+- Skip the footer on spirits nothing ever changes: permanent spirits, positive flavour spirits, hidden ideas, and dynamic modifiers that only give bonuses
 
 ---
 

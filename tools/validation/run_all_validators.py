@@ -10,7 +10,8 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from typing import Dict, List, Optional, TextIO, Tuple
+import time
+from typing import Callable, Dict, Iterator, List, Optional, TextIO, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -18,10 +19,12 @@ import disk_cache
 from report_lib.dedupe import dedupe
 from report_lib.models import Issue
 from shared_utils import Colors, split_cpu_budget
+from validator_batches import ALL_SPECS
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
 PERSISTENCE_MARKER = ".persist-complete"
 TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
+_POLL_SECONDS = 0.05
 
 
 # The manual texture audit needs the full gfx tree, which cache warm-up omits.
@@ -33,18 +36,16 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
     )
 )
 
-# Opt-in flags that only one validator understands, applied by its discovered
-# `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
-# these surface as warnings without gating. --missing-loc is intentionally left
-# off. Its `_desc` backlog would drown the report; run it on demand instead.
-_VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
-    "bonus-names": ["--name-not-owner-id"],
-    "decisions": ["--unannounced-categories"],
-    "focus-tree": ["--missing-icons"],
-    "ideas": ["--missing-name-loc"],
-    "math-expressions": ["--clamp-bounds"],
-    "variables": ["--redundant-focus-flags"],
-}
+# The CI batch specs, keyed by script: a full run is the main baseline PRs
+# compare against, so it must enable the same checks over their whole domain.
+_SPECS_BY_SCRIPT = {spec.script: spec for spec in ALL_SPECS}
+
+
+def _spec_flags(script: str, staged: bool) -> List[str]:
+    spec = _SPECS_BY_SCRIPT.get(script)
+    if spec is None:
+        return []
+    return [*spec.args, *(() if staged else spec.baseline_args)]
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
@@ -88,19 +89,10 @@ def launch_validator(
     name: str,
     mod_path: str,
     output_filename: Optional[str] = None,
-    apply_extra_flags: bool = True,
 ) -> Tuple[subprocess.Popen, TextIO]:
     """Launch a single validator as a background subprocess (non-blocking)."""
     script_path = os.path.join(SCRIPTS_DIR, script_name)
     output_path = os.path.join(output_dir, output_filename or f"{name}.txt")
-
-    combined_flags: List[str] = []
-    extra = extra_flags + (
-        _VALIDATOR_EXTRA_FLAGS.get(name, []) if apply_extra_flags else []
-    )
-    for flag in extra:
-        if flag not in combined_flags:
-            combined_flags.append(flag)
 
     cmd = [
         sys.executable,
@@ -109,7 +101,7 @@ def launch_validator(
         mod_path,
         "--output",
         output_path,
-    ] + combined_flags
+    ] + extra_flags
 
     # Capture stderr per validator so a crash leaves a traceback to read;
     # previously DEVNULL made crashes undiagnosable from the suite output.
@@ -125,6 +117,35 @@ def launch_validator(
         stderr_fh.close()
         raise
     return proc, stderr_fh
+
+
+def finish_in_order(
+    processes: Dict[str, Tuple[subprocess.Popen, TextIO]],
+    launch_next: Callable[[], None],
+    names: List[str],
+) -> Iterator[int]:
+    """Yield each return code in `names` order, refilling a slot as soon as
+    any child exits so one long validator never idles the finished slots."""
+    returncodes: Dict[str, int] = {}
+    for name in names:
+        while name not in returncodes:
+            done = next(
+                (
+                    key
+                    for key, (proc, _) in processes.items()
+                    if proc.poll() is not None
+                ),
+                None,
+            )
+            if done is None:
+                # Polling waits portably for completion without a second scheduler.
+                time.sleep(_POLL_SECONDS)
+                continue
+            proc, stderr_fh = processes.pop(done)
+            returncodes[done] = proc.wait()
+            stderr_fh.close()
+            launch_next()
+        yield returncodes.pop(name)
 
 
 def read_validator_counts(output_dir: str, name: str) -> Tuple[int, int]:
@@ -258,14 +279,13 @@ def generate_combined_report(
     return "\n".join(lines)
 
 
-def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
+def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None:
     """Copy every validator's JSON sidecar into persist_dir.
 
     The suite runs inside a TemporaryDirectory that is deleted on exit; the
-    copies are the only per-validator results that survive. A validator that
-    passed clean writes no sidecar, which is exactly the empty findings set a
-    baseline wants from it. Copy errors raise: a silent partial persist would
-    save a truncated baseline under a valid-looking meta.
+    copies are the only per-validator results that survive. Copy errors raise:
+    a silent partial persist would save a truncated baseline under a
+    valid-looking meta.
     """
     os.makedirs(persist_dir, exist_ok=True)
     marker_path = os.path.join(persist_dir, PERSISTENCE_MARKER)
@@ -284,8 +304,9 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
             json_path, os.path.join(persist_dir, os.path.basename(json_path))
         )
         copied += 1
-    with open(marker_path, "w", encoding="utf-8", newline="") as marker:
-        marker.write("complete\n")
+    if complete:
+        with open(marker_path, "w", encoding="utf-8", newline="") as marker:
+            marker.write("complete\n")
     print(
         f"Persisted {copied} validator result sidecar(s) to {persist_dir}",
         file=sys.stderr,
@@ -439,22 +460,21 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     crashed_validators = []
 
     def launch_next() -> None:
-        # Results are consumed in VALIDATORS order and launched in the same
-        # order, so whatever is waited on next has always started already.
         if pending:
             name, script, _label = pending.pop(0)
             processes[name] = launch_validator(
-                script, child_flags, output_dir, name, mod_path
+                script,
+                [*_spec_flags(script, "--staged" in extra_flags), *child_flags],
+                output_dir,
+                name,
+                mod_path,
             )
 
     for _ in range(max_parallel):
         launch_next()
 
-    for name, _script, label in VALIDATORS:
-        proc, stderr_fh = processes[name]
-        returncode = proc.wait()
-        stderr_fh.close()
-        launch_next()
+    finished = finish_in_order(processes, launch_next, [v[0] for v in VALIDATORS])
+    for (name, _script, label), returncode in zip(VALIDATORS, finished, strict=True):
         error_count, warning_count = read_validator_counts(output_dir, name)
 
         if error_count > 0 or warning_count > 0:
@@ -462,12 +482,17 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                 f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
                 file=human_stream,
             )
-        elif returncode != 0:
-            # Non-zero exit with no JSON output means the validator itself crashed
-            print(
-                f"{Colors.RED}✗ {label}{Colors.ENDC} (crashed, exit code {returncode})",
-                file=human_stream,
+        elif returncode != 0 or not os.path.exists(
+            os.path.join(output_dir, f"{name}.json")
+        ):
+            # Every validator writes a JSON sidecar, so a missing one is not a
+            # clean result.
+            reason = (
+                f"crashed, exit code {returncode}"
+                if returncode
+                else "wrote no result file"
             )
+            print(f"{Colors.RED}✗ {label}{Colors.ENDC} ({reason})", file=human_stream)
             _print_stderr_tail(output_dir, name, stream=human_stream)
             crashed_validators.append(label)
         else:
@@ -522,12 +547,11 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
 
     # Persist before the TemporaryDirectory cleanup in main() reclaims the
     # sidecars. Runs even when validators crashed so a failing night still
-    # leaves the partial results to inspect (the nightly baseline job gates
-    # its diff on this step's exit code, so a partial persist never becomes
-    # the baseline).
+    # leaves the partial results to inspect, but only a complete run gets the
+    # completion marker the baseline job checks.
     persist_dir = getattr(args, "persist_results", None)
     if persist_dir:
-        _persist_sidecars(output_dir, persist_dir)
+        _persist_sidecars(output_dir, persist_dir, complete=not crashed_validators)
 
     if total_errors == 0 and total_warnings == 0:
         print(f"{Colors.GREEN}✓ ALL VALIDATIONS PASSED{Colors.ENDC}", file=human_stream)

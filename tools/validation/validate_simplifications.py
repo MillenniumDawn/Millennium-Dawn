@@ -52,6 +52,7 @@ from functools import cached_property
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import MODIFIER_OPEN_RE as _MODIFIER_RE
 
 # strip_comments is re-exported here so validate_simplifications_test can import it.
 from shared_utils import (  # noqa: F401
@@ -238,7 +239,6 @@ def _find_scope_expansion(src: _Script):
 # Three+ buckets, or two non-empty buckets, must stay (see simplification-patterns.md).
 _RANDOM_LIST_RE = _keyword_block_re("random_list")
 _WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
-_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 
 
 def _find_two_bucket_random(src: _Script):
@@ -512,9 +512,9 @@ def _find_government_match(src: _Script):
     return results
 
 
-# Bare multi-child NOT is ambiguous: the project doc reads it as NAND, cwtools
-# as NOR (see scripting-edge-cases.md). A single child — one trigger or
-# one explicit AND/OR wrapper — is unambiguous and never flagged.
+# A bare multi-child NOT is NOR (scripting-edge-cases.md), which readers often
+# take for "not both", so it is flagged to be written as NOT = { OR = { } }. A
+# single child (one trigger or one explicit AND/OR wrapper) is never flagged.
 _NOT_RE = _keyword_block_re("NOT")
 _CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")
 _VALUE_RE = re.compile(r"\S+")
@@ -561,7 +561,7 @@ def _count_children(body: str) -> int:
 def _find_bare_not(src: _Script):
     """Return (line, child_count) for each `NOT = { ... }` with 2+ direct
     children. A single child — a lone trigger or an explicit AND/OR wrapper —
-    is unambiguous and not flagged. finditer walks the whole file, so a NOT
+    states its meaning and is not flagged. finditer walks the whole file, so a NOT
     nested inside another block (OR, if, a second NOT) is found independently
     of its container."""
     results = []
@@ -1067,9 +1067,9 @@ def _scan_bare_not(src: _Script):
     for line, count in _find_bare_not(src):
         findings.append(
             (
-                f"NOT with {count} children is ambiguous (semantics disputed "
-                "NAND vs NOR); write `NOT = { OR = { ... } }` or one NOT "
-                "per trigger",
+                f"NOT with {count} children is NOR (true only when every child "
+                "is false); write `NOT = { OR = { ... } }` to say so, or "
+                "`NOT = { AND = { ... } }` for not all",
                 line,
             )
         )

@@ -19,7 +19,17 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 `dev` includes a smaller `test` group, which is all the CI test jobs install.
 
-Python quality checks run on `tools/` in pre-commit and CI:
+ImageMagick is also required for art conversion and its integration tests. Install
+it with your system package manager: `sudo apt-get install imagemagick` on
+Debian/Ubuntu, or `brew install imagemagick` on macOS. On Windows, use the
+[ImageMagick installer](https://imagemagick.org/script/download.php#windows) and
+enable its PATH option. Setup checks for a working `magick` or ImageMagick
+`convert`, rejects unrelated programs with those names, and fails if neither is
+available. It does not install system packages. After installing, reopen your
+terminal and run `python tools/dev_setup.py --check`.
+
+CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
+and pylint on staged files only, plus mypy:
 
 ```bash
 python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
@@ -93,8 +103,92 @@ Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
 updates its regression expectations; a broken implementation gets fixed instead.
-Removing a test as cleanup is its own change. The test must be dead or repeat another
-test's input, and the coverage total must not drop.
+
+### Test Structure
+
+One test file per tool module, or one per group of related checks when a module's
+tests outgrow a file. `tests/validation/validate_decisions_test.py` is the model.
+
+A test lives in the file of the module it tests. Do not add a `*_coverage_test.py`
+that gathers tests for several modules. Import the module under test normally,
+never as a second copy through `spec_from_file_location`: a patch on one copy does
+not reach the other.
+
+The exception is a contract several modules share. It is one table over those
+modules, not a copy in each file. `tests/docs_checks/checker_cli_test.py` is the
+model: every docs checker's `main()` hands its arguments to `run()`, prints the
+report and exits 0 or 1.
+
+A module that carries its own table of cases, such as `SELF_TEST_CASES` in the
+docs checkers, is tested by running that table once. The test file adds only the
+cases it leaves out.
+
+A test checks one behavior. A test that asserts many unrelated things in a row is
+split into tests or table rows, so a failure names what broke.
+
+A check's cases are rows of one parametrized table: a dict of case name to case, used
+for both the values and the ids. A comment above the table names the columns. A new
+case is a new row, not a new function.
+
+```python
+# check: {case: (decisions, what each finding must match)}
+_CHECK_CASES = {
+    "validate_missing_log": {
+        "logged": ([_flat(_effect(_LOG))], []),
+        "unquoted log": ([_flat(_effect(_UNQUOTED))], [_NO_LOG % "complete_effect"]),
+    },
+}
+```
+
+A table holds these rows and no others:
+
+- One row the check flags and one row it passes.
+- One row for each code path through the check that no other row runs.
+- One row for each rule the check applies that coverage cannot see. To find them,
+  name the one-line change to the validator that the row would catch. If no other row
+  fails under that change, the row stays. This covers each alternative or literal in a
+  regex or tuple, comment, quoted-string and CRLF handling, nesting depth, and
+  report-once, per-block and scope-order rules.
+
+The row that pins a rule must be one whose expected result changes when the rule
+breaks. A row that expects no finding does not pin a pattern that could just stop
+matching.
+
+A row that only repeats another row's rule with different incidental input does not
+belong. A named regression is a row like any other.
+
+Beside its tables, a validator's test file has:
+
+- One test proving `run_validations` calls every `validate_*` check, through
+  `checks_called_by_run`.
+- One run against a real tree, with no mocked source, for each check that reads its
+  data from the mod.
+- A severity assertion wherever the severity is a decision: an ERROR that gates CI, or
+  a WARNING held back until a backlog clears.
+
+Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
+`run_validator` construct a validator on `tmp_path`. `write_tree` writes a dict of
+files. `assert_findings` matches findings one to one: a string is a whole finding, a
+tuple is fragments of one. `event_block` and `decision_factory` build one event or one
+decision file from its fields. `decisions_results_for`, `call_site_scan`, `yml_scan`
+and `variable_scan` run one check or one section of a shared scan. `run_tool_script`
+runs a tool as its own process.
+
+A tool with a `main()` is tested in process, with `sys.argv` patched. At most one
+test per tool runs the script itself, through `run_tool_script`. Keep one where it
+exists: only a script run catches an import that works only under pytest's path. Do
+not add more, and do not repeat an in-process case as a subprocess.
+
+A rule that depends on an external binary, such as ImageMagick, is tested on a stub
+of that binary, so it runs on every machine. At most a couple of tests drive the real
+binary, and they skip where it is missing. `tests/md_art_convert_test.py` is the
+model.
+
+Removing a test as cleanup is its own change. The test must be dead or fail the row
+rules above, and the missed-line and partial-branch totals from `coverage json` must
+not rise. Run the suite with `--cov-context=test` to see which rows share a path.
+Shared paths only pick candidates: equal coverage does not show that two rows check
+the same rule.
 
 ## Quick Start
 
@@ -110,18 +204,43 @@ python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO
 python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
 ```
 
-### Fix changelog ordering
+### Clean up the changelog
 
 ```bash
-python3 tools/merge_changelog.py --fix
+python3 tools/merge_changelog.py --fix                 # clean and sort the current version
+python3 tools/merge_changelog.py --preview             # report duplicates and merge candidates
+python3 tools/merge_changelog.py --beta                # fix, then update the beta changelog page
+python3 tools/merge_changelog.py --release "The Name"  # fix, then write the release page
 ```
 
-This sorts only the current version's entries within each category. Untagged
-entries come first, followed by the first country tag. Equal tags keep their
-order. Blank lines between entries are dropped and repeated blank lines become
-one. Older versions, entry text, and duplicate entries are left alone. Resolve
-conflict markers first. The Git merge driver also applies this ordering after a
-successful merge.
+`--fix` touches only the current version. Older versions stay as they are.
+Resolve conflict markers first.
+
+- Each entry starts with one space, a dash, and a space. Repeated spaces become
+  one, and `[A][B]` or `[A/B]` tags become `[A]/[B]`. An entry that ends in a
+  word gets a period. Endings like `)`, `:`, or a backtick are left alone.
+  Category headings start at column 0.
+- An entry that repeats one in the same category word for word is removed, with
+  a warning. An exact repeat in another category is kept and reported, so you
+  can pick the right category.
+- Entries are sorted within each category. Untagged entries come first, followed
+  by the first country tag. Equal tags keep their order. Blank lines between
+  entries are dropped and repeated blank lines become one.
+
+The Git merge driver applies only the ordering after a successful merge. The
+changelog lint warns, without failing, about exact repeats and about entries
+`--fix` would tidy.
+
+`--preview` writes nothing. It reports exact repeats, entries that differ only
+by tag, near-identical entries, and wording shared by three or more entries in
+one category. Each candidate lists the tags and issue numbers a merged entry
+must keep. Edit the changelog by hand for the ones worth merging.
+
+`--beta` replaces the version sections of
+`docs/src/content/misc/beta-changelogs.md` with the current version and keeps
+its frontmatter and intro. `--release NAME` writes the current version to
+`docs/src/content/changelogSections/vX-Y-name.md` with the next `order`. Running
+it again rewrites the version sections and keeps the page's frontmatter.
 
 The merge driver keeps a PR's new entry in the category the PR put it under. If
 main started a new version, the entry moves to the same category there. A PR
@@ -362,7 +481,9 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+Internal package used by `generate_validation_report.py` to render PR report artifacts. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+
+`publish_validation_report.py` runs in a separate trusted workflow to synchronize the PR comment. Validation runs, including forks, have read-only repository permissions. The publisher verifies the artifact's run and PR before writing; it never executes artifact content. Checks API support remains available through the CLI but is not used by CI.
 
 | Module            | Responsibility                                                                                 |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -399,8 +520,9 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                          |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                             |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                              |
-| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                     |
+| **generate_validation_report.py** | CI: renders the PR report and comment payload for the trusted publisher                                                                                                                                                                                                                                                                                                                                                                                      |
+| **publish_validation_report.py**  | CI: trusted publisher that synchronizes the PR report comment                                                                                                                                                                                                                                                                                                                                                                                                |
+| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines. Manual: `--fix`, `--preview`, `--beta`, and `--release` clean the changelog and write its docs pages                                                                                                                                                                                                                               |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                               |
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse helpers (`add_standard_file_arguments`, `create_validation_parser`, `create_linting_parser`), the `run_validator_main` entry point, `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |

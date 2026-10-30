@@ -1,8 +1,14 @@
 """Suite-wide fixtures for every test under tools/tests."""
 
+import multiprocessing
 import os
 
 import pytest
+
+
+def pytest_configure():
+    # An xdist worker is multi-threaded, and a child forked from one can deadlock.
+    multiprocessing.set_start_method("spawn", force=True)
 
 
 @pytest.fixture(autouse=True)
