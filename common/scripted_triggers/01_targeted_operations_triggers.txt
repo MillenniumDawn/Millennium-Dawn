@@ -639,7 +639,14 @@ TOP_authored_role_eligible = {
 	OR = {
 		AND = {
 			check_variable = { TOP_role_target > 55 }
-			check_variable = { TOP_role_target < 65 }
+			check_variable = { TOP_role_target < 64 }
+		}
+		AND = {
+			check_variable = { TOP_role_target = 64 }
+			OR = {
+				PER = { exists = yes has_character = PER_qasem_soleimani }
+				HEZ = { exists = yes has_character = HEZ_qasem_soleimani }
+			}
 		}
 		AND = {
 			check_variable = { TOP_role_target > 0 }
@@ -785,18 +792,6 @@ TOP_authored_civilian_mandate_valid = {
 	has_stability < 0.45
 	check_variable = { global.TOP_status^141 = 1 }
 	check_variable = { TOP_mandates^141 > global.TOP_clock }
-}
-
-TOP_protection_policy_active = {
-	TOP_enabled = yes
-	exists = yes
-	check_variable = { ct_home_defense_var > 0 }
-}
-
-TOP_counterintelligence_policy_active = {
-	TOP_enabled = yes
-	exists = yes
-	check_variable = { ct_global_base_detect_var > 0 }
 }
 
 TOP_security_country_eligible = {
@@ -1129,16 +1124,6 @@ TOP_method_startable_7 = {
 
 TOP_security_can_purchase_1 = {
 	set_temp_variable = { TOP_security_requested_level = 1 }
-	TOP_security_can_purchase = yes
-}
-
-TOP_security_can_purchase_2 = {
-	set_temp_variable = { TOP_security_requested_level = 2 }
-	TOP_security_can_purchase = yes
-}
-
-TOP_security_can_purchase_3 = {
-	set_temp_variable = { TOP_security_requested_level = 3 }
 	TOP_security_can_purchase = yes
 }
 
@@ -2023,6 +2008,18 @@ TOP_native_facility_authorized = {
 	raid_show_target_intervention_check = yes
 }
 
+# Actor scope. Reads TOP_group_target, TOP_facility_objective, TOP_native_state and TOP_native_host.
+TOP_native_facility_bound = {
+	TOP_country_eligible = yes
+	check_variable = { TOP_org_case_phase^TOP_group_target = 3 }
+	check_variable = { TOP_org_case_objective^TOP_group_target = TOP_facility_objective }
+	check_variable = { TOP_org_case_state^TOP_group_target = TOP_native_state }
+	check_variable = { TOP_org_case_host^TOP_group_target = TOP_native_host }
+	check_variable = { TOP_operation_subject_kind = 2 }
+	check_variable = { TOP_operation_subject_id = TOP_group_target }
+	check_variable = { TOP_operation_sequence = TOP_org_case_sequence^TOP_group_target }
+}
+
 top_agency_case_ready = {
 	set_temp_variable = { TOP_arg_target = TOP_operation_subject_id }
 	top_agency_person_ready = yes
@@ -2049,6 +2046,7 @@ top_agency_person_ready = {
 }
 
 top_agency_receipt_matches = {
+	check_variable = { top_agency_host^top_agency_key = top_agency_host }
 	check_variable = { TOP_operation_subject_id = TOP_arg_target }
 	check_variable = { TOP_arg_target > 0 }
 	check_variable = { TOP_arg_target < global.TOP_registry_capacity }

@@ -57,7 +57,7 @@ def test_wiring_requires_human_only_offense_and_shared_single_slot(tmp_path):
     redesign = tmp_path / "common/scripted_triggers/01_targeted_operations_triggers.txt"
     redesign.write_bytes(
         redesign.read_bytes().replace(
-            b"TOP_operation_slot_available = yes", b"always = yes"
+            b"TOP_operation_slot_available = yes", b"always = yes", 1
         )
     )
 

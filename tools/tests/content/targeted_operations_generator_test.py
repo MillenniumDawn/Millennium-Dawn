@@ -6,9 +6,11 @@ from pathlib import Path
 
 import pytest
 from targeted_operations_helpers import (
+    MANIFEST_DEFECT_ERRORS,
     _named_block,
     _parse_race_script,
     mutate_manifest,
+    write_manifest_root,
 )
 
 from tools.generators import generate_targeted_operations as GENERATOR
@@ -30,44 +32,36 @@ def test_existing_representations_resolve_to_shipped_files(manifest):
             )
 
 
-@pytest.mark.parametrize("missing", ["serving", "retirement"])
+@pytest.mark.parametrize(
+    "missing,error",
+    [
+        ("serving", "Missing serving trigger for leader 129"),
+        ("retirement", "Missing retirement handling for leader 129"),
+    ],
+)
 def test_registered_leaders_require_serving_and_retirement_bindings(
-    tmp_path, manifest, missing
+    tmp_path, manifest, missing, error
 ):
-    manifest_path = tmp_path / "tools/data/targeted_operations.json"
-    trigger_path = (
-        tmp_path / "common/scripted_triggers/01_targeted_operations_triggers.txt"
-    )
-    effect_path = (
-        tmp_path
-        / "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
-    )
-    for path in (manifest_path, trigger_path, effect_path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-    with manifest_path.open("w", encoding="utf-8", newline="") as stream:
-        json.dump(manifest, stream)
-    trigger_text = (
-        ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
-    ).read_text(encoding="utf-8")
-    effect_text = (
-        ROOT
-        / "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
-    ).read_text(encoding="utf-8")
+    root = write_manifest_root(tmp_path, manifest)
+    GENERATOR.load_manifest(root)
     if missing == "serving":
-        trigger_text = trigger_text.replace(
-            "TOP_person_129_serving = {", "TOP_person_129_unbound = {", 1
-        )
+        source = root / "common/scripted_triggers/01_targeted_operations_triggers.txt"
+        old, new = "TOP_person_129_serving = {", "TOP_person_129_unbound = {"
     else:
-        effect_text = effect_text.replace(
+        source = (
+            root
+            / "common/scripted_effects/02_targeted_operations_authorization_effects.txt"
+        )
+        old, new = (
             "check_variable = { TOP_target = 129 }",
             "check_variable = { TOP_target = 999 }",
         )
-    with trigger_path.open("w", encoding="utf-8", newline="") as stream:
-        stream.write(trigger_text)
-    with effect_path.open("w", encoding="utf-8", newline="") as stream:
-        stream.write(effect_text)
-    with pytest.raises(ValueError):
-        GENERATOR.load_manifest(tmp_path)
+    text = source.read_text(encoding="utf-8")
+    assert old in text
+    with source.open("w", encoding="utf-8", newline="") as stream:
+        stream.write(text.replace(old, new))
+    with pytest.raises(ValueError, match=re.escape(error)):
+        GENERATOR.load_manifest(root)
 
 
 def test_render_is_deterministic_and_tracked_outputs_are_current(manifest):
@@ -195,7 +189,7 @@ def test_authored_successor_requires_group_pool_even_without_successors(
     manifest = copy.deepcopy(GENERATOR.load_manifest(ROOT))
     group = next(group for group in manifest["groups"] if group["id"] == 22)
     group["succession"] = []
-    write_manifest(tmp_path, manifest)
+    write_manifest_root(tmp_path, manifest)
     with pytest.raises(
         ValueError, match="Authored successor missing from group pool: 145"
     ):
@@ -208,7 +202,7 @@ def test_authored_identity_keys_cannot_be_reassigned(tmp_path: Path) -> None:
         manifest["targets"][1]["key"],
         manifest["targets"][0]["key"],
     )
-    write_manifest(tmp_path, manifest)
+    write_manifest_root(tmp_path, manifest)
     with pytest.raises(ValueError, match="retain their stable IDs"):
         GENERATOR.load_manifest(tmp_path)
 
@@ -216,7 +210,7 @@ def test_authored_identity_keys_cannot_be_reassigned(tmp_path: Path) -> None:
 def test_historical_outcome_cannot_force_a_campaign_removal(tmp_path: Path) -> None:
     manifest = copy.deepcopy(GENERATOR.load_manifest(ROOT))
     manifest["targets"][0]["historical_outcome"]["force_in_campaign"] = True
-    write_manifest(tmp_path, manifest)
+    write_manifest_root(tmp_path, manifest)
     with pytest.raises(ValueError, match="cannot force campaign removals"):
         GENERATOR.load_manifest(tmp_path)
 
@@ -258,11 +252,10 @@ def test_manifest_rejects_invalid_identity_and_provenance(
     tmp_path: Path, defect: str
 ) -> None:
     data = copy.deepcopy(GENERATOR.load_manifest(ROOT))
+    GENERATOR.load_manifest(write_manifest_root(tmp_path, data))
     mutate_manifest(data, defect)
-
-    write_manifest(tmp_path, data)
-    with pytest.raises(ValueError):
-        GENERATOR.load_manifest(tmp_path)
+    with pytest.raises(ValueError, match=re.escape(MANIFEST_DEFECT_ERRORS[defect])):
+        GENERATOR.load_manifest(write_manifest_root(tmp_path, data))
 
 
 def test_facility_objectives_can_override_known_defaults() -> None:

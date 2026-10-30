@@ -370,9 +370,20 @@ def test_irgc_roles_need_recruited_character_and_current_service(target, token):
 
 def test_legacy_officials_keep_their_pre_expansion_role_eligibility():
     game = PoliticalScript()
-    for target in range(56, 65):
+    for target in range(56, 64):
         assert game.globals[f"TOP_political^{target}"] == 1
         assert game.trigger("TOP_authored_role_eligible", target)
+
+    assert game.globals["TOP_political^64"] == 1
+    assert not game.trigger("TOP_authored_role_eligible", 64)
+    for tag, character in (
+        ("PER", "PER_qasem_soleimani"),
+        ("HEZ", "HEZ_qasem_soleimani"),
+    ):
+        country = game.countries[game.tags[tag]]
+        country["characters"].add(character)
+        assert game.trigger("TOP_authored_role_eligible", 64)
+        country["characters"].discard(character)
 
     for target in (129, 144, 146, 147, 150, 152, 153, 156, 158, 159, 160):
         assert not game.trigger("TOP_authored_role_eligible", target)

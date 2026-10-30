@@ -1,7 +1,9 @@
 """Shared HOI4 script execution model for Targeted Operations source tests."""
 
+import json
 import operator
 import re
+import shutil
 from datetime import date
 from pathlib import Path
 
@@ -808,6 +810,53 @@ def read_top_source(root, folder):
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+MANIFEST_DEFECT_ERRORS = {
+    "duplicate_id": "Authored IDs must preserve slots 1-64",
+    "duplicate_key": "Authored person keys must retain their stable IDs",
+    "duplicate_group": "Organization identities must preserve slots 1-12",
+    "duplicate_ct_slot": "Duplicate or out-of-range CT identity",
+    "foreign_successor": "Incomplete successor binding for 1",
+    "missing_successor": "Invalid affiliation or successor for 1",
+    "foreign_group_successor": "Incomplete successor binding for 1",
+    "generated_overlap": "Authored IDs must preserve slots 1-64",
+    "generated_end": "Authored IDs must preserve slots 1-64",
+    "capacity": "Authored IDs must preserve slots 1-64",
+    "target_class": "Invalid target class for 1",
+    "group_class": "Target class does not match group for 1",
+    "location_policy": "Invalid location policy for 1",
+    "unknown_source": "Unknown source for 1",
+    "stable_target_key": "Authored person keys must retain their stable IDs",
+    "stable_group_key": "Organization keys must retain their stable IDs",
+    "negative_ct_slot": "Duplicate or out-of-range CT identity",
+    "group_public_identity": "Public identity does not match class for group 1",
+    "target_public_identity": "Public identity does not match target class for 1",
+    "facility_default": "Invalid facility objective default for state_security",
+    "empty_facility_override": "Facility objectives must be a nonempty set",
+    "unknown_facility_override": "Facility objectives must be a nonempty set",
+    "leader_role": "Invalid leader role for target 1",
+    "leader_office": "Incomplete serving leader binding for 129",
+    "consequence_profile": "Consequence profile does not match group for 1",
+    "duplicate_successor": "Incomplete successor binding for 1",
+    "incomplete_successor": "Incomplete successor binding for 1",
+    "missing_authored_pool": "Authored successor missing from group pool: 145",
+    "activation_year": "Invalid authored opportunity year for 1",
+    "missing_sources": "Missing authoring provenance for 1",
+}
+
+
+def write_manifest_root(root: Path, data: dict) -> Path:
+    """Write a manifest beside the TOP sources that load_manifest cross-checks."""
+    for folder in ("common/scripted_triggers", "common/scripted_effects"):
+        target = root / folder
+        target.mkdir(parents=True, exist_ok=True)
+        for path in (ROOT / folder).glob("*targeted_operations*.txt"):
+            shutil.copyfile(path, target / path.name)
+    manifest_path = root / "tools/data/targeted_operations.json"
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    with manifest_path.open("w", encoding="utf-8", newline="") as stream:
+        json.dump(data, stream)
+    return root
 
 
 def read(relative: str) -> str:

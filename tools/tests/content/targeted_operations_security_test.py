@@ -115,20 +115,19 @@ class SecurityScript(TargetedScript):
 
 
 @pytest.mark.parametrize("level,pp,cash", [(1, 25, 0.25), (2, 40, 0.75), (3, 60, 1.5)])
-@pytest.mark.parametrize("track", ["protection", "counterintelligence"])
 def test_policy_controls_navigate_to_core_without_a_second_charge_or_tier(
-    track, level, pp, cash
+    level, pp, cash
 ):
     game = SecurityScript()
     country = game.countries[2]
     country["power"] = pp
     country["vars"]["treasury"] = cash
-    game.purchase(track, level)
+    game.purchase("protection", level)
     assert country["power"] == pp
     assert country["vars"]["treasury"] == cash
     assert game.charges == []
     assert game.navigations == [2]
-    assert f"TOP_{track}_until" not in country["vars"]
+    assert "TOP_protection_until" not in country["vars"]
     assert game.modifiers() == (0, 0, 0)
 
 
@@ -158,7 +157,6 @@ def test_live_core_policy_changes_replace_values_without_stacking():
     core = game.countries[2]["vars"]
     core.update(ct_home_defense_var=7, ct_global_base_detect_var=12)
     game.purchase("protection", 3)
-    game.purchase("counterintelligence", 2)
     assert game.modifiers() == (7, 7, 12)
     core.update(ct_home_defense_var=15, ct_global_base_detect_var=3)
     assert game.modifiers() == (15, 15, 3)
@@ -227,7 +225,7 @@ def test_disabled_system_neither_spends_nor_applies_existing_policy():
     game = SecurityScript()
     game.purchase("protection", 3)
     game.enabled = False
-    game.purchase("counterintelligence", 3)
+    game.purchase("protection", 1)
     assert game.modifiers() == (0, 0, 0)
     assert game.charges == []
 
@@ -316,16 +314,6 @@ def test_ai_avoids_unneeded_or_unaffordable_defensive_spending(restriction):
         country["vars"]["treasury"] = 2
     game.run("TOP_security_country_tick", 2)
     assert game.charges == []
-
-
-def test_parody_badge_has_explicit_non_sponsorship_hover_text():
-    path = ROOT / "localisation/english/MD_targeted_operations_l_english.yml"
-    raw = path.read_bytes()
-    assert raw.startswith(b"\xef\xbb\xbf")
-    text = raw.decode("utf-8-sig")
-    assert "Sponsored by Palantir(TM)" in text
-    assert "in-game parody" in text
-    assert "no actual sponsorship, endorsement, or affiliation" in text
 
 
 def test_lethal_resolution_snapshots_defensive_exposure_before_retirement():

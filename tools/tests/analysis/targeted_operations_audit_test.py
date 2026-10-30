@@ -23,6 +23,15 @@ def test_discovery_includes_system_checks_and_excludes_unrelated_tools(
     assert audit.discover_tests(tmp_path) == sorted(included)
 
 
+def test_discovery_includes_shared_counter_terror_and_loop_alias_suites(tmp_path):
+    own = tmp_path / "tools/tests/content/targeted_operations_behavior_test.py"
+    shared = [tmp_path / suite for suite in audit.SHARED_SUITES]
+    for path in [own, *shared]:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.touch()
+    assert audit.discover_tests(tmp_path) == sorted([own, *shared])
+
+
 @pytest.mark.parametrize(
     "generator_result,pytest_result,expected", [(0, 0, 0), (0, 5, 5), (2, 0, 1)]
 )

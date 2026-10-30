@@ -213,9 +213,11 @@ def check_wiring(root: Path) -> list[str]:
     slot = get_block(source["scripted_triggers"], "TOP_operation_slot_available")
     if "check_variable = { TOP_operation_subject_kind = 0 }" not in slot:
         failures.append("TOP_operation_slot_available does not require an empty slot")
-    slot_uses = sum(
-        len(re.findall(r"(?m)^\s*TOP_operation_slot_available\s*=\s*yes\s*$", text))
-        for text in (source["scripted_triggers"], source["scripted_triggers"])
+    slot_uses = len(
+        re.findall(
+            r"(?m)^\s*TOP_operation_slot_available\s*=\s*yes\s*$",
+            source["scripted_triggers"],
+        )
     )
     if slot_uses < 2:
         failures.append(

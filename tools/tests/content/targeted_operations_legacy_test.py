@@ -164,14 +164,22 @@ def test_dossiers_window_is_screen_level_and_scoped_to_counter_terror():
     assert window_fields["orientation"] == "center"
 
 
-def test_security_footer_is_retired_but_remains_attached_to_the_live_dossiers_gui():
-    gui = _named_block(
-        source("common/scripted_guis/01_targeted_operations_gui.txt"),
-        "TOP_security_footer_gui",
-    )
-    assert "parent_scripted_gui = TOP_dossiers_gui" in gui
-    assert "parent_window_name" not in gui
-    assert "always = no" in _named_block(gui, "visible")
+def test_security_footer_and_hidden_tier_buttons_are_removed():
+    gui = source("common/scripted_guis/01_targeted_operations_gui.txt")
+    interface = source("interface/targeted_operations.gui")
+    assert "TOP_security_footer_gui" not in gui
+    assert "TOP_security_footer_window" not in interface
+    for button in (
+        "TOP_protection_two",
+        "TOP_protection_three",
+        "TOP_counterintelligence_one",
+        "TOP_counterintelligence_two",
+        "TOP_counterintelligence_three",
+    ):
+        assert f'name = "{button}"' not in interface
+        assert f"{button}_click" not in gui
+    assert 'name = "TOP_protection_one"' in interface
+    assert "TOP_protection_one_click" in gui
 
 
 def test_security_policy_attaches_to_the_live_dossiers_security_tab():
@@ -185,24 +193,6 @@ def test_security_policy_attaches_to_the_live_dossiers_security_tab():
     assert "TOP_security_window_visible = yes" in visible
     assert "check_variable = { TOP_security_open = 1 }" in visible
     assert "check_variable = { TOP_tab = 5 }" in visible
-
-
-def test_security_footer_leaves_room_for_the_dossiers_refresh_button():
-    windows = _parse_race_script(source("interface/targeted_operations.gui"))[
-        "guiTypes"
-    ]
-    footer = next(
-        body
-        for kind, _, body in windows
-        if kind == "containerWindowType"
-        and ("name", "=", '"TOP_security_footer_window"') in body
-    )
-    fields = {key: value for key, _, value in footer}
-    assert ("width", "=", "190") in fields["size"]
-    badge = fields["instantTextboxType"]
-    assert ("text", "=", '"TOP_security_parody_label"') in badge
-    assert ("pdx_tooltip", "=", '"TOP_security_parody_tt"') in badge
-    assert ("maxWidth", "=", "180") in badge
 
 
 @pytest.mark.parametrize(

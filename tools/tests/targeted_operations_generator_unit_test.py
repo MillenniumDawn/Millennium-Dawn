@@ -9,9 +9,11 @@ from pathlib import Path
 
 import pytest
 from targeted_operations_helpers import (
+    MANIFEST_DEFECT_ERRORS,
     _named_block,
     _parse_race_script,
     mutate_manifest,
+    write_manifest_root,
 )
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -60,19 +62,11 @@ def manifest():
 def test_manifest_rejects_ambiguous_or_cross_group_identities(
     tmp_path, manifest, defect
 ):
+    GENERATOR.load_manifest(write_manifest_root(tmp_path, manifest))
     data = deepcopy(manifest)
     mutate_manifest(data, defect)
-    path = tmp_path / "tools/data/targeted_operations.json"
-    path.parent.mkdir(parents=True)
-    with path.open("w", encoding="utf-8", newline="") as stream:
-        json.dump(data, stream)
-    expected = (
-        "Authored successor missing from group pool: 145"
-        if defect == "missing_authored_pool"
-        else None
-    )
-    with pytest.raises(ValueError, match=expected):
-        GENERATOR.load_manifest(tmp_path)
+    with pytest.raises(ValueError, match=re.escape(MANIFEST_DEFECT_ERRORS[defect])):
+        GENERATOR.load_manifest(write_manifest_root(tmp_path, data))
 
 
 def test_facility_overrides_can_add_or_remove_known_objectives(manifest):

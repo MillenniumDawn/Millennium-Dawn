@@ -851,6 +851,7 @@ def test_snapshot_identity_and_host_slot_have_single_writers():
             "TOP_send_host_request",
             "TOP_answer_host_request",
             "TOP_clear_incoming_host_request",
+            "TOP_cancel_review",
         }:
             assert "TOP_incoming_actor" not in rendered
     assert "TOP_selected" not in _named_block(source(EFFECT_PATH), "TOP_approve_review")

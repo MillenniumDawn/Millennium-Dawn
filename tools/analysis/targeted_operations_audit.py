@@ -13,12 +13,21 @@ def run(command: list[str]) -> int:
     return subprocess.run(command, cwd=ROOT, check=False).returncode
 
 
+# Shared suites that cover TOP behavior outside the system's own test files.
+SHARED_SUITES = (
+    "tools/tests/content/counter_terror_intelligence_test.py",
+    "tools/tests/validation/validate_scripted_params_test.py",
+)
+
+
 def discover_tests(root: Path) -> list[Path]:
-    return sorted(
+    found = {
         path
         for path in (root / "tools/tests").rglob("*_test.py")
         if path.name.startswith(("targeted_operations", "top_lifecycle_probe"))
-    )
+    }
+    found.update(root / suite for suite in SHARED_SUITES if (root / suite).is_file())
+    return sorted(found)
 
 
 def main() -> int:
