@@ -108,11 +108,6 @@ on_actions = {
 				automation_economy_weekly = yes
 			}
 
-			# Banked here, not in ingame_update_setup, which re-runs on demand
-			if = { limit = { check_variable = { EU_seigniorage_weekly > 0 } }
-				add_to_variable = { global.EU_seigniorage_pool = EU_seigniorage_weekly }
-			}
-
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
 
 			# No longer subject stop paying for subsidies
@@ -377,7 +372,6 @@ on_actions = {
 						array = global.EU_potential
 						limit = { is_ai = yes }
 						add_ideas = EUU_monitor
-						activate_mission = EU_election_5_years
 					}
 				}
 			}
@@ -780,6 +774,16 @@ on_actions = {
 
 						set_EU_gdp = yes
 						set_global_flag = { flag = EU_gdp_updated value = 1 days = 1 }
+
+						# European Parliament election, queued in January by eu_schedule_parliament_election
+						if = {
+							limit = {
+								has_global_flag = eu_parliament_election_due
+								check_variable = { global.month > 5 }
+							}
+							clr_global_flag = eu_parliament_election_due
+							country_event = { id = EUelection.1 days = 14 }
+						}
 
 						# POTEF Election
 						# Updates 3 times during an election cadence to ensure minimal drift.
