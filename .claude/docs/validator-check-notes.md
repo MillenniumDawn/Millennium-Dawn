@@ -103,6 +103,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
+- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
+  CI): the case rule in the stylization guide, and a prefix-owner rule still under
+  review. Existing ids are never renamed, so
+  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+  flat `allowed` pin, else its category's. Prefixes that are not country tags are
+  skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
+  `SIL_bund_*`), so review the owner rule before enforcing it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -347,11 +354,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `unneeded-treasury-guard` (WARNING): the focus twin of
   `event-unneeded-treasury-guard`, over the completion rewards. The focus `cost` is
   completion time, never a price. A literal political power loss justifies the
-  bankruptcy check. A building effect after `skip_payment = 1` in the same or an
-  enclosing block costs nothing. A charge another nation's event sends back to the
-  sender, directly or through a reply event, counts. Known gaps: partner-event
-  branches gated on the receiver's tag are not told apart, and a partner-event charge
-  never raises `missing-bankruptcy-guard`.
+  bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
+  as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
+  block costs nothing. A charge another nation's event sends back to the sender,
+  directly or through a reply event, counts. Known gaps: partner-event branches gated
+  on the receiver's tag are not told apart, a partner-event charge never raises
+  `missing-bankruptcy-guard`, and costs that come from an idea's modifiers, such as
+  `personnel_cost_multiplier_modifier`, are not seen, so their guards read as unneeded.
 
 ## validate_ai_path_rules.py
 
@@ -663,7 +672,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - The decision log id check also reads a log with no `Decision` word, when the string is
   only the standard prefix, filler words, and one id. Longer text is skipped, so a log
-  such as `... <other_decision> setup finished` is a known gap.
+  such as `... <other_decision> setup finished` is a known gap. `Mission` works like
+  `Decision`, and an id that runs into `[?...]` is built at runtime and skipped.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
