@@ -1221,6 +1221,13 @@ WORD_BOUNDARY_ORIGINALS = {
     ),
     "_MODIFY_TREASURY_RE": r"\bmodify_treasury_effect(\w*)\s*=\s*yes\b",
     "_MODIFY_DEBT_RE": r"\bmodify_debt_effect\s*=\s*yes\b",
+    "_DEBT_CHANGE_RE": (
+        r"\bdebt_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
+        r"|\bvar\s*=\s*debt_change\b"
+    ),
+    "_TAX_RATE_EFFECT_RE": (
+        r"\bmodify_(?:population|corporate)_tax_rate_effect\s*=\s*yes\b"
+    ),
     "_SEARCH_FILTERS_RE": r"\bsearch_filters\s*=\s*\{([^{}]*)\}",
     "_COUNTRY_EVENT_RE": r"\bcountry_event\b",
     "_EVENT_OPTION_RE": r"\boption\s*=\s*\{",
@@ -1253,6 +1260,8 @@ PATTERN_SAMPLE = "\n".join(
         "modify_treasury_effect",
         "modify_treasury_effect_corruption",
         "modify_debt_effect",
+        "debt_change",
+        "modify_population_tax_rate_effect",
         "search_filters",
         "country_event",
         "option",
@@ -1261,7 +1270,15 @@ PATTERN_SAMPLE = "\n".join(
         "mutually_exclusive",
         "available",
     )
-    for value in ("{ }", "{ focus = a }", "yes", "-5", "treasury_change", '"GFX x"')
+    for value in (
+        "{ }",
+        "{ focus = a }",
+        "yes",
+        "-5",
+        "treasury_change",
+        "debt_change",
+        '"GFX x"',
+    )
 )
 
 
@@ -1727,6 +1744,30 @@ _MONEY_COST_CASES = {
         frozenset(),
         (0.0, False, False),
     ),
+    "literal debt cut applied twice": (
+        "set_temp_variable = { debt_change = -6 }\n"
+        "modify_debt_effect = yes\n"
+        "modify_debt_effect = yes\n",
+        frozenset(),
+        (0.0, False, False),
+    ),
+    "debt cut beside a raise": (
+        "if = {\n"
+        "\tlimit = { has_country_flag = flag_a }\n"
+        "\tset_temp_variable = { debt_change = -5 }\n"
+        "}\n"
+        "else = { set_temp_variable = { debt_change = 5 } }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
+    "debt cut mutated before the apply": (
+        "set_temp_variable = { debt_change = -5 }\n"
+        "multiply_temp_variable = { debt_change = gdp_scale }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
     "money effect after unrelated keys": (
         "add_political_power = 5\nspend_money_effect = yes\n",
         _SPEND_MONEY,
@@ -2006,6 +2047,14 @@ _GUARD_REPORT_CASES = {
         "",
         "",
         _PREVIEWED_SPEND,
+        BANKRUPTCY_GUARD,
+        [],
+    ),
+    "guard on a tax rate change": (
+        "",
+        "",
+        "set_temp_variable = { pop_change = -1 }\n"
+        "\t\t\tmodify_population_tax_rate_effect = yes",
         BANKRUPTCY_GUARD,
         [],
     ),

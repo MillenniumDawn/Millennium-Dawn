@@ -195,6 +195,14 @@ Write only the properties the focus uses. An empty commented-out slot marker
 - Structure with clear `visible` and `available` conditions
 - Include `ai_will_do`
 
+## Naming
+
+- Name decisions and categories `TAG_lowercase_words`. Keep everything after the prefix
+  lowercase, even a wrapped tag: `SER_invite_kos`, not `SER_invite_KOS`.
+- Start each effect block's log with `Decision <id>` (`Mission <id>` in a mission),
+  naming the decision the block sits in.
+- Do not rename existing ids to fit these rules.
+
 ## Example Decision
 
 ```hoiscript
