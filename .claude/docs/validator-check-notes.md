@@ -25,6 +25,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_ai_weight_order.py
 
+- Checks event `ai_chance`, decision/GUI `ai_will_do`, and diplomatic `ai_desire`
+  through the same scanner. The existing common/events CI batch covers all three.
 - `ai-weight-zero-then-add` (WARNING): modifiers run in order, so a positive `add`
   can restore a zeroed weight. Opposite boolean guards in the same scope cannot
   both apply. Other relationships, including numeric bounds and flag values,
