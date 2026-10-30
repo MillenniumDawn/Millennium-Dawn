@@ -81,7 +81,9 @@ modifier = {
 ```
 
 The gate is the reward's money cost, not the focus `cost` field, which is completion
-time. Keep it in `ai_will_do`, never `available`.
+time. A charge the partner's event sends back to the sender, as in an arms purchase,
+counts. A build after `skip_payment = 1` is free and needs no guard. Keep it in
+`ai_will_do`, never `available`.
 
 ## Israel
 
