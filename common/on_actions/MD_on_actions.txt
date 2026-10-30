@@ -46,6 +46,19 @@ on_actions = {
 			}
 			if = {
 				limit = {
+					ai_race_country_initialized = yes
+					ai_race_full_mode = yes
+				}
+				ai_race_refresh_operating_state = yes
+				ai_race_refresh_effective_capability = yes
+				if = {
+					limit = { is_ai = no }
+					ai_race_refresh_offer = yes
+					ai_race_refresh_gui = yes
+				}
+			}
+			if = {
+				limit = {
 					is_ai = no
 					has_country_flag = automation_energy_consumption_policy
 					has_country_flag = energy_state_bases_initialized
@@ -140,6 +153,15 @@ on_actions = {
 					has_capitulated = no
 				}
 				set_temp_variable = { treasury_rate_gain = treasury_rate }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { ai_race_finance_outstanding > 0 }
+							check_variable = { ai_race_finance_rate_component > 0 }
+						}
+					}
+					ai_race_prepare_weekly_bill = yes
+				}
 
 				# Pay down debt automatically this weekly tick
 				if = {
@@ -164,9 +186,22 @@ on_actions = {
 				}
 
 				add_to_variable = { treasury = treasury_rate_gain }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { ai_race_finance_outstanding > 0 }
+							check_variable = { ai_race_finance_rate_component > 0 }
+						}
+					}
+					ai_race_commit_weekly_bill = yes
+				}
 
 				# Must sit after the accrual and before automated_debt_taker, or the two fight over the same treasury
-				if = { limit = { is_ai = yes } ai_repay_debt = yes }
+				if = {
+					limit = { is_ai = yes }
+					if = { limit = { has_variable = ai_race_ai_target_stage } ai_race_ai_refresh_savings = yes }
+					ai_repay_debt = yes
+				}
 
 				#Automated taking debt - has calculate_interest_rate at the end
 				automated_debt_taker = yes
@@ -720,6 +755,7 @@ on_actions = {
 				else = {
 					set_variable = { global.month = 1 }
 				}
+				ai_race_monthly_dispatch = yes
 				set_temp_variable = { every_other_month = global.month }
 				modulo_temp_variable = { every_other_month = 2 }
 
