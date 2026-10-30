@@ -25,6 +25,8 @@ def _modifier(weight):
 _CASES = {
     "add after zero": (_block(ZERO, ADD), [(4, "ai_chance")]),
     "ai_will_do": (_block(ZERO, ADD, name="ai_will_do"), [(4, "ai_will_do")]),
+    "diplomatic ai_desire": (_block(ZERO, ADD, name="ai_desire"), [(4, "ai_desire")]),
+    "diplomatic zero last": (_block(ADD, ZERO, name="ai_desire"), []),
     "decimal zero": (_block(_modifier("factor = 0.0"), ADD), [(4, "ai_chance")]),
     "once per block": (
         _block(ZERO, ADD, ADD) + _block(ADD, ZERO) + _block(ZERO, ADD),
@@ -124,6 +126,11 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
         + option
         + "\t}\n}\n",
     )
+    write_path(
+        tmp_path,
+        "common/scripted_diplomatic_actions/Trade.txt",
+        _block(ZERO, ADD, name="ai_desire"),
+    )
     write_path(tmp_path, "common/decisions/Clean.txt", _block(ADD, ZERO))
     write_path(tmp_path, "common/decisions/Weightless.txt", "ai_chance = { base = 1 }")
     scans = []
@@ -138,15 +145,16 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
 
     cold = issue_rows(issues_by_line(V.Validator, tmp_path)[1])
     warm = issue_rows(issues_by_line(V.Validator, tmp_path)[1])
-    assert len(scans) == 2
+    assert len(scans) == 3
     uncached = run_validator(V.Validator, tmp_path)
-    assert len(scans) == 4
+    assert len(scans) == 6
 
     assert cold == warm == issue_rows(uncached)
     assert [(category, path, line) for category, _, path, line in cold] == [
-        ("ai-weight-zero-then-add", "events/Ev.txt", 8)
+        ("ai-weight-zero-then-add", "events/Ev.txt", 8),
+        ("ai-weight-zero-then-add", "common/scripted_diplomatic_actions/Trade.txt", 4),
     ]
-    assert (uncached.warnings_found, uncached.errors_found) == (1, 0)
+    assert (uncached.warnings_found, uncached.errors_found) == (2, 0)
 
 
 _SCRIPTED_GUARDS = (

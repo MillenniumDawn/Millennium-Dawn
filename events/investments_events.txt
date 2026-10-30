@@ -257,6 +257,19 @@ country_event = {
 	}
 }
 
+country_event = {
+	id = investments_event.13
+	title = investments_event.13.t
+	desc = investments_event.13.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = investments_event.13.a
+	}
+}
+
 #Construction Refused
 country_event = {
 	id = investments_event.11
@@ -332,29 +345,33 @@ country_event = {
 		set_temp_variable = { inv_has_EU_ECOFIN_office_idea = 0 }
 		if = { limit = { has_idea = EU_ECOFIN_office_idea } set_temp_variable = { inv_has_EU_ECOFIN_office_idea = 1 } }
 
-		for_each_scope_loop = {
-			array = investment_targets
-			if = {
-				limit = {
-					country_exists = THIS
-					NOT = { has_country_flag = int_auto_reject_investment_flag }
-					NOT = { has_country_flag = not_investment_target }
-					NOT = { has_country_flag = recently_failed_to_invest }
-					OR = {
-						is_subject = no
-						is_subject_of = ROOT
-						AND = { is_subject = yes OVERLORD = { is_in_faction_with = ROOT } }
+		calculate_investment_spendable_treasury = yes
+		if = {
+			limit = { check_variable = { investment_spendable_treasury > 5 } }
+			for_each_scope_loop = {
+				array = investment_targets
+				if = {
+					limit = {
+						country_exists = THIS
+						NOT = { has_country_flag = int_auto_reject_investment_flag }
+						NOT = { has_country_flag = not_investment_target }
+						NOT = { has_country_flag = recently_failed_to_invest }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+							AND = { is_subject = yes OVERLORD = { is_in_faction_with = ROOT } }
+						}
 					}
-				}
-				set_temp_variable = { AI_selected_country = THIS.id }
-				set_temp_variable = { AI_country_score = 0 }
-				AI_country_selection_calculation = yes
+					set_temp_variable = { AI_selected_country = THIS.id }
+					set_temp_variable = { AI_country_score = 0 }
+					AI_country_selection_calculation = yes
 
 
-				# Sets the new best country
-				if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
-					set_temp_variable = { AI_best_country_score = AI_country_score }
-					set_temp_variable = { AI_best_country = AI_selected_country }
+					# Sets the new best country
+					if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
+						set_temp_variable = { AI_best_country_score = AI_country_score }
+						set_temp_variable = { AI_best_country = AI_selected_country }
+					}
 				}
 			}
 		}
@@ -556,6 +573,7 @@ country_event = {
 				set_variable = { project_build_amount^-1 = 1 }
 
 				project_monetary_cost_calculation = yes
+				calculate_investment_spendable_treasury = yes
 
 				# Init Project Variables (writes ^-1 staging slot since project = -1)
 				# AI_best_target is the best state to invest in
@@ -579,6 +597,7 @@ country_event = {
 						# Only allow projects between 0 and 700. If construction speed goes negative you'll get instant failing projects
 						check_variable = { project_construction_duration^-2 < 700 }
 						check_variable = { project_construction_duration^-2 > 0 }
+						check_variable = { var = investment_spendable_treasury value = project_monetary_cost^-1 compare = greater_than_or_equals }
 
 						# Check whether it's available
 						var:AI_best_target = { investment_building_slot_available = yes }
@@ -600,11 +619,15 @@ country_event = {
 
 					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.investments_nation_target.GetName], score = [?abs]"
 				}
-				else = {
+				else_if = {
+					limit = { check_variable = { var = investment_spendable_treasury value = project_monetary_cost^-1 compare = greater_than_or_equals } }
 					var:AI_best_country = {
 						set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
 					}
 					log = "[GetDateText]: [This.GetName]: Investment Failed: project_construction_duration out of range or slot unavailable in [?abt.GetName]. Duration: [?pd], score: [?abs]. Skipping this investment pulse."
+				}
+				else = {
+					log = "[GetDateText]: [This.GetName]: Investment Deferred: insufficient spendable treasury for project cost [?project_monetary_cost^-1]. Skipping this investment pulse."
 				}
 			}
 			else = {
