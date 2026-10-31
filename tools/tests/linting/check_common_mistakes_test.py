@@ -59,6 +59,8 @@ from check_common_mistakes import (
     _check_random_select_amount_literal,
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
+    _check_shadowed_branches,
+    _check_stat_effect_magnitude,
     _check_tautological_or,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
@@ -117,6 +119,16 @@ _chain_lines = [
 ]
 
 
+def _chain(first, second):
+    """An if/else_if pair whose limits hold `first` and `second`."""
+    return [
+        "effect = {\n",
+        f"\tif = {{ limit = {{ {first} }} add_stability = 0.1 }}\n",
+        f"\telse_if = {{ limit = {{ {second} }} add_stability = 0.2 }}\n",
+        "}\n",
+    ]
+
+
 def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=None):
     """One rotation tier: counter check, increment, kill, create, do_not_retire undo."""
     retire = counter if retire is None else retire
@@ -164,6 +176,19 @@ _CUB_DAILY_CACHE = [
     "\t}\n",
     "}\n",
 ]
+
+
+def _logged_decision(text):
+    """TST_decision whose complete_effect carries one log line."""
+    return [
+        "TST_category = {\n",
+        "\tTST_decision = {\n",
+        "\t\tcomplete_effect = {\n",
+        f'\t\t\tlog = "{text}"\n',
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ]
 
 
 def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
@@ -1166,6 +1191,48 @@ _COUNT_CASES: dict[
                 "}\n",
             ],
         ),
+        (
+            "log with no Decision word naming another id flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: TST_other"),
+        ),
+        (
+            "log with no Decision word, filler word and trailing space flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: add TST_other "),
+        ),
+        (
+            "log with no Decision word naming its own id not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: TST_decision"),
+        ),
+        (
+            "free text after the standard prefix not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: Operation succeeded"),
+        ),
+        (
+            "filler word alone is not an id",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: remove"),
+        ),
+        (
+            "Mission log naming another id flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: Mission TST_other"),
+        ),
+        (
+            "effect block name before its own id not flagged",
+            0,
+            _logged_decision(
+                "[GetDateText]: [Root.GetName]: mission timeout_effect TST_decision"
+            ),
+        ),
+        (
+            "id built at runtime not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: Mission TST_[?x.id]_end"),
+        ),
     ],
     _check_event_log_id: [
         (
@@ -1840,6 +1907,27 @@ _COUNT_CASES: dict[
             ],
         ),
     ],
+    _check_stat_effect_magnitude: [
+        ("fraction not flagged", 0, ["\tadd_stability = 0.05\n"]),
+        ("negative fraction not flagged", 0, ["\tadd_stability = -0.1\n"]),
+        ("stability of 1 flagged", 1, ["\tadd_stability = 1\n"]),
+        ("stability of -1 flagged", 1, ["\tadd_stability = -1\n"]),
+        ("war support of 15 flagged", 1, ["\tadd_war_support = 15\n"]),
+        ("variable not flagged", 0, ["\tadd_stability = var_name\n"]),
+        ("decimal magnitude flagged", 1, ["\tadd_stability = 1.5\n"]),
+        ("expression not flagged", 0, ["\tadd_stability = 5 * 0.01\n"]),
+        ("comment not flagged", 0, ["\t# add_stability = 1\n"]),
+        (
+            "whole number before a closing brace flagged",
+            1,
+            ["\tTAG = { add_stability = 1 }\n"],
+        ),
+        (
+            "whole number inside a log string not flagged",
+            0,
+            ['\tlog = "add_stability = 1"\n'],
+        ),
+    ],
     _check_else_with_limit: [
         (
             "limit directly inside else flagged",
@@ -2250,6 +2338,112 @@ _COUNT_CASES: dict[
         ("var:x^i shorthand flagged", 1, ["\tset_variable = { x = var:a^i }\n"]),
         ("shorthand in a comment not flagged", 0, ["\t# var:a^i\n"]),
     ],
+    _check_shadowed_branches: [
+        (
+            "lower bound before a higher one flagged",
+            1,
+            _chain("check_variable = { x > 10 }", "check_variable = { x > 20 }"),
+        ),
+        (
+            "higher bound first, then else, clean",
+            0,
+            [
+                *_chain("check_variable = { x > 20 }", "check_variable = { x > 10 }")[
+                    :-1
+                ],
+                "\telse = { add_stability = 0.3 }\n",
+                "}\n",
+            ],
+        ),
+        (
+            "branch shadowed by two earlier ones reported once",
+            2,
+            [
+                "effect = {\n",
+                "\tif = { limit = { check_variable = { x > 10 } } add_stability = 0.1 }\n",
+                "\telse_if = { limit = { check_variable = { x > 20 } } add_stability = 0.2 }\n",
+                "\telse_if = { limit = { check_variable = { x > 30 } } add_stability = 0.3 }\n",
+                "}\n",
+            ],
+        ),
+        (
+            "tighter less-than bound after a looser one flagged",
+            1,
+            _chain("check_variable = { x < 5 }", "check_variable = { x < 3 }"),
+        ),
+        (
+            "bare comparison bounds flagged",
+            1,
+            _chain("has_stability > 0.5", "has_stability > 0.75"),
+        ),
+        (
+            "bounds on different triggers not compared",
+            0,
+            _chain("has_stability > 0.5", "has_war_support > 0.75"),
+        ),
+        (
+            "earlier limit contained in a later one flagged",
+            1,
+            _chain("has_idea = a", "has_idea = a has_war = yes"),
+        ),
+        (
+            "opposite operators not ordered",
+            0,
+            _chain("check_variable = { x > 10 }", "check_variable = { x < 5 }"),
+        ),
+        (
+            "equality is not a bound",
+            0,
+            _chain("check_variable = { x = 20 }", "check_variable = { x = 10 }"),
+        ),
+        (
+            "variables on different scopes not compared",
+            0,
+            _chain(
+                "check_variable = { 169.troops < 1 }",
+                "check_variable = { 1122.troops < 1 }",
+            ),
+        ),
+        (
+            "different quoted values not compared",
+            0,
+            _chain('has_dlc = "La Resistance"', 'has_dlc = "By Blood Alone"'),
+        ),
+        (
+            "else_if written inside the if body flagged",
+            1,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a } add_stability = 0.1\n",
+                "\t\telse_if = { limit = { has_idea = a } add_stability = 0.2 }\n",
+                "\t}\n",
+                "}\n",
+            ],
+        ),
+        (
+            "inner chain's else_if is not the outer chain's",
+            0,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a }\n",
+                "\t\tif = { limit = { has_idea = b } add_stability = 0.1 }\n",
+                "\t\telse_if = { limit = { has_idea = a } add_stability = 0.2 }\n",
+                "\t}\n",
+                "}\n",
+            ],
+        ),
+        (
+            "a new if starts a new chain",
+            0,
+            [
+                "effect = {\n",
+                "\tif = { limit = { has_idea = a } add_stability = 0.1 }\n",
+                "\tif = { limit = { has_idea = b } add_stability = 0.2 }\n",
+                "\telse_if = { limit = { has_idea = a } add_stability = 0.3 }\n",
+                "}\n",
+            ],
+        ),
+    ],
 }
 
 
@@ -2609,6 +2803,18 @@ _EXPECTED = {
         (
             1,
             'bare "tst_trigger" inside NOT = { }: add "= yes" to call the scripted trigger/effect',
+        )
+    ],
+    "shadowed else_if": [
+        (
+            3,
+            "else_if never runs -- the branch at line 2 already matches whenever this limit holds, and if/else_if stops at the first match",
+        )
+    ],
+    "war support 15": [
+        (
+            1,
+            "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
         )
     ],
 }
@@ -3145,6 +3351,16 @@ _EXACT_CASES = [
     ),
     _exact(
         "bare trigger call", _check_bare_statement_token, ["\tNOT = { tst_trigger }\n"]
+    ),
+    _exact(
+        "shadowed else_if",
+        _check_shadowed_branches,
+        _chain("has_idea = a", "has_idea = a"),
+    ),
+    _exact(
+        "war support 15",
+        _check_stat_effect_magnitude,
+        ["\tadd_war_support = 15\n"],
     ),
 ]
 

@@ -1395,6 +1395,9 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 
 
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# Matched with first_flat_match, which supplies the word boundary before the key.
+IS_AI_NO_RE = re.compile(r"is_ai\s*=\s*no\b")
+ALWAYS_NO_RE = re.compile(r"always\s*=\s*no\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
 _TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
