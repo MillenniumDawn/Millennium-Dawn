@@ -24,7 +24,7 @@ def reuse_repository_import_graph(monkeypatch, repository_import_graph):
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 45
+    assert len(vb.ALL_SPECS) == 46
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -93,6 +93,14 @@ def test_common_group_selects_graphical_culture_registration():
     assert spec.strict is False
 
 
+def test_influence_reads_are_advisory_and_selected_for_all_caller_roots():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "influence-reads")
+    assert spec.strict is False
+    assert spec.groups == ("common", "events", "history")
+    for group in spec.groups:
+        assert spec in rvb.selected_specs("targeted-b", {group})
+
+
 def test_music_group_selects_only_common_mistakes():
     selected = {spec.name for spec in rvb.selected_specs("core", {"music"})}
     assert selected == {"common-mistakes"}
@@ -137,6 +145,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "events",
         "history",
         "dlc-guards",
+        "influence-reads",
     }
     assert adhoc == []
 
