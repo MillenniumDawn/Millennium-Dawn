@@ -11,6 +11,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 - Keep edits within the requested scope.
 - Verify identifiers against their definitions before using them: exact case, caller
   scope, and tooltip behavior. Existing usage is a clue, not proof.
+- Write HOI4 script only. Scripted effects and triggers take no parameters, so
+  `my_effect = { x = y }` with `$x$` inside is invalid, as are other EU4 and CK3 forms.
+  See "HOI4 Syntax Only" in `scripting-edge-cases.md`.
 - Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
   current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
