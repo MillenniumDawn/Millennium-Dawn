@@ -198,6 +198,10 @@ _ALL_GATED = _event(
     _option("foo.1.a", _GATE + _PP_COST + _FLAT),
     _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
 )
+_TAG_SPLIT = _event(
+    _option("foo.1.a", "\t\ttrigger = { tag = ISR }\n" + _PP_COST + _FLAT),
+    _option("foo.1.b", "\t\ttrigger = { tag = HEZ }\n" + _AWARE),
+)
 _PP_BLIND = "foo.1.a - ai_chance ignores the political power cost"
 _TREASURY_BLIND = "foo.1.a - ai_chance ignores the treasury cost"
 _BUDGET = "common/scripted_effects/00_budget_effects.txt"
@@ -296,6 +300,7 @@ _VALIDATOR_CASES = {
             )
         ],
     ),
+    "tag-split options": ({"events/Ev.txt": _TAG_SPLIT}, []),
     "commented cost": (
         {"events/Ev.txt": _two_options("\t\t#add_political_power = -50\n" + _FLAT)},
         [],
@@ -620,6 +625,49 @@ def test_find_cost_blind_options(text, expected):
     assert _found(text) == expected
 
 
+# case: (option triggers, at most one option per receiver)
+_RECEIVER_CASES = {
+    "distinct tags": (("tag = ISR", "tag = HEZ"), True),
+    "distinct original tags": (("original_tag = ISR", "original_tag = HEZ"), True),
+    "same tag": (("tag = ISR", "tag = ISR"), False),
+    "different identity fields can overlap": (
+        ("tag = D01", "original_tag = ISR"),
+        False,
+    ),
+    "conjunctive receiver wrappers": (
+        (
+            "AND = { has_war = no hidden_trigger = { ROOT = { tag = ISR } } }",
+            "THIS = { tag = HEZ }",
+        ),
+        True,
+    ),
+    "tag inside OR": (("OR = { tag = ISR has_war = yes }", "tag = HEZ"), False),
+    "tag in another country": (("FROM = { tag = ISR }", "tag = HEZ"), False),
+    "tag complement": (("tag = ISR", "NOT = { tag = ISR }"), True),
+    "original tag complement reversed": (
+        ("NOT = { original_tag = ISR }", "original_tag = ISR"),
+        True,
+    ),
+    "exclusion of a different tag": (("NOT = { tag = ISR }", "tag = HEZ"), False),
+    "two exclusions overlap": (("NOT = { tag = ISR }", "NOT = { tag = HEZ }"), False),
+    "negated conjunction does not exclude its tag": (
+        ("tag = ISR", "NOT = { AND = { tag = ISR has_war = yes } }"),
+        False,
+    ),
+    "untagged sibling": (("tag = ISR", "has_war = yes"), False),
+    "third option overlaps the second": (
+        ("tag = ISR", "tag = HEZ", "tag = HEZ"),
+        False,
+    ),
+    "both identity fields constrain the receiver": (
+        ("tag = D01 original_tag = ISR", "tag = D01 original_tag = HEZ"),
+        True,
+    ),
+    "commented tag is not a pin": (("# tag = ISR\nhas_war = yes", "tag = HEZ"), False),
+    "country alias is not a literal tag": (("tag = FROM", "tag = HEZ"), False),
+}
+
+
 # case: (option bodies, (option suffix, uncovered cost kinds) per finding)
 _SHARED_PRICE_CASES = {
     "dearer political power option": (
@@ -809,6 +857,24 @@ _SHARED_PRICE_CASES = {
         [("b", "political power")],
     ),
 }
+
+
+@pytest.mark.parametrize(
+    "triggers, split", _RECEIVER_CASES.values(), ids=_RECEIVER_CASES
+)
+def test_tag_split_options_need_no_cost_weights(triggers, split):
+    text = _event(
+        *(
+            _option(
+                f"foo.1.{letter}",
+                f"\t\ttrigger = {{ {trigger} }}\n"
+                + (_PP_COST + _FLAT if letter == "a" else _AWARE),
+            )
+            for letter, trigger in zip("abc", triggers)
+        )
+    )
+    blind, unneeded = find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)
+    assert (bool(blind), bool(unneeded)) == (not split, not split)
 
 
 @pytest.mark.parametrize(
