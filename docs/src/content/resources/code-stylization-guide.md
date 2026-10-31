@@ -15,7 +15,8 @@ Keep the change local, reuse existing behavior, and add only what the task needs
   for historical transitions or state the engine cannot otherwise answer.
 - Keep behavior-preserving cleanup separate from gameplay changes.
 - Remove unused code and commented-out blocks. Add a comment only for a non-obvious
-  reason, in one short line. Do not narrate the code.
+  reason, in one short line. Do not narrate the code. The doc header on a scripted
+  effect or trigger is the exception, see [Scripted Effects](#scripted-effects).
 
 ### Names and Encoding
 
@@ -46,7 +47,7 @@ UTF-8 with BOM. Python tools must preserve LF when writing; see
 | Events           | Use `is_triggered_only = yes`, log only if effects exist       |
 | Ideas            | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
 | Technologies     | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
-| Scripted Effects | List every input in a `# Parameters:` block above the effect   |
+| Scripted Effects | `# Effect:`, `# Purpose:`, `# Parameters:` above each effect   |
 | Formatting       | Tabs (not spaces), 1 line between elements                     |
 
 ---
@@ -380,24 +381,42 @@ night_vision_1 = {
 
 # Scripted Effects
 
-Scripted effects take no arguments, so a caller passes values through variables. List
-every value an effect reads from its caller in a `# Parameters:` block directly above
-the effect. The validators read this block and check every call against it.
+Scripted effects take no arguments, so a caller passes values through variables and
+cannot see what an effect needs by calling it. Put a doc header directly above each
+effect, the same idea as a Javadoc comment, so nobody has to read the body to use it.
 
-## Parameters Block
+## Doc Header
 
 ```hoiscript
-# Effect: GRE_repay_creditor_debt
-# Purpose: Repay a portion of debt to a specific creditor
+# Effect: get_pol_distance
+# Purpose: Reads the political distance between two party slots
+# Output: pol_distance_current
 # Parameters:
-# - GRE_repay_index: creditor index
-# - GRE_repay_amount: amount to repay
-GRE_repay_creditor_debt = {
+# - pol_dist_target_index: party slot 0-23
+# - pol_dist_source_index: party slot 0-23
+get_pol_distance = {
     ...
 }
 ```
 
-Write one line per input. The marker after the name says what kind of input it is:
+Write the lines in this order:
+
+| Line              | When   | Content                                         |
+| ----------------- | ------ | ----------------------------------------------- |
+| `# Effect: name`  | Always | The exact effect name                           |
+| `# Purpose: text` | Always | One line on what the effect does, not how       |
+| `# Output: text`  | If any | Values it leaves for the caller to read         |
+| `# Parameters:`   | If any | Every value it reads from the caller, see below |
+
+Scripted triggers use the same header with `# Trigger: name`.
+
+Give every new effect and trigger a header. Add one to an existing effect when you change
+what it does or what it reads. You do not need to document untouched effects.
+
+## Parameters Block
+
+The validators read this block and check every call against it. Write one line per input.
+The marker after the name says what kind of input it is:
 
 | Line                                | Input                                        |
 | ----------------------------------- | -------------------------------------------- |
