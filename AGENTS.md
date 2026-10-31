@@ -49,6 +49,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   Branch summary: `python3 tools/analysis/review_branch.py [base-branch]`.
 - Per-building and resource GDP factors live only in the `@gdp_*` constants of
   `common/scripted_effects/00_money_system.txt`.
+- Before changing a large system, map it with
+  `python3 tools/analysis/system_inspector.py <preset>` (`--list` for presets such as
+  `top`, `--path-pattern` for any other system, `--json` for structured output).
 
 ## Formatting
 
@@ -89,6 +92,8 @@ are under `.claude/docs/`.
 - Map modes and their colorblind palettes: `map-mode-reference.md`.
 - UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
   UAR, union cosmetics: `formable-reference.md`.
+- Targeted Operations: [implementation reference](.claude/docs/targeted-operations.md),
+  including authorization, typed cases, defense, liaison, and runtime acceptance.
 - Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
   Loading and menu art: `loading-screen-system.md`.
 - 3D models, entities, landmarks: `entity-system.md`. Power plants, energy techs,
