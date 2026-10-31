@@ -1,5 +1,7 @@
 """Starting-research candidates, fallbacks, and bounded unknown cases."""
 
+import json
+
 import ai_equipment_buildability as B
 import pytest
 from shared.suite import assert_findings, build_validator, run_tool_script, write_tree
@@ -193,11 +195,93 @@ def test_weapon_ammunition_alternatives(tmp_path, slots, expected):
     validator = build_validator(Validator, tmp_path)
     validator._validate_variant_modules()
     assert_findings(
-        [f"{issue.category}: {issue.message}" for issue in validator._issues],
+        [f"{issue.category}: {issue.message}" for issue in validator._issues]
+        + [
+            f"ai-equipment-ammo-unresolved: {record['group']}/{record['design']}: {record['reason']} {record.get('unresolved_providers', {})}"
+            for record in validator.analysis_records
+            if record["status"] in {"unknown", "partial"}
+        ],
         expected,
     )
     assert all(issue.severity == Severity.WARNING for issue in validator._issues)
+    assert not any(
+        issue.category == "ai-equipment-ammo-unresolved" for issue in validator._issues
+    )
     assert validator.errors_found == 0
+
+
+@pytest.mark.parametrize(
+    ("expression", "bounds"),
+    (
+        ("100", (100, 100)),
+        ("{ base = 100 modifier = { has_war = yes factor = 2 } }", (100, 200)),
+        ("{ base = 100 modifier = { has_war = yes factor = 0 } }", (0, 100)),
+        ("{ base = -10 modifier = { has_war = yes factor = -2 } }", (-10, 20)),
+        ("{ base = 100 modifier = { has_war = yes add = -200 } }", (-100, 100)),
+        ("{ base = @dynamic factor = 0 }", (0, 0)),
+        ("{ base = @dynamic base = 100 }", None),
+        ("{ modifier = { has_war = yes factor = 0 } base = 100 }", None),
+        ("{ base = 10 add = -15 factor = 2 }", None),
+        ("{ unknown_key = yes base = 100 }", None),
+        ("{ base = 0 modifier = 100 }", None),
+        ("{ base > 100 }", None),
+        ("{ base = 100 modifier = { has_war = yes factor = @dynamic } }", None),
+    ),
+)
+def test_priority_bounds(expression, bounds):
+    priority = B.script_nodes(f"priority = {expression}")[0]
+    assert B._weight(priority, lambda nodes: None if nodes else True) == bounds
+
+
+@pytest.mark.parametrize("complete", (False, True))
+def test_allowed_modules_only_defer_implicit_slot_filling(tmp_path, complete):
+    slots = "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo"
+    if complete:
+        slots += " secondary_armament_slot = empty"
+    _tree(
+        tmp_path,
+        {
+            "groups": _group(
+                _design(slots=slots), extra="allowed_modules = { weapons }"
+            ).replace("category = naval", "category = land"),
+            "hulls": _AMMO_HULLS,
+            "files": {"common/units/equipment/modules/test.txt": _AMMO_MODULES},
+        },
+    )
+    validator = build_validator(Validator, tmp_path)
+    validator._validate_variant_modules()
+    assert [issue.category for issue in validator._issues] == (
+        ["ai-equipment-incompatible-ammo"] if complete else []
+    )
+    assert [record["status"] for record in validator.analysis_records] == (
+        ["incompatible"] if complete else ["unknown"]
+    )
+
+
+@pytest.mark.parametrize(
+    "reference", ("{ any_of = { banned_autocannon afv_machine_gun_3 } }", "weapons")
+)
+def test_forbidden_provider_cannot_mask_a_slot_error(tmp_path, reference):
+    _tree(
+        tmp_path,
+        {
+            "designs": _design(
+                slots=f"main_armament_slot = {reference} ammunition_load_slot = autocannon_ammo"
+            ),
+            "hulls": _AMMO_HULLS,
+            "files": {
+                "common/units/equipment/modules/test.txt": _AMMO_MODULES.replace(
+                    "small_autocannon_3", "banned_autocannon"
+                )
+            },
+        },
+    )
+    validator = build_validator(Validator, tmp_path)
+    validator._validate_variant_modules()
+    assert len(validator._issues) == 1
+    assert validator._issues[0].severity == Severity.ERROR
+    assert "category not allowed" in validator._issues[0].category
+    assert "ammunition_load_slot" in validator._issues[0].message
 
 
 # case: source changes, expected (category, message fragments) findings.
@@ -292,7 +376,7 @@ _CASES = {
         "designs": _design(
             extra="priority = { base = -1 modifier = { add = 1000 has_tech = weapons_2 } }"
         ),
-        "expected": [(_UNKNOWN, ("nonpositive priority",))],
+        "expected": [],
     },
     "live priority": {
         "designs": _design(
@@ -304,11 +388,78 @@ _CASES = {
         "designs": _design(extra="priority = " + "9" * 400),
         "expected": [(_UNKNOWN, ("priority",))],
     },
-    "unknown priority": {
+    "positive dynamic multiplier": {
         "designs": _design(
             extra="priority = { factor = 100 modifier = { factor = 2 has_war = yes } }"
         ),
-        "expected": [(_UNKNOWN, ("dynamic", "priority"))],
+        "expected": [(_MISSING, ("weapons_2",))],
+    },
+    "priority arithmetic after a modifier is unsupported": {
+        "designs": _design(
+            extra="priority = { modifier = { factor = 0 has_war = yes } base = 100 }"
+        ),
+        "expected": [(_UNKNOWN, ("priority",))],
+    },
+    "conditional positive priority": {
+        "designs": _design(
+            extra="priority = { base = -1 modifier = { add = 1000 has_war = yes } }"
+        ),
+        "expected": [(_UNKNOWN, ("priority",))],
+    },
+    "zero priority": {
+        "designs": _design(extra="priority = 0"),
+        "expected": [],
+    },
+    "deferred fallback is not a proven absence": {
+        "designs": _design() + _design("deferred", "gun = gun_1", extra="priority = 0"),
+        "expected": [(_MISSING, ("role coverage unresolved",))],
+    },
+    "tooltip research is not a grant": {
+        "history": _START + "\neffect_tooltip = { set_technology = { weapons_2 = 1 } }",
+        "expected": [(_MISSING, ("weapons_2",))],
+    },
+    "registered cloned hull unlock": {
+        "designs": _design(hull="clone_1"),
+        "hulls": _HULLS.replace("future_hull = {", "test_hull_1 = {")
+        + "\nduplicate_archetypes = { clone = { archetype = test_hull type = screen_ship } }",
+        "files": {
+            "common/technologies/clone.txt": "technologies = { clone_research = { enable_equipments = { test_hull_1 } } }"
+        },
+        "history": _START + "\nset_technology = { clone_research = 1 }",
+        "expected": [(_MISSING, ("weapons_2",))],
+    },
+    "unrelated technology DLCs are not analysis axes": {
+        "files": {
+            "common/technologies/unused.txt": "technologies = { "
+            + " ".join(
+                f'unused_{i} = {{ allow_branch = {{ has_dlc = "Unused {i}" }} }}'
+                for i in range(7)
+            )
+            + " }"
+        },
+        "expected": [(_MISSING, ("weapons_2",))],
+    },
+    "special-project research is not proven absent": {
+        "history": _START + "\ncomplete_special_project = sp:grant",
+        "files": {
+            "common/special_projects/projects/test.txt": "grant = { project_output = { country_effects = { set_technology = { weapons_2 = 1 } } } }"
+        },
+        "expected": [(_UNKNOWN, ("module selection",))],
+    },
+    "special-project module unlock is not proven absent": {
+        "history": _START + "\ncomplete_special_project = sp:grant",
+        "files": {
+            "common/special_projects/projects/test.txt": "grant = { project_output = { enable_equipment_modules = { gun_2 } } }"
+        },
+        "expected": [(_UNKNOWN, ("module selection",))],
+    },
+    "special-project scripted grant is not proven absent": {
+        "history": _START + "\ncomplete_special_project = sp:grant",
+        "files": {
+            "common/special_projects/projects/test.txt": "grant = { project_output = { country_effects = { give_research = yes } } }",
+            "common/scripted_effects/project.txt": "give_research = { set_technology = { weapons_2 = 1 } }",
+        },
+        "expected": [(_UNKNOWN, ("module selection",))],
     },
     "later research is not starting research": {
         "history": _START + "\n2017.1.1 = { set_technology = { weapons_2 = 1 } }",
@@ -361,7 +512,7 @@ _CASES = {
     "usable fallback": {
         "groups": _group(_design())
         + _group(_design("fallback", "gun = gun_1"), "other"),
-        "expected": [(_MISSING, ("current", "usable fallback: fallback"))],
+        "expected": [(_MISSING, ("current", "usable fallback: other/fallback"))],
     },
     "blocked fallback": {
         "groups": _group(_design())
@@ -466,12 +617,67 @@ def test_starting_candidates(tmp_path, case):
     validator._validate_buildability()
     issues = validator._issues
     assert_findings(
-        [f"{issue.category}: {issue.message}" for issue in issues],
+        [f"{issue.category}: {issue.message}" for issue in issues]
+        + [
+            f"{_UNKNOWN}: {record.get('country', '')}: {record['group']}/{record['design']}: {record['reason']}; {record.get('coverage', '')}"
+            for record in validator.analysis_records
+            if record["status"] == "unknown"
+        ],
         [(category, *fragments) for category, fragments in case["expected"]],
     )
     assert all(issue.severity == Severity.WARNING for issue in issues)
     assert all(issue.file == _AI and issue.line > 0 for issue in issues)
+    assert all(issue.category == _MISSING for issue in issues)
+    assert all(
+        record["file"] == _AI and record["line"] > 0
+        for record in validator.analysis_records
+    )
     assert validator.errors_found == 0
+
+
+def test_shared_unresolved_records_preserve_countries_and_dlc_contexts(tmp_path):
+    history = (
+        _START
+        + '\nif = { limit = { has_dlc = "Test DLC" } set_technology = { weapons_2 = 1 } }'
+    )
+    _tree(
+        tmp_path,
+        {
+            "groups": _group(_design(slots="gun > gun_1"), users="AAA BBB"),
+            "history": history,
+            "files": {"history/countries/BBB - Other.txt": history},
+        },
+    )
+    validator = build_validator(Validator, tmp_path, check_buildability=True)
+    validator._validate_buildability()
+    assert validator._issues == []
+    assert validator.warnings_found == 0
+    assert len(validator.analysis_records) == 2
+    assert {record["country"] for record in validator.analysis_records} == {
+        "AAA",
+        "BBB",
+    }
+    for record in validator.analysis_records:
+        assert record["status"] == "unknown"
+        assert record["dlc_configurations"] == [{"Test DLC": False}, {"Test DLC": True}]
+        assert record["coverage"] == "role coverage unresolved"
+
+
+def test_non_modular_hull_is_an_explicit_scope_limit(tmp_path):
+    _tree(
+        tmp_path,
+        {
+            "designs": _design(slots=""),
+            "hulls": "equipments = { test_hull = { is_archetype = yes upgrades = { engine } } }",
+        },
+    )
+    validator = build_validator(Validator, tmp_path, check_buildability=True)
+    validator._validate_buildability()
+    assert validator._issues == []
+    assert [record["status"] for record in validator.analysis_records] == [
+        "not-applicable"
+    ]
+    assert "hull availability is not modeled" in validator.analysis_records[0]["reason"]
 
 
 @pytest.mark.parametrize("limit", ("selections", "DLC"))
@@ -487,8 +693,12 @@ def test_work_bounds_are_unresolved(tmp_path, monkeypatch, limit):
     _tree(tmp_path, case)
     validator = build_validator(Validator, tmp_path, check_buildability=True)
     validator._validate_buildability()
-    assert validator._issues
-    assert all(issue.category == _UNKNOWN for issue in validator._issues)
+    assert not validator._issues
+    unknown = [
+        record for record in validator.analysis_records if record["status"] == "unknown"
+    ]
+    assert len(unknown) == 1
+    assert "limit" in unknown[0]["reason"]
 
 
 def test_buildability_is_opt_in_and_called_by_run(tmp_path, monkeypatch):
@@ -529,6 +739,7 @@ def test_buildability_is_opt_in_and_called_by_run(tmp_path, monkeypatch):
         "common/technology_tags/test.txt",
         "common/bookmarks/test.txt",
         "common/scripted_effects/test.txt",
+        "common/special_projects/projects/deleted.txt",
         _HISTORY,
         "common/ideas/unrelated.txt",
     ),
@@ -550,22 +761,43 @@ def test_unreadable_input_is_not_empty_research(tmp_path):
     (tmp_path / _HISTORY).write_bytes(b"\xff")
     validator = build_validator(Validator, tmp_path, check_buildability=True)
     validator._validate_buildability()
-    assert [issue.category for issue in validator._issues] == [_UNKNOWN]
+    assert [issue.category for issue in validator._issues] == [
+        "ai-buildability-input-unavailable"
+    ]
     assert "could not be read" in validator._issues[0].message
 
 
-def test_strict_cli_keeps_new_findings_advisory(tmp_path):
-    _tree(tmp_path, {})
+@pytest.mark.parametrize("unresolved", (False, True))
+def test_strict_cli_keeps_findings_and_analysis_separate(tmp_path, unresolved):
+    _tree(tmp_path, {"designs": _design(slots="gun > gun_1")} if unresolved else {})
+    output = tmp_path / "results.log"
     result = run_tool_script(
         "validation/validate_ai_equipment.py",
         "--path",
         tmp_path,
         "--strict",
         "--check-buildability",
+        "--output",
+        output,
         "--no-color",
         "--no-cache",
         "--workers",
         "1",
     )
     assert result.returncode == 0, result.stdout + result.stderr
-    assert "weapons_2" in result.stdout + result.stderr
+    issues = json.loads(output.with_suffix(".json").read_text(encoding="utf-8"))
+    lines = (
+        output.with_suffix(".analysis.jsonl").read_text(encoding="utf-8").splitlines()
+    )
+    records = [json.loads(line) for line in lines]
+    assert lines == sorted(lines)
+    assert "Analysis records (not warning counts)" in result.stdout + result.stderr
+    if unresolved:
+        assert issues == []
+        assert [record["status"] for record in records] == ["unknown"]
+        assert records[0]["country"] == "AAA"
+        assert records[0]["dlc_configurations"] == [{}]
+    else:
+        assert len(issues) == 1 and issues[0]["category"] == _MISSING
+        assert "weapons_2" in result.stdout + result.stderr
+        assert [record["status"] for record in records] == ["missing"]

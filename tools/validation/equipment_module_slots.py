@@ -545,6 +545,8 @@ class EquipmentIndex:
     module_forbid_types: Dict[str, Set[str]]
     module_forbid_exact: Dict[str, Set[str]]
     hull_upgrades: Dict[str, Set[str]]
+    hull_sources: Dict[str, str]
+    non_modular_hulls: Set[str]
 
 
 # ---- variant module assignments -------------------------------------------
@@ -795,10 +797,22 @@ def _check_variant(
     # Modules widen each other's slots, so the whole design has to be read
     # before any one assignment can be judged.
     unlocked: Dict[str, Set[str]] = {}
+    hull_types = index.hull_types.get(hull, set())
     for _, refs, _ in assignments:
         for ref in refs:
-            for slot, cats in index.slot_unlocks.get(ref, {}).items():
-                unlocked.setdefault(slot, set()).update(cats)
+            modules = (
+                [ref]
+                if ref in index.module_category
+                else [
+                    mod
+                    for mod, category in index.module_category.items()
+                    if category == ref
+                ]
+            )
+            for module in modules:
+                if not _module_forbidden(module, hull_types, index):
+                    for slot, cats in index.slot_unlocks.get(module, {}).items():
+                        unlocked.setdefault(slot, set()).update(cats)
 
     for slot, refs, off in assignments:
         line = mods_line + text.count("\n", mods_span[0], off)
@@ -847,7 +861,6 @@ def _check_variant(
                     )
                 )
 
-        hull_types = index.hull_types.get(hull, set())
         live_refs = [ref for ref in refs if ref != "empty"]
         if (
             hull_types
@@ -1063,6 +1076,14 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
     hull_types = resolve_hull_types(hulls)
     count_limits = resolve_count_limits(hulls)
     hull_upgrades = resolve_hull_upgrades(hulls)
+    hull_sources = {name: name for name in hulls}
+    _clone_family(hull_sources, duplicates)
+    non_modular_hulls = {
+        name for name, hull in hulls.items() if hull.slots is None and not hull.inherit
+    }
+    non_modular_hulls.update(
+        name for name, source in hull_sources.items() if source in non_modular_hulls
+    )
     _clone_family(resolved, duplicates)
     _clone_family(count_limits, duplicates)
     _clone_family(hull_upgrades, duplicates)
@@ -1107,6 +1128,8 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         forbid_types,
         forbid_exact,
         hull_upgrades,
+        hull_sources,
+        non_modular_hulls,
     )
 
 

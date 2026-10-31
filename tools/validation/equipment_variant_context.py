@@ -223,7 +223,12 @@ def starting_techs(
                     active,
                     possible=possible,
                 )
-        elif possible and node.children and not _DATE.fullmatch(node.key):
+        elif (
+            possible
+            and node.children
+            and node.key not in {"effect_tooltip", "custom_effect_tooltip", "limit"}
+            and not _DATE.fullmatch(node.key)
+        ):
             known |= starting_techs(
                 node.children, dlcs, start, known, effects, active, possible=True
             )

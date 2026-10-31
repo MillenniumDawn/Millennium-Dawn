@@ -38,9 +38,14 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
             weapon,
             "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } }",
         ).replace(ammunition, "ammunition_load_slot = machine_gun_ammo")
-    findings = check_ammunition_compatibility(
+    analysis = check_ammunition_compatibility(
         parse_designs(group, path), live_equipment_index
     )
+    findings = analysis.findings
+    assert [(record["design"], record["status"]) for record in analysis.records] == [
+        ("modern_APC_default", "incompatible" if historical else "checked"),
+        ("new_APC_default", "checked"),
+    ]
     assert_findings(
         [f"{issue.category}: {issue.message}" for issue in findings],
         (
@@ -66,25 +71,40 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
     )
 
 
-def test_naval_regression_sources(tmp_path):
+@pytest.fixture(scope="module")
+def live_naval_sources():
+    countries = {
+        "ALG": "Algeria",
+        "ARG": "Argentina",
+        "AST": "Australia",
+        "GRE": "Greece",
+        "TUR": "Turkey",
+    }
     paths = [
-        REPO_ROOT / "common/ai_equipment/GRE_naval.txt",
-        REPO_ROOT / "common/ai_equipment/TUR_naval.txt",
-        REPO_ROOT / "history/countries/GRE - Greece.txt",
-        REPO_ROOT / "history/countries/TUR - Turkey.txt",
+        REPO_ROOT / path
+        for tag, name in countries.items()
+        for path in (
+            f"common/ai_equipment/{tag}_naval.txt",
+            f"history/countries/{tag} - {name}.txt",
+        )
     ]
     for directory in (
         "common/bookmarks",
         "common/technologies",
         "common/technology_tags",
         "common/scripted_effects",
+        "common/special_projects",
         "common/units/equipment",
     ):
         paths.extend((REPO_ROOT / directory).rglob("*.txt"))
-    sources = {
+    return {
         path.relative_to(REPO_ROOT).as_posix(): path.read_text(encoding="utf-8-sig")
         for path in paths
     }
+
+
+def test_naval_regression_sources(tmp_path, live_naval_sources):
+    sources = live_naval_sources
     write_tree(tmp_path, sources)
     for country in ("GRE", "TUR"):
         path = f"common/ai_equipment/{country}_naval.txt"
@@ -100,6 +120,59 @@ def test_naval_regression_sources(tmp_path):
     assert all(issue.severity == Severity.WARNING for issue in validator._issues)
     assert all(
         issue.file.startswith("common/ai_equipment/")
-        and issue.message.startswith(("GRE:", "TUR:"))
+        and issue.message.startswith(("ALG:", "ARG:", "AST:", "GRE:", "TUR:"))
         for issue in validator._issues
     )
+    assert validator.analysis_records
+
+
+@pytest.mark.parametrize(
+    ("country", "group", "design", "module", "technology"),
+    (
+        (
+            "ALG - Algeria",
+            "ALG_corvettes",
+            "ALG_Corvette_1970s",
+            "module_torpedoes_2",
+            "tech_torpedoes_2",
+        ),
+        (
+            "ARG - Argentina",
+            "ARG_attack_submarines",
+            "ARG_attack_sub_1960s",
+            "module_sub_esm_1",
+            "tech_combat_radar_2",
+        ),
+        (
+            "AST - Australia",
+            "AST_unique_frigates",
+            "AST_adelaide_class_2",
+            "module_light_surface_diesel_power_1",
+            "tech_diesel_power_systems_1",
+        ),
+    ),
+)
+@pytest.mark.parametrize("researched", (False, True))
+def test_live_module_claim_tracks_its_enabling_technology(
+    tmp_path, live_naval_sources, country, group, design, module, technology, researched
+):
+    sources = dict(live_naval_sources)
+    history = f"history/countries/{country}.txt"
+    sources[
+        history
+    ] += (
+        f"\n2000.1.1.12 = {{ set_technology = {{ {technology} = {int(researched)} }} }}"
+    )
+    write_tree(tmp_path, sources)
+    validator = build_validator(Validator, tmp_path, check_buildability=True)
+    validator._validate_buildability()
+    records = [
+        record
+        for record in validator.analysis_records
+        if record.get("country") == country[:3]
+        and record["group"] == group
+        and record["design"] == design
+    ]
+    assert records
+    claim = f"{module} requires {technology}"
+    assert any(claim in record["reason"] for record in records) is not researched

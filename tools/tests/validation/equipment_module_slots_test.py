@@ -293,6 +293,16 @@ def test_duplicate_archetype_clones_the_whole_family():
     index = _indexes()
     assert index.hull_slots["test_boat_hull_1"] == index.hull_slots["test_ship_hull_1"]
     assert index.hull_slots["test_boat"] == index.hull_slots["test_ship"]
+    assert index.hull_sources["test_boat_hull_1"] == "test_ship_hull_1"
+    assert index.hull_sources["test_boat"] == "test_ship"
+    assert index.hull_sources["test_ship_hull_1"] == "test_ship_hull_1"
+
+
+def test_explicit_clone_keeps_its_own_unlock_source():
+    explicit = "equipments = { test_boat_hull_1 = { archetype = test_ship module_slots = { } } }"
+    index = build_indexes([HULLS, DUPLICATES, explicit], [])
+    assert index.hull_sources["test_boat_hull_1"] == "test_boat_hull_1"
+    assert index.hull_sources["test_boat_hull_2"] == "test_ship_hull_2"
 
 
 def test_correct_category_passes():

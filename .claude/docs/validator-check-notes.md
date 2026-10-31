@@ -565,9 +565,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   - This runs in the normal AI slot-check phase, without `--check-buildability`.
     Future designs, disabled priorities, and numeric equipment upgrades do not
     suppress structural ammo checks. It does not prove the engine's choice order.
-  - `ai-equipment-ammo-unresolved` (WARNING) reports current-dependent refits,
-    comparisons, inherited module context, unplaced requirements, implicit
-    `allowed_modules` filling, and missing weapon-specific ammo allowances.
+  - Unsupported ammo selections are analysis records, not warnings. These include
+    current-dependent refits, comparisons, inherited module context, unplaced
+    requirements, implicit `allowed_modules` filling, and missing weapon-specific
+    allowances. An `allowed_modules` block does not suspend checks when every
+    hull slot is explicitly assigned. Forbidden modules cannot widen other slots,
+    including through a category selector.
   - Regression source: `USA_APC_design/modern_APC_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
@@ -578,12 +581,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `--check-buildability` adds advisory starting-research checks in the existing CI
   batch and main baseline. Commit hooks leave it off. Changes to AI designs,
   country histories, technologies, technology folders, equipment definitions,
-  bookmarks, or scripted effects select that batch.
+  bookmarks, scripted effects, or special projects select that batch.
   - `ai-buildability-missing-unlock` (WARNING) identifies the country, design,
     role, pinned module or category candidates, missing enabling technologies,
     start date, and DLC context. It requires a researched starting hull, a proven
-    enabled design, and positive statically evaluable priorities. An unresearched
-    successor hull or false enable condition is not a starting defect.
+    enabled design, and priorities bounded above zero. An unknown modifier that
+    only multiplies a positive weight by another positive weight does not suspend
+    this proof. Nonpositive starting priorities are deferred, not unsupported or
+    proven unusable fallbacks. An unresearched successor hull or false enable
+    condition is not a starting defect. Pins in optional slots still constrain
+    the target variant; this is not limited to hull slots marked `required`.
   - A researched alternative or category member can satisfy a slot. Researched
     selections are checked with the existing slot rules, including count limits
     and module-dependent slot categories. A usable role candidate from another
@@ -594,23 +601,46 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     It applies undated setup and dated setup through the earliest bookmark,
     expands research-granting scripted effects, and keeps guaranteed and possible
     research separate. Unknown conditional or foreign-scope grants cannot prove
-    a fallback usable or a module unavailable. DLC configurations stay separate.
-    Unlocks come from explicit technology definitions, not equipment-name guesses.
-  - `ai-buildability-unresolved` (WARNING) keeps unknown cases separate: dynamic
-    conditions or priorities, nonpositive priorities, missing unlock sources,
-    archetypes without a direct hull unlock, module comparisons, current-dependent
-    refits, unplaced requirements, and equipment upgrades. Selection is bounded
-    at 256 researched combinations per design and 64 DLC configurations per
-    country. Exhausting a bound is unresolved, not a buildability failure.
-    Modules with no recorded unlocking technology are unknown, not assumed free.
-    Implicit required-slot filling through `allowed_modules`, runtime on-actions,
-    technology-sharing effects, and the engine's refit choice are not simulated.
-  - Baseline source for #6287: main
-    `f2578bb8c776c43a0ea5c5029a0da483d14023e0`. Synthetic regressions and a
-    Greek/Turkish source fixture cover the supported contract. No full-repository
-    buildability count or native-game build test established a reviewed baseline.
-    Review both advisory categories in the CI baseline comparison before changing
-    severity. A clean supported subset is not an engine-buildability claim.
+    a fallback usable or a module unavailable. Tooltip-only effects and trigger
+    metadata do not grant research. DLC configurations stay separate; unrelated
+    technology gates do not consume the configuration budget. Unlocks come from
+    explicit technology definitions. Registered `duplicate_archetypes` clones use
+    their source hull's unlock unless the clone has its own definition or unlock.
+    No hull-name inference is used.
+  - Unknown cases are analysis records, not content warnings: dynamic conditions,
+    ambiguous or unbounded priorities, missing unlock sources, module comparisons,
+    current-dependent refits, unplaced requirements, and equipment upgrades.
+    Selection is bounded at 256 researched combinations per design and 64 DLC
+    configurations per country. Exhausting a bound is unresolved, not a
+    buildability failure. Modules with no recorded unlocking technology are not
+    assumed free. Non-modular hull availability is outside this module check.
+    Special-project completions are not simulated; their possible technology,
+    hull, and module rewards prevent a confident missing-unlock verdict unless
+    a researched unlock already proves availability. Implicit slot filling,
+    runtime on-actions, technology sharing, and engine refit choices are not
+    simulated.
+  - With `--output report.log`, `report.json` remains the normal issue list.
+    `report.analysis.jsonl` contains deterministic assessment records, with
+    country, design, role, starting date, full DLC configurations, status, and
+    fallback context where applicable. `unknown`, `deferred`, `future`,
+    `not-applicable`, `usable`, and `checked` do not inflate warning counts.
+    The console summarizes these separately. Batch artifacts and
+    `run_all_validators.py --persist-results` preserve the analysis sidecar;
+    issue and baseline readers do not treat it as an issue list. Unreadable
+    inputs still produce `ai-buildability-input-unavailable` (WARNING).
+  - Baseline game data for #6287: main
+    `f2578bb8c776c43a0ea5c5029a0da483d14023e0`. The reviewed full scan produced
+    229 missing-unlock warnings at 139 design sites, zero errors, and zero proved
+    incompatible-ammo warnings. All 109 previous missing-unlock records remain;
+    corrected priority and hull handling expose 120 additional records. The
+    7,874 unresolved starting assessments at 286 sites and 60 unresolved ammo
+    assessments remain explicit analysis limits, not gameplay defects. Moving
+    those records out of warning totals is a reporting correction, not a game fix.
+    Live regressions cover the historical USA APC and Greek/Turkish sources;
+    Algeria, Argentina, and Australia fixtures also check that researching the
+    named enabling technology removes that module's missing-unlock claim.
+    No native-game build test was run, and not every warning site was individually
+    adjudicated. A clean supported subset is not an engine-buildability claim.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
 - `missing-equipment-factor` (WARNING, opt-in `--missing-equipment-factor`).

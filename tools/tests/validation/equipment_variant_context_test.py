@@ -31,6 +31,24 @@ _RESEARCH_CASES = {
         set(),
     ),
     "foreign scope": ("BBB = { set_technology = { tech = 1 } }", {}, set(), {"tech"}),
+    "tooltip is not an effect": (
+        "effect_tooltip = { set_technology = { tech = 1 } }",
+        {},
+        set(),
+        set(),
+    ),
+    "custom tooltip is not an effect": (
+        "custom_effect_tooltip = { set_technology = { tech = 1 } }",
+        {},
+        set(),
+        set(),
+    ),
+    "trigger metadata is not an effect": (
+        "limit = { set_technology = { tech = 1 } }",
+        {},
+        set(),
+        set(),
+    ),
 }
 
 

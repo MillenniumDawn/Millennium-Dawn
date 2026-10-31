@@ -3,7 +3,7 @@
 import itertools
 import math
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from equipment_module_slots import (
     _depth0_text,
@@ -65,6 +65,12 @@ def _selection(text):
 
 
 @dataclass
+class Analysis:
+    findings: list = field(default_factory=list)
+    records: list = field(default_factory=list)
+
+
+@dataclass
 class Design:
     group: str
     name: str
@@ -80,6 +86,7 @@ class Design:
     priorities: list
     unsupported: bool
     unresolved_modules: bool = False
+    allowed_modules: set = field(default_factory=set)
 
 
 def parse_designs(content, path):
@@ -126,14 +133,7 @@ def parse_designs(content, path):
             )
             duplicates = len(slots) != len({slot for slot, _, _ in slots})
             unsupported |= duplicates or requirements
-            unresolved_modules |= (
-                duplicates
-                or requirements
-                or bool(
-                    _tokens(text, glo, ghi, "allowed_modules")
-                    | _tokens(text, dlo, dhi, "allowed_modules")
-                )
-            )
+            unresolved_modules |= duplicates or requirements
             designs.append(
                 Design(
                     group,
@@ -150,6 +150,8 @@ def parse_designs(content, path):
                     [node for node in group_nodes + nodes if node.key == "priority"],
                     bool(unsupported),
                     bool(unresolved_modules),
+                    _tokens(text, glo, ghi, "allowed_modules")
+                    | _tokens(text, dlo, dhi, "allowed_modules"),
                 )
             )
     return designs
@@ -194,14 +196,24 @@ def _truth(nodes, known, possible, dlcs, country, start):
     return _combine(results)
 
 
-def _weight(node, truth, weight=1.0):
+def _weight(node, truth, bounds=(1.0, 1.0)):
+    if node.op != "=":
+        return None
     if node.value is not None:
         if not _NUMBER.fullmatch(node.value):
             return None
         number = float(node.value)
-        return number if math.isfinite(number) else None
+        return (number, number) if math.isfinite(number) else None
+    arithmetic = [
+        child.key for child in node.children if child.key in {"base", "add", "factor"}
+    ]
+    if len(arithmetic) != len(set(arithmetic)) or {"add", "factor"} <= set(arithmetic):
+        return None
+    modified_before = False
     for child in node.children:
         if child.key == "modifier":
+            if child.value is not None or child.op != "=":
+                return None
             gate = truth(
                 [
                     part
@@ -209,24 +221,43 @@ def _weight(node, truth, weight=1.0):
                     if part.key not in {"base", "add", "factor"}
                 ]
             )
-            if gate is None:
-                return None
-            if gate:
-                weight = _weight(child, truth, weight)
+            if gate is False:
+                continue
+            modified_before = True
+            modified = _weight(child, truth, bounds)
+            if gate is True:
+                bounds = modified
+            elif bounds is None or modified is None:
+                bounds = None
+            else:
+                bounds = (min(bounds[0], modified[0]), max(bounds[1], modified[1]))
         elif child.key in {"base", "add", "factor"}:
-            if child.value is None or not _NUMBER.fullmatch(child.value):
+            if (
+                child.op != "="
+                or modified_before
+                or child.key == "base"
+                and arithmetic[0] != "base"
+            ):
                 return None
+            if child.value is None or not _NUMBER.fullmatch(child.value):
+                bounds = None
+                continue
             number = float(child.value)
-            weight = (
-                number
-                if child.key == "base"
-                else weight + number if child.key == "add" else weight * number
-            )
+            if not math.isfinite(number):
+                bounds = None
+            elif child.key == "base" or child.key == "factor" and number == 0:
+                bounds = (number, number)
+            elif bounds is not None:
+                values = [
+                    bound + number if child.key == "add" else bound * number
+                    for bound in bounds
+                ]
+                bounds = (min(values), max(values))
         elif node.key != "modifier":
             return None
-        if weight is None or not math.isfinite(weight):
-            return None
-    return weight
+        if bounds is not None and not all(map(math.isfinite, bounds)):
+            bounds = None
+    return bounds
 
 
 def _candidates(references, index, unlocked):
@@ -261,11 +292,33 @@ def _candidates(references, index, unlocked):
     return sorted(candidates), missing, unknown
 
 
+def _assessment(design, kind, status, reason="", **details):
+    return {
+        "kind": kind,
+        "status": status,
+        "file": design.file.replace("\\", "/"),
+        "line": design.line,
+        "group": design.group,
+        "design": design.name,
+        "reason": reason,
+        **details,
+    }
+
+
 def check_ammunition_compatibility(designs, index):
-    findings = []
+    analysis = Analysis()
+    findings = analysis.findings
     for design in designs:
         slots = index.hull_slots.get(design.hull)
         if slots is None:
+            if any(
+                "ammo" in slot or "ammunition" in slot for slot, _, _ in design.slots
+            ):
+                analysis.records.append(
+                    _assessment(
+                        design, "ammunition", "unknown", "unresolved hull slots"
+                    )
+                )
             continue
         ammunition = {
             slot
@@ -290,18 +343,28 @@ def check_ammunition_compatibility(designs, index):
                 if module == "empty" or not _module_forbidden(module, hull_types, index)
             ]
             unresolved |= unsupported or unknown
+        unresolved |= bool(design.allowed_modules) and bool(set(slots) - domains.keys())
         if unresolved:
-            findings.append(
-                Issue(
-                    Severity.WARNING,
-                    "ai-equipment-ammo-unresolved",
-                    f"{design.group}/{design.name}: ammunition compatibility is unresolved for inherited or dynamic selections, requirements, or allowed-module filling",
-                    design.file,
-                    design.line,
+            analysis.records.append(
+                _assessment(
+                    design,
+                    "ammunition",
+                    "unknown",
+                    "inherited or dynamic selections, requirements, or allowed-module filling",
+                    ammunition_slots=sorted(ammunition),
                 )
             )
             continue
         for ammo_slot in sorted(ammunition):
+            record = _assessment(
+                design,
+                "ammunition",
+                "checked",
+                ammunition_slot=ammo_slot,
+                incompatible_choices={},
+                unresolved_providers={},
+            )
+            analysis.records.append(record)
             entry = slots[ammo_slot]
             ammo = domains[ammo_slot]
             if not entry.required and "empty" in ammo:
@@ -319,6 +382,8 @@ def check_ammunition_compatibility(designs, index):
                 for source, choices in domains.items()
             }
             if not categories & (entry.allowed | set().union(*grants.values())):
+                record["status"] = "slot-error"
+                record["reason"] = "covered by existing slot errors"
                 continue
             for source, choices in domains.items():
                 if source == ammo_slot or len(choices) < 2 or not grants[source]:
@@ -341,16 +406,9 @@ def check_ammunition_compatibility(designs, index):
                     and not categories & other
                 ]
                 if unproven:
-                    findings.append(
-                        Issue(
-                            Severity.WARNING,
-                            "ai-equipment-ammo-unresolved",
-                            f"{design.group}/{design.name}: {', '.join(unproven)} in {source} has no resolved {ammo_slot} allowance",
-                            design.file,
-                            design.line,
-                        )
-                    )
+                    record["unresolved_providers"][source] = unproven
                 if incompatible:
+                    record["incompatible_choices"][source] = incompatible
                     requested = sorted(
                         {
                             reference
@@ -368,11 +426,27 @@ def check_ammunition_compatibility(designs, index):
                             design.line,
                         )
                     )
-    return findings
+            if record["unresolved_providers"]:
+                record["reason"] = (
+                    "some weapon choices have no recorded ammunition allowance"
+                )
+            if record["incompatible_choices"]:
+                record["status"] = (
+                    "partial" if record["unresolved_providers"] else "incompatible"
+                )
+            elif record["unresolved_providers"]:
+                record["status"] = "unknown"
+    return analysis
 
 
 def _design_state(design, index, unlocked_hull, unlocked_module, truth):
-    if index.hull_slots.get(design.hull) is None:
+    priorities = [_weight(node, truth) for node in design.priorities]
+    if any(bounds is not None and bounds[1] <= 0 for bounds in priorities):
+        return "deferred", "nonpositive priority at the selected start"
+    slots = index.hull_slots.get(design.hull)
+    if not design.slots and (design.hull in index.non_modular_hulls or slots == {}):
+        return "not-applicable", "non-modular hull availability is not modeled"
+    if slots is None:
         return "unknown", "unknown or dynamic hull, or unresolved hull slots"
     hull, _ = unlocked_hull(design.hull)
     enabled = truth(design.gates)
@@ -380,9 +454,8 @@ def _design_state(design, index, unlocked_hull, unlocked_module, truth):
         return "future", ""
     if hull is None or enabled is None:
         return "unknown", "unresolved hull unlock or enable condition"
-    priorities = [_weight(node, truth) for node in design.priorities]
-    if any(weight is None or weight <= 0 for weight in priorities):
-        return "unknown", "dynamic or nonpositive priority"
+    if any(bounds is None or bounds[0] <= 0 for bounds in priorities):
+        return "unknown", "priority may be nonpositive or is not statically bounded"
     choices, missing = [], set()
     unknown = design.unsupported
     for slot, references, unsupported in design.slots:
@@ -426,22 +499,64 @@ def _dlcs(nodes, effects=None):
     return result
 
 
-def check_buildability(designs, index, context, hull_techs, module_techs, tech_gates):
-    if not context.start:
-        if not designs:
-            return []
-        return [
-            Issue(
-                Severity.WARNING,
-                "ai-buildability-unresolved",
-                "No bookmark start date; starting buildability was not checked",
-                designs[0].file,
-                designs[0].line,
+def project_unlocks(texts, context):
+    result = {"technologies": set(), "hulls": set(), "modules": set()}
+    fields = {"enable_equipments": "hulls", "enable_equipment_modules": "modules"}
+    for content in texts:
+        text = blank_comments(content)
+        result["technologies"].update(
+            starting_techs(
+                script_nodes(text),
+                {},
+                context.start,
+                effects=context.effects,
+                possible=True,
             )
-        ]
+        )
+        pending = [(0, len(text))]
+        while pending:
+            for key, lo, hi, _ in _iter_blocks(text, *pending.pop()):
+                if key in fields:
+                    result[fields[key]].update(_depth0_text(text, lo, hi).split())
+                else:
+                    pending.append((lo, hi))
+    return result
+
+
+def check_buildability(
+    designs, index, context, hull_techs, module_techs, tech_gates, unmodeled=None
+):
+    analysis = Analysis()
+    if not context.start:
+        for design in designs:
+            analysis.records.append(
+                _assessment(
+                    design,
+                    "starting-buildability",
+                    "unknown",
+                    "No bookmark start date; starting buildability was not checked",
+                )
+            )
+        return analysis
     start = (*context.start[:3], 12)
-    findings = []
-    dlc_names = _dlcs([node for nodes in tech_gates.values() for node in nodes])
+    designs_by_id = {id(design): design for design in designs}
+    unmodeled = unmodeled or {}
+    hull_techs = dict(hull_techs)
+    for hull, source in index.hull_sources.items():
+        if source in hull_techs:
+            hull_techs.setdefault(hull, hull_techs[source])
+    design_axes = {}
+    for design in designs:
+        techs = set(hull_techs.get(design.hull, set()))
+        for _, references, _ in design.slots:
+            candidates, _, _ = _candidates(references, index, lambda _: (True, set()))
+            for module in candidates:
+                techs.update(module_techs.get(module, set()))
+        design_axes[id(design)] = _dlcs(
+            design.gates
+            + design.priorities
+            + [node for tech in techs for node in tech_gates.get(tech, [])]
+        )
     for country in sorted(
         set(context.histories) | {tag for design in designs for tag in design.users}
     ):
@@ -455,15 +570,8 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
             continue
         history = context.histories.get(country)
         axes = sorted(
-            dlc_names
-            | _dlcs(history or [], context.effects)
-            | _dlcs(
-                [
-                    node
-                    for design in applicable
-                    for node in design.gates + design.priorities
-                ]
-            )
+            _dlcs(history or [], context.effects)
+            | set().union(*(design_axes[id(design)] for design in applicable))
         )
         if history is None or 2 ** len(axes) > _MAX_DLC_CONFIGS:
             reason = (
@@ -471,15 +579,19 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
                 if history is None
                 else "DLC configuration limit exceeded"
             )
-            findings.append(
-                Issue(
-                    Severity.WARNING,
-                    "ai-buildability-unresolved",
-                    f"{country}: {reason}",
-                    applicable[0].file,
-                    applicable[0].line,
+            for design in applicable:
+                analysis.records.append(
+                    _assessment(
+                        design,
+                        "starting-buildability",
+                        "unknown",
+                        reason,
+                        country=country,
+                        roles=sorted(design.roles),
+                        start=list(start[:3]),
+                        dlc_configurations=[],
+                    )
                 )
-            )
             continue
         grouped = {}
         for bits in itertools.product((False, True), repeat=len(axes)):
@@ -492,7 +604,7 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
             def truth(nodes):
                 return _truth(nodes, known, possible, dlcs, country, start)
 
-            def unlocked(token, mapping):
+            def unlocked(token, mapping, kind):
                 techs = mapping.get(token)
                 if not techs:
                     return None, set()
@@ -504,7 +616,15 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
                     states.append(
                         _combine([researched, truth(tech_gates.get(tech, []))])
                     )
-                return _combine(states, True), techs
+                state = _combine(states, True)
+                if state is not True and (
+                    techs & unmodeled.get("technologies", set())
+                    or token in unmodeled.get(kind, set())
+                    or kind == "hulls"
+                    and index.hull_sources.get(token) in unmodeled.get(kind, set())
+                ):
+                    state = None
+                return state, techs
 
             results = [
                 (
@@ -512,44 +632,73 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
                     *_design_state(
                         design,
                         index,
-                        lambda hull: unlocked(hull, hull_techs),
-                        lambda module: unlocked(module, module_techs),
+                        lambda hull: unlocked(hull, hull_techs, "hulls"),
+                        lambda module: unlocked(module, module_techs, "modules"),
                         truth,
                     ),
                 )
                 for design in applicable
             ]
+            coverage = {}
+            for other, status, _ in results:
+                for role in other.roles:
+                    usable, unresolved = coverage.setdefault(
+                        (other.category, role), (set(), False)
+                    )
+                    if status == "usable":
+                        usable.add(f"{other.group}/{other.name}")
+                    coverage[(other.category, role)] = (
+                        usable,
+                        unresolved
+                        or status in {"unknown", "deferred", "not-applicable"},
+                    )
             for design, state, reason in results:
-                if state not in {"missing", "unknown"}:
-                    continue
                 for role in sorted(design.roles):
-                    peers = [
-                        (other, status)
-                        for other, status, _ in results
-                        if other.category == design.category and role in other.roles
-                    ]
-                    usable = sorted(
-                        {other.name for other, status in peers if status == "usable"}
+                    usable, unresolved = coverage[(design.category, role)]
+                    key = (
+                        id(design),
+                        state,
+                        role,
+                        reason,
+                        tuple(sorted(usable)),
+                        unresolved,
                     )
-                    unresolved = any(status == "unknown" for _, status in peers)
-                    coverage = (
-                        f"usable fallback: {', '.join(usable)}"
-                        if usable
-                        else (
-                            "role coverage unresolved"
-                            if unresolved
-                            else "no usable starting fallback"
-                        )
-                    )
-                    category = (
-                        "ai-buildability-missing-unlock"
-                        if state == "missing"
-                        else "ai-buildability-unresolved"
-                    )
-                    message = f"{country}: {design.group}/{design.name} ({role}): {reason}; {coverage}"
-                    key = (category, message, design.file, design.line)
                     grouped.setdefault(key, []).append(dlcs)
-        for (category, message, path, line), configs in grouped.items():
+        for (
+            identity,
+            state,
+            role,
+            reason,
+            usable,
+            unresolved,
+        ), configs in grouped.items():
+            design = designs_by_id[identity]
+            role_coverage = (
+                f"usable fallback: {', '.join(usable)}"
+                if usable
+                else (
+                    "role coverage unresolved"
+                    if unresolved
+                    else "no usable starting fallback"
+                )
+            )
+            analysis.records.append(
+                _assessment(
+                    design,
+                    "starting-buildability",
+                    state,
+                    reason,
+                    country=country,
+                    role=role,
+                    coverage=role_coverage,
+                    usable_candidates=list(usable),
+                    start=list(start[:3]),
+                    dlc_configurations=configs,
+                )
+            )
+            if state != "missing":
+                continue
+            message = f"{country}: {design.group}/{design.name} ({role}): {reason}; {role_coverage}"
             labels = [
                 " + ".join(
                     name if enabled else f"NOT {name}"
@@ -563,13 +712,13 @@ def check_buildability(designs, index, context, hull_techs, module_techs, tech_g
                 if axes and len(configs) == 2 ** len(axes)
                 else "; ".join(labels)
             )
-            findings.append(
+            analysis.findings.append(
                 Issue(
                     Severity.WARNING,
-                    category,
+                    "ai-buildability-missing-unlock",
                     f"{message} [start {'.'.join(map(str, start[:3]))}; {context_label}]",
-                    path,
-                    line,
+                    design.file,
+                    design.line,
                 )
             )
-    return findings
+    return analysis

@@ -21,6 +21,7 @@ GROUP_PATTERNS = {
         "common/technology_tags/**",
         "common/bookmarks/**",
         "common/scripted_effects/**",
+        "common/special_projects/**",
         "history/countries/**",
     ],
     "factions": ["common/factions/**"],

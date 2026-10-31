@@ -17,6 +17,7 @@ from validate_file_paths import CONTENT_ROOTS
         "common/technology_tags/folders.txt",
         "common/bookmarks/start.txt",
         "common/scripted_effects/research.txt",
+        "common/special_projects/projects/naval.txt",
         "history/countries/AAA - Test.txt",
     ),
 )

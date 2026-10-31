@@ -4,19 +4,25 @@
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
 import glob
+import json
 import logging
 import os
 import re
 import sys
+from collections import Counter
 from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from ai_equipment_buildability import check_ammunition_compatibility, check_buildability
+from ai_equipment_buildability import (
+    check_ammunition_compatibility,
+    check_buildability,
+    project_unlocks,
+)
 from ai_equipment_buildability import parse_designs as parse_buildability_designs
 from equipment_module_slots import build_equipment_index, check_target_variants
 from equipment_variant_context import VariantContext, script_nodes, value
-from shared_utils import strip_inline_comment
+from shared_utils import atomic_write_text, strip_inline_comment
 from validate_equipment_variants import equipment_unlocks
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
@@ -219,6 +225,16 @@ class Validator(BaseValidator):
     def __init__(self, *args, check_buildability=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.check_buildability = check_buildability
+        self.analysis_records = []
+
+    def save_output(self):
+        super().save_output()
+        if self.output_file:
+            path = os.path.splitext(self.output_file)[0] + ".analysis.jsonl"
+            lines = sorted(
+                json.dumps(record, sort_keys=True) for record in self.analysis_records
+            )
+            atomic_write_text(path, "\n".join(lines) + ("\n" if lines else ""))
 
     def run_validations(self):
         self._validate_coverage()
@@ -226,6 +242,23 @@ class Validator(BaseValidator):
         self._validate_history_consistency()
         if self.check_buildability:
             self._validate_buildability()
+        if self.analysis_records:
+            counts = Counter(
+                (record["kind"], record["status"]) for record in self.analysis_records
+            )
+            self.log(
+                "Analysis records (not warning counts): "
+                + ", ".join(
+                    f"{kind}/{status}={count}"
+                    for (kind, status), count in sorted(counts.items())
+                ),
+                "always",
+            )
+            if self.output_file:
+                self.log(
+                    f"Analysis detail: {os.path.splitext(self.output_file)[0]}.analysis.jsonl",
+                    "always",
+                )
 
     def _validate_buildability(self):
         directories = (
@@ -244,6 +277,7 @@ class Validator(BaseValidator):
                 "common/bookmarks",
                 "common/technology_tags",
                 "common/scripted_effects",
+                "common/special_projects",
             )
         ):
             return
@@ -261,7 +295,7 @@ class Validator(BaseValidator):
                 read_failures.append(
                     Issue(
                         Severity.WARNING,
-                        "ai-buildability-unresolved",
+                        "ai-buildability-input-unavailable",
                         f"Buildability inputs could not be read: {error}",
                         os.path.relpath(path, self.mod_path).replace("\\", "/"),
                     )
@@ -270,6 +304,7 @@ class Validator(BaseValidator):
 
         folders = {}
         technologies = []
+        projects = []
         for path in self._collect_files(
             [
                 "history/countries/*.txt",
@@ -277,6 +312,7 @@ class Validator(BaseValidator):
                 "common/technologies/*.txt",
                 "common/technology_tags/*.txt",
                 "common/scripted_effects/*.txt",
+                "common/special_projects/**/*.txt",
             ],
             ignore_staged=True,
         ):
@@ -284,6 +320,8 @@ class Validator(BaseValidator):
             relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
             nodes = script_nodes(text)
             context.documents[relative] = nodes
+            if relative.startswith("common/special_projects/"):
+                projects.append(text)
             if relative.startswith("common/technologies/"):
                 for hull, techs in equipment_unlocks(text).items():
                     hull_techs.setdefault(hull, set()).update(techs)
@@ -334,11 +372,19 @@ class Validator(BaseValidator):
                 os.path.join(self.mod_path, "common/units/equipment")
             ),
         )
+        analysis = check_buildability(
+            designs,
+            index,
+            context,
+            hull_techs,
+            module_techs,
+            gates,
+            project_unlocks(projects, context),
+        )
+        self.analysis_records.extend(analysis.records)
         self._report(
-            check_buildability(
-                designs, index, context, hull_techs, module_techs, gates
-            ),
-            "✓ No supported starting-research problems found; unresolved cases are advisory",
+            analysis.findings,
+            "✓ No starting-research mismatches proved; unsupported cases are analysis records",
             "Advisory starting AI equipment buildability:",
             severity=Severity.WARNING,
         )
@@ -386,11 +432,11 @@ class Validator(BaseValidator):
                     )
                 )
 
-            results.extend(
-                check_ammunition_compatibility(
-                    parse_buildability_designs(content, rel), index
-                )
+            analysis = check_ammunition_compatibility(
+                parse_buildability_designs(content, rel), index
             )
+            results.extend(analysis.findings)
+            self.analysis_records.extend(analysis.records)
 
         self._report(
             results,
