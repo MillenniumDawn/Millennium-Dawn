@@ -98,44 +98,62 @@ initialize_pending_investment_offer = {
 	set_variable = { pending_offer_state = FROM.investments_state_target }
 }
 
+calculate_investment_spendable_treasury = {
+	set_temp_variable = { investment_spendable_treasury = treasury }
+	if = {
+		limit = { ai_race_ai_expansion_permitted = yes }
+		subtract_from_temp_variable = { investment_spendable_treasury = ai_race_ai_savings_target }
+	}
+}
+
 accept_pending_investment_offer = {
 	FROM = {
-		set_variable = { project_building_type^-1 = PREV.pending_offer_type }
-		set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
-		set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
-		set_variable = { project_construction_duration^-1 = PREV.pending_offer_duration }
-		set_variable = { investments_state_target = PREV.pending_offer_state }
-		set_variable = {
-			project_monetary_cost_effect = {
-				value = PREV.pending_offer_total_cost
-				multiply = -1
+		calculate_investment_spendable_treasury = yes
+		set_temp_variable = { investment_offer_cost = PREV.pending_offer_total_cost }
+		if = {
+			limit = { check_variable = { var = investment_spendable_treasury value = investment_offer_cost compare = greater_than_or_equals } }
+			set_variable = { project_building_type^-1 = PREV.pending_offer_type }
+			set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
+			set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
+			set_variable = { project_construction_duration^-1 = PREV.pending_offer_duration }
+			set_variable = { investments_state_target = PREV.pending_offer_state }
+			set_variable = {
+				project_monetary_cost_effect = {
+					value = PREV.pending_offer_total_cost
+					multiply = -1
+				}
+			}
+
+			start_project_two = yes
+			ROOT = {
+				if = {
+					limit = { NOT = { has_country_flag = influence_gained_@PREV } }
+					set_temp_variable = { percent_change = global.investment_percent_change_value }
+					set_temp_variable = { tag_index = PREV.id }
+					change_influence_percentage = yes
+					newline = yes
+
+					if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
+						set_country_flag = { flag = influence_gained_@PREV value = 1 days = 14 }
+						custom_effect_tooltip = cooldown_influence_limit_14_tooltip
+					}
+					else_if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown } }
+						set_country_flag = { flag = influence_gained_@PREV value = 1 days = 30 }
+						custom_effect_tooltip = cooldown_influence_limit_30_tooltip
+					}
+				}
+
+				set_temp_variable = { treasury_change = PREV.project_monetary_cost_effect }
+				multiply_temp_variable = { treasury_change = 0.1 }
+				modify_treasury_effect = yes
 			}
 		}
-
-		start_project_two = yes
+		else = {
+			country_event = investments_event.13
+		}
 		clr_country_flag = this_investment_offer_pending@PREV
 		clr_country_flag = investments_ai_pending
 	}
-	if = {
-		limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-		set_temp_variable = { percent_change = global.investment_percent_change_value }
-		set_temp_variable = { tag_index = FROM.id }
-		change_influence_percentage = yes
-		newline = yes
-
-		if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
-			set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
-			custom_effect_tooltip = cooldown_influence_limit_14_tooltip
-		}
-		else_if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown } }
-			set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
-			custom_effect_tooltip = cooldown_influence_limit_30_tooltip
-		}
-	}
-
-	set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
-	multiply_temp_variable = { treasury_change = 0.1 }
-	modify_treasury_effect = yes
 	clear_variable = investor_cost
 	clear_variable = pending_offer_total_cost
 	clear_variable = pending_offer_duration
@@ -414,9 +432,12 @@ precompute_state_construction_data = {
 	}
 }
 
-# Calculate project duration. Caller must call precompute_state_construction_data first.
-# Reads: local_state_modifier, receiving_investment_duration_temp (from precompute)
+# Effect: calculate_project_duration
+# Purpose: Calculates an investment project's duration. Call precompute_state_construction_data first
 # Writes: project_construction_duration^project, project_construction_duration^-2 (snapshot).
+# Parameters:
+# - local_state_modifier (set by precompute_state_construction_data): state modifier total
+# - receiving_investment_duration_temp (set by precompute_state_construction_data): duration modifier
 calculate_project_duration = {
 	get_building_construction_values = yes
 
