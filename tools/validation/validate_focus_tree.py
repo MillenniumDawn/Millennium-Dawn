@@ -167,7 +167,8 @@ _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
 # computed value, or a bare-identifier reference to another variable — the
 # latter two we can't sum statically) then applied by modify_treasury_effect;
-# modify_debt_effect raises debt. Negative treasury spends, positive is income.
+# modify_debt_effect adds debt_change to debt. Negative treasury spends, positive
+# is income; for debt_change the signs are reversed.
 # Only set_temp_variable/set_variable actually assign treasury_change (as the
 # key, or as `var = treasury_change`); any other verb touching it
 # (multiply_temp_variable, add_to_temp_variable, clamp_temp_variable, ...)
@@ -206,6 +207,13 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # segment unknown. The `_tt` loc key is never called with `= yes`.
 _MODIFY_TREASURY_RE = word_start_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
 _MODIFY_DEBT_RE = word_start_re("modify_debt_effect", r"\s*=\s*yes\b")
+_DEBT_CHANGE_RE = re.compile(
+    r"debt_change(?<=\bdebt_change)\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
+    r"|var(?<=\bvar)\s*=\s*debt_change\b"
+)
+_TAX_RATE_EFFECT_RE = word_start_re(
+    "modify_", r"(?:population|corporate)_tax_rate_effect\s*=\s*yes\b"
+)
 # Building effects charge nothing once the caller sets this temp variable.
 _SKIP_PAYMENT_RE = re.compile(r"\bskip_payment\s*=\s*1\b")
 _PAYMENT_TOKEN_RE = re.compile(
@@ -390,13 +398,14 @@ def _body_money_cost(
 
     spend    - summed magnitude (billions) of negative treasury_change literals
                actually applied via modify_treasury_effect.
-    has_cost - the body reduces the treasury or raises debt at all.
+    has_cost - the body reduces the treasury or may raise debt.
     unknown  - a real cost exists whose amount can't be summed statically (a
                computed or variable-referenced treasury_change, a
                treasury_change touched by anything other than a plain set, a
-               debt change, a corruption-style modify_treasury_effect variant,
-               or a called effect in *money_effects*, unless it is *waivable*
-               and a skip_payment = 1 is in force; *waived_at_start* says one
+               debt change other than a literal cut, a corruption-style
+               modify_treasury_effect variant, or a called effect in
+               *money_effects*, unless it is *waivable* and a
+               skip_payment = 1 is in force; *waived_at_start* says one
                already is when the body begins).
     An amount whose sign is still known to be positive after scaling is income,
     not an unknown cost, so it counts as neither.
@@ -523,11 +532,40 @@ def _body_money_cost(
             seg_max, seg_unknown, seg_has_set = 0.0, False, False
             seg_neg, seg_sign_unknown, seg_var_base = False, False, False
 
+    # debt_change carries over between applies like treasury_change. Only a
+    # segment whose every set is a literal cut is known to be free.
+    debt_events: List[Tuple[int, str, Optional[str]]] = []
+    for m in _DEBT_CHANGE_RE.finditer(body):
+        if previewed(m.start()):
+            continue
+        verb, _ = _enclosing_block_label(body, m.start())
+        if verb in _TREASURY_SET_VERBS:
+            debt_events.append((m.start(), "set", m.group(1)))
+        elif verb in _TREASURY_MUTATE_VERBS:
+            debt_events.append((m.start(), "set", None))
     for m in _MODIFY_DEBT_RE.finditer(body):
         if not previewed(m.start()):
+            debt_events.append((m.start(), "apply", None))
+    debt_events.sort()
+    cut = False  # debt_change set outside this body
+    seg_cut, seg_has_set = True, False
+    for _, kind, val in debt_events:
+        if kind == "set":
+            seg_has_set = True
+            seg_cut = (
+                seg_cut
+                and val is not None
+                and _NUMERIC_LITERAL_RE.match(val) is not None
+                and float(val) <= 0
+            )
+            continue
+        if seg_has_set:
+            cut = seg_cut
+        if not cut:
             has_cost = True
             unknown = True
             break
+        seg_cut, seg_has_set = True, False
 
     if money_effects and not money_effects.isdisjoint(_REWARD_KEY_RE.findall(body)):
         for pos, key, waived in _payment_keys(body, waived_at_start):
@@ -1241,7 +1279,9 @@ def _scan_ai_guards(
                 bpos = bend
             s, hc, u = _body_money_cost(rbody, called_money, waivable)
             spend += s
-            has_cost = has_cost or hc
+            # A tax rate change moves potential_income, which the bankruptcy
+            # mission weighs against debt_rate.
+            has_cost = has_cost or hc or bool(_TAX_RATE_EFFECT_RE.search(rbody))
             unknown_cost = unknown_cost or u
             previewed_cost = previewed_cost or any(
                 _body_money_cost(

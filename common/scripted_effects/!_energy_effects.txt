@@ -33,6 +33,7 @@ calculate_energy_use = {
 	energy_calc_consumption = yes
 	energy_calc_generation = yes
 	energy_calc_balance = yes
+	ai_race_capture_power_sample = yes
 	energy_calc_fuel = yes
 }
 
@@ -210,6 +211,16 @@ energy_calc_consumption = {
 
 	# Static use from special decisions/events, scaled into its display var
 	set_variable = { other_energy_use_display_var = { value = modifier@energy_use multiply = display_multiplier } }
+	if = {
+		limit = {
+			OR = {
+				ai_race_country_initialized = yes
+				has_variable = ai_race_ai_target_stage
+			}
+		}
+		set_variable = { ai_race_accounted_power = { value = modifier@ai_race_applied_power multiply = display_multiplier } }
+		set_variable = { ai_race_sampled_power_multiplier = display_multiplier }
+	}
 
 	# Energy Use from Buildings, computed straight into the persistent per-type display vars with the display multiplier folded in
 	# Base energy use per building: count * (1 + modifier) * base_energy_use * display_multiplier
@@ -535,7 +546,8 @@ energy_calc_generation = {
 
 # Effect: energy_calc_balance
 # Purpose: Energy balance, storage withdrawal, fossil fuel-saving, fulfillment ratio, and unfulfilled-demand penalties
-# Requires (temp): temp_total_energy_use (from energy_calc_consumption)
+# Parameters:
+# - temp_total_energy_use (set by energy_calc_consumption): total energy demand
 energy_calc_balance = {
 	set_variable = { energy_consumption = temp_total_energy_use }
 	set_variable = { energy_balance = { value = energy_sum subtract = energy_consumption } }
@@ -620,7 +632,8 @@ energy_calc_balance = {
 
 # Effect: energy_calc_fuel
 # Purpose: Non-electric fuel consumption and fuel displays, then fires the energy alerts and UI refresh
-# Requires (temp): no_fuel_killswitch_var (from energy_calc_generation)
+# Parameters:
+# - no_fuel_killswitch_var (set by energy_calc_generation): fuel killswitch state
 energy_calc_fuel = {
 	# Calculate the Non-Electric Fuel Consumption
 	set_variable = {

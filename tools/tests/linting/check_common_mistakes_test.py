@@ -1216,6 +1216,23 @@ _COUNT_CASES: dict[
             0,
             _logged_decision("[GetDateText]: [Root.GetName]: remove"),
         ),
+        (
+            "Mission log naming another id flagged",
+            1,
+            _logged_decision("[GetDateText]: [Root.GetName]: Mission TST_other"),
+        ),
+        (
+            "effect block name before its own id not flagged",
+            0,
+            _logged_decision(
+                "[GetDateText]: [Root.GetName]: mission timeout_effect TST_decision"
+            ),
+        ),
+        (
+            "id built at runtime not flagged",
+            0,
+            _logged_decision("[GetDateText]: [Root.GetName]: Mission TST_[?x.id]_end"),
+        ),
     ],
     _check_event_log_id: [
         (
