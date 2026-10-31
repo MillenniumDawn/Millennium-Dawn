@@ -651,6 +651,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     named enabling technology removes that module's missing-unlock claim.
     No native-game build test was run, and not every warning site was individually
     adjudicated. A clean supported subset is not an engine-buildability claim.
+- Unit references (ERROR): names in `regiments`, `regimental_support`, and `support`
+  blocks must match a `common/units` sub-unit exactly, case included. Only
+  `history/units`, `common/ai_templates`, and `00_AI_scripted_effects.txt` are read.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
 - `missing-equipment-factor` (WARNING, opt-in `--missing-equipment-factor`).

@@ -601,7 +601,7 @@ def _extract_division_names_group_refs(content: str) -> List[Tuple[str, int]]:
 
 
 def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
-    """Extract unit names from regiments = { ... } and support = { ... } blocks.
+    """Extract unit names from regiments, regimental_support, and support blocks.
 
     Handles two patterns:
       - unit_name = { x = 0 y = 0 }   (OOB / scripted effect style)
@@ -617,7 +617,7 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
         line = lines[i].strip()
 
         if not in_block:
-            if re.match(r"^(regiments|support)\s*=\s*\{", line):
+            if re.match(r"^(regiments|regimental_support|support)\s*=\s*\{", line):
                 in_block = True
                 brace_depth = 1
                 i += 1
@@ -626,7 +626,7 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
             continue
 
         # Depth at the START of this line — unit references live at depth 1
-        # (direct children of the regiments/support block). Deeper lines
+        # (direct children of the matched block). Deeper lines
         # (e.g. position `x = 0` / `y = 0` inside `unit_name = { ... }`) must
         # be skipped.
         depth_at_line_start = brace_depth

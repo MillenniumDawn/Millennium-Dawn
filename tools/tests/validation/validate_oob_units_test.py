@@ -274,6 +274,9 @@ def test_extract_unit_refs_reads_both_block_and_count_forms():
         "\n"
         "\t\tMech_Inf_Bat = 2\n"
         "\t}\n"
+        "\tregimental_support = {\n"
+        "\t\tSP_Arty_Battery = { x = 0 y = 0 }\n"
+        "\t}\n"
         "\tsupport = {\n"
         "\t\tengineer = { x = 0 y = 0 }\n"
         "\t}\n"
@@ -282,6 +285,7 @@ def test_extract_unit_refs_reads_both_block_and_count_forms():
     assert _extract_unit_refs_from_blocks(content) == {
         "Arm_Inf_Bat",
         "Mech_Inf_Bat",
+        "SP_Arty_Battery",
         "engineer",
     }
 
