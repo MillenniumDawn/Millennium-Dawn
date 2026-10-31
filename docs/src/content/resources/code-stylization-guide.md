@@ -16,7 +16,8 @@ Keep the change local, reuse existing behavior, and add only what the task needs
 - Keep behavior-preserving cleanup separate from gameplay changes.
 - Remove unused code and commented-out blocks. Add a comment only for a non-obvious
   reason, in one short line. Do not narrate the code. The doc header on a scripted
-  effect or trigger is the exception, see [Scripted Effects](#scripted-effects).
+  effect or trigger that takes inputs is the exception, see
+  [Scripted Effects](#scripted-effects).
 
 ### Names and Encoding
 
@@ -47,7 +48,7 @@ UTF-8 with BOM. Python tools must preserve LF when writing; see
 | Events           | Use `is_triggered_only = yes`, log only if effects exist       |
 | Ideas            | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
 | Technologies     | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
-| Scripted Effects | `# Effect:`, `# Purpose:`, `# Parameters:` above each effect   |
+| Scripted Effects | Doc header with `# Parameters:` on effects that take inputs    |
 | Formatting       | Tabs (not spaces), 1 line between elements                     |
 
 ---
@@ -382,8 +383,9 @@ night_vision_1 = {
 # Scripted Effects
 
 Scripted effects take no arguments, so a caller passes values through variables and
-cannot see what an effect needs by calling it. Put a doc header directly above each
-effect, the same idea as a Javadoc comment, so nobody has to read the body to use it.
+cannot see what an effect needs by calling it. An effect that needs values from its
+caller gets a doc header directly above it, the same idea as a Javadoc comment. The
+header is the contract callers must meet.
 
 ## Doc Header
 
@@ -406,12 +408,12 @@ Write the lines in this order:
 | `# Effect: name`  | Always | The exact effect name                           |
 | `# Purpose: text` | Always | One line on what the effect does, not how       |
 | `# Output: text`  | If any | Values it leaves for the caller to read         |
-| `# Parameters:`   | If any | Every value it reads from the caller, see below |
+| `# Parameters:`   | Always | Every value it reads from the caller, see below |
 
 Scripted triggers use the same header with `# Trigger: name`.
 
-Give every new effect and trigger a header. Add one to an existing effect when you change
-what it does or what it reads. You do not need to document untouched effects.
+Do not add this header to an effect that takes no inputs. A plain helper needs no
+documentation pass.
 
 ## Parameters Block
 

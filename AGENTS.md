@@ -33,9 +33,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   state or a historical transition.
 - Keep behavior-preserving cleanup separate from gameplay changes. Remove dead code
   introduced or exposed by the change, without refactoring unrelated systems.
-- Default to no comments. Explain only a non-obvious reason, in one short line. Scripted
-  effects and triggers are the exception: give each new or changed one the doc header
-  from the Code Stylization Guide.
+- Default to no comments. Explain only a non-obvious reason, in one short line. A scripted
+  effect or trigger that needs values from its caller is the exception: it gets the doc
+  header from the Code Stylization Guide. Other helpers do not.
 
 ## Validation
 
