@@ -1255,7 +1255,7 @@ def test_refinery_repairs_rubber_dependency_for_composites_without_creating_oil(
     country["vars"]["resource@rubber"] = 8 if project else 0
     if project:
         country["techs"].discard("composite_production_1")
-    country["researchable"] = {"fuel_efficiency"}
+    country["researchable"] = {"fuel_efficiency_01"}
     oil = country["vars"]["resource@oil"]
     race.run("ai_race_ai_update_plan", 1)
     variables = country["vars"]

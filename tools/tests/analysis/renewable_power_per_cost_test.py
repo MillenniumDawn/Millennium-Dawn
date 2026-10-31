@@ -64,7 +64,7 @@ INDUSTRY_FIXTURE = (
     "\t\tproduction_speed_nuclear_reactor_factor = 0.09\n"
     "\t\tstart_year = 2000\n"
     "\t}\n"
-    "\tfuel_efficiency = {\n"
+    "\tfuel_efficiency_01 = {\n"
     "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
     "\t\tproduction_speed_fossil_powerplant_factor = 0.02\n"
     "\t\tstart_year = 1990\n"
