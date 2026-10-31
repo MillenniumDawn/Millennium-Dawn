@@ -4074,6 +4074,15 @@ calculate_additional_expense_rate = {
 	#Compensate for inflation on the final value
 	set_temp_variable = { additional_expenses_inflation = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
 	multiply_variable = { additional_expenses_rate = additional_expenses_inflation }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { ai_race_finance_outstanding > 0 }
+				check_variable = { ai_race_finance_expense_component > 0 }
+			}
+		}
+		ai_race_refresh_finance_expense = yes
+	}
 
 	# Event Horizon
 	if = {
@@ -4329,6 +4338,15 @@ update_display = {
 	}
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { ai_race_finance_expense_component > 0 }
+				check_variable = { ai_race_finance_rate_component > 0 }
+			}
+		}
+		set_variable = { ai_race_finance_rate_component = ai_race_finance_expense_component }
+	}
 
 	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
 	if = { limit = { check_variable = { display_income > 0 } }

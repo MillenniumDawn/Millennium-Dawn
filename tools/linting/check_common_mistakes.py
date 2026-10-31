@@ -226,9 +226,10 @@ _RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
     r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
 )
 _RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
-# "Decision <keyword...> <id>" tolerates a chain of filler words before the real
-# id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
-# describing which effect block logged the line) and, in a couple of legacy
+# "Decision <keyword...> <id>" (or "Mission ...") tolerates a chain of filler
+# words before the real id: the block-name keywords (remove/complete/completed/
+# timeout/cancel/add, describing which effect block logged the line), the block
+# names themselves ("Mission timeout_effect X"), and, in a couple of legacy
 # logs, a spelled-out "effect" after the keyword ("Decision cancel effect X"
 # for a cancel_effect block). Strip all leading filler tokens, then compare
 # whatever's left to the decision's own id.
@@ -240,8 +241,14 @@ _DECISION_LOG_FILLER_WORDS = {
     "cancel",
     "add",
     "effect",
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
 }
-_RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
+_RE_LOG_DECISION_MARKER = re.compile(
+    r'log\s*=\s*"[^"]*\b(?:Decision|Mission)\b', re.IGNORECASE
+)
 _RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
 # A log with no "Decision" word still names its decision when it is the standard
 # prefix, filler words, and one id that ends the string. Longer free text is not
@@ -3263,6 +3270,9 @@ def _decision_log_token_span(line):
         if token.lower() in _DECISION_LOG_FILLER_WORDS:
             pos = m.end()
             continue
+        # An id that runs into [?...] is built at runtime.
+        if line.startswith("[", m.end(1)):
+            return None
         return token, m.start(1), m.end(1)
 
 
