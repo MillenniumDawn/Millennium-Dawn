@@ -58,6 +58,7 @@ def test_specs_carry_their_opt_in_checks():
         for spec in vb.ALL_SPECS
         if spec.args or spec.baseline_args
     } == {
+        "ai-equipment": (("--check-buildability",), (), True),
         "bonus-names": (("--name-not-owner-id",), (), True),
         "decisions": (("--unannounced-categories",), (), True),
         "events": (("--check-ai-chance-costs",), (), True),
@@ -131,6 +132,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         ["tools/linting/check_common_mistakes.py"]
     )
     assert {spec.name for spec in batch} == {
+        "ai-equipment",
         "common-mistakes",
         "decisions",
         "equipment-variants",

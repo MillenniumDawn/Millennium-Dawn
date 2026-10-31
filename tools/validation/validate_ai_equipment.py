@@ -12,8 +12,12 @@ from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from ai_equipment_buildability import check_buildability
+from ai_equipment_buildability import parse_designs as parse_buildability_designs
 from equipment_module_slots import build_equipment_index, check_target_variants
+from equipment_variant_context import VariantContext, script_nodes, value
 from shared_utils import strip_inline_comment
+from validate_equipment_variants import equipment_unlocks
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
 _NAVAL_SLOT_CATEGORIES = {
@@ -210,11 +214,134 @@ def parse_designs(content: str) -> List[Dict]:
 class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
+    STAGED_INCLUDE_MISSING = True
+
+    def __init__(self, *args, check_buildability=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.check_buildability = check_buildability
 
     def run_validations(self):
         self._validate_coverage()
         self._validate_variant_modules()
         self._validate_history_consistency()
+        if self.check_buildability:
+            self._validate_buildability()
+
+    def _validate_buildability(self):
+        directories = (
+            "common/ai_equipment",
+            "common/units/equipment",
+            "common/technologies",
+            "history/countries",
+        )
+        if not all(
+            os.path.isdir(os.path.join(self.mod_path, path)) for path in directories
+        ):
+            return
+        if self.staged_only and not self.staged_touches(
+            (
+                *directories,
+                "common/bookmarks",
+                "common/technology_tags",
+                "common/scripted_effects",
+            )
+        ):
+            return
+        self._log_section("Checking advisory starting AI equipment buildability...")
+        context = VariantContext()
+        hull_techs = {}
+        module_techs = {}
+        read_failures = []
+
+        def read_source(path):
+            try:
+                with open(path, encoding="utf-8-sig") as source:
+                    return source.read()
+            except (OSError, UnicodeError) as error:
+                read_failures.append(
+                    Issue(
+                        Severity.WARNING,
+                        "ai-buildability-unresolved",
+                        f"Buildability inputs could not be read: {error}",
+                        os.path.relpath(path, self.mod_path).replace("\\", "/"),
+                    )
+                )
+                return ""
+
+        folders = {}
+        technologies = []
+        for path in self._collect_files(
+            [
+                "history/countries/*.txt",
+                "common/bookmarks/*.txt",
+                "common/technologies/*.txt",
+                "common/technology_tags/*.txt",
+                "common/scripted_effects/*.txt",
+            ],
+            ignore_staged=True,
+        ):
+            text = read_source(path)
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            nodes = script_nodes(text)
+            context.documents[relative] = nodes
+            if relative.startswith("common/technologies/"):
+                for hull, techs in equipment_unlocks(text).items():
+                    hull_techs.setdefault(hull, set()).update(techs)
+                for module, techs in equipment_unlocks(
+                    text, "enable_equipment_modules"
+                ).items():
+                    module_techs.setdefault(module, set()).update(techs)
+            for node in nodes:
+                if node.key == "technology_folders":
+                    for folder in node.children:
+                        folders[folder.key] = [
+                            child
+                            for available in folder.children
+                            if available.key == "available"
+                            for child in available.children
+                        ]
+                elif node.key == "technologies":
+                    technologies.extend(node.children)
+        context.index()
+        gates = {}
+        for tech in technologies:
+            gates[tech.key] = [
+                child
+                for block in tech.children
+                if block.key == "allow_branch"
+                for child in block.children
+            ]
+            for folder in tech.children:
+                if folder.key == "folder":
+                    gates[tech.key].extend(folders.get(value(folder, "name"), []))
+        designs = []
+        for path in self._collect_files(
+            ["common/ai_equipment/*.txt"], ignore_staged=True
+        ):
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            designs.extend(parse_buildability_designs(read_source(path), relative))
+        if read_failures:
+            self._report(
+                read_failures,
+                "",
+                "Starting buildability inputs unavailable:",
+                severity=Severity.WARNING,
+            )
+            return
+        index = self.cached(
+            "equipment_hull_index",
+            lambda: build_equipment_index(
+                os.path.join(self.mod_path, "common/units/equipment")
+            ),
+        )
+        self._report(
+            check_buildability(
+                designs, index, context, hull_techs, module_techs, gates
+            ),
+            "✓ No supported starting-research problems found; unresolved cases are advisory",
+            "Advisory starting AI equipment buildability:",
+            severity=Severity.WARNING,
+        )
 
     def _validate_variant_modules(self):
         equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
@@ -425,5 +552,13 @@ class Validator(BaseValidator):
         )
 
 
+def _extra_args(parser):
+    parser.add_argument(
+        "--check-buildability",
+        action="store_true",
+        help="Report advisory starting-research and usable-fallback checks",
+    )
+
+
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate AI equipment coverage")
+    run_validator_main(Validator, "Validate AI equipment coverage", _extra_args)

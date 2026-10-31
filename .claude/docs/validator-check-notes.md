@@ -555,6 +555,42 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   producers and dynamic names or types are not checked. Separate events can overlap,
   but the check does not prove both execute, so this is advisory.
 - `validate_ai_equipment.py` runs without `--strict` locally and with it in CI.
+- `--check-buildability` adds advisory starting-research checks in the existing CI
+  batch and main baseline. Commit hooks leave it off. Changes to AI designs,
+  country histories, technologies, technology folders, equipment definitions,
+  bookmarks, or scripted effects select that batch.
+  - `ai-buildability-missing-unlock` (WARNING) identifies the country, design,
+    role, pinned module or category candidates, missing enabling technologies,
+    start date, and DLC context. It requires a researched starting hull, a proven
+    enabled design, and positive statically evaluable priorities. An unresearched
+    successor hull or false enable condition is not a starting defect.
+  - A researched alternative or category member can satisfy a slot. Researched
+    selections are checked with the existing slot rules, including count limits
+    and module-dependent slot categories. A usable role candidate from another
+    permitted group is named as a fallback; blocked groups do not count. This
+    proves a candidate exists, not that the engine will choose it over competing
+    priorities. A bad pin is still reported when a fallback exists.
+  - Starting research reuses the date-aware equipment-variant context reader.
+    It applies undated setup and dated setup through the earliest bookmark,
+    expands research-granting scripted effects, and keeps guaranteed and possible
+    research separate. Unknown conditional or foreign-scope grants cannot prove
+    a fallback usable or a module unavailable. DLC configurations stay separate.
+    Unlocks come from explicit technology definitions, not equipment-name guesses.
+  - `ai-buildability-unresolved` (WARNING) keeps unknown cases separate: dynamic
+    conditions or priorities, nonpositive priorities, missing unlock sources,
+    archetypes without a direct hull unlock, module comparisons, current-dependent
+    refits, unplaced requirements, and equipment upgrades. Selection is bounded
+    at 256 researched combinations per design and 64 DLC configurations per
+    country. Exhausting a bound is unresolved, not a buildability failure.
+    Modules with no recorded unlocking technology are unknown, not assumed free.
+    Implicit required-slot filling through `allowed_modules`, runtime on-actions,
+    technology-sharing effects, and the engine's refit choice are not simulated.
+  - Baseline source for #6287: main
+    `f2578bb8c776c43a0ea5c5029a0da483d14023e0`. Synthetic regressions and a
+    Greek/Turkish source fixture cover the supported contract. No full-repository
+    buildability count or native-game build test established a reviewed baseline.
+    Review both advisory categories in the CI baseline comparison before changing
+    severity. A clean supported subset is not an engine-buildability claim.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
 - `missing-equipment-factor` (WARNING, opt-in `--missing-equipment-factor`).
