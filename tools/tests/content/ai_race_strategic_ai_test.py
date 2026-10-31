@@ -122,7 +122,7 @@ class StrategicRaceScript(RaceScript):
                 "microchip_production_1",
                 "composite_production_1",
                 "fuel_silos",
-                "reactor1",
+                "reactor_01",
             }
         )
         return country

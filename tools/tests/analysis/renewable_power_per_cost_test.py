@@ -54,12 +54,12 @@ INDUSTRY_FIXTURE = (
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.06\n"
     "\t\tstart_year = 1995\n"
     "\t}\n"
-    "\treactor1 = {\n"
+    "\treactor_01 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.20\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.06\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\treactor2 = {\n"
+    "\treactor_02 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.30\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.09\n"
     "\t\tstart_year = 2000\n"
@@ -100,8 +100,8 @@ def test_parse_techs_strips_comments_and_groups_fields(industry_path):
 def test_parse_techs_recognises_nested_blocks(industry_path):
     techs = rpp.parse_techs(str(industry_path))
     # depth tracking must close the outer block before sibling techs start
-    assert "reactor2" in techs
-    assert techs["reactor2"]["nuclear_energy_generation_modifier"] == 0.30
+    assert "reactor_02" in techs
+    assert techs["reactor_02"]["nuclear_energy_generation_modifier"] == 0.30
 
 
 def test_build_chains_excludes_orphan_and_blank(industry_path):
