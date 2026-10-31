@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from ai_equipment_buildability import check_buildability
+from ai_equipment_buildability import check_ammunition_compatibility, check_buildability
 from ai_equipment_buildability import parse_designs as parse_buildability_designs
 from equipment_module_slots import build_equipment_index, check_target_variants
 from equipment_variant_context import VariantContext, script_nodes, value
@@ -385,6 +385,12 @@ class Validator(BaseValidator):
                         line=f.line,
                     )
                 )
+
+            results.extend(
+                check_ammunition_compatibility(
+                    parse_buildability_designs(content, rel), index
+                )
+            )
 
         self._report(
             results,

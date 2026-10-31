@@ -85,6 +85,121 @@ def _tree(tmp_path, case):
     return tmp_path
 
 
+_AMMO_HULLS = """equipments = {
+    test_hull = {
+        type = armor
+        module_slots = {
+            main_armament_slot = { required = yes allowed_module_categories = { weapons } }
+            ammunition_load_slot = { required = yes allowed_module_categories = { } }
+            secondary_armament_slot = { allowed_module_categories = { weapons } }
+        }
+    }
+}
+"""
+_AMMO_MODULES = """equipment_modules = {
+    small_autocannon_3 = {
+        category = weapons
+        allowed_module_categories = { ammunition_load_slot = { autocannon_ammo } }
+    }
+    afv_machine_gun_3 = {
+        category = weapons
+        allowed_module_categories = { ammunition_load_slot = { machine_gun_ammo } }
+    }
+    banned_autocannon = {
+        category = weapons
+        forbid_equipment_type_exact_match = armor
+        allowed_module_categories = { ammunition_load_slot = { autocannon_ammo } }
+    }
+    inherited_weapon = { category = weapons parent = small_autocannon_3 }
+    autocannon_rounds = { category = autocannon_ammo }
+    machine_gun_rounds = { category = machine_gun_ammo }
+}
+"""
+_AMMO_CASES = {
+    "USA APC before aaa631c76f": (
+        "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "USA APC corrected pairing": (
+        "main_armament_slot = small_autocannon_3 ammunition_load_slot = autocannon_ammo",
+        [],
+    ),
+    "both weapon families have ammo": (
+        "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = { any_of = { autocannon_ammo machine_gun_ammo } }",
+        [],
+    ),
+    "weapon category is not one compatible representative": (
+        "main_armament_slot = weapons ammunition_load_slot = machine_gun_ammo",
+        [
+            (
+                "ai-equipment-incompatible-ammo",
+                "small_autocannon_3",
+                "machine_gun_ammo",
+            ),
+            ("ai-equipment-ammo-unresolved", "inherited_weapon", "allowance"),
+        ],
+    ),
+    "repeated module alternatives": (
+        "main_armament_slot = { module = small_autocannon_3 module = afv_machine_gun_3 } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "module and any_of alternatives": (
+        "main_armament_slot = { module = afv_machine_gun_3 any_of = { small_autocannon_3 } } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "repeated any_of alternatives": (
+        "main_armament_slot = { any_of = { small_autocannon_3 } any_of = { afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "another equipped weapon can enable ammo": (
+        "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } secondary_armament_slot = afv_machine_gun_3 ammunition_load_slot = machine_gun_ammo",
+        [],
+    ),
+    "forbidden weapon is not a selectable alternative": (
+        "main_armament_slot = { any_of = { banned_autocannon afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo",
+        [],
+    ),
+    "ammo before nested weapon selection": (
+        "ammunition_load_slot = machine_gun_ammo main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } }",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "current selection remains unresolved": (
+        "main_armament_slot = { module = weapons upgrade = current } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-ammo-unresolved", "shared/current")],
+    ),
+    "range selection remains unresolved": (
+        "main_armament_slot > small_autocannon_3 ammunition_load_slot = autocannon_ammo",
+        [("ai-equipment-ammo-unresolved", "shared/current")],
+    ),
+}
+
+
+@pytest.mark.parametrize(("slots", "expected"), _AMMO_CASES.values(), ids=_AMMO_CASES)
+def test_weapon_ammunition_alternatives(tmp_path, slots, expected):
+    design = _design(
+        slots=slots,
+        extra="priority = { factor = 0 } enable = { date > 2099.1.1 }",
+    ).replace(
+        "type = test_hull", "type = test_hull upgrades = { tank_nsb_armor_upgrade = 1 }"
+    )
+    _tree(
+        tmp_path,
+        {
+            "groups": _group(design).replace("category = naval", "category = land"),
+            "hulls": _AMMO_HULLS,
+            "files": {"common/units/equipment/modules/test.txt": _AMMO_MODULES},
+        },
+    )
+    validator = build_validator(Validator, tmp_path)
+    validator._validate_variant_modules()
+    assert_findings(
+        [f"{issue.category}: {issue.message}" for issue in validator._issues],
+        expected,
+    )
+    assert all(issue.severity == Severity.WARNING for issue in validator._issues)
+    assert validator.errors_found == 0
+
+
 # case: source changes, expected (category, message fragments) findings.
 _CASES = {
     "literal pin": {

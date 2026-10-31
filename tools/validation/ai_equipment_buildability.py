@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from equipment_module_slots import (
     _depth0_text,
     _iter_blocks,
+    _module_forbidden,
     _scalar,
     blank_comments,
     check_target_variants,
@@ -42,6 +43,16 @@ def _tokens(text, lo, hi, key):
     }
 
 
+def _scalar_nodes(text, lo, hi):
+    parts = []
+    cursor = lo
+    for _, _, end, header in _iter_blocks(text, lo, hi):
+        parts.append(text[cursor:header])
+        cursor = end + 1
+    parts.append(text[cursor:hi])
+    return script_nodes(re.sub(r"=\s*([<>])", r"\1", " ".join(parts)))
+
+
 def _selection(text):
     text = re.sub(r"=\s*([<>])", r"\1", text)
     nodes = script_nodes(text)
@@ -68,6 +79,7 @@ class Design:
     gates: list
     priorities: list
     unsupported: bool
+    unresolved_modules: bool = False
 
 
 def parse_designs(content, path):
@@ -92,14 +104,14 @@ def parse_designs(content, path):
             slots = []
             unsupported = len(variants) != 1 or any(
                 node.key not in {"type", "match_value"}
-                for node in script_nodes(_depth0_text(text, vlo, vhi))
+                for node in _scalar_nodes(text, vlo, vhi)
             )
+            unresolved_modules = unsupported
             for key, lo, hi, _ in _iter_blocks(text, vlo, vhi):
                 if key == "modules":
-                    scalar = re.sub(r"=\s*([<>])", r"\1", _depth0_text(text, lo, hi))
                     slots.extend(
                         (node.key, [(node.op, node.value)], False)
-                        for node in script_nodes(scalar)
+                        for node in _scalar_nodes(text, lo, hi)
                     )
                     slots.extend(
                         (slot, *_selection(text[slo:shi]))
@@ -107,10 +119,20 @@ def parse_designs(content, path):
                     )
                 elif text[lo:hi].strip():
                     unsupported = True
-            unsupported |= len(slots) != len({slot for slot, _, _ in slots})
-            unsupported |= any(
+                    unresolved_modules |= key != "upgrades"
+            requirements = any(
                 key == "requirements" and text[lo:hi].strip()
                 for key, lo, hi, _ in _iter_blocks(text, dlo, dhi)
+            )
+            duplicates = len(slots) != len({slot for slot, _, _ in slots})
+            unsupported |= duplicates or requirements
+            unresolved_modules |= (
+                duplicates
+                or requirements
+                or bool(
+                    _tokens(text, glo, ghi, "allowed_modules")
+                    | _tokens(text, dlo, dhi, "allowed_modules")
+                )
             )
             designs.append(
                 Design(
@@ -127,6 +149,7 @@ def parse_designs(content, path):
                     _children(group_nodes, "enable") + _children(nodes, "enable"),
                     [node for node in group_nodes + nodes if node.key == "priority"],
                     bool(unsupported),
+                    bool(unresolved_modules),
                 )
             )
     return designs
@@ -236,6 +259,116 @@ def _candidates(references, index, unlocked):
             else:
                 missing.add(f"{module} requires {' or '.join(sorted(techs))}")
     return sorted(candidates), missing, unknown
+
+
+def check_ammunition_compatibility(designs, index):
+    findings = []
+    for design in designs:
+        slots = index.hull_slots.get(design.hull)
+        if slots is None:
+            continue
+        ammunition = {
+            slot
+            for slot, _, _ in design.slots
+            if ("ammo" in slot or "ammunition" in slot)
+            and slot in slots
+            and slots[slot]
+            and slots[slot].allowed is not None
+        }
+        if not ammunition:
+            continue
+        domains = {}
+        unresolved = design.unresolved_modules
+        hull_types = index.hull_types.get(design.hull, set())
+        for slot, references, unsupported in design.slots:
+            candidates, _, unknown = _candidates(
+                references, index, lambda _: (True, set())
+            )
+            domains[slot] = [
+                module
+                for module in candidates
+                if module == "empty" or not _module_forbidden(module, hull_types, index)
+            ]
+            unresolved |= unsupported or unknown
+        if unresolved:
+            findings.append(
+                Issue(
+                    Severity.WARNING,
+                    "ai-equipment-ammo-unresolved",
+                    f"{design.group}/{design.name}: ammunition compatibility is unresolved for inherited or dynamic selections, requirements, or allowed-module filling",
+                    design.file,
+                    design.line,
+                )
+            )
+            continue
+        for ammo_slot in sorted(ammunition):
+            entry = slots[ammo_slot]
+            ammo = domains[ammo_slot]
+            if not entry.required and "empty" in ammo:
+                continue
+            categories = {
+                index.module_category[module] for module in ammo if module != "empty"
+            }
+            grants = {
+                source: set().union(
+                    *(
+                        index.slot_unlocks.get(module, {}).get(ammo_slot, set())
+                        for module in choices
+                    )
+                )
+                for source, choices in domains.items()
+            }
+            if not categories & (entry.allowed | set().union(*grants.values())):
+                continue
+            for source, choices in domains.items():
+                if source == ammo_slot or len(choices) < 2 or not grants[source]:
+                    continue
+                other = entry.allowed | set().union(
+                    *(provided for slot, provided in grants.items() if slot != source)
+                )
+                incompatible = [
+                    module
+                    for module in choices
+                    if module != "empty"
+                    and ammo_slot in index.slot_unlocks.get(module, {})
+                    and not categories & (other | index.slot_unlocks[module][ammo_slot])
+                ]
+                unproven = [
+                    module
+                    for module in choices
+                    if module != "empty"
+                    and ammo_slot not in index.slot_unlocks.get(module, {})
+                    and not categories & other
+                ]
+                if unproven:
+                    findings.append(
+                        Issue(
+                            Severity.WARNING,
+                            "ai-equipment-ammo-unresolved",
+                            f"{design.group}/{design.name}: {', '.join(unproven)} in {source} has no resolved {ammo_slot} allowance",
+                            design.file,
+                            design.line,
+                        )
+                    )
+                if incompatible:
+                    requested = sorted(
+                        {
+                            reference
+                            for slot, refs, _ in design.slots
+                            if slot == ammo_slot
+                            for _, reference in refs
+                        }
+                    )
+                    findings.append(
+                        Issue(
+                            Severity.WARNING,
+                            "ai-equipment-incompatible-ammo",
+                            f"{design.group}/{design.name}: {', '.join(incompatible)} in {source} cannot use any {ammo_slot} option ({', '.join(requested)}); another weapon alternative was masking the mismatch",
+                            design.file,
+                            design.line,
+                        )
+                    )
+    return findings
 
 
 def _design_state(design, index, unlocked_hull, unlocked_module, truth):

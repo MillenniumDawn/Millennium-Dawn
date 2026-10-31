@@ -555,6 +555,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   producers and dynamic names or types are not checked. Separate events can overlap,
   but the check does not prove both execute, so this is advisory.
 - `validate_ai_equipment.py` runs without `--strict` locally and with it in CI.
+- `ai-equipment-incompatible-ammo` (WARNING) checks each weapon alternative
+  against the requested ammo choices, rather than borrowing compatibility from
+  another alternative in the same slot. It expands literal modules, categories,
+  repeated `module` selectors, and `any_of` lists. Hull allowances and other
+  equipped weapons can still permit the ammunition; forbidden weapon choices
+  do not count. Existing literal slot contradictions remain ERROR without a
+  second advisory for the same contradiction.
+  - This runs in the normal AI slot-check phase, without `--check-buildability`.
+    Future designs, disabled priorities, and numeric equipment upgrades do not
+    suppress structural ammo checks. It does not prove the engine's choice order.
+  - `ai-equipment-ammo-unresolved` (WARNING) reports current-dependent refits,
+    comparisons, inherited module context, unplaced requirements, implicit
+    `allowed_modules` filling, and missing weapon-specific ammo allowances.
+  - Regression source: `USA_APC_design/modern_APC_default` before
+    `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
+    were paired with MG-only ammo. The union of both weapons' slot unlocks hid
+    the autocannon mismatch. The historical pattern now warns; the corrected
+    autocannon/ammo pairing passes against the current equipment definitions.
+    Regressions also pin selectors followed by scalar ammo assignments, so
+    stripping a nested block cannot consume the following slot.
 - `--check-buildability` adds advisory starting-research checks in the existing CI
   batch and main baseline. Commit hooks leave it off. Changes to AI designs,
   country histories, technologies, technology folders, equipment definitions,

@@ -54,7 +54,7 @@ from shared_utils import find_matching_brace, strip_comments, strip_inline_comme
 _SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
 
 _NAME_BLOCK_RE = re.compile(r"([A-Za-z_][\w.]*)\s*=\s*\{")
-_ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*")
+_ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*[=<>]\s*")
 _CATEGORY_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 
 
@@ -551,16 +551,18 @@ class EquipmentIndex:
 
 
 def _refs_from_block(text: str, lo: int, hi: int) -> List[str]:
-    body = text[lo:hi]
-    ao = re.search(r"any_of\s*=\s*\{", body)
-    if ao:
-        inner_open = lo + ao.end() - 1
-        inner_close = find_matching_brace(text, inner_open)
-        return re.findall(r"[A-Za-z_]\w*", text[inner_open + 1 : inner_close])
-    mm = re.search(r"\bmodule\s*=\s*(?:[<>]\s*)?([A-Za-z_]\w*)", body)
-    if mm:
-        return [mm.group(1)]
-    return _CATEGORY_TOKEN_RE.findall(body)
+    refs = []
+    for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
+        if name == "any_of":
+            refs.extend(_CATEGORY_TOKEN_RE.findall(text[blo:bhi]))
+    refs.extend(
+        match.group(1)
+        for match in re.finditer(
+            r"\bmodule\s*(?:=\s*[<>]?|[<>])\s*([A-Za-z_]\w*)",
+            _depth0_text(text, lo, hi),
+        )
+    )
+    return refs or _CATEGORY_TOKEN_RE.findall(text[lo:hi])
 
 
 def _parse_module_assignments(

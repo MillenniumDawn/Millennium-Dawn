@@ -1,10 +1,69 @@
-"""Exercise the advisory check on the Greek and Turkish regression sources."""
+"""Exercise Greek, Turkish, and historical USA AI equipment regressions."""
 
-from ai_equipment_buildability import parse_designs
+import pytest
+from ai_equipment_buildability import check_ammunition_compatibility, parse_designs
+from equipment_module_slots import (
+    _iter_blocks,
+    blank_comments,
+    build_equipment_index,
+    check_target_variants,
+)
 from shared.paths import REPO_ROOT
-from shared.suite import build_validator, write_tree
+from shared.suite import assert_findings, build_validator, write_tree
 from validate_ai_equipment import Validator
 from validator_common import Severity
+
+
+@pytest.fixture(scope="module")
+def live_equipment_index():
+    return build_equipment_index(str(REPO_ROOT / "common/units/equipment"))
+
+
+@pytest.mark.parametrize(
+    "historical", (True, False), ids=("before-aaa631c76f", "corrected-USA-APC")
+)
+def test_usa_apc_ammunition_regression(live_equipment_index, historical):
+    path = "common/ai_equipment/USA_tank.txt"
+    text = (REPO_ROOT / path).read_text(encoding="utf-8-sig")
+    group = next(
+        text[header : hi + 1]
+        for name, _, hi, header in _iter_blocks(blank_comments(text), 0, len(text))
+        if name == "USA_APC_design"
+    )
+    weapon = "main_armament_slot = small_autocannon_3"
+    ammunition = "ammunition_load_slot = anti_infantry_autocannon_ammo_3"
+    assert group.count(weapon) == group.count(ammunition) == 1
+    if historical:
+        group = group.replace(
+            weapon,
+            "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } }",
+        ).replace(ammunition, "ammunition_load_slot = machine_gun_ammo")
+    findings = check_ammunition_compatibility(
+        parse_designs(group, path), live_equipment_index
+    )
+    assert_findings(
+        [f"{issue.category}: {issue.message}" for issue in findings],
+        (
+            [
+                (
+                    "ai-equipment-incompatible-ammo",
+                    "USA_APC_design/modern_APC_default",
+                    "small_autocannon_3",
+                    "machine_gun_ammo",
+                )
+            ]
+            if historical
+            else []
+        ),
+    )
+    assert all(
+        issue.severity == Severity.WARNING and issue.file == path for issue in findings
+    )
+    assert not any(
+        finding.kind == "category_mismatch"
+        and "ammunition_load_slot" in finding.message
+        for finding in check_target_variants(group, live_equipment_index)
+    )
 
 
 def test_naval_regression_sources(tmp_path):
