@@ -5020,10 +5020,18 @@ UKR_parliament_vote_roll = {
 	}
 	if = {
 		limit = { check_variable = { UKR_vote_weight_yes > 0 } }
+		if = {
+			limit = { has_country_flag = UKR_rada_lobbied_flag }
+			add_to_temp_variable = { UKR_vote_bonus = 30 }
+			custom_effect_tooltip = UKR_vote_sit_lobbied_tt
+			hidden_effect = { clr_country_flag = UKR_rada_lobbied_flag }
+		}
 		# approval weight x (1 + bonus/100), e.g. 60/40 with +30% -> 78/40 -> 66% approval
 		set_temp_variable = { UKR_vote_bonus_factor = UKR_vote_bonus }
 		divide_temp_variable = { UKR_vote_bonus_factor = 100 }
 		add_to_temp_variable = { UKR_vote_bonus_factor = 1 }
+		# penalties can lower the approval weight, but never below a quarter of the base
+		clamp_temp_variable = { var = UKR_vote_bonus_factor min = 0.25 }
 		multiply_temp_variable = { UKR_vote_weight_yes = UKR_vote_bonus_factor }
 		set_temp_variable = { UKR_vote_weight_total = UKR_vote_weight_yes }
 		add_to_temp_variable = { UKR_vote_weight_total = UKR_vote_weight_no }
@@ -5034,6 +5042,10 @@ UKR_parliament_vote_roll = {
 		if = {
 			limit = { check_variable = { UKR_vote_bonus > 0 } }
 			custom_effect_tooltip = UKR_vote_bonus_total_tt
+		}
+		else_if = {
+			limit = { check_variable = { UKR_vote_bonus < 0 } }
+			custom_effect_tooltip = UKR_vote_penalty_total_tt
 		}
 		custom_effect_tooltip = UKR_vote_pass_chance_tt
 		hidden_effect = {
@@ -5047,6 +5059,150 @@ UKR_parliament_vote_roll = {
 				set_temp_variable = { UKR_vote_roll_result = 2 }
 			}
 		}
+	}
+}
+
+# Situational Verkhovna Rada modifiers for the request in temp UKR_vote_topic / UKR_vote_direction
+# UKR_vote_topic: 1 bureaucracy, 2 military, 3 security, 4 education, 5 healthcare, 6 pension
+# UKR_vote_direction: 1 higher, -1 lower
+UKR_parliament_vote_situation = {
+	if = { limit = { check_variable = { UKR_vote_topic = 1 } }
+		set_temp_variable = { UKR_vote_law = bureau_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_adm_spending }
+	}
+	else_if = { limit = { check_variable = { UKR_vote_topic = 2 } }
+		set_temp_variable = { UKR_vote_law = military_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_military_law }
+	}
+	else_if = { limit = { check_variable = { UKR_vote_topic = 3 } }
+		set_temp_variable = { UKR_vote_law = police_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_police_spending }
+	}
+	else_if = { limit = { check_variable = { UKR_vote_topic = 4 } }
+		set_temp_variable = { UKR_vote_law = education_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_edu_spending }
+	}
+	else_if = { limit = { check_variable = { UKR_vote_topic = 5 } }
+		set_temp_variable = { UKR_vote_law = health_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_health_spending }
+	}
+	else = {
+		set_temp_variable = { UKR_vote_law = social_law }
+		set_temp_variable = { UKR_vote_law_expected = expected_welfare_spending }
+	}
+	custom_effect_tooltip = UKR_vote_situation_header_tt
+
+	# public expectations: +20 per level the request closes (max +60), -20 when it widens the gap
+	set_temp_variable = { UKR_vote_gap = UKR_vote_law_expected }
+	subtract_from_temp_variable = { UKR_vote_gap = UKR_vote_law }
+	multiply_temp_variable = { UKR_vote_gap = UKR_vote_direction }
+	if = {
+		limit = { check_variable = { UKR_vote_gap > 0 } }
+		clamp_temp_variable = { var = UKR_vote_gap max = 3 }
+		multiply_temp_variable = { UKR_vote_gap = 20 }
+		add_to_temp_variable = { UKR_vote_bonus = UKR_vote_gap }
+		custom_effect_tooltip = UKR_vote_sit_expected_toward_tt
+	}
+	else = {
+		add_to_temp_variable = { UKR_vote_bonus = -20 }
+		custom_effect_tooltip = UKR_vote_sit_expected_away_tt
+	}
+
+	# large budget deficit: -20 for higher spending, +20 for lower
+	if = {
+		limit = { ai_has_high_deficit = yes }
+		if = {
+			limit = { check_variable = { UKR_vote_direction = 1 } }
+			add_to_temp_variable = { UKR_vote_bonus = -20 }
+			custom_effect_tooltip = UKR_vote_sit_deficit_higher_tt
+		}
+		else = {
+			add_to_temp_variable = { UKR_vote_bonus = 20 }
+			custom_effect_tooltip = UKR_vote_sit_deficit_lower_tt
+		}
+	}
+
+	# defensive war: military +-50, security +-20
+	if = {
+		limit = {
+			has_defensive_war = yes
+			check_variable = { UKR_vote_topic = 2 }
+		}
+		set_temp_variable = { UKR_vote_war = 50 }
+		multiply_temp_variable = { UKR_vote_war = UKR_vote_direction }
+		add_to_temp_variable = { UKR_vote_bonus = UKR_vote_war }
+		custom_effect_tooltip = UKR_vote_sit_war_tt
+	}
+	else_if = {
+		limit = {
+			has_defensive_war = yes
+			check_variable = { UKR_vote_topic = 3 }
+		}
+		set_temp_variable = { UKR_vote_war = 20 }
+		multiply_temp_variable = { UKR_vote_war = UKR_vote_direction }
+		add_to_temp_variable = { UKR_vote_bonus = UKR_vote_war }
+		custom_effect_tooltip = UKR_vote_sit_war_tt
+	}
+
+	# Rada majority
+	if = {
+		limit = {
+			check_variable = { UKR_verkhovna_majority_selected = 1 }
+			check_variable = { UKR_vote_direction = 1 }
+			OR = {
+				check_variable = { UKR_vote_topic = 2 }
+				check_variable = { UKR_vote_topic = 3 }
+			}
+		}
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_sit_majority_ukrainian_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { UKR_verkhovna_majority_selected = 2 }
+			check_variable = { UKR_vote_topic = 6 }
+			check_variable = { UKR_vote_direction = 1 }
+		}
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_sit_majority_russian_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { UKR_verkhovna_majority_selected = 2 }
+			check_variable = { UKR_vote_topic = 2 }
+			check_variable = { UKR_vote_direction = 1 }
+		}
+		add_to_temp_variable = { UKR_vote_bonus = -20 }
+		custom_effect_tooltip = UKR_vote_sit_majority_russian_army_tt
+	}
+	else_if = {
+		limit = {
+			check_variable = { UKR_verkhovna_majority_selected = 3 }
+			OR = {
+				AND = {
+					check_variable = { UKR_vote_topic = 4 }
+					check_variable = { UKR_vote_direction = 1 }
+				}
+				AND = {
+					check_variable = { UKR_vote_topic = 1 }
+					check_variable = { UKR_vote_direction = -1 }
+				}
+			}
+		}
+		add_to_temp_variable = { UKR_vote_bonus = 20 }
+		custom_effect_tooltip = UKR_vote_sit_majority_western_tt
+	}
+
+	# kleptocracy: the oligarchs protect the state apparatus
+	if = {
+		limit = {
+			UKR_has_kleptocracy = yes
+			check_variable = { UKR_vote_topic = 1 }
+		}
+		set_temp_variable = { UKR_vote_klepto = 20 }
+		multiply_temp_variable = { UKR_vote_klepto = UKR_vote_direction }
+		add_to_temp_variable = { UKR_vote_bonus = UKR_vote_klepto }
+		custom_effect_tooltip = UKR_vote_sit_kleptocracy_tt
 	}
 }
 
@@ -7634,5 +7790,27 @@ UKR_sov_order_production_line_1089 = {
 	}
 	else = {
 		custom_effect_tooltip = ukraine_sov_factories_already_ordered_tt
+	}
+}
+# An-71 restoration: the AWACS special project is completed together with the tech
+UKR_an_71_complete_awacs_project = {
+	if = {
+		limit = { NOT = { is_special_project_completed = sp:sp_awacs_project } }
+		complete_special_project = {
+			project = sp:sp_awacs_project
+			scientist = UKR_Dmytro_Kiva
+			state = 698 #Kyiv
+		}
+	}
+ 
+	if = {
+		limit = { NOT = { has_tech = awacs_1 } }
+		custom_override_tooltip = {
+			tooltip = tech_effect|awacs_1
+			set_technology = {
+				awacs_1 = 1
+				popup = no
+			}
+		}
 	}
 }

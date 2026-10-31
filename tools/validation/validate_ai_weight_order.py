@@ -1,6 +1,6 @@
 """Flag AI weight blocks where an `add` follows a `factor = 0` modifier.
 
-`ai_chance` and `ai_will_do` apply their `modifier` blocks in order on a running
+`ai_chance`, `ai_will_do` and diplomatic `ai_desire` apply their `modifier` blocks in order on a running
 total, so a positive `add` after a `factor = 0` brings the zeroed weight back
 (issue #5738). Opposite literal boolean conditions in the same scope cannot
 hold together. Other trigger relationships remain unknown.
@@ -30,7 +30,7 @@ from validator_common import (
     run_validator_main,
 )
 
-_AI_WEIGHT_RE = re.compile(r"\b(ai_chance|ai_will_do)\s*=\s*\{")
+_AI_WEIGHT_RE = re.compile(r"\b(ai_chance|ai_will_do|ai_desire)\s*=\s*\{")
 _ADD_RE = re.compile(r"\badd\s*=\s*(\d+(?:\.\d+)?)")
 _CATEGORY = "ai-weight-zero-then-add"
 _BOOLEAN_TRIGGERS = frozenset({"always", "has_war", "is_ai"})

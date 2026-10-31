@@ -18,6 +18,7 @@ _SHARED_PATTERNS = {
         shared_utils.TRIGGER_OPEN_RE,
         shared_utils.AVAILABLE_OPEN_RE,
         validator_common.BANKRUPTCY_GUARD_RE,
+        validator_common.DEFICIT_GUARD_RE,
     )
 }
 
@@ -35,6 +36,11 @@ _LONGER_KEYS = {
         validator_common.BANKRUPTCY_GUARD_RE,
         "has_active_mission = bankruptcy_incoming_collapse_timer",
     ),
+    "deficit start": (
+        validator_common.DEFICIT_GUARD_RE,
+        "not_ai_has_high_deficit = yes",
+    ),
+    "deficit end": (validator_common.DEFICIT_GUARD_RE, "ai_has_high_deficit = yes_x"),
 }
 
 

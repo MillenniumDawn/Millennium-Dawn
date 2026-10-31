@@ -74,7 +74,19 @@ _INFLUENCE_HISTORY = (
     "capital = 652\n\n2000.1.1 = {\n"
     "\tset_country_flag = TST_alpha\n" + _INFLUENCE_SETUP + "}\n"
 )
-_IDEMPOTENT_CASES = {"repeated statements": _HISTORY, "influence": _INFLUENCE_HISTORY}
+_POLITICS_HISTORY = (
+    "capital = 652\n\n2000.1.1 = {\n"
+    "\tstart_politics_input = yes\n"
+    "\tset_variable = { party_pop_array^0 = 0.5 }\n"
+    "\tset_variable = { ruling_party = 0 }\n"
+    "\tstartup_politics = yes\n"
+    "}\n"
+)
+_IDEMPOTENT_CASES = {
+    "repeated statements": _HISTORY,
+    "influence": _INFLUENCE_HISTORY,
+    "politics": _POLITICS_HISTORY,
+}
 
 
 def test_influence_setup_order_preserved(tmp_path):
@@ -82,6 +94,19 @@ def test_influence_setup_order_preserved(tmp_path):
     _write(src, _INFLUENCE_HISTORY)
     out = _standardize(src)
     assert _INFLUENCE_SETUP in out
+
+
+def test_startup_politics_runs_after_the_party_setup_it_reads(tmp_path):
+    # Issue #6247: it was hoisted above party_pop_array and ruling_party.
+    src = tmp_path / "hist.txt"
+    _write(src, _POLITICS_HISTORY)
+    out = _standardize(src)
+    assert (
+        out.index("start_politics_input")
+        < out.index("party_pop_array^0")
+        < out.index("ruling_party = 0")
+        < out.index("startup_politics")
+    )
 
 
 @pytest.mark.parametrize("history", _IDEMPOTENT_CASES.values(), ids=_IDEMPOTENT_CASES)

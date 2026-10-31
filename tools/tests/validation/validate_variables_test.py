@@ -1348,7 +1348,6 @@ _SET_DONE = "\t\t\tset_country_flag = tag_done\n"
 _DONE_LOC = {
     "localisation/english/test_l_english.yml": 'l_english:\n tag_done: "done"\n'
 }
-_RELOAD = "; caution: this file reloads a focus tree without keep_completed = yes"
 _HAS_LOC = "; flag has a loc key - the effect tooltip line changes"
 
 
@@ -1480,11 +1479,9 @@ _REDUNDANT_FLAG_CASES = {
         },
         None,
     ),
-    "tree reload without keep_completed": (
-        {_TREE: _SWAP_TREE},
-        _redundant([_read_at(1)], suffix=_RELOAD),
-    ),
-    "tree reload with keep_completed": (
+    # keep_completed only keeps focuses the new tree also has.
+    "tree swapped out by its own file": ({_TREE: _SWAP_TREE}, None),
+    "tree swapped out with keep_completed": (
         {
             _TREE: _focus(_SET_DONE)
             + _focus(
@@ -1492,14 +1489,20 @@ _REDUNDANT_FLAG_CASES = {
                 focus_id="TAG_swap",
             )
         },
-        _ONE_READ,
+        None,
+    ),
+    "tree loaded from another file": (
+        {
+            _READER: _DONE_READER
+            + "\ne = { load_focus_tree = { tree = tag_focus keep_completed = yes } }\n"
+        },
+        None,
+    ),
+    "tree loaded from a file with no flags": (
+        {"common/decisions/loader.txt": "e = { load_focus_tree = tag_focus }\n"},
+        None,
     ),
     "flag with a loc key": (_DONE_LOC, _redundant([_read_at(1)], suffix=_HAS_LOC)),
-    # UKR_vitrenko_power / IRQ_spring_of_islam shape.
-    "reload caution then loc key": (
-        {_TREE: _SWAP_TREE, **_DONE_LOC},
-        _redundant([_read_at(1)], suffix=_RELOAD + _HAS_LOC),
-    ),
     "two readers": (
         {_READER: _DONE_READER + "\n" + _DONE_READER + "\n"},
         _redundant([_read_at(1), _read_at(2)]),

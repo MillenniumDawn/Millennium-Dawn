@@ -11,6 +11,18 @@ from validator_batches import ALL_SPECS
 UNLOCKS = {"hull": {"naval_tech"}, "tank": {"armor_tech"}, "plane": {"air_tech"}}
 
 
+@pytest.mark.parametrize("kind", ("enable_equipments", "enable_equipment_modules"))
+def test_unlock_reader_handles_compact_definitions_and_alternative_technologies(kind):
+    text = f"""technologies = {{
+        first = {{ {kind} = {{ item }} }}
+        second = {{ {kind} = {{ item other }} }}
+    }}"""
+    assert equipment_unlocks(text, kind) == {
+        "item": {"first", "second"},
+        "other": {"second"},
+    }
+
+
 def write_technology(tmp_path, write_path):
     write_path(
         tmp_path,
@@ -440,6 +452,14 @@ def test_starting_history_for_event_recipients(gate):
         (
             'if = { limit = { NOT = { has_dlc = "Designer" } } } else = { set_technology = { naval_tech = 1 } }',
             0,
+        ),
+        (
+            'if = { limit = { has_dlc = "Designer" } if = { limit = { NOT = { has_dlc = "Designer" } } } else = { set_technology = { naval_tech = 1 } } }',
+            0,
+        ),
+        (
+            'if = { limit = { NOT = { has_dlc = "Designer" } } if = { limit = { has_war = yes } } else = { set_technology = { naval_tech = 1 } } }',
+            1,
         ),
     ],
 )

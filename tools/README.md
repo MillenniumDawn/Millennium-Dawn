@@ -19,6 +19,15 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
 `dev` includes a smaller `test` group, which is all the CI test jobs install.
 
+ImageMagick is also required for art conversion and its integration tests. Install
+it with your system package manager: `sudo apt-get install imagemagick` on
+Debian/Ubuntu, or `brew install imagemagick` on macOS. On Windows, use the
+[ImageMagick installer](https://imagemagick.org/script/download.php#windows) and
+enable its PATH option. Setup checks for a working `magick` or ImageMagick
+`convert`, rejects unrelated programs with those names, and fails if neither is
+available. It does not install system packages. After installing, reopen your
+terminal and run `python tools/dev_setup.py --check`.
+
 CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
 and pylint on staged files only, plus mypy:
 
@@ -195,18 +204,43 @@ python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO
 python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
 ```
 
-### Fix changelog ordering
+### Clean up the changelog
 
 ```bash
-python3 tools/merge_changelog.py --fix
+python3 tools/merge_changelog.py --fix                 # clean and sort the current version
+python3 tools/merge_changelog.py --preview             # report duplicates and merge candidates
+python3 tools/merge_changelog.py --beta                # fix, then update the beta changelog page
+python3 tools/merge_changelog.py --release "The Name"  # fix, then write the release page
 ```
 
-This sorts only the current version's entries within each category. Untagged
-entries come first, followed by the first country tag. Equal tags keep their
-order. Blank lines between entries are dropped and repeated blank lines become
-one. Older versions, entry text, and duplicate entries are left alone. Resolve
-conflict markers first. The Git merge driver also applies this ordering after a
-successful merge.
+`--fix` touches only the current version. Older versions stay as they are.
+Resolve conflict markers first.
+
+- Each entry starts with one space, a dash, and a space. Repeated spaces become
+  one, and `[A][B]` or `[A/B]` tags become `[A]/[B]`. An entry that ends in a
+  word gets a period. Endings like `)`, `:`, or a backtick are left alone.
+  Category headings start at column 0.
+- An entry that repeats one in the same category word for word is removed, with
+  a warning. An exact repeat in another category is kept and reported, so you
+  can pick the right category.
+- Entries are sorted within each category. Untagged entries come first, followed
+  by the first country tag. Equal tags keep their order. Blank lines between
+  entries are dropped and repeated blank lines become one.
+
+The Git merge driver applies only the ordering after a successful merge. The
+changelog lint warns, without failing, about exact repeats and about entries
+`--fix` would tidy.
+
+`--preview` writes nothing. It reports exact repeats, entries that differ only
+by tag, near-identical entries, and wording shared by three or more entries in
+one category. Each candidate lists the tags and issue numbers a merged entry
+must keep. Edit the changelog by hand for the ones worth merging.
+
+`--beta` replaces the version sections of
+`docs/src/content/misc/beta-changelogs.md` with the current version and keeps
+its frontmatter and intro. `--release NAME` writes the current version to
+`docs/src/content/changelogSections/vX-Y-name.md` with the next `order`. Running
+it again rewrites the version sections and keeps the page's frontmatter.
 
 The merge driver keeps a PR's new entry in the category the PR put it under. If
 main started a new version, the entry moves to the same category there. A PR
@@ -447,7 +481,9 @@ See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full u
 
 ### Report Library (`report_lib/`)
 
-Internal package used by `generate_validation_report.py` to render PR comments and post GitHub Check Runs. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+Internal package used by `generate_validation_report.py` to render PR report artifacts. Its inputs are the JSON sidecars produced by each validator plus the `suite-run.json` artifacts the tools-tests jobs upload.
+
+`publish_validation_report.py` runs in a separate trusted workflow to synchronize the PR comment. Validation runs, including forks, have read-only repository permissions. The publisher verifies the artifact's run and PR before writing; it never executes artifact content. Checks API support remains available through the CLI but is not used by CI.
 
 | Module            | Responsibility                                                                                 |
 | ----------------- | ---------------------------------------------------------------------------------------------- |
@@ -484,8 +520,9 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                          |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                             |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                              |
-| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                     |
+| **generate_validation_report.py** | CI: renders the PR report and comment payload for the trusted publisher                                                                                                                                                                                                                                                                                                                                                                                      |
+| **publish_validation_report.py**  | CI: trusted publisher that synchronizes the PR report comment                                                                                                                                                                                                                                                                                                                                                                                                |
+| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines. Manual: `--fix`, `--preview`, `--beta`, and `--release` clean the changelog and write its docs pages                                                                                                                                                                                                                               |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                               |
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse helpers (`add_standard_file_arguments`, `create_validation_parser`, `create_linting_parser`), the `run_validator_main` entry point, `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |

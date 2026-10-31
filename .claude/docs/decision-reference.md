@@ -86,6 +86,7 @@ own line as the first statement, using the decision's own id:
 - A log nested in an `if` or `hidden_effect` records which branch ran. It does not
   replace the block's own log.
 - A block whose only content is a log is dead. Delete the block.
+- One log per block at its own level. A second log belongs inside the branch it describes.
 
 ## AI-only decisions
 
@@ -161,6 +162,9 @@ mission and halve it on a high deficit:
   adds, or a later `add` brings the zeroed weight back.
 - Leave the weight off when skipping the decision costs the AI more than the charge.
 - Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
+  A bankruptcy check on it is still fine, a deficit check is not.
+- Do not lower the weight on bankruptcy or a high deficit for a decision that costs no
+  money. A war, a spending law change, or a money modifier counts as money.
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
@@ -175,6 +179,11 @@ The Spanish decisions in `common/decisions/Spain.txt` are the reference.
   payment effect there if needed. A charge in `remove_effect`, `timeout_effect`, or
   `cancel_effect` is not an entry cost: the country may no longer have the resources
   when that effect runs. A tooltip preview does not charge anything.
+- A treasury gate must be at least the charge it guards. `treasury > 1.75` in front of a
+  charge of 2 lets a country take the decision and end in debt.
+- A trigger cannot read a temp variable that only the decision's effects set. It runs
+  before them, so it always reads 0. Use a persistent variable, or a scripted trigger
+  that sets the temp variable first.
 - `cost` and a non-PP custom cost can sit together; vanilla does this
   (`AUS_arm_border_guards_decision`).
 

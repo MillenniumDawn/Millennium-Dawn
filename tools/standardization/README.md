@@ -277,6 +277,10 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 Focus, event, decision, idea and technology blocks are reindented by brace
 depth, one tab per level, so a nested line written at the wrong depth is moved.
+Focus files are also reindented between blocks, so section comments and tree
+properties follow the same rule. `validate_style.py` reports lines off their
+brace depth as `indent-depth` warnings; `tools/linting/fix_styling.py --fix-indent`
+fixes them in any file the check reads.
 
 ### Focus Trees
 
