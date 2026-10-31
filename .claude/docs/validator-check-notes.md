@@ -25,6 +25,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_ai_weight_order.py
 
+- Checks event `ai_chance`, decision/GUI `ai_will_do`, and diplomatic `ai_desire`
+  through the same scanner. The existing common/events CI batch covers all three.
 - `ai-weight-zero-then-add` (WARNING): modifiers run in order, so a positive `add`
   can restore a zeroed weight. Opposite boolean guards in the same scope cannot
   both apply. Other relationships, including numeric bounds and flag values,
@@ -103,6 +105,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
+- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
+  CI): the case rule in the stylization guide, and a prefix-owner rule still under
+  review. Existing ids are never renamed, so
+  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+  flat `allowed` pin, else its category's. Prefixes that are not country tags are
+  skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
+  `SIL_bund_*`), so review the owner rule before enforcing it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -122,6 +131,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   country that cannot pay. A decision that must stay unguarded, such as a deadline the
   AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
   decision, not one cost, so re-check its reason when the decision gains a new cost.
+- `decision-unneeded-treasury-guard` (WARNING): the decision twin of
+  `event-unneeded-treasury-guard`, read over the whole decision, with the same gaps.
+  `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost is
+  money, and a money modifier in the `modifier` block commits money.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -251,6 +264,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
+- `event-unneeded-treasury-guard` (WARNING, opt-in with `--check-ai-chance-costs`): an
+  `ai_chance` modifier that lowers the weight on bankruptcy or a high deficit, on an
+  option with no money cost. Costs come from the whole option, nested scopes included,
+  so a charge back to ROOT from a state scope counts, and so does one to another
+  country. A political power cost justifies the bankruptcy check only. A war, a
+  spending law change, or a money modifier the script names commits money and
+  justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
+  A free build costs nothing here, even for a building with upkeep, matching the
+  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
+  modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -330,6 +353,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
+- `unneeded-treasury-guard` (WARNING): the focus twin of
+  `event-unneeded-treasury-guard`, over the completion rewards. The focus `cost` is
+  completion time, never a price. A literal political power loss justifies the
+  bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
+  as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
+  block costs nothing. A charge another nation's event sends back to the sender,
+  directly or through a reply event, counts. Known gaps: partner-event branches gated
+  on the receiver's tag are not told apart, a partner-event charge never raises
+  `missing-bankruptcy-guard`, and costs that come from an idea's modifiers, such as
+  `personnel_cost_multiplier_modifier`, are not seen, so their guards read as unneeded.
 
 ## validate_ai_path_rules.py
 
@@ -641,7 +674,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - The decision log id check also reads a log with no `Decision` word, when the string is
   only the standard prefix, filler words, and one id. Longer text is skipped, so a log
-  such as `... <other_decision> setup finished` is a known gap.
+  such as `... <other_decision> setup finished` is a known gap. `Mission` works like
+  `Decision`, and an id that runs into `[?...]` is built at runtime and skipped.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
@@ -650,6 +684,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `add_relation_modifier`.
 - Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
   and a `#` comment swallowed into a `log` string.
+- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+  finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
+  rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
+  clears it. The scan strips comments, so comment-only lines are not checked. Four
+  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
+  tracked in #6248.
 
 ## validate_variables.py
 
