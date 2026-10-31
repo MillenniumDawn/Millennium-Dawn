@@ -70,57 +70,6 @@ CONTRACTS.update(
 )
 
 _TAG = re.compile(r"[A-Z][A-Z0-9]{2}")
-_NEUTRAL = frozenset(
-    {
-        "AND",
-        "OR",
-        "NOT",
-        "if",
-        "else_if",
-        "else",
-        "limit",
-        "trigger",
-        "available",
-        "allowed",
-        "visible",
-        "bypass",
-        "joint_trigger",
-        "possible",
-        "happened",
-        "hidden_trigger",
-        "custom_trigger_tooltip",
-        "custom_override_tooltip",
-        "hidden_effect",
-        "effect",
-        "completion_reward",
-        "completion_reward_joint_originator",
-        "completion_reward_joint_member",
-        "immediate",
-        "after",
-        "option",
-        "ai_chance",
-        "ai_will_do",
-        "modifier",
-        "mean_time_to_happen",
-        "complete_effect",
-        "remove_effect",
-        "cancel_effect",
-        "timeout_effect",
-        "select_effect",
-        "ai_desire",
-        "random",
-        "for_each_loop",
-        "for_loop_effect",
-        "while_loop_effect",
-        "any_of",
-        "all_of",
-        "desc",
-        "title",
-    }
-)
-_SKIP = frozenset(
-    {"meta_effect", "meta_trigger", "effect_tooltip", "custom_effect_tooltip"}
-)
 _CONDITION_LISTS = frozenset(
     {
         "AND",
@@ -137,6 +86,42 @@ _CONDITION_LISTS = frozenset(
         "custom_trigger_tooltip",
         "modifier",
     }
+)
+_NEUTRAL = _CONDITION_LISTS | {
+    "OR",
+    "NOT",
+    "if",
+    "else_if",
+    "else",
+    "custom_override_tooltip",
+    "hidden_effect",
+    "effect",
+    "completion_reward",
+    "completion_reward_joint_originator",
+    "completion_reward_joint_member",
+    "immediate",
+    "after",
+    "option",
+    "ai_chance",
+    "ai_will_do",
+    "mean_time_to_happen",
+    "complete_effect",
+    "remove_effect",
+    "cancel_effect",
+    "timeout_effect",
+    "select_effect",
+    "ai_desire",
+    "random",
+    "for_each_loop",
+    "for_loop_effect",
+    "while_loop_effect",
+    "any_of",
+    "all_of",
+    "desc",
+    "title",
+}
+_SKIP = frozenset(
+    {"meta_effect", "meta_trigger", "effect_tooltip", "custom_effect_tooltip"}
 )
 _PATTERNS = ["common/**/*.txt", "events/**/*.txt", "history/countries/*.txt"]
 _CONTEXT_LIMIT = 64
@@ -494,6 +479,19 @@ class Reader:
                 self._walk(path, node.children, scope, caller)
 
 
+def scan_documents(documents):
+    """Return bindings from relative script paths mapped to raw text."""
+    parsed = {}
+    pools = set()
+    for path, text in sorted(documents.items()):
+        parsed[path] = script_nodes(text)
+        pools.update(event_pool_targets(text))
+    reader = Reader(parsed)
+    for event in sorted(pools):
+        reader._event(event, Scope(), "event pool (caller unresolved)")
+    return reader.scan()
+
+
 class Validator(BaseValidator):
     TITLE = "INFLUENCE TRIGGER READ VALIDATION"
 
@@ -501,15 +499,10 @@ class Validator(BaseValidator):
         self._log_section("Foreign-influence trigger bindings (advisory)")
         files = self._collect_files(_PATTERNS, ignore_staged=True)
         documents = {}
-        pools = set()
         for path in sorted(files):
             text = read_file(path)
             relative = os.path.relpath(path, self.mod_path).replace(os.sep, "/")
-            documents[relative] = script_nodes(text)
-            pools.update(event_pool_targets(text))
-        reader = Reader(documents)
-        for event in sorted(pools):
-            reader._event(event, Scope(), "event pool (caller unresolved)")
+            documents[relative] = text
         selected = None
         if self.staged_only:
             selected = {
@@ -517,7 +510,9 @@ class Validator(BaseValidator):
                 for path in self._collect_files(_PATTERNS)
             }
         self.bindings = [
-            row for row in reader.scan() if selected is None or row.file in selected
+            row
+            for row in scan_documents(documents)
+            if selected is None or row.file in selected
         ]
         for row in self.bindings:
             if row.status != "resolved":

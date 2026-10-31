@@ -10,21 +10,12 @@ from shared.suite import (
     run_validator,
     write_tree,
 )
+from validate_influence_reads import scan_documents as _scan
 
 _FOCUS = "common/national_focus/test.txt"
 _HISTORY = "history/countries/CHI - China.txt"
 _EVENTS = "events/test.txt"
 _TRIGGERS = "common/scripted_triggers/test.txt"
-
-
-def _scan(documents):
-    reader = V.Reader(
-        {path: V.script_nodes(text) for path, text in sorted(documents.items())}
-    )
-    for text in documents.values():
-        for event in sorted(V.event_pool_targets(text)):
-            reader._event(event, V.Scope(), "event pool (caller unresolved)")
-    return reader.scan()
 
 
 def _focus(body):
@@ -412,6 +403,21 @@ def test_run_calls_every_check(tmp_path, monkeypatch):
     validator = V.Validator(mod_path=str(tmp_path), workers=1)
     called, checks = checks_called_by_run(validator, monkeypatch)
     assert called == checks == ["validate_influence_reads"]
+
+
+def test_validator_uses_shared_scan_entrypoint(tmp_path, monkeypatch):
+    documents = {_HISTORY: "is_top3_influencer = yes"}
+    write_tree(tmp_path, documents)
+    calls = []
+
+    def scan(inputs):
+        calls.append(inputs)
+        return _scan(inputs)
+
+    monkeypatch.setattr(V, "scan_documents", scan)
+    validator = run_validator(V.Validator, tmp_path)
+    assert calls == [documents]
+    assert validator.bindings == _scan(documents)
 
 
 def test_warnings_and_bindings_have_separate_outputs(tmp_path):
