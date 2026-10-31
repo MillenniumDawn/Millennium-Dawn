@@ -439,7 +439,7 @@ EU_voting_category = {
 			remove_mission = EU_budget_draft_preparations
 			activate_mission = EU_budget_draft_ongoing
 			set_global_flag = EU_ongoing_budget_draft
-			set_global_flag = EU_budget_EP_block # failgate
+			set_global_flag = EU_budget_EP_block
 			update_eu_dirty_variable = yes
 			country_event = EUbudget.11
 		}
@@ -474,11 +474,11 @@ EU_voting_category = {
 				}
 				assess_MEP_support_party_x = yes
 				set_global_flag = EU_active_EP_agenda_holder
+				set_variable = { global.current_active_agenda_disp = 999 }
 				for_each_scope_loop = {
 					array = global.EU_member
 					activate_mission = EU_parliament_focus_EUXXX_approve
 				}
-				set_variable = { global.current_active_agenda_disp = 999 }
 			}
 			else = {
 				if = {
@@ -587,11 +587,11 @@ EU_voting_category = {
 				}
 				assess_MEP_support_party_x = yes
 				set_global_flag = EU_active_EP_agenda_holder
+				set_variable = { global.current_active_agenda_disp = 998 }
 				for_each_scope_loop = {
 					array = global.EU_member
 					activate_mission = EU_parliament_focus_EUXXX_approve
 				}
-				set_variable = { global.current_active_agenda_disp = 998 }
 			}
 			else = {
 				if = {
@@ -1673,6 +1673,13 @@ EU_apply_for_membership_category = {
 					check_variable = { europeanism > 0.69 }
 				}
 			}
+			is_puppet = no
+			custom_trigger_tooltip = {
+				tooltip = is_recognised_state_tt
+				NOT = { is_in_array = { global.Unrecognised_States = THIS } }
+				NOT = { has_idea = non_state_actor }
+				NOT = { has_idea = lacks_international_recognition }
+			}
 		}
 
 		visible = { NOT = { has_idea = EU_member } }
@@ -1901,5 +1908,45 @@ EU_apply_for_membership_category = {
 		}
 
 		ai_will_do = { base = 100 }
+	}
+
+	EU_player_start_potential_negotiations = {
+		visible = {
+			is_ai = no
+			NOT = { has_country_flag = EU_candidate }
+			NOT = { has_idea = EU_member }
+		}
+		available = {
+			custom_trigger_toolip = {
+				tooltip = EU_potential_not_candidate_tt
+				EU_is_potential = yes
+				NOT = { has_country_flag = EU_candidate }
+			}
+		}
+		cost = 150
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EU_player_start_potential_negotiations"
+			activate_mission = EU_player_negotiations_ongoing
+		}
+	}
+
+	EU_player_negotiations_ongoing = {
+		available = { always = no }
+		activation = { always = no }
+		days_mission_timeout = 365
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EU_player_negotiations_ongoing"
+			set_country_flag = EU_candidate
+			remove_from_array = { global.EU_all_potential_members = ROOT }
+			remove_from_array = { global.EU_fulfilled_potential_members = ROOT }
+			remove_from_array = { global.EU_historical_potential_members = ROOT }
+			for_each_scope_loop = {
+				array = global.EU_member
+				if = {
+					limit = { has_country_flag = show_EU_council }
+					EU_enlargement_display_constructor = yes
+				}
+			}
+		}
 	}
 }
