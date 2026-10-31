@@ -255,7 +255,9 @@ definitions. Both are WARNINGs pending backlog triage. Comments, quoted strings,
 native effect blocks, and scripted trigger parameters are not flagged.
 
 `validate_scripted_params.py` checks `NAME = yes` calls to effects with required
-parameter contracts by default. `call-shares-line` is an ERROR: a contracted call
+parameter contracts by default. A real variable marked `(variable)` in a contract
+must be written above the effect's last call in its block, or the check reports a
+`variable-input-after-call` ERROR. `call-shares-line` is an ERROR: a contracted call
 must not share its physical line with another statement. `--strict` gates it in
 CI. This is a readability policy, not an engine requirement for newlines.
 
