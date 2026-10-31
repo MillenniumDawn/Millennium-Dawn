@@ -280,7 +280,7 @@ def generate_combined_report(
 
 
 def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None:
-    """Copy every validator's JSON sidecar into persist_dir.
+    """Copy every validator's issue and analysis sidecars into persist_dir.
 
     The suite runs inside a TemporaryDirectory that is deleted on exit; the
     copies are the only per-validator results that survive. Copy errors raise:
@@ -293,13 +293,17 @@ def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None
         os.unlink(marker_path)
     except FileNotFoundError:
         pass
-    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")):
+    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")) + glob.glob(
+        os.path.join(persist_dir, "*.analysis.jsonl")
+    ):
         try:
             os.unlink(stale_path)
         except FileNotFoundError:
             pass
     copied = 0
-    for json_path in glob.glob(os.path.join(output_dir, "*.json")):
+    for json_path in glob.glob(os.path.join(output_dir, "*.json")) + glob.glob(
+        os.path.join(output_dir, "*.analysis.jsonl")
+    ):
         shutil.copyfile(
             json_path, os.path.join(persist_dir, os.path.basename(json_path))
         )
@@ -365,7 +369,7 @@ def main():
         type=str,
         default=None,
         help=(
-            "Copy each validator's JSON sidecar into this directory before "
+            "Copy each validator's issue and analysis sidecars into this directory before "
             "the run's temporary output is deleted. Used by the nightly "
             "baseline job to keep the per-validator results after the suite "
             "completes."
