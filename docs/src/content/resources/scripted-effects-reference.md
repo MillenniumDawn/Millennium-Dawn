@@ -286,7 +286,7 @@ Consult the [Subideology Slots table](#subideology-slots) below to pick the subi
 
 ### Step 2: Add Localisation
 
-In `localisation/english/MD_subideology_parties_l_english.yml`, add three entries for the party using the format below:
+In `localisation/english/MD_politics_view_parties_l_english.yml`, add three entries for the party using the format below:
 
 ```yaml
 TAG.subideology: "£TAG_icon_name (ABBRV) - Party Name"
