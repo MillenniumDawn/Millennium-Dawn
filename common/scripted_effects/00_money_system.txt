@@ -4810,7 +4810,9 @@ update_state_variables = {
 
 # Effect: register_sector_demand
 # Purpose: Adds one sector's job demand to the totals and to its priority level for solve_workforce_priority_share
-# Input (temp): sector_priority (1-10), sector_max_workers (millions)
+# Parameters:
+# - sector_priority: 1-10
+# - sector_max_workers: millions
 register_sector_demand = {
 	add_to_temp_variable = { workforce_demand_by_priority^sector_priority = sector_max_workers }
 	add_to_temp_variable = { open_demand = sector_max_workers }
@@ -4830,10 +4832,15 @@ register_sector_demand = {
 # Effect: solve_workforce_priority_share
 # Purpose: Finds workforce_priority_share, the fulfillment each priority point buys (fulfillment = priority * share, max 100%).
 #          Levels that reach 100% take only the jobs they have, and the workers left over go to the lower levels.
-# Input (temp): workforce_total, open_demand, open_weight (demand * priority) and open_priority_sum from register_sector_demand,
-#               workforce_demand_by_priority, workforce_sectors_by_priority
 # Output (temp): workforce_priority_share
 # Output (player): workforce_fulfillment_per_growth, the average fulfillment gained per 100% of population growth
+# Parameters:
+# - workforce_total: workers available
+# - open_demand (set by register_sector_demand): jobs still open
+# - open_weight (set by register_sector_demand): demand * priority
+# - open_priority_sum (set by register_sector_demand): priority total
+# - workforce_demand_by_priority (set by register_sector_demand): jobs per priority level
+# - workforce_sectors_by_priority (set by register_sector_demand): sectors per priority level
 solve_workforce_priority_share = {
 	set_temp_variable = { workforce_pool = workforce_total }
 	clamp_temp_variable = { var = workforce_pool min = 0 max = @math_expressions_max }
@@ -4893,8 +4900,11 @@ solve_workforce_priority_share = {
 
 # Effect: assign_sector_workers
 # Purpose: Gives one sector its workers from workforce_priority_share and takes them out of workforce_total
-# Input (temp): sector_priority (1-10), sector_max_workers (millions), workforce_priority_share
 # Output (temp): sector_workers (millions), sector_fulfillment (1 for a sector with no jobs)
+# Parameters:
+# - sector_priority: 1-10
+# - sector_max_workers: millions
+# - workforce_priority_share (set by solve_workforce_priority_share): fulfillment per priority point
 assign_sector_workers = {
 	set_temp_variable = { sector_workers = 0 }
 	set_temp_variable = { sector_fulfillment = 1 }
