@@ -681,13 +681,21 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
-  sizes and `allowed_battalion_groups`. Staged mode checks only staged template files,
-  so a define or doctrine change surfaces on the full CI run.
+  sizes. Staged mode checks only staged template files, so a define or doctrine change
+  surfaces on the full CI run.
 - `template-misplaced-support` (WARNING): a `support` block lists a sub-unit with
   `divisional = no`, or a `regimental_support` block lists one with `regimental = no`.
   The game drops that unit from the template. Ships as WARNING for its backlog of
   1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
   on the full CI run only.
+- `template-incompatible-regimental-support` (WARNING): a `regimental_support` company
+  sets `allowed_battalion_groups`, and no battalion in its `regiments` column has one
+  of those `group` values. A column with at least one allowed battalion passes,
+  because the engine rule for mixed columns is unverified. Companies without the list,
+  columns with an ungrouped battalion, and missing columns (`template-slot`) are
+  skipped. Ships as WARNING for its backlog of 378 attachments in 182 template
+  definitions. A `common/units/` change surfaces on the full CI run only. Tracked in
+  #5453.
 - `airbase-over-capacity` (WARNING): the planes `history/units` `air_wings` place in a
   state exceed its undated `air_base` level times `NBuildings.AIRBASE_CAPACITY_MULT`
   (vanilla 200, one slot per plane). Totals add every country's OOB, so each file

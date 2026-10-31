@@ -194,6 +194,9 @@ _TEMPLATE_LOCKED_ROW = "template-locked-row"
 _TEMPLATE_MISPLACED_SUPPORT = "template-misplaced-support"
 # A sub-unit that sets the flag to no cannot sit in that template block.
 _SUPPORT_BLOCK_FLAGS = {"support": "divisional", "regimental_support": "regimental"}
+_TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT = "template-incompatible-regimental-support"
+_ATTACH_GROUPS_KEY = "allowed_battalion_groups"
+_GROUP_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
@@ -410,12 +413,27 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
     return equipment
 
 
-def _parse_unit_flags_file(content: str) -> Tuple[Set[str], Dict[str, Set[str]]]:
-    """Sub-unit names declared `can_be_parachuted = yes` in one units file, and
-    per support block the names whose flag bars them from it."""
+# Plain tuples: a class would pickle into the disk cache under the running module name.
+_UnitFlags = Tuple[
+    Set[str], Dict[str, Set[str]], Dict[str, str], Dict[str, FrozenSet[str]]
+]
+_UnitSource = Tuple[
+    Set[str],
+    Set[str],
+    Set[str],
+    Dict[str, Set[str]],
+    Dict[str, str],
+    Dict[str, FrozenSet[str]],
+]
+
+
+def _parse_unit_flags_file(content: str) -> _UnitFlags:
+    """Parachutable names, per-block barred names, groups, and attach groups."""
     text = blank_comments(content)
     parachutable = set()
     barred: Dict[str, Set[str]] = {block: set() for block in _SUPPORT_BLOCK_FLAGS}
+    groups: Dict[str, str] = {}
+    attach_groups: Dict[str, FrozenSet[str]] = {}
     for lo, hi in _iter_named_blocks(text, 0, len(text), "sub_units"):
         for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
             if _scalar(text, blo, bhi, "can_be_parachuted") == "yes":
@@ -423,12 +441,18 @@ def _parse_unit_flags_file(content: str) -> Tuple[Set[str], Dict[str, Set[str]]]
             for block, flag in _SUPPORT_BLOCK_FLAGS.items():
                 if _scalar(text, blo, bhi, flag) == "no":
                     barred[block].add(name)
-    return parachutable, barred
+            group = _scalar(text, blo, bhi, "group")
+            if group:
+                groups[name] = group
+            for key, llo, lhi, _ in _iter_blocks(text, blo, bhi):
+                if key == _ATTACH_GROUPS_KEY:
+                    attach_groups[name] = frozenset(
+                        _GROUP_TOKEN_RE.findall(text, llo, lhi)
+                    )
+    return parachutable, barred, groups, attach_groups
 
 
-def _parse_canonical_unit_source(
-    content: str,
-) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
+def _parse_canonical_unit_source(content: str) -> _UnitSource:
     return (
         _parse_canonical_units_file(content),
         _parse_equipment_names_file(content),
@@ -436,19 +460,15 @@ def _parse_canonical_unit_source(
     )
 
 
-def _parse_canonical_unit_sources(
-    mod_path: str,
-) -> List[Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]]:
-    """Parse each unit source once for the canonical, paradrop, and support
-    placement unit indexes."""
+def _parse_canonical_unit_sources(mod_path: str) -> List[_UnitSource]:
+    """Parse each unit source once for the canonical, paradrop, support
+    placement, and battalion group unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
         content = _read_text(filepath, mod_path)
 
-        def compute(
-            source_content: str = content,
-        ) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
+        def compute(source_content: str = content) -> _UnitSource:
             return _parse_canonical_unit_source(source_content)
 
         parsed.append(
@@ -2265,6 +2285,11 @@ def read_template_limits(mod_path: str) -> TemplateLimits:
 _TemplateGrids = Dict[str, Dict[int, Dict[int, int]]]
 
 
+def _slot_coords(text: str, node: Dict) -> Optional[Tuple[int, int]]:
+    pos = dict(_SLOT_COORD_RE.findall(text[node["start"] : node["end"]]))
+    return (int(pos["x"]), int(pos["y"])) if len(pos) == 2 else None
+
+
 def _read_template_grids(
     text: str, nodes: List[Dict], node: Dict, limits: TemplateLimits
 ) -> Tuple[_TemplateGrids, List[Tuple[int, str]]]:
@@ -2280,12 +2305,12 @@ def _read_template_grids(
         for unit_idx in nodes[block_idx]["children"]:
             unit = nodes[unit_idx]
             line = unit["line"]
-            pos = dict(_SLOT_COORD_RE.findall(text[unit["start"] : unit["end"]]))
-            if len(pos) != 2:
+            coords = _slot_coords(text, unit)
+            if coords is None:
                 label = unit["label"]
                 errors.append((line, f"{block} unit '{label}' has no readable x and y"))
                 continue
-            x, y = int(pos["x"]), int(pos["y"])
+            x, y = coords
             slot = f"{block} slot x = {x} y = {y}"
             rows = grids.setdefault(block, {}).setdefault(x, {})
             if y in rows:
@@ -2425,10 +2450,71 @@ def check_misplaced_support(
     return findings
 
 
+def check_regimental_support_groups(
+    text: str,
+    nodes: List[Dict],
+    battalion_groups: Dict[str, str],
+    attach_groups: Dict[str, FrozenSet[str]],
+) -> List[Tuple[int, str, str]]:
+    """``(line, category, message)`` per regimental_support company whose
+    regiments column has no battalion in its ``allowed_battalion_groups``.
+
+    Only a column whose every battalion has a known group can prove the
+    attachment wrong; one allowed battalion is enough to pass.
+    """
+    findings = []
+    for node in nodes:
+        if node["label"] != "division_template":
+            continue
+        columns: Dict[int, List[str]] = {}
+        companies = []
+        for block_idx in node["children"]:
+            block = nodes[block_idx]["label"]
+            for idx in nodes[block_idx]["children"]:
+                coords = _slot_coords(text, nodes[idx])
+                if coords is None:
+                    continue
+                x = coords[0]
+                if block == "regiments":
+                    columns.setdefault(x, []).append(nodes[idx]["label"])
+                elif block == "regimental_support":
+                    companies.append((idx, x))
+        name = _top_level_value(text, node["start"] + 1, node["end"], "name")
+        for idx, x in companies:
+            company = nodes[idx]["label"]
+            allowed = attach_groups.get(company)
+            battalions = columns.get(x, [])
+            # An empty column is template-slot's; an ungrouped battalion proves nothing.
+            if not allowed or not battalions:
+                continue
+            if any(battalion not in battalion_groups for battalion in battalions):
+                continue
+            groups = sorted({battalion_groups[battalion] for battalion in battalions})
+            if allowed.isdisjoint(groups):
+                findings.append(
+                    (
+                        nodes[idx]["line"],
+                        _TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT,
+                        f"template '{name}' (line {node['line']}): "
+                        f"regimental_support '{company}' allows "
+                        f"{_ATTACH_GROUPS_KEY} {', '.join(sorted(allowed))}, but "
+                        f"regiments column x = {x} has only {', '.join(groups)}",
+                    )
+                )
+    return findings
+
+
 def _check_template_slots_file(
-    args: Tuple[str, str, TemplateLimits, Dict[str, Set[str]]],
+    args: Tuple[
+        str,
+        str,
+        TemplateLimits,
+        Dict[str, Set[str]],
+        Dict[str, str],
+        Dict[str, FrozenSet[str]],
+    ],
 ) -> List[Issue]:
-    filepath, mod_path, limits, barred = args
+    filepath, mod_path, limits, barred, battalion_groups, attach_groups = args
     raw = _read_text(filepath, mod_path)
     # Most candidates only name a template inside a create_unit string.
     if not _DIVISION_TEMPLATE_DEF_TEXT_RE.search(raw):
@@ -2454,6 +2540,7 @@ def _check_template_slots_file(
         )
         for line, category, message in check_template_slots(text, nodes, rel, limits)
         + check_misplaced_support(text, nodes, barred)
+        + check_regimental_support_groups(text, nodes, battalion_groups, attach_groups)
     ]
 
 
@@ -3331,6 +3418,8 @@ class Validator(BaseValidator):
         self.canonical_lower = {}
         self.parachutable = set()
         self.barred_support: Dict[str, Set[str]] = {}
+        self.battalion_groups: Dict[str, str] = {}
+        self.attach_groups: Dict[str, FrozenSet[str]] = {}
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
         self._variant_sources_by_scope: Dict[
@@ -3343,10 +3432,20 @@ class Validator(BaseValidator):
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
         self.canonical = {name for sub_units, *_ in unit_sources for name in sub_units}
-        self.parachutable = {name for _, _, para, _ in unit_sources for name in para}
+        self.parachutable = {name for _, _, para, *_ in unit_sources for name in para}
         self.barred_support = {
-            block: {name for *_, barred in unit_sources for name in barred[block]}
+            block: {name for *_, barred, _, _ in unit_sources for name in barred[block]}
             for block in _SUPPORT_BLOCK_FLAGS
+        }
+        self.battalion_groups = {
+            name: group
+            for *_, groups, _ in unit_sources
+            for name, group in groups.items()
+        }
+        self.attach_groups = {
+            name: allowed
+            for *_, attach in unit_sources
+            for name, allowed in attach.items()
         }
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
@@ -3991,7 +4090,7 @@ class Validator(BaseValidator):
 
     def validate_template_slots(self):
         """Flag division_template layouts the designer hides, keeps locked, or
-        drops units from."""
+        drops units from, and regimental support on a column it does not fit."""
         self._log_section("Checking division template slot layout...")
 
         files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
@@ -4009,7 +4108,17 @@ class Validator(BaseValidator):
         )
         results = self._pool_flat_map(
             _check_template_slots_file,
-            [(f, self.mod_path, limits, self.barred_support) for f in files],
+            [
+                (
+                    f,
+                    self.mod_path,
+                    limits,
+                    self.barred_support,
+                    self.battalion_groups,
+                    self.attach_groups,
+                )
+                for f in files
+            ],
             chunksize=20,
         )
 
@@ -4036,6 +4145,17 @@ class Validator(BaseValidator):
             "Division templates with support sub-units the game drops:",
             severity=Severity.WARNING,
             category=_TEMPLATE_MISPLACED_SUPPORT,
+        )
+        self._report(
+            [
+                issue
+                for issue in results
+                if issue.category == _TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT
+            ],
+            "✓ Every regimental support company fits its regiments column",
+            "Regimental support companies on a column with no allowed battalion group:",
+            severity=Severity.WARNING,
+            category=_TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT,
         )
 
     def validate_airbase_capacity(self):
