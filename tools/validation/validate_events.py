@@ -1755,6 +1755,53 @@ def _receiver_tag(trigger: str) -> Optional[str]:
     return next(iter(tags)) if len(tags) == 1 else None
 
 
+def _option_tag_constraints(
+    trigger: str,
+) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
+    """Required and excluded receiver identities, without crossing scopes or ORs."""
+    required: Set[Tuple[str, str]] = set()
+    excluded: Set[Tuple[str, str]] = set()
+    for key, value, block in iter_statements(strip_comments(trigger)):
+        if (
+            key in {"tag", "original_tag"}
+            and value
+            and re.fullmatch(r"[A-Z0-9]{3}", value)
+        ):
+            required.add((key, value))
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            inner_required, inner_excluded = _option_tag_constraints(block)
+            required |= inner_required
+            excluded |= inner_excluded
+        elif key == "NOT" and block is not None:
+            for field, tag, nested in iter_statements(block):
+                if (
+                    field in {"tag", "original_tag"}
+                    and nested is None
+                    and tag
+                    and re.fullmatch(r"[A-Z0-9]{3}", tag)
+                ):
+                    excluded.add((field, tag))
+    return required, excluded
+
+
+def _options_have_disjoint_receivers(triggers: List[str]) -> bool:
+    """Prove no receiver can see two options using the same identity field."""
+    constraints = [_option_tag_constraints(trigger) for trigger in triggers]
+    for index, (required, excluded) in enumerate(constraints):
+        for other_required, other_excluded in constraints[:index]:
+            if not (
+                required & other_excluded
+                or other_required & excluded
+                or any(
+                    field == other_field and tag != other_tag
+                    for field, tag in required
+                    for other_field, other_tag in other_required
+                )
+            ):
+                return False
+    return True
+
+
 def _literal_cost_amounts(body: str) -> Optional[Dict[str, Decimal]]:
     """Direct literal prices; refunds, balance rewrites, and calls stay unknown."""
     amounts: Dict[str, Decimal] = {}
@@ -1826,7 +1873,8 @@ def find_option_cost_weights(
     is one, since that is where the fix goes. `effects`, `stored` and
     `commitments` come from load_cost_lookups.
 
-    Skipped: an event whose own trigger requires `is_ai = no`, an option the AI
+    Skipped: an event whose own trigger requires `is_ai = no`, an event whose
+    option tag gates prove each receiver sees at most one option, an option the AI
     never picks (`base = 0`, no `add`) while another option can win, and, for
     ignored costs, a cost every option always pays, or every option pays only
     sometimes, since a guard on each one scales them all alike. Unequal direct
@@ -1853,6 +1901,10 @@ def find_option_cost_weights(
             for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
+        if all_gated and _options_have_disjoint_receivers(
+            [blocks["trigger"][1] for _own, blocks in splits]
+        ):
+            continue
         option_effect_costs = [
             _effect_costs(own, effects, {}, stored) for own, _b in splits
         ]
