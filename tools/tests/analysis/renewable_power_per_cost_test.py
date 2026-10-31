@@ -44,12 +44,12 @@ import renewable_power_per_cost as rpp
 INDUSTRY_FIXTURE = (
     "\tstart_year = 1990\n"
     "\tallow = { always = yes }\n"
-    "\tearly_renewables = {\n"
+    "\trenewable_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.10\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.04\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\trenewables = {\n"
+    "\trenewable_02 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.15\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.06\n"
     "\t\tstart_year = 1995\n"
@@ -90,8 +90,8 @@ def industry_path(tmp_path):
 
 def test_parse_techs_strips_comments_and_groups_fields(industry_path):
     techs = rpp.parse_techs(str(industry_path))
-    assert "early_renewables" in techs
-    er = techs["early_renewables"]
+    assert "renewable_01" in techs
+    er = techs["renewable_01"]
     assert er["renewable_energy_gain_multiplier"] == 0.10
     assert er["production_speed_renewable_energy_infra_factor"] == 0.04
     assert er["start_year"] == 1990
@@ -126,7 +126,7 @@ def test_build_chains_sorted_by_year(industry_path):
 def test_cum_inclusive_at_year_threshold(industry_path):
     techs = rpp.parse_techs(str(industry_path))
     chains = rpp.build_chains(techs)
-    # renewable chain: early_renewables(1990, p=0.10), renewables(1995, p=0.15)
+    # renewable chain: renewable_01(1990, p=0.10), renewable_02(1995, p=0.15)
     chain = chains["ren"]
     assert rpp.cum(chain, 1989, 1) == 0.0
     assert rpp.cum(chain, 1990, 1) == pytest.approx(0.10)

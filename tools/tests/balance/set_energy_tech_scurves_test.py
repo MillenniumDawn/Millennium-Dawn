@@ -234,7 +234,7 @@ INDUSTRY_TEMPLATE = (
     "\t\tnuclear_infra_cost_multiplier_modifier = -0.05\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\tearly_renewables = {\n"
+    "\trenewable_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.20\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.08\n"
     "\t\trenewable_infra_cost_multiplier_modifier = -0.10\n"
@@ -246,7 +246,7 @@ INDUSTRY_TEMPLATE = (
 ENERGY_EDITS = {
     "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
     "reactor1": ("nuc", 0.6, 0.18, -0.05),
-    "early_renewables": ("ren", 0.7, 0.28, -0.10),
+    "renewable_01": ("ren", 0.7, 0.28, -0.10),
 }
 
 
