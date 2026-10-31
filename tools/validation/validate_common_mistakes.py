@@ -48,24 +48,32 @@ class Validator(BaseValidator):
             focuses, decisions, flags = set(), set(), set()
         else:
             focuses, decisions, flags = _scan_global_refs(self.mod_path)
-        results = []
-        for file_results in self._pool_map_init(
+        errors, shadowed = [], []
+        for file_errors, file_shadowed in self._pool_map_init(
             check_file,
             files,
             initializer=_init_worker,
             initargs=(focuses, decisions, flags),
             chunksize=20,
         ):
-            for filepath, line, message in file_results:
-                results.append(
+            for found, results in ((file_errors, errors), (file_shadowed, shadowed)):
+                results.extend(
                     (message, os.path.relpath(filepath, self.mod_path), line)
+                    for filepath, line, message in found
                 )
         self._report(
-            results,
+            errors,
             "No common scripting mistakes found",
             "Common scripting mistakes:",
             severity=Severity.ERROR,
             category="common-mistakes",
+        )
+        self._report(
+            shadowed,
+            "No shadowed else_if branches found",
+            "Shadowed else_if branches:",
+            severity=Severity.ERROR,
+            category="shadowed-branch",
         )
 
 

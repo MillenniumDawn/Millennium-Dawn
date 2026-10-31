@@ -12,6 +12,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "validation"))
 from shared_utils import (
     Timer,
+    atomic_write_bytes,
     atomic_write_text,
     clean_filepath,
     collect_files_by_mode,
@@ -20,6 +21,7 @@ from shared_utils import (
     normalize_spacing,
     print_timing_summary,
     read_text_strict,
+    reindent_by_brace_depth,
     run_with_pool,
 )
 from validate_style import line_spacing_warnings, split_code_and_comment
@@ -27,6 +29,8 @@ from validate_style import line_spacing_warnings, split_code_and_comment
 __version__ = 3.0
 
 _RE_EQ_SEP = re.compile(r"={3,}")
+# validate_style.py's scan scope; interface alignment is left alone.
+_REINDENT_DIRS = ("common", "events", "history", "music")
 
 FIXABLE_LINE_WARNINGS = frozenset(
     {
@@ -38,24 +42,11 @@ FIXABLE_LINE_WARNINGS = frozenset(
 )
 
 
-def fix_line(line, fix_indent=False, collapse_comment_alignment=False):
+def fix_line(line, collapse_comment_alignment=False):
     """Fix one line and return its replacement and fix count."""
     newline = line[len(line.rstrip("\r\n")) :]
     body = line[: len(line) - len(newline)]
     fixes = 0
-
-    if fix_indent:
-        stripped = body.lstrip(" \t")
-        leading = body[: len(body) - len(stripped)]
-        if " " in leading:
-            expanded = leading.replace("\t", "    ")
-            num_spaces = len(expanded)
-            tabs = num_spaces // 4
-            remainder = num_spaces % 4
-            new_body = "\t" * tabs + " " * remainder + stripped
-            if new_body != body:
-                fixes += 1
-            body = new_body
 
     code, comment = split_code_and_comment(body)
     warnings = line_spacing_warnings(body)
@@ -86,6 +77,30 @@ def fix_line(line, fix_indent=False, collapse_comment_alignment=False):
 def _collapse_comment_separators(comment):
     collapsed = _RE_EQ_SEP.sub(lambda match: "-" * len(match.group()), comment)
     return collapsed, int(collapsed != comment)
+
+
+def _in_reindent_scope(filepath):
+    parts = os.path.normpath(filepath).split(os.sep)[:-1]
+    return "interface" not in parts and any(part in _REINDENT_DIRS for part in parts)
+
+
+def _reindent(lines, only_lines=None):
+    """Set leading tabs to brace depth, the rule validate_style's indent-depth
+    check enforces. Depth comes from the whole file; only *only_lines* change."""
+    bodies = [line.removesuffix("\r") for line in lines]
+    fixed, fixes = [], 0
+    for number, (line, body, indented) in enumerate(
+        zip(lines, bodies, reindent_by_brace_depth(bodies)), 1
+    ):
+        stripped = body.lstrip(" \t")
+        new = indented[: len(indented) - len(indented.lstrip("\t"))] + stripped
+        skipped = only_lines is not None and number not in only_lines
+        if not stripped or new == body or skipped:
+            fixed.append(line)
+        else:
+            fixed.append(new + line[len(body) :])
+            fixes += 1
+    return fixed, fixes
 
 
 class StagedDiffError(RuntimeError):
@@ -220,13 +235,15 @@ def fix_file(
         total_fixes = 0
         unfixable = []
 
+        if fix_indent and _in_reindent_scope(filepath):
+            lines, total_fixes = _reindent(lines, only_lines)
+
         for line_num, line in enumerate(lines, 1):
             if only_lines is not None and line_num not in only_lines:
                 fixed_lines.append(line)
             else:
                 fixed, fixes = fix_line(
                     line,
-                    fix_indent=fix_indent,
                     collapse_comment_alignment=collapse_comment_alignment,
                 )
                 total_fixes += fixes
@@ -254,6 +271,28 @@ def fix_file(
         return (filepath, 0, [f"  Error processing {filepath}: {e}"])
 
 
+def fix_trailing_whitespace(filename, *, dry_run=False):
+    try:
+        _worktree_matches_index(filename)
+        changed = staged_changed_lines(filename)
+        content = read_text_strict(filename, encoding="utf-8")
+        lines = content.split("\n")
+        for number in changed:
+            line = lines[number - 1]
+            body = line.removesuffix("\r")
+            lines[number - 1] = body.rstrip(" \t") + line[len(body) :]
+        fixed = "\n".join(lines)
+        if fixed != content:
+            if not dry_run:
+                atomic_write_bytes(filename, fixed.encode("utf-8"))
+            print(f"{'Would fix' if dry_run else 'Fixing'} {filename}")
+            return 1
+    except (OSError, UnicodeError, StagedDiffError) as error:
+        print(f"{filename}: {error}", file=sys.stderr)
+        return 1
+    return 0
+
+
 def fix_file_dry_run(filepath):
     """Run fix_file without writing."""
     return fix_file(filepath, dry_run=True)
@@ -261,6 +300,11 @@ def fix_file_dry_run(filepath):
 
 def main():
     def _extra(parser):
+        parser.add_argument(
+            "--trailing-whitespace-only",
+            action="store_true",
+            help="Trim only staged-diff trailing whitespace in the named text files",
+        )
         parser.add_argument(
             "--dry-run",
             action="store_true",
@@ -274,7 +318,7 @@ def main():
         parser.add_argument(
             "--fix-indent",
             action="store_true",
-            help="Legacy bulk cleanup: convert leading spaces to tabs",
+            help="Reindent common, events, history, and music files by brace depth",
         )
         parser.add_argument(
             "--collapse-comment-alignment",
@@ -286,6 +330,13 @@ def main():
         "Fix styling issues in HOI4 mod files", extra_args_fn=_extra
     )
     args = parser.parse_args()
+    if args.trailing_whitespace_only:
+        if not args.filenames:
+            parser.error("--trailing-whitespace-only requires named files")
+        return max(
+            fix_trailing_whitespace(filename, dry_run=args.dry_run)
+            for filename in args.filenames
+        )
 
     timings = []
     start_time = time.time()

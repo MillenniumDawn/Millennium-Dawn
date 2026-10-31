@@ -1,6 +1,7 @@
-# steal_from_party: helper for steal_popularity_from_* effects
-# Parameters: steal_party_index (0-23)
-# Steals 1% popularity from the given party and gives it to the ruling party
+# Effect: steal_from_party
+# Purpose: Steals 1% popularity from the given party and gives it to the ruling party
+# Parameters:
+# - steal_party_index: party slot 0-23
 steal_from_party = {
 	if = {
 		limit = { check_variable = { party_pop_array^steal_party_index > 0.01 } }
@@ -177,10 +178,11 @@ set_party_index_to_ruling_party = {
 	}
 }
 
-# Maps a party slot (0-23) to its numeric outlook ID.
+# Effect: set_outlook_from_party_index
+# Purpose: Maps a party slot to its numeric outlook ID
+# Output: outlook_id
 # Parameters:
-# set_temp_variable = { outlook_party_index = X }
-# set_outlook_from_party_index = yes
+# - outlook_party_index: party slot 0-23
 set_outlook_from_party_index = {
 	set_temp_variable = {
 		outlook_id = {
@@ -252,19 +254,12 @@ change_outlook_popularity = {
 	}
 }
 
-# Change Relative Party Popularity:
-#
-# This scripted effect adds (or substracts) relative party popularity. How to use:
-#
-# 2022/04/30 - Added a additional parameter Z to allow you to increase the outlook within the script
-#
+# Effect: change_relative_party_popularity
+# Purpose: Adds or subtracts relative party popularity
 # Parameters:
-# set_temp_variable = { party_index = X } #OPTIONAL -- Index of party to be changed 0-23. Defaults to ruling party if not set.
-# set_temp_variable = { party_popularity_increase = Y } #OPTIONAL -- How much party popularity is changed, must be in decimals so 2% is 0.02. Defaults to no change.
-# set_temp_variable = { temp_outlook_increase = Z } #OPTIONAL PARAMETER -- Must be in decimals so 2% is 0.02
-# change_relative_party_popularity = yes
-#
-#NOTE! The temp variable names must be the same as above!
+# - party_index (optional): party slot 0-23, defaults to the ruling party
+# - party_popularity_increase (optional): decimal, so 2% is 0.02. Defaults to no change
+# - temp_outlook_increase (optional): outlook change as a decimal, so 2% is 0.02
 change_relative_party_popularity = {
 	if = {
 		limit = { NOT = { has_variable = party_index } }
@@ -378,7 +373,7 @@ scale_party_popularity = {
 
 # Effect: effect_puppet_match_ruling_party_to_overlord
 # Purpose: Sets the outlook of a nation when being puppetted to the outlook of the overlord.
-# Parameter:
+# Parameters:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
 	var:overlord_to_match = {
@@ -447,6 +442,12 @@ seed_ruling_party_if_unset = {
 	}
 }
 
+# Effect: startup_politics
+# Purpose: Totals party support and sets up elections and the coalition from the party setup above the call
+# Parameters:
+# - party_pop_array (variable): party support, failsafe values fill anything unset
+# - ruling_party (variable): seeded from the largest party when unset
+# - gov_coalition_array (variable): coalition partners
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
 	seed_ruling_party_if_unset = yes
@@ -706,7 +707,7 @@ find_two_highest_parties = {
 	set_variable = { party_pop_elect_array^max_index_1 = max_1_tmp }
 }
 
-# function: update_party_name
+# Effect: update_party_name
 # Purpose: Updates the political ideology
 update_party_name = {
 	if = { limit = { has_variable = ruling_party }
@@ -723,7 +724,7 @@ update_party_name = {
 	}
 }
 
-# Function: gov_pop_calculation
+# Effect: gov_pop_calculation
 # Purpose: The gov pop calculation is to calculate the penalty from your government popularity swinging
 # from -100% to 100% of their current popularity
 # How-to Adjust: Adjust the penalty by changing line 1904 from 0.002 to 0.005
@@ -1197,6 +1198,14 @@ make_affinity_arrays = {
 					OR = {
 						check_variable = { max_index_1 = v }
 						check_variable = { max_index_2 = v }
+					}
+				}
+				NOT = {
+					AND = {
+						original_tag = PAK
+						is_ai = yes
+						is_historical_focus_on = yes
+						check_variable = { v = 11 }
 					}
 				}
 			}
@@ -1926,9 +1935,12 @@ init_pol_distance_matrix = {
 	set_variable = { global.pol_dist_initialized = 1 }
 }
 
-# get_pol_distance: replaces all pol_distance_X effects
-# Parameters: pol_dist_target_index (0-23), pol_dist_source_index (0-23)
+# Effect: get_pol_distance
+# Purpose: Reads the political distance between two party slots
 # Output: pol_distance_current
+# Parameters:
+# - pol_dist_target_index: party slot 0-23
+# - pol_dist_source_index: party slot 0-23
 get_pol_distance = {
 	if = {
 		limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
@@ -1955,8 +1967,10 @@ add_coalition_members_effect = {
 	}
 }
 
-# Function: Remove Coalition Member
-# Parameters: set_temp_variable = { remove_col_one = 0-23 }
+# Effect: remove_coalition_members_effect
+# Purpose: Removes a party from the governing coalition
+# Parameters:
+# - remove_col_one: party slot 0-23
 remove_coalition_members_effect = {
 	if = { limit = { is_in_array = { gov_coalition_array = remove_col_one } }
 		custom_effect_tooltip = remove_coalition_members_effect_TT
@@ -1967,16 +1981,17 @@ remove_coalition_members_effect = {
 	}
 }
 
-# Function: Change Party Command
+# Effect: change_ruling_party_effect
+# Purpose: Changes the ruling party and its coalition, and allows or disables elections
 # Parameters:
-# set_temp_variable = { rul_party_temp = 0-23 }
-# set_temp_variable = { col_one = 0 - 23 }  -- Optional
-# set_temp_variable = { col_two = 0 - 23 }  -- Optional
-# set_temp_variable = { col_three = 0 - 23 }  -- Optional
-# set_temp_variable = { col_four = 0 - 23 }  -- Optional
-# set_temp_variable = { col_five = 0 - 23 }  -- Optional
-# set_temp_variable = { change_leader_temp = 0-1 } -- Optional
-# set_temp_variable = { disable_elections = 0-1 } -- Optional
+# - rul_party_temp: party slot 0-23, the new ruling party
+# - col_one (optional): party slot 0-23, a coalition partner
+# - col_two (optional): party slot 0-23, a coalition partner
+# - col_three (optional): party slot 0-23, a coalition partner
+# - col_four (optional): party slot 0-23, a coalition partner
+# - col_five (optional): party slot 0-23, a coalition partner
+# - change_leader_temp (optional): 1 keeps the current leader from retiring
+# - disable_elections (optional): 1 turns elections off, 0 or unset allows them
 change_ruling_party_effect = {
 	# Do Not Retire Section
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
@@ -2057,7 +2072,7 @@ change_ruling_party_effect = {
 	force_update_map_mode = { mapmode = subideology_map_mode }
 }
 
-# Function: update_dirty_politicsview_expanded
+# Effect: update_dirty_politicsview_expanded
 # Purpose: updates the politicsview_expanded dirty variable to ensure the UI is up-to-date
 update_dirty_politicsview_expanded = {
 	if = {
@@ -2165,8 +2180,12 @@ set_partyall_allowed = {
 	update_dirty_politicsview_expanded = yes
 }
 
-# set_elections_with_frequency: parameterized election setup
-# Parameters: election_freq (48/60/72), uses global.year and global.month
+# Effect: set_elections_with_frequency
+# Purpose: Allows elections and sets their frequency and last election date
+# Parameters:
+# - election_freq: months between elections (48, 60, or 72)
+# - election_year_param (optional): year of the last election
+# - election_month_param (optional): month of the last election
 set_elections_with_frequency = {
 	set_country_flag = no_leader_change
 	meta_effect = {

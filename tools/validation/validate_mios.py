@@ -1211,6 +1211,9 @@ class Validator(BaseValidator):
             keyed: Dict[str, Set[str]] = {}
             token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
+                # A policy's same_as_mio reaches whatever the attached MIO covers.
+                if token == "same_as_mio" and rel.startswith(POLICY_DIR + "/"):
+                    continue
                 line = block_offset + block.count("\n", 0, token_start) + 1
                 keyed[token] = {
                     stat

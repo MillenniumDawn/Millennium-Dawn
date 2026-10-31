@@ -773,8 +773,14 @@ def test_parse_script_refs(tmp_path, rel, text, refs):
             'l_english:\n A:0 "£trigger_no£Not £mission_icons|1£Intel"\n',
             [("GFX_trigger_no", 2), ("GFX_mission_icons", 2)],
         ),
+        ('l_english:\n A:0 "£GFX_$KEY$ : Jump"\n', []),
     ],
-    ids=["punctuation and repeats", "prefix already present", "closing pound sign"],
+    ids=[
+        "punctuation and repeats",
+        "prefix already present",
+        "closing pound sign",
+        "parameter-built name",
+    ],
 )
 def test_parse_loc_refs(tmp_path, text, refs):
     path = _write(tmp_path / "localisation" / "english" / "a_l_english.yml", text)

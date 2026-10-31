@@ -402,8 +402,13 @@ def _table_row(
     warnings: int,
     new_count: Optional[int] = None,
     bold: bool = False,
+    incomplete: bool = False,
 ) -> str:
     icon = "" if bold else f"{_severity_icon(errors, warnings)} "
+    if incomplete:
+        title += " (incomplete)"
+        if not errors and not warnings and not bold:
+            icon = "⚠️ "
     label = f"**{title}**" if bold else f"{icon}{title}"
     err = f"**{errors:,}**" if bold else f"{errors:,}"
     warn = f"**{warnings:,}**" if bold else f"{warnings:,}"
@@ -442,13 +447,18 @@ def _render_tools_section(
 
     if new_counts is not None:
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
-        rows = [
-            _table_row(r.title, r.errors, r.warnings, new_counts.get(r.name, 0))
-            for r in table_runs
-        ]
     else:
         header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
+    rows = [
+        _table_row(
+            r.title,
+            r.errors,
+            r.warnings,
+            new_counts.get(r.name, 0) if new_counts is not None else None,
+            incomplete=r.status in _INCOMPLETE_STATUSES,
+        )
+        for r in table_runs
+    ]
     return "## Tools tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
@@ -461,12 +471,17 @@ def _render_summary_table(
 
     runs = mod_runs
     total_errors, total_warnings = _totals(runs)
-    if total_errors == 0 and total_warnings == 0:
+    incomplete = [r for r in runs if r.status in _INCOMPLETE_STATUSES]
+    if total_errors == 0 and total_warnings == 0 and not incomplete:
         return ""
 
     sorted_runs = sorted(runs, key=lambda r: _run_sort_key(r, new_counts))
-    table_runs = [r for r in sorted_runs if r.errors or r.warnings]
-    passed = sum(1 for r in runs if not r.errors and not r.warnings)
+    table_runs = [
+        r
+        for r in sorted_runs
+        if r.errors or r.warnings or r.status in _INCOMPLETE_STATUSES
+    ]
+    passed = len(runs) - len(table_runs)
     passed_note = ""
     if passed:
         passed_note = (
@@ -475,18 +490,21 @@ def _render_summary_table(
 
     if new_counts is not None:
         header = "| Validator | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
-        rows = [
-            _table_row(r.title, r.errors, r.warnings, new_counts.get(r.name, 0))
-            for r in table_runs
-        ]
         total_new = sum(new_counts.get(r.name, 0) for r in runs)
-        rows.append(
-            _table_row("Total", total_errors, total_warnings, total_new, bold=True)
-        )
     else:
         header = "| Validator | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
-        rows.append(_table_row("Total", total_errors, total_warnings, bold=True))
+        total_new = None
+    rows = [
+        _table_row(
+            r.title,
+            r.errors,
+            r.warnings,
+            new_counts.get(r.name, 0) if new_counts is not None else None,
+            incomplete=r.status in _INCOMPLETE_STATUSES,
+        )
+        for r in table_runs
+    ]
+    rows.append(_table_row("Total", total_errors, total_warnings, total_new, bold=True))
     return "## Mod tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 

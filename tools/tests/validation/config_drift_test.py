@@ -34,6 +34,7 @@ from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "test-suite.yml"
+REPORT_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validation-report.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
 DOCS_QUALITY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "docs-quality.yml"
 SETUP_MD_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-md-python" / "action.yml"
@@ -517,15 +518,19 @@ def test_mod_core_runs_extra_checks_after_batch():
     assert localisation.strict
 
 
-def test_report_job_posts_comment_and_checks():
+def test_report_job_only_generates_data():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     report = workflow["jobs"]["report"]
     assert report["if"] == "${{ always() && !cancelled() }}"
-    assert report["permissions"]["pull-requests"] == "write"
-    assert report["permissions"]["checks"] == "write"
+    assert report["permissions"] == {"contents": "read"}
+    assert all(
+        "write" not in job.get("permissions", {}).values()
+        for job in workflow["jobs"].values()
+    )
     text = CI_WORKFLOW.read_text(encoding="utf-8")
-    assert "--post-comment" in text
-    assert "--checks-api" in text
+    assert "--post-comment" not in text
+    assert "--checks-api" not in text
+    assert "--comment-output comment.json" in text
     assert 'pattern: "*results"' in text
     assert any(step.get("name") == "Download changed files" for step in report["steps"])
     assert "full_suite == 'true'" in text
@@ -534,6 +539,49 @@ def test_report_job_posts_comment_and_checks():
     )
     assert "checkout-repository" in checkout["with"]["repository"]
     assert "checkout-ref" in checkout["with"]["ref"]
+
+
+def test_publisher_uses_trusted_code_and_comment_only_writes():
+    workflow = yaml.safe_load(REPORT_WORKFLOW.read_text(encoding="utf-8"))
+    assert _workflow_trigger(REPORT_WORKFLOW) == {
+        "workflow_run": {"workflows": ["Test Suite"], "types": ["completed"]}
+    }
+    assert workflow["permissions"] == {}
+    job = workflow["jobs"]["publish"]
+    assert job["permissions"] == {
+        "actions": "read",
+        "contents": "read",
+        "pull-requests": "write",
+    }
+    checkout, setup, download, publish = job["steps"]
+    assert checkout["with"]["ref"] == "${{ github.sha }}"
+    assert checkout["with"]["persist-credentials"] is False
+    assert setup["with"]["install"] == "false"
+    assert download["with"]["run-id"] == "${{ github.event.workflow_run.id }}"
+    assert download["with"]["name"] == "validation-report"
+    assert download["with"]["path"] == "${{ runner.temp }}/validation-report"
+    assert publish["env"]["COMMENT_PAYLOAD"] == (
+        "${{ runner.temp }}/validation-report/comment.json"
+    )
+    assert publish["run"] == (
+        'python3 tools/publish_validation_report.py --payload "$COMMENT_PAYLOAD"'
+    )
+    workflow_path = REPORT_WORKFLOW.relative_to(REPO_ROOT).as_posix()
+    assert classify([workflow_path])["full_suite"]
+    tools_checkout = workflow_step("tools-tests", "Checkout tools test tree")
+    assert workflow_path in tools_checkout["with"]["sparse-checkout"].splitlines()
+
+
+def test_empty_report_requires_every_validation_job_to_be_skipped():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    required = workflow["jobs"]["gate"]["needs"]
+    conditions = [
+        f"needs.{job}.result == '{'success' if job == 'detect-changes' else 'skipped'}'"
+        for job in required
+        if job != "report"
+    ]
+    selector = workflow["jobs"]["report"]["env"]["NO_TESTS_SELECTED"]
+    assert " ".join(selector.split()) == "${{ " + " && ".join(conditions) + " }}"
 
 
 def test_suite_step_ids_are_unique():
@@ -588,6 +636,7 @@ CONTRACT_STRINGS = {
     "pytest-xdist": "pyproject.toml",
     "pytest-cov": "pyproject.toml",
     "--main-tools-baseline": "tools/generate_validation_report.py",
+    "--comment-output": "tools/generate_validation_report.py",
     "--renames": "tools/generate_validation_report.py",
     "--hunks": "tools/generate_validation_report.py",
     "--tooling-changed": "tools/generate_validation_report.py",
@@ -653,7 +702,7 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     script = next(
         step["run"]
         for step in report["steps"]
-        if step.get("name") == "Generate and post validation report"
+        if step.get("name") == "Generate validation report"
     )
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
@@ -720,20 +769,40 @@ def test_nightly_dispatches_test_suite_and_matches_its_runs():
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
-    ("head_repository", "event", "allowed"),
+    ("head_repository", "event", "allowed", "message"),
     [
-        pytest.param("o/r", {"INPUT_PR_NUMBER": "5"}, True, id="same-repo dispatch"),
-        pytest.param("fork/r", {"INPUT_PR_NUMBER": "5"}, False, id="fork dispatch"),
+        pytest.param(
+            "o/r",
+            {"INPUT_PR_NUMBER": "5", "INPUT_HEAD_SHA": "head"},
+            True,
+            None,
+            id="same-repo dispatch",
+        ),
+        pytest.param(
+            "fork/r",
+            {"INPUT_PR_NUMBER": "5", "INPUT_HEAD_SHA": "head"},
+            False,
+            "same-repository PRs only",
+            id="fork dispatch",
+        ),
+        pytest.param(
+            "o/r",
+            {"INPUT_PR_NUMBER": "5"},
+            False,
+            "PR dispatch must pin head_sha",
+            id="unpinned dispatch",
+        ),
         pytest.param(
             "fork/r",
             {"EVENT_PR_NUMBER": "5", "EVENT_HEAD_REPOSITORY": "fork/r"},
             True,
+            None,
             id="fork pull_request run",
         ),
     ],
 )
 def test_dispatch_validates_only_same_repository_prs(
-    tmp_path, head_repository, event, allowed
+    tmp_path, head_repository, event, allowed, message
 ):
     pr = json.dumps({"head": {"sha": "head", "repo": {"full_name": head_repository}}})
     gh = write_under_str(tmp_path, "bin/gh", f"#!/bin/sh\nprintf '%s' '{pr}'\n")
@@ -757,7 +826,8 @@ def test_dispatch_validates_only_same_repository_prs(
     result = run_bash_step(step["run"], tmp_path, env)
 
     assert (result.returncode == 0) is allowed, result.stdout
-    assert ("same-repository PRs only" in result.stdout) is not allowed
+    if message:
+        assert message in result.stdout
 
 
 def test_housekeeping_has_one_job_and_three_actions():
@@ -952,7 +1022,7 @@ def test_tool_effect_reads_main_own_baseline_of_the_base():
     upload = workflow_step("baseline-scan", _TOOL_EFFECT_STEPS[2])
     download = workflow_step("report", "Download main's own baseline of the base")
     assert download["with"]["name"] == upload["with"]["name"]
-    report = workflow_step("report", "Generate and post validation report")
+    report = workflow_step("report", "Generate validation report")
     assert f"--main-tools-baseline {download['with']['path']}" in report["run"]
 
 
@@ -1021,7 +1091,7 @@ def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed)
     outputs = workflow["jobs"]["detect-changes"]["outputs"]
     assert outputs["tooling-changed"] == "${{ steps.tooling.outputs.changed }}"
     assert step["env"]["MERGE_BASE"] == "${{ steps.changed.outputs.merge-base }}"
-    report = workflow_step("report", "Generate and post validation report")
+    report = workflow_step("report", "Generate validation report")
     assert "args+=(--tooling-changed)" in report["run"]
 
 
@@ -1044,7 +1114,11 @@ _LIVE_PR = '{"head":{"sha":"live","repo":{"full_name":"o/r"}},"base":{"ref":"mai
         pytest.param(
             {"EVENT_PR_NUMBER": "5", "EVENT_HEAD_SHA": "event"}, "event", id="re-run"
         ),
-        pytest.param({"INPUT_PR_NUMBER": "5"}, "live", id="dispatch refresh"),
+        pytest.param(
+            {"INPUT_PR_NUMBER": "5", "INPUT_HEAD_SHA": "live"},
+            "live",
+            id="dispatch refresh",
+        ),
     ],
 )
 def test_pull_request_runs_keep_their_event_head(tmp_path, event, expected):
@@ -1072,30 +1146,29 @@ def test_pull_request_runs_keep_their_event_head(tmp_path, event, expected):
 
 
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
-@pytest.mark.parametrize(
-    ("gh", "posts"),
-    [
-        pytest.param("echo head", True, id="head unchanged"),
-        pytest.param("echo newer", False, id="head moved"),
-        pytest.param("exit 1", True, id="head unreadable"),
-    ],
-)
-def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, posts):
+@pytest.mark.parametrize("skipped", ["false", "true"])
+def test_report_prepares_payload_without_api_writes(tmp_path, skipped):
     calls = tmp_path / "calls.txt"
-    path = _stub_commands(tmp_path, gh=gh, python3=f'echo "$@" > "{calls}"')
-    step = workflow_step("report", "Generate and post validation report")
+    path = _stub_commands(tmp_path, python3=f'echo "$@" > "{calls}"')
+    step = workflow_step("report", "Generate validation report")
     script = substitute_expressions(step["run"], {"github.repository": "o/r"})
     env = {
         "PATH": path,
         "PR_NUMBER": "5",
         "HEAD_SHA": "head",
         "GITHUB_REPOSITORY": "o/r",
+        "NO_TESTS_SELECTED": skipped,
     }
 
     result = run_bash_step(script, tmp_path, env)
 
     assert result.returncode == 0, result.stderr
-    assert ("--post-comment" in calls.read_text(encoding="utf-8")) is posts
+    arguments = calls.read_text(encoding="utf-8")
+    assert "--comment-output comment.json" in arguments
+    assert "--post-comment" not in arguments
+    assert "--checks-api" not in arguments
+    assert ("--no-tests-selected" in arguments) is (skipped == "true")
+    assert "GITHUB_TOKEN" not in step["env"]
 
 
 def test_every_fingerprint_site_hashes_the_same_inputs():
