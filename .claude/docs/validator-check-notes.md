@@ -257,9 +257,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `if`/`else` chain or `random_list` whose every arm charges counts as always, and
     so does a charge behind the `MD_skip_treasury_cost` flag or an unset
     `skip_payment`. Tax rate is never shared, since options can move it apart.
-  - Known gaps: a shared cost of different sizes is skipped too, so the dearer
-    option goes unreported. So is a kind every option pays only sometimes, at
-    different odds. Charges that depend on a variable set in each arm stay
+  - Unequal shared literal prices need a guard above the cheapest AI-eligible
+    choice, provided no option has a `trigger`. This covers direct stat losses and
+    literal `add_to_variable` / `subtract_from_variable` money changes. Decimal sums
+    keep equivalent fractional prices equal. A base-zero choice without an `add`
+    cannot supply the cheaper fallback.
+  - Unmeasured prices keep the shared-kind exemption: scripted or computed costs,
+    conditional branches, option trigger gates, mixed gains and charges, and balance
+    rewrites or clamps. A kind every option pays only sometimes is still skipped,
+    even at different odds. Charges that depend on a variable set in each arm stay
     conditional. Costs behind conditions that can never hold still count. Stored negative values built from math or arrays, unsubstituted
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
