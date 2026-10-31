@@ -25,6 +25,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_ai_weight_order.py
 
+- Checks event `ai_chance`, decision/GUI `ai_will_do`, and diplomatic `ai_desire`
+  through the same scanner. The existing common/events CI batch covers all three.
 - `ai-weight-zero-then-add` (WARNING): modifiers run in order, so a positive `add`
   can restore a zeroed weight. Opposite boolean guards in the same scope cannot
   both apply. Other relationships, including numeric bounds and flag values,
@@ -73,6 +75,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   stale name leaves the tooltip empty while the unlock still happens. The category form
   takes the bare token only.
 - `validate_formable_commitment_sync` (ERROR): contract in `formable-reference.md`.
+- `decision-cosmetic-targeting` (WARNING): a single explicit country target is a
+  candidate for a normal decision with a custom icon. Multiple explicit country
+  targets without unquoted `FROM` use need review for target-dependent behavior.
+  State/map targeting, script-only `allowed = { always = no }`, target arrays, and
+  dynamic country variants are skipped. For multiple targets, an enabled
+  `war_with_target_on_*` hint also counts as target use. Comments and quoted text
+  such as logs do not count as script use. This is advisory: localisation and called
+  scripts may consume `FROM`, and a single-target decision may depend on it too.
+  Verify those dependencies and visibility before removing targeting. The check
+  neither follows those references nor rewrites decisions or creates icons.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
@@ -93,6 +105,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
+- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
+  CI): the case rule in the stylization guide, and a prefix-owner rule still under
+  review. Existing ids are never renamed, so
+  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+  flat `allowed` pin, else its category's. Prefixes that are not country tags are
+  skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
+  `SIL_bund_*`), so review the owner rule before enforcing it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -100,13 +119,22 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `tools/assets/resize_decision_icons.py --dry-run` shows the fix: it resizes in place
   when nothing else uses the texture, else writes a resized sibling and repoints. It
   skips vanilla art.
+- `decision-icon-unmeasured` (WARNING): an icon whose texture is not on disk, so its
+  slot size is unchecked. In CI this means the art lives outside the shipped trees
+  (see `validation-pipeline.md`); confirm the size locally.
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
-- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+- `decision-ai-will-do-ignores-cost` (ERROR): the decision twin of
   `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
   `custom_cost_trigger` carries a "verify" note, because the engine already stops a
-  country that cannot pay.
+  country that cannot pay. A decision that must stay unguarded, such as a deadline the
+  AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
+  decision, not one cost, so re-check its reason when the decision gains a new cost.
+- `decision-unneeded-treasury-guard` (WARNING): the decision twin of
+  `event-unneeded-treasury-guard`, read over the whole decision, with the same gaps.
+  `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost is
+  money, and a money modifier in the `modifier` block commits money.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -128,13 +156,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
-- `decision-money-charged-late` (WARNING): money a non-mission `remove_effect` charges
-  itself, by the cost rules of `decision-ai-will-do-ignores-cost`. Only direct writes and
-  the `modify_*` payment effects count. A scripted effect that pays for a building on
-  delivery is intended and is not followed. A treasury custom cost that
-  `decision-custom-cost-not-charged` already reports as late is not repeated. A
-  deliberate pay-on-completion decision is reported too. `timeout_effect` and
-  `cancel_effect` are not read.
+- `decision-money-charged-late` (ERROR): money a non-mission `remove_effect` charges,
+  by the cost rules of `decision-ai-will-do-ignores-cost`, directly or through the
+  scripted effects it calls. Building payments are not followed, since they are paid on
+  delivery: an effect that holds `add_building_construction`, `add_offsite_building`, or
+  `skip_payment`, or calls one that does. A treasury custom cost that
+  `decision-custom-cost-not-charged` already reports as late is not repeated. An
+  outcome rather than a price, such as an annexation inheriting debt or a charge per
+  subject converted at the end, needs a reason in `late_charge_exempt`, which also
+  skips the whole decision. `timeout_effect` and `cancel_effect` are not read. Known
+  gap: a building built in the decision itself and paid through a separate effect still
+  counts (Syria's cotton investment is exempt for this).
 - `decision-treasury-gate-below-charge` (WARNING): the highest literal `treasury > N` in
   `available` and `custom_cost_trigger` against the literal `treasury_change` charges at
   the top level of `complete_effect`. A scripted trigger's minimum comes from its body,
@@ -202,6 +234,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   a guard. An event with the guard and no schedule is dead content. Exempt: events
   reachable from a scheduled ancestor, fires from focuses or decisions, `random_events`
   pools, and chance-rolled `random` polls. A `date <` bound alone is an expiry guard.
+- `scheduled-event-date-bound` (ERROR): a `date` comparison in an event's own
+  trigger is redundant when only the yearly effects fire it. The yearly slot fixes
+  the schedule; a `date <` bound can silently drop a fire when `random_days`
+  spills past it. Events with another fire path (focus, decision, chain, or
+  on_action `random_events` pool) may need the guard and are exempt.
 - `event-fire-type-mismatch`, `malformed-event-fire` (ERROR).
 - `event-option-log-without-effect` (ERROR): an option with a log but no effects is
   dead code. Tooltips count as effects. `fix_event_option_logs.py` removes dead logs.
@@ -227,6 +264,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
     events. Review these manually.
+- `event-unneeded-treasury-guard` (WARNING, opt-in with `--check-ai-chance-costs`): an
+  `ai_chance` modifier that lowers the weight on bankruptcy or a high deficit, on an
+  option with no money cost. Costs come from the whole option, nested scopes included,
+  so a charge back to ROOT from a state scope counts, and so does one to another
+  country. A political power cost justifies the bankruptcy check only. A war, a
+  spending law change, or a money modifier the script names commits money and
+  justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
+  A free build costs nothing here, even for a building with upkeep, matching the
+  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
+  modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -306,6 +353,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
+- `unneeded-treasury-guard` (WARNING): the focus twin of
+  `event-unneeded-treasury-guard`, over the completion rewards. The focus `cost` is
+  completion time, never a price. A literal political power loss justifies the
+  bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
+  as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
+  block costs nothing. A charge another nation's event sends back to the sender,
+  directly or through a reply event, counts. Known gaps: partner-event branches gated
+  on the receiver's tag are not told apart, a partner-event charge never raises
+  `missing-bankruptcy-guard`, and costs that come from an idea's modifiers, such as
+  `personnel_cost_multiplier_modifier`, are not seen, so their guards read as unneeded.
 
 ## validate_ai_path_rules.py
 
@@ -439,6 +496,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   split. `mio-equipment-type-unknown` (WARNING) suppresses the bonus check for its block.
   - Scope in `organizations/`: the trait's `limit_to_equipment_type`, else the org's
     `equipment_type`, else that of the org named by `include`.
+  - Scope in `policies/` and company traits: each named block is its own scope. A
+    policy's `same_as_mio` block reaches the attached MIO's departments, so it gets no
+    check. Outside `policies/` it is an unknown type.
   - `NON_STAT_BONUS_KEYS` excludes the per-archetype production keys.
     `zero_base_exempt_stats` in the config is empty on purpose: confirm in game before
     adding a stat. The naval `*_factor` keys stay out of it. Vanilla declares their base
@@ -525,9 +585,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
-  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
-  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
-  define or doctrine change surfaces on the full CI run.
+  sizes and `allowed_battalion_groups`. Staged mode checks only staged template files,
+  so a define or doctrine change surfaces on the full CI run.
+- `template-misplaced-support` (WARNING): a `support` block lists a sub-unit with
+  `divisional = no`, or a `regimental_support` block lists one with `regimental = no`.
+  The game drops that unit from the template. Ships as WARNING for its backlog of
+  1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
+  on the full CI run only.
+- `airbase-over-capacity` (WARNING): the planes `history/units` `air_wings` place in a
+  state exceed its undated `air_base` level times `NBuildings.AIRBASE_CAPACITY_MULT`
+  (vanilla 200, one slot per plane). Totals add every country's OOB, so each file
+  sharing an overfull base gets its own finding. Every file with `air_wings` counts as
+  a starting placement; today all are `set_air_oob` targets. Staged mode reports only
+  staged OOB files, so a state or define change surfaces on the full CI run. WARNING
+  until the starting backlog clears.
 
 ## validate_party_loc.py
 
@@ -594,16 +665,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR, except
-  `shadowed-branch`, a WARNING until its existing findings are fixed. It scans
-  `common`, `events`, `history`, and `music`.
+  core batch through `validate_common_mistakes.py` and report ERROR, with
+  `shadowed-branch` as its own category. It scans `common`, `events`, `history`, and
+  `music`.
 - Shadowed branches: the parser blanks quoted strings, so a limit with a quoted value
   never matches another. Only strict `>` and `<` bounds are ordered. Leader files are
   skipped, since the rotation check already reports their duplicate branches.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - The decision log id check also reads a log with no `Decision` word, when the string is
   only the standard prefix, filler words, and one id. Longer text is skipped, so a log
-  such as `... <other_decision> setup finished` is a known gap.
+  such as `... <other_decision> setup finished` is a known gap. `Mission` works like
+  `Decision`, and an id that runs into `[?...]` is built at runtime and skipped.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
@@ -612,6 +684,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `add_relation_modifier`.
 - Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
   and a `#` comment swallowed into a `log` string.
+- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+  finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
+  rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
+  clears it. The scan strips comments, so comment-only lines are not checked. Four
+  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
+  tracked in #6248.
 
 ## validate_variables.py
 
@@ -627,8 +705,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
   foreign-scope set, any `clr_country_flag` or `modify_country_flag`, a timed or valued
-  form, a focus with `bypass`, and joint rewards. A file that reloads a tree gets a
-  caution, since `load_focus_tree` without `keep_completed = yes` wipes completion.
+  form, a focus with `bypass`, joint rewards, and a set in a file that loads a focus
+  tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
+  focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
   - `untooltipped-available-check`: a bare `check_variable` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a

@@ -782,22 +782,11 @@ country_event = {
 		name = russia.51.a
 		log = "[GetDateText]: [This.GetName]: russia.51.a executed"
 		SOV = {
-			if = {
-				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-				set_autonomy = {
-					target = ROOT
-					autonomy_state = autonomy_puppet_state_colored
-					end_wars = no
-					end_civil_wars = no
-				}
-			}
-			else = {
-				set_autonomy = {
-					target = ROOT
-					autonomy_state = autonomy_puppet_state
-					end_wars = no
-					end_civil_wars = no
-				}
+			set_autonomy = {
+				target = ROOT
+				autonomy_state = autonomy_puppet_state
+				end_wars = no
+				end_civil_wars = no
 			}
 		}
 	}
@@ -993,6 +982,7 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
+
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1026,6 +1016,7 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
+
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1060,6 +1051,7 @@ country_event = {
 				L_Inf_Bat = { x = 0 y = 0 }
 				L_Inf_Bat = { x = 0 y = 1 }
 				L_Inf_Bat = { x = 0 y = 2 }
+
 				L_Inf_Bat = { x = 1 y = 0 }
 			}
 			priority = 2
@@ -3855,7 +3847,7 @@ country_event = {
 		name = sov_other.22.a
 		log = "[GetDateText]: [This.GetName]: sov_other.22.a executed"
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_1
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978 Kok'San"
 			amount = -1300
 		}
@@ -3887,7 +3879,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_1
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978 Kok'San"
 			amount = 1100
 			producer = NKO
@@ -3925,7 +3917,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_1
+			type = medium_tank_artillery_chassis_0
 			variant_name = "M-1978 Kok'San"
 			amount = 200
 			producer = NKO
@@ -5240,7 +5232,10 @@ country_event = {
 		name = sov_nationalists.28.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.28.a executed"
 		ai_chance = { base = 100 }
-		ROOT = { every_owned_state = { add_core_of = SOV } }
+		ROOT = {
+			every_owned_state = { add_core_of = SOV }
+			clear_united_nations_member_state = yes
+		}
 		SOV = {
 			country_event = sov_nationalists.51
 			add_to_variable = { treasury = ROOT.treasury }
@@ -5776,7 +5771,8 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+
+					Special_Forces = { x = 1 y = 0 }
 				}
 				priority = 2
 			}
@@ -6979,11 +6975,11 @@ country_event = {
 			}
 			modifier = {
 				factor = 20
-				is_top5_influencer = yes
+				sender_is_top5_influencer = yes
 			}
 			modifier = {
 				factor = 20
-				is_top3_influencer = yes
+				FROM_is_top3_influencer = yes
 			}
 			modifier = {
 				factor = 20
@@ -7022,7 +7018,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 20
-				NOT = { is_influencer = yes }
+				NOT = { sender_is_influencer = yes }
 			}
 			modifier = {
 				factor = 20
@@ -8973,6 +8969,7 @@ country_event = {
 	option = {
 		name = sov_economic.16.a
 		log = "[GetDateText]: [This.GetName]: sov_economic.16.a executed"
+		set_variable = { BLR_azot_exporter = SOV }
 		add_ideas = BLR_azot_fertilizers_idea
 		unlock_decision_category_tooltip = BLR_Foreign_azot_trade_category
 		add_opinion_modifier = {
@@ -8993,7 +8990,7 @@ country_event = {
 				add = 10
 			}
 			modifier = {
-				is_top5_influencer = yes
+				sender_is_top5_influencer = yes
 				add = 10
 			}
 		}
@@ -10320,6 +10317,21 @@ country_event = {
 					autonomy_state = autonomy_state_cis
 				}
 			}
+			set_temp_variable = { rul_party_temp = SOV.ruling_party }
+			set_temp_variable = { disable_elections = 1 }
+			if = {
+				limit = { SOV = { has_elections = yes } }
+				set_temp_variable = { disable_elections = 0 }
+			}
+			change_ruling_party_effect = yes
+			if = {
+				limit = { has_elections = yes }
+				set_elections_60_months = yes
+			}
+			set_temp_variable = { party_index = rul_party_temp }
+			set_temp_variable = { party_popularity_increase = 0.20 }
+			set_temp_variable = { temp_outlook_increase = 0.20 }
+			change_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 1
@@ -10333,15 +10345,15 @@ country_event = {
 			}
 			modifier = {
 				add = 30
-				is_influencer = yes
+				sender_is_influencer = yes
 			}
 			modifier = {
 				add = 30
-				is_top3_influencer = yes
+				FROM_is_top3_influencer = yes
 			}
 			modifier = {
 				add = 30
-				is_top_eighty_influencer = yes
+				sender_is_top_eighty_influencer = yes
 			}
 			modifier = {
 				OR = {
@@ -10557,30 +10569,11 @@ country_event = {
 		set_temp_variable = { SOV_modify_economic = 1 }
 		SOV_modify_economic_support = yes
 		if = {
-			limit = { check_variable = { kaliningrad_invest < 2 } }
+			limit = { check_variable = { kaliningrad_invest < 3 } }
 			642 = { add_extra_state_shared_building_slots = 1 }
 		}
 		else_if = {
-			limit = { check_variable = { kaliningrad_invest > 2 } }
-			642 = {
-				add_extra_state_shared_building_slots = 1
-				add_building_construction = {
-					type = offices
-					level = 1
-					instant_build = yes
-				}
-				add_building_construction = {
-					type = fossil_powerplant
-					level = 1
-					instant_build = yes
-				}
-			}
-		}
-		else_if = {
-			limit = {
-				check_variable = { kaliningrad_invest > 4 }
-				check_variable = { kaliningrad_invest < 3 }
-			}
+			limit = { check_variable = { kaliningrad_invest > 4 } }
 			642 = {
 				add_extra_state_shared_building_slots = 2
 				add_building_construction = {
@@ -10595,6 +10588,22 @@ country_event = {
 				}
 				add_building_construction = {
 					type = industrial_complex
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { kaliningrad_invest > 2 } }
+			642 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = offices
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = fossil_powerplant
 					level = 1
 					instant_build = yes
 				}
@@ -10827,7 +10836,10 @@ country_event = {
 		name = sov_nazbol.1.a
 		log = "[GetDateText]: [This.GetName]: sov_nazbol.1.a executed"
 		ai_chance = { base = 100 }
-		ROOT = { every_owned_state = { add_core_of = SOV } }
+		ROOT = {
+			every_owned_state = { add_core_of = SOV }
+			clear_united_nations_member_state = yes
+		}
 		SOV = {
 			country_event = sov_nazbol.2
 			add_to_variable = { treasury = ROOT.treasury }
@@ -10981,10 +10993,19 @@ country_event = {
 				regiments = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 0 y = 2 }
+
+					Special_Forces = { x = 1 y = 0 }
+					Special_Forces = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 2 }
 				}
+
+				regimental_support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+				}
+
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
-					L_Recce_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -11114,17 +11135,28 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
+
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
+
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
+
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-				support = {
+
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+
+					L_Recce_Comp = { x = 1 y = 0 }
+
+					L_Recce_Comp = { x = 2 y = 0 }
+				}
+
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -11229,17 +11261,28 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
+
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
+
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
+
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-				support = {
+
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+
+					L_Recce_Comp = { x = 1 y = 0 }
+
+					L_Recce_Comp = { x = 2 y = 0 }
+				}
+
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
