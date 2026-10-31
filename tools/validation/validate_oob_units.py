@@ -2496,8 +2496,8 @@ def check_regimental_support_groups(
                         nodes[idx]["line"],
                         _TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT,
                         f"template '{name}' (line {node['line']}): "
-                        f"regimental_support '{company}' allows "
-                        f"{_ATTACH_GROUPS_KEY} {', '.join(sorted(allowed))}, but "
+                        f"regimental_support '{company}' is limited to battalion "
+                        f"groups {', '.join(sorted(allowed))}, but "
                         f"regiments column x = {x} has only {', '.join(groups)}",
                     )
                 )

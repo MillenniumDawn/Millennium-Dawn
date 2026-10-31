@@ -2705,7 +2705,7 @@ def _attach_template(regiments, regimental_support, block="regimental_support"):
 
 def _no_group(company, allowed, x, groups):
     return (
-        f"regimental_support '{company}' allows allowed_battalion_groups {allowed}, "
+        f"regimental_support '{company}' is limited to battalion groups {allowed}, "
         f"but regiments column x = {x} has only {groups}"
     )
 
