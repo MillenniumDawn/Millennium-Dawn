@@ -39,14 +39,15 @@ UTF-8 with BOM. Python tools must preserve LF when writing; see
 
 # Quick Reference
 
-| Feature      | Key Rules                                                      |
-| ------------ | -------------------------------------------------------------- |
-| Focus Trees  | Use `relative_position_id`, include logging, `ai_will_do` last |
-| Decisions    | Include logging, use `fire_only_once` sparingly                |
-| Events       | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas        | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
-| Technologies | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
-| Formatting   | Tabs (not spaces), 1 line between elements                     |
+| Feature          | Key Rules                                                      |
+| ---------------- | -------------------------------------------------------------- |
+| Focus Trees      | Use `relative_position_id`, include logging, `ai_will_do` last |
+| Decisions        | Include logging, use `fire_only_once` sparingly                |
+| Events           | Use `is_triggered_only = yes`, log only if effects exist       |
+| Ideas            | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
+| Technologies     | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
+| Scripted Effects | List every input in a `# Parameters:` block above the effect   |
+| Formatting       | Tabs (not spaces), 1 line between elements                     |
 
 ---
 
@@ -373,6 +374,55 @@ night_vision_1 = {
 
     ai_will_do = { factor = 1 }
 }
+```
+
+---
+
+# Scripted Effects
+
+Scripted effects take no arguments, so a caller passes values through variables. List
+every value an effect reads from its caller in a `# Parameters:` block directly above
+the effect. The validators read this block and check every call against it.
+
+## Parameters Block
+
+```hoiscript
+# Effect: GRE_repay_creditor_debt
+# Purpose: Repay a portion of debt to a specific creditor
+# Parameters:
+# - GRE_repay_index: creditor index
+# - GRE_repay_amount: amount to repay
+GRE_repay_creditor_debt = {
+    ...
+}
+```
+
+Write one line per input. The marker after the name says what kind of input it is:
+
+| Line                                | Input                                        |
+| ----------------------------------- | -------------------------------------------- |
+| `# - name: text`                    | Temp variable the caller must set first      |
+| `# - name (optional): text`         | Temp variable the caller may leave unset     |
+| `# - name (set by an_effect): text` | Temp variable an earlier effect leaves       |
+| `# - name (variable): text`         | Real variable, written above the effect call |
+
+## Best Practices
+
+- Use `# Parameters:` only. Do not write `# Inputs:`, `# Expects:`, `# Requires:`, or
+  `# Reads:`. Only this header is checked.
+- Keep the block as the last comment above the effect, with no blank line inside it.
+  Put `# Output:` and `# Writes:` lines above it.
+- Do not list scopes or event targets. Describe those in `# Purpose:`.
+- Scripted triggers use the same block. Nothing checks trigger calls against it yet.
+- Write a `(variable)` input before the call. `startup_politics` totals the party
+  setup when it runs, so it goes below the last `party_pop_array`, `ruling_party`, and
+  `gov_coalition_array` line:
+
+```hoiscript
+set_variable = { party_pop_array^4 = 0.479 }
+set_variable = { ruling_party = 4 }
+add_to_array = { gov_coalition_array = 7 }
+startup_politics = yes
 ```
 
 ---

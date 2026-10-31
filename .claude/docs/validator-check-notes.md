@@ -642,6 +642,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `variable-input-after-call` (ERROR): a real variable an effect marks `(variable)` is
+  written after the effect's last call in the same scope and effect block. Known gaps:
+  writes inside scripted effects the caller runs are not followed, and an `else` arm
+  that writes counts as following a call in its `if`.
 - `orphan-param-setter` (ERROR): a `set_temp_variable`, `add_to_temp_variable`, or
   `subtract_from_temp_variable` of a declared parameter, required or optional, that
   nothing uses afterwards in the same effect block, or that is overwritten at the same
