@@ -251,15 +251,25 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   conditions. `original_tag`, foreign-scope tags, and tags mentioned only inside
   `OR` or `NOT` do not prove the receiver.
   - Display-only `effect_tooltip` costs and temp writes do not execute.
+  - Both AI cost checks skip events whose option tag gates are pairwise disjoint.
+    Conjunctive `tag` or `original_tag` requirements and direct `NOT` exclusions can
+    prove that no receiver sees two options. Different identity fields, `OR` gates,
+    and foreign-country checks do not prove a split.
   - Skipped: an option at `base = 0` with no `add` while another option can win, and
     a cost kind every option always pays, or every option pays only sometimes. A kind
     some options always pay and others only sometimes pay is not shared. An
     `if`/`else` chain or `random_list` whose every arm charges counts as always, and
     so does a charge behind the `MD_skip_treasury_cost` flag or an unset
     `skip_payment`. Tax rate is never shared, since options can move it apart.
-  - Known gaps: a shared cost of different sizes is skipped too, so the dearer
-    option goes unreported. So is a kind every option pays only sometimes, at
-    different odds. Charges that depend on a variable set in each arm stay
+  - Unequal shared literal prices need a guard above the cheapest AI-eligible
+    choice, provided no option has a `trigger`. This covers direct stat losses and
+    literal `add_to_variable` / `subtract_from_variable` money changes. Decimal sums
+    keep equivalent fractional prices equal. A base-zero choice without an `add`
+    cannot supply the cheaper fallback.
+  - Unmeasured prices keep the shared-kind exemption: scripted or computed costs,
+    conditional branches, option trigger gates, mixed gains and charges, and balance
+    rewrites or clamps. A kind every option pays only sometimes is still skipped,
+    even at different odds. Charges that depend on a variable set in each arm stay
     conditional. Costs behind conditions that can never hold still count. Stored negative values built from math or arrays, unsubstituted
     `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs,
     nonconjunctive recipient gates, caller-derived recipients, and single-option
@@ -555,6 +565,92 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   producers and dynamic names or types are not checked. Separate events can overlap,
   but the check does not prove both execute, so this is advisory.
 - `validate_ai_equipment.py` runs without `--strict` locally and with it in CI.
+- `ai-equipment-incompatible-ammo` (WARNING) checks each weapon alternative
+  against the requested ammo choices, rather than borrowing compatibility from
+  another alternative in the same slot. It expands literal modules, categories,
+  repeated `module` selectors, and `any_of` lists. Hull allowances and other
+  equipped weapons can still permit the ammunition; forbidden weapon choices
+  do not count. Existing literal slot contradictions remain ERROR without a
+  second advisory for the same contradiction.
+  - This runs in the normal AI slot-check phase, without `--check-buildability`.
+    Future designs, disabled priorities, and numeric equipment upgrades do not
+    suppress structural ammo checks. It does not prove the engine's choice order.
+  - Unsupported ammo selections are analysis records, not warnings. These include
+    current-dependent refits, comparisons, inherited module context, unplaced
+    requirements, implicit `allowed_modules` filling, and missing weapon-specific
+    allowances. An `allowed_modules` block does not suspend checks when every
+    hull slot is explicitly assigned. Forbidden modules cannot widen other slots,
+    including through a category selector.
+  - Regression source: `USA_APC_design/modern_APC_default` before
+    `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
+    were paired with MG-only ammo. The union of both weapons' slot unlocks hid
+    the autocannon mismatch. The historical pattern now warns; the corrected
+    autocannon/ammo pairing passes against the current equipment definitions.
+    Regressions also pin selectors followed by scalar ammo assignments, so
+    stripping a nested block cannot consume the following slot.
+- `--check-buildability` adds advisory starting-research checks in the existing CI
+  batch and main baseline. Commit hooks leave it off. Changes to AI designs,
+  country histories, technologies, technology folders, equipment definitions,
+  bookmarks, scripted effects, or special projects select that batch.
+  - `ai-buildability-missing-unlock` (WARNING) identifies the country, design,
+    role, pinned module or category candidates, missing enabling technologies,
+    start date, and DLC context. It requires a researched starting hull, a proven
+    enabled design, and priorities bounded above zero. An unknown modifier that
+    only multiplies a positive weight by another positive weight does not suspend
+    this proof. Nonpositive starting priorities are deferred, not unsupported or
+    proven unusable fallbacks. An unresearched successor hull or false enable
+    condition is not a starting defect. Pins in optional slots still constrain
+    the target variant; this is not limited to hull slots marked `required`.
+  - A researched alternative or category member can satisfy a slot. Researched
+    selections are checked with the existing slot rules, including count limits
+    and module-dependent slot categories. A usable role candidate from another
+    permitted group is named as a fallback; blocked groups do not count. This
+    proves a candidate exists, not that the engine will choose it over competing
+    priorities. A bad pin is still reported when a fallback exists.
+  - Starting research reuses the date-aware equipment-variant context reader.
+    It applies undated setup and dated setup through the earliest bookmark,
+    expands research-granting scripted effects, and keeps guaranteed and possible
+    research separate. Unknown conditional or foreign-scope grants cannot prove
+    a fallback usable or a module unavailable. Tooltip-only effects and trigger
+    metadata do not grant research. DLC configurations stay separate; unrelated
+    technology gates do not consume the configuration budget. Unlocks come from
+    explicit technology definitions. Registered `duplicate_archetypes` clones use
+    their source hull's unlock unless the clone has its own definition or unlock.
+    No hull-name inference is used.
+  - Unknown cases are analysis records, not content warnings: dynamic conditions,
+    ambiguous or unbounded priorities, missing unlock sources, module comparisons,
+    current-dependent refits, unplaced requirements, and equipment upgrades.
+    Selection is bounded at 256 researched combinations per design and 64 DLC
+    configurations per country. Exhausting a bound is unresolved, not a
+    buildability failure. Modules with no recorded unlocking technology are not
+    assumed free. Non-modular hull availability is outside this module check.
+    Special-project completions are not simulated; their possible technology,
+    hull, and module rewards prevent a confident missing-unlock verdict unless
+    a researched unlock already proves availability. Implicit slot filling,
+    runtime on-actions, technology sharing, and engine refit choices are not
+    simulated.
+  - With `--output report.log`, `report.json` remains the normal issue list.
+    `report.analysis.jsonl` contains deterministic assessment records, with
+    country, design, role, starting date, full DLC configurations, status, and
+    fallback context where applicable. `unknown`, `deferred`, `future`,
+    `not-applicable`, `usable`, and `checked` do not inflate warning counts.
+    The console summarizes these separately. Batch artifacts and
+    `run_all_validators.py --persist-results` preserve the analysis sidecar;
+    issue and baseline readers do not treat it as an issue list. Unreadable
+    inputs still produce `ai-buildability-input-unavailable` (WARNING).
+  - Baseline game data for #6287: main
+    `f2578bb8c776c43a0ea5c5029a0da483d14023e0`. The reviewed full scan produced
+    229 missing-unlock warnings at 139 design sites, zero errors, and zero proved
+    incompatible-ammo warnings. All 109 previous missing-unlock records remain;
+    corrected priority and hull handling expose 120 additional records. The
+    7,874 unresolved starting assessments at 286 sites and 60 unresolved ammo
+    assessments remain explicit analysis limits, not gameplay defects. Moving
+    those records out of warning totals is a reporting correction, not a game fix.
+    Live regressions cover the historical USA APC and Greek/Turkish sources;
+    Algeria, Argentina, and Australia fixtures also check that researching the
+    named enabling technology removes that module's missing-unlock claim.
+    No native-game build test was run, and not every warning site was individually
+    adjudicated. A clean supported subset is not an engine-buildability claim.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
 - `missing-equipment-factor` (WARNING, opt-in `--missing-equipment-factor`).
@@ -642,6 +738,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `variable-input-after-call` (ERROR): a real variable an effect marks `(variable)` is
+  written after the effect's last call in the same scope and effect block. Known gaps:
+  writes inside scripted effects the caller runs are not followed, and an `else` arm
+  that writes counts as following a call in its `if`.
 - `orphan-param-setter` (ERROR): a `set_temp_variable`, `add_to_temp_variable`, or
   `subtract_from_temp_variable` of a declared parameter, required or optional, that
   nothing uses afterwards in the same effect block, or that is overwritten at the same
