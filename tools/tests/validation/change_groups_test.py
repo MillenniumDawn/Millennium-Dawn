@@ -8,6 +8,33 @@ import run_validator_batch
 from validate_file_paths import CONTENT_ROOTS
 
 
+@pytest.mark.parametrize(
+    "path",
+    (
+        "common/ai_equipment/shared.txt",
+        "common/units/equipment/modules/guns.txt",
+        "common/technologies/naval.txt",
+        "common/technology_tags/folders.txt",
+        "common/bookmarks/start.txt",
+        "common/scripted_effects/research.txt",
+        "common/special_projects/projects/naval.txt",
+        "history/countries/AAA - Test.txt",
+    ),
+)
+def test_buildability_inputs_select_the_existing_batch(path):
+    groups = change_groups.classify([path])
+    assert groups["ai-equipment"] is True
+    assert groups["full_suite"] is False
+    changed = {name for name in change_groups.GROUP_PATTERNS if groups[name]}
+    spec = next(
+        spec
+        for spec in run_validator_batch.selected_specs("targeted-a", changed)
+        if spec.name == "ai-equipment"
+    )
+    assert spec.args == ("--check-buildability",)
+    assert spec.strict is True
+
+
 def test_localisation_only_change():
     groups = change_groups.classify(["localisation/english/example.yml"])
 
