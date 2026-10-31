@@ -26,7 +26,11 @@ from shared_utils import run_validator_main
 from sprite_index import SpriteSizeIndex
 from validate_events import costly_scripted_effects
 
-_OPT_IN_CHECKS = {"validate_missing_icons", "validate_unannounced_categories"}
+_OPT_IN_CHECKS = {
+    "validate_missing_icons",
+    "validate_unannounced_categories",
+    "validate_naming_style",
+}
 
 
 def _flat(*parts, token="dec_one"):
@@ -68,6 +72,11 @@ _RANDOM_LIST = (
 )
 
 _BILL = "pay_the_bill = {\n\tadd_to_variable = { treasury = -3 }\n}\n"
+_BUILD = (
+    "build_a_factory = {\n\trandom_owned_state = {\n"
+    "\t\tadd_building_construction = { type = arms_factory level = 1 }\n\t}\n"
+    "\tadd_to_variable = { treasury = -3 }\n}\n"
+)
 _CUSTOM_BILLS = (
     "pay_command_power = { add_command_power = -20 }\n"
     "forward_command_power = { pay_command_power = yes }\n"
@@ -79,13 +88,25 @@ _CUSTOM_BILLS = (
 _PAYMENT = (
     "modify_treasury_effect = { add_to_variable = { treasury = treasury_change } }\n"
 )
-_EFFECTS = costly_scripted_effects([_BILL, _CUSTOM_BILLS, _PAYMENT])
+_EFFECTS = costly_scripted_effects([_BILL, _BUILD, _CUSTOM_BILLS, _PAYMENT])
 _CHARGE = "\t\tadd_to_variable = { treasury = -5 }\n"
 _WEIGHT = "\tai_will_do = { base = 10 }\n"
 _BANKRUPTCY_WEIGHT = (
     "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0 "
     "has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
 )
+_DEFICIT_WEIGHT = (
+    "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0.5 "
+    "ai_has_high_deficit = yes }\n\t}\n"
+)
+_UNNEEDED_BANKRUPTCY = [
+    (
+        "dec_one - ai_will_do lowers the weight on bankruptcy, but the decision has"
+        " no money or political power cost",
+        "X.txt",
+        0,
+    )
+]
 _ZERO_BASE_ADD = (
     "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { add = 5 has_war = yes }\n\t}\n"
 )
@@ -247,6 +268,15 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     },
     "validate_money_charged_after_entry": {
         "charged on removal": ([_flat(_PAID_ON_REMOVE)], _LATE),
+        "exempt id": (
+            [
+                _flat(
+                    _PAID_ON_REMOVE,
+                    token=sorted(V._LATE_CHARGE_EXEMPT - V._AI_COST_EXEMPT)[0],
+                )
+            ],
+            [],
+        ),
         "payment effect on removal": (
             [
                 _flat(
@@ -258,9 +288,13 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             ],
             _LATE,
         ),
-        # A construction effect pays when the building is delivered; that is intended.
         "scripted effect that charges": (
             [_flat(_effect("\t\tpay_the_bill = yes\n", "remove_effect"))],
+            _LATE,
+        ),
+        # A construction effect pays when the building is delivered; that is intended.
+        "building effect that charges": (
+            [_flat(_effect("\t\tbuild_a_factory = yes\n", "remove_effect"))],
             [],
         ),
         "charged when taken": ([_flat(_PAID)], []),
@@ -499,6 +533,16 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     # Issue #5738.
     "validate_ai_will_do_ignores_cost": {
         "flat weight": ([_flat(_PAID, _WEIGHT)], _ignores("treasury cost")),
+        "exempt id": (
+            [
+                _flat(
+                    _PAID,
+                    _WEIGHT,
+                    token=sorted(V._AI_COST_EXEMPT - V._LATE_CHARGE_EXEMPT)[0],
+                )
+            ],
+            [],
+        ),
         "scripted effect": (
             [_flat(_effect("\t\tpay_the_bill = yes\n"), _WEIGHT)],
             _ignores("treasury cost"),
@@ -579,6 +623,80 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
                     "\tavailable = { hidden_trigger = { always = no } }\n",
                 )
             ],
+            [],
+        ),
+    },
+    "validate_unneeded_treasury_guard": {
+        "free decision": (
+            [_flat(_effect(_GAIN), _BANKRUPTCY_WEIGHT)],
+            _UNNEEDED_BANKRUPTCY,
+        ),
+        "treasury charge": ([_flat(_PAID, _BANKRUPTCY_WEIGHT)], []),
+        "scripted charge": (
+            [_flat(_effect("\t\tpay_the_bill = yes\n"), _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "charge back to ROOT from a state scope": (
+            [
+                _flat(
+                    _effect(
+                        "\t\trandom_owned_state = { ROOT = { pay_the_bill = yes } }\n"
+                    ),
+                    _BANKRUPTCY_WEIGHT,
+                )
+            ],
+            [],
+        ),
+        "bankruptcy check on a political power price": (
+            [_flat("\tcost = 25\n", _effect(_GAIN), _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "deficit check on a political power price": (
+            [_flat("\tcost = 25\n", _effect(_GAIN), _DEFICIT_WEIGHT)],
+            [
+                (
+                    "dec_one - ai_will_do lowers the weight on high deficit, but the"
+                    " decision has no money cost",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "money modifier while active": (
+            [
+                _flat(
+                    "\tdays_remove = 30\n",
+                    "\tmodifier = { social_cost_multiplier_modifier = 0.1 }\n",
+                    _effect(_GAIN),
+                    _DEFICIT_WEIGHT,
+                )
+            ],
+            [],
+        ),
+        "treasury custom cost": (
+            [_flat(_TREASURY_GATE, _effect(_GAIN), _DEFICIT_WEIGHT)],
+            [],
+        ),
+        "remove_effect charge": (
+            [_flat("\tdays_remove = 30\n", _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "selectable mission's timeout charge": (
+            [_flat(_SELECTABLE, _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
+        "plain mission": ([_flat(_MISSION, _BANKRUPTCY_WEIGHT)], []),
+        "AI never takes it": (
+            [
+                _flat(
+                    "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { factor = 0"
+                    " has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
+                )
+            ],
+            [],
+        ),
+        "player only": (
+            [_flat(_BANKRUPTCY_WEIGHT, "\tavailable = { is_ai = no }\n")],
             [],
         ),
     },
@@ -959,9 +1077,12 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     ],
 )
 def test_decision_check(monkeypatch, check, decisions, expected):
-    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}))
+    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}, set()))
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
     monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
+    monkeypatch.setattr(
+        V.Validator, "_get_building_payments", lambda self: {"build_a_factory"}
+    )
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
@@ -980,12 +1101,85 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
 
     validator.validate_ai_will_do_ignores_cost()
 
+    assert {i.severity for i in validator._issues} == {V.Severity.ERROR}
     assert issue_rows(validator) == [
         (
             "decision-ai-will-do-ignores-cost",
             "dec_bill - ai_will_do ignores the treasury cost",
             "common/decisions/Bills.txt",
             2,
+        )
+    ]
+
+
+def test_unneeded_treasury_guard_shares_the_cost_pass(tmp_path, monkeypatch):
+    walks = []
+    walk = V.ai_weight_cost_checks
+    monkeypatch.setattr(
+        V,
+        "ai_weight_cost_checks",
+        lambda weights: walks.append(weights) or walk(weights),
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/Free.txt": "free_category = {\n"
+            + _nested(
+                "dec_free",
+                _block("complete_effect", "add_political_power = 10")
+                + _block(
+                    "ai_will_do",
+                    "base = 10\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_ai_will_do_ignores_cost()
+    validator.validate_unneeded_treasury_guard()
+
+    assert len(walks) == 1
+    assert {i.severity for i in validator._issues} == {V.Severity.WARNING}
+    assert issue_rows(validator) == [
+        (
+            "decision-unneeded-treasury-guard",
+            "dec_free - ai_will_do lowers the weight on high deficit, but the"
+            " decision has no money cost",
+            "common/decisions/Free.txt",
+            2,
+        )
+    ]
+
+
+def test_late_charge_check_follows_scripted_effects_but_not_buildings(tmp_path):
+    waived = (
+        "pay_unless_waived = {\n\tif = {\n"
+        "\t\tlimit = { NOT = { check_variable = { skip_payment = 1 } } }\n"
+        "\t\tadd_to_variable = { treasury = -3 }\n\t}\n}\n"
+    )
+    calls = ("pay_the_bill", "build_a_factory", "pay_unless_waived")
+    validator = _mod(
+        tmp_path,
+        {
+            "common/scripted_effects/00_bills.txt": _BILL + _BUILD + waived,
+            "common/decisions/Bills.txt": "bills_category = {\n"
+            + "".join(
+                _nested(f"dec_{call}", _block("remove_effect", f"{call} = yes"))
+                for call in calls
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_money_charged_after_entry()
+
+    assert [(i.severity, i.category, i.message) for i in validator._issues] == [
+        (
+            V.Severity.ERROR,
+            "decision-money-charged-late",
+            "dec_pay_the_bill - remove_effect charges treasury,"
+            " charge it in complete_effect",
         )
     ]
 
@@ -1801,11 +1995,36 @@ def test_icon_type_message(tmp_path, slot, value, sprites, vanilla, fragments):
         assert all(fragment in message for fragment in fragments), message
 
 
+_ICON_POLITICS = "\t\ticon = politics\n"
+
+
 def test_texture_missing_from_disk_is_counted_not_reported(tmp_path):
     textures = SpriteSizeIndex({"GFX_decision_politics": str(tmp_path / "gone.dds")})
 
     assert V._icon_type_message("decision", "d", "politics", textures) is None
     assert textures.unreadable == 1
+
+
+def test_icon_with_a_missing_texture_is_a_warning_at_its_line(tmp_path, monkeypatch):
+    textures = {f"GFX_filler_{i}": "unused.dds" for i in range(1000)}
+    textures["GFX_decision_politics"] = str(tmp_path / "gone.dds")
+    monkeypatch.setattr(
+        V, "build_sprite_size_index", lambda *a, **k: SpriteSizeIndex(textures)
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/d.txt": "cat = {\n"
+            + _nested("dec_one", _ICON_POLITICS)
+            + "}\n"
+        },
+    )
+
+    validator.validate_icon_types()
+
+    assert [(i.category, i.severity, i.line) for i in validator._issues] == [
+        ("decision-icon-unmeasured", V.Severity.WARNING, 3)
+    ]
 
 
 def test_icon_checks_skip_themselves_without_a_sprite_index(tmp_path, monkeypatch):
@@ -2405,7 +2624,10 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
 
 @pytest.mark.parametrize(
     "flags",
-    ({}, {"missing_icons": True, "unannounced_categories": True}),
+    (
+        {},
+        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
+    ),
     ids=("default", "opt-in checks"),
 )
 def test_run_validations_calls_every_check(tmp_path, monkeypatch, flags):
@@ -2422,6 +2644,8 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
+    assert parser.parse_args(["--naming-style"]).naming_style
+    assert not parser.parse_args([]).naming_style
 
 
 _ICON = "\t\ticon = icon\n"
@@ -2438,6 +2662,7 @@ _FINDING_DECISIONS = {
     "nonselect_mission": _MISSION_DAYS + "\t\tai_will_do = { base = 1 }\n",
     "custom_cost": _block("custom_cost_trigger", "has_political_power > 10"),
     "target_no_set": _block("target_trigger", "has_war = yes"),
+    "cosmetic_targets": _block("targets", "GER FRA"),
     "from_no_trigger": _GER_TARGET + _block("visible", _FROM_WAR),
     "root_visible": _GER_TARGET + _block("visible", "has_war = yes"),
     "from_duplicate": _GER_TARGET
@@ -2526,14 +2751,15 @@ _FINDINGS_MOD = {
 }
 # WARNINGs held back until their backlog clears.
 _BACKLOG_WARNINGS = (
+    "decision-cosmetic-targeting",
     "decision-duplicate-log",
-    "decision-money-charged-late",
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
 )
+_PROMOTED_ERRORS = ("missing-decision-log", "decision-money-charged-late")
 _REPORTED_CATEGORIES = (
     "missing-decision-localisation",
-    "missing-decision-log",
+    *_PROMOTED_ERRORS,
     "decision-log-not-first",
     *_BACKLOG_WARNINGS,
     "bare-trigger-name",
@@ -2577,8 +2803,9 @@ def test_full_run_reports_every_finding_category(tmp_path):
     for marker in _REPORTED_CATEGORIES:
         assert any(marker in category for category in categories), marker
     assert "unannounced-decision-category" not in categories
-    missing_log = [i for i in validator._issues if i.category == "missing-decision-log"]
-    assert {issue.severity for issue in missing_log} == {V.Severity.ERROR}
+    for category in _PROMOTED_ERRORS:
+        severities = {i.severity for i in validator._issues if i.category == category}
+        assert severities == {V.Severity.ERROR}, category
     for category in _BACKLOG_WARNINGS:
         severities = {i.severity for i in validator._issues if i.category == category}
         assert severities == {V.Severity.WARNING}, category
@@ -2765,6 +2992,98 @@ def test_timer_without_remove_effect(tmp_path, token, body, reported):
     )
     assert issue_rows(validator) == [expected] * reported
     assert validator.warnings_found == reported
+
+
+_DECISIONS_FILE = "common/decisions/ser.txt"
+_VOJ_PREFIX_ROW = (
+    "decision-prefix-owner",
+    "Decision VOJ_integrate has the VOJ prefix but allowed admits SER",
+    _DECISIONS_FILE,
+    2,
+)
+# case: (category, category allowed, decision, decision allowed, rows as
+#        (category, message, file, line))
+_NAMING_CASES = {
+    "lowercase ids": ("SER_main", "", "SER_invite_bosnia", "original_tag = SER", []),
+    "uppercase decision": (
+        "SER_main",
+        "",
+        "SER_The_Confederacy",
+        "original_tag = SER",
+        [
+            (
+                "decision-id-case",
+                "Decision SER_The_Confederacy is not lowercase after its prefix",
+                _DECISIONS_FILE,
+                2,
+            )
+        ],
+    ),
+    "uppercase category": (
+        "SER_Political",
+        "",
+        "SER_invite_bosnia",
+        "",
+        [
+            (
+                "decision-id-case",
+                "Category SER_Political is not lowercase after its prefix",
+                "common/decisions/categories/cats.txt",
+                1,
+            )
+        ],
+    ),
+    "decision allowed names another country": (
+        "SER_main",
+        "",
+        "VOJ_integrate",
+        "original_tag = SER",
+        [_VOJ_PREFIX_ROW],
+    ),
+    "category lock names another country": (
+        "SER_main",
+        "original_tag = SER",
+        "VOJ_integrate",
+        "",
+        [_VOJ_PREFIX_ROW],
+    ),
+    "prefix that is not a country": (
+        "SER_main",
+        "",
+        "SUB_annex",
+        "original_tag = SER",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("category", "category_allowed", "token", "allowed", "rows"),
+    _NAMING_CASES.values(),
+    ids=_NAMING_CASES,
+)
+def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows):
+    category_body = (
+        f"\tallowed = {{ {category_allowed} }}\n" if category_allowed else ""
+    )
+    validator = _mod(
+        tmp_path,
+        {
+            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
+            'VOJ = "countries/Vojvodina.txt"\n',
+            "common/decisions/categories/cats.txt": f"{category} = {{\n"
+            + category_body
+            + "}\n",
+            _DECISIONS_FILE: f"{category} = {{\n"
+            + _nested(token, _block("allowed", allowed) if allowed else "")
+            + "}\n",
+        },
+    )
+
+    validator.validate_naming_style()
+
+    assert issue_rows(validator) == rows
+    assert validator.warnings_found == len(rows)
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):
