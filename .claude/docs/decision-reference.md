@@ -162,6 +162,9 @@ mission and halve it on a high deficit:
   adds, or a later `add` brings the zeroed weight back.
 - Leave the weight off when skipping the decision costs the AI more than the charge.
 - Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
+  A bankruptcy check on it is still fine, a deficit check is not.
+- Do not lower the weight on bankruptcy or a high deficit for a decision that costs no
+  money. A war, a spending law change, or a money modifier counts as money.
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
