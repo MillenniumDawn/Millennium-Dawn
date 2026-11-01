@@ -7261,7 +7261,12 @@ UKR_sevastopol_naval_base_category = {
 	UKR_sevastopol_naval_base_terminate_bsf_lease = {
 		icon = generic_naval
 		fire_only_once = yes
-		cost = 250
+		custom_cost_trigger = {
+			NOT = { check_variable = { political_power < UKR_bsf_lease_pp_cost } }
+			NOT = { check_variable = { command_power < UKR_bsf_lease_cp_cost } }
+		}
+		custom_cost_text = UKR_bsf_lease_cost_text
+		ai_hint_pp_cost = 750
 
 		visible = { date < 2010.1.1 }
 
@@ -7274,10 +7279,21 @@ UKR_sevastopol_naval_base_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_sevastopol_naval_base_terminate_bsf_lease"
+
 			hidden_effect = {
+				set_temp_variable = { pp_change = UKR_bsf_lease_pp_cost }
+				multiply_temp_variable = { pp_change = -1 }
+				add_political_power = pp_change
+
+				set_temp_variable = { cp_change = UKR_bsf_lease_cp_cost }
+				multiply_temp_variable = { cp_change = -1 }
+				add_command_power = cp_change
+
 				SOV = { country_event = { id = ukraine_sevastopol.1 days = 3 } }
 			}
+
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+
 			effect_tooltip = {
 				transfer_state = 1112
 				SOV = {
@@ -7287,17 +7303,21 @@ UKR_sevastopol_naval_base_category = {
 					}
 				}
 			}
+
 			custom_effect_tooltip = TT_IF_THEY_REJECT
+
 			effect_tooltip = {
 				add_opinion_modifier = {
 					target = SOV
 					modifier = recent_actions_negative
 				}
+
 				SOV = {
 					add_opinion_modifier = {
 						target = UKR
 						modifier = recent_actions_negative
 					}
+
 					declare_war_on = {
 						target = UKR
 						type = take_state_focus
@@ -13056,21 +13076,23 @@ UKR_modernize_sov_category = {
 				type = medium_tank_chassis_1
 				parent_version = 0
 				allow_without_tech = yes
+
 				modules = {
-				main_armament_slot = tank_medium_cannon_2
-				secondary_armament_slot = afv_coax_machine_gun_2
-				ammunition_load_slot = mixed_main_ammo_2
-				turret_type_slot = tank_soviet_turret
-				suspension_type_slot = tank_torsion_bar_suspension_medium
-				armor_type_slot = tank_composite_armor_gen2
-				engine_type_slot = tank_gas_turbine_engine_gen3
-				reload_type_slot = automatic_loading
-				special_type_slot_1 = smoke_launchers_2
-				special_type_slot_2 = additional_mg
-				special_type_slot_3 = smoothbore_atgm_gen2
-				special_type_slot_4 = tank_battlestation_2_thermal
-				special_type_slot_6 = reactive_armor_gen3
+					main_armament_slot = tank_medium_cannon_2
+					secondary_armament_slot = afv_coax_machine_gun_2
+					ammunition_load_slot = mixed_main_ammo_2
+					turret_type_slot = tank_soviet_turret
+					suspension_type_slot = tank_torsion_bar_suspension_medium
+					armor_type_slot = tank_composite_armor_gen2
+					engine_type_slot = tank_gas_turbine_engine_gen3
+					reload_type_slot = automatic_loading
+					special_type_slot_1 = smoke_launchers_2
+					special_type_slot_2 = additional_mg
+					special_type_slot_3 = smoothbore_atgm_gen2
+					special_type_slot_4 = tank_battlestation_2_thermal
+					special_type_slot_6 = reactive_armor_gen3
 				}
+
 				upgrades = { tank_nsb_armor_upgrade = 2 }
 				obsolete = no
 				icon = "GFX_T_80BV_MODEL_1985"
@@ -14217,11 +14239,11 @@ UKR_modernize_planes_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		days_remove = 200
-		visible = { 
+		visible = {
 			date > 2007.03.01
 			date < 2012.01.01
 		}
-		available = { 
+		available = {
 			date > 2007.08.01
 			date < 2012.01.01
 		}
@@ -14229,7 +14251,7 @@ UKR_modernize_planes_category = {
 		custom_cost_text = cost_0_05
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_l39_m1"
-			
+
 			hidden_effect = {
 				set_temp_variable = { treasury_change = -0.05 }
 				modify_treasury_effect = yes
@@ -14237,31 +14259,31 @@ UKR_modernize_planes_category = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_l39_m1"
-		create_equipment_variant = {
-			name = "L-39M1"
-			type = small_plane_strike_airframe_1
-			parent_version = 0
-			modules = {
-				fixed_main_weapon_slot = weap_mp_light_hardpoint_1
-				fixed_gun_slot = empty
-				engine_type_slot = engine_light_single_2
-				avionics_type_slot = avionics_manned_1
-				wingform_type_slot = wing_straight
-				special_slot_type_1 = spec_countermeasures_1
-				special_slot_type_2 = spec_redundant_1
-			}
-			upgrades = {
-				plane_bba_radar_upgrade = 2
-				plane_bba_engine_upgrade = 4
-			}
-			icon = "GFX_UKR_AIR_L_39M1"
+			create_equipment_variant = {
+				name = "L-39M1"
+				type = small_plane_strike_airframe_1
+				parent_version = 0
+				modules = {
+					fixed_main_weapon_slot = weap_mp_light_hardpoint_1
+					fixed_gun_slot = empty
+					engine_type_slot = engine_light_single_2
+					avionics_type_slot = avionics_manned_1
+					wingform_type_slot = wing_straight
+					special_slot_type_1 = spec_countermeasures_1
+					special_slot_type_2 = spec_redundant_1
+				}
+				upgrades = {
+					plane_bba_radar_upgrade = 2
+					plane_bba_engine_upgrade = 4
+				}
+				icon = "GFX_UKR_AIR_L_39M1"
 			}
 			set_country_flag = UKR_developed_l39_m1_flag
 		}
-  	}
+	}
 
 	UKR_modernize_l39_m = {
-	fire_only_once = yes
+		fire_only_once = yes
 		icon = GFX_decision_jet_aircraft
 		allowed = { always = yes }
 		ai_will_do = {
@@ -14270,11 +14292,11 @@ UKR_modernize_planes_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		days_remove = 200
-		visible = { 
+		visible = {
 			date > 2012.01.01
 			date < 2014.01.01
 		}
-		available = { 
+		available = {
 			date > 2012.01.01
 			date < 2014.01.01
 			has_country_flag = UKR_developed_l39_m1_flag
@@ -14283,7 +14305,7 @@ UKR_modernize_planes_category = {
 		custom_cost_text = cost_0_1
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_l39_m"
-			
+
 			hidden_effect = {
 				set_temp_variable = { treasury_change = -0.1 }
 				modify_treasury_effect = yes
@@ -14291,30 +14313,30 @@ UKR_modernize_planes_category = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_l39_m"
-		create_equipment_variant = {
-			name = "L-39M"
-			type = small_plane_strike_airframe_1
-			parent_version = 0
-			modules = {
-				fixed_main_weapon_slot = weap_mp_light_hardpoint_1
-				fixed_gun_slot = empty
-				engine_type_slot = engine_light_single_2
-				avionics_type_slot = avionics_manned_2
-				wingform_type_slot = wing_straight
-				special_slot_type_1 = spec_countermeasures_1
-				special_slot_type_2 = spec_redundant_1
-			}
-			upgrades = {
-				plane_bba_radar_upgrade = 2
-				plane_bba_engine_upgrade = 4
-			}
-			icon = "GFX_UKR_AIR_L_39M"
+			create_equipment_variant = {
+				name = "L-39M"
+				type = small_plane_strike_airframe_1
+				parent_version = 0
+				modules = {
+					fixed_main_weapon_slot = weap_mp_light_hardpoint_1
+					fixed_gun_slot = empty
+					engine_type_slot = engine_light_single_2
+					avionics_type_slot = avionics_manned_2
+					wingform_type_slot = wing_straight
+					special_slot_type_1 = spec_countermeasures_1
+					special_slot_type_2 = spec_redundant_1
+				}
+				upgrades = {
+					plane_bba_radar_upgrade = 2
+					plane_bba_engine_upgrade = 4
+				}
+				icon = "GFX_UKR_AIR_L_39M"
 			}
 		}
-  	}
+	}
 
 	UKR_develop_horlytsia = {
-	fire_only_once = yes
+		fire_only_once = yes
 		icon = GFX_decision_jet_aircraft
 		ai_will_do = {
 			base = 10
@@ -14326,7 +14348,7 @@ UKR_modernize_planes_category = {
 		visible = {
 			date > 2016.03.01
 		}
-		available = { 
+		available = {
 			date > 2016.03.01
 			has_tech = drone_2
 			has_tech = ag_weapons_2
@@ -14342,24 +14364,24 @@ UKR_modernize_planes_category = {
 		}
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_horlytsia"
-		create_equipment_variant = {
-			name = "An-BK-1 Horlytsia"
-			type = small_plane_suicide_airframe_2
-			parent_version = 0
-			modules = {
-				fixed_main_weapon_slot = avionics_drone_2
-				fixed_gun_slot = empty
-				fixed_auxiliary_weapon_slot_1 = weap_ag_cas_hardpoint_2
-				engine_type_slot = engine_prop_single_2
-				avionics_type_slot = avionics_manned_2
-				wingform_type_slot = wing_straight
-				special_slot_type_1 = empty
-			}
-			icon = "GFX_UKR_AIR_Horlytsia"
-			design_team = mio:UKR_antonov_aircraft_manufacturer
+			create_equipment_variant = {
+				name = "An-BK-1 Horlytsia"
+				type = small_plane_suicide_airframe_2
+				parent_version = 0
+				modules = {
+					fixed_main_weapon_slot = avionics_drone_2
+					fixed_gun_slot = empty
+					fixed_auxiliary_weapon_slot_1 = weap_ag_cas_hardpoint_2
+					engine_type_slot = engine_prop_single_2
+					avionics_type_slot = avionics_manned_2
+					wingform_type_slot = wing_straight
+					special_slot_type_1 = empty
+				}
+				icon = "GFX_UKR_AIR_Horlytsia"
+				design_team = mio:UKR_antonov_aircraft_manufacturer
 			}
 		}
-  	}
+	}
 
 	UKR_develop_an_lbl = {
 		fire_only_once = yes
@@ -14524,47 +14546,47 @@ UKR_modernize_planes_category = {
 	UKR_restore_an_71_with_project = {
 		icon = GFX_decision_icon_UKR_modernize_planes_antonov_logo
 		fire_only_once = yes
- 
+
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
- 
+
 		visible = {
 			date < 2010.10.16
 			NOT = { has_country_flag = UKR_restore_an_71_flag }
 			is_special_project_completed = sp:sp_awacs_project
 		}
- 
+
 		available = {
 			controls_state = 698 #Kyiv
 			698 = { #Kyiv
 				arms_factory > 2
 			}
 		}
- 
+
 		days_remove = 1
- 
+
 		custom_cost_trigger = {
 			check_variable = { treasury > 0.05 }
 			has_political_power > 10
 			has_air_experience > 1
 		}
- 
+
 		custom_cost_text = development_cost_0_05_pp_10_air_1
 		ai_hint_pp_cost = 10
- 
+
 		highlight_states = {
 			highlight_states_trigger = { state = 698 } #Kyiv
 			highlight_color_while_active = 3
 			highlight_color_before_active = 2
 		}
 		on_map_mode = map_and_decisions_view
- 
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_restore_an_71_with_project"
- 
+
 			hidden_effect = {
 				add_political_power = -10
 				air_experience = -1
@@ -14572,7 +14594,7 @@ UKR_modernize_planes_category = {
 				modify_treasury_effect = yes
 			}
 		}
- 
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_restore_an_71_with_project"
 			custom_effect_tooltip = UKR_vote_bonus_military_up_5_tt
@@ -14581,51 +14603,51 @@ UKR_modernize_planes_category = {
 			country_event = ukraine_modernize_planes_restore_an_71.1
 		}
 	}
- 
+
 	UKR_restore_an_71_without_project = {
 		icon = GFX_decision_icon_UKR_modernize_planes_antonov_logo
 		fire_only_once = yes
- 
+
 		ai_will_do = {
 			base = 10
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
- 
+
 		visible = {
 			date < 2010.10.16
 			NOT = { has_country_flag = UKR_restore_an_71_flag }
 			NOT = { is_special_project_completed = sp:sp_awacs_project }
 		}
- 
+
 		available = {
 			controls_state = 698 #Kyiv
 			698 = { #Kyiv
 				arms_factory > 2
 			}
 		}
- 
+
 		days_remove = 1
- 
+
 		custom_cost_trigger = {
 			check_variable = { treasury > 0.1 }
 			has_political_power > 14
 			has_air_experience > 3
 		}
- 
+
 		custom_cost_text = development_cost_0_10_pp_15_air_3
 		ai_hint_pp_cost = 15
- 
+
 		highlight_states = {
 			highlight_states_trigger = { state = 698 } #Kyiv
 			highlight_color_while_active = 3
 			highlight_color_before_active = 2
 		}
 		on_map_mode = map_and_decisions_view
- 
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_restore_an_71_without_project"
- 
+
 			hidden_effect = {
 				add_political_power = -15
 				air_experience = -3
@@ -14633,7 +14655,7 @@ UKR_modernize_planes_category = {
 				modify_treasury_effect = yes
 			}
 		}
- 
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_restore_an_71_without_project"
 			custom_effect_tooltip = UKR_vote_bonus_military_up_5_tt
@@ -14641,12 +14663,12 @@ UKR_modernize_planes_category = {
 			country_event = ukraine_modernize_planes_restore_an_71.1
 		}
 	}
- 
+
 	UKR_restore_an_71_phalcon_mission = {
 		icon = GFX_decision_icon_UKR_modernize_planes_antonov_logo
- 
+
 		activation = { always = no }
- 
+
 		available = {
 			has_country_flag = UKR_an_71_phalcon_ready_flag
 			ISR = {
@@ -14657,21 +14679,21 @@ UKR_modernize_planes_category = {
 				influence_higher_5 = yes
 			}
 		}
- 
+
 		days_mission_timeout = 180
 		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
 		is_good = yes
- 
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete UKR_restore_an_71_phalcon_mission"
- 
+
 			set_country_flag = UKR_an_71_phalcon_radar_flag
 			country_event = ukraine_modernize_planes_restore_an_71.2
 		}
- 
+
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_restore_an_71_phalcon_mission"
- 
+
 			country_event = ukraine_modernize_planes_restore_an_71.6
 		}
 	}
@@ -15025,10 +15047,13 @@ UKR_develop_domestic_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_btr3e"
 			UKR_count_domestic_development = yes
 			army_experience = 4
+
 			if = {
-				limit = { NOT = { has_tech = small_autocannon_tech_3 } }
-			set_technology = { small_autocannon_tech_3 = 1 }
+				limit = { NOT = { has_tech = small_autocannon_tech_3 }
+				}
+				set_technology = { small_autocannon_tech_3 = 1 }
 			}
+
 			create_equipment_variant = {
 				name = "BTR-3E"
 				type = medium_tank_amphibious_chassis_2
@@ -15667,10 +15692,13 @@ UKR_develop_domestic_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_yatahan"
 			UKR_count_domestic_development = yes
 			army_experience = 8
+
 			if = {
-				limit = { NOT = { has_tech = medium_gun_tech_3 } }
-			set_technology = { medium_gun_tech_3 = 1 }
+				limit = { NOT = { has_tech = medium_gun_tech_3 }
+				}
+				set_technology = { medium_gun_tech_3 = 1 }
 			}
+
 			create_equipment_variant = {
 				name = "T-84-120 Yatahan"
 				type = medium_tank_chassis_2
@@ -15779,10 +15807,13 @@ UKR_develop_domestic_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_bahira"
 			UKR_count_domestic_development = yes
 			army_experience = 8
+
 			if = {
-				limit = { NOT = { has_tech = large_gun_tech_2 } }
-			set_technology = { large_gun_tech_2 = 1 }
+				limit = { NOT = { has_tech = large_gun_tech_2 }
+				}
+				set_technology = { large_gun_tech_2 = 1 }
 			}
+
 			create_equipment_variant = {
 				name = "T-84-140 Bahira"
 				type = medium_tank_chassis_2
@@ -17494,7 +17525,7 @@ UKR_develop_domestic_atgm_category = {
 	}
 
 	UKR_equipment_develop_domestic_kombat_konus_atgm = {
-	icon = GFX_decision_icon_UKR_develop_domestic_stuhna_p_atgm
+		icon = GFX_decision_icon_UKR_develop_domestic_stuhna_p_atgm
 		fire_only_once = yes
 
 		ai_will_do = {
@@ -17548,7 +17579,9 @@ UKR_develop_domestic_atgm_category = {
 			UKR_count_domestic_development = yes
 
 			if = {
-				limit = { NOT = { has_tech = Heavy_Anti_tank_3 } }
+				limit = {
+					NOT = { has_tech = Heavy_Anti_tank_3 }
+				}
 				add_tech_bonus = {
 					name = UKR_equipment_develop_domestic_kombat_konus_atgm
 					bonus = 0.15
@@ -17840,7 +17873,7 @@ UKR_develop_domestic_atgm_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_export_skif_azerbaijan"
 			if = {
 				limit = { NOT = { has_country_flag = UKR_equipment_export_skif_variant_flag } }
-				
+
 				create_equipment_variant = {
 					name = "Skif"
 					type = Anti_tank_3

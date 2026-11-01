@@ -37,12 +37,55 @@ on_actions = {
 					limit = { check_variable = { industrial_complex_total > 0 } }
 					UKR_start_workforce_record_counts = yes
 				}
+				# BSF lease termination: 750 PP / 100 CP in 2000, falling to 300 PP / 10 CP in 2009
+				set_variable = { UKR_bsf_lease_cp_cost = 2010 }
+				subtract_from_variable = { UKR_bsf_lease_cp_cost = global.year }
+				multiply_variable = { UKR_bsf_lease_cp_cost = 10 }
+				set_variable = { UKR_bsf_lease_pp_cost = UKR_bsf_lease_cp_cost }
+				multiply_variable = { UKR_bsf_lease_pp_cost = 5 }
+				add_to_variable = { UKR_bsf_lease_pp_cost = 250 }
+
+				# Initial equipment count for the Sevastopol deterrence category.
+				if = {
+					limit = {
+						date < 2011.1.1
+						SOV = { owns_state = 1112 }
+					}
+					UKR_update_equipment_count_effect = yes
+				}
 			}
 		}
 	}
 	on_monthly_UKR = {
 		effect = {
 			UKR_start_workforce_update = yes
+			if = {
+				limit = { date < 2010.1.1 }
+				set_variable = { UKR_bsf_lease_cp_cost = 2010 }
+				subtract_from_variable = { UKR_bsf_lease_cp_cost = global.year }
+				multiply_variable = { UKR_bsf_lease_cp_cost = 10 }
+				set_variable = { UKR_bsf_lease_pp_cost = UKR_bsf_lease_cp_cost }
+				multiply_variable = { UKR_bsf_lease_pp_cost = 5 }
+				add_to_variable = { UKR_bsf_lease_pp_cost = 250 }
+			}
+			# Monthly strength snapshot for the Sevastopol category
+			if = {
+				limit = {
+					date < 2011.1.1
+					SOV = { owns_state = 1112 }
+				}
+
+				UKR_update_equipment_count_effect = yes
+
+				698 = { set_temp_variable = { aa_level = building_level@anti_air_building } }
+				set_variable = { UKR_crimea_deterrent_aa_kyiv = aa_level }
+				696 = { set_temp_variable = { aa_level = building_level@anti_air_building } }
+				set_variable = { UKR_crimea_deterrent_aa_kharkiv = aa_level }
+				1087 = { set_temp_variable = { aa_level = building_level@anti_air_building } }
+				set_variable = { UKR_crimea_deterrent_aa_dnipro = aa_level }
+				695 = { set_temp_variable = { aa_level = building_level@anti_air_building } }
+				set_variable = { UKR_crimea_deterrent_aa_odesa = aa_level }
+			}
 			# BRDM-2: Arey rebuilds it on its own during a war with Russia when Mykolayiv does not lead the program
 			if = {
 				limit = {
