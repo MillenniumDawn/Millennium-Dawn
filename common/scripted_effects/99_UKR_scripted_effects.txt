@@ -8461,17 +8461,76 @@ UKR_sov_deliver_t55m8_a2_tifon_ii = {
 	}
 }
 
-# Old Soviet T-62 in Egypt's stockpile (call in EGY scope). ROOT's ukraine_egypt_t62_pool follows the same amount,
-# so the contracts check exactly the pool they take from. Without NSB Egypt's T-62 are Soviet-built MBT_1.
+# Old Soviet T-62 in Egypt's stockpile (call in EGY scope). ROOT's ukraine_egypt_t62_pool tracks contract deliveries.
 UKR_sov_deliver_old_t62 = {
 	if = {
 		limit = { has_dlc = "No Step Back" }
 		add_equipment_to_stockpile = { type = medium_tank_chassis_0 variant_name = "T-62" amount = ukr_sov_amount producer = SOV }
 	}
 	else = {
-		add_equipment_to_stockpile = { type = MBT_1 amount = ukr_sov_amount producer = SOV }
+		add_equipment_to_stockpile = { type = MBT_1 variant_name = "T-62" amount = ukr_sov_amount producer = SOV }
 	}
 	hidden_effect = { add_to_variable = { ROOT.ukraine_egypt_t62_pool = ukr_sov_amount } }
+}
+
+# Effect: UKR_egypt_t62_reserve_hulls
+# Purpose: In Ukrainian scope, reserves a complete Egyptian T-62 batch and returns incomplete batches
+# Output: UKR_egypt_t62_contract_hulls is the reserved batch size, or zero on failure
+# Parameters:
+# - ukr_sov_amount: positive number of hulls requested
+# - UKR_egypt_t62_use_5tdf: 1 for Ukrainian T-62-5TDF hulls, 0 for Soviet T-62 hulls
+UKR_egypt_t62_reserve_hulls = {
+	set_temp_variable = { UKR_egypt_t62_requested_hulls = ukr_sov_amount }
+	set_temp_variable = { UKR_egypt_t62_pool_before = ukraine_egypt_t62_pool }
+	EGY = {
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			set_temp_variable = { UKR_egypt_t62_stock_before = num_equipment@medium_tank_chassis_0 }
+		}
+		else = {
+			set_temp_variable = { UKR_egypt_t62_stock_before = num_equipment@MBT_1 }
+		}
+	}
+	multiply_temp_variable = { ukr_sov_amount = -1 }
+	if = {
+		limit = { check_variable = { UKR_egypt_t62_use_5tdf = 1 } }
+		EGY = { UKR_sov_deliver_t62_5tdf = yes }
+	}
+	else = {
+		EGY = { UKR_sov_deliver_old_t62 = yes }
+	}
+	EGY = {
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			subtract_from_temp_variable = { UKR_egypt_t62_stock_before = num_equipment@medium_tank_chassis_0 }
+		}
+		else = {
+			subtract_from_temp_variable = { UKR_egypt_t62_stock_before = num_equipment@MBT_1 }
+		}
+	}
+	set_variable = { UKR_egypt_t62_contract_hulls = UKR_egypt_t62_stock_before }
+	if = {
+		limit = { check_variable = { UKR_egypt_t62_contract_hulls = UKR_egypt_t62_requested_hulls } }
+		if = {
+			limit = { check_variable = { UKR_egypt_t62_use_5tdf = 1 } }
+			subtract_from_variable = { ukraine_egypt_t62_5tdf_delivered = UKR_egypt_t62_requested_hulls }
+		}
+	}
+	else = {
+		if = {
+			limit = { check_variable = { UKR_egypt_t62_contract_hulls > 0 } }
+			set_temp_variable = { ukr_sov_amount = UKR_egypt_t62_contract_hulls }
+			if = {
+				limit = { check_variable = { UKR_egypt_t62_use_5tdf = 1 } }
+				EGY = { UKR_sov_deliver_t62_5tdf = yes }
+			}
+			else = {
+				EGY = { UKR_sov_deliver_old_t62 = yes }
+			}
+		}
+		set_variable = { ukraine_egypt_t62_pool = UKR_egypt_t62_pool_before }
+		set_variable = { UKR_egypt_t62_contract_hulls = 0 }
+	}
 }
 
 # Technologies a deep modernization developed by itself (its own-technology option or decision)
@@ -8641,6 +8700,11 @@ UKR_storage_toggle_section = {
 
 # Call after every change of a ukraine_has_*_stockpile variable: section totals, rows and a GUI refresh
 UKR_storage_refresh = {
+	set_variable = { ukraine_s75_regiments = 0 }
+	every_owned_state = {
+		limit = { has_state_flag = UKR_s75_regiment_flag }
+		PREV = { add_to_variable = { ukraine_s75_regiments = 1 } }
+	}
 	if = {
 		limit = { NOT = { has_country_flag = UKR_storage_initialized_flag } }
 		set_country_flag = UKR_storage_initialized_flag
@@ -9224,11 +9288,10 @@ UKR_s75_remove_regiment = {
 				limit = { anti_air_building > 0 }
 				remove_building = { type = anti_air_building level = 1 }
 			}
+			owner = { UKR_storage_refresh = yes }
 		}
-		subtract_from_variable = { ukraine_s75_regiments = 1 }
 	}
 }
-
 # Sell one S-75 regiment for temp ukr_sale_price to ukr_storage_buyer
 UKR_storage_sell_s75 = {
 	UKR_s75_remove_regiment = yes
