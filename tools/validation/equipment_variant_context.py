@@ -113,13 +113,13 @@ def dlc_truth(nodes, dlcs):
             result = dlcs.get(node.value.strip('"'))
         elif node.key == "always":
             result = {"yes": True, "no": False}.get(node.value)
-        elif node.key in _WRAPPERS or node.key == "NOT":
+        elif node.key in _WRAPPERS:
             result = dlc_truth(node.children, dlcs)
-            if node.key == "NOT" and result is not None:
-                result = not result
-        elif node.key == "OR":
+        elif node.key in {"OR", "NOT"}:
             arms = [dlc_truth([child], dlcs) for child in node.children]
             result = True if True in arms else None if None in arms else False
+            if node.key == "NOT" and result is not None:
+                result = not result
         else:
             result = None
         results.append(result)
@@ -172,7 +172,9 @@ def branches(nodes, dlcs):
         yield outcomes
 
 
-def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozenset()):
+def starting_techs(
+    nodes, dlcs, start, known=None, effects=None, active=frozenset(), *, possible=False
+):
     known = set(known or ())
     dated = [node for node in nodes if _DATE.fullmatch(node.key)]
     ordered = [node for node in nodes if not _DATE.fullmatch(node.key)]
@@ -182,9 +184,12 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
     for node in branches(ordered, dlcs):
         if isinstance(node, list):
             outcomes = [
-                starting_techs(arm, dlcs, start, known, effects, active) for arm in node
+                starting_techs(
+                    arm, dlcs, start, known, effects, active, possible=possible
+                )
+                for arm in node
             ]
-            known = set.intersection(*outcomes)
+            known = (set.union if possible else set.intersection)(*outcomes)
         elif effects and node.key in effects:
             if node.key not in active:
                 known = starting_techs(
@@ -194,6 +199,7 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
                     known,
                     effects,
                     active | {node.key},
+                    possible=possible,
                 )
         elif node.key == "set_technology":
             for tech in node.children:
@@ -202,13 +208,30 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
                 elif tech.value == "0":
                     known.discard(tech.key)
         elif node.key == "hidden_effect":
-            known = starting_techs(node.children, dlcs, start, known, effects, active)
+            known = starting_techs(
+                node.children, dlcs, start, known, effects, active, possible=possible
+            )
         elif _DATE.fullmatch(node.key) and start:
             date = tuple(int(part) for part in node.key.split("."))[:3]
             if date <= start:
                 known = starting_techs(
-                    node.children, dlcs, start, known, effects, active
+                    node.children,
+                    dlcs,
+                    start,
+                    known,
+                    effects,
+                    active,
+                    possible=possible,
                 )
+        elif (
+            possible
+            and node.children
+            and node.key not in {"effect_tooltip", "custom_effect_tooltip", "limit"}
+            and not _DATE.fullmatch(node.key)
+        ):
+            known |= starting_techs(
+                node.children, dlcs, start, known, effects, active, possible=True
+            )
     return known
 
 
