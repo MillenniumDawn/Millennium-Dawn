@@ -38,6 +38,7 @@ from linting.check_common_mistakes import (
 )
 from shared_utils import (
     ALWAYS_NO_RE,
+    COUNTRY_TAG_ASSIGNMENT_LINE_RE,
     IS_AI_NO_RE,
     ai_only_decision_categories,
     atomic_write_text,
@@ -1512,6 +1513,13 @@ def parse_decision_categories(
 # The keys that open a block at the start of a line, the only place a category
 # block can start.
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
+_ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
+_TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
+
+
+def _has_uppercase_after_prefix(name: str) -> bool:
+    rest = _ID_PREFIX_RE.sub("", name, count=1)
+    return rest != rest.lower()
 
 
 def parse_categories_with_decisions(
@@ -1733,12 +1741,14 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
+        naming_style: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
+        self.naming_style = naming_style
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -2948,6 +2958,83 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
+    def validate_naming_style(self):
+        """Flag decision and category ids that break the naming rules.
+
+        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        """
+        self._log_section("Checking decision and category naming style...")
+        token_to_cat = {
+            dec: cat
+            for cat, decs in parse_categories_with_decisions(self.mod_path).items()
+            for dec in decs
+        }
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        country_tags = set()
+        for path in self._collect_files(
+            ["common/country_tags/*.txt"], ignore_staged=True
+        ):
+            country_tags.update(
+                COUNTRY_TAG_ASSIGNMENT_LINE_RE.findall(
+                    FileOpener.open_text_file(path, strip_comments_flag=True)
+                )
+            )
+
+        case_results = []
+        prefix_results = []
+        for d in parse_all_decision_factories(self.mod_path):
+            if _has_uppercase_after_prefix(d.token):
+                case_results.append(
+                    (
+                        f"Decision {d.token} is not lowercase after its prefix",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+            prefix = _TAG_PREFIX_RE.match(d.token)
+            if not prefix or prefix.group(1) not in country_tags:
+                continue
+            pins = _flat_tag_pins(d.allowed) or {
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token), set())
+            }
+            if pins and prefix.group(1) not in pins:
+                prefix_results.append(
+                    (
+                        f"Decision {d.token} has the {prefix.group(1)} prefix but"
+                        f" allowed admits {', '.join(sorted(pins))}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    case_results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            case_results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+        self._report(
+            prefix_results,
+            "✓ Decision prefixes match the countries allowed to take them",
+            "Decisions whose tag prefix names a country their allowed does not admit:",
+            Severity.WARNING,
+            category="decision-prefix-owner",
+        )
+
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
@@ -4100,6 +4187,13 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
+        if self.naming_style:
+            self.validate_naming_style()
+        else:
+            self._log_section(
+                "Skipping decision naming style check (pass --naming-style to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -4118,6 +4212,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="unannounced_categories",
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
+    )
+    parser.add_argument(
+        "--naming-style",
+        action="store_true",
+        dest="naming_style",
+        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
     )
 
 
