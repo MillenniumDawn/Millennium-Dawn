@@ -696,7 +696,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   of those `group` values. A column with at least one allowed battalion passes,
   because the engine rule for mixed columns is unverified. Companies without the list,
   columns with an ungrouped battalion, and missing columns (`template-slot`) are
-  skipped. Ships as WARNING for its backlog of 378 attachments in 182 template
+  skipped. Ships as WARNING for its backlog of 366 attachments in 178 template
   definitions. A `common/units/` change surfaces on the full CI run only. Tracked in
   #5453.
 - `airbase-over-capacity` (WARNING): the planes `history/units` `air_wings` place in a
