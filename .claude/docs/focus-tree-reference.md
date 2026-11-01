@@ -13,7 +13,8 @@
 - Match `available` to a reachable bypass condition. Never pair a bypass with
   `available = { always = no }`.
 - A focus whose reward spends treasury needs the bankruptcy guard in `ai_will_do`. See
-  [Search Filters](search-filters.md#bankruptcy-guard). Focus duration is not money cost.
+  [Search Filters](search-filters.md#bankruptcy-guard). The focus `cost` is its
+  duration, not a price. Never add a bankruptcy or deficit check for it.
 - Check `country_exists` before targeting another country with a wargoal.
 - When a focus fires an event to another country, add the `TT_IF_THEY_ACCEPT` tooltip
   pattern from `event-reference.md`.

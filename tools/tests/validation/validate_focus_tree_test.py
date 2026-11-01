@@ -7,11 +7,12 @@ import re
 
 import pytest
 import validate_focus_tree as V
-from shared.suite import checks_called_by_run
+from shared.suite import checks_called_by_run, event_block
 from shared.suite import write_under_str as _write
 from shared_utils import extract_block_from_text
 
 FOCUS_DIR = "common/national_focus"
+NO_EFFECTS = V._EffectFacts({}, frozenset(), frozenset(), frozenset())
 
 
 def _focus_file(tmp_path, body, name="test.txt"):
@@ -807,6 +808,16 @@ def test_cache_hits_when_warm_and_recomputes_only_the_changed_file(
     _write(tmp_path, SCAN_PATH, SCAN_TREE)
     other = f"{FOCUS_DIR}/other.txt"
     _write(tmp_path, other, "focus_tree = { focus = { id = TAG_other } }\n")
+    deal = f"{FOCUS_DIR}/deal.txt"
+    _write(
+        tmp_path,
+        deal,
+        FOCUS_TEMPLATE.format(
+            extra="",
+            reward="GER = { country_event = e.1 }",
+            modifiers=BANKRUPTCY_GUARD,
+        ),
+    )
     _write(
         tmp_path,
         "events/ev.txt",
@@ -846,6 +857,14 @@ def test_cache_hits_when_warm_and_recomputes_only_the_changed_file(
         "Focus 'TAG_renamed' missing search_filters",
     ) in changed
     assert [row for row in changed if "TAG_other" in row[3]] == []
+
+    def unneeded(rows):
+        return [row[1] for row in rows if row[0] == "unneeded-treasury-guard"]
+
+    # An event edit alone must reach the cached guard facts of the focus file.
+    assert unneeded(changed) == [deal]
+    _write(tmp_path, "events/ev.txt", _event(f"FROM = {{ {_CHARGE} }}", "e.1"))
+    assert unneeded(_run(tmp_path)) == []
 
 
 STAGED_PATH = f"{FOCUS_DIR}/staged.txt"
@@ -924,7 +943,7 @@ def test_staged_run_with_no_focus_file_reads_nothing(tmp_path, monkeypatch):
     for name in (
         "_parse_focus_text",
         "_scripted_effect_facts",
-        "_notification_ids_in_file",
+        "_event_facts_in_file",
         *PER_FILE_SCANS,
     ):
         monkeypatch.setattr(V, name, _never)
@@ -973,7 +992,7 @@ _UNREADABLE_WORKERS = {
     "missing_search_filters": lambda source: source.missing_search_filters(),
     "structural": lambda source: source.structural(),
     "relative_positions": lambda source: source.relative_positions(),
-    "ai_guards": lambda source: source.ai_guards({}, frozenset()),
+    "ai_guards": lambda source: source.ai_guards(NO_EFFECTS, {}),
     "cross_country_fires": lambda source: source.cross_country_fires(frozenset()),
 }
 
@@ -1069,7 +1088,7 @@ def test_empty_blocks_are_skipped_by_the_per_focus_workers(tmp_path):
 
 
 def test_empty_reward_and_ai_will_do_blocks_yield_no_guard_facts(tmp_path):
-    data = _source(tmp_path, EMPTY_BLOCKS).ai_guards({}, frozenset())
+    data = _source(tmp_path, EMPTY_BLOCKS).ai_guards(NO_EFFECTS, {})
 
     assert [d["id"] for d in data] == [
         "TAG_shared_s",
@@ -1202,6 +1221,13 @@ WORD_BOUNDARY_ORIGINALS = {
     ),
     "_MODIFY_TREASURY_RE": r"\bmodify_treasury_effect(\w*)\s*=\s*yes\b",
     "_MODIFY_DEBT_RE": r"\bmodify_debt_effect\s*=\s*yes\b",
+    "_DEBT_CHANGE_RE": (
+        r"\bdebt_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
+        r"|\bvar\s*=\s*debt_change\b"
+    ),
+    "_TAX_RATE_EFFECT_RE": (
+        r"\bmodify_(?:population|corporate)_tax_rate_effect\s*=\s*yes\b"
+    ),
     "_SEARCH_FILTERS_RE": r"\bsearch_filters\s*=\s*\{([^{}]*)\}",
     "_COUNTRY_EVENT_RE": r"\bcountry_event\b",
     "_EVENT_OPTION_RE": r"\boption\s*=\s*\{",
@@ -1234,6 +1260,8 @@ PATTERN_SAMPLE = "\n".join(
         "modify_treasury_effect",
         "modify_treasury_effect_corruption",
         "modify_debt_effect",
+        "debt_change",
+        "modify_population_tax_rate_effect",
         "search_filters",
         "country_event",
         "option",
@@ -1242,7 +1270,15 @@ PATTERN_SAMPLE = "\n".join(
         "mutually_exclusive",
         "available",
     )
-    for value in ("{ }", "{ focus = a }", "yes", "-5", "treasury_change", '"GFX x"')
+    for value in (
+        "{ }",
+        "{ focus = a }",
+        "yes",
+        "-5",
+        "treasury_change",
+        "debt_change",
+        '"GFX x"',
+    )
 )
 
 
@@ -1462,12 +1498,15 @@ def _spend(amount):
     )
 
 
+_CHARGE = _spend(-4)
+
+
 def _guard_facts(tmp_path, reward, modifiers=""):
     source = _source(
         tmp_path,
         FOCUS_TEMPLATE.format(extra="", reward=reward, modifiers=modifiers),
     )
-    return source.ai_guards(STAFFABLE_MAP, frozenset())
+    return source.ai_guards(NO_EFFECTS._replace(staffable=STAFFABLE_MAP), {})
 
 
 def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
@@ -1480,7 +1519,7 @@ def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
         "direct_money = {\n\tset_temp_variable = { treasury_change = -7 }\n"
         "\tmodify_treasury_effect = yes\n}\n"
         "money_wrapper = {\n\tdirect_money = yes\n}\n"
-        "money_outer = {\n\tmoney_wrapper = yes\n}\n",
+        "money_outer = {\n\tmoney_wrapper = yes\n}\n" + _BUILD_EFFECT,
     )
     validator = _validator(tmp_path)
 
@@ -1489,6 +1528,7 @@ def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
     assert staffable["direct_builder"] == frozenset({"arms_factory"})
     assert staffable["builder_outer"] == frozenset({"arms_factory"})
     assert {"direct_money", "money_wrapper", "money_outer"} <= money
+    assert validator._scripted_effect_data_for_guards().waivable == {"build_effect"}
 
 
 def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkeypatch):
@@ -1626,6 +1666,8 @@ def _gdp_scale(source, factor):
 
 
 _SPEND_MONEY = frozenset({"spend_money_effect"})
+_WAIVABLE = frozenset({"build_effect"})
+_SKIP = "set_temp_variable = { skip_payment = 1 }"
 
 # case: (completion_reward body, money-spending effects, (spend, has_cost, unknown))
 _MONEY_COST_CASES = {
@@ -1702,6 +1744,30 @@ _MONEY_COST_CASES = {
         frozenset(),
         (0.0, False, False),
     ),
+    "literal debt cut applied twice": (
+        "set_temp_variable = { debt_change = -6 }\n"
+        "modify_debt_effect = yes\n"
+        "modify_debt_effect = yes\n",
+        frozenset(),
+        (0.0, False, False),
+    ),
+    "debt cut beside a raise": (
+        "if = {\n"
+        "\tlimit = { has_country_flag = flag_a }\n"
+        "\tset_temp_variable = { debt_change = -5 }\n"
+        "}\n"
+        "else = { set_temp_variable = { debt_change = 5 } }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
+    "debt cut mutated before the apply": (
+        "set_temp_variable = { debt_change = -5 }\n"
+        "multiply_temp_variable = { debt_change = gdp_scale }\n"
+        "modify_debt_effect = yes",
+        frozenset(),
+        (0.0, True, True),
+    ),
     "money effect after unrelated keys": (
         "add_political_power = 5\nspend_money_effect = yes\n",
         _SPEND_MONEY,
@@ -1711,6 +1777,26 @@ _MONEY_COST_CASES = {
         "add_political_power = 5\nadd_stability = 0.05\n",
         _SPEND_MONEY,
         (0.0, False, False),
+    ),
+    "building waived by skip_payment": (
+        f"{_SKIP}\nbuild_effect = yes\n",
+        _WAIVABLE,
+        (0.0, False, False),
+    ),
+    "skip_payment set after the building": (
+        f"build_effect = yes\n{_SKIP}\n",
+        _WAIVABLE,
+        (0.0, True, True),
+    ),
+    "skip_payment does not waive other payments": (
+        f"{_SKIP}\nspend_money_effect = yes\n",
+        _SPEND_MONEY,
+        (0.0, True, True),
+    ),
+    "skip_payment set in a branch beside the building": (
+        f"if = {{ limit = {{ has_country_flag = x }} {_SKIP} }}\nbuild_effect = yes\n",
+        _WAIVABLE,
+        (0.0, True, True),
     ),
     # The multiply's own literal used to be misread as a fresh set.
     "gdp_total scaled by a negative": (
@@ -1777,7 +1863,7 @@ _MONEY_COST_CASES = {
     "body, money, expected", _MONEY_COST_CASES.values(), ids=_MONEY_COST_CASES
 )
 def test_body_money_cost(body, money, expected):
-    assert V._body_money_cost(body, money) == expected
+    assert V._body_money_cost(body, money, _WAIVABLE) == expected
 
 
 def test_money_effect_called_only_inside_a_preview_keeps_the_guard(tmp_path):
@@ -1813,7 +1899,7 @@ def test_money_effect_called_only_inside_a_preview_keeps_the_guard(tmp_path):
     )
 
     facts = V._FocusFile(path, str(tmp_path)).ai_guards(
-        {}, frozenset({"spend_money_effect"})
+        NO_EFFECTS._replace(money=frozenset({"spend_money_effect"})), {}
     )
 
     assert [
@@ -1846,6 +1932,14 @@ _SPEND_EFFECT = (
     "\tmodify_treasury_effect = yes\n"
     "}\n"
 )
+_BUILD_EFFECT = (
+    "build_effect = {\n"
+    "\tif = { limit = { NOT = { check_variable = { skip_payment = 1 } } }\n"
+    "\t\tset_temp_variable = { treasury_change = -5 }\n"
+    "\t\tmodify_treasury_effect = yes\n"
+    "\t}\n"
+    "}\n"
+)
 _PREVIEWED_SPEND = (
     "FRA = { country_event = { id = test.1 days = 1 } }\n"
     "\t\t\tcustom_effect_tooltip = TT_IF_THEY_ACCEPT\n"
@@ -1853,6 +1947,12 @@ _PREVIEWED_SPEND = (
     "\t\t\t\tset_temp_variable = { treasury_change = -6 }\n"
     "\t\t\t\tmodify_treasury_effect = yes\n"
     "\t\t\t}"
+)
+_DEAL_EVENT = event_block("deal.1", f"option = {{ FROM = {{ {_CHARGE} }} }}")
+_UNNEEDED_TREASURY_CHECK = (
+    "unneeded-treasury-guard",
+    "1 focus(es) whose ai_will_do lowers the weight on bankruptcy or a high"
+    " deficit without a matching cost: TAG_focus_a (line 3)",
 )
 
 # case: (extra scripted effects, other focus fields, reward, modifiers,
@@ -1908,23 +2008,60 @@ _GUARD_REPORT_CASES = {
             )
         ],
     ),
-    "guard without a cost": (
+    "guard whose only cost is the focus cost, its duration": (
         "",
         "",
         "add_political_power = 50",
         BANKRUPTCY_GUARD,
-        [
-            (
-                "unneeded-bankruptcy-guard",
-                "1 focus(es) with a bankruptcy guard but no money cost (guard"
-                " unneeded): TAG_focus_a (line 3)",
-            )
-        ],
+        [_UNNEEDED_TREASURY_CHECK],
+    ),
+    "deficit check on a war": (
+        "",
+        "",
+        "create_wargoal = { type = annex_everything target = GER }",
+        "modifier = { factor = 0.5 ai_has_high_deficit = yes }",
+        [],
+    ),
+    "deficit check on a scripted spending law change": (
+        "raise_spending = {\n\tset_country_flag = spending_law_scripted_change\n}\n",
+        "",
+        "raise_spending = yes",
+        "modifier = { factor = 0.5 ai_has_high_deficit = yes }",
+        [],
+    ),
+    "bankruptcy check on a political power loss": (
+        "",
+        "",
+        "add_political_power = -50",
+        BANKRUPTCY_GUARD,
+        [],
+    ),
+    "deficit check on a political power loss": (
+        "",
+        "",
+        "add_political_power = -50",
+        "modifier = { factor = 0.5 ai_has_high_deficit = yes }",
+        [_UNNEEDED_TREASURY_CHECK],
     ),
     "guard on a cost paid in a preview": (
         "",
         "",
         _PREVIEWED_SPEND,
+        BANKRUPTCY_GUARD,
+        [],
+    ),
+    "guard on a tax rate change": (
+        "",
+        "",
+        "set_temp_variable = { pop_change = -1 }\n"
+        "\t\t\tmodify_population_tax_rate_effect = yes",
+        BANKRUPTCY_GUARD,
+        [],
+    ),
+    "guard on a cost the partner's event charges back": (
+        "",
+        "",
+        "GER = { country_event = deal.1 }",
         BANKRUPTCY_GUARD,
         [],
     ),
@@ -1958,6 +2095,7 @@ _GUARD_REPORT_CASES = {
 )
 def test_ai_will_do_guards(tmp_path, effects, extra, reward, modifiers, expected):
     _write_effects_file(tmp_path, effects)
+    _write(tmp_path, "events/deal.txt", _DEAL_EVENT)
     _focus_file(
         tmp_path,
         FOCUS_TEMPLATE.format(extra=extra, reward=reward, modifiers=modifiers),
@@ -2178,6 +2316,32 @@ def test_cross_country_findings_aggregate_per_file(tmp_path):
     assert v._issues[0].category == "missing-cross-country-tooltip"
 
 
+_DEAL_FIRE = "GER = { country_event = deal.1 }"
+
+# case: (completion_reward body, scopes deal.1 charges, counted as a cost)
+_EVENT_COST_CASES = {
+    "the partner charges FROM": (_DEAL_FIRE, {"FROM"}, True),
+    "the partner charges the owner's tag": (_DEAL_FIRE, {"BUL"}, True),
+    "the partner charges a third nation": (_DEAL_FIRE, {"SER"}, False),
+    "the owner's own event": ("country_event = deal.1", {"FROM"}, False),
+    "a hidden fire": (f"hidden_effect = {{ {_DEAL_FIRE} }}", {"FROM"}, True),
+    "a fire inside a preview": (
+        f"effect_tooltip = {{ {_DEAL_FIRE} }}",
+        {"FROM"},
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "reward, scopes, cost", _EVENT_COST_CASES.values(), ids=_EVENT_COST_CASES
+)
+def test_event_cost_facts(tmp_path, reward, scopes, cost):
+    source = _source(tmp_path, TREE_TEMPLATE.format(reward=reward))
+    facts = source.ai_guards(NO_EFFECTS, {"deal.1": frozenset(scopes)})
+    assert [d["event_cost"] for d in facts] == [cost]
+
+
 # A nested fire is not a definition; tag-routed options give nobody a choice
 # unless the tags overlap, one option is negated or one is ungated.
 EVENTS = """country_event = {
@@ -2299,9 +2463,62 @@ def test_notification_event_ids(tmp_path):
     _write(tmp_path, "events/test_events.txt", EVENTS)
     _write(tmp_path, "events/Unparseable.txt", UNPARSEABLE_EVENTS)
 
-    assert _validator(tmp_path)._notification_event_ids() == frozenset(
+    assert _validator(tmp_path)._event_facts()[0] == frozenset(
         {"notice.1", "quiet.1", "flavor.1", "routed.1", "quoted.1"}
     )
+
+
+def _event(option, event_id="x.1"):
+    return event_block(event_id, f"option = {{ {option} }}")
+
+
+_REPLY = "FROM = { country_event = y.1 }"
+
+# case: (event file, payers per event id)
+_EVENT_PAYER_CASES = {
+    "the sender pays": (_event(f"FROM = {{ {_CHARGE} }}"), {"x.1": {"FROM"}}),
+    "a named tag pays": (_event(f"ISR = {{ {_CHARGE} }}"), {"x.1": {"ISR"}}),
+    "the sender takes on debt": (
+        _event("FROM = { modify_debt_effect = yes }"),
+        {"x.1": {"FROM"}},
+    ),
+    "the receiver pays": (_event(_CHARGE), {}),
+    "a scripted effect charges the sender": (
+        _event("FROM = { spend_money_effect = yes }"),
+        {"x.1": {"FROM"}},
+    ),
+    "skip_payment set before the sender's block": (
+        _event(f"{_SKIP} FROM = {{ build_effect = yes }}"),
+        {},
+    ),
+    "a nested tag pays, not the sender": (
+        _event(f"FROM = {{ GER = {{ {_CHARGE} }} }}"),
+        {"x.1": {"GER"}},
+    ),
+    "a reply charges its receiver": (
+        _event(_REPLY) + _event(_CHARGE, "y.1"),
+        {"x.1": {"FROM"}},
+    ),
+    "a reply charges its own sender": (
+        _event(_REPLY) + _event(f"FROM = {{ {_CHARGE} }}", "y.1"),
+        {"y.1": {"FROM"}},
+    ),
+    "a previewed reply": (
+        _event(f"effect_tooltip = {{ {_REPLY} }}") + _event(_CHARGE, "y.1"),
+        {},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "events, payers", _EVENT_PAYER_CASES.values(), ids=_EVENT_PAYER_CASES
+)
+def test_event_payers(tmp_path, events, payers):
+    _write_effects_file(tmp_path, _SPEND_EFFECT + _BUILD_EFFECT)
+    _write(tmp_path, "events/deal.txt", events)
+    assert _validator(tmp_path)._event_facts()[1] == {
+        event_id: frozenset(scopes) for event_id, scopes in payers.items()
+    }
 
 
 @pytest.mark.parametrize(

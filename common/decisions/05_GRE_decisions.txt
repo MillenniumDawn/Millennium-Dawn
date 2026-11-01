@@ -29,6 +29,7 @@ GRE_debt_crisis_category = {
 		visible = {
 			has_country_flag = GRE_hide_financial_records
 		}
+		fire_only_once = yes
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_negotiate_debt_swap_deals_decision"
@@ -368,18 +369,14 @@ GRE_debt_crisis_category = {
 		}
 
 		ai_will_do = {
-			base = 1
+			base = 0
 			modifier = {
-				factor = 10
-				ai_has_high_deficit = yes
-			}
-			modifier = {
-				factor = 4
+				add = 4
 				ai_has_deficit = yes
 			}
 			modifier = {
-				factor = 0.1
-				ai_has_surplus = yes
+				add = 36
+				ai_has_high_deficit = yes
 			}
 		}
 	}
@@ -397,14 +394,10 @@ GRE_debt_crisis_category = {
 		}
 
 		ai_will_do = {
-			base = 1
+			base = 0
 			modifier = {
-				factor = 10
+				add = 10
 				ai_has_surplus = yes
-			}
-			modifier = {
-				factor = 0.1
-				ai_has_deficit = yes
 			}
 		}
 	}
@@ -502,6 +495,10 @@ GRE_debt_crisis_category = {
 				set_temp_variable = { GRE_repay_amount = GRE_creditor_debt^GRE_repay_index }
 				multiply_temp_variable = { GRE_repay_amount = 0.1 }
 				round_temp_variable = GRE_repay_amount
+				if = {
+					limit = { check_variable = { GRE_repay_amount < 1 } }
+					set_temp_variable = { GRE_repay_amount = GRE_creditor_debt^GRE_repay_index }
+				}
 				custom_effect_tooltip = GRE_repay_10pct_tt
 				GRE_repay_creditor_debt = yes
 			}
@@ -511,13 +508,18 @@ GRE_debt_crisis_category = {
 			base = 3
 			modifier = {
 				factor = 5
-				check_variable = { treasury > 100 }
+				check_variable = { treasury > 30 }
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
 			}
 			modifier = {
 				factor = 0
 				OR = {
 					has_active_mission = GRE_debt_crisis_mission
 					has_active_mission = GRE_austerity_tension_mission
+					has_active_mission = bankruptcy_incoming_collapse
 				}
 			}
 		}
@@ -551,6 +553,8 @@ GRE_CYP_category = {
 		}
 
 		cost = 0
+
+		days_re_enable = 7
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_recognize_unified_cyprus"
@@ -980,6 +984,7 @@ GRE_homelessness_crisis_category = {
 
 		ai_will_do = {
 			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -1015,6 +1020,7 @@ GRE_homelessness_crisis_category = {
 
 		ai_will_do = {
 			base = 3
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -1073,8 +1079,8 @@ GRE_generic_decisions_category = {
 			log = "[GetDateText]: [Root.GetName]: mission timeout_effect GRE_defense_innovation_research_mission"
 			if = {
 				limit = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
+				set_temp_variable = { debt_change = 3 }
 				custom_effect_tooltip = GRE_defense_innovation_funding_tt
-				set_temp_variable = { debt_change = 25 }
 				GRE_pay_or_defer = yes
 				random_list = {
 					20 = { add_tech_bonus = { name = GRE_defense_innovation_research_mission bonus = 1 ahead_reduction = 3.5 uses = 1 category = CAT_armor } }
@@ -1135,7 +1141,7 @@ GRE_generic_decisions_category = {
 		}
 
 		ai_will_do = {
-			base = 1000
+			base = 5
 		}
 	}
 	GRE_archipelago_air_base_rapid_repair = {
@@ -1649,10 +1655,6 @@ GRE_generic_decisions_category = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 2
-				naval_strength_ratio = { tag = TUR ratio > 1.25 }
-			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = {
 				factor = 0
@@ -1806,10 +1808,6 @@ GRE_generic_decisions_category = {
 
 		ai_will_do = {
 			base = 5
-			modifier = {
-				factor = 2
-				naval_strength_ratio = { tag = TUR ratio > 1.25 }
-			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = {
 				factor = 0
@@ -1988,17 +1986,22 @@ GRE_creditor_management_category = {
 			custom_effect_tooltip = GRE_forgive_25pct_tt
 
 			GRE = {
+				set_temp_variable = { GRE_forgive_index = -1 }
 				for_each_loop = {
 					array = GRE_creditors
 					if = {
 						limit = { check_variable = { v = ROOT.id } }
-						subtract_from_variable = { GRE_creditor_debt^i = ROOT.GRE_forgive_amount }
-						subtract_from_variable = { GRE_total_creditor_debt = ROOT.GRE_forgive_amount }
-						if = {
-							limit = { check_variable = { GRE_creditor_debt^i < 0.01 } }
-							set_temp_variable = { GRE_creditor_remove_index = i }
-							GRE_remove_creditor = yes
-						}
+						set_temp_variable = { GRE_forgive_index = i }
+					}
+				}
+				if = {
+					limit = { check_variable = { GRE_forgive_index > -1 } }
+					subtract_from_variable = { GRE_creditor_debt^GRE_forgive_index = GRE_forgive_amount }
+					subtract_from_variable = { GRE_total_creditor_debt = GRE_forgive_amount }
+					if = {
+						limit = { check_variable = { GRE_creditor_debt^GRE_forgive_index < 0.01 } }
+						set_temp_variable = { GRE_creditor_remove_index = GRE_forgive_index }
+						GRE_remove_creditor = yes
 					}
 				}
 				country_event = { id = greece_debt.17 days = 1 }
@@ -2060,6 +2063,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 3 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2104,6 +2113,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 4 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2148,6 +2163,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 5 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2191,6 +2212,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 7 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2237,6 +2264,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 3 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2281,6 +2314,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 4 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2324,6 +2363,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 6 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2370,6 +2415,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 3 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2414,6 +2465,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 4 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2458,6 +2515,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 6 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2504,6 +2567,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 3 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2547,6 +2616,12 @@ GRE_prospecting_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				factor = 0
+				NOT = { has_country_flag = GRE_defer_payments_flag }
+				check_variable = { treasury < 5 }
+			}
 			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
@@ -2589,7 +2664,13 @@ GRE_diplomacy_category = {
 			GRE_check_eastern_alignment_swap = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_idea = GRE_brics_anchor
+			}
+		}
 	}
 
 	GRE_cosco_pier_expansion = {
@@ -2623,7 +2704,13 @@ GRE_diplomacy_category = {
 			civilian_factory_use = 1
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_idea = GRE_brics_anchor
+			}
+		}
 	}
 
 	GRE_instex_iran_barter = {
@@ -2654,7 +2741,13 @@ GRE_diplomacy_category = {
 			GRE_check_eastern_alignment_swap = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_idea = GRE_brics_anchor
+			}
+		}
 	}
 
 	GRE_orthodox_patriarchate_summit = {
@@ -2699,7 +2792,13 @@ GRE_diplomacy_category = {
 			GRE_check_eastern_alignment_swap = yes
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_idea = GRE_brics_anchor
+			}
+		}
 	}
 
 	# === RETRY DECISIONS ===

@@ -1016,7 +1016,8 @@ def _parse_loc_refs(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         for m in _LOC_SPRITE_REF.finditer(text):
             # Sentence-final punctuation (`£command_power.`) is not part of the name.
             name = m.group(1).rstrip(".-")
-            if not name:
+            # `£GFX_$KEY$` builds the sprite name from a loc parameter at runtime.
+            if not name or text.startswith("$", m.end(1)):
                 continue
             if not name.startswith("GFX_"):
                 name = "GFX_" + name

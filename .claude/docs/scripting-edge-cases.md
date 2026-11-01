@@ -8,9 +8,9 @@ relevant to the effects and triggers you are changing.
 - Verify effects, modifiers, sprites, and triggers against their definitions. Existing
   usage alone is not proof that a name is valid. Match exact case, including file paths
   and unit names, for Linux compatibility.
-- `NOT = { A B }` means not both, not neither. Use separate `NOT` blocks or
-  `NOT = { OR = { A B } }` for neither. `NOR` is not a HOI4 trigger, and `NRY` is
-  Norway's country tag, not a logical operator.
+- `NOT = { A B }` is NOR: true only when every child is false. `NOT = { OR = { A B } }`
+  says the same thing explicitly. Use `NOT = { AND = { A B } }` for not both. `NOR` is
+  not a HOI4 trigger, and `NRY` is Norway's country tag, not a logical operator.
 - `threat` uses a 0.0 to 1.0 scale. Write `threat > 0.40`, not `threat > 40`.
 - `is_in_faction` accepts `yes` or `no`. Membership with a country uses
   `is_in_faction_with = TAG`. `add_to_faction = TAG` takes a country, not a faction name.
@@ -22,6 +22,21 @@ relevant to the effects and triggers you are changing.
   `western_autocrats_are_in_power`. Verify other parties in `common/scripted_triggers/`.
 - Modifier names: use the engine reference or [MD Custom Modifiers](md-custom-modifiers.md).
   Sprites: resolve the `name` in `interface/*.gfx` and check its texture exists.
+
+## HOI4 Syntax Only
+
+HOI4 script is not EU4, CK3, or Victoria 3 script. Do not carry over constructs from
+those games:
+
+- Scripted effects and triggers take no parameters. `my_effect = { mission = X }` with
+  `$mission$` inside is EU4/CK3 syntax. Call `my_effect = yes`, pass values through temp
+  variables, or substitute names with `meta_effect`/`meta_trigger`
+  ([Meta-Effect Patterns](meta-effect-patterns.md)). Otherwise write the blocks out.
+- Saved scopes use `save_event_target_as` and `event_target:`, not `save_scope_as` and
+  `scope:`.
+- Tooltips use `custom_effect_tooltip` and `custom_trigger_tooltip`, not `custom_tooltip`.
+- Variables use `set_variable`, `add_to_variable`, and `check_variable`, not
+  `change_variable`, `export_to_variable`, or `which =`.
 
 ## Relief Must Reduce the Actual Penalty
 

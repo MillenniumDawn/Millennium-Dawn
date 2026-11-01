@@ -69,9 +69,11 @@ Blocs and system:
 
 ## Bankruptcy guard
 
-A focus whose `completion_reward` spends real treasury (about 5bn or more through
-`modify_treasury_effect`, or a money-costing scripted or building effect) takes
-`FOCUS_FILTER_EXPENDITURE` and this modifier in `ai_will_do`:
+A focus whose `completion_reward` spends real treasury takes `FOCUS_FILTER_EXPENDITURE`
+and this modifier in `ai_will_do`. Real treasury is about 5bn or more through a literal
+`treasury_change` and `modify_treasury_effect`, or any call to a money-costing scripted
+or building effect. A scripted charge such as `GRE_pay_or_defer` counts at any size,
+since the validator cannot size it:
 
 ```
 modifier = {
@@ -81,7 +83,9 @@ modifier = {
 ```
 
 The gate is the reward's money cost, not the focus `cost` field, which is completion
-time. Keep it in `ai_will_do`, never `available`.
+time. A charge the partner's event sends back to the sender, as in an arms purchase,
+counts. A build after `skip_payment = 1` is free and needs no guard. Keep it in
+`ai_will_do`, never `available`.
 
 ## Israel
 

@@ -13,6 +13,7 @@ import pytest
 from equipment_module_slots import (
     _depth0_text,
     _iter_named_blocks,
+    _parse_module_assignments,
     blank_comments,
     build_indexes,
     check_created_variant_upgrades,
@@ -218,6 +219,39 @@ def _kinds(content):
     return [f.kind for f in check_target_variants(content, _indexes())]
 
 
+_SELECTION_CASES = {
+    "greater": ("gun_slot > module_test_gun", {"module_test_gun"}),
+    "less": ("gun_slot < module_test_gun", {"module_test_gun"}),
+    "equals greater": ("gun_slot = > module_test_gun", {"module_test_gun"}),
+    "nested range": (
+        "gun_slot = { module > module_test_gun upgrade = current }",
+        {"module_test_gun"},
+    ),
+    "repeated module": (
+        "gun_slot = { module = module_test_gun module = module_test_banned }",
+        {"module_test_gun", "module_test_banned"},
+    ),
+    "repeated any_of": (
+        "gun_slot = { any_of = { module_test_gun } any_of = { module_test_banned } }",
+        {"module_test_gun", "module_test_banned"},
+    ),
+    "module plus any_of": (
+        "gun_slot = { module = module_test_gun any_of = { module_test_banned } }",
+        {"module_test_gun", "module_test_banned"},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("text", "references"), _SELECTION_CASES.values(), ids=_SELECTION_CASES
+)
+def test_module_selection_reader(text, references):
+    assignments = _parse_module_assignments(text, 0, len(text))
+    assert len(assignments) == 1
+    slot, refs, offset = assignments[0]
+    assert (slot, set(refs), offset) == ("gun_slot", references, 0)
+
+
 def test_build_indexes_resolves_inheritance_and_categories():
     index = _indexes()
     assert (
@@ -259,6 +293,16 @@ def test_duplicate_archetype_clones_the_whole_family():
     index = _indexes()
     assert index.hull_slots["test_boat_hull_1"] == index.hull_slots["test_ship_hull_1"]
     assert index.hull_slots["test_boat"] == index.hull_slots["test_ship"]
+    assert index.hull_sources["test_boat_hull_1"] == "test_ship_hull_1"
+    assert index.hull_sources["test_boat"] == "test_ship"
+    assert index.hull_sources["test_ship_hull_1"] == "test_ship_hull_1"
+
+
+def test_explicit_clone_keeps_its_own_unlock_source():
+    explicit = "equipments = { test_boat_hull_1 = { archetype = test_ship module_slots = { } } }"
+    index = build_indexes([HULLS, DUPLICATES, explicit], [])
+    assert index.hull_sources["test_boat_hull_1"] == "test_boat_hull_1"
+    assert index.hull_sources["test_boat_hull_2"] == "test_ship_hull_2"
 
 
 def test_correct_category_passes():

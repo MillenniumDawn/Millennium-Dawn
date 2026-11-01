@@ -351,7 +351,7 @@ _NUCLEAR_STATUS_CASES = {
             "use_list_view = yes",
             _block("non_nuclear_power", "default = yes", "cost = 300"),
             _block(
-                "nuclear_energy", "cost = 300", "available = { has_tech = reactor1 }"
+                "nuclear_energy", "cost = 300", "available = { has_tech = reactor_01 }"
             ),
             _block("nuclear_power_def", "cost = 300"),
         ),

@@ -17,7 +17,7 @@ class _Process:
     def __init__(self, returncode=0):
         self.returncode = returncode
 
-    def poll(self):
+    def poll(self) -> int | None:
         return self.returncode
 
     def wait(self):
@@ -459,6 +459,40 @@ def test_persist_results_copies_json_sidecars(tmp_path, monkeypatch):
     assert (persist_dir / runner.PERSISTENCE_MARKER).read_text(encoding="utf-8") == (
         "complete\n"
     )
+
+
+def test_analysis_sidecars_are_preserved_but_never_counted_as_issues(tmp_path):
+    output = tmp_path / "output"
+    persisted = tmp_path / "persisted"
+    records = '{"kind":"starting-buildability","status":"unknown"}\n'
+    write_text(output / "stub.json", "[]")
+    write_text(output / "stub.analysis.jsonl", records)
+    write_text(persisted / "stale.analysis.jsonl", records)
+    write_text(persisted / "unrelated.jsonl", "keep")
+    assert (
+        runner.collect_all_issues(str(output), [("stub", "validate_stub.py", "Stub")])
+        == []
+    )
+    runner._persist_sidecars(str(output), str(persisted), complete=True)
+    assert (persisted / "stub.analysis.jsonl").read_text(encoding="utf-8") == records
+    assert not (persisted / "stale.analysis.jsonl").exists()
+    assert (persisted / "unrelated.jsonl").read_text(encoding="utf-8") == "keep"
+
+
+def test_analysis_sidecar_copy_failure_does_not_mark_persistence_complete(
+    tmp_path, monkeypatch
+):
+    output = tmp_path / "output"
+    persisted = tmp_path / "persisted"
+    write_text(output / "stub.analysis.jsonl", "{}\n")
+
+    def fail_copy(*_args):
+        raise OSError("analysis copy failed")
+
+    monkeypatch.setattr(runner.shutil, "copyfile", fail_copy)
+    with pytest.raises(OSError, match="analysis copy failed"):
+        runner._persist_sidecars(str(output), str(persisted), complete=True)
+    assert not (persisted / runner.PERSISTENCE_MARKER).exists()
 
 
 def test_persist_results_writes_completion_marker_when_clean(tmp_path, monkeypatch):

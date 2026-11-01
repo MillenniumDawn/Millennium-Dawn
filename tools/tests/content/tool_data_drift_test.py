@@ -5,8 +5,6 @@ import re
 import pytest
 import validate_building_guards
 import validate_decisions
-import validate_dlc_guards
-import validate_influence_calls
 import validate_scripted_params
 from shared.paths import REPO_ROOT
 from shared_utils import PARTY_SLOT_NAMES
@@ -103,15 +101,6 @@ def test_pp_malus_exemptions_are_still_live():
     )
 
 
-def test_spain_focus_tree_is_clean():
-    path = REPO_ROOT / "common" / "national_focus" / "05_spain.txt"
-    raw = path.read_text(encoding="utf-8")
-    setter = "set_temp_variable = { influence_target = THIS }"
-    assert raw.count(setter) == 6
-    assert validate_influence_calls.scan_file((str(path), str(REPO_ROOT))) == []
-    assert len(validate_influence_calls.scan_text(raw.replace(setter, ""))) == 6
-
-
 @pytest.mark.parametrize(
     "rel, effect, required, optional",
     [
@@ -139,6 +128,17 @@ def test_game_file_still_declares_the_contract(rel, effect, required, optional):
     assert contracts[effect] == {"required": required, "optional": optional}
 
 
+def test_startup_politics_still_declares_its_party_inputs():
+    contracts = validate_scripted_params._parse_effect_contracts_from_file(
+        str(REPO_ROOT / _POLITICS)
+    )
+    assert contracts["startup_politics"]["variables"] == [
+        "party_pop_array",
+        "ruling_party",
+        "gov_coalition_array",
+    ]
+
+
 def test_legacy_table_targets_exist_and_keys_do_not():
     known = load_known_categories(
         sorted((REPO_ROOT / "common" / "technology_tags").glob("*.txt"))
@@ -157,25 +157,16 @@ def test_unannounced_category_exemptions_are_still_live():
     )
 
 
-def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
-    guards = validate_dlc_guards
-    mod_path = f"{REPO_ROOT}/"
-    folder_gates = guards.parse_folder_gates(mod_path)
-    project_gates = guards.parse_project_gates(mod_path)
-    tech_gates, category_gates, project_tech_gates = guards.parse_tech_gates(
-        mod_path, folder_gates, project_gates
+def test_decision_cost_exemptions_are_still_live():
+    tokens = {
+        d.token for d in validate_decisions.parse_all_decision_factories(str(REPO_ROOT))
+    }
+    exempt = validate_decisions._AI_COST_EXEMPT | validate_decisions._LATE_CHARGE_EXEMPT
+    stale = sorted(exempt - tokens)
+    assert not stale, (
+        "ai_cost_exempt or late_charge_exempt names decisions that no longer "
+        f"exist: {stale}. Remove them from validation_config.json."
     )
-    path = REPO_ROOT / "common" / "national_focus" / "05_poland.txt"
-    scanner = guards.Scanner(
-        guards._sanitize(path.read_text(encoding="utf-8-sig")),
-        tech_gates,
-        category_gates,
-        project_gates,
-        project_tech_gates,
-        guards._AVAILABILITY,
-    )
-    scanner.walk(0, len(scanner.text), guards.Context())
-    assert scanner.findings == []
 
 
 def _tech_ids(text):

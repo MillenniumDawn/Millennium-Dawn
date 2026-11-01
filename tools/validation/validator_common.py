@@ -50,6 +50,24 @@ _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
+DEFICIT_GUARD_RE = re.compile(r"\bai_has_high_deficit\s*=\s*yes\b")
+# Script that commits money later: a war, a spending law change, or a money
+# modifier, set in a `modifier` block or named by a dynamic modifier's tooltip.
+MONEY_COMMITMENT_RE = re.compile(
+    r"\b(?:create_wargoal|declare_war_on|start_border_war|start_civil_war"
+    r"|war_with_(?:target_)?on_(?:complete|remove|timeout))\b"
+    r"|\bset_country_flag\s*=\s*spending_law_scripted_change\b"
+    r"|\b\w*(?:cost_multiplier|tax|income|interest_rate|money_cost)\w*_modifier"
+    r"(?:_tt\b|\s*=)"
+)
+# One token stream for lowering_treasury_checks: braces, NOT openers, literal
+# weight steps and the two treasury checks.
+_TREASURY_CHECK_TOKEN_RE = re.compile(
+    r"\bNOT\s*=\s*(?P<not>\{)|(?P<open>\{)|(?P<close>\})"
+    r"|\b(?P<step>factor|add)\s*=\s*(?P<value>-?(?:\d+(?:\.\d*)?|\.\d+))(?![\w.])"
+    rf"|(?P<bankruptcy>{BANKRUPTCY_GUARD_RE.pattern})"
+    rf"|(?P<deficit>{DEFICIT_GUARD_RE.pattern})"
+)
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -393,6 +411,49 @@ _WEIGHT_ADD_RE = re.compile(r"\badd\s*=")
 def weight_stays_zero(weights: str) -> bool:
     """An AI weight body with `base = 0` and no `add`: no modifier can lift it."""
     return bool(BASE_ZERO_RE.search(weights)) and not _WEIGHT_ADD_RE.search(weights)
+
+
+def lowering_treasury_checks(modifier: str) -> Set[str]:
+    """The treasury checks ("bankruptcy", "deficit") an AI weight modifier body
+    lowers the weight on, read in one pass.
+
+    The modifier's own literal factor must be below 1 or its add below 0. A
+    check under NOT does not count. Which costs each check covers is the
+    caller's rule.
+    """
+    depth = 0
+    negated: List[int] = []
+    lowers = False
+    found: Set[str] = set()
+    for m in _TREASURY_CHECK_TOKEN_RE.finditer(modifier):
+        kind = m.lastgroup
+        if kind in ("not", "open"):
+            depth += 1
+            if kind == "not":
+                negated.append(depth)
+        elif kind == "close":
+            if negated and negated[-1] == depth:
+                negated.pop()
+            depth -= 1
+        elif kind == "value":
+            if depth == 0 and float(m["value"]) < (1 if m["step"] == "factor" else 0):
+                lowers = True
+        elif kind and not negated:
+            found.add(kind)
+    return found if lowers else set()
+
+
+def unneeded_treasury_checks(
+    checks: Set[str], money: bool, political_power: bool
+) -> Set[str]:
+    """The *checks* an item has no cost for.
+
+    Any money cost or MONEY_COMMITMENT_RE effect covers both checks. A
+    political power cost covers bankruptcy only.
+    """
+    if money:
+        return set()
+    return checks - {"bankruptcy"} if political_power else set(checks)
 
 
 def casefold_index(names) -> dict:

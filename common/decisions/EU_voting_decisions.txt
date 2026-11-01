@@ -1,21 +1,4 @@
 EU_voting_category = {
-	EU_election_5_years = {
-		allowed = { always = no }
-		available = { tag = EUU }
-		activation = { always = no }
-		is_good = yes
-		days_mission_timeout = 1825
-		selectable_mission = yes
-		fire_only_once = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: mission timeout_effect EU_election_5_years"
-			country_event = EUelection.1
-		}
-
-		ai_will_do = { base = 0 }
-	}
-
 	#############
 	### EUXXX ###
 	#############
@@ -442,13 +425,17 @@ EU_voting_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_budget_draft_preparations"
-			set_EU_gdp = yes
-			EU_save_budget_values = yes
-			update_EU_budget_call_rate = yes
-			update_EU_average_eco_lvl = yes
-			EU_global_click_cost = yes
-			reset_MEP_support_party_x = yes
-			set_variable = { global.EU_budget_draft_invested_PP = 0 }
+			# Every member times out the same day; run the Union-wide math once
+			if = { limit = { NOT = { has_global_flag = eu_budget_prep_math_done } }
+				set_global_flag = { flag = eu_budget_prep_math_done value = 1 days = 1 }
+				set_EU_gdp = yes
+				EU_save_budget_values = yes
+				update_EU_budget_call_rate = yes
+				update_EU_average_eco_lvl = yes
+				EU_global_click_cost = yes
+				reset_MEP_support_party_x = yes
+				set_variable = { global.EU_budget_draft_invested_PP = 0 }
+			}
 			remove_mission = EU_budget_draft_preparations
 			activate_mission = EU_budget_draft_ongoing
 			set_global_flag = EU_ongoing_budget_draft
@@ -470,8 +457,11 @@ EU_voting_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_budget_draft_ongoing"
-			set_EU_gdp = yes
-			update_EU_budget_call_rate = yes
+			if = { limit = { NOT = { has_global_flag = eu_budget_vote_math_done } }
+				set_global_flag = { flag = eu_budget_vote_math_done value = 1 days = 1 }
+				set_EU_gdp = yes
+				update_EU_budget_call_rate = yes
+			}
 			if = {
 				limit = { has_idea = EU_ECB_office_idea }
 				if = {
@@ -548,13 +538,17 @@ EU_voting_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_mff_draft_preparations"
-			set_EU_gdp = yes
-			EU_save_mff_values = yes
-			update_EU_budget_call_rate = yes
-			update_EU_average_eco_lvl = yes
-			EU_global_click_cost = yes
-			EU_country_call_rate_cost_calc = yes
-			set_variable = { global.EU_budget_draft_invested_PP = 0 }
+			# Every member times out the same day; run the Union-wide math once
+			if = { limit = { NOT = { has_global_flag = eu_mff_prep_math_done } }
+				set_global_flag = { flag = eu_mff_prep_math_done value = 1 days = 1 }
+				set_EU_gdp = yes
+				EU_save_mff_values = yes
+				update_EU_budget_call_rate = yes
+				update_EU_average_eco_lvl = yes
+				EU_global_click_cost = yes
+				EU_country_call_rate_cost_calc = yes
+				set_variable = { global.EU_budget_draft_invested_PP = 0 }
+			}
 			remove_mission = EU_mff_draft_preparations
 			activate_mission = EU_mff_draft_ongoing
 			set_global_flag = EU_ongoing_mff_draft
@@ -576,8 +570,11 @@ EU_voting_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EU_mff_draft_ongoing"
-			set_EU_gdp = yes
-			update_EU_budget_call_rate = yes
+			if = { limit = { NOT = { has_global_flag = eu_mff_vote_math_done } }
+				set_global_flag = { flag = eu_mff_vote_math_done value = 1 days = 1 }
+				set_EU_gdp = yes
+				update_EU_budget_call_rate = yes
+			}
 			if = {
 				limit = { has_idea = EU_ECB_office_idea }
 				if = {

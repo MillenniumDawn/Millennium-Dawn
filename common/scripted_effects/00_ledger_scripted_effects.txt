@@ -47,6 +47,20 @@ open_ledger = {
 	update_ledger_dirty_var = yes
 }
 
+# Tab click: leaving the faction page restores the country list, entering it builds the faction list
+ledger_set_page = {
+	if = {
+		limit = { check_variable = { ledger_open = 7 } }
+		update_ledger_country_array = yes
+	}
+	set_variable = { ledger_open = ledger_page }
+	if = {
+		limit = { check_variable = { ledger_open = 7 } }
+		update_ledger_faction_array = yes
+	}
+	update_ledger_dirty_var = yes
+}
+
 update_ledger_country_array = {
 	clear_variable = last_sort_var
 	clear_array = country_array
@@ -110,7 +124,12 @@ update_ledger_country_array = {
 		}
 	}
 
-	update_ledger_dirty_var = yes
+	# Start with the largest economies first; the next GDP click then sorts ascending
+	set_temp_variable = { sort_var = 33 }
+	set_temp_variable = { ledger_sort_descending = 1 }
+	for_each_scope_loop = { array = country_array add_to_temp_array = { ledger_sort_values = gdp_total } }
+	create_sorted_array = yes
+	clear_variable = last_sort_var
 }
 
 update_ledger_faction_array = {

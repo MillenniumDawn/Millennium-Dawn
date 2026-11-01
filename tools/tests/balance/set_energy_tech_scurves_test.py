@@ -221,20 +221,20 @@ def test_increments_cumulate_to_chain_total():
 INDUSTRY_TEMPLATE = (
     "\tstart_year = 1990\n"
     "\tallow = { always = yes }\n"
-    "\tfuel_efficiency = {\n"
+    "\tfuel_efficiency_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.123\n"
     "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
     "\t\tproduction_speed_fossil_powerplant_factor = 0.02\n"
     "\t\tfossil_infra_cost_multiplier_modifier = -0.04\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\treactor1 = {\n"
+    "\treactor_01 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.10\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.03\n"
     "\t\tnuclear_infra_cost_multiplier_modifier = -0.05\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\tearly_renewables = {\n"
+    "\trenewable_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.20\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.08\n"
     "\t\trenewable_infra_cost_multiplier_modifier = -0.10\n"
@@ -244,9 +244,9 @@ INDUSTRY_TEMPLATE = (
 
 
 ENERGY_EDITS = {
-    "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
-    "reactor1": ("nuc", 0.6, 0.18, -0.05),
-    "early_renewables": ("ren", 0.7, 0.28, -0.10),
+    "fuel_efficiency_01": ("fos", 0.5, 0.25, -0.04),
+    "reactor_01": ("nuc", 0.6, 0.18, -0.05),
+    "renewable_01": ("ren", 0.7, 0.28, -0.10),
 }
 
 
@@ -296,7 +296,7 @@ def test_apply_to_industry_inserts_missing_speed_and_infra(industry_path, monkey
     """Tech block that lacks the speed line gets it inserted by the rewriter."""
     template = (
         "\tstart_year = 1990\n"
-        "\tfuel_efficiency = {\n"
+        "\tfuel_efficiency_01 = {\n"
         "\t\trenewable_energy_gain_multiplier = 0.10\n"
         "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
         "\t\tfossil_infra_cost_multiplier_modifier = -0.02\n"
@@ -305,12 +305,12 @@ def test_apply_to_industry_inserts_missing_speed_and_infra(industry_path, monkey
     )
     industry_path.write_text(template, encoding="utf-8")
     monkeypatch.setattr(sc, "INDUSTRY", str(industry_path))
-    edits = {"fuel_efficiency": ("fos", 0.5, 0.25, -0.04)}
+    edits = {"fuel_efficiency_01": ("fos", 0.5, 0.25, -0.04)}
     report, missing = sc.apply_to_industry((0.3, 1.0, 1.0, 1.0), edits, apply=True)
     assert missing == set()
     flags = {r[0]: (r[5], r[6]) for r in report}
-    assert flags["fuel_efficiency"][0] == "speed+"  # speed inserted
-    assert flags["fuel_efficiency"][1] == "infra="  # infra replaced
+    assert flags["fuel_efficiency_01"][0] == "speed+"  # speed inserted
+    assert flags["fuel_efficiency_01"][1] == "infra="  # infra replaced
     text = industry_path.read_text(encoding="utf-8")
     assert "\t\tproduction_speed_fossil_powerplant_factor = 0.25" in text
 
