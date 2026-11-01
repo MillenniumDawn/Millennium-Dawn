@@ -128,6 +128,17 @@ def test_game_file_still_declares_the_contract(rel, effect, required, optional):
     assert contracts[effect] == {"required": required, "optional": optional}
 
 
+def test_startup_politics_still_declares_its_party_inputs():
+    contracts = validate_scripted_params._parse_effect_contracts_from_file(
+        str(REPO_ROOT / _POLITICS)
+    )
+    assert contracts["startup_politics"]["variables"] == [
+        "party_pop_array",
+        "ruling_party",
+        "gov_coalition_array",
+    ]
+
+
 def test_legacy_table_targets_exist_and_keys_do_not():
     known = load_known_categories(
         sorted((REPO_ROOT / "common" / "technology_tags").glob("*.txt"))
