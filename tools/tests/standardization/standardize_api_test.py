@@ -155,6 +155,38 @@ def test_history_text_fixes_tabs_inside_and_outside_dated_blocks():
     assert standardize_text("history", once) == once
 
 
+# case: kind, source -> comments the standardizer must keep
+_KEPT_COMMENTS = {
+    "decision and category opener": (
+        "decision",
+        "TST_cat = { # cat note\n\tTST_d = { # dec note\n\t\ticon = x\n\t}\n}\n",
+        ["TST_cat = { # cat note\n", "\tTST_d = { # dec note\n"],
+    ),
+    "organization opener": (
+        "mio",
+        "TST_org = {\t\t# org note\n\tname = x\n}\n",
+        ["TST_org = { # org note\n"],
+    ),
+    "history idea and add_ideas opener": (
+        "history",
+        "2000.1.1 = {\n\tadd_ideas = { # list note\n\t\tTST_a # idea note\n\t}\n}\n",
+        ["# list note\n", "\t\t\tTST_a # idea note\n"],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("kind", "source", "kept"), _KEPT_COMMENTS.values(), ids=_KEPT_COMMENTS
+)
+def test_comments_on_an_opener_or_an_idea_survive(kind, source, kept):
+    once = standardize_text(kind, source)
+
+    assert once is not None
+    for text in kept:
+        assert text in once
+    assert standardize_text(kind, once) == once
+
+
 def test_indent_text_fixes_only_tabs_and_spacing():
     messy = (
         "# Header {\n"

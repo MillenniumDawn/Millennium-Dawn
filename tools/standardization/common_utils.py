@@ -31,6 +31,12 @@ _BRACE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{|\{|\}")
 LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 
 
+def opener_with_comment(name: str, source_line: str) -> str:
+    """`name = {`, keeping any comment written after the brace on source_line."""
+    comment = source_line[len(strip_inline_comment(source_line)) :].strip()
+    return f"{name} = {{ {comment}" if comment else f"{name} = {{"
+
+
 def code_of_line(line: str) -> str:
     """Strip a line down to what the parser sees: no comment, no quoted text."""
     return blank_quoted_strings(strip_inline_comment(line))

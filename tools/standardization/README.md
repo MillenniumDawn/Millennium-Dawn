@@ -85,7 +85,7 @@ Standardizes idea files according to Millennium Dawn standards.
 **Key features:**
 
 - Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
-- Adds logging to on_add/on_remove when they have effects
+- Adds logging to on_add/on_remove when they have effects beyond tooltips
 - Rewrites a stock on_add/on_remove log to `Idea <id> added` or `Idea <id> removed`, so a copied log names its own idea. A hand-written message is left alone
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting

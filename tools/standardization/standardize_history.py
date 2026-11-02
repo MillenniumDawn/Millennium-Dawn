@@ -514,10 +514,18 @@ class HistoryStandardizer(BaseStandardizer):
                 if not _is_boilerplate_comment(raw):
                     props["ideas_extra_comments"].append(raw.rstrip())
                 continue
-            for tok in code.replace("{", " ").replace("}", " ").split():
-                if "=" in tok or tok == "add_ideas":
-                    continue
-                props["ideas"].append((tok, tok))
+            tokens = [
+                tok
+                for tok in code.replace("{", " ").replace("}", " ").split()
+                if "=" not in tok and tok != "add_ideas"
+            ]
+            comment = raw[len(code) :].strip()
+            if comment and not tokens:
+                props["ideas_extra_comments"].append(raw.rstrip())
+            for tok in tokens:
+                # A trailing comment stays on the line's last idea.
+                text = f"{tok} {comment}" if comment and tok == tokens[-1] else tok
+                props["ideas"].append((tok, text))
 
     # -- formatting --------------------------------------------------------- #
 
@@ -579,11 +587,11 @@ class HistoryStandardizer(BaseStandardizer):
         )
         classified: Dict[str, List[str]] = {k: [] for k in groups}
         seen: set = set()
-        for token, _text in props["ideas"]:
+        for token, text in props["ideas"]:
             if token in seen:
                 continue
             seen.add(token)
-            classified[self._classify_idea(token)].append(token)
+            classified[self._classify_idea(token)].append(text)
         for key, header in groups.items():
             items = classified[key]
             if not items:

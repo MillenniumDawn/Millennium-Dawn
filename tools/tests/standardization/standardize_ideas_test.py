@@ -381,6 +381,26 @@ def test_stock_idea_log_names_its_own_idea(written, emitted):
     assert f'\t\t\tlog = "{prefix}{emitted}"' in out
 
 
+def test_tooltip_only_lifecycle_block_gets_no_log():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_log = {",
+                "\t\tpicture = x",
+                "\t\ton_add = {",
+                "\t\t\tcustom_effect_tooltip = TAG_tt",
+                "\t\t\teffect_tooltip = {",
+                "\t\t\t\tadd_stability = 0.05",
+                "\t\t\t}",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert not any('log = "' in line for line in out)
+    assert "\t\t\tcustom_effect_tooltip = TAG_tt" in out
+
+
 def test_on_remove_stock_log_says_removed():
     out = _standardize(
         _idea(
