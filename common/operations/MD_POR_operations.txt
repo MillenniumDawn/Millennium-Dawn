@@ -1,0 +1,119 @@
+POR_operation_false_flag = {
+	icon = GFX_operations_targeted_sabotage
+	map_icon = GFX_operations_targeted_sabotage_map
+	name = POR_operation_false_flag
+	desc = POR_operation_false_flag_desc
+	priority = 2
+
+	days = 45
+	network_strength = 35
+	operatives = 2
+
+	visible = {
+		FROM = {
+			exists = yes
+			is_in_array = { ROOT.POR_network_target_array = THIS.id }
+		}
+		network_strength = { target = FROM value > 0 }
+	}
+
+	available = {
+		has_completed_focus = POR_special_actions_detachment
+		NOT = { has_completed_focus = POR_remain_in_europe }
+		custom_trigger_tooltip = {
+			tooltip = POR_ops_gate_tt
+			FROM = { POR_ops_target_open = yes }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_no_civil_war_tt
+			FROM = { has_civil_war = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_independent_tt
+			FROM = { is_subject = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_at_peace_tt
+			NOT = { has_war_with = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_no_raid_recent_tt
+			FROM = { NOT = { has_country_flag = POR_raid_recent@ROOT } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_civilian_token_tt
+			has_operation_token = { tag = FROM token = token_civilian }
+		}
+	}
+
+	requirements = {
+		FROM = { any_owned_state = { is_capital = no } }
+	}
+	selection_target = {
+		targets = { FROM }
+	}
+	selection_target_state = {
+		is_capital = no
+	}
+
+	equipment = {
+		infantry_weapons_type = 500
+	}
+
+	risk_chance = 0.40
+	experience = 3
+	outcome_extra_chance = 0.20
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+
+	on_start = { # SCOPE_OPERATION
+		ROOT = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	outcome_execute = { # SCOPE_OPERATION
+		FROM = {
+			set_country_flag = { flag = POR_raid_recent@ROOT days = 180 value = 1 }
+			country_event = { id = portugal.72 days = 2 }
+		}
+	}
+
+	# Replaces outcome_execute rather than adding to it, so it does the same.
+	outcome_extra_execute = { # SCOPE_OPERATION
+		FROM = {
+			set_country_flag = { flag = POR_raid_recent@ROOT days = 180 value = 1 }
+			country_event = { id = portugal.72 days = 2 }
+		}
+	}
+
+	outcome_potential = {
+		custom_effect_tooltip = POR_operation_false_flag_outcome_tt
+	}
+
+	phases = { # infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = { has_war = no }
+			}
+		}
+	}
+	phases = { # the raid itself
+		targeted_sabotage_plant_explosives = { base = 90 }
+		targeted_sabotage_organize_more_meetings = { base = 10 }
+	}
+	phases = { # exfiltration
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+
+	ai_will_do = { base = 3 }
+}
