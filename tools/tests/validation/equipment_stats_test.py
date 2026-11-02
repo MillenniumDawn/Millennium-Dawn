@@ -1,6 +1,7 @@
 """Tests for `equipment_stats.py` (which stats each equipment token declares)."""
 
 import equipment_stats as S
+import pytest
 
 _AA = """
 equipments = {
@@ -31,8 +32,14 @@ def _index(equipment="", modules="", groups=""):
     return S.build_index([equipment], [modules], [groups])
 
 
+def _stats(index, token):
+    stats = index.resolve(token)
+    assert stats is not None
+    return stats
+
+
 def _aa_stats():
-    return _index(_AA).resolve("AA_Equipment")
+    return _stats(_index(_AA), "AA_Equipment")
 
 
 def test_variant_stats_union_into_archetype():
@@ -100,7 +107,7 @@ equipment_modules = {
 
 def test_module_stats_reach_only_hulls_whose_slots_accept_them():
     index = _index(_HULL, _MODULES)
-    stats = index.resolve("tank_chassis")
+    stats = _stats(index, "tank_chassis")
     assert "hard_attack" in stats
     # The ship module is in no slot this hull accepts — pooling every module is
     # what handed tank chassis a max_organisation they do not have.
@@ -109,7 +116,64 @@ def test_module_stats_reach_only_hulls_whose_slots_accept_them():
 
 def test_plain_archetype_gets_no_module_stats():
     index = _index(_AA + _HULL, _MODULES)
-    assert "hard_attack" not in index.resolve("AA_Equipment")
+    assert "hard_attack" not in _stats(index, "AA_Equipment")
+
+
+# case: (category, module body, detection stat reachable)
+_MODULE_STAT_CASES = {
+    "direct stat": (
+        "module_gun_category",
+        "add_stats = { surface_detection = 2 }",
+        True,
+    ),
+    "mission add": (
+        "module_gun_category",
+        "mission_type_stats = { limit = { naval_patrol } "
+        "add_stats = { surface_detection = 2 } }",
+        True,
+    ),
+    "mission multiply": (
+        "module_gun_category",
+        "mission_type_stats = { multiply_stats = { surface_detection = 0.1 } }",
+        True,
+    ),
+    "mission average": (
+        "module_gun_category",
+        "mission_type_stats = { add_average_stats = { surface_detection = 2 } }",
+        True,
+    ),
+    "mission zero": (
+        "module_gun_category",
+        "mission_type_stats = { add_stats = { surface_detection = 0 } }",
+        False,
+    ),
+    "mission metadata": (
+        "module_gun_category",
+        "mission_type_stats = { limit = { surface_detection = 2 } }",
+        False,
+    ),
+    "unrelated block": (
+        "module_gun_category",
+        "can_convert_from = { add_stats = { surface_detection = 2 } }",
+        False,
+    ),
+    "incompatible module": (
+        "module_ship_category",
+        "mission_type_stats = { add_stats = { surface_detection = 2 } }",
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "category, body, expected",
+    _MODULE_STAT_CASES.values(),
+    ids=_MODULE_STAT_CASES,
+)
+def test_module_stat_sources(category, body, expected):
+    modules = f"equipment_modules = {{ sensor = {{ category = {category}\n{body} }} }}"
+    stats = _stats(_index(_HULL, modules), "tank_chassis")
+    assert ("surface_detection" in stats) == expected
 
 
 _DUPLICATES = """
@@ -134,7 +198,7 @@ duplicate_archetypes = {
 
 
 def test_duplicate_archetype_inherits_base_and_adds_for_each():
-    stats = _index(_DUPLICATES).resolve("small_plane_cas_airframe")
+    stats = _stats(_index(_DUPLICATES), "small_plane_cas_airframe")
     assert "air_range" in stats  # from the base archetype
     assert "air_ground_attack" in stats  # from for_each
     assert "air_superiority" not in stats  # for_each set it to 0
@@ -184,7 +248,7 @@ equipments = {
 
 def test_an_entry_restated_in_a_second_block_unions_its_stats_and_types():
     index = _index(_SPLIT)
-    stats = index.resolve("split_entry")
+    stats = _stats(index, "split_entry")
     assert {"reliability", "air_attack"} <= stats
     assert index.resolve("escort") == stats
 
@@ -210,7 +274,7 @@ duplicate_archetypes = {
 
 def test_clone_without_a_substitute_registers_only_itself():
     index = _index(_EDGE_DUPLICATES)
-    stats = index.resolve("edge_clone")
+    stats = _stats(index, "edge_clone")
     assert {"air_range", "air_ground_attack"} <= stats
     assert index.resolve("cv_edge_clone") is None
 
@@ -272,12 +336,12 @@ equipment_modules = {
 def test_hull_reaches_stats_of_categories_its_modules_unlock():
     """gun_module unlocks ammo_category into gun_slot, so the hull can carry
     ammo stats even though its own slot list never names that category."""
-    stats = _index(_UNLOCK_HULLS, _UNLOCK_MODULES).resolve("unlock_hull")
+    stats = _stats(_index(_UNLOCK_HULLS, _UNLOCK_MODULES), "unlock_hull")
     assert {"reliability", "hard_attack", "breakthrough"} <= stats
 
 
 def test_a_hull_whose_modules_declare_no_stats_gains_nothing():
-    stats = _index(_UNLOCK_HULLS, _UNLOCK_MODULES).resolve("bare_hull")
+    stats = _stats(_index(_UNLOCK_HULLS, _UNLOCK_MODULES), "bare_hull")
     assert "armor_value" in stats
     assert "hard_attack" not in stats
     assert "breakthrough" not in stats
