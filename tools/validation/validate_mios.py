@@ -1342,8 +1342,10 @@ class Validator(BaseValidator):
         ):
             team = DESIGN_TEAM_RE.search(text, lo, hi)
             variant_type = _scalar(text, lo, hi, "type")
-            body = self._org_bodies.get(team.group(1)) if team else None
-            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if team is None or variant_type is None:
+                continue
+            body = self._org_bodies.get(team.group(1))
+            archetype = equipment.archetype_of(variant_type)
             if body is None or archetype is None:
                 continue
             tokens = self._org_equipment_types(team.group(1), body)
