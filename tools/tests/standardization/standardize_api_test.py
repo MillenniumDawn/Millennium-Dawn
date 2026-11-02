@@ -21,6 +21,10 @@ _ROUTED = [
     ("common/military_industrial_organization/policies/_land_policies.txt", "mio"),
     ("common/technologies/infantry.txt", "technology"),
     ("history/countries/ARA - Arabistan.txt", "history"),
+    ("common/ai_equipment/FRA_tank.txt", "indent"),
+    ("common/characters/FRA.txt", "indent"),
+    ("common/scripted_effects/FRA_political_leaders.txt", "indent"),
+    ("common/scripted_triggers/99_FRA_scripted_triggers.txt", "indent"),
 ]
 
 _UNROUTED = [
@@ -47,6 +51,7 @@ def test_routes_have_only_supported_standardizer_kinds():
         "mio",
         "technology",
         "history",
+        "indent",
     }
 
 
@@ -132,3 +137,43 @@ def test_history_text_accepts_a_mod_root(tmp_path):
 
 def test_history_text_returns_none_when_no_dated_block_matches():
     assert standardize_text("history", "# just a comment\n") is None
+
+
+def test_history_text_fixes_tabs_inside_and_outside_dated_blocks():
+    once = standardize_text(
+        "history",
+        "note = {\n    x = 1\n}\n\n2000.1.1 = {\nif = {\n"
+        "limit = { always = yes }\n      set_country_flag = TST_alpha\n}\n}\n",
+    )
+
+    assert once is not None
+    assert "note = {\n\tx = 1\n}\n" in once
+    assert (
+        "\tif = {\n\t\tlimit = { always = yes }\n"
+        "\t\tset_country_flag = TST_alpha\n\t}\n" in once
+    )
+    assert standardize_text("history", once) == once
+
+
+def test_indent_text_fixes_only_tabs_and_spacing():
+    messy = (
+        "# Header {\n"
+        "TST_effect = {\n"
+        "    if = {limit={always = yes}\n"
+        '\t\t\t\tlog = "keep  {  this"  # keep  this\n'
+        "\n"
+        "  }\n"
+        "}\n"
+    )
+    once = standardize_text("indent", messy)
+
+    assert once == (
+        "# Header {\n"
+        "TST_effect = {\n"
+        "\tif = { limit = { always = yes }\n"
+        '\t\tlog = "keep  {  this" # keep  this\n'
+        "\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert standardize_text("indent", once) == once

@@ -7,7 +7,7 @@ Reorders the contents of every dated history block (e.g. ``2000.1.1 = { ... }``)
 into a fixed, readable grouping without changing anything semantically. The
 transform is lossless (no statement dropped) and idempotent (running twice is a
 no-op). Content outside dated blocks (``capital = ...``, naval OOB, equipment
-variants) is passed through untouched.
+variants) keeps its order. The whole file is reindented by brace depth.
 
 Target ordering inside each dated block:
   1. Consolidated ``add_ideas`` with # Laws / # MD Ideas / # Internal Factions /
@@ -34,7 +34,12 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
-from shared_utils import extract_block, log_message, strip_inline_comment
+from shared_utils import (
+    extract_block,
+    log_message,
+    reindent_by_brace_depth,
+    strip_inline_comment,
+)
 
 # --------------------------------------------------------------------------- #
 # Classification loaders (cached per mod root)
@@ -327,6 +332,10 @@ class HistoryStandardizer(BaseStandardizer):
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         self._ensure_classification(input_file)
         return super().standardize_file(input_file, output_file)
+
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        output_lines = super().standardize_lines(lines)
+        return None if output_lines is None else reindent_by_brace_depth(output_lines)
 
     # -- BaseStandardizer interface ----------------------------------------- #
 
