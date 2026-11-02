@@ -9,6 +9,7 @@ import re
 from typing import Any, Callable, Dict, List
 
 from common_utils import (
+    LOG_STATEMENT_RE,
     PROP_NAME_RE,
     BaseStandardizer,
     collapse_blank_runs,
@@ -137,12 +138,8 @@ def _effect_has_statements(block_lines: List[str]) -> bool:
     if len(block) == 1:
         block = _split_one_line_effect(block[0]) or block
     for line in block[1:-1]:
-        stripped = line.strip()
-        if (
-            stripped
-            and not stripped.startswith("#")
-            and not stripped.startswith("log =")
-        ):
+        stripped = LOG_STATEMENT_RE.sub("", line).strip()
+        if stripped and not stripped.startswith("#"):
             return True
     return False
 

@@ -10,6 +10,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from common_utils import (
+    LOG_STATEMENT_RE,
     PROP_NAME_RE,
     BaseStandardizer,
     read_lines_for_standardization,
@@ -51,7 +52,6 @@ _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
 
 
 _ALLOWED_TAG_RE = re.compile(r"\btag\s*=\s*(\w+)")
-_LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 # Stock idea log wordings only; a hand-written message stays as written.
 _STOCK_IDEA_LOG_RE = re.compile(
     r'(\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
@@ -260,7 +260,7 @@ class IdeaStandardizer(BaseStandardizer):
             return False
 
         for line in block_lines:
-            stripped = _LOG_STATEMENT_RE.sub("", line).strip()
+            stripped = LOG_STATEMENT_RE.sub("", line).strip()
             if (
                 stripped in ("{", "}", "")
                 or not stripped

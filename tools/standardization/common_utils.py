@@ -28,6 +28,7 @@ from shared_utils import (
 # A named block opener, or a bare brace. Ordering matters: `foo = {` has to win
 # over the lone `{` alternative so the name reaches the stack.
 _BRACE_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{|\{|\}")
+LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 
 
 def code_of_line(line: str) -> str:
