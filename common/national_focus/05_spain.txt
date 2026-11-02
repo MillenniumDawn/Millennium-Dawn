@@ -16,6 +16,7 @@ focus_tree = {
 	# Shared Focuses
 	shared_focus = USoE001
 	shared_focus = POTEF001
+	shared_focus = IBR_dream_of_iberia
 
 	# Focus Shortcut
 	shortcut = {
@@ -36,6 +37,11 @@ focus_tree = {
 	shortcut = {
 		name = SPR_military_shortcut
 		target = SPR_ejercito_de_tierra
+		scroll_wheel_factor = 0.80
+	}
+	shortcut = {
+		name = IBR_dream_shortcut
+		target = IBR_dream_of_iberia
 		scroll_wheel_factor = 0.80
 	}
 
@@ -3128,23 +3134,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_declare_the_iberian_union"
-			if = { limit = { NOT = { has_country_flag = is_IBR } }
-				set_global_flag = IBR_exists
-			}
 			country_event = spain.60
+			custom_effect_tooltip = SPR_solidify_the_iberian_union_dream_tt
 		}
 
 		ai_will_do = {
 			base = 1
-			modifier = {
-				factor = 0
-				NOT = { check_variable = { formable_committed_id = 5 } }
-				check_variable = {
-					var = formable_committed_size
-					value = 24
-					compare = greater_than_or_equals
-				}
-			}
 			modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
 			modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
 		}
@@ -3514,23 +3509,7 @@ focus_tree = {
 					}
 				}
 			}
-			# Set you to the Iberian Union
-			set_country_flag = is_IBR
-			mark_formed_country_formable = yes
-			# Ungated focus commit must not downgrade a larger commitment
-			hidden_effect = {
-				if = {
-					limit = {
-						check_variable = {
-							var = formable_committed_size
-							value = 24
-							compare = less_than
-						}
-					}
-					set_variable = { formable_committed_id = 5 }
-					set_variable = { formable_committed_size = 24 }
-				}
-			}
+			custom_effect_tooltip = SPR_solidify_the_iberian_union_dream_tt
 		}
 
 		ai_will_do = {
@@ -3832,7 +3811,12 @@ focus_tree = {
 			add_political_power = 150
 			custom_effect_tooltip = SPR_the_spanish_empire_revived_TT
 			news_event = spain.71
-			hidden_effect = { set_cosmetic_tag = SPR_EMPIRE }
+			hidden_effect = {
+				if = {
+					limit = { NOT = { has_completed_focus = IBR_dream_of_iberia } }
+					set_cosmetic_tag = SPR_EMPIRE
+				}
+			}
 		}
 
 		ai_will_do = {
@@ -16168,6 +16152,75 @@ focus_tree = {
 			base = 1
 			modifier = { factor = 25 SPR_ai_left_path = yes }
 			modifier = { factor = 0 SPR_ai_not_left_path = yes }
+		}
+	}
+
+	focus = {
+		id = SPR_propose_iberian_union
+		icon = focus_generic_free_iberia
+
+		x = 7
+		y = 4
+		relative_position_id = SPR_economia_espanola
+		offset = {
+			x = -2 y = 0
+			trigger = {
+				has_game_rule = { rule = obsolete_focus_branches_visibility option = HIDE }
+				OR = {
+					has_completed_focus = SPR_hybrid_territorial_model
+					has_completed_focus = SPR_federalization_with_spanish_characteristics
+				}
+			}
+		}
+
+		cost = 20
+
+		prerequisite = { focus = SPR_coffee_for_all focus = SPR_federalism_with_extra_steps }
+
+		search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_formables_enabled_tt
+				NOT = { has_global_flag = GAME_RULE_disable_formable_nations }
+			}
+			country_exists = POR
+			NOT = { has_war_with = POR }
+			POR = {
+				OR = {
+					is_subject = no
+					is_subject_of = ROOT
+				}
+				influence_higher_50 = yes
+				has_opinion = { target = ROOT value > 49 }
+			}
+			has_political_power > 399
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus SPR_propose_iberian_union"
+			add_political_power = -400
+			newline = yes
+			POR = { country_event = { id = spain.88 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				annex_country = { target = POR transfer_troops = yes }
+				custom_effect_tooltip = SPR_solidify_the_iberian_union_dream_tt
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { custom_effect_tooltip = SPR_portugal_union_refused_tt }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				NOT = { POR = { is_subject_of = ROOT } }
+				NOT = { POR = { has_opinion = { target = ROOT value > 74 } } }
+			}
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
