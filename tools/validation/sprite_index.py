@@ -175,7 +175,7 @@ class SpriteSizeIndex:
     shadows a vanilla name wins; anything else falls back to the size column of
     ``vanilla_sprites.txt``. ``unreadable`` counts textures the index names but
     could not be read — in CI that is every art directory the prepared workspace
-    does not ship, so callers log it rather than silently skipping.
+    does not ship, so callers report it rather than silently skipping.
     """
 
     def __init__(

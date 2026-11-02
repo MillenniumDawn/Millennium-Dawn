@@ -99,7 +99,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
-  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+  and only `gfx/flags`, `gfx/interface/decisions`, and `gfx/texticons` from the art
+  trees. Size checks report art outside them as `decision-icon-unmeasured`.
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
@@ -140,8 +141,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
   four `hashFiles` sites must match, and each checkout must hold those files.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
-  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
-  `python3 tools/merge_changelog.py --fix` repairs it.
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order
+  and warns, without failing, about exact repeats and untidy entries;
+  `python3 tools/merge_changelog.py --fix` repairs both. Its sparse checkout holds only
+  `Changelog.txt` and `check_changelog.py`, so that script imports no other tools.
 - The report uploads `report.md` and `comment.json` in `validation-report`.
   `validation-report.yml` publishes the comment after the Test Suite completes,
   including failed runs. It checks out only the default branch's trusted code and
