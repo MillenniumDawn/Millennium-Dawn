@@ -61,6 +61,83 @@ def test_match_brace_returns_minus_one_when_unclosed():
     assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
+# ---- AI weight treasury checks ---------------------------------------------
+
+_BANKRUPT = "has_active_mission = bankruptcy_incoming_collapse"
+
+# case: (modifier body, treasury checks it lowers the weight on)
+_TREASURY_CHECK_CASES = {
+    "factor zero on bankruptcy": (f"factor = 0 {_BANKRUPT}", {"bankruptcy"}),
+    "factor below one on a deficit": (
+        "factor = 0.5 ai_has_high_deficit = yes",
+        {"deficit"},
+    ),
+    "no deficit": ("factor = 0.5 ai_has_high_deficit = no", set()),
+    "negative add": (f"add = -2 {_BANKRUPT}", {"bankruptcy"}),
+    "raising add": (f"add = 10 {_BANKRUPT}", set()),
+    "factor of one": (f"factor = 1 {_BANKRUPT}", set()),
+    "under NOT": (f"factor = 0.5 NOT = {{ {_BANKRUPT} }}", set()),
+    "after a closed NOT": (
+        f"factor = 0.5 NOT = {{ has_war = yes }} {_BANKRUPT}",
+        {"bankruptcy"},
+    ),
+    "factor inside a nested block": (f"OR = {{ factor = 0 }} {_BANKRUPT}", set()),
+}
+
+
+@pytest.mark.parametrize(
+    "modifier, checks", _TREASURY_CHECK_CASES.values(), ids=_TREASURY_CHECK_CASES
+)
+def test_lowering_treasury_checks(modifier, checks):
+    assert VC.lowering_treasury_checks(modifier) == checks
+
+
+_BOTH = {"bankruptcy", "deficit"}
+
+# case: (checks, money cost or commitment, political power cost, unneeded checks)
+_UNNEEDED_CHECK_CASES = {
+    "no cost": (_BOTH, False, False, _BOTH),
+    "money covers both": (_BOTH, True, False, set()),
+    "political power covers bankruptcy only": (_BOTH, False, True, {"deficit"}),
+}
+
+
+@pytest.mark.parametrize(
+    "checks, money, political_power, unneeded",
+    _UNNEEDED_CHECK_CASES.values(),
+    ids=_UNNEEDED_CHECK_CASES,
+)
+def test_unneeded_treasury_checks(checks, money, political_power, unneeded):
+    assert VC.unneeded_treasury_checks(checks, money, political_power) == unneeded
+
+
+# case: (script, commits money)
+_MONEY_COMMITMENT_CASES = {
+    "war goal": ("create_wargoal = { type = annex_everything target = GER }", True),
+    "declared war": ("declare_war_on = { target = GER }", True),
+    "border war": ("start_border_war = { change_state_after_war = no }", True),
+    "civil war": ("start_civil_war = { ideology = democratic }", True),
+    "decision war": ("war_with_target_on_complete = yes", True),
+    "spending law change": ("set_country_flag = spending_law_scripted_change", True),
+    "spending law check": ("has_country_flag = spending_law_scripted_change", False),
+    "money modifier": ("modifier = { social_cost_multiplier_modifier = 0.1 }", True),
+    "dynamic money modifier": (
+        "add_to_variable = { TAG_police = 0.01 tooltip = police_cost_multiplier_modifier_tt }",
+        True,
+    ),
+    "money modifier read": ("add = modifier@tax_gain_multiplier_modifier", False),
+    "money system scale": ("common_money_modifier = 1", False),
+    "other modifier": ("modifier = { stability_factor = 0.1 }", False),
+}
+
+
+@pytest.mark.parametrize(
+    "script, commits", _MONEY_COMMITMENT_CASES.values(), ids=_MONEY_COMMITMENT_CASES
+)
+def test_money_commitment(script, commits):
+    assert bool(VC.MONEY_COMMITMENT_RE.search(script)) is commits
+
+
 # ---- leader trait parsing -------------------------------------------------
 
 

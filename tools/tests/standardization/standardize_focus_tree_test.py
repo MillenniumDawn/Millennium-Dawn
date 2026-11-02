@@ -542,6 +542,7 @@ def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
 \t\t\tadd_stability = 0.01
 \t\t\t}
 \t}
+\t\t#europe
 }
 """,
         encoding="utf-8",
@@ -550,6 +551,7 @@ def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
     assert standardize_focus_tree(str(source), str(output)) is True
 
     lines = output.read_text(encoding="utf-8").splitlines()
+    assert "\t#europe" in lines
     assert "\t\t\t\tadd_building_construction = {" in lines
     assert "\t\t\t\t\ttype = infrastructure" in lines
     assert "\t\t\t\t\tlevel = 1" in lines

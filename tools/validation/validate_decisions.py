@@ -38,6 +38,7 @@ from linting.check_common_mistakes import (
 )
 from shared_utils import (
     ALWAYS_NO_RE,
+    COUNTRY_TAG_ASSIGNMENT_LINE_RE,
     IS_AI_NO_RE,
     ai_only_decision_categories,
     atomic_write_text,
@@ -59,10 +60,13 @@ from shared_utils import (
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validate_events import (
+    ai_weight_cost_checks,
     building_payment_effects,
+    commits_money,
     effect_costs,
     load_cost_lookups,
-    uncovered_costs,
+    possible_costs,
+    unneeded_treasury_reason,
 )
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -639,7 +643,7 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
-# The money kinds validate_events.uncovered_costs can report.
+# The money kinds validate_events.effect_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
 # `treasury > 1.4` for a 1.5 charge is how the mod writes `>= 1.5`.
 _GATE_SLACK = 0.1
@@ -1509,6 +1513,13 @@ def parse_decision_categories(
 # The keys that open a block at the start of a line, the only place a category
 # block can start.
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
+_ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
+_TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
+
+
+def _has_uppercase_after_prefix(name: str) -> bool:
+    rest = _ID_PREFIX_RE.sub("", name, count=1)
+    return rest != rest.lower()
 
 
 def parse_categories_with_decisions(
@@ -1635,6 +1646,14 @@ def _category_hides_from_ai(category: str) -> bool:
     )
 
 
+def _custom_cost_claims(d: DecisionFactory) -> Set[str]:
+    """Resources a decision's custom_cost_trigger checks."""
+    trigger = blank_quoted_strings(d.custom_cost_trigger)
+    return {
+        kind for kind, claim in _CUSTOM_COST_CLAIMS.items() if claim.search(trigger)
+    }
+
+
 def _unpaid_custom_costs(
     d: DecisionFactory, effects: Dict[str, str], stored: Dict[str, int]
 ) -> Tuple[Set[str], Set[str]]:
@@ -1642,10 +1661,7 @@ def _unpaid_custom_costs(
 
     Also returns the ones remove_effect charges instead.
     """
-    trigger = blank_quoted_strings(d.custom_cost_trigger)
-    claims = {
-        kind for kind, claim in _CUSTOM_COST_CLAIMS.items() if claim.search(trigger)
-    }
+    claims = _custom_cost_claims(d)
     if not claims:
         return set(), set()
     missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
@@ -1725,12 +1741,14 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
+        naming_style: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
+        self.naming_style = naming_style
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -1738,13 +1756,15 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
-        self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
+        self._cost_lookups: Optional[
+            Tuple[Dict[str, str], Dict[str, int], Set[str]]
+        ] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
         self._building_payments: Optional[Set[str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
-    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int]]:
+    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int], Set[str]]:
         """load_cost_lookups, read once per run."""
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
@@ -2938,6 +2958,83 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
+    def validate_naming_style(self):
+        """Flag decision and category ids that break the naming rules.
+
+        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        """
+        self._log_section("Checking decision and category naming style...")
+        token_to_cat = {
+            dec: cat
+            for cat, decs in parse_categories_with_decisions(self.mod_path).items()
+            for dec in decs
+        }
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        country_tags = set()
+        for path in self._collect_files(
+            ["common/country_tags/*.txt"], ignore_staged=True
+        ):
+            country_tags.update(
+                COUNTRY_TAG_ASSIGNMENT_LINE_RE.findall(
+                    FileOpener.open_text_file(path, strip_comments_flag=True)
+                )
+            )
+
+        case_results = []
+        prefix_results = []
+        for d in parse_all_decision_factories(self.mod_path):
+            if _has_uppercase_after_prefix(d.token):
+                case_results.append(
+                    (
+                        f"Decision {d.token} is not lowercase after its prefix",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+            prefix = _TAG_PREFIX_RE.match(d.token)
+            if not prefix or prefix.group(1) not in country_tags:
+                continue
+            pins = _flat_tag_pins(d.allowed) or {
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token), set())
+            }
+            if pins and prefix.group(1) not in pins:
+                prefix_results.append(
+                    (
+                        f"Decision {d.token} has the {prefix.group(1)} prefix but"
+                        f" allowed admits {', '.join(sorted(pins))}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    case_results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            case_results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+        self._report(
+            prefix_results,
+            "✓ Decision prefixes match the countries allowed to take them",
+            "Decisions whose tag prefix names a country their allowed does not admit:",
+            Severity.WARNING,
+            category="decision-prefix-owner",
+        )
+
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
@@ -3332,57 +3429,95 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
         )
 
+    def _ai_cost_weight_rows(
+        self,
+    ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+        """Rows for both decision AI weight cost checks, from one pass.
+
+        Skipped by both: decisions the AI cannot see or never takes, plain
+        missions, and a mission's `remove_effect`, which is a timeout outcome.
+        """
+
+        def scan():
+            effects, stored, commitments = self._get_cost_lookups()
+            ignored_rows: List[Tuple[str, str, int]] = []
+            unneeded_rows: List[Tuple[str, str, int]] = []
+            for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+                if d.mission_subtype and not d.selectable_mission:
+                    continue
+                if weight_stays_zero(d.ai_factor):
+                    continue
+                charged = effect_costs(d.complete_effect[1:-1], effects, stored)
+                if not d.mission_subtype:
+                    charged |= effect_costs(d.remove_effect[1:-1], effects, stored)
+                covered, lowering = ai_weight_cost_checks(d.ai_factor[1:-1])
+
+                ignored = (charged - covered) & _MONEY_COSTS
+                if ignored and d.token not in _AI_COST_EXEMPT:
+                    note = (
+                        _TREASURY_GATE_NOTE
+                        if "treasury" in d.custom_cost_trigger
+                        else ""
+                    )
+                    ignored_rows.append(
+                        (
+                            f"{d.token} - ai_will_do ignores the "
+                            f"{', '.join(sorted(ignored))} cost{note}",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+
+                if not lowering:
+                    continue
+                costs = possible_costs(d.raw, effects, stored) | _custom_cost_claims(d)
+                if {d.cost, d.ai_hint_pp_cost} - {"", "0"}:
+                    costs.add("political power")
+                reason = unneeded_treasury_reason(
+                    lowering, costs, commits_money(d.raw, commitments), "decision"
+                )
+                if reason:
+                    unneeded_rows.append(
+                        (f"{d.token} - ai_will_do {reason}", d.source_path, d.line)
+                    )
+            return ignored_rows, unneeded_rows
+
+        return self.cached("ai_cost_weight_rows", scan)
+
     def validate_ai_will_do_ignores_cost(self):
         """Flag decisions that charge money while ai_will_do never looks at money.
 
         The decision twin of the event check (issue #5738), with the same cost
-        and guard detection. Skipped: decisions the AI cannot see or never
-        takes, plain missions, a selectable mission's `remove_effect`, which
-        is a timeout outcome, and ids in `ai_cost_exempt`. A treasury
-        `custom_cost_trigger` already stops a broke country, so those findings
-        carry a note.
+        and guard detection and the skips of _ai_cost_weight_rows, plus ids in
+        `ai_cost_exempt`. A treasury `custom_cost_trigger` already stops a broke
+        country, so those findings carry a note.
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
-
-        effects, stored = self._get_cost_lookups()
-        results = []
-
-        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
-            if d.token in _AI_COST_EXEMPT:
-                continue
-            if d.mission_subtype and not d.selectable_mission:
-                continue
-            if weight_stays_zero(d.ai_factor):
-                continue
-            ai_weights = d.ai_factor[1:-1]
-
-            costs: Set[str] = set()
-            blocks = [d.complete_effect]
-            if not d.mission_subtype:
-                blocks.append(d.remove_effect)
-            for block in blocks:
-                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
-            costs &= _MONEY_COSTS
-            if not costs:
-                continue
-
-            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
-            results.append(
-                (
-                    f"{d.token} - ai_will_do ignores the "
-                    f"{', '.join(sorted(costs))} cost{note}",
-                    d.source_path,
-                    d.line,
-                )
-            )
-
         self._report(
-            results,
+            self._ai_cost_weight_rows()[0],
             "✓ No decision AI weights ignoring money costs",
             "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
             " deficit modifier):",
             severity=Severity.ERROR,
             category="decision-ai-will-do-ignores-cost",
+        )
+
+    def validate_unneeded_treasury_guard(self):
+        """Flag ai_will_do treasury checks for a cost the decision does not have.
+
+        The inverse of validate_ai_will_do_ignores_cost, from the same pass.
+        Costs are what any effect block may charge (possible_costs), a custom
+        cost, and a `cost` or `ai_hint_pp_cost` price. The `modifier` block
+        counts toward commits_money. See validate_events.unneeded_treasury_reason.
+        """
+        self._log_section("Checking decisions for AI treasury checks with no cost...")
+        self._report(
+            self._ai_cost_weight_rows()[1],
+            "✓ No decision AI treasury checks without a cost",
+            "Decisions whose ai_will_do lowers the weight on a treasury check the"
+            " decision has no cost for (drop the modifier, or add the missing cost):",
+            severity=Severity.WARNING,
+            category="decision-unneeded-treasury-guard",
         )
 
     def validate_custom_cost_charged(self):
@@ -3397,7 +3532,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking custom costs are charged in complete_effect...")
 
-        effects, stored = self._get_cost_lookups()
+        effects, stored, _ = self._get_cost_lookups()
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -3448,7 +3583,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for money charged after entry...")
 
-        effects, stored = self._get_cost_lookups()
+        effects, stored, _ = self._get_cost_lookups()
         buildings = self._get_building_payments()
         followed = {
             name: body for name, body in effects.items() if name not in buildings
@@ -4023,6 +4158,7 @@ class Validator(BaseValidator):
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_ai_will_do_ignores_cost()
+        self.validate_unneeded_treasury_guard()
         self.validate_custom_cost_charged()
         self.validate_money_charged_after_entry()
         self.validate_treasury_gate_below_charge()
@@ -4051,6 +4187,13 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
+        if self.naming_style:
+            self.validate_naming_style()
+        else:
+            self._log_section(
+                "Skipping decision naming style check (pass --naming-style to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -4069,6 +4212,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="unannounced_categories",
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
+    )
+    parser.add_argument(
+        "--naming-style",
+        action="store_true",
+        dest="naming_style",
+        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
     )
 
 

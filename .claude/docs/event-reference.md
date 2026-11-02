@@ -111,6 +111,10 @@ problem the cost solves:
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 - Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
+- Do not lower the weight on bankruptcy or a high deficit for an option that costs no
+  money. Bankruptcy also covers political power. A war, a spending law change, or a
+  money modifier counts as money. Raising a free option when the country is broke is
+  fine.
 - Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`; see "Cost-aware AI weights" in `decision-reference.md`.
 - Skip the guard on an option the AI never picks (`base = 0`, no `add`), in an event whose trigger has `is_ai = no`, and on a cost every option pays the same way, since a guard on each scales them all alike. When the shared cost differs in size, guard only the dearer option.
 - Modifiers run in order on a running total. Put every `factor = 0` modifier after the adds, or a later `add` brings the zeroed weight back.

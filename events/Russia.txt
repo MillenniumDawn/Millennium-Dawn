@@ -193,7 +193,17 @@ country_event = {
 				transfer_state = 1112
 			}
 		}
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 25
+				UKR_ai_historical_path = yes
+			}
+			modifier = {
+				add = 20
+				strength_ratio = { tag = FROM ratio < 0.25 }
+			}
+		}
 	}
 
 	option = { #We will stand and fight!
@@ -211,12 +221,57 @@ country_event = {
 				}
 			}
 		}
+		# Army strength, NATO and each Ukrainian deterrent shift weight from backing down to fighting
 		ai_chance = {
-			base = 25
+			base = 10
 			modifier = {
-				is_historical_focus_on = yes
 				add = 10
+				strength_ratio = { tag = FROM ratio > 0.5 }
 			}
+			modifier = {
+				add = 15
+				strength_ratio = { tag = FROM ratio > 0.8 }
+			}
+			modifier = {
+				add = 10
+				has_idea = NATO_member
+			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_sapsan
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_develop_nota_flag
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_country_flag = UKR_developed_an_lbl_flag
+					has_country_flag = UKR_developed_an_bfv_flag
+				}
+			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_hur_reform
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_completed_focus = UKR_ukrainian_armed_forces_reform
+					has_completed_focus = UKR_poroshenko_army_reform
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support < 0.3
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -982,6 +1037,7 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
+
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1015,6 +1071,7 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
+
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1049,6 +1106,7 @@ country_event = {
 				L_Inf_Bat = { x = 0 y = 0 }
 				L_Inf_Bat = { x = 0 y = 1 }
 				L_Inf_Bat = { x = 0 y = 2 }
+
 				L_Inf_Bat = { x = 1 y = 0 }
 			}
 			priority = 2
@@ -5229,7 +5287,10 @@ country_event = {
 		name = sov_nationalists.28.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.28.a executed"
 		ai_chance = { base = 100 }
-		ROOT = { every_owned_state = { add_core_of = SOV } }
+		ROOT = {
+			every_owned_state = { add_core_of = SOV }
+			clear_united_nations_member_state = yes
+		}
 		SOV = {
 			country_event = sov_nationalists.51
 			add_to_variable = { treasury = ROOT.treasury }
@@ -5765,6 +5826,7 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
+
 					Special_Forces = { x = 1 y = 0 }
 				}
 				priority = 2
@@ -10829,7 +10891,10 @@ country_event = {
 		name = sov_nazbol.1.a
 		log = "[GetDateText]: [This.GetName]: sov_nazbol.1.a executed"
 		ai_chance = { base = 100 }
-		ROOT = { every_owned_state = { add_core_of = SOV } }
+		ROOT = {
+			every_owned_state = { add_core_of = SOV }
+			clear_united_nations_member_state = yes
+		}
 		SOV = {
 			country_event = sov_nazbol.2
 			add_to_variable = { treasury = ROOT.treasury }
@@ -10983,10 +11048,19 @@ country_event = {
 				regiments = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
+					Special_Forces = { x = 0 y = 2 }
+
+					Special_Forces = { x = 1 y = 0 }
+					Special_Forces = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 2 }
 				}
+
+				regimental_support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+				}
+
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
-					L_Recce_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -11116,17 +11190,28 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
+
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
+
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
+
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-				support = {
+
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+
+					L_Recce_Comp = { x = 1 y = 0 }
+
+					L_Recce_Comp = { x = 2 y = 0 }
+				}
+
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -11231,17 +11316,28 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
+
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
+
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
+
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-				support = {
+
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+
+					L_Recce_Comp = { x = 1 y = 0 }
+
+					L_Recce_Comp = { x = 2 y = 0 }
+				}
+
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
