@@ -194,7 +194,7 @@ The following countries are playable with unique focus trees:
 | Philippines                                                  | PHI | Yes                               | Nationalist Outlook (Right Wing Populist)        | NO                   |
 | Poland                                                       | POL | Yes                               | Western Outlook (Social Democrat)                | YES                  |
 | Polynesia                                                    | PLY | Yes                               | Western Outlook (Social Democrat)                | NO                   |
-| Portugal                                                     | POR | Yes                               | Western Outlook (Social Democrat)                | NO                   |
+| Portugal                                                     | POR | Yes                               | Western Outlook (Social Democrat)                | YES                  |
 | Puntland                                                     | PUN | Yes                               | Non-Aligned Outlook (Social Democrat)            | NO                   |
 | Qatar                                                        | QAT | Yes                               | Non-Aligned Outlook (Autocracy)                  | YES(Gulf tree)       |
 | Qatif                                                        | QTF | No                                | N/A                                              | NO                   |
