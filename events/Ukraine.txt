@@ -769,7 +769,7 @@ country_event = {
 			}
 		}
 		if = {
-			limit = { owns_state = 669 }
+			limit = { UKR_crimea_annexation_available = yes }
 			set_country_flag = UKR_crimea_2014_chain_active
 			SOV = { country_event = { id = ukraine_maidan.1 days = 1 } }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -862,19 +862,22 @@ country_event = {
 				}
 			}
 		}
-		set_country_flag = UKR_crimea_2014_chain_active
-		SOV = {
-			country_event = { id = ukraine_maidan.1 days = 3 }
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
+		if = {
+			limit = { UKR_crimea_annexation_available = yes }
+			set_country_flag = UKR_crimea_2014_chain_active
 			SOV = {
-				669 = { add_core_of = SOV }
-				set_autonomy = { target = CRM autonomy_state = autonomy_republic_rf }
+				country_event = { id = ukraine_maidan.1 days = 3 }
 			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				SOV = {
+					669 = { add_core_of = SOV }
+					set_autonomy = { target = CRM autonomy_state = autonomy_republic_rf }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { SOV = { add_state_core = 669 } }
 		}
-		custom_effect_tooltip = TT_IF_THEY_REJECT
-		effect_tooltip = { SOV = { add_state_core = 669 } }
 	}
 }
 #Donbass Done(OPR Rises)
@@ -902,24 +905,27 @@ country_event = {
 	option = {
 		name = ukraine_maidan_east.11.a
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan_east.11.a executed"
-		set_country_flag = UKR_crimea_2014_chain_active
-		CRM = {
-			set_country_flag = UKR_subject_agree
-			set_country_flag = SOV_subject_republic
-			set_country_flag = UKR_crimea_bund
-		}
-		SOV = {
-			country_event = { id = ukraine_maidan.1 days = 3 }
-		}
-		custom_effect_tooltip = TT_IF_THEY_ACCEPT
-		effect_tooltip = {
-			SOV = {
-				669 = { add_core_of = SOV }
-				set_autonomy = { target = CRM autonomy_state = autonomy_republic_rf }
+		if = {
+			limit = { UKR_crimea_annexation_available = yes }
+			set_country_flag = UKR_crimea_2014_chain_active
+			CRM = {
+				set_country_flag = UKR_subject_agree
+				set_country_flag = SOV_subject_republic
+				set_country_flag = UKR_crimea_bund
 			}
+			SOV = {
+				country_event = { id = ukraine_maidan.1 days = 3 }
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				SOV = {
+					669 = { add_core_of = SOV }
+					set_autonomy = { target = CRM autonomy_state = autonomy_republic_rf }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { SOV = { add_state_core = 669 } }
 		}
-		custom_effect_tooltip = TT_IF_THEY_REJECT
-		effect_tooltip = { SOV = { add_state_core = 669 } }
 		add_timed_idea = { idea = UKR_maidan_temporary_attack_idea days = 465 }
 		hidden_effect = {
 			if = {
@@ -1346,11 +1352,7 @@ country_event = {
 		name = ukraine_maidan.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.a executed"
 		trigger = {
-			NOT = { country_exists = CRM }
-			UKR = {
-				owns_state = 669
-				NOT = { has_country_flag = UKR_crimea_2004_departed }
-			}
+			UKR = { UKR_crimea_annexation_available = yes }
 		}
 		UKR = { set_country_flag = UKR_crimea_2014_chain_active }
 		add_named_threat = { threat = 5 name = threat_SOV_annexiation_of_crimea }
@@ -1394,25 +1396,9 @@ country_event = {
 	option = { ##Crimea is Ukrainian!
 		name = ukraine_maidan.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.b executed"
-		trigger = {
-			NOT = { country_exists = CRM }
-			UKR = {
-				owns_state = 669
-				NOT = { has_country_flag = UKR_crimea_2004_departed }
-			}
-		}
 		UKR = { set_country_flag = UKR_crimea_2014_chain_active }
 		add_state_core = 669
 		country_event = ukraine_maidan.3
-		hidden_effect = {
-			UKR = { release = CRM }
-			669 = { add_core_of = UKR }
-			CRM = {
-				set_country_flag = UKR_crimea_bund
-				set_country_flag = UKR_subject_agree
-				set_country_flag = SOV_subject_republic
-			}
-		}
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -1502,8 +1488,10 @@ country_event = {
 		clr_country_flag = UKR_crimea_2014_chain_active
 		ai_chance = {
 			base = 100
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = {
+				add = 20
+				strength_ratio = { tag = SOV ratio < 0.25 }
+			}
 		}
 	}
 
@@ -1511,6 +1499,7 @@ country_event = {
 		name = ukraine_maidan_crm_annex.1.b
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan_crm_annex.1.b executed"
 		clr_country_flag = UKR_crimea_2014_chain_active
+		# Army strength, NATO and each Ukrainian deterrent shift weight from standing down to fighting
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -1518,9 +1507,53 @@ country_event = {
 				has_war_with = SOV
 			}
 			modifier = {
-				add = 5
+				add = 10
+				strength_ratio = { tag = SOV ratio > 0.5 }
+			}
+			modifier = {
+				add = 15
+				strength_ratio = { tag = SOV ratio > 0.8 }
+			}
+			modifier = {
+				add = 10
 				has_idea = NATO_member
 			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_sapsan
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_develop_nota_flag
+			}
+			modifier = {
+				add = 6
+				has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_country_flag = UKR_developed_an_lbl_flag
+					has_country_flag = UKR_developed_an_bfv_flag
+				}
+			}
+			modifier = {
+				add = 6
+				has_completed_focus = UKR_hur_reform
+			}
+			modifier = {
+				add = 6
+				OR = {
+					has_completed_focus = UKR_ukrainian_armed_forces_reform
+					has_completed_focus = UKR_poroshenko_army_reform
+				}
+			}
+			modifier = {
+				factor = 0.5
+				has_war_support < 0.3
+			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		declare_war_on = {
 			target = CRM
@@ -3164,7 +3197,7 @@ country_event = {
 		}
 		set_country_flag = UKR_republic_wave_crimea_done
 		if = {
-			limit = { country_exists = SOV }
+			limit = { UKR_crimea_annexation_available = yes }
 			set_country_flag = UKR_crimea_2014_chain_active
 			SOV = { country_event = { id = ukraine_maidan.1 days = 1 } }
 		}
@@ -14035,7 +14068,7 @@ country_event = {
 		}
 
 		set_temp_variable = { treasury_change = 0.1 }
-			modify_treasury_effect = yes
+		modify_treasury_effect = yes
 
 		if = {
 			limit = {
@@ -14113,7 +14146,7 @@ country_event = {
 		}
 
 		set_temp_variable = { treasury_change = 0.1 }
-			modify_treasury_effect = yes
+		modify_treasury_effect = yes
 
 		if = {
 			limit = {
@@ -14200,7 +14233,7 @@ country_event = {
 		}
 
 		set_temp_variable = { treasury_change = 0.1 }
-			modify_treasury_effect = yes
+		modify_treasury_effect = yes
 
 
 		set_country_flag = UKR_develop_btr3_uae_tender_finish_flag
@@ -15753,8 +15786,8 @@ country_event = {
 
 		trigger = {
 			1110 = { #Volyn
-					is_controlled_by = UKR
-					arms_factory < 1
+				is_controlled_by = UKR
+				arms_factory < 1
 			}
 		}
 
@@ -16125,7 +16158,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-					NOT = { has_tech = AT_upgrade_2 }
+				NOT = { has_tech = AT_upgrade_2 }
 			}
 			set_technology = { AT_upgrade_2 = 1 }
 		}
@@ -16648,7 +16681,7 @@ country_event = {
 		}
 		if = {
 			limit = {
-					NOT = { has_tech = Heavy_Anti_tank_3 }
+				NOT = { has_tech = Heavy_Anti_tank_3 }
 			}
 			set_technology = { Heavy_Anti_tank_3 = 1 }
 		}
@@ -17334,28 +17367,30 @@ country_event = {
 			uses = 1
 			technology = nsb_arty_upgrade_2
 		}
+
 		create_equipment_variant = {
-				name = "2S22 Bohdana"
-				type = medium_tank_artillery_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					ammunition_load_slot = artillery_medium_ammo_2
-					engine_type_slot = tank_diesel_engine_gen2
-					main_armament_slot = art_med_gun_gen2
-					reload_type_slot = manual_loading
-					special_type_slot_1 = cluster_ammo_2
-					special_type_slot_2 = empty
-					special_type_slot_3 = empty
-					special_type_slot_4 = tank_battlestation_3
-					special_type_slot_5 = empty
-					suspension_type_slot = tank_wheeled_suspension_medium
-					turret_type_slot = tank_no_turret
+			name = "2S22 Bohdana"
+			type = medium_tank_artillery_chassis_2
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				ammunition_load_slot = artillery_medium_ammo_2
+				engine_type_slot = tank_diesel_engine_gen2
+				main_armament_slot = art_med_gun_gen2
+				reload_type_slot = manual_loading
+				special_type_slot_1 = cluster_ammo_2
+				special_type_slot_2 = empty
+				special_type_slot_3 = empty
+				special_type_slot_4 = tank_battlestation_3
+				special_type_slot_5 = empty
+				suspension_type_slot = tank_wheeled_suspension_medium
+				turret_type_slot = tank_no_turret
 			}
 			upgrades = { tank_nsb_fire_upgrade = 0 }
 			icon = "GFX_2S22_BOHDANA_ON_KRAZ_63221"
 			model = "CZE_SP_Arty_Bat_entity"
 		}
+
 		add_equipment_production = {
 			equipment = {
 				type = medium_tank_artillery_chassis_3
@@ -17401,28 +17436,30 @@ country_event = {
 			uses = 1
 			technology = nsb_arty_upgrade_3
 		}
+
 		create_equipment_variant = {
-				name = "2S22 Bohdana"
-				type = medium_tank_artillery_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					ammunition_load_slot = artillery_medium_ammo_3
-					engine_type_slot = tank_diesel_engine_gen3
-					main_armament_slot = art_med_gun_gen3
-					reload_type_slot = manual_loading
-					special_type_slot_1 = cluster_ammo_2
-					special_type_slot_2 = laser_guided_ammo_2
-					special_type_slot_3 = empty
-					special_type_slot_4 = tank_battlestation_3
-					special_type_slot_5 = empty
-					suspension_type_slot = tank_wheeled_suspension_medium
-					turret_type_slot = tank_no_turret
+			name = "2S22 Bohdana"
+			type = medium_tank_artillery_chassis_2
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				ammunition_load_slot = artillery_medium_ammo_3
+				engine_type_slot = tank_diesel_engine_gen3
+				main_armament_slot = art_med_gun_gen3
+				reload_type_slot = manual_loading
+				special_type_slot_1 = cluster_ammo_2
+				special_type_slot_2 = laser_guided_ammo_2
+				special_type_slot_3 = empty
+				special_type_slot_4 = tank_battlestation_3
+				special_type_slot_5 = empty
+				suspension_type_slot = tank_wheeled_suspension_medium
+				turret_type_slot = tank_no_turret
 			}
 			upgrades = { tank_nsb_fire_upgrade = 2 }
 			icon = "GFX_2S22_BOHDANA_ON_KRAZ_63221_ZSU_PIXEL_CAMO"
 			model = "CZE_SP_Arty_Bat_entity"
 		}
+
 		add_equipment_production = {
 			equipment = {
 				type = medium_tank_artillery_chassis_3
@@ -21980,7 +22017,7 @@ country_event = {
 	trigger = {
 		tag = UKR
 		country_exists = SOV
-	 }
+	}
 
 	option = {
 		name = ukraine_reorganize_navy_repair_support_ships.3.a
@@ -22493,16 +22530,13 @@ country_event = {
 	fire_only_once = yes
 
 	trigger = {
-			UKR = {
-				UKR_Oleksandr_Kuzmuk = { is_advisor = yes }
-			}
-			has_country_flag = UKR_Brovary_Missile_Tragedy_Flag
-			#NOT = {
-			#	has_country_flag = UKR_army_exercises_sam_flag
-			#}
-			NOT = {
-				has_country_flag = UKR_Tu154_Air_Tragedy_Flag
-			}
+		UKR = {
+			UKR_Oleksandr_Kuzmuk = { is_advisor = yes }
+		}
+		has_country_flag = UKR_Brovary_Missile_Tragedy_Flag
+		NOT = {
+			has_country_flag = UKR_Tu154_Air_Tragedy_Flag
+		}
 	}
 
 	option = {
@@ -22529,11 +22563,11 @@ country_event = {
 	fire_only_once = yes
 
 	trigger = {
-			UKR = { UKR_Oleksandr_Kuzmuk = { is_advisor = yes } }
-			OR = {
-				has_country_flag = UKR_Tu154_Air_Tragedy_Flag
-				has_country_flag = UKR_Brovary_Missile_Tragedy_Flag
-			}
+		UKR = { UKR_Oleksandr_Kuzmuk = { is_advisor = yes } }
+		OR = {
+			has_country_flag = UKR_Tu154_Air_Tragedy_Flag
+			has_country_flag = UKR_Brovary_Missile_Tragedy_Flag
+		}
 	}
 
 	option = {
@@ -28681,7 +28715,14 @@ country_event = {
 	option = {
 		name = ukraine_sevastopol.1.c
 		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.c executed"
-		trigger = { UKR = { NOT = { has_idea = NATO_member } } }
+
+		trigger = {
+			UKR = {
+				NOT = { has_idea = NATO_member }
+				NOT = { UKR_army_deters_crimea_demand = yes }
+			}
+		}
+
 		UKR = {
 			add_opinion_modifier = {
 				target = SOV

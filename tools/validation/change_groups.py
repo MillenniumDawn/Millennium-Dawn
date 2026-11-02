@@ -14,7 +14,16 @@ GROUP_PATTERNS = {
     "localisation": ["localisation/**"],
     "ai-strategy": ["common/ai_strategy/**", "common/ai_templates/**"],
     "ai-navy": ["common/ai_navy/**", "common/units/**"],
-    "ai-equipment": ["common/ai_equipment/**"],
+    "ai-equipment": [
+        "common/ai_equipment/**",
+        "common/units/equipment/**",
+        "common/technologies/**",
+        "common/technology_tags/**",
+        "common/bookmarks/**",
+        "common/scripted_effects/**",
+        "common/special_projects/**",
+        "history/countries/**",
+    ],
     "factions": ["common/factions/**"],
     "characters": [
         "common/characters/**",

@@ -9,6 +9,7 @@ import os
 import re
 import sys
 from collections import Counter
+from decimal import Decimal
 from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterable, Iterator, List, Optional, Set, Tuple
@@ -1068,7 +1069,7 @@ _VARIABLE_OPS = ("set", "add_to", "subtract_from", "multiply", "divide")
 # Kept whole: the math block nested in one (`x = { value = ... }`) is not a scope.
 _VARIABLE_EFFECTS = frozenset(
     f"{op}_{temp}variable" for op in _VARIABLE_OPS for temp in ("", "temp_")
-)
+) | {"clamp_variable", "round_variable", "modulo_variable", "set_variable_to_random"}
 _IDEA_MUTATION_BLOCKS = frozenset(
     {"add_ideas", "remove_ideas", "add_timed_idea", "remove_timed_idea", "swap_ideas"}
 )
@@ -1754,6 +1755,108 @@ def _receiver_tag(trigger: str) -> Optional[str]:
     return next(iter(tags)) if len(tags) == 1 else None
 
 
+def _option_tag_constraints(
+    trigger: str,
+) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
+    """Required and excluded receiver identities, without crossing scopes or ORs."""
+    required: Set[Tuple[str, str]] = set()
+    excluded: Set[Tuple[str, str]] = set()
+    for key, value, block in iter_statements(strip_comments(trigger)):
+        if (
+            key in {"tag", "original_tag"}
+            and value
+            and re.fullmatch(r"[A-Z0-9]{3}", value)
+        ):
+            required.add((key, value))
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            inner_required, inner_excluded = _option_tag_constraints(block)
+            required |= inner_required
+            excluded |= inner_excluded
+        elif key == "NOT" and block is not None:
+            for field, tag, nested in iter_statements(block):
+                if (
+                    field in {"tag", "original_tag"}
+                    and nested is None
+                    and tag
+                    and re.fullmatch(r"[A-Z0-9]{3}", tag)
+                ):
+                    excluded.add((field, tag))
+    return required, excluded
+
+
+def _options_have_disjoint_receivers(triggers: List[str]) -> bool:
+    """Prove no receiver can see two options using the same identity field."""
+    constraints = [_option_tag_constraints(trigger) for trigger in triggers]
+    for index, (required, excluded) in enumerate(constraints):
+        for other_required, other_excluded in constraints[:index]:
+            if not (
+                required & other_excluded
+                or other_required & excluded
+                or any(
+                    field == other_field and tag != other_tag
+                    for field, tag in required
+                    for other_field, other_tag in other_required
+                )
+            ):
+                return False
+    return True
+
+
+def _literal_cost_amounts(body: str) -> Optional[Dict[str, Decimal]]:
+    """Direct literal prices; refunds, balance rewrites, and calls stay unknown."""
+    amounts: Dict[str, Decimal] = {}
+    for key, value, block in iter_statements(strip_comments(body)):
+        if key in {"ROOT", "THIS", "hidden_effect"} and block is not None:
+            nested = _literal_cost_amounts(block)
+            if nested is None:
+                return None
+            for kind, amount in nested.items():
+                amounts[kind] = amounts.get(kind, Decimal(0)) + amount
+        elif (
+            (value == "yes" and key not in _OPTION_NON_EFFECT_KEYS)
+            or key
+            in {"if", "else_if", "else", "random", "random_list", "meta_effect", "text"}
+            or (block is not None and key.isdigit())
+        ):
+            return None
+        elif key in _STAT_COSTS and _STAT_COSTS[key] in _COST_GUARDS:
+            if value is None or not _AI_WEIGHT_LITERAL_RE.fullmatch(value):
+                return None
+            delta = -Decimal(value)
+            if delta < 0:
+                return None
+            kind = _STAT_COSTS[key]
+            amounts[kind] = amounts.get(kind, Decimal(0)) + delta
+        elif key in _VARIABLE_EFFECTS and "_temp_" not in key and block is not None:
+            fields = {name: scalar for name, scalar, _nested in iter_statements(block)}
+            target = fields.get("var")
+            if target is None:
+                if len(fields) != 1:
+                    return None
+                target, value = next(iter(fields.items()))
+            else:
+                value = fields.get("value")
+            cost = _COST_VARIABLES.get(target or "")
+            if cost is None or cost[1] == "tax rate":
+                continue
+            if (
+                key not in {"add_to_variable", "subtract_from_variable"}
+                or value is None
+                or not _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+            ):
+                return None
+            signs, kind = cost
+            delta = Decimal(value)
+            if key == "subtract_from_variable":
+                delta = -delta
+            if signs == _NEG:
+                delta = -delta
+            if delta < 0:
+                return None
+            amounts[kind] = amounts.get(kind, Decimal(0)) + delta
+    return amounts
+
+
 def find_option_cost_weights(
     text: str, effects: Dict[str, str], stored: Dict[str, int], commitments: Set[str]
 ) -> Tuple[List[Tuple[str, int, str, bool]], List[Tuple[str, int, str]]]:
@@ -1770,11 +1873,14 @@ def find_option_cost_weights(
     is one, since that is where the fix goes. `effects`, `stored` and
     `commitments` come from load_cost_lookups.
 
-    Skipped: an event whose own trigger requires `is_ai = no`, an option the AI
+    Skipped: an event whose own trigger requires `is_ai = no`, an event whose
+    option tag gates prove each receiver sees at most one option, an option the AI
     never picks (`base = 0`, no `add`) while another option can win, and, for
     ignored costs, a cost every option always pays, or every option pays only
-    sometimes, since a guard on each one scales them all alike. Tax rate is never
-    shared: options can move it apart.
+    sometimes, since a guard on each one scales them all alike. Unequal direct
+    literal prices need guards above the cheapest AI-eligible price when no option
+    has a trigger. Scripted, computed, and conditional prices remain unmeasured.
+    Tax rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
@@ -1795,6 +1901,10 @@ def find_option_cost_weights(
             for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
+        if all_gated and _options_have_disjoint_receivers(
+            [blocks["trigger"][1] for _own, blocks in splits]
+        ):
+            continue
         option_effect_costs = [
             _effect_costs(own, effects, {}, stored) for own, _b in splits
         ]
@@ -1810,8 +1920,28 @@ def find_option_cost_weights(
             weight_stays_zero(blocks.get("ai_chance", (0, ""))[1])
             for _own, blocks in splits
         ]
-        for (opt_start, opt_end), (_own, blocks), costs, never in zip(
-            options, splits, option_costs, never_picked
+        shared_by_option = [shared.copy() for _option in options]
+        eligible = [index for index, never in enumerate(never_picked) if not never]
+        if (
+            shared
+            and len(eligible) > 1
+            and not any("trigger" in blocks for _own, blocks in splits)
+        ):
+            prices = [_literal_cost_amounts(splits[index][0]) for index in eligible]
+            for kind in shared:
+                amounts = [
+                    price[kind]
+                    for price in prices
+                    if price is not None and price.get(kind, Decimal(0)) > 0
+                ]
+                if len(amounts) != len(eligible):
+                    continue
+                cheapest = min(amounts)
+                for index, amount in zip(eligible, amounts):
+                    if amount > cheapest:
+                        shared_by_option[index].discard(kind)
+        for (opt_start, opt_end), (_own, blocks), costs, never, shared_costs in zip(
+            options, splits, option_costs, never_picked, shared_by_option
         ):
             if never and not all(never_picked):
                 continue
@@ -1828,7 +1958,7 @@ def find_option_cost_weights(
                 if lowering
                 else None
             )
-            ignored = (costs - shared - covered) & _COST_GUARDS.keys()
+            ignored = (costs - shared_costs - covered) & _COST_GUARDS.keys()
             if not (ignored or reason):
                 continue
             match = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)

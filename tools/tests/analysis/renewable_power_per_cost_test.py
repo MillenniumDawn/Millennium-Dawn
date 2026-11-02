@@ -44,27 +44,27 @@ import renewable_power_per_cost as rpp
 INDUSTRY_FIXTURE = (
     "\tstart_year = 1990\n"
     "\tallow = { always = yes }\n"
-    "\tearly_renewables = {\n"
+    "\trenewable_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.10\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.04\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\trenewables = {\n"
+    "\trenewable_02 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.15\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.06\n"
     "\t\tstart_year = 1995\n"
     "\t}\n"
-    "\treactor1 = {\n"
+    "\treactor_01 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.20\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.06\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\treactor2 = {\n"
+    "\treactor_02 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.30\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.09\n"
     "\t\tstart_year = 2000\n"
     "\t}\n"
-    "\tfuel_efficiency = {\n"
+    "\tfuel_efficiency_01 = {\n"
     "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
     "\t\tproduction_speed_fossil_powerplant_factor = 0.02\n"
     "\t\tstart_year = 1990\n"
@@ -90,8 +90,8 @@ def industry_path(tmp_path):
 
 def test_parse_techs_strips_comments_and_groups_fields(industry_path):
     techs = rpp.parse_techs(str(industry_path))
-    assert "early_renewables" in techs
-    er = techs["early_renewables"]
+    assert "renewable_01" in techs
+    er = techs["renewable_01"]
     assert er["renewable_energy_gain_multiplier"] == 0.10
     assert er["production_speed_renewable_energy_infra_factor"] == 0.04
     assert er["start_year"] == 1990
@@ -100,8 +100,8 @@ def test_parse_techs_strips_comments_and_groups_fields(industry_path):
 def test_parse_techs_recognises_nested_blocks(industry_path):
     techs = rpp.parse_techs(str(industry_path))
     # depth tracking must close the outer block before sibling techs start
-    assert "reactor2" in techs
-    assert techs["reactor2"]["nuclear_energy_generation_modifier"] == 0.30
+    assert "reactor_02" in techs
+    assert techs["reactor_02"]["nuclear_energy_generation_modifier"] == 0.30
 
 
 def test_build_chains_excludes_orphan_and_blank(industry_path):
@@ -126,7 +126,7 @@ def test_build_chains_sorted_by_year(industry_path):
 def test_cum_inclusive_at_year_threshold(industry_path):
     techs = rpp.parse_techs(str(industry_path))
     chains = rpp.build_chains(techs)
-    # renewable chain: early_renewables(1990, p=0.10), renewables(1995, p=0.15)
+    # renewable chain: renewable_01(1990, p=0.10), renewable_02(1995, p=0.15)
     chain = chains["ren"]
     assert rpp.cum(chain, 1989, 1) == 0.0
     assert rpp.cum(chain, 1990, 1) == pytest.approx(0.10)

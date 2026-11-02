@@ -198,6 +198,10 @@ _ALL_GATED = _event(
     _option("foo.1.a", _GATE + _PP_COST + _FLAT),
     _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
 )
+_TAG_SPLIT = _event(
+    _option("foo.1.a", "\t\ttrigger = { tag = ISR }\n" + _PP_COST + _FLAT),
+    _option("foo.1.b", "\t\ttrigger = { tag = HEZ }\n" + _AWARE),
+)
 _PP_BLIND = "foo.1.a - ai_chance ignores the political power cost"
 _TREASURY_BLIND = "foo.1.a - ai_chance ignores the treasury cost"
 _BUDGET = "common/scripted_effects/00_budget_effects.txt"
@@ -254,6 +258,15 @@ _VALIDATOR_CASES = {
         {"events/Ev.txt": _two_options(_PP_COST + _FLAT)},
         [(_PP_BLIND, 8)],
     ),
+    "unequal shared literal cost": (
+        {
+            "events/Ev.txt": _event(
+                _option("foo.1.a", _PP_COST + _FLAT),
+                _option("foo.1.b", "\t\tadd_political_power = -25\n" + _FLAT),
+            ),
+        },
+        [(_PP_BLIND, 8)],
+    ),
     "empty tree": ({}, []),
     "the mod's scripted effects": (
         {
@@ -287,6 +300,7 @@ _VALIDATOR_CASES = {
             )
         ],
     ),
+    "tag-split options": ({"events/Ev.txt": _TAG_SPLIT}, []),
     "commented cost": (
         {"events/Ev.txt": _two_options("\t\t#add_political_power = -50\n" + _FLAT)},
         [],
@@ -609,6 +623,270 @@ _OPTION_CASES = {
 @pytest.mark.parametrize("text, expected", _OPTION_CASES.values(), ids=_OPTION_CASES)
 def test_find_cost_blind_options(text, expected):
     assert _found(text) == expected
+
+
+# case: (option triggers, at most one option per receiver)
+_RECEIVER_CASES = {
+    "distinct tags": (("tag = ISR", "tag = HEZ"), True),
+    "distinct original tags": (("original_tag = ISR", "original_tag = HEZ"), True),
+    "same tag": (("tag = ISR", "tag = ISR"), False),
+    "different identity fields can overlap": (
+        ("tag = D01", "original_tag = ISR"),
+        False,
+    ),
+    "conjunctive receiver wrappers": (
+        (
+            "AND = { has_war = no hidden_trigger = { ROOT = { tag = ISR } } }",
+            "THIS = { tag = HEZ }",
+        ),
+        True,
+    ),
+    "tag inside OR": (("OR = { tag = ISR has_war = yes }", "tag = HEZ"), False),
+    "tag in another country": (("FROM = { tag = ISR }", "tag = HEZ"), False),
+    "tag complement": (("tag = ISR", "NOT = { tag = ISR }"), True),
+    "original tag complement reversed": (
+        ("NOT = { original_tag = ISR }", "original_tag = ISR"),
+        True,
+    ),
+    "exclusion of a different tag": (("NOT = { tag = ISR }", "tag = HEZ"), False),
+    "two exclusions overlap": (("NOT = { tag = ISR }", "NOT = { tag = HEZ }"), False),
+    "negated conjunction does not exclude its tag": (
+        ("tag = ISR", "NOT = { AND = { tag = ISR has_war = yes } }"),
+        False,
+    ),
+    "untagged sibling": (("tag = ISR", "has_war = yes"), False),
+    "third option overlaps the second": (
+        ("tag = ISR", "tag = HEZ", "tag = HEZ"),
+        False,
+    ),
+    "both identity fields constrain the receiver": (
+        ("tag = D01 original_tag = ISR", "tag = D01 original_tag = HEZ"),
+        True,
+    ),
+    "commented tag is not a pin": (("# tag = ISR\nhas_war = yes", "tag = HEZ"), False),
+    "country alias is not a literal tag": (("tag = FROM", "tag = HEZ"), False),
+}
+
+
+# case: (option bodies, (option suffix, uncovered cost kinds) per finding)
+_SHARED_PRICE_CASES = {
+    "dearer political power option": (
+        ("add_political_power = -50", "add_political_power = -25"),
+        [("a", "political power")],
+    ),
+    "dearer choice has its guard": (
+        ("add_political_power = -50\n" + _AWARE, "add_political_power = -25"),
+        [],
+    ),
+    "only the cheaper choice has a guard": (
+        ("add_political_power = -50", "add_political_power = -25\n" + _AWARE),
+        [("a", "political power")],
+    ),
+    "every tier above the cheapest": (
+        (
+            "add_political_power = -50",
+            "add_political_power = -25",
+            "add_political_power = -100",
+        ),
+        [("a", "political power"), ("c", "political power")],
+    ),
+    "stability fractions sum exactly": (
+        ("add_stability = -0.1 add_stability = -0.2", "add_stability = -0.3"),
+        [],
+    ),
+    "dearer war support choice": (
+        ("add_war_support = -0.01", "add_war_support = -0.02"),
+        [("b", "war support")],
+    ),
+    "treasury charges add across short and long forms": (
+        (
+            "add_to_variable = { var = treasury value = -3 } "
+            "subtract_from_variable = { treasury = 4 }",
+            "add_to_variable = { treasury = -5 }",
+        ),
+        [("a", "treasury")],
+    ),
+    "debt increases are costs": (
+        ("add_to_variable = { debt = 5 }", "add_to_variable = { debt = 2 }"),
+        [("a", "debt")],
+    ),
+    "investment losses are costs": (
+        (
+            "add_to_variable = { int_investments = -5 }",
+            "add_to_variable = { int_investments = -8 }",
+        ),
+        [("b", "international investment")],
+    ),
+    "different cheapest choices per kind": (
+        (
+            "add_political_power = -50 add_stability = -0.01",
+            "add_political_power = -25 add_stability = -0.02",
+        ),
+        [("a", "political power"), ("b", "stability")],
+    ),
+    "mixed gains and charges are not a fixed price": (
+        (
+            "add_political_power = -50 add_political_power = 25",
+            "add_political_power = -30",
+        ),
+        [],
+    ),
+    "zero stat effect does not hide an unequal price": (
+        (
+            "add_political_power = -50 add_political_power = 0",
+            "add_political_power = -25",
+        ),
+        [("a", "political power")],
+    ),
+    "money refund remains unmeasured": (
+        (
+            "add_to_variable = { treasury = -5 } add_to_variable = { treasury = 3 }",
+            "add_to_variable = { treasury = -3 }",
+        ),
+        [],
+    ),
+    "unrelated stored variable does not change the price": (
+        (
+            "set_variable = { foo = 3 } add_political_power = -50",
+            "add_political_power = -25",
+        ),
+        [("a", "political power")],
+    ),
+    "balance reset is not a known price": (
+        (
+            "add_to_variable = { treasury = -5 } set_variable = { treasury = 100 }",
+            "add_to_variable = { treasury = -2 }",
+        ),
+        [],
+    ),
+    "balance clamp is not a known price": (
+        (
+            "add_to_variable = { treasury = -5 } clamp_variable = { var = treasury min = 0 }",
+            "add_to_variable = { treasury = -2 }",
+        ),
+        [],
+    ),
+    "variable-priced money remains unmeasured": (
+        (
+            "add_to_variable = { treasury = TAG_project_cost }",
+            "add_to_variable = { treasury = -2 }",
+        ),
+        [],
+    ),
+    "same-country wrappers keep prices": (
+        (
+            "hidden_effect = { ROOT = { THIS = { add_political_power = -50 } } }",
+            "add_political_power = -25",
+        ),
+        [("a", "political power")],
+    ),
+    "foreign charges do not change the price": (
+        (
+            "add_political_power = -25 FROM = { add_political_power = -200 }",
+            "add_political_power = -50",
+        ),
+        [("b", "political power")],
+    ),
+    "preview is not a charge": (
+        (
+            "add_political_power = -25 effect_tooltip = { add_political_power = -200 }",
+            "add_political_power = -50",
+        ),
+        [("b", "political power")],
+    ),
+    "conditional add-on is not a known price": (
+        (
+            "add_political_power = -25 if = { limit = { has_war = yes } add_political_power = -100 }",
+            "add_political_power = -50",
+        ),
+        [],
+    ),
+    "scripted price stays unmeasured": (
+        ("lose_pp_for_15_days = yes", "add_political_power = -50"),
+        [],
+    ),
+    "a scripted reward can change the price": (
+        (
+            "add_political_power = -50 increase_economic_growth = yes",
+            "add_political_power = -25",
+        ),
+        [],
+    ),
+    "wrapped scripted price stays unmeasured": (
+        ("hidden_effect = { lose_pp_for_15_days = yes }", "add_political_power = -50"),
+        [],
+    ),
+    "stored price stays unmeasured": (
+        ("add_political_power = TAG_project_cost", "add_political_power = -50"),
+        [],
+    ),
+    "tag-split prices do not imply a choice": (
+        (
+            "trigger = { tag = ISR } add_political_power = -50",
+            "trigger = { tag = HEZ } add_political_power = -25",
+        ),
+        [],
+    ),
+    "even one gated option needs receiver analysis": (
+        (
+            "trigger = { has_country_flag = foo } add_political_power = -50",
+            "add_political_power = -25",
+        ),
+        [],
+    ),
+    "only one AI choice remains": (
+        (
+            "add_political_power = -25 ai_chance = { base = 0 }",
+            "add_political_power = -50",
+        ),
+        [],
+    ),
+    "disabled cheap option is not the baseline": (
+        (
+            "add_political_power = -25 ai_chance = { base = 0 }",
+            "add_political_power = -50",
+            "add_political_power = -100",
+        ),
+        [("c", "political power")],
+    ),
+    "an add can make a base-zero option eligible": (
+        (
+            "add_political_power = -25 ai_chance = { base = 0 modifier = { add = 1 has_war = yes } }",
+            "add_political_power = -50",
+        ),
+        [("b", "political power")],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "triggers, split", _RECEIVER_CASES.values(), ids=_RECEIVER_CASES
+)
+def test_tag_split_options_need_no_cost_weights(triggers, split):
+    text = _event(
+        *(
+            _option(
+                f"foo.1.{letter}",
+                f"\t\ttrigger = {{ {trigger} }}\n"
+                + (_PP_COST + _FLAT if letter == "a" else _AWARE),
+            )
+            for letter, trigger in zip("abc", triggers)
+        )
+    )
+    blind, unneeded = find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)
+    assert (bool(blind), bool(unneeded)) == (not split, not split)
+
+
+@pytest.mark.parametrize(
+    "bodies, expected", _SHARED_PRICE_CASES.values(), ids=_SHARED_PRICE_CASES
+)
+def test_shared_literal_prices(bodies, expected):
+    text = _event(
+        *(_option(f"foo.1.{letter}", body) for letter, body in zip("abc", bodies))
+    )
+    assert [(name, costs) for name, _line, costs, _gated in _found(text)] == [
+        (f"foo.1.{letter}", costs) for letter, costs in expected
+    ]
 
 
 @pytest.mark.parametrize(
