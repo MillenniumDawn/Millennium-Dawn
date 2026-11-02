@@ -1,0 +1,1037 @@
+EU_exit_category = {
+
+	POR_brussels_ultimatum = {
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ultimatum_answered_tt
+				OR = {
+					NOT = { has_idea = EU_member }
+					has_country_flag = Article_50
+					NOT = { check_variable = { global.POR_community_stage = 2 } }
+				}
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_brussels_ultimatum"
+			custom_effect_tooltip = POR_ultimatum_answered_effect_tt
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_brussels_ultimatum timed out"
+			add_stability = -0.10
+			add_political_power = -100
+			news_event = { id = portugal_news.12 hours = 6 }
+		}
+	}
+}
+
+POR_overseas_school_category = {
+
+	POR_jungle_tour = {
+		icon = GFX_decision_generic_military
+
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		visible = {
+			NOT = { has_decision = POR_jungle_tour }
+			NOT = { has_decision = POR_bush_war_tour }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_needs_a_war_tt
+				OR = {
+					check_variable = { POR_shadow_clients^num > 0 }
+					check_variable = { nations_we_sent_volunteers_to^num > 0 }
+				}
+			}
+			any_army_leader = {
+				is_field_marshal = no
+				NOT = { has_trait = jungle_rat }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_tt
+				check_variable = { treasury > 1.4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_jungle_tour"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_jungle_tour"
+			random_army_leader = {
+				limit = {
+					is_field_marshal = no
+					NOT = { has_trait = jungle_rat }
+				}
+				random_list = {
+					70 = {
+						add_unit_leader_trait = jungle_rat
+						gain_xp = 100
+					}
+					30 = { gain_xp = 50 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_bush_war_tour = {
+		icon = GFX_decision_generic_military
+
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		visible = {
+			NOT = { has_decision = POR_jungle_tour }
+			NOT = { has_decision = POR_bush_war_tour }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_needs_a_war_tt
+				OR = {
+					check_variable = { POR_shadow_clients^num > 0 }
+					check_variable = { nations_we_sent_volunteers_to^num > 0 }
+				}
+			}
+			any_army_leader = {
+				is_field_marshal = no
+				NOT = { has_trait = ranger }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_tt
+				check_variable = { treasury > 1.4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_bush_war_tour"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_bush_war_tour"
+			random_army_leader = {
+				limit = {
+					is_field_marshal = no
+					NOT = { has_trait = ranger }
+				}
+				random_list = {
+					70 = {
+						add_unit_leader_trait = ranger
+						gain_xp = 100
+					}
+					30 = { gain_xp = 50 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+POR_federation_category = {
+
+	POR_summon_to_the_conference = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 100
+		days_re_enable = 365
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU }
+		targets_dynamic = yes
+		target_array = POR_lusophone_subjects
+
+		target_root_trigger = {
+			has_completed_focus = POR_imperial_conference
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				is_subject_of = ROOT
+				NOT = { has_country_flag = POR_federation_decided }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_summon_to_the_conference [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			FROM = { country_event = { id = portugal.60 days = 3 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_apply_pressure = {
+		icon = GFX_decision_generic_nationalism
+
+		cost = 200
+		days_re_enable = 180
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU }
+		targets_dynamic = yes
+		target_array = POR_lusophone_subjects
+
+		target_root_trigger = {
+			has_completed_focus = POR_imperial_conference
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				is_subject_of = ROOT
+				has_country_flag = POR_federation_decided
+				NOT = { has_country_flag = POR_federation_willing }
+				check_variable = { POR_federation_pressure < 2 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_apply_pressure [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			FROM = {
+				add_to_variable = { POR_federation_pressure = 1 }
+				clr_country_flag = POR_federation_decided
+				add_stability = -0.05
+				add_opinion_modifier = { target = ROOT modifier = supported_opposition }
+				country_event = { id = portugal.60 days = 3 }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+POR_spanish_spoils_category = {
+
+	POR_seize_ceuta = {
+		icon = GFX_decision_generic_naval
+
+		cost = 100
+
+		visible = {
+			NOT = { owns_state = 495 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				495 = { is_controlled_by = ROOT }
+				495 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_ceuta"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 495
+			add_stability = -0.03
+			if = {
+				limit = { country_exists = MOR }
+				MOR = { add_opinion_modifier = { target = ROOT modifier = diplomatic_distance } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_seize_canary_islands = {
+		icon = GFX_decision_generic_naval
+
+		cost = 125
+
+		visible = {
+			NOT = { owns_state = 95 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				95 = { is_controlled_by = ROOT }
+				95 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_canary_islands"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 95
+			add_stability = -0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_seize_balearic_islands = {
+		icon = GFX_decision_generic_naval
+
+		cost = 100
+
+		visible = {
+			NOT = { owns_state = 94 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				94 = { is_controlled_by = ROOT }
+				94 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_balearic_islands"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 94
+			add_stability = -0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+# Not Portugal's decisions: these belong to the countries it works on.
+POR_counter_intelligence_category = {
+
+	POR_purge_the_network = {
+		icon = GFX_decision_generic_arrest
+
+		cost = 125
+		days_remove = 90
+		days_re_enable = 730
+
+		visible = {
+			country_exists = POR
+			OR = {
+				has_idea = POR_lusophone_presence_2
+				has_idea = POR_lusophone_presence_3
+			}
+			POR = {
+				has_completed_focus = POR_lusophone_realpolitik
+				network_strength = { target = ROOT value > 39 }
+			}
+		}
+
+		available = {
+			has_civil_war = no
+			NOT = { has_war_with = POR }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_purge_the_network"
+			add_stability = -0.05
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_purge_the_network"
+			POR = {
+				remove_operation_token = { tag = ROOT token = token_civilian }
+				remove_operation_token = { tag = ROOT token = token_army }
+			}
+			add_opinion_modifier = { target = POR modifier = accused_of_interference }
+			set_temp_variable = { percent_change = -8 }
+			set_temp_variable = { tag_index = POR.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			POR = {
+				country_event = { id = portugal.74 hours = 12 }
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_idea = POR_lusophone_presence_3
+			}
+		}
+	}
+}
+
+POR_macau_window_category = {
+	POR_visas_for_officials = {
+		icon = GFX_decision_generic_intelligence_operation
+		cost = 25
+		days_re_enable = 90
+
+		available = {
+			1106 = { is_owned_by = ROOT }
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_visas_for_officials"
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			newline = yes
+			CHI = { add_political_power = -50 }
+			newline = yes
+			POR_provoke_china = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_passports_for_engineers = {
+		icon = GFX_decision_generic_civil_support
+		cost = 50
+		days_re_enable = 90
+
+		available = {
+			1106 = { is_owned_by = ROOT }
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_passports_for_engineers"
+			add_tech_bonus = { name = POR_passports_for_engineers bonus = 0.5 uses = 1 category = CAT_electronics category = CAT_computing }
+			newline = yes
+			CHI = { add_stability = -0.01 }
+			newline = yes
+			POR_provoke_china = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_the_tax_window = {
+		icon = GFX_decision_generic_fundraising
+		cost = 25
+		days_re_enable = 90
+
+		available = {
+			1106 = { is_owned_by = ROOT }
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_the_tax_window"
+			set_temp_variable = { treasury_change = 5 }
+			modify_treasury_effect = yes
+			newline = yes
+			CHI = { add_stability = -0.02 }
+			newline = yes
+			POR_provoke_china = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_sanctuary_broadcasts = {
+		icon = GFX_decision_generic_operation
+		cost = 50
+		days_re_enable = 90
+
+		available = {
+			1106 = { is_owned_by = ROOT }
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_sanctuary_broadcasts"
+			CHI = {
+				add_stability = -0.03
+				add_political_power = -25
+			}
+			newline = yes
+			POR_provoke_china = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+POR_naval_support_category = {
+	POR_buy_secondhand_frigate = {
+		icon = GFX_decision_generic_naval
+
+		cost = 25
+		days_re_enable = 365
+
+		visible = { date > 2006.1.1 }
+
+		available = {
+			country_exists = HOL
+			NOT = { has_war_with = HOL }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_buy_secondhand_frigate"
+			create_ship = {
+				type = frigate_hull_3
+				equipment_variant = "Karel Doorman Class"
+				creator = HOL
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_nato_naval_exercise = {
+		icon = GFX_decision_generic_military
+
+		cost = 25
+		days_remove = 60
+		days_re_enable = 365
+
+		visible = { is_in_faction = yes }
+
+		available = {
+			has_war = no
+			is_in_faction = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_nato_naval_exercise"
+			navy_experience = 20
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	POR_request_allied_naval_cover = {
+		icon = GFX_decision_generic_naval
+
+		cost = 50
+		days_re_enable = 365
+
+		visible = { is_in_faction = yes }
+
+		available = {
+			has_war = yes
+			is_in_faction = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_request_allied_naval_cover"
+			add_timed_idea = { idea = POR_allied_naval_cover days = 120 }
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
+
+POR_south_atlantic_sanctions_category = {
+	POR_cede_south_atlantic_islands = {
+		icon = GFX_decision_generic_naval
+
+		available = {
+			var:POR_south_atlantic_claimant = { NOT = { has_war_with = ROOT } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_cede_south_atlantic_islands"
+			var:POR_south_atlantic_claimant = {
+				if = { limit = { 24 = { is_owned_by = ROOT } } transfer_state = 24 }
+				if = { limit = { 25 = { is_owned_by = ROOT } } transfer_state = 25 }
+				if = { limit = { 1216 = { is_owned_by = ROOT } } transfer_state = 1216 }
+				hidden_effect = { country_event = { id = portugal.301 hours = 6 } }
+			}
+			add_stability = -0.10
+			add_war_support = -0.05
+			remove_ideas = POR_south_atlantic_sanctions
+		}
+
+		ai_will_do = { base = 100 }
+	}
+}
+
+POR_community_category = {
+
+	POR_community_invite = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 50
+		days_re_enable = 180
+
+		targets = { AGL BRA CAB EGU GUB MOZ SAO TIM UNI VER ARG BOL CHL COL COS CUB DOM ECU ELS GUA HON MEX NIC PAN PAR PRU URG VEN }
+		targets_dynamic = yes
+
+		target_root_trigger = { POR_is_community_founder = yes }
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				POR_community_eligible = yes
+				NOT = { has_war_with = ROOT }
+			}
+		}
+
+		available = {
+			FROM = {
+				has_opinion = { target = ROOT value > 49 }
+				influence_higher_10 = yes
+				custom_trigger_tooltip = {
+					tooltip = POR_community_not_foreign_subject_tt
+					OR = {
+						is_subject = no
+						is_subject_of = ROOT
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_invite [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = POR_community_joins_tt
+			FROM = { country_event = { id = portugal.330 days = 1 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_community_propose_common_market = {
+		icon = GFX_decision_economy
+
+		cost = 50
+
+		visible = {
+			POR_is_community_founder = yes
+			NOT = { has_global_flag = POR_community_common_market }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_has_members_tt
+				check_variable = { global.POR_community_members^num > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_common_market"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_common_market_tt
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 5 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_community_propose_mobility = {
+		icon = GFX_decision_generic_civil_support
+
+		cost = 50
+
+		visible = {
+			POR_is_community_founder = yes
+			has_global_flag = POR_community_common_market
+			NOT = { has_global_flag = POR_community_mobility }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_two_members_tt
+				check_variable = { global.POR_community_members^num > 1 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_mobility"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_mobility_tt
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 6 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_community_propose_free_movement = {
+		icon = GFX_decision_generic_civil_support
+
+		cost = 75
+
+		visible = {
+			POR_is_community_founder = yes
+			has_global_flag = POR_community_mobility
+			check_variable = { global.POR_community_stage = 1 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_three_members_tt
+				check_variable = { global.POR_community_members^num > 2 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_not_chosen_europe_tt
+				NOT = {
+					AND = {
+						has_country_flag = POR_chose_europe
+						has_idea = EU_member
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_free_movement"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_free_movement_tt
+			if = {
+				limit = { has_idea = EU_member }
+				custom_effect_tooltip = POR_community_brussels_warning_tt
+			}
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 1 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.2 has_idea = EU_member }
+		}
+	}
+
+	POR_community_propose_development_fund = {
+		icon = GFX_decision_generic_construction
+
+		cost = 50
+
+		visible = {
+			POR_is_community_founder = yes
+			has_global_flag = POR_community_common_market
+			NOT = { has_global_flag = POR_community_development_fund }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_has_members_tt
+				check_variable = { global.POR_community_members^num > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_development_fund"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_fund_tt
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 2 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_community_propose_defence_clause = {
+		icon = GFX_decision_generic_military
+
+		cost = 75
+
+		visible = {
+			POR_is_community_founder = yes
+			check_variable = { global.POR_community_stage > 1 }
+			NOT = { has_global_flag = POR_community_defence_clause }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_has_members_tt
+				check_variable = { global.POR_community_members^num > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_defence_clause"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_defence_tt
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 3 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_community_propose_federal_constitution = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 150
+
+		visible = {
+			POR_is_community_founder = yes
+			check_variable = { global.POR_community_stage = 2 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_community_no_vote_open_tt
+				POR_community_vote_open = no
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_two_members_tt
+				check_variable = { global.POR_community_members^num > 1 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_two_years_tt
+				has_global_flag = { flag = POR_community_free_movement days > 729 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_community_outside_eu_tt
+				NOT = { has_idea = EU_member }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_propose_federal_constitution"
+			custom_effect_tooltip = POR_community_vote_tt
+			newline = yes
+			custom_effect_tooltip = POR_community_federation_tt
+			hidden_effect = {
+				set_temp_variable = { POR_proposal = 4 }
+				POR_community_start_vote = yes
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_community_offer_accession = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 50
+		days_re_enable = 365
+
+		target_array = global.POR_community_members
+
+		target_root_trigger = {
+			POR_is_community_founder = yes
+			check_variable = { global.POR_community_stage = 3 }
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_offer_accession [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			custom_effect_tooltip = POR_community_accession_tt
+			FROM = { country_event = { id = portugal.334 days = 1 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_community_suspend_free_movement = {
+		icon = GFX_decision_generic_european_union
+
+		cost = 25
+
+		visible = {
+			POR_is_community_founder = yes
+			check_variable = { global.POR_community_stage = 2 }
+			has_idea = EU_member
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_suspend_free_movement"
+			custom_effect_tooltip = POR_community_suspend_tt
+			hidden_effect = { POR_community_choose_europe = yes }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_community_choose_the_community = {
+		icon = GFX_decision_generic_leave_european_union
+
+		cost = 100
+
+		visible = {
+			POR_is_community_founder = yes
+			check_variable = { global.POR_community_stage = 2 }
+			has_idea = EU_member
+			NOT = { has_country_flag = Article_50 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_choose_the_community"
+			POR_start_eu_exit = yes
+			newline = yes
+			add_stability = -0.05
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	POR_community_leave = {
+		icon = GFX_decision_generic_independence
+
+		cost = 25
+
+		visible = { POR_is_community_member = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_community_leave"
+			custom_effect_tooltip = POR_community_leave_tt
+			hidden_effect = { country_event = portugal.336 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+}
