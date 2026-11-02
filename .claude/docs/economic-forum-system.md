@@ -67,6 +67,33 @@ directional: signing ceremonies also add the reverse agreement. Targets added by
 an agreement are removed on expiry only if that agreement inserted them, retaining
 targets selected through the ordinary investment system.
 
+## Financial Flow
+
+Treasury values are billions of dollars. `modify_treasury_effect` adds
+`treasury_change` directly, without a GDP multiplier or a millions-to-billions
+conversion. Forums have only these cash purchases:
+
+| Purchase | Treasury charge | Limit |
+| --- | --- | --- |
+| Guest session sponsorship | $1.5 billion | Once per forum cycle; total sponsor points below 25 |
+| Host sponsor package | $3 billion | Adds 5 sponsor points, up to 25 |
+| Host media blitz | $2 billion | One summit message per preparation |
+
+Founding, invitations, delegation replies, tracks, speakers, ceremonies, and
+security use Political Power, not treasury. Startup does not charge governments.
+Attendance and company delegations do not charge treasury; MIO funds are MIO
+progress points. Forum modifiers do not add recurring treasury or debt expenses.
+Investment agreements change target eligibility and scores within the existing
+weekly investment system; they do not create another investment spending pulse.
+
+An AI state-led host buys one sponsor package when preparation opens and its cash
+exceeds $10 billion. A media blitz also requires more than $30 billion. The WEF's
+AI preparation is funded by private partners. AI guests can sponsor once per cycle
+only with more than $20 billion in cash, and stop topping up a forum at 15 sponsor
+points. Host cash decisions have zero AI weight, so they do not duplicate the AI
+preparation purchases. These are cash-stock checks, not forecasts of a country's
+future weekly balance.
+
 ## Player Choices and State
 
 The Forums tab lists active or vacant founded forums by prestige and shows sector

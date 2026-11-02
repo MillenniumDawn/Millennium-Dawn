@@ -27,6 +27,101 @@ BID_EVENT = next(
 COMPARISONS = {"=": operator.eq, ">": operator.gt, "<": operator.lt}
 
 
+def _walk(nodes):
+    for node in nodes:
+        yield node
+        yield from _walk(node.children)
+
+
+def _cash_charges(nodes):
+    charges = []
+    for index, node in enumerate(nodes):
+        if node.key == "modify_treasury_effect":
+            assert index > 0, "Cash charge has no local amount"
+            amount = nodes[index - 1]
+            assert amount.key == "set_temp_variable"
+            assert len(amount.children) == 1
+            assert amount.children[0].key == "treasury_change"
+            assert not amount.children[
+                0
+            ].children, "Forum prices must not scale with GDP"
+            charges.append(float(amount.children[0].value))
+        charges.extend(_cash_charges(node.children))
+    return charges
+
+
+def _effect_closure(name, seen=None):
+    seen = set() if seen is None else seen
+    if name in seen:
+        return
+    seen.add(name)
+    for node in _walk(EFFECTS[name].children):
+        yield node
+        if node.key in EFFECTS and node.value == "yes":
+            yield from _effect_closure(node.key, seen)
+
+
+def test_forum_cash_inventory_has_only_fixed_one_off_purchases():
+    decisions = _definitions("common/decisions/econ_forum_decisions.txt")
+    roots = {f"effect:{name}": node for name, node in EFFECTS.items()}
+    roots.update(
+        {
+            f"decision:{node.key}": node
+            for node in decisions["econ_forum_category"].children
+        }
+    )
+    assert {
+        name: charges
+        for name, node in roots.items()
+        if (charges := _cash_charges(node.children))
+    } == {
+        "effect:econ_forum_sponsor_session": [-1.5],
+        "effect:econ_forum_ai_prepare": [-3, -2],
+        "decision:econ_forum_message_media": [-2],
+        "decision:econ_forum_secure_sponsors": [-3],
+    }
+
+
+@pytest.mark.parametrize(
+    "effect",
+    [
+        "setup",
+        "send_invitation",
+        "send_personal_invitation",
+        "answer_invitation",
+        "select_track",
+        "book_ceremony",
+        "record_attendance",
+        "corporate_delegations",
+        "reward_host",
+    ],
+)
+def test_regular_forum_flows_do_not_charge_cash_or_borrow(effect):
+    for node in _effect_closure(f"econ_forum_{effect}"):
+        assert node.key not in {
+            "modify_treasury_effect",
+            "modify_debt_effect",
+            "small_expenditure",
+            "medium_expenditure",
+            "large_expenditure",
+        }
+        if node.key in {"set_variable", "add_to_variable", "subtract_from_variable"}:
+            assert node.children[0].key not in {"treasury", "debt", "treasury_rate"}
+
+
+def test_forum_cash_uses_the_canonical_unscaled_billion_unit():
+    budget = _definitions("common/scripted_effects/00_budget_effects.txt")
+    writes = [
+        node
+        for node in _walk(budget["modify_treasury_effect"].children)
+        if node.key == "add_to_variable"
+    ]
+    assert len(writes) == 1
+    assert [(node.key, node.value, node.children) for node in writes[0].children] == [
+        ("treasury", "treasury_change", [])
+    ]
+
+
 class ForumScript:
     """Execute the tested source branches; no game-engine or GUI simulation."""
 
