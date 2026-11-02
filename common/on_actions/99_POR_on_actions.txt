@@ -1,0 +1,278 @@
+on_actions = {
+	# ROOT is the winner, FROM the annexed side. Puppet here, not mid-war, where it blocks volunteers.
+	on_civil_war_end = {
+		effect = {
+			POR_resolve_backing = yes
+
+			if = {
+				limit = {
+					country_exists = POR
+					POR = { is_in_array = { POR_held_state_owners = FROM.id } }
+				}
+				POR = {
+					remove_from_array = { POR_held_state_owners = FROM.id }
+					if = {
+						limit = { NOT = { is_in_array = { POR_held_state_owners = ROOT.id } } }
+						add_to_array = { POR_held_state_owners = ROOT.id }
+					}
+					every_owned_state = {
+						limit = {
+							has_state_flag = POR_held_state
+							check_variable = { POR_held_owner = FROM.id }
+						}
+						set_variable = { POR_held_owner = ROOT.id }
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					country_exists = POR
+					POR = { is_in_array = { POR_network_target_array = ROOT.id } }
+				}
+				set_country_flag = { flag = POR_after_civil_war value = 1 days = 1095 }
+			}
+
+			if = {
+				limit = { has_country_flag = POR_client_pending_puppet }
+				clr_country_flag = POR_client_pending_puppet
+				POR_client_core_repair = yes
+				news_event = { id = portugal_news.2 hours = 6 }
+				var:POR_client_overlord_id = {
+					set_autonomy = {
+						target = PREV
+						autonomy_state = autonomy_associated_state
+						end_wars = no
+						end_civil_wars = yes
+					}
+					country_event = { id = portugal.32 hours = 8 }
+				}
+				clear_variable = POR_client_overlord_id
+			}
+
+			if = {
+				limit = {
+					FROM = { has_country_flag = POR_shadow_client }
+					NOT = { has_country_flag = POR_shadow_client }
+				}
+				FROM = {
+					if = {
+						limit = { check_variable = { POR_client_overlord_id > 0 } }
+						var:POR_client_overlord_id = { country_event = { id = portugal.34 hours = 8 } }
+					}
+				}
+				if = { limit = { country_exists = POR } add_opinion_modifier = { target = POR modifier = supported_opposition } }
+			}
+		}
+	}
+
+	# ROOT capitulated, FROM won. The treaty fires a day later, after any peace conference.
+	on_capitulation = {
+		effect = {
+			# Spain, Italy, France, the UK and Brazil get a treaty instead, which offers the crown.
+			if = {
+				limit = {
+					POR_crowns_candidate = yes
+					NOT = { tag = SPR }
+					NOT = { tag = ITA }
+					NOT = { tag = FRA }
+					NOT = { tag = ENG }
+					NOT = { tag = BRA }
+					country_exists = POR
+					POR = { has_war_with = ROOT }
+				}
+				set_country_flag = { flag = POR_crowns_defeated value = 1 days = 180 }
+			}
+
+			# The treaty goes to Portugal, or a Spain-led union, when it, its subject or its faction won.
+			random_enemy_country = {
+				limit = {
+					OR = {
+						tag = POR
+						AND = {
+							tag = SPR
+							has_completed_focus = IBR_proclaim_the_iberian_union
+						}
+					}
+					FROM = {
+						OR = {
+							tag = PREV
+							is_subject_of = PREV
+							AND = {
+								is_in_faction_with = PREV
+								PREV = { is_faction_leader = yes }
+							}
+						}
+					}
+				}
+				if = {
+					limit = { ROOT = { tag = ITA } }
+					country_event = { id = portugal.142 days = 1 }
+				}
+				else_if = {
+					limit = { ROOT = { tag = FRA } }
+					country_event = { id = portugal.143 days = 1 }
+				}
+				else_if = {
+					limit = { ROOT = { tag = ENG } }
+					country_event = { id = portugal.144 days = 1 }
+				}
+				else_if = {
+					limit = { ROOT = { tag = MOR } }
+					country_event = { id = portugal.145 days = 1 }
+				}
+				else_if = {
+					limit = { ROOT = { tag = PAN } }
+					country_event = { id = portugal.340 days = 1 }
+				}
+				else_if = {
+					limit = {
+						ROOT = {
+							OR = {
+								tag = MEX
+								tag = CUB
+								tag = COL
+								tag = VEN
+								tag = AGL
+								tag = UNI
+								tag = MOZ
+								tag = TIM
+								tag = PAR
+								tag = SIN
+								tag = MNC
+								tag = MLT
+								tag = SAR
+							}
+						}
+					}
+					country_event = { id = portugal.339 days = 1 }
+				}
+				else_if = {
+					limit = {
+						tag = SPR
+						ROOT = { tag = BRA }
+					}
+					country_event = { id = portugal.339 days = 1 }
+				}
+				else_if = {
+					limit = { tag = POR }
+					if = {
+						limit = { ROOT = { tag = SPR } }
+						country_event = { id = portugal.141 days = 1 }
+					}
+					else_if = {
+						limit = { ROOT = { tag = BRA } }
+						country_event = { id = portugal.146 days = 1 }
+					}
+					else_if = {
+						limit = { ROOT = { tag = ARG } }
+						country_event = { id = portugal.147 days = 1 }
+					}
+					else_if = {
+						limit = { ROOT = { tag = RAJ } }
+						country_event = { id = portugal.148 days = 1 }
+					}
+					else_if = {
+						limit = { ROOT = { tag = CHI } }
+						country_event = { id = portugal.149 days = 1 }
+					}
+					else_if = {
+						limit = { ROOT = { tag = IND } }
+						country_event = { id = portugal.150 days = 1 }
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					owns_state = 1255
+					any_enemy_country = { has_completed_focus = IBR_suez_question }
+				}
+				random_enemy_country = {
+					limit = { has_completed_focus = IBR_suez_question }
+					country_event = { id = portugal.314 days = 1 }
+				}
+			}
+		}
+	}
+
+	# ROOT is the winner, FROM the annexed crown. The event follows a day later, once it is gone, so it reads the crown from a variable.
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = POR
+					ROOT = {
+						original_tag = POR
+						has_country_flag = POR_monarchy_restored
+					}
+					FROM = {
+						POR_crowns_candidate = yes
+						has_country_flag = POR_crowns_defeated
+					}
+				}
+				POR = {
+					set_variable = { POR_spoils_target = FROM.id }
+					country_event = { id = portugal.290 days = 1 }
+				}
+			}
+		}
+	}
+
+	# ROOT is the new puppet, FROM its overlord.
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					country_exists = POR
+					POR_crowns_candidate = yes
+					has_country_flag = POR_crowns_defeated
+					FROM = {
+						original_tag = POR
+						has_country_flag = POR_monarchy_restored
+					}
+				}
+				clr_country_flag = POR_crowns_defeated
+				POR = { country_event = { id = portugal.291 days = 1 } }
+			}
+		}
+	}
+
+	on_weekly_POR = {
+		effect = {
+			if = {
+				limit = {
+					has_completed_focus = IBR_dream_of_iberia
+					NOT = { has_completed_focus = IBR_proclaim_the_iberian_union }
+				}
+				IBR_weekly_tick = yes
+			}
+
+			POR_update_blocs = yes
+			POR_watch_party_flip = yes
+			POR_update_war_rules = yes
+			POR_update_ideology_tier = yes
+			POR_update_ideology_support = yes
+
+			POR_prune_shadow_arrays = yes
+			POR_update_intervention_load = yes
+
+			for_each_scope_loop = {
+				array = POR_network_target_array
+				POR_apply_client_tier = yes
+			}
+
+			POR_update_overseas_doctrine = yes
+			POR_update_money_ideas = yes
+			POR_update_league = yes
+			POR_community_tick = yes
+			POR_check_held_states = yes
+		}
+	}
+
+	on_monthly_POR = {
+		effect = {
+			POR_peace_watch = yes
+		}
+	}
+}

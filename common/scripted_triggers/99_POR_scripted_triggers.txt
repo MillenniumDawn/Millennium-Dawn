@@ -1,0 +1,534 @@
+# AI path ownership. Internal to ai_will_do, so no tooltips and no loc keys.
+
+POR_ai_alt_path = {
+	OR = {
+		has_global_flag = POR_LUSOPHONE_FOCUS_PATH
+		has_global_flag = POR_IMPERIAL_FOCUS_PATH
+	}
+}
+
+POR_ai_not_lusophone_path = {
+	NOT = { has_global_flag = POR_LUSOPHONE_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+		has_global_flag = POR_IMPERIAL_FOCUS_PATH
+	}
+}
+
+POR_ai_not_imperial_path = {
+	NOT = { has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+		has_global_flag = POR_LUSOPHONE_FOCUS_PATH
+	}
+}
+
+# Both alt paths run the Lusophone spine; only the imperial one takes it to a war.
+POR_ai_shadow_path = {
+	POR_ai_alt_path = yes
+}
+
+POR_ai_not_shadow_path = {
+	NOT = { POR_ai_alt_path = yes }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+	}
+}
+
+# POR_update_blocs recomputes these weekly from the last election result.
+POR_bloc_left_has_majority = {
+	check_variable = { POR_bloc_left > majority_threshold }
+}
+
+POR_bloc_right_has_majority = {
+	check_variable = { POR_bloc_right > majority_threshold }
+}
+
+POR_ideology_tier_1 = {
+	check_variable = { POR_ideological_development > 19 }
+}
+
+POR_ideology_tier_2 = {
+	check_variable = { POR_ideological_development > 39 }
+}
+
+POR_ideology_tier_3 = {
+	check_variable = { POR_ideological_development > 59 }
+}
+
+POR_ideology_tier_4 = {
+	check_variable = { POR_ideological_development > 79 }
+}
+
+POR_ruling_party_has_support = {
+	check_variable = { party_pop_array^ruling_party > 0.15 }
+}
+
+POR_has_an_opposition = {
+	check_variable = { POR_opposition_party > -1 }
+}
+
+# Cached weekly by POR_update_ideology_support.
+POR_revolt_has_support = {
+	check_variable = { POR_revolt_party > -1 }
+	check_variable = { POR_revolt_support > 0.34 }
+}
+
+# PS (slot 3) counts as Atlanticist, not left.
+POR_the_left_governs = {
+	OR = {
+		check_variable = { ruling_party = 4 }
+		check_variable = { ruling_party = 5 }
+		check_variable = { ruling_party = 18 }
+		check_variable = { ruling_party = 19 }
+	}
+}
+
+POR_the_atlanticists_govern = {
+	OR = {
+		check_variable = { ruling_party = 1 }
+		check_variable = { ruling_party = 2 }
+		check_variable = { ruling_party = 3 }
+	}
+}
+
+POR_the_national_right_governs = {
+	OR = {
+		check_variable = { ruling_party = 14 }
+		check_variable = { ruling_party = 20 }
+		check_variable = { ruling_party = 22 }
+		check_variable = { ruling_party = 23 }
+	}
+}
+
+# Regime directions: PPM, CDS-PP or NOS for the Crown; PDR, PNR or the army for the Executive State.
+POR_crown_family_governs = {
+	OR = {
+		check_variable = { ruling_party = 14 }
+		check_variable = { ruling_party = 21 }
+		check_variable = { ruling_party = 23 }
+	}
+}
+
+POR_executive_family_governs = {
+	OR = {
+		check_variable = { ruling_party = 16 }
+		check_variable = { ruling_party = 20 }
+		check_variable = { ruling_party = 22 }
+	}
+}
+
+POR_open_family_governs = {
+	OR = {
+		POR_the_atlanticists_govern = yes
+		check_variable = { ruling_party = 17 }
+	}
+}
+
+POR_monarchy_vote_passes = {
+	OR = {
+		check_variable = { party_pop_array^23 > 0.20 }
+		has_stability > 0.60
+	}
+}
+
+POR_coalition_agreement_partners = {
+	custom_trigger_tooltip = {
+		tooltip = POR_coalition_agreement_partners_tt
+		OR = {
+			AND = {
+				date > 2015.10.1
+				western_socialism_are_in_power_or_coalition = yes
+			}
+			western_conservatism_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_ps_be_cdu_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_ps_be_cdu_in_government_tt
+		OR = {
+			western_socialism_are_in_power_or_coalition = yes
+			neutrality_neutral_social_in_power_or_coalition = yes
+			emerging_anarchist_communism_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_psd_cds_nc_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_psd_cds_nc_in_government_tt
+		OR = {
+			western_conservatism_are_in_power_or_coalition = yes
+			neutrality_neutral_conservatism_in_power_or_coalition = yes
+			western_liberal_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_ps_psd_cds_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_ps_psd_cds_in_government_tt
+		OR = {
+			western_socialism_are_in_power_or_coalition = yes
+			western_conservatism_are_in_power_or_coalition = yes
+			neutrality_neutral_conservatism_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_ps_be_mpt_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_ps_be_mpt_in_government_tt
+		OR = {
+			western_socialism_are_in_power_or_coalition = yes
+			neutrality_neutral_social_in_power_or_coalition = yes
+			neutrality_neutral_green_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_ps_psd_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_ps_psd_in_government_tt
+		OR = {
+			western_socialism_are_in_power_or_coalition = yes
+			western_conservatism_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_psd_cds_ppm_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_psd_cds_ppm_in_government_tt
+		OR = {
+			western_conservatism_are_in_power_or_coalition = yes
+			neutrality_neutral_conservatism_in_power_or_coalition = yes
+			nationalist_monarchists_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_ps_be_nc_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_ps_be_nc_in_government_tt
+		OR = {
+			western_socialism_are_in_power_or_coalition = yes
+			neutrality_neutral_social_in_power_or_coalition = yes
+			western_liberal_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_psd_cds_pnr_in_government = {
+	custom_trigger_tooltip = {
+		tooltip = POR_psd_cds_pnr_in_government_tt
+		OR = {
+			western_conservatism_are_in_power_or_coalition = yes
+			neutrality_neutral_conservatism_in_power_or_coalition = yes
+			nationalist_right_wing_populists_are_in_power_or_coalition = yes
+		}
+	}
+}
+
+POR_madrid_cedes = {
+	any_country = {
+		original_tag = SPR
+		has_country_flag = POR_shadow_client
+		has_civil_war = no
+		has_government = ROOT
+	}
+}
+
+POR_galicia_is_ready = {
+	OR = {
+		SPR = { has_civil_war = yes }
+		POR_madrid_cedes = yes
+	}
+}
+
+POR_spanish_spoils_open = {
+	country_exists = SPR
+	OR = {
+		has_war_with = SPR
+		AND = {
+			SPR = { has_civil_war = yes }
+			any_country = {
+				original_tag = SPR
+				OR = {
+					has_country_flag = POR_shadow_client
+					has_country_flag = POR_backed_by_portugal
+				}
+			}
+		}
+	}
+}
+
+# EU112 keeps members' EU_member under a global flag; EU111 merges them into one USoE country.
+POR_federation_without_us = {
+	NOT = { has_idea = EU_member }
+	NOT = { has_country_flag = USoE }
+	OR = {
+		has_global_flag = european_federation
+		any_other_country = { has_country_flag = USoE }
+	}
+}
+
+# Democratic and communist governments cannot declare war on their own ideology.
+POR_ideology_allows_war_on_spain = {
+	OR = {
+		has_government = nationalist
+		has_government = neutrality
+		has_government = fascism
+		NOT = { SPR = { has_government = ROOT } }
+	}
+}
+
+POR_ideology_allows_war_on_morocco = {
+	OR = {
+		has_government = nationalist
+		has_government = neutrality
+		has_government = fascism
+		NOT = { MOR = { has_government = ROOT } }
+	}
+}
+
+# The Angolan government is AGL, or UNI once UNITA has won the civil war.
+POR_angola_stands = {
+	OR = {
+		country_exists = AGL
+		country_exists = UNI
+	}
+}
+
+POR_angola_war_on = {
+	country_exists = AGL
+	country_exists = UNI
+	AGL = { has_war_with = UNI }
+}
+
+POR_angola_holds_cabinda = {
+	296 = { owner = { OR = { original_tag = AGL original_tag = UNI } } }
+}
+
+# Offers go to AGL during the war and to whichever government is left afterwards.
+POR_luanda_refused_us = {
+	any_other_country = {
+		OR = {
+			original_tag = AGL
+			AND = { original_tag = UNI NOT = { country_exists = AGL } }
+		}
+		has_country_flag = POR_refused_portugal
+	}
+}
+
+POR_unita_refused_us = {
+	POR_angola_war_on = yes
+	UNI = { has_country_flag = POR_refused_portugal }
+}
+
+# Target scope: open after POR's hostile focus against it.
+POR_ops_target_open = {
+	OR = {
+		AND = { original_tag = AGL POR = { has_completed_focus = POR_support_unita } }
+		AND = {
+			original_tag = UNI
+			OR = {
+				AND = { country_exists = AGL POR = { has_completed_focus = POR_recognise_luanda } }
+				AND = { NOT = { country_exists = AGL } POR = { has_completed_focus = POR_support_unita } }
+			}
+		}
+		AND = { original_tag = MOZ POR = { has_completed_focus = POR_return_of_renamo } }
+		AND = { original_tag = GUB POR = { has_completed_focus = POR_night_of_the_generals } }
+		AND = { original_tag = TIM POR = { has_completed_focus = POR_petitioners } }
+		AND = { original_tag = EGU POR = { has_completed_focus = POR_severo_motos_hour } }
+		AND = { original_tag = BRA POR = { has_completed_focus = POR_contest_for_luanda } }
+		AND = { original_tag = SPR POR = { has_completed_focus = POR_almaraz_complaint } }
+	}
+}
+
+# State scope. A state holds one research facility of any kind; the three service facility focuses own these states.
+POR_is_free_facility_state = {
+	is_core_of = ROOT
+	is_fully_controlled_by = ROOT
+	land_facility < 1
+	naval_facility < 1
+	air_facility < 1
+	nuclear_facility < 1
+	NOT = {
+		OR = {
+			state = 97
+			state = 1055
+			state = 1056
+		}
+	}
+}
+
+# Enemy's scope, ROOT Portugal or the union: it owns states we claim or core and we fully control every one of them.
+POR_peace_claims_held = {
+	any_owned_state = {
+		OR = {
+			is_claimed_by = ROOT
+			is_core_of = ROOT
+		}
+	}
+	all_owned_state = {
+		OR = {
+			is_fully_controlled_by = ROOT
+			AND = {
+				NOT = { is_claimed_by = ROOT }
+				NOT = { is_core_of = ROOT }
+			}
+		}
+	}
+}
+
+# Enemy's scope, ROOT Portugal or the union: we hold its capital and it is close to surrender.
+POR_peace_capital_held = {
+	capital_scope = { is_controlled_by = ROOT }
+	surrender_progress > 0.3
+}
+
+# Portugal has a subject in Sub-Saharan Africa.
+POR_holds_sub_saharan_africa = {
+	any_subject_country = { is_sub_saharan_nation = yes }
+}
+
+# Portugal owns a Moroccan state, Ceuta or Melilla.
+POR_holds_north_africa = {
+	any_owned_state = {
+		OR = {
+			is_core_of = MOR
+			state = 495
+			state = 632
+		}
+	}
+}
+
+POR_holds_africa = {
+	OR = {
+		POR_holds_sub_saharan_africa = yes
+		POR_holds_north_africa = yes
+	}
+}
+
+POR_holds_south_america = {
+	OR = {
+		any_subject_country = { is_in_south_america = yes }
+		any_owned_state = { is_on_continent = south_america }
+	}
+}
+
+POR_holds_asia = {
+	OR = {
+		any_subject_country = { is_in_asia = yes }
+		any_owned_state = { is_on_continent = asia }
+	}
+}
+
+POR_holds_spain = {
+	any_owned_state = { is_core_of = SPR }
+}
+
+POR_holds_mediterranean = {
+	OR = {
+		any_owned_state = {
+			OR = {
+				state = 19
+				state = 374
+				state = 94
+				state = 84
+				state = 83
+				state = 82
+				state = 956
+				state = 85
+				state = 65
+				state = 961
+				state = 63
+				state = 1000
+			}
+		}
+		any_subject_country = {
+			OR = {
+				original_tag = SAR
+				original_tag = MLT
+				original_tag = MNC
+			}
+		}
+	}
+}
+
+# Country scope: a European crown or throne-in-waiting that a Portuguese victory can restore.
+POR_crowns_candidate = {
+	OR = {
+		original_tag = ENG
+		original_tag = FRA
+		original_tag = ITA
+		original_tag = SPR
+		original_tag = GER
+		original_tag = AUS
+		original_tag = GRE
+		original_tag = ROM
+		original_tag = BUL
+		original_tag = SER
+		original_tag = HUN
+		original_tag = CZE
+		original_tag = BEL
+		original_tag = HOL
+		original_tag = DEN
+		original_tag = NOR
+		original_tag = SWE
+		original_tag = BRA
+	}
+}
+
+# POR scope: the League can take the target or be founded now, which needs no other faction.
+POR_can_host_league = {
+	OR = {
+		is_in_faction = no
+		AND = {
+			is_faction_leader = yes
+			has_dynamic_modifier = { modifier = POR_league_of_crowns_modifier }
+		}
+	}
+}
+
+POR_is_community_founder = {
+	check_variable = { global.POR_community_stage > 0 }
+	check_variable = { global.POR_community_founder = THIS.id }
+}
+
+POR_is_community_member = {
+	is_in_array = { global.POR_community_members = THIS.id }
+}
+
+POR_community_vote_open = {
+	check_variable = { global.POR_community_proposal > 0 }
+}
+
+# Founder scope: the Iberian Union has opened the community to Spanish-speaking America.
+POR_community_is_ibero = {
+	OR = {
+		has_completed_focus = IBR_ibero_american_community
+		has_completed_focus = IBR_lusophone_inheritance
+	}
+}
+
+# ROOT is the founder.
+POR_community_eligible = {
+	NOT = { POR_is_community_member = yes }
+	OR = {
+		portuguese_speaking = yes
+		original_tag = UNI
+		original_tag = CAB
+		original_tag = EGU
+		AND = {
+			Spanish_Speaking = yes
+			ROOT = { POR_community_is_ibero = yes }
+		}
+	}
+}
