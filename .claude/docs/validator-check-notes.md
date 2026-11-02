@@ -32,6 +32,42 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   both apply. Other relationships, including numeric bounds and flag values,
   remain unknown and need review.
 
+## validate_influence_reads.py
+
+- `influence-read-self` (WARNING): the influencer and array owner resolve to the
+  same country. This is a review candidate, not a claim about diplomatic intent.
+- `influence-read-unresolved` (WARNING): the caller, sender, or target cannot be
+  bound. Unknown FROM is not proof that the engine leaves the sender unset.
+- Models the ROOT, PREV, and sender helper families in
+  `00_influence_scripted_triggers.txt`, the EU `FROM_is_top3_influencer` helper,
+  and the two HOL ranking helpers. `influence_less_*` reads the ROOT array for
+  THIS, the reverse of `influence_higher_*`. Contract tests read their definitions.
+- Tracks literal country scopes, ROOT, THIS, PREV/FROM chains, neutral wrappers,
+  and calls through scripted effects and triggers. Focuses, achievements,
+  non-targeted decisions, country history, and country/news event definitions
+  supply country contexts. A positive local `tag` guard can bind a runtime tag;
+  `original_tag` is only a label, not proof of a literal runtime tag.
+- Effect-fired events receive the firing block's ROOT as FROM, not its innermost
+  selected country. Event pools, automatic firing, unsupported dispatches, and
+  definitions without a known caller keep unknown contexts alongside known ones.
+  Broadcast events also have an unspecified audience context.
+- Targeted decisions, unmodeled blocks, state/variable/event-target scopes, and
+  other entry points remain conservative. Templates and effect previews are
+  skipped. This is not a reachability solver or an audit of arbitrary array reads.
+  Each definition keeps at most 64 distinct contexts before adding an unknown
+  context; recursive calls are deduplicated. Scope chains retain the depth used
+  by the parsed sources.
+- Ordinary JSON contains warning candidates only. `<output>.bindings.jsonl` and
+  the text log expose every resolved or unresolved pair without turning valid
+  bindings into baseline issues. CI runs this separately from influence writes,
+  without `--strict`; even direct `--strict` runs do not gate on these warnings.
+- Reviewed baseline at `a0585a7e5d`: #6198's old read was CHI ROOT into the USA
+  array; its replacement is USA PREV into the KOR array. #6197's old achievement
+  read had an unresolved sender into five foreign arrays; the replacement uses
+  the achieving ROOT (original_tag HOL). The live-source regressions pin these
+  corrected bindings. This baseline covers those sites, not a full-repository
+  adjudication. No native-game test supports stricter enforcement.
+
 ## validate_building_guards.py
 
 - `damage_building` or `remove_building` against a building the state lacks spams
