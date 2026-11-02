@@ -1266,6 +1266,7 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert [spec.name for spec in ALL_SPECS if not spec.strict] == [
         "simplifications",
+        "influence-reads",
         "graphical-cultures",
     ]
 

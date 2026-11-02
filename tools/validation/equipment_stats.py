@@ -268,7 +268,7 @@ def _parse_duplicates(text: str) -> Dict[str, _Entry]:
 
 
 def _module_stats(texts: List[str]) -> Dict[str, Set[str]]:
-    """Module name -> the stat names it can set."""
+    """Module name -> stats it can set, including mission-specific values."""
     stats: Dict[str, Set[str]] = {}
     for text in texts:
         for container, clo, chi, _ in _iter_blocks(text, 0, len(text)):
@@ -279,6 +279,10 @@ def _module_stats(texts: List[str]) -> Dict[str, Set[str]]:
                 for name, blo, bhi, _ in _iter_blocks(text, mlo, mhi):
                     if name in _MODULE_STAT_BLOCKS:
                         keys |= _depth0_stats(text, blo, bhi)
+                    elif name == "mission_type_stats":
+                        for stat_block, slo, shi, _ in _iter_blocks(text, blo, bhi):
+                            if stat_block in _MODULE_STAT_BLOCKS:
+                                keys |= _depth0_stats(text, slo, shi)
                 if keys:
                     stats.setdefault(module, set()).update(keys)
     return stats
