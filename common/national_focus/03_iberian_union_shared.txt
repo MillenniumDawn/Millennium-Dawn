@@ -1,0 +1,2960 @@
+shared_focus = {
+	id = IBR_dream_of_iberia
+	icon = iberian_summit
+	x = 160
+	y = 12
+	offset = {
+		x = -97
+		y = 4
+		trigger = { original_tag = SPR }
+	}
+	offset = {
+		x = 37
+		y = 0
+		trigger = { original_tag = POR }
+	}
+	cost = 5
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		IBR_controls_iberia = yes
+		OR = {
+			original_tag = SPR
+			has_completed_focus = POR_iberian_union
+			AND = {
+				original_tag = POR
+				NOT = { country_exists = SPR }
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = IBR_not_usoe_tt
+			NOT = { has_country_flag = USoE }
+		}
+		custom_trigger_tooltip = {
+			tooltip = IBR_formables_enabled_tt
+			NOT = { has_global_flag = GAME_RULE_disable_formable_nations }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_dream_of_iberia"
+		custom_effect_tooltip = IBR_union_cores_tt
+		hidden_effect = {
+			every_owned_state = {
+				limit = {
+					OR = {
+						is_spain_state = yes
+						is_portugal_state = yes
+					}
+				}
+				add_core_of = ROOT
+			}
+		}
+		newline = yes
+		if = {
+			limit = { has_cosmetic_tag = POR_united_kingdom }
+			set_cosmetic_tag = IBR_united_kingdom
+		}
+		else_if = {
+			limit = { has_cosmetic_tag = POR_fifth_empire }
+			set_cosmetic_tag = IBR_fifth_empire
+		}
+		# A European Federation member keeps its EFS branding; EFS_update_flag never runs twice
+		else_if = {
+			limit = {
+				has_country_flag = EFS_flag_change
+				has_idea = EU_member
+			}
+			set_cosmetic_tag = EFS_IBR
+		}
+		else = { set_cosmetic_tag = IBR }
+		newline = yes
+		custom_effect_tooltip = IBR_dream_of_iberia_tt
+		newline = yes
+		unlock_decision_category_tooltip = IBR_dream_category
+		newline = yes
+		custom_effect_tooltip = {
+			localization_key = adds_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		newline = yes
+		set_variable = { IBR_union_growth = 0.25 tooltip = IBR_sectarian_growth_change_tt }
+		newline = yes
+		custom_effect_tooltip = IBR_division_stability_tt
+		hidden_effect = {
+			set_country_flag = is_IBR
+			mark_formed_country_formable = yes
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			IBR_setup_states = yes
+			IBR_seed_sectarianism = yes
+			IBR_update_average = yes
+			add_dynamic_modifier = { modifier = IBR_divided_peninsula }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_common_curriculum
+	icon = focus_generic_education
+	x = -2
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_common_curriculum"
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		custom_effect_tooltip = IBR_common_curriculum_tt
+		newline = yes
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		newline = yes
+		add_to_variable = { IBR_union_growth = -0.2 tooltip = IBR_sectarian_growth_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_iberian_broadcasting
+	icon = goal_JAP_analogue_television
+	x = 2
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_PROPAGANDA }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_iberian_broadcasting"
+		add_stability = 0.02
+		newline = yes
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = { IBR_change_sectarianism_all = yes }
+		# The nation that was absorbed gets a second cut
+		if = {
+			limit = { original_tag = SPR }
+			set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_portugal_change_tt }
+			hidden_effect = { IBR_change_sectarianism_portugal = yes }
+		}
+		else = {
+			set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_spain_change_tt }
+			hidden_effect = { IBR_change_sectarianism_spain = yes }
+		}
+		hidden_effect = { IBR_update_map_dirty = yes }
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_single_market
+	icon = customs_union
+	x = 0
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_TRADE }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_single_market"
+		add_timed_idea = {
+			idea = IBR_single_market_idea
+			days = 730
+		}
+		set_temp_variable = { IBR_sect_change = -3 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_charter_of_the_nations
+	icon = SPR_nuestra_identidad
+	x = -1
+	y = 1
+	relative_position_id = IBR_common_curriculum
+	cost = 4
+	prerequisite = { focus = IBR_common_curriculum }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_charter_of_the_nations"
+		add_stability = 0.03
+		set_temp_variable = { IBR_sect_change = -15 tooltip = IBR_sectarianism_charter_change_tt }
+		hidden_effect = {
+			86 = { IBR_change_sectarianism = yes }
+			88 = { IBR_change_sectarianism = yes }
+			1041 = { IBR_change_sectarianism = yes }
+			944 = { IBR_change_sectarianism = yes }
+			94 = { IBR_change_sectarianism = yes }
+			92 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_capital_lisbon
+	icon = flag_portugal
+	x = -1
+	y = 1
+	relative_position_id = IBR_iberian_broadcasting
+	cost = 4
+	prerequisite = { focus = IBR_iberian_broadcasting }
+	mutually_exclusive = { focus = IBR_capital_madrid }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		96 = {
+			is_owned_by = ROOT
+			is_fully_controlled_by = ROOT
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_capital_lisbon"
+		set_capital = { state = 96 }
+		add_victory_points = {
+			province = 11805
+			value = 16
+		}
+		add_victory_points = {
+			province = 9767
+			value = -4
+		}
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = { IBR_change_sectarianism_portugal = yes }
+		set_temp_variable = { IBR_sect_change = 5 tooltip = IBR_sectarianism_castile_change_tt }
+		hidden_effect = {
+			91 = { IBR_change_sectarianism = yes }
+			90 = { IBR_change_sectarianism = yes }
+			970 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = POR
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_capital_madrid
+	icon = spain
+	x = 1
+	y = 1
+	relative_position_id = IBR_iberian_broadcasting
+	cost = 4
+	prerequisite = { focus = IBR_iberian_broadcasting }
+	mutually_exclusive = { focus = IBR_capital_lisbon }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		91 = {
+			is_owned_by = ROOT
+			is_fully_controlled_by = ROOT
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_capital_madrid"
+		set_capital = { state = 91 }
+		add_victory_points = {
+			province = 9767
+			value = 6
+		}
+		add_victory_points = {
+			province = 11805
+			value = -1
+		}
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_spain_change_tt }
+		hidden_effect = { IBR_change_sectarianism_spain = yes }
+		set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_portugal = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = SPR
+		}
+		modifier = {
+			factor = 0.1
+			any_of_scopes = {
+				array = global.IBR_states
+				is_portugal_state = yes
+				check_variable = { IBR_sectarianism > 85 }
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_madrid_lisbon_high_speed
+	icon = grants_for_high_speed_trains
+	x = -1
+	y = 1
+	relative_position_id = IBR_single_market
+	cost = 4
+	prerequisite = { focus = IBR_single_market }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INFRASTRUCTURE }
+
+	available = {
+		has_railway_level = { state = 91 level = 6 }
+		has_railway_level = { state = 968 level = 6 }
+		has_railway_level = { state = 1056 level = 6 }
+		has_railway_level = { state = 96 level = 6 }
+		has_railway_connection = { start_state = 91 target_state = 96 }
+		NOT = { has_completed_focus = IBR_proclaim_the_iberian_union }
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_madrid_lisbon_high_speed"
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_rail_change_tt }
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		newline = yes
+		add_to_variable = { IBR_union_growth = -0.5 tooltip = IBR_sectarian_growth_change_tt }
+		hidden_effect = {
+			91 = { IBR_change_sectarianism = yes }
+			968 = { IBR_change_sectarianism = yes }
+			1056 = { IBR_change_sectarianism = yes }
+			96 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_common_citizenship
+	icon = CHI_passport
+	x = 0
+	y = 3
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_capital_lisbon focus = IBR_capital_madrid }
+	prerequisite = { focus = IBR_charter_of_the_nations }
+	prerequisite = { focus = IBR_single_market }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_STABILITY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_common_citizenship"
+		add_political_power = 75
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_spanish_language
+	icon = one_language_state
+	x = -2
+	y = 1
+	relative_position_id = IBR_common_citizenship
+	cost = 4
+	prerequisite = { focus = IBR_common_citizenship }
+	mutually_exclusive = { focus = IBR_bilingual_union focus = IBR_portuguese_language }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	available = {
+		has_political_power > 99
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_spanish_language"
+		add_political_power = -100
+		newline = yes
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_spain_change_tt }
+		hidden_effect = { IBR_change_sectarianism_spain = yes }
+		set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_portugal = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = SPR
+		}
+		modifier = {
+			factor = 0.1
+			any_of_scopes = {
+				array = global.IBR_states
+				is_portugal_state = yes
+				check_variable = { IBR_sectarianism > 85 }
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_bilingual_union
+	icon = two_language_state
+	x = 0
+	y = 1
+	relative_position_id = IBR_common_citizenship
+	cost = 4
+	prerequisite = { focus = IBR_common_citizenship }
+	mutually_exclusive = { focus = IBR_spanish_language focus = IBR_portuguese_language }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_bilingual_union"
+		add_ideas = IBR_bilingual_union_idea
+		newline = yes
+		set_temp_variable = { IBR_sect_change = 4 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_portuguese_language
+	icon = blr_promote_language
+	x = 2
+	y = 1
+	relative_position_id = IBR_common_citizenship
+	cost = 4
+	prerequisite = { focus = IBR_common_citizenship }
+	mutually_exclusive = { focus = IBR_spanish_language focus = IBR_bilingual_union }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	available = {
+		has_political_power > 99
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_portuguese_language"
+		add_political_power = -100
+		newline = yes
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = { IBR_change_sectarianism_portugal = yes }
+		set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_sectarianism_spain_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_spain = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = POR
+		}
+		modifier = {
+			factor = 0.1
+			any_of_scopes = {
+				array = global.IBR_states
+				is_spain_state = yes
+				check_variable = { IBR_sectarianism > 85 }
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_proclaim_the_iberian_union
+	icon = focus_generic_free_iberia
+	x = 0
+	y = 2
+	relative_position_id = IBR_common_citizenship
+	cost = 5
+	prerequisite = { focus = IBR_spanish_language focus = IBR_bilingual_union focus = IBR_portuguese_language }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+	available = {
+		IBR_controls_union_states = yes
+		IBR_sectarianism_resolved = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_proclaim_the_iberian_union"
+		custom_effect_tooltip = IBR_project_ends_tt
+		newline = yes
+		IBR_end_project = yes
+		newline = yes
+		add_timed_idea = {
+			idea = IBR_national_unity
+			days = 730
+		}
+		hidden_effect = { news_event = { id = iberian_union.2 hours = 6 } }
+	}
+
+	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = IBR_gates_of_iberia
+	icon = reinforce_southern_naval_bases
+	x = 0
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 7
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_DIPLOMACY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_gates_of_iberia"
+		add_political_power = 50
+		newline = yes
+		add_ideas = IBR_gates_of_iberia_idea
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_south_atlantic_islands
+	icon = attack_virgin_islands
+	x = -4
+	y = 1
+	relative_position_id = IBR_gates_of_iberia
+	cost = 7
+	prerequisite = { focus = IBR_gates_of_iberia }
+	will_lead_to_war_with = ENG
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_FOREIGN_POLICY }
+
+	available = {
+		country_exists = ENG
+		NOT = { has_war_with = ENG }
+		NOT = { is_in_faction_with = ENG }
+		OR = {
+			24 = { is_owned_by = ENG }
+			25 = { is_owned_by = ENG }
+			1216 = { is_owned_by = ENG }
+		}
+		has_government = nationalist
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		naval_strength_ratio = { tag = ENG ratio > 3 }
+		custom_trigger_tooltip = {
+			tooltip = POR_gdp_doubles_britain_tt
+			set_temp_variable = { POR_doubled_british_gdp = ENG.gdp_total }
+			multiply_temp_variable = { POR_doubled_british_gdp = 2 }
+			check_variable = { gdp_total > POR_doubled_british_gdp }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_south_atlantic_islands"
+		ENG = { add_opinion_modifier = { target = ROOT modifier = claims_on_us } }
+		newline = yes
+		ENG = { country_event = { id = portugal.313 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			if = { limit = { 24 = { is_owned_by = ENG } } transfer_state = 24 }
+			if = { limit = { 25 = { is_owned_by = ENG } } transfer_state = 25 }
+			if = { limit = { 1216 = { is_owned_by = ENG } } transfer_state = 1216 }
+			ENG = { POR_demand_conceded = yes }
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			if = { limit = { 24 = { is_owned_by = ENG } } add_state_claim = 24 }
+			if = { limit = { 25 = { is_owned_by = ENG } } add_state_claim = 25 }
+			if = { limit = { 1216 = { is_owned_by = ENG } } add_state_claim = 1216 }
+			create_wargoal = {
+				type = take_claimed_state
+				target = ENG
+				generator = { 24 25 1216 }
+				expire = 365
+			}
+			ENG = {
+				add_opinion_modifier = { target = ROOT modifier = sanctions_relations }
+				POR_south_atlantic_refused = yes
+			}
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_gibraltar_two_flags
+	icon = british_cooperation
+	x = -2
+	y = 1
+	relative_position_id = IBR_gates_of_iberia
+	cost = 7
+	prerequisite = { focus = IBR_gates_of_iberia }
+	search_filters = { FOCUS_FILTER_DIPLOMACY FOCUS_FILTER_ANNEXATION }
+
+	available = {
+		country_exists = ENG
+		NOT = { has_war_with = ENG }
+		19 = { is_owned_by = ENG }
+		ENG = { influence_higher_5 = yes }
+	}
+
+	bypass = {
+		owns_state = 19
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_gibraltar_two_flags"
+		ENG = { country_event = { id = portugal.104 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			transfer_state = 19
+			give_military_access = ENG
+			custom_effect_tooltip = POR_gibraltar_base_tt
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = IBR_gibraltar_refused_tt }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			NOT = { ENG = { has_opinion = { target = ROOT value > 50 } } }
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_tangier_zone
+	icon = attack_morocco
+	x = 0
+	y = 1
+	relative_position_id = IBR_gates_of_iberia
+	cost = 10
+	prerequisite = { focus = IBR_gates_of_iberia }
+	will_lead_to_war_with = MOR
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = MOR
+		NOT = { has_war_with = MOR }
+		374 = { is_owned_by = MOR }
+		custom_trigger_tooltip = {
+			tooltip = POR_ideology_allows_war_on_morocco_tt
+			POR_ideology_allows_war_on_morocco = yes
+		}
+	}
+
+	bypass = {
+		owns_state = 374
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_tangier_zone"
+		374 = { add_core_of = ROOT }
+		newline = yes
+		MOR = { country_event = { id = portugal.106 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { transfer_state = 374 }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			add_state_claim = 374
+			create_wargoal = {
+				type = take_claimed_state
+				target = MOR
+				generator = { 374 }
+			}
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_tangier_zone"
+		374 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_andorran_accession
+	icon = align_to_andorra
+	x = 2
+	y = 1
+	relative_position_id = IBR_gates_of_iberia
+	cost = 10
+	prerequisite = { focus = IBR_gates_of_iberia }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_DIPLOMACY }
+
+	available = {
+		country_exists = ADO
+		NOT = { has_war_with = ADO }
+		ADO = { influence_higher_30 = yes }
+	}
+
+	bypass = {
+		owns_state = 945
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_andorran_accession"
+		ADO = { country_event = { id = portugal.110 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { annex_country = { target = ADO transfer_troops = yes } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = POR_andorra_request_refused_tt }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_crown_of_aragon
+	icon = FRA_coalition_of_european_kings
+	x = 0
+	y = 2
+	relative_position_id = IBR_gates_of_iberia
+	cost = 7
+	prerequisite = { focus = IBR_gibraltar_two_flags focus = IBR_tangier_zone focus = IBR_andorran_accession }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_FOREIGN_POLICY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_crown_of_aragon"
+		add_political_power = 50
+		navy_experience = 25
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_sardinian_question
+	icon = ITA_Focus_Add_Constitution
+	x = -2
+	y = 1
+	relative_position_id = IBR_crown_of_aragon
+	cost = 7
+	prerequisite = { focus = IBR_crown_of_aragon }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		country_exists = ITA
+		84 = { is_owned_by = ITA }
+		NOT = { country_exists = SAR }
+		NOT = { has_war_with = ITA }
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_sardinian_question"
+		ITA = { country_event = { id = portugal.130 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = POR_sardinia_freed_tt }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = POR_sardinia_refused_tt }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_occitan_fiefs
+	icon = focus_generic_free_iberia
+	x = 0
+	y = 1
+	relative_position_id = IBR_crown_of_aragon
+	cost = 10
+	prerequisite = { focus = IBR_crown_of_aragon }
+	will_lead_to_war_with = FRA
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = FRA
+		NOT = { has_war_with = FRA }
+		NOT = { is_in_faction_with = FRA }
+		NOT = { FRA = { is_subject_of = ROOT } }
+		custom_trigger_tooltip = {
+			tooltip = IBR_occitan_fiefs_french_tt
+			OR = {
+				961 = { is_owned_by = FRA }
+				63 = { is_owned_by = FRA }
+				1000 = { is_owned_by = FRA }
+			}
+		}
+	}
+
+	bypass = {
+		owns_state = 961
+		owns_state = 63
+		owns_state = 1000
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_occitan_fiefs"
+		if = {
+			limit = {
+				FRA = { has_idea = NATO_member }
+				NOT = { has_idea = NATO_member }
+			}
+			custom_effect_tooltip = POR_france_nato_tt
+			newline = yes
+		}
+		961 = { add_core_of = ROOT }
+		63 = { add_core_of = ROOT }
+		1000 = { add_core_of = ROOT }
+		FRA = { add_opinion_modifier = { target = ROOT modifier = claims_on_us } }
+		newline = yes
+		FRA = { country_event = { id = portugal.321 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			transfer_state = 961
+			transfer_state = 63
+			transfer_state = 1000
+			FRA = { POR_demand_conceded = yes }
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			add_state_claim = 961
+			add_state_claim = 63
+			add_state_claim = 1000
+			create_wargoal = {
+				type = take_claimed_state
+				target = FRA
+				generator = { 961 63 1000 }
+				expire = 365
+			}
+			FRA = { POR_demand_refused = yes }
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_occitan_fiefs"
+		961 = { add_core_of = ROOT }
+		63 = { add_core_of = ROOT }
+		1000 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_grimaldi_protectorate
+	icon = Monegasque_Army
+	x = 0
+	y = 1
+	relative_position_id = IBR_occitan_fiefs
+	cost = 5
+	prerequisite = { focus = IBR_occitan_fiefs }
+	will_lead_to_war_with = MNC
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		1000 = { is_owned_by = ROOT }
+		country_exists = MNC
+		NOT = { has_war_with = MNC }
+		NOT = { is_in_faction_with = MNC }
+		NOT = { MNC = { is_subject_of = ROOT } }
+	}
+
+	bypass = {
+		OR = {
+			owns_state = 946
+			MNC = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_grimaldi_protectorate"
+		946 = { add_core_of = ROOT }
+		newline = yes
+		MNC = { country_event = { id = portugal.322 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			puppet = MNC
+			MNC = { POR_demand_conceded = yes }
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = MNC
+				expire = 365
+			}
+			MNC = { POR_demand_refused = yes }
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_grimaldi_protectorate"
+		946 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_two_sicilies
+	icon = italy_parliament
+	x = 2
+	y = 1
+	relative_position_id = IBR_crown_of_aragon
+	cost = 10
+	prerequisite = { focus = IBR_crown_of_aragon }
+	will_lead_to_war_with = ITA
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = ITA
+		NOT = { has_war_with = ITA }
+		NOT = { is_in_faction_with = ITA }
+		NOT = { ITA = { is_subject_of = ROOT } }
+	}
+
+	bypass = {
+		owns_state = 82
+		owns_state = 83
+		owns_state = 956
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_two_sicilies"
+		if = {
+			limit = {
+				ITA = { has_idea = NATO_member }
+				NOT = { has_idea = NATO_member }
+			}
+			custom_effect_tooltip = POR_italy_nato_tt
+			newline = yes
+		}
+		82 = { add_core_of = ROOT }
+		83 = { add_core_of = ROOT }
+		956 = { add_core_of = ROOT }
+		ITA = { add_opinion_modifier = { target = ROOT modifier = claims_on_us } }
+		newline = yes
+		ITA = { country_event = { id = portugal.309 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			transfer_state = 82
+			transfer_state = 83
+			transfer_state = 956
+			ITA = { POR_demand_conceded = yes }
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			add_state_claim = 82
+			add_state_claim = 83
+			add_state_claim = 956
+			create_wargoal = {
+				type = take_claimed_state
+				target = ITA
+				generator = { 82 83 956 }
+				expire = 365
+			}
+			ITA = { POR_demand_refused = yes }
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_two_sicilies"
+		82 = { add_core_of = ROOT }
+		83 = { add_core_of = ROOT }
+		956 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_sardinian_protectorate
+	icon = Dutch_Maritime_Industry
+	x = -2
+	y = 2
+	relative_position_id = IBR_crown_of_aragon
+	cost = 7
+	prerequisite = { focus = IBR_sardinian_question }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = POR_sardinia_open_tt
+			OR = {
+				AND = {
+					country_exists = SAR
+					SAR = { is_subject = no }
+				}
+				AND = {
+					has_country_flag = POR_sardinia_refused
+					84 = { is_owned_by = ITA }
+					NOT = { is_in_faction_with = ITA }
+					NOT = { has_government = democratic }
+					has_war_support > 0.70
+					OR = {
+						has_idea = intervention_global_interventionism
+						has_idea = intervention_neo_imperialism
+					}
+				}
+			}
+		}
+		NOT = { has_war_with = ITA }
+	}
+
+	bypass = {
+		OR = {
+			owns_state = 84
+			SAR = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_sardinian_protectorate"
+		84 = { add_core_of = ROOT }
+		newline = yes
+		if = {
+			limit = {
+				country_exists = SAR
+				SAR = { is_subject = no }
+			}
+			SAR = { country_event = { id = portugal.132 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = POR_sardinia_associated_tt }
+		}
+		else = {
+			if = {
+				limit = {
+					ITA = { has_idea = NATO_member }
+					NOT = { has_idea = NATO_member }
+				}
+				custom_effect_tooltip = POR_italy_nato_tt
+				newline = yes
+			}
+			ITA = { country_event = { id = portugal.319 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				transfer_state = 84
+				ITA = { POR_demand_conceded = yes }
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				create_wargoal = {
+					type = take_claimed_state
+					target = ITA
+					generator = { 84 }
+					expire = 365
+				}
+				ITA = { POR_demand_refused = yes }
+			}
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_sardinian_protectorate"
+		84 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_knights_isle
+	icon = focus_rus_oceangoing
+	x = 2
+	y = 2
+	relative_position_id = IBR_crown_of_aragon
+	cost = 7
+	prerequisite = { focus = IBR_two_sicilies }
+	will_lead_to_war_with = MLT
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = MLT
+		NOT = { has_war_with = MLT }
+		NOT = { is_in_faction_with = MLT }
+		NOT = { MLT = { is_subject_of = ROOT } }
+	}
+
+	bypass = {
+		OR = {
+			owns_state = 85
+			MLT = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_knights_isle"
+		85 = { add_core_of = ROOT }
+		newline = yes
+		MLT = { country_event = { id = portugal.318 days = 1 } }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = {
+			puppet = MLT
+			MLT = { POR_demand_conceded = yes }
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = {
+			create_wargoal = {
+				type = puppet_wargoal_focus
+				target = MLT
+				expire = 365
+			}
+			MLT = { POR_demand_refused = yes }
+		}
+	}
+
+	bypass_effect = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_knights_isle"
+		85 = { add_core_of = ROOT }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_mare_nostrum
+	icon = Dutch_European_Navy
+	x = 0
+	y = 3
+	relative_position_id = IBR_crown_of_aragon
+	cost = 10
+	prerequisite = { focus = IBR_sardinian_protectorate focus = IBR_grimaldi_protectorate focus = IBR_two_sicilies focus = IBR_knights_isle }
+	search_filters = { FOCUS_FILTER_NAVY FOCUS_FILTER_ANNEXATION }
+
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = POR_two_aragon_holdings_tt
+			count_triggers = {
+				amount = 2
+				84 = { is_owned_by = ROOT }
+				83 = { is_owned_by = ROOT }
+				82 = { is_owned_by = ROOT }
+				961 = { is_owned_by = ROOT }
+				63 = { is_owned_by = ROOT }
+				1000 = { is_owned_by = ROOT }
+				85 = { is_owned_by = ROOT }
+				SAR = { is_subject_of = ROOT }
+				MLT = { is_subject_of = ROOT }
+				MNC = { is_subject_of = ROOT }
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_mare_nostrum"
+		swap_ideas = {
+			remove_idea = IBR_gates_of_iberia_idea
+			add_idea = IBR_mare_nostrum_idea
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_suez_question
+	icon = attack_egypt
+	x = 0
+	y = 1
+	relative_position_id = IBR_mare_nostrum
+	cost = 10
+	prerequisite = { focus = IBR_mare_nostrum }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		1255 = {
+			NOT = { is_owned_by = ROOT }
+			OWNER = {
+				NOT = { has_war_with = ROOT }
+				NOT = { is_in_faction_with = ROOT }
+				NOT = { is_subject_of = ROOT }
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_suez_question"
+		add_state_claim = 1255
+		newline = yes
+		custom_effect_tooltip = POR_suez_wargoal_tt
+		hidden_effect = {
+			1255 = {
+				OWNER = {
+					add_opinion_modifier = { target = ROOT modifier = claims_on_us }
+					ROOT = {
+						set_temp_variable = { wargoal_on = PREV }
+						set_temp_variable = { wargoal_type = 1 }
+						add_threat_from_wargoal_effect = yes
+						create_wargoal = {
+							type = take_claimed_state
+							target = PREV
+							generator = { 1255 }
+							expire = 365
+						}
+					}
+				}
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = POR_suez_peace_tt
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = { factor = 25 original_tag = POR has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 original_tag = POR POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_ibero_american_community
+	icon = Latin_Popular_Union
+	x = 7
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 5
+	allow_branch = { original_tag = POR }
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_ibero_american_community"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_every_hispanic_country_tt
+			limit = { Spanish_Speaking = yes }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = political_outreach }
+		}
+		newline = yes
+		add_political_power = 50
+		newline = yes
+		if = {
+			limit = { NOT = { any_country = { POR_is_community_founder = yes } } }
+			custom_effect_tooltip = IBR_community_founded_tt
+			unlock_decision_category_tooltip = POR_community_category
+			hidden_effect = { POR_community_found = yes }
+		}
+		else_if = {
+			limit = { POR_is_community_founder = yes }
+			custom_effect_tooltip = IBR_community_opens_tt
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_mexican_service_contracts
+	icon = align_to_mexico
+	x = -3
+	y = 1
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_ibero_american_community }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_mexico_tt
+			OR = { NOT = { country_exists = MEX } MEX = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_mexican_service_contracts"
+		add_political_power = -60
+		newline = yes
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_mexico_and_guatemala_tt
+			limit = {
+				OR = {
+					original_tag = MEX
+					original_tag = GUA
+				}
+			}
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+		}
+		newline = yes
+		if = {
+			limit = { 838 = { owner = { IBR_grants_concession = yes } } }
+			838 = { owner = { give_resource_rights = { receiver = ROOT state = 838 } } }
+		}
+		if = {
+			limit = { 842 = { owner = { IBR_grants_concession = yes } } }
+			842 = { owner = { give_resource_rights = { receiver = ROOT state = 842 } } }
+		}
+		newline = yes
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						OR = {
+							original_tag = MEX
+							original_tag = GUA
+						}
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_zapatista_card
+	icon = focus_CHI_guerrilla_warfare
+	x = -3
+	y = 2
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_mexican_service_contracts }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = MEX
+		MEX = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = MEX value > 29 }
+		MEX = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = MEX }
+			MEX = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_zapatista_card"
+		add_political_power = -75
+		newline = yes
+		MEX = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_new_spain
+	icon = attack_mexico
+	x = -3
+	y = 3
+	relative_position_id = IBR_ibero_american_community
+	prerequisite = { focus = IBR_zapatista_card }
+	will_lead_to_war_with = MEX
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = MEX
+		MEX = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = MEX }
+			MEX = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_new_spain"
+		MEX = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			MEX = { NOT = { MD_can_reach_for_invasion = yes } }
+		}
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_antilles_partnership
+	icon = align_to_cuba
+	x = -1
+	y = 1
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_ibero_american_community }
+	search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_cuba_tt
+			OR = { NOT = { country_exists = CUB } CUB = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_antilles_partnership"
+		add_political_power = -60
+		newline = yes
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_caribbean_countries_tt
+			limit = {
+				OR = {
+					original_tag = CUB
+					original_tag = DOM
+				}
+			}
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+		}
+		newline = yes
+		if = {
+			limit = { 862 = { owner = { IBR_grants_concession = yes } } }
+			862 = { owner = { give_resource_rights = { receiver = ROOT state = 862 } } }
+		}
+		newline = yes
+		set_temp_variable = { int_investment_change = 10 }
+		modify_international_investment_effect = yes
+		newline = yes
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						OR = {
+							original_tag = CUB
+							original_tag = DOM
+						}
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_ladies_in_white
+	icon = focus_PER_stage_mass_protests
+	x = -1
+	y = 2
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_antilles_partnership }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = CUB
+		CUB = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = CUB value > 29 }
+		CUB = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = CUB }
+			CUB = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_ladies_in_white"
+		add_political_power = -75
+		newline = yes
+		CUB = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_pearl_of_the_antilles
+	icon = attack_cuba
+	x = -1
+	y = 3
+	relative_position_id = IBR_ibero_american_community
+	cost = 7
+	prerequisite = { focus = IBR_ladies_in_white }
+	will_lead_to_war_with = CUB
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = CUB
+		CUB = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = CUB }
+			CUB = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_pearl_of_the_antilles"
+		CUB = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			CUB = { NOT = { MD_can_reach_for_invasion = yes } }
+		}
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_andean_concessions
+	icon = mining
+	x = 1
+	y = 1
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_ibero_american_community }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_colombia_tt
+			OR = { NOT = { country_exists = COL } COL = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_andean_concessions"
+		add_political_power = -60
+		newline = yes
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_andean_countries_tt
+			limit = {
+				OR = {
+					original_tag = ARG
+					original_tag = BOL
+					original_tag = CHL
+					original_tag = COL
+					original_tag = PRU
+				}
+			}
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+		}
+		newline = yes
+		if = {
+			limit = { 454 = { owner = { IBR_grants_concession = yes } } }
+			454 = { owner = { give_resource_rights = { receiver = ROOT state = 454 } } }
+		}
+		if = {
+			limit = { 897 = { owner = { IBR_grants_concession = yes } } }
+			897 = { owner = { give_resource_rights = { receiver = ROOT state = 897 } } }
+		}
+		if = {
+			limit = { 949 = { owner = { IBR_grants_concession = yes } } }
+			949 = { owner = { give_resource_rights = { receiver = ROOT state = 949 } } }
+		}
+		if = {
+			limit = { 914 = { owner = { IBR_grants_concession = yes } } }
+			914 = { owner = { give_resource_rights = { receiver = ROOT state = 914 } } }
+		}
+		if = {
+			limit = { 902 = { owner = { IBR_grants_concession = yes } } }
+			902 = { owner = { give_resource_rights = { receiver = ROOT state = 902 } } }
+		}
+		newline = yes
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						OR = {
+							original_tag = ARG
+							original_tag = BOL
+							original_tag = CHL
+							original_tag = COL
+							original_tag = PRU
+						}
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_arms_to_the_llanos
+	icon = com_rebel_man
+	x = 1
+	y = 2
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_andean_concessions }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = COL
+		COL = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = COL value > 29 }
+		COL = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = COL }
+			COL = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_arms_to_the_llanos"
+		add_political_power = -75
+		newline = yes
+		COL = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_new_granada
+	icon = attack_colombia
+	x = 1
+	y = 3
+	relative_position_id = IBR_ibero_american_community
+	cost = 7
+	prerequisite = { focus = IBR_arms_to_the_llanos }
+	will_lead_to_war_with = COL
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = COL
+		COL = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = COL }
+			COL = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_new_granada"
+		COL = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			COL = { NOT = { MD_can_reach_for_invasion = yes } }
+		}
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_orinoco_belt
+	icon = align_to_venezuela
+	x = 3
+	y = 1
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_ibero_american_community }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_venezuela_tt
+			OR = { NOT = { country_exists = VEN } VEN = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_orinoco_belt"
+		add_political_power = -60
+		newline = yes
+		if = {
+			limit = { country_exists = VEN }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = VEN.id }
+			change_influence_percentage = yes
+			VEN = {
+				add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			}
+			newline = yes
+		}
+		if = {
+			limit = { 874 = { owner = { IBR_grants_concession = yes } } }
+			874 = { owner = { give_resource_rights = { receiver = ROOT state = 874 } } }
+			newline = yes
+		}
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						original_tag = VEN
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_caracas_opposition
+	icon = com_rebel_woman
+	x = 3
+	y = 2
+	relative_position_id = IBR_ibero_american_community
+	cost = 5
+	prerequisite = { focus = IBR_orinoco_belt }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = VEN
+		VEN = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = VEN value > 29 }
+		VEN = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = VEN }
+			VEN = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_caracas_opposition"
+		add_political_power = -75
+		newline = yes
+		VEN = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_captaincy_general
+	icon = attack_venezuela
+	x = 3
+	y = 3
+	relative_position_id = IBR_ibero_american_community
+	cost = 7
+	prerequisite = { focus = IBR_caracas_opposition }
+	will_lead_to_war_with = VEN
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = VEN
+		VEN = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = VEN }
+			VEN = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_captaincy_general"
+		VEN = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			VEN = { NOT = { MD_can_reach_for_invasion = yes } }
+		}
+		modifier = { factor = 25 has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+		modifier = { factor = 0 POR_ai_not_imperial_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_hispanic_federation
+	icon = accept_treaty
+	x = 0
+	y = 4
+	relative_position_id = IBR_ibero_american_community
+	prerequisite = { focus = IBR_ibero_american_community }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_POLITICAL }
+
+	available = {
+		has_completed_focus = IBR_mexican_service_contracts
+		has_completed_focus = IBR_antilles_partnership
+		has_completed_focus = IBR_andean_concessions
+		has_completed_focus = IBR_orinoco_belt
+		any_other_country = {
+			OR = {
+				tag = MEX
+				tag = CUB
+				tag = COL
+				tag = VEN
+			}
+			OR = {
+				is_subject_of = ROOT
+				influence_higher_30 = yes
+			}
+		}
+		has_political_power > 99
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_hispanic_federation"
+		add_political_power = -100
+		newline = yes
+		custom_effect_tooltip = IBR_indies_federation_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = MEX
+						tag = CUB
+						tag = COL
+						tag = VEN
+					}
+					NOT = { has_war_with = ROOT }
+					OR = {
+						is_subject_of = ROOT
+						influence_higher_30 = yes
+					}
+				}
+				country_event = { id = iberian_union.4 days = 1 }
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = IBR_federation_join_tt }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = IBR_federation_refused_tt }
+	}
+
+	ai_will_do = { base = 5 }
+}
+
+shared_focus = {
+	id = IBR_lusophone_inheritance
+	icon = POR_Imperio_Ultramarino
+	x = 7
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 5
+	allow_branch = { original_tag = SPR }
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_lusophone_inheritance"
+		set_temp_variable = { percent_change = 4 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_every_lusophone_country_tt
+			limit = { portuguese_speaking = yes }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = political_outreach }
+		}
+		newline = yes
+		add_political_power = 50
+		newline = yes
+		if = {
+			limit = { NOT = { any_country = { POR_is_community_founder = yes } } }
+			custom_effect_tooltip = IBR_community_founded_tt
+			unlock_decision_category_tooltip = POR_community_category
+			hidden_effect = { POR_community_found = yes }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_brazilian_partnership
+	icon = align_to_brazil
+	x = -3
+	y = 1
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_lusophone_inheritance }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_brazil_tt
+			OR = { NOT = { country_exists = BRA } BRA = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_brazilian_partnership"
+		add_political_power = -60
+		newline = yes
+		if = {
+			limit = { country_exists = BRA }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = BRA.id }
+			change_influence_percentage = yes
+			BRA = {
+				add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			}
+			newline = yes
+		}
+		if = {
+			limit = { 883 = { owner = { IBR_grants_concession = yes } } }
+			883 = { owner = { give_resource_rights = { receiver = ROOT state = 883 } } }
+			newline = yes
+		}
+		add_tech_bonus = {
+			name = IBR_brazilian_partnership
+			uses = 1
+			bonus = 0.20
+			category = CAT_aircraft
+		}
+		newline = yes
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						original_tag = BRA
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_pre_salt_dispute
+	icon = focus_generic_offshore_oil_rig
+	x = -3
+	y = 2
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_brazilian_partnership }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = BRA
+		BRA = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = BRA value > 29 }
+		BRA = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = BRA }
+			BRA = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_pre_salt_dispute"
+		add_political_power = -75
+		newline = yes
+		BRA = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_tordesillas
+	icon = recover_brazil
+	x = -3
+	y = 3
+	relative_position_id = IBR_lusophone_inheritance
+	prerequisite = { focus = IBR_pre_salt_dispute }
+	will_lead_to_war_with = BRA
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = BRA
+		BRA = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = BRA }
+			BRA = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_tordesillas"
+		BRA = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			NOT = { SPR_ai_war_ready = yes }
+		}
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_angolan_oil_blocks
+	icon = POR_angola
+	x = -1
+	y = 1
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_lusophone_inheritance }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_angola_tt
+			OR = {
+				AND = { country_exists = AGL AGL = { influence_higher_10 = yes } }
+				AND = { NOT = { country_exists = AGL } country_exists = UNI UNI = { influence_higher_10 = yes } }
+				AND = { NOT = { country_exists = AGL } NOT = { country_exists = UNI } }
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_angolan_oil_blocks"
+		add_political_power = -60
+		newline = yes
+		set_temp_variable = { percent_change = 10 }
+		set_temp_variable = { tag_index = ROOT.id }
+		every_other_country = {
+			tooltip = IBR_angola_tt
+			limit = {
+				OR = {
+					original_tag = AGL
+					original_tag = UNI
+				}
+			}
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+		}
+		newline = yes
+		if = {
+			limit = { 298 = { owner = { IBR_grants_concession = yes } } }
+			298 = { owner = { give_resource_rights = { receiver = ROOT state = 298 } } }
+			newline = yes
+		}
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						OR = {
+							original_tag = AGL
+							original_tag = UNI
+						}
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_cabinda_separatists
+	icon = com_rebel_man
+	x = -1
+	y = 2
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_angolan_oil_blocks }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		OR = {
+			AND = {
+				country_exists = AGL
+				AGL = { IBR_foreign_target = yes }
+			}
+			AND = {
+				NOT = { country_exists = AGL }
+				country_exists = UNI
+				UNI = { IBR_foreign_target = yes }
+			}
+		}
+		has_political_power > 74
+		OR = {
+			AND = { country_exists = AGL network_strength = { target = AGL value > 29 } }
+			AND = { NOT = { country_exists = AGL } country_exists = UNI network_strength = { target = UNI value > 29 } }
+		}
+		OR = {
+			AND = { country_exists = AGL AGL = { influence_higher_20 = yes } }
+			AND = { NOT = { country_exists = AGL } country_exists = UNI UNI = { influence_higher_20 = yes } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			AND = {
+				country_exists = AGL
+				AND = {
+					country_exists = AGL
+					AGL = { is_subject_of = ROOT }
+				}
+			}
+			AND = {
+				country_exists = UNI
+				AND = {
+					country_exists = UNI
+					UNI = { is_subject_of = ROOT }
+				}
+			}
+			AND = {
+				NOT = { country_exists = AGL }
+				NOT = { country_exists = UNI }
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_cabinda_separatists"
+		add_political_power = -75
+		newline = yes
+		if = {
+			limit = { country_exists = AGL }
+			AGL = { IBR_hostile_pressure = yes }
+		}
+		else = { UNI = { IBR_hostile_pressure = yes } }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_angolan_intervention
+	icon = african_conflict
+	x = -1
+	y = 3
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 7
+	prerequisite = { focus = IBR_cabinda_separatists }
+	will_lead_to_war_with = AGL
+	will_lead_to_war_with = UNI
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		OR = {
+			AND = {
+				country_exists = AGL
+				AGL = {
+					NOT = { is_in_faction_with = ROOT }
+					NOT = { is_subject_of = ROOT }
+				}
+			}
+			AND = {
+				country_exists = UNI
+				UNI = {
+					NOT = { is_in_faction_with = ROOT }
+					NOT = { is_subject_of = ROOT }
+				}
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = AGL }
+			AGL = { is_subject_of = ROOT }
+		}
+		OR = {
+			NOT = { country_exists = UNI }
+			UNI = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_angolan_intervention"
+		if = {
+			limit = {
+				country_exists = AGL
+				AGL = {
+					NOT = { is_in_faction_with = ROOT }
+					NOT = { is_subject_of = ROOT }
+				}
+			}
+			AGL = { IBR_puppet_wargoal = yes }
+		}
+		if = {
+			limit = {
+				country_exists = UNI
+				UNI = {
+					NOT = { is_in_faction_with = ROOT }
+					NOT = { is_subject_of = ROOT }
+				}
+			}
+			UNI = { IBR_puppet_wargoal = yes }
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			NOT = { SPR_ai_war_ready = yes }
+		}
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_mozal_smelter
+	icon = POR_mozambique
+	x = 1
+	y = 1
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_lusophone_inheritance }
+	search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_mozambique_tt
+			OR = { NOT = { country_exists = MOZ } MOZ = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_mozal_smelter"
+		add_political_power = -60
+		newline = yes
+		if = {
+			limit = { country_exists = MOZ }
+			set_temp_variable = { percent_change = 10 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = MOZ.id }
+			change_influence_percentage = yes
+			MOZ = {
+				add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			}
+			newline = yes
+		}
+		if = {
+			limit = { 264 = { owner = { IBR_grants_concession = yes } } }
+			264 = { owner = { give_resource_rights = { receiver = ROOT state = 264 } } }
+			newline = yes
+		}
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						original_tag = MOZ
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_renamo_contacts
+	icon = focus_CHI_guerrilla_warfare
+	x = 1
+	y = 2
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_mozal_smelter }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = MOZ
+		MOZ = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = MOZ value > 29 }
+		MOZ = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = MOZ }
+			MOZ = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_renamo_contacts"
+		add_political_power = -75
+		newline = yes
+		MOZ = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_rose_coloured_map
+	icon = attack_mozambique
+	x = 1
+	y = 3
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 7
+	prerequisite = { focus = IBR_renamo_contacts }
+	will_lead_to_war_with = MOZ
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = MOZ
+		MOZ = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = MOZ }
+			MOZ = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_rose_coloured_map"
+		MOZ = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			NOT = { SPR_ai_war_ready = yes }
+		}
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_macau_forum
+	icon = Port_Arthur_Colony
+	x = 3
+	y = 1
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_lusophone_inheritance }
+	search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_RESEARCH }
+
+	available = {
+		has_political_power > 59
+		custom_trigger_tooltip = {
+			tooltip = IBR_influence_east_timor_tt
+			OR = { NOT = { country_exists = TIM } TIM = { influence_higher_10 = yes } }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_macau_forum"
+		add_political_power = -60
+		newline = yes
+		if = {
+			limit = { country_exists = CHI }
+			CHI = {
+				add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			}
+			newline = yes
+		}
+		add_tech_bonus = {
+			name = IBR_macau_forum
+			uses = 2
+			bonus = 0.20
+			category = CAT_industry
+		}
+		newline = yes
+		if = {
+			limit = { country_exists = TIM }
+			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = TIM.id }
+			change_influence_percentage = yes
+			TIM = {
+				add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+				reverse_add_opinion_modifier = { target = ROOT modifier = IBR_partnership_trade }
+			}
+		}
+		if = {
+			limit = { 1226 = { owner = { IBR_grants_concession = yes } } }
+			1226 = { owner = { give_resource_rights = { receiver = ROOT state = 1226 } } }
+		}
+		newline = yes
+		if = {
+			limit = { POR_is_community_founder = yes }
+			hidden_effect = {
+				every_other_country = {
+					limit = {
+						original_tag = TIM
+						POR_community_eligible = yes
+						NOT = { has_war_with = ROOT }
+						OR = {
+							is_subject = no
+							is_subject_of = ROOT
+						}
+					}
+					country_event = { id = portugal.330 days = 1 }
+				}
+			}
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = IBR_community_invite_tt }
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_timor_gap
+	icon = trade_with_east_timor
+	x = 3
+	y = 2
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 5
+	prerequisite = { focus = IBR_macau_forum }
+	search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_WAR_SUPPORT }
+
+	available = {
+		country_exists = TIM
+		TIM = { IBR_foreign_target = yes }
+		has_political_power > 74
+		network_strength = { target = TIM value > 29 }
+		TIM = { influence_higher_20 = yes }
+		custom_trigger_tooltip = {
+			tooltip = IBR_regional_intervention_tt
+			OR = {
+				has_idea = intervention_regional_interventionism
+				has_idea = intervention_global_interventionism
+				has_idea = intervention_neo_imperialism
+			}
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = TIM }
+			TIM = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_timor_gap"
+		add_political_power = -75
+		newline = yes
+		TIM = { IBR_hostile_pressure = yes }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_timor_protectorate
+	icon = attack_east_timor
+	x = 3
+	y = 3
+	relative_position_id = IBR_lusophone_inheritance
+	cost = 7
+	prerequisite = { focus = IBR_timor_gap }
+	will_lead_to_war_with = TIM
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_INFLUENCE }
+
+	available = {
+		NOT = { has_government = democratic }
+		has_war_support > 0.70
+		OR = {
+			has_idea = intervention_global_interventionism
+			has_idea = intervention_neo_imperialism
+		}
+		country_exists = TIM
+		TIM = {
+			NOT = { is_in_faction_with = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
+	}
+
+	bypass = {
+		OR = {
+			NOT = { country_exists = TIM }
+			TIM = { is_subject_of = ROOT }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_timor_protectorate"
+		TIM = { IBR_puppet_wargoal = yes }
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 0
+			NOT = { SPR_ai_war_ready = yes }
+		}
+		modifier = { factor = 25 has_global_flag = SPR_MONARCHIST_FOCUS_PATH }
+		modifier = { factor = 0 SPR_ai_not_monarchist_path = yes }
+	}
+}
+
+shared_focus = {
+	id = IBR_lusophone_federation
+	icon = accept_treaty
+	x = 0
+	y = 4
+	relative_position_id = IBR_lusophone_inheritance
+	prerequisite = { focus = IBR_tordesillas }
+	prerequisite = { focus = IBR_angolan_intervention }
+	prerequisite = { focus = IBR_rose_coloured_map }
+	prerequisite = { focus = IBR_timor_protectorate }
+	search_filters = { FOCUS_FILTER_ANNEXATION FOCUS_FILTER_POLITICAL }
+
+	available = {
+		custom_trigger_tooltip = {
+			tooltip = IBR_ultramar_all_subjects_tt
+			any_other_country = {
+				OR = {
+					tag = BRA
+					tag = AGL
+					tag = UNI
+					tag = MOZ
+					tag = TIM
+				}
+				is_subject_of = ROOT
+			}
+			NOT = {
+				any_other_country = {
+					OR = {
+						tag = BRA
+						tag = AGL
+						tag = UNI
+						tag = MOZ
+						tag = TIM
+					}
+					NOT = { is_subject_of = ROOT }
+				}
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_lusophone_federation"
+		custom_effect_tooltip = IBR_ultramar_federation_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					OR = {
+						tag = BRA
+						tag = AGL
+						tag = UNI
+						tag = MOZ
+						tag = TIM
+					}
+					is_subject_of = ROOT
+				}
+				country_event = { id = iberian_union.4 days = 1 }
+			}
+		}
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		effect_tooltip = { custom_effect_tooltip = IBR_federation_join_tt }
+		newline = yes
+		custom_effect_tooltip = TT_IF_THEY_REJECT
+		effect_tooltip = { custom_effect_tooltip = IBR_federation_refused_tt }
+	}
+
+	ai_will_do = { base = 5 }
+}

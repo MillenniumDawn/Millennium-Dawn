@@ -1,0 +1,285 @@
+add_namespace = iberian_union
+
+# iberian_union.1 to iberian_union.13: the shared Dream of Iberia tree, fired for Spain or Portugal
+
+# A union state has reached 100 sectarianism. ROOT owns the union; IBR_seceding_state and IBR_seceding_tag are set by IBR_weekly_tick.
+country_event = {
+	id = iberian_union.1
+	title = iberian_union.1.t
+	desc = iberian_union.1.d
+	picture = GFX_2017_catalan_refer
+
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = IBR_secession_pending }
+
+	option = {
+		name = iberian_union.1.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.1.a executed"
+		add_stability = -0.05
+		custom_effect_tooltip = IBR_secession_accept_tt
+		hidden_effect = {
+			clr_country_flag = IBR_secession_pending
+			IBR_release_seceding_state = yes
+			var:IBR_seceding_state = { remove_from_array = { global.IBR_states = THIS } }
+			if = {
+				limit = { check_variable = { IBR_selected_state = IBR_seceding_state } }
+				clear_variable = IBR_selected_state
+			}
+			IBR_update_average = yes
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				has_army_size = { size < 24 }
+			}
+			modifier = {
+				factor = 0.3
+				has_army_size = { size > 47 }
+			}
+		}
+	}
+
+	option = {
+		name = iberian_union.1.b
+		log = "[GetDateText]: [This.GetName]: iberian_union.1.b executed"
+		add_war_support = 0.05
+		custom_effect_tooltip = IBR_secession_war_tt
+		hidden_effect = {
+			clr_country_flag = IBR_secession_pending
+			IBR_release_seceding_state = yes
+			var:IBR_seceding_state = { set_state_flag = IBR_independence_war }
+			declare_war_on = {
+				target = var:IBR_seceding_tag
+				type = annex_everything
+			}
+			if = {
+				limit = { check_variable = { IBR_selected_state = IBR_seceding_state } }
+				clear_variable = IBR_selected_state
+			}
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				has_army_size = { size > 23 }
+			}
+			modifier = {
+				factor = 1.5
+				has_stability > 0.5
+			}
+		}
+	}
+}
+
+# Proclamation news. FROM is the new union.
+news_event = {
+	id = iberian_union.2
+	title = iberian_union.2.t
+	desc = iberian_union.2.d
+	picture = GFX_iberia_united_news
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = iberian_union.2.a
+		trigger = { has_country_flag = is_IBR }
+	}
+
+	option = {
+		name = iberian_union.2.b
+		trigger = { NOT = { has_country_flag = is_IBR } }
+	}
+}
+
+# A founder branch capstone invites a subject to federate. FROM is the union, ROOT the subject.
+country_event = {
+	id = iberian_union.4
+	title = iberian_union.4.t
+	desc = iberian_union.4.d
+	picture = GFX_treaty
+
+	is_triggered_only = yes
+
+	option = {
+		name = iberian_union.4.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.4.a executed"
+		custom_effect_tooltip = IBR_federation_join_tt
+		hidden_effect = {
+			every_owned_state = { add_core_of = FROM }
+			FROM = { annex_country = { target = ROOT transfer_troops = yes } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value > 49 }
+			}
+			modifier = {
+				factor = 1.5
+				has_government = FROM
+			}
+			modifier = {
+				factor = 0.5
+				has_war = yes
+			}
+			modifier = {
+				factor = 0.1
+				NOT = { is_subject_of = FROM }
+			}
+		}
+	}
+
+	option = {
+		name = iberian_union.4.b
+		log = "[GetDateText]: [This.GetName]: iberian_union.4.b executed"
+		custom_effect_tooltip = IBR_federation_refused_tt
+		ai_chance = { base = 30 }
+	}
+}
+
+# A fatal brawl between youths from two regions. IBR_incident_state is set by IBR_roll_incident.
+country_event = {
+	id = iberian_union.10
+	title = iberian_union.10.t
+	desc = iberian_union.10.d
+	picture = GFX_politics_protest
+
+	is_triggered_only = yes
+
+	trigger = {
+		var:IBR_incident_state = {
+			is_owned_by = ROOT
+			check_variable = { IBR_sectarianism < 75.01 }
+		}
+	}
+
+	option = {
+		name = iberian_union.10.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.10.a executed"
+		add_political_power = -25
+		set_temp_variable = { IBR_sect_change = 8 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = iberian_union.10.b
+		log = "[GetDateText]: [This.GetName]: iberian_union.10.b executed"
+		set_temp_variable = { IBR_sect_change = 15 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# A derby between clubs from two regions ends in a riot. IBR_incident_state is set by IBR_roll_incident.
+country_event = {
+	id = iberian_union.11
+	title = iberian_union.11.t
+	desc = iberian_union.11.d
+	picture = GFX_riots_austerity
+
+	is_triggered_only = yes
+
+	trigger = {
+		var:IBR_incident_state = {
+			is_owned_by = ROOT
+			check_variable = { IBR_sectarianism < 80.01 }
+		}
+	}
+
+	option = {
+		name = iberian_union.11.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.11.a executed"
+		add_political_power = -25
+		set_temp_variable = { IBR_sect_change = 5 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = iberian_union.11.b
+		log = "[GetDateText]: [This.GetName]: iberian_union.11.b executed"
+		set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = { base = 50 }
+	}
+}
+
+# A teacher from another region goes viral. IBR_incident_state is set by IBR_roll_incident.
+country_event = {
+	id = iberian_union.12
+	title = iberian_union.12.t
+	desc = iberian_union.12.d
+	picture = GFX_generic_education_event_picture
+
+	is_triggered_only = yes
+
+	trigger = {
+		var:IBR_incident_state = {
+			is_owned_by = ROOT
+			check_variable = { IBR_sectarianism > 0 }
+		}
+	}
+
+	option = {
+		name = iberian_union.12.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.12.a executed"
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+}
+
+# Firefighters from every region hold back a wildfire. IBR_incident_state is set by IBR_roll_incident.
+country_event = {
+	id = iberian_union.13
+	title = iberian_union.13.t
+	desc = iberian_union.13.d
+	picture = GFX_bushfire
+
+	is_triggered_only = yes
+
+	trigger = {
+		var:IBR_incident_state = {
+			is_owned_by = ROOT
+			check_variable = { IBR_sectarianism > 0 }
+		}
+	}
+
+	option = {
+		name = iberian_union.13.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.13.a executed"
+		set_temp_variable = { IBR_sect_change = -15 tooltip = IBR_incident_sectarianism_change_tt }
+		hidden_effect = {
+			var:IBR_incident_state = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+}
