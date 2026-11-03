@@ -151,7 +151,7 @@ def test_discovery_names_validators_from_their_scripts_in_name_order(
         str(write_path(tmp_path, name, 'TITLE = "STUB VALIDATION"\n'))
         for name in ("validate_b_two.py", "validate_a.py")
     ]
-    monkeypatch.setattr(runner.glob, "glob", lambda _pattern: scripts)
+    monkeypatch.setattr(runner, "list_files", lambda *_args, **_kwargs: scripts)
 
     assert runner.discover_validators() == [
         ("a", "validate_a.py", "STUB"),
