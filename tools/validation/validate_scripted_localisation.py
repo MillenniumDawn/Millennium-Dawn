@@ -608,8 +608,8 @@ class Validator(BaseValidator):
         getter_refs: Dict[str, List[Tuple[str, int]]] = {}
         if self.staged_only:
             # Staged scans cover a handful of files, so they map in-process.
-            all_defined_locs = ScriptedLocalisation.get_all_defined_localisations(
-                mod_path=self.mod_path, lowercase=False, workers=1
+            all_defined_locs, _ = ScriptedLocalisation.get_all_defined_localisations(
+                mod_path=self.mod_path, lowercase=False, return_paths=True, workers=1
             )
             defined_locs, defined_paths = (
                 ScriptedLocalisation.get_all_defined_localisations(
@@ -635,10 +635,11 @@ class Validator(BaseValidator):
             # repo-wide consumer scan only when a definition file is staged.
             all_used_locs: List[str] = []
             if defined_locs:
-                all_used_locs = ScriptedLocalisation.get_all_used_localisations(
+                all_used_locs, _ = ScriptedLocalisation.get_all_used_localisations(
                     mod_path=self.mod_path,
                     defined_names=set(all_defined_locs),
                     lowercase=False,
+                    return_paths=True,
                     workers=self.workers,
                     pool=self._get_pool(),
                 )

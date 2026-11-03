@@ -36,7 +36,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, List, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -360,7 +360,7 @@ class Scanner:
         start: int,
         end: int,
         ctx: Context,
-        chain: Conditions = (),
+        chain: Sequence[Tuple[str, str]] = (),
         required: bool = False,
     ):
         blocks = _child_blocks(self.text, start, end)
@@ -483,7 +483,7 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
     if "add_tech_bonus" not in raw and "sp:" not in raw and "has_tech" not in raw:
         return []
     relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
-    availability = frozenset()
+    availability: FrozenSet[str] = frozenset()
     if relative.startswith("common/national_focus/") or (
         relative.startswith("common/decisions/") and "/categories/" not in relative
     ):

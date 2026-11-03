@@ -2995,7 +2995,7 @@ class Validator(BaseValidator):
             if not prefix or prefix.group(1) not in country_tags:
                 continue
             pins = _flat_tag_pins(d.allowed) or {
-                tag for _, tag in cat_pins.get(token_to_cat.get(d.token), set())
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
                 prefix_results.append(
