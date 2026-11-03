@@ -318,8 +318,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   spending law change, or a money modifier the script names commits money and
   justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
   A free build costs nothing here, even for a building with upkeep, matching the
-  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
-  modifiers on an idea the option adds.
+  `skip_payment` rule. Unconditional own-country event calls in the same file also
+  commit money when the follow-up charges in its immediate effects or every option
+  guarantees a money cost. Routing events are followed to a fixed point; a free exit,
+  conditional call or charge, a trigger beyond the receiver's tag, foreign scope, and
+  tooltip preview do not prove payment.
+  Known gaps: cross-file or cross-country reply-chain costs, scripted-effect event
+  dispatch, and money modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
