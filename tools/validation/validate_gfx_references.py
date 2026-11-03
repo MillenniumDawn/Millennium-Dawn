@@ -26,6 +26,7 @@ from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
     line_for_offset,
+    list_files,
     strip_comments,
     strip_inline_comment,
 )
@@ -301,7 +302,7 @@ def _vanilla_gfx_files() -> List[str]:
     base = find_hoi4_install()
     if not base:
         return []
-    files = glob.glob(os.path.join(base, "interface", "**", "*.gfx"), recursive=True)
+    files = list_files(os.path.join(base, "interface"), ("*.gfx",))
     for sub in ("dlc", "integrated_dlc"):
         files.extend(
             glob.glob(
@@ -317,7 +318,7 @@ def _vanilla_gui_files() -> List[str]:
     base = find_hoi4_install()
     if not base:
         return []
-    files = glob.glob(os.path.join(base, "interface", "**", "*.gui"), recursive=True)
+    files = list_files(os.path.join(base, "interface"), ("*.gui",))
     for sub in ("dlc", "integrated_dlc"):
         files.extend(
             glob.glob(
@@ -455,21 +456,7 @@ def _search_filter_names_from_text(raw: str) -> List[str]:
 
 def _iter_txt_files(root: str, *, recursive: bool = True) -> List[str]:
     """Return `.txt` paths under `root`. Missing dirs yield an empty list."""
-    if not recursive:
-        try:
-            return [
-                os.path.join(root, fn)
-                for fn in os.listdir(root)
-                if fn.endswith(".txt") and os.path.isfile(os.path.join(root, fn))
-            ]
-        except OSError:
-            return []
-    files: List[str] = []
-    for dirpath, _dirnames, filenames in os.walk(root):
-        for fn in filenames:
-            if fn.endswith(".txt"):
-                files.append(os.path.join(dirpath, fn))
-    return files
+    return list_files(root, recursive=recursive)
 
 
 def _load_names_from_dir(
@@ -683,11 +670,11 @@ def _declaration_engine_refs(
 def _load_ace_pool_names(mod_path: str) -> FrozenSet[str]:
     """Return every country tag and graphical culture an ace portrait can key off."""
     names: Set[str] = set()
-    for pattern, name_re in (
-        (os.path.join("common", "country_tags", "*.txt"), _COUNTRY_TAG_RE),
-        (os.path.join("common", "countries", "*.txt"), _GRAPHICAL_CULTURE_RE),
+    for subdir, name_re in (
+        (os.path.join("common", "country_tags"), _COUNTRY_TAG_RE),
+        (os.path.join("common", "countries"), _GRAPHICAL_CULTURE_RE),
     ):
-        for filepath in glob.glob(os.path.join(mod_path, pattern)):
+        for filepath in list_files(os.path.join(mod_path, subdir), recursive=False):
             raw = _read_raw(filepath)
             if raw is None:
                 continue
@@ -1199,11 +1186,7 @@ class Validator(BaseValidator):
         )
         # should_skip_file ignores gfx/ wholesale, so _collect_files can't reach
         # the equipment-designer graphic_db there — and it names sprites literally.
-        files.extend(
-            glob.iglob(
-                os.path.join(self.mod_path, "gfx", "**", "*.txt"), recursive=True
-            )
-        )
+        files.extend(list_files(os.path.join(self.mod_path, "gfx")))
         refs = set(
             self._pool_flat_map(_parse_script_refs, [(f, self.mod_path) for f in files])
         )
@@ -1768,15 +1751,15 @@ class Validator(BaseValidator):
         )
 
     def _graphic_db_files(self) -> List[str]:
-        files = glob.glob(
+        files = list_files(
             os.path.join(
                 self.mod_path,
                 "gfx",
                 "interface",
                 "equipmentdesigner",
                 "graphic_db",
-                "*.txt",
-            )
+            ),
+            recursive=False,
         )
         if not self.staged_only:
             return files

@@ -24,7 +24,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
-from shared_utils import find_hoi4_install
+from shared_utils import find_hoi4_install, get_root_dir, list_files
 from sprite_index import _gfx_root
 from validate_defines import find_vanilla_defines, parse_vanilla_defines
 from validate_file_paths import collect_vanilla_paths
@@ -37,9 +37,7 @@ from validate_gfx_references import (
 )
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_DOC_DIR = os.path.normpath(
-    os.path.join(_HERE, "..", "..", "resources", "documentation")
-)
+_DOC_DIR = os.path.join(get_root_dir(), "resources", "documentation")
 
 
 class RefreshError(Exception):
@@ -63,8 +61,12 @@ def _write_manifest(
         "",
     ]
     lines = sorted(entries)
-    with open(os.path.join(_HERE, filename), "w", encoding="utf-8", newline="") as fh:
-        fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    path = os.path.join(_HERE, filename)
+    try:
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    except OSError as exc:
+        raise RefreshError(f"cannot write {path}: {exc}") from exc
     return f"{filename}: {len(lines)} entries"
 
 
@@ -86,7 +88,7 @@ def _refresh_defines() -> str:
 
 def _refresh_docs() -> str:
     source = os.path.join(_install(), "documentation")
-    docs = glob.glob(os.path.join(source, "*.md"))
+    docs = list_files(source, ("*.md",), recursive=False)
     if not docs:
         raise RefreshError(f"no .md files under {source}")
     added = 0
@@ -180,9 +182,7 @@ def _vanilla_entity_files(base: str) -> List[str]:
         path
         for root in roots
         for extension in ("asset", "gfx")
-        for path in glob.glob(
-            os.path.join(root, "gfx", "**", f"*.{extension}"), recursive=True
-        )
+        for path in list_files(os.path.join(root, "gfx"), (f"*.{extension}",))
     )
 
 
@@ -250,7 +250,9 @@ _TARGETS: Dict[str, Callable[[], str]] = {
 
 def main() -> int:
     targets = sorted(_TARGETS)
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description="Refresh every vanilla-derived file the validators read, from a local HOI4 install."
+    )
     parser.add_argument(
         "--only",
         nargs="+",
