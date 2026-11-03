@@ -1211,6 +1211,9 @@ class Validator(BaseValidator):
             keyed: Dict[str, Set[str]] = {}
             token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
+                # A policy's same_as_mio reaches whatever the attached MIO covers.
+                if token == "same_as_mio" and rel.startswith(POLICY_DIR + "/"):
+                    continue
                 line = block_offset + block.count("\n", 0, token_start) + 1
                 keyed[token] = {
                     stat
@@ -1339,8 +1342,10 @@ class Validator(BaseValidator):
         ):
             team = DESIGN_TEAM_RE.search(text, lo, hi)
             variant_type = _scalar(text, lo, hi, "type")
-            body = self._org_bodies.get(team.group(1)) if team else None
-            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if team is None or variant_type is None:
+                continue
+            body = self._org_bodies.get(team.group(1))
+            archetype = equipment.archetype_of(variant_type)
             if body is None or archetype is None:
                 continue
             tokens = self._org_equipment_types(team.group(1), body)

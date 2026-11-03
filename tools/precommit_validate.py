@@ -148,9 +148,13 @@ _REGISTRY = [
         "validate_agency_upgrades",
         [
             ("common/intelligence_agency_upgrades/", TXT),
-            ("common/on_actions/MD_auto_agency_on_actions.txt", ""),
-            ("common/scripted_guis/00_MD_auto_agency_scripted_gui.txt", ""),
-            ("localisation/english/MD_auto_agency_l_english.yml", ""),
+            ("common/decisions/", TXT),
+            ("common/factions/goals/", TXT),
+            ("common/national_focus/", TXT),
+            ("common/scripted_effects/", TXT),
+            ("events/", TXT),
+            ("history/countries/", TXT),
+            ("interface/", GFX),
         ],
     ),
     _Spec(

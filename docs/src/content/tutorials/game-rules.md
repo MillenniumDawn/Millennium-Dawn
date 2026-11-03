@@ -84,7 +84,6 @@ See the [Influence Guide](/player-tutorials/influence-guide/).
 
 - **Rail-Roaded World War**: No (default), Yes. Yes limits the sandbox and pushes the world toward a world war by a set year.
 - **Enable MD Ledger**: Yes (default), No.
-- **Enable MD Colored Puppets**: Yes (default), No. Yes recolors a puppet to match its overlord.
 - **Historical Events Trigger**: No (default), Yes. Yes makes certain events fire within the month of their historical date.
 - **Corporate History**: Full (default), Outcomes Only, Off. Outcomes Only applies the historical route without showing its event choices or one-time rewards.
 - **Enable Aircraft Carrier Only Raids**: No (default), Yes.

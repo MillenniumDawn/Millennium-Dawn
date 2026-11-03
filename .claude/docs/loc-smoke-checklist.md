@@ -1,12 +1,12 @@
 # Localisation Smoke Checklist
 
-Python tests and CI prove that tokens, scopes, and formats in English strings match
-what we expect. Only the game proves they render. Run this list by hand after a change
+Python tests and CI check the markup in English strings. Only the game proves it
+renders. Run this list by hand after a change
 to dynamic localisation, and report the result apart from the Python and CI results.
 
-The automated side lives in `tools/tests/content/localisation_contract_test.py`, the
-section sign rows of `tools/tests/validation/validate_localisation_syntax_test.py`, and
-the getter spelling tests in `tools/tests/validation/validate_scripted_localisation_test.py`.
+The automated side lives in the section sign rows of
+`tools/tests/validation/validate_localisation_syntax_test.py` and the getter spelling
+tests in `tools/tests/validation/validate_scripted_localisation_test.py`.
 
 ## What to record
 

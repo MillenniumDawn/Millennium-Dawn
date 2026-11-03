@@ -36,6 +36,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   is the single list of what runs, which change groups select each validator, and which
   run without `--strict`. Its `args` are also the flags of the main baseline run, so a
   PR and main enable the same checks.
+- Trailing-whitespace cleanup uses `fix_styling.py --trailing-whitespace-only` on
+  staged-diff lines only, preserving untouched lines and refusing worktree/index
+  mismatches. The normal commit flow stashes unstaged work first. The fixer never
+  stages its output; stage the changed lines and retry when it makes a correction.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
   on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
@@ -76,30 +80,32 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   confirm the vanilla culture source/policy; validate entity
   clone parents and `attach` targets (including vanilla entities); check that cultural
   sprite sets cover `_1` through `_7`, including the known tierless-only
-  `northamerican_gfx` entries; validate cross-file clone load order; report cosmetic-tag
-  users of tag-prefixed entity sets; and include `gfx/entities/` in the CI workspace.
-  Those checks depend on entity parsing and/or game lookup behavior and are not covered
-  by the country registration milestone.
+  `northamerican_gfx` entries; validate cross-file clone load order; and report
+  cosmetic-tag users of tag-prefixed entity sets. Those checks depend on entity parsing
+  and/or game lookup behavior and are not covered by the country registration milestone.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
 ## CI artifacts and reports
 
-- `test-suite.yml` holds no write credentials until the `report` job. A
-  `pull_request` run, re-runs included, validates its event's head and base. A
+- `test-suite.yml` has read-only repository permissions, including its `report`
+  job. A `pull_request` run, re-runs included, validates its event's head and base. A
   dispatch looks the PR up, which is the explicit refresh to its live head. The report
-  leaves the PR comment alone when the head has since moved. A head predating the
-  tooling contract stops with one error asking to merge main. The report and the base
-  scan run the head's scripts with the workflow's flags, so a new flag joins the
-  contract.
+  publisher leaves the PR comment alone when the head has since moved. A head
+  predating the tooling contract stops with one error asking to merge main. The
+  report and base scan run the head's scripts with the workflow's flags, so a new
+  flag joins the contract.
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
-  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+  and only `gfx/flags`, `gfx/interface/decisions`, and `gfx/texticons` from the art
+  trees, plus the entity definitions in `gfx/entities` and `gfx/models`. Size checks
+  report art outside them as `decision-icon-unmeasured`.
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
-  diff-scoped style sections. It runs with main's token and cache scope, so it refuses
+  diff-scoped style sections. A PR dispatch requires `head_sha` so its run title
+  pins the validated commit. It runs with main's token and cache scope, so it refuses
   fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
   re-dispatches same-repository PRs with no successful run on their current head and
   base. `validator-cache.yml` rebuilds main's baseline.
@@ -135,11 +141,30 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
   four `hashFiles` sites must match, and each checkout must hold those files.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
-  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
-  `python3 tools/merge_changelog.py --fix` repairs it.
-- The report posts one PR comment: new findings against main's baseline first, then
-  findings in touched files. A clean run removes the older comment. Section titles
-  derive from artifact directory names, so keep those slugs stable.
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order
+  and warns, without failing, about exact repeats and untidy entries;
+  `python3 tools/merge_changelog.py --fix` repairs both. Its sparse checkout holds only
+  `Changelog.txt` and `check_changelog.py`, so that script imports no other tools.
+- The report uploads `report.md` and `comment.json` in `validation-report`.
+  `validation-report.yml` publishes the comment after the Test Suite completes,
+  including failed runs. It checks out only the default branch's trusted code and
+  reads the artifact as data outside the checkout. Only this publisher has
+  `pull-requests: write`; its other permissions are `actions: read` and
+  `contents: read`. It has no checks, contents, or issues write access.
+- The publisher verifies the source workflow, repository, run attempt, PR, and
+  validated head against GitHub before writing. Fork runs often have an empty
+  `pull_requests` list, so the pinned run title identifies the target. The PR's
+  head repository and branch must also match the source run. Dispatches can publish
+  only to same-repository PRs. Closed PRs and moved heads are left alone; unreadable
+  PRs and malformed or missing payloads fail publishing. Artifact mentions are
+  disabled. The new workflow must land on the default branch before it can run.
+- The comment lists new findings against main's baseline first, then findings in
+  touched files. A clean run removes the older comment. If change detection
+  succeeds and every validation job is skipped, `--no-tests-selected` also removes
+  the older comment instead of posting an empty report. Empty results without that
+  flag still report missing output. The workflow no longer writes Checks API
+  annotations; the validation jobs and suite gate remain the merge checks. Section
+  titles derive from artifact directory names, so keep those slugs stable.
 - Every validator writes a sidecar, even when clean, and the baseline meta lists them.
   A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
   drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
@@ -157,18 +182,19 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## Refreshing vanilla-derived data
 
-CI has no HOI4 install, so six checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
+CI has no HOI4 install, so seven checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
 
 Files live under `tools/validation/` except the `docs` target.
 
-| Target    | File                           | Read by                      |
-| --------- | ------------------------------ | ---------------------------- |
-| `defines` | `vanilla_defines.txt`          | `validate_defines.py`        |
-| `docs`    | `resources/documentation/*.md` | `validate_modifiers.py`      |
-| `fonts`   | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
-| `gui`     | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
-| `paths`   | `vanilla_paths.txt`            | `validate_file_paths.py`     |
-| `sprites` | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+| Target     | File                           | Read by                      |
+| ---------- | ------------------------------ | ---------------------------- |
+| `defines`  | `vanilla_defines.txt`          | `validate_defines.py`        |
+| `docs`     | `resources/documentation/*.md` | `validate_modifiers.py`      |
+| `entities` | `vanilla_entities.txt`         | `validate_oob_units.py`      |
+| `fonts`    | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
+| `gui`      | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
+| `paths`    | `vanilla_paths.txt`            | `validate_file_paths.py`     |
+| `sprites`  | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
 
 - `docs` files are verbatim copies of the game's own `documentation/`.
 - `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).

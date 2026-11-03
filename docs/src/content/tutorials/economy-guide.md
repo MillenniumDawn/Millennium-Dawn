@@ -554,7 +554,9 @@ If all buildings are fully staffed and workers remain, those workers become unem
 
 If unemployment exceeds the **Unemployment Threshold** shown in the Economy window, debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as unemployment rises.
 
-You can prioritize which building types receive workers first from the Economy window.
+Each building type has a **priority** from 1 to 10, set in the Employment Priority panel of the Economy window. When there are fewer workers than jobs, workers are shared out in proportion to priority and to the jobs each type offers, so a priority 10 job is filled ten times as readily as a priority 1 job. Workers a fully staffed type cannot use go to the others. When every job can be filled, priorities do nothing.
+
+The defaults rank each type by the GDP it produces per worker, so productive buildings such as microchip plants are staffed first. Power plants start at priority 10 so the grid keeps running. Each entry shows the share of the workforce employed in the type, with the share it would employ when fully staffed in brackets. Healthcare and government administration are staffed after the building types.
 
 ### Productivity
 
@@ -1137,6 +1139,8 @@ Your law takes a share of that rate:
 **Emigration** works the other way. Unemployment and being at war push your own people out, whatever your law is.
 
 Your **Net Migration Rate** is immigration minus emigration. The Economy window shows it next to the Maximum Migration Rate, and its tooltip breaks it into the two parts.
+
+The Economy window also shows the **Net Migrants** we expect next month as a number of people, and the estimated change in **Workforce Fulfillment** next month. The tooltips split both into natural growth, migration and other growth modifiers.
 
 Immigration control costs money. Stricter laws cost more to enforce.
 
