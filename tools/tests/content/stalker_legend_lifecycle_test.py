@@ -1,8 +1,8 @@
 import re
 
 import pytest
-from stalker_lifecycle_test import ROOT, StalkerScript, _event
 from ai_race_state_model_test import _parse_race_script
+from stalker_lifecycle_test import ROOT, StalkerScript, _event
 
 ROUTES = {
     "STALKER_apply_clear_sky_spared": "STALKER_strelok_turned_back",
