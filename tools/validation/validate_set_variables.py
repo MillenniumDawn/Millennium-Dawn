@@ -15,7 +15,7 @@ from multiprocessing import Pool
 from typing import Dict, FrozenSet, Iterator, List, Tuple
 
 import disk_cache
-from shared_utils import validation_config
+from shared_utils import find_mod_root, validation_config
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -75,22 +75,12 @@ def _resolve_mod_root(path: str) -> str:
 
     Reference counting must cover the whole mod, but `--path` may point at a
     subdirectory (e.g. common/scripted_effects/). Walk up until a directory
-    holding `descriptor.mod` (or both `common/` and `localisation/`) is found
-    and scan references from there; otherwise fall back to `path` unchanged.
-    Walking up from the *given* path (not the tool's own location) keeps
-    sibling-checkout runs correct.
+    holding both `common/` and `localisation/` is found and scan references
+    from there; otherwise fall back to `path` unchanged. Walking up from the
+    *given* path (not the tool's own location) keeps sibling-checkout runs
+    correct.
     """
-    cur = os.path.abspath(path)
-    while True:
-        if os.path.exists(os.path.join(cur, "descriptor.mod")) or (
-            os.path.isdir(os.path.join(cur, "common"))
-            and os.path.isdir(os.path.join(cur, "localisation"))
-        ):
-            return cur
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return os.path.abspath(path)
-        cur = parent
+    return find_mod_root(path, ("common", "localisation")) or os.path.abspath(path)
 
 
 def _strip_scope_prefix(name: str) -> str:

@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import fnmatch
 import json
 import os
 import re
@@ -15,7 +16,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
-from itertools import chain
+from itertools import chain, islice
 from pathlib import Path
 from typing import (
     Any,
@@ -1722,9 +1723,39 @@ def collect_files_by_mode(
 
 
 def get_root_dir() -> str:
-    """Resolve the mod root directory (two levels up from tools/linting/)."""
-    return os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
+    """The checkout root that holds this tools/ directory."""
+    return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def find_mod_root(
+    start: str | os.PathLike[str], markers: Tuple[str, ...]
+) -> Optional[str]:
+    """The nearest of *start* and its parents that holds every *markers* directory."""
+    path = os.path.abspath(start)
+    while not all(os.path.isdir(os.path.join(path, marker)) for marker in markers):
+        parent = os.path.dirname(path)
+        if parent == path:
+            return None
+        path = parent
+    return path
+
+
+def list_files(
+    directory: str | os.PathLike[str],
+    patterns: Tuple[str, ...] = ("*.txt",),
+    recursive: bool = True,
+) -> List[str]:
+    """Sorted paths of the files in *directory* whose names match a pattern.
+
+    Subdirectories are searched only when *recursive*. A missing directory
+    gives an empty list.
+    """
+    walk = os.walk(directory)
+    return sorted(
+        os.path.join(dirpath, name)
+        for dirpath, _dirnames, filenames in (walk if recursive else islice(walk, 1))
+        for name in filenames
+        if any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
     )
 
 
@@ -1893,19 +1924,13 @@ def get_all_txt_files(
     include_interface: bool = False,
 ) -> List[str]:
     """Get all .txt files from relevant directories."""
-    import fnmatch
-
     if include_interface:
         directories = _DIRECTORIES_WITH_INTERFACE
-
-    files_list = []
-    for directory in directories:
-        dir_path = os.path.join(root_dir, directory)
-        if os.path.exists(dir_path):
-            for root, _, filenames in os.walk(dir_path):
-                for filename in fnmatch.filter(filenames, "*.txt"):
-                    files_list.append(os.path.join(root, filename))
-    return files_list
+    return [
+        path
+        for directory in directories
+        for path in list_files(os.path.join(root_dir, directory))
+    ]
 
 
 def get_staged_files(

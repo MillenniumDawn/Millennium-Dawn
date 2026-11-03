@@ -1006,11 +1006,7 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
     if event_index is None:
         if not _EVENT_INDEX_BUILT:
-            try:
-                root_dir = get_root_dir()
-            except Exception:
-                root_dir = None
-            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX = _build_event_index(get_root_dir())
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
@@ -2660,12 +2656,7 @@ def _provincial_building_types(mod_root=None):
     downgrades the check to a fixed list rather than silently disabling it.
     """
     if mod_root is None:
-        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
-        # which points at pytest rather than the linter when the tests import
-        # this. realpath so a symlinked checkout still lands on the real root.
-        mod_root = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-        )
+        mod_root = get_root_dir()
     types = set()
     buildings_dir = os.path.join(mod_root, "common", "buildings")
     try:
@@ -2743,17 +2734,9 @@ def _direct_child_matches(body, pattern):
     return found
 
 
-@lru_cache(maxsize=None)
-def _mod_root():
-    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
-    return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-    )
-
-
 def _read_dir_text(*parts):
     """Concatenated text of every .txt directly under the given mod directory."""
-    directory = os.path.join(_mod_root(), *parts)
+    directory = os.path.join(get_root_dir(), *parts)
     chunks = []
     try:
         filenames = sorted(os.listdir(directory))
@@ -2777,7 +2760,7 @@ def _equipment_bonus_enum():
     Returns None when the file can't be read, which disables the check rather
     than reporting every bonus as unknown.
     """
-    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    path = os.path.join(get_root_dir(), "common", "script_enums.txt")
     try:
         with open(path, encoding="utf-8") as f:
             text = f.read()
