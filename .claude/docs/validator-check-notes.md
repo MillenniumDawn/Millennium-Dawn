@@ -848,8 +848,14 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   only the standard prefix, filler words, and one id. Longer text is skipped, so a log
   such as `... <other_decision> setup finished` is a known gap. `Mission` works like
   `Decision`, and an id that runs into `[?...]` is built at runtime and skipped.
+- The idea log id check reads stock `on_add` and `on_remove` wordings only (`Idea X added`,
+  `add idea X`, `remove idea X`, `add X`, `X idea added`). A hand-written message is a known
+  gap. `tools/linting/fix_log_ids.py` fixes the id.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
+- `unneeded-idea-log` (WARNING): an idea `on_add` or `on_remove` log beside nothing but
+  `custom_effect_tooltip` or `effect_tooltip`. The idea standardizer no longer injects one
+  there, but it does not remove an existing one.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and

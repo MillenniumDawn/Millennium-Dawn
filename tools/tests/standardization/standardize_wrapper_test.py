@@ -80,6 +80,7 @@ def _run_main(monkeypatch, capsys, *args):
         "mio",
         "technology",
         "history",
+        "indent",
         "localisation",
     ],
 )
@@ -254,6 +255,19 @@ def test_history_subcommand_runs(tmp_path, monkeypatch, capsys):
     result = _run_main(monkeypatch, capsys, "history", src, "-o", out)
     assert result.returncode == 0
     assert out.exists()
+
+
+def test_indent_subcommand_writes_tabs_and_spacing(tmp_path, monkeypatch, capsys):
+    src = tmp_path / "effects.txt"
+    out = tmp_path / "effects_out.txt"
+    src.write_text("TST_effect = {\n    add_stability=0.1\n}\n", encoding="utf-8")
+
+    result = _run_main(monkeypatch, capsys, "indent", src, "-o", out)
+
+    assert result.returncode == 0
+    assert out.read_text(encoding="utf-8") == (
+        "TST_effect = {\n\tadd_stability = 0.1\n}\n"
+    )
 
 
 def test_localisation_subcommand_with_mod_root(tmp_path, monkeypatch, capsys):

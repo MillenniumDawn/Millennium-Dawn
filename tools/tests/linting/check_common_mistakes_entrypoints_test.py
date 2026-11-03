@@ -22,8 +22,8 @@ def _script(*lines):
 def _messages(tmp_path, rel, *lines):
     path = tmp_path / rel
     _write(path, _script(*lines))
-    errors, warnings = checker.check_file(str(path))
-    return [message for _fp, _line, message in errors + warnings]
+    errors, shadowed, warnings = checker.check_file(str(path))
+    return [message for _fp, _line, message in errors + shadowed + warnings]
 
 
 def _matching(messages, needle):
@@ -295,8 +295,36 @@ _DIVISION = "use multiplication instead of division (/ 100 -> * 0.01)"
     ],
 )
 def test_check_file_line_checks(tmp_path, scoped_refs, rel_path, text, expected):
-    errors, _warnings = checker.check_file(write_under_str(tmp_path, rel_path, text))
+    errors, _shadowed, _warnings = checker.check_file(
+        write_under_str(tmp_path, rel_path, text)
+    )
     assert [(line, message) for _path, line, message in errors] == expected
+
+
+def test_idea_file_dispatch_covers_the_idea_log_checks(tmp_path, scoped_refs):
+    text = _script(
+        "ideas = {",
+        "\tcountry = {",
+        "\t\tTST_idea = {",
+        "\t\t\ton_add = {",
+        '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: add idea TST_other"',
+        "\t\t\t\tcustom_effect_tooltip = TST_tt",
+        "\t\t\t}",
+        "\t\t}",
+        "\t}",
+        "}",
+    )
+
+    errors, _shadowed, warnings = checker.check_file(
+        write_under_str(tmp_path, _IDEAS, text)
+    )
+
+    assert [line for _path, line, _message in errors] == [5]
+    assert [line for _path, line, _message in warnings] == [4]
+    outside_ideas = checker.check_file(
+        write_under_str(tmp_path, "common/scripted_effects/tst.txt", text)
+    )
+    assert outside_ideas[2] == []
 
 
 def test_focus_file_dispatch_covers_the_focus_only_checks(tmp_path, scoped_refs):
@@ -437,7 +465,7 @@ def test_check_file_ignores_a_path_it_cannot_read(tmp_path):
     directory = tmp_path / "common" / "unreadable.txt"
     directory.mkdir(parents=True)
 
-    assert checker.check_file(str(directory)) == ([], [])
+    assert checker.check_file(str(directory)) == ([], [], [])
 
 
 # ---------------------------------------------------------------------------

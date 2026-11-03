@@ -391,6 +391,16 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+# A stock idea on_add/on_remove log; the id is whichever id group matched
+# (m.lastgroup). A hand-written message or a runtime [name] does not match.
+STOCK_IDEA_LOG_RE = re.compile(
+    r'(?P<prefix>\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
+    r"(?:Idea (?P<standard>[\w.-]+) (?:added|removed)"
+    r"|(?:add|remove)(?: idea)? (?P<legacy>[\w.-]+)"
+    r'|(?P<trailing>[\w.-]+) idea added)"'
+)
+
+
 def count_braces(text: str) -> Tuple[int, int]:
     """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
     strings and after an unquoted ``#`` comment."""

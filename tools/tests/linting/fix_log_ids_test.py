@@ -35,12 +35,38 @@ def test_focus_finder_dispatches_to_focus_and_decision():
     from check_common_mistakes import _find_decision_log_mismatches as dec_fn
     from check_common_mistakes import _find_event_log_mismatches as event_fn
     from check_common_mistakes import _find_focus_log_mismatches as focus_fn
+    from check_common_mistakes import _find_idea_log_mismatches as idea_fn
     from fix_log_ids import _finder_for
 
     assert _finder_for("common/national_focus/y.txt") is focus_fn
     assert _finder_for("common/decisions/x.txt") is dec_fn
     assert _finder_for("events/x.txt") is event_fn
-    assert _finder_for("common/ideas/x.txt") is None
+    assert _finder_for("common/ideas/x.txt") is idea_fn
+    assert _finder_for("common/units/x.txt") is None
+
+
+def test_apply_rewrites_idea_log_token(tmp_path):
+    from fix_log_ids import fix_file
+
+    idea = tmp_path / "mod/common/ideas/tst.txt"
+    _write(
+        idea,
+        (
+            "ideas = {\n"
+            "\tcountry = {\n"
+            "\t\tTST_right = {\n"
+            "\t\t\ton_add = {\n"
+            '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: add idea TST_wrong"\n'
+            "\t\t\t\tadd_stability = 0.1\n"
+            "\t\t\t}\n"
+            "\t\t}\n"
+            "\t}\n"
+            "}\n"
+        ),
+    )
+
+    assert fix_file(str(idea)) == (str(idea), 1)
+    assert 'add idea TST_right"\n' in idea.read_text(encoding="utf-8")
 
 
 def test_apply_rewrites_bare_event_option_log_token(tmp_path):

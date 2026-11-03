@@ -12,6 +12,7 @@ import time
 from typing import Any
 
 from common_utils import (
+    LOG_STATEMENT_RE,
     PROP_NAME_RE,
     collapse_blank_runs,
     compact_icon,
@@ -384,8 +385,7 @@ def _effect_has_statements(effect_block):
     else:
         inner = effect_block[1:-1]
     for line in inner:
-        stripped = strip_inline_comment(line).strip()
-        if stripped and not stripped.startswith("log ="):
+        if LOG_STATEMENT_RE.sub("", strip_inline_comment(line)).strip():
             return True
     return False
 
