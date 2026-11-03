@@ -135,7 +135,8 @@ def test_shared_module_change_selects_its_transitive_consumers():
 @pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
     # validate_common_mistakes, validate_decisions, validate_equipment_variants,
-    # validate_history and its DLC-guard consumer also use the shared parser.
+    # validate_oob_units, validate_history and its DLC-guard consumer also use the
+    # shared parser.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -148,6 +149,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "history",
         "dlc-guards",
         "influence-reads",
+        "oob-units",
     }
     assert adhoc == []
 
