@@ -57,7 +57,7 @@ def fake_mod_root(monkeypatch, tmp_path):
     root.mkdir()
     for function in cached:
         function.cache_clear()
-    monkeypatch.setattr(checker, "_mod_root", lambda: str(root))
+    monkeypatch.setattr(checker, "get_root_dir", lambda: str(root))
     yield root
     for function in cached:
         function.cache_clear()
