@@ -8726,6 +8726,8 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_tu22_total = ukraine_has_tu22rd_stockpile }
 	set_variable = { UKR_storage_total_5 = UKR_storage_tu16_total }
 	add_to_variable = { UKR_storage_total_5 = UKR_storage_tu22_total }
+	set_variable = { ukraine_has_su17_stockpile = ukraine_has_su17m2_stockpile }
+	add_to_variable = { ukraine_has_su17_stockpile = ukraine_has_su17m4_stockpile }
 	set_variable = { UKR_storage_total_6 = ukraine_has_mig23_stockpile }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig27_stockpile }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig25_stockpile }
@@ -9211,14 +9213,29 @@ UKR_storage_sell_mig25 = {
 UKR_sov_deliver_su17 = {
 	if = {
 		limit = { has_dlc = "By Blood Alone" }
-		add_equipment_to_stockpile = { type = medium_plane_cas_airframe_1 variant_name = "Su-17M4" amount = ukr_sov_amount producer = SOV }
+		if = {
+			limit = { check_variable = { ukr_su17m4_amount > 0 } }
+			add_equipment_to_stockpile = { type = medium_plane_cas_airframe_1 variant_name = "Su-17M4" amount = ukr_su17m4_amount producer = SOV }
+		}
+		if = {
+			limit = { check_variable = { ukr_su17m2_amount > 0 } }
+			add_equipment_to_stockpile = { type = medium_plane_cas_airframe_1 variant_name = "Su-17M2" amount = ukr_su17m2_amount producer = SOV }
+		}
 	}
 	else = {
 		add_equipment_to_stockpile = { type = Strike_fighter1 amount = ukr_sov_amount producer = SOV }
 	}
 }
 UKR_storage_sell_su17 = {
-	subtract_from_variable = { ukraine_has_su17_stockpile = ukr_sov_amount tooltip = ukraine_storage_su17_sold_tt }
+	set_temp_variable = { ukr_su17m4_amount = ukraine_has_su17m4_stockpile }
+	clamp_temp_variable = { var = ukr_su17m4_amount min = 0 max = ukr_sov_amount }
+	set_temp_variable = { ukr_su17m2_amount = ukr_sov_amount }
+	subtract_from_temp_variable = { ukr_su17m2_amount = ukr_su17m4_amount }
+	custom_effect_tooltip = ukraine_storage_su17_sold_tt
+	hidden_effect = {
+		subtract_from_variable = { ukraine_has_su17m4_stockpile = ukr_su17m4_amount }
+		subtract_from_variable = { ukraine_has_su17m2_stockpile = ukr_su17m2_amount }
+	}
 	event_target:ukr_storage_buyer = { UKR_sov_deliver_su17 = yes }
 	UKR_storage_sale_payment = yes
 }
