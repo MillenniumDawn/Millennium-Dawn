@@ -40,6 +40,27 @@ def test_main_exits_one_when_no_install(monkeypatch):
     assert rvd_mod.main() == 1
 
 
+def test_main_help_works_without_docstrings(monkeypatch, capsys):
+    import sys
+
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "__doc__", None)
+    monkeypatch.setattr(sys, "argv", ["refresh_vanilla_data.py", "--help"])
+    with pytest.raises(SystemExit) as exc:
+        rvd_mod.main()
+    assert exc.value.code == 0
+    assert "Refresh every vanilla-derived file" in capsys.readouterr().out
+
+
+def test_manifest_write_failure_is_reported(monkeypatch, tmp_manifests):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "_HERE", str(tmp_manifests / "missing"))
+    with pytest.raises(rvd_mod.RefreshError, match="cannot write .*manifest.txt"):
+        rvd_mod._write_manifest("manifest.txt", [], [])
+
+
 def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
     import validation.refresh_vanilla_data as rvd_mod
 
@@ -279,7 +300,7 @@ def test_refresh_docs_copies_files(monkeypatch, tmp_manifests, tmp_path):
     (install / "new_doc.md").write_text("# New doc\nbody\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "new_doc.md")],
     )
 
@@ -300,7 +321,7 @@ def test_refresh_docs_counts_new(monkeypatch, tmp_manifests, tmp_path):
     (install / "doc1.md").write_text("# Doc1\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "doc1.md")],
     )
 
@@ -317,7 +338,9 @@ def test_refresh_docs_raises_when_no_docs(monkeypatch):
     import validation.refresh_vanilla_data as rvd_mod
 
     monkeypatch.setattr(rvd_mod, "_install", lambda: "/nope")
-    monkeypatch.setattr("validation.refresh_vanilla_data.glob.glob", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "validation.refresh_vanilla_data.list_files", lambda *a, **k: []
+    )
     with pytest.raises(rvd_mod.RefreshError):
         rvd_mod._refresh_docs()
 
