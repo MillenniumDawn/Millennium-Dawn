@@ -463,6 +463,7 @@ _LIST_FILES_CASES = {
         ["a.txt", "b.gui"],
     ),
     "directory named like a match": (["dir.txt/inner.yml"], {}, []),
+    "hidden entries": ([".a.txt", ".git/b.txt", "c.txt"], {}, ["c.txt"]),
     "missing directory": ([], {}, []),
 }
 

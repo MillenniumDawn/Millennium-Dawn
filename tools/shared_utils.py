@@ -1747,16 +1747,21 @@ def list_files(
 ) -> List[str]:
     """Sorted paths of the files in *directory* whose names match a pattern.
 
-    Subdirectories are searched only when *recursive*. A missing directory
-    gives an empty list.
+    Subdirectories are searched only when *recursive*. Hidden files and
+    directories are skipped, as glob skips them. A missing directory gives an
+    empty list.
     """
     walk = os.walk(directory)
-    return sorted(
-        os.path.join(dirpath, name)
-        for dirpath, _dirnames, filenames in (walk if recursive else islice(walk, 1))
-        for name in filenames
-        if any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
-    )
+    found: List[str] = []
+    for dirpath, dirnames, filenames in walk if recursive else islice(walk, 1):
+        dirnames[:] = [name for name in dirnames if not name.startswith(".")]
+        found.extend(
+            os.path.join(dirpath, name)
+            for name in filenames
+            if not name.startswith(".")
+            and any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
+        )
+    return sorted(found)
 
 
 def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
