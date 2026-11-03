@@ -2,14 +2,8 @@
 
 import pytest
 from shared.paths import REPO_ROOT
+from shared.suite import only_block as _block
 from shared_utils import iter_statements, read_script
-
-
-def _block(script, name):
-    blocks = [body for key, _, body in iter_statements(script) if key == name]
-    assert len(blocks) == 1 and blocks[0] is not None, name
-    return blocks[0]
-
 
 DECISIONS = _block(
     read_script(str(REPO_ROOT / "common/decisions/Free_syrian_army.txt")),
