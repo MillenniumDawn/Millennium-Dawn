@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # Find scripted effects and triggers defined in common/scripted_effects/ and
 # common/scripted_triggers/ that are never called anywhere in the mod.
-import glob
 import os
 import re
 import sys
@@ -11,7 +10,7 @@ from typing import List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import validation_config
+from shared_utils import list_files, validation_config
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -145,7 +144,7 @@ class Validator(BaseValidator):
             return []
 
         if self.staged_files:
-            files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
+            files = list_files(search_path)
             files = [
                 f for f in files if not should_skip_file(f, mod_path=self.mod_path)
             ]
