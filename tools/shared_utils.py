@@ -391,6 +391,16 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+# A stock idea on_add/on_remove log; the id is whichever id group matched
+# (m.lastgroup). A hand-written message or a runtime [name] does not match.
+STOCK_IDEA_LOG_RE = re.compile(
+    r'(?P<prefix>\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
+    r"(?:Idea (?P<standard>[\w.-]+) (?:added|removed)"
+    r"|(?:add|remove)(?: idea)? (?P<legacy>[\w.-]+)"
+    r'|(?P<trailing>[\w.-]+) idea added)"'
+)
+
+
 def count_braces(text: str) -> Tuple[int, int]:
     """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
     strings and after an unquoted ``#`` comment."""
@@ -1395,6 +1405,9 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 
 
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# Matched with first_flat_match, which supplies the word boundary before the key.
+IS_AI_NO_RE = re.compile(r"is_ai\s*=\s*no\b")
+ALWAYS_NO_RE = re.compile(r"always\s*=\s*no\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
 _TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE

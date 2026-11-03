@@ -11,11 +11,16 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 - Keep edits within the requested scope.
 - Verify identifiers against their definitions before using them: exact case, caller
   scope, and tooltip behavior. Existing usage is a clue, not proof.
+- Write HOI4 script only. Scripted effects and triggers take no parameters, so
+  `my_effect = { x = y }` with `$x$` inside is invalid, as are other EU4 and CK3 forms.
+  See "HOI4 Syntax Only" in `scripting-edge-cases.md`.
 - Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
   current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
 - Keep the session working directory fixed. Use absolute paths or per-command flags.
-- Development builds may invalidate saves. Do not add legacy migration support.
+- Ignore save-game compatibility unless the request explicitly asks for it. Do not add
+  or maintain migration or compatibility steps, and do not weigh save breakage when
+  choosing a fix. Development builds may invalidate saves.
 
 ## KISS: Keep It Simple
 
@@ -28,7 +33,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   state or a historical transition.
 - Keep behavior-preserving cleanup separate from gameplay changes. Remove dead code
   introduced or exposed by the change, without refactoring unrelated systems.
-- Default to no comments. Explain only a non-obvious reason, in one short line.
+- Default to no comments. Explain only a non-obvious reason, in one short line. A scripted
+  effect or trigger that needs values from its caller is the exception: it gets the doc
+  header from the Code Stylization Guide. Other helpers do not.
 
 ## Validation
 
