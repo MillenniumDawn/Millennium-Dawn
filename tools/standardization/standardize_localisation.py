@@ -19,8 +19,13 @@ from shared_utils import (
     add_standard_file_arguments,
     atomic_write_text,
     create_backup,
+    find_mod_root,
+    list_files,
     log_message,
 )
+
+MOD_ROOT_MARKERS = ("common", "events")
+_SCRIPT_PATTERNS = ("*.txt", "*.gui")
 
 # Output order
 SECTION_ORDER = [
@@ -138,24 +143,17 @@ class LocEntry:
     value: str  # everything after the colon (e.g. ` "Text"`)
 
 
-def _scan_dir(directory: Path, recursive: bool) -> List[Path]:
-    if not directory.exists():
-        return []
-    if recursive:
-        return list(directory.rglob("*.txt")) + list(directory.rglob("*.gui"))
-    return list(directory.glob("*.txt")) + list(directory.glob("*.gui"))
-
-
 def _build_index(mod_root: Path, verbose: bool) -> Dict[str, Set[str]]:
     index: Dict[str, Set[str]] = {cat: set() for cat in SECTION_ORDER}
 
     for category, (dirs, patterns, recursive) in CATEGORY_CONFIG.items():
         compiled = [re.compile(p, re.MULTILINE) for p in patterns]
         for rel_dir in dirs:
-            directory = mod_root / rel_dir
-            for txt_file in _scan_dir(directory, recursive):
+            for txt_file in list_files(mod_root / rel_dir, _SCRIPT_PATTERNS, recursive):
                 try:
-                    content = txt_file.read_text(encoding="utf-8-sig", errors="replace")
+                    content = Path(txt_file).read_text(
+                        encoding="utf-8-sig", errors="replace"
+                    )
                 except OSError:
                     continue
                 for regex in compiled:
@@ -177,10 +175,11 @@ def _build_reference_tokens(mod_root: Path, verbose: bool) -> Set[str]:
     """Collect every identifier token appearing in REFERENCE_DIRS (excludes loc)."""
     tokens: Set[str] = set()
     for rel_dir in REFERENCE_DIRS:
-        directory = mod_root / rel_dir
-        for src_file in _scan_dir(directory, recursive=True):
+        for src_file in list_files(mod_root / rel_dir, _SCRIPT_PATTERNS):
             try:
-                content = src_file.read_text(encoding="utf-8-sig", errors="replace")
+                content = Path(src_file).read_text(
+                    encoding="utf-8-sig", errors="replace"
+                )
             except OSError:
                 continue
             tokens.update(_TOKEN_RE.findall(content))
@@ -351,26 +350,13 @@ def _format_output(
     return "\n".join(output_lines)
 
 
-def _detect_mod_root(start: Path) -> Optional[Path]:
-    """Walk up from start until we find a directory containing both common/ and events/."""
-    candidate = start if start.is_dir() else start.parent
-    for _ in range(10):
-        if (candidate / "common").is_dir() and (candidate / "events").is_dir():
-            return candidate
-        parent = candidate.parent
-        if parent == candidate:
-            break
-        candidate = parent
-    return None
-
-
 class LocalisationStandardizer:
-    def __init__(self, mod_root: Path, verbose: bool = False):
-        self.mod_root = mod_root
+    def __init__(self, mod_root: str | Path, verbose: bool = False):
+        self.mod_root = Path(mod_root)
         self.verbose = verbose
         log_message("INFO", f"Building content index from {mod_root}", verbose)
-        self.index = _build_index(mod_root, verbose)
-        self.references = _build_reference_tokens(mod_root, verbose)
+        self.index = _build_index(self.mod_root, verbose)
+        self.references = _build_reference_tokens(self.mod_root, verbose)
 
     def standardize_file(self, input_file: Path, output_file: Path) -> bool:
         log_message("INFO", f"Standardising {input_file}", self.verbose)
@@ -432,13 +418,10 @@ def main():
 
     output_path = Path(args.output) if args.output else input_path
 
-    if args.mod_root:
-        mod_root = Path(args.mod_root)
-    else:
-        mod_root = _detect_mod_root(input_path)
-        if not mod_root:
-            log_message("ERROR", "Could not detect mod root. Use --mod-root.")
-            sys.exit(1)
+    mod_root = args.mod_root or find_mod_root(input_path, MOD_ROOT_MARKERS)
+    if not mod_root:
+        log_message("ERROR", "Could not detect mod root. Use --mod-root.")
+        sys.exit(1)
     log_message("INFO", f"Mod root: {mod_root}", args.verbose)
 
     if args.backup:
