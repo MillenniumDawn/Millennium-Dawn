@@ -2,7 +2,6 @@
 """Validate technology prerequisites, equipment module unlocks, DLC gating,
 special-project requirements, and ruling_party seeding in history files."""
 
-import glob
 import os
 import re
 from collections import defaultdict
@@ -10,7 +9,7 @@ from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
 from equipment_variant_context import branches, script_nodes
-from shared_utils import FileOpener
+from shared_utils import FileOpener, list_files
 from validator_common import (
     BaseValidator,
     Severity,
@@ -83,7 +82,7 @@ _BUILDING_TYPE_RE = re.compile(r"\btype\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 
 def _iter_cleaned_text_files(directory: str):
     """Yield each readable text file in *directory* with comments stripped."""
-    for filepath in glob.iglob(os.path.join(directory, "*.txt")):
+    for filepath in list_files(directory, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as input_file:
                 content = input_file.read()
@@ -358,7 +357,7 @@ def parse_nuclear_status_ideas(mod_path: str) -> Set[str]:
     non-compliant.
     """
     ideas_dir = os.path.join(mod_path, "common", "ideas")
-    for filepath in glob.iglob(os.path.join(ideas_dir, "*.txt")):
+    for filepath in list_files(ideas_dir, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
                 content = f.read()
@@ -425,7 +424,7 @@ def parse_state_building_owners(
     owners: Dict[str, Set[str]] = defaultdict(set)
     states_dir = os.path.join(mod_path, "history", "states")
 
-    for filepath in glob.iglob(os.path.join(states_dir, "*.txt")):
+    for filepath in list_files(states_dir, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
                 content = f.read()
@@ -502,7 +501,7 @@ def _tag_country_file_map(mod_path: str) -> Dict[str, str]:
     `validate_oob_references`)."""
     countries_dir = os.path.join(mod_path, "history", "countries")
     mapping: Dict[str, str] = {}
-    for filepath in glob.iglob(os.path.join(countries_dir, "*.txt")):
+    for filepath in list_files(countries_dir, recursive=False):
         filename = os.path.basename(filepath)
         tag = (
             filename.split(" - ")[0]
@@ -1238,7 +1237,7 @@ def _get_state_owners(mod_path: str) -> Set[str]:
     """
     owners = set()
     states_dir = os.path.join(mod_path, "history", "states")
-    for f in glob.iglob(os.path.join(states_dir, "*.txt")):
+    for f in list_files(states_dir, recursive=False):
         try:
             with open(f, "r", encoding="utf-8-sig") as fh:
                 for line in fh:
@@ -1621,7 +1620,7 @@ class Validator(BaseValidator):
                 for f in self.staged_files
                 if f.endswith(".txt") and "history/countries" in f.replace("\\", "/")
             ]
-        return sorted(glob.iglob(os.path.join(history_dir, "*.txt")))
+        return list_files(history_dir, recursive=False)
 
     def _validate_history_files(
         self,
@@ -1735,7 +1734,7 @@ class Validator(BaseValidator):
         units_dir = os.path.join(self.mod_path, "history", "units")
         existing_oobs = {
             os.path.splitext(os.path.basename(f))[0]
-            for f in glob.iglob(os.path.join(units_dir, "*.txt"))
+            for f in list_files(units_dir, recursive=False)
         }
         self.log(f"  Found {len(existing_oobs)} OOB files in history/units/")
 
