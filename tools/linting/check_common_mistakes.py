@@ -41,8 +41,11 @@ Detects mechanically-checkable rule violations:
     a check_variable-style leftover; block form or a bare scalar are both valid
   - every_owned_controlled_state (does not exist; use every_controlled_state)
   - random_select_amount set to a variable/decimal instead of an integer literal
-  - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
-    enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - log = "...Focus X" / "...Decision X" / "...Event X" / a stock idea log where X
+    doesn't match the enclosing focus/decision/event/idea id (copy-paste bug from
+    duplicating a neighbor)
+  - An idea on_add/on_remove log beside nothing but tooltips, which records no state
+    change (warning)
   - Event AI choices that all reach factor 0 when historical focus and the
     bankruptcy mission are both active
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
@@ -99,6 +102,7 @@ from shared_utils import AVAILABLE_OPEN_RE as _RE_AVAILABLE_OPEN
 from shared_utils import IDENTIFIER_BLOCK_START_RE as _RE_AI_STRATEGY_BLOCK
 from shared_utils import MODIFIER_OPEN_RE as _RE_AI_MODIFIER_OPEN
 from shared_utils import OPTION_OPEN_RE as _RE_OPTION_BLOCK_OPEN
+from shared_utils import STOCK_IDEA_LOG_RE
 from shared_utils import TRIGGER_OPEN_RE as _RE_TRIGGER_BLOCK_OPEN
 from shared_utils import WORD_BLOCK_LINE_RE as _RE_MODIFIER_ENTRY
 from shared_utils import WORD_BLOCK_START_RE as _RE_CATEGORY
@@ -226,6 +230,7 @@ _RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
     r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
 )
 _RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
+_LOG_NOT_NEEDED_KEYS = {"log", "custom_effect_tooltip", "effect_tooltip"}
 # "Decision <keyword...> <id>" (or "Mission ...") tolerates a chain of filler
 # words before the real id: the block-name keywords (remove/complete/completed/
 # timeout/cancel/add, describing which effect block logged the line), the block
@@ -3250,6 +3255,72 @@ def _check_focus_log_id(lines):
     return issues
 
 
+def _idea_lifecycle_nodes(src):
+    """Yield (idea_id, node) for each on_add/on_remove directly in an idea, read from
+    the ideas > category > idea layout of common/ideas/ files."""
+    for root in src.tree:
+        if root.key != "ideas":
+            continue
+        for category in root.children:
+            for idea in category.children:
+                for node in idea.children:
+                    if node.key in ("on_add", "on_remove"):
+                        yield idea.key, node
+
+
+def _find_idea_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, idea_id, bad_token) for each stock
+    on_add/on_remove log naming an idea other than the enclosing one. Shared by
+    _check_idea_log_id and fix_log_ids.py.
+    """
+    src = _source(lines)
+    results = []
+    if "log" not in src.raw:
+        return results
+    owners = {node.line - 1: idea for idea, node in _idea_lifecycle_nodes(src)}
+    for start, end, _match in _outer_blocks(src, sorted(owners), lambda _i: True):
+        for row in range(start, end):
+            m = STOCK_IDEA_LOG_RE.search(src.code[row])
+            if m and m[m.lastgroup] != owners[start]:
+                tstart, tend = m.span(m.lastgroup)
+                results.append((row, tstart, tend, owners[start], m[m.lastgroup]))
+    return results
+
+
+def _check_idea_log_id(lines):
+    """Flag stock idea logs naming another idea -- almost always a copy-paste
+    leftover from duplicating a neighboring idea."""
+    return [
+        (
+            line_idx + 1,
+            f"log references idea {token}, but the enclosing idea is {idea_id} -- "
+            "likely copy-paste; fix the log id",
+        )
+        for line_idx, _s, _e, idea_id, token in _find_idea_log_mismatches(lines)
+    ]
+
+
+def _check_idea_log_not_needed(lines):
+    """Warn on an idea on_add/on_remove log beside nothing but tooltips. A tooltip
+    changes no state, so the log records nothing and only adds I/O. A block with no
+    other statement is _check_empty_log_only_blocks' finding."""
+    src = _source(lines)
+    issues = []
+    if "log" not in src.raw:
+        return issues
+    for idea, node in _idea_lifecycle_nodes(src):
+        keys = {child.key for child in node.children}
+        if "log" in keys and len(keys) > 1 and keys <= _LOG_NOT_NEEDED_KEYS:
+            issues.append(
+                (
+                    node.line,
+                    f"{node.key} of {idea} only shows tooltips, so its log records "
+                    "no state change -- drop the log",
+                )
+            )
+    return issues
+
+
 def _decision_log_token_span(line):
     """Return (token, start, end) for the id referenced by a
     `log = "...Decision ..."` line, skipping leading filler words
@@ -4264,16 +4335,17 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns (errors, shadowed), each a
-    list of (filepath, line_num, message) tuples. Shadowed branches are kept apart
-    so the validator can report them under their own category."""
+    """Check a single file for common mistakes. Returns (errors, shadowed, warnings),
+    each a list of (filepath, line_num, message) tuples. Shadowed branches and
+    warnings are kept apart so the validator can report them under their own
+    categories."""
     issues = []
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = _Source(f.readlines())
     except Exception:
-        return issues, []
+        return issues, [], []
 
     (
         is_ideas,
@@ -4483,6 +4555,8 @@ def check_file(filepath):
     if is_event_file:
         issues.extend(_check_event_ai_historical_bankruptcy_fallback(lines))
         issues.extend(_check_event_log_id(lines))
+    if is_ideas:
+        issues.extend(_check_idea_log_id(lines))
     if is_political_leaders_file:
         issues.extend(_check_leader_rotation(lines))
 
@@ -4527,9 +4601,11 @@ def check_file(filepath):
 
     # The leader rotation check already reports duplicate branches in these files.
     shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    warnings = _check_idea_log_not_needed(lines) if is_ideas else []
     return (
         [(filepath, ln, msg) for ln, msg in issues],
         [(filepath, ln, msg) for ln, msg in shadowed],
+        [(filepath, ln, msg) for ln, msg in warnings],
     )
 
 
@@ -4586,11 +4662,15 @@ def main():
     timings.append(("checking", t.elapsed))
 
     all_issues = sorted(
-        issue for errors, shadowed in results for issue in errors + shadowed
+        issue for errors, shadowed, _warnings in results for issue in errors + shadowed
     )
 
     for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
+    for filepath, line_num, message in sorted(
+        warning for _errors, _shadowed, warnings in results for warning in warnings
+    ):
+        print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
 

@@ -7,7 +7,7 @@ Reorders the contents of every dated history block (e.g. ``2000.1.1 = { ... }``)
 into a fixed, readable grouping without changing anything semantically. The
 transform is lossless (no statement dropped) and idempotent (running twice is a
 no-op). Content outside dated blocks (``capital = ...``, naval OOB, equipment
-variants) is passed through untouched.
+variants) keeps its order. The whole file is reindented by brace depth.
 
 Target ordering inside each dated block:
   1. Consolidated ``add_ideas`` with # Laws / # MD Ideas / # Internal Factions /
@@ -34,7 +34,12 @@ from typing import Any, Dict, Iterator, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
-from shared_utils import extract_block, log_message, strip_inline_comment
+from shared_utils import (
+    extract_block,
+    log_message,
+    reindent_by_brace_depth,
+    strip_inline_comment,
+)
 
 # --------------------------------------------------------------------------- #
 # Classification loaders (cached per mod root)
@@ -328,6 +333,10 @@ class HistoryStandardizer(BaseStandardizer):
         self._ensure_classification(input_file)
         return super().standardize_file(input_file, output_file)
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        output_lines = super().standardize_lines(lines)
+        return None if output_lines is None else reindent_by_brace_depth(output_lines)
+
     # -- BaseStandardizer interface ----------------------------------------- #
 
     def get_block_pattern(self) -> str:
@@ -505,10 +514,18 @@ class HistoryStandardizer(BaseStandardizer):
                 if not _is_boilerplate_comment(raw):
                     props["ideas_extra_comments"].append(raw.rstrip())
                 continue
-            for tok in code.replace("{", " ").replace("}", " ").split():
-                if "=" in tok or tok == "add_ideas":
-                    continue
-                props["ideas"].append((tok, tok))
+            tokens = [
+                tok
+                for tok in code.replace("{", " ").replace("}", " ").split()
+                if "=" not in tok and tok != "add_ideas"
+            ]
+            comment = raw[len(code) :].strip()
+            if comment and not tokens:
+                props["ideas_extra_comments"].append(comment)
+            for tok in tokens:
+                # A trailing comment stays on the line's last idea.
+                text = f"{tok} {comment}" if comment and tok == tokens[-1] else tok
+                props["ideas"].append((tok, text))
 
     # -- formatting --------------------------------------------------------- #
 
@@ -570,11 +587,11 @@ class HistoryStandardizer(BaseStandardizer):
         )
         classified: Dict[str, List[str]] = {k: [] for k in groups}
         seen: set = set()
-        for token, _text in props["ideas"]:
+        for token, text in props["ideas"]:
             if token in seen:
                 continue
             seen.add(token)
-            classified[self._classify_idea(token)].append(token)
+            classified[self._classify_idea(token)].append(text)
         for key, header in groups.items():
             items = classified[key]
             if not items:
