@@ -1402,6 +1402,22 @@ _UPGRADE_LEVEL_CASES = {
         "rule_upgrade = { base = 4 modifier = { add = 2 has_war = yes } }",
         ["invalid_upgrade_level"],
     ),
+    "negative add hides a base over max": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 7 modifier = { add = -2 has_war = yes } }",
+        ["invalid_upgrade_level"],
+    ),
+    "exclusive modifiers stay unresolved": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 3 modifier = { add = 2 has_war = yes } "
+        "modifier = { add = 2 has_war = no } }",
+        [],
+    ),
+    "factor stays unresolved": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 9 modifier = { factor = 0.5 has_war = yes } }",
+        [],
+    ),
     "ship": ("rule_ship_1", "rule_upgrade = 1", ["ship_upgrade"]),
 }
 

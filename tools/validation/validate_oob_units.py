@@ -1346,15 +1346,6 @@ def _create_unit_variant_refs(text: str) -> List[Tuple[int, int, str, str, str]]
     return refs
 
 
-def _file_country(rel: str) -> Optional[str]:
-    """The country a history or OOB file belongs to, from its name."""
-    norm = rel.replace("\\", "/")
-    if norm.startswith("history/units/"):
-        match = re.match(r"([A-Z]{3})_", os.path.basename(norm))
-        return match.group(1) if match else None
-    return variant_tag_from_path(norm)
-
-
 def _literal_named_variant_refs(
     content: str, default_producer: Optional[str] = None
 ) -> List[Tuple[int, int, str, str, str]]:
@@ -1657,6 +1648,25 @@ def _start_oob_names(histories: Iterable[list], start: Tuple[int, ...]) -> Set[s
     return names
 
 
+def _variant_creators(
+    registry: VariantRegistry, producer: str, equipment: str, name: str
+) -> List[Tuple[Optional[str], VariantDefinition]]:
+    """(creator, definition) pairs a consumer can use. A ``None`` creator is a
+    definition whose country is not known statically."""
+    if producer == _ANY_CREATOR:
+        return [
+            (tag, record)
+            for (tag, etype, created), records in registry.by_identity.items()
+            if etype == equipment and created == name
+            for record in records
+        ]
+    return [
+        (tag, record)
+        for tag in (producer, None)
+        for record in registry.by_identity.get((tag, equipment, name), [])
+    ]
+
+
 def check_start_variant_consumers(
     sources: Iterable[Tuple[str, str]],
     registry: VariantRegistry,
@@ -1668,16 +1678,37 @@ def check_start_variant_consumers(
 
     A scripted-effect definition may run from history, so it proves nothing
     either way. Starting research counts every branch that could grant the
-    technology, so a finding means no reading of the history grants it.
+    technology, so a finding means no reading of the history grants it. A
+    stockpile with no ``producer`` passes if any creator satisfies it.
     """
     findings = []
     start = tuple(context.start)[:3]
     possible: Dict[Tuple[Any, ...], Set[str]] = {}
+
+    def has_tech(
+        tag: str, record: VariantDefinition, consumer: Dict, techs: Set
+    ) -> bool:
+        dlcs = {
+            dlc: enabled
+            for dlc, enabled in {**record.context, **consumer}.items()
+            if not dlc.startswith("__")
+        }
+        key = (tag, tuple(sorted(dlcs.items())))
+        if key not in possible:
+            possible[key] = starting_techs(
+                context.histories.get(tag, []),
+                dlcs,
+                start,
+                effects=context.effects,
+                possible=True,
+            )
+        return bool(techs & possible[key])
+
     for rel, content in sources:
         text = blank_comments(content)
         nodes = _build_block_nodes(text)
         for offset, line, producer, equipment, name in [
-            *_literal_named_variant_refs(content, _file_country(rel)),
+            *_literal_named_variant_refs(content, _ANY_CREATOR),
             *_oob_ship_refs(content),
         ]:
             consumer = _dlc_context_at_offset(text, nodes, offset, rel)
@@ -1688,18 +1719,18 @@ def check_start_variant_consumers(
                 or (date is not None and date > start)
             ):
                 continue
-            own = registry.by_identity.get((producer, equipment, name), [])
             records = [
-                record
-                for record in own
-                + registry.by_identity.get((None, equipment, name), [])
+                (tag, record)
+                for tag, record in _variant_creators(
+                    registry, producer, equipment, name
+                )
                 if _dlc_contexts_compatible(record.context, consumer)
             ]
             at_start = [
-                record
-                for record in records
-                if record.file.startswith("history/countries/")
-                and record in own
+                (tag, record)
+                for tag, record in records
+                if tag is not None
+                and record.file.startswith("history/countries/")
                 and (record.date is None or record.date <= start)
             ]
             if not at_start:
@@ -1707,15 +1738,17 @@ def check_start_variant_consumers(
                     record.file.startswith(
                         ("common/scripted_effects/", "history/countries/")
                     )
-                    for record in records
+                    for _, record in records
                 ):
+                    who = "any creator" if producer == _ANY_CREATOR else producer
+                    first = records[0][1]
                     findings.append(
                         Issue(
                             severity=Severity.ERROR,
                             category="OOB VARIANT: created only after the start",
-                            message=f'"{name}" ({equipment}) from {producer} is used '
-                            f"at the start but only {records[0].file}:"
-                            f"{records[0].line} creates it",
+                            message=f'"{name}" ({equipment}) from {who} is used '
+                            f"at the start but only {first.file}:{first.line} "
+                            "creates it",
                             file=rel,
                             line=line,
                         )
@@ -1724,31 +1757,20 @@ def check_start_variant_consumers(
             techs = unlocks.get(equipment) or unlocks.get(
                 hull_sources.get(equipment, ""), set()
             )
-            if not techs or any(record.allow_without_tech for record in at_start):
+            if not techs or any(record.allow_without_tech for _, record in at_start):
                 continue
-            dlcs = {
-                dlc: enabled
-                for dlc, enabled in {**at_start[0].context, **consumer}.items()
-                if not dlc.startswith("__")
-            }
-            key = (producer, tuple(sorted(dlcs.items())))
-            if key not in possible:
-                possible[key] = starting_techs(
-                    context.histories.get(producer, []),
-                    dlcs,
-                    start,
-                    effects=context.effects,
-                    possible=True,
-                )
-            if not techs & possible[key]:
+            if not any(
+                has_tech(tag, record, consumer, techs) for tag, record in at_start
+            ):
+                creators = " or ".join(sorted({tag for tag, _ in at_start}))
+                first = at_start[0][1]
                 findings.append(
                     Issue(
                         severity=Severity.WARNING,
                         category="OOB VARIANT: hull technology missing at the start",
                         message=f'"{name}" ({equipment}) waits for '
-                        f"{' or '.join(sorted(techs))}, which {producer} does not "
-                        f"have at the start; defined at {at_start[0].file}:"
-                        f"{at_start[0].line}",
+                        f"{' or '.join(sorted(techs))}, which {creators} does not "
+                        f"have at the start; defined at {first.file}:{first.line}",
                         file=rel,
                         line=line,
                     )

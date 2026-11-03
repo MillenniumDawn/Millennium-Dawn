@@ -593,8 +593,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   (ERROR): unknown hulls, slots, and modules, slot categories, required slots, hull
   `module_count_limit`, `forbid_equipment_type`, archetypes as `type`, `modules` on a
   non-modular type, a `type_override` module whose type `allowed_types` omits, and
-  undefined, unsupported, or out-of-range upgrades. A weighted AI upgrade counts every
-  `add` on top of its `base`.
+  undefined, unsupported, or out-of-range upgrades. A weighted AI upgrade checks its level
+  with and without one `modifier`. Several modifiers or a `factor` stay unresolved.
   `validate_ai_equipment.py` applies the same rules to `target_variant` designs. An AI
   archetype `type` only warns: the engine rule is documented for the effect alone.
 - WARNING, because only the designer tool or a module's script states the effect:
@@ -610,9 +610,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   focuses create is an ERROR. A scripted-effect definition proves nothing either way.
   Full scans only.
 - A stockpile with no `producer` applies to all creators, per the effect docs, so any
-  country's design satisfies it (WARNING when none does). The start check still reads it
-  as the file's own country, since a design only that country creates cannot come from
-  anyone else.
+  country's design satisfies it (WARNING when none does). The start check passes it when
+  any creator has the design and its technology at the start.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
   proof the runtime design is legal. `_flag_required_slots` treats an omitted required
   slot as empty, but the engine inherits it from the parent. No design hits this today.

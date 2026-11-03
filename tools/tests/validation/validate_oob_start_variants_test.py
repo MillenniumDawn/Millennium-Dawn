@@ -14,6 +14,8 @@ _USE = (
     '{ type = hull_1 variant_name = "D" amount = 1 producer = TST } }\n'
 )
 _UNSET_PRODUCER = _USE.replace("producer = TST ", "")
+_OTHER_HISTORY = "history/countries/BBB - Other.txt"
+_TST_EVENT = "country_event = { immediate = { TST = { " + _VARIANT + "} } }\n"
 _MISSING_TECH = "OOB VARIANT: hull technology missing at the start"
 _LATER_ONLY = "OOB VARIANT: created only after the start"
 
@@ -60,9 +62,39 @@ _CASES = {
         },
         None,
     ),
-    "no producer means the file's country": (
+    "no producer, the only creator lacks the tech": (
         {_HISTORY: _LOADS + _VARIANT, _OOB: _UNSET_PRODUCER},
         _MISSING_TECH,
+    ),
+    "no producer, another creator has it at the start": (
+        {
+            _HISTORY: _LOADS,
+            _OTHER_HISTORY: _VARIANT + _GRANT,
+            _OOB: _UNSET_PRODUCER,
+            "events/Test.txt": _TST_EVENT,
+        },
+        None,
+    ),
+    "no producer, another creator lacks the tech": (
+        {
+            _HISTORY: _LOADS,
+            _OTHER_HISTORY: _VARIANT,
+            _OOB: _UNSET_PRODUCER,
+            "events/Test.txt": _TST_EVENT,
+        },
+        _MISSING_TECH,
+    ),
+    "no producer, one of two creators has the tech": (
+        {
+            _HISTORY: _LOADS + _VARIANT,
+            _OTHER_HISTORY: _VARIANT + _GRANT,
+            _OOB: _UNSET_PRODUCER,
+        },
+        None,
+    ),
+    "no producer, every creator is an event": (
+        {_HISTORY: _LOADS, _OOB: _UNSET_PRODUCER, "events/Test.txt": _TST_EVENT},
+        _LATER_ONLY,
     ),
     "consumed in the history itself": (
         {_HISTORY: _VARIANT + _USE},

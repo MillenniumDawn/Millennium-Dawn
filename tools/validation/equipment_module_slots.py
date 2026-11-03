@@ -1089,29 +1089,47 @@ def check_created_variants(
 
 
 _UPGRADE_ENTRY_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*(\{|-?\d+)?")
+_WEIGHT_TERM_RE = re.compile(r"\b(?:base|add)\s*=\s*(-?\d+)")
 
 
-def _upgrade_entries(text: str, lo: int, hi: int) -> Iterable[Tuple[str, int, int]]:
-    """(upgrade, level, offset) per entry. A weighted level counts every ``add``
-    on top of its ``base``, the highest it can reach."""
+def _weight_terms(text: str, lo: int, hi: int) -> int:
+    return sum(int(value) for value in _WEIGHT_TERM_RE.findall(text, lo, hi))
+
+
+def _weighted_levels(text: str, lo: int, hi: int) -> List[int]:
+    """Levels a weighted upgrade proves it reaches: with and without its one
+    ``modifier``. Several modifiers may exclude each other and a factor scales,
+    so those prove nothing."""
+    blocks = list(_iter_blocks(text, lo, hi))
+    if (
+        len(blocks) > 1
+        or any(key != "modifier" for key, *_ in blocks)
+        or "factor" in text[lo:hi]
+    ):
+        return []
+    total = _weight_terms(text, lo, hi)
+    conditional = sum(_weight_terms(text, blo, bhi) for _, blo, bhi, _ in blocks)
+    return [total - conditional, total]
+
+
+def _upgrade_entries(
+    text: str, lo: int, hi: int
+) -> Iterable[Tuple[str, List[int], int]]:
+    """(upgrade, levels it can reach, offset) per entry."""
     pos = lo
     while True:
         m = _UPGRADE_ENTRY_RE.search(text, pos, hi)
         if not m:
             return
         pos = m.end()
-        level = 0
+        levels = [0]
         if m.group(2) == "{":
             close = find_matching_brace(text, m.end() - 1)
-            body = text[m.end() : close if close != -1 else hi]
-            level = sum(
-                int(value)
-                for value in re.findall(r"\b(?:base|add)\s*=\s*(-?\d+)", body)
-            )
+            levels = _weighted_levels(text, m.end(), close if close != -1 else hi)
             pos = close + 1 if close != -1 else hi
         elif m.group(2):
-            level = int(m.group(2))
-        yield m.group(1), level, m.start()
+            levels = [int(m.group(2))]
+        yield m.group(1), levels, m.start()
 
 
 def _upgrade_findings(
@@ -1139,7 +1157,7 @@ def _upgrade_findings(
                         etype,
                     )
                 )
-            for upgrade, level, offset in entries:
+            for upgrade, levels, offset in entries:
                 line = text.count("\n", 0, offset) + 1
                 cap = index.upgrade_max.get(upgrade)
                 if index.upgrade_max and cap is None:
@@ -1163,13 +1181,18 @@ def _upgrade_findings(
                             etype,
                         )
                     )
-                if level < 0 or (cap is not None and level > cap):
+                invalid = [
+                    level
+                    for level in levels
+                    if level < 0 or (cap is not None and level > cap)
+                ]
+                if invalid:
                     findings.append(
                         Finding(
                             line,
                             "invalid_upgrade_level",
-                            f"{label}upgrade '{upgrade}' level {level} is outside "
-                            f"0 to max_level {cap}",
+                            f"{label}upgrade '{upgrade}' level {invalid[0]} is "
+                            f"outside 0 to max_level {cap}",
                             etype,
                         )
                     )
