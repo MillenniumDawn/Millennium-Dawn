@@ -1457,6 +1457,40 @@ def _raw_icon_issues(validator):
     return _categories(validator, "raw-icon-path")
 
 
+# variant icon: {case: (icon value, sprites the variant check should return)}
+_VARIANT_ICON_CASES = {
+    "quoted sprite": ('"GFX_TST_a"', [("GFX_TST_a", 3)]),
+    "bare sprite": ("GFX_TST_a", [("GFX_TST_a", 3)]),
+    "raw path is another check's finding": ('"gfx/a.dds"', []),
+}
+
+
+@pytest.mark.parametrize(
+    ("icon", "sprites"), _VARIANT_ICON_CASES.values(), ids=_VARIANT_ICON_CASES
+)
+def test_variant_icon_sprites(icon, sprites):
+    assert vg.variant_icon_sprites(_variant(icon)) == sprites
+
+
+@pytest.mark.parametrize(
+    ("sprite", "expected"),
+    [("GFX_TST_defined", 0), ("GFX_TST_missing", 1), ("GFX_TST_DEFINED", 1)],
+    ids=["defined", "undefined", "wrong case"],
+)
+def test_run_reports_an_undefined_variant_icon(tmp_path, sprite, expected):
+    write_under(
+        tmp_path,
+        "interface/test.gfx",
+        'spriteTypes = { spriteType = { name = "GFX_TST_defined" texturefile = "a.dds" } }\n',
+    )
+    write_under(tmp_path, "history/countries/TST - Test.txt", _variant(f'"{sprite}"'))
+    issues = _categories(
+        run_validator(GfxReferenceValidator, tmp_path), "undefined-sprite"
+    )
+    assert len(issues) == expected
+    assert all(issue.severity == Severity.ERROR for issue in issues)
+
+
 @pytest.mark.parametrize(
     "icon",
     [

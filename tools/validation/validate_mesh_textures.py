@@ -9,7 +9,7 @@ carries. `Collision` materials never render and carry empty slots by design.
 A slot absent from the material is not reported: vanilla ships helper shapes
 (`dummyShape` in the bomber meshes) that way.
 
-The CI workspace ships no gfx/models or gfx/entities, so this runs on commit.
+The CI workspace ships no meshes or textures, so this runs on commit.
 """
 
 import glob

@@ -771,8 +771,11 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
     return defs
 
 
-def _raw_paths_in_blocks(
-    text: str, opener: re.Pattern, token_re: re.Pattern
+def _values_in_blocks(
+    text: str,
+    opener: re.Pattern,
+    token_re: re.Pattern,
+    keep: Callable[[str], bool] = _is_raw_icon_path,
 ) -> List[Tuple[str, int]]:
     # Quote-aware: a `#` inside a variant name is not a comment.
     stripped = strip_comments(text)
@@ -784,19 +787,29 @@ def _raw_paths_in_blocks(
             continue
         for tm in token_re.finditer(body):
             value = _quoted_or_bare(tm)
-            if _is_raw_icon_path(value):
+            if keep(value):
                 hits.append((value, line_for_offset(offsets, m.end() + tm.start())))
     return hits
 
 
 def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
     """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
-    return _raw_paths_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
+    return _values_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
+
+
+def variant_icon_sprites(text: str) -> List[Tuple[str, int]]:
+    """Return (sprite, line) for `icon = GFX_x` in create_equipment_variant."""
+    return _values_in_blocks(
+        text,
+        _CREATE_EQUIPMENT_VARIANT,
+        _VARIANT_ICON,
+        lambda value: value.startswith("GFX_"),
+    )
 
 
 def raw_graphic_db_icon_paths(text: str) -> List[Tuple[str, int]]:
     """Return (value, line) for raw texture paths in `icons = { }` blocks."""
-    return _raw_paths_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
+    return _values_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
 
 
 def font_names_from_gfx_text(raw: str) -> Set[str]:
@@ -924,6 +937,15 @@ def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]
         "gfx_ref.raw_variant_icon",
         "create_equipment_variant",
         raw_variant_icon_paths,
+    )
+
+
+def _parse_variant_icon_sprites(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    return _parse_raw_icon_hits(
+        args,
+        "gfx_ref.variant_icon_sprite",
+        "create_equipment_variant",
+        variant_icon_sprites,
     )
 
 
@@ -1849,6 +1871,20 @@ class Validator(BaseValidator):
         loc_refs = self._collect_loc_refs()
         self._check_loc_refs(loc_refs, defined, casefold_index(defined))
         self._check_raw_icon_paths()
+
+        self._log_section("Checking undefined GFX sprites in equipment variant icons")
+        variant_files = self._collect_files(
+            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
+        )
+        self._check_undefined_refs(
+            self._pool_flat_map(
+                _parse_variant_icon_sprites, [(f, self.mod_path) for f in variant_files]
+            ),
+            defined,
+            source_label="create_equipment_variant icons",
+            category="undefined-sprite",
+            mod_defined_ci=mod_defined_ci,
+        )
 
         if not self.report_unused:
             self._log_section(
