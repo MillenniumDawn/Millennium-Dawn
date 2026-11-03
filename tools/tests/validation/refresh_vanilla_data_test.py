@@ -279,7 +279,7 @@ def test_refresh_docs_copies_files(monkeypatch, tmp_manifests, tmp_path):
     (install / "new_doc.md").write_text("# New doc\nbody\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "new_doc.md")],
     )
 
@@ -300,7 +300,7 @@ def test_refresh_docs_counts_new(monkeypatch, tmp_manifests, tmp_path):
     (install / "doc1.md").write_text("# Doc1\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "doc1.md")],
     )
 
@@ -317,7 +317,9 @@ def test_refresh_docs_raises_when_no_docs(monkeypatch):
     import validation.refresh_vanilla_data as rvd_mod
 
     monkeypatch.setattr(rvd_mod, "_install", lambda: "/nope")
-    monkeypatch.setattr("validation.refresh_vanilla_data.glob.glob", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "validation.refresh_vanilla_data.list_files", lambda *a, **k: []
+    )
     with pytest.raises(rvd_mod.RefreshError):
         rvd_mod._refresh_docs()
 

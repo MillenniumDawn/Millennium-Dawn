@@ -3,7 +3,6 @@
 # land generic_tank.txt / generic_afv.txt) have every required equipment role
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
-import glob
 import json
 import logging
 import os
@@ -30,7 +29,7 @@ from equipment_module_slots import (
     role_strip_frames,
 )
 from equipment_variant_context import VariantContext, script_nodes, value
-from shared_utils import atomic_write_text, strip_inline_comment
+from shared_utils import atomic_write_text, list_files, strip_inline_comment
 from validate_equipment_variants import equipment_unlocks
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
@@ -403,10 +402,12 @@ class Validator(BaseValidator):
 
         frames = role_strip_frames(
             _read_text(fp)
-            for fp in glob.iglob(os.path.join(self.mod_path, "interface", "*.gfx"))
+            for fp in list_files(
+                os.path.join(self.mod_path, "interface"), ("*.gfx",), recursive=False
+            )
         )
         results = []
-        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for fp in list_files(equip_dir, recursive=False):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
@@ -460,7 +461,7 @@ class Validator(BaseValidator):
         self._log_section("Checking history = yes consistency within design groups...")
 
         results = []
-        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for fp in list_files(equip_dir, recursive=False):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
@@ -514,7 +515,7 @@ class Validator(BaseValidator):
         generic_templates = []
         custom_templates = []
 
-        for filepath in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for filepath in list_files(equip_dir, recursive=False):
             filename = os.path.basename(filepath)
             templates = parse_equipment_file(filepath)
 

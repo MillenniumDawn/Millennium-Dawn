@@ -19,13 +19,17 @@ from common_utils import (
     run_standardizer,
     write_standardized_output,
 )
-from shared_utils import add_standard_file_arguments, reindent_by_brace_depth
+from shared_utils import (
+    add_standard_file_arguments,
+    find_mod_root,
+    reindent_by_brace_depth,
+)
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import add_check_naming_argument, standardize_focus_tree
 from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
-from standardize_localisation import LocalisationStandardizer, _detect_mod_root
+from standardize_localisation import MOD_ROOT_MARKERS, LocalisationStandardizer
 from standardize_mio import MIOStandardizer
 from standardize_technologies import TechnologyStandardizer
 
@@ -171,16 +175,10 @@ def main():
         input_path = Path(args.input_file)
         output_path = Path(args.output) if args.output else input_path
 
-        if args.mod_root:
-            mod_root = Path(args.mod_root)
-        else:
-            mod_root = _detect_mod_root(input_path)
-            if not mod_root:
-                print(
-                    "Error: could not detect mod root. Use --mod-root.",
-                    file=sys.stderr,
-                )
-                sys.exit(1)
+        mod_root = args.mod_root or find_mod_root(input_path, MOD_ROOT_MARKERS)
+        if not mod_root:
+            print("Error: could not detect mod root. Use --mod-root.", file=sys.stderr)
+            sys.exit(1)
 
         if args.backup:
             from shared_utils import create_backup

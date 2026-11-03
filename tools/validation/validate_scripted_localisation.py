@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Validate scripted localisation definitions and usage in Millennium Dawn."""
 
-import glob
 import os
 import re
 from multiprocessing import Pool
@@ -9,7 +8,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
-from shared_utils import validation_config
+from shared_utils import list_files, validation_config
 from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
@@ -284,8 +283,10 @@ class ScriptedLocalisation:
                 if "scripted_localisation" in f and f.endswith(".txt")
             ]
         else:
-            pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
-            files_to_scan = glob.glob(pattern)
+            files_to_scan = list_files(
+                os.path.join(mod_path, "common", "scripted_localisation"),
+                recursive=False,
+            )
 
         args_list = [(f, lowercase, mod_path) for f in files_to_scan]
         results = _map_files(
@@ -330,18 +331,11 @@ class ScriptedLocalisation:
                 if f.endswith(".gui") or f.endswith(".yml") or f.endswith(".txt")
             ]
         else:
-            gui_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
+            gui_files = list_files(mod_path, ("*.gui",))
+            yml_files = list_files(
+                os.path.join(mod_path, "localisation", "english"), ("*.yml",)
             )
-            yml_files = list(
-                glob.iglob(
-                    os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
-                    recursive=True,
-                )
-            )
-            txt_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
+            txt_files = list_files(mod_path)
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
@@ -475,10 +469,9 @@ class Validator(BaseValidator):
                 if os.path.exists(pattern):
                     full_path = pattern
                 else:
-                    for filename in glob.iglob(
-                        os.path.join(
-                            self.mod_path, "common", "scripted_localisation", "*.txt"
-                        )
+                    for filename in list_files(
+                        os.path.join(self.mod_path, "common", "scripted_localisation"),
+                        recursive=False,
                     ):
                         if os.path.basename(filename) == basename:
                             full_path = filename
@@ -504,9 +497,9 @@ class Validator(BaseValidator):
         )
 
         # Collect all GFX_ names defined in interface/*.gfx
-        gfx_path = str(Path(self.mod_path) / "interface") + "/"
+        gfx_path = str(Path(self.mod_path) / "interface")
         defined_gfx = set()
-        for filename in glob.iglob(gfx_path + "**/*.gfx", recursive=True):
+        for filename in list_files(gfx_path, ("*.gfx",)):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=False
             )
@@ -520,10 +513,10 @@ class Validator(BaseValidator):
                 if "scripted_localisation" in f and f.endswith(".txt")
             ]
         else:
-            pattern = os.path.join(
-                self.mod_path, "common", "scripted_localisation", "*.txt"
+            files_to_scan = list_files(
+                os.path.join(self.mod_path, "common", "scripted_localisation"),
+                recursive=False,
             )
-            files_to_scan = glob.glob(pattern)
 
         results = []
         reported = set()

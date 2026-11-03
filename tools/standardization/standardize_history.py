@@ -25,7 +25,6 @@ modifier->variable map from common/dynamic_modifiers, so the tool works for any
 country, not just CHI.
 """
 
-import glob
 import os
 import re
 import sys
@@ -36,6 +35,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from common_utils import BaseStandardizer, collapse_blank_runs, run_standardizer
 from shared_utils import (
     extract_block,
+    find_mod_root,
+    list_files,
     log_message,
     reindent_by_brace_depth,
     strip_inline_comment,
@@ -70,23 +71,6 @@ def _iter_code_lines(lines: List[str]) -> Iterator[Tuple[str, str]]:
         yield code, code.strip()
 
 
-def _detect_mod_root(start: str) -> Optional[str]:
-    """Walk up from *start* until a directory holding both common/ and history/."""
-    path = os.path.abspath(start)
-    if os.path.isfile(path):
-        path = os.path.dirname(path)
-    for _ in range(12):
-        if os.path.isdir(os.path.join(path, "common")) and os.path.isdir(
-            os.path.join(path, "history")
-        ):
-            return path
-        parent = os.path.dirname(path)
-        if parent == path:
-            break
-        path = parent
-    return None
-
-
 def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     """Return ``(law_tokens, faction_tokens)`` scanned from common/ideas/*.txt.
 
@@ -105,7 +89,7 @@ def _load_idea_classification(mod_root: str) -> Tuple[set, set]:
     law_categories: set = set()
 
     ideas_dir = os.path.join(mod_root, "common", "ideas")
-    for path in glob.glob(os.path.join(ideas_dir, "*.txt")):
+    for path in list_files(ideas_dir, recursive=False):
         is_lawfile = bool(_LAWFILE_RE.match(os.path.basename(path)))
         lines = _iter_file_lines(path)
         if lines is None:
@@ -166,7 +150,7 @@ def _load_modifier_variables(mod_root: str) -> Dict[str, set]:
     mods: Dict[str, set] = {}
 
     dm_dir = os.path.join(mod_root, "common", "dynamic_modifiers")
-    for path in glob.glob(os.path.join(dm_dir, "*.txt")):
+    for path in list_files(dm_dir, recursive=False):
         lines = _iter_file_lines(path)
         if lines is None:
             continue
@@ -309,7 +293,7 @@ class HistoryStandardizer(BaseStandardizer):
             and self._modvars is not None
         ):
             return
-        root = self._mod_root or _detect_mod_root(input_file)
+        root = self._mod_root or find_mod_root(input_file, ("common", "history"))
         if root:
             law, faction = _load_idea_classification(root)
             self._law = law if self._law is None else self._law

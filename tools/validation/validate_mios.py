@@ -37,7 +37,6 @@ legitimately design-teams an AST org. Those references are still checked for
 existence, never for tag reachability.
 """
 
-import glob
 import os
 import re
 from dataclasses import dataclass, field
@@ -60,6 +59,7 @@ from shared_utils import (
     blank_quoted_strings,
     find_unquoted_block_end,
     get_staged_files,
+    list_files,
     validation_config,
 )
 from sprite_index import build_sprite_index
@@ -417,8 +417,7 @@ class Validator(BaseValidator):
                 self.staged_files = staged
 
     def _org_files(self) -> List[str]:
-        pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
-        files = sorted(glob.glob(pattern))
+        files = list_files(Path(self.mod_path) / ORG_DIR, recursive=False)
         if not self.staged_only:
             return files
         staged = {Path(f).resolve() for f in self.staged_files or []}
@@ -575,19 +574,14 @@ class Validator(BaseValidator):
     def _bonus_files(self) -> List[str]:
         """Files carrying the nested `equipment_bonus = { ARCHETYPE = {...} }`
         form: MIO policies and the country-leader company traits."""
-        files = sorted(glob.glob(str(Path(self.mod_path) / POLICY_DIR / "*.txt")))
+        files = list_files(Path(self.mod_path) / POLICY_DIR, recursive=False)
         company_traits = Path(self.mod_path) / COMPANY_TRAIT_FILE
         if company_traits.is_file():
             files.append(str(company_traits))
         return self._staged_bonus_subset(files)
 
     def _doctrine_files(self) -> List[str]:
-        files = sorted(
-            glob.glob(
-                str(Path(self.mod_path) / DOCTRINE_DIR / "**" / "*.txt"),
-                recursive=True,
-            )
-        )
+        files = list_files(Path(self.mod_path) / DOCTRINE_DIR)
         return self._staged_bonus_subset(files)
 
     def _staged_bonus_subset(self, files: List[str]) -> List[str]:

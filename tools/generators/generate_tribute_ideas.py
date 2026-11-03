@@ -6,12 +6,10 @@ from pathlib import Path
 
 country_tag_list: list[str] = []
 
-# Anchor to the repo (tools/generators/ -> repo root) with OS-correct
-# separators; the old `"..\\common\\country_tags"` literals were dead on Linux.
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import atomic_write_bytes, read_text_strict
+from shared_utils import atomic_write_bytes, get_root_dir, read_text_strict
 
+REPO_ROOT = get_root_dir()
 TAG_DIR = os.path.join(REPO_ROOT, "common", "country_tags")
 newline = "\n\t\t\t"
 newline2 = "\n\t\t\t\t"

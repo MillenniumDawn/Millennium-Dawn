@@ -6,7 +6,6 @@ for `\\bX\\b` references and report vars whose net refs (refs minus sets) is
 zero. Both passes are multiprocessed and disk-cached via `disk_cache`.
 """
 
-import glob
 import hashlib
 import os
 import re
@@ -15,7 +14,7 @@ from multiprocessing import Pool
 from typing import Dict, FrozenSet, Iterator, List, Tuple
 
 import disk_cache
-from shared_utils import validation_config
+from shared_utils import find_mod_root, list_files, validation_config
 from validator_common import (
     BaseValidator,
     FileOpener,
@@ -75,22 +74,12 @@ def _resolve_mod_root(path: str) -> str:
 
     Reference counting must cover the whole mod, but `--path` may point at a
     subdirectory (e.g. common/scripted_effects/). Walk up until a directory
-    holding `descriptor.mod` (or both `common/` and `localisation/`) is found
-    and scan references from there; otherwise fall back to `path` unchanged.
-    Walking up from the *given* path (not the tool's own location) keeps
-    sibling-checkout runs correct.
+    holding both `common/` and `localisation/` is found and scan references
+    from there; otherwise fall back to `path` unchanged. Walking up from the
+    *given* path (not the tool's own location) keeps sibling-checkout runs
+    correct.
     """
-    cur = os.path.abspath(path)
-    while True:
-        if os.path.exists(os.path.join(cur, "descriptor.mod")) or (
-            os.path.isdir(os.path.join(cur, "common"))
-            and os.path.isdir(os.path.join(cur, "localisation"))
-        ):
-            return cur
-        parent = os.path.dirname(cur)
-        if parent == cur:
-            return os.path.abspath(path)
-        cur = parent
+    return find_mod_root(path, ("common", "localisation")) or os.path.abspath(path)
 
 
 def _strip_scope_prefix(name: str) -> str:
@@ -327,9 +316,7 @@ class SetVariables:
         if staged_files:
             files_to_scan = [f for f in staged_files if f.endswith(".txt")]
         else:
-            files_to_scan = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
-            )
+            files_to_scan = list_files(mod_path)
 
         process_func = partial(
             process_file_for_set_variables, lowercase=lowercase, mod_path=mod_path
@@ -404,24 +391,15 @@ class Validator(BaseValidator):
         # also rescues a `--path` pointed at a subdirectory by scanning from the
         # true mod root rather than the subfolder.
         scan_root = _resolve_mod_root(self.mod_path)
-        txt_files = list(
-            glob.iglob(os.path.join(scan_root, "**", "*.txt"), recursive=True)
-        )
-        yml_files = list(
-            glob.iglob(
-                os.path.join(scan_root, "localisation", "english", "**", "*.yml"),
-                recursive=True,
-            )
+        txt_files = list_files(scan_root)
+        yml_files = list_files(
+            os.path.join(scan_root, "localisation", "english"), ("*.yml",)
         )
         # Scripted-GUI properties read variables via [?THIS.var|C0] interpolation
         # in interface/*.gui. A variable referenced only from a GUI file (common
         # for display-only vars backing a text/progressbar element) has zero .txt
         # refs and was wrongly reported unused — scan .gui too.
-        gui_files = list(
-            glob.iglob(
-                os.path.join(scan_root, "interface", "**", "*.gui"), recursive=True
-            )
-        )
+        gui_files = list_files(os.path.join(scan_root, "interface"), ("*.gui",))
         files_to_scan = txt_files + yml_files + gui_files
 
         # Partition into bare names and global.-dotted names (lowercased -> orig

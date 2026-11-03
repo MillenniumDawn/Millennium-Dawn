@@ -6,7 +6,7 @@ import sys
 
 import pytest
 import validate_gfx_references as vg
-from shared.suite import run_validator, write_under
+from shared.suite import broken_symlink, run_validator, write_under
 from shared_utils import extract_block_from_text
 from validate_gfx_references import Validator as GfxReferenceValidator
 from validator_common import Severity
@@ -35,15 +35,6 @@ def _write(path, body):
 def _directory(path):
     """A directory whose name matches a scanned glob; reads as unreadable."""
     path.mkdir(parents=True, exist_ok=True)
-    return str(path)
-
-
-def _broken_symlink(path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.symlink(str(path.parent / "no_such_target"), str(path))
-    except (OSError, NotImplementedError):
-        pytest.skip("symlinks unavailable on this platform")
     return str(path)
 
 
@@ -193,14 +184,14 @@ def test_missing_directory_yields_no_files(tmp_path):
 _UNREADABLE_DECLARATION_CASES = {
     "focus search filters": (
         "common/national_focus",
-        _broken_symlink,
+        broken_symlink,
         "focus = {\n\tsearch_filters = { FOCUS_FILTER_UKR }\n}\n",
         vg._load_search_filter_names,
         frozenset({"FOCUS_FILTER_UKR"}),
     ),
     "equipment archetypes": (
         "common/units/equipment",
-        _broken_symlink,
+        broken_symlink,
         "equipments = {\n\tutil_vehicle_1 = {\n\t}\n}\n",
         lambda mod: vg._load_equipment_tree(mod)[0],
         frozenset({"util_vehicle_1"}),

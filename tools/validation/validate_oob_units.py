@@ -57,6 +57,7 @@ from equipment_variant_context import (
 from shared_utils import (
     get_staged_files,
     label_before_brace,
+    list_files,
     normalize_path_separators,
     read_text_under,
     validation_config,
@@ -458,7 +459,7 @@ def _parse_canonical_unit_sources(mod_path: str) -> List[_UnitSource]:
     placement, and battalion group unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
-    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
+    for filepath in list_files(units_dir, recursive=False):
         content = _read_text(filepath, mod_path)
 
         def compute(source_content: str = content) -> _UnitSource:
@@ -568,8 +569,8 @@ def _extract_division_group_keys(content: str) -> Set[str]:
 def parse_division_group_keys(mod_path: str) -> Set[str]:
     """Return the set of all division_names_group keys defined across the mod."""
     keys = set()
-    pattern = os.path.join(mod_path, "common", "units", "names_divisions", "*.txt")
-    for filepath in glob.iglob(pattern):
+    names_dir = os.path.join(mod_path, "common", "units", "names_divisions")
+    for filepath in list_files(names_dir, recursive=False):
         content = _read_text(filepath, mod_path)
         if not content:
             continue
@@ -3947,11 +3948,8 @@ class Validator(BaseValidator):
             entities = set()
             for root in ("entities", "models"):
                 for extension in ("asset", "gfx"):
-                    for filepath in glob.iglob(
-                        os.path.join(
-                            self.mod_path, "gfx", root, "**", f"*.{extension}"
-                        ),
-                        recursive=True,
+                    for filepath in list_files(
+                        os.path.join(self.mod_path, "gfx", root), (f"*.{extension}",)
                     ):
                         raw = _read_text(filepath, self.mod_path)
                         entities |= disk_cache.per_file_cached_by_content(

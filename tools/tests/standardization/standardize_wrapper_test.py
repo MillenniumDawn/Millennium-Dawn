@@ -324,10 +324,10 @@ def test_main_focus_returns_one_when_backup_fails(tmp_path, monkeypatch, capsys)
 def test_main_localisation_returns_one_when_mod_root_missing(
     tmp_path, monkeypatch, capsys
 ):
-    """Localisation branch with _detect_mod_root returning None."""
+    """Localisation branch with find_mod_root returning None."""
     src = tmp_path / "orphan.yml"
     src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
-    monkeypatch.setattr("standardize._detect_mod_root", lambda path: None)
+    monkeypatch.setattr("standardize.find_mod_root", lambda path, markers: None)
 
     result = _run_main(monkeypatch, capsys, "localisation", src)
     assert result.returncode == 1

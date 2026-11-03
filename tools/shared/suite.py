@@ -12,6 +12,7 @@ from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
 
+import pytest
 import yaml
 from report_lib.models import Issue, Severity
 
@@ -397,6 +398,16 @@ def write_tree(root: Path, files: dict) -> Path:
     for relative_path, content in files.items():
         write_under(root, relative_path, content)
     return root
+
+
+def broken_symlink(path: Path) -> str:
+    """A listed file whose read raises, or a skip where symlinks are unavailable."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        os.symlink(str(path.parent / "no_such_target"), str(path))
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks unavailable on this platform")
+    return str(path)
 
 
 def write_focus_file(root: Path, content: str) -> Path:
