@@ -1338,7 +1338,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_expel_russian"
 			remove_ideas = PMR_14_army
-			SOV = { country_event = transnistria.39 }
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = transnistria.39 }
+			}
 			set_temp_variable = { percent_change = -12 }
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = PMR }
@@ -1555,25 +1558,12 @@ focus_tree = {
 			UKR = { country_event = transnistria.26 }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
-				if = {
-					limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-					UKR = {
-						set_autonomy = {
-							target = PMR
-							autonomy_state = autonomy_autonomous_state_colored
-							end_wars = yes
-							end_civil_wars = yes
-						}
-					}
-				}
-				else = {
-					UKR = {
-						set_autonomy = {
-							target = PMR
-							autonomy_state = autonomy_autonomous_state
-							end_wars = yes
-							end_civil_wars = yes
-						}
+				UKR = {
+					set_autonomy = {
+						target = PMR
+						autonomy_state = autonomy_autonomous_state
+						end_wars = yes
+						end_civil_wars = yes
 					}
 				}
 			}
@@ -2110,35 +2100,31 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_cis_2"
-			add_opinion_modifier = {
-				target = ABK
-				modifier = diplomatic_support
+			every_country = {
+				limit = {
+					OR = {
+						tag = ABK
+						tag = NKR
+						tag = SOO
+					}
+				}
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
+				reverse_add_opinion_modifier = {
+					target = ROOT
+					modifier = diplomatic_support
+				}
 			}
-			reverse_add_opinion_modifier = {
-				target = ABK
-				modifier = diplomatic_support
-			}
-			GEO = {
-				add_opinion_modifier = { target = PMR modifier = recognises_them_rival }
-			}
-			add_opinion_modifier = {
-				target = NKR
-				modifier = diplomatic_support
-			}
-			reverse_add_opinion_modifier = {
-				target = NKR
-				modifier = diplomatic_support
-			}
-			AZE = {
-				add_opinion_modifier = { target = ABK modifier = recognises_them_rival }
-			}
-			add_opinion_modifier = {
-				target = SOO
-				modifier = diplomatic_support
-			}
-			reverse_add_opinion_modifier = {
-				target = SOO
-				modifier = diplomatic_support
+			every_country = {
+				limit = {
+					OR = {
+						tag = GEO
+						tag = AZE
+					}
+				}
+				add_opinion_modifier = { target = ROOT modifier = recognises_them_rival }
 			}
 		}
 
@@ -2589,7 +2575,10 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_expel_russians"
 			remove_ideas = PMR_14_army
-			SOV = { country_event = transnistria.39 }
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = transnistria.39 }
+			}
 			set_temp_variable = { percent_change = -12 }
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = PMR }
@@ -3289,6 +3278,8 @@ focus_tree = {
 			is_subject = no
 			country_exists = MLV
 		}
+
+		bypass = { NOT = { country_exists = MLV } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus PMR_red_moldova"
@@ -4893,7 +4884,18 @@ focus_tree = {
 						L_Inf_Bat = { x = 0 y = 0 }
 						L_Inf_Bat = { x = 0 y = 1 }
 						L_Inf_Bat = { x = 0 y = 2 }
-						L_Inf_Bat = { x = 0 y = 3 }
+
+						L_Inf_Bat = { x = 1 y = 0 }
+						L_Inf_Bat = { x = 1 y = 1 }
+						L_Inf_Bat = { x = 1 y = 2 }
+
+						L_Inf_Bat = { x = 2 y = 0 }
+						L_Inf_Bat = { x = 2 y = 1 }
+						L_Inf_Bat = { x = 2 y = 2 }
+
+						L_Inf_Bat = { x = 3 y = 0 }
+						L_Inf_Bat = { x = 3 y = 1 }
+						L_Inf_Bat = { x = 3 y = 2 }
 					}
 				}
 			}
@@ -6903,22 +6905,11 @@ focus_tree = {
 						set_temp_variable = { temp_outlook_increase = 0.75 }
 						change_relative_party_popularity = yes
 					}
-					if = {
-						limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-						set_autonomy = {
-							target = OPR
-							autonomy_state = autonomy_autonomous_state_colored
-							end_wars = yes
-							end_civil_wars = yes
-						}
-					}
-					else = {
-						set_autonomy = {
-							target = OPR
-							autonomy_state = autonomy_autonomous_state
-							end_wars = yes
-							end_civil_wars = yes
-						}
+					set_autonomy = {
+						target = OPR
+						autonomy_state = autonomy_autonomous_state
+						end_wars = yes
+						end_civil_wars = yes
 					}
 				}
 			}
@@ -7026,13 +7017,13 @@ focus_tree = {
 					country_exists = GGZ
 					GGZ = { is_subject_of = PMR }
 				}
-				annex_country = { target = GGZ transfer_troops = yes }
-				GGZ = { every_core_state = { add_core_of = PMR } }
 				hidden_effect = {
 					add_to_variable = { treasury = GGZ.treasury }
 					add_to_variable = { debt = GGZ.debt }
 					add_to_variable = { int_investments = GGZ.int_investments }
 				}
+				annex_country = { target = GGZ transfer_troops = yes }
+				GGZ = { every_core_state = { add_core_of = PMR } }
 			}
 		}
 
@@ -7205,7 +7196,7 @@ focus_tree = {
 			set_cosmetic_tag = PMR_Moldova
 			clr_country_flag = dynamic_flag
 			set_capital = { state = 147 }
-			remove_ideas = lacks_international_recognition
+			un_admit_member = yes
 			news_event = {
 				hours = 6
 				id = transnistria_news.4
