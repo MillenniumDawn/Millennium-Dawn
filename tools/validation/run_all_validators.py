@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disk_cache
 from report_lib.dedupe import dedupe
 from report_lib.models import Issue
-from shared_utils import Colors, split_cpu_budget
+from shared_utils import Colors, list_files, split_cpu_budget
 from validator_batches import ALL_SPECS
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +51,7 @@ def _spec_flags(script: str, staged: bool) -> List[str]:
 def discover_validators() -> List[Tuple[str, str, str]]:
     """Return (name, script_name, label) for each auto-runnable validator."""
     validators = []
-    for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
+    for script_path in list_files(SCRIPTS_DIR, ("validate_*.py",), recursive=False):
         script_name = os.path.basename(script_path)
         if script_name in _AUTO_RUN_EXCLUDED_SCRIPTS:
             continue
@@ -301,8 +301,8 @@ def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None
         except FileNotFoundError:
             pass
     copied = 0
-    for json_path in glob.glob(os.path.join(output_dir, "*.json")) + glob.glob(
-        os.path.join(output_dir, "*.analysis.jsonl")
+    for json_path in list_files(
+        output_dir, ("*.json", "*.analysis.jsonl"), recursive=False
     ):
         shutil.copyfile(
             json_path, os.path.join(persist_dir, os.path.basename(json_path))

@@ -12,7 +12,6 @@ from shared.suite import read_text as _read
 from shared.suite import write_text as _write
 from standardize_history import (
     HistoryStandardizer,
-    _detect_mod_root,
     _load_idea_classification,
     _load_modifier_variables,
     _variable_name,
@@ -127,12 +126,6 @@ def test_quoted_string_and_comments_preserved(tmp_path):
     assert "# inline note" in out
 
 
-def test_mod_root_search_gives_up_after_twelve_levels(tmp_path):
-    deep = tmp_path.joinpath(*[f"level{i}" for i in range(13)])
-    deep.mkdir(parents=True)
-    assert _detect_mod_root(str(deep)) is None
-
-
 _ODD_IDEAS = """top_double = { name = top_double } }
 ideas = {
 \tlaw_category = {
@@ -160,7 +153,7 @@ def test_loaders_skip_unreadable_entries_and_survive_stray_braces(tmp_path):
     modifiers = root / "common" / "dynamic_modifiers"
     ideas.mkdir(parents=True)
     modifiers.mkdir(parents=True)
-    # `*.txt` globs match directories, which cannot be read.
+    # A directory named like a script is not a file to read.
     (ideas / "a_directory.txt").mkdir()
     (modifiers / "a_directory.txt").mkdir()
     _write(ideas / "AA_law_odd.txt", _ODD_IDEAS)
@@ -290,8 +283,12 @@ def _mod(tmp_path):
 
 
 def test_mod_root_is_found_from_a_country_file(tmp_path):
+    history._IDEA_CACHE.clear()
+    history._MODIFIER_CACHE.clear()
     root, country = _mod(tmp_path)
-    assert _detect_mod_root(str(country)) == str(root)
+    standardizer = HistoryStandardizer()
+    standardizer._ensure_classification(str(country))
+    assert standardizer._classify_idea("law_income") == "law"
     assert history._iter_file_lines(str(root / "missing.txt")) is None
 
 
@@ -349,4 +346,3 @@ def test_without_a_mod_root_classification_is_empty(tmp_path):
         set(),
         {},
     )
-    assert _detect_mod_root(str(tmp_path)) is None
