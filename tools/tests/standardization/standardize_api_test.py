@@ -170,7 +170,7 @@ _KEPT_COMMENTS = {
     "history idea and add_ideas opener": (
         "history",
         "2000.1.1 = {\n\tadd_ideas = { # list note\n\t\tTST_a # idea note\n\t}\n}\n",
-        ["# list note\n", "\t\t\tTST_a # idea note\n"],
+        ["\t\t# list note\n", "\t\tTST_a # idea note\n"],
     ),
 }
 
@@ -185,6 +185,24 @@ def test_comments_on_an_opener_or_an_idea_survive(kind, source, kept):
     for text in kept:
         assert text in once
     assert standardize_text(kind, once) == once
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "2000.1.1 = {\n\tadd_ideas = { # note\n\t\tTST_a\n\t}\n}\n",
+        "2000.1.1 = {\n\tadd_ideas = {\n\t\tTST_a\n\t} # note\n}\n",
+    ],
+    ids=["opener", "closer"],
+)
+def test_comment_on_an_add_ideas_delimiter_keeps_the_braces_balanced(source):
+    once = standardize_text("history", source)
+
+    assert once == (
+        "2000.1.1 = {\n\n\tadd_ideas = {\n\t\t# note\n"
+        "\t\t# Country Content\n\t\tTST_a\n\t}\n}\n"
+    )
+    assert standardize_text("history", once) == once
 
 
 def test_indent_text_fixes_only_tabs_and_spacing():

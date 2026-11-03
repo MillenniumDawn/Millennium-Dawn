@@ -521,7 +521,7 @@ class HistoryStandardizer(BaseStandardizer):
             ]
             comment = raw[len(code) :].strip()
             if comment and not tokens:
-                props["ideas_extra_comments"].append(raw.rstrip())
+                props["ideas_extra_comments"].append(comment)
             for tok in tokens:
                 # A trailing comment stays on the line's last idea.
                 text = f"{tok} {comment}" if comment and tok == tokens[-1] else tok
