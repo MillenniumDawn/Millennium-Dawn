@@ -580,6 +580,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
   modifier. `unknown-modifier` (WARNING) has known false positives.
+- `income-over-25-percent` (WARNING, always on): one literal tax, healthcare,
+  building-tax, resource-export, or equipment-market income bonus above `0.25`
+  (+25%). Exactly +25%, penalties, variable-fed values, and stacked totals are not
+  flagged. Each warning names the owner, modifier, value, percentage, and source line.
+  This is a balance review prompt, not a hard cap or a claim that the value is a typo.
+  The check covers the same source files as the opt-in economy checks, without
+  requiring `--unbalanced-modifiers`. Document an intentional bonus as
+  `owner::key` with a reason in `validation_config.json`
+  `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
+  The owner is the idea, trait, or modifier name that holds the bonus. Do not
+  blanket-exempt existing bonuses; review and explain each one (Issue #6371).
 
 ## validate_on_actions.py
 

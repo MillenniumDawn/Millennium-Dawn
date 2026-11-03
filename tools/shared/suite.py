@@ -15,6 +15,7 @@ from types import ModuleType
 import pytest
 import yaml
 from report_lib.models import Issue, Severity
+from shared_utils import iter_statements
 
 from shared.paths import REPO_ROOT
 
@@ -279,6 +280,13 @@ def event_block(event_id, *fields, kind="country_event"):
     """
     lines = (f"id = {event_id}",) * (event_id is not None) + fields
     return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
+
+
+def only_block(script, name):
+    """The body of the single `name = { ... }` statement directly in `script`."""
+    blocks = [body for key, _, body in iter_statements(script) if key == name]
+    assert len(blocks) == 1 and blocks[0] is not None, name
+    return blocks[0]
 
 
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
