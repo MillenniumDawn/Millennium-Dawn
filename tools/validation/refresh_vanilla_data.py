@@ -61,8 +61,12 @@ def _write_manifest(
         "",
     ]
     lines = sorted(entries)
-    with open(os.path.join(_HERE, filename), "w", encoding="utf-8", newline="") as fh:
-        fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    path = os.path.join(_HERE, filename)
+    try:
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write("\n".join(header) + "\n".join(lines) + "\n")
+    except OSError as exc:
+        raise RefreshError(f"cannot write {path}: {exc}") from exc
     return f"{filename}: {len(lines)} entries"
 
 
@@ -246,7 +250,9 @@ _TARGETS: Dict[str, Callable[[], str]] = {
 
 def main() -> int:
     targets = sorted(_TARGETS)
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(
+        description="Refresh every vanilla-derived file the validators read, from a local HOI4 install."
+    )
     parser.add_argument(
         "--only",
         nargs="+",
