@@ -24,7 +24,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
-from shared_utils import find_hoi4_install, get_root_dir
+from shared_utils import find_hoi4_install, get_root_dir, list_files
 from sprite_index import _gfx_root
 from validate_defines import find_vanilla_defines, parse_vanilla_defines
 from validate_file_paths import collect_vanilla_paths
@@ -84,7 +84,7 @@ def _refresh_defines() -> str:
 
 def _refresh_docs() -> str:
     source = os.path.join(_install(), "documentation")
-    docs = glob.glob(os.path.join(source, "*.md"))
+    docs = list_files(source, ("*.md",), recursive=False)
     if not docs:
         raise RefreshError(f"no .md files under {source}")
     added = 0
@@ -178,9 +178,7 @@ def _vanilla_entity_files(base: str) -> List[str]:
         path
         for root in roots
         for extension in ("asset", "gfx")
-        for path in glob.glob(
-            os.path.join(root, "gfx", "**", f"*.{extension}"), recursive=True
-        )
+        for path in list_files(os.path.join(root, "gfx"), (f"*.{extension}",))
     )
 
 
