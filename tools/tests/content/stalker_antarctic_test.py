@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 from stalker_lifecycle_test import StalkerScript, _event
-from targeted_operations_model_test import _named_block, _parse_race_script
+from ai_race_state_model_test import _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
 

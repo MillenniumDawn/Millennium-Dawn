@@ -2,7 +2,7 @@ from copy import deepcopy
 
 import pytest
 from stalker_lifecycle_test import ROOT, StalkerScript, _event, _option
-from targeted_operations_model_test import _named_block, _parse_race_script
+from ai_race_state_model_test import _named_block, _parse_race_script
 
 EVENTS = "events/STALKER_field_campaigns.txt"
 

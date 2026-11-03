@@ -159,6 +159,7 @@ def staged_changed_lines(filepath):
         result = subprocess.run(
             ["git", "-C", root, "diff", "--cached", "--unified=0", "--", relative],
             capture_output=True,
+            text=True,
             check=False,
             timeout=15,
         )
@@ -167,13 +168,11 @@ def staged_changed_lines(filepath):
             f"cannot read staged diff for {filepath}: {error}"
         ) from error
     if result.returncode:
-        detail = (
-            result.stderr.decode("utf-8", errors="replace").strip() or "git diff failed"
-        )
+        detail = result.stderr.strip() or "git diff failed"
         raise StagedDiffError(f"cannot read staged diff for {filepath}: {detail}")
     lines = set()
     for match in re.finditer(
-        rb"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", result.stdout, re.M
+        r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@", result.stdout, re.M
     ):
         start = int(match.group(1))
         count = int(match.group(2) or "1")

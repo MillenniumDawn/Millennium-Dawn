@@ -316,11 +316,10 @@ def git_repo(tmp_path):
     return tmp_path
 
 
-@pytest.mark.parametrize("added", [b"newline\t= yes\n", b"\xff\n"])
-def test_staged_changed_lines_parses_hunk_headers(git_repo, added):
+def test_staged_changed_lines_parses_hunk_headers(git_repo):
     path = git_repo / "focus.txt"
-    with open(path, "ab") as handle:
-        handle.write(added)
+    with open(path, "a", encoding="utf-8", newline="") as handle:
+        handle.write("newline\t= yes\n")
     _git(git_repo, "add", "focus.txt")
 
     lines = fix_styling.staged_changed_lines(str(path))

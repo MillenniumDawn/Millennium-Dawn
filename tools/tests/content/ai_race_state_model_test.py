@@ -403,9 +403,7 @@ def _substitute_script_parameters(statements, arguments):
             return [
                 (substitute(key), op, substitute(operand)) for key, op, operand in value
             ]
-        return re.sub(
-            r"\$([A-Za-z0-9_]+)\$", lambda match: str(arguments[match[1]]), value
-        )
+        return re.sub(r"\$([A-Za-z0-9_]+)\$", lambda match: arguments[match[1]], value)
 
     return substitute(statements)
 
@@ -634,7 +632,7 @@ class RaceScript:
                 member = (
                     identifier if value == "THIS" else self.value(value, identifier)
                 )
-                result = member in (self.value(name, identifier) or [])
+                result = member in self.value(name, identifier)
             elif key == "has_tech":
                 result = operand in country["techs"]
             elif key == "can_research":
@@ -805,7 +803,7 @@ class RaceScript:
                     self.scope_stack.pop()
             elif key == "for_each_scope_loop":
                 data = {key: value for key, _op, value in operand}
-                for member in list(self.value(data["array"], identifier) or []):
+                for member in list(self.value(data["array"], identifier)):
                     self.scope_stack.append(identifier)
                     try:
                         self.execute(
@@ -815,7 +813,7 @@ class RaceScript:
                         self.scope_stack.pop()
             elif key == "for_each_loop":
                 data = {key: value for key, _op, value in operand}
-                for member in list(self.value(data["array"], identifier) or []):
+                for member in list(self.value(data["array"], identifier)):
                     self.temps[data["value"]] = member
                     self.execute(
                         [
@@ -946,7 +944,7 @@ class RaceScript:
                 for argument, expression in data.items():
                     if argument == "text":
                         continue
-                    match = re.fullmatch(r'"\[\?(\w+)(?:\.GetTokenKey)?\]"', expression)
+                    match = re.fullmatch(r'"\[\?(\w+)\.GetTokenKey\]"', expression)
                     assert match, f"Unsupported meta expression {expression}"
                     arguments[argument] = self.value(match[1], identifier)
 
@@ -958,7 +956,7 @@ class RaceScript:
                         ]
                     return re.sub(
                         r"\[([A-Za-z0-9_]+)\]",
-                        lambda match: str(arguments[match[1]]),
+                        lambda match: arguments[match[1]],
                         value,
                     )
 

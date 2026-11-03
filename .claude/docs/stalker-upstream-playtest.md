@@ -1,6 +1,6 @@
 # Full STALKER upstream playthrough checklist
 
-This checklist covers the complete OEM scenario port for #4791 and its Targeted Operations prerequisite #5498. It is an approximate plan grounded in the shipped source. Every box starts unchecked for this combined upstream candidate. Earlier #5962 fixture runs do not establish acceptance of this complete port.
+This checklist covers the OEM scenario port for #4791, without Targeted Operations. It is an approximate plan grounded in the shipped source. Every box starts unchecked for this combined upstream candidate. Earlier #5962 fixture runs do not establish acceptance of this complete port.
 
 Record the tested commit, HOI4 version and checksum, DLC list, game rules, actual save files, screenshots, game log, and error log. Preserve the normal playset and original saves. Record every test fixture or console command separately from normal campaign progression.
 
@@ -8,7 +8,6 @@ Record the tested commit, HOI4 version and checksum, DLC list, game rules, actua
 
 - [ ] Start a fresh 2000 campaign with STALKER disabled and both secondary rule choices varied, confirm no Zone registry, active anchor, scenario decision category, artifact bureau, or STALKER story becomes active (#4791).
 - [ ] Save, close, and reload the disabled campaign, confirm isolation persists through the 2006 and 2008 dispatch boundaries (#4791).
-- [ ] Keep TOP enabled during this control, confirm organizations 35 through 38 remain inactive and ordinary TOP dossiers, native raids, and agency operations retain their normal behavior (#4791).
 
 **Playthrough B: UKR 2000 through 2018, original Zone and dated history (covers #4791)**
 
@@ -45,7 +44,7 @@ Dated branches and delayed delivery:
 
 - [ ] Use the Belarus and international research paths, confirm access, opinions, funds, and artifact transfers reach the selected country (#4791).
 - [ ] Run the Security Council response with the Zone controlled by a permanent member and then a nonmember, confirm one ballot per live permanent seat plus the controller and correct recovery of annexed uncast seats (#4791).
-- [ ] Test foreign intelligence drift and artifact seizures, confirm faction leadership refreshes and source-linked TOP leads are granted only to eligible human countries (#4791).
+- [ ] Test foreign intelligence drift and artifact seizures, confirm faction leadership refreshes (#4791).
 - [ ] Buy and sell artifacts and unlock the anomalous-materials bureau with the relevant DLC enabled, confirm stock, treasury, research, and MIO upgrades account once (#4791).
 - [ ] Start a polar artifact study at a powered, fuelled, undamaged Radiation Laboratory, confirm the 5-artifact charge and the 180-day research and station-iteration bonus (#4791).
 - [ ] From separate study saves, lose laboratory operation or receive Treaty observers, confirm samples are seized or lost, the result is suppressed, and a station already reported for another violation receives no duplicate Treaty penalty (#4791).
@@ -61,11 +60,7 @@ Dated branches and delayed delivery:
 - [ ] Advance footprint spread, recession, drift, and a full-footprint split, confirm anchors stay fixed and the child uses its parent's ID plus 100 with independent administration (#4791).
 - [ ] With crossover content disabled, confirm none of its stories fire; with it enabled and a human holding Lake Mungo, complete Alice's contact and delayed return through save/reload and control transfer (#4791).
 
-**Playthrough E: USA and a low-PP AI Zone controller, TOP enabled (covers #4791)**
+**Playthrough E: a low-PP AI Zone controller (covers #4791)**
 
-- [ ] Discover the Monolith, smugglers, SIRCAA, and mercenaries at their actual activation thresholds, confirm groups 35 through 38 use state 698 and its current controller rather than the original host's capital (#4791).
-- [ ] Inspect the person and organization packages during calm and crisis, confirm the crisis disclosure, exposure adjustment, harm adjustment, and native operation modifiers (#4791).
-- [ ] Complete native person and facility operations in a live Zone, confirm only successful matching callbacks disturb containment and faction strength, while cancelled, stale, mismatched, or unsuccessful operations do not (#4791).
-- [ ] Transfer the Zone during preparation and confirm the reviewed host, state, objective, sequence, and controller checks prevent a stale resolution (#4791).
 - [ ] Let an AI controller with less than 50 PP and at least 10 treasury face containment under 30 or a breach, confirm the treasury relief path fires once and respects the shared cooldown and bankruptcy gates (#4791).
 - [ ] Finish with a real save/reload and a multi-month campaign, confirm no accumulating STALKER errors, stuck pending reports, duplicate rewards, or sustained monthly slowdown (#4791).

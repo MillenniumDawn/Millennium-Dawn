@@ -2,8 +2,8 @@ from collections import Counter
 from pathlib import Path
 
 import pytest
-from targeted_operations_core_test import TargetScript
-from targeted_operations_model_test import _parse_race_script
+from ai_race_state_model_test import _parse_race_script
+from stalker_script_model_test import StalkerModel
 
 ROOT = Path(__file__).resolve().parents[3]
 
@@ -27,7 +27,7 @@ def _option(event_id, name, filename):
     )
 
 
-class StalkerScript(TargetScript):
+class StalkerScript(StalkerModel):
     """Execute story effects with the shared scope and timed-flag interpreter."""
 
     def __init__(self):
@@ -40,7 +40,6 @@ class StalkerScript(TargetScript):
             "99_STALKER_intel_effects.txt",
             "99_STALKER_faction_wars_effects.txt",
             "99_STALKER_society_effects.txt",
-            "99_STALKER_top_effects.txt",
         ):
             self.effects.update(
                 _parse_race_script(
@@ -49,6 +48,13 @@ class StalkerScript(TargetScript):
                     )
                 )
             )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_triggers/99_STALKER_scripted_triggers.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
         self.triggers.update(
             {
                 name: [("always", "=", "yes")]

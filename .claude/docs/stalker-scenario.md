@@ -15,9 +15,9 @@ Add content to the subsystem that owns it, and touch shared files only through t
 - **Monthly work.** Add a line to `STALKER_monthly_pulse` in
   `common/scripted_effects/99_STALKER_pulse_effects.txt`. Do not add lines to `MD_on_actions.txt`.
 - **Changelog.** Each STALKER PR adds one BLUF line to `Changelog.txt`, as `AGENTS.md` requires.
-- **Target `main`.** This complete upstream port carries the scenario from OEM `main` and the
-  Targeted Operations prerequisite in #5498. Merge STALKER PRs one at a time, and incorporate
-  the latest upstream `main` into each one first.
+- **Target `main`.** This upstream port carries the scenario from OEM `main` and has no
+  Targeted Operations dependency. Merge STALKER PRs one at a time, and incorporate the latest
+  upstream `main` into each one first.
 
 ## Canon
 
@@ -131,11 +131,6 @@ where possible; they are what an upstream port has to carry.
   Zone activation, the 2011 dispatch of STALKER.171 and STALKER.172, the 2012 dispatch of
   STALKER.160, the 2018 dispatch of STALKER.176, and the 2022 dispatch of STALKER.34 and STALKER.35.
 - `common/scripted_effects/00_startup_effects.txt`: the artifact MIO in MD's starting MIO sizing.
-- Targeted Operations: `STALKER_check_top_zone_crisis` calls in the TOP proposal and resolution
-  effects, `STALKER_apply_top_organization_sabotage` in the organization resolution, the four
-  STALKER organizations in `tools/data/targeted_operations.json`, and
-  `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
-  [Targeted Operations](targeted-operations.md).
 - `localisation/english/MD_game_rules_l_english.yml`: the three STALKER rules.
 - `events/MD_Antarctica.txt`: the observer report event's block that seizes a polar artifact study
   and adds the Treaty penalty only when the station shows no other violation.
