@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import List
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import atomic_write_bytes
+from shared_utils import atomic_write_bytes, list_files
 
 
 class LocalizationValidator:
@@ -136,20 +136,12 @@ class LocalizationValidator:
 
 
 def find_english_localization_files() -> List[Path]:
-    """Find all English localization files in the project."""
-    patterns = [
-        "localisation/english/*.yml",
-        "localisation/*_l_english.yml",  # Alternative naming pattern
-        "localisation/english/**/*.yml",  # Nested directories
-    ]
-
-    files: List[Path] = []
-    project_root = Path.cwd()
-
-    for pattern in patterns:
-        files.extend(project_root.glob(pattern))
-
-    return sorted(set(files))
+    """Find all English localization files under the working directory."""
+    localisation = Path.cwd() / "localisation"
+    found = list_files(localisation / "english", ("*.yml",)) + list_files(
+        localisation, ("*_l_english.yml",), recursive=False
+    )
+    return sorted(Path(path) for path in found)
 
 
 def main():

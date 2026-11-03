@@ -21,6 +21,7 @@ from shared_utils import (
     find_matching_brace,
     iter_direct_child_blocks,
     iter_statements,
+    list_files,
     normalize_path_separators,
     validation_config,
 )
@@ -365,19 +366,11 @@ def _idea_categories_frame_count(gfx_dirs: List[Optional[str]]) -> Optional[int]
     no noOfFrames line means a single frame, so it returns 1.
     """
     for gfx_dir in gfx_dirs:
-        if not gfx_dir or not os.path.isdir(gfx_dir):
+        if not gfx_dir:
             continue
-        try:
-            filenames = sorted(os.listdir(gfx_dir))
-        except OSError:
-            continue
-        for fname in filenames:
-            if not fname.endswith(".gfx"):
-                continue
+        for path in list_files(gfx_dir, ("*.gfx",), recursive=False):
             try:
-                with open(
-                    os.path.join(gfx_dir, fname), encoding="utf-8-sig", errors="replace"
-                ) as fh:
+                with open(path, encoding="utf-8-sig", errors="replace") as fh:
                     text = fh.read()
             except Exception:
                 continue

@@ -400,6 +400,9 @@ if __name__ == "__main__":
 | `create_validation_parser(desc)`                      | Argparse factory for validators (`--path`, `--strict`, `--staged`, `--no-cache`, `--workers`) |
 | `create_linting_parser(desc)`                         | Argparse factory for linting scripts (`--mode`, `--files`, `--workers`)                       |
 | `run_validator_main(cls, desc)`                       | Entry point for validators, parses args, creates instance, runs, exits                        |
+| `get_root_dir()`                                      | Checkout root that holds `tools/`, anchored on `shared_utils.py` rather than the command      |
+| `find_mod_root(start, markers)`                       | Nearest of `start` and its parents holding every marker directory, or `None`                  |
+| `list_files(directory, patterns, recursive)`          | Sorted files whose names match a pattern; a missing directory gives `[]`                      |
 
 ## Scripts by Category
 
