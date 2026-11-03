@@ -321,7 +321,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `skip_payment` rule. Unconditional own-country event calls in the same file also
   commit money when the follow-up charges in its immediate effects or every option
   guarantees a money cost. Routing events are followed to a fixed point; a free exit,
-  conditional call or charge, foreign scope, and tooltip preview do not prove payment.
+  conditional call or charge, a trigger beyond the receiver's tag, foreign scope, and
+  tooltip preview do not prove payment.
   Known gaps: cross-file or cross-country reply-chain costs, scripted-effect event
   dispatch, and money modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with

@@ -1885,13 +1885,20 @@ def _paid_event_ids(
     """Same-file events whose immediate or every option commits money.
 
     Follow only unconditional own-country calls. Free exits, conditional calls,
-    foreign scopes, previews, and cycles without a payment remain unproven.
+    triggers beyond the receiver's tag, foreign scopes, previews, and cycles
+    without a payment remain unproven.
     """
     events: Dict[str, Tuple[str, List[Tuple[str, bool]], bool]] = {}
     for event_id, body, _start in _iter_event_bodies(text):
         if event_id is None:
             continue
-        country = _receiver_tag(_event_trigger_body(body) or "")
+        trigger = _event_trigger_body(body) or ""
+        if any(
+            key not in {"tag", "original_tag"}
+            for key, _value, _block in iter_statements(trigger)
+        ):
+            continue
+        country = _receiver_tag(trigger)
         immediate = ""
         options = []
         immediate_paid = False

@@ -1392,6 +1392,27 @@ _UNNEEDED_CASES = {
         ),
         _DEFERRED_WARNING,
     ),
+    "follow-up trigger can fail": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { has_war = yes }"
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "follow-up date trigger can fail": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { date > 2003.1.1 }"
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "follow-up trigger only names the receiver": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { original_tag = FOO }"
+        ),
+        [],
+    ),
     "deferred immediate payment": (_DEFERRED_START + _IMMEDIATE_FOLLOWUP, []),
     "deferred payment behind a routing event": (
         _DEFERRED_START
