@@ -40,6 +40,27 @@ def test_main_exits_one_when_no_install(monkeypatch):
     assert rvd_mod.main() == 1
 
 
+def test_main_help_works_without_docstrings(monkeypatch, capsys):
+    import sys
+
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "__doc__", None)
+    monkeypatch.setattr(sys, "argv", ["refresh_vanilla_data.py", "--help"])
+    with pytest.raises(SystemExit) as exc:
+        rvd_mod.main()
+    assert exc.value.code == 0
+    assert "Refresh every vanilla-derived file" in capsys.readouterr().out
+
+
+def test_manifest_write_failure_is_reported(monkeypatch, tmp_manifests):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "_HERE", str(tmp_manifests / "missing"))
+    with pytest.raises(rvd_mod.RefreshError, match="cannot write .*manifest.txt"):
+        rvd_mod._write_manifest("manifest.txt", [], [])
+
+
 def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
     import validation.refresh_vanilla_data as rvd_mod
 
