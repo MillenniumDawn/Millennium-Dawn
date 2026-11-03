@@ -3626,15 +3626,41 @@ country_event = {
 	option = {
 		name = AFG_hostage_crisis.5.a
 		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.5.a executed"
-		ai_chance = { base = 1 }
-		AFG = { country_event = { id = AFG_hostage_crisis.8 days = 2 } }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+		set_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = AFG }
+			AFG = {
+				diplomatic_relation = {
+					country = KOR
+					relation = military_access
+					active = no
+				}
+				hidden_effect = { country_event = { id = AFG_hostage_crisis.8 days = 2 } }
+			}
+		}
 	}
 
 	option = {
 		name = AFG_hostage_crisis.5.b
 		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.5.b executed"
 		ai_chance = { base = 0 }
-		AFG = { country_event = { id = AFG_hostage_crisis.9 days = 2 } }
+		add_popularity = {
+			ideology = democratic
+			popularity = -0.15
+		}
+		add_political_power = -50
+		hidden_effect = {
+			if = {
+				limit = { country_exists = AFG }
+				AFG = { country_event = { id = AFG_hostage_crisis.9 days = 2 } }
+			}
+		}
 	}
 }
 
@@ -3692,21 +3718,12 @@ country_event = {
 	desc = AFG_hostage_crisis.8.d
 	picture = GFX_afghan_sk_hostage_released
 	is_triggered_only = yes
+	minor_flavor = yes
 
 	#Good Ending
 	option = {
 		name = AFG_hostage_crisis.8.a
-		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.8.a executed"
 		ai_chance = { base = 1 }
-		KOR = {
-			set_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes
-		}
-		diplomatic_relation = {
-			country = KOR
-			relation = military_access
-			active = no
-		}
 	}
 }
 
@@ -3717,19 +3734,12 @@ country_event = {
 	desc = AFG_hostage_crisis.9.d
 	picture = GFX_afghan_sk_hostages_killed
 	is_triggered_only = yes
+	minor_flavor = yes
 
 	#Bad Ending
 	option = {
 		name = AFG_hostage_crisis.9.a
-		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.9.a executed"
 		ai_chance = { base = 1 }
-		KOR = {
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.15
-			}
-			add_political_power = -50
-		}
 	}
 }
 #Aloya jirga (No war on terror)
@@ -3943,6 +3953,7 @@ country_event = {
 	#they need american plans so send event to america
 	option = {
 		name = AFG_events.35.a
+		trigger = { country_exists = USA }
 		log = "[GetDateText]: [This.GetName]: AFG_events.35.a executed"
 		USA = { country_event = AFG_events.42 }
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -4022,7 +4033,12 @@ country_event = {
 		}
 		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
-		ai_chance = { base = 0 }
+		ai_chance = {
+			base = 0
+			modifier = { add = 100 NOT = { country_exists = USA } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = {
@@ -4530,43 +4546,29 @@ country_event = {
 				has_opinion = { target = AFG value < 0 }
 			}
 		}
-		AFG = { country_event = AFG_political_events.3 }
-		effect_tooltip = {
-			AFG = {
-				add_equipment_to_stockpile = {
-					type = infantry_weapons_type
-					producer = USA
-					amount = 5000
-				}
-				add_equipment_to_stockpile = {
-					type = artillery_equipment
-					producer = USA
-					amount = 100
-				}
-				add_equipment_to_stockpile = {
-					type = util_vehicle_type
-					producer = USA
-					amount = 500
-				}
+		send_equipment = {
+			type = infantry_weapons_type
+			amount = 5000
+			target = AFG
+		}
+		send_equipment = {
+			type = artillery_equipment
+			amount = 100
+			target = AFG
+		}
+		send_equipment = {
+			type = util_vehicle_type
+			amount = 500
+			target = AFG
+		}
+		custom_effect_tooltip = AFG_arms_stockpile_limit_tt
+		AFG = {
+			country_event = AFG_political_events.3
+			effect_tooltip = {
 				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = USA.id }
 				change_influence_percentage = yes
 			}
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_type
-			producer = USA
-			amount = -5000
-		}
-		add_equipment_to_stockpile = {
-			type = artillery_equipment
-			producer = USA
-			amount = -100
-		}
-		add_equipment_to_stockpile = {
-			type = util_vehicle_type
-			producer = USA
-			amount = -500
 		}
 		set_temp_variable = { treasury_change = -4.50 }
 		modify_treasury_effect = yes
@@ -4612,21 +4614,6 @@ country_event = {
 	option = {
 		name = AFG_political_events.3.a
 		log = "[GetLogInfo]: event AFG_political_events.3.a"
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_type
-			producer = USA
-			amount = 5000
-		}
-		add_equipment_to_stockpile = {
-			type = artillery_equipment
-			producer = USA
-			amount = 100
-		}
-		add_equipment_to_stockpile = {
-			type = util_vehicle_type
-			producer = USA
-			amount = 500
-		}
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = USA.id }
 		set_temp_variable = { influence_target = AFG }
