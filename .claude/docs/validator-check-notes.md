@@ -583,23 +583,14 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `income-over-25-percent` (WARNING, always on): one literal tax, healthcare,
   building-tax, resource-export, or equipment-market income bonus above `0.25`
   (+25%). Exactly +25%, penalties, variable-fed values, and stacked totals are not
-  flagged. Each warning names the modifier, value, percentage, and source line.
+  flagged. Each warning names the owner, modifier, value, percentage, and source line.
   This is a balance review prompt, not a hard cap or a claim that the value is a typo.
   The check covers the same source files as the opt-in economy checks, without
-  requiring `--unbalanced-modifiers`.
-  - For an intentional bonus, put a reason on the object's opening line:
-
-    ```text
-    TAG_recovery_bonus = { # md-ignore: income-over-25-percent - Temporary recovery bonus
-        modifier = { tax_gain_multiplier_modifier = 0.30 }
-    }
-    ```
-
-  - The same comment can go on the `modifier = {` opening line. It suppresses only
-    this warning within that block, including nested blocks, not sibling objects
-    or other checks. A missing reason, a preceding comment, or a comment on the
-    numeric assignment does not suppress it. Do not blanket-ignore existing bonuses;
-    review and explain each intentional exception (Issue #6371).
+  requiring `--unbalanced-modifiers`. Document an intentional bonus as
+  `owner::key` with a reason in `validation_config.json`
+  `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
+  The owner is the idea, trait, or modifier name that holds the bonus. Do not
+  blanket-exempt existing bonuses; review and explain each one (Issue #6371).
 
 ## validate_on_actions.py
 

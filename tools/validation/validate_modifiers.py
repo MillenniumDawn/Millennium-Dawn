@@ -19,7 +19,6 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     line_for_offset,
-    strip_inline_comment,
     validation_config,
 )
 from validator_common import (
@@ -692,12 +691,14 @@ _INCOME_TOKEN_RE = re.compile(
     r"(?<![A-Za-z0-9_:.@])(?P<key>[A-Za-z_][A-Za-z0-9_:.@]*)"
     r"\s*=\s*(?P<value>\{|[^\s{}]+)|(?P<brace>[{}])"
 )
-_INCOME_IGNORE_RE = re.compile(r"#\s*md-ignore:\s*income-over-25-percent\s+-\s+\S.*")
 
 # Documented ROI exceptions, as "owner::key". A single reward above the ROI
 # cap must justify itself there; undocumented ones fail the opt-in check.
 _UNBALANCED_ROI_EXCEPTIONS: FrozenSet[str] = frozenset(
     validation_config("validate_modifiers", "unbalanced_roi_exceptions")
+)
+_INCOME_EXCEPTIONS: FrozenSet[str] = frozenset(
+    validation_config("validate_modifiers", "income_over_25_percent_exceptions")
 )
 
 _NUMERIC_BARE_ASSIGNMENT_RE = re.compile(
@@ -776,12 +777,14 @@ def _scan_numeric_modifier_entries(text: str) -> List[Tuple[str, float, int, str
 
 def _scan_income_modifiers(
     text: str, direct_depth: int
-) -> List[Tuple[str, float, int]]:
-    """Find literal income bonuses, honoring reasoned ignores on block headers."""
+) -> List[Tuple[str, float, int, str]]:
+    """(key, value, line, owner) for literal income bonuses above the cap.
+
+    The owner is the idea, trait, or modifier name that holds the bonus.
+    """
     clean = blank_quoted_strings(blank_comments(text))
     offsets = compute_line_offsets(clean)
-    lines = text.splitlines()
-    stack: List[Tuple[str, bool]] = []
+    stack: List[str] = []
     entries = []
     for match in _INCOME_TOKEN_RE.finditer(clean):
         key, value, brace = match.group("key", "value", "brace")
@@ -790,30 +793,20 @@ def _scan_income_modifiers(
                 stack.pop()
             continue
         if brace == "{" or value == "{":
-            line = line_for_offset(offsets, match.start())
-            start = offsets[line - 2] + 1 if line > 1 else 0
-            raw = lines[line - 1]
-            comment = raw[len(strip_inline_comment(raw)) :]
-            end = offsets[line - 1] if line <= len(offsets) else len(clean)
-            tail = clean[match.end() : end]
-            header = not tail.strip() or tail.count("}") - tail.count("{") == 1
-            ignored = bool(stack and stack[-1][1]) or (
-                header
-                and not clean[start : match.start()].strip()
-                and bool(_INCOME_IGNORE_RE.fullmatch(comment))
-            )
-            stack.append((key or "", ignored))
+            stack.append(key or "")
             continue
-        if (
-            key not in _INCOME_MODIFIER_KEYS
-            or not stack
-            or stack[-1][1]
-            or (stack[-1][0] not in _INCOME_BLOCK_KEYS and len(stack) != direct_depth)
-        ):
+        if key not in _INCOME_MODIFIER_KEYS or not stack:
+            continue
+        if stack[-1] in _INCOME_BLOCK_KEYS:
+            owner = stack[-2] if len(stack) > 1 else ""
+        elif len(stack) == direct_depth:
+            owner = stack[-1]
+        else:
             continue
         numeric = _parse_entry_value(value or "")
         if numeric is not None and numeric > _INCOME_MODIFIER_CAP:
-            entries.append((key, numeric, line_for_offset(offsets, match.start())))
+            line = line_for_offset(offsets, match.start())
+            entries.append((key, numeric, line, owner))
     return entries
 
 
@@ -1157,13 +1150,16 @@ class Validator(BaseValidator):
                     text, depth
                 ),
             )
-            for key, value, line in entries:
+            for key, value, line, owner in entries:
+                if f"{owner}::{key}" in _INCOME_EXCEPTIONS:
+                    continue
                 results.append(
                     (
-                        f"{key} = {value:g} grants +{value * 100:g}%, above +25% "
-                        "per source; verify the balance and decimal placement. "
-                        "If intentional, add '# md-ignore: income-over-25-percent "
-                        "- <reason>' to the object's opening line (issue #6371)",
+                        f"'{owner}': {key} = {value:g} grants +{value * 100:g}%, "
+                        "above +25% per source; verify the balance and decimal "
+                        f"placement. If intentional, add '{owner}::{key}' with a "
+                        "reason to validation_config.json "
+                        "income_over_25_percent_exceptions (issue #6371)",
                         rel,
                         line,
                     )

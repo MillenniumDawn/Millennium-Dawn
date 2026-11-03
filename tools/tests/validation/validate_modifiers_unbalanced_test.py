@@ -9,7 +9,7 @@ import validate_modifiers as vm
 from shared.suite import checks_called_by_run
 from shared.suite import write_under as _write
 from validate_modifiers import Validator, _scan_numeric_modifier_entries
-from validator_common import FileOpener, Severity
+from validator_common import Severity
 
 
 def _validator(tmp_path, enabled=True):
@@ -199,11 +199,10 @@ def test_income_modifier_families_warn_without_the_opt_in_flag(tmp_path, key):
     assert f"{key} = 0.5" in message
     assert "+50%" in message
     assert "+25%" in message
-    assert "md-ignore: income-over-25-percent - <reason>" in message
+    assert f"'idea::{key}'" in message
 
 
 _TAX = "tax_gain_multiplier_modifier"
-_IGNORE_INCOME = "# md-ignore: income-over-25-percent - Temporary recovery bonus"
 
 # source, relative path, expected warning lines
 _INCOME_CASES = {
@@ -297,70 +296,10 @@ _INCOME_CASES = {
         "common/ideas/test.txt",
         [1],
     ),
-    "documented object ignore": (
-        f"idea = {{ {_IGNORE_INCOME}\n modifier = {{ {_TAX} = 0.5 }}\n}}",
-        "common/ideas/test.txt",
-        [],
-    ),
-    "documented modifier block ignore": (
-        f"idea = {{\n modifier = {{ {_IGNORE_INCOME}\n {_TAX} = 0.5\n }}\n}}",
-        "common/ideas/test.txt",
-        [],
-    ),
-    "documented inline object ignore": (
-        f"idea = {{ modifier = {{ {_TAX} = 0.5 }} }} {_IGNORE_INCOME}",
-        "common/ideas/test.txt",
-        [],
-    ),
-    "ignore does not leak to siblings": (
-        f"a = {{ {_IGNORE_INCOME}\n modifier = {{ {_TAX} = 0.5 }}\n}}\nb = {{ modifier = {{ {_TAX} = 0.5 }} }}",
-        "common/ideas/test.txt",
-        [4],
-    ),
-    "inline ignore closes before sibling": (
-        f"a = {{ modifier = {{ {_TAX} = 0.5 }} }} {_IGNORE_INCOME}\nb = {{ modifier = {{ {_TAX} = 0.5 }} }}",
-        "common/ideas/test.txt",
-        [2],
-    ),
-    "nested ignore does not leak to parent": (
-        f"idea = {{\n country_modifier = {{ {_IGNORE_INCOME}\n {_TAX} = 0.5\n }}\n modifier = {{ {_TAX} = 0.5 }}\n}}",
-        "common/ideas/test.txt",
-        [5],
-    ),
-    "ignore needs a reason": (
-        f"idea = {{ # md-ignore: income-over-25-percent -   \n modifier = {{ {_TAX} = 0.5 }}\n}}",
-        "common/ideas/test.txt",
-        [2],
-    ),
-    "unrelated ignore": (
-        f"idea = {{ # md-ignore: other-check - Reason\n modifier = {{ {_TAX} = 0.5 }}\n}}",
-        "common/ideas/test.txt",
-        [2],
-    ),
-    "quoted ignore is not a comment": (
-        f'idea = {{\n log = "{_IGNORE_INCOME}"\n modifier = {{ {_TAX} = 0.5 }}\n}}',
-        "common/ideas/test.txt",
-        [3],
-    ),
-    "preceding ignore is not object scoped": (
-        f"{_IGNORE_INCOME}\nidea = {{ modifier = {{ {_TAX} = 0.5 }} }}",
-        "common/ideas/test.txt",
-        [2],
-    ),
-    "assignment ignore is not object scoped": (
-        f"idea = {{ modifier = {{\n {_TAX} = 0.5 {_IGNORE_INCOME}\n}} }}",
-        "common/ideas/test.txt",
-        [2],
-    ),
     "two bonuses on one line": (
         f"idea = {{ modifier = {{ {_TAX} = 0.5 corporate_tax_income_multiplier_modifier = 0.3 }} }}",
         "common/ideas/test.txt",
         [1, 1],
-    ),
-    "anonymous block does not leak its ignore": (
-        f"idea = {{ color = {{ 1 2 3 }} {_IGNORE_INCOME}\n modifier = {{ {_TAX} = 0.5 }}\n}}",
-        "common/ideas/test.txt",
-        [2],
     ),
     "empty file": ("", "common/ideas/test.txt", []),
 }
@@ -377,20 +316,16 @@ def test_income_modifier_warnings(tmp_path, source, path, lines):
     assert all(i.severity == Severity.WARNING for i in validator._issues)
 
 
-def test_income_ignore_comment_edit_invalidates_scan(tmp_path):
-    source = f"idea = {{\n modifier = {{ {_TAX} = 0.5 }}\n}}"
-    path = "common/ideas/test.txt"
-    _write(tmp_path, path, source)
+def test_income_exception_skips_only_its_owner(tmp_path, monkeypatch):
+    monkeypatch.setattr(vm, "_INCOME_EXCEPTIONS", frozenset({f"a::{_TAX}"}))
+    _write(
+        tmp_path,
+        "common/ideas/test.txt",
+        f"a = {{ modifier = {{ {_TAX} = 0.5 }} }}\nb = {{ modifier = {{ {_TAX} = 0.5 }} }}",
+    )
     validator = _validator(tmp_path, enabled=False)
     validator.validate_income_modifiers()
-    assert validator.warnings_found == 1
-
-    _write(tmp_path, path, source.replace("idea = {", f"idea = {{ {_IGNORE_INCOME}"))
-    # Simulate a new CLI run while keeping the disk cache.
-    FileOpener.invalidate(str(tmp_path / path))
-    validator = _validator(tmp_path, enabled=False)
-    validator.validate_income_modifiers()
-    assert validator.warnings_found == 0
+    assert [i.line for i in validator._issues] == [2]
 
 
 def test_modifier_run_calls_every_check(tmp_path, monkeypatch):
