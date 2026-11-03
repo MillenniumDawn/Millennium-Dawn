@@ -24,7 +24,7 @@ from typing import Callable, Dict, Iterable, List, Optional, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
-from shared_utils import find_hoi4_install
+from shared_utils import find_hoi4_install, get_root_dir
 from sprite_index import _gfx_root
 from validate_defines import find_vanilla_defines, parse_vanilla_defines
 from validate_file_paths import collect_vanilla_paths
@@ -37,9 +37,7 @@ from validate_gfx_references import (
 )
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
-_DOC_DIR = os.path.normpath(
-    os.path.join(_HERE, "..", "..", "resources", "documentation")
-)
+_DOC_DIR = os.path.join(get_root_dir(), "resources", "documentation")
 
 
 class RefreshError(Exception):

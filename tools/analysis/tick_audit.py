@@ -63,13 +63,14 @@ from shared_utils import (  # noqa: E402
     Colors,
     atomic_write_text,
     extract_block_from_text,
+    get_root_dir,
     line_of,
     read_text_strict,
     read_text_under,
     strip_comments,
 )
 
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+REPO_ROOT = get_root_dir()
 
 # --- HOI4 cadence facts -----------------------------------------------------
 
