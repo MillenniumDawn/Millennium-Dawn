@@ -536,6 +536,7 @@ from shared_utils import (
     find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
+    list_files,
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
@@ -557,29 +558,22 @@ def _scan_global_refs(root_dir):
     decisions: set = set()
     nation_flags: set = set()
     for directory in ["common", "events", "history"]:
-        dir_path = os.path.join(root_dir, directory)
-        if not os.path.exists(dir_path):
-            continue
-        for root, _, filenames in os.walk(dir_path):
-            for filename in filenames:
-                if not filename.endswith(".txt"):
-                    continue
-                fp = os.path.join(root, filename)
-                try:
-                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
-                        content = f.read()
-                except OSError:
-                    continue
-                # A \b-led pattern gets no literal-prefix scan, so test the
-                # literal every match contains before running it.
-                if "complete_national_focus" in content:
-                    focuses.update(_RE_COMPLETE_FOCUS.findall(content))
-                if "unlock_national_focus" in content:
-                    focuses.update(_RE_UNLOCK_FOCUS.findall(content))
-                if "activate_decision" in content:
-                    decisions.update(_RE_ACTIVATE_DECISION.findall(content))
-                if "_nation_flag" in content:
-                    nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
+        for fp in list_files(os.path.join(root_dir, directory)):
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except OSError:
+                continue
+            # A \b-led pattern gets no literal-prefix scan, so test the
+            # literal every match contains before running it.
+            if "complete_national_focus" in content:
+                focuses.update(_RE_COMPLETE_FOCUS.findall(content))
+            if "unlock_national_focus" in content:
+                focuses.update(_RE_UNLOCK_FOCUS.findall(content))
+            if "activate_decision" in content:
+                decisions.update(_RE_ACTIVATE_DECISION.findall(content))
+            if "_nation_flag" in content:
+                nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
     return focuses, decisions, nation_flags
 
 
@@ -2659,15 +2653,11 @@ def _provincial_building_types(mod_root=None):
         mod_root = get_root_dir()
     types = set()
     buildings_dir = os.path.join(mod_root, "common", "buildings")
-    try:
-        filenames = sorted(os.listdir(buildings_dir))
-    except OSError:
+    if not os.path.isdir(buildings_dir):
         return _PROVINCIAL_BUILDINGS_FALLBACK
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
+    for fpath in list_files(buildings_dir, recursive=False):
         try:
-            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
+            with open(fpath, encoding="utf-8") as f:
                 lines = f.readlines()
         except OSError:
             continue

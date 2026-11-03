@@ -989,14 +989,7 @@ def _editor_settings_files() -> List[str]:
     mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
     vscode = os.path.join(mod_root, ".vscode")
     files = [os.path.join(vscode, "settings.json")]
-    try:
-        files.extend(
-            os.path.join(vscode, f)
-            for f in sorted(os.listdir(vscode))
-            if f.endswith(".code-workspace")
-        )
-    except OSError:
-        pass
+    files.extend(list_files(vscode, patterns=("*.code-workspace",), recursive=False))
     appdata = os.environ.get("APPDATA", "")
     files.extend(
         os.path.expanduser(p)
@@ -1084,15 +1077,7 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
-    try:
-        filenames = sorted(os.listdir(tags_dir))
-    except OSError:
-        return out
-
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
+    for fpath in list_files(tags_dir, recursive=False):
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = re.sub(r"#.*", "", f.read())
@@ -1507,7 +1492,7 @@ def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
     """
     root = Path(mod_path) / "common" / "decisions" / "categories"
     names: Dict[str, str] = {}
-    for path in sorted(root.rglob("*.txt")):
+    for path in map(Path, list_files(root)):
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
         except OSError:

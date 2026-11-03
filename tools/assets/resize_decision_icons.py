@@ -22,7 +22,6 @@ the slot's size, written as uncompressed ARGB DDS like the rest of MD's icons.
 """
 
 import argparse
-import glob
 import os
 import re
 import sys
@@ -39,7 +38,12 @@ except ImportError:
     sys.exit("Pillow is required: pip install --group runtime")
 
 from image_size import read_image_size
-from shared_utils import find_hoi4_install, find_unquoted_block_end, get_root_dir
+from shared_utils import (
+    find_hoi4_install,
+    find_unquoted_block_end,
+    get_root_dir,
+    list_files,
+)
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validate_decisions import (
     _DEC_ICON_BLOCK_RE,
@@ -99,9 +103,7 @@ class Job:
 
 
 def _decision_files(root: Path) -> List[str]:
-    return sorted(
-        glob.glob(str(root / "common" / "decisions" / "**" / "*.txt"), recursive=True)
-    )
+    return list_files(root / "common" / "decisions")
 
 
 def _is_under(path: str, root: Path) -> bool:
