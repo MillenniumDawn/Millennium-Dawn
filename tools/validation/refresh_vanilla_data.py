@@ -2,8 +2,8 @@
 """Refresh every vanilla-derived file the validators read, from a local HOI4 install.
 
 CI has no game installed, so validate_defines, validate_file_paths,
-validate_gfx_references and validate_modifiers fall back to committed copies of
-vanilla data. A game update leaves those stale: a modifier Paradox added after
+validate_gfx_references, validate_modifiers and validate_oob_units fall back to
+committed copies of vanilla data. A game update leaves those stale: a modifier Paradox added after
 the last refresh reads as a typo. Run this after a HOI4 version bump, from the
 mod root:
 
@@ -18,9 +18,11 @@ import glob
 import os
 import shutil
 import sys
+import zipfile
 from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
 from shared_utils import find_hoi4_install
 from sprite_index import _gfx_root
@@ -172,6 +174,53 @@ def _refresh_sprites() -> str:
     )
 
 
+def _vanilla_entity_files(base: str) -> List[str]:
+    roots = [
+        base,
+        *glob.glob(os.path.join(base, "dlc", "*")),
+        *glob.glob(os.path.join(base, "integrated_dlc", "*")),
+    ]
+    return sorted(
+        path
+        for root in roots
+        for extension in ("asset", "gfx")
+        for path in glob.glob(
+            os.path.join(root, "gfx", "**", f"*.{extension}"), recursive=True
+        )
+    )
+
+
+def _refresh_entities() -> str:
+    names: set = set()
+    base = _install()
+    files = _vanilla_entity_files(base)
+    if not files:
+        raise RefreshError("no gfx .asset or .gfx files found")
+    for path in files:
+        raw = _read_raw(path)
+        if raw is not None:
+            names.update(entity_names_from_text(raw))
+    # Some DLC ship their gfx only inside a zip.
+    for archive_path in glob.glob(os.path.join(base, "dlc", "*", "*.zip")):
+        with zipfile.ZipFile(archive_path) as archive:
+            for member in archive.namelist():
+                if member.startswith("gfx/") and member.endswith((".asset", ".gfx")):
+                    names.update(
+                        entity_names_from_text(
+                            archive.read(member).decode("utf-8-sig", "replace")
+                        )
+                    )
+    return _write_manifest(
+        "vanilla_entities.txt",
+        [
+            "# Vanilla Hearts of Iron IV entity names, lowercased (base + DLC gfx).",
+            "# Used by validate_oob_units.py so a create_equipment_variant model",
+            "# naming a vanilla entity is not flagged.",
+        ],
+        names,
+    )
+
+
 def _refresh_fonts() -> str:
     gfx_files = _vanilla_gfx_files()
     if not gfx_files:
@@ -195,6 +244,7 @@ def _refresh_fonts() -> str:
 _TARGETS: Dict[str, Callable[[], str]] = {
     "defines": _refresh_defines,
     "docs": _refresh_docs,
+    "entities": _refresh_entities,
     "fonts": _refresh_fonts,
     "gui": _refresh_gui,
     "paths": _refresh_paths,

@@ -2,6 +2,7 @@
 
 import importlib
 import struct
+import zipfile
 
 import pytest
 
@@ -65,7 +66,7 @@ def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
 
     importlib.reload(rvd_mod)
     monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
-    for name in ("defines", "docs", "fonts", "gui", "paths", "sprites"):
+    for name in ("defines", "docs", "entities", "fonts", "gui", "paths", "sprites"):
         monkeypatch.setitem(rvd_mod._TARGETS, name, lambda n=name: f"{n}: ok")
 
     import sys as _sys
@@ -348,8 +349,39 @@ def test_targets_dict_has_expected_keys():
     assert set(rvd_mod._TARGETS) == {
         "defines",
         "docs",
+        "entities",
         "fonts",
         "gui",
         "paths",
         "sprites",
     }
+
+
+def test_refresh_entities_writes_lowercased_names(monkeypatch, tmp_manifests):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    install = tmp_manifests / "install"
+    for relative in ("gfx/entities/base.asset", "dlc/dlc001/gfx/models/dlc.gfx"):
+        path = install / relative
+        path.parent.mkdir(parents=True)
+        name = path.stem.upper()
+        path.write_text(f'entity = {{ name = "{name}_entity" }}\n', encoding="utf-8")
+    with zipfile.ZipFile(install / "dlc/dlc001/dlc001.zip", "w") as archive:
+        archive.writestr(
+            "gfx/entities/zipped.asset", 'entity = { name = "ZIPPED_entity" }\n'
+        )
+        archive.writestr("sound/ignored.asset", 'entity = { name = "sound_entity" }\n')
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(install))
+
+    assert rvd_mod._refresh_entities() == "vanilla_entities.txt: 3 entries"
+
+    body = (tmp_manifests / "vanilla_entities.txt").read_text(encoding="utf-8")
+    assert body.splitlines()[-3:] == ["base_entity", "dlc_entity", "zipped_entity"]
+
+
+def test_refresh_entities_raises_when_no_files(monkeypatch, tmp_path):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
+    with pytest.raises(rvd_mod.RefreshError):
+        rvd_mod._refresh_entities()
