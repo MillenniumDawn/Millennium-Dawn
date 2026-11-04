@@ -275,7 +275,7 @@
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 25.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 72 -- 200 vanilla; planes per airbase level, 3x the old 24
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 48 -- 200 vanilla; planes per airbase level, 2x the old 24
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
