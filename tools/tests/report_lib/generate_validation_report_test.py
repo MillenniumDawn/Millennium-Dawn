@@ -15,16 +15,22 @@ from shared.paths import TOOLS_DIR
 from shared.suite import issue_dict as _issue_dict
 from shared.suite import make_results_tree
 
+BASE_SHA = "0123456789abcdef"  # pragma: allowlist secret
 
-def _write_baseline(base, toolshash, issues):
+
+def _write_baseline(base, toolshash, issues, run_id=""):
     base.mkdir(parents=True, exist_ok=True)
-    (base / META_FILENAME).write_text(
-        json.dumps({"toolshash": toolshash}), encoding="utf-8"
-    )
+    meta = {
+        "toolshash": toolshash,
+        "commit_sha": BASE_SHA,
+        "run_id": run_id,
+        "sidecars": ["events.json"],
+    }
+    (base / META_FILENAME).write_text(json.dumps(meta), encoding="utf-8")
     (base / "events.json").write_text(json.dumps(issues), encoding="utf-8")
 
 
-def _old_and_new_tree(tmp_path, toolshash="h"):
+def _old_and_new_tree(tmp_path, toolshash="h", run_id=""):
     make_results_tree(
         tmp_path,
         {
@@ -41,10 +47,11 @@ def _old_and_new_tree(tmp_path, toolshash="h"):
         tmp_path / "baseline",
         toolshash,
         [_issue_dict("error", file="old.txt", message="old finding")],
+        run_id,
     )
 
 
-def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
+def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None, baseline_commit=None):
     argv = [
         "--results-dir",
         str(tmp_path / "validation-results"),
@@ -61,6 +68,8 @@ def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
         argv += ["--baseline-dir", str(baseline_dir)]
     if baseline_toolshash is not None:
         argv += ["--baseline-toolshash", baseline_toolshash]
+    if baseline_commit is not None:
+        argv += ["--baseline-commit", baseline_commit]
     return argv
 
 
@@ -90,28 +99,135 @@ def _post_argv(tmp_path, *extra):
     return argv
 
 
-def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize(
+    ("run_id", "source"),
+    [
+        pytest.param("", "", id="main's run"),
+        pytest.param("7", " (scanned in this run)", id="this run's base scan"),
+    ],
+)
+def test_main_annotates_new_vs_existing_from_baseline(
+    tmp_path, monkeypatch, capsys, run_id, source
+):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    _old_and_new_tree(tmp_path)
+    monkeypatch.setenv("GITHUB_RUN_ID", "7")
+    _old_and_new_tree(tmp_path, run_id=run_id)
 
     code = generate_validation_report.main(
-        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        _argv(
+            tmp_path,
+            baseline_dir=tmp_path / "baseline",
+            baseline_toolshash="h",
+            baseline_commit=BASE_SHA,
+        )
     )
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "1 new error against the main baseline" in report
-    assert "**Baseline comparison:** available" in report
+    assert f"**Baseline comparison:** main `0123456`{source}\n" in report
     err = capsys.readouterr().err
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
 
-def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
+def test_main_reports_what_changed_validators_do_to_main(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _old_and_new_tree(tmp_path)
+    _write_baseline(tmp_path / "main-tools", "main-hash", [])
+
+    code = generate_validation_report.main(
+        _argv(
+            tmp_path,
+            baseline_dir=tmp_path / "baseline",
+            baseline_toolshash="h",
+            baseline_commit=BASE_SHA,
+        )
+        + ["--tooling-changed", "--main-tools-baseline", str(tmp_path / "main-tools")]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "that code adds/drops: `c` +1/-0." in report
+
+
+def test_main_moves_main_findings_to_renamed_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "VALIDATION COMPLETE",
+                "issues": [_issue_dict("error", file="moved.txt", message="finding")],
+            }
+        },
+    )
+    _write_baseline(
+        tmp_path / "baseline",
+        "h",
+        [_issue_dict("error", file="old.txt", message="finding")],
+    )
+    renames = tmp_path / "renames.txt"
+    renames.write_text("old.txt\nmoved.txt\n", encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--renames", str(renames)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "No new errors against the main baseline" in report
+
+
+@pytest.mark.parametrize(
+    ("hunks", "verdict"),
+    [
+        pytest.param("", "No new errors", id="no edit"),
+        pytest.param("@@ -1,0 +2,2 @@\n", "1 new error", id="main's copy moved down"),
+    ],
+)
+def test_main_places_main_findings_through_the_hunks(
+    tmp_path, monkeypatch, hunks, verdict
+):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    finding = _issue_dict("error", file="events/a.txt", line=10, message="finding")
+    make_results_tree(
+        tmp_path, {"events": {"log": "VALIDATION COMPLETE", "issues": [finding]}}
+    )
+    _write_baseline(tmp_path / "baseline", "h", [finding])
+    hunks_file = tmp_path / "hunks.txt"
+    hunks_file.write_text(
+        "diff --git a/events/a.txt b/events/a.txt\n+++ b/events/a.txt\n" + hunks,
+        encoding="utf-8",
+    )
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--hunks", str(hunks_file)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert f"{verdict} against the main baseline" in report
+
+
+@pytest.mark.parametrize(
+    ("toolshash", "commit"),
+    [
+        pytest.param("new-generation", BASE_SHA, id="other validator code"),
+        pytest.param(
+            "h",
+            "fedcba9876543210",  # pragma: allowlist secret
+            id="other main commit",
+        ),
+    ],
+)
+def test_main_ignores_stale_baseline(tmp_path, monkeypatch, toolshash, commit):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
     _write_baseline(
         tmp_path / "baseline",
-        "old-generation",
+        "h",
         [_issue_dict("error", file="old.txt", message="old finding")],
     )
 
@@ -119,16 +235,18 @@ def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
         _argv(
             tmp_path,
             baseline_dir=tmp_path / "baseline",
-            baseline_toolshash="new-generation",
+            baseline_toolshash=toolshash,
+            baseline_commit=commit,
         )
     )
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    # A baseline from a different validator generation must be ignored, not
-    # compared: no NEW/EXISTING annotation anywhere.
+    # A baseline from different validator code or another main commit must be
+    # ignored, not compared: no NEW/EXISTING annotation anywhere.
     assert "main baseline" not in report
     assert "**Baseline comparison:** unavailable" in report
+    assert f"no complete baseline of main `{commit[:7]}`" in report
 
 
 def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
@@ -274,17 +392,66 @@ def test_main_posts_comment_for_unknown_run(tmp_path, monkeypatch):
     assert not cleared
 
 
-def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("specs", "skipped", "posts"),
+    [
+        pytest.param({}, False, True, id="missing results"),
+        pytest.param({}, True, False, id="no tests selected"),
+        pytest.param(
+            {"events": {"log": "validator started"}},
+            True,
+            True,
+            id="incomplete result is not hidden",
+        ),
+        pytest.param(
+            {"events": {"issues": [_issue_dict("warning", message="warning")]}},
+            True,
+            True,
+            id="findings are not hidden",
+        ),
+    ],
+)
+def test_main_handles_empty_validation(tmp_path, monkeypatch, specs, skipped, posts):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    (tmp_path / "validation-results").mkdir()
+    monkeypatch.setenv("GITHUB_RUN_ID", "7")
+    monkeypatch.setenv("GITHUB_RUN_ATTEMPT", "2")
+    make_results_tree(tmp_path, specs)
     posted, cleared = _comment_spies(monkeypatch)
+    extra = ["--comment-output", str(tmp_path / "comment.json")]
+    if skipped:
+        extra.append("--no-tests-selected")
 
-    code = generate_validation_report.main(_post_argv(tmp_path))
+    code = generate_validation_report.main(_post_argv(tmp_path, *extra))
 
     assert code == 0
-    assert len(posted) == 1
-    assert "_No validator results found._" in posted[0][3]
-    assert not cleared
+    assert len(posted) == int(posts)
+    assert len(cleared) == int(not posts)
+    if not specs and posts:
+        assert "_No validator results found._" in posted[0][3]
+    payload = json.loads((tmp_path / "comment.json").read_text(encoding="utf-8"))
+    assert payload == {
+        "pr_number": "42",
+        "commit_sha": "abc1234deadbeef",  # pragma: allowlist secret
+        "run_id": "7",
+        "run_attempt": "2",
+        "should_post": posts,
+        "body": (tmp_path / "report.md").read_text(encoding="utf-8"),
+    }
+
+
+def test_main_writes_comment_payload_without_api_credentials(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_TOKEN", raising=False)
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+    posted, cleared = _comment_spies(monkeypatch)
+
+    code = generate_validation_report.main(
+        _argv(tmp_path) + ["--comment-output", str(tmp_path / "comment.json")]
+    )
+
+    assert code == 0
+    assert (tmp_path / "comment.json").is_file()
+    assert not posted and not cleared
 
 
 def test_main_hands_tools_suite_runs_to_the_checks_api(tmp_path, monkeypatch):
@@ -358,13 +525,16 @@ def test_main_post_comment_requires_repository(tmp_path, monkeypatch):
     assert code == 1
 
 
-def test_main_fails_when_the_report_cannot_be_written(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize("output", ["--output", "--comment-output"])
+def test_main_fails_when_the_report_cannot_be_written(
+    tmp_path, monkeypatch, capsys, output
+):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
     blocked = tmp_path / "blocked"
     blocked.mkdir()
     argv = _argv(tmp_path)
-    argv[argv.index("--output") + 1] = str(blocked)
+    argv += [output, str(blocked)]
 
     code = generate_validation_report.main(argv)
 

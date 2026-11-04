@@ -12,6 +12,7 @@ from linting.check_common_mistakes import (
 
 _TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!]=?|=|[^\s{}=<>!]+')
 _DATE = re.compile(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?")
+_TAG = re.compile(r"[A-Z]{3}")
 _WRAPPERS = {
     "AND",
     "hidden_trigger",
@@ -22,9 +23,9 @@ _WRAPPERS = {
 
 def script_nodes(text):
     tokens = [
-        (match.group(), line)
+        (token, line)
         for line, code in enumerate(blank_comments(text).splitlines(), 1)
-        for match in _TOKEN.finditer(code)
+        for token in _TOKEN.findall(code)
     ]
     return _parse_script_nodes(tokens, 0)[0]
 
@@ -36,6 +37,8 @@ def value(node, key):
 
 def event_pool_targets(text):
     """Bare event lists are omitted by the shared assignment-only AST parser."""
+    if "events" not in text:
+        return set()
     return {
         event
         for block in re.finditer(
@@ -68,7 +71,7 @@ def countries(nodes):
 def scope_country(key, current, root):
     if key == "ROOT":
         return root
-    if re.fullmatch(r"[A-Z]{3}", key):
+    if _TAG.fullmatch(key):
         return frozenset({key})
     if (
         _scope_frame_kind(key) == "foreign"
@@ -110,13 +113,13 @@ def dlc_truth(nodes, dlcs):
             result = dlcs.get(node.value.strip('"'))
         elif node.key == "always":
             result = {"yes": True, "no": False}.get(node.value)
-        elif node.key in _WRAPPERS or node.key == "NOT":
+        elif node.key in _WRAPPERS:
             result = dlc_truth(node.children, dlcs)
-            if node.key == "NOT" and result is not None:
-                result = not result
-        elif node.key == "OR":
+        elif node.key in {"OR", "NOT"}:
             arms = [dlc_truth([child], dlcs) for child in node.children]
             result = True if True in arms else None if None in arms else False
+            if node.key == "NOT" and result is not None:
+                result = not result
         else:
             result = None
         results.append(result)
@@ -134,20 +137,34 @@ def branches(nodes, dlcs):
             continue
         outcomes = []
         reachable = True
+        nested = []
         while True:
+            arm = []
+            own = []
+            inner = False
+            for child in node.children:
+                # An else after an inner if chain belongs to that chain.
+                if child.key in {"else_if", "else"}:
+                    (arm if inner else own).append(child)
+                    continue
+                if child.key != "limit":
+                    arm.append(child)
+                inner = child.key == "if"
             limit = _first_child(node, "limit")
             truth = dlc_truth(limit.children, dlcs) if limit else None
             if reachable and (truth is None or truth):
-                outcomes.append(
-                    [child for child in node.children if child.key != "limit"]
-                )
+                outcomes.append(arm)
             reachable = reachable and (truth is None or not truth)
-            if index == len(nodes) or nodes[index].key not in {"else_if", "else"}:
+            nested = own + nested
+            if nested:
+                node = nested.pop(0)
+            elif index < len(nodes) and nodes[index].key in {"else_if", "else"}:
+                node = nodes[index]
+                index += 1
+            else:
                 if reachable:
                     outcomes.append([])
                 break
-            node = nodes[index]
-            index += 1
             if node.key == "else":
                 if reachable:
                     outcomes.append(node.children)
@@ -155,7 +172,9 @@ def branches(nodes, dlcs):
         yield outcomes
 
 
-def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozenset()):
+def starting_techs(
+    nodes, dlcs, start, known=None, effects=None, active=frozenset(), *, possible=False
+):
     known = set(known or ())
     dated = [node for node in nodes if _DATE.fullmatch(node.key)]
     ordered = [node for node in nodes if not _DATE.fullmatch(node.key)]
@@ -165,9 +184,12 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
     for node in branches(ordered, dlcs):
         if isinstance(node, list):
             outcomes = [
-                starting_techs(arm, dlcs, start, known, effects, active) for arm in node
+                starting_techs(
+                    arm, dlcs, start, known, effects, active, possible=possible
+                )
+                for arm in node
             ]
-            known = set.intersection(*outcomes)
+            known = (set.union if possible else set.intersection)(*outcomes)
         elif effects and node.key in effects:
             if node.key not in active:
                 known = starting_techs(
@@ -177,6 +199,7 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
                     known,
                     effects,
                     active | {node.key},
+                    possible=possible,
                 )
         elif node.key == "set_technology":
             for tech in node.children:
@@ -185,13 +208,30 @@ def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozense
                 elif tech.value == "0":
                     known.discard(tech.key)
         elif node.key == "hidden_effect":
-            known = starting_techs(node.children, dlcs, start, known, effects, active)
+            known = starting_techs(
+                node.children, dlcs, start, known, effects, active, possible=possible
+            )
         elif _DATE.fullmatch(node.key) and start:
             date = tuple(int(part) for part in node.key.split("."))[:3]
             if date <= start:
                 known = starting_techs(
-                    node.children, dlcs, start, known, effects, active
+                    node.children,
+                    dlcs,
+                    start,
+                    known,
+                    effects,
+                    active,
+                    possible=possible,
                 )
+        elif (
+            possible
+            and node.children
+            and node.key not in {"effect_tooltip", "custom_effect_tooltip", "limit"}
+            and not _DATE.fullmatch(node.key)
+        ):
+            known |= starting_techs(
+                node.children, dlcs, start, known, effects, active, possible=True
+            )
     return known
 
 

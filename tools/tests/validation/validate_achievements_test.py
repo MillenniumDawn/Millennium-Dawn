@@ -7,7 +7,7 @@ country's `original_tag` never changes mid-game, so re-checking the same tag in
 only them.
 """
 
-from validate_achievements import _scan_file
+from validate_achievements import Validator, _scan_file
 
 
 def _achievement(name, possible, happened):
@@ -104,3 +104,57 @@ def test_happened_tag_for_different_country_not_flagged(tmp_path):
         ]
     )
     assert _scan(txt, tmp_path) == []
+
+
+def test_happened_tag_with_untagged_possible_not_flagged(tmp_path):
+    # possible admits every country, so the happened tag is the only gate.
+    txt = _build(
+        [
+            _achievement(
+                "anyone_can_try",
+                '\t\thas_dlc = "Man the Guns"\n',
+                "\t\toriginal_tag = USA\n",
+            )
+        ]
+    )
+    assert _scan(txt, tmp_path) == []
+
+
+def test_achievement_without_happened_is_skipped(tmp_path):
+    txt = _build(["no_goal = {\n\tpossible = {\n\t\toriginal_tag = USA\n\t}\n}\n"])
+    assert _scan(txt, tmp_path) == []
+
+
+def test_unreadable_file_yields_no_findings(tmp_path):
+    assert _scan_file((str(tmp_path / "missing.txt"), str(tmp_path))) == []
+
+
+def test_validator_reports_redundant_tag_as_error(tmp_path):
+    f = tmp_path / "common" / "achievements" / "MD_achievements.txt"
+    f.parent.mkdir(parents=True)
+    f.write_text(
+        _build(
+            [
+                _achievement(
+                    "make_america_great",
+                    "\t\toriginal_tag = USA\n",
+                    "\t\toriginal_tag = USA\n",
+                )
+            ]
+        ),
+        encoding="utf-8",
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+
+    validator.validate_achievements()
+
+    assert [(i.severity, i.category, i.file, i.line) for i in validator._issues] == [
+        (
+            "error",
+            "achievement-original-tag-redundant",
+            "common/achievements/MD_achievements.txt",
+            8,
+        )
+    ]
+    assert "original_tag = USA" in validator._issues[0].message
+    assert validator.errors_found == 1

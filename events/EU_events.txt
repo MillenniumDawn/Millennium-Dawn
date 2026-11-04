@@ -187,6 +187,18 @@ country_event = {
 	}
 }
 
+# Pays office subsidies to the new holders a day after an office changes hands
+country_event = {
+	id = EUbudget.30
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		log = "[GetDateText]: [ROOT.GetName]: event EUbudget.30"
+		distribute_EU_budget = yes
+	}
+}
+
 country_event = {
 	id = EUevent.4
 	title = EUevent.4.t
@@ -437,6 +449,11 @@ country_event = {
 		FROM = {
 			decrease_corruption = yes
 		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = { #b no
@@ -491,7 +508,6 @@ country_event = {
 		log = "[GetDateText]: [ROOT.GetName]: event EUelection.1.a"
 		clear_EU_Parliament = yes
 		election_EU_Parliament = yes
-		activate_mission = EU_election_5_years
 
 		### Result of EU Parliament elections
 		for_each_scope_loop = {
@@ -517,6 +533,41 @@ country_event = {
 	}
 }
 
+# Investment events
+# This one is for infrastructure, currently utilized by BOS and MNT
+country_event = {
+	id = EUevent.23
+	title = EUevent.23.t
+	desc = EUevent.23.d
+	picture = GFX_european_union_flag
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = EU_member
+		FROM = {
+			any_owned_state = {
+				free_building_slots = { building = infrastructure size > 0 include_locked = no }
+			}
+		}
+	}
+
+	option = {
+		name = EUevent.23.a
+		log = "[GetDateText]: [This.GetName]: EUevent.23.a executed"
+		FROM = { invest_in_EU_single_market_infra = yes }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = EUevent.23.b
+		ai_chance = { base = 40 }
+	}
+}
 # ----- POTEF
 news_event = {
 	id = EU_POTEF_news.1

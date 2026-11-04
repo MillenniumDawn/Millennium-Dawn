@@ -29,6 +29,9 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "history/probe.txt",
         "localisation/english/probe.yml",
         "interface/core.gfx",
+        "gfx/entities/probe.asset",
+        "gfx/models/ships/probe.asset",
+        "gfx/models/ships/probe.gfx",
         "gfx/flags/probe.tga",
         "gfx/interface/decisions/probe.dds",
         "gfx/interface/equipmentdesigner/graphic_db/probe.txt",
@@ -43,6 +46,8 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "descriptor.mod",
     ]
     excluded = [
+        "gfx/models/ships/probe.mesh",
+        "gfx/models/ships/probe.dds",
         "gfx/interface/portraits/probe.dds",
         "resources/vanilla/interface/probe.gfx",
         "map/provinces.bmp",
@@ -179,7 +184,7 @@ def test_workspace_archive_ships_the_declared_paths_without_git(tmp_path):
         (REPO_ROOT / ".github/workflows/test-suite.yml").read_text(encoding="utf-8")
     )
     workspace_paths = workflow["env"]["WORKSPACE_PATHS"]
-    shipped = [".workspace-manifest", ".validation_cache/v9/cache.db"]
+    shipped = [".workspace-manifest", ".validation_cache/v10/cache.db"]
     for entry in workspace_paths.split():
         entry = entry.replace("*", "descriptor")
         shipped.append(entry if PurePosixPath(entry).suffix else f"{entry}/probe")

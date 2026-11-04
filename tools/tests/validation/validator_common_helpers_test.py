@@ -61,6 +61,83 @@ def test_match_brace_returns_minus_one_when_unclosed():
     assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
+# ---- AI weight treasury checks ---------------------------------------------
+
+_BANKRUPT = "has_active_mission = bankruptcy_incoming_collapse"
+
+# case: (modifier body, treasury checks it lowers the weight on)
+_TREASURY_CHECK_CASES = {
+    "factor zero on bankruptcy": (f"factor = 0 {_BANKRUPT}", {"bankruptcy"}),
+    "factor below one on a deficit": (
+        "factor = 0.5 ai_has_high_deficit = yes",
+        {"deficit"},
+    ),
+    "no deficit": ("factor = 0.5 ai_has_high_deficit = no", set()),
+    "negative add": (f"add = -2 {_BANKRUPT}", {"bankruptcy"}),
+    "raising add": (f"add = 10 {_BANKRUPT}", set()),
+    "factor of one": (f"factor = 1 {_BANKRUPT}", set()),
+    "under NOT": (f"factor = 0.5 NOT = {{ {_BANKRUPT} }}", set()),
+    "after a closed NOT": (
+        f"factor = 0.5 NOT = {{ has_war = yes }} {_BANKRUPT}",
+        {"bankruptcy"},
+    ),
+    "factor inside a nested block": (f"OR = {{ factor = 0 }} {_BANKRUPT}", set()),
+}
+
+
+@pytest.mark.parametrize(
+    "modifier, checks", _TREASURY_CHECK_CASES.values(), ids=_TREASURY_CHECK_CASES
+)
+def test_lowering_treasury_checks(modifier, checks):
+    assert VC.lowering_treasury_checks(modifier) == checks
+
+
+_BOTH = {"bankruptcy", "deficit"}
+
+# case: (checks, money cost or commitment, political power cost, unneeded checks)
+_UNNEEDED_CHECK_CASES = {
+    "no cost": (_BOTH, False, False, _BOTH),
+    "money covers both": (_BOTH, True, False, set()),
+    "political power covers bankruptcy only": (_BOTH, False, True, {"deficit"}),
+}
+
+
+@pytest.mark.parametrize(
+    "checks, money, political_power, unneeded",
+    _UNNEEDED_CHECK_CASES.values(),
+    ids=_UNNEEDED_CHECK_CASES,
+)
+def test_unneeded_treasury_checks(checks, money, political_power, unneeded):
+    assert VC.unneeded_treasury_checks(checks, money, political_power) == unneeded
+
+
+# case: (script, commits money)
+_MONEY_COMMITMENT_CASES = {
+    "war goal": ("create_wargoal = { type = annex_everything target = GER }", True),
+    "declared war": ("declare_war_on = { target = GER }", True),
+    "border war": ("start_border_war = { change_state_after_war = no }", True),
+    "civil war": ("start_civil_war = { ideology = democratic }", True),
+    "decision war": ("war_with_target_on_complete = yes", True),
+    "spending law change": ("set_country_flag = spending_law_scripted_change", True),
+    "spending law check": ("has_country_flag = spending_law_scripted_change", False),
+    "money modifier": ("modifier = { social_cost_multiplier_modifier = 0.1 }", True),
+    "dynamic money modifier": (
+        "add_to_variable = { TAG_police = 0.01 tooltip = police_cost_multiplier_modifier_tt }",
+        True,
+    ),
+    "money modifier read": ("add = modifier@tax_gain_multiplier_modifier", False),
+    "money system scale": ("common_money_modifier = 1", False),
+    "other modifier": ("modifier = { stability_factor = 0.1 }", False),
+}
+
+
+@pytest.mark.parametrize(
+    "script, commits", _MONEY_COMMITMENT_CASES.values(), ids=_MONEY_COMMITMENT_CASES
+)
+def test_money_commitment(script, commits):
+    assert bool(VC.MONEY_COMMITMENT_RE.search(script)) is commits
+
+
 # ---- leader trait parsing -------------------------------------------------
 
 
@@ -301,6 +378,43 @@ def test_pool_map_falls_back_to_sequential_without_a_pool(tmp_path, monkeypatch)
     assert v._pool_map(str, list(range(12))) == [str(i) for i in range(12)]
 
 
+def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
+    tmp_path, monkeypatch
+):
+    events = []
+
+    class _SharedPool:
+        def terminate(self):
+            events.append("terminate")
+
+        def join(self):
+            events.append("join")
+
+    class _DedicatedPool:
+        def __init__(self, **_kwargs):
+            events.append("start")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def map(self, func, items, chunksize=None):
+            return [func(item) for item in items]
+
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    monkeypatch.setattr(VC, "Pool", _DedicatedPool)
+    v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
+    monkeypatch.setattr(v, "_pool", _SharedPool())
+
+    result = v._pool_map_init(str, list(range(12)), lambda: None, ())
+
+    assert events == ["terminate", "join", "start"]
+    assert v._pool is None
+    assert result == [str(i) for i in range(12)]
+
+
 # ---- localisation keys ----------------------------------------------------
 
 
@@ -314,6 +428,65 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
 
     assert "k" in keys
     assert "recruit_in_europe" in keys
+
+
+@pytest.mark.parametrize(
+    "registry, expected",
+    [
+        ("TOKEN_one\nTOKEN_two\n\nnot a token line\n", {"TOKEN_one", "TOKEN_two"}),
+        ("", set()),
+    ],
+    ids=["tokens", "empty registry"],
+)
+def test_dynamic_token_names(write_path, tmp_path, registry, expected):
+    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+    assert VC.load_dynamic_token_names(str(tmp_path)) == expected
+
+
+def _loc_tree(write_path, tmp_path):
+    write_path(
+        tmp_path,
+        "localisation/english/test_l_english.yml",
+        'l_english:\n TEST_key_one:0 "One"\n TEST_key_two:0 "Two"\n',
+    )
+
+
+# A staged .txt reads its loc keys from unstaged files. Restricting the lookup
+# to staged files once flooded --staged runs with false positives.
+def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    dummy.staged_only = True
+    dummy.staged_files = ["events/some_event.txt"]
+
+    assert {"TEST_key_one", "TEST_key_two"} <= dummy._load_localisation_keys()
+
+
+def test_loc_keys_are_memoized(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    assert dummy._load_localisation_keys() is dummy._load_localisation_keys()
+
+
+def test_loc_keys_hit_the_disk_cache_across_instances(
+    write_path, tmp_path, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _loc_tree(write_path, tmp_path)
+    first = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    opens = []
+    original_open = open
+
+    def wrapped(path, *args, **kwargs):
+        opens.append(str(path))
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", wrapped)
+    second = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    assert not any(path.endswith(".yml") for path in opens)
+    assert second == first
 
 
 # ---- run wiring -----------------------------------------------------------

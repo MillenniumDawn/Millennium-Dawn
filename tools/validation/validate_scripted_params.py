@@ -12,13 +12,15 @@ import functools
 import glob
 import os
 import re
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Mapping, Set, Tuple
 
 import disk_cache
 from shared_utils import (
+    COUNTRY_TAG_ASSIGNMENT_RE,
     blank_quoted_strings,
     extract_block_from_text,
     get_staged_files,
+    list_files,
 )
 from validate_unused_scripted import extract_definitions
 from validator_common import (
@@ -32,9 +34,7 @@ from validator_common import (
 # Every tree the engine runs script from, not a per-directory caller list: that
 # list drifted past operations, scripted_diplomatic_actions, ideas, MIOs,
 # factions and bop, all of which already call contracted effects, and any new
-# common/ subdirectory would be missed the same way. _validate_call_sites_in_file
-# drops a file that names no contract before parsing it, so the extra breadth
-# costs a read per file.
+# common/ subdirectory would be missed the same way.
 _CALLER_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
@@ -166,7 +166,26 @@ _SINGLE_CALL_LINE_RE = re.compile(
 # Numeric scopes (741 = {) must open a block, or their close pops the wrong one.
 _KW_OPEN_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=\s*\{")
 
+_SCRIPT_BLOCK_RE = re.compile(r"([A-Za-z0-9_:.@^$+-]+)\s*=\s*\{|[{}]")
+_DOLLAR_PARAM_RE = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$")
+
 _READ_ERRORS = (OSError, UnicodeDecodeError)
+
+_PARAM_LINE_RE = re.compile(
+    r"^[-\*]?\s*([A-Za-z][A-Za-z0-9_]*)\s*"
+    r"(?:\((variable|optional|set by [^)]*)\)\s*)?[-:]"
+)
+# These run in the scope and effect of the block around them.
+_SAME_SCOPE_BLOCKS = {"if", "else", "else_if", "hidden_effect", "random", "random_list"}
+_VARIABLE_WRITERS = {
+    "set_variable",
+    "add_to_variable",
+    "subtract_from_variable",
+    "multiply_variable",
+    "divide_variable",
+    "add_to_array",
+    "remove_from_array",
+}
 
 
 def _unreadable(filepath: str, mod_path: str, exc: Exception) -> str:
@@ -238,12 +257,11 @@ def _load_valid_country_tags(mod_path: str) -> Tuple["frozenset[str]", List[str]
     """
     valid: Set[str] = set()
     unreadable: List[str] = []
-    tag_re = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
     for fp in glob.glob(os.path.join(mod_path, "common", "country_tags", "*.txt")):
         try:
             with open(fp, "r", encoding="utf-8-sig") as fh:
                 for line in fh:
-                    m = tag_re.match(line)
+                    m = COUNTRY_TAG_ASSIGNMENT_RE.match(line)
                     if m:
                         valid.add(m.group(1))
         except _READ_ERRORS as exc:
@@ -298,6 +316,9 @@ def _parse_effect_contracts_from_file(
     Looks for the pattern:
         # Parameters:
         # - param_name: description
+        # - param_name (optional): a temp variable callers may skip
+        # - param_name (set by other_effect): a temp variable that effect leaves
+        # - param_name (variable): a real variable the effect reads
         effect_name = {
 
     A read or decode error propagates so the caller can report the file.
@@ -315,6 +336,7 @@ def _parse_effect_contracts_from_file(
         if re.match(r"^#\s*[Pp]arameters?\s*:", stripped):
             params_required: List[str] = []
             params_optional: List[str] = []
+            params_variable: List[str] = []
             j = i + 1
 
             while j < len(lines):
@@ -340,9 +362,10 @@ def _parse_effect_contracts_from_file(
                     continue
 
                 # "# - param_name: ..." or "# - param_name - ..."
-                plain_m = re.match(r"^[-\*]?\s*([A-Za-z][A-Za-z0-9_]*)\s*[-:]", inner)
+                plain_m = _PARAM_LINE_RE.match(inner)
                 if plain_m:
                     pname = plain_m.group(1)
+                    kind = plain_m.group(2) or ""
                     skip_words = {
                         "note",
                         "purpose",
@@ -361,7 +384,9 @@ def _parse_effect_contracts_from_file(
                         "usage",
                     }
                     if pname.lower() not in skip_words:
-                        if "optional" in inner.lower():
+                        if kind == "variable":
+                            params_variable.append(pname)
+                        elif kind.startswith("set by") or "optional" in inner.lower():
                             params_optional.append(pname)
                         else:
                             params_required.append(pname)
@@ -373,13 +398,15 @@ def _parse_effect_contracts_from_file(
                 k += 1
             if k < len(lines):
                 def_m = re.match(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", lines[k].strip())
-                if def_m and (params_required or params_optional):
+                if def_m and (params_required or params_optional or params_variable):
                     eff_name = def_m.group(1)
                     if eff_name not in HARDCODED_CONTRACTS:
                         contracts[eff_name] = {
                             "required": params_required,
                             "optional": params_optional,
                         }
+                        if params_variable:
+                            contracts[eff_name]["variables"] = params_variable
             i = j
             continue
         i += 1
@@ -484,9 +511,97 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     return tokens
 
 
+def _unsupported_effect_syntax(
+    text: str, rel: str, effect_names: "frozenset[str]"
+) -> List[Tuple[str, str, int]]:
+    """Report unsupported effect arguments without flagging definitions."""
+    definitions = rel.replace("\\", "/").startswith("common/scripted_effects/")
+    # Definition blocks share namespaces with effects: idea names collide
+    # with budget-cycle effects, dynamic-modifier names collide with their
+    # applier effects. Those opens are definitions, not effect calls.
+    ideas_file = rel.replace("\\", "/").startswith("common/ideas/")
+    dynmod_file = rel.replace("\\", "/").startswith("common/dynamic_modifiers/")
+    # Scopes and engine blocks are never effect calls, matched
+    # case-insensitively: HOI4 scopes are case-insensitive, so both
+    # `from` and `FROM` are the scope, not the script-language effect.
+    lowered_effects = {name.lower() for name in effect_names}
+    skip_names = SCOPE_CHANGING_KEYWORDS | {
+        block.lower() for block in HOI4_BUILTIN_BLOCKS
+    }
+    # Magic scopes written uppercase by convention. A lowercase block whose
+    # name is both one of these and a scripted effect is ambiguous: readers
+    # (and the old case-sensitive check) see the effect, the engine runs the
+    # scope. Only these collide today (`from`); lowercase `root`/`prev`/`this`
+    # without an effect of the same name stay silent.
+    uppercase_scopes = {"root", "prev", "from", "this", "fromfrom", "prevprev"}
+    results = []
+    if definitions:
+        for line, content in enumerate(text.splitlines(), 1):
+            if match := _DOLLAR_PARAM_RE.search(content):
+                results.append(
+                    (
+                        "unsupported-effect-placeholder",
+                        f"{rel}:{line} - scripted effects do not substitute "
+                        f"'{match.group()}'; use scopes, temp variables, or meta_effect",
+                        line,
+                    )
+                )
+
+    depth = 0
+    for match in _SCRIPT_BLOCK_RE.finditer(text):
+        name = match.group(1)
+        if name is not None:
+            lowered = name.lower()
+            is_definition_open = (
+                (definitions and depth == 0)
+                or (dynmod_file and depth == 0)
+                or (ideas_file and depth in (1, 2))
+            )
+            if (
+                lowered in lowered_effects
+                and lowered not in skip_names
+                and not is_definition_open
+            ):
+                line = text.count("\n", 0, match.start()) + 1
+                results.append(
+                    (
+                        "unsupported-effect-arguments",
+                        f"{rel}:{line} - '{name}' is a scripted effect, not a "
+                        "parameter block; call it with '= yes' and pass values "
+                        "through scopes or set_temp_variable",
+                        line,
+                    )
+                )
+            if (
+                lowered in lowered_effects
+                and lowered in uppercase_scopes
+                and name != name.upper()
+                and not is_definition_open
+            ):
+                line = text.count("\n", 0, match.start()) + 1
+                results.append(
+                    (
+                        "lowercase-scope-shadowed-by-effect",
+                        f"{rel}:{line} - '{name}' matches the {name.upper()} scope "
+                        f"and a scripted effect; write the scope as '{name.upper()}'",
+                        line,
+                    )
+                )
+        if match.group().endswith("{"):
+            depth += 1
+        else:
+            depth = max(0, depth - 1)
+    return results
+
+
 def _validate_call_sites_in_file(
     args: Tuple[
-        str, Dict[str, Dict[str, List[str]]], str, "frozenset[str]", "frozenset[str]"
+        str,
+        Dict[str, Dict[str, List[str]]],
+        str,
+        "frozenset[str]",
+        "frozenset[str]",
+        "frozenset[str]",
     ],
 ) -> List[Tuple[str, str, int]]:
     """Validate one file for missing required params and orphaned sets.
@@ -496,7 +611,7 @@ def _validate_call_sites_in_file(
 
     Returns a list of (category, message, line_number) tuples.
     """
-    filepath, contracts, mod_path, valid_tags, audit_names = args
+    filepath, contracts, mod_path, valid_tags, audit_names, effect_names = args
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as fh:
@@ -508,14 +623,15 @@ def _validate_call_sites_in_file(
     text = blank_quoted_strings(strip_comments(raw))
     rel = os.path.relpath(filepath, mod_path)
 
+    results = _unsupported_effect_syntax(text, rel, effect_names)
+
     # Quick pre-check: does this file reference any contracted effect?
     contracted_names = set(contracts.keys())
     if not audit_names and not any(name in text for name in contracted_names):
-        return []
+        return results
 
     lines = text.splitlines()
     shared_lines: Set[int] = set()
-    results: List[Tuple[str, str, int]] = []
     # Cache the tokenisation (the expensive, contract-independent step); the
     # contract validation below runs per call against the cached tokens.
     tokens = disk_cache.per_file_cached_by_content(
@@ -766,7 +882,7 @@ def _reads_itself(text: str, write_start: int, var_re: re.Pattern) -> bool:
 
 
 def build_param_consumer_map(
-    bodies: Dict[str, str], declared: Dict[str, Iterable[str]]
+    bodies: Dict[str, str], declared: Mapping[str, Iterable[str]]
 ) -> Dict[str, frozenset]:
     """Map each declared parameter to the scripted effects that consume it.
 
@@ -792,7 +908,10 @@ def build_param_consumer_map(
             if var not in body:
                 continue
             # target position -> start of the statement that writes it
-            writes = {w.start(w.lastindex): w.start() for w in write_re.finditer(body)}
+            writes = {
+                w.start(1 if w.group(1) is not None else 2): w.start()
+                for w in write_re.finditer(body)
+            }
             read = write = None
             for om in var_re.finditer(body):
                 opener = writes.get(om.start())
@@ -945,6 +1064,97 @@ def _scan_orphan_setters_in_file(
     return results
 
 
+def _find_variables_written_after_call(
+    text: str, inputs: Mapping[str, Iterable[str]]
+) -> List[Tuple[str, str, int]]:
+    """Find declared variable inputs written after the last call that reads them.
+
+    A call and a write only compare inside one scope and effect block. Returns
+    (variable, effect, line) triples.
+    """
+    readers: Dict[str, Set[str]] = {}
+    for effect, variables in inputs.items():
+        for var in variables:
+            readers.setdefault(var, set()).add(effect)
+    var_names = "|".join(re.escape(var) for var in sorted(readers))
+    effect_names = "|".join(re.escape(effect) for effect in sorted(inputs))
+    token_re = re.compile(
+        r"\bclear_array\s*=\s*(?P<cleared>" + var_names + r")\b"
+        r"|\b(?P<call>" + effect_names + r")\s*=\s*yes\b"
+        r"|(?P<open>[A-Za-z0-9_:.@^+-]+)\s*=\s*\{"
+        r"|(?P<close>\})"
+    )
+    write_target_re = re.compile(
+        r"\s*(?:(?:var|array)\s*=\s*)?(" + var_names + r")(?![A-Za-z0-9_])"
+    )
+
+    found: List[Tuple[str, str, int]] = []
+    # Each frame: calls seen, unflushed writes (var -> effect, line), open if-style blocks.
+    stack: List[Dict] = [{"called": set(), "late": {}, "depth": 0}]
+
+    def record_write(var: str, position: int) -> None:
+        frame = stack[-1]
+        called = sorted(frame["called"] & readers[var])
+        if called:
+            line = text.count("\n", 0, position) + 1
+            frame["late"].setdefault(var, (called[0], line))
+
+    def flush(frame: Dict) -> None:
+        found.extend(
+            (var, effect, line) for var, (effect, line) in frame["late"].items()
+        )
+
+    for m in token_re.finditer(text):
+        if m.group("cleared"):
+            record_write(m.group("cleared"), m.start())
+        elif m.group("call"):
+            effect = m.group("call")
+            frame = stack[-1]
+            frame["called"].add(effect)
+            for var in inputs[effect]:
+                frame["late"].pop(var, None)
+        elif m.group("open"):
+            keyword = m.group("open")
+            if keyword in _VARIABLE_WRITERS:
+                target = write_target_re.match(text, m.end())
+                if target:
+                    record_write(target.group(1), m.start())
+            if keyword in _SAME_SCOPE_BLOCKS or keyword.isdigit():
+                stack[-1]["depth"] += 1
+            else:
+                stack.append({"called": set(), "late": {}, "depth": 0})
+        elif stack[-1]["depth"]:
+            stack[-1]["depth"] -= 1
+        elif len(stack) > 1:
+            flush(stack.pop())
+    for frame in stack:
+        flush(frame)
+    return found
+
+
+def _scan_variable_inputs_in_file(
+    args: Tuple[str, str, Dict[str, List[str]]],
+) -> List[str]:
+    """Report the declared variable inputs one file writes too late."""
+    filepath, mod_path, inputs = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as fh:
+            raw = fh.read()
+    except _READ_ERRORS:
+        # The call-site pass reads the same file and reports it.
+        return []
+    if not any(effect in raw for effect in inputs):
+        return []
+
+    rel = os.path.relpath(filepath, mod_path)
+    text = blank_quoted_strings(strip_comments(raw))
+    return [
+        f"{rel}:{line} - '{var}' is written after '{effect}', which reads it, and no"
+        f" later call picks it up; move the call below the write"
+        for var, effect, line in _find_variables_written_after_call(text, inputs)
+    ]
+
+
 class Validator(BaseValidator):
     TITLE = "SCRIPTED EFFECT PARAMETER VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -952,10 +1162,12 @@ class Validator(BaseValidator):
     def __init__(self, *args, audit_shared_lines: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.audit_shared_lines = audit_shared_lines
-        self._audit_names: Set[str] = set()
+        self._effect_names: Set[str] = set()
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         # Every declared parameter, required or optional -> effects declaring it.
         self._declared: Dict[str, Set[str]] = {}
+        # Effect -> the real variables it declares as inputs.
+        self._variable_inputs: Dict[str, List[str]] = {}
         self._consumers: Dict[str, frozenset] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
@@ -990,35 +1202,34 @@ class Validator(BaseValidator):
 
         # Auto-discover from scripted effect files (always full scan — definitions
         # are the truth set and must be complete even in staged mode)
-        effect_files = glob.glob(
-            os.path.join(self.mod_path, "common", "scripted_effects", "*.txt")
+        effect_files = list_files(
+            os.path.join(self.mod_path, "common", "scripted_effects"), recursive=False
         )
         discovered = 0
         bodies: Dict[str, str] = {}
-        for filepath in sorted(effect_files):
+        for filepath in effect_files:
             try:
                 parsed = _parse_effect_contracts_from_file(filepath)
                 bodies.update(_scripted_bodies(filepath))
             except _READ_ERRORS as exc:
                 self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
                 continue
-            if self.audit_shared_lines:
-                self._audit_names.update(
-                    name
-                    for name, _file, _line in extract_definitions(
-                        (filepath, self.mod_path)
-                    )
-                )
+            self._effect_names.update(
+                name
+                for name, _file, _line in extract_definitions((filepath, self.mod_path))
+            )
             for eff_name, contract in parsed.items():
                 self._declare(eff_name, contract)
+                if contract.get("variables"):
+                    self._variable_inputs[eff_name] = contract["variables"]
                 if eff_name not in self._contracts and contract["required"]:
                     self._contracts[eff_name] = contract
                     discovered += 1
         # A scripted trigger reads a parameter the same way an effect does.
-        trigger_files = glob.glob(
-            os.path.join(self.mod_path, "common", "scripted_triggers", "*.txt")
+        trigger_files = list_files(
+            os.path.join(self.mod_path, "common", "scripted_triggers"), recursive=False
         )
-        for filepath in sorted(trigger_files):
+        for filepath in trigger_files:
             try:
                 bodies.update(_scripted_bodies(filepath))
             except _READ_ERRORS as exc:
@@ -1052,9 +1263,17 @@ class Validator(BaseValidator):
         )
         self.log(f"  Scanning {len(files)} files for effect calls")
 
-        audit_names = frozenset(self._audit_names)
+        effect_names = frozenset(self._effect_names)
+        audit_names = effect_names if self.audit_shared_lines else frozenset()
         args_list = [
-            (f, self._contracts, self.mod_path, self._valid_tags, audit_names)
+            (
+                f,
+                self._contracts,
+                self.mod_path,
+                self._valid_tags,
+                audit_names,
+                effect_names,
+            )
             for f in files
         ]
         all_results = self._pool_map(
@@ -1067,6 +1286,9 @@ class Validator(BaseValidator):
         invalid_tag_results = []
         shared_line_results = []
         audit_shared_line_results = []
+        unsupported_argument_results = []
+        unsupported_placeholder_results = []
+        lowercase_scope_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -1082,8 +1304,36 @@ class Validator(BaseValidator):
                     shared_line_results.append(message)
                 elif category == "audit-call-shares-line":
                     audit_shared_line_results.append(message)
+                elif category == "unsupported-effect-arguments":
+                    unsupported_argument_results.append(message)
+                elif category == "unsupported-effect-placeholder":
+                    unsupported_placeholder_results.append(message)
+                elif category == "lowercase-scope-shadowed-by-effect":
+                    lowercase_scope_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
+
+        self._report(
+            unsupported_argument_results,
+            "No scripted effects use unsupported argument blocks",
+            "Scripted effects called with unsupported argument blocks:",
+            severity=Severity.WARNING,
+            category="unsupported-effect-arguments",
+        )
+        self._report(
+            unsupported_placeholder_results,
+            "No scripted effects use unsupported dollar placeholders",
+            "Unsupported dollar placeholders in scripted effect definitions:",
+            severity=Severity.WARNING,
+            category="unsupported-effect-placeholder",
+        )
+        self._report(
+            lowercase_scope_results,
+            "No scopes shadowed by scripted effects are written lowercase",
+            "Scopes sharing a name with a scripted effect, written lowercase (use uppercase):",
+            severity=Severity.WARNING,
+            category="lowercase-scope-shadowed-by-effect",
+        )
 
         self._report(
             missing_param_results,
@@ -1149,6 +1399,19 @@ class Validator(BaseValidator):
             "Declared parameters set and never used, or overwritten before use:",
             severity=Severity.ERROR,
             category="orphan-param-setter",
+        )
+
+        late_write_results = self._pool_map(
+            _scan_variable_inputs_in_file,
+            [(f, self.mod_path, self._variable_inputs) for f in files],
+            chunksize=20,
+        )
+        self._report(
+            [m for file_results in late_write_results for m in file_results],
+            "No declared variable input is written after the effect reads it",
+            "Variable inputs written after the effect that reads them:",
+            severity=Severity.ERROR,
+            category="variable-input-after-call",
         )
 
     def run_validations(self):

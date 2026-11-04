@@ -2445,7 +2445,7 @@ focus_tree = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+					Special_Forces = { x = 1 y = 0 }
 				}
 			}
 			capital_scope = {
@@ -3256,15 +3256,22 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_demand_andorra"
-			ADO = { country_event = spain.65 }
+			945 = { OWNER = { country_event = spain.65 } }
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
-				annex_country = { target = ADO transfer_troops = yes }
+				if = { limit = { country_exists = ADO ADO = { owns_state = 945 } }
+					annex_country = { target = ADO transfer_troops = yes }
+				}
+				else = { transfer_state = 945 }
 			}
 			custom_effect_tooltip = TT_IF_THEY_REJECT
 			effect_tooltip = {
 				add_state_claim = 945
-				create_wargoal = { target = ADO type = take_claimed_state generator = { 945 } }
+				945 = {
+					OWNER = {
+						ROOT = { create_wargoal = { target = PREV type = take_claimed_state generator = { 945 } } }
+					}
+				}
 			}
 		}
 
@@ -3324,21 +3331,16 @@ focus_tree = {
 					annex_country = { target = POR transfer_troops = yes }
 				}
 			}
-			else_if = { limit = { country_exists = POR POR = { is_subject = yes } }
-				POR = {
-					OVERLORD = {
-						country_event = spain.62
-					}
-				}
+			else_if = { limit = { country_exists = POR POR = { is_subject = yes } NOT = { POR = { is_subject_of = SPR } } }
+				POR = { OVERLORD = { country_event = spain.62 } }
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
-				effect_tooltip = {
-					puppet = POR
-				}
+				effect_tooltip = { puppet = POR }
 			}
-			else = {
+			else_if = { limit = { NOT = { country_exists = POR } }
 				random_country = {
 					limit = {
 						owns_state = 96
+						NOT = { tag = ROOT }
 					}
 					PREV = {
 						set_temp_variable = { wargoal_on = PREV }
@@ -3393,9 +3395,7 @@ focus_tree = {
 					add_idea = SPR_the_new_nobility_idea2
 				}
 			}
-			else = {
-				add_ideas = SPR_the_new_nobility_idea
-			}
+			else = { add_ideas = SPR_the_new_nobility_idea }
 		}
 
 		ai_will_do = {
@@ -3435,9 +3435,7 @@ focus_tree = {
 					add_idea = SPR_the_new_nobility_idea2
 				}
 			}
-			else = {
-				add_ideas = SPR_the_new_nobility_idea
-			}
+			else = { add_ideas = SPR_the_new_nobility_idea }
 		}
 
 		ai_will_do = {
@@ -3650,22 +3648,14 @@ focus_tree = {
 		available = {
 			nationalist_monarchists_are_in_power = yes
 			40_percent_government_popularity = yes
-			has_army_manpower = {
-				size > 250000
-			}
+			has_army_manpower = { size > 250000 }
 		}
 
 		bypass = { owns_state = 19 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_demand_the_rock"
-			hidden_effect = {
-				19 = {
-					OWNER = {
-						country_event = spain.68
-					}
-				}
-			}
+			hidden_effect = { 19 = { OWNER = { country_event = spain.68 } } }
 			custom_effect_tooltip = SPR_demand_the_rock_TT
 			add_war_support = 0.05
 		}
@@ -3784,9 +3774,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_guardia_real"
-			hidden_effect = {
-				delete_unit_template_and_units = { division_template = "Guardia Real" }
-			}
+			hidden_effect = { delete_unit_template_and_units = { division_template = "Guardia Real" } }
 			division_template = {
 				name = "Expanded Guardia Real"
 				is_locked = yes
@@ -3794,9 +3782,9 @@ focus_tree = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
 					Special_Forces = { x = 1 y = 0 }
 					Special_Forces = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 2 }
 				}
 			}
 			swap_ideas = {
@@ -3844,9 +3832,7 @@ focus_tree = {
 			add_political_power = 150
 			custom_effect_tooltip = SPR_the_spanish_empire_revived_TT
 			news_event = spain.71
-			hidden_effect = {
-				set_cosmetic_tag = SPR_EMPIRE
-			}
+			hidden_effect = { set_cosmetic_tag = SPR_EMPIRE }
 		}
 
 		ai_will_do = {
@@ -4698,6 +4684,7 @@ focus_tree = {
 			add_ideas = SPR_the_conservative_welfare_state_idea
 			set_temp_variable = { temp_opinion = 3 }
 			change_labour_unions_opinion = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -5078,13 +5065,14 @@ focus_tree = {
 
 		available = { conservative_focus_available_trigger = yes }
 
-		 completion_reward = {
+		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_minimize_bureaucracy"
 			if = { limit = { has_idea = bureau_01 }
 				decrease_centralization = yes
 				block_bureau_change = yes
 			}
 			add_political_power = 100
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -5589,9 +5577,7 @@ focus_tree = {
 					}
 				}
 			}
-			else = {
-				add_ideas = SPR_the_spanish_patriot_act_idea
-			}
+			else = { add_ideas = SPR_the_spanish_patriot_act_idea }
 		}
 
 		ai_will_do = {
@@ -5778,9 +5764,7 @@ focus_tree = {
 					}
 				}
 			}
-			else = {
-				add_political_power = 75
-			}
+			else = { add_political_power = 75 }
 		}
 
 		ai_will_do = {
@@ -5898,9 +5882,7 @@ focus_tree = {
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
 			every_other_country = {
-				limit = {
-					has_government = democratic
-				}
+				limit = { has_government = democratic }
 				add_opinion_modifier = { target = SPR modifier = supports_us }
 				reverse_add_opinion_modifier = { target = SPR modifier = supports_us }
 			}
@@ -6239,9 +6221,7 @@ focus_tree = {
 					western_autocrats_are_in_power = yes
 				}
 			}
-			else = {
-				nationalist_right_wing_populists_are_in_power_or_coalition = yes
-			}
+			else = { nationalist_right_wing_populists_are_in_power_or_coalition = yes }
 			NOT = { has_country_flag = SPR_initial_election_flag }
 		}
 
@@ -6740,9 +6720,7 @@ focus_tree = {
 					add_idea = SPR_border_entrenchment2_idea
 				}
 			}
-			else = {
-				add_ideas = SPR_border_entrenchment_idea
-			}
+			else = { add_ideas = SPR_border_entrenchment_idea }
 		}
 
 		ai_will_do = {
@@ -6782,9 +6760,7 @@ focus_tree = {
 					add_idea = SPR_border_entrenchment2_idea
 				}
 			}
-			else = {
-				add_ideas = SPR_border_entrenchment_idea
-			}
+			else = { add_ideas = SPR_border_entrenchment_idea }
 		}
 
 		ai_will_do = {
@@ -6817,13 +6793,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_el_problema_de_gibraltar"
-			hidden_effect = {
-				19 = {
-					OWNER = {
-						country_event = spain.68
-					}
-				}
-			}
+			hidden_effect = { 19 = { OWNER = { country_event = spain.68 } } }
 			custom_effect_tooltip = SPR_demand_the_rock_TT
 			add_war_support = 0.05
 		}
@@ -6868,9 +6838,7 @@ focus_tree = {
 					add_idea = SPR_glory_to_spain2_idea
 				}
 			}
-			else = {
-				add_ideas = SPR_glory_to_spain_idea
-			}
+			else = { add_ideas = SPR_glory_to_spain_idea }
 		}
 
 		ai_will_do = {
@@ -6913,9 +6881,7 @@ focus_tree = {
 					add_idea = SPR_glory_to_spain2_idea
 				}
 			}
-			else = {
-				add_ideas = SPR_glory_to_spain_idea
-			}
+			else = { add_ideas = SPR_glory_to_spain_idea }
 		}
 
 		ai_will_do = {
@@ -6959,9 +6925,7 @@ focus_tree = {
 					add_idea = SPR_glory_to_spain2_idea
 				}
 			}
-			else = {
-				add_ideas = SPR_glory_to_spain_idea
-			}
+			else = { add_ideas = SPR_glory_to_spain_idea }
 		}
 
 		ai_will_do = {
@@ -7371,9 +7335,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_hispanidad"
 			set_temp_variable = { percent_change = 2 }
 			every_other_country = {
-				limit = {
-					has_country_flag = spanish_speaking_flag
-				}
+				limit = { has_country_flag = spanish_speaking_flag }
 				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
@@ -7674,9 +7636,7 @@ focus_tree = {
 					western_autocrats_are_in_power = yes
 				}
 			}
-			else = {
-				nationalist_fascists_are_in_power_or_coalition = yes
-			}
+			else = { nationalist_fascists_are_in_power_or_coalition = yes }
 			NOT = { has_country_flag = SPR_initial_election_flag }
 		}
 
@@ -8664,6 +8624,7 @@ focus_tree = {
 		bypass = {
 			OR = {
 				owns_state = 945
+				ADO = { is_subject_of = SPR }
 				NOT = { country_exists = ADO }
 			}
 		}
@@ -8800,6 +8761,21 @@ focus_tree = {
 			40_percent_government_popularity = yes
 		}
 
+		bypass = {
+			OR = {
+				POR = { is_subject_of = SPR }
+				AND = {
+					1055 = { is_owned_by = SPR }
+					97 = { is_owned_by = SPR }
+					96 = { is_owned_by = SPR }
+					1056 = { is_owned_by = SPR }
+					1057 = { is_owned_by = SPR }
+					98 = { is_owned_by = SPR }
+					99 = { is_owned_by = SPR }
+				}
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_what_are_you_doing_step_portugal"
 			if = { limit = { country_exists = POR NOT = { POR = { is_subject = yes } } }
@@ -8809,21 +8785,16 @@ focus_tree = {
 					annex_country = { target = POR transfer_troops = yes }
 				}
 			}
-			else_if = { limit = { country_exists = POR POR = { is_subject = yes } }
-				POR = {
-					OVERLORD = {
-						country_event = spain.62
-					}
-				}
+			else_if = { limit = { country_exists = POR POR = { is_subject = yes } NOT = { POR = { is_subject_of = SPR } } }
+				POR = { OVERLORD = { country_event = spain.62 } }
 				custom_effect_tooltip = TT_IF_THEY_ACCEPT
-				effect_tooltip = {
-					puppet = POR
-				}
+				effect_tooltip = { puppet = POR }
 			}
-			else = {
+			else_if = { limit = { NOT = { country_exists = POR } }
 				random_country = {
 					limit = {
 						owns_state = 96
+						NOT = { tag = ROOT }
 					}
 					PREV = {
 						set_temp_variable = { wargoal_on = PREV }
@@ -9038,11 +9009,11 @@ focus_tree = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
-					L_Inf_Bat = { x = 0 y = 3 }
+					L_Inf_Bat = { x = 2 y = 0 }
 					Mot_Inf_Bat = { x = 1 y = 0 }
 					Mot_Inf_Bat = { x = 1 y = 1 }
 					Mot_Inf_Bat = { x = 1 y = 2 }
-					Mot_Inf_Bat = { x = 1 y = 3 }
+					Mot_Inf_Bat = { x = 3 y = 0 }
 				}
 				support = {
 					Arty_Battery = { x = 0 y = 0 }
@@ -9050,14 +9021,14 @@ focus_tree = {
 			}
 			92 = {
 				create_unit = {
-				division = "name = \"Camisas Azules de Valencia\" division_template = \"Camisas Azules\" start_experience_factor = 0.90"
+					division = "name = \"Camisas Azules de Valencia\" division_template = \"Camisas Azules\" start_experience_factor = 0.90"
 					owner = SPR
 					prioritize_location = 6906
 				}
 			}
 			91 = {
 				create_unit = {
-				division = "name = \"Camisas Azules de Madrid\" division_template = \"Camisas Azules\" start_experience_factor = 0.90"
+					division = "name = \"Camisas Azules de Madrid\" division_template = \"Camisas Azules\" start_experience_factor = 0.90"
 					owner = SPR
 					prioritize_location = 9767
 				}
@@ -9766,9 +9737,7 @@ focus_tree = {
 					}
 				}
 			}
-			else = {
-				add_political_power = 100
-			}
+			else = { add_political_power = 100 }
 		}
 
 		ai_will_do = {
@@ -10405,9 +10374,7 @@ focus_tree = {
 				set_temp_variable = { modify_europeanism_target = ROOT }
 				europeanism_change = yes
 			}
-			else = {
-				add_political_power = 100
-			}
+			else = { add_political_power = 100 }
 		}
 
 		ai_will_do = {
@@ -10715,9 +10682,7 @@ focus_tree = {
 				set_temp_variable = { culture_index = i }
 				set_temp_variable = { cultural_opinion = 5 }
 				if = {
-					limit = {
-						check_variable = { SPR_culture_opinion^i < 70 }
-					}
+					limit = { check_variable = { SPR_culture_opinion^i < 70 } }
 					SPR_modify_cultural_opinion = yes
 				}
 			}
@@ -10771,9 +10736,7 @@ focus_tree = {
 				set_temp_variable = { culture_index = i }
 				set_temp_variable = { cultural_opinion = 5 }
 				if = {
-					limit = {
-						check_variable = { SPR_culture_opinion^i < 70 }
-					}
+					limit = { check_variable = { SPR_culture_opinion^i < 70 } }
 					SPR_modify_cultural_opinion = yes
 				}
 			}
@@ -10821,9 +10784,7 @@ focus_tree = {
 				set_temp_variable = { culture_index = i }
 				set_temp_variable = { cultural_opinion = 5 }
 				if = {
-					limit = {
-						check_variable = { SPR_culture_opinion^i < 70 }
-					}
+					limit = { check_variable = { SPR_culture_opinion^i < 70 } }
 					SPR_modify_cultural_opinion = yes
 				}
 			}
@@ -13218,7 +13179,7 @@ focus_tree = {
 		prerequisite = {
 			focus = SPR_ICMM_mining_operations
 			focus = SPR_operaciones_mineras_espanolas
-			}
+		}
 
 		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
@@ -14752,9 +14713,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.01 }
 			set_temp_variable = { temp_outlook_increase = 0.01 }
 			change_relative_party_popularity = yes
-			970 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
+			970 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
 			add_ideas = SPR_idea_spanish_wind_farms_1
 		}
 
@@ -14792,15 +14751,9 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.03 }
 			set_temp_variable = { temp_outlook_increase = 0.03 }
 			change_relative_party_popularity = yes
-			944 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			89 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			1040 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
+			944 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			89 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			1040 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
 			swap_ideas = {
 				remove_idea = SPR_idea_spanish_wind_farms_1 add_idea = SPR_idea_spanish_wind_farms_2
 			}
@@ -14839,21 +14792,11 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
-			88 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			1042 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			1041 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			87 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
-			90 = {
-				add_dynamic_modifier = { modifier = SPR_wind_farms }
-			}
+			88 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			1042 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			1041 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			87 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
+			90 = { add_dynamic_modifier = { modifier = SPR_wind_farms } }
 			swap_ideas = {
 				remove_idea = SPR_idea_spanish_wind_farms_2 add_idea = SPR_idea_spanish_wind_farms_3
 			}
@@ -16567,9 +16510,7 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 2
-				has_army_manpower = {
-					size > 49999
-				}
+				has_army_manpower = { size > 49999 }
 			}
 			modifier = {
 				factor = 2
@@ -16664,9 +16605,7 @@ focus_tree = {
 				GER = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = medium_tank_chassis_2
-						}
+						equipment = { type = medium_tank_chassis_2 }
 						cost_factor = 0
 					}
 				}
@@ -16675,9 +16614,7 @@ focus_tree = {
 				GER = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = MBT_4
-						}
+						equipment = { type = MBT_4 }
 						cost_factor = 0
 					}
 				}
@@ -16751,9 +16688,7 @@ focus_tree = {
 				USA = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = medium_tank_chassis_2
-						}
+						equipment = { type = medium_tank_chassis_2 }
 						cost_factor = 0
 					}
 				}
@@ -16762,9 +16697,7 @@ focus_tree = {
 				USA = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = MBT_4
-						}
+						equipment = { type = MBT_4 }
 						cost_factor = 0
 					}
 				}
@@ -17315,9 +17248,7 @@ focus_tree = {
 				SWI = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = APC_4
-						}
+						equipment = { type = APC_4 }
 						cost_factor = 0
 					}
 				}
@@ -17398,9 +17329,7 @@ focus_tree = {
 				USA = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = APC_4
-						}
+						equipment = { type = APC_4 }
 						cost_factor = 0
 					}
 				}
@@ -17914,9 +17843,7 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 2
-				has_army_manpower = {
-					size > 49999
-				}
+				has_army_manpower = { size > 49999 }
 			}
 			modifier = {
 				factor = 2
@@ -18015,9 +17942,7 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 2
-				any_owned_state = {
-					NOT = { is_core_of = SPR }
-				}
+				any_owned_state = { NOT = { is_core_of = SPR } }
 			}
 			modifier = {
 				factor = 2
@@ -18042,9 +17967,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SPR_expand_the_regulares"
-			hidden_effect = {
-				delete_unit_template_and_units = { division_template = "Regulares Group" }
-			}
+			hidden_effect = { delete_unit_template_and_units = { division_template = "Regulares Group" } }
 			division_template = {
 				name = "Regulares Brigade"
 				is_locked = yes
@@ -18052,7 +17975,7 @@ focus_tree = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
-					L_Inf_Bat = { x = 0 y = 3 }
+					L_Inf_Bat = { x = 2 y = 0 }
 					Mot_Inf_Bat = { x = 1 y = 0 }
 					Mot_Inf_Bat = { x = 1 y = 1 }
 				}
@@ -18084,9 +18007,7 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 2
-				any_owned_state = {
-					NOT = { is_core_of = SPR }
-				}
+				any_owned_state = { NOT = { is_core_of = SPR } }
 			}
 			modifier = {
 				factor = 2
@@ -18121,9 +18042,7 @@ focus_tree = {
 			base = 1
 			modifier = {
 				factor = 2
-				any_owned_state = {
-					NOT = { is_core_of = SPR }
-				}
+				any_owned_state = { NOT = { is_core_of = SPR } }
 			}
 			modifier = {
 				factor = 2
@@ -18232,9 +18151,7 @@ focus_tree = {
 			GER = {
 				create_production_license = {
 					target = SPR
-					equipment = {
-						type = attack_helicopter_3
-					}
+					equipment = { type = attack_helicopter_3 }
 					cost_factor = 0
 				}
 			}
@@ -18306,9 +18223,7 @@ focus_tree = {
 			USA = {
 				create_production_license = {
 					target = SPR
-					equipment = {
-						type = attack_helicopter_3
-					}
+					equipment = { type = attack_helicopter_3 }
 					cost_factor = 0
 				}
 			}
@@ -18531,9 +18446,7 @@ focus_tree = {
 			FRA = {
 				create_production_license = {
 					target = SPR
-					equipment = {
-						type = transport_helicopter_2
-					}
+					equipment = { type = transport_helicopter_2 }
 					cost_factor = 0
 				}
 			}
@@ -18605,9 +18518,7 @@ focus_tree = {
 			USA = {
 				create_production_license = {
 					target = SPR
-					equipment = {
-						type = transport_helicopter_3
-					}
+					equipment = { type = transport_helicopter_3 }
 					cost_factor = 0
 				}
 			}
@@ -19250,17 +19161,13 @@ focus_tree = {
 					limit = { has_dlc = "By Blood Alone" }
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = small_plane_strike_airframe_1
-						}
+						equipment = { type = small_plane_strike_airframe_1 }
 						cost_factor = 0
 					}
 				} else = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = MR_Fighter3
-						}
+						equipment = { type = MR_Fighter3 }
 						cost_factor = 0
 					}
 				}
@@ -19315,17 +19222,13 @@ focus_tree = {
 					limit = { has_dlc = "By Blood Alone" }
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = cv_medium_plane_airframe_2
-						}
+						equipment = { type = cv_medium_plane_airframe_2 }
 						cost_factor = 0
 					}
 				} else = {
 					create_production_license = {
 						target = SPR
-						equipment = {
-							type = CV_MR_Fighter3
-						}
+						equipment = { type = CV_MR_Fighter3 }
 						cost_factor = 0
 					}
 				}

@@ -19,6 +19,7 @@ def focus(name, x=0, y=0, **kwargs):
         "branch_terms": [],
         "offset": False,
         "prerequisites": [],
+        "mutually_exclusive": [],
         **kwargs,
     }
 
@@ -358,6 +359,261 @@ def test_fractional_neighbor_buckets_include_all_stacked_products():
     assert result["counts"]["overlap_pairs"] == 10
     assert len(set(result["findings"])) == 10
     assert not any("'F'" in message for message, _, _ in result["findings"])
+
+
+def test_prerequisite_or_members_and_relative_shared_positions():
+    host = source(
+        [
+            focus(
+                "child",
+                0,
+                1,
+                relative="SH_root",
+                prerequisites=[["SH_root", "SH_child"]],
+            )
+        ],
+        refs=["SH_root"],
+    )
+    shared = source(
+        shared=[
+            focus("SH_root", 0, 0, file="shared.txt"),
+            focus(
+                "SH_child",
+                0,
+                2,
+                file="shared.txt",
+                relative="SH_root",
+                prerequisites=[["SH_root"]],
+            ),
+        ],
+        name="shared.txt",
+    )
+    shared["trees"] = []
+    result = analyze_layout([host, shared])
+    assert result["counts"]["prerequisite_order_pairs"] == 1
+    assert len(result["prerequisite_order"]) == 1
+    warning = result["prerequisite_order"][0][0]
+    assert "'SH_child' at (0, 2)" in warning
+    assert "'child' at (0, 1)" in warning
+    assert "'SH_root'" not in warning  # the other OR member is above the child
+
+
+def test_prerequisite_rows_include_equal_and_every_bad_or_member_once():
+    parents = [focus(f"P{i}", i * 3, 1) for i in range(4)]
+    parents.append(focus("above", 20, 0))
+    child = focus(
+        "child",
+        30,
+        1,
+        prerequisites=[["P0", "P1", "above"], ["P0", "P2", "P3"]],
+    )
+    result = analyze_layout([source(parents + [child])])
+    assert result["counts"]["prerequisite_order_pairs"] == 4
+    warnings = [message for message, _, _ in result["prerequisite_order"]]
+    assert sum("prerequisite 'P0'" in message for message in warnings) == 1
+    assert {f"P{i}" for i in range(4)} <= {
+        message.split(" prerequisite '")[1].split("'")[0] for message in warnings
+    }
+
+
+def test_prerequisite_order_deduplicates_repeated_edge_but_keeps_reverse_edge():
+    result = analyze_layout(
+        [
+            source(
+                [
+                    focus("A", prerequisites=[["B"], ["B"]]),
+                    focus("B", prerequisites=[["A"]]),
+                ]
+            )
+        ]
+    )
+    assert result["counts"]["prerequisite_order_pairs"] == 2
+    assert len(result["prerequisite_order"]) == 2
+    assert {
+        message.split("prerequisite '")[1].split("'")[0]
+        for message, _, _ in result["prerequisite_order"]
+    } == {
+        "A",
+        "B",
+    }
+
+
+def test_prerequisite_row_warnings_skip_unresolved_and_cyclic_positions():
+    result = analyze_layout(
+        [
+            source(
+                [
+                    focus("broken", relative="missing", prerequisites=[["child"]]),
+                    focus("cycle_a", relative="cycle_b", prerequisites=[["cycle_b"]]),
+                    focus("cycle_b", relative="cycle_a", prerequisites=[["cycle_a"]]),
+                    focus("child", prerequisites=[["broken", "cycle_a"]]),
+                ]
+            )
+        ]
+    )
+    assert result["counts"]["unresolved"] == 3
+    assert result["counts"]["prerequisite_order_pairs"] == 0
+    assert not result["prerequisite_order"]
+
+
+def test_mutex_pairs_are_unordered_and_reciprocal_declarations_deduplicate():
+    result = analyze_layout(
+        [
+            source(
+                [
+                    focus("A", 0, 0, mutually_exclusive=["B", "C"]),
+                    focus("B", 3, 1, mutually_exclusive=["A"]),
+                    focus("C", 6, 2, mutually_exclusive=["A"]),
+                ]
+            )
+        ]
+    )
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 2
+    assert len(result["mutually_exclusive_rows"]) == 2
+    assert all(
+        "different rows" in message
+        for message, _, _ in result["mutually_exclusive_rows"]
+    )
+
+
+def test_same_row_mutex_pair_is_not_reported():
+    result = analyze_layout(
+        [source([focus("A", 0, 0, mutually_exclusive=["B"]), focus("B", 3, 0)])]
+    )
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 0
+    assert not result["mutually_exclusive_rows"]
+
+
+def test_gated_mutex_pair_is_skipped_even_when_rows_differ():
+    result = analyze_layout(
+        [
+            source(
+                [
+                    focus(
+                        "gated",
+                        0,
+                        0,
+                        allow_branch=True,
+                        mutually_exclusive=["candidate"],
+                    ),
+                    focus("candidate", 3, 2, mutually_exclusive=["gated"]),
+                ]
+            )
+        ]
+    )
+    assert result["counts"]["gated"] == 1
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 0
+    assert not result["mutually_exclusive_rows"]
+
+
+def test_mutex_pair_from_imported_shared_relative_chain_is_reported():
+    host = source(refs=["SH_root"])
+    shared = source(
+        shared=[
+            focus("SH_root", 0, 0, file="shared.txt"),
+            focus(
+                "SH_middle",
+                1,
+                1,
+                file="shared.txt",
+                relative="SH_root",
+                prerequisites=[["SH_root"]],
+            ),
+            focus(
+                "SH_leaf",
+                1,
+                1,
+                file="shared.txt",
+                relative="SH_middle",
+                prerequisites=[["SH_middle"]],
+                mutually_exclusive=["SH_root"],
+            ),
+        ],
+        name="shared.txt",
+    )
+    shared["trees"] = []
+    shared["shared"][0]["mutually_exclusive"] = ["SH_leaf"]
+    result = analyze_layout([host, shared])
+    assert result["counts"]["instances"] == 3
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 1
+    warning = result["mutually_exclusive_rows"][0][0]
+    assert "'SH_root' at (0, 0)" in warning
+    assert "'SH_leaf' at (2, 2)" in warning
+
+
+def test_mutex_checks_skip_unresolved_and_absent_or_unimported_targets():
+    file = source(
+        [
+            focus("missing_anchor", relative="absent", mutually_exclusive=["peer"]),
+            focus("cycle_a", relative="cycle_b", mutually_exclusive=["cycle_b"]),
+            focus("cycle_b", relative="cycle_a", mutually_exclusive=["cycle_a"]),
+            focus(
+                "peer",
+                3,
+                2,
+                mutually_exclusive=[
+                    "missing_anchor",
+                    "absent_mutex",
+                    "unimported_shared",
+                ],
+            ),
+            focus(
+                "child",
+                6,
+                2,
+                prerequisites=[["unimported_shared"]],
+                mutually_exclusive=["absent_mutex", "unimported_shared"],
+            ),
+        ],
+        shared=[focus("unimported_shared", 0, 8)],
+    )
+    result = analyze_layout([file])
+    assert result["counts"]["unresolved"] == 3
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 0
+    assert not result["mutually_exclusive_rows"]
+
+
+def test_large_prerequisite_and_mutex_groups_are_complete_and_deduplicated():
+    members = [focus(f"P{i:03}", i * 3, 2) for i in range(64)]
+    child = focus(
+        "child",
+        0,
+        1,
+        prerequisites=[[item["id"] for item in members]],
+        mutually_exclusive=[item["id"] for item in members],
+    )
+    for member in members:
+        member["mutually_exclusive"] = ["child"]
+    result = analyze_layout([source(members + [child])])
+    assert result["counts"]["prerequisite_order_pairs"] == 64
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 64
+    assert len(result["prerequisite_order"]) == 64
+    assert len(result["mutually_exclusive_rows"]) == 64
+
+
+def test_prerequisite_and_mutex_warnings_skip_gated_or_offset_focus_pairs():
+    result = analyze_layout(
+        [
+            source(
+                [
+                    focus("gate", 0, 2, allow_branch=True),
+                    focus("gated_child", 0, 0, prerequisites=[["gate"]]),
+                    focus("offset", 3, 2, offset=True),
+                    focus(
+                        "offset_child",
+                        0,
+                        -2,
+                        relative="offset",
+                        prerequisites=[["offset"]],
+                        mutually_exclusive=["peer"],
+                    ),
+                    focus("peer", 6, 1, mutually_exclusive=["offset_child"]),
+                ]
+            )
+        ]
+    )
+    assert result["counts"]["prerequisite_order_pairs"] == 0
+    assert result["counts"]["mutually_exclusive_row_pairs"] == 0
 
 
 @pytest.mark.parametrize("removed", [True, False])

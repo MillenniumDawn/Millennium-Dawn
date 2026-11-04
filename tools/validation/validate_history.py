@@ -2,15 +2,17 @@
 """Validate technology prerequisites, equipment module unlocks, DLC gating,
 special-project requirements, and ruling_party seeding in history files."""
 
-import glob
 import os
 import re
 from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
+from equipment_variant_context import branches, script_nodes
+from shared_utils import FileOpener, list_files
 from validator_common import (
     BaseValidator,
+    Severity,
     find_unquoted_block_end,
     run_validator_main,
     strip_comments,
@@ -80,7 +82,7 @@ _BUILDING_TYPE_RE = re.compile(r"\btype\s*=\s*([a-zA-Z_][a-zA-Z0-9_]*)")
 
 def _iter_cleaned_text_files(directory: str):
     """Yield each readable text file in *directory* with comments stripped."""
-    for filepath in glob.iglob(os.path.join(directory, "*.txt")):
+    for filepath in list_files(directory, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as input_file:
                 content = input_file.read()
@@ -355,7 +357,7 @@ def parse_nuclear_status_ideas(mod_path: str) -> Set[str]:
     non-compliant.
     """
     ideas_dir = os.path.join(mod_path, "common", "ideas")
-    for filepath in glob.iglob(os.path.join(ideas_dir, "*.txt")):
+    for filepath in list_files(ideas_dir, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
                 content = f.read()
@@ -422,7 +424,7 @@ def parse_state_building_owners(
     owners: Dict[str, Set[str]] = defaultdict(set)
     states_dir = os.path.join(mod_path, "history", "states")
 
-    for filepath in glob.iglob(os.path.join(states_dir, "*.txt")):
+    for filepath in list_files(states_dir, recursive=False):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
                 content = f.read()
@@ -499,7 +501,7 @@ def _tag_country_file_map(mod_path: str) -> Dict[str, str]:
     `validate_oob_references`)."""
     countries_dir = os.path.join(mod_path, "history", "countries")
     mapping: Dict[str, str] = {}
-    for filepath in glob.iglob(os.path.join(countries_dir, "*.txt")):
+    for filepath in list_files(countries_dir, recursive=False):
         filename = os.path.basename(filepath)
         tag = (
             filename.split(" - ")[0]
@@ -1235,7 +1237,7 @@ def _get_state_owners(mod_path: str) -> Set[str]:
     """
     owners = set()
     states_dir = os.path.join(mod_path, "history", "states")
-    for f in glob.iglob(os.path.join(states_dir, "*.txt")):
+    for f in list_files(states_dir, recursive=False):
         try:
             with open(f, "r", encoding="utf-8-sig") as fh:
                 for line in fh:
@@ -1414,6 +1416,115 @@ def validate_country_file(
     return results
 
 
+def check_influence_order(text, country):
+    """Check country-local execution paths, keeping dated setups independent."""
+    findings = set()
+
+    def join(outcomes):
+        result = {}
+        for owner in set().union(*(state.keys() for state in outcomes)):
+            values = [
+                state.get(owner, (False, set(), set(), set(), False))
+                for state in outcomes
+            ]
+            result[owner] = (
+                all(value[0] for value in values),
+                *(set().union(*(value[i] for value in values)) for i in range(1, 4)),
+                all(value[4] for value in values),
+            )
+        return result
+
+    def walk(nodes, state, scope):
+        state = state.copy()
+        for node in branches(nodes, {}):
+            if isinstance(node, list):
+                state = join([walk(arm, state, scope) for arm in node])
+                continue
+            if re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?", node.key):
+                finish(walk(node.children, {}, scope))
+                continue
+            if node.key in {"hidden_effect", "THIS", "ROOT", scope} or re.fullmatch(
+                r"[A-Z]{3}", node.key
+            ):
+                target = (
+                    country
+                    if node.key == "ROOT"
+                    else scope if node.key in {"hidden_effect", "THIS"} else node.key
+                )
+                state = walk(node.children, state, target)
+                continue
+            if node.key in {"random", "while"}:
+                state = join([state, walk(node.children, state, scope)])
+                continue
+            operations = []
+            if node.key == "add_to_array":
+                for entry in node.children:
+                    target, _, array = entry.key.rpartition(".")
+                    if array in {"influence_array", "influence_array_val"}:
+                        owner = (
+                            country
+                            if target == "ROOT"
+                            else scope if target in {"", "THIS"} else target
+                        )
+                        operations.append((owner, "write"))
+            elif (
+                node.key
+                in {"init_influence", "sort_influence", "recalculate_influence"}
+                and node.value == "yes"
+            ):
+                operations.append((scope, node.key))
+            for owner, operation in operations:
+                initialized, written, pending, sorted_at, warned = state.get(
+                    owner, (False, set(), set(), set(), False)
+                )
+                if operation == "write":
+                    if not initialized and not warned:
+                        warned = True
+                        findings.add(
+                            (
+                                f"{owner}: initialize influence with init_influence = yes before writing starting influence arrays",
+                                node.line,
+                            )
+                        )
+                    for line in sorted_at:
+                        findings.add(
+                            (
+                                f"{owner}: sort_influence runs before a later influence array write; move it after the setup",
+                                line,
+                            )
+                        )
+                    written = written | {node.line}
+                    pending = pending | {node.line}
+                    sorted_at = set()
+                elif operation == "init_influence":
+                    if written:
+                        findings.add(
+                            (
+                                f"{owner}: init_influence clears earlier influence array writes; move it before the setup",
+                                node.line,
+                            )
+                        )
+                    initialized = True
+                else:
+                    pending = set()
+                    sorted_at = sorted_at | {node.line}
+                state[owner] = initialized, written, pending, sorted_at, warned
+        return state
+
+    def finish(state):
+        for owner, (_, _, pending, _, _) in state.items():
+            if pending:
+                findings.add(
+                    (
+                        f"{owner}: add sort_influence = yes after the starting influence array writes",
+                        max(pending),
+                    )
+                )
+
+    finish(walk(script_nodes(text), {}, country))
+    return sorted(findings, key=lambda finding: (finding[1], finding[0]))
+
+
 class Validator(BaseValidator):
     TITLE = "HISTORY FILE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1509,7 +1620,7 @@ class Validator(BaseValidator):
                 for f in self.staged_files
                 if f.endswith(".txt") and "history/countries" in f.replace("\\", "/")
             ]
-        return sorted(glob.iglob(os.path.join(history_dir, "*.txt")))
+        return list_files(history_dir, recursive=False)
 
     def _validate_history_files(
         self,
@@ -1623,7 +1734,7 @@ class Validator(BaseValidator):
         units_dir = os.path.join(self.mod_path, "history", "units")
         existing_oobs = {
             os.path.splitext(os.path.basename(f))[0]
-            for f in glob.iglob(os.path.join(units_dir, "*.txt"))
+            for f in list_files(units_dir, recursive=False)
         }
         self.log(f"  Found {len(existing_oobs)} OOB files in history/units/")
 
@@ -1721,6 +1832,25 @@ class Validator(BaseValidator):
             "States starting with a project-granted building whose owner never completes the project:",
         )
 
+    def validate_influence_order(self):
+        results = []
+        for path in self._get_history_files():
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            country = os.path.basename(path).split(" ", 1)[0].split(".", 1)[0]
+            results.extend(
+                (message, relative, line)
+                for message, line in check_influence_order(
+                    FileOpener.open_text_file(path), country
+                )
+            )
+        self._report(
+            results,
+            "Starting influence setup is ordered correctly",
+            "Starting influence setup ordering problems:",
+            severity=Severity.WARNING,
+            category="history-influence-order",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
@@ -1732,6 +1862,7 @@ class Validator(BaseValidator):
         self.validate_oob_references()
         self.validate_capital_defined()
         self.validate_ruling_party_assigned()
+        self.validate_influence_order()
         self._build_building_ownership()
         self.validate_reactor_nuclear_status()
         self.validate_project_granted_buildings()

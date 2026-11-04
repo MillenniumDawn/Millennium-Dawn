@@ -64,8 +64,8 @@ _EFFECTS = {
 }
 
 
-def equipment_unlocks(text):
-    """Map equipment tokens to their enabling technologies, not assumed names."""
+def equipment_unlocks(text, kind="enable_equipments"):
+    """Map equipment or module tokens to their explicit enabling technologies."""
     text = blank_comments(text)
     result = {}
     for container, lo, hi, _ in _iter_blocks(text, 0, len(text)):
@@ -73,7 +73,7 @@ def equipment_unlocks(text):
             continue
         for tech, tlo, thi, _ in _iter_blocks(text, lo, hi):
             for key, elo, ehi, _ in _iter_blocks(text, tlo, thi):
-                if key == "enable_equipments":
+                if key == kind:
                     for equipment in _depth0_text(text, elo, ehi).split():
                         if _LITERAL.fullmatch(equipment):
                             result.setdefault(equipment, set()).add(tech)
@@ -420,7 +420,7 @@ class Validator(BaseValidator):
                         "set_technology",
                     )
                 )
-                or any(match[1] in effect_names for match in _ASSIGNMENT.finditer(text))
+                or any(name in effect_names for name in _ASSIGNMENT.findall(text))
                 or re.search(r"\b[A-Za-z_]\w*\.\d+\b", text)
                 or relative.startswith(
                     (
@@ -476,7 +476,7 @@ class Validator(BaseValidator):
                 continue
             text = FileOpener.open_text_file(path)
             if "create_equipment_variant" not in text and not any(
-                match[1] in context.effects for match in _ASSIGNMENT.finditer(text)
+                name in context.effects for name in _ASSIGNMENT.findall(text)
             ):
                 continue
             match = re.match(r"history/countries/([A-Z]{3})(?:\s|\.)", relative)

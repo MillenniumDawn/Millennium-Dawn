@@ -574,12 +574,84 @@ antarctica_remove_research_station_from_display = {
 	}
 }
 
+antarctica_transfer_research_stations_to_root = {
+	set_temp_variable = { station_transferred = 0 }
+	set_temp_variable = { transfer_at_membership = 0 }
+	if = {
+		limit = { has_idea = at_member }
+		set_temp_variable = { transfer_at_membership = 1 }
+	}
+	for_each_loop = {
+		array = country_owned_station_ids
+		value = transfer_station_id
+		index = transfer_station_index
+
+		if = {
+			limit = {
+				check_variable = { transfer_station_id > 0 }
+				check_variable = { global.antarctica_station_exists^transfer_station_id > 0 }
+				check_variable = { global.antarctica_station_controller^transfer_station_id = THIS.id }
+			}
+			set_variable = { global.antarctica_station_controller^transfer_station_id = ROOT.id }
+			set_variable = { country_owned_station_ids^transfer_station_index = -1 }
+			ROOT = {
+				if = {
+					limit = { NOT = { is_in_array = { country_owned_station_ids = transfer_station_id } } }
+					add_to_array = { country_owned_station_ids = transfer_station_id }
+				}
+			}
+			set_temp_variable = { station_transferred = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { station_transferred > 0 } }
+		clr_country_flag = antarctica_has_active_station
+		antarctica_clear_laboratory_country_effects = yes
+		ROOT = {
+			set_country_flag = antarctica_has_active_station
+			if = {
+				limit = { NOT = { has_dynamic_modifier = { modifier = antarctica_laboratory_dynamic_modifier } } }
+				add_dynamic_modifier = { modifier = antarctica_laboratory_dynamic_modifier }
+			}
+			if = {
+				limit = {
+					check_variable = { transfer_at_membership > 0 }
+					NOT = { has_idea = at_member }
+				}
+				add_ideas = at_member
+			}
+			antarctica_recalculate_country_laboratory_effects = yes
+		}
+		add_to_variable = { global.missile_ui_updated = 1 }
+	}
+}
+
+antarctica_remove_all_research_stations = {
+	for_each_loop = {
+		array = country_owned_station_ids
+		value = remove_station_id
+
+		if = {
+			limit = {
+				check_variable = { remove_station_id > 0 }
+				check_variable = { global.antarctica_station_exists^remove_station_id > 0 }
+				check_variable = { global.antarctica_station_controller^remove_station_id = THIS.id }
+			}
+			set_temp_variable = { station_id = remove_station_id }
+			antarctica_remove_research_station = yes
+		}
+	}
+}
+
 # Usage
 # set_temp_variable = { station_id = x }
 # antarctica_remove_research_station = yes
 antarctica_remove_research_station = {
-	antarctica_find_player_station = yes
-	set_temp_variable = { station_id = player_station_id }
+	if = {
+		limit = { check_variable = { station_id < 1 } }
+		antarctica_find_player_station = yes
+		set_temp_variable = { station_id = player_station_id }
+	}
 	if = {
 		limit = {
 			check_variable = { global.antarctica_station_exists^station_id > 0 }
@@ -608,7 +680,27 @@ antarctica_remove_research_station = {
 			set_variable = { country_owned_station_ids^remove_owned_index = -1 }
 		}
 
-		clr_country_flag = antarctica_has_active_station
+		set_temp_variable = { has_remaining_station = 0 }
+		for_each_loop = {
+			array = country_owned_station_ids
+			value = remaining_station_id
+
+			if = {
+				limit = {
+					check_variable = { remaining_station_id > 0 }
+					check_variable = { global.antarctica_station_exists^remaining_station_id > 0 }
+					check_variable = { global.antarctica_station_controller^remaining_station_id = THIS.id }
+				}
+				set_temp_variable = { has_remaining_station = 1 }
+			}
+		}
+		if = {
+			limit = { check_variable = { has_remaining_station > 0 } }
+			set_country_flag = antarctica_has_active_station
+		}
+		else = {
+			clr_country_flag = antarctica_has_active_station
+		}
 		antarctica_remove_research_station_from_display = yes
 		add_to_variable = { global.antarctica_station_display_capacity_remaining = 1 }
 		clamp_variable = { var = global.antarctica_station_display_capacity_remaining min = 0 max = 70 }
@@ -1366,6 +1458,7 @@ antarctica_set_selected_station_controller = {
 		set_variable = { selected_antarctica_station_iterations = global.antarctica_station_iterations^selected_antarctica_station }
 		set_variable = { selected_antarctica_station_iteration_speed_multiplier = selected_antarctica_station_output_iteration_speed_multiplier }
 		antarctica_read_selected_slot_module = yes
+		antarctica_calculate_selected_preview_module_install_time = yes
 		if = {
 			limit = { check_variable = { selected_antarctica_station_tier < 1 } }
 			set_variable = { selected_antarctica_station_tier = 1 }
@@ -1851,18 +1944,17 @@ antarctica_replace_station_module = {
 # Usage
 # antarctica_queue_selected_station_module_install = yes
 antarctica_queue_selected_station_module_install = {
+	antarctica_calculate_selected_preview_module_install_time = yes
 	if = {
 		limit = {
 			check_variable = { selected_antarctica_station > 0 }
-			check_variable = { selected_antarctica_station_selected_module > 0 }
+			antarctica_station_selected_slot_module_different = yes
 			antarctica_can_install_module_power_balance = yes
 			antarctica_can_install_module_staff_availability = yes
 			NOT = {
 				check_variable = { global.antarctica_station_install_pending^selected_antarctica_station > 0 }
 			}
 		}
-
-		antarctica_calculate_selected_preview_module_install_time = yes
 
 		# Deduct installation cost from treasury
 		custom_effect_tooltip = antarctica_module_install_cost_TT

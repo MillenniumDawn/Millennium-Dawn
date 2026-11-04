@@ -3,7 +3,7 @@ title: Mechanics Guide
 description: Guide to power ranking, satellite states, and other core mechanics in Millennium Dawn
 ---
 
-This guide covers core Millennium Dawn mechanics that affect every country: power rankings, the autonomy system, and the naval power system.
+This guide covers core Millennium Dawn mechanics that affect every country: power rankings, the autonomy system, the naval power system, and shared national spirits.
 
 ---
 
@@ -18,6 +18,9 @@ This guide covers core Millennium Dawn mechanics that affect every country: powe
 - [Subject States](#subject-states)
   - [Autonomy Levels](#autonomy-levels)
   - [Changing Autonomy](#changing-autonomy)
+- [Shared National Spirits](#shared-national-spirits)
+  - [Spirits Every Country Carries](#spirits-every-country-carries)
+  - [Spirits You Gain and Lose](#spirits-you-gain-and-lose)
 
 ---
 
@@ -132,6 +135,47 @@ As an overlord, you can reduce a subject's autonomy through the **Reduce Autonom
 Some subjects are exempt from autonomy manipulation, including Special Administrative Regions (Hong Kong, Macao, Taiwan), Tibet, East Turkestan, Mongolia, Wagner PMC members, CIS member states, Warsaw Pact members, and Russian federal subjects.
 
 Several nation-specific systems use custom autonomy hierarchies. Russia has a federal subject system with its own promotion chain (Governorate, Okrug, Oblast, Kray, Republic, State). Britain has a devolution system for constituent countries.
+
+---
+
+## Shared National Spirits
+
+Some national spirits do not come from a focus tree. Any country can carry them, whether it has unique content or the generic tree. The game updates their values as your situation changes, and they sit with your other national spirits in the Politics window.
+
+### Spirits Every Country Carries
+
+These stay for the whole game. Only their values change.
+
+| Spirit                              | Driven By                          |
+| ----------------------------------- | ---------------------------------- |
+| A power ranking, such as Superpower | GDP and domestic independence      |
+| Inflation Impact on Economy         | Inflation rate                     |
+| Currency Effects                    | Currency strength                  |
+| GDP per Capita                      | GDP per capita                     |
+| Impact of Tax Rates                 | Corporate and population tax rates |
+| Productivity and Employment Effects | Productivity and employment        |
+| National Electrical Grid            | Electricity supply and demand      |
+| Literacy Rate Dynamic Modifier      | Literacy rate                      |
+| Foreign Influence on Us             | Foreign influence in your country  |
+| Our Neighbors Effect on Us          | The countries on your borders      |
+| Government Policy Impact            | Your government's popularity       |
+
+Each internal faction in your country adds a spirit of its own, scaled by that faction's opinion.
+
+The economic rows are explained in the [Economy Guide](/player-tutorials/economy-guide/). For the rest, see [Power Ranking](#power-ranking), the [Influence Guide](/player-tutorials/influence-guide/), the [Politics Guide](/player-tutorials/politics-guide/), and [Internal Factions](/player-tutorials/internal-factions/).
+
+### Spirits You Gain and Lose
+
+| Spirit                       | When You Have It                               |
+| ---------------------------- | ---------------------------------------------- |
+| Very High Interest Rate      | Your interest rate is 15% or higher            |
+| United Nations Member        | You are a member of the United Nations         |
+| Naval Power of the Continent | Most deployed naval manpower on your continent |
+| A sanctions tier             | Other countries have sanctioned you            |
+
+See [Naval Power of the Continent](#naval-power-of-the-continent) and the Sanctions section of the [Economy Guide](/player-tutorials/economy-guide/) for the last two.
+
+Country-specific spirits come from that country's own history, focuses, decisions, and events. Its page under [Countries](/countries/) lists the starting ones.
 
 ---
 

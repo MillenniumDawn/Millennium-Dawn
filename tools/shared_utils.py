@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import fnmatch
 import json
 import os
 import re
@@ -15,7 +16,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
-from itertools import chain
+from itertools import chain, islice
 from pathlib import Path
 from typing import (
     Any,
@@ -29,6 +30,19 @@ from typing import (
     Set,
     Tuple,
 )
+
+WORD_BLOCK_START_RE = re.compile(r"^(\w+)\s*=\s*\{")
+WORD_BLOCK_LINE_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+IDENTIFIER_BLOCK_START_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+IDENTIFIER_BLOCK_LINE_RE = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE
+)
+COUNTRY_TAG_ASSIGNMENT_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+COUNTRY_TAG_ASSIGNMENT_LINE_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+MODIFIER_OPEN_RE = re.compile(r"\bmodifier\s*=\s*\{")
+TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+AVAILABLE_OPEN_RE = re.compile(r"\bavailable\s*=\s*\{")
 
 
 class Colors:
@@ -378,10 +392,22 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+# A stock idea on_add/on_remove log; the id is whichever id group matched
+# (m.lastgroup). A hand-written message or a runtime [name] does not match.
+STOCK_IDEA_LOG_RE = re.compile(
+    r'(?P<prefix>\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
+    r"(?:Idea (?P<standard>[\w.-]+) (?:added|removed)"
+    r"|(?:add|remove)(?: idea)? (?P<legacy>[\w.-]+)"
+    r'|(?P<trailing>[\w.-]+) idea added)"'
+)
+
+
 def count_braces(text: str) -> Tuple[int, int]:
     """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
     strings and after an unquoted ``#`` comment."""
     code = strip_inline_comment(text)
+    if '"' not in code:
+        return code.count("{"), code.count("}")
     opens = closes = 0
     in_str = False
     for i, c in enumerate(code):
@@ -417,6 +443,8 @@ def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
     unquoted text, but a `log`/tooltip string keeps its internal spacing."""
+    if '"' not in text:
+        return " ".join(text.split())
     result: List[str] = []
     in_str = False
     prev_space = False
@@ -456,6 +484,10 @@ def _normalize_oneline_braces(text: str) -> str:
 
 
 _COMPARISON_OPS = {"!=", "==", ">=", "<="}
+# The tokens normalize_spacing pads, two-character forms first.
+_SPACED_TOKEN_RE = re.compile(
+    "|".join(re.escape(op) for op in sorted(_COMPARISON_OPS)) + r"|\{\}|[{}=<>]"
+)
 
 
 def normalize_spacing(line: str) -> str:
@@ -475,28 +507,30 @@ def normalize_spacing(line: str) -> str:
 
     indent = code[: len(code) - len(code.lstrip())]
 
-    out: List[str] = []
-    in_str = False
-    i = 0
-    n = len(code)
-    while i < n:
-        c = code[i]
-        if c == '"' and (i == 0 or code[i - 1] != "\\"):
-            in_str = not in_str
-            out.append(c)
-        elif in_str:
-            out.append(c)
-        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
-            out.append(f" {code[i : i + 2]} ")
-            i += 2
-            continue
-        elif c in "{}=<>":
-            out.append(f" {c} ")
-        else:
-            out.append(c)
-        i += 1
-
-    body = collapse_ws_outside_quotes("".join(out))
+    if '"' not in code:
+        body = " ".join(_SPACED_TOKEN_RE.sub(r" \g<0> ", code).split())
+    else:
+        out: List[str] = []
+        in_str = False
+        i = 0
+        n = len(code)
+        while i < n:
+            c = code[i]
+            if c == '"' and (i == 0 or code[i - 1] != "\\"):
+                in_str = not in_str
+                out.append(c)
+            elif in_str:
+                out.append(c)
+            elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+                out.append(f" {code[i : i + 2]} ")
+                i += 2
+                continue
+            elif c in "{}=<>":
+                out.append(f" {c} ")
+            else:
+                out.append(c)
+            i += 1
+        body = collapse_ws_outside_quotes("".join(out))
     return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
 
 
@@ -524,9 +558,19 @@ def collapse_or_compact(
         first = block_lines[0]
         indent = first[: len(first) - len(first.lstrip())]
 
-    for line in block_lines:
-        if strip_inline_comment(line) != line:
-            return reindent_by_brace_depth(compact_block(block_lines), indent)
+    one_line = _one_line_form(block_lines, indent)
+    if one_line is not None:
+        return [one_line]
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return reindent_by_brace_depth(compact_block(block_lines), indent)
+    multi = compact_block(collapse_nested_blocks(block_lines))
+    return reindent_by_brace_depth(multi, indent)
+
+
+def _one_line_form(block_lines: List[str], indent: str) -> Optional[str]:
+    """The block on one line when it passes the single-leaf test, else None."""
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return None
 
     text = " ".join(line.strip() for line in block_lines if line.strip())
 
@@ -546,16 +590,14 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        multi = compact_block(collapse_nested_blocks(block_lines))
-        return reindent_by_brace_depth(multi, indent)
+        return None
 
     unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
     for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
         if len(group.split()) > 1:
-            multi = compact_block(collapse_nested_blocks(block_lines))
-            return reindent_by_brace_depth(multi, indent)
+            return None
 
-    return [f"{indent}{_normalize_oneline_braces(text)}"]
+    return f"{indent}{_normalize_oneline_braces(text)}"
 
 
 def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
@@ -593,8 +635,9 @@ def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
             return out
 
         child = collapse_nested_blocks(block_lines[i:j])
-        collapsed = collapse_or_compact(child)
-        out.extend(collapsed if len(collapsed) == 1 else child)
+        first = child[0]
+        one_line = _one_line_form(child, first[: len(first) - len(first.lstrip())])
+        out.extend(child if one_line is None else [one_line])
         i = j
 
     out.append(block_lines[last])
@@ -946,14 +989,7 @@ def _editor_settings_files() -> List[str]:
     mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
     vscode = os.path.join(mod_root, ".vscode")
     files = [os.path.join(vscode, "settings.json")]
-    try:
-        files.extend(
-            os.path.join(vscode, f)
-            for f in sorted(os.listdir(vscode))
-            if f.endswith(".code-workspace")
-        )
-    except OSError:
-        pass
+    files.extend(list_files(vscode, patterns=("*.code-workspace",), recursive=False))
     appdata = os.environ.get("APPDATA", "")
     files.extend(
         os.path.expanduser(p)
@@ -1041,15 +1077,7 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
-    try:
-        filenames = sorted(os.listdir(tags_dir))
-    except OSError:
-        return out
-
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
+    for fpath in list_files(tags_dir, recursive=False):
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = re.sub(r"#.*", "", f.read())
@@ -1363,9 +1391,12 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 
 
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# Matched with first_flat_match, which supplies the word boundary before the key.
+IS_AI_NO_RE = re.compile(r"is_ai\s*=\s*no\b")
+ALWAYS_NO_RE = re.compile(r"always\s*=\s*no\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
-_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
 
 
 def iter_flat_matches(
@@ -1461,7 +1492,7 @@ def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
     """
     root = Path(mod_path) / "common" / "decisions" / "categories"
     names: Dict[str, str] = {}
-    for path in sorted(root.rglob("*.txt")):
+    for path in map(Path, list_files(root)):
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
         except OSError:
@@ -1677,10 +1708,45 @@ def collect_files_by_mode(
 
 
 def get_root_dir() -> str:
-    """Resolve the mod root directory (two levels up from tools/linting/)."""
-    return os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
-    )
+    """The checkout root that holds this tools/ directory."""
+    return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def find_mod_root(
+    start: str | os.PathLike[str], markers: Tuple[str, ...]
+) -> Optional[str]:
+    """The nearest of *start* and its parents that holds every *markers* directory."""
+    path = os.path.abspath(start)
+    while not all(os.path.isdir(os.path.join(path, marker)) for marker in markers):
+        parent = os.path.dirname(path)
+        if parent == path:
+            return None
+        path = parent
+    return path
+
+
+def list_files(
+    directory: str | os.PathLike[str],
+    patterns: Tuple[str, ...] = ("*.txt",),
+    recursive: bool = True,
+) -> List[str]:
+    """Sorted paths of the files in *directory* whose names match a pattern.
+
+    Subdirectories are searched only when *recursive*. Hidden files and
+    directories are skipped, as glob skips them. A missing directory gives an
+    empty list.
+    """
+    walk = os.walk(directory)
+    found: List[str] = []
+    for dirpath, dirnames, filenames in walk if recursive else islice(walk, 1):
+        dirnames[:] = [name for name in dirnames if not name.startswith(".")]
+        found.extend(
+            os.path.join(dirpath, name)
+            for name in filenames
+            if not name.startswith(".")
+            and any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
+        )
+    return sorted(found)
 
 
 def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
@@ -1848,19 +1914,13 @@ def get_all_txt_files(
     include_interface: bool = False,
 ) -> List[str]:
     """Get all .txt files from relevant directories."""
-    import fnmatch
-
     if include_interface:
         directories = _DIRECTORIES_WITH_INTERFACE
-
-    files_list = []
-    for directory in directories:
-        dir_path = os.path.join(root_dir, directory)
-        if os.path.exists(dir_path):
-            for root, _, filenames in os.walk(dir_path):
-                for filename in fnmatch.filter(filenames, "*.txt"):
-                    files_list.append(os.path.join(root, filename))
-    return files_list
+    return [
+        path
+        for directory in directories
+        for path in list_files(os.path.join(root_dir, directory))
+    ]
 
 
 def get_staged_files(

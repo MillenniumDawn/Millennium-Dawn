@@ -1,14 +1,23 @@
 # Abbreviations
 
-- *FI* - Faction Initiative
+- _FI_ - Faction Initiative
 
 # Faction Goals
+
 ```
 faction_goal_id = {
 
 	name = [...] # Goal name (Loc Environment = faction + player country)
 	description = [...] # Goal description (Loc Environment = faction + player country)
 	category = [...] # Goal's category (short_term, medium_term or long_term)
+	visible = {
+		# Trigger - checks if goal will show up in selection list
+		# SCOPE = ROOT = faction leader: COUNTRY / FROM = faction member: COUNTRY
+	}
+	available = {
+		# Trigger - checks if goal will be selectable in selection list
+		# SCOPE = ROOT = faction leader: COUNTRY / FROM = faction member: COUNTRY
+	}
 	completed = {
 		# Trigger - checks if goal completion condition is fulfilled
 		# NOTE if empty - the goal is never completed!
@@ -16,10 +25,13 @@ faction_goal_id = {
 		# SCOPE = faction leader: COUNTRY
 	}
 
+	group = # a categorization used by the UI to allow for filtering. UI asset will be GFX_group and the localization string will be group_FACTION_GOAL_FILTER
+
 	auto_complete = yes # automatically complete goal if the progress reaches 100%
 
 	ai_will_do = { #how likely the faction leader AI is to select this goal if there is a free slot
 		factor = 200
+		# SCOPE = faction member: COUNTRY
 	}
 
 	complete_effect = {
@@ -36,6 +48,17 @@ faction_goal_id = {
 
 	cancel_effect = {
 		# Effect - runs once if the goal is canceled
+		#
+		# SCOPE = faction leader: COUNTRY
+	}
+
+	select_effect = {
+		# Effect - runs once if the goal is selected, only runs if the goal is selected after game start
+		#
+		# SCOPE = faction leader: COUNTRY
+	}
+	remove_effect = {
+		# Effect - runs once if the goal is removed, only runs if the goal is removed after game start
 		#
 		# SCOPE = faction leader: COUNTRY
 	}
@@ -115,6 +138,7 @@ faction_goal_id = {
 ```
 
 # Faction Rules
+
 ```
 faction_rule_id = {
 
@@ -196,6 +220,7 @@ faction_rule_id = {
 ```
 
 # Faction Rule Groups
+
 ```
 group_id = {
 	default_rule = rule_token # The default rule to be set
@@ -207,6 +232,7 @@ group_id = {
 ```
 
 # Faction Templates
+
 ```
 faction_template_id = {
 
@@ -248,98 +274,167 @@ faction_template_id = {
 # Triggers and Effects
 
 ### List of faction-related effects
-- *create_faction* - creates a faction without a template (OBSOLETE)
-- *create_faction_from_template* - the new fancy way of creating factions
-- *dismantle_faction* - dismantles faction
-- *set_faction_leader* - changes faction's leader
-- *set_faction_spymaster* - changes faction's spymaster
-- *set_faction_name* - changes faction's name
-- *add_to_faction* - adds a country to a faction
-- *remove_from_faction* - removes a country from a faction
-- *leave_faction* - removes the current country from faction
-- *set_faction_rule* - sets a rule on a faction
-- *set_faction_manifest* - changes faction's manifest (main goal)
-- *add_faction_goal* - adds a goal to a faction
-- *remove_faction_goal* - removes a goal from a faction
-- *add_faction_initiative* - adds FI to faction
-- *add_faction_power_projection* - adds power to the faction
-- *add_faction_influence_score* - adds influence to the country in the faction
-- *add_faction_influence_ratio* - adds influence to the country based on the given ratio of the faction's total influence
 
+- _create_faction_ - creates a faction without a template (OBSOLETE)
+- _create_faction_from_template_ - the new fancy way of creating factions
+- _dismantle_faction_ - dismantles faction
+- _set_faction_leader_ - changes faction's leader
+- _set_faction_spymaster_ - changes faction's spymaster
+- _set_faction_name_ - changes faction's name
+- _add_to_faction_ - adds a country to a faction
+- _remove_from_faction_ - removes a country from a faction
+- _leave_faction_ - removes the current country from faction
+- _set_faction_rule_ - sets a rule on a faction
+- _set_faction_manifest_ - changes faction's manifest (main goal)
+- _add_faction_goal_ - adds a goal to a faction
+- _remove_faction_goal_ - removes a goal from a faction
+- _add_faction_initiative_ - adds FI to faction
+- _add_faction_power_projection_ - adds power to the faction
+- _add_faction_influence_score_ - adds influence to the country in the faction
+- _add_faction_influence_ratio_ - adds influence to the country based on the given ratio of the faction's total influence
 
 ### List of faction-related triggers
-- *faction_manifest_fulfillment* - compares the current country faction's manifest fulfillmens to a value
-- *has_faction_template* - checks if the current country is in a faction created from a template
-- *faction_power_projection* - compares the current country faction's power to a value
-- *faction_influence_score* - checks influence value of current country in the faction
-- *faction_influence_ratio* - checks influence ratio of current country in the faction
-- *faction_influence_rank* - checks influence rank in the faction of the current country
-- *has_faction_goal* - checks if the current country's faction has an active or completed goal
-- *has_completed_faction_goal* - checks if the current country's faction has completed a goal
-- *faction_goal_fulfillment* - checks goal fulfillment for the current country's faction
-- *has_manpower_to_become_leader* - checks if the current country exceeds the current faction leader and its subjects in deployed manpower
-- *has_industry_to_become_leader* - checks if the current country exceeds the faction leader in number of factories
+
+- _faction_manifest_fulfillment_ - compares the current country faction's manifest fulfillmens to a value
+- _has_faction_template_ - checks if the current country is in a faction created from a template
+- _faction_power_projection_ - compares the current country faction's power to a value
+- _faction_influence_score_ - checks influence value of current country in the faction
+- _faction_influence_ratio_ - checks influence ratio of current country in the faction
+- _faction_influence_rank_ - checks influence rank in the faction of the current country
+- _has_faction_goal_ - checks if the current country's faction has an active or completed goal
+- _has_completed_faction_goal_ - checks if the current country's faction has completed a goal
+- _faction_goal_fulfillment_ - checks goal fulfillment for the current country's faction
+- _has_manpower_to_become_leader_ - checks if the current country exceeds the current faction leader and its subjects in deployed manpower
+- _has_industry_to_become_leader_ - checks if the current country exceeds the faction leader in number of factories
 
 ### List of faction-related modifiers
-- *faction_influence_war_score_factor* - war score modifier for faction influence
-- *faction_influence_industrial_capacity_factor* - industrial capacity modifier for faction influence
-- *faction_influence_garrison_support_provider_factor* - garrison support provider modifier for faction influence
-- *faction_influence_garrison_support_reciver_factor* - garrison support reciver modifier for faction influence
-- *faction_influence_expeditionary_force_provider_factor* - expeditionary force provider modifier for faction influence
-- *faction_influence_expeditionary_force_reciver_factor* -  expeditionary force reciver modifier for faction influence
+
+- _faction_influence_war_score_factor_ - war score modifier for faction influence
+- _faction_influence_industrial_capacity_factor_ - industrial capacity modifier for faction influence
+- _faction_influence_garrison_support_provider_factor_ - garrison support provider modifier for faction influence
+- _faction_influence_garrison_support_reciver_factor_ - garrison support reciver modifier for faction influence
+- _faction_influence_expeditionary_force_provider_factor_ - expeditionary force provider modifier for faction influence
+- _faction_influence_expeditionary_force_reciver_factor_ - expeditionary force reciver modifier for faction influence
 
 # Defines
 
 ### NFactions
-- *FACTION_INITIATIVE_CHANGE_RULE_COST* - cost of changing a faction rule in FI
+
+- _FACTION_INITIATIVE_CHANGE_RULE_COST_ - cost of changing a faction rule in FI
 
 # Console Commands
 
-- *faction_initiative X* - adds X faction initiative (FI) points to current player's faction (shortcut: "fi X")
+- _faction_initiative X_ - adds X faction initiative (FI) points to current player's faction (shortcut: "fi X")
 
 # Faction Upgrades
+
+# Vanilla's current doc dropped this block. MD still scripts these upgrade types.
+
 Faction_Upgrade_Id = {
-	name = the localization string key for the screen name while active. will override the group's name
-	desc = the localization string key for the screen description while active. will override the group's desc
-	icon = the icon that will be displayed while active. will override the group's icon
-	upgrade_cost = the amount of faction initiative that it cost to get to this level from the previous one
-	bonus = a numerical value to dictate the boost the country gets based on the type of upgrade
+name = the localization string key for the screen name while active. will override the group's name
+desc = the localization string key for the screen description while active. will override the group's desc
+icon = the icon that will be displayed while active. will override the group's icon
+upgrade_cost = the amount of faction initiative that it cost to get to this level from the previous one
+bonus = a numerical value to dictate the boost the country gets based on the type of upgrade
 }
+
 # Faction Upgrade Group
+
 Faction_Upgrade_Group_Id = {
-	name = the default localization string key for the screen name
-	desc = the default localization string key for the screen description
-	icon = the default icon that will be displayed
-	upgrades = {
-		the faction upgrades within this group, this list will be sorted on their bonus
-	}
+name = the default localization string key for the screen name
+desc = the default localization string key for the screen description
+icon = the default icon that will be displayed
+upgrades = {
+the faction upgrades within this group, this list will be sorted on their bonus
+}
 
-	display_as_percentage = (default yes) whether to show the value as a percentage or flat value in the UI
+    display_as_percentage = (default yes) whether to show the value as a percentage or flat value in the UI
 
-   ### List of faction-upgrade-types, that have code support
-	upgrade_research = an upgrade that increases the faction sharing research, first one unlocks the research
-	upgrade_intelligence = an upgrade that makes agency upgrades quicker if another faction member has unlocked the upgrade already
-	upgrade_doctrine = makes the doctrines quicker to unlock if another member in the faction already has the upgrade
+### List of faction-upgrade-types, that have code support
+
+    upgrade_research = an upgrade that increases the faction sharing research, first one unlocks the research
+    upgrade_intelligence = an upgrade that makes agency upgrades quicker if another faction member has unlocked the upgrade already
+    upgrade_doctrine = makes the doctrines quicker to unlock if another member in the faction already has the upgrade
+
 }
 
 # Faction Member Upgrades
+
 Faction_Member_Upgrade_Id = {
-	name = the localization string key for the screen name while active. will override the group's name
-	desc = the localization string key for the screen description while active. will override the group's desc
-	icon = the icon that will be displayed while active. will override the group's icon
-	upgrade_cost = the amount of faction initiative that it cost to replace this upgrade with another
-	bonus = a numerical value to dictate the boost the country gets based on the type of upgrade
+name = the localization string key for the screen name while active. will override the group's name
+desc = the localization string key for the screen description while active. will override the group's desc
+icon = the icon that will be displayed while active. will override the group's icon
+upgrade_cost = the amount of faction initiative that it cost to replace this upgrade with another
+bonus = a numerical value to dictate the boost the country gets based on the type of upgrade
 }
 
 # Faction Member Upgrade Group
-Faction_Upgrade_Group_Id = {
-	name = the default localization string key for the screen name
-	desc = the default localization string key for the screen description
-	icon = the default icon that will be displayed
-	upgrades = {
-		the faction upgrades within this group, this list will be sorted on their bonus
-	}
 
-   ### List of faction-member-upgrade-types, that have code support
-	faction_member_upgrade_manpower = bonus will be the % that you take from your own countries manpower and put into the faction manpower pool
+Faction_Upgrade_Group_Id = {
+name = the default localization string key for the screen name
+desc = the default localization string key for the screen description
+icon = the default icon that will be displayed
+upgrades = {
+the faction upgrades within this group, this list will be sorted on their bonus
 }
+
+### List of faction-member-upgrade-types, that have code support
+
+    faction_member_upgrade_manpower = bonus will be the % that you take from your own countries manpower and put into the faction manpower pool
+
+}
+
+# AI Faction Initiative Spending
+
+AI spending of faction initiative can be affected by AI strategies like such:
+
+```
+default_add_faction_facility = {
+	enable = {
+		always = yes
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = {
+		type = spent_faction_initiative_priority
+		id = program # <---- This specifies what to spend the Faction Initiative on
+		value = 5
+	}
+}
+```
+
+Valid ids are:
+
+```
+program
+unlock_doctrine_sharing
+unlock_faction_commander
+```
+
+Intel Advisors work a bit differently, and use custom AI strategy types, e.g:
+
+```
+default_become_spymaster_minor = {
+	allowed = {
+		has_dlc = "La Resistance"
+	}
+	enable = {
+		is_major = no
+	}
+	abort_when_not_enabled = yes
+	ai_strategy = {
+		type = become_spymaster
+		value = 2
+	}
+}
+```
+
+Valid types are:
+
+```
+become_spymaster
+become_head_of_crypto
+become_head_of_counter_intel
+become_head_of_operations
+```
+
+Faction Rules initiative spending priority are scripted in the faction rules themselves (ai_will_do)
