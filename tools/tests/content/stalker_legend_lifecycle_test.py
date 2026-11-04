@@ -244,7 +244,7 @@ def test_turned_back_route_skips_the_raid_after_a_lost_carrier(entry):
     if entry == "relay":
         relay = next(
             body
-            for key, _, body in _event("STALKER.160", "events/STALKER_strelok.txt")
+            for key, _, body in _event("STALKER.160", "events/STALKER_legend.txt")
             if key == "immediate"
         )
         script.execute(relay, 3)
@@ -313,7 +313,7 @@ def test_legend_choices_revalidate_the_current_original_zone(event_id, index, in
 
 def test_monthly_entry_point_wires_both_durable_story_recoveries_once():
     pulse = _parse_race_script(
-        (ROOT / "common/scripted_effects/99_STALKER_pulse_effects.txt").read_text(
+        (ROOT / "common/scripted_effects/99_STALKER_scripted_effects.txt").read_text(
             encoding="utf-8"
         )
     )["STALKER_monthly_pulse"]

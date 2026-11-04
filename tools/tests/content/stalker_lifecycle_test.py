@@ -36,9 +36,8 @@ class StalkerScript(StalkerModel):
         for filename in (
             "99_STALKER_scripted_effects.txt",
             "99_STALKER_world_effects.txt",
-            "99_STALKER_strelok_effects.txt",
-            "99_STALKER_intel_effects.txt",
-            "99_STALKER_faction_wars_effects.txt",
+            "99_STALKER_legend_effects.txt",
+            "99_STALKER_faction_effects.txt",
             "99_STALKER_society_effects.txt",
         ):
             self.effects.update(
@@ -208,7 +207,7 @@ def test_stale_raid_options_cannot_choose_a_route_or_charge_the_former_controlle
     script = StalkerScript()
     script.actor = 2
     script.countries[2]["vars"]["political_power"] = 100
-    body = _option("STALKER.161", f"STALKER.161.{option}", "events/STALKER_strelok.txt")
+    body = _option("STALKER.161", f"STALKER.161.{option}", "events/STALKER_legend.txt")
     trigger = next(value for key, _, value in body if key == "trigger")
     assert script.condition(trigger, script.actor)
     if invalid == "controller":
@@ -222,7 +221,7 @@ def test_stale_raid_options_cannot_choose_a_route_or_charge_the_former_controlle
     assert not script.condition(trigger, script.actor)
     before = script.countries[698]["vars"].copy()
     script.hidden_option(
-        "STALKER.161", f"STALKER.161.{option}", "events/STALKER_strelok.txt"
+        "STALKER.161", f"STALKER.161.{option}", "events/STALKER_legend.txt"
     )
     assert "STALKER_2012_route" not in script.globals
     assert script.countries[2]["vars"]["political_power"] == 100
@@ -305,8 +304,8 @@ def test_lost_2012_carrier_reaches_the_new_controller_once_after_the_due_date():
 @pytest.mark.parametrize(
     "event_id,option,filename",
     [
-        ("STALKER.27", "a", "events/STALKER_international.txt"),
-        ("STALKER.27", "b", "events/STALKER_international.txt"),
+        ("STALKER.27", "a", "events/STALKER_world.txt"),
+        ("STALKER.27", "b", "events/STALKER_world.txt"),
         ("STALKER.46", "a", "events/STALKER_regional.txt"),
         ("STALKER.47", "b", "events/STALKER_regional.txt"),
     ],
@@ -398,12 +397,12 @@ def test_absent_factions_cannot_accept_paid_tearling_backing(zone_id, option, ba
     variables["STALKER_zone_id"] = zone_id
     script.run("STALKER_start_tearling_drive", 698)
     body = _option(
-        "STALKER.150", f"STALKER.150.{option}", "events/STALKER_faction_wars.txt"
+        "STALKER.150", f"STALKER.150.{option}", "events/STALKER_factions.txt"
     )
     trigger = next(value for key, _, value in body if key == "trigger")
     assert script.condition(trigger, 2) == (zone_id == 1)
     script.hidden_option(
-        "STALKER.150", f"STALKER.150.{option}", "events/STALKER_faction_wars.txt"
+        "STALKER.150", f"STALKER.150.{option}", "events/STALKER_factions.txt"
     )
     assert variables["STALKER_zone_tearling_backed"] == (backed if zone_id == 1 else 0)
     assert script.countries[2]["vars"]["political_power"] == (

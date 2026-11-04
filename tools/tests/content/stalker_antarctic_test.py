@@ -12,10 +12,10 @@ def _read(path):
     return (ROOT / path).read_text(encoding="utf-8-sig")
 
 
-DECISIONS = _read("common/decisions/STALKER_antarctic_decisions.txt")
-EFFECTS = _read("common/scripted_effects/99_STALKER_antarctic_effects.txt")
-EVENTS = _read("events/STALKER_antarctic.txt")
-LOC = _read("localisation/english/MD_STALKER_antarctic_l_english.yml")
+DECISIONS = _read("common/decisions/STALKER_decisions.txt")
+EFFECTS = _read("common/scripted_effects/99_STALKER_world_effects.txt")
+EVENTS = _read("events/STALKER.txt")
+LOC = _read("localisation/english/MD_STALKER_l_english.yml")
 TRIGGERS = _read("common/scripted_triggers/99_STALKER_scripted_triggers.txt")
 
 
@@ -169,7 +169,7 @@ def test_the_study_ends_the_first_day_its_laboratory_stops():
     lost = _named_block(EFFECTS, "STALKER_polar_study_lab_lost")
     assert "flag = STALKER_polar_study_cut_short days = 181" in lost
     assert lost.index("has_dynamic_modifier") < lost.index("remove_dynamic_modifier")
-    pulses = _read("common/scripted_effects/99_STALKER_pulse_effects.txt")
+    pulses = _read("common/scripted_effects/99_STALKER_scripted_effects.txt")
     assert "STALKER_monthly_antarctic_pulse" not in pulses
 
 
@@ -244,7 +244,7 @@ def test_polar_cancellation_removes_samples_and_blocks_the_delayed_reward(
     )
     result_gate = next(
         body
-        for key, _, body in _event("STALKER.190", "events/STALKER_antarctic.txt")
+        for key, _, body in _event("STALKER.190", "events/STALKER.txt")
         if key == "trigger"
     )
     assert script.condition(result_gate, 2)

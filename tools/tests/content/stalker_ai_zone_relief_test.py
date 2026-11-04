@@ -112,7 +112,7 @@ def test_no_relief_while_the_zone_policy_is_pending():
 
 
 def test_relief_runs_from_the_monthly_pulse_and_matches_the_decision():
-    pulse = (ROOT / "common/scripted_effects/99_STALKER_pulse_effects.txt").read_text(
+    pulse = (ROOT / "common/scripted_effects/99_STALKER_scripted_effects.txt").read_text(
         encoding="utf-8"
     )
     assert (
