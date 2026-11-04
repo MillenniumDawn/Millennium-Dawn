@@ -125,6 +125,35 @@ Opinion and path modifiers alone do not cover costs. `effect_tooltip` previews a
 not charges. When payment occurs in a follow-up event, show it in the original
 choice's preview and weigh it there. Review delayed event-chain costs manually.
 
+## Situation weights
+
+A flat `base` makes the AI pick the same option every campaign. Weigh the choice by
+the condition it changes, then by the receiver's situation. Cost rules above still
+apply. Put every `factor = 0` after the adds.
+
+Use the factors that exist for that choice. Skip a row the option does not touch.
+
+- The variable the option moves, such as support, tension, trust, influence, or a
+  department tier. High values favor keeping the status quo. Low values favor
+  accepting the change. Do not substitute a proxy, such as factory count, for that
+  variable. A proxy that zeroes the sensible option makes the outcome fixed.
+- Opinion of the other country, in more than one band. Hostile favors defiance.
+  Friendly favors concession.
+- Influence, when the influence triggers exist.
+- War: `has_war`, `has_war_with`, and a rival already at war. A country at war is
+  less likely to open another front or spend on a side dispute.
+- Alliance and settled policy: `is_in_faction_with`, a guarantee, or a flag that
+  already closed the question. If one check zeroes an option, another option the
+  receiver can see must stay above 0.
+- Path and government: `TAG_ai_behavior` first. Sitting ideology only under No Path,
+  or where it matches a focus `available` gate.
+- Stability and war support, for an option that spends them or risks a war.
+
+A low `ai_chance` does not block a pick. See "Weight blocks" in
+`ai-strategy-reference.md`. Use `factor = 0` to stop one option. Never zero every
+option the receiver can see. An option `trigger` is for a choice the situation has
+already closed, not for a price. Decisions use the same factors in `ai_will_do`.
+
 ## Cross-country events
 
 When an event fires to a different country than the one that started it, weigh the
