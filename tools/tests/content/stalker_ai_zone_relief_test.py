@@ -112,9 +112,8 @@ def test_no_relief_while_the_zone_policy_is_pending():
 
 
 def test_relief_runs_from_the_monthly_pulse_and_matches_the_decision():
-    pulse = (ROOT / "common/scripted_effects/99_STALKER_scripted_effects.txt").read_text(
-        encoding="utf-8"
-    )
+    effects_path = ROOT / "common/scripted_effects/99_STALKER_scripted_effects.txt"
+    pulse = effects_path.read_text(encoding="utf-8")
     assert (
         _named_block(pulse, "STALKER_monthly_pulse").count(
             "STALKER_monthly_ai_zone_relief_pulse = yes"
@@ -127,11 +126,8 @@ def test_relief_runs_from_the_monthly_pulse_and_matches_the_decision():
     )
     cost = int(re.search(r"\n\t\tcost = (\d+)", decision).group(1))
     cooldown = int(re.search(r"days_re_enable = (\d+)", decision).group(1))
-    effects = (ROOT / "common/scripted_effects/99_STALKER_scripted_effects.txt").read_text(
-        encoding="utf-8"
-    )
-    relief = _named_block(effects, "STALKER_monthly_ai_zone_relief_pulse")
-    reinforce = _named_block(effects, "STALKER_reinforce_containment")
+    relief = _named_block(pulse, "STALKER_monthly_ai_zone_relief_pulse")
+    reinforce = _named_block(pulse, "STALKER_reinforce_containment")
     assert f"has_political_power < {cost}" in relief
     assert "check_variable = { treasury < 10 }" in decision
     assert "check_variable = { treasury < 10 }" in relief

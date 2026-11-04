@@ -15,9 +15,10 @@ def _read(path):
 DECISIONS = _read("common/decisions/STALKER_decisions.txt")
 EFFECTS = _read("common/scripted_effects/99_STALKER_world_effects.txt")
 EVENTS = _read("events/STALKER.txt")
+LOC_DIR = ROOT / "localisation/english"
 LOC = "\n".join(
     path.read_text(encoding="utf-8-sig")
-    for path in sorted((ROOT / "localisation/english").glob("MD_STALKER*_l_english.yml"))
+    for path in sorted(LOC_DIR.glob("MD_STALKER*_l_english.yml"))
 )
 TRIGGERS = _read("common/scripted_triggers/99_STALKER_scripted_triggers.txt")
 
