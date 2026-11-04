@@ -144,6 +144,58 @@ on_actions = {
 				SOV = { country_event = { id = ukraine_sevastopol.1 days = 3 } }
 			}
 
+			# Intelligence advisors: Naumov and Budanov chains
+			if = {
+				limit = { has_dlc = "La Resistance" }
+				# Naumov: appointed under Zelensky; as the serving intelligence advisor he defects when Russia attacks or after a year in office
+				if = {
+					limit = {
+						date > 2021.01.01
+						has_country_leader = { ruling_only = yes name = "Volodymyr Zelenskyy" }
+						NOT = { has_country_flag = UKR_operatives_naumov_flag }
+					}
+					set_country_flag = UKR_operatives_naumov_flag
+					country_event = { id = ukraine_operatives.1 days = 1 random_days = 30 }
+				}
+				if = {
+					limit = {
+						has_idea = UKR_andrii_naumov_intel
+						NOT = { has_country_flag = UKR_naumov_fled_flag }
+						OR = {
+							has_war_with = SOV
+							NOT = { has_country_flag = UKR_naumov_in_office_flag }
+						}
+					}
+					set_country_flag = UKR_naumov_fled_flag
+					country_event = { id = ukraine_operatives.2 days = 1 random_days = 10 }
+				}
+				# Budanov: HUR chief from 2020; in 2025-2026 a wartime Zelensky can make him Head of the Office of the President
+				if = {
+					limit = {
+						date > 2020.06.01
+						has_completed_focus = UKR_hur_reform
+						NOT = { has_country_flag = UKR_operatives_budanov_hur_flag }
+					}
+					set_country_flag = UKR_operatives_budanov_hur_flag
+					country_event = { id = ukraine_operatives.3 days = 1 random_days = 60 }
+				}
+				if = {
+					limit = {
+						date > 2025.01.01
+						date < 2027.01.01
+						has_idea = UKR_kyrylo_budanov_intel
+						has_war_with = SOV
+						has_country_leader = { ruling_only = yes name = "Volodymyr Zelenskyy" }
+						NOT = { has_country_flag = UKR_budanov_presidential_office_queued_flag }
+					}
+					random = {
+						chance = 15
+						set_country_flag = UKR_budanov_presidential_office_queued_flag
+						country_event = ukraine_operatives.4
+					}
+				}
+			}
+
 			# T-62 trophies (BMPV-62) during a war with Russia
 			if = {
 				limit = { has_war_with = SOV }
