@@ -1241,6 +1241,23 @@ _BANKRUPT = "has_active_mission = bankruptcy_incoming_collapse"
 _DEFICIT = "ai_has_high_deficit = yes"
 _NO_COST = "but the option has no money or political power cost"
 
+_DEFERRED_CALL = "country_event = bill.2"
+_DEFERRED_START = _two_options(f"\t\t{_DEFERRED_CALL}\n" + _weighted(_BANKRUPT))
+_DEFERRED_WARNING = [("foo.1.a", 8, f"lowers the weight on bankruptcy, {_NO_COST}")]
+_PAID_FOLLOWUP = _event(
+    _option("bill.2.a", "\t\tsmall_expenditure = yes\n" + _FLAT),
+    _option("bill.2.b", "\t\tadd_to_variable = { debt = 2 }\n" + _FLAT),
+).replace("id = foo.1", "id = bill.2")
+_FREE_FOLLOWUP = _PAID_FOLLOWUP.replace(
+    "add_to_variable = { debt = 2 }", "add_stability = -0.02"
+)
+_IMMEDIATE_FOLLOWUP = (
+    _event(_option("bill.2.a", _FLAT))
+    .replace("id = foo.1", "id = bill.2")
+    .replace("\toption = {", "\timmediate = { small_expenditure = yes }\n\toption = {")
+)
+
+
 # case: (event, (option, line, reason) per unneeded treasury check)
 _UNNEEDED_CASES = {
     "bankruptcy check on a free option": (
@@ -1315,6 +1332,104 @@ _UNNEEDED_CASES = {
         ),
         [],
     ),
+    "deferred own-country payment": (_DEFERRED_START + _PAID_FOLLOWUP, []),
+    "deferred payment from a block call": (
+        _DEFERRED_START.replace(
+            _DEFERRED_CALL, "country_event = { id = bill.2 days = 180 }"
+        )
+        + _PAID_FOLLOWUP,
+        [],
+    ),
+    "deferred payment in hidden effects": (
+        _DEFERRED_START.replace(
+            _DEFERRED_CALL, "hidden_effect = { country_event = bill.2 }"
+        )
+        + _PAID_FOLLOWUP,
+        [],
+    ),
+    "deferred payment in ROOT": (
+        _DEFERRED_START.replace(_DEFERRED_CALL, "ROOT = { country_event = bill.2 }")
+        + _PAID_FOLLOWUP,
+        [],
+    ),
+    "deferred payment in THIS": (
+        _DEFERRED_START.replace(_DEFERRED_CALL, "THIS = { country_event = bill.2 }")
+        + _PAID_FOLLOWUP,
+        [],
+    ),
+    "deferred payment covers a deficit check": (
+        _DEFERRED_START.replace(_BANKRUPT, _DEFICIT) + _PAID_FOLLOWUP,
+        [],
+    ),
+    "deferred payment has a free exit": (
+        _DEFERRED_START + _FREE_FOLLOWUP,
+        _DEFERRED_WARNING,
+    ),
+    "deferred payment is conditional": (
+        _DEFERRED_START.replace(
+            _DEFERRED_CALL, "if = { limit = { has_war = yes } country_event = bill.2 }"
+        )
+        + _PAID_FOLLOWUP,
+        _DEFERRED_WARNING,
+    ),
+    "deferred payment belongs to another country": (
+        _DEFERRED_START.replace(_DEFERRED_CALL, "FROM = { country_event = bill.2 }")
+        + _PAID_FOLLOWUP,
+        _DEFERRED_WARNING,
+    ),
+    "deferred payment is only previewed": (
+        _DEFERRED_START.replace(
+            _DEFERRED_CALL, "effect_tooltip = { country_event = bill.2 }"
+        )
+        + _PAID_FOLLOWUP,
+        _DEFERRED_WARNING,
+    ),
+    "follow-up payment is conditional": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "small_expenditure = yes",
+            "if = { limit = { has_war = yes } small_expenditure = yes }",
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "follow-up trigger can fail": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { has_war = yes }"
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "follow-up date trigger can fail": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { date > 2003.1.1 }"
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "follow-up trigger only names the receiver": (
+        _DEFERRED_START
+        + _PAID_FOLLOWUP.replace(
+            "id = bill.2", "id = bill.2\n\ttrigger = { original_tag = FOO }"
+        ),
+        [],
+    ),
+    "deferred immediate payment": (_DEFERRED_START + _IMMEDIATE_FOLLOWUP, []),
+    "deferred payment behind a routing event": (
+        _DEFERRED_START
+        + _event(_option("bill.2.a", "\t\tcountry_event = bill.3\n" + _FLAT)).replace(
+            "id = foo.1", "id = bill.2"
+        )
+        + _PAID_FOLLOWUP.replace("bill.2", "bill.3"),
+        [],
+    ),
+    "deferred payment cycle without a charge": (
+        _DEFERRED_START
+        + _event(_option("bill.2.a", "\t\tcountry_event = bill.2\n" + _FLAT)).replace(
+            "id = foo.1", "id = bill.2"
+        ),
+        _DEFERRED_WARNING,
+    ),
+    "unknown follow-up event": (_DEFERRED_START, _DEFERRED_WARNING),
 }
 
 

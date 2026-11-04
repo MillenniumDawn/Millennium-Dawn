@@ -637,6 +637,12 @@ def test_ensure_effect_log_boundaries():
     # An empty or log-only effect block is dropped rather than given a log.
     assert ensure_effect_log(["\t\tremove_effect = { }"], "CHI_x") == []
     assert ensure_effect_log(['\t\tremove_effect = { log = "x" }'], "CHI_x") == []
+    # An effect packed after the log still counts.
+    assert "add_stability = 0.1" in "".join(
+        ensure_effect_log(
+            ['\t\tremove_effect = { log = "x" add_stability = 0.1 }'], "CHI_x"
+        )
+    )
     assert (
         ensure_effect_log(
             ["\t\tremove_effect = {", '\t\t\tlog = "x"', "\t\t}"], "CHI_x"

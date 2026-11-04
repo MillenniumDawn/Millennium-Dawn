@@ -1085,6 +1085,30 @@ CZE_skoda_laboratories_category = {
 }
 
 CZE_skoda_superb_cars_export_category = {
+	CZE_enable_auto_exports = {
+		cost = 0
+		icon = GFX_decision_relation
+		visible = { is_ai = no NOT = { has_country_flag = CZE_skoda_auto_exports } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CZE_enable_auto_exports"
+			set_country_flag = CZE_skoda_auto_exports
+			CZE_gui_dirty_update = yes
+		}
+	}
+
+	CZE_disable_auto_exports = {
+		cost = 0
+		icon = GFX_decision_relation
+		visible = { is_ai = no has_country_flag = CZE_skoda_auto_exports }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CZE_disable_auto_exports"
+			clr_country_flag = CZE_skoda_auto_exports
+			CZE_gui_dirty_update = yes
+		}
+	}
+
 	CZE_borrow_state_factory = {
 		cost = 75
 		icon = GFX_decision_civ_fac
@@ -1158,9 +1182,11 @@ CZE_skoda_superb_cars_export_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CZE_pay_bills"
+			CZE_skoda_superb_cars_calculate_factories = yes
 			if = {
-				limit = { check_variable = { CZE_skoda_superb_cars_treasury > CZE_skoda_bills_gain } }
+				limit = { check_variable = { var = CZE_skoda_superb_cars_treasury value = CZE_skoda_bills_gain compare = greater_than_or_equals } }
 				add_to_variable = { CZE_skoda_superb_cars_treasury = CZE_skoda_bills_cost }
+				add_to_variable = { CZE_skoda_period_bills = CZE_skoda_bills_gain }
 				add_to_variable = { CZE_skoda_superb_cars_bill_fail = -0.2 }
 				clamp_variable = {
 					var = CZE_skoda_superb_cars_bill_fail
@@ -1272,6 +1298,7 @@ CZE_skoda_superb_cars_export_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CZE_sell_everything"
 			add_to_variable = { CZE_skoda_superb_cars_factories = -1 }
+			CZE_skoda_superb_cars_calculate_factories = yes
 			custom_effect_tooltip = CZE_skoda_superb_cars_remove_factory_tooltip
 		}
 
@@ -1283,6 +1310,7 @@ CZE_skoda_superb_cars_export_category = {
 			set_variable = { CZE_skoda_superb3_cars_stockpile = 0 }
 			set_variable = { CZE_skoda_superb4_cars_stockpile = 0 }
 			add_to_variable = { CZE_skoda_superb_cars_factories = 1 }
+			CZE_skoda_superb_cars_calculate_factories = yes
 			custom_effect_tooltip = CZE_skoda_superb_cars_add_factory_tooltip
 		}
 

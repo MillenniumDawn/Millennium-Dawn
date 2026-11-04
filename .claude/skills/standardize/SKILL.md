@@ -1,6 +1,6 @@
 ---
 name: standardize
-description: "Auto-standardize a MD focus/event/decision/idea/MIO/technology file with the tools/standardization/ scripts and report what changed. Use when asked to standardize, reformat, or bring a mod file up to MD conventions. Takes the file path as argument."
+description: "Auto-standardize a MD focus/event/decision/idea/MIO/technology/history file, or fix tabs and spacing in an AI equipment, character, scripted effect, or scripted trigger file, with the tools/standardization/ scripts and report what changed. Use when asked to standardize, reformat, or bring a mod file up to MD conventions. Takes the file path as argument."
 ---
 
 Standardize a Millennium Dawn mod file using the standardization tools.
@@ -16,6 +16,8 @@ Steps:
    - `common/ideas/` → `idea`
    - `common/military_industrial_organization/organizations/` → `mio`
    - `common/technologies/` → `technology`
+   - `history/` → `history`. This also reorders each dated block, so it can change startup statement order.
+   - `common/ai_equipment/`, `common/characters/`, `common/scripted_effects/`, `common/scripted_triggers/` → `indent`
      If the type cannot be determined, ask the user to clarify.
 
 2. Run from the `tools/standardization/` directory:

@@ -2,6 +2,7 @@
 
 import importlib
 import struct
+import zipfile
 
 import pytest
 
@@ -39,12 +40,33 @@ def test_main_exits_one_when_no_install(monkeypatch):
     assert rvd_mod.main() == 1
 
 
+def test_main_help_works_without_docstrings(monkeypatch, capsys):
+    import sys
+
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "__doc__", None)
+    monkeypatch.setattr(sys, "argv", ["refresh_vanilla_data.py", "--help"])
+    with pytest.raises(SystemExit) as exc:
+        rvd_mod.main()
+    assert exc.value.code == 0
+    assert "Refresh every vanilla-derived file" in capsys.readouterr().out
+
+
+def test_manifest_write_failure_is_reported(monkeypatch, tmp_manifests):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "_HERE", str(tmp_manifests / "missing"))
+    with pytest.raises(rvd_mod.RefreshError, match="cannot write .*manifest.txt"):
+        rvd_mod._write_manifest("manifest.txt", [], [])
+
+
 def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
     import validation.refresh_vanilla_data as rvd_mod
 
     importlib.reload(rvd_mod)
     monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
-    for name in ("defines", "docs", "fonts", "gui", "paths", "sprites"):
+    for name in ("defines", "docs", "entities", "fonts", "gui", "paths", "sprites"):
         monkeypatch.setitem(rvd_mod._TARGETS, name, lambda n=name: f"{n}: ok")
 
     import sys as _sys
@@ -278,7 +300,7 @@ def test_refresh_docs_copies_files(monkeypatch, tmp_manifests, tmp_path):
     (install / "new_doc.md").write_text("# New doc\nbody\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "new_doc.md")],
     )
 
@@ -299,7 +321,7 @@ def test_refresh_docs_counts_new(monkeypatch, tmp_manifests, tmp_path):
     (install / "doc1.md").write_text("# Doc1\n", encoding="utf-8")
     monkeypatch.setattr(rvd_mod, "_install", lambda: str(install))
     monkeypatch.setattr(
-        "validation.refresh_vanilla_data.glob.glob",
+        "validation.refresh_vanilla_data.list_files",
         lambda *a, **k: [str(install / "doc1.md")],
     )
 
@@ -316,7 +338,9 @@ def test_refresh_docs_raises_when_no_docs(monkeypatch):
     import validation.refresh_vanilla_data as rvd_mod
 
     monkeypatch.setattr(rvd_mod, "_install", lambda: "/nope")
-    monkeypatch.setattr("validation.refresh_vanilla_data.glob.glob", lambda *a, **k: [])
+    monkeypatch.setattr(
+        "validation.refresh_vanilla_data.list_files", lambda *a, **k: []
+    )
     with pytest.raises(rvd_mod.RefreshError):
         rvd_mod._refresh_docs()
 
@@ -327,8 +351,39 @@ def test_targets_dict_has_expected_keys():
     assert set(rvd_mod._TARGETS) == {
         "defines",
         "docs",
+        "entities",
         "fonts",
         "gui",
         "paths",
         "sprites",
     }
+
+
+def test_refresh_entities_writes_lowercased_names(monkeypatch, tmp_manifests):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    install = tmp_manifests / "install"
+    for relative in ("gfx/entities/base.asset", "dlc/dlc001/gfx/models/dlc.gfx"):
+        path = install / relative
+        path.parent.mkdir(parents=True)
+        name = path.stem.upper()
+        path.write_text(f'entity = {{ name = "{name}_entity" }}\n', encoding="utf-8")
+    with zipfile.ZipFile(install / "dlc/dlc001/dlc001.zip", "w") as archive:
+        archive.writestr(
+            "gfx/entities/zipped.asset", 'entity = { name = "ZIPPED_entity" }\n'
+        )
+        archive.writestr("sound/ignored.asset", 'entity = { name = "sound_entity" }\n')
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(install))
+
+    assert rvd_mod._refresh_entities() == "vanilla_entities.txt: 3 entries"
+
+    body = (tmp_manifests / "vanilla_entities.txt").read_text(encoding="utf-8")
+    assert body.splitlines()[-3:] == ["base_entity", "dlc_entity", "zipped_entity"]
+
+
+def test_refresh_entities_raises_when_no_files(monkeypatch, tmp_path):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
+    with pytest.raises(rvd_mod.RefreshError):
+        rvd_mod._refresh_entities()

@@ -10,16 +10,14 @@ import re
 import sys
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import read_text_under
+from shared_utils import get_root_dir, read_text_under
 
 
 def _pil_image():
     return importlib.import_module("PIL.Image")
 
 
-# Anchor to the repo (tools/assets/ -> repo root) with OS-correct separators;
-# the old `r"..\history\states"` literals were dead on Linux.
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+REPO_ROOT = get_root_dir()
 states_dir = os.path.join(REPO_ROOT, "history", "states")
 definition_file = os.path.join(REPO_ROOT, "map", "definition.csv")
 provinces_bmp = os.path.join(REPO_ROOT, "map", "provinces.bmp")

@@ -264,7 +264,8 @@ class Validator(BaseValidator):
         file_index = casefold_index(vanilla)
         dir_index = casefold_index({os.path.dirname(p) for p in vanilla})
 
-        diverging, inert = [], []
+        diverging: List[Tuple[str, str, int]] = []
+        inert: List[Tuple[str, str, int]] = []
         for path in paths:
             canonical = case_mismatch(path, file_index)
             if canonical is None:

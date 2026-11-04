@@ -31,6 +31,7 @@ from shared_utils import (  # noqa: E402
     iter_focus_blocks,
     iter_statements,
     line_of,
+    list_files,
     read_script,
     strip_comments,
     validation_config,
@@ -104,11 +105,7 @@ TRUE, FALSE, UNKNOWN = True, False, None
 
 def iter_txt_files(folder: str) -> Iterator[str]:
     """Yield every .txt path directly in *folder*, in a stable order."""
-    if not os.path.isdir(folder):
-        return
-    for name in sorted(os.listdir(folder)):
-        if name.endswith(".txt"):
-            yield os.path.join(folder, name)
+    yield from list_files(folder, recursive=False)
 
 
 def read_raw(path: str) -> str:
@@ -513,12 +510,7 @@ def load_localisation(root: str) -> Dict[str, str]:
     entries: Dict[str, str] = {}
     for folder in ("english", os.path.join("english", "replace")):
         path = os.path.join(root, "localisation", folder)
-        if not os.path.isdir(path):
-            continue
-        for name in sorted(os.listdir(path)):
-            if not name.endswith("_l_english.yml"):
-                continue
-            full = os.path.join(path, name)
+        for full in list_files(path, ("*_l_english.yml",), recursive=False):
             if not os.path.isfile(full):
                 continue
             with open(full, "r", encoding="utf-8-sig", errors="replace") as handle:

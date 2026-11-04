@@ -29,6 +29,9 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "history/probe.txt",
         "localisation/english/probe.yml",
         "interface/core.gfx",
+        "gfx/entities/probe.asset",
+        "gfx/models/ships/probe.asset",
+        "gfx/models/ships/probe.gfx",
         "gfx/flags/probe.tga",
         "gfx/interface/decisions/probe.dds",
         "gfx/interface/equipmentdesigner/graphic_db/probe.txt",
@@ -43,6 +46,8 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "descriptor.mod",
     ]
     excluded = [
+        "gfx/models/ships/probe.mesh",
+        "gfx/models/ships/probe.dds",
         "gfx/interface/portraits/probe.dds",
         "resources/vanilla/interface/probe.gfx",
         "map/provinces.bmp",

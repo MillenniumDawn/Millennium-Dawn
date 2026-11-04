@@ -35,6 +35,23 @@ def test_buildability_inputs_select_the_existing_batch(path):
     assert spec.strict is True
 
 
+@pytest.mark.parametrize(
+    "path",
+    (
+        "gfx/entities/test.asset",
+        "gfx/models/ships/test.asset",
+        "gfx/models/ships/test.gfx",
+        "common/technologies/armor.txt",
+        "common/bookmarks/start.txt",
+        "interface/equipment.gfx",
+    ),
+)
+def test_variant_reference_inputs_select_the_oob_validator(path):
+    groups = change_groups.classify([path])
+    assert groups["oob"] is True
+    assert groups["content"] is True
+
+
 def test_localisation_only_change():
     groups = change_groups.classify(["localisation/english/example.yml"])
 

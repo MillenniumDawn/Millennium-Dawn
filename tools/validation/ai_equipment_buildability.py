@@ -342,8 +342,20 @@ def check_ammunition_compatibility(designs, index):
                 for module in candidates
                 if module == "empty" or not _module_forbidden(module, hull_types, index)
             ]
-            unresolved |= unsupported or unknown
-        unresolved |= bool(design.allowed_modules) and bool(set(slots) - domains.keys())
+            # A dynamic pick elsewhere only matters if it can touch the ammunition:
+            # the ammo slot itself, or a module that widens it.
+            unresolved |= (unsupported or unknown) and (
+                slot in ammunition
+                or not candidates
+                or any(
+                    ammunition & index.slot_unlocks.get(module, {}).keys()
+                    for module in candidates
+                )
+            )
+        unresolved |= bool(set(slots) - domains.keys()) and any(
+            ammunition & index.slot_unlocks.get(filler, {}).keys()
+            for filler in design.allowed_modules
+        )
         if unresolved:
             analysis.records.append(
                 _assessment(

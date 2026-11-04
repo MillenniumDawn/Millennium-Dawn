@@ -1857,6 +1857,85 @@ def _literal_cost_amounts(body: str) -> Optional[Dict[str, Decimal]]:
     return amounts
 
 
+def _fires_paid_event(body: str, paid_events: Set[str]) -> bool:
+    """Whether this body unconditionally starts a paid event in its own scope."""
+    for key, value, block in iter_statements(body):
+        if key == "country_event":
+            event_id = value
+            if block is not None:
+                event_id = next(
+                    (
+                        value
+                        for key, value, _nested in iter_statements(block)
+                        if key == "id"
+                    ),
+                    None,
+                )
+            if event_id in paid_events:
+                return True
+        elif key in {"hidden_effect", "ROOT", "THIS"} and block is not None:
+            if _fires_paid_event(block, paid_events):
+                return True
+    return False
+
+
+def _paid_event_ids(
+    text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Same-file events whose immediate or every option commits money.
+
+    Follow only unconditional own-country calls. Free exits, conditional calls,
+    triggers beyond the receiver's tag, foreign scopes, previews, and cycles
+    without a payment remain unproven.
+    """
+    events: Dict[str, Tuple[str, List[Tuple[str, bool]], bool]] = {}
+    for event_id, body, _start in _iter_event_bodies(text):
+        if event_id is None:
+            continue
+        trigger = _event_trigger_body(body) or ""
+        if any(
+            key not in {"tag", "original_tag"}
+            for key, _value, _block in iter_statements(trigger)
+        ):
+            continue
+        country = _receiver_tag(trigger)
+        immediate = ""
+        options = []
+        immediate_paid = False
+        for key, _value, block in iter_statements(body):
+            if key not in {"immediate", "option"} or block is None:
+                continue
+            own = _split_option(block, country)[0]
+            paid = bool(_effect_costs(own, effects, {}, stored)[1] & _MONEY_COSTS)
+            if key == "immediate":
+                immediate = block
+                immediate_paid = paid
+            else:
+                options.append((block, paid))
+        events[event_id] = immediate, options, immediate_paid
+    paid_events: Set[str] = set()
+    while True:
+        found = {
+            event_id
+            for event_id, (immediate, options, immediate_paid) in events.items()
+            if event_id not in paid_events
+            and (
+                immediate_paid
+                or _fires_paid_event(immediate, paid_events)
+                or (
+                    options
+                    and all(
+                        paid or _fires_paid_event(option, paid_events)
+                        for option, paid in options
+                    )
+                )
+            )
+        }
+        if not found:
+            return paid_events
+        paid_events |= found
+
+
 def find_option_cost_weights(
     text: str, effects: Dict[str, str], stored: Dict[str, int], commitments: Set[str]
 ) -> Tuple[List[Tuple[str, int, str, bool]], List[Tuple[str, int, str]]]:
@@ -1886,6 +1965,7 @@ def find_option_cost_weights(
     line = _line_lookup(code)
     out: List[Tuple[str, int, str, bool]] = []
     unneeded: List[Tuple[str, int, str]] = []
+    paid_events = _paid_event_ids(code, effects, stored)
     for _eid, body, start in _iter_event_bodies(code):
         base = code.index("{", start) + 1
         options = [
@@ -1952,7 +2032,8 @@ def find_option_cost_weights(
                 unneeded_treasury_reason(
                     lowering,
                     possible_costs(option, effects, stored),
-                    commits_money(option, commitments),
+                    commits_money(option, commitments)
+                    or _fires_paid_event(option, paid_events),
                     "option",
                 )
                 if lowering

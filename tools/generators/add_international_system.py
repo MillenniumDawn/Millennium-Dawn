@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from shared.paths import REPO_ROOT
-from shared_utils import atomic_write_bytes, read_text_strict
+from shared_utils import atomic_write_bytes, list_files, read_text_strict
 
 SCREEN_GUI = "interface/MD_countrymissilesview.gui"
 SCREEN_GFX = "interface/MD_countrymissilesview.gfx"
@@ -439,11 +439,8 @@ def taken_loc_keys(repo, keys):
     """Return the keys already defined in English localisation."""
     folder = os.path.join(repo, "localisation", "english")
     taken = set()
-    for folder_path, _, files in os.walk(folder):
-        for file in files:
-            if file.endswith(".yml"):
-                path = os.path.join(folder_path, file)
-                taken.update(LOC_KEY_RE.findall(read_text_strict(path)))
+    for path in list_files(folder, ("*.yml",)):
+        taken.update(LOC_KEY_RE.findall(read_text_strict(path)))
     return sorted(set(keys) & taken)
 
 
@@ -455,26 +452,22 @@ def taken_gui_names(repo, key):
         ("interface", ".gui", rf'name\s*=\s*"{window}"', window),
         (os.path.join("common", "scripted_guis"), ".txt", rf"\b{gui}\s*=\s*\{{", gui),
     ):
-        for folder_path, _, files in os.walk(os.path.join(repo, folder)):
-            for file in files:
-                path = os.path.join(folder_path, file)
-                if file.endswith(suffix) and re.search(pattern, read_text_strict(path)):
-                    taken.add(name)
+        for path in list_files(os.path.join(repo, folder), (f"*{suffix}",)):
+            if re.search(pattern, read_text_strict(path)):
+                taken.add(name)
     return sorted(taken)
 
 
 def direct_openers(repo):
     """List script lines outside the ledger strip that open a tab directly."""
     found = []
-    for folder, _, files in os.walk(os.path.join(repo, "common")):
-        for file in files:
-            path = os.path.join(folder, file)
-            relative = os.path.relpath(path, repo).replace(os.sep, "/")
-            if not file.endswith(".txt") or relative == SCREEN_SCRIPT:
-                continue
-            for number, line in enumerate(read_text_strict(path).splitlines(), 1):
-                if OPENER_RE.search(line):
-                    found.append((relative, number))
+    for path in list_files(os.path.join(repo, "common")):
+        relative = os.path.relpath(path, repo).replace(os.sep, "/")
+        if relative == SCREEN_SCRIPT:
+            continue
+        for number, line in enumerate(read_text_strict(path).splitlines(), 1):
+            if OPENER_RE.search(line):
+                found.append((relative, number))
     return found
 
 

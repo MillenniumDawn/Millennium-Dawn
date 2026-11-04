@@ -312,11 +312,8 @@ def test_event_block_lookup_keeps_missing_files_cached(tmp_path, monkeypatch):
     assert mistakes._get_event_block("tst.1", event_index=index) is None
 
 
-def test_event_index_lookup_handles_root_resolution_failure(monkeypatch):
-    def no_root():
-        raise OSError("no checkout")
-
-    monkeypatch.setattr(mistakes, "get_root_dir", no_root)
+def test_event_index_lookup_handles_a_root_without_events(tmp_path, monkeypatch):
+    monkeypatch.setattr(mistakes, "get_root_dir", lambda: str(tmp_path))
     monkeypatch.setattr(mistakes, "_EVENT_INDEX_BUILT", False)
     monkeypatch.setattr(mistakes, "_EVENT_INDEX", {})
     assert mistakes._get_event_block("tst.1") is None

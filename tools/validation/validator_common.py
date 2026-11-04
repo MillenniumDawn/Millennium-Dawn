@@ -34,6 +34,7 @@ from shared_utils import (
     get_staged_files,
     line_for_offset,
     line_of,
+    list_files,
     log_message,
     normalize_path_separators,
     print_timing_summary,
@@ -502,19 +503,9 @@ def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
     """
     names: Set[str] = set()
     trait_dir = os.path.join(mod_path, "common", subdir)
-    if not os.path.isdir(trait_dir):
-        return names
-
-    try:
-        trait_files = sorted(os.listdir(trait_dir))
-    except OSError:
-        return names
-
-    for fname in trait_files:
-        if not fname.endswith(".txt"):
-            continue
+    for trait_file in list_files(trait_dir, recursive=False):
         content = FileOpener.open_text_file(
-            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+            trait_file, lowercase=False, strip_comments_flag=True
         )
         names.update(match.group(1) for match in LEADER_TRAIT_DEF_RE.finditer(content))
     return names

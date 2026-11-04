@@ -52,6 +52,7 @@ from shared_utils import (
     iter_statement_ops,
     iter_statements,
     line_of,
+    list_files,
     read_script,
     read_text_strict,
     strip_comments,
@@ -615,8 +616,8 @@ def _scan_activations_and_removals(
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
-    pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
-    for filename in glob.iglob(pattern):
+    loc_dir = os.path.join(mod_path, "common", "scripted_localisation")
+    for filename in list_files(loc_dir, recursive=False):
         if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
@@ -1000,11 +1001,10 @@ def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
 
 
 def _find_decision_file(mod_path: str, basename: str) -> str | None:
-    pattern = str(Path(mod_path) / "common" / "decisions" / "**" / "*.txt")
     return next(
         (
             filepath
-            for filepath in glob.iglob(pattern, recursive=True)
+            for filepath in list_files(Path(mod_path) / "common" / "decisions")
             if os.path.basename(filepath) == basename
         ),
         None,
@@ -1420,7 +1420,7 @@ def parse_all_decisions(
         decisions = []
         paths = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1492,7 +1492,7 @@ def parse_decision_categories(
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
@@ -1535,7 +1535,7 @@ def parse_categories_with_decisions(
 
         filepath = str(Path(mod_path) / "common" / "decisions")
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1982,7 +1982,7 @@ class Validator(BaseValidator):
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
         found_files = False
-        for filename in glob.iglob(bop_path + "/**/*.txt", recursive=True):
+        for filename in list_files(bop_path):
             found_files = True
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -2781,7 +2781,7 @@ class Validator(BaseValidator):
 
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
-        for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
+        for filename in list_files(dec_filepath):
             if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
@@ -2995,7 +2995,7 @@ class Validator(BaseValidator):
             if not prefix or prefix.group(1) not in country_tags:
                 continue
             pins = _flat_tag_pins(d.allowed) or {
-                tag for _, tag in cat_pins.get(token_to_cat.get(d.token), set())
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
                 prefix_results.append(
@@ -3935,8 +3935,7 @@ class Validator(BaseValidator):
 
         extra_texts: Dict[str, str] = {}
         for parts in _COMMIT_SCAN_DIRS:
-            pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
-            for filename in glob.iglob(pattern, recursive=True):
+            for filename in list_files(os.path.join(self.mod_path, *parts)):
                 if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:

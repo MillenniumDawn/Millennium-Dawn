@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
+from shared_utils import VALIDATION_CONFIG_PATH, list_files, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -104,6 +104,7 @@ _HELPER_DEPENDENCIES = {
     "ideas": ("equipment_module_slots.py",),
     "influence_calls_scan_v2": ("guard_scan.py",),
     "math_expr": ("equipment_module_slots.py",),
+    "modifiers": ("equipment_module_slots.py",),
     "oob_units": ("equipment_module_slots.py",),
     "sprite_index": ("validate_gfx_references.py",),
     "variables": ("validate_focus_tree.py",),
@@ -224,7 +225,9 @@ def _fingerprint_paths(namespace: str) -> tuple[Path, ...]:
     if owner:
         paths.append(Path(__file__).parent / owner)
     else:
-        paths.extend(Path(__file__).parent.glob("*.py"))
+        paths.extend(
+            map(Path, list_files(Path(__file__).parent, ("*.py",), recursive=False))
+        )
     for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
         paths.append(Path(__file__).parent / dependency)
     return tuple(sorted(set(paths)))

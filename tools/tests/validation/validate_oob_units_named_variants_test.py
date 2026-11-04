@@ -33,6 +33,59 @@ _CONSUMERS = {
 }
 
 
+# stockpile with no producer: {case: (equipment, name, expected category)}
+_NO_PRODUCER_CASES = {
+    "any country's design counts": ("medium_plane_airframe_1", "MiG-X", None),
+    "only another type": (
+        "small_plane_airframe_1",
+        "MiG-X",
+        "NAMED VARIANT: name exists for a different equipment type",
+    ),
+    "no country creates it": (
+        "medium_plane_airframe_1",
+        "Nope",
+        "NAMED VARIANT: unresolved producer, type, and name",
+    ),
+    "default model name": ("medium_plane_airframe_1", "Default Model", None),
+}
+
+
+@pytest.mark.parametrize(
+    ("equipment", "name", "category"),
+    _NO_PRODUCER_CASES.values(),
+    ids=_NO_PRODUCER_CASES,
+)
+def test_stockpile_without_producer_accepts_any_creator(
+    tmp_path, equipment, name, category
+):
+    write_tree(
+        tmp_path,
+        {
+            "history/countries/SOV - Russia.txt": (
+                'create_equipment_variant = { name = "MiG-X" '
+                "type = medium_plane_airframe_1 }"
+            ),
+            "common/units/equipment/planes.txt": (
+                "equipments = { medium_plane_airframe_1 = { module_slots = { } } }"
+            ),
+            "localisation/english/equipment_l_english.yml": (
+                'l_english:\n medium_plane_airframe_1:0 "Default Model"\n'
+            ),
+            "history/units/UKR_2000_bba.txt": (
+                f"add_equipment_to_stockpile = {{ type = {equipment} "
+                f'variant_name = "{name}" amount = 1 }}'
+            ),
+        },
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.validate_oob_variant_references()
+
+    assert [(issue.category, issue.severity) for issue in validator._issues] == (
+        [(category, "warning")] if category else []
+    )
+
+
 @pytest.mark.parametrize("consumer", _CONSUMERS.values(), ids=_CONSUMERS)
 @pytest.mark.parametrize(
     "equipment,errors",
