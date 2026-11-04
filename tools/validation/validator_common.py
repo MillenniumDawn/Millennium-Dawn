@@ -9,11 +9,24 @@ import re
 import sys
 import time
 from dataclasses import dataclass
+from decimal import Decimal
 from itertools import chain
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Set,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -22,6 +35,7 @@ from shared_utils import (
     Colors,
     FileOpener,
     atomic_write_text,
+    blank_quoted_strings,
     clean_filepath,
     compute_line_offsets,
     cpu_budget,
@@ -32,6 +46,7 @@ from shared_utils import (
     find_unquoted_block_end,
     find_unquoted_brace_close,
     get_staged_files,
+    iter_statements,
     line_for_offset,
     line_of,
     list_files,
@@ -52,14 +67,23 @@ BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
 DEFICIT_GUARD_RE = re.compile(r"\bai_has_high_deficit\s*=\s*yes\b")
-# Script that commits money later: a war, a spending law change, or a money
-# modifier, set in a `modifier` block or named by a dynamic modifier's tooltip.
-MONEY_COMMITMENT_RE = re.compile(
+_WAR_RE = re.compile(
     r"\b(?:create_wargoal|declare_war_on|start_border_war|start_civil_war"
     r"|war_with_(?:target_)?on_(?:complete|remove|timeout))\b"
-    r"|\bset_country_flag\s*=\s*spending_law_scripted_change\b"
-    r"|\b\w*(?:cost_multiplier|tax|income|interest_rate|money_cost)\w*_modifier"
-    r"(?:_tt\b|\s*=)"
+)
+# tax_rate_change_multiplier_modifier scales a political power price, not money.
+MONEY_MODIFIER_RE = re.compile(
+    r"(?!tax_rate_change_multiplier_modifier\b)"
+    r"\w*(?:cost_multiplier|tax|income|interest_rate|money_cost)\w*_modifier"
+)
+# Not a modifier: the spending law level an idea sets, which costs more as it rises.
+SPENDING_LEVEL = "spending_level"
+_SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*(\d+)")
+_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
+_TOOLTIP_VARIABLE_KEYS = frozenset({"add_to_variable", "subtract_from_variable"})
+_MONEY_HINT_RE = re.compile(
+    r"_modifier\b|_modifier_tt\b|\b(?:add_ideas|remove_ideas|swap_ideas|add_timed_idea)\b"
 )
 # One token stream for lowering_treasury_checks: braces, NOT openers, literal
 # weight steps and the two treasury checks.
@@ -449,12 +473,122 @@ def unneeded_treasury_checks(
 ) -> Set[str]:
     """The *checks* an item has no cost for.
 
-    Any money cost or MONEY_COMMITMENT_RE effect covers both checks. A
+    Any money cost or script_commits_money effect covers both checks. A
     political power cost covers bankruptcy only.
     """
     if money:
         return set()
     return checks - {"bankruptcy"} if political_power else set(checks)
+
+
+def money_modifier_raises_cost(name: str, value: Decimal) -> bool:
+    """Whether *value* of money modifier *name* (or SPENDING_LEVEL) costs money.
+
+    Cost and interest modifiers cost as they rise, tax and income ones as they
+    fall. This matches each modifier's `color_type`.
+    """
+    if "cost" in name or "interest_rate" in name or name == SPENDING_LEVEL:
+        return value > 0
+    return value < 0
+
+
+def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
+    """Idea name -> its literal money modifiers and SPENDING_LEVEL, for every idea
+    with one. *texts* are common/ideas files with comments stripped."""
+    ideas: Dict[str, Dict[str, Decimal]] = {}
+    for text in texts:
+        for key, _value, groups in iter_statements(blank_quoted_strings(text)):
+            if key != "ideas" or groups is None:
+                continue
+            for _group, _scalar, group in iter_statements(groups):
+                for name, _idea_value, idea in iter_statements(group or ""):
+                    money: Dict[str, Decimal] = {}
+                    for field, _field_value, block in iter_statements(idea or ""):
+                        if field == "modifier" and block is not None:
+                            money.update(
+                                (modifier, Decimal(amount))
+                                for modifier, amount, nested in iter_statements(block)
+                                if nested is None
+                                and amount
+                                and MONEY_MODIFIER_RE.fullmatch(modifier)
+                                and _LITERAL_RE.fullmatch(amount)
+                            )
+                        elif field == "on_add" and block is not None:
+                            level = _SPENDING_LEVEL_RE.search(block)
+                            if level:
+                                money[SPENDING_LEVEL] = Decimal(level.group(1))
+                    if money:
+                        ideas[name] = money
+    return ideas
+
+
+def script_commits_money(text: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:
+    """Whether script in *text* commits money beyond a direct charge.
+
+    That is a war, a money modifier set or tooltipped in the costly direction, or
+    idea changes in one block whose net change raises a money modifier or a
+    spending law level. A value that is not a literal counts as costly. *ideas*
+    comes from idea_money_modifiers.
+    """
+    if _WAR_RE.search(text):
+        return True
+    return bool(_MONEY_HINT_RE.search(text)) and _block_commits_money(text, ideas)
+
+
+def _is_money_tooltip(value: str) -> bool:
+    return value.endswith("_tt") and bool(MONEY_MODIFIER_RE.fullmatch(value[:-3]))
+
+
+def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:
+    added: List[str] = []
+    removed: List[str] = []
+    for key, value, block in iter_statements(body):
+        if block is None:
+            if value is None:
+                continue
+            if key in _IDEA_LIST_KEYS:
+                (added if key == "add_ideas" else removed).append(value)
+            elif _is_money_tooltip(value) or (
+                MONEY_MODIFIER_RE.fullmatch(key)
+                and (
+                    not _LITERAL_RE.fullmatch(value)
+                    or money_modifier_raises_cost(key, Decimal(value))
+                )
+            ):
+                return True
+        elif key in _IDEA_LIST_KEYS:
+            (added if key == "add_ideas" else removed).extend(block.split())
+        elif key in ("add_timed_idea", "swap_ideas"):
+            for field, name, _nested in iter_statements(block):
+                if name and field in ("idea", "add_idea"):
+                    added.append(name)
+                elif name and field == "remove_idea":
+                    removed.append(name)
+        elif key in _TOOLTIP_VARIABLE_KEYS:
+            fields = {
+                field: scalar for field, scalar, _nested in iter_statements(block)
+            }
+            tooltip = fields.pop("tooltip", None) or ""
+            if not _is_money_tooltip(tooltip):
+                continue
+            amount = (
+                fields.get("value")
+                if "var" in fields
+                else next(iter(fields.values()), None)
+            )
+            if not amount or not _LITERAL_RE.fullmatch(amount):
+                return True
+            change = Decimal(amount) * (-1 if key == "subtract_from_variable" else 1)
+            if money_modifier_raises_cost(tooltip[:-3], change):
+                return True
+        elif _block_commits_money(block, ideas):
+            return True
+    delta: Dict[str, Decimal] = {}
+    for sign, names in ((1, added), (-1, removed)):
+        for idea in names:
+            for modifier, level in ideas.get(idea, {}).items():
+                delta[modifier] = delta.get(modifier, Decimal(0)) + sign * level
+    return any(money_modifier_raises_cost(name, net) for name, net in delta.items())
 
 
 def casefold_index(names) -> dict:

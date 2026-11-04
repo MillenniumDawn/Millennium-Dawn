@@ -11,13 +11,19 @@ import validate_events
 import validator_common
 from shared.suite import write_under_str as _write
 from validate_events import (
+    CostLookups,
     Validator,
     _add_extra_args,
+    _scripted_effect_bodies,
     costly_scripted_effects,
+    effect_payment_nodes,
+    event_payment_nodes,
     find_option_cost_weights,
     money_commitment_effects,
+    resolve_payments,
     stored_variable_signs,
 )
+from validator_common import idea_money_modifiers
 
 _FLAT = "\t\tai_chance = { base = 5 }\n"
 _AWARE = (
@@ -88,6 +94,12 @@ _SCRIPTED_EFFECTS = (
     "increase_economic_growth = {\n"
     "\tadd_political_power = 10\n"
     "}\n"
+    "TAG_open_the_bill = {\n"
+    "\tcountry_event = bill.2\n"
+    "}\n"
+    "TAG_root_pays = {\n"
+    "\tROOT = { small_expenditure = yes }\n"
+    "}\n"
     "modify_corporate_tax_rate_effect = {\n"
     "\tset_temp_variable = { calculator_diff = 0 }\n"
     "\tif = {\n"
@@ -101,12 +113,42 @@ _SCRIPTED_EFFECTS = (
 _EFFECTS = costly_scripted_effects([_SCRIPTED_EFFECTS])
 # What stored_variable_signs reports for a variable only ever set negative.
 _STORED = stored_variable_signs(["set_variable = { TAG_project_cost = -4 }\n"])
+_IDEAS = idea_money_modifiers(
+    [
+        "ideas = { bureaucracy = {\n"
+        "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
+        "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+        "}\n"
+        "country = {\n"
+        "\tTAG_army_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
+        "\tTAG_lean_army = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
+        "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+        "} }\n"
+    ]
+)
 _COMMITMENTS = money_commitment_effects(
     {
-        "TAG_raise_spending": "set_country_flag = spending_law_scripted_change",
+        "TAG_raise_spending": (
+            "swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }"
+        ),
         "TAG_reform": "TAG_raise_spending = yes",
-    }
+        "TAG_cut_spending": (
+            "swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }"
+        ),
+    },
+    _IDEAS,
 )
+_LOOKUPS = CostLookups(_EFFECTS, _STORED, _COMMITMENTS, _IDEAS)
+
+
+def _weights(text: str):
+    """find_option_cost_weights with every event in *text* and _SCRIPTED_EFFECTS
+    as the mod."""
+    payments = resolve_payments(
+        event_payment_nodes(text, _LOOKUPS),
+        effect_payment_nodes(_scripted_effect_bodies([_SCRIPTED_EFFECTS]), _LOOKUPS),
+    )
+    return find_option_cost_weights(text, _LOOKUPS, payments)
 
 
 def _option(name: str, body: str) -> str:
@@ -127,7 +169,7 @@ def _two_options(cost_body: str) -> str:
 
 
 def _found(text: str):
-    return find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)[0]
+    return _weights(text)[0]
 
 
 def _validator(tmp_path, **kwargs):
@@ -873,7 +915,7 @@ def test_tag_split_options_need_no_cost_weights(triggers, split):
             for letter, trigger in zip("abc", triggers)
         )
     )
-    blind, unneeded = find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)
+    blind, unneeded = _weights(text)
     assert (bool(blind), bool(unneeded)) == (not split, not split)
 
 
@@ -1122,6 +1164,8 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\tTAG_unknown_effect = yes\n",
         "\t\tFROM = { add_political_power = -50 }\n",
         "\t\tFROM = { one_office_construction = yes }\n",
+        "\t\tset_temp_variable = { skip_payment = 1 }\n"
+        "\t\tone_office_construction = yes\n",
         "\t\tevery_other_country = { add_stability = -0.02 }\n",
         '\t\tlog = "add_political_power = -50"\n',
     ],
@@ -1142,6 +1186,7 @@ def test_only_effects_that_can_charge_the_caller_are_kept():
         "TAG_pay_or_defer",
         "TAG_loops_forever",
         "TAG_war_only_cost",
+        "TAG_root_pays",
         "modify_corporate_tax_rate_effect",
     }
 
@@ -1258,6 +1303,27 @@ _IMMEDIATE_FOLLOWUP = (
 )
 
 
+def _unneeded_start(body: str, receiver: bool = False) -> str:
+    text = _two_options(f"\t\t{body}\n" + _weighted(_BANKRUPT))
+    return (
+        text.replace("id = foo.1", "id = foo.1\n\ttrigger = { tag = FOO }")
+        if receiver
+        else text
+    )
+
+
+def _reply(body: str) -> str:
+    """bill.9, an event the partner answers, with *body* in one option."""
+    return _event(
+        _option("bill.9.a", f"\t\t{body}\n" + _FLAT), _option("bill.9.b", _FLAT)
+    ).replace("id = foo.1", "id = bill.9")
+
+
+_NO_COST_ROW = [("foo.1.a", 8, f"lowers the weight on bankruptcy, {_NO_COST}")]
+_SENT = _unneeded_start("GER = { country_event = bill.9 }", receiver=True)
+# With the receiver's trigger line, the ai_chance sits one line lower.
+_TAGGED_NO_COST_ROW = [("foo.1.a", 9, f"lowers the weight on bankruptcy, {_NO_COST}")]
+
 # case: (event, (option, line, reason) per unneeded treasury check)
 _UNNEEDED_CASES = {
     "bankruptcy check on a free option": (
@@ -1370,7 +1436,7 @@ _UNNEEDED_CASES = {
             _DEFERRED_CALL, "if = { limit = { has_war = yes } country_event = bill.2 }"
         )
         + _PAID_FOLLOWUP,
-        _DEFERRED_WARNING,
+        [],
     ),
     "deferred payment belongs to another country": (
         _DEFERRED_START.replace(_DEFERRED_CALL, "FROM = { country_event = bill.2 }")
@@ -1390,21 +1456,21 @@ _UNNEEDED_CASES = {
             "small_expenditure = yes",
             "if = { limit = { has_war = yes } small_expenditure = yes }",
         ),
-        _DEFERRED_WARNING,
+        [],
     ),
     "follow-up trigger can fail": (
         _DEFERRED_START
         + _PAID_FOLLOWUP.replace(
             "id = bill.2", "id = bill.2\n\ttrigger = { has_war = yes }"
         ),
-        _DEFERRED_WARNING,
+        [],
     ),
     "follow-up date trigger can fail": (
         _DEFERRED_START
         + _PAID_FOLLOWUP.replace(
             "id = bill.2", "id = bill.2\n\ttrigger = { date > 2003.1.1 }"
         ),
-        _DEFERRED_WARNING,
+        [],
     ),
     "follow-up trigger only names the receiver": (
         _DEFERRED_START
@@ -1430,6 +1496,116 @@ _UNNEEDED_CASES = {
         _DEFERRED_WARNING,
     ),
     "unknown follow-up event": (_DEFERRED_START, _DEFERRED_WARNING),
+    "dynamic follow-up event": (
+        _DEFERRED_START.replace(_DEFERRED_CALL, "country_event = bill.[TAG_id]"),
+        [],
+    ),
+    "follow-up fired by a scripted effect": (
+        _DEFERRED_START.replace(_DEFERRED_CALL, "TAG_open_the_bill = yes")
+        + _PAID_FOLLOWUP,
+        [],
+    ),
+    "follow-up free exit the AI never picks": (
+        _DEFERRED_START
+        + _FREE_FOLLOWUP.replace(
+            "add_stability = -0.02\n" + _FLAT, "ai_chance = { base = 0 }\n"
+        ),
+        [],
+    ),
+    "follow-up free exit behind a trigger": (
+        _DEFERRED_START
+        + _FREE_FOLLOWUP.replace(
+            "add_stability = -0.02", "trigger = { has_war = yes }"
+        ),
+        [],
+    ),
+    "partner reply charges the sender": (
+        _SENT + _reply("FROM = { small_expenditure = yes }"),
+        [],
+    ),
+    "partner reply charges the partner": (
+        _SENT + _reply("small_expenditure = yes"),
+        _TAGGED_NO_COST_ROW,
+    ),
+    "partner reply returns a bill to the chooser's tag": (
+        _SENT + _reply("FOO = { country_event = bill.2 }") + _PAID_FOLLOWUP,
+        [],
+    ),
+    "partner reply bills another tag": (
+        _SENT + _reply("ITA = { country_event = bill.2 }") + _PAID_FOLLOWUP,
+        _TAGGED_NO_COST_ROW,
+    ),
+    "charge to the sender": (
+        _unneeded_start("FROM = { small_expenditure = yes }"),
+        _NO_COST_ROW,
+    ),
+    "charge to another tag": (
+        _unneeded_start("GER = { small_expenditure = yes }", receiver=True),
+        _TAGGED_NO_COST_ROW,
+    ),
+    "charge to a tag that may be the chooser": (
+        _unneeded_start("GER = { small_expenditure = yes }"),
+        [],
+    ),
+    "charge to a country iterator": (
+        _unneeded_start("every_neighbor_country = { small_expenditure = yes }"),
+        _NO_COST_ROW,
+    ),
+    "charge to a tag the option trigger rules out": (
+        _unneeded_start(
+            "trigger = { tag = FOO }\n\t\tGER = { small_expenditure = yes }"
+        ),
+        _TAGGED_NO_COST_ROW,
+    ),
+    "scripted effect bills the sender": (
+        _unneeded_start("TAG_bill_the_neighbour = yes"),
+        _NO_COST_ROW,
+    ),
+    "scripted effect bills ROOT from the sender's scope": (
+        _unneeded_start("FROM = { TAG_root_pays = yes }"),
+        [],
+    ),
+    "the sender gets a war goal on the chooser": (
+        _unneeded_start(
+            "FROM = { create_wargoal = { type = annex_everything target = ROOT } }"
+        ),
+        [],
+    ),
+    "the sender gets a war goal on a third country": (
+        _unneeded_start(
+            "FROM = { create_wargoal = { type = annex_everything target = ITA } }",
+            receiver=True,
+        ),
+        _TAGGED_NO_COST_ROW,
+    ),
+    "partner reply declares war on the sender": (
+        _SENT + _reply("declare_war_on = { target = FROM type = annex_everything }"),
+        [],
+    ),
+    "costly idea": (_unneeded_start("add_ideas = TAG_army_reform"), []),
+    "idea that saves money": (
+        _unneeded_start("add_ideas = TAG_lean_army"),
+        _NO_COST_ROW,
+    ),
+    "non-economic idea": (_unneeded_start("add_ideas = TAG_drill"), _NO_COST_ROW),
+    "costly idea only previewed": (
+        _unneeded_start("effect_tooltip = { add_ideas = TAG_army_reform }"),
+        _NO_COST_ROW,
+    ),
+    "costly idea for the sender": (
+        _unneeded_start("FROM = { add_ideas = TAG_army_reform }"),
+        _NO_COST_ROW,
+    ),
+    "spending law cut": (
+        _two_options("\t\tTAG_cut_spending = yes\n" + _weighted(_DEFICIT)),
+        [
+            (
+                "foo.1.a",
+                8,
+                "lowers the weight on high deficit, but the option has no money cost",
+            )
+        ],
+    ),
 }
 
 
@@ -1437,9 +1613,7 @@ _UNNEEDED_CASES = {
     "text, expected", _UNNEEDED_CASES.values(), ids=_UNNEEDED_CASES
 )
 def test_unneeded_treasury_checks(text, expected):
-    assert (
-        find_option_cost_weights(text, _EFFECTS, _STORED, _COMMITMENTS)[1] == expected
-    )
+    assert _weights(text)[1] == expected
 
 
 def test_mixed_costs_report_only_the_uncovered_kind():

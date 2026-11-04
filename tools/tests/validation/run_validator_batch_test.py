@@ -437,8 +437,9 @@ def test_main_impact_selects_by_changed_files(tmp_path, monkeypatch, capsys):
     )
 
     assert code == 0
-    # validate_decisions imports the cost helpers from validate_events.
-    assert ran == [["events", "decisions"]]
+    # Decisions and focus trees import the cost helpers from validate_events, and
+    # validate_variables imports validate_focus_tree.
+    assert ran == [["variables", "events", "decisions", "focus-tree"]]
 
 
 def test_main_impact_forces_the_disk_cache_off(tmp_path, monkeypatch):

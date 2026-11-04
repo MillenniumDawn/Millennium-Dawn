@@ -19,12 +19,13 @@ from shared.suite import (
     dds_stub,
     decision_factory,
     decisions_results_for,
+    event_block,
     issue_rows,
     write_tree,
 )
 from shared_utils import run_validator_main
 from sprite_index import SpriteSizeIndex
-from validate_events import costly_scripted_effects
+from validate_events import CostLookups, EventPayments, costly_scripted_effects
 
 _OPT_IN_CHECKS = {
     "validate_missing_icons",
@@ -673,6 +674,32 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             ],
             [],
         ),
+        "cost-cutting modifier while active": (
+            [
+                _flat(
+                    "\tdays_remove = 30\n",
+                    "\tmodifier = { social_cost_multiplier_modifier = -0.1 }\n",
+                    _effect(_GAIN),
+                    _DEFICIT_WEIGHT,
+                )
+            ],
+            [
+                (
+                    "dec_one - ai_will_do lowers the weight on high deficit, but the"
+                    " decision has no money cost",
+                    "X.txt",
+                    0,
+                )
+            ],
+        ),
+        "charge to the target": (
+            [_flat(_effect("\t\tFROM = { pay_the_bill = yes }\n"), _BANKRUPTCY_WEIGHT)],
+            _UNNEEDED_BANKRUPTCY,
+        ),
+        "charge to a tag that may be the owner": (
+            [_flat(_effect("\t\tGER = { pay_the_bill = yes }\n"), _BANKRUPTCY_WEIGHT)],
+            [],
+        ),
         "treasury custom cost": (
             [_flat(_TREASURY_GATE, _effect(_GAIN), _DEFICIT_WEIGHT)],
             [],
@@ -1077,7 +1104,12 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     ],
 )
 def test_decision_check(monkeypatch, check, decisions, expected):
-    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}, set()))
+    monkeypatch.setattr(
+        V, "load_cost_lookups", lambda validator: CostLookups(_EFFECTS, {}, set(), {})
+    )
+    monkeypatch.setattr(
+        V, "load_event_payments", lambda validator, lookups: EventPayments({}, {})
+    )
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
     monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
     monkeypatch.setattr(
@@ -1110,6 +1142,47 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
             2,
         )
     ]
+
+
+@pytest.mark.parametrize(
+    "law_change, flagged", [("raise_spending", False), ("cut_spending", True)]
+)
+def test_unneeded_guard_follows_the_event_a_decision_fires(
+    tmp_path, law_change, flagged
+):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/ideas/laws.txt": "ideas = { bureaucracy = {\n"
+            "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
+            "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+            "} }\n",
+            "common/scripted_effects/00_laws.txt": "raise_spending = {\n"
+            "\tswap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }\n}\n"
+            "cut_spending = {\n"
+            "\tswap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }\n}\n",
+            "events/laws.txt": event_block(
+                "law.1", f"option = {{ {law_change} = yes }}"
+            ),
+            "common/decisions/Laws.txt": "laws_category = {\n"
+            + _nested(
+                "dec_law",
+                _block(
+                    "complete_effect",
+                    "if = { limit = { has_war = no } country_event = law.1 }",
+                )
+                + _block(
+                    "ai_will_do",
+                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_unneeded_treasury_guard()
+
+    assert bool(issue_rows(validator)) is flagged
 
 
 def test_unneeded_treasury_guard_shares_the_cost_pass(tmp_path, monkeypatch):
