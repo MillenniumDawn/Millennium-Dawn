@@ -9,7 +9,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import atomic_write_bytes
+from shared_utils import atomic_write_bytes, list_files
 
 # Curly quote pairs to normalize
 SMART_QUOTES = {
@@ -234,7 +234,12 @@ def main():
     if args.files:
         files = [Path(f) for f in args.files]
     else:
-        files = sorted(Path("localisation/english").glob("*_l_english.yml"))
+        files = [
+            Path(path)
+            for path in list_files(
+                "localisation/english", ("*_l_english.yml",), recursive=False
+            )
+        ]
 
     total_problems = 0
     total_fixed = 0

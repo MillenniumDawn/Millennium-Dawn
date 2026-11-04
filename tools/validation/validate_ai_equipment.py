@@ -3,7 +3,6 @@
 # land generic_tank.txt / generic_afv.txt) have every required equipment role
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
-import glob
 import json
 import logging
 import os
@@ -20,31 +19,23 @@ from ai_equipment_buildability import (
     project_unlocks,
 )
 from ai_equipment_buildability import parse_designs as parse_buildability_designs
-from equipment_module_slots import build_equipment_index, check_target_variants
+from equipment_module_slots import (
+    ADVISORY_KINDS,
+    KIND_LABELS,
+    build_equipment_index,
+    check_target_variant_role_icons,
+    check_target_variant_upgrades,
+    check_target_variants,
+    role_strip_frames,
+)
 from equipment_variant_context import VariantContext, script_nodes, value
-from shared_utils import atomic_write_text, strip_inline_comment
+from shared_utils import atomic_write_text, list_files, strip_inline_comment
 from validate_equipment_variants import equipment_unlocks
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
-_NAVAL_SLOT_CATEGORIES = {
-    "unknown_hull": "NAVAL VARIANT: unknown hull type",
-    "unknown_slot": "NAVAL VARIANT: slot not on hull",
-    "unknown_module": "NAVAL VARIANT: unknown module reference",
-    "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
-    "missing_required_module": "NAVAL VARIANT: required slot left empty",
-    "count_limit_exceeded": "NAVAL VARIANT: module count limit exceeded",
-    "forbidden_equipment_type": "NAVAL VARIANT: module forbidden on hull type",
-}
-
-_EQUIPMENT_SLOT_CATEGORIES = {
-    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
-    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
-    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
-    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
-    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
-    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
-    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
-}
+# The engine's "not an archetype" rule is documented for create_equipment_variant.
+# An AI template naming one is not proven broken, so it advises here.
+_AI_ADVISORY_KINDS = ADVISORY_KINDS | {"archetype_type"}
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -409,23 +400,33 @@ class Validator(BaseValidator):
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
+        frames = role_strip_frames(
+            _read_text(fp)
+            for fp in list_files(
+                os.path.join(self.mod_path, "interface"), ("*.gfx",), recursive=False
+            )
+        )
         results = []
-        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for fp in list_files(equip_dir, recursive=False):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
             content = _read_text(fp)
             rel = os.path.relpath(fp, self.mod_path)
-            for f in check_target_variants(content, index):
-                labels = (
-                    _NAVAL_SLOT_CATEGORIES
-                    if f.hull in index.ship_hulls
-                    else _EQUIPMENT_SLOT_CATEGORIES
-                )
+            for f in (
+                check_target_variants(content, index)
+                + check_target_variant_upgrades(content, index)
+                + check_target_variant_role_icons(content, index, frames)
+            ):
+                prefix = "NAVAL" if f.hull in index.ship_hulls else "EQUIPMENT"
                 results.append(
                     Issue(
-                        severity=Severity.ERROR,
-                        category=labels[f.kind],
+                        severity=(
+                            Severity.WARNING
+                            if f.kind in _AI_ADVISORY_KINDS
+                            else Severity.ERROR
+                        ),
+                        category=f"{prefix} VARIANT: {KIND_LABELS[f.kind]}",
                         message=f.message,
                         file=rel,
                         line=f.line,
@@ -460,7 +461,7 @@ class Validator(BaseValidator):
         self._log_section("Checking history = yes consistency within design groups...")
 
         results = []
-        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for fp in list_files(equip_dir, recursive=False):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
@@ -514,7 +515,7 @@ class Validator(BaseValidator):
         generic_templates = []
         custom_templates = []
 
-        for filepath in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
+        for filepath in list_files(equip_dir, recursive=False):
             filename = os.path.basename(filepath)
             templates = parse_equipment_file(filepath)
 

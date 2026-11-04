@@ -248,6 +248,9 @@ class _Hull:
     count_limits: Dict[Tuple[str, str], int]
     upgrades: Optional[Set[str]] = None
     parent: Optional[str] = None
+    type_override: Optional[str] = None
+    allowed_types: Optional[Set[str]] = None
+    is_archetype: bool = False
 
 
 def parse_hulls(text: str) -> Dict[str, _Hull]:
@@ -283,8 +286,16 @@ def parse_hulls(text: str) -> Dict[str, _Hull]:
                 parent = pm.group(1)
             count_limits = _parse_count_limits(text, hlo, hhi)
             types = _named_type_tokens(text, hlo, hhi, "type")
-            if slots is None and not inherit and not am and upgrades is None:
+            is_archetype = bool(re.search(r"\bis_archetype\s*=\s*yes\b", body))
+            if (
+                slots is None
+                and not inherit
+                and not am
+                and upgrades is None
+                and not is_archetype
+            ):
                 continue
+            override = re.search(r"\btype_override\s*=\s*(\w+)", body)
             hulls[hull] = _Hull(
                 slots=slots,
                 archetype=arch,
@@ -293,6 +304,10 @@ def parse_hulls(text: str) -> Dict[str, _Hull]:
                 count_limits=count_limits,
                 upgrades=upgrades,
                 parent=parent,
+                type_override=override.group(1) if override else None,
+                allowed_types=_named_type_tokens(text, hlo, hhi, "allowed_types")
+                or None,
+                is_archetype=is_archetype,
             )
     return hulls
 
@@ -347,12 +362,12 @@ def resolve_hull_slots(
     return resolved
 
 
-def resolve_hull_upgrades(hulls: Dict[str, _Hull]) -> Dict[str, Set[str]]:
-    """hull -> allowed upgrade keys: its own ``upgrades`` list, else the nearest
-    one up the ``parent`` chain, else up the ``archetype`` chain. Hulls with no
-    list anywhere are left out, so callers treat them as unknown."""
+def _resolve_up_chain(hulls: Dict[str, _Hull], field_name: str) -> dict:
+    """hull -> the field's own value, else the nearest one up the ``parent``
+    chain, else up the ``archetype`` chain. Hulls with no value anywhere are left
+    out, so callers treat them as unknown."""
 
-    def find(name: str) -> Optional[Set[str]]:
+    def find(name: str):
         for link in ("parent", "archetype"):
             seen: Set[str] = set()
             cur: Optional[str] = name
@@ -361,13 +376,13 @@ def resolve_hull_upgrades(hulls: Dict[str, _Hull]) -> Dict[str, Set[str]]:
                 hull = hulls.get(cur)
                 if hull is None:
                     break
-                if hull.upgrades is not None:
-                    return hull.upgrades
+                if getattr(hull, field_name) is not None:
+                    return getattr(hull, field_name)
                 cur = getattr(hull, link)
         return None
 
     resolved = {name: find(name) for name in hulls}
-    return {name: ups for name, ups in resolved.items() if ups is not None}
+    return {name: found for name, found in resolved.items() if found is not None}
 
 
 def resolve_hull_types(hulls: Dict[str, _Hull]) -> Dict[str, Set[str]]:
@@ -462,6 +477,8 @@ class _ModuleIndex:
     forbid_types: Dict[str, Set[str]]
     forbid_exact: Dict[str, Set[str]]
     parent: Dict[str, str]
+    added_types: Dict[str, Set[str]]
+    exact_category_forbids: Dict[str, Dict[str, Set[str]]]
 
 
 def parse_equipment_modules(text: str) -> _ModuleIndex:
@@ -475,6 +492,8 @@ def parse_equipment_modules(text: str) -> _ModuleIndex:
     forbid_types: Dict[str, Set[str]] = {}
     forbid_exact: Dict[str, Set[str]] = {}
     parent: Dict[str, str] = {}
+    added_types: Dict[str, Set[str]] = {}
+    exact_category: Dict[str, Dict[str, Set[str]]] = {}
     n = len(text)
     containers = [
         (blo, bhi)
@@ -503,7 +522,20 @@ def parse_equipment_modules(text: str) -> _ModuleIndex:
             par = _scalar(text, mlo, mhi, "parent")
             if par:
                 parent[mod] = par
-    return _ModuleIndex(mods, unlocks, forbid_types, forbid_exact, parent)
+            added = _named_type_tokens(text, mlo, mhi, "add_equipment_type")
+            if added:
+                added_types[mod] = added
+            for key, blo, bhi, _ in _iter_blocks(text, mlo, mhi):
+                if key == "forbid_equipment_type_exact_match_for_category":
+                    for category, hull_type in re.findall(
+                        r"(\w+)\s*=\s*(\w+)", text[blo:bhi]
+                    ):
+                        exact_category.setdefault(mod, {}).setdefault(
+                            category, set()
+                        ).add(hull_type)
+    return _ModuleIndex(
+        mods, unlocks, forbid_types, forbid_exact, parent, added_types, exact_category
+    )
 
 
 def _inherit_module_forbids(
@@ -547,6 +579,12 @@ class EquipmentIndex:
     hull_upgrades: Dict[str, Set[str]]
     hull_sources: Dict[str, str]
     non_modular_hulls: Set[str]
+    archetypes: Set[str]
+    upgrade_max: Dict[str, int]
+    hull_type_overrides: Dict[str, str]
+    hull_allowed_types: Dict[str, Set[str]]
+    module_added_types: Dict[str, Set[str]]
+    module_exact_category_forbids: Dict[str, Dict[str, Set[str]]]
 
 
 # ---- variant module assignments -------------------------------------------
@@ -614,9 +652,41 @@ def _iter_named_blocks(text: str, lo: int, hi: int, name: str):
 @dataclass
 class Finding:
     line: int
-    kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch | missing_required_module | count_limit_exceeded | forbidden_equipment_type | unsupported_upgrade
+    kind: str  # a key of KIND_LABELS
     message: str
     hull: str = ""
+
+
+KIND_LABELS = {
+    "unknown_hull": "unknown hull type",
+    "archetype_type": "type is an archetype",
+    "modules_on_non_modular": "modules on a non-modular type",
+    "unknown_slot": "slot not on hull",
+    "unknown_module": "unknown module reference",
+    "category_mismatch": "module category not allowed in slot",
+    "missing_required_module": "required slot left empty",
+    "count_limit_exceeded": "module count limit exceeded",
+    "forbidden_equipment_type": "module forbidden on hull type",
+    "type_override_role": "main weapon sets a type the hull does not allow",
+    "exact_category_conflict": "modules conflict on hull type",
+    "unsupported_upgrade": "unsupported upgrade",
+    "undefined_upgrade": "undefined upgrade",
+    "invalid_upgrade_level": "upgrade level out of range",
+    "ship_upgrade": "upgrades on a ship",
+    "role_icon_out_of_range": "role_icon_index out of range",
+    "unknown_name_group": "unknown name_group",
+    "name_group_country": "name_group for another country",
+    "unknown_model": "unknown model",
+}
+
+# Their engine effect comes from tooling or designer behavior, not an engine
+# error or documentation, so they advise and do not gate.
+ADVISORY_KINDS = {
+    "exact_category_conflict",
+    "ship_upgrade",
+    "role_icon_out_of_range",
+    "name_group_country",
+}
 
 
 def _module_forbidden(mod: str, hull_types: Set[str], index: EquipmentIndex) -> bool:
@@ -742,58 +812,125 @@ def _flag_count_limits(
         )
 
 
+_Assignments = List[Tuple[str, List[str], int]]
+
+
+def _type_override_problems(
+    index: EquipmentIndex, hull: str, assignments: _Assignments
+) -> Iterable[Tuple[int, str, str]]:
+    """A plane's ``type_override`` module sets its type, which must be one the
+    hull's ``allowed_types`` lists. A category reference can still resolve to a
+    fitting module, so only literal modules count."""
+    override = index.hull_type_overrides.get(hull)
+    allowed = index.hull_allowed_types.get(hull)
+    if not override or not allowed:
+        return
+    allowed = allowed | index.hull_types.get(hull, set())
+    for slot, refs, off in assignments:
+        live = [ref for ref in refs if ref != "empty"]
+        added = [index.module_added_types.get(ref) for ref in live]
+        if slot != override or not live or not all(added):
+            continue
+        if any(types & allowed for types in added if types):
+            continue
+        gives = sorted(set().union(*(types for types in added if types)))
+        yield (
+            off,
+            "type_override_role",
+            f"'{', '.join(live)}' in {slot} sets type {'/'.join(gives)}, which "
+            f"hull '{hull}' does not allow ({', '.join(sorted(allowed))})",
+        )
+
+
+def _exact_category_problems(
+    index: EquipmentIndex, hull: str, assignments: _Assignments
+) -> Iterable[Tuple[int, str, str]]:
+    """``forbid_equipment_type_exact_match_for_category``: on a hull with exactly
+    that one type, the module refuses every module of the named category."""
+    hull_types = index.hull_types.get(hull, set())
+    identities = [
+        (slot, _assignment_identities(refs, index), off)
+        for slot, refs, off in assignments
+    ]
+    for slot, identity, _ in identities:
+        rules = index.module_exact_category_forbids.get(identity[0]) if identity else {}
+        if not identity or not rules:
+            continue
+        for other_slot, other, off in identities:
+            if other_slot == slot or not other:
+                continue
+            if rules.get(other[1], set()) & hull_types and len(hull_types) == 1:
+                yield (
+                    off,
+                    "exact_category_conflict",
+                    f"'{identity[0]}' in {slot} refuses category {other[1]} "
+                    f"in {other_slot} on hull '{hull}'",
+                )
+
+
 def _check_variant(
     text: str,
     vlo: int,
     vhi: int,
     index: EquipmentIndex,
     findings: List[Finding],
-    *,
-    require_known_hull: bool,
-    require_filled_slots: bool,
 ) -> None:
-    """Validate one variant body's ``modules`` block against its hull's slots.
+    """Validate one variant body's ``type`` and ``modules`` against its hull.
 
-    With *require_known_hull* an unresolvable ``type`` is a real error. Without
-    it the variant is skipped, which is what a caller indexing only part of the
-    equipment tree needs. With *require_filled_slots* every ``required = yes``
-    slot of the hull must receive a module — the engine refuses the variant
-    otherwise (equipment_effects.cpp, 'Design lacks one or more required
+    Every ``required = yes`` slot must receive a module: the engine refuses the
+    variant otherwise (equipment_effects.cpp, 'Design lacks one or more required
     modules').
     """
-    hull = _scalar(text, vlo, vhi, "type")
+    hull = _first_at_depth0(text, vlo, vhi, "type", r"([A-Za-z_]\w*)(?![\w:.@\[$])")
+    if hull is None:
+        return
     mods_span = None
     for key, mlo, mhi, _ in _iter_blocks(text, vlo, vhi):
         if key == "modules":
             mods_span = (mlo, mhi)
             break
-    if mods_span is None:
-        if require_filled_slots and hull is not None:
-            slots = index.hull_slots.get(hull)
-            if slots is not None:
-                _flag_required_slots(
-                    findings, slots, hull, text.count("\n", 0, vlo) + 1
-                )
-        return
-    if hull is None:
-        return
-    mods_line = text.count("\n", 0, mods_span[0]) + 1
+    mods_line = text.count("\n", 0, mods_span[0] if mods_span else vlo) + 1
     if hull not in index.hull_slots:
-        if require_known_hull:
-            findings.append(
-                Finding(
-                    mods_line,
-                    "unknown_hull",
-                    f"variant type '{hull}' is not a defined hull",
-                    hull,
-                )
+        spelling = next(
+            (name for name in index.hull_slots if name.lower() == hull.lower()), None
+        )
+        hint = f"; the definition is spelled '{spelling}'" if spelling else ""
+        findings.append(
+            Finding(
+                mods_line,
+                "unknown_hull",
+                f"variant type '{hull}' is not a defined hull{hint}",
+                hull,
             )
+        )
+        return
+    if hull in index.archetypes:
+        findings.append(
+            Finding(
+                mods_line,
+                "archetype_type",
+                f"variant type '{hull}' is an archetype; name a concrete type",
+                hull,
+            )
+        )
+    assignments = _parse_module_assignments(text, *mods_span) if mods_span else []
+    if assignments and hull in index.non_modular_hulls:
+        findings.append(
+            Finding(
+                mods_line,
+                "modules_on_non_modular",
+                f"type '{hull}' has no module slots; the engine ignores its modules",
+                hull,
+            )
+        )
         return
     slots = index.hull_slots[hull]
     if slots is None:
         return
+    if mods_span is None:
+        _flag_required_slots(findings, slots, hull, mods_line)
+        return
 
-    assignments = _parse_module_assignments(text, *mods_span)
     # Modules widen each other's slots, so the whole design has to be read
     # before any one assignment can be judged.
     unlocked: Dict[str, Set[str]] = {}
@@ -878,13 +1015,18 @@ def _check_variant(
                 )
             )
 
-    if require_filled_slots:
-        filled = {
-            slot for slot, refs, _ in assignments if any(ref != "empty" for ref in refs)
-        }
-        _flag_required_slots(findings, slots, hull, mods_line, filled)
+    filled = {
+        slot for slot, refs, _ in assignments if any(ref != "empty" for ref in refs)
+    }
+    _flag_required_slots(findings, slots, hull, mods_line, filled)
 
     _flag_count_limits(findings, index, hull, assignments, mods_line)
+    for off, kind, message in (
+        *_type_override_problems(index, hull, assignments),
+        *_exact_category_problems(index, hull, assignments),
+    ):
+        line = mods_line + text.count("\n", mods_span[0], off)
+        findings.append(Finding(line, kind, message, hull))
 
 
 class CreatedVariants(NamedTuple):
@@ -906,56 +1048,36 @@ def created_variant_spans(content: str) -> CreatedVariants:
 
 
 def _check_all(
-    text: str,
-    spans: Iterable[Tuple[int, int]],
-    index: EquipmentIndex,
-    *,
-    require_known_hull: bool,
-    require_filled_slots: bool,
+    text: str, spans: Iterable[Tuple[int, int]], index: EquipmentIndex
 ) -> List[Finding]:
     findings: List[Finding] = []
     for vlo, vhi in spans:
-        _check_variant(
-            text,
-            vlo,
-            vhi,
-            index,
-            findings,
-            require_known_hull=require_known_hull,
-            require_filled_slots=require_filled_slots,
-        )
+        _check_variant(text, vlo, vhi, index, findings)
     findings.sort(key=lambda f: f.line)
     return findings
 
 
-def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
-    """Validate every ``target_variant`` design's module assignments against its
-    hull's slot rules. Returns findings sorted by line.
+def _target_variant_spans(text: str) -> Iterable[Tuple[int, int]]:
+    return _iter_named_blocks(text, 0, len(text), "target_variant")
 
-    These are AI equipment templates, whose ``type`` always names a hull the mod
-    defines, so an unresolvable one is reported rather than skipped. Required
-    slots are checked too: a template that leaves one empty cannot be matched
-    by any design the AI produces, so the roles it covers quietly degrade.
+
+def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
+    """Validate every ``target_variant`` design's type and module assignments
+    against its hull. Returns findings sorted by line.
+
+    A template that leaves a required slot empty cannot be matched by any design
+    the AI produces, so the roles it covers quietly degrade.
     """
     text = blank_comments(content)
-    return _check_all(
-        text,
-        _iter_named_blocks(text, 0, len(text), "target_variant"),
-        index,
-        require_known_hull=True,
-        require_filled_slots=True,
-    )
+    return _check_all(text, _target_variant_spans(text), index)
 
 
 def check_created_variants(
     variants: CreatedVariants, index: EquipmentIndex
 ) -> List[Finding]:
-    """Same slot/category check for ``create_equipment_variant`` effects, which
-    are what focus rewards, events, decisions and history files use.
-
-    These blocks sit at arbitrary depth inside effect scopes. A variant whose
-    ``type`` is not indexed is skipped: unlike an AI template, the effect is also
-    used for equipment archetypes that declare no ``module_slots`` at all.
+    """Same check for ``create_equipment_variant`` effects, which are what focus
+    rewards, events, decisions and history files use. These blocks sit at
+    arbitrary depth inside effect scopes.
 
     A design that leaves a ``required = yes`` slot without a module — an omitted
     slot or an explicit ``= empty`` — is refused by the engine at effect time
@@ -963,47 +1085,299 @@ def check_created_variants(
     required modules'), so every required slot of a resolvable hull must be
     filled, including when the block carries no ``modules`` at all.
     """
-    return _check_all(
-        variants.text,
-        variants.spans,
-        index,
-        require_known_hull=False,
-        require_filled_slots=True,
-    )
+    return _check_all(variants.text, variants.spans, index)
+
+
+_UPGRADE_ENTRY_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*(\{|-?\d+)?")
+_WEIGHT_TERM_RE = re.compile(r"\b(?:base|add)\s*=\s*(-?\d+)")
+
+
+def _weight_terms(text: str, lo: int, hi: int) -> int:
+    return sum(int(value) for value in _WEIGHT_TERM_RE.findall(text, lo, hi))
+
+
+def _weighted_levels(text: str, lo: int, hi: int) -> List[int]:
+    """Levels a weighted upgrade proves it reaches: with and without its one
+    ``modifier``. Several modifiers may exclude each other and a factor scales,
+    so those prove nothing."""
+    blocks = list(_iter_blocks(text, lo, hi))
+    if (
+        len(blocks) > 1
+        or any(key != "modifier" for key, *_ in blocks)
+        or "factor" in text[lo:hi]
+    ):
+        return []
+    total = _weight_terms(text, lo, hi)
+    conditional = sum(_weight_terms(text, blo, bhi) for _, blo, bhi, _ in blocks)
+    return [total - conditional, total]
+
+
+def _upgrade_entries(
+    text: str, lo: int, hi: int
+) -> Iterable[Tuple[str, List[int], int]]:
+    """(upgrade, levels it can reach, offset) per entry."""
+    pos = lo
+    while True:
+        m = _UPGRADE_ENTRY_RE.search(text, pos, hi)
+        if not m:
+            return
+        pos = m.end()
+        levels = [0]
+        if m.group(2) == "{":
+            close = find_matching_brace(text, m.end() - 1)
+            levels = _weighted_levels(text, m.end(), close if close != -1 else hi)
+            pos = close + 1 if close != -1 else hi
+        elif m.group(2):
+            levels = [int(m.group(2))]
+        yield m.group(1), levels, m.start()
+
+
+def _upgrade_findings(
+    text: str, spans: Iterable[Tuple[int, int]], index: EquipmentIndex
+) -> List[Finding]:
+    findings: List[Finding] = []
+    for vlo, vhi in spans:
+        etype = _scalar(text, vlo, vhi, "type")
+        if not etype:
+            continue
+        allowed = index.hull_upgrades.get(etype)
+        name = _quoted_scalar(text, vlo, vhi, "name")
+        label = f"'{name}' - " if name else ""
+        for key, ulo, uhi, _ in _iter_blocks(text, vlo, vhi):
+            if key != "upgrades":
+                continue
+            entries = list(_upgrade_entries(text, ulo, uhi))
+            if entries and etype in index.ship_hulls:
+                findings.append(
+                    Finding(
+                        text.count("\n", 0, ulo) + 1,
+                        "ship_upgrade",
+                        f"{label}ship '{etype}' sets upgrades; the ship designer "
+                        "has none, so the engine likely ignores them",
+                        etype,
+                    )
+                )
+            for upgrade, levels, offset in entries:
+                line = text.count("\n", 0, offset) + 1
+                cap = index.upgrade_max.get(upgrade)
+                if index.upgrade_max and cap is None:
+                    findings.append(
+                        Finding(
+                            line,
+                            "undefined_upgrade",
+                            f"{label}upgrade '{upgrade}' is not defined in "
+                            "common/units/equipment/upgrades",
+                            etype,
+                        )
+                    )
+                    continue
+                if allowed is not None and upgrade not in allowed:
+                    findings.append(
+                        Finding(
+                            line,
+                            "unsupported_upgrade",
+                            f"{label}Type '{etype}' does not support upgrades "
+                            f"'{upgrade}'",
+                            etype,
+                        )
+                    )
+                invalid = [
+                    level
+                    for level in levels
+                    if level < 0 or (cap is not None and level > cap)
+                ]
+                if invalid:
+                    findings.append(
+                        Finding(
+                            line,
+                            "invalid_upgrade_level",
+                            f"{label}upgrade '{upgrade}' level {invalid[0]} is "
+                            f"outside 0 to max_level {cap}",
+                            etype,
+                        )
+                    )
+    findings.sort(key=lambda f: f.line)
+    return findings
 
 
 def check_created_variant_upgrades(
     variants: CreatedVariants, index: EquipmentIndex
 ) -> List[Finding]:
-    """Flag ``upgrades = { key = N }`` entries the variant's equipment type does
-    not list in its own ``upgrades`` block (the engine logs "Type 'X' does not
-    support upgrades 'Y'"). A type with no resolvable upgrade list is skipped.
+    """Flag ``upgrades`` entries the type does not list (the engine logs "Type 'X'
+    does not support upgrades 'Y'"), entries no upgrade file defines, and levels
+    outside the upgrade's ``max_level``. A type with no resolvable upgrade list
+    skips the first rule only.
+    """
+    return _upgrade_findings(variants.text, variants.spans, index)
+
+
+def check_target_variant_upgrades(content: str, index: EquipmentIndex) -> List[Finding]:
+    """The same upgrade rules for AI ``target_variant`` designs."""
+    text = blank_comments(content)
+    return _upgrade_findings(text, _target_variant_spans(text), index)
+
+
+# ---- variant references outside the equipment tree -------------------------
+
+_AIR_TYPES = {
+    "fighter",
+    "cas",
+    "naval_bomber",
+    "tactical_bomber",
+    "strategic_bomber",
+    "interceptor",
+    "air_transport",
+    "suicide",
+    "scout_plane",
+}
+_ROLE_STRIPS = (
+    "GFX_naval_equipment_role_icons",
+    "GFX_plane_niche_icon_strip",
+    "GFX_niche_icon_strip",
+)
+_ENTITY_NAME_RE = re.compile(r'\bname\s*=\s*"?([^"\s{}]+)"?')
+
+
+def entity_names_from_text(raw: str) -> Set[str]:
+    """Lowercased ``entity`` names in one .asset or .gfx file."""
+    text = blank_comments(raw)
+    names: Set[str] = set()
+    for lo, hi in _iter_named_blocks(text, 0, len(text), "entity"):
+        match = _ENTITY_NAME_RE.search(_depth0_text(text, lo, hi))
+        if match:
+            names.add(match.group(1).lower())
+    return names
+
+
+def _role_strip(hull: str, index: EquipmentIndex) -> str:
+    if hull in index.ship_hulls:
+        return _ROLE_STRIPS[0]
+    if index.hull_types.get(hull, set()) & _AIR_TYPES:
+        return _ROLE_STRIPS[1]
+    return _ROLE_STRIPS[2]
+
+
+def role_strip_frames(gfx_texts: Iterable[str]) -> Dict[str, int]:
+    """Frame count of each equipment role icon strip that declares one."""
+    frames: Dict[str, int] = {}
+    for raw in gfx_texts:
+        for strip in _ROLE_STRIPS:
+            if strip not in raw:
+                continue
+            match = re.search(
+                rf'name\s*=\s*"?{strip}"?\s[^}}]*?noOfFrames\s*=\s*(\d+)',
+                blank_comments(raw),
+                re.IGNORECASE,
+            )
+            if match:
+                frames[strip] = int(match.group(1))
+    return frames
+
+
+def _role_icon_finding(
+    text: str,
+    lo: int,
+    hi: int,
+    hull: Optional[str],
+    index: EquipmentIndex,
+    frames: Dict[str, int],
+) -> Optional[Finding]:
+    role = re.search(r"\brole_icon_index\s*=\s*(\d+)", _depth0_text(text, lo, hi))
+    if not role or not hull:
+        return None
+    strip = _role_strip(hull, index)
+    count = frames.get(strip)
+    if count is None or 1 <= int(role.group(1)) <= count:
+        return None
+    return Finding(
+        text.count("\n", 0, lo) + 1,
+        "role_icon_out_of_range",
+        f"role_icon_index = {role.group(1)} on '{hull}' is outside {strip} "
+        f"(1 to {count})",
+        hull,
+    )
+
+
+def check_target_variant_role_icons(
+    content: str, index: EquipmentIndex, frames: Dict[str, int]
+) -> List[Finding]:
+    """AI designs carry ``role_icon_index`` beside their ``target_variant``."""
+    text = blank_comments(content)
+    findings: List[Finding] = []
+    for _, glo, ghi, _ in _iter_blocks(text, 0, len(text)):
+        for _, dlo, dhi, _ in _iter_blocks(text, glo, ghi):
+            for key, vlo, vhi, _ in _iter_blocks(text, dlo, dhi):
+                if key == "target_variant":
+                    finding = _role_icon_finding(
+                        text,
+                        dlo,
+                        dhi,
+                        _scalar(text, vlo, vhi, "type"),
+                        index,
+                        frames,
+                    )
+                    if finding:
+                        findings.append(finding)
+                    break
+    return findings
+
+
+def check_created_variant_references(
+    variants: CreatedVariants,
+    index: EquipmentIndex,
+    name_groups: Dict[str, Set[str]],
+    entities: Optional[Set[str]],
+    frames: Dict[str, int],
+    country: Optional[str] = None,
+) -> List[Finding]:
+    """Check ``name_group``, ``model``, and ``role_icon_index``.
+
+    *entities* is None when the workspace ships no entity files. *name_groups*
+    maps each group to its ``for_countries``. *country* is the file's own tag.
     """
     text = variants.text
     findings: List[Finding] = []
     for vlo, vhi in variants.spans:
-        etype = _scalar(text, vlo, vhi, "type")
-        if not etype:
-            continue
-        allowed = index.hull_upgrades.get(etype)
-        if allowed is None:
-            continue
-        name = _quoted_scalar(text, vlo, vhi, "name") or ""
-        for key, ulo, uhi, _ in _iter_blocks(text, vlo, vhi):
-            if key != "upgrades":
-                continue
-            for m in re.finditer(r"([A-Za-z_]\w*)\s*=", text[ulo:uhi]):
-                if m.group(1) in allowed:
-                    continue
+        hull = _scalar(text, vlo, vhi, "type")
+        line = text.count("\n", 0, vlo) + 1
+        body = _depth0_text(text, vlo, vhi)
+        group = re.search(r'\bname_group\s*=\s*"?(\w+)"?', body)
+        if group and name_groups:
+            owners = name_groups.get(group.group(1))
+            if owners is None:
                 findings.append(
                     Finding(
-                        text.count("\n", 0, ulo + m.start()) + 1,
-                        "unsupported_upgrade",
-                        f"'{name}' - Type '{etype}' does not support upgrades "
-                        f"'{m.group(1)}'",
-                        etype,
+                        line,
+                        "unknown_name_group",
+                        f"name_group '{group.group(1)}' is not defined in "
+                        "common/units/names_ships",
+                        hull or "",
                     )
                 )
+            elif country and owners and country not in owners:
+                findings.append(
+                    Finding(
+                        line,
+                        "name_group_country",
+                        f"name_group '{group.group(1)}' is for "
+                        f"{', '.join(sorted(owners))}, not {country}",
+                        hull or "",
+                    )
+                )
+        model = re.search(r'\bmodel\s*=\s*"?([^"\s{}]+)"?', body)
+        if model and entities is not None and model.group(1).lower() not in entities:
+            findings.append(
+                Finding(
+                    line,
+                    "unknown_model",
+                    f"model '{model.group(1)}' matches no entity in gfx/entities, "
+                    "gfx/models, or vanilla",
+                    hull or "",
+                )
+            )
+        finding = _role_icon_finding(text, vlo, vhi, hull, index, frames)
+        if finding:
+            findings.append(finding)
     findings.sort(key=lambda f: f.line)
     return findings
 
@@ -1057,8 +1431,27 @@ def _apply_duplicate_types(
                 types.setdefault(dup + name[src_len:], set(clone_types))
 
 
-def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIndex:
-    """Build the index from the raw text of the hull and module definition files."""
+def _parse_upgrade_levels(texts: Iterable[str]) -> Dict[str, int]:
+    """upgrade -> ``max_level`` from the upgrade definition files."""
+    levels: Dict[str, int] = {}
+    for raw in texts:
+        text = blank_comments(raw)
+        for _, lo, hi, _ in _iter_blocks(text, 0, len(text)):
+            for name, ulo, uhi, _ in _iter_blocks(text, lo, hi):
+                level = re.search(
+                    r"\bmax_level\s*=\s*(\d+)", _depth0_text(text, ulo, uhi)
+                )
+                if level:
+                    levels[name] = int(level.group(1))
+    return levels
+
+
+def build_indexes(
+    hull_texts: List[str],
+    module_texts: List[str],
+    upgrade_texts: Iterable[str] = (),
+) -> EquipmentIndex:
+    """Build the index from the raw text of the equipment definition files."""
     hulls: Dict[str, _Hull] = {}
     duplicates: Dict[str, str] = {}
     dup_types: Dict[str, Set[str]] = {}
@@ -1075,7 +1468,11 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
     resolved = resolve_hull_slots(hulls)
     hull_types = resolve_hull_types(hulls)
     count_limits = resolve_count_limits(hulls)
-    hull_upgrades = resolve_hull_upgrades(hulls)
+    hull_upgrades = _resolve_up_chain(hulls, "upgrades")
+    type_overrides = _resolve_up_chain(hulls, "type_override")
+    allowed_types = _resolve_up_chain(hulls, "allowed_types")
+    archetypes = {name for name, hull in hulls.items() if hull.is_archetype}
+    archetypes.update(dup for dup, src in duplicates.items() if src in archetypes)
     hull_sources = {name: name for name in hulls}
     _clone_family(hull_sources, duplicates)
     non_modular_hulls = {
@@ -1087,12 +1484,16 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
     _clone_family(resolved, duplicates)
     _clone_family(count_limits, duplicates)
     _clone_family(hull_upgrades, duplicates)
+    _clone_family(type_overrides, duplicates)
+    _clone_family(allowed_types, duplicates)
     _apply_duplicate_types(hull_types, duplicates, dup_types)
 
     module_category: Dict[str, str] = {}
     module_unlocks: Dict[str, Dict[str, Set[str]]] = {}
     forbid_types: Dict[str, Set[str]] = {}
     forbid_exact: Dict[str, Set[str]] = {}
+    added_types: Dict[str, Set[str]] = {}
+    exact_category: Dict[str, Dict[str, Set[str]]] = {}
     parents: Dict[str, str] = {}
     for text in module_texts:
         parsed_mods = parse_equipment_modules(strip_comments(text))
@@ -1100,9 +1501,12 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         module_unlocks.update(parsed_mods.unlocks)
         forbid_types.update(parsed_mods.forbid_types)
         forbid_exact.update(parsed_mods.forbid_exact)
+        added_types.update(parsed_mods.added_types)
+        exact_category.update(parsed_mods.exact_category_forbids)
         parents.update(parsed_mods.parent)
     forbid_types = _inherit_module_forbids(forbid_types, parents)
     forbid_exact = _inherit_module_forbids(forbid_exact, parents)
+    added_types = _inherit_module_forbids(added_types, parents)
 
     slot_unlocks: Dict[str, Dict[str, Set[str]]] = {}
     categories: Set[str] = set(module_category.values())
@@ -1130,6 +1534,12 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         hull_upgrades,
         hull_sources,
         non_modular_hulls,
+        archetypes,
+        _parse_upgrade_levels(upgrade_texts),
+        type_overrides,
+        allowed_types,
+        added_types,
+        exact_category,
     )
 
 
@@ -1154,4 +1564,8 @@ def build_equipment_index(units_dir: str) -> EquipmentIndex:
         _read_text(fp)
         for fp in sorted(glob.iglob(os.path.join(units_dir, "modules", "*.txt")))
     ]
-    return build_indexes(hull_texts, module_texts)
+    upgrade_texts = [
+        _read_text(fp)
+        for fp in sorted(glob.iglob(os.path.join(units_dir, "upgrades", "*.txt")))
+    ]
+    return build_indexes(hull_texts, module_texts, upgrade_texts)

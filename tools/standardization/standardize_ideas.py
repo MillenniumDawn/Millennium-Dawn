@@ -10,6 +10,7 @@ import time
 from typing import Any, Dict, List, Optional
 
 from common_utils import (
+    LOG_STATEMENT_RE,
     PROP_NAME_RE,
     BaseStandardizer,
     read_lines_for_standardization,
@@ -17,6 +18,7 @@ from common_utils import (
     write_standardized_output,
 )
 from shared_utils import (
+    STOCK_IDEA_LOG_RE,
     blank_quoted_strings,
     collapse_nested_blocks,
     collapse_or_compact,
@@ -51,7 +53,19 @@ _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
 
 
 _ALLOWED_TAG_RE = re.compile(r"\btag\s*=\s*(\w+)")
-_LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
+_TOOLTIP_STATEMENT_RE = re.compile(r"(?:custom_effect_tooltip|effect_tooltip)\b")
+
+
+def _is_tooltip_only(block: List[str]) -> bool:
+    """True when every statement directly in the block only shows a tooltip."""
+    depth = 0
+    for line in block:
+        code = blank_quoted_strings(strip_inline_comment(line)).strip()
+        if depth == 1 and code and code != "}":
+            if not _TOOLTIP_STATEMENT_RE.match(code):
+                return False
+        depth += code.count("{") - code.count("}")
+    return True
 
 
 def _rewrite_allowed_tag(line: str) -> str:
@@ -255,7 +269,7 @@ class IdeaStandardizer(BaseStandardizer):
             return False
 
         for line in block_lines:
-            stripped = _LOG_STATEMENT_RE.sub("", line).strip()
+            stripped = LOG_STATEMENT_RE.sub("", line).strip()
             if (
                 stripped in ("{", "}", "")
                 or not stripped
@@ -329,8 +343,9 @@ class IdeaStandardizer(BaseStandardizer):
         action: str,
     ) -> List[str]:
         """Emit an on_add / on_remove block, injecting a log line if there are
-        meaningful effects and no existing log. Returns [] if the block is an
-        empty log-only block or has no meaningful effects."""
+        meaningful effects beyond tooltips and no existing log, and rewriting a
+        stock log so it names this idea. Returns [] if the block is an empty
+        log-only block or has no meaningful effects."""
         # A single-line block (`on_add = { set_variable = { x = 1 } }`) has its
         # opener and closer on the same line, so an injected log would land
         # outside the block and re-inject on the next run (non-idempotent).
@@ -350,7 +365,7 @@ class IdeaStandardizer(BaseStandardizer):
             return []
 
         has_log = any("log =" in line for line in block)
-        if not has_log and idea_id:
+        if not has_log and idea_id and not _is_tooltip_only(block):
             log_line = (
                 f'{prop_indent}\tlog = "[GetDateText]: [Root.GetName]: '
                 f'Idea {idea_id} {action}"'
@@ -361,6 +376,9 @@ class IdeaStandardizer(BaseStandardizer):
                 if j == 0 and "{" in line:
                     modified.append(log_line)
             block = modified
+        elif has_log and idea_id:
+            stock_log = rf'\g<prefix>Idea {idea_id} {action}"'
+            block = [STOCK_IDEA_LOG_RE.sub(stock_log, line) for line in block]
 
         return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 

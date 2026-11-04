@@ -80,6 +80,7 @@ def _run_main(monkeypatch, capsys, *args):
         "mio",
         "technology",
         "history",
+        "indent",
         "localisation",
     ],
 )
@@ -256,6 +257,19 @@ def test_history_subcommand_runs(tmp_path, monkeypatch, capsys):
     assert out.exists()
 
 
+def test_indent_subcommand_writes_tabs_and_spacing(tmp_path, monkeypatch, capsys):
+    src = tmp_path / "effects.txt"
+    out = tmp_path / "effects_out.txt"
+    src.write_text("TST_effect = {\n    add_stability=0.1\n}\n", encoding="utf-8")
+
+    result = _run_main(monkeypatch, capsys, "indent", src, "-o", out)
+
+    assert result.returncode == 0
+    assert out.read_text(encoding="utf-8") == (
+        "TST_effect = {\n\tadd_stability = 0.1\n}\n"
+    )
+
+
 def test_localisation_subcommand_with_mod_root(tmp_path, monkeypatch, capsys):
     src = tmp_path / "tst_l_english.yml"
     out = tmp_path / "tst_out.yml"
@@ -310,10 +324,10 @@ def test_main_focus_returns_one_when_backup_fails(tmp_path, monkeypatch, capsys)
 def test_main_localisation_returns_one_when_mod_root_missing(
     tmp_path, monkeypatch, capsys
 ):
-    """Localisation branch with _detect_mod_root returning None."""
+    """Localisation branch with find_mod_root returning None."""
     src = tmp_path / "orphan.yml"
     src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
-    monkeypatch.setattr("standardize._detect_mod_root", lambda path: None)
+    monkeypatch.setattr("standardize.find_mod_root", lambda path, markers: None)
 
     result = _run_main(monkeypatch, capsys, "localisation", src)
     assert result.returncode == 1

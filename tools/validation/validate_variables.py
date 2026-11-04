@@ -3,7 +3,6 @@
 # event targets for cleared-but-not-set, used-but-not-set, and unused items.
 # Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323).
 import bisect
-import glob
 import os
 import re
 import sys
@@ -29,6 +28,7 @@ from shared_utils import (
     is_ai_only_block,
     iter_direct_child_blocks,
     iter_statements,
+    list_files,
     strip_comments,
     validation_config,
     word_start_re,
@@ -2552,9 +2552,7 @@ class Validator(BaseValidator):
         if self.staged_files:
             yml_files_to_scan = [f for f in self.staged_files if f.endswith(".yml")]
         else:
-            yml_files_to_scan = list(
-                glob.iglob(os.path.join(self.mod_path, "**", "*.yml"), recursive=True)
-            )
+            yml_files_to_scan = list_files(self.mod_path, ("*.yml",))
 
         targets_tuple = tuple(potential_results)
         targets_used_in_loc: set = set()
@@ -2619,12 +2617,10 @@ class Validator(BaseValidator):
             return
 
         # Collect the file list once and share across all flag-type and
-        # event-target scans — avoids one glob.iglob per flag_type (×3) plus
+        # event-target scans — avoids one file scan per flag_type (×3) plus
         # one more for event targets, for a total of 4 redundant scans.
         self.log("Collecting all .txt files (one scan for all validators)...")
-        all_txt_files = list(
-            glob.iglob(os.path.join(self.mod_path, "**", "*.txt"), recursive=True)
-        )
+        all_txt_files = list_files(self.mod_path)
         self.log(f"  Found {len(all_txt_files)} .txt files")
 
         generic, country, global_, country_unused = (

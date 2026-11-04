@@ -820,6 +820,15 @@ def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     )
 
 
+def test_effect_block_with_log_keeps_effects_packed_after_the_log():
+    packed = [
+        '\t\tcompletion_reward = { log = "[GetDateText]: [Root.GetName]: Focus TST_x"'
+        " add_ideas = { TST_idea } }\n"
+    ]
+
+    assert "add_ideas = { TST_idea }" in "".join(effect_block_with_log(packed, "TST_x"))
+
+
 def test_effect_block_with_log_drops_empty_and_log_only_blocks():
     assert effect_block_with_log(["\t\tcompletion_reward = { }"], "TST_x") == []
     assert effect_block_with_log(['\t\tselect_effect = { log = "x" }'], "TST_x") == []
