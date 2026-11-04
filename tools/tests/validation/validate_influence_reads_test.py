@@ -130,6 +130,19 @@ _CASES = {
         },
         [("CHI", "KOR", "resolved"), ("unknown", "KOR", "unresolved")],
     ),
+    "country-specific weekly action supplies ROOT": (
+        {
+            "common/on_actions/test.txt": (
+                "on_actions = { on_weekly_UKR = { effect = { subjects = yes } } "
+                "on_weekly = { effect = { USA = { influence_higher_40 = yes } } } }"
+            ),
+            _TRIGGERS: "subjects = { any_subject_country = { influence_higher_40 = yes } }",
+        },
+        [
+            ("UKR", "country[any_subject_country]", "resolved"),
+            ("unknown", "USA", "unresolved"),
+        ],
+    ),
     "event pool does not erase bound caller": (
         {
             _HISTORY: "KOR = { country_event = test.1 }",
