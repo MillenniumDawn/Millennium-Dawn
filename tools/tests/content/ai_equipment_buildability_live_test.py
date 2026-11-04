@@ -81,13 +81,15 @@ def live_naval_sources():
         "TUR": "Turkey",
     }
     paths = [
-        REPO_ROOT / path
+        REPO_ROOT / f"history/countries/{tag} - {name}.txt"
         for tag, name in countries.items()
-        for path in (
-            f"common/ai_equipment/{tag}_naval.txt",
-            f"history/countries/{tag} - {name}.txt",
-        )
     ]
+    naval_files = {f"{tag}_naval.txt" for tag in countries}
+    paths.extend(
+        path
+        for path in (REPO_ROOT / "common/ai_equipment").glob("*.txt")
+        if path.name in naval_files or path.name.startswith("zz_shared_")
+    )
     for directory in (
         "common/bookmarks",
         "common/technologies",
@@ -106,11 +108,17 @@ def live_naval_sources():
 def test_naval_regression_sources(tmp_path, live_naval_sources):
     sources = live_naval_sources
     write_tree(tmp_path, sources)
+    designs = [
+        design
+        for path, text in sources.items()
+        if path.startswith("common/ai_equipment/")
+        for design in parse_designs(text, path)
+    ]
     for country in ("GRE", "TUR"):
-        path = f"common/ai_equipment/{country}_naval.txt"
-        designs = parse_designs(sources[path], path)
-        assert designs and all(design.users == {country} for design in designs)
-        assert any(design.hull == "frigate_hull_2" for design in designs)
+        assert any(
+            country in design.users and design.hull == "frigate_hull_2"
+            for design in designs
+        )
     validator = build_validator(Validator, tmp_path, check_buildability=True)
     validator._validate_buildability()
     assert validator.errors_found == 0
@@ -131,22 +139,22 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
     (
         (
             "ALG - Algeria",
-            "ALG_corvettes",
-            "ALG_Corvette_1970s",
+            "SHARED_corvettes_1",
+            "SHARED_corvettes_1_corvette_hull_2",
             "module_torpedoes_2",
             "tech_torpedoes_2",
         ),
         (
             "ARG - Argentina",
-            "ARG_attack_submarines",
-            "ARG_attack_sub_1960s",
+            "SHARED_attack_submarines_1",
+            "SHARED_attack_submarines_1_attack_submarine_hull_1",
             "module_sub_esm_1",
             "tech_combat_radar_2",
         ),
         (
             "AST - Australia",
-            "AST_unique_frigates",
-            "AST_adelaide_class_2",
+            "SHARED_frigates_2",
+            "SHARED_frigates_2_frigate_hull_3",
             "module_light_surface_diesel_power_1",
             "tech_diesel_power_systems_1",
         ),
