@@ -32,6 +32,42 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   both apply. Other relationships, including numeric bounds and flag values,
   remain unknown and need review.
 
+## validate_influence_reads.py
+
+- `influence-read-self` (WARNING): the influencer and array owner resolve to the
+  same country. This is a review candidate, not a claim about diplomatic intent.
+- `influence-read-unresolved` (WARNING): the caller, sender, or target cannot be
+  bound. Unknown FROM is not proof that the engine leaves the sender unset.
+- Models the ROOT, PREV, and sender helper families in
+  `00_influence_scripted_triggers.txt`, the EU `FROM_is_top3_influencer` helper,
+  and the two HOL ranking helpers. `influence_less_*` reads the ROOT array for
+  THIS, the reverse of `influence_higher_*`. Contract tests read their definitions.
+- Tracks literal country scopes, ROOT, THIS, PREV/FROM chains, neutral wrappers,
+  and calls through scripted effects and triggers. Focuses, achievements,
+  non-targeted decisions, country history, and country/news event definitions
+  supply country contexts. A positive local `tag` guard can bind a runtime tag;
+  `original_tag` is only a label, not proof of a literal runtime tag.
+- Effect-fired events receive the firing block's ROOT as FROM, not its innermost
+  selected country. Event pools, automatic firing, unsupported dispatches, and
+  definitions without a known caller keep unknown contexts alongside known ones.
+  Broadcast events also have an unspecified audience context.
+- Targeted decisions, unmodeled blocks, state/variable/event-target scopes, and
+  other entry points remain conservative. Templates and effect previews are
+  skipped. This is not a reachability solver or an audit of arbitrary array reads.
+  Each definition keeps at most 64 distinct contexts before adding an unknown
+  context; recursive calls are deduplicated. Scope chains retain the depth used
+  by the parsed sources.
+- Ordinary JSON contains warning candidates only. `<output>.bindings.jsonl` and
+  the text log expose every resolved or unresolved pair without turning valid
+  bindings into baseline issues. CI runs this separately from influence writes,
+  without `--strict`; even direct `--strict` runs do not gate on these warnings.
+- Reviewed baseline at `a0585a7e5d`: #6198's old read was CHI ROOT into the USA
+  array; its replacement is USA PREV into the KOR array. #6197's old achievement
+  read had an unresolved sender into five foreign arrays; the replacement uses
+  the achieving ROOT (original_tag HOL). The live-source regressions pin these
+  corrected bindings. This baseline covers those sites, not a full-repository
+  adjudication. No native-game test supports stricter enforcement.
+
 ## validate_building_guards.py
 
 - `damage_building` or `remove_building` against a building the state lacks spams
@@ -282,8 +318,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   spending law change, or a money modifier the script names commits money and
   justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
   A free build costs nothing here, even for a building with upkeep, matching the
-  `skip_payment` rule. Known gaps: reply-chain and delayed own-event costs, and money
-  modifiers on an idea the option adds.
+  `skip_payment` rule. Unconditional own-country event calls in the same file also
+  commit money when the follow-up charges in its immediate effects or every option
+  guarantees a money cost. Routing events are followed to a fixed point; a free exit,
+  conditional call or charge, a trigger beyond the receiver's tag, foreign scope, and
+  tooltip preview do not prove payment.
+  Known gaps: cross-file or cross-country reply-chain costs, scripted-effect event
+  dispatch, and money modifiers on an idea the option adds.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -472,7 +513,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_mesh_textures.py
 
-- Commit-stage only, since the CI workspace ships no models. `mesh-texture-empty`,
+- Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
 
@@ -539,6 +580,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
   modifier. `unknown-modifier` (WARNING) has known false positives.
+- `income-over-25-percent` (WARNING, always on): one literal tax, healthcare,
+  building-tax, resource-export, or equipment-market income bonus above `0.25`
+  (+25%). Exactly +25%, penalties, variable-fed values, and stacked totals are not
+  flagged. Each warning names the owner, modifier, value, percentage, and source line.
+  This is a balance review prompt, not a hard cap or a claim that the value is a typo.
+  The check covers the same source files as the opt-in economy checks, without
+  requiring `--unbalanced-modifiers`. Document an intentional bonus as
+  `owner::key` with a reason in `validation_config.json`
+  `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
+  The owner is the idea, trait, or modifier name that holds the bonus. Do not
+  blanket-exempt existing bonuses; review and explain each one (Issue #6371).
 
 ## validate_on_actions.py
 
@@ -550,10 +602,30 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - Every `create_equipment_variant` is slot-checked through `equipment_module_slots.py`
   (ERROR): unknown hulls, slots, and modules, slot categories, required slots, hull
-  `module_count_limit`, `forbid_equipment_type`.
-  `validate_ai_equipment.py` applies the same rules to `target_variant` designs.
+  `module_count_limit`, `forbid_equipment_type`, archetypes as `type`, `modules` on a
+  non-modular type, a `type_override` module whose type `allowed_types` omits, and
+  undefined, unsupported, or out-of-range upgrades. A weighted AI upgrade checks its level
+  with and without one `modifier`. Several modifiers or a `factor` stay unresolved.
+  `validate_ai_equipment.py` applies the same rules to `target_variant` designs. An AI
+  archetype `type` only warns: the engine rule is documented for the effect alone.
+- WARNING, because only the designer tool or a module's script states the effect:
+  `role_icon_index` outside its strip, `forbid_equipment_type_exact_match_for_category`
+  conflicts, ship `upgrades`, and a `name_group` for another country.
+- `name_group` and `model` must resolve (ERROR). `model` reads `gfx/entities`, `.asset`
+  and `.gfx` under `gfx/models`, and `vanilla_entities.txt`, case-insensitively. Without
+  `gfx/entities`, as in staged worktrees, the model check is skipped. The manifest only
+  covers DLC the refreshing machine owns, like the sprite manifest.
+- `validate_start_variants` covers histories and the OOBs they load by the first
+  bookmark. Hull technology missing at the start (WARNING) counts every branch that
+  could grant it, and `allow_without_tech` exempts. A variant only events, decisions, or
+  focuses create is an ERROR. A scripted-effect definition proves nothing either way.
+  Full scans only.
+- A stockpile with no `producer` applies to all creators, per the effect docs, so any
+  country's design satisfies it (WARNING when none does). The start check passes it when
+  any creator has the design and its technology at the start.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
-  proof the runtime design is legal.
+  proof the runtime design is legal. `_flag_required_slots` treats an omitted required
+  slot as empty, but the engine inherits it from the parent. No design hits this today.
 - Explicit variant definitions are cached per source file by content and indexed by
   producer, equipment type, and name. English default model names stay separate.
   Staged edits widen reference checks only when the resulting identities or
@@ -578,9 +650,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   - Unsupported ammo selections are analysis records, not warnings. These include
     current-dependent refits, comparisons, inherited module context, unplaced
     requirements, implicit `allowed_modules` filling, and missing weapon-specific
-    allowances. An `allowed_modules` block does not suspend checks when every
-    hull slot is explicitly assigned. Forbidden modules cannot widen other slots,
-    including through a category selector.
+    allowances. A dynamic pick or `allowed_modules` filler suspends the check only if
+    it can touch the ammo: the ammo slot itself, or a module that widens it. Forbidden
+    modules cannot widen other slots, including through a category selector.
   - Regression source: `USA_APC_design/modern_APC_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
@@ -651,6 +723,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     named enabling technology removes that module's missing-unlock claim.
     No native-game build test was run, and not every warning site was individually
     adjudicated. A clean supported subset is not an engine-buildability claim.
+- Unit references (ERROR): names in `regiments`, `regimental_support`, and `support`
+  blocks must match a `common/units` sub-unit exactly, case included. Only
+  `history/units`, `common/ai_templates`, and `00_AI_scripted_effects.txt` are read.
 - `create_unit` is checked for state scope, `owner`, block keys, a single-line division
   string that parses, zero or near-zero factors, and template order.
 - `missing-equipment-factor` (WARNING, opt-in `--missing-equipment-factor`).
@@ -681,13 +756,21 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
-  sizes and `allowed_battalion_groups`. Staged mode checks only staged template files,
-  so a define or doctrine change surfaces on the full CI run.
+  sizes. Staged mode checks only staged template files, so a define or doctrine change
+  surfaces on the full CI run.
 - `template-misplaced-support` (WARNING): a `support` block lists a sub-unit with
   `divisional = no`, or a `regimental_support` block lists one with `regimental = no`.
   The game drops that unit from the template. Ships as WARNING for its backlog of
   1,286 `divisional = no` units in `support`. A `common/units/` flag change surfaces
   on the full CI run only.
+- `template-incompatible-regimental-support` (WARNING): a `regimental_support` company
+  sets `allowed_battalion_groups`, and no battalion in its `regiments` column has one
+  of those `group` values. A column with at least one allowed battalion passes,
+  because the engine rule for mixed columns is unverified. Companies without the list,
+  columns with an ungrouped battalion, and missing columns (`template-slot`) are
+  skipped. Ships as WARNING for its backlog of 366 attachments in 178 template
+  definitions. A `common/units/` change surfaces on the full CI run only. Tracked in
+  #5453.
 - `airbase-over-capacity` (WARNING): the planes `history/units` `air_wings` place in a
   state exceed its undated `air_base` level times `NBuildings.AIRBASE_CAPACITY_MULT`
   (vanilla 200, one slot per plane). Totals add every country's OOB, so each file
@@ -776,8 +859,14 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   only the standard prefix, filler words, and one id. Longer text is skipped, so a log
   such as `... <other_decision> setup finished` is a known gap. `Mission` works like
   `Decision`, and an id that runs into `[?...]` is built at runtime and skipped.
+- The idea log id check reads stock `on_add` and `on_remove` wordings only (`Idea X added`,
+  `add idea X`, `remove idea X`, `add X`, `X idea added`). A hand-written message is a known
+  gap. `tools/linting/fix_log_ids.py` fixes the id.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
+- `unneeded-idea-log` (WARNING): an idea `on_add` or `on_remove` log beside nothing but
+  `custom_effect_tooltip` or `effect_tooltip`. The idea standardizer no longer injects one
+  there, but it does not remove an existing one.
 - Name checks resolve against mod data: equipment `type =` (with `duplicate_archetypes`
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and

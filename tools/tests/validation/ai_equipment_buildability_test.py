@@ -94,11 +94,13 @@ _AMMO_HULLS = """equipments = {
             main_armament_slot = { required = yes allowed_module_categories = { weapons } }
             ammunition_load_slot = { required = yes allowed_module_categories = { } }
             secondary_armament_slot = { allowed_module_categories = { weapons } }
+            spare_slot = { allowed_module_categories = { spares } }
         }
     }
 }
 """
 _AMMO_MODULES = """equipment_modules = {
+    spare_part = { category = spares }
     small_autocannon_3 = {
         category = weapons
         allowed_module_categories = { ammunition_load_slot = { autocannon_ammo } }
@@ -173,6 +175,14 @@ _AMMO_CASES = {
         "main_armament_slot > small_autocannon_3 ammunition_load_slot = autocannon_ammo",
         [("ai-equipment-ammo-unresolved", "shared/current")],
     ),
+    "refit in a slot that cannot touch ammo": (
+        "spare_slot = { module = spares upgrade = current } main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo",
+        [("ai-equipment-incompatible-ammo", "small_autocannon_3", "machine_gun_ammo")],
+    ),
+    "refit of the ammo itself": (
+        "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = { module = machine_gun_ammo upgrade = current }",
+        [("ai-equipment-ammo-unresolved", "shared/current")],
+    ),
 }
 
 
@@ -233,16 +243,21 @@ def test_priority_bounds(expression, bounds):
     assert B._weight(priority, lambda nodes: None if nodes else True) == bounds
 
 
-@pytest.mark.parametrize("complete", (False, True))
-def test_allowed_modules_only_defer_implicit_slot_filling(tmp_path, complete):
+@pytest.mark.parametrize(
+    ("complete", "allowed"),
+    ((False, "weapons"), (True, "weapons"), (False, "spare_part")),
+    ids=("open slot could widen", "every slot assigned", "filler cannot touch ammo"),
+)
+def test_allowed_modules_only_defer_implicit_slot_filling(tmp_path, complete, allowed):
     slots = "main_armament_slot = { any_of = { small_autocannon_3 afv_machine_gun_3 } } ammunition_load_slot = machine_gun_ammo"
     if complete:
-        slots += " secondary_armament_slot = empty"
+        slots += " secondary_armament_slot = empty spare_slot = empty"
+    complete = complete or allowed == "spare_part"
     _tree(
         tmp_path,
         {
             "groups": _group(
-                _design(slots=slots), extra="allowed_modules = { weapons }"
+                _design(slots=slots), extra=f"allowed_modules = {{ {allowed} }}"
             ).replace("category = naval", "category = land"),
             "hulls": _AMMO_HULLS,
             "files": {"common/units/equipment/modules/test.txt": _AMMO_MODULES},

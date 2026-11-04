@@ -20,6 +20,7 @@ from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     get_staged_files,
+    list_files,
 )
 from validate_unused_scripted import extract_definitions
 from validator_common import (
@@ -1239,12 +1240,12 @@ class Validator(BaseValidator):
 
         # Auto-discover from scripted effect files (always full scan — definitions
         # are the truth set and must be complete even in staged mode)
-        effect_files = glob.glob(
-            os.path.join(self.mod_path, "common", "scripted_effects", "*.txt")
+        effect_files = list_files(
+            os.path.join(self.mod_path, "common", "scripted_effects"), recursive=False
         )
         discovered = 0
         bodies: Dict[str, str] = {}
-        for filepath in sorted(effect_files):
+        for filepath in effect_files:
             try:
                 parsed = _parse_effect_contracts_from_file(filepath)
                 bodies.update(_scripted_bodies(filepath))
@@ -1263,10 +1264,10 @@ class Validator(BaseValidator):
                     self._contracts[eff_name] = contract
                     discovered += 1
         # A scripted trigger reads a parameter the same way an effect does.
-        trigger_files = glob.glob(
-            os.path.join(self.mod_path, "common", "scripted_triggers", "*.txt")
+        trigger_files = list_files(
+            os.path.join(self.mod_path, "common", "scripted_triggers"), recursive=False
         )
-        for filepath in sorted(trigger_files):
+        for filepath in trigger_files:
             try:
                 bodies.update(_scripted_bodies(filepath))
             except _READ_ERRORS as exc:
