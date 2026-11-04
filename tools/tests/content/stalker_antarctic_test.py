@@ -15,7 +15,10 @@ def _read(path):
 DECISIONS = _read("common/decisions/STALKER_decisions.txt")
 EFFECTS = _read("common/scripted_effects/99_STALKER_world_effects.txt")
 EVENTS = _read("events/STALKER.txt")
-LOC = _read("localisation/english/MD_STALKER_l_english.yml")
+LOC = "\n".join(
+    path.read_text(encoding="utf-8-sig")
+    for path in sorted((ROOT / "localisation/english").glob("MD_STALKER*_l_english.yml"))
+)
 TRIGGERS = _read("common/scripted_triggers/99_STALKER_scripted_triggers.txt")
 
 
@@ -173,9 +176,17 @@ def test_the_study_ends_the_first_day_its_laboratory_stops():
     assert "STALKER_monthly_antarctic_pulse" not in pulses
 
 
-def test_event_ids_stay_in_the_block_and_every_key_has_english_text():
-    ids = [int(n) for n in re.findall(r"id = STALKER\.(\d+)", EVENTS)]
-    assert ids and all(190 <= n <= 199 for n in ids)
+def test_polar_event_ids_and_english_text_survive_consolidation():
+    events = _parse_race_script("events = {" + EVENTS + "}")["events"]
+    ids = [
+        value
+        for kind, _, body in events
+        if kind in {"country_event", "news_event"}
+        for key, _, value in body
+        if key == "id"
+    ]
+    for event_id in ("STALKER.190", "STALKER.191", "STALKER.192"):
+        assert ids.count(event_id) == 1, event_id
     for key in re.findall(
         r"(?:title|desc|name|tooltip|custom_effect_tooltip) = (STALKER[A-Za-z0-9_.]*)",
         DECISIONS + EVENTS + EFFECTS,

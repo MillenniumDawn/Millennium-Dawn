@@ -31,9 +31,9 @@ def campaign():
     script = FieldScript()
     script.effects.update(
         _parse_race_script(
-            (
-                ROOT / "common/scripted_effects/99_STALKER_legend_effects.txt"
-            ).read_text(encoding="utf-8")
+            (ROOT / "common/scripted_effects/99_STALKER_legend_effects.txt").read_text(
+                encoding="utf-8"
+            )
         )
     )
     script.prepare_original_zone()
@@ -187,9 +187,7 @@ def test_purge_affordability_and_consumed_discount_agree(
     if used:
         script.countries[698]["flags"]["STALKER_field_purge_used"] = None
     body = _parse_race_script(
-        (ROOT / "common/decisions/STALKER_decisions.txt").read_text(
-            encoding="utf-8"
-        )
+        (ROOT / "common/decisions/STALKER_decisions.txt").read_text(encoding="utf-8")
     )["STALKER_mdst_category"]
     body = next(value for key, _, value in body if key == "STALKER_purge_mdst_channels")
     cost = next(value for key, _, value in body if key == "custom_cost_trigger")
