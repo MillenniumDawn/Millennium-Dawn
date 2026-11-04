@@ -31,25 +31,38 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from equipment_module_slots import (
+    ADVISORY_KINDS,
+    KIND_LABELS,
     CreatedVariants,
     Finding,
     _iter_blocks,
     _iter_named_blocks,
+    _named_type_tokens,
     _scalar,
     blank_comments,
     build_equipment_index,
+    check_created_variant_references,
     check_created_variant_upgrades,
     check_created_variants,
     created_variant_spans,
+    entity_names_from_text,
     parse_variant_names,
+    role_strip_frames,
+)
+from equipment_variant_context import (
+    VariantContext,
+    script_nodes,
+    starting_techs,
 )
 from shared_utils import (
     get_staged_files,
     label_before_brace,
+    list_files,
     normalize_path_separators,
     read_text_under,
     validation_config,
 )
+from validate_equipment_variants import equipment_unlocks
 from validator_common import (
     BaseValidator,
     Issue,
@@ -58,27 +71,7 @@ from validator_common import (
     strip_comments,
 )
 
-_VARIANT_SLOT_CATEGORIES = {
-    "unknown_hull": "SHIP VARIANT: unknown hull type",
-    "unknown_slot": "SHIP VARIANT: slot not on hull",
-    "unknown_module": "SHIP VARIANT: unknown module reference",
-    "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
-    "missing_required_module": "SHIP VARIANT: required slot left empty",
-    "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
-    "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
-    "unsupported_upgrade": "SHIP VARIANT: unsupported upgrade",
-}
-
-_EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
-    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
-    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
-    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
-    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
-    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
-    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
-    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
-    "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
-}
+_VANILLA_ENTITIES = os.path.join(os.path.dirname(__file__), "vanilla_entities.txt")
 
 
 class VariantDefinition(NamedTuple):
@@ -87,6 +80,7 @@ class VariantDefinition(NamedTuple):
     file: str
     line: int
     alternatives: Dict[int, int]
+    allow_without_tech: bool = False
 
 
 _VariantIdentity = Tuple[Optional[str], Optional[str], str]
@@ -465,7 +459,7 @@ def _parse_canonical_unit_sources(mod_path: str) -> List[_UnitSource]:
     placement, and battalion group unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
-    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
+    for filepath in list_files(units_dir, recursive=False):
         content = _read_text(filepath, mod_path)
 
         def compute(source_content: str = content) -> _UnitSource:
@@ -575,8 +569,8 @@ def _extract_division_group_keys(content: str) -> Set[str]:
 def parse_division_group_keys(mod_path: str) -> Set[str]:
     """Return the set of all division_names_group keys defined across the mod."""
     keys = set()
-    pattern = os.path.join(mod_path, "common", "units", "names_divisions", "*.txt")
-    for filepath in glob.iglob(pattern):
+    names_dir = os.path.join(mod_path, "common", "units", "names_divisions")
+    for filepath in list_files(names_dir, recursive=False):
         content = _read_text(filepath, mod_path)
         if not content:
             continue
@@ -1022,6 +1016,7 @@ def _parse_variant_definitions(
             rel,
             variants.text.count("\n", 0, lo) + 1,
             _variant_alternatives(nodes, chain),
+            _field_value(variants.text, lo, hi, "allow_without_tech") == "yes",
         )
         definitions.setdefault((tag, equipment, name), []).append(record)
     return definitions
@@ -1353,9 +1348,12 @@ def _create_unit_variant_refs(text: str) -> List[Tuple[int, int, str, str, str]]
 
 
 def _literal_named_variant_refs(
-    content: str,
+    content: str, default_producer: Optional[str] = None
 ) -> List[Tuple[int, int, str, str, str]]:
     """Find literal air-wing, division, stockpile, and production consumers.
+
+    A stockpile with no ``producer`` is reported under *default_producer*, and
+    left out without one.
 
     AI ``target_variant`` blocks are intentionally outside this history-reference
     scan: their display names describe a design specification.
@@ -1401,6 +1399,8 @@ def _literal_named_variant_refs(
         if not named:
             continue
         producer = _literal_producer(masked, blo, bhi, ("producer",))
+        if _field_match(masked, blo, bhi, "producer") is None:
+            producer = default_producer
         equipment = _field_value(masked, blo, bhi, "type")
         ref = _named_variant_reference(
             named[2], named[1], producer, equipment, named[0]
@@ -1435,6 +1435,40 @@ def _literal_named_variant_refs(
                 refs.append(ref)
 
     return refs
+
+
+_ANY_CREATOR = "ANY"
+
+
+def check_any_creator_stockpiles(
+    content: str, registry: VariantRegistry, default_names: Set[str]
+) -> List[Finding]:
+    """A stockpile with no ``producer`` applies to all creators (effect docs), so
+    some country must create its named variant for that type."""
+    findings = []
+    for _, line, producer, equipment, name in _literal_named_variant_refs(
+        content, _ANY_CREATOR
+    ):
+        if producer != _ANY_CREATOR or name in default_names:
+            continue
+        types = {
+            etype for (_, etype, created) in registry.by_identity if created == name
+        }
+        if equipment in types or None in types:
+            continue
+        findings.append(
+            Finding(
+                line,
+                "wrong_variant_type" if types else "unknown_named_variant",
+                f'Stockpile with no producer names "{name}" for {equipment}, '
+                + (
+                    f"but it exists only for {', '.join(sorted(types))}"
+                    if types
+                    else "which no country creates"
+                ),
+            )
+        )
+    return findings
 
 
 def check_named_variant_refs(
@@ -1573,6 +1607,175 @@ def check_named_variant_refs(
                     f"and equipment type {equipment}",
                 )
             )
+    return findings
+
+
+_START_OOB_KEYS = {"oob", "set_oob", "set_naval_oob", "set_air_oob"}
+
+
+def _oob_ship_refs(content: str) -> List[Tuple[int, int, str, str, str]]:
+    """The ship references `check_oob_variant_refs` reads, as named references."""
+    text = blank_comments(content)
+    refs = []
+    for m in _OOB_EQUIPMENT_RE.finditer(text):
+        version = _VERSION_NAME_RE.search(m.group(2))
+        who = _OOB_CREATOR_RE.search(m.group(2)) or _OOB_OWNER_RE.search(m.group(2))
+        if version and who and len(who.group(1)) == 3:
+            refs.append(
+                (
+                    m.start(),
+                    text.count("\n", 0, m.start()) + 1,
+                    who.group(1).upper(),
+                    m.group(1),
+                    version.group(1),
+                )
+            )
+    return refs
+
+
+def _start_oob_names(histories: Iterable[list], start: Tuple[int, ...]) -> Set[str]:
+    """OOB files country histories load by the start date, in any branch."""
+    names: Set[str] = set()
+    pending = [node for nodes in histories for node in nodes]
+    while pending:
+        node = pending.pop()
+        if _HISTORY_DATE_RE.fullmatch(node.key) and (
+            tuple(int(part) for part in node.key.split("."))[:3] > tuple(start)[:3]
+        ):
+            continue
+        if node.key in _START_OOB_KEYS and node.value:
+            names.add(node.value.strip('"'))
+        pending.extend(node.children)
+    return names
+
+
+def _variant_creators(
+    registry: VariantRegistry, producer: str, equipment: str, name: str
+) -> List[Tuple[Optional[str], VariantDefinition]]:
+    """(creator, definition) pairs a consumer can use. A ``None`` creator is a
+    definition whose country is not known statically."""
+    if producer == _ANY_CREATOR:
+        return [
+            (tag, record)
+            for (tag, etype, created), records in registry.by_identity.items()
+            if etype == equipment and created == name
+            for record in records
+        ]
+    return [
+        (tag, record)
+        for tag in (producer, None)
+        for record in registry.by_identity.get((tag, equipment, name), [])
+    ]
+
+
+def check_start_variant_consumers(
+    sources: Iterable[Tuple[str, str]],
+    registry: VariantRegistry,
+    context: VariantContext,
+    unlocks: Dict[str, Set[str]],
+    hull_sources: Dict[str, str],
+) -> List[Issue]:
+    """Flag start-state consumers whose variant does not exist at the start.
+
+    A scripted-effect definition may run from history, so it proves nothing
+    either way. Starting research counts every branch that could grant the
+    technology, so a finding means no reading of the history grants it. A
+    stockpile with no ``producer`` passes if any creator satisfies it.
+    """
+    findings = []
+    start = tuple(context.start)[:3]
+    possible: Dict[Tuple[Any, ...], Set[str]] = {}
+
+    def has_tech(
+        tag: str, record: VariantDefinition, consumer: Dict, techs: Set
+    ) -> bool:
+        dlcs = {
+            dlc: enabled
+            for dlc, enabled in {**record.context, **consumer}.items()
+            if not dlc.startswith("__")
+        }
+        key = (tag, tuple(sorted(dlcs.items())))
+        if key not in possible:
+            possible[key] = starting_techs(
+                context.histories.get(tag, []),
+                dlcs,
+                start,
+                effects=context.effects,
+                possible=True,
+            )
+        return bool(techs & possible[key])
+
+    for rel, content in sources:
+        text = blank_comments(content)
+        nodes = _build_block_nodes(text)
+        for offset, line, producer, equipment, name in [
+            *_literal_named_variant_refs(content, _ANY_CREATOR),
+            *_oob_ship_refs(content),
+        ]:
+            consumer = _dlc_context_at_offset(text, nodes, offset, rel)
+            date = _history_date_at_offset(text, nodes, offset, rel)
+            if (
+                consumer is None
+                or _UNCERTAIN_DLC_CONTEXT in consumer
+                or (date is not None and date > start)
+            ):
+                continue
+            records = [
+                (tag, record)
+                for tag, record in _variant_creators(
+                    registry, producer, equipment, name
+                )
+                if _dlc_contexts_compatible(record.context, consumer)
+            ]
+            at_start = [
+                (tag, record)
+                for tag, record in records
+                if tag is not None
+                and record.file.startswith("history/countries/")
+                and (record.date is None or record.date <= start)
+            ]
+            if not at_start:
+                if records and not any(
+                    record.file.startswith(
+                        ("common/scripted_effects/", "history/countries/")
+                    )
+                    for _, record in records
+                ):
+                    who = "any creator" if producer == _ANY_CREATOR else producer
+                    first = records[0][1]
+                    findings.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category="OOB VARIANT: created only after the start",
+                            message=f'"{name}" ({equipment}) from {who} is used '
+                            f"at the start but only {first.file}:{first.line} "
+                            "creates it",
+                            file=rel,
+                            line=line,
+                        )
+                    )
+                continue
+            techs = unlocks.get(equipment) or unlocks.get(
+                hull_sources.get(equipment, ""), set()
+            )
+            if not techs or any(record.allow_without_tech for _, record in at_start):
+                continue
+            if not any(
+                has_tech(tag, record, consumer, techs) for tag, record in at_start
+            ):
+                creators = " or ".join(sorted({tag for tag, _ in at_start}))
+                first = at_start[0][1]
+                findings.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="OOB VARIANT: hull technology missing at the start",
+                        message=f'"{name}" ({equipment}) waits for '
+                        f"{' or '.join(sorted(techs))}, which {creators} does not "
+                        f"have at the start; defined at {first.file}:{first.line}",
+                        file=rel,
+                        line=line,
+                    )
+                )
     return findings
 
 
@@ -3692,21 +3895,33 @@ class Validator(BaseValidator):
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
+        name_groups, entities, frames = self.cached(
+            "variant_reference_data", self._variant_reference_data
+        )
         results = []
         for rel, variants in variant_files:
-            findings = check_created_variants(
-                variants, index
-            ) + check_created_variant_upgrades(variants, index)
-            for f in findings:
-                labels = (
-                    _VARIANT_SLOT_CATEGORIES
-                    if f.hull in index.ship_hulls
-                    else _EQUIPMENT_VARIANT_SLOT_CATEGORIES
+            findings = (
+                check_created_variants(variants, index)
+                + check_created_variant_upgrades(variants, index)
+                + check_created_variant_references(
+                    variants,
+                    index,
+                    name_groups,
+                    entities,
+                    frames,
+                    variant_tag_from_path(rel),
                 )
+            )
+            for f in findings:
+                prefix = "SHIP" if f.hull in index.ship_hulls else "EQUIPMENT"
                 results.append(
                     Issue(
-                        severity=Severity.ERROR,
-                        category=labels[f.kind],
+                        severity=(
+                            Severity.WARNING
+                            if f.kind in ADVISORY_KINDS
+                            else Severity.ERROR
+                        ),
+                        category=f"{prefix} VARIANT: {KIND_LABELS[f.kind]}",
                         message=f.message,
                         file=rel,
                         line=f.line,
@@ -3717,6 +3932,120 @@ class Validator(BaseValidator):
             results,
             "✓ All created variants match their hull slot rules",
             "Created variant modules invalid for their hull slot:",
+        )
+
+    def _variant_reference_data(self):
+        """Name groups, entity names (None without entity files), and role strips."""
+        name_groups = {}
+        for filepath in self._collect_files(
+            ["common/units/names_ships/*.txt"], ignore_staged=True
+        ):
+            text = blank_comments(_read_text(filepath, self.mod_path))
+            for group, lo, hi, _ in _iter_blocks(text, 0, len(text)):
+                name_groups[group] = _named_type_tokens(text, lo, hi, "for_countries")
+        entities = None
+        if os.path.isdir(os.path.join(self.mod_path, "gfx", "entities")):
+            entities = set()
+            for root in ("entities", "models"):
+                for extension in ("asset", "gfx"):
+                    for filepath in list_files(
+                        os.path.join(self.mod_path, "gfx", root), (f"*.{extension}",)
+                    ):
+                        raw = _read_text(filepath, self.mod_path)
+                        entities |= disk_cache.per_file_cached_by_content(
+                            self.mod_path,
+                            "oob_units.entity_names",
+                            filepath,
+                            raw,
+                            partial(entity_names_from_text, raw),
+                        )
+            with open(_VANILLA_ENTITIES, encoding="utf-8") as handle:
+                entities.update(
+                    line.strip()
+                    for line in handle
+                    if line.strip() and not line.startswith("#")
+                )
+        frames = role_strip_frames(
+            _read_text(filepath, self.mod_path)
+            for filepath in self._collect_files(["interface/*.gfx"], ignore_staged=True)
+        )
+        return name_groups, entities, frames
+
+    def validate_start_variants(self):
+        """Check variants a start OOB or country history consumes exist at start.
+
+        The engine defers a variant until its type is researched unless it sets
+        `allow_without_tech`, and event or decision variants come later still, so
+        the bookmark loads equipment that does not exist yet. Cross-file, so it
+        runs on full scans only.
+        """
+        if self.staged_only:
+            return
+        self._log_section("Checking variants consumed at the game start...")
+        context = VariantContext()
+        for filepath in self._collect_files(
+            [
+                "history/countries/*.txt",
+                "common/bookmarks/*.txt",
+                "common/scripted_effects/*.txt",
+            ],
+            ignore_staged=True,
+        ):
+            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
+            context.documents[rel] = script_nodes(_read_text(filepath, self.mod_path))
+        context.index()
+        if not context.start:
+            self.log("  No bookmark start date — skipping")
+            return
+
+        unlocks: Dict[str, Set[str]] = {}
+        for filepath in self._collect_files(
+            ["common/technologies/**/*.txt"], ignore_staged=True
+        ):
+            for equipment, techs in equipment_unlocks(
+                _read_text(filepath, self.mod_path)
+            ).items():
+                unlocks.setdefault(equipment, set()).update(techs)
+        units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
+        hull_sources = (
+            self.cached(
+                "equipment_hull_index", lambda: build_equipment_index(units_dir)
+            ).hull_sources
+            if os.path.isdir(units_dir)
+            else {}
+        )
+
+        consumers = [
+            rel for rel in context.documents if rel.startswith("history/countries/")
+        ]
+        consumers.extend(
+            f"history/units/{name}.txt"
+            for name in sorted(
+                _start_oob_names(
+                    (
+                        nodes
+                        for rel, nodes in context.documents.items()
+                        if rel.startswith("history/countries/")
+                    ),
+                    context.start,
+                )
+            )
+        )
+        results = check_start_variant_consumers(
+            (
+                (rel, _read_text(os.path.join(self.mod_path, rel), self.mod_path))
+                for rel in consumers
+                if os.path.isfile(os.path.join(self.mod_path, rel))
+            ),
+            self._get_variant_registry(),
+            context,
+            unlocks,
+            hull_sources,
+        )
+        self._report(
+            results,
+            "✓ Variants consumed at the game start exist then",
+            "Variants consumed at the game start that do not exist yet:",
         )
 
     def validate_oob_variant_references(self):
@@ -3846,6 +4175,7 @@ class Validator(BaseValidator):
                     )
 
         if need_named_variants:
+            default_model_names = set(default_equipment_names.values())
             for filepath in named_files:
                 content = _read_text(filepath, self.mod_path)
                 if not any(
@@ -3875,6 +4205,18 @@ class Validator(BaseValidator):
                                 if finding.kind == "unknown_named_variant"
                                 else Severity.ERROR
                             ),
+                            category=_VARIANT_REF_CATEGORIES[finding.kind],
+                            message=finding.message,
+                            file=rel,
+                            line=finding.line,
+                        )
+                    )
+                for finding in check_any_creator_stockpiles(
+                    content, variant_registry, default_model_names
+                ):
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
                             category=_VARIANT_REF_CATEGORIES[finding.kind],
                             message=finding.message,
                             file=rel,
@@ -4204,6 +4546,7 @@ class Validator(BaseValidator):
         self.validate_created_variant_modules()
         self.validate_duplicate_variant_creations()
         self.validate_oob_variant_references()
+        self.validate_start_variants()
         self.validate_load_oob_references()
         self.validate_created_units()
         self.validate_airborne_templates()
