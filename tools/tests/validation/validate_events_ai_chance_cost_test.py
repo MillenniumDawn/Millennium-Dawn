@@ -1584,6 +1584,13 @@ _UNNEEDED_CASES = {
         [],
     ),
     "costly idea": (_unneeded_start("add_ideas = TAG_army_reform"), []),
+    "unknown idea": (_unneeded_start("add_ideas = TAG_missing"), []),
+    "unknown replacement": (
+        _unneeded_start(
+            "swap_ideas = { remove_idea = TAG_army_reform add_idea = TAG_missing }"
+        ),
+        [],
+    ),
     "idea that saves money": (
         _unneeded_start("add_ideas = TAG_lean_army"),
         _NO_COST_ROW,
@@ -1615,6 +1622,24 @@ _UNNEEDED_CASES = {
 )
 def test_unneeded_treasury_checks(text, expected):
     assert _weights(text)[1] == expected
+
+
+@pytest.mark.parametrize(
+    ("receiver", "expected"),
+    [(None, []), ("GER", []), ("FRA", _TAGGED_NO_COST_ROW)],
+)
+def test_scripted_literal_payer_with_unknown_or_known_receiver(receiver, expected):
+    bodies = {"partner_spends": "GER = { add_ideas = TAG_army_reform }"}
+    lookups = CostLookups({}, {}, money_commitment_effects(bodies, _IDEAS), _IDEAS)
+    text = _unneeded_start("partner_spends = yes")
+    if receiver:
+        text = text.replace(
+            "id = foo.1", f"id = foo.1\n\ttrigger = {{ tag = {receiver} }}"
+        )
+    payments = resolve_payments(
+        event_payment_nodes(text, lookups), effect_payment_nodes(bodies, lookups)
+    )
+    assert find_option_cost_weights(text, lookups, payments)[1] == expected
 
 
 def test_mixed_costs_report_only_the_uncovered_kind():

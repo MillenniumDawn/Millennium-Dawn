@@ -78,7 +78,8 @@ MONEY_MODIFIER_RE = re.compile(
 )
 # Not a modifier: the spending law level an idea sets, which costs more as it rises.
 SPENDING_LEVEL = "spending_level"
-_SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*(\d+)")
+_UNKNOWN_MONEY_MODIFIER = "_unknown_money_modifier"
+_SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*([^\s}]+)")
 _LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
 _IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
 _TOOLTIP_VARIABLE_KEYS = frozenset({"add_to_variable", "subtract_from_variable"})
@@ -494,7 +495,8 @@ def money_modifier_raises_cost(name: str, value: Decimal) -> bool:
 
 def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
     """Idea name -> its literal money modifiers and SPENDING_LEVEL, for every idea
-    with one. *texts* are common/ideas files with comments stripped."""
+    including those without one. *texts* are common/ideas files with comments stripped.
+    """
     ideas: Dict[str, Dict[str, Decimal]] = {}
     for text in texts:
         for key, _value, groups in iter_statements(blank_quoted_strings(text)):
@@ -513,12 +515,28 @@ def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
                                 and MONEY_MODIFIER_RE.fullmatch(modifier)
                                 and _LITERAL_RE.fullmatch(amount)
                             )
+                            if any(
+                                nested is None
+                                and amount
+                                and MONEY_MODIFIER_RE.fullmatch(modifier)
+                                and not _LITERAL_RE.fullmatch(amount)
+                                for modifier, amount, nested in iter_statements(block)
+                            ):
+                                money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
                         elif field == "on_add" and block is not None:
-                            level = _SPENDING_LEVEL_RE.search(block)
-                            if level:
-                                money[SPENDING_LEVEL] = Decimal(level.group(1))
-                    if money:
-                        ideas[name] = money
+                            levels = _SPENDING_LEVEL_RE.findall(block)
+                            if levels:
+                                if all(
+                                    _LITERAL_RE.fullmatch(value) for value in levels
+                                ):
+                                    values = {Decimal(value) for value in levels}
+                                    if len(values) == 1:
+                                        money[SPENDING_LEVEL] = values.pop()
+                                    else:
+                                        money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+                                else:
+                                    money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+                    ideas[name] = money
     return ideas
 
 
@@ -586,7 +604,9 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
     delta: Dict[str, Decimal] = {}
     for sign, names in ((1, added), (-1, removed)):
         for idea in names:
-            for modifier, level in ideas.get(idea, {}).items():
+            if idea not in ideas or _UNKNOWN_MONEY_MODIFIER in ideas[idea]:
+                return True
+            for modifier, level in ideas[idea].items():
                 delta[modifier] = delta.get(modifier, Decimal(0)) + sign * level
     return any(money_modifier_raises_cost(name, net) for name, net in delta.items())
 

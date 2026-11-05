@@ -117,12 +117,18 @@ _IDEAS = VC.idea_money_modifiers(
         "ideas = { bureaucracy = {\n"
         "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
         "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+        "\tbureau_dynamic = { on_add = { set_temp_variable = { spending_new_level = var:level } } }\n"
+        "\tbureau_multiple = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = var:level } } } }\n"
+        "\tbureau_conditional = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = 2 } } } }\n"
         "}\n"
         "country = {\n"
         "\tTAG_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
         "\tTAG_reform_2 = { modifier = { personnel_cost_multiplier_modifier = 0.2 } }\n"
         "\tTAG_lean = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
         "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+        "\tTAG_dynamic = { modifier = { personnel_cost_multiplier_modifier = TAG_value } }\n"
         "\tTAG_tax_speed = { modifier = { tax_rate_change_multiplier_modifier = 0.5 } }\n"
         "} }\n"
     ]
@@ -133,9 +139,15 @@ def test_idea_money_modifiers_keep_money_and_spending_levels():
     assert _IDEAS == {
         "bureau_01": {VC.SPENDING_LEVEL: 1},
         "bureau_02": {VC.SPENDING_LEVEL: 2},
+        "bureau_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "bureau_multiple": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "bureau_conditional": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
         "TAG_reform": {"personnel_cost_multiplier_modifier": Decimal("0.1")},
         "TAG_reform_2": {"personnel_cost_multiplier_modifier": Decimal("0.2")},
         "TAG_lean": {"personnel_cost_multiplier_modifier": Decimal("-0.1")},
+        "TAG_drill": {},
+        "TAG_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "TAG_tax_speed": {},
     }
 
 
@@ -231,7 +243,16 @@ _MONEY_COMMITMENT_CASES = {
     "costly idea removed": ("remove_ideas = TAG_reform", False),
     "non-economic idea": ("add_ideas = TAG_drill", False),
     "tax rate change price idea": ("add_ideas = TAG_tax_speed", False),
-    "unknown idea": ("add_ideas = TAG_missing", False),
+    "unknown idea": ("add_ideas = TAG_missing", True),
+    "unknown swap replacement": (
+        "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_missing }",
+        True,
+    ),
+    "unknown removed idea": ("remove_ideas = TAG_missing", True),
+    "dynamic idea modifier": ("add_ideas = TAG_dynamic", True),
+    "dynamic spending level": ("add_ideas = bureau_dynamic", True),
+    "multiple spending levels": ("add_ideas = bureau_multiple", True),
+    "conditional spending levels": ("add_ideas = bureau_conditional", True),
 }
 
 
