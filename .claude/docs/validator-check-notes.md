@@ -801,6 +801,24 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
 
+## validate_special_projects.py
+
+- A project's `visible`, `available`, and `special_project_parent` decide what
+  unlocks it. `OR` branches and if/else branches are separate ways in; a lone `if`
+  body is required. `NOT`, `NOR`, `NAND`, `count_triggers`, and `limit` never are.
+  Tag, flag, and building checks are ignored, so a branch with only those does not
+  excuse the others.
+- `sp-unlock-tooltip-missing` (WARNING): no member of a way in shows
+  `SP_UNLOCK_PROJECT` for the project. One member is enough. A parent project's
+  `project_output` tooltip and a focus's `complete_special_project` count. Ways with
+  no tech or focus, such as parent-only or flag-only projects, are skipped.
+- `sp-unlock-tooltip-misplaced` (WARNING): the tooltip names a project its tech,
+  focus, or project does not unlock, or a project that does not exist. `PROJECT`
+  takes the bare id; `sp:` reads as unknown.
+- Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
+  tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
+  not checked.
+
 ## validate_scripted_params.py
 
 - Contracts come from the `# Parameters:` block above a scripted effect, plus the
