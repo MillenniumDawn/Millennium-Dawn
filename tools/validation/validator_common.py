@@ -79,6 +79,7 @@ MONEY_MODIFIER_RE = re.compile(
 # Not a modifier: the spending law level an idea sets, which costs more as it rises.
 SPENDING_LEVEL = "spending_level"
 _UNKNOWN_MONEY_MODIFIER = "_unknown_money_modifier"
+_IDEA_CALLBACK = "_idea_callback"
 _SPENDING_LEVEL_RE = re.compile(r"\bspending_new_level\s*=\s*([^\s}]+)")
 _LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
 _IDEA_LIST_KEYS = frozenset({"add_ideas", "remove_ideas"})
@@ -523,7 +524,10 @@ def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
                                 for modifier, amount, nested in iter_statements(block)
                             ):
                                 money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
-                        elif field == "on_add" and block is not None:
+                        elif field in {"on_add", "on_remove"} and block is not None:
+                            money[_IDEA_CALLBACK] = Decimal(0)
+                            if field == "on_remove":
+                                continue
                             levels = _SPENDING_LEVEL_RE.findall(block)
                             if levels:
                                 if all(
@@ -557,6 +561,18 @@ def _is_money_tooltip(value: str) -> bool:
     return value.endswith("_tt") and bool(MONEY_MODIFIER_RE.fullmatch(value[:-3]))
 
 
+def _required_readded_idea(body: str) -> Optional[str]:
+    statements = list(iter_statements(body))
+    if len(statements) != 2:
+        return None
+    (key, _value, limit), (effect, idea, nested) = statements
+    if key != "limit" or limit is None or effect != "add_ideas" or nested is not None:
+        return None
+    if idea and ("has_idea", idea, None) in iter_statements(limit):
+        return idea
+    return None
+
+
 def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) -> bool:
     added: List[str] = []
     removed: List[str] = []
@@ -574,6 +590,12 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
                 )
             ):
                 return True
+        elif key == "if" and (idea := _required_readded_idea(block)):
+            if idea not in ideas or (
+                {_UNKNOWN_MONEY_MODIFIER, _IDEA_CALLBACK} & ideas[idea].keys()
+            ):
+                return True
+            continue
         elif key in _IDEA_LIST_KEYS:
             (added if key == "add_ideas" else removed).extend(block.split())
         elif key in ("add_timed_idea", "swap_ideas"):
@@ -607,6 +629,8 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
             if idea not in ideas or _UNKNOWN_MONEY_MODIFIER in ideas[idea]:
                 return True
             for modifier, level in ideas[idea].items():
+                if modifier == _IDEA_CALLBACK:
+                    continue
                 delta[modifier] = delta.get(modifier, Decimal(0)) + sign * level
     return any(money_modifier_raises_cost(name, net) for name, net in delta.items())
 

@@ -128,6 +128,8 @@ _IDEAS = VC.idea_money_modifiers(
         "\tTAG_reform_2 = { modifier = { personnel_cost_multiplier_modifier = 0.2 } }\n"
         "\tTAG_lean = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
         "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+        "\tTAG_on_add = { on_add = { add_to_variable = { treasury = -10 } } }\n"
+        "\tTAG_on_remove = { on_remove = { add_to_variable = { treasury = -10 } } }\n"
         "\tTAG_dynamic = { modifier = { personnel_cost_multiplier_modifier = TAG_value } }\n"
         "\tTAG_tax_speed = { modifier = { tax_rate_change_multiplier_modifier = 0.5 } }\n"
         "} }\n"
@@ -137,15 +139,26 @@ _IDEAS = VC.idea_money_modifiers(
 
 def test_idea_money_modifiers_keep_money_and_spending_levels():
     assert _IDEAS == {
-        "bureau_01": {VC.SPENDING_LEVEL: 1},
-        "bureau_02": {VC.SPENDING_LEVEL: 2},
-        "bureau_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
-        "bureau_multiple": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
-        "bureau_conditional": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "bureau_01": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 1},
+        "bureau_02": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 2},
+        "bureau_dynamic": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_multiple": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_conditional": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
         "TAG_reform": {"personnel_cost_multiplier_modifier": Decimal("0.1")},
         "TAG_reform_2": {"personnel_cost_multiplier_modifier": Decimal("0.2")},
         "TAG_lean": {"personnel_cost_multiplier_modifier": Decimal("-0.1")},
         "TAG_drill": {},
+        "TAG_on_add": {VC._IDEA_CALLBACK: 0},
+        "TAG_on_remove": {VC._IDEA_CALLBACK: 0},
         "TAG_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
         "TAG_tax_speed": {},
     }
@@ -243,6 +256,39 @@ _MONEY_COMMITMENT_CASES = {
     "costly idea removed": ("remove_ideas = TAG_reform", False),
     "non-economic idea": ("add_ideas = TAG_drill", False),
     "tax rate change price idea": ("add_ideas = TAG_tax_speed", False),
+    "immediately readded held idea": (
+        "if = { limit = { has_idea = TAG_reform } add_ideas = TAG_reform }",
+        False,
+    ),
+    "unrelated prerequisite": (
+        "if = { limit = { has_idea = TAG_lean } add_ideas = TAG_reform }",
+        True,
+    ),
+    "negated prerequisite": (
+        "if = { limit = { NOT = { has_idea = TAG_reform } } add_ideas = TAG_reform }",
+        True,
+    ),
+    "held free modifier idea with on_add": (
+        "if = { limit = { has_idea = TAG_on_add } add_ideas = TAG_on_add }",
+        True,
+    ),
+    "held idea with on_remove": (
+        "if = { limit = { has_idea = TAG_on_remove } add_ideas = TAG_on_remove }",
+        True,
+    ),
+    "held idea with on_add": (
+        "if = { limit = { has_idea = bureau_02 } add_ideas = bureau_02 }",
+        True,
+    ),
+    "unknown required idea": (
+        "if = { limit = { has_idea = TAG_missing } add_ideas = TAG_missing }",
+        True,
+    ),
+    "intervening other idea removal": (
+        "if = { limit = { has_idea = TAG_reform } remove_ideas = TAG_lean "
+        "add_ideas = TAG_reform }",
+        True,
+    ),
     "unknown idea": ("add_ideas = TAG_missing", True),
     "unknown swap replacement": (
         "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_missing }",

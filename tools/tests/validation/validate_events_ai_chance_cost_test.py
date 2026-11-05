@@ -1583,6 +1583,19 @@ _UNNEEDED_CASES = {
         _SENT + _reply("declare_war_on = { target = FROM type = annex_everything }"),
         [],
     ),
+    "immediately readded held idea": (
+        _unneeded_start(
+            "if = { limit = { has_idea = TAG_army_reform } add_ideas = TAG_army_reform }"
+        ),
+        _NO_COST_ROW,
+    ),
+    "readded held idea with another cost": (
+        _unneeded_start(
+            "if = { limit = { has_idea = TAG_army_reform } add_ideas = TAG_army_reform } "
+            "small_expenditure = yes"
+        ),
+        [],
+    ),
     "costly idea": (_unneeded_start("add_ideas = TAG_army_reform"), []),
     "unknown idea": (_unneeded_start("add_ideas = TAG_missing"), []),
     "unknown replacement": (
@@ -1640,6 +1653,20 @@ def test_scripted_literal_payer_with_unknown_or_known_receiver(receiver, expecte
         event_payment_nodes(text, lookups), effect_payment_nodes(bodies, lookups)
     )
     assert find_option_cost_weights(text, lookups, payments)[1] == expected
+
+
+def test_scripted_effect_readding_required_idea_is_not_a_new_cost():
+    bodies = {
+        "readd_reform": (
+            "if = { limit = { has_idea = TAG_army_reform } add_ideas = TAG_army_reform }"
+        )
+    }
+    lookups = CostLookups({}, {}, money_commitment_effects(bodies, _IDEAS), _IDEAS)
+    text = _unneeded_start("readd_reform = yes")
+    payments = resolve_payments(
+        event_payment_nodes(text, lookups), effect_payment_nodes(bodies, lookups)
+    )
+    assert find_option_cost_weights(text, lookups, payments)[1] == _NO_COST_ROW
 
 
 def test_mixed_costs_report_only_the_uncovered_kind():

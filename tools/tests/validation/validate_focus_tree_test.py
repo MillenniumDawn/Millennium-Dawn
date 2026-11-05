@@ -2063,6 +2063,13 @@ _GUARD_REPORT_CASES = {
         "modifier = { factor = 0.5 ai_has_high_deficit = yes }",
         [_UNNEEDED_TREASURY_CHECK],
     ),
+    "guard on an immediately readded held idea": (
+        "",
+        "",
+        "if = { limit = { has_idea = TAG_army_reform } add_ideas = TAG_army_reform }",
+        BANKRUPTCY_GUARD,
+        [_UNNEEDED_TREASURY_CHECK],
+    ),
     "guard on an idea that raises a cost": (
         "",
         "",
