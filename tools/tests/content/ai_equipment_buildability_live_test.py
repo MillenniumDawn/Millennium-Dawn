@@ -184,3 +184,49 @@ def test_live_module_claim_tracks_its_enabling_technology(
     assert records
     claim = f"{module} requires {technology}"
     assert any(claim in record["reason"] for record in records) is not researched
+
+
+def test_naval_technology_transitions(live_equipment_index):
+    from ai_equipment_buildability import _truth, _weight
+
+    designs = [
+        design
+        for path in (REPO_ROOT / "common/ai_equipment").glob("*.txt")
+        for design in parse_designs(path.read_text(encoding="utf-8-sig"), str(path))
+    ]
+
+    def active(design, techs, country):
+        def truth(nodes):
+            return _truth(nodes, techs, set(), {}, country, (2050, 1, 1, 0))
+
+        return all(
+            (weight := _weight(priority, truth)) is not None and weight[0] > 0
+            for priority in design.priorities
+        )
+
+    carriers = [d for d in designs if d.group == "CHI_carriers"]
+    hull2 = next(d for d in carriers if d.hull == "carrier_hull_2")
+    hull3 = next(d for d in carriers if d.hull == "carrier_hull_3")
+    assert hull3.slots == hull2.slots
+    assert not check_target_variants(
+        (REPO_ROOT / "common/ai_equipment/CHI_naval.txt").read_text(encoding="utf-8"),
+        live_equipment_index,
+    )
+    assert active(hull3, {"carrier_hull_1", "carrier_hull_2", "carrier_hull_3"}, "CHI")
+    assert not active(
+        hull3,
+        {"carrier_hull_1", "carrier_hull_2", "carrier_hull_3", "carrier_hull_4"},
+        "CHI",
+    )
+
+    techs = {f"frigate_hull_{tier}" for tier in range(1, 7)}
+    for (
+        country
+    ) in "AST BRA CAN CHI DEN EGY ENG FRA GER GRE HOL IND ITA JAP KOR NKO POR RAJ SIA SOV SWE USA".split():
+        assert any(
+            country in design.users
+            and "naval_frigate" in design.roles
+            and design.hull == "frigate_hull_5"
+            and active(design, techs, country)
+            for design in designs
+        ), country
