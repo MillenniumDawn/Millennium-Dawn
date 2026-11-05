@@ -84,6 +84,28 @@ _RANDOM_INFRASTRUCTURE_CASES = {
         "add_building_construction = { type = infrastructure level = 1 } }",
         1,
     ),
+    "controlled state": (
+        "random_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "owned controlled state": (
+        "random_owned_controlled_state = { limit = { infrastructure_random_build_loc = yes } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "core state": (
+        "random_core_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "controlled subset": (
+        "every_controlled_state = { random_select_amount = 1 "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "all controlled states": (
+        "every_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
     "all states": (
         "every_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
         0,
@@ -125,6 +147,26 @@ def test_random_infrastructure_slots(script, count):
     scanner = V.Scanner(V._sanitize(script))
     scanner.check_random_infrastructure_slots(0, len(scanner.text))
     assert len(scanner.findings) == count
+
+
+@pytest.mark.parametrize(
+    "limit,has_bound",
+    [
+        ("infrastructure < 5", True),
+        ("AND = { infrastructure <= 4 }", True),
+        ("OR = { infrastructure < 5 always = yes }", False),
+        ("any_owned_state = { infrastructure < 5 }", False),
+    ],
+)
+def test_level_bounds_are_reported_without_suppressing_warning(limit, has_bound):
+    script = (
+        f"random_owned_state = {{ limit = {{ {limit} }} "
+        "add_building_construction = { type = infrastructure level = 1 } }"
+    )
+    scanner = V.Scanner(V._sanitize(script))
+    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+    assert len(scanner.findings) == 1
+    assert ("a level bound is present" in scanner.findings[0][2]) is has_bound
 
 
 # --- unguarded effects --------------------------------------------------

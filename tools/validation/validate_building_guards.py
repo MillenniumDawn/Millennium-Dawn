@@ -52,8 +52,9 @@ state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
 
 The advisory random-infrastructure check only covers direct construction effects
-in random_owned_state and every_owned_state with random_select_amount. It looks
-for a recognized slot check in the selector's own limit, not arbitrary guards.
+in selected random-state iterators and randomly limited every-state iterators.
+It looks for a recognized slot check in the selector's own limit, not arbitrary
+guards.
 """
 
 import os
@@ -85,6 +86,16 @@ _QUANTIFIER_SCOPE_RE = re.compile(r"^(?:any|all)_")
 # Scopes that pick their own state, so an outer guard says nothing about them.
 _STATE_SELECTOR_RE = re.compile(r"^(?:random|every)_\w*state\w*$")
 _RANDOM_SELECT_RE = re.compile(r"\brandom_select_amount\s*=")
+_RANDOM_STATE_SELECTORS = frozenset(
+    {
+        "random_owned_state",
+        "random_controlled_state",
+        "random_owned_controlled_state",
+        "random_core_state",
+    }
+)
+_RANDOM_SUBSET_SELECTORS = frozenset({"every_owned_state", "every_controlled_state"})
+_CHECKED_RANDOM_SELECTORS = _RANDOM_STATE_SELECTORS | _RANDOM_SUBSET_SELECTORS
 _INFRASTRUCTURE_GUARD_RE = re.compile(r"\binfrastructure_random_build_loc\s*=\s*yes\b")
 _SLOT_BUILDING_RE = re.compile(r"\bbuilding\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _SLOT_COUNT_RE = re.compile(r"\bsize\s*(>=|==|>|<=|!=|<)\s*(-?\d+)(?![\w.])")
@@ -267,6 +278,18 @@ def _has_infrastructure_slot_guard(text: str) -> bool:
     return bool(_INFRASTRUCTURE_GUARD_RE.search(text, cursor))
 
 
+def _has_infrastructure_level_bound(text: str) -> bool:
+    """Find a same-state upper bound without inferring that a slot is free."""
+    if "infrastructure" in _comparisons_outside_blocks(
+        text, lambda op, _: op in ("<", "<=")
+    ):
+        return True
+    return any(
+        name.lower() == "and" and _has_infrastructure_level_bound(text[start:end])
+        for name, _, start, end in _child_blocks(text, 0, len(text))
+    )
+
+
 class Scanner:
     """Walks one file's script tree, tracking buildings proven present."""
 
@@ -290,17 +313,15 @@ class Scanner:
         if (
             "add_building_construction" not in text
             or "infrastructure" not in text
-            or not any(
-                name in text for name in ("random_owned_state", "every_owned_state")
-            )
+            or not any(name in text for name in _CHECKED_RANDOM_SELECTORS)
         ):
             return
         for name, _, body_start, body_end in _child_blocks(self.text, start, end):
             if name in _SKIP_BLOCKS or name == "modifier":
                 continue
             blocks = _child_blocks(self.text, body_start, body_end)
-            selected = name == "random_owned_state"
-            if name == "every_owned_state":
+            selected = name in _RANDOM_STATE_SELECTORS
+            if name in _RANDOM_SUBSET_SELECTORS:
                 # Only a direct random_select_amount field applies to this iterator.
                 direct = _direct_text(self.text, body_start, body_end, blocks)
                 selected = bool(_RANDOM_SELECT_RE.search(direct))
@@ -311,6 +332,11 @@ class Scanner:
                     for child, _, c_start, c_end in blocks
                 )
                 if not guarded:
+                    level_bound = any(
+                        child == "limit"
+                        and _has_infrastructure_level_bound(self.text[c_start:c_end])
+                        for child, _, c_start, c_end in blocks
+                    )
                     for child, _, c_start, c_end in blocks:
                         if child != "add_building_construction":
                             continue
@@ -321,8 +347,14 @@ class Scanner:
                                 (
                                     "random-infrastructure-slot-guard",
                                     line,
-                                    "randomly selected owned state builds infrastructure "
-                                    "without a recognized slot guard in its limit",
+                                    "randomly selected state builds infrastructure "
+                                    "without a recognized slot guard in its limit"
+                                    + (
+                                        "; a level bound is present but slot availability "
+                                        "is not verified"
+                                        if level_bound
+                                        else ""
+                                    ),
                                 )
                             )
             self.check_random_infrastructure_slots(body_start, body_end)
@@ -390,7 +422,7 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
     has_random_infrastructure = (
         "add_building_construction" in raw
         and "infrastructure" in raw
-        and any(name in raw for name in ("random_owned_state", "every_owned_state"))
+        and any(name in raw for name in _CHECKED_RANDOM_SELECTORS)
     )
     if not has_existing_checks and not has_random_infrastructure:
         return []
@@ -405,7 +437,7 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan_v6", filepath, raw, compute
+        mod_path, "building_guards_scan_v7", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
@@ -444,7 +476,7 @@ class Validator(BaseValidator):
             [row for row in rows if row[0] == "random-infrastructure-slot-guard"],
             self.add_warning,
             "random infrastructure construction(s) without a recognized slot guard",
-            "Checked random owned-state infrastructure constructions have recognized slot guards",
+            "Checked random-state infrastructure constructions have recognized slot guards",
         )
 
     def run_validations(self):

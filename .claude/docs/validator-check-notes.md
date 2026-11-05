@@ -80,13 +80,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
 - `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
-  in `random_owned_state`, or `every_owned_state` with `random_select_amount`, has no
-  recognized slot guard in the selector's own `limit`. It recognizes
+  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+  or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
+  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
   `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
-  with `size > 0` or `size >= 1`, including inside `AND`. Other guards, such as a direct
-  infrastructure level cap, may produce warnings. Nested effects and other buildings or
-  selectors are not checked, and a guard for one slot does not prove that every level
-  requested will fit. The backlog is tracked by #6390.
+  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
+  upper bound is noted in the warning, but does not suppress it: a level bound alone
+  does not establish slot availability. Nested effects and other buildings or selectors
+  are not checked, and a guard for one slot does not prove that every level requested
+  will fit. The backlog is tracked by #6390.
 
 ## validate_characters.py
 
