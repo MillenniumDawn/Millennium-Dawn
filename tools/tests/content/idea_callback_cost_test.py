@@ -9,7 +9,10 @@ from validate_events import (
     chooser_costs,
     costly_scripted_effects,
     effect_payment_nodes,
+    event_payment_nodes,
     idea_callbacks,
+    item_facts,
+    item_payers,
     money_commitment_effects,
     resolve_payments,
 )
@@ -41,7 +44,10 @@ def graph():
         ideas,
         idea_callbacks(texts),
     )
-    return lookups, resolve_payments({}, effect_payment_nodes(bodies, lookups))
+    iran = strip_comments((ROOT / "events/Iran.txt").read_text(encoding="utf-8-sig"))
+    return lookups, resolve_payments(
+        event_payment_nodes(iran, lookups), effect_payment_nodes(bodies, lookups)
+    )
 
 
 @pytest.mark.parametrize(
@@ -64,3 +70,57 @@ def test_live_bureaucracy_cut_still_has_no_modifier_increase(graph):
     lookups, _payments = graph
     effect = "swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }"
     assert not script_commits_money(effect, lookups.ideas)
+
+
+@pytest.mark.parametrize(
+    ("context", "change"),
+    [
+        ("", "remove_idea = bureau_02 add_idea = bureau_01"),
+        (
+            "set_country_flag = spending_law_scripted_change",
+            "remove_idea = bureau_02 add_idea = bureau_01",
+        ),
+        (
+            "set_country_flag = spending_law_scripted_change set_country_flag = spending_law_bill_passed",
+            "remove_idea = bureau_02 add_idea = bureau_01",
+        ),
+        (
+            "set_country_flag = spending_law_scripted_change set_country_flag = spending_law_bill_forced",
+            "remove_idea = bureau_02 add_idea = bureau_01",
+        ),
+        (
+            "set_variable = { bureau_law = 4 }",
+            "remove_idea = bureau_02 add_idea = bureau_01",
+        ),
+        ("", "remove_idea = bureau_01 add_idea = bureau_02"),
+    ],
+    ids=[
+        "unknown",
+        "scripted",
+        "bill-passed",
+        "bill-forced",
+        "stale-level",
+        "increase",
+    ],
+)
+def test_budget_callback_context_does_not_prove_no_cost(graph, context, change):
+    lookups, payments = graph
+    text = f"{context} swap_ideas = {{ {change} }}"
+    assert "money" in chooser_costs(text, lookups, payments, frozenset({"FRA"}))
+
+
+def test_foreign_budget_callback_preserves_payer_and_unknown_roles(graph):
+    lookups, payments = graph
+    effect = "GER = { swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 } }"
+    roles = item_payers(item_facts(effect, lookups, frozenset({"FRA"})), payments)
+    assert "money" in roles["GER"]
+    assert "money" not in roles.get("ROOT", set())
+    assert "uncertain" in roles["?"]
+
+
+def test_iran_budget_protest_can_charge_political_power(graph):
+    _lookups, payments = graph
+    charged, picked = payments.events["PER_majlis.31"]
+    assert "political power" in charged["ROOT"]
+    assert "uncertain" in picked["ROOT"]
+    assert "PER" in payments.effects["@idea:on_add:bureau_01"]
