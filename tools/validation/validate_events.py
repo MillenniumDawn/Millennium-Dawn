@@ -1578,13 +1578,13 @@ def _costly_effects(bodies: Dict[str, str]) -> Dict[str, str]:
 def money_commitment_effects(
     bodies: Dict[str, str], ideas: Dict[str, Dict[str, Decimal]]
 ) -> Set[str]:
-    """Scripted effects that commit money, and their callers.
-
-    `bodies` maps each scripted effect to its whole body. See script_commits_money.
-    """
+    """Scripted effects that commit their caller's money, and their callers."""
+    own = {
+        name: split_roles(body, top=_THIS)[0][_THIS] for name, body in bodies.items()
+    }
     return _with_callers(
-        {name for name, body in bodies.items() if script_commits_money(body, ideas)},
-        bodies,
+        {name for name, body in own.items() if script_commits_money(body, ideas)},
+        own,
     )
 
 

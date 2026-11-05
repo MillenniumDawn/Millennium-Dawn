@@ -15,6 +15,7 @@ from validate_events import (
     Validator,
     _add_extra_args,
     _scripted_effect_bodies,
+    chooser_costs,
     costly_scripted_effects,
     effect_payment_nodes,
     event_payment_nodes,
@@ -1700,3 +1701,45 @@ def test_preview_temp_writes_do_not_change_the_executed_cost(actual, preview, ex
         "\t\tmodify_treasury_effect = yes\n" + _FLAT
     )
     assert [found[0] for found in _found(_two_options(body))] == expected
+
+
+@pytest.mark.parametrize(
+    ("body", "expected_payer", "chooser_pays"),
+    [
+        ("FROM = { add_ideas = TAG_army_reform }", "FROM", False),
+        ("FROM = { own_spending = yes }", "FROM", False),
+        ("own_spending = yes", "THIS", True),
+        ("declare_war_on = { target = GER type = annex_everything }", "THIS", True),
+        (
+            "FROM = { declare_war_on = { target = GER type = annex_everything } }",
+            "FROM",
+            False,
+        ),
+        (
+            "if = { modifier = { operational_cost_multiplier_modifier = 0.2 } }",
+            "THIS",
+            True,
+        ),
+        (
+            "FROM = { modifier = { operational_cost_multiplier_modifier = 0.2 } }",
+            "FROM",
+            False,
+        ),
+    ],
+)
+def test_scripted_idea_commitments_charge_the_right_country(
+    body, expected_payer, chooser_pays
+):
+    bodies = {
+        "own_spending": "add_ideas = TAG_army_reform",
+        "partner_spends": body,
+    }
+    lookups = CostLookups({}, {}, money_commitment_effects(bodies, _IDEAS), _IDEAS)
+    payments = resolve_payments({}, effect_payment_nodes(bodies, lookups))
+
+    if expected_payer == "FROM":
+        assert payments.effects["partner_spends"][expected_payer] == {"money"}
+    assert (
+        "money"
+        in chooser_costs("partner_spends = yes", lookups, payments, frozenset({"FRA"}))
+    ) == (chooser_pays)
