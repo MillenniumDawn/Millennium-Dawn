@@ -168,6 +168,12 @@ mission and halve it on a high deficit:
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
+A flat `base` makes the AI take the same decision every campaign. Weigh `ai_will_do`
+by the variable the decision changes, war, opinion, alliance, and the selected path,
+as in "Situation weights" in `event-reference.md`. Do not `factor = 0` the decision
+on a proxy that ignores that variable. If a block zeroes the weight, another legal
+pick must remain.
+
 ## Prices
 
 - A plain political power price goes in `cost = N`, not in an effect.
