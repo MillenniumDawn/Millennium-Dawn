@@ -494,53 +494,57 @@ def money_modifier_raises_cost(name: str, value: Decimal) -> bool:
     return value < 0
 
 
-def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
-    """Idea name -> its literal money modifiers and SPENDING_LEVEL, for every idea
-    including those without one. *texts* are common/ideas files with comments stripped.
-    """
-    ideas: Dict[str, Dict[str, Decimal]] = {}
+def iter_idea_bodies(texts: Iterable[str]) -> Iterable[Tuple[str, str]]:
+    """Yield idea names and bodies from comment-stripped idea files."""
     for text in texts:
         for key, _value, groups in iter_statements(blank_quoted_strings(text)):
             if key != "ideas" or groups is None:
                 continue
             for _group, _scalar, group in iter_statements(groups):
                 for name, _idea_value, idea in iter_statements(group or ""):
-                    money: Dict[str, Decimal] = {}
-                    for field, _field_value, block in iter_statements(idea or ""):
-                        if field == "modifier" and block is not None:
-                            money.update(
-                                (modifier, Decimal(amount))
-                                for modifier, amount, nested in iter_statements(block)
-                                if nested is None
-                                and amount
-                                and MONEY_MODIFIER_RE.fullmatch(modifier)
-                                and _LITERAL_RE.fullmatch(amount)
-                            )
-                            if any(
-                                nested is None
-                                and amount
-                                and MONEY_MODIFIER_RE.fullmatch(modifier)
-                                and not _LITERAL_RE.fullmatch(amount)
-                                for modifier, amount, nested in iter_statements(block)
-                            ):
-                                money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
-                        elif field in {"on_add", "on_remove"} and block is not None:
-                            money[_IDEA_CALLBACK] = Decimal(0)
-                            if field == "on_remove":
-                                continue
-                            levels = _SPENDING_LEVEL_RE.findall(block)
-                            if levels:
-                                if all(
-                                    _LITERAL_RE.fullmatch(value) for value in levels
-                                ):
-                                    values = {Decimal(value) for value in levels}
-                                    if len(values) == 1:
-                                        money[SPENDING_LEVEL] = values.pop()
-                                    else:
-                                        money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
-                                else:
-                                    money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
-                    ideas[name] = money
+                    yield name, idea or ""
+
+
+def idea_money_modifiers(texts: Iterable[str]) -> Dict[str, Dict[str, Decimal]]:
+    """Idea name -> its literal money modifiers and SPENDING_LEVEL, for every idea
+    including those without one. *texts* are common/ideas files with comments stripped.
+    """
+    ideas: Dict[str, Dict[str, Decimal]] = {}
+    for name, idea in iter_idea_bodies(texts):
+        money: Dict[str, Decimal] = {}
+        for field, _field_value, block in iter_statements(idea or ""):
+            if field == "modifier" and block is not None:
+                money.update(
+                    (modifier, Decimal(amount))
+                    for modifier, amount, nested in iter_statements(block)
+                    if nested is None
+                    and amount
+                    and MONEY_MODIFIER_RE.fullmatch(modifier)
+                    and _LITERAL_RE.fullmatch(amount)
+                )
+                if any(
+                    nested is None
+                    and amount
+                    and MONEY_MODIFIER_RE.fullmatch(modifier)
+                    and not _LITERAL_RE.fullmatch(amount)
+                    for modifier, amount, nested in iter_statements(block)
+                ):
+                    money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+            elif field in {"on_add", "on_remove"} and block is not None:
+                money[_IDEA_CALLBACK] = Decimal(0)
+                if field == "on_remove":
+                    continue
+                levels = _SPENDING_LEVEL_RE.findall(block)
+                if levels:
+                    if all(_LITERAL_RE.fullmatch(value) for value in levels):
+                        values = {Decimal(value) for value in levels}
+                        if len(values) == 1:
+                            money[SPENDING_LEVEL] = values.pop()
+                        else:
+                            money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+                    else:
+                        money[_UNKNOWN_MONEY_MODIFIER] = Decimal(0)
+        ideas[name] = money
     return ideas
 
 

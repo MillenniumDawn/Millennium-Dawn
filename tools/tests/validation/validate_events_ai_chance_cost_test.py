@@ -1918,31 +1918,19 @@ def test_callback_expiry_and_swap_use_relevant_callback_direction():
     assert "money" not in chooser_costs("remove_ideas = new", lookups, payments)
 
 
-def test_callback_uncertainty_is_recorded_separately():
+@pytest.mark.parametrize(
+    "callback",
+    [
+        "missing_effect = yes",
+        "country_event = bill.[id]",
+        "force_update_dynamic_modifier = yes",
+    ],
+    ids=["unknown helper", "dynamic event", "unclassified native effect"],
+)
+def test_unresolved_callback_outcome_is_uncertain(callback):
     idea_text = (
-        "ideas = { country = { TAG_callback = { on_add = { missing_effect = yes } } } }"
+        f"ideas = {{ country = {{ TAG_callback = {{ on_add = {{ {callback} }} }} }} }}"
     )
-    ideas = idea_money_modifiers([idea_text])
-    lookups = CostLookups(
-        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
-    )
-    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
-    assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}
-
-
-def test_unresolved_dynamic_callback_event_is_uncertain():
-    idea_text = "ideas = { country = { TAG_callback = { on_add = { country_event = bill.[id] } } } }"
-    ideas = idea_money_modifiers([idea_text])
-    lookups = CostLookups(
-        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
-    )
-    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
-    assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}
-
-
-@pytest.mark.parametrize("name", ["missing_effect", "force_update_dynamic_modifier"])
-def test_unresolved_callback_call_is_uncertain_even_for_unclassified_native(name):
-    idea_text = f"ideas = {{ country = {{ TAG_callback = {{ on_add = {{ {name} = yes }} }} }} }}"
     ideas = idea_money_modifiers([idea_text])
     lookups = CostLookups(
         {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])

@@ -55,6 +55,7 @@ from validator_common import (
     FileOpener,
     Severity,
     idea_money_modifiers,
+    iter_idea_bodies,
     lowering_treasury_checks,
     run_validator_main,
     script_commits_money,
@@ -399,15 +400,10 @@ def _effect_bodies(validator: BaseValidator) -> Dict[str, str]:
 def idea_callbacks(texts: Iterable[str]) -> Dict[str, str]:
     """Idea callback node names and their script bodies."""
     callbacks: Dict[str, str] = {}
-    for text in texts:
-        for key, _value, groups in iter_statements(blank_quoted_strings(text)):
-            if key != "ideas" or groups is None:
-                continue
-            for _group, _scalar, group in iter_statements(groups):
-                for name, _value, idea in iter_statements(group or ""):
-                    for field, _value, body in iter_statements(idea or ""):
-                        if field in {"on_add", "on_remove"} and body is not None:
-                            callbacks[f"@idea:{field}:{name}"] = body
+    for name, idea in iter_idea_bodies(texts):
+        for field, _value, body in iter_statements(idea):
+            if field in {"on_add", "on_remove"} and body is not None:
+                callbacks[f"@idea:{field}:{name}"] = body
     return callbacks
 
 
