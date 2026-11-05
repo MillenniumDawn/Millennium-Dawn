@@ -163,7 +163,7 @@ def test_quoted_script_is_not_a_reference(tmp_path):
         tmp_path,
         "events/Test.txt",
         'log = "category = CAT_fake research_bonus = { CAT_also_fake = 1 }"\n'
-        'add_tech_bonus = { category = CAT_missile }\n',
+        "add_tech_bonus = { category = CAT_missile }\n",
     )
     assert _messages(v) == []
 
