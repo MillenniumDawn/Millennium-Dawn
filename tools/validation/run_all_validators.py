@@ -269,7 +269,7 @@ def generate_combined_report(
             _format_issues_by_file(warnings, lines)
 
         if crashed:
-            lines.append(f"💥 {len(crashed)} VALIDATOR(S) CRASHED (no output produced)")
+            lines.append(f"💥 {len(crashed)} VALIDATOR(S) CRASHED OR WROTE NO RESULT")
             lines.append("")
             for name in crashed:
                 lines.append(f"  - {name}")
@@ -377,6 +377,12 @@ def main():
     )
     args = parser.parse_args()
 
+    if args.persist_results:
+        try:
+            os.unlink(os.path.join(args.persist_results, PERSISTENCE_MARKER))
+        except FileNotFoundError:
+            pass
+
     if args.no_color:
         for color in ("RED", "GREEN", "YELLOW", "CYAN", "ENDC"):
             setattr(Colors, color, "")
@@ -481,16 +487,10 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     for (name, _script, label), returncode in zip(VALIDATORS, finished, strict=True):
         error_count, warning_count = read_validator_counts(output_dir, name)
 
-        if error_count > 0 or warning_count > 0:
-            print(
-                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
-                file=human_stream,
-            )
-        elif returncode != 0 or not os.path.exists(
+        expected_findings_exit = args.strict and returncode == 1 and error_count > 0
+        if (returncode != 0 and not expected_findings_exit) or not os.path.exists(
             os.path.join(output_dir, f"{name}.json")
         ):
-            # Every validator writes a JSON sidecar, so a missing one is not a
-            # clean result.
             reason = (
                 f"crashed, exit code {returncode}"
                 if returncode
@@ -499,6 +499,11 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             print(f"{Colors.RED}✗ {label}{Colors.ENDC} ({reason})", file=human_stream)
             _print_stderr_tail(output_dir, name, stream=human_stream)
             crashed_validators.append(label)
+        elif error_count > 0 or warning_count > 0:
+            print(
+                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
+                file=human_stream,
+            )
         else:
             print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}", file=human_stream)
 
