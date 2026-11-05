@@ -48,6 +48,9 @@ joint_focus = {
 		add_political_power = 100
 		add_war_support = -0.02
 		add_stability = 0.02
+	}
+
+	completion_reward_joint_originator = {
 		KOR = {
 			support_for_reunification_2 = yes
 		}
@@ -92,6 +95,21 @@ joint_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_sunshine_moon_policy executed"
+		if = {
+			limit = { tag = KOR }
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			change_the_military_opinion = yes
+		}
+		if = {
+			limit = { tag = NKO }
+			set_temp_variable = { temp_opinion = -5 }
+			change_communist_cadres_opinion = yes
+			change_the_military_opinion = yes
+		}
+	}
+
+	completion_reward_joint_originator = {
 		KOR = {
 			add_opinion_modifier = { target = NKO modifier = sunshine_policy }
 			support_for_reunification_2 = yes
@@ -117,18 +135,6 @@ joint_focus = {
 			remove_opinion_modifier = { target = KOR modifier = propaganda_broadcasts }
 			remove_opinion_modifier = { target = KOR modifier = propaganda_leaflets }
 			remove_opinion_modifier = { target = KOR modifier = recent_actions_negative }
-		}
-		if = {
-			limit = { tag = KOR }
-			set_temp_variable = { temp_opinion = -5 }
-			change_intelligence_community_opinion = yes
-			change_the_military_opinion = yes
-		}
-		if = {
-			limit = { tag = NKO }
-			set_temp_variable = { temp_opinion = -5 }
-			change_communist_cadres_opinion = yes
-			change_the_military_opinion = yes
 		}
 	}
 
@@ -169,7 +175,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_kaesong_industrial executed"
 		KOR = {
 			add_opinion_modifier = { target = NKO modifier = kaesong_industrial_park }
@@ -228,7 +234,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_cultural_exchange executed"
 		KOR = {
 			add_opinion_modifier = { target = NKO modifier = cultural_exchange }
@@ -278,7 +284,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_reduce_dmz_militarization executed"
 		KOR = {
 			add_opinion_modifier = { target = NKO modifier = diplomatic_proximity }
@@ -332,7 +338,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_pursue_peace_treaty executed"
 		KOR = {
 			remove_opinion_modifier = { target = NKO modifier = NKO_kor_korean_war_ceasefire }
@@ -351,24 +357,21 @@ joint_focus = {
 			add_war_support = -0.05
 			add_stability = 0.05
 		}
-		if = {
-			limit = { original_tag = KOR }
-			KOR = {
-				country_event = { id = korea.5 days = 1 }
-				custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
-				effect_tooltip = {
-					add_opinion_modifier = { target = NKO modifier = peace_talks }
-				}
+		KOR = {
+			country_event = { id = korea.5 days = 1 }
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+			effect_tooltip = {
+				add_opinion_modifier = { target = NKO modifier = peace_talks }
 			}
-			NKO = {
-				country_event = { id = korea.5 days = 1 }
-				custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
-				effect_tooltip = {
-					add_opinion_modifier = { target = KOR modifier = peace_talks }
-				}
-			}
-			news_event = { id = korea.6 days = 1 }
 		}
+		NKO = {
+			country_event = { id = korea.5 days = 1 }
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+			effect_tooltip = {
+				add_opinion_modifier = { target = KOR modifier = peace_talks }
+			}
+		}
+		news_event = { id = korea.6 days = 1 }
 	}
 
 	ai_will_do = {
@@ -408,7 +411,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_improve_relations executed"
 		KOR = {
 			add_opinion_modifier = { target = NKO modifier = political_outreach }
@@ -458,7 +461,7 @@ joint_focus = {
 		NOT = { NKO = { has_war_with = KOR } }
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_our_true_enemy executed"
 		KOR = {
 			support_for_reunification_2 = yes
@@ -557,7 +560,7 @@ joint_focus = {
 		}
 	}
 
-	completion_reward = {
+	completion_reward_joint_originator = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_reunification executed"
 		if = {
 			limit = { tag = KOR }
@@ -588,6 +591,8 @@ joint_focus = {
 			limit = { tag = NKO }
 			set_country_flag = NKO_proposed_north_reunification
 			custom_effect_tooltip = negotiation_result_tt
+			KOR_calc_north_proposal_chance = yes
+			custom_effect_tooltip = KOR_north_proposal_chance_tt
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
 			effect_tooltip = {
 				annex_country = { target = KOR transfer_troops = yes }
@@ -643,12 +648,17 @@ joint_focus = {
 	joint_trigger = { tag = NKO }
 
 	available = {
+		original_tag = NKO
 		country_exists = NKO
 		country_exists = KOR
 		NOT = { NKO = { has_war_with = KOR } }
 		NOT = { has_country_flag = korea_peninsula_reunited }
 		NOT = { KOR = { has_country_flag = korea_peninsula_reunited } }
 		NOT = { NKO = { has_country_flag = korea_peninsula_reunited } }
+		custom_trigger_tooltip = {
+			tooltip = support_for_reunification_more_50_tt
+			check_variable = { KOR.SFR > 50 }
+		}
 		KOR = {
 			has_opinion = {
 				target = NKO
@@ -667,6 +677,8 @@ joint_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_confederation executed"
 		custom_effect_tooltip = negotiation_result_tt
+		KOR_calc_north_proposal_chance = yes
+		custom_effect_tooltip = KOR_north_proposal_chance_tt
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
 		effect_tooltip = {
 			set_autonomy = {
@@ -741,14 +753,20 @@ joint_focus = {
 			NKO = { add_to_tech_sharing_group = korea_confederation_Tech_Share }
 		}
 		if = {
-			limit = { country_exists = NKO }
+			limit = {
+				tag = KOR
+				country_exists = NKO
+			}
 			add_opinion_modifier = {
 				target = NKO
 				modifier = mutual_trade_agreement
 			}
 		}
-		if = {
-			limit = { country_exists = KOR }
+		else_if = {
+			limit = {
+				tag = NKO
+				country_exists = KOR
+			}
 			add_opinion_modifier = {
 				target = KOR
 				modifier = mutual_trade_agreement
@@ -1056,19 +1074,16 @@ joint_focus = {
 
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus KOR_connect_the_people executed"
+		set_temp_variable = { treasury_change = -20 }
+		modify_treasury_effect = yes
+	}
+
+	completion_reward_joint_originator = {
 		build_railway = {
 			level = 1
 			path = { 4056 3276 4086 4103 9936 10036 3310 4004 3187 7070 10083 11770 14036 3912 11775 11828 }
 			start_province = 4056
 			target_province = 11828
-		}
-		KOR = {
-			set_temp_variable = { treasury_change = -20 }
-			modify_treasury_effect = yes
-		}
-		NKO = {
-			set_temp_variable = { treasury_change = -20 }
-			modify_treasury_effect = yes
 		}
 	}
 

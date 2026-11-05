@@ -59,6 +59,7 @@ Ask these systematically against every changed block. If the answer is "no, it's
 
 - `clr_country_flag` / `clr_global_flag` on a flag never set: harmless, but signals the author did not trace the flag lifecycle.
 - `random_list` with all weights 0, or every `ai_chance` at `base = 0`: nothing is ever selected.
+- `ai_chance` or `ai_will_do` with only a flat base, or a `factor = 0` on a proxy that is not the variable the choice changes: the outcome is fixed. See "Situation weights" in `event-reference.md`.
 
 **Cross-Country Mechanics**
 
