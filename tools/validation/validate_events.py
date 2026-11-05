@@ -328,6 +328,7 @@ class CostLookups(NamedTuple):
     stored: Dict[str, int]  # stored_variable_signs
     commitments: Set[str]  # money_commitment_effects
     ideas: Dict[str, Dict[str, Decimal]]  # idea_money_modifiers
+    callbacks: Optional[Dict[str, str]] = None
 
 
 class EventPayments(NamedTuple):
@@ -337,6 +338,7 @@ class EventPayments(NamedTuple):
 
     events: Dict[str, Tuple[Dict[str, FrozenSet[str]], Dict[str, FrozenSet[str]]]]
     effects: Dict[str, Dict[str, FrozenSet[str]]]
+    known_events: FrozenSet[str] = frozenset()
 
 
 _NO_PAYMENTS = EventPayments({}, {})
@@ -358,6 +360,7 @@ def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
                 sorted(lookups.effects.items()),
                 sorted(lookups.stored.items()),
                 sorted(lookups.commitments),
+                sorted((lookups.callbacks or {}).items()),
                 sorted(
                     (name, sorted(money.items()))
                     for name, money in lookups.ideas.items()
@@ -393,10 +396,27 @@ def _effect_bodies(validator: BaseValidator) -> Dict[str, str]:
     )
 
 
+def idea_callbacks(texts: Iterable[str]) -> Dict[str, str]:
+    """Idea callback node names and their script bodies."""
+    callbacks: Dict[str, str] = {}
+    for text in texts:
+        for key, _value, groups in iter_statements(blank_quoted_strings(text)):
+            if key != "ideas" or groups is None:
+                continue
+            for _group, _scalar, group in iter_statements(groups):
+                for name, _value, idea in iter_statements(group or ""):
+                    for field, _value, body in iter_statements(idea or ""):
+                        if field in {"on_add", "on_remove"} and body is not None:
+                            callbacks[f"@idea:{field}:{name}"] = body
+    return callbacks
+
+
 def load_cost_lookups(validator: BaseValidator) -> CostLookups:
     """CostLookups read from the whole mod."""
     bodies = _effect_bodies(validator)
-    ideas = idea_money_modifiers(_mod_texts(validator, "common/ideas/**/*.txt"))
+    idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
+    ideas = idea_money_modifiers(idea_texts)
+    callbacks = idea_callbacks(idea_texts)
     effects = _costly_effects(bodies)
     commitments = money_commitment_effects(bodies, ideas)
     stored: Dict[str, int] = {}
@@ -409,7 +429,7 @@ def load_cost_lookups(validator: BaseValidator) -> CostLookups:
     ):
         for name, signs in found.items():
             stored[name] = stored.get(name, 0) | signs
-    return CostLookups(effects, stored, commitments, ideas)
+    return CostLookups(effects, stored, commitments, ideas, callbacks)
 
 
 def _scan_event_payment_nodes(
@@ -2010,6 +2030,7 @@ class ItemFacts(NamedTuple):
     direct: Dict[str, FrozenSet[str]]
     fires: Tuple[Tuple[str, Optional[str]], ...]
     calls: Tuple[Tuple[str, str], ...]
+    sender: str = _ROOT
 
 
 # (receiver tags, immediate, ((option, whether the AI may pick it freely), ...))
@@ -2025,7 +2046,11 @@ def _fire_target(value: str) -> Optional[str]:
 
 
 def split_roles(
-    text: str, own_tags: Optional[FrozenSet[str]] = None, top: str = _ROOT
+    text: str,
+    own_tags: Optional[FrozenSet[str]] = None,
+    top: str = _ROOT,
+    *,
+    strip_triggers: bool = False,
 ) -> Tuple[Dict[str, str], List[Tuple[str, Optional[str]]], List[Tuple[str, str]]]:
     """(effect text per role, event fires, scripted effect calls) of *text*.
 
@@ -2066,6 +2091,9 @@ def split_roles(
                 pos = m.end()
                 if key == "country_event":
                     fires.append((scope, _fire_target(value)))
+                elif key in {"add_ideas", "remove_ideas"}:
+                    field = "on_add" if key == "add_ideas" else "on_remove"
+                    calls.append((scope, f"@idea:{field}:{value}"))
                 elif value == "yes":
                     calls.append((scope, key))
                 continue
@@ -2075,7 +2103,26 @@ def split_roles(
             inner = body[m.end() : close]
             pos = close + 1
             if key in _TRACER_SKIP_BLOCKS:
+                if strip_triggers:
+                    parts.append(body[cursor : m.start()])
+                    cursor = pos
                 continue
+            if key in {"add_ideas", "remove_ideas", "add_timed_idea", "swap_ideas"}:
+                if key in {"add_ideas", "remove_ideas"}:
+                    field = "on_add" if key == "add_ideas" else "on_remove"
+                    calls.extend(
+                        (scope, f"@idea:{field}:{name}") for name in inner.split()
+                    )
+                else:
+                    for field, name, nested in iter_statements(inner):
+                        if nested is not None or name is None:
+                            continue
+                        if field in {"idea", "add_idea"}:
+                            calls.append((scope, f"@idea:on_add:{name}"))
+                            if key == "add_timed_idea":
+                                calls.append((scope, f"@idea:on_remove:{name}"))
+                        elif field == "remove_idea":
+                            calls.append((scope, f"@idea:on_remove:{name}"))
             if key == "country_event":
                 fire = _FIRE_ID_RE.search(inner)
                 if fire:
@@ -2120,20 +2167,27 @@ def item_facts(
     lookups: CostLookups,
     own_tags: Optional[FrozenSet[str]] = None,
     top: str = _ROOT,
+    *,
+    callback: bool = False,
 ) -> ItemFacts:
     """ItemFacts of an effect block running as *top*, with direct costs read per
     role of split_roles. A war charges its target's role too. A scripted effect
     runs as THIS, whose own charges its caller's cost lookups already read."""
-    texts, fires, calls = split_roles(blank_quoted_strings(text), own_tags, top)
+    texts, fires, calls = split_roles(
+        blank_quoted_strings(text), own_tags, top, strip_triggers=callback
+    )
     direct: Dict[str, Set[str]] = defaultdict(set)
     for role, body in texts.items():
-        if role != _THIS:
+        if role != _THIS or callback:
             direct[role] |= _cost_kinds(body, lookups)
         for target in _WAR_TARGET_RE.findall(body):
             payer = role if target == _THIS else target
             if payer in (_ROOT, _FROM) or _TAG_ROLE_RE.fullmatch(payer):
                 direct[payer].add("money")
-    return ItemFacts(_frozen(direct), tuple(fires), tuple(calls))
+    for scope, name in calls:
+        if name.startswith("@idea:") and name.rsplit(":", 1)[-1] not in lookups.ideas:
+            direct[scope].add("uncertain")
+    return ItemFacts(_frozen(direct), tuple(fires), tuple(calls), top)
 
 
 def event_payment_nodes(text: str, lookups: CostLookups) -> Dict[str, _EventNode]:
@@ -2159,14 +2213,12 @@ def event_payment_nodes(text: str, lookups: CostLookups) -> Dict[str, _EventNode
                     fields.get("ai_chance") or ""
                 )
                 options.append((item_facts(block, lookups, own), free_pick))
-        facts = [immediate, *(option for option, _free in options)]
-        if any(fact and (fact.direct or fact.fires or fact.calls) for fact in facts):
-            nodes[event_id] = (own, immediate, tuple(options))
+        nodes[event_id] = (own, immediate, tuple(options))
     return nodes
 
 
 _TRACED_EFFECT_RE = re.compile(
-    r"\bcountry_event\b|(?<![\w.:@^])(?:ROOT|FROM|[A-Z][A-Z0-9]{2}"
+    r"\b(?:country_event|add_ideas|remove_ideas|add_timed_idea|swap_ideas)\b|(?<![\w.:@^])(?:ROOT|FROM|[A-Z][A-Z0-9]{2}"
     r"|(?:every|random|all)_\w*(?:country|puppet))\s*=\s*\{"
 )
 
@@ -2180,7 +2232,32 @@ def effect_payment_nodes(
         {name for name, body in bodies.items() if _TRACED_EFFECT_RE.search(body)},
         bodies,
     )
-    return {name: item_facts(bodies[name], lookups, top=_THIS) for name in traced}
+    nodes = {name: item_facts(bodies[name], lookups, top=_THIS) for name in traced}
+    pending = deque((name, body) for name, body in (lookups.callbacks or {}).items())
+    seen: Set[str] = set()
+    while pending:
+        name, body = pending.popleft()
+        if name in seen:
+            continue
+        seen.add(name)
+        facts = item_facts(body, lookups, top=_THIS, callback=True)
+        calls = []
+        direct = {role: set(kinds) for role, kinds in facts.direct.items()}
+        for scope, callee in facts.calls:
+            if callee.startswith("@idea:"):
+                calls.append((scope, callee))
+            elif callee in bodies:
+                callback_name = "@callback_effect:" + callee
+                calls.append((scope, callback_name))
+                pending.append((callback_name, bodies[callee]))
+            else:
+                direct.setdefault(scope, set()).add("uncertain")
+        fires = tuple(
+            (scope, "@callback_event:" + (event_id or ""))
+            for scope, event_id in facts.fires
+        )
+        nodes[name] = ItemFacts(_frozen(direct), fires, tuple(calls), facts.sender)
+    return nodes
 
 
 def item_payers(
@@ -2207,11 +2284,21 @@ def item_payers(
         if event_id is None:
             add(_UNKNOWN, _PAYMENT_KINDS)
             continue
+        callback_event = event_id.startswith("@callback_event:")
+        if callback_event:
+            event_id = event_id.removeprefix("@callback_event:")
+        if callback_event and event_id not in payments.known_events:
+            add(scope, frozenset({"uncertain"}))
+            add(facts.sender, frozenset({"uncertain"}))
+            continue
         charged, picked = payments.events.get(event_id, ({}, {}))
         for role, kinds in charged.items():
-            if role == _ROOT or (role == _FROM and scope == _ROOT):
+            if role == _ROOT or (role == _FROM and scope == facts.sender):
                 kinds = picked.get(role, frozenset())
-            add(scope if role == _ROOT else _ROOT if role == _FROM else role, kinds)
+            add(
+                scope if role == _ROOT else facts.sender if role == _FROM else role,
+                kinds,
+            )
     for scope, name in facts.calls:
         for role, kinds in payments.effects.get(name, {}).items():
             add(scope if role == _THIS else role, kinds)
@@ -2220,6 +2307,22 @@ def item_payers(
 
 def _frozen(costs: RoleCosts) -> Dict[str, FrozenSet[str]]:
     return {role: frozenset(kinds) for role, kinds in costs.items() if kinds}
+
+
+def _possible_picks(picks: List[RoleCosts], role: str) -> Set[str]:
+    possible = []
+    for costs in picks:
+        kinds = set(costs.get(role, ()))
+        if "uncertain" in kinds:
+            kinds.update(_PAYMENT_KINDS)
+        possible.append(kinds)
+    common = set.intersection(*possible)
+    if common & _PAYMENT_KINDS and any(
+        "uncertain" in cost.get(role, ()) for cost in picks
+    ):
+        common -= _PAYMENT_KINDS
+        common.add("uncertain")
+    return common
 
 
 def _event_payers(
@@ -2237,9 +2340,7 @@ def _event_payers(
         paid = [cost.get(role, set()) for cost, _free in costs]
         charged[role] = base.get(role, set()).union(*paid)
         picked[role] = (
-            base.get(role, set()).union(
-                set.intersection(*(cost.get(role, set()) for cost in picks))
-            )
+            base.get(role, set()).union(_possible_picks(picks, role))
             if picks
             else charged[role]
         )
@@ -2255,7 +2356,7 @@ def resolve_payments(
     charges anyone stays free. A node is redone only when an event or effect it
     starts changes.
     """
-    payments = EventPayments({}, {})
+    payments = EventPayments({}, {}, frozenset(event_nodes))
     readers: Dict[Tuple[str, str], Set[Tuple[str, str]]] = defaultdict(set)
     nodes = [("effect", name, facts) for name, facts in effect_nodes.items()]
     for event_id, (_own, immediate, options) in event_nodes.items():
@@ -2265,7 +2366,9 @@ def resolve_payments(
     for kind, name, facts in nodes:
         for _scope, event_id in facts.fires:
             if event_id:
-                readers[("event", event_id)].add((kind, name))
+                readers[("event", event_id.removeprefix("@callback_event:"))].add(
+                    (kind, name)
+                )
         for _scope, effect in facts.calls:
             readers[("effect", effect)].add((kind, name))
     pending = deque(dict.fromkeys((kind, name) for kind, name, _facts in nodes))
@@ -2316,6 +2419,8 @@ def chooser_kinds(costs: RoleCosts, tags_known: bool) -> Set[str]:
         for role, paid in costs.items():
             if _TAG_ROLE_RE.fullmatch(role):
                 kinds |= paid
+    if "uncertain" in kinds:
+        kinds.update(_PAYMENT_KINDS)
     return kinds
 
 

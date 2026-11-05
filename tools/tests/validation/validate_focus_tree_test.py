@@ -1968,6 +1968,7 @@ _IDEAS = (
     "\tTAG_army_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
     "\tTAG_lean_army = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
     "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+    "\tTAG_callback = { on_add = { subtract_from_variable = { var = treasury value = cost } } }\n"
     "} }\n"
 )
 _UNNEEDED_TREASURY_CHECK = (
@@ -2069,6 +2070,13 @@ _GUARD_REPORT_CASES = {
         "if = { limit = { has_idea = TAG_army_reform } add_ideas = TAG_army_reform }",
         BANKRUPTCY_GUARD,
         [_UNNEEDED_TREASURY_CHECK],
+    ),
+    "guard on an idea with a callback": (
+        "",
+        "",
+        "add_ideas = TAG_callback",
+        BANKRUPTCY_GUARD,
+        [],
     ),
     "guard on an idea that raises a cost": (
         "",

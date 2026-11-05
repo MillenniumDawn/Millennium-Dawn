@@ -114,19 +114,20 @@ _SCRIPTED_EFFECTS = (
 _EFFECTS = costly_scripted_effects([_SCRIPTED_EFFECTS])
 # What stored_variable_signs reports for a variable only ever set negative.
 _STORED = stored_variable_signs(["set_variable = { TAG_project_cost = -4 }\n"])
-_IDEAS = idea_money_modifiers(
-    [
-        "ideas = { bureaucracy = {\n"
-        "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
-        "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
-        "}\n"
-        "country = {\n"
-        "\tTAG_army_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
-        "\tTAG_lean_army = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
-        "\tTAG_drill = { modifier = { army_org = 5 } }\n"
-        "} }\n"
-    ]
-)
+_IDEA_TEXTS = [
+    "ideas = { bureaucracy = {\n"
+    "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
+    "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+    "}\n"
+    "country = {\n"
+    "\tTAG_army_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
+    "\tTAG_lean_army = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
+    "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+    "\tTAG_callback = { on_add = { subtract_from_variable = { var = treasury value = cost } } }\n"
+    "\tTAG_expiring = { on_remove = { small_expenditure = yes } }\n"
+    "} }\n"
+]
+_IDEAS = idea_money_modifiers(_IDEA_TEXTS)
 _COMMITMENTS = money_commitment_effects(
     {
         "TAG_raise_spending": (
@@ -139,7 +140,9 @@ _COMMITMENTS = money_commitment_effects(
     },
     _IDEAS,
 )
-_LOOKUPS = CostLookups(_EFFECTS, _STORED, _COMMITMENTS, _IDEAS)
+_LOOKUPS = CostLookups(
+    _EFFECTS, _STORED, _COMMITMENTS, _IDEAS, validate_events.idea_callbacks(_IDEA_TEXTS)
+)
 
 
 def _weights(text: str):
@@ -1596,6 +1599,11 @@ _UNNEEDED_CASES = {
         ),
         [],
     ),
+    "idea on_add may charge chooser": (_unneeded_start("add_ideas = TAG_callback"), []),
+    "timed idea on_remove may charge chooser": (
+        _unneeded_start("add_timed_idea = { idea = TAG_expiring days = 440 }"),
+        [],
+    ),
     "costly idea": (_unneeded_start("add_ideas = TAG_army_reform"), []),
     "unknown idea": (_unneeded_start("add_ideas = TAG_missing"), []),
     "unknown replacement": (
@@ -1795,3 +1803,149 @@ def test_scripted_idea_commitments_charge_the_right_country(
         "money"
         in chooser_costs("partner_spends = yes", lookups, payments, frozenset({"FRA"}))
     ) == (chooser_pays)
+
+
+@pytest.mark.parametrize(
+    ("callback", "bodies", "effect", "expected"),
+    [
+        (
+            "GER = { add_to_variable = { treasury = -10 } }",
+            {},
+            "add_ideas = TAG_callback",
+            False,
+        ),
+        ("add_to_variable = { treasury = -10 }", {}, "add_ideas = TAG_callback", True),
+        (
+            "pay_bill = yes",
+            {"pay_bill": "add_to_variable = { treasury = -10 }"},
+            "add_ideas = TAG_callback",
+            True,
+        ),
+        ("unknown_callback_helper = yes", {}, "add_ideas = TAG_callback", True),
+        (
+            "effect_tooltip = { add_to_variable = { treasury = -10 } }",
+            {},
+            "add_ideas = TAG_callback",
+            False,
+        ),
+        (
+            "if = { limit = { add_to_variable = { treasury = -10 } } add_stability = 0.1 }",
+            {},
+            "add_ideas = TAG_callback",
+            False,
+        ),
+        (
+            "add_to_variable = { treasury = -10 }",
+            {},
+            "remove_ideas = TAG_callback",
+            False,
+        ),
+        ("loop = yes", {"loop": "loop = yes"}, "add_ideas = TAG_callback", False),
+        ("add_ideas = TAG_callback", {}, "add_ideas = TAG_callback", False),
+    ],
+)
+def test_callback_payer_and_uncertainty(callback, bodies, effect, expected):
+    idea_text = (
+        f"ideas = {{ country = {{ TAG_callback = {{ on_add = {{ {callback} }} }} }} }}"
+    )
+    ideas = idea_money_modifiers([idea_text])
+    effects = costly_scripted_effects(
+        [f"{name} = {{ {body} }}" for name, body in bodies.items()]
+    )
+    lookups = CostLookups(
+        effects,
+        {},
+        money_commitment_effects(bodies, ideas),
+        ideas,
+        validate_events.idea_callbacks([idea_text]),
+    )
+    payments = resolve_payments({}, effect_payment_nodes(bodies, lookups))
+    costs = chooser_costs(effect, lookups, payments, frozenset({"FRA"}))
+    assert ("money" in costs) is expected
+
+
+def test_callback_foreign_event_charges_callback_caller_not_original_chooser():
+    idea_text = "ideas = { country = { TAG_callback = { on_add = { BRA = { country_event = bill.9 } } } } }"
+    event = _reply("FROM = { small_expenditure = yes }")
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        _EFFECTS, _STORED, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    bodies = _scripted_effect_bodies([_SCRIPTED_EFFECTS])
+    payments = resolve_payments(
+        event_payment_nodes(event, lookups), effect_payment_nodes(bodies, lookups)
+    )
+    assert "money" not in chooser_costs(
+        "GER = { add_ideas = TAG_callback }", lookups, payments, frozenset({"FRA"})
+    )
+
+
+@pytest.mark.parametrize(("known", "expected"), [(True, False), (False, True)])
+def test_callback_free_event_is_distinguished_from_missing_event(known, expected):
+    idea_text = "ideas = { country = { TAG_callback = { on_add = { country_event = bill.9 } } } }"
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    event = _reply("add_stability = 0.1") if known else ""
+    payments = resolve_payments(
+        event_payment_nodes(event, lookups), effect_payment_nodes({}, lookups)
+    )
+    assert (
+        "money" in chooser_costs("add_ideas = TAG_callback", lookups, payments)
+    ) is expected
+
+
+def test_callback_expiry_and_swap_use_relevant_callback_direction():
+    idea_text = (
+        "ideas = { country = { "
+        "old = { on_remove = { add_to_variable = { treasury = -10 } } } "
+        "new = { on_add = { add_to_variable = { debt = 10 } } } "
+        "} }"
+    )
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
+    for effect in (
+        "add_timed_idea = { idea = old days = 10 }",
+        "remove_ideas = old",
+        "swap_ideas = { remove_idea = old add_idea = new }",
+    ):
+        assert "money" in chooser_costs(effect, lookups, payments)
+    assert "money" not in chooser_costs("add_ideas = old", lookups, payments)
+    assert "money" not in chooser_costs("remove_ideas = new", lookups, payments)
+
+
+def test_callback_uncertainty_is_recorded_separately():
+    idea_text = (
+        "ideas = { country = { TAG_callback = { on_add = { missing_effect = yes } } } }"
+    )
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
+    assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}
+
+
+def test_unresolved_dynamic_callback_event_is_uncertain():
+    idea_text = "ideas = { country = { TAG_callback = { on_add = { country_event = bill.[id] } } } }"
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
+    assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}
+
+
+@pytest.mark.parametrize("name", ["missing_effect", "force_update_dynamic_modifier"])
+def test_unresolved_callback_call_is_uncertain_even_for_unclassified_native(name):
+    idea_text = f"ideas = {{ country = {{ TAG_callback = {{ on_add = {{ {name} = yes }} }} }} }}"
+    ideas = idea_money_modifiers([idea_text])
+    lookups = CostLookups(
+        {}, {}, set(), ideas, validate_events.idea_callbacks([idea_text])
+    )
+    payments = resolve_payments({}, effect_payment_nodes({}, lookups))
+    assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}

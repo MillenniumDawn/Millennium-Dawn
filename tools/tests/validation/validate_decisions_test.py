@@ -1185,6 +1185,30 @@ def test_unneeded_guard_follows_the_event_a_decision_fires(
     assert bool(issue_rows(validator)) is flagged
 
 
+def test_idea_on_add_can_justify_decision_guard(tmp_path):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/ideas/ideas.txt": (
+                "ideas = { country = { TAG_callback = "
+                "{ on_add = { subtract_from_variable = { var = treasury value = cost } } } } }"
+            ),
+            "common/decisions/Reform.txt": "reform_category = {\n"
+            + _nested(
+                "dec_reform",
+                _block("complete_effect", "add_ideas = TAG_callback")
+                + _block(
+                    "ai_will_do",
+                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
+                ),
+            )
+            + "}\n",
+        },
+    )
+    validator.validate_unneeded_treasury_guard()
+    assert issue_rows(validator) == []
+
+
 def test_unneeded_guard_on_immediately_readded_idea(tmp_path):
     validator = _mod(
         tmp_path,
