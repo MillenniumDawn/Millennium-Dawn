@@ -99,7 +99,9 @@ def _either(text: str, start: int, end: int) -> List[Way]:
     blocks = _child_blocks(text, start, end)
     ways = [frozenset([member]) for member in _direct_members(text, start, end, blocks)]
     for name, _, b_start, b_end in blocks:
-        if name not in _NOT_REQUIRED:
+        if name == "OR":
+            ways.extend(_either(text, b_start, b_end))
+        elif name not in _NOT_REQUIRED:
             ways.extend(ways_in(text, b_start, b_end))
     return _branches(ways)
 

@@ -34,6 +34,10 @@ _WAYS_CASES = {
         " NOT = { has_tech = c } }",
         [["focus:f", "tech:b"], ["tech:a"]],
     ),
+    "nested or preserves alternatives": (
+        "OR = { has_tech = a OR = { has_tech = b has_tech = c } }",
+        [["tech:a"], ["tech:b"], ["tech:c"]],
+    ),
     "or of non-members leaves the rest": (
         "OR = { original_tag = GER original_tag = FRA } has_tech = a",
         [["tech:a"]],
