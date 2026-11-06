@@ -1,15 +1,33 @@
 # Author(s): The General
 HOL_adjust_referendum_outcome = {
 	if = {
-		limit = { BEL = { HOL = { is_top3_influencer = yes } } }
+		limit = { BEL = { HOL_is_top3_influencer = yes } }
 		add_to_variable = { var = HOL_belgium_referendum_outcome value = 20 }
 	}
 	if = {
-		limit = { BEL = { FRA = { is_top3_influencer = yes } } }
+		limit = {
+			BEL = {
+				OR = {
+					check_variable = { influence_array^0 = FRA }
+					check_variable = { influence_array^1 = FRA }
+					check_variable = { influence_array^2 = FRA }
+				}
+			}
+		}
 		add_to_variable = { var = HOL_belgium_referendum_outcome value = 15 }
 	}
 	if = {
-		limit = { BEL = { GER = { is_top5_influencer = yes } } }
+		limit = {
+			BEL = {
+				OR = {
+					check_variable = { influence_array^0 = GER }
+					check_variable = { influence_array^1 = GER }
+					check_variable = { influence_array^2 = GER }
+					check_variable = { influence_array^3 = GER }
+					check_variable = { influence_array^4 = GER }
+				}
+			}
+		}
 		add_to_variable = { var = HOL_belgium_referendum_outcome value = 10 }
 	}
 	if = {
@@ -719,5 +737,34 @@ HOL_update_party_programmes = {
 			has_completed_focus = HOL_economic_stimulation_tax
 		}
 		add_dynamic_modifier = { modifier = HOL_liberal_society_modifier }
+	}
+}
+
+# Scope: HOL. Ends the Bolle Jos chain once he is in Dutch custody.
+HOL_bolle_jos_captured_effect = {
+	HOL_bolle_jos_end_chain_effect = yes
+	add_stability = 0.03
+	add_political_power = 50
+	set_temp_variable = { cart_strength_change = -10 }
+	set_temp_variable = { cart_influence_change = -8 }
+	modify_cartel_variables_effect = yes
+}
+
+# Scope: any. Closes the Bolle Jos chain and removes his patronage from Sierra Leone.
+HOL_bolle_jos_end_chain_effect = {
+	clr_global_flag = HOL_bolle_jos_at_large
+	set_global_flag = HOL_bolle_jos_resolved
+	if = {
+		limit = { country_exists = SIE }
+		SIE = {
+			clr_country_flag = HOL_bolle_jos_sheltered
+			clr_country_flag = HOL_bolle_jos_located_by@HOL
+			clr_country_flag = HOL_bolle_jos_capture_failed_by@HOL
+			clear_variable = HOL_bolle_jos_pressure
+			if = {
+				limit = { has_idea = HOL_bolle_jos_patronage }
+				remove_ideas = HOL_bolle_jos_patronage
+			}
+		}
 	}
 }

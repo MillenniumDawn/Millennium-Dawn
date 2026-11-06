@@ -3,6 +3,7 @@
 import random
 import re
 
+import pytest
 import validate_mios as V
 
 
@@ -975,6 +976,34 @@ def test_nested_bonus_on_an_unknown_archetype_reports_only_the_type(tmp_path):
     assert [i.category for i in v._issues] == ["mio-equipment-type-unknown"]
 
 
+@pytest.mark.parametrize(
+    ("rel", "expected"),
+    [
+        (f"{V.POLICY_DIR}/p.txt", ["mio-bonus-no-base-stat"]),
+        (
+            V.COMPANY_TRAIT_FILE,
+            ["mio-equipment-type-unknown", "mio-bonus-no-base-stat"],
+        ),
+    ],
+)
+def test_same_as_mio_is_a_policy_keyword(tmp_path, rel, expected):
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tsame_as_mio = {\n"
+        "\t\t\tmax_organisation = 0.03\n"
+        "\t\t}\n"
+        "\t\tAA_Equipment = {\n"
+        "\t\t\tmax_organisation = 0.03\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(text, rel, _equipment_index(tmp_path))
+    assert [i.category for i in v._issues] == expected
+
+
 # ---- full-repo runs --------------------------------------------------------
 
 _RUN_ORGS = """\
@@ -1165,13 +1194,18 @@ def test_design_team_clone_is_its_own_archetype(tmp_path, write_path):
     assert "small_plane_cas_airframe" in issues[0].message
 
 
-def test_variant_without_design_team_is_not_flagged(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path,
-        write_path,
-        "small_plane_airframe",
+@pytest.mark.parametrize(
+    "variant",
+    [
         _team("medium_plane_airframe_1", ""),
-    )
+        "\tdesign_team = mio:TST_org\n",
+    ],
+    ids=["missing design team", "missing type"],
+)
+def test_variant_without_design_team_or_type_is_not_flagged(
+    tmp_path, write_path, variant
+):
+    issues = _coverage_issues(tmp_path, write_path, "small_plane_airframe", variant)
     assert not issues
 
 
@@ -1906,8 +1940,8 @@ def test_relative_position_scan_matches_the_depth_walk():
         for index, char in enumerate(inner):
             if char in "{}":
                 depth += 1 if char == "{" else -1
-            elif depth == 0 and old.match(inner, index):
-                expected = old.match(inner, index).group(1)
+            elif depth == 0 and (match := old.match(inner, index)):
+                expected = match.group(1)
                 break
         assert V._parse_org_traits(body)["t"].rel == expected, text
 

@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import disk_cache
 from report_lib.dedupe import dedupe
 from report_lib.models import Issue
-from shared_utils import Colors, split_cpu_budget
+from shared_utils import Colors, list_files, split_cpu_budget
 from validator_batches import ALL_SPECS
 
 SCRIPTS_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -51,7 +51,7 @@ def _spec_flags(script: str, staged: bool) -> List[str]:
 def discover_validators() -> List[Tuple[str, str, str]]:
     """Return (name, script_name, label) for each auto-runnable validator."""
     validators = []
-    for script_path in glob.glob(os.path.join(SCRIPTS_DIR, "validate_*.py")):
+    for script_path in list_files(SCRIPTS_DIR, ("validate_*.py",), recursive=False):
         script_name = os.path.basename(script_path)
         if script_name in _AUTO_RUN_EXCLUDED_SCRIPTS:
             continue
@@ -269,7 +269,7 @@ def generate_combined_report(
             _format_issues_by_file(warnings, lines)
 
         if crashed:
-            lines.append(f"💥 {len(crashed)} VALIDATOR(S) CRASHED (no output produced)")
+            lines.append(f"💥 {len(crashed)} VALIDATOR(S) CRASHED OR WROTE NO RESULT")
             lines.append("")
             for name in crashed:
                 lines.append(f"  - {name}")
@@ -280,7 +280,7 @@ def generate_combined_report(
 
 
 def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None:
-    """Copy every validator's JSON sidecar into persist_dir.
+    """Copy every validator's issue and analysis sidecars into persist_dir.
 
     The suite runs inside a TemporaryDirectory that is deleted on exit; the
     copies are the only per-validator results that survive. Copy errors raise:
@@ -293,13 +293,17 @@ def _persist_sidecars(output_dir: str, persist_dir: str, complete: bool) -> None
         os.unlink(marker_path)
     except FileNotFoundError:
         pass
-    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")):
+    for stale_path in glob.glob(os.path.join(persist_dir, "*.json")) + glob.glob(
+        os.path.join(persist_dir, "*.analysis.jsonl")
+    ):
         try:
             os.unlink(stale_path)
         except FileNotFoundError:
             pass
     copied = 0
-    for json_path in glob.glob(os.path.join(output_dir, "*.json")):
+    for json_path in list_files(
+        output_dir, ("*.json", "*.analysis.jsonl"), recursive=False
+    ):
         shutil.copyfile(
             json_path, os.path.join(persist_dir, os.path.basename(json_path))
         )
@@ -365,13 +369,19 @@ def main():
         type=str,
         default=None,
         help=(
-            "Copy each validator's JSON sidecar into this directory before "
+            "Copy each validator's issue and analysis sidecars into this directory before "
             "the run's temporary output is deleted. Used by the nightly "
             "baseline job to keep the per-validator results after the suite "
             "completes."
         ),
     )
     args = parser.parse_args()
+
+    if args.persist_results:
+        try:
+            os.unlink(os.path.join(args.persist_results, PERSISTENCE_MARKER))
+        except FileNotFoundError:
+            pass
 
     if args.no_color:
         for color in ("RED", "GREEN", "YELLOW", "CYAN", "ENDC"):
@@ -477,16 +487,10 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
     for (name, _script, label), returncode in zip(VALIDATORS, finished, strict=True):
         error_count, warning_count = read_validator_counts(output_dir, name)
 
-        if error_count > 0 or warning_count > 0:
-            print(
-                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
-                file=human_stream,
-            )
-        elif returncode != 0 or not os.path.exists(
+        expected_findings_exit = args.strict and returncode == 1 and error_count > 0
+        if (returncode != 0 and not expected_findings_exit) or not os.path.exists(
             os.path.join(output_dir, f"{name}.json")
         ):
-            # Every validator writes a JSON sidecar, so a missing one is not a
-            # clean result.
             reason = (
                 f"crashed, exit code {returncode}"
                 if returncode
@@ -495,6 +499,11 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             print(f"{Colors.RED}✗ {label}{Colors.ENDC} ({reason})", file=human_stream)
             _print_stderr_tail(output_dir, name, stream=human_stream)
             crashed_validators.append(label)
+        elif error_count > 0 or warning_count > 0:
+            print(
+                f"{Colors.RED}✗ {label}{Colors.ENDC} ({error_count} errors, {warning_count} warnings)",
+                file=human_stream,
+            )
         else:
             print(f"{Colors.GREEN}✓ {label}{Colors.ENDC}", file=human_stream)
 

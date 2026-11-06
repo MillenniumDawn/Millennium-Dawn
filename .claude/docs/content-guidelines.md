@@ -39,7 +39,9 @@ Quality checklist for new content. Full guides:
 - Add game rules for AI customisation and AI logic that prevents self-destructive
   choices.
 - Do not use `add_ai_strategy` in effects.
-- Events that target another nation weigh the AI by opinion or influence.
+- Events that target another nation weigh the AI by opinion, influence, and the
+  variable the choice changes. A flat base, or a proxy that zeroes the sensible
+  option, makes the outcome fixed. See "Situation weights" in `event-reference.md`.
 - The AI must be able to use any custom GUI.
 
 ## Code

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Flag files the project formatter would rewrite. The standardizers in
-# tools/standardization/ define MD's canonical layout for focus trees, events,
-# decisions, ideas and MIOs, but nothing enforces it: the md-standardize hook is
+# tools/standardization/ define MD's canonical layout for the paths in
+# standardize_api.ROUTES, but nothing enforces it: the md-standardize hook is
 # disabled and most of the repo predates the current rules. Rather than restate
 # those rules, this runs the owning standardizer in memory and compares its
 # output to the file on disk, so the check can never drift from the formatter.

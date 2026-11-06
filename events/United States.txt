@@ -240,13 +240,15 @@ country_event = {
 
 	trigger = {
 		tag = USA
-		OR = {
-			NOT = { has_government = communism }
-			NOT = { has_government = nationalist }
-			NOT = { check_variable = { ruling_party = 4 } }
-			NOT = { check_variable = { ruling_party = 19 } }
-			NOT = { check_variable = { ruling_party = 20 } }
-			NOT = { check_variable = { ruling_party = 21 } }
+		NOT = {
+			OR = {
+				has_government = communism
+				has_government = nationalist
+				check_variable = { ruling_party = 4 }
+				check_variable = { ruling_party = 19 }
+				check_variable = { ruling_party = 20 }
+				check_variable = { ruling_party = 21 }
+			}
 		}
 		NOT = { has_country_flag = collapsed_nation }
 	}
@@ -287,10 +289,6 @@ country_event = {
 			modifier = {
 				is_historical_focus_on = yes
 				add = 2
-			}
-			modifier = {
-				is_historical_focus_on = no
-				factor = 0
 			}
 			modifier = { factor = 0.5 has_stability < 0.4 }
 		}
@@ -1673,15 +1671,20 @@ country_event = {
 					regiments = {
 						armor_Bat = { x = 0 y = 0 }
 						armor_Bat = { x = 0 y = 1 }
-						Arm_Inf_Bat = { x = 0 y = 2 }
-						Arm_Inf_Bat = { x = 0 y = 3 }
-						SP_Arty_Bat = { x = 1 y = 0 }
+
+						Arm_Inf_Bat = { x = 1 y = 0 }
 						Arm_Inf_Bat = { x = 1 y = 1 }
-						Mech_Inf_Bat = { x = 1 y = 2 }
+
+						Arm_Inf_Bat = { x = 2 y = 0 }
+						Mech_Inf_Bat = { x = 2 y = 1 }
+
+						SP_Arty_Bat = { x = 3 y = 0 }
+					}
+					regimental_support = {
+						SP_arty_battery = { x = 0 y = 0 }
 					}
 					support = {
 						H_Engi_Comp = { x = 0 y = 0 }
-						SP_arty_battery = { x = 0 y = 1 }
 					}
 				}
 			}
@@ -1833,15 +1836,20 @@ country_event = {
 					regiments = {
 						armor_Bat = { x = 0 y = 0 }
 						armor_Bat = { x = 0 y = 1 }
-						Arm_Inf_Bat = { x = 0 y = 2 }
-						Arm_Inf_Bat = { x = 0 y = 3 }
-						SP_Arty_Bat = { x = 1 y = 0 }
+
+						Arm_Inf_Bat = { x = 1 y = 0 }
 						Arm_Inf_Bat = { x = 1 y = 1 }
-						Mech_Inf_Bat = { x = 1 y = 2 }
+
+						Arm_Inf_Bat = { x = 2 y = 0 }
+						Mech_Inf_Bat = { x = 2 y = 1 }
+
+						SP_Arty_Bat = { x = 3 y = 0 }
+					}
+					regimental_support = {
+						SP_arty_battery = { x = 0 y = 0 }
 					}
 					support = {
 						H_Engi_Comp = { x = 0 y = 0 }
-						SP_arty_battery = { x = 0 y = 1 }
 					}
 				}
 			}
@@ -1948,8 +1956,10 @@ country_event = {
 
 ###American Economic Events###
 # 2000's Recession
+# The crisis starts with the Economic Rumors warning chain (USA_econ_event.100-.102).
+# Ignoring a warning schedules usa_economic_events.init; finishing the chain prevents it.
 country_event = {
-	id = usa_economic_events.init
+	id = usa_economic_events.warning
 	is_triggered_only = yes
 	hidden = yes
 	fire_only_once = yes
@@ -2011,32 +2021,32 @@ country_event = {
 		modifier = {
 			factor = 3000
 			has_game_rule = { rule = historic_events option = no }
-			date > 2009.1.01
+			date > 2008.7.1
 		}
 		modifier = {
 			factor = 0.30
 			has_game_rule = { rule = historic_events option = no }
-			date < 2006.1.1
+			date < 2005.7.1
 		}
 		modifier = {
 			factor = 1.25
 			has_game_rule = { rule = historic_events option = no }
-			date > 2006.6.1
+			date > 2005.12.1
 		}
 		modifier = {
 			factor = 1.25
 			has_game_rule = { rule = historic_events option = no }
-			date > 2007.1.1
+			date > 2006.7.1
 		}
 		modifier = {
 			factor = 1.25
 			has_game_rule = { rule = historic_events option = no }
-			date > 2007.6.1
+			date > 2006.12.1
 		}
 		modifier = {
 			factor = 1.25
 			has_game_rule = { rule = historic_events option = no }
-			date > 2008.6.1
+			date > 2007.12.1
 		}
 	}
 
@@ -2044,11 +2054,11 @@ country_event = {
 		original_tag = USA
 		OR = {
 			AND = {
-				date > 2005.6.1
+				date > 2004.12.1
 				has_game_rule = { rule = historic_events option = no }
 			}
 			AND = {
-				date > 2008.1.1
+				date > 2007.7.1
 				has_game_rule = { rule = historic_events option = yes }
 			}
 		}
@@ -2056,8 +2066,34 @@ country_event = {
 			OR = {
 				has_country_flag = collapsed_nation
 				has_country_flag = USA_housing_problems_detected
+				has_country_flag = USA_gfc_warnings_started
 			}
 		}
+		NOT = { has_global_flag = USA_great_financial_crisis }
+	}
+
+	immediate = {
+		set_country_flag = USA_gfc_warnings_started
+		country_event = { id = USA_econ_event.100 days = 1 }
+	}
+}
+
+# Fired by the Economic Rumors chain when a warning is ignored
+country_event = {
+	id = usa_economic_events.init
+	is_triggered_only = yes
+	hidden = yes
+	fire_only_once = yes
+
+	trigger = {
+		original_tag = USA
+		NOT = {
+			OR = {
+				has_country_flag = collapsed_nation
+				has_country_flag = USA_housing_problems_detected
+			}
+		}
+		NOT = { has_global_flag = USA_great_financial_crisis }
 	}
 
 	immediate = {
@@ -2110,7 +2146,11 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				nationalist > 0.30
+				OR = {
+					nationalist > 0.30
+					has_government = communism
+					has_government = nationalist
+				}
 				add = 1
 			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -4201,6 +4241,10 @@ country_event = {
 	option = { #If the remaining astronauts are ready for it, then let them go
 		name = donald_trump.18.o1
 		log = "[GetDateText]: [This.GetName]: donald_trump.18.o1 executed"
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 		add_political_power = -75
 		hidden_effect = {
 			country_event = {
@@ -10026,6 +10070,11 @@ country_event = {
 	option = {
 		name = USA_econ_event.100.o2
 		log = "[GetDateText]: [This.GetName]: USA_econ_event.100.o2 executed"
+		hidden_effect = {
+			# The housing market crash comes about a month before the crisis
+			country_event = { id = USA_econ_event.14 days = 132 random_days = 30 }
+			country_event = { id = usa_economic_events.init days = 162 random_days = 30 }
+		}
 		custom_effect_tooltip = {
 			localization_key = modifies_dynamic_modifier_tt
 			MODIFIER = USA_domestic_policies
@@ -10080,8 +10129,13 @@ country_event = {
 	}
 
 	option = {
-	name = USA_econ_event.101.o2
-	log = "[GetDateText]: [This.GetName]: USA_econ_event.101.o2 executed"
+		name = USA_econ_event.101.o2
+		log = "[GetDateText]: [This.GetName]: USA_econ_event.101.o2 executed"
+		hidden_effect = {
+			# The housing market crash comes about a month before the crisis
+			country_event = { id = USA_econ_event.14 days = 51 random_days = 30 }
+			country_event = { id = usa_economic_events.init days = 81 random_days = 30 }
+		}
 		custom_effect_tooltip = {
 			localization_key = modifies_dynamic_modifier_tt
 			MODIFIER = USA_domestic_policies
@@ -10132,6 +10186,7 @@ country_event = {
 			set_country_flag = anti_trust_awareness2
 			set_country_flag = anti_trust_awareness3
 			set_country_flag = anti_trust_awareness4
+			update_party_name = yes
 		}
 	}
 }
@@ -10252,6 +10307,7 @@ country_event = {
 		add_political_power = -100
 		unlock_decision_tooltip = USA_political_Fairness_act
 		set_country_flag = public_ignored3
+		hidden_effect = { update_party_name = yes }
 		set_temp_variable = { party_index = 5 }
 		set_temp_variable = { party_popularity_increase = 0.07 }
 		set_temp_variable = { temp_outlook_increase = 0.04 }
@@ -18565,6 +18621,7 @@ country_event = {
 			set_country_flag = anti_trust_awareness2
 			set_country_flag = anti_trust_awareness3
 			set_country_flag = anti_trust_awareness4
+			update_party_name = yes
 		}
 	}
 }
@@ -25860,27 +25917,27 @@ country_event = {
 			RUS = {
 				set_autonomy = {
 					target = TAT
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 				set_autonomy = {
 					target = URA
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 				set_autonomy = {
 					target = NEE
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 				set_autonomy = {
 					target = KAE
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 				set_autonomy = {
 					target = KOM
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 				set_autonomy = {
 					target = BSH
-					autonomy_state = autonomy_satellite_state_colored
+					autonomy_state = autonomy_satellite_state
 				}
 			}
 			URA = {
@@ -26957,10 +27014,12 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					L_Marine_Bat = { x = 0 y = 1 }
 					L_Marine_Bat = { x = 0 y = 2 }
-					L_Marine_Bat = { x = 0 y = 3 }
-					L_Marine_Bat = { x = 0 y = 4 }
+
 					L_Marine_Bat = { x = 1 y = 0 }
-					Arty_Bat = { x = 1 y = 1 }
+					L_Marine_Bat = { x = 1 y = 1 }
+					L_Marine_Bat = { x = 1 y = 2 }
+
+					Arty_Bat = { x = 2 y = 0 }
 				}
 				priority = 2
 			}
@@ -26970,13 +27029,16 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+
 					Special_Forces = { x = 1 y = 0 }
 					Special_Forces = { x = 1 y = 1 }
 					Special_Forces = { x = 1 y = 2 }
-					Special_Forces = { x = 1 y = 3 }
+
 					Special_Forces = { x = 2 y = 0 }
 					Special_Forces = { x = 2 y = 1 }
+					Special_Forces = { x = 2 y = 2 }
+
+					Special_Forces = { x = 3 y = 0 }
 				}
 				priority = 2
 			}
@@ -26985,14 +27047,19 @@ country_event = {
 				regiments = {
 					Mot_Militia_Bat = { x = 0 y = 0 }
 					Mot_Militia_Bat = { x = 0 y = 1 }
+
 					Mot_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
-					SP_Arty_Bat = { x = 1 y = 2 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+				}
+				regimental_support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+
+					SP_AA_Battery = { x = 1 y = 0 }
 				}
 				support = {
-					Mot_Recce_Comp = { x = 0 y = 0 }
-					H_Engi_Comp = { x = 0 y = 1 }
-					SP_AA_Battery = { x = 0 y = 2 }
+					H_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27000,14 +27067,18 @@ country_event = {
 				name = "Lashkar-e Zerehiye Sepah-e Pasdaran" #Sepah
 				regiments = {
 					armor_Bat = { x = 0 y = 0 }
+
 					Arm_Inf_Bat = { x = 1 y = 0 }
 					Mot_Militia_Bat = { x = 1 y = 1 }
-					SP_Arty_Bat = { x = 1 y = 2 }
-					SP_AA_Bat = { x = 1 y = 3 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+					SP_AA_Bat = { x = 2 y = 1 }
+				}
+				regimental_support = {
+					Arm_Recce_Comp = { x = 0 y = 0 }
 				}
 				support = {
-					Arm_Recce_Comp = { x = 0 y = 0 }
-					H_Engi_Comp = { x = 0 y = 1 }
+					H_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27015,15 +27086,19 @@ country_event = {
 				name = "Lashkar-e Mekanizeh Sepah-e Pasdaran" #Sepah
 				regiments = {
 					Mech_Inf_Bat = { x = 0 y = 0 }
-					Mot_Militia_Bat = { x = 0 y = 1 }
-					Mot_Militia_Bat = { x = 0 y = 2 }
-					SP_Arty_Bat = { x = 1 y = 0 }
-					SP_AA_Bat = { x = 1 y = 1 }
-					armor_Bat = { x = 2 y = 0 }
+					armor_Bat = { x = 0 y = 1 }
+
+					Mot_Militia_Bat = { x = 1 y = 0 }
+					Mot_Militia_Bat = { x = 1 y = 1 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+					SP_AA_Bat = { x = 2 y = 1 }
+				}
+				regimental_support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
 				}
 				support = {
-					Mot_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27033,13 +27108,14 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+
 					Special_Forces = { x = 1 y = 0 }
-					SP_Arty_Bat = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 1 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
 				}
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
-					#SP_AA_Battery = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -27049,7 +27125,7 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					L_Air_Inf_Bat = { x = 0 y = 1 }
 				}
-				support = {
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
@@ -27434,10 +27510,12 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					L_Marine_Bat = { x = 0 y = 1 }
 					L_Marine_Bat = { x = 0 y = 2 }
-					L_Marine_Bat = { x = 0 y = 3 }
-					L_Marine_Bat = { x = 0 y = 4 }
+
 					L_Marine_Bat = { x = 1 y = 0 }
-					Arty_Bat = { x = 1 y = 1 }
+					L_Marine_Bat = { x = 1 y = 1 }
+					L_Marine_Bat = { x = 1 y = 2 }
+
+					Arty_Bat = { x = 2 y = 0 }
 				}
 				priority = 2
 			}
@@ -27447,13 +27525,16 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+
 					Special_Forces = { x = 1 y = 0 }
 					Special_Forces = { x = 1 y = 1 }
 					Special_Forces = { x = 1 y = 2 }
-					Special_Forces = { x = 1 y = 3 }
+
 					Special_Forces = { x = 2 y = 0 }
 					Special_Forces = { x = 2 y = 1 }
+					Special_Forces = { x = 2 y = 2 }
+
+					Special_Forces = { x = 3 y = 0 }
 				}
 				priority = 2
 			}
@@ -27462,14 +27543,19 @@ country_event = {
 				regiments = {
 					Mot_Militia_Bat = { x = 0 y = 0 }
 					Mot_Militia_Bat = { x = 0 y = 1 }
+
 					Mot_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
-					SP_Arty_Bat = { x = 1 y = 2 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+				}
+				regimental_support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
+
+					SP_AA_Battery = { x = 1 y = 0 }
 				}
 				support = {
-					Mot_Recce_Comp = { x = 0 y = 0 }
-					H_Engi_Comp = { x = 0 y = 1 }
-					SP_AA_Battery = { x = 0 y = 2 }
+					H_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27477,14 +27563,18 @@ country_event = {
 				name = "Lashkar-e Zerehiye Sepah-e Pasdaran" #Sepah
 				regiments = {
 					armor_Bat = { x = 0 y = 0 }
+
 					Arm_Inf_Bat = { x = 1 y = 0 }
 					Mot_Militia_Bat = { x = 1 y = 1 }
-					SP_Arty_Bat = { x = 1 y = 2 }
-					SP_AA_Bat = { x = 1 y = 3 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+					SP_AA_Bat = { x = 2 y = 1 }
+				}
+				regimental_support = {
+					Arm_Recce_Comp = { x = 0 y = 0 }
 				}
 				support = {
-					Arm_Recce_Comp = { x = 0 y = 0 }
-					H_Engi_Comp = { x = 0 y = 1 }
+					H_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27492,15 +27582,19 @@ country_event = {
 				name = "Lashkar-e Mekanizeh Sepah-e Pasdaran" #Sepah
 				regiments = {
 					Mech_Inf_Bat = { x = 0 y = 0 }
-					Mot_Militia_Bat = { x = 0 y = 1 }
-					Mot_Militia_Bat = { x = 0 y = 2 }
-					SP_Arty_Bat = { x = 1 y = 0 }
-					SP_AA_Bat = { x = 1 y = 1 }
-					armor_Bat = { x = 2 y = 0 }
+					armor_Bat = { x = 0 y = 1 }
+
+					Mot_Militia_Bat = { x = 1 y = 0 }
+					Mot_Militia_Bat = { x = 1 y = 1 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
+					SP_AA_Bat = { x = 2 y = 1 }
+				}
+				regimental_support = {
+					Mot_Recce_Comp = { x = 0 y = 0 }
 				}
 				support = {
-					Mot_Recce_Comp = { x = 0 y = 0 }
-					L_Engi_Comp = { x = 0 y = 1 }
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
 			}
@@ -27510,13 +27604,14 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-					Special_Forces = { x = 0 y = 3 }
+
 					Special_Forces = { x = 1 y = 0 }
-					SP_Arty_Bat = { x = 1 y = 1 }
+					Special_Forces = { x = 1 y = 1 }
+
+					SP_Arty_Bat = { x = 2 y = 0 }
 				}
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
-					#SP_AA_Battery = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -27526,7 +27621,7 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					L_Air_Inf_Bat = { x = 0 y = 1 }
 				}
-				support = {
+				regimental_support = {
 					L_Recce_Comp = { x = 0 y = 0 }
 				}
 				priority = 2
@@ -29303,6 +29398,8 @@ country_event = {
 				add = 25
 				has_war = yes
 			}
+			modifier = { factor = 2 has_opinion = { target = event_target:nato_coup_victim value > 50 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 has_stability < 0.4 }
 		}
 	}
@@ -29548,10 +29645,11 @@ country_event = {
 						Militia_Bat = { x = 0 y = 0 }
 						Militia_Bat = { x = 0 y = 1 }
 						Militia_Bat = { x = 0 y = 2 }
-						Militia_Bat = { x = 0 y = 3 }
-						Militia_Bat = { x = 0 y = 4 }
+
+						Militia_Bat = { x = 1 y = 0 }
+						Militia_Bat = { x = 1 y = 1 }
 					}
-					support = {
+					regimental_support = {
 						L_Recce_Comp = { x = 0 y = 0 }
 					}
 				}
@@ -29735,22 +29833,11 @@ country_event = {
 		name = department_of_state.97.b
 		log = "[GetDateText]: [This.GetName]: department_of_state.97.b executed"
 		USA = {
-			if = {
-				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-				set_autonomy = {
-					target = VEN
-					autonomy_state = autonomy_autonomous_state_colored
-					end_wars = yes
-					end_civil_wars = yes
-				}
-			}
-			else = {
-				set_autonomy = {
-					target = VEN
-					autonomy_state = autonomy_autonomous_state
-					end_wars = yes
-					end_civil_wars = yes
-				}
+			set_autonomy = {
+				target = VEN
+				autonomy_state = autonomy_autonomous_state
+				end_wars = yes
+				end_civil_wars = yes
 			}
 		}
 		ai_chance = { base = 15 }
@@ -37278,6 +37365,7 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = { factor = 5 is_historical_focus_on = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 

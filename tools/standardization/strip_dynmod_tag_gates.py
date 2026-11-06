@@ -20,7 +20,6 @@ Every strip is reported, because "only X ever attaches it" is a claim about the
 rest of the repo that this script does not verify.
 """
 
-import glob
 import os
 import re
 import sys
@@ -35,7 +34,13 @@ from common_utils import (  # noqa: E402
     create_gate_sweep_parser,
     find_block_span,
 )
-from shared_utils import atomic_write_text, create_backup, log_message  # noqa: E402
+from shared_utils import (  # noqa: E402
+    atomic_write_text,
+    create_backup,
+    get_root_dir,
+    list_files,
+    log_message,
+)
 
 _TAG_GATE_RE = re.compile(r"^\s*(?:original_tag|tag)\s*=\s*[A-Z]{3}\s*$")
 _ALWAYS_YES_RE = re.compile(r"^\s*always\s*=\s*yes\s*$")
@@ -204,9 +209,7 @@ def main() -> int:
         __doc__ or "", "files (default: dynamic_modifiers/)"
     ).parse_args()
 
-    root = args.root or os.path.normpath(
-        os.path.join(os.path.dirname(__file__), "..", "..")
-    )
+    root = args.root or get_root_dir()
 
     files = args.files
     if not files:
@@ -214,7 +217,7 @@ def main() -> int:
         if not os.path.isdir(mod_dir):
             log_message("ERROR", f"directory not found: {mod_dir}")
             return 1
-        files = sorted(glob.iglob(os.path.join(mod_dir, "**", "*.txt"), recursive=True))
+        files = list_files(mod_dir)
 
     total_removed = 0
     total_trimmed = 0

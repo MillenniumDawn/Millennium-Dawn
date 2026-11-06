@@ -10,6 +10,7 @@ nesting), and round-trip idempotently.
 import re
 import sys
 
+import pytest
 import standardize_ideas
 from shared.suite import read_text as _read
 from shared.suite import write_text as _write
@@ -344,6 +345,77 @@ def test_compact_block_boundaries():
     assert standardizer.compact_block(
         ["on_add = {", "", "\tadd_stability = 0.05", "}"], "\t\t"
     ) == ["\t\ton_add = {", "\t\t\tadd_stability = 0.05", "\t\t}"]
+
+
+# case: the on_add log as written -> the log the standardizer emits
+_IDEA_LOG_ROWS = {
+    "copied id": ("add idea TAG_other", "Idea TAG_log added"),
+    "wrong action": ("remove idea TAG_log", "Idea TAG_log added"),
+    "short wording": ("add TAG_log", "Idea TAG_log added"),
+    "trailing wording": ("TAG_log idea added", "Idea TAG_log added"),
+    "stock id copied": ("Idea TAG_other added", "Idea TAG_log added"),
+    "already right": ("Idea TAG_log added", "Idea TAG_log added"),
+    "hand-written": ("Adopted TAG_log reserve", "Adopted TAG_log reserve"),
+    "runtime name": ("add idea [TAG_log.GetName]", "add idea [TAG_log.GetName]"),
+}
+
+
+@pytest.mark.parametrize(
+    ("written", "emitted"), _IDEA_LOG_ROWS.values(), ids=_IDEA_LOG_ROWS
+)
+def test_stock_idea_log_names_its_own_idea(written, emitted):
+    prefix = "[GetDateText]: [Root.GetName]: "
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_log = {",
+                "\t\tpicture = x",
+                "\t\ton_add = {",
+                f'\t\t\tlog = "{prefix}{written}"',
+                "\t\t\tadd_stability = 0.05",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert f'\t\t\tlog = "{prefix}{emitted}"' in out
+
+
+def test_tooltip_only_lifecycle_block_gets_no_log():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_log = {",
+                "\t\tpicture = x",
+                "\t\ton_add = {",
+                "\t\t\tcustom_effect_tooltip = TAG_tt",
+                "\t\t\teffect_tooltip = {",
+                "\t\t\t\tadd_stability = 0.05",
+                "\t\t\t}",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert not any('log = "' in line for line in out)
+    assert "\t\t\tcustom_effect_tooltip = TAG_tt" in out
+
+
+def test_on_remove_stock_log_says_removed():
+    out = _standardize(
+        _idea(
+            [
+                "\tTAG_log = {",
+                "\t\tpicture = x",
+                "\t\ton_remove = {",
+                '\t\t\tlog = "[GetDateText]: [Root.GetName]: remove idea TAG_log"',
+                "\t\t\tadd_stability = -0.05",
+                "\t\t}",
+                "\t}",
+            ]
+        )
+    )
+    assert '\t\t\tlog = "[GetDateText]: [Root.GetName]: Idea TAG_log removed"' in out
 
 
 def test_single_line_on_add_with_effects_is_exploded_and_logged():
