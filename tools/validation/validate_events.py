@@ -14,6 +14,7 @@ from decimal import Decimal
 from functools import partial
 from pathlib import Path
 from typing import (
+    AbstractSet,
     Callable,
     Dict,
     FrozenSet,
@@ -615,6 +616,7 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
 def _iter_event_bodies(cleaned: str):
     """Yield (event_id, body, match_start) for defined events."""
     for eid, _event_type, body, start in _iter_typed_event_bodies(cleaned):
+        assert eid is not None
         yield eid, body, start
 
 
@@ -1625,7 +1627,9 @@ def money_commitment_effects(
 
 
 def commits_money(
-    effect_text: str, commitments: Set[str], ideas: Dict[str, Dict[str, Decimal]]
+    effect_text: str,
+    commitments: AbstractSet[str],
+    ideas: Dict[str, Dict[str, Decimal]],
 ) -> bool:
     """Whether effects anywhere in `effect_text` commit money, directly or through
     a call to one of `commitments` (money_commitment_effects)."""
@@ -1840,8 +1844,8 @@ def unneeded_treasury_reason(
     labels = [
         label for name, label in _TREASURY_CHECK_LABELS.items() if name in unneeded
     ]
-    kinds = "money or political power" if "bankruptcy" in unneeded else "money"
-    return f"lowers the weight on {' and '.join(labels)}, but the {item} has no {kinds} cost"
+    cost_label = "money or political power" if "bankruptcy" in unneeded else "money"
+    return f"lowers the weight on {' and '.join(labels)}, but the {item} has no {cost_label} cost"
 
 
 def possible_costs(
@@ -2387,9 +2391,9 @@ def resolve_payments(
         if immediate:
             nodes.append(("event", event_id, immediate))
     for kind, name, facts in nodes:
-        for _scope, event_id in facts.fires:
-            if event_id:
-                readers[("event", event_id.removeprefix("@callback_event:"))].add(
+        for _scope, fired_id in facts.fires:
+            if fired_id:
+                readers[("event", fired_id.removeprefix("@callback_event:"))].add(
                     (kind, name)
                 )
         for _scope, effect in facts.calls:
