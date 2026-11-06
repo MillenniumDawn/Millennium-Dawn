@@ -16,11 +16,16 @@ from equipment_module_slots import (
     _parse_module_assignments,
     blank_comments,
     build_indexes,
+    check_created_variant_references,
     check_created_variant_upgrades,
     check_created_variants,
+    check_target_variant_role_icons,
+    check_target_variant_upgrades,
     check_target_variants,
     created_variant_spans,
+    entity_names_from_text,
     parse_variant_names,
+    role_strip_frames,
 )
 from shared.suite import write_under as _write
 from validate_ai_equipment import Validator
@@ -487,14 +492,13 @@ def test_created_variant_unknown_slot_flagged():
     assert _created_kinds(content) == ["unknown_slot"]
 
 
-def test_created_variant_non_ship_type_skipped():
-    # Tank and plane designs share the effect but not the hull index; flagging
-    # their chassis as an unknown hull would be a false positive on every one.
+def test_created_variant_unindexed_type_flagged():
+    # The real index covers every equipment type, so an unindexed one is a typo.
     content = _created(
         "medium_tank_chassis_1",
         "\t\t\t\t\t\tturret_type_slot = tank_medium_cannon_2\n",
     )
-    assert _created_kinds(content) == []
+    assert _created_kinds(content) == ["unknown_hull"]
 
 
 def test_created_variant_empty_is_legal():
@@ -862,7 +866,6 @@ def test_uniform_history_is_not_flagged(tmp_path):
 EDGE_HULLS = """
 equipments = {
 \tedge_hull = {
-\t\tis_archetype = yes
 \t\ttype = screen_ship
 \t\tname = "Edge Class"
 \t\tmodule_slots = {
@@ -988,9 +991,10 @@ def test_variant_with_neither_type_nor_modules_is_skipped():
     assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
-def test_variant_naming_an_unindexed_hull_without_modules_is_skipped():
+def test_variant_naming_an_unindexed_hull_without_modules_is_flagged():
     content = _edge_created('\t\t\t\tname = "Ghost"\n\t\t\t\ttype = not_a_hull\n')
-    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
+    findings = check_created_variants(created_variant_spans(content), _edge_index())
+    assert [f.kind for f in findings] == ["unknown_hull"]
 
 
 def test_variant_on_an_unresolvable_hull_is_skipped():
@@ -1210,8 +1214,8 @@ def test_variant_of_unknown_type_has_no_upgrade_finding():
 
 
 def test_type_without_any_upgrade_list_is_skipped():
-    index = build_indexes([HULLS], [MODULES])
-    content = _upgraded("test_ship_hull_1", "\t\tlegacy_upgrade = 1\n")
+    index = build_indexes([LIMIT_HULLS], [MODULES])
+    content = _upgraded("lim_tank_hull_1", "\t\tlegacy_upgrade = 1\n")
     assert check_created_variant_upgrades(created_variant_spans(content), index) == []
 
 
@@ -1230,6 +1234,474 @@ def test_oob_validator_reports_unsupported_upgrade(tmp_path):
     assert issues[0].severity == "error"
     assert issues[0].file == "common/national_focus/07_test.txt"
     assert "legacy_upgrade" in issues[0].message
+
+
+# --- rules ported from the equipment designer -------------------------------
+
+RULE_HULLS = """
+equipments = {
+\trule_plane = {
+\t\tis_archetype = yes
+\t\ttype = { fighter }
+\t\ttype_override = main_slot
+\t\tallowed_types = { fighter cas }
+\t\tmodule_slots = {
+\t\t\tmain_slot = { allowed_module_categories = { cat_gun } }
+\t\t\taux_slot = { allowed_module_categories = { cat_bomb } }
+\t\t}
+\t}
+\trule_plane_1 = { archetype = rule_plane module_slots = inherit }
+\trule_rifle = { is_archetype = yes upgrades = { rule_upgrade } }
+\trule_rifle_1 = { archetype = rule_rifle }
+}
+duplicate_archetypes = {
+\trule_clone = { archetype = rule_plane type = { fighter } }
+}
+"""
+
+# Its own file: a hull-type marker makes every hull in a file a ship.
+RULE_SHIP_HULLS = """
+equipments = {
+\trule_ship = {
+\t\tis_archetype = yes
+\t\ttype = screen_ship
+\t\tupgrades = { rule_upgrade }
+\t\tmodule_slots = { main_slot = { } }
+\t}
+\trule_ship_1 = { archetype = rule_ship module_slots = inherit }
+}
+"""
+
+RULE_MODULES = """
+equipment_modules = {
+\tgun_fighter = { category = cat_gun add_equipment_type = { fighter } }
+\tgun_cas = { category = cat_gun add_equipment_type = { cas } }
+\tgun_bomber = { category = cat_gun add_equipment_type = strategic_bomber }
+\tgun_bomber_child = { category = cat_gun parent = gun_bomber }
+\tgun_plain = { category = cat_gun }
+\tgun_no_bombs = {
+\t\tcategory = cat_gun
+\t\tforbid_equipment_type_exact_match_for_category = { cat_bomb = fighter }
+\t}
+\tbomb = { category = cat_bomb }
+}
+"""
+
+RULE_UPGRADES = """
+upgrades = {
+\trule_upgrade = { max_level = 5 }
+}
+"""
+
+
+def _rule_index():
+    return build_indexes([RULE_HULLS, RULE_SHIP_HULLS], [RULE_MODULES], [RULE_UPGRADES])
+
+
+def _main_slot(module, hull="rule_plane_1", extra=""):
+    return (
+        f'create_equipment_variant = {{ name = "D" type = {hull} '
+        f"modules = {{ main_slot = {module} {extra} }} }}\n"
+    )
+
+
+# rule: {case: (variant text, expected kinds)}
+_VARIANT_RULE_CASES = {
+    "archetype as type": (
+        'create_equipment_variant = { name = "D" type = rule_plane }',
+        ["archetype_type"],
+    ),
+    "cloned archetype as type": (
+        'create_equipment_variant = { name = "D" type = rule_clone }',
+        ["archetype_type"],
+    ),
+    "concrete type": (
+        'create_equipment_variant = { name = "D" type = rule_plane_1 }',
+        [],
+    ),
+    "unknown type without modules": (
+        'create_equipment_variant = { name = "D" type = rule_plane_9 }',
+        ["unknown_hull"],
+    ),
+    "dynamic type": ('create_equipment_variant = { name = "D" type = var:x }', []),
+    "modules on a non-modular type": (
+        "create_equipment_variant = { type = rule_rifle_1 modules = { a = b } }",
+        ["modules_on_non_modular"],
+    ),
+    "empty modules on a non-modular type": (
+        "create_equipment_variant = { type = rule_rifle_1 modules = { } }",
+        [],
+    ),
+    "weapon sets the hull's own type": (_main_slot("gun_fighter"), []),
+    "weapon sets an allowed type": (_main_slot("gun_cas"), []),
+    "weapon sets a type the hull refuses": (
+        _main_slot("gun_bomber"),
+        ["type_override_role"],
+    ),
+    "refused type through module parent": (
+        _main_slot("gun_bomber_child"),
+        ["type_override_role"],
+    ),
+    "refused type on a clone": (
+        _main_slot("gun_bomber", "rule_clone_1"),
+        ["type_override_role"],
+    ),
+    "weapon adds no type": (_main_slot("gun_plain"), []),
+    "category reference stays open": (_main_slot("cat_gun"), []),
+    "one alternative fits": (
+        "create_equipment_variant = { type = rule_plane_1 modules = "
+        "{ main_slot = { any_of = { gun_bomber gun_cas } } } }",
+        [],
+    ),
+    "module refuses a category": (
+        _main_slot("gun_no_bombs", extra="aux_slot = bomb"),
+        ["exact_category_conflict"],
+    ),
+    "module without the other category": (_main_slot("gun_no_bombs"), []),
+}
+
+
+@pytest.mark.parametrize(
+    ("text", "kinds"), _VARIANT_RULE_CASES.values(), ids=_VARIANT_RULE_CASES
+)
+def test_variant_rules(text, kinds):
+    findings = check_created_variants(created_variant_spans(text), _rule_index())
+    assert [f.kind for f in findings] == kinds
+    target = text.replace("create_equipment_variant", "target_variant")
+    assert [f.kind for f in check_target_variants(target, _rule_index())] == kinds
+
+
+def test_unknown_type_names_the_definition_spelling():
+    text = "create_equipment_variant = { type = Rule_Plane_1 }"
+    (finding,) = check_created_variants(created_variant_spans(text), _rule_index())
+    assert "spelled 'rule_plane_1'" in finding.message
+
+
+def test_exact_category_conflict_needs_a_single_type_hull():
+    hulls = RULE_HULLS.replace("type = { fighter }", "type = { fighter cas }", 1)
+    index = build_indexes([hulls], [RULE_MODULES], [RULE_UPGRADES])
+    text = _main_slot("gun_no_bombs", extra="aux_slot = bomb")
+    assert check_created_variants(created_variant_spans(text), index) == []
+
+
+_UPGRADE_RULE_BODY = "create_equipment_variant = { type = HULL upgrades = { BODY } }"
+
+# level rule: {case: (hull, upgrades body, expected kinds)}
+_UPGRADE_LEVEL_CASES = {
+    "at max": ("rule_rifle_1", "rule_upgrade = 5", []),
+    "over max": ("rule_rifle_1", "rule_upgrade = 6", ["invalid_upgrade_level"]),
+    "negative": ("rule_rifle_1", "rule_upgrade = -1", ["invalid_upgrade_level"]),
+    "undefined": ("rule_rifle_1", "other_upgrade = 1", ["undefined_upgrade"]),
+    "weighted within max": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 3 modifier = { add = 2 has_war = yes } }",
+        [],
+    ),
+    "weighted over max": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 4 modifier = { add = 2 has_war = yes } }",
+        ["invalid_upgrade_level"],
+    ),
+    "negative add hides a base over max": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 7 modifier = { add = -2 has_war = yes } }",
+        ["invalid_upgrade_level"],
+    ),
+    "exclusive modifiers stay unresolved": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 3 modifier = { add = 2 has_war = yes } "
+        "modifier = { add = 2 has_war = no } }",
+        [],
+    ),
+    "factor stays unresolved": (
+        "rule_rifle_1",
+        "rule_upgrade = { base = 9 modifier = { factor = 0.5 has_war = yes } }",
+        [],
+    ),
+    "ship": ("rule_ship_1", "rule_upgrade = 1", ["ship_upgrade"]),
+}
+
+
+@pytest.mark.parametrize(
+    ("hull", "body", "kinds"),
+    _UPGRADE_LEVEL_CASES.values(),
+    ids=_UPGRADE_LEVEL_CASES,
+)
+def test_upgrade_level_rules(hull, body, kinds):
+    text = _UPGRADE_RULE_BODY.replace("HULL", hull).replace("BODY", body)
+    created = check_created_variant_upgrades(created_variant_spans(text), _rule_index())
+    assert [f.kind for f in created] == kinds
+    target = text.replace("create_equipment_variant", "target_variant")
+    assert [f.kind for f in check_target_variant_upgrades(target, _rule_index())] == (
+        kinds
+    )
+
+
+def test_target_upgrade_outside_the_type_list_is_flagged():
+    index = build_indexes(
+        [RULE_HULLS],
+        [RULE_MODULES],
+        [RULE_UPGRADES + "upgrades = { spare = { max_level = 1 } }"],
+    )
+    text = "target_variant = { type = rule_rifle_1 upgrades = { spare = 1 } }"
+    (finding,) = check_target_variant_upgrades(text, index)
+    assert finding.kind == "unsupported_upgrade"
+    assert finding.message == "Type 'rule_rifle_1' does not support upgrades 'spare'"
+
+
+_FRAMES = {
+    "GFX_naval_equipment_role_icons": 3,
+    "GFX_plane_niche_icon_strip": 2,
+    "GFX_niche_icon_strip": 1,
+}
+
+# role icon: {case: (hull, index, expected kinds)}
+_ROLE_ICON_CASES = {
+    "ship in range": ("rule_ship_1", 3, []),
+    "ship over": ("rule_ship_1", 4, ["role_icon_out_of_range"]),
+    "plane uses its own strip": ("rule_plane_1", 3, ["role_icon_out_of_range"]),
+    "other uses the niche strip": ("rule_rifle_1", 2, ["role_icon_out_of_range"]),
+    "zero": ("rule_ship_1", 0, ["role_icon_out_of_range"]),
+}
+
+
+@pytest.mark.parametrize(
+    ("hull", "role", "kinds"), _ROLE_ICON_CASES.values(), ids=_ROLE_ICON_CASES
+)
+def test_role_icon_range(hull, role, kinds):
+    created = created_variant_spans(
+        f"create_equipment_variant = {{ type = {hull} role_icon_index = {role} }}"
+    )
+    assert [
+        f.kind
+        for f in check_created_variant_references(
+            created, _rule_index(), {}, None, _FRAMES
+        )
+    ] == kinds
+    target = (
+        f"group = {{ design = {{ role_icon_index = {role} "
+        f"target_variant = {{ type = {hull} }} }} }}"
+    )
+    assert [
+        f.kind for f in check_target_variant_role_icons(target, _rule_index(), _FRAMES)
+    ] == kinds
+
+
+def test_role_strip_frames_reads_only_declared_strips():
+    frames = role_strip_frames(
+        [
+            'spriteType = { name = "GFX_niche_icon_strip" texturefile = "a" noOfFrames = 10 }',
+            'spriteType = { name = "GFX_plane_niche_icon_strip" texturefile = "a" }',
+            'spriteType = { name = "GFX_niche_icon_strip_selected" noOfFrames = 99 }',
+        ]
+    )
+    assert frames == {"GFX_niche_icon_strip": 10}
+
+
+# references: {case: (variant body, country, expected kinds)}
+_REFERENCE_CASES = {
+    "known name group": ("name_group = TST_NAMES", "TST", []),
+    "unknown name group": ("name_group = NOPE", "TST", ["unknown_name_group"]),
+    "name group of another country": (
+        "name_group = TST_NAMES",
+        "OTH",
+        ["name_group_country"],
+    ),
+    "unscoped file skips the country rule": ("name_group = TST_NAMES", None, []),
+    "name group for anyone": ("name_group = ANY_NAMES", "OTH", []),
+    "known model": ('model = "Known_Entity"', None, []),
+    "unknown model": ('model = "missing_entity"', None, ["unknown_model"]),
+}
+
+
+@pytest.mark.parametrize(
+    ("body", "country", "kinds"), _REFERENCE_CASES.values(), ids=_REFERENCE_CASES
+)
+def test_variant_references(body, country, kinds):
+    variants = created_variant_spans(
+        f"create_equipment_variant = {{ type = rule_plane_1 {body} }}"
+    )
+    findings = check_created_variant_references(
+        variants,
+        _rule_index(),
+        {"TST_NAMES": {"TST"}, "ANY_NAMES": set()},
+        {"known_entity"},
+        {},
+        country,
+    )
+    assert [f.kind for f in findings] == kinds
+
+
+def test_model_check_needs_entity_files():
+    variants = created_variant_spans(
+        'create_equipment_variant = { type = rule_plane_1 model = "x" }'
+    )
+    assert check_created_variant_references(variants, _rule_index(), {}, None, {}) == []
+
+
+def test_entity_names_read_quoted_and_bare_names_only_from_entities():
+    raw = (
+        '# entity = { name = "commented" }\n'
+        'pdxmesh = { name = "not_an_entity" }\n'
+        'entity = { pdxmesh = "x" name = "Quoted_Entity" }\n'
+        "objectTypes = { entity = { name = Bare_Entity } }\n"
+    )
+    assert entity_names_from_text(raw) == {"quoted_entity", "bare_entity"}
+
+
+# severity: {case: (rel, kind's category, content, severity)}
+_VALIDATOR_SEVERITY_CASES = {
+    "gating rule": (
+        "common/national_focus/07_test.txt",
+        "EQUIPMENT VARIANT: upgrade level out of range",
+        'create_equipment_variant = { name = "D" type = rule_rifle_1 '
+        "upgrades = { rule_upgrade = 6 } }",
+        "error",
+    ),
+    "advisory rule": (
+        "common/national_focus/07_test.txt",
+        "SHIP VARIANT: upgrades on a ship",
+        'create_equipment_variant = { name = "D" type = rule_ship_1 '
+        "upgrades = { rule_upgrade = 1 } }",
+        "warning",
+    ),
+    "unknown type gates": (
+        "common/national_focus/07_test.txt",
+        "EQUIPMENT VARIANT: unknown hull type",
+        'create_equipment_variant = { name = "D" type = rule_plane_9 }',
+        "error",
+    ),
+    "created archetype gates": (
+        "common/national_focus/07_test.txt",
+        "EQUIPMENT VARIANT: type is an archetype",
+        'create_equipment_variant = { name = "D" type = rule_plane }',
+        "error",
+    ),
+}
+
+
+def _rule_tree(tmp_path, rel, content):
+    _write(tmp_path, "common/units/equipment/MD_rules.txt", RULE_HULLS)
+    _write(tmp_path, "common/units/equipment/MD_rule_ships.txt", RULE_SHIP_HULLS)
+    _write(tmp_path, "common/units/equipment/modules/MD_rules.txt", RULE_MODULES)
+    _write(tmp_path, "common/units/equipment/upgrades/MD_rules.txt", RULE_UPGRADES)
+    _write(tmp_path, rel, content)
+
+
+@pytest.mark.parametrize(
+    ("rel", "category", "content", "severity"),
+    _VALIDATOR_SEVERITY_CASES.values(),
+    ids=_VALIDATOR_SEVERITY_CASES,
+)
+def test_oob_validator_rule_severity(tmp_path, rel, category, content, severity):
+    from validate_oob_units import Validator as OobValidator
+
+    _rule_tree(tmp_path, rel, content)
+    validator = OobValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_created_variant_modules()
+    (issue,) = [i for i in validator._issues if i.category == category]
+    assert issue.severity == severity
+    assert issue.file == rel
+
+
+def test_oob_validator_reads_references_from_the_tree(tmp_path):
+    from validate_oob_units import Validator as OobValidator
+
+    _rule_tree(
+        tmp_path,
+        "history/countries/TST - Test.txt",
+        'create_equipment_variant = { name = "A" type = rule_plane_1 name_group = NOPE '
+        'model = "nope_entity" }\n'
+        'create_equipment_variant = { name = "B" type = rule_ship_1 role_icon_index = 9 '
+        'name_group = OTH_NAMES model = "MOD_entity" }\n'
+        'create_equipment_variant = { name = "C" type = rule_plane_1 model = "vanilla_probe" }\n',
+    )
+    _write(
+        tmp_path,
+        "common/units/names_ships/names.txt",
+        "OTH_NAMES = { for_countries = { OTH } }\n",
+    )
+    _write(tmp_path, "gfx/entities/mod.asset", 'entity = { name = "mod_entity" }\n')
+    _write(
+        tmp_path,
+        "interface/equipment.gfx",
+        'spriteType = { name = "GFX_naval_equipment_role_icons" noOfFrames = 3 }\n',
+    )
+    validator = OobValidator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_created_variant_modules()
+    assert {(i.category, i.severity) for i in validator._issues} == {
+        ("EQUIPMENT VARIANT: unknown name_group", "error"),
+        ("EQUIPMENT VARIANT: unknown model", "error"),
+        ("SHIP VARIANT: name_group for another country", "warning"),
+        ("SHIP VARIANT: role_icon_index out of range", "warning"),
+    }
+    # "vanilla_probe" has no entity anywhere, so it is the second model finding.
+    models = [i for i in validator._issues if "model" in i.category]
+    assert sorted("nope_entity" in i.message for i in models) == [False, True]
+
+
+def test_vanilla_entity_manifest_covers_vanilla_models(tmp_path, monkeypatch):
+    import validate_oob_units as oob
+
+    manifest = tmp_path / "manifest.txt"
+    manifest.write_text("# header\nvanilla_probe\n", encoding="utf-8")
+    monkeypatch.setattr(oob, "_VANILLA_ENTITIES", str(manifest))
+    _rule_tree(
+        tmp_path,
+        "history/countries/TST - Test.txt",
+        'create_equipment_variant = { name = "C" type = rule_plane_1 model = "vanilla_probe" }\n',
+    )
+    _write(tmp_path, "gfx/entities/mod.asset", 'entity = { name = "mod_entity" }\n')
+    validator = oob.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_created_variant_modules()
+    assert not validator._issues
+
+
+# severity: {case: (category, design body, severity)}
+_AI_SEVERITY_CASES = {
+    "upgrade over max": (
+        "EQUIPMENT VARIANT: upgrade level out of range",
+        "target_variant = { type = rule_rifle_1 upgrades = { rule_upgrade = 6 } }",
+        "error",
+    ),
+    "unknown type without modules": (
+        "EQUIPMENT VARIANT: unknown hull type",
+        "target_variant = { type = rule_plane_9 }",
+        "error",
+    ),
+    "archetype only advises": (
+        "EQUIPMENT VARIANT: type is an archetype",
+        "target_variant = { type = rule_plane }",
+        "warning",
+    ),
+    "role icon": (
+        "NAVAL VARIANT: role_icon_index out of range",
+        "role_icon_index = 9 target_variant = { type = rule_ship_1 }",
+        "warning",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("category", "body", "severity"),
+    _AI_SEVERITY_CASES.values(),
+    ids=_AI_SEVERITY_CASES,
+)
+def test_ai_validator_rule_severity(tmp_path, category, body, severity):
+    _rule_tree(
+        tmp_path,
+        "common/ai_equipment/TST.txt",
+        f"group = {{ category = land roles = {{ r }} design = {{ {body} }} }}\n",
+    )
+    _write(
+        tmp_path,
+        "interface/equipment.gfx",
+        'spriteType = { name = "GFX_naval_equipment_role_icons" noOfFrames = 3 }\n',
+    )
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    (issue,) = [i for i in validator._issues if i.category == category]
+    assert issue.severity == severity
 
 
 def test_one_walk_feeds_every_created_variant_check_with_real_lines():

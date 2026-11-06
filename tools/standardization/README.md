@@ -85,7 +85,8 @@ Standardizes idea files according to Millennium Dawn standards.
 **Key features:**
 
 - Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
-- Adds logging to on_add/on_remove when they have effects
+- Adds logging to on_add/on_remove when they have effects beyond tooltips
+- Rewrites a stock on_add/on_remove log to `Idea <id> added` or `Idea <id> removed`, so a copied log names its own idea. A hand-written message is left alone
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
 
@@ -203,12 +204,22 @@ python3 standardize_technologies.py common/technologies/infantry.txt -o output.t
 
 ### History (`standardize_history.py`)
 
-Standardizes dated blocks in country history files without changing content outside them.
+Reorders dated blocks in country history files into fixed groups, then reindents the whole file by brace depth. Content outside dated blocks keeps its order. A file with no dated block is left alone.
 
 **Usage:**
 
 ```bash
 python3 standardize_history.py "history/countries/CHI - China.txt" -o output.txt
+```
+
+### Tabs and Spacing (`standardize.py indent`)
+
+Fixes tabs and spacing in `common/ai_equipment/`, `common/characters/`, `common/scripted_effects/`, and `common/scripted_triggers/`. These paths have no block layout rules, so nothing is reordered, added, or removed.
+
+**Usage:**
+
+```bash
+python3 standardize.py indent common/characters/CHI.txt
 ```
 
 ### Localisation (`standardize_localisation.py`)
@@ -247,6 +258,9 @@ python3 standardize.py technology common/technologies/infantry.txt
 # Standardize history files
 python3 standardize.py history "history/countries/CHI - China.txt"
 
+# Fix tabs and spacing only
+python3 standardize.py indent common/characters/CHI.txt
+
 # Standardize localisation
 python3 standardize.py localisation input.yml --mod-root /path/to/mod
 ```
@@ -277,8 +291,8 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 Focus, event, decision, idea and technology blocks are reindented by brace
 depth, one tab per level, so a nested line written at the wrong depth is moved.
-Focus files are also reindented between blocks, so section comments and tree
-properties follow the same rule. `validate_style.py` reports lines off their
+Focus, history and `indent` files are reindented between blocks too, so section
+comments and top-level properties follow the same rule. `validate_style.py` reports lines off their
 brace depth as `indent-depth` warnings; `tools/linting/fix_styling.py --fix-indent`
 fixes them in any file the check reads.
 
@@ -419,7 +433,7 @@ Drop `--all` (and add `--staged`) for the changed-file scope.
 standardizer selection live in one place:
 
 - `kind_for_path(path)` — `"focus"`, `"event"`, `"decision"`, `"idea"`, `"mio"`,
-  or `None` when no standardizer owns the path.
+  `"technology"`, `"history"`, `"indent"`, or `None` when no standardizer owns the path.
 - `standardize_text(kind, text)` — the text the standardizer would write, or
   `None` when the file holds no block of that kind.
 

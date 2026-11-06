@@ -3,6 +3,7 @@
 import importlib.util
 import logging
 import os
+from decimal import Decimal
 
 import pytest
 import validator_common as VC
@@ -111,6 +112,62 @@ def test_unneeded_treasury_checks(checks, money, political_power, unneeded):
     assert VC.unneeded_treasury_checks(checks, money, political_power) == unneeded
 
 
+_IDEAS = VC.idea_money_modifiers(
+    [
+        "ideas = { bureaucracy = {\n"
+        "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
+        "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+        "\tbureau_dynamic = { on_add = { set_temp_variable = { spending_new_level = var:level } } }\n"
+        "\tbureau_multiple = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = var:level } } } }\n"
+        "\tbureau_conditional = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = 2 } } } }\n"
+        "}\n"
+        "country = {\n"
+        "\tTAG_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
+        "\tTAG_reform_2 = { modifier = { personnel_cost_multiplier_modifier = 0.2 } }\n"
+        "\tTAG_lean = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
+        "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+        "\tTAG_on_add = { on_add = { add_to_variable = { treasury = -10 } } }\n"
+        "\tTAG_on_remove = { on_remove = { add_to_variable = { treasury = -10 } } }\n"
+        "\tTAG_dynamic = { modifier = { personnel_cost_multiplier_modifier = TAG_value } }\n"
+        "\tTAG_tax_speed = { modifier = { tax_rate_change_multiplier_modifier = 0.5 } }\n"
+        "} }\n"
+    ]
+)
+
+
+def test_idea_money_modifiers_keep_money_and_spending_levels():
+    assert _IDEAS == {
+        "bureau_01": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 1},
+        "bureau_02": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 2},
+        "bureau_dynamic": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_multiple": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_conditional": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "TAG_reform": {"personnel_cost_multiplier_modifier": Decimal("0.1")},
+        "TAG_reform_2": {"personnel_cost_multiplier_modifier": Decimal("0.2")},
+        "TAG_lean": {"personnel_cost_multiplier_modifier": Decimal("-0.1")},
+        "TAG_drill": {},
+        "TAG_on_add": {VC._IDEA_CALLBACK: 0},
+        "TAG_on_remove": {VC._IDEA_CALLBACK: 0},
+        "TAG_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "TAG_tax_speed": {},
+    }
+
+
+def _tooltip(op: str, amount: str, modifier: str) -> str:
+    return f"{op} = {{ TAG_x = {amount} tooltip = {modifier}_modifier_tt }}"
+
+
 # case: (script, commits money)
 _MONEY_COMMITMENT_CASES = {
     "war goal": ("create_wargoal = { type = annex_everything target = GER }", True),
@@ -118,24 +175,170 @@ _MONEY_COMMITMENT_CASES = {
     "border war": ("start_border_war = { change_state_after_war = no }", True),
     "civil war": ("start_civil_war = { ideology = democratic }", True),
     "decision war": ("war_with_target_on_complete = yes", True),
-    "spending law change": ("set_country_flag = spending_law_scripted_change", True),
-    "spending law check": ("has_country_flag = spending_law_scripted_change", False),
-    "money modifier": ("modifier = { social_cost_multiplier_modifier = 0.1 }", True),
-    "dynamic money modifier": (
-        "add_to_variable = { TAG_police = 0.01 tooltip = police_cost_multiplier_modifier_tt }",
+    "spending law flag alone": (
+        "set_country_flag = spending_law_scripted_change",
+        False,
+    ),
+    "spending law raised": (
+        "swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }",
         True,
     ),
+    "spending law lowered": (
+        "swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }",
+        False,
+    ),
+    "spending law set from an unknown level": ("add_ideas = bureau_02", True),
+    "cost modifier raised": (
+        "modifier = { social_cost_multiplier_modifier = 0.1 }",
+        True,
+    ),
+    "cost modifier cut": (
+        "modifier = { social_cost_multiplier_modifier = -0.1 }",
+        False,
+    ),
+    "income modifier cut": ("modifier = { tax_gain_multiplier_modifier = -0.1 }", True),
+    "income modifier raised": (
+        "modifier = { tax_gain_multiplier_modifier = 0.1 }",
+        False,
+    ),
+    "short add cost raised": (
+        "add_to_variable = { social_cost_multiplier_modifier = 0.15 }",
+        True,
+    ),
+    "short add cost cut": (
+        "add_to_variable = { social_cost_multiplier_modifier = -0.15 }",
+        False,
+    ),
+    "long add income cut": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "long add income raised": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = 0.15 }",
+        False,
+    ),
+    "short subtract cost cut": (
+        "subtract_from_variable = { social_cost_multiplier_modifier = 0.15 }",
+        False,
+    ),
+    "long subtract cost raised": (
+        "subtract_from_variable = { var = social_cost_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "dynamic modifier change": (
+        "add_to_variable = { social_cost_multiplier_modifier = TAG_step }",
+        True,
+    ),
+    "unrelated dynamic variable": (
+        "add_to_variable = { other_variable = TAG_step }",
+        False,
+    ),
+    "computed money modifier": ("social_cost_multiplier_modifier = TAG_step", True),
+    "tax rate change price": ("tax_rate_change_multiplier_modifier = 0.5", False),
+    "dynamic cost raised": (
+        _tooltip("add_to_variable", "0.01", "police_cost_multiplier"),
+        True,
+    ),
+    "dynamic cost cut": (
+        _tooltip("add_to_variable", "-0.01", "police_cost_multiplier"),
+        False,
+    ),
+    "dynamic cost subtracted": (
+        _tooltip("subtract_from_variable", "0.01", "police_cost_multiplier"),
+        False,
+    ),
+    "dynamic income subtracted": (
+        _tooltip("subtract_from_variable", "0.01", "tax_gain_multiplier"),
+        True,
+    ),
+    "dynamic long form": (
+        "add_to_variable = { var = TAG_x value = 0.01"
+        " tooltip = police_cost_multiplier_modifier_tt }",
+        True,
+    ),
+    "dynamic computed change": (
+        _tooltip("add_to_variable", "TAG_step", "police_cost_multiplier"),
+        True,
+    ),
+    "dynamic set": (_tooltip("set_variable", "0.01", "police_cost_multiplier"), True),
     "money modifier read": ("add = modifier@tax_gain_multiplier_modifier", False),
     "money system scale": ("common_money_modifier = 1", False),
     "other modifier": ("modifier = { stability_factor = 0.1 }", False),
+    "costly idea": ("add_ideas = TAG_reform", True),
+    "costly idea in a list": ("add_ideas = { TAG_drill TAG_reform }", True),
+    "costly timed idea": ("add_timed_idea = { idea = TAG_reform days = 30 }", True),
+    "idea swapped up": (
+        "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_reform_2 }",
+        True,
+    ),
+    "idea swapped down": (
+        "swap_ideas = { remove_idea = TAG_reform_2 add_idea = TAG_reform }",
+        False,
+    ),
+    "idea replaced with a cheaper one": (
+        "remove_ideas = TAG_reform_2 add_ideas = TAG_reform",
+        False,
+    ),
+    "removals in another block do not offset": (
+        "if = { limit = { has_war = yes } remove_ideas = TAG_reform_2 }"
+        " add_ideas = TAG_reform",
+        True,
+    ),
+    "saving removed": ("remove_ideas = TAG_lean", True),
+    "costly idea removed": ("remove_ideas = TAG_reform", False),
+    "non-economic idea": ("add_ideas = TAG_drill", False),
+    "tax rate change price idea": ("add_ideas = TAG_tax_speed", False),
+    "immediately readded held idea": (
+        "if = { limit = { has_idea = TAG_reform } add_ideas = TAG_reform }",
+        False,
+    ),
+    "unrelated prerequisite": (
+        "if = { limit = { has_idea = TAG_lean } add_ideas = TAG_reform }",
+        True,
+    ),
+    "negated prerequisite": (
+        "if = { limit = { NOT = { has_idea = TAG_reform } } add_ideas = TAG_reform }",
+        True,
+    ),
+    "held free modifier idea with on_add": (
+        "if = { limit = { has_idea = TAG_on_add } add_ideas = TAG_on_add }",
+        True,
+    ),
+    "held idea with on_remove": (
+        "if = { limit = { has_idea = TAG_on_remove } add_ideas = TAG_on_remove }",
+        True,
+    ),
+    "held idea with on_add": (
+        "if = { limit = { has_idea = bureau_02 } add_ideas = bureau_02 }",
+        True,
+    ),
+    "unknown required idea": (
+        "if = { limit = { has_idea = TAG_missing } add_ideas = TAG_missing }",
+        True,
+    ),
+    "intervening other idea removal": (
+        "if = { limit = { has_idea = TAG_reform } remove_ideas = TAG_lean "
+        "add_ideas = TAG_reform }",
+        True,
+    ),
+    "unknown idea": ("add_ideas = TAG_missing", True),
+    "unknown swap replacement": (
+        "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_missing }",
+        True,
+    ),
+    "unknown removed idea": ("remove_ideas = TAG_missing", True),
+    "dynamic idea modifier": ("add_ideas = TAG_dynamic", True),
+    "dynamic spending level": ("add_ideas = bureau_dynamic", True),
+    "multiple spending levels": ("add_ideas = bureau_multiple", True),
+    "conditional spending levels": ("add_ideas = bureau_conditional", True),
 }
 
 
 @pytest.mark.parametrize(
     "script, commits", _MONEY_COMMITMENT_CASES.values(), ids=_MONEY_COMMITMENT_CASES
 )
-def test_money_commitment(script, commits):
-    assert bool(VC.MONEY_COMMITMENT_RE.search(script)) is commits
+def test_script_commits_money(script, commits):
+    assert VC.script_commits_money(script, _IDEAS) is commits
 
 
 # ---- leader trait parsing -------------------------------------------------

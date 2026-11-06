@@ -15,7 +15,7 @@ from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import extract_block_from_text
+from shared_utils import extract_block_from_text, list_files
 from validator_common import (
     LEADER_TRAIT_DEF_RE,
     BaseValidator,
@@ -91,19 +91,9 @@ def parse_trait_types(mod_path: str) -> Dict[str, Set[str]]:
     """Map every unit leader trait to the role types it declares."""
     traits: Dict[str, Set[str]] = {}
     trait_dir = os.path.join(mod_path, "common", "unit_leader")
-    if not os.path.isdir(trait_dir):
-        return traits
-
-    try:
-        trait_files = sorted(os.listdir(trait_dir))
-    except OSError:
-        return traits
-
-    for fname in trait_files:
-        if not fname.endswith(".txt"):
-            continue
+    for path in list_files(trait_dir, recursive=False):
         content = FileOpener.open_text_file(
-            os.path.join(trait_dir, fname), lowercase=False, strip_comments_flag=True
+            path, lowercase=False, strip_comments_flag=True
         )
         for match in LEADER_TRAIT_DEF_RE.finditer(content):
             body, _ = extract_block_from_text(content, match.end() - 1)

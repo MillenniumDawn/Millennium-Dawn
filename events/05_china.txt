@@ -364,13 +364,24 @@ country_event = {
 				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 			}
 			30 = {
-				add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
-				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+					add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
 			}
 		}
 		ai_chance = {
-			base = 60
+			base = 40
+			modifier = {
+				add = 20
+				check_variable = { CHI_taiwan_us_support > 50 }
+			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = {
+				factor = 0.4
+				check_variable = { CHI_taiwan_us_support < 20 }
+			}
 		}
 	}
 
@@ -381,7 +392,13 @@ country_event = {
 		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		add_to_variable = { CHI_taiwan_strait_tension = 2 tooltip = CHI_taiwan_strait_tension_tt }
 		clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				check_variable = { CHI_taiwan_us_support > 40 }
+			}
+		}
 	}
 
 	option = {
@@ -393,7 +410,13 @@ country_event = {
 				days = 365
 			}
 		}
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.25
+				check_variable = { CHI_taiwan_us_support > 40 }
+			}
+		}
 	}
 }
 
@@ -422,8 +445,11 @@ country_event = {
 	option = {
 		name = china_sar.014.a
 		log = "[GetDateText]: [This.GetName]: china_sar.014.a executed"
-		add_to_variable = { CHI_taiwan_us_support = 15 tooltip = CHI_taiwan_us_support_tt }
-		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+			add_to_variable = { CHI_taiwan_us_support = 15 tooltip = CHI_taiwan_us_support_tt }
+			clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+		}
 		add_stability = -0.05
 		USA = { add_opinion_modifier = { target = CHI modifier = chi_usa_sanctions_response } }
 	}
@@ -864,13 +890,16 @@ country_event = {
 	option = {
 		name = china_sar.028.a
 		log = "[GetDateText]: [This.GetName]: china_sar.028.a executed"
+		trigger = {
+			CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
+		}
 		CHI = {
 			country_event = { id = china_sar.029 days = 14 }
 			add_opinion_modifier = { target = USA modifier = tai_diplomatic_isolation }
 		}
 		TAI = { add_opinion_modifier = { target = USA modifier = reduced_tensions } }
 		ai_chance = {
-			base = 8
+			base = 4
 			modifier = {
 				add = 5
 				has_opinion = { target = CHI value < -10 }
@@ -880,8 +909,17 @@ country_event = {
 				TAI = { is_in_faction_with = USA }
 			}
 			modifier = {
+				add = 6
+				CHI = { check_variable = { CHI_taiwan_us_support > 60 } }
+			}
+			modifier = {
+				factor = 0.35
+				CHI = { check_variable = { CHI_taiwan_us_support < 25 } }
+			}
+			modifier = {
 				factor = 0
 				has_opinion = { target = CHI value > 30 }
+				NOT = { TAI = { is_in_faction_with = USA } }
 			}
 		}
 	}
@@ -897,8 +935,13 @@ country_event = {
 				has_opinion = { target = CHI value > 10 }
 			}
 			modifier = {
+				add = 8
+				CHI = { check_variable = { CHI_taiwan_us_support < 25 } }
+			}
+			modifier = {
 				factor = 0
 				TAI = { is_in_faction_with = USA }
+				CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 		}
 	}
@@ -983,6 +1026,10 @@ country_event = {
 				add = 5
 				has_completed_focus = CHI_SAR_one_system_declaration
 			}
+			modifier = {
+				add = 8
+				check_variable = { CHI_taiwan_us_support < 20 }
+			}
 		}
 	}
 }
@@ -1005,12 +1052,18 @@ country_event = {
 				has_opinion = { target = CHI value > 20 }
 			}
 			modifier = {
+				add = 8
+				CHI = { check_variable = { CHI_taiwan_us_support < 20 } }
+			}
+			modifier = {
 				factor = 0
 				TAI = { is_in_faction_with = ROOT }
+				CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 			modifier = {
 				factor = 0
 				check_variable = { num_of_military_factories > 150 }
+				CHI = { check_variable = { CHI_taiwan_us_support > 40 } }
 			}
 		}
 	}
@@ -1018,10 +1071,13 @@ country_event = {
 	option = {
 		name = china_sar.031.b
 		log = "[GetDateText]: [This.GetName]: china_sar.031.b executed"
+		trigger = {
+			CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
+		}
 		CHI = { country_event = { id = china_sar.033 days = 7 } }
 		TAI = { add_opinion_modifier = { target = USA modifier = reduced_tensions } }
 		ai_chance = {
-			base = 7
+			base = 5
 			modifier = {
 				add = 5
 				has_opinion = { target = CHI value < 0 }
@@ -1029,6 +1085,14 @@ country_event = {
 			modifier = {
 				add = 5
 				TAI = { is_in_faction_with = ROOT }
+			}
+			modifier = {
+				add = 6
+				CHI = { check_variable = { CHI_taiwan_us_support > 50 } }
+			}
+			modifier = {
+				factor = 0.3
+				CHI = { check_variable = { CHI_taiwan_us_support < 30 } }
 			}
 		}
 	}
@@ -1629,6 +1693,7 @@ country_event = {
 				target = TAI
 				autonomy_state = autonomy_special_administrative_region_TAI
 			}
+			TAI = { CHI_SAR_match_ruling_party = yes }
 			if = {
 				limit = { has_completed_focus = CHI_SAR_research_sharing }
 				TAI = { add_to_tech_sharing_group = Greater_China_Tech_Share }
@@ -2224,7 +2289,10 @@ country_event = {
 		name = CHI_foreign.012.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.012.a executed"
 		add_opinion_modifier = { target = CHI modifier = diplomatic_opening }
-		KOR = { add_to_variable = { SFR = 3 } }
+		KOR = {
+			add_to_variable = { SFR = 3 }
+			KOR_refresh_sfr = yes
+		}
 		ai_chance = { base = 3 }
 	}
 }
@@ -2285,6 +2353,7 @@ country_event = {
 		name = CHI_foreign.047.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.047.a executed"
 		add_to_variable = { SFR = 20 }
+		KOR_refresh_sfr = yes
 		add_stability = 0.05
 	}
 }
@@ -2368,7 +2437,10 @@ country_event = {
 		name = CHI_foreign.014.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.014.a executed"
 		add_political_power = 50
-		KOR = { add_to_variable = { SFR = 5 } }
+		KOR = {
+			add_to_variable = { SFR = 5 }
+			KOR_refresh_sfr = yes
+		}
 	}
 }
 
@@ -2807,7 +2879,10 @@ country_event = {
 		add_political_power = 200
 		add_stability = 0.05
 		add_to_variable = { CHI_korea_peninsula_tension = -40 tooltip = CHI_korea_peninsula_tension_tt }
-		KOR = { add_to_variable = { SFR = 20 tooltip = SFR_tt } }
+		KOR = {
+			add_to_variable = { SFR = 20 tooltip = SFR_tt }
+			KOR_refresh_sfr = yes
+		}
 		every_state = {
 			limit = { is_owned_by = NKO }
 			KOR = { transfer_state = PREV }
@@ -2837,11 +2912,7 @@ country_event = {
 		ai_chance = { base = 5 }
 		KOR = {
 			add_to_variable = { SFR = 8 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = NKO modifier = KOR_beijing_mediated }
 		}
 		NKO = {
@@ -2862,11 +2933,7 @@ country_event = {
 		ai_chance = { base = 10 }
 		KOR = {
 			add_to_variable = { SFR = 5 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = NKO modifier = KOR_beijing_mediated }
 		}
 		NKO = {
@@ -2883,11 +2950,7 @@ country_event = {
 		ai_chance = { base = 3 }
 		KOR = {
 			add_to_variable = { SFR = 3 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = CHI modifier = peace_contributor }
 		}
 		add_stability = 0.02
@@ -3371,7 +3434,7 @@ country_event = {
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: china_scs.20.a executed"
+		log = "[GetDateText]: [This.GetName]: china_scs.20.a executed"
 		name = china_scs.20.a
 		trigger = {
 			NOT = { original_tag = CHI }
@@ -3850,10 +3913,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 813 }
-							531 = { NOT = { has_border_war = yes } }
-							813 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 813 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -3878,10 +3940,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 943 }
-							531 = { NOT = { has_border_war = yes } }
-							943 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 943 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -3906,10 +3967,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 526 }
-							531 = { NOT = { has_border_war = yes } }
-							526 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 526 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -4595,10 +4655,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sino_indian.1.a executed"
 		CHI = {
 			create_wargoal = {
-			type = annex_everything
+				type = annex_everything
 				target = BHU
-	}
-}
+			}
+		}
 		add_war_support = 0.05
 		ai_chance = {
 			base = 30
@@ -4633,10 +4693,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sino_indian.1.e executed"
 		CHI = {
 			create_wargoal = {
-			type = annex_everything
-			target = BHU
-	}
-}
+				type = annex_everything
+				target = BHU
+			}
+		}
 		add_opinion_modifier = { target = RAJ modifier = territorial_integrity_violation }
 		ai_chance = { base = 20 }
 	}

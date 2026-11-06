@@ -38,6 +38,7 @@ from validate_oob_units import (
     check_misplaced_support,
     check_named_variant_refs,
     check_oob_variant_refs,
+    check_regimental_support_groups,
     check_template_slots,
     division_template_entries,
     find_load_oob_references,
@@ -273,6 +274,9 @@ def test_extract_unit_refs_reads_both_block_and_count_forms():
         "\n"
         "\t\tMech_Inf_Bat = 2\n"
         "\t}\n"
+        "\tregimental_support = {\n"
+        "\t\tSP_Arty_Battery = { x = 0 y = 0 }\n"
+        "\t}\n"
         "\tsupport = {\n"
         "\t\tengineer = { x = 0 y = 0 }\n"
         "\t}\n"
@@ -281,6 +285,7 @@ def test_extract_unit_refs_reads_both_block_and_count_forms():
     assert _extract_unit_refs_from_blocks(content) == {
         "Arm_Inf_Bat",
         "Mech_Inf_Bat",
+        "SP_Arty_Battery",
         "engineer",
     }
 
@@ -2668,6 +2673,140 @@ def test_misplaced_support_reads_flags_from_unit_files(tmp_path):
         for issue in validator._issues
         if issue.category == _MISPLACED
     ] == [("warning", _OOB, 7)]
+
+
+_INCOMPATIBLE = "template-incompatible-regimental-support"
+_BATTALION_GROUPS = {
+    "Militia_Bat": "militia",
+    "L_Inf_Bat": "infantry",
+    "Mot_Inf_Bat": "mobile",
+    "Arm_Inf_Bat": "armor",
+    "L_Air_assault_Bat": "airmobile",
+}
+_ATTACH_GROUPS = {
+    "Arty_Battery": frozenset({"militia", "infantry", "mobile"}),
+    "Mot_Recce_Comp": frozenset({"mobile", "combat_support"}),
+}
+
+
+def _attach_template(regiments, regimental_support, block="regimental_support"):
+    """One template; the first regiments unit sits on line 4."""
+
+    def rows(units):
+        return "".join(f"\t\t{unit} = {{ x = {x} y = {y} }}\n" for unit, x, y in units)
+
+    return (
+        'division_template = {\n\tname = "Test Brigade"\n'
+        f"\tregiments = {{\n{rows(regiments)}\t}}\n"
+        f"\t{block} = {{\n{rows(regimental_support)}\t}}\n"
+        "}\n"
+    )
+
+
+def _no_group(company, allowed, x, groups):
+    return (
+        f"regimental_support '{company}' is limited to battalion groups {allowed}, "
+        f"but regiments column x = {x} has only {groups}"
+    )
+
+
+_MILITIA_COLUMN = [("Militia_Bat", 0, y) for y in range(3)]
+
+# case: (template text, (line, message) per finding)
+_ATTACH_CASES = {
+    "allowed group": (
+        _attach_template([("L_Inf_Bat", 0, 0)], [("Arty_Battery", 0, 0)]),
+        [],
+    ),
+    # The #6250 Police Regiment shape.
+    "no allowed group": (
+        _attach_template(_MILITIA_COLUMN, [("Mot_Recce_Comp", 0, 0)]),
+        [(9, _no_group("Mot_Recce_Comp", "combat_support, mobile", 0, "militia"))],
+    ),
+    "company checked against its own column": (
+        _attach_template(
+            [("Mot_Inf_Bat", 0, 0), ("Militia_Bat", 1, 0)],
+            [("Mot_Recce_Comp", 0, 0), ("Mot_Recce_Comp", 1, 0)],
+        ),
+        [(9, _no_group("Mot_Recce_Comp", "combat_support, mobile", 1, "militia"))],
+    ),
+    "mixed column with one allowed battalion": (
+        _attach_template(
+            [("Arm_Inf_Bat", 0, 0), ("Mot_Inf_Bat", 0, 1)], [("Mot_Recce_Comp", 0, 0)]
+        ),
+        [],
+    ),
+    "mixed column with no allowed battalion": (
+        _attach_template(
+            [("Arm_Inf_Bat", 0, 0), ("L_Air_assault_Bat", 0, 1)],
+            [("Arty_Battery", 0, 0)],
+        ),
+        [
+            (
+                8,
+                _no_group(
+                    "Arty_Battery", "infantry, militia, mobile", 0, "airmobile, armor"
+                ),
+            )
+        ],
+    ),
+    "company without a restriction": (
+        _attach_template(_MILITIA_COLUMN, [("Weapons_company", 0, 0)]),
+        [],
+    ),
+    "column with an ungrouped battalion": (
+        _attach_template(
+            [("Militia_Bat", 0, 0), ("Unknown_Bat", 0, 1)], [("Mot_Recce_Comp", 0, 0)]
+        ),
+        [],
+    ),
+    "company without a regiments column": (
+        _attach_template(_MILITIA_COLUMN, [("Mot_Recce_Comp", 1, 0)]),
+        [],
+    ),
+    "restriction applies to regimental_support only": (
+        _attach_template(_MILITIA_COLUMN, [("Mot_Recce_Comp", 0, 0)], block="support"),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize("raw, expected", _ATTACH_CASES.values(), ids=_ATTACH_CASES)
+def test_regimental_support_groups(raw, expected):
+    text = strip_comments(raw)
+    assert check_regimental_support_groups(
+        text, _build_block_nodes(text), _BATTALION_GROUPS, _ATTACH_GROUPS
+    ) == [(line, _INCOMPATIBLE, _PREFIX + message) for line, message in expected]
+
+
+def test_regimental_support_groups_read_from_unit_files(tmp_path):
+    _write(
+        tmp_path,
+        "common/units/MD_land_units.txt",
+        "sub_units = {\n\tMilitia_Bat = {\n\t\tgroup = militia\n\t}\n"
+        "\tMot_Recce_Comp = {\n\t\tgroup = support\n"
+        "\t\tallowed_battalion_groups = { mobile # motorized only\n"
+        "\t\t\tcombat_support }\n\t}\n}\n",
+    )
+    _write(
+        tmp_path, _OOB, _attach_template(_MILITIA_COLUMN, [("Mot_Recce_Comp", 0, 0)])
+    )
+    validator = _validator(tmp_path)
+    validator._build_canonical_units()
+    validator.validate_template_slots()
+    assert [
+        (issue.severity, issue.file, issue.line, issue.message)
+        for issue in validator._issues
+        if issue.category == _INCOMPATIBLE
+    ] == [
+        (
+            "warning",
+            _OOB,
+            9,
+            _PREFIX
+            + _no_group("Mot_Recce_Comp", "combat_support, mobile", 0, "militia"),
+        )
+    ]
 
 
 def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):

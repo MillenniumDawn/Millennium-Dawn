@@ -9,12 +9,14 @@ import re
 from typing import Any, Callable, Dict, List
 
 from common_utils import (
+    LOG_STATEMENT_RE,
     PROP_NAME_RE,
     BaseStandardizer,
     collapse_blank_runs,
     create_standardizer_parser,
     inject_log_after_brace,
     join_groups,
+    opener_with_comment,
     resolve_output_file_and_backup,
 )
 from shared_utils import (
@@ -137,12 +139,8 @@ def _effect_has_statements(block_lines: List[str]) -> bool:
     if len(block) == 1:
         block = _split_one_line_effect(block[0]) or block
     for line in block[1:-1]:
-        stripped = line.strip()
-        if (
-            stripped
-            and not stripped.startswith("#")
-            and not stripped.startswith("log =")
-        ):
+        stripped = LOG_STATEMENT_RE.sub("", line).strip()
+        if stripped and not stripped.startswith("#"):
             return True
     return False
 
@@ -397,7 +395,11 @@ def format_decision(block_lines: List[str]) -> List[str]:
 
     groups.append(singles)
     groups.append(pending)
-    return [f"\t{did} = {{"] + join_groups(groups) + ["\t}"]
+    return (
+        [f"\t{opener_with_comment(did, block_lines[0])}"]
+        + join_groups(groups)
+        + ["\t}"]
+    )
 
 
 class DecisionStandardizer(BaseStandardizer):
@@ -421,7 +423,12 @@ class DecisionStandardizer(BaseStandardizer):
         properties, ``decision`` for a nested decision block, ``raw`` for a
         comment or stray line kept verbatim.
         """
-        props: Dict[str, Any] = {"id": _read_header_id(block_lines), "children": []}
+        category_id = _read_header_id(block_lines)
+        props: Dict[str, Any] = {
+            "id": category_id,
+            "opener": opener_with_comment(category_id, block_lines[0]),
+            "children": [],
+        }
 
         i = 1  # skip opening header line
         while i < len(block_lines) - 1:  # skip closing brace
@@ -488,9 +495,7 @@ class DecisionStandardizer(BaseStandardizer):
         groups.append(singles)
         groups.append(pending)
 
-        return collapse_blank_runs(
-            [f"{props['id']} = {{"] + join_groups(groups) + ["}"]
-        )
+        return collapse_blank_runs([props["opener"]] + join_groups(groups) + ["}"])
 
 
 def detect_file_type(input_file: str) -> BaseStandardizer:

@@ -158,6 +158,21 @@ def test_commented_out_reference_is_ignored(tmp_path):
     assert _messages(v) == []
 
 
+def test_quoted_script_is_not_a_reference(tmp_path):
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        'log = "category = CAT_fake research_bonus = { CAT_also_fake = 1 }"\n'
+        "add_tech_bonus = { category = CAT_missile }\n",
+    )
+    assert _messages(v) == []
+
+
+def test_quoted_list_values_are_still_references():
+    text = 'research_categories = { "CAT_one" CAT_two }'
+    assert [name for name, _ in _references(text)] == ["CAT_one", "CAT_two"]
+
+
 def test_mixed_case_tag_is_a_format_error(tmp_path):
     v = _run(
         tmp_path,

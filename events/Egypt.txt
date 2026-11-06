@@ -576,22 +576,41 @@ country_event = {
 				213 = { is_fully_controlled_by = EGY }
 				NOT = { 209 = { is_controlled_by = EGY } }
 			}
-			EGY = {
-				start_border_war = {
-					change_state_after_war = no
-					attacker = {
-						state = 213
-						num_provinces = 1
-						on_win = Egypt.15
-						on_lose = Egypt.16
-					}
-					defender = {
-						state = 209
-						num_provinces = 1
-						on_win = Egypt.16
-						on_lose = Egypt.15
+			if = {
+				limit = {
+					set_temp_variable = { border_war_attacker_state = 213 }
+					set_temp_variable = { border_war_defender_state = 209 }
+					EGY = {
+						border_war_can_start = yes
+						divisions_in_state = { size > 0 state = 213 }
 					}
 				}
+				EGY = {
+					start_border_war = {
+						change_state_after_war = no
+						attacker = {
+							state = 213
+							num_provinces = 1
+							on_win = Egypt.15
+							on_lose = Egypt.16
+						}
+						defender = {
+							state = 209
+							num_provinces = 1
+							on_win = Egypt.16
+							on_lose = Egypt.15
+						}
+					}
+				}
+			}
+			# Without troops in Sinai the attack fails at once
+			else_if = {
+				limit = {
+					set_temp_variable = { border_war_attacker_state = 213 }
+					set_temp_variable = { border_war_defender_state = 209 }
+					EGY = { border_war_can_start = yes }
+				}
+				EGY = { country_event = Egypt.16 }
 			}
 		}
 		else = { EGY = { country_event = Egypt.16 } }
