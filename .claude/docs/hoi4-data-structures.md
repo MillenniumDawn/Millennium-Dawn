@@ -131,6 +131,25 @@ plain variables: use them directly, with no temp copy.
 
 `validate_math_expressions.py` warns in CI on the sibling form and on `FROM` reads.
 
+### Math in weight blocks
+
+`ai_will_do`, `ai_chance`, and scorer `score` blocks run for every candidate on every AI
+pass. Do their math in one `check_expr`, not a `set_temp_variable` chain that a
+`check_variable` then reads. Compare a single existing variable with plain
+`check_variable`. No MD or vanilla code passes an expression to `add` or `factor`, so
+express a computed weight as threshold steps:
+
+```
+modifier = {
+    check_expr = {
+        value = building_level@industrial_complex
+        add = building_level@arms_factory
+        greater_than = 1
+    }
+    add = 24000
+}
+```
+
 ## Loops
 
 ```

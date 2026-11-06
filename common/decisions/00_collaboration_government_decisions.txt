@@ -32,27 +32,14 @@ collaboration_government_decisions = {
 		ai_will_do = {
 			base = 10
 			modifier = {
-				set_temp_variable = { num_cores_we_control = 0 }
-				all_of_scopes = {
-					array = FROM.core_states
-					if = {
-						limit = { is_controlled_by = PREV }
-						add_to_temp_variable = { num_cores_we_control = 1 }
-					}
-				}
-				add = num_cores_we_control
-			}
-			# Each collaboration government we already run raises the bar for the next one
-			modifier = {
-				set_temp_variable = { num_min_cores = 1.5 }
-				all_of_scopes = {
+				any_of_scopes = {
 					array = subjects
-					if = {
-						limit = { has_autonomy_state = autonomy_collaboration_government }
-						add_to_temp_variable = { num_min_cores = 0.7 }
-					}
+					has_autonomy_state = autonomy_collaboration_government
 				}
-				check_variable = { num_cores_we_control < num_min_cores }
+				factor = 0.5
+			}
+			modifier = {
+				NOT = { any_controlled_state = { is_core_of = FROM } }
 				factor = 0
 			}
 			modifier = {
