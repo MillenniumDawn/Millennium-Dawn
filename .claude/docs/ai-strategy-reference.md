@@ -211,8 +211,9 @@ Zombie roles: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`.
   - To add an operation, give it a candidate block that copies its `operatives` and
     `network_strength` from the operation file and its token, war, and resistance gates.
   - Register its token in `common/synchronized_dynamic_tokens/MD_tokens.txt`.
-- Scorers: `common/scorers/country/` holds MD copies of vanilla's operation target and
-  mission scorers. A file with the same name replaces vanilla's file.
+- Scorers: `common/scorers/country/` holds MD copies of vanilla's operation target,
+  mission, and decryption scorers. A file with the same name replaces vanilla's file.
+  Rivalries come from `antagonize`, `contain`, and `conquer` strategies, not tag checks.
 - Country operations: `TAG_operations_against_TAG` strategies use values 950 and 1000,
   above the generic 900, and need more than 3 operatives so the generic pick keeps
   enough.
