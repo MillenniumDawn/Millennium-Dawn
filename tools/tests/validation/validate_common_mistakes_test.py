@@ -53,6 +53,24 @@ def test_shadowed_branch_is_its_own_error_category(tmp_path):
     assert validator.errors_found == 1
 
 
+def test_unneeded_idea_log_is_a_warning(tmp_path):
+    _write(
+        tmp_path,
+        "common/ideas/tst.txt",
+        "ideas = {\n\tcountry = {\n\t\tTST_idea = {\n"
+        '\t\t\ton_add = { log = "x" custom_effect_tooltip = TST_tt }\n'
+        "\t\t}\n\t}\n}\n",
+    )
+
+    validator = _validator(tmp_path)
+    validator.run_validations()
+
+    assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
+        ("unneeded-idea-log", "warning", "common/ideas/tst.txt", 4)
+    ]
+    assert validator.errors_found == 0
+
+
 def _findings(validator):
     return [(i.file, i.line, i.message) for i in validator._issues]
 

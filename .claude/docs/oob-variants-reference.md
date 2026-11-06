@@ -253,3 +253,13 @@ Slots live per archetype in `common/units/equipment/`. A hull either inherits th
 
 `validate_oob_units.py` checks every `create_equipment_variant` against its hull, and
 `validate_ai_equipment.py` does the same for AI `target_variant` designs.
+
+## Upgrades, models, and start stockpiles
+
+- A level above the upgrade's `max_level` is invalid. Count a weighted AI level's `base`
+  and every `add`.
+- `model` names an entity. `name_group` names a block in `common/units/names_ships/`.
+- A start OOB can only use a variant whose hull technology the producer holds at the
+  start, or one with `allow_without_tech = yes`. Otherwise the variant waits for research.
+- A stockpile with no `producer` applies to all creators. Some country must create its
+  named variant for that type.

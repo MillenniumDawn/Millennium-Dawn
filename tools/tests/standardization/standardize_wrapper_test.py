@@ -80,6 +80,7 @@ def _run_main(monkeypatch, capsys, *args):
         "mio",
         "technology",
         "history",
+        "indent",
         "localisation",
     ],
 )
@@ -162,98 +163,92 @@ def test_focus_subcommand_with_output_and_backup(tmp_path, monkeypatch, capsys):
     assert out.exists()
 
 
-def test_event_subcommand_runs(tmp_path, monkeypatch, capsys):
-    src = tmp_path / "event.txt"
-    out = tmp_path / "event_out.txt"
-    src.write_text(
-        "country_event = {\n"
-        "id=EVT_test.1\n"
-        "title = EVT_test.1.t\n"
-        "desc = EVT_test.1.d\n"
-        "picture = GFX_evt_test\n"
-        "is_triggered_only = yes\n"
-        "option = { name = OK }\n"
-        "}\n",
-        encoding="utf-8",
+@pytest.mark.parametrize(
+    ("command", "content"),
+    [
+        (
+            "event",
+            "country_event = {\n"
+            "id=EVT_test.1\n"
+            "title = EVT_test.1.t\n"
+            "desc = EVT_test.1.d\n"
+            "picture = GFX_evt_test\n"
+            "is_triggered_only = yes\n"
+            "option = { name = OK }\n"
+            "}\n",
+        ),
+        (
+            "decision",
+            "TAG_test = {\n"
+            "TAG_test_decision = {\n"
+            "icon = GFX_decision_test\n"
+            "allowed = { always = yes }\n"
+            "available = { always = yes }\n"
+            "complete_effect = { add_political_power = 1 }\n"
+            "}\n"
+            "}\n",
+        ),
+        (
+            "idea",
+            "ideas = {\n"
+            "country = {\n"
+            "TST_test_idea = {\n"
+            "picture = GFX_idea_test\n"
+            "modifier = { test_factor = 0.1 }\n"
+            "}\n"
+            "}\n"
+            "}\n",
+        ),
+        (
+            "mio",
+            "TST_organization = {\n"
+            "name = TST_org\n"
+            "icon = GFX_mio_test\n"
+            "allowed = { original_tag = TST }\n"
+            "equipment_type = { type = mio_equipment_test }\n"
+            "tree_type = single_tree\n"
+            "initial_trait = {\n"
+            "organization_modifier = { military_industrial_organization_size = 1 }\n"
+            "}\n"
+            "}\n",
+        ),
+        (
+            "history",
+            "capital = 123\n"
+            "2000.1.1 = {\n"
+            'oob = "TST_2000.txt"\n'
+            "set_politics = { ruling_party = democratic elections_allowed = yes }\n"
+            "}\n",
+        ),
+    ],
+    ids=["event", "decision", "idea", "mio", "history"],
+)
+def test_subcommand_runs(command, content, tmp_path, monkeypatch, capsys):
+    src = tmp_path / (
+        "country_history.txt" if command == "history" else f"{command}.txt"
     )
-    result = _run_main(monkeypatch, capsys, "event", src, "-o", out)
+    out = tmp_path / (
+        "country_out.txt" if command == "history" else f"{command}_out.txt"
+    )
+    with src.open("w", encoding="utf-8", newline="") as f:
+        f.write(content)
+
+    result = _run_main(monkeypatch, capsys, command, src, "-o", out)
     assert result.returncode == 0
     assert out.exists()
 
 
-def test_decision_subcommand_runs(tmp_path, monkeypatch, capsys):
-    src = tmp_path / "decision.txt"
-    out = tmp_path / "decision_out.txt"
-    src.write_text(
-        "TAG_test = {\n"
-        "TAG_test_decision = {\n"
-        "icon = GFX_decision_test\n"
-        "allowed = { always = yes }\n"
-        "available = { always = yes }\n"
-        "complete_effect = { add_political_power = 1 }\n"
-        "}\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    result = _run_main(monkeypatch, capsys, "decision", src, "-o", out)
+def test_indent_subcommand_writes_tabs_and_spacing(tmp_path, monkeypatch, capsys):
+    src = tmp_path / "effects.txt"
+    out = tmp_path / "effects_out.txt"
+    src.write_text("TST_effect = {\n    add_stability=0.1\n}\n", encoding="utf-8")
+
+    result = _run_main(monkeypatch, capsys, "indent", src, "-o", out)
+
     assert result.returncode == 0
-    assert out.exists()
-
-
-def test_idea_subcommand_runs(tmp_path, monkeypatch, capsys):
-    src = tmp_path / "idea.txt"
-    out = tmp_path / "idea_out.txt"
-    src.write_text(
-        "ideas = {\n"
-        "country = {\n"
-        "TST_test_idea = {\n"
-        "picture = GFX_idea_test\n"
-        "modifier = { test_factor = 0.1 }\n"
-        "}\n"
-        "}\n"
-        "}\n",
-        encoding="utf-8",
+    assert out.read_text(encoding="utf-8") == (
+        "TST_effect = {\n\tadd_stability = 0.1\n}\n"
     )
-    result = _run_main(monkeypatch, capsys, "idea", src, "-o", out)
-    assert result.returncode == 0
-    assert out.exists()
-
-
-def test_mio_subcommand_runs(tmp_path, monkeypatch, capsys):
-    src = tmp_path / "mio.txt"
-    out = tmp_path / "mio_out.txt"
-    src.write_text(
-        "TST_organization = {\n"
-        "name = TST_org\n"
-        "icon = GFX_mio_test\n"
-        "allowed = { original_tag = TST }\n"
-        "equipment_type = { type = mio_equipment_test }\n"
-        "tree_type = single_tree\n"
-        "initial_trait = {\n"
-        "organization_modifier = { military_industrial_organization_size = 1 }\n"
-        "}\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    result = _run_main(monkeypatch, capsys, "mio", src, "-o", out)
-    assert result.returncode == 0
-    assert out.exists()
-
-
-def test_history_subcommand_runs(tmp_path, monkeypatch, capsys):
-    src = tmp_path / "country_history.txt"
-    out = tmp_path / "country_out.txt"
-    src.write_text(
-        "capital = 123\n"
-        "2000.1.1 = {\n"
-        'oob = "TST_2000.txt"\n'
-        "set_politics = { ruling_party = democratic elections_allowed = yes }\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    result = _run_main(monkeypatch, capsys, "history", src, "-o", out)
-    assert result.returncode == 0
-    assert out.exists()
 
 
 def test_localisation_subcommand_with_mod_root(tmp_path, monkeypatch, capsys):
@@ -310,10 +305,10 @@ def test_main_focus_returns_one_when_backup_fails(tmp_path, monkeypatch, capsys)
 def test_main_localisation_returns_one_when_mod_root_missing(
     tmp_path, monkeypatch, capsys
 ):
-    """Localisation branch with _detect_mod_root returning None."""
+    """Localisation branch with find_mod_root returning None."""
     src = tmp_path / "orphan.yml"
     src.write_text('l_english:\n "x" : "y"\n', encoding="utf-8")
-    monkeypatch.setattr("standardize._detect_mod_root", lambda path: None)
+    monkeypatch.setattr("standardize.find_mod_root", lambda path, markers: None)
 
     result = _run_main(monkeypatch, capsys, "localisation", src)
     assert result.returncode == 1

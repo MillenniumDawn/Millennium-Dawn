@@ -679,3 +679,29 @@ fossil_powerplant_random_build_loc = {
 		}
 	}
 }
+
+# Trigger: border_war_can_start
+# Purpose: Country scope. True if this country can start a border war between the two states:
+# it controls the attacker state but not the defender state, neither state is in a border war,
+# and neither side has military access to the other
+# Parameters:
+# - border_war_attacker_state: state the border war starts from, controlled by this country
+# - border_war_defender_state: state the border war targets
+# Sets border_war_attacker_country (temp) to this country for the military access check
+border_war_can_start = {
+	custom_trigger_tooltip = {
+		tooltip = border_war_can_start_tt
+		set_temp_variable = { border_war_attacker_country = THIS.id }
+		controls_state = var:border_war_attacker_state
+		NOT = { controls_state = var:border_war_defender_state }
+		var:border_war_attacker_state = { NOT = { has_border_war = yes } }
+		var:border_war_defender_state = {
+			NOT = { has_border_war = yes }
+			# The engine refuses a border war between countries with military access to each other
+			CONTROLLER = {
+				NOT = { has_military_access_to = PREV.PREV }
+				var:border_war_attacker_country = { NOT = { has_military_access_to = PREV } }
+			}
+		}
+	}
+}

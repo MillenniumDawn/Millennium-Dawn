@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
+from shared_utils import VALIDATION_CONFIG_PATH, list_files, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -58,7 +58,7 @@ _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
     "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
-    "building_guards_scan_v5": "validate_building_guards.py",
+    "building_guards_scan_v7": "validate_building_guards.py",
     "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
@@ -98,12 +98,14 @@ _CACHE_RECORD = "md.cache.v9"
 # must invalidate the owning namespace without making unrelated namespaces cold.
 _HELPER_DEPENDENCIES = {
     "ai_weight_order_scan_v1": ("guard_scan.py",),
-    "building_guards_scan_v5": ("guard_scan.py",),
+    "building_guards_scan_v7": ("guard_scan.py",),
     "dlc_guards_scan": ("validate_history.py",),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "focus_tree": ("validate_events.py",),
     "ideas": ("equipment_module_slots.py",),
     "influence_calls_scan_v2": ("guard_scan.py",),
     "math_expr": ("equipment_module_slots.py",),
+    "modifiers": ("equipment_module_slots.py",),
     "oob_units": ("equipment_module_slots.py",),
     "sprite_index": ("validate_gfx_references.py",),
     "variables": ("validate_focus_tree.py",),
@@ -224,7 +226,9 @@ def _fingerprint_paths(namespace: str) -> tuple[Path, ...]:
     if owner:
         paths.append(Path(__file__).parent / owner)
     else:
-        paths.extend(Path(__file__).parent.glob("*.py"))
+        paths.extend(
+            map(Path, list_files(Path(__file__).parent, ("*.py",), recursive=False))
+        )
     for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
         paths.append(Path(__file__).parent / dependency)
     return tuple(sorted(set(paths)))
