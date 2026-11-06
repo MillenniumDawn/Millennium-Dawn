@@ -54,15 +54,39 @@ update_operation_ai = {
 					}
 				}
 			}
-			set_country_flag = generic_operation_started
+			if = {
+				limit = { NOT = { has_country_flag = generic_operation_started } }
+				set_country_flag = generic_operation_started
+				set_country_flag = { flag = generic_operation_start_window value = 1 days = 180 }
+				clr_country_flag = generic_operation_completed
+			}
+			# Stuck collecting equipment it cannot produce
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = generic_operation_start_window }
+					NOT = {
+						is_running_operation = {
+							target = var:generic_operation_target
+							operation = var:generic_operation_type_to_run
+						}
+					}
+				}
+				operation_ai_time_out_target = yes
+			}
 		}
 		else_if = {
 			limit = { has_country_flag = generic_operation_started }
 			if = {
-				limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: Operation AI finished [?generic_operation_type_to_run.GetTokenKey] against [?generic_operation_target.GetTag]"
+				limit = { has_country_flag = generic_operation_completed }
+				if = {
+					limit = { is_debug = yes }
+					log = "[GetDateText]: [Root.GetName]: Operation AI finished [?generic_operation_type_to_run.GetTokenKey] against [?generic_operation_target.GetTag]"
+				}
+				operation_ai_clear_selection = yes
 			}
-			operation_ai_clear_selection = yes
+			else = {
+				operation_ai_time_out_target = yes
+			}
 		}
 		else_if = {
 			limit = {
@@ -76,7 +100,6 @@ update_operation_ai = {
 			}
 			operation_ai_clear_selection = yes
 		}
-		# The network is ready but the operation never started, most often for want of equipment
 		else_if = {
 			limit = { has_country_flag = generic_operation_network_ready }
 			if = {
@@ -420,6 +443,8 @@ operation_ai_add_candidate = {
 operation_ai_clear_selection = {
 	set_variable = { generic_operation_type_to_run = 0 }
 	clr_country_flag = generic_operation_started
+	clr_country_flag = generic_operation_start_window
+	clr_country_flag = generic_operation_completed
 	clr_country_flag = generic_operation_network_ready
 	clr_country_flag = generic_operation_launch_window
 	clr_country_flag = generic_operation_network_phase
