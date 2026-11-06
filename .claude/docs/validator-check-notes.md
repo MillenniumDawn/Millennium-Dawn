@@ -393,6 +393,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `source-art-format` (ERROR): under `gfx/`, `.psd`, `.xcf`, and `.tif` cannot load, and
   `.png` and `.jpg` load uncompressed without mipmaps. Convert with
   `tools/assets/md_art_convert.py`. `map/` is out of scope.
+- `scripted-loc-file-prefix` (WARNING): tracked `.txt` files directly under
+  `common/scripted_localisation/` lack a two-digit `NN_` prefix. This is an initial
+  slice of #1572; it does not check tag ownership, suffixes, or other directories.
 
 ## validate_focus_tree.py
 
