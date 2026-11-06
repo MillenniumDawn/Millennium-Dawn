@@ -79,6 +79,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
+- `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
+  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+  or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
+  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
+  `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
+  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
+  upper bound is noted in the warning, but does not suppress it: a level bound alone
+  does not establish slot availability. Nested effects and other buildings or selectors
+  are not checked, and a guard for one slot does not prove that every level requested
+  will fit. The backlog is tracked by #6390.
 
 ## validate_characters.py
 
@@ -393,6 +403,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `source-art-format` (ERROR): under `gfx/`, `.psd`, `.xcf`, and `.tif` cannot load, and
   `.png` and `.jpg` load uncompressed without mipmaps. Convert with
   `tools/assets/md_art_convert.py`. `map/` is out of scope.
+- `scripted-loc-file-prefix` (WARNING): tracked `.txt` files directly under
+  `common/scripted_localisation/` lack a two-digit `NN_` prefix. This is an initial
+  slice of #1572; it does not check tag ownership, suffixes, or other directories.
 
 ## validate_focus_tree.py
 
@@ -800,6 +813,24 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
+
+## validate_special_projects.py
+
+- A project's `visible`, `available`, and `special_project_parent` decide what
+  unlocks it. `OR` branches and if/else branches are separate ways in; a lone `if`
+  body is required. `NOT`, `NOR`, `NAND`, `count_triggers`, and `limit` never are.
+  Tag, flag, and building checks are ignored, so a branch with only those does not
+  excuse the others.
+- `sp-unlock-tooltip-missing` (WARNING): no member of a way in shows
+  `SP_UNLOCK_PROJECT` for the project. One member is enough. A parent project's
+  `project_output` tooltip and a focus's `complete_special_project` count. Ways with
+  no tech or focus, such as parent-only or flag-only projects, are skipped.
+- `sp-unlock-tooltip-misplaced` (WARNING): the tooltip names a project its tech,
+  focus, or project does not unlock, or a project that does not exist. `PROJECT`
+  takes the bare id; `sp:` reads as unknown.
+- Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
+  tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
+  not checked.
 
 ## validate_scripted_params.py
 

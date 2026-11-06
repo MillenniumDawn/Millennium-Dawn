@@ -143,6 +143,52 @@ def test_strict_findings_fail_and_non_strict_findings_pass(
     assert _manifest_results(tmp_path)["advisory"]["status"] == "ok"
 
 
+@pytest.mark.parametrize(
+    ("strict", "returncode", "log", "issues", "status"),
+    [
+        (True, 1, "log", [{"severity": "error"}], "findings"),
+        (True, 2, "log", [{"severity": "error"}], "crash"),
+        (False, 1, "log", [{"severity": "error"}], "crash"),
+        (True, 1, "log", [{"severity": "warning"}], "crash"),
+        (True, 1, None, [{"severity": "error"}], "crash"),
+    ],
+)
+def test_unexpected_exit_with_sidecar_is_reported_as_crash(
+    tmp_path, monkeypatch, capsys, strict, returncode, log, issues, status
+):
+    behaviors = {"validation-events": (returncode, log, issues)}
+    _patch_runner(tmp_path, monkeypatch, behaviors, 1)
+    (tmp_path / "validation-events.stderr.log").write_text("failure detail\n")
+
+    assert rvb.run_batch([_spec("events", strict=strict)], _Args(tmp_path)) == 1
+    assert _manifest_results(tmp_path)["events"]["status"] == status
+    assert ("failure detail" in capsys.readouterr().err) is (status == "crash")
+
+
+@pytest.mark.parametrize(
+    "sidecar", ["{broken", "42", "{}", '[{"severity":"error"}, 1]']
+)
+def test_invalid_sidecar_cannot_explain_a_nonzero_exit(tmp_path, sidecar):
+    (tmp_path / "validation-events.log").write_text("log")
+    (tmp_path / "validation-events.json").write_text(sidecar)
+
+    assert rvb.classify_result(_spec("events"), 1, str(tmp_path)) == (
+        "crash",
+        "exit code 1",
+    )
+
+
+def test_reused_batch_directory_does_not_accept_old_results(tmp_path, monkeypatch):
+    for suffix in ("log", "json", "analysis.jsonl"):
+        (tmp_path / f"validation-events.{suffix}").write_text("[]")
+    behaviors = {"validation-events": (0, None, None)}
+    _patch_runner(tmp_path, monkeypatch, behaviors, 1)
+
+    assert rvb.run_batch([_spec("events")], _Args(tmp_path)) == 1
+    assert _manifest_results(tmp_path)["events"]["status"] == "missing"
+    assert not (tmp_path / "validation-events.analysis.jsonl").exists()
+
+
 def test_missing_result_files_fail_the_run(tmp_path, monkeypatch, capsys):
     # A validator that exits 0 without writing its log and sidecar produced
     # no verdict — the workflow's old `test -f` step, now enforced here.

@@ -24,7 +24,7 @@ def reuse_repository_import_graph(monkeypatch, repository_import_graph):
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 46
+    assert len(vb.ALL_SPECS) == 47
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
