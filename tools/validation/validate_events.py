@@ -435,13 +435,33 @@ def _scan_event_payment_nodes(
     text = _read_cleaned_text(filename, mod_path=mod_path)
     if not text:
         return {}
-    return disk_cache.per_file_cached_by_content(
+
+    def plain_nodes():
+        nodes = event_payment_nodes(text, _W_LOOKUPS)
+        return {
+            event_id: (
+                own,
+                tuple(immediate) if immediate is not None else None,
+                tuple((tuple(option), free) for option, free in options),
+            )
+            for event_id, (own, immediate, options) in nodes.items()
+        }
+
+    cached = disk_cache.per_file_cached_by_content(
         mod_path or "",
-        "events.payment_nodes",
+        "events.payment_nodes.v2",
         filename,
         f"{text}\x00{_W_DIGEST}",
-        lambda: event_payment_nodes(text, _W_LOOKUPS),
+        plain_nodes,
     )
+    return {
+        event_id: (
+            own,
+            ItemFacts(*immediate) if immediate is not None else None,
+            tuple((ItemFacts(*option), free) for option, free in options),
+        )
+        for event_id, (own, immediate, options) in cached.items()
+    }
 
 
 def load_event_payments(
@@ -2158,6 +2178,17 @@ def _cost_kinds(text: str, lookups: CostLookups) -> FrozenSet[str]:
     return frozenset(kinds)
 
 
+def war_target_payers(texts: Dict[str, str]) -> RoleCosts:
+    """Countries targeted by a war or war goal, by the role in *texts*."""
+    direct: RoleCosts = defaultdict(set)
+    for role, body in texts.items():
+        for target in _WAR_TARGET_RE.findall(body):
+            payer = role if target == _THIS else target
+            if payer in (_ROOT, _FROM) or _TAG_ROLE_RE.fullmatch(payer):
+                direct[payer].add("money")
+    return direct
+
+
 def item_facts(
     text: str,
     lookups: CostLookups,
@@ -2172,14 +2203,10 @@ def item_facts(
     texts, fires, calls = split_roles(
         blank_quoted_strings(text), own_tags, top, strip_triggers=callback
     )
-    direct: Dict[str, Set[str]] = defaultdict(set)
+    direct = war_target_payers(texts)
     for role, body in texts.items():
         if role != _THIS or callback:
             direct[role] |= _cost_kinds(body, lookups)
-        for target in _WAR_TARGET_RE.findall(body):
-            payer = role if target == _THIS else target
-            if payer in (_ROOT, _FROM) or _TAG_ROLE_RE.fullmatch(payer):
-                direct[payer].add("money")
     for scope, name in calls:
         if name.startswith("@idea:") and name.rsplit(":", 1)[-1] not in lookups.ideas:
             direct[scope].add("uncertain")

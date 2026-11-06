@@ -613,17 +613,19 @@ def _block_commits_money(body: str, ideas: Mapping[str, Mapping[str, Decimal]]) 
                 field: scalar for field, scalar, _nested in iter_statements(block)
             }
             tooltip = fields.pop("tooltip", None) or ""
-            if not _is_money_tooltip(tooltip):
+            if "var" in fields:
+                variable = fields.get("var") or ""
+                amount = fields.get("value")
+            else:
+                variable = next(iter(fields), "")
+                amount = fields.get(variable)
+            modifier = tooltip[:-3] if _is_money_tooltip(tooltip) else variable
+            if not MONEY_MODIFIER_RE.fullmatch(modifier):
                 continue
-            amount = (
-                fields.get("value")
-                if "var" in fields
-                else next(iter(fields.values()), None)
-            )
             if not amount or not _LITERAL_RE.fullmatch(amount):
                 return True
             change = Decimal(amount) * (-1 if key == "subtract_from_variable" else 1)
-            if money_modifier_raises_cost(tooltip[:-3], change):
+            if money_modifier_raises_cost(modifier, change):
                 return True
         elif _block_commits_money(block, ideas):
             return True

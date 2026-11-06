@@ -201,6 +201,38 @@ _MONEY_COMMITMENT_CASES = {
         "modifier = { tax_gain_multiplier_modifier = 0.1 }",
         False,
     ),
+    "short add cost raised": (
+        "add_to_variable = { social_cost_multiplier_modifier = 0.15 }",
+        True,
+    ),
+    "short add cost cut": (
+        "add_to_variable = { social_cost_multiplier_modifier = -0.15 }",
+        False,
+    ),
+    "long add income cut": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "long add income raised": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = 0.15 }",
+        False,
+    ),
+    "short subtract cost cut": (
+        "subtract_from_variable = { social_cost_multiplier_modifier = 0.15 }",
+        False,
+    ),
+    "long subtract cost raised": (
+        "subtract_from_variable = { var = social_cost_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "dynamic modifier change": (
+        "add_to_variable = { social_cost_multiplier_modifier = TAG_step }",
+        True,
+    ),
+    "unrelated dynamic variable": (
+        "add_to_variable = { other_variable = TAG_step }",
+        False,
+    ),
     "computed money modifier": ("social_cost_multiplier_modifier = TAG_step", True),
     "tax rate change price": ("tax_rate_change_multiplier_modifier = 0.5", False),
     "dynamic cost raised": (

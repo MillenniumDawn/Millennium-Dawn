@@ -2185,6 +2185,29 @@ def test_ai_will_do_guards(tmp_path, effects, extra, reward, modifiers, expected
     assert v.warnings_found == len(expected)
 
 
+@pytest.mark.parametrize(
+    ("reward", "unneeded"),
+    [
+        ("GER = { declare_war_on = { target = ROOT type = annex_everything } }", False),
+        ("GER = { declare_war_on = { target = FRA type = annex_everything } }", False),
+        ("GER = { declare_war_on = { target = BRA type = annex_everything } }", True),
+        ("GER = { declare_war_on = { target = THIS type = annex_everything } }", True),
+        (
+            "effect_tooltip = { GER = { declare_war_on = { target = ROOT type = annex_everything } } }",
+            True,
+        ),
+    ],
+)
+def test_foreign_war_target_may_charge_focus_owner(tmp_path, reward, unneeded):
+    _write_effects_file(tmp_path)
+    text = FOCUS_TEMPLATE.format(extra="", reward=reward, modifiers=BANKRUPTCY_GUARD)
+    text = text.replace("id = test_tree", "id = test_tree\n\tcountry = { tag = FRA }")
+    _focus_file(tmp_path, text)
+    v = _validator(tmp_path)
+    v.validate_ai_will_do_guards()
+    assert any(i.category == "unneeded-treasury-guard" for i in v._issues) is unneeded
+
+
 def test_bankruptcy_warnings_aggregate_per_file(tmp_path):
     _write_effects_file(tmp_path)
     focus = (

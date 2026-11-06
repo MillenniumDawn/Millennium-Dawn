@@ -46,6 +46,7 @@ from validate_events import (
     load_cost_lookups,
     load_event_payments,
     split_roles,
+    war_target_payers,
 )
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
@@ -1217,7 +1218,16 @@ def _scan_ai_guards(
                 or bool(_TAX_RATE_EFFECT_RE.search(owner_text))
             )
             pp_cost = pp_cost or bool(_PP_MALUS_RE.search(owner_text))
-            commits = commits or commits_money(owner_text, commitments, ideas)
+            targets = war_target_payers(texts)
+            if own:
+                for tag in own:
+                    if tag in targets:
+                        targets["ROOT"].update(targets.pop(tag))
+            commits = (
+                commits
+                or commits_money(owner_text, commitments, ideas)
+                or "money" in chooser_kinds(targets, bool(own))
+            )
 
         guards: Set[str] = set()
         treasury_checks: Set[str] = set()

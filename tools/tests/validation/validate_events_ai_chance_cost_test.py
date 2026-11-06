@@ -1,6 +1,9 @@
 """Event options whose ai_chance ignores what the option costs (issue #5096)."""
 
 import argparse
+import os
+import pickle
+import sqlite3
 import subprocess
 import sys
 from multiprocessing import get_context
@@ -1937,3 +1940,92 @@ def test_unresolved_callback_outcome_is_uncertain(callback):
     )
     payments = resolve_payments({}, effect_payment_nodes({}, lookups))
     assert payments.effects["@idea:on_add:TAG_callback"] == {"THIS": {"uncertain"}}
+
+
+@pytest.mark.parametrize("workers", [1, 2])
+def test_event_cache_is_read_by_later_decision_cli(tmp_path, workers):
+    for number in range(10):
+        _write(
+            tmp_path,
+            f"events/bill_{number}.txt",
+            _PAID_FOLLOWUP.replace("bill.2", f"bill.{number + 2}"),
+        )
+    _write(
+        tmp_path,
+        "common/decisions/bill.txt",
+        "bills = {\n\tbill_decision = {\n"
+        "\t\tcomplete_effect = { country_event = bill.2 }\n"
+        "\t\tai_will_do = {\n\t\t\tbase = 1\n"
+        "\t\t\tmodifier = { factor = 0.5 "
+        "has_active_mission = bankruptcy_incoming_collapse }\n"
+        "\t\t}\n\t}\n}\n",
+    )
+    scripts = Path(__file__).resolve().parents[2] / "validation"
+    env = os.environ.copy()
+    env.pop("MD_NO_CACHE", None)
+    if workers > 1:
+        _write(
+            tmp_path,
+            "bootstrap/sitecustomize.py",
+            "import multiprocessing\nmultiprocessing.set_start_method('spawn', force=True)\n",
+        )
+        env["PYTHONPATH"] = os.pathsep.join(
+            [str(tmp_path / "bootstrap"), env.get("PYTHONPATH", "")]
+        )
+    common = ["--path", str(tmp_path), "--no-color", "--workers", str(workers)]
+    subprocess.run(
+        [
+            sys.executable,
+            str(scripts / "validate_events.py"),
+            *common,
+            "--check-ai-chance-costs",
+        ],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    db = next((tmp_path / ".validation_cache").glob("v*/cache.db"))
+    with sqlite3.connect(db) as con:
+        rows = con.execute(
+            "SELECT value FROM entries WHERE namespace LIKE 'events.payment_nodes%'"
+        ).fetchall()
+        assert len(rows) == 10
+        cached = con.execute(
+            "SELECT value FROM entries WHERE namespace = 'events.payment_nodes.v2' "
+            "AND key = 'events/bill_0.txt'"
+        ).fetchone()
+        assert cached is not None
+        record = pickle.loads(cached[0])
+        record[2]["bill.2"] = (None, None, ((({}, (), (), "ROOT"), True),))
+        con.execute(
+            "UPDATE entries SET value = ? WHERE namespace = 'events.payment_nodes.v2' "
+            "AND key = 'events/bill_0.txt'",
+            (pickle.dumps(record, protocol=pickle.HIGHEST_PROTOCOL),),
+        )
+        con.execute(
+            "INSERT INTO entries (namespace, key, tag, value) "
+            "SELECT 'events.payment_nodes', key, tag, x'00' FROM entries "
+            "WHERE namespace = 'events.payment_nodes.v2'"
+        )
+        con.executescript(
+            "CREATE TABLE payment_cache_rewrites (n INTEGER); "
+            "CREATE TRIGGER track_payment_writes AFTER INSERT ON entries "
+            "WHEN NEW.namespace LIKE 'events.payment_nodes%' "
+            "BEGIN INSERT INTO payment_cache_rewrites VALUES (1); END;"
+        )
+    result = subprocess.run(
+        [sys.executable, str(scripts / "validate_decisions.py"), *common],
+        env=env,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "bill_decision - ai_will_do lowers the weight on bankruptcy" in result.stderr
+    with sqlite3.connect(db) as con:
+        assert (
+            con.execute("SELECT COUNT(*) FROM payment_cache_rewrites").fetchone()[0]
+            == 0
+        )
+    assert all(b"ItemFacts" not in row[0] for row in rows)
