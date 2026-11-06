@@ -158,18 +158,18 @@ already closed, not for a price. Decisions use the same factors in `ai_will_do`.
 
 When an event fires to a different country than the one that started it, weigh the
 options by the receiver's situation (opinion, influence, ideology), never by base
-alone. `SNDR` is the sender:
+alone. When a country fires the event directly, `FROM` is the firing country:
 
 ```
  option = { # reject
   name = tag_ns.N.a
   log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
-  SNDR = { country_event = { id = tag_ns.M days = 1 } }
+  FROM = { country_event = { id = tag_ns.M days = 1 } }
   ai_chance = {
    base = 15
    modifier = {
     add = 10
-    has_opinion = { target = SNDR value < -15 }
+    has_opinion = { target = FROM value < -15 }
    }
    modifier = {
     factor = 0
@@ -178,6 +178,12 @@ alone. `SNDR` is the sender:
   }
  }
 ```
+
+Check the firing scope before using `FROM`: an event fired from a state scope has
+that state as `FROM`, not the intended country. Use a literal tag for a known
+country, as `egypt.169` does, or save the intended country as an event target.
+On-action and array dispatch have further caveats; see
+[FROM in Events Fired From On Actions and `random_scope_in_array`](scripting-edge-cases.md#from-in-events-fired-from-on-actions-and-random_scope_in_array).
 
 Wrap follow-up fires to other countries in `hidden_effect` so chain consequences stay
 out of the option's tooltip:
