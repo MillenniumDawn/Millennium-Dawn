@@ -121,7 +121,7 @@ Each command makes that subideology your ruling party and adds 50% to its popula
 | Western     | `effect cheat_party_socialism`                  | Social Democrats              |
 | Emerging    | `effect cheat_party_communist_state`            | Communists                    |
 | Emerging    | `effect cheat_party_anarchist_communism`        | Left-Wing Radicals            |
-| Emerging    | `effect cheat_party_conservative`               | Reactionaries                 |
+| Emerging    | `effect cheat_party_reactionary`                | Reactionaries                 |
 | Emerging    | `effect cheat_party_autocracy`                  | Autocrats                     |
 | Emerging    | `effect cheat_party_mod_vilayat_e_faqih`        | Moderate Shiite Revolutionary |
 | Emerging    | `effect cheat_party_vilayat_e_faqih`            | Hardline Shiite Revolutionary |

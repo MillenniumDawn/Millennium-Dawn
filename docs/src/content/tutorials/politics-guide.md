@@ -112,7 +112,7 @@ Each ideology group contains several subideologies, for a total of 24. Each coun
 | ----- | ------------------------ | ---------------------------------------- |
 | 4     | Communist State          | Marxist-Leninist single-party states     |
 | 5     | Anarchist Communism      | Libertarian communist movements          |
-| 6     | Conservative (Emerging)  | Reactionary left-wing parties            |
+| 6     | Reactionary              | Reactionary left-wing parties            |
 | 7     | Autocracy (Emerging)     | Authoritarian communist regimes          |
 | 8     | Moderate Vilayat-e Faqih | Moderate Shiite revolutionary governance |
 | 9     | Hardline Vilayat-e Faqih | Hardline Shiite revolutionary governance |
@@ -352,7 +352,7 @@ Socialists focus on domestic welfare, economic interventionism, and peaceful dip
 
 ### Conservatives
 
-**Available to:** Conservatism (1), Conservative/Emerging (6), Moderate Vilayat-e Faqih (8), Neutral Muslim Brotherhood (12), Neutral Conservatism (14), National Populism (20)
+**Available to:** Conservatism (1), Reactionary (6), Moderate Vilayat-e Faqih (8), Neutral Muslim Brotherhood (12), Neutral Conservatism (14), National Populism (20)
 
 Conservatives focus on stability, national identity, and resistance to foreign influence. They are the most defensively oriented political ideology.
 
