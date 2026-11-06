@@ -79,6 +79,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
+- `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
+  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+  or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
+  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
+  `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
+  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
+  upper bound is noted in the warning, but does not suppress it: a level bound alone
+  does not establish slot availability. Nested effects and other buildings or selectors
+  are not checked, and a guard for one slot does not prove that every level requested
+  will fit. The backlog is tracked by #6390.
 
 ## validate_characters.py
 
@@ -168,9 +178,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
   decision, not one cost, so re-check its reason when the decision gains a new cost.
 - `decision-unneeded-treasury-guard` (WARNING): the decision twin of
-  `event-unneeded-treasury-guard`, read over the whole decision, with the same gaps.
-  `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost is
-  money, and a money modifier in the `modifier` block commits money.
+  `event-unneeded-treasury-guard`, read over the whole decision, with the "Who pays"
+  rules and gaps under `validate_events.py`. `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost
+  is money, and the `modifier` block can commit money. FROM is the target.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -312,19 +322,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     events. Review these manually.
 - `event-unneeded-treasury-guard` (WARNING, opt-in with `--check-ai-chance-costs`): an
   `ai_chance` modifier that lowers the weight on bankruptcy or a high deficit, on an
-  option with no money cost. Costs come from the whole option, nested scopes included,
-  so a charge back to ROOT from a state scope counts, and so does one to another
-  country. A political power cost justifies the bankruptcy check only. A war, a
-  spending law change, or a money modifier the script names commits money and
-  justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
-  A free build costs nothing here, even for a building with upkeep, matching the
-  `skip_payment` rule. Unconditional own-country event calls in the same file also
-  commit money when the follow-up charges in its immediate effects or every option
-  guarantees a money cost. Routing events are followed to a fixed point; a free exit,
-  conditional call or charge, a trigger beyond the receiver's tag, foreign scope, and
-  tooltip preview do not prove payment.
-  Known gaps: cross-file or cross-country reply-chain costs, scripted-effect event
-  dispatch, and money modifiers on an idea the option adds.
+  option that costs the choosing country no money. A political power cost justifies
+  the bankruptcy check only. The chooser's tag comes from the event or option
+  `trigger`. Payers and commitments follow "Who pays" below.
+- Who pays (all three unneeded-treasury-guard checks): only the chooser's costs count.
+  - Payers: ROOT is the chooser, and so is its own tag. FROM, country iterators, and other
+    tags are other payers. With no known tag, any literal tag may be the chooser. A state
+    scope charges its parent. Previews never execute, and `skip_payment = 1` waives a
+    later build, even inside a moved scope block.
+  - Commitments (`script_commits_money`): a war, which also costs its target; a money
+    modifier moved the costly way, which means cost or interest up, tax or income down,
+    matching `color_type`; a value that is not a literal; and idea changes whose net in
+    one block raises a money modifier or a spending law level (`spending_new_level` in
+    the idea's `on_add`). The `spending_law_scripted_change` flag alone commits nothing,
+    and `tax_rate_change_multiplier_modifier` prices political power, not money.
+  - Chains: fired events and called effects are followed to a fixed point. A fired
+    event's FROM is its sender, and an explicit ROOT in a scripted effect is the
+    caller's ROOT. Another country's choice charges the chooser if any option does. A
+    follow-up the chooser answers itself charges only when every free pick does (no
+    `trigger`, not `base = 0`). Branches and event triggers count as possible. A dynamic
+    event id counts as a cost, while an undefined id and a cycle with no charge are free.
+  - Known gaps: receiver identity from callers, partner-event branches gated on the
+    receiver's tag, income an idea earns through money-system script that reads
+    `has_idea`, and tax rate changes, which count in either direction.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -393,6 +413,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `source-art-format` (ERROR): under `gfx/`, `.psd`, `.xcf`, and `.tif` cannot load, and
   `.png` and `.jpg` load uncompressed without mipmaps. Convert with
   `tools/assets/md_art_convert.py`. `map/` is out of scope.
+- `scripted-loc-file-prefix` (WARNING): tracked `.txt` files directly under
+  `common/scripted_localisation/` lack a two-digit `NN_` prefix. This is an initial
+  slice of #1572; it does not check tag ownership, suffixes, or other directories.
 
 ## validate_focus_tree.py
 
@@ -409,11 +432,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   completion time, never a price. A literal political power loss justifies the
   bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
   as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
-  block costs nothing. A charge another nation's event sends back to the sender,
-  directly or through a reply event, counts. Known gaps: partner-event branches gated
-  on the receiver's tag are not told apart, a partner-event charge never raises
-  `missing-bankruptcy-guard`, and costs that come from an idea's modifiers, such as
-  `personnel_cost_multiplier_modifier`, are not seen, so their guards read as unneeded.
+  block costs nothing. The owner's tags come from the tree's `country` block. Payers,
+  commitments, and chains follow "Who pays" under `validate_events.py`. Known gap: an
+  event chain charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 
@@ -800,6 +821,24 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
+
+## validate_special_projects.py
+
+- A project's `visible`, `available`, and `special_project_parent` decide what
+  unlocks it. `OR` branches and if/else branches are separate ways in; a lone `if`
+  body is required. `NOT`, `NOR`, `NAND`, `count_triggers`, and `limit` never are.
+  Tag, flag, and building checks are ignored, so a branch with only those does not
+  excuse the others.
+- `sp-unlock-tooltip-missing` (WARNING): no member of a way in shows
+  `SP_UNLOCK_PROJECT` for the project. One member is enough. A parent project's
+  `project_output` tooltip and a focus's `complete_special_project` count. Ways with
+  no tech or focus, such as parent-only or flag-only projects, are skipped.
+- `sp-unlock-tooltip-misplaced` (WARNING): the tooltip names a project its tech,
+  focus, or project does not unlock, or a project that does not exist. `PROJECT`
+  takes the bare id; `sp:` reads as unknown.
+- Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
+  tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
+  not checked.
 
 ## validate_scripted_params.py
 

@@ -355,7 +355,7 @@ If the country has scripted leader rotation, add the leader's `create_country_le
 | 3     | `socialism`                  | Pro-Western (democratic)  |
 | 4     | `communist_state`            | Emerging (communism)      |
 | 5     | `anarchist_communism`        | Emerging (communism)      |
-| 6     | `Conservative`               | Emerging (communism)      |
+| 6     | `reactionary`                | Emerging (communism)      |
 | 7     | `Autocracy`                  | Emerging (communism)      |
 | 8     | `Mod_Vilayat_e_Faqih`        | Emerging (communism)      |
 | 9     | `Vilayat_e_Faqih`            | Emerging (communism)      |

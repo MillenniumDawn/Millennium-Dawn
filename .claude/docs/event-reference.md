@@ -111,10 +111,11 @@ problem the cost solves:
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 - Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
-- Do not lower the weight on bankruptcy or a high deficit for an option that costs no
-  money. Bankruptcy also covers political power. A war, a spending law change, or a
-  money modifier counts as money. Raising a free option when the country is broke is
-  fine.
+- Do not lower the weight on bankruptcy or a high deficit for an option that costs the
+  choosing country no money. Bankruptcy also covers political power. A war, a spending
+  law raise, an idea or money modifier that raises a cost, and a bill a follow-up event
+  sends back count as money. A charge to FROM or another tag does not. Raising a free
+  option when the country is broke is fine.
 - Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`; see "Cost-aware AI weights" in `decision-reference.md`.
 - Skip the guard on an option the AI never picks (`base = 0`, no `add`), in an event whose trigger has `is_ai = no`, and on a cost every option pays the same way, since a guard on each scales them all alike. When the shared cost differs in size, guard only the dearer option.
 - Modifiers run in order on a running total. Put every `factor = 0` modifier after the adds, or a later `add` brings the zeroed weight back.
@@ -158,18 +159,18 @@ already closed, not for a price. Decisions use the same factors in `ai_will_do`.
 
 When an event fires to a different country than the one that started it, weigh the
 options by the receiver's situation (opinion, influence, ideology), never by base
-alone. `SNDR` is the sender:
+alone. When a country fires the event directly, `FROM` is the firing country:
 
 ```
  option = { # reject
   name = tag_ns.N.a
   log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
-  SNDR = { country_event = { id = tag_ns.M days = 1 } }
+  FROM = { country_event = { id = tag_ns.M days = 1 } }
   ai_chance = {
    base = 15
    modifier = {
     add = 10
-    has_opinion = { target = SNDR value < -15 }
+    has_opinion = { target = FROM value < -15 }
    }
    modifier = {
     factor = 0
@@ -178,6 +179,12 @@ alone. `SNDR` is the sender:
   }
  }
 ```
+
+Check the firing scope before using `FROM`: an event fired from a state scope has
+that state as `FROM`, not the intended country. Use a literal tag for a known
+country, as `egypt.169` does, or save the intended country as an event target.
+On-action and array dispatch have further caveats; see
+[FROM in Events Fired From On Actions and `random_scope_in_array`](scripting-edge-cases.md#from-in-events-fired-from-on-actions-and-random_scope_in_array).
 
 Wrap follow-up fires to other countries in `hidden_effect` so chain consequences stay
 out of the option's tooltip:

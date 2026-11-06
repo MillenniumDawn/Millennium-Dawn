@@ -21,7 +21,7 @@ Armenia is a landlocked nation surrounded by Turkey from the west, Iran from the
 
 ## Ideology
 
-Armenia's ruling party is Emerging Conservative, which starts out with 23.5% of Popularity. The second closest party is Western Liberalism, which has 23.2%. The other two parties with any sort of footing is Non-Aligned Communist with 13.3% and Emerging Autocracy with 11%. The rest of the pie-chart goes to Nationalistics Parties with a combined total of 10%
+Armenia's ruling party is Emerging Reactionary, which starts out with 23.5% of Popularity. The second closest party is Western Liberalism, which has 23.2%. The other two parties with any sort of footing is Non-Aligned Communist with 13.3% and Emerging Autocracy with 11%. The rest of the pie-chart goes to Nationalistics Parties with a combined total of 10%
 
 ## Diplomacy
 
