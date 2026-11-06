@@ -101,6 +101,7 @@ _HELPER_DEPENDENCIES = {
     "building_guards_scan_v7": ("guard_scan.py",),
     "dlc_guards_scan": ("validate_history.py",),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "focus_tree": ("validate_events.py",),
     "ideas": ("equipment_module_slots.py",),
     "influence_calls_scan_v2": ("guard_scan.py",),
     "math_expr": ("equipment_module_slots.py",),
