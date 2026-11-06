@@ -4,6 +4,8 @@ Check for common scripting mistakes in HOI4 mod files.
 
 Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
+  - add_stability / add_war_support set to a numeric literal of magnitude 1 or
+    more (both take a fraction; a variable or an expression is left alone)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
   - allowed_civil_war = { always = no } in ideas (no effect, remove it)
@@ -39,8 +41,11 @@ Detects mechanically-checkable rule violations:
     a check_variable-style leftover; block form or a bare scalar are both valid
   - every_owned_controlled_state (does not exist; use every_controlled_state)
   - random_select_amount set to a variable/decimal instead of an integer literal
-  - log = "...Focus X" / "...Decision X" / "...Event X" where X doesn't match the
-    enclosing focus/decision/event id (copy-paste bug from duplicating a neighbor)
+  - log = "...Focus X" / "...Decision X" / "...Event X" / a stock idea log where X
+    doesn't match the enclosing focus/decision/event/idea id (copy-paste bug from
+    duplicating a neighbor)
+  - An idea on_add/on_remove log beside nothing but tooltips, which records no state
+    change (warning)
   - Event AI choices that all reach factor 0 when historical focus and the
     bankruptcy mission are both active
   - hidden_trigger = { } directly inside custom_trigger_tooltip (redundant nesting)
@@ -97,6 +102,7 @@ from shared_utils import AVAILABLE_OPEN_RE as _RE_AVAILABLE_OPEN
 from shared_utils import IDENTIFIER_BLOCK_START_RE as _RE_AI_STRATEGY_BLOCK
 from shared_utils import MODIFIER_OPEN_RE as _RE_AI_MODIFIER_OPEN
 from shared_utils import OPTION_OPEN_RE as _RE_OPTION_BLOCK_OPEN
+from shared_utils import STOCK_IDEA_LOG_RE
 from shared_utils import TRIGGER_OPEN_RE as _RE_TRIGGER_BLOCK_OPEN
 from shared_utils import WORD_BLOCK_LINE_RE as _RE_MODIFIER_ENTRY
 from shared_utils import WORD_BLOCK_START_RE as _RE_CATEGORY
@@ -190,6 +196,8 @@ _RE_RELATION_MODIFIER = re.compile(
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 _RE_BARE_NUMBER = re.compile(r"^-?\d+(?:\.\d+)?$")
+_RE_STAT_EFFECT_VALUE = re.compile(r"\b(add_stability|add_war_support)\s*=\s*(\S+)")
+_RE_STAT_EFFECT_MATH = re.compile(r"\s*[-+*/]")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
 # always true. Captures both tokens + values; caller checks token match in code.
 _RE_TAUTOLOGICAL_OR = re.compile(
@@ -222,9 +230,11 @@ _RE_FOCUS_ANY_BLOCK_OPEN = re.compile(
     r"^\s*(?:focus|shared_focus|joint_focus)\s*=\s*\{"
 )
 _RE_LOG_FOCUS_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bFocus\s+([\w-]+)', re.IGNORECASE)
-# "Decision <keyword...> <id>" tolerates a chain of filler words before the real
-# id: the block-name keywords (remove/complete/completed/timeout/cancel/add,
-# describing which effect block logged the line) and, in a couple of legacy
+_LOG_NOT_NEEDED_KEYS = {"log", "custom_effect_tooltip", "effect_tooltip"}
+# "Decision <keyword...> <id>" (or "Mission ...") tolerates a chain of filler
+# words before the real id: the block-name keywords (remove/complete/completed/
+# timeout/cancel/add, describing which effect block logged the line), the block
+# names themselves ("Mission timeout_effect X"), and, in a couple of legacy
 # logs, a spelled-out "effect" after the keyword ("Decision cancel effect X"
 # for a cancel_effect block). Strip all leading filler tokens, then compare
 # whatever's left to the decision's own id.
@@ -236,8 +246,14 @@ _DECISION_LOG_FILLER_WORDS = {
     "cancel",
     "add",
     "effect",
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
 }
-_RE_LOG_DECISION_MARKER = re.compile(r'log\s*=\s*"[^"]*\bDecision\b', re.IGNORECASE)
+_RE_LOG_DECISION_MARKER = re.compile(
+    r'log\s*=\s*"[^"]*\b(?:Decision|Mission)\b', re.IGNORECASE
+)
 _RE_NEXT_WORD = re.compile(r"\s+([\w-]+)")
 # A log with no "Decision" word still names its decision when it is the standard
 # prefix, filler words, and one id that ends the string. Longer free text is not
@@ -520,6 +536,7 @@ from shared_utils import (
     find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
+    list_files,
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
@@ -541,29 +558,22 @@ def _scan_global_refs(root_dir):
     decisions: set = set()
     nation_flags: set = set()
     for directory in ["common", "events", "history"]:
-        dir_path = os.path.join(root_dir, directory)
-        if not os.path.exists(dir_path):
-            continue
-        for root, _, filenames in os.walk(dir_path):
-            for filename in filenames:
-                if not filename.endswith(".txt"):
-                    continue
-                fp = os.path.join(root, filename)
-                try:
-                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
-                        content = f.read()
-                except OSError:
-                    continue
-                # A \b-led pattern gets no literal-prefix scan, so test the
-                # literal every match contains before running it.
-                if "complete_national_focus" in content:
-                    focuses.update(_RE_COMPLETE_FOCUS.findall(content))
-                if "unlock_national_focus" in content:
-                    focuses.update(_RE_UNLOCK_FOCUS.findall(content))
-                if "activate_decision" in content:
-                    decisions.update(_RE_ACTIVATE_DECISION.findall(content))
-                if "_nation_flag" in content:
-                    nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
+        for fp in list_files(os.path.join(root_dir, directory)):
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except OSError:
+                continue
+            # A \b-led pattern gets no literal-prefix scan, so test the
+            # literal every match contains before running it.
+            if "complete_national_focus" in content:
+                focuses.update(_RE_COMPLETE_FOCUS.findall(content))
+            if "unlock_national_focus" in content:
+                focuses.update(_RE_UNLOCK_FOCUS.findall(content))
+            if "activate_decision" in content:
+                decisions.update(_RE_ACTIVATE_DECISION.findall(content))
+            if "_nation_flag" in content:
+                nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
     return focuses, decisions, nation_flags
 
 
@@ -990,11 +1000,7 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
     if event_index is None:
         if not _EVENT_INDEX_BUILT:
-            try:
-                root_dir = get_root_dir()
-            except Exception:
-                root_dir = None
-            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX = _build_event_index(get_root_dir())
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
@@ -2644,23 +2650,14 @@ def _provincial_building_types(mod_root=None):
     downgrades the check to a fixed list rather than silently disabling it.
     """
     if mod_root is None:
-        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
-        # which points at pytest rather than the linter when the tests import
-        # this. realpath so a symlinked checkout still lands on the real root.
-        mod_root = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-        )
+        mod_root = get_root_dir()
     types = set()
     buildings_dir = os.path.join(mod_root, "common", "buildings")
-    try:
-        filenames = sorted(os.listdir(buildings_dir))
-    except OSError:
+    if not os.path.isdir(buildings_dir):
         return _PROVINCIAL_BUILDINGS_FALLBACK
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
+    for fpath in list_files(buildings_dir, recursive=False):
         try:
-            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
+            with open(fpath, encoding="utf-8") as f:
                 lines = f.readlines()
         except OSError:
             continue
@@ -2727,17 +2724,9 @@ def _direct_child_matches(body, pattern):
     return found
 
 
-@lru_cache(maxsize=None)
-def _mod_root():
-    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
-    return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-    )
-
-
 def _read_dir_text(*parts):
     """Concatenated text of every .txt directly under the given mod directory."""
-    directory = os.path.join(_mod_root(), *parts)
+    directory = os.path.join(get_root_dir(), *parts)
     chunks = []
     try:
         filenames = sorted(os.listdir(directory))
@@ -2761,7 +2750,7 @@ def _equipment_bonus_enum():
     Returns None when the file can't be read, which disables the check rather
     than reporting every bonus as unknown.
     """
-    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    path = os.path.join(get_root_dir(), "common", "script_enums.txt")
     try:
         with open(path, encoding="utf-8") as f:
             text = f.read()
@@ -3131,6 +3120,36 @@ def _check_random_select_amount_literal(lines):
     return issues
 
 
+def _check_stat_effect_magnitude(lines):
+    """Flag add_stability / add_war_support set to a literal of magnitude 1 or more.
+
+    Both effects take a fraction. A variable or an expression is left alone.
+    """
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "add_stability", "add_war_support"):
+        if src[i].strip().startswith("#"):
+            continue
+        code = src.depth_code[i]
+        for match in _RE_STAT_EFFECT_VALUE.finditer(code):
+            token = match.group(2).rstrip("}")
+            if not _RE_BARE_NUMBER.match(token):
+                continue
+            if _RE_STAT_EFFECT_MATH.match(code[match.end() :]):
+                continue
+            if abs(float(token)) < 1:
+                continue
+            effect = match.group(1)
+            issues.append(
+                (
+                    i + 1,
+                    f"{effect} = {token} is at least 100% -- "
+                    f"{effect} takes a fraction (0.05 is 5%)",
+                )
+            )
+    return issues
+
+
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
     src = _source(lines)
@@ -3209,6 +3228,72 @@ def _check_focus_log_id(lines):
     return issues
 
 
+def _idea_lifecycle_nodes(src):
+    """Yield (idea_id, node) for each on_add/on_remove directly in an idea, read from
+    the ideas > category > idea layout of common/ideas/ files."""
+    for root in src.tree:
+        if root.key != "ideas":
+            continue
+        for category in root.children:
+            for idea in category.children:
+                for node in idea.children:
+                    if node.key in ("on_add", "on_remove"):
+                        yield idea.key, node
+
+
+def _find_idea_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, idea_id, bad_token) for each stock
+    on_add/on_remove log naming an idea other than the enclosing one. Shared by
+    _check_idea_log_id and fix_log_ids.py.
+    """
+    src = _source(lines)
+    results = []
+    if "log" not in src.raw:
+        return results
+    owners = {node.line - 1: idea for idea, node in _idea_lifecycle_nodes(src)}
+    for start, end, _match in _outer_blocks(src, sorted(owners), lambda _i: True):
+        for row in range(start, end):
+            m = STOCK_IDEA_LOG_RE.search(src.code[row])
+            if m and m[m.lastgroup] != owners[start]:
+                tstart, tend = m.span(m.lastgroup)
+                results.append((row, tstart, tend, owners[start], m[m.lastgroup]))
+    return results
+
+
+def _check_idea_log_id(lines):
+    """Flag stock idea logs naming another idea -- almost always a copy-paste
+    leftover from duplicating a neighboring idea."""
+    return [
+        (
+            line_idx + 1,
+            f"log references idea {token}, but the enclosing idea is {idea_id} -- "
+            "likely copy-paste; fix the log id",
+        )
+        for line_idx, _s, _e, idea_id, token in _find_idea_log_mismatches(lines)
+    ]
+
+
+def _check_idea_log_not_needed(lines):
+    """Warn on an idea on_add/on_remove log beside nothing but tooltips. A tooltip
+    changes no state, so the log records nothing and only adds I/O. A block with no
+    other statement is _check_empty_log_only_blocks' finding."""
+    src = _source(lines)
+    issues = []
+    if "log" not in src.raw:
+        return issues
+    for idea, node in _idea_lifecycle_nodes(src):
+        keys = {child.key for child in node.children}
+        if "log" in keys and len(keys) > 1 and keys <= _LOG_NOT_NEEDED_KEYS:
+            issues.append(
+                (
+                    node.line,
+                    f"{node.key} of {idea} only shows tooltips, so its log records "
+                    "no state change -- drop the log",
+                )
+            )
+    return issues
+
+
 def _decision_log_token_span(line):
     """Return (token, start, end) for the id referenced by a
     `log = "...Decision ..."` line, skipping leading filler words
@@ -3229,6 +3314,9 @@ def _decision_log_token_span(line):
         if token.lower() in _DECISION_LOG_FILLER_WORDS:
             pos = m.end()
             continue
+        # An id that runs into [?...] is built at runtime.
+        if line.startswith("[", m.end(1)):
+            return None
         return token, m.start(1), m.end(1)
 
 
@@ -4220,16 +4308,17 @@ def classify_file_path(filepath):
 
 
 def check_file(filepath):
-    """Check a single file for common mistakes. Returns (errors, warnings), each a
-    list of (filepath, line_num, message) tuples. Shadowed branches are warnings
-    while the existing ones are triaged."""
+    """Check a single file for common mistakes. Returns (errors, shadowed, warnings),
+    each a list of (filepath, line_num, message) tuples. Shadowed branches and
+    warnings are kept apart so the validator can report them under their own
+    categories."""
     issues = []
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
             lines = _Source(f.readlines())
     except Exception:
-        return issues, []
+        return issues, [], []
 
     (
         is_ideas,
@@ -4439,6 +4528,8 @@ def check_file(filepath):
     if is_event_file:
         issues.extend(_check_event_ai_historical_bankruptcy_fallback(lines))
         issues.extend(_check_event_log_id(lines))
+    if is_ideas:
+        issues.extend(_check_idea_log_id(lines))
     if is_political_leaders_file:
         issues.extend(_check_leader_rotation(lines))
 
@@ -4463,6 +4554,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_wrong_stat_trigger(lines))
+    issues.extend(_check_stat_effect_magnitude(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
@@ -4481,9 +4573,11 @@ def check_file(filepath):
         issues.extend(_check_bare_statement_token(lines))
 
     # The leader rotation check already reports duplicate branches in these files.
-    warnings = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    shadowed = [] if is_political_leaders_file else _check_shadowed_branches(lines)
+    warnings = _check_idea_log_not_needed(lines) if is_ideas else []
     return (
         [(filepath, ln, msg) for ln, msg in issues],
+        [(filepath, ln, msg) for ln, msg in shadowed],
         [(filepath, ln, msg) for ln, msg in warnings],
     )
 
@@ -4540,12 +4634,15 @@ def main():
         )
     timings.append(("checking", t.elapsed))
 
-    all_issues = sorted(issue for errors, _ in results for issue in errors)
-    warnings = sorted(issue for _, file_warnings in results for issue in file_warnings)
+    all_issues = sorted(
+        issue for errors, shadowed, _warnings in results for issue in errors + shadowed
+    )
 
     for filepath, line_num, message in all_issues:
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
-    for filepath, line_num, message in warnings:
+    for filepath, line_num, message in sorted(
+        warning for _errors, _shadowed, warnings in results for warning in warnings
+    ):
         print(f"{clean_filepath(filepath)}:{line_num}: warning: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")

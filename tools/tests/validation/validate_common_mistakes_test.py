@@ -34,7 +34,7 @@ def test_mistake_is_reported_with_relative_path_and_line(tmp_path):
     assert validator.errors_found == 1
 
 
-def test_shadowed_branch_is_a_warning_while_the_backlog_is_triaged(tmp_path):
+def test_shadowed_branch_is_its_own_error_category(tmp_path):
     _write(
         tmp_path,
         "common/scripted_effects/shadow.txt",
@@ -48,7 +48,25 @@ def test_shadowed_branch_is_a_warning_while_the_backlog_is_triaged(tmp_path):
     validator.run_validations()
 
     assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
-        ("shadowed-branch", "warning", "common/scripted_effects/shadow.txt", 3)
+        ("shadowed-branch", "error", "common/scripted_effects/shadow.txt", 3)
+    ]
+    assert validator.errors_found == 1
+
+
+def test_unneeded_idea_log_is_a_warning(tmp_path):
+    _write(
+        tmp_path,
+        "common/ideas/tst.txt",
+        "ideas = {\n\tcountry = {\n\t\tTST_idea = {\n"
+        '\t\t\ton_add = { log = "x" custom_effect_tooltip = TST_tt }\n'
+        "\t\t}\n\t}\n}\n",
+    )
+
+    validator = _validator(tmp_path)
+    validator.run_validations()
+
+    assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
+        ("unneeded-idea-log", "warning", "common/ideas/tst.txt", 4)
     ]
     assert validator.errors_found == 0
 

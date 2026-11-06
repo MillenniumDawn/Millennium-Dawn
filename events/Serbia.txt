@@ -234,7 +234,10 @@ country_event = { #Arkan Assassination
 		log = "[GetDateText]: [This.GetName]: Serbia.1.a executed"
 		name = Serbia.1.a
 		custom_effect_tooltip = Serbia.1.tt
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 		hidden_effect = {
 			retire_character = SER_zeljko_raznatovic
 			country_event = { id = Serbia.2 days = 5 }
@@ -246,7 +249,11 @@ country_event = { #Arkan Assassination
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.1.b executed"
 		name = Serbia.1.b
-		ai_chance = { base = 25 }
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
+		}
 		add_stability = -0.02
 		add_war_support = -0.05
 	}
@@ -261,6 +268,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.2.a executed"
 		name = Serbia.2.a
+		ai_chance = { base = 25 }
 		add_political_power = -20
 		add_stability = 0.05
 		if = {
@@ -278,7 +286,11 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.2.b executed"
 		name = Serbia.2.b
-		ai_chance = { base = 25 }
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 		add_political_power = -75
 		add_stability = -0.02
 	}
@@ -351,7 +363,11 @@ country_event = { #2010 Earthquake
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.5.a executed"
 		name = Serbia.5.a
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
 		add_political_power = 60
@@ -442,8 +458,11 @@ country_event = { #Cyanide Spills in Danube
 
 	#picture = GFX_Arkan_Assassination
 	immediate = {
-		BUL = {
-			country_event = { id = Serbia.8 days = 1 }
+		if = {
+			limit = { tag = SER }
+			BUL = {
+				country_event = { id = Serbia.8 days = 1 }
+			}
 		}
 	}
 
@@ -455,27 +474,18 @@ country_event = { #Cyanide Spills in Danube
 		add_political_power = -100
 		ROM = {
 			add_opinion_modifier = {
-				target = SER
-				modifier = blame_us_for_cyanide_spill
-			}
-			add_opinion_modifier = {
-				target = BUL
+				target = ROOT
 				modifier = blame_us_for_cyanide_spill
 			}
 		}
-		SER = {
-			add_opinion_modifier = {
-				target = ROM
-				modifier = caused_cyanide_spill
-			}
+		add_opinion_modifier = {
+			target = ROM
+			modifier = caused_cyanide_spill
 		}
-		BUL = {
-			add_opinion_modifier = {
-				target = ROM
-				modifier = caused_cyanide_spill
-			}
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
-		ai_chance = { base = 25 }
 	}
 
 	option = {
@@ -486,19 +496,21 @@ country_event = { #Cyanide Spills in Danube
 		change_relative_party_popularity = yes
 		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
-		SER = {
-			add_opinion_modifier = {
-				target = ROM
-				modifier = cooperated_to_clean_up_cyanide_spill
-			}
+		add_opinion_modifier = {
+			target = ROM
+			modifier = cooperated_to_clean_up_cyanide_spill
 		}
 		ROM = {
 			add_opinion_modifier = {
-				target = SER
+				target = ROOT
 				modifier = cooperated_to_clean_up_cyanide_spill
 			}
 		}
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 }
 ########
@@ -661,6 +673,8 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.15.a executed"
 		name = Serbia.15.a
+		set_country_flag = SER_montenegro_independence_dead
+		clr_country_flag = SER_montenegro_independence
 		if = {
 			limit = { MNT = { is_subject_of = SER } }
 			set_autonomy = {
@@ -704,12 +718,17 @@ country_event = { #Montenegrans become militarized
 		#
 		add_to_variable = { var = SER_Montenegro_combatants value = 873 }
 		clamp_variable = { var = SER_Montenegro_combatants min = 0 max = 8000 }
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = { add = 50 SER_ai_not_historical_path = yes }
+		}
 	}
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: Serbia.16.b executed"
 		name = Serbia.16.b
+		set_country_flag = SER_montenegro_independence_dead
+		clr_country_flag = SER_montenegro_independence
 		if = {
 			limit = { MNT = { is_subject_of = SER } }
 			set_autonomy = {
@@ -722,7 +741,10 @@ country_event = { #Montenegrans become militarized
 			release = MNT
 			MNT = { ingame_startup_nations_effect = yes }
 		}
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = { add = 50 SER_ai_historical_path = yes }
+		}
 	}
 }
 
@@ -1091,6 +1113,7 @@ country_event = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -1184,6 +1207,7 @@ country_event = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -1234,6 +1258,7 @@ country_event = {
 				factor = 2
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -1364,7 +1389,7 @@ country_event = {
 			base = 5
 			modifier = {
 				has_opinion = { target = SER value < 0 }
-				add = -5
+				add = 5
 			}
 		}
 	}
@@ -1420,6 +1445,7 @@ country_event = {
 				has_opinion = { target = SER value > 19 }
 				add = 5
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -1482,22 +1508,11 @@ country_event = {
 		name = SerbiaFocus.7.a
 		BOS = { release_puppet = RSK }
 		SER = {
-			if = {
-				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
-				set_autonomy = {
-					target = RSK
-					autonomy_state = autonomy_autonomous_state_colored
-					end_wars = yes
-					end_civil_wars = yes
-				}
-			}
-			else = {
-				set_autonomy = {
-					target = RSK
-					autonomy_state = autonomy_autonomous_state
-					end_wars = yes
-					end_civil_wars = yes
-				}
+			set_autonomy = {
+				target = RSK
+				autonomy_state = autonomy_autonomous_state
+				end_wars = yes
+				end_civil_wars = yes
 			}
 		}
 		BOS = {
@@ -1522,7 +1537,19 @@ country_event = {
 			target = SER
 			type = annex_everything
 		}
-		ai_chance = { base = 75 }
+		ai_chance = {
+			base = 75
+			modifier = {
+				add = 40
+				strength_ratio = { tag = SER ratio > 0.6 }
+			}
+			modifier = {
+				add = 20
+				has_opinion = { target = SER value < -20 }
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 
 	option = {
@@ -1531,7 +1558,19 @@ country_event = {
 		add_stability = -0.15
 		add_war_support = 0.15
 		add_political_power = -200
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 25
+				strength_ratio = { tag = SER ratio < 0.3 }
+			}
+			modifier = {
+				add = 10
+				has_opinion = { target = SER value > 0 }
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 }
 country_event = {
@@ -1566,7 +1605,8 @@ country_event = {
 		add_stability = -0.10
 		add_political_power = -100
 		add_ideas = VOJ_debuff_nation
-		ai_chance = { base = 90 }
+		# The AI never releases Vojvodina, so refusing would keep the debuff forever
+		ai_chance = { base = 0 }
 	}
 }
 #Vojvodina start Rebelleion
@@ -1616,7 +1656,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.100.a
-		ai_chance = { base = 55 }
+		ai_chance = {
+			base = 55
+			modifier = { add = 50 SER_ai_greater_serbia_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.100.a executed"
 		declare_war_on = {
 			target = VOJ
@@ -1639,7 +1682,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.101.a
-		ai_chance = { base = 55 }
+		ai_chance = {
+			base = 55
+			modifier = { add = 50 SER_ai_reform_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.101.a executed"
 		VOJ = {
 			country_event = {
@@ -1653,7 +1699,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.101.b
-		ai_chance = { base = 45 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 50 SER_ai_greater_serbia_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.101.b executed"
 		VOJ = {
 			country_event = {
@@ -1719,7 +1768,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.104.a
-		ai_chance = { base = 55 }
+		ai_chance = {
+			base = 55
+			modifier = { add = 50 SER_ai_reform_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.104.a executed"
 		VOJ = {
 			country_event = {
@@ -1733,7 +1785,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.104.b
-		ai_chance = { base = 45 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 50 SER_ai_greater_serbia_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.104.b executed"
 		VOJ = {
 			country_event = {
@@ -1833,7 +1888,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.109.a
-		ai_chance = { base = 55 }
+		ai_chance = {
+			base = 55
+			modifier = { add = 50 SER_ai_reform_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.109.a executed"
 		VOJ = {
 			country_event = {
@@ -1847,7 +1905,10 @@ country_event = {
 
 	option = {
 		name = SerbiaFocus.109.b
-		ai_chance = { base = 45 }
+		ai_chance = {
+			base = 45
+			modifier = { add = 50 SER_ai_greater_serbia_path = yes }
+		}
 		log = "[GetDateText]: [This.GetName]: SerbiaFocus.109.b executed"
 		VOJ = {
 			country_event = {
@@ -2132,6 +2193,8 @@ country_event = {
 					value > 10
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -2194,11 +2257,11 @@ country_event = {
 			base = 15
 			modifier = {
 				add = 20
-				is_top5_influencer = yes
+				sender_is_top5_influencer = yes
 			}
 			modifier = {
 				add = 20
-				is_top3_influencer = yes
+				FROM_is_top3_influencer = yes
 			}
 		}
 		set_country_flag = balkan_subject_agree
@@ -2231,8 +2294,8 @@ country_event = {
 	}
 
 	option = {
-		name = SerbiaFocus.17.a
-		log = "[GetDateText]: [This.GetName]: SerbiaFocus.17.a executed"
+		name = SerbiaFocus.17.b
+		log = "[GetDateText]: [This.GetName]: SerbiaFocus.17.b executed"
 		ai_chance = { base = 85 }
 		set_temp_variable = { percent_change = -5 }
 		set_temp_variable = { tag_index = SER }
@@ -2270,6 +2333,8 @@ country_event = {
 					value > 10
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 		random_owned_state = {
 			limit = { free_shared_building_slots = yes }
@@ -2462,7 +2527,7 @@ country_event = {
 		name = ser_dem.1.a
 		log = "[GetDateText]: [This.GetName]: ser_dem.1.a executed"
 		ai_chance = {
-			base = 100
+			base = 1
 			modifier = {
 				add = 0.2
 				has_opinion = {
@@ -2470,6 +2535,8 @@ country_event = {
 					value > 10
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 		SER = {
 			one_random_industrial_complex = yes
@@ -2495,6 +2562,8 @@ country_event = {
 					value > 10
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 		SER = {
 			one_random_infrastructure = yes
@@ -2520,6 +2589,8 @@ country_event = {
 					value > 10
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 		SER = {
 			one_random_network_infrastructure = yes
@@ -2677,24 +2748,11 @@ country_event = {
 			limit = { has_idea = SER_confederation_idea }
 			remove_ideas = SER_confederation_idea
 		}
-		if = {
-			limit = {
-				has_global_flag = GAME_RULE_allow_colored_puppets
-			}
-			set_autonomy = {
-				target = VOJ
-				autonomy_state = autonomy_autonomous_state_colored
-				end_wars = yes
-				end_civil_wars = yes
-			}
-		}
-		else = {
-			set_autonomy = {
-				target = VOJ
-				autonomy_state = autonomy_autonomous_state
-				end_wars = yes
-				end_civil_wars = yes
-			}
+		set_autonomy = {
+			target = VOJ
+			autonomy_state = autonomy_autonomous_state
+			end_wars = yes
+			end_civil_wars = yes
 		}
 	}
 
@@ -3710,6 +3768,7 @@ country_event = {
 			base = 1
 			modifier = { add = 2 MNT_ai_dukanovic_path = yes }
 			modifier = { add = 2 has_global_flag = MNT_EUROPEAN_REFORM_FOCUS_PATH }
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -3774,6 +3833,7 @@ country_event = {
 			modifier = { add = 2 has_opinion = { target = MNT value > 25 } }
 			modifier = { add = 3 has_opinion = { target = MNT value > 50 } }
 			modifier = { factor = 0 has_opinion = { target = MNT value < 0 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -3901,6 +3961,7 @@ country_event = {
 				factor = 0.2
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 		declare_war_on = {
 			target = KOS
@@ -3929,6 +3990,7 @@ country_event = {
 				add = -15
 				strength_ratio = { tag = KOS ratio > 2 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 		add_stability = -0.09
 	}
@@ -4192,16 +4254,18 @@ country_event = { #Albania agrees
 			remove_ideas = KOS_Ruined_Nations
 			mark_formed_country_formable = yes
 		}
-		annex_country = { target = ALB transfer_troops = yes }
-		ALB = {
-			every_core_state = { add_core_of = KOS }
-			every_core_state = { transfer_state_to = KOS }
-		}
 		hidden_effect = {
 			add_to_variable = { treasury = ALB.treasury }
 			add_to_variable = { debt = ALB.debt }
 			add_to_variable = { int_investments = ALB.int_investments }
 		}
+		ALB = { clear_united_nations_member_state = yes }
+		annex_country = { target = ALB transfer_troops = yes }
+		ALB = {
+			every_core_state = { add_core_of = KOS }
+			every_core_state = { transfer_state_to = KOS }
+		}
+		un_admit_member = yes
 		ai_chance = {
 			base = 6
 		}
@@ -4242,14 +4306,6 @@ country_event = { #Albania rejects
 		ai_chance = {
 			base = 6
 			modifier = {
-				factor = 0
-				ALB = { OR = { has_faction_template = faction_template_nato has_faction_template = faction_template_csto } }
-			}
-			modifier = {
-				factor = 0
-				interest_rate_higher_than_8 = yes
-			}
-			modifier = {
 				add = -4
 				alliance_strength_ratio > 0.75
 			}
@@ -4259,6 +4315,14 @@ country_event = { #Albania rejects
 					tag = ALB
 					ratio > 1
 				}
+			}
+			modifier = {
+				factor = 0
+				ALB = { OR = { has_faction_template = faction_template_nato has_faction_template = faction_template_csto } }
+			}
+			modifier = {
+				factor = 0
+				interest_rate_higher_than_8 = yes
 			}
 		}
 	}
@@ -4504,10 +4568,7 @@ country_event = { #Kosovo requests recognition (China)
 	option = { #Ok
 		name = kosovo_rec.1.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.1.a executed"
-		KOS = {
-			set_country_flag = KOS_china_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4539,10 +4600,7 @@ country_event = { #Kosovo requests recognition (India)
 	option = { #Ok
 		name = kosovo_rec.4.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.4.a executed"
-		KOS = {
-			set_country_flag = KOS_india_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4574,10 +4632,7 @@ country_event = { #Kosovo requests recognition (Indonesia)
 	option = { #Ok
 		name = kosovo_rec.5.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.5.a executed"
-		KOS = {
-			set_country_flag = KOS_indonesia_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4609,10 +4664,7 @@ country_event = { #Kosovo requests recognition (Brazil)
 	option = { #Ok
 		name = kosovo_rec.7.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.7.a executed"
-		KOS = {
-			set_country_flag = KOS_brazil_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4644,10 +4696,7 @@ country_event = { #Kosovo requests recognition (Argentina)
 	option = { #Ok
 		name = kosovo_rec.8.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.8.a executed"
-		KOS = {
-			set_country_flag = KOS_argentina_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4679,10 +4728,7 @@ country_event = { #Kosovo requests recognition (Chile)
 	option = { #Ok
 		name = kosovo_rec.9.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.9.a executed"
-		KOS = {
-			set_country_flag = KOS_chile_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4714,10 +4760,7 @@ country_event = { #Kosovo requests recognition (Belarus)
 	option = { #Ok
 		name = kosovo_rec.10.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.10.a executed"
-		KOS = {
-			set_country_flag = KOS_belarus_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4749,10 +4792,7 @@ country_event = { #Kosovo requests recognition (Ukraine)
 	option = { #Ok
 		name = kosovo_rec.11.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.11.a executed"
-		KOS = {
-			set_country_flag = KOS_ukraine_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4785,10 +4825,7 @@ country_event = {
 	option = { #Ok
 		name = kosovo_rec.12.a
 		log = "[GetDateText]: [This.GetName]: kosovo_rec.12.a executed"
-		KOS = {
-			set_country_flag = KOS_russia_rec
-			country_event = kosovo_rec.3
-		}
+		KOS_grant_recognition_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
@@ -4884,9 +4921,10 @@ country_event = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
 				Militia_Bat = { x = 0 y = 2 }
-				Militia_Bat = { x = 0 y = 3 }
+
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
+				Militia_Bat = { x = 1 y = 2 }
 			}
 			priority = 2
 		}
