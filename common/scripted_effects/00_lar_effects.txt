@@ -198,3 +198,50 @@ gain_random_agency_upgrade = { #Gives a random agency upgrade or grants a free a
 		}
 	}
 }
+
+# Effect: instantiate_collaboration_government
+# Purpose: Turns the states this country occupies from an occupied country into a collaboration government puppet
+# Parameters:
+# - country_to_initiate: id of the occupied country
+instantiate_collaboration_government = {
+	custom_effect_tooltip = instantiate_collaboration_government_tt
+	hidden_effect = {
+		set_temp_variable = { overlord_to_match = THIS.id }
+		if = {
+			limit = { var:country_to_initiate = { exists = no } }
+			var:country_to_initiate = { set_variable = { collaboration_formed_by = PREV } }
+			release_autonomy = {
+				target = country_to_initiate
+				autonomy_state = autonomy_collaboration_government
+				freedom_level = 0.5
+				release_non_owned_controlled = yes
+			}
+			var:country_to_initiate = {
+				effect_puppet_match_ruling_party_to_overlord = yes
+				ingame_startup_nations_effect = yes
+			}
+		}
+		else = {
+			create_dynamic_country = {
+				original_tag = country_to_initiate
+				reserve_dynamic_country = yes
+				set_variable = { collaboration_formed_by = PREV }
+				set_temp_variable = { new_country = THIS }
+				PREV = {
+					every_controlled_state = {
+						limit = { occupied_country_tag = country_to_initiate }
+						var:new_country = { transfer_state = PREV }
+					}
+					puppet = new_country
+					set_autonomy = {
+						target = new_country
+						autonomy_state = autonomy_collaboration_government
+						freedom_level = 0.5
+					}
+				}
+				effect_puppet_match_ruling_party_to_overlord = yes
+				ingame_startup_nations_effect = yes
+			}
+		}
+	}
+}
