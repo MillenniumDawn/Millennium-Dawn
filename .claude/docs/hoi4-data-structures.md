@@ -133,9 +133,10 @@ plain variables: use them directly, with no temp copy.
 
 ### Math in weight blocks
 
-`ai_will_do`, `ai_chance`, and scorer `score` blocks run for every candidate on every AI
-pass. Do their math in one `check_expr`, not a `set_temp_variable` chain that a
-`check_variable` then reads. Compare a single existing variable with plain
+Weight blocks (`ai_will_do`, `ai_chance`, scorer `score`) do their math in one
+`check_expr`, not a `set_temp_variable` chain that a `check_variable` then reads. The
+cost is in the ones the AI rechecks for every candidate: decision, focus, and scripted
+GUI `ai_will_do`, occupation laws, and scorers. Event `ai_chance` runs once per event. Compare a single existing variable with plain
 `check_variable`. No MD or vanilla code passes an expression to `add` or `factor`, so
 express a computed weight as threshold steps:
 
