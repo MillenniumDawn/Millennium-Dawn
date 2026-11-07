@@ -638,14 +638,40 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 
-	# AI Support the other AI
+	# Recipients pay 10% on acceptance: skip countries that cannot, and favor ones that can
 	if = {
 		limit = {
 			OR = {
-				num_of_available_civilian_factories < 15
-				check_variable = { treasury_rate < 1.00 }
+				has_active_mission = bankruptcy_incoming_collapse
+				has_active_mission = cheap_loan_from_the_imf_mission
+				has_active_mission = debt_default_main_mission
+				has_idea = debt_default_credit_downgrade
+				check_variable = { interest_rate > 9.999 }
 			}
 		}
+		add_to_temp_variable = { AI_country_score = -500 }
+	}
+	else_if = { limit = { ai_has_high_deficit = yes }
+		add_to_temp_variable = { AI_country_score = -40 }
+	}
+	else_if = { limit = { check_variable = { interest_rate > 7.999 } }
+		add_to_temp_variable = { AI_country_score = -20 }
+	}
+	if = { limit = { has_idea = depression }
+		add_to_temp_variable = { AI_country_score = -30 }
+	}
+	else_if = { limit = { has_idea = recession }
+		add_to_temp_variable = { AI_country_score = -15 }
+	}
+	else_if = { limit = { OR = { has_idea = fast_growth has_idea = economic_boom } }
+		add_to_temp_variable = { AI_country_score = 10 }
+	}
+	else_if = { limit = { has_idea = stable_growth }
+		add_to_temp_variable = { AI_country_score = 5 }
+	}
+
+	# Room to grow: few free civilian factories to build with
+	if = { limit = { num_of_available_civilian_factories < 15 }
 		add_to_temp_variable = { AI_country_score = 30 }
 	}
 
@@ -664,10 +690,11 @@ AI_country_selection_calculation = {
 
 	set_temp_variable_to_random = {
 		var = randomizer_country_score
-		min = 25
-		max = 75
+		min = 0
+		max = 30
 		integer = yes
 	}
+	# Cost and duration modifiers are bad when positive, so they lower the score
 	set_temp_variable = {
 		AI_country_score = {
 			value = AI_country_score
@@ -675,13 +702,13 @@ AI_country_selection_calculation = {
 			multiply = {
 				value = 1
 				subtract = modifier@receiving_investment_cost_modifier
-				add = inv_cost_modifier
+				subtract = inv_cost_modifier
 				clamp = { min = 0.50 max = 1.50 }
 			}
 			multiply = {
 				value = 1
-				add = modifier@receiving_investment_duration_modifier
-				add = inv_duration_modifier
+				subtract = modifier@receiving_investment_duration_modifier
+				subtract = inv_duration_modifier
 				clamp = { min = 0.50 max = 1.50 }
 			}
 		}

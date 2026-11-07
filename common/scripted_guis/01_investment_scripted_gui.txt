@@ -166,6 +166,8 @@ scripted_gui = {
 				}
 				ROOT = { NOT = { has_active_mission = cheap_loan_from_the_imf_mission } }
 			}
+			# The right-click effect rechecks the offer conditions, including the extra 10%
+			invest_button_right_click_enabled = { always = yes }
 
 			select_civ_button_click_enabled = {
 				investments_building_cic_available = yes
@@ -302,6 +304,57 @@ scripted_gui = {
 						set_temp_variable = { tag_index = THIS.id }
 						change_influence_percentage = yes
 						set_country_flag = { flag = recently_canceled_a_project_in_this_state_@PREV value = 1 days = 3 }
+					}
+				}
+			}
+
+			# Fully funded offer: we also pay the recipient's 10% share, so a broke country can still accept
+			invest_button_right_click = {
+				hidden_effect = {
+					ROOT = {
+						update_gui = yes
+						refresh_investment_gui = yes
+					}
+				}
+				ROOT = {
+					calculate_investment_spendable_treasury = yes
+					set_temp_variable = { fully_funded_cost = project_monetary_cost^-1 }
+					multiply_temp_variable = { fully_funded_cost = 1.1 }
+				}
+				if = {
+					limit = {
+						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+						selected_investment_building_available = yes
+						check_variable = { var = investment_spendable_treasury value = fully_funded_cost compare = greater_than_or_equals }
+						CONTROLLER = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+						ROOT = {
+							check_variable = { active_projects < 15 }
+							check_variable = { project_building_type^-1 > 0 }
+							check_variable = { project_build_amount^-1 > 0 }
+							NOT = { has_war_with = PREV.CONTROLLER }
+							NOT = { has_country_flag = disabled_foreign_investment }
+							NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+							OR = {
+								NOT = {
+									has_game_rule = {
+										rule = rule_enable_investment_collapse_lock
+										option = yes
+									}
+								}
+								NOT = { has_active_mission = bankruptcy_incoming_collapse }
+							}
+						}
+					}
+					set_variable = { ROOT.investments_state_target = THIS.id }
+					CONTROLLER = {
+						set_variable = { ROOT.investments_nation_target = THIS.id }
+						ROOT = { set_country_flag = { flag = this_investment_offer_pending@PREV days = 90 value = 1 } }
+					}
+					ROOT = {
+						set_variable = { investment_offer_fully_funded = 1 }
+						update_gui = yes
+						refresh_investment_gui = yes
+						country_event = investments_event.3
 					}
 				}
 			}

@@ -41,7 +41,14 @@ country_event = {
 country_event = {
 	id = investments_event.10
 	title = investments_event.1.t
-	desc = investments_event.1.d
+	desc = {
+		text = investments_event.1.d_fully_funded
+		trigger = { check_variable = { pending_offer_fully_funded = 1 } }
+	}
+	desc = {
+		text = investments_event.1.d
+		trigger = { NOT = { check_variable = { pending_offer_fully_funded = 1 } } }
+	}
 	picture = GFX_united_states_dollar
 	is_triggered_only = yes
 
@@ -126,6 +133,17 @@ country_event = {
 				}
 				check_variable = { unfulfilled_energy_demand_var < -0.02 }
 			}
+			# Our 10% share; a fully funded offer costs us nothing
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+				NOT = { check_variable = { pending_offer_fully_funded = 1 } }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+				NOT = { check_variable = { pending_offer_fully_funded = 1 } }
+			}
 			modifier = {
 				factor = 0
 				OR = {
@@ -152,6 +170,7 @@ country_event = {
 		clear_variable = pending_offer_amount
 		clear_variable = pending_offer_type
 		clear_variable = pending_offer_state
+		clear_variable = pending_offer_fully_funded
 		FROM = {
 			country_event = investments_event.11
 		}
@@ -171,6 +190,10 @@ country_event = {
 						original_tag = BOS
 						has_stability < 0.40
 						date < 2000.6.01
+					}
+					AND = {
+						has_active_mission = bankruptcy_incoming_collapse
+						NOT = { check_variable = { pending_offer_fully_funded = 1 } }
 					}
 				}
 			}
@@ -348,6 +371,7 @@ country_event = {
 		NOT = { has_country_flag = investments_ai_pending }
 		NOT = { has_active_mission = bankruptcy_incoming_collapse }
 		NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+		ai_has_high_deficit = no
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
 		check_variable = { interest_rate < 8.000 }
@@ -652,7 +676,13 @@ country_event = {
 					set_country_flag = { flag = investments_ai_pending days = 7 value = 1 }
 					# Temporarily pulls this tag from investment targets for the sake of spreading investments around
 					var:AI_best_country = {
-						set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
+						# Players get fewer offer popups
+						if = { limit = { is_ai = no }
+							set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 60 }
+						}
+						else = {
+							set_country_flag = { flag = recently_accepted_an_investment value = 1 days = 21 }
+						}
 					}
 
 					log = "[GetDateText]: [This.GetName]: Investment Succeeded: project type [?pbt] (x [?pba]) in [?abt.GetName], Project Duration: [?pd], Nation [?ROOT.investments_nation_target.GetName], score = [?abs]"
@@ -665,6 +695,8 @@ country_event = {
 					log = "[GetDateText]: [This.GetName]: Investment Failed: project_construction_duration out of range or slot unavailable in [?abt.GetName]. Duration: [?pd], score: [?abs]. Skipping this investment pulse."
 				}
 				else = {
+					# Save up for four weeks instead of re-scoring the same unaffordable project every week
+					set_country_flag = { flag = investments_ai_pending days = 28 value = 1 }
 					log = "[GetDateText]: [This.GetName]: Investment Deferred: insufficient spendable treasury for project cost [?project_monetary_cost^-1]. Skipping this investment pulse."
 				}
 			}
