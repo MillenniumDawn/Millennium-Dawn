@@ -1,7 +1,5 @@
-
-
+# Holds one target and operation until it ends or stalls, so the network built for it is used
 update_operation_ai = {
-	# old target is no longer relevant
 	if = {
 		limit = {
 			NOT = { check_variable = { generic_operation_target = 0 } }
@@ -14,211 +12,477 @@ update_operation_ai = {
 			}
 		}
 		set_variable = { generic_operation_target = 0 }
+		operation_ai_clear_selection = yes
 	}
 
-
-	# pick an operation target
-	get_highest_scored_country = {
-		scorer = ai_generic_operation_target_scorer
-		var = generic_operation_target
-	}
-
-	# this variable will be our limiting factor for actually doing operations
-
-	# check if we have any operatives that are captured
-	# find the captor so they can be rescued
 	set_temp_variable = { captor = 0 }
-
+	set_temp_variable = { free_operatives = 0 }
 	every_operative = {
-		limit = { is_operative_captured = yes }
-		add_to_temp_variable = { min_needed_operative_for_operations = 1 }
 		if = {
-			limit = { check_variable = { captor = 0 } }
-			set_temp_variable = { captor = operative_captor }
+			limit = { is_operative_captured = yes }
+			if = {
+				limit = { check_variable = { captor = 0 } }
+				set_temp_variable = { captor = operative_captor }
+			}
+		}
+		else = {
+			add_to_temp_variable = { free_operatives = 1 }
 		}
 	}
-	set_variable = { rescue_operative_from = 0 }
+	set_variable = { rescue_operative_from = captor }
 	if = {
 		limit = { NOT = { check_variable = { captor = 0 } } }
-		set_variable = { rescue_operative_from = captor } # used in ai strat generic_operation_ai_rescue
-		add_to_temp_variable = { min_needed_operative_for_operations = 2 }
-	}
-
-
-	# if we have too few of operatives clear operative target
-	set_temp_variable = { t = min_needed_operative_for_operations }
-	subtract_from_temp_variable = { t = 2 }
-	if = {
-		limit = { num_of_operatives < t }
-		set_variable = { generic_operation_target = 0 }
+		subtract_from_temp_variable = { free_operatives = 1 }
 	}
 
 	if = {
-		# if found a target pick an operation
-		limit = {
-			NOT = { check_variable = { generic_operation_target = 0 } }
-			# if we are already preparing for current one no need to recalc
-			OR = {
-				check_variable = { generic_operation_type_to_run = 0 }
-				NOT = {
+		limit = { NOT = { check_variable = { generic_operation_type_to_run = 0 } } }
+		if = {
+			limit = {
+				OR = {
 					is_preparing_operation = {
+						target = var:generic_operation_target
+						operation = var:generic_operation_type_to_run
+					}
+					has_finished_collecting_for_operation = {
+						target = var:generic_operation_target
+						operation = var:generic_operation_type_to_run
+					}
+					is_running_operation = {
 						target = var:generic_operation_target
 						operation = var:generic_operation_type_to_run
 					}
 				}
 			}
+			if = {
+				limit = { NOT = { has_country_flag = generic_operation_started } }
+				set_country_flag = generic_operation_started
+				set_country_flag = { flag = generic_operation_start_window value = 1 days = 180 }
+				clr_country_flag = generic_operation_completed
+			}
+			# Stuck collecting equipment it cannot produce
+			else_if = {
+				limit = {
+					NOT = { has_country_flag = generic_operation_start_window }
+					NOT = {
+						is_running_operation = {
+							target = var:generic_operation_target
+							operation = var:generic_operation_type_to_run
+						}
+					}
+				}
+				operation_ai_time_out_target = yes
+			}
 		}
+		else_if = {
+			limit = { has_country_flag = generic_operation_started }
+			if = {
+				limit = { has_country_flag = generic_operation_completed }
+				if = {
+					limit = { is_debug = yes }
+					log = "[GetDateText]: [Root.GetName]: Operation AI finished [?generic_operation_type_to_run.GetTokenKey] against [?generic_operation_target.GetTag]"
+				}
+				operation_ai_clear_selection = yes
+			}
+			else = {
+				operation_ai_time_out_target = yes
+			}
+		}
+		else_if = {
+			limit = {
+				OR = {
+					check_variable = { generic_operation_type_to_run = token:operation_collaboration_government }
+					check_variable = { generic_operation_type_to_run = token:operation_targeted_sabotage_industry }
+					check_variable = { generic_operation_type_to_run = token:operation_targeted_sabotage_infrastructure }
+					check_variable = { generic_operation_type_to_run = token:operation_targeted_sabotage_resources }
+				}
+				var:generic_operation_target = { NOT = { has_war_with = PREV } }
+			}
+			operation_ai_clear_selection = yes
+		}
+		else_if = {
+			limit = { has_country_flag = generic_operation_network_ready }
+			if = {
+				limit = { NOT = { has_country_flag = generic_operation_launch_window } }
+				operation_ai_time_out_target = yes
+			}
+		}
+		else_if = {
+			limit = {
+				NOT = {
+					network_strength = {
+						target = var:generic_operation_target
+						value < generic_operation_network_needed
+					}
+				}
+			}
+			set_country_flag = generic_operation_network_ready
+			set_country_flag = { flag = generic_operation_launch_window value = 1 days = 90 }
+		}
+		else_if = {
+			limit = { NOT = { has_country_flag = generic_operation_network_phase } }
+			operation_ai_time_out_target = yes
+		}
+	}
 
+	if = {
+		limit = { check_variable = { generic_operation_type_to_run = 0 } }
+		get_highest_scored_country = {
+			scorer = ai_generic_operation_target_scorer
+			var = generic_operation_target
+		}
 		if = {
 			limit = {
-				num_of_operatives > min_needed_operative_for_operations
+				NOT = { check_variable = { generic_operation_target = 0 } }
+				check_variable = { free_operatives > 1 }
 			}
-
-			# these two arrays are filled with operation tokens and corresponding score
 			clear_temp_array = operation_types
 			clear_temp_array = operation_types_scores
+			clear_temp_array = operation_types_network
 
-			# civilian infiltration
-			set_temp_variable = { score = 100 }
-			add_to_temp_array = { operation_types = token:operation_infiltrate_civilian }
-			add_to_temp_array = { operation_types_scores = score }
-
-			# army infiltration
-			set_temp_variable = { score = 50 }
-			add_to_temp_variable = { score = num_armies }
-			clamp_temp_variable = { var = score max = 180 }
-			add_to_temp_array = { operation_types = token:operation_infiltrate_armed_forces_army }
-			add_to_temp_array = { operation_types_scores = score }
-
-			# air infiltration
-			set_temp_variable = { score = 50 }
-			add_to_temp_variable = { t = num_deployed_planes }
-			multiply_temp_variable = { t = 0.1 }
-			add_to_temp_variable = { score = t }
-			clamp_temp_variable = { var = score max = 180 }
-			add_to_temp_array = { operation_types = token:operation_infiltrate_armed_forces_airforce }
-			add_to_temp_array = { operation_types_scores = score }
-
-			# navy infiltration
-			var:generic_operation_target = {
-				if = {
-					limit = {
-						has_navy_size = { size > 0 }
-						PREV = {
-							has_navy_size = { size > 0 }
+			if = {
+				limit = {
+					NOT = {
+						has_operation_token = {
+							tag = var:generic_operation_target
+							token = token_civilian
 						}
 					}
-					set_temp_variable = { score = num_ships }
-
-					set_temp_variable = { t = num_ships_with_type@carrier }
-					multiply_temp_variable = { t = 20 }
-					add_to_temp_variable = { score = t }
-
-					set_temp_variable = { t = num_ships_with_type@capital }
-					multiply_temp_variable = { t = 10 }
-					add_to_temp_variable = { score = t }
-
-					clamp_temp_variable = { var = score max = 180 }
-
-					add_to_temp_array = { operation_types = token:operation_infiltrate_armed_forces_navy }
-					add_to_temp_array = { operation_types_scores = score }
 				}
-
-				# get token for boost resistance
-				# only do on fascist
-				if = {
-					limit = {
-						PREV = {
-							NOT = { tag = ENG } # ENG already does it against GER
-							NOT = { has_government = fascism }
-							NOT = {
-								has_operation_token = {
-									tag = var:generic_operation_target
-									token = token_resistance_contacts
-								}
-							}
+				set_temp_variable = { cand_type = token:operation_infiltrate_civilian }
+				set_temp_variable = { cand_score = 100 }
+				set_temp_variable = { cand_network = 35 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_operation_token = {
+							tag = var:generic_operation_target
+							token = token_army
 						}
-						has_government = fascism
-						check_variable = { occupied_countries^num > 0 }
-						has_added_tension_amount > 20
 					}
-
-					# ~number of occupied_states
-					set_temp_variable = { t = 1 }
-					add_to_temp_variable = { t = num_controlled_states }
-					subtract_from_temp_variable = { t = num_owned_states }
-					clamp_temp_variable = { var = t min = 1 }
-
-					set_temp_variable = { score = t }
-					multiply_temp_variable = { score = 15 }
-					add_to_temp_variable = { score = 50 }
-					clamp_temp_variable = { var = score max = 200 }
-
-					add_to_temp_array = { operation_types = token:operation_make_resistance_contacts }
-					add_to_temp_array = { operation_types_scores = score }
 				}
+				set_temp_variable = { cand_type = token:operation_infiltrate_armed_forces_army }
+				set_temp_variable = { cand_score = 50 }
+				var:generic_operation_target = { add_to_temp_variable = { cand_score = num_divisions } }
+				clamp_temp_variable = { var = cand_score max = 180 }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					NOT = {
+						has_operation_token = {
+							tag = var:generic_operation_target
+							token = token_airforce
+						}
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_infiltrate_armed_forces_airforce }
+				set_temp_variable = { cand_score = 50 }
+				var:generic_operation_target = {
+					set_temp_variable = { t = num_deployed_planes }
+					multiply_temp_variable = { t = 0.1 }
+					add_to_temp_variable = { cand_score = t }
+				}
+				clamp_temp_variable = { var = cand_score max = 180 }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					has_navy_size = { size > 0 }
+					var:generic_operation_target = { has_navy_size = { size > 0 } }
+					NOT = {
+						has_operation_token = {
+							tag = var:generic_operation_target
+							token = token_navy
+						}
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_infiltrate_armed_forces_navy }
+				set_temp_variable = { cand_score = 50 }
+				var:generic_operation_target = { add_to_temp_variable = { cand_score = num_ships } }
+				clamp_temp_variable = { var = cand_score max = 180 }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
 			}
 
-			# boost resistance
+			set_temp_variable = { our_research_slots = amount_research_slots }
+			set_temp_variable = { steal_tech_score = 150 }
+			var:generic_operation_target = {
+				if = {
+					limit = { check_variable = { amount_research_slots > our_research_slots } }
+					set_temp_variable = { steal_tech_score = 225 }
+				}
+			}
 			if = {
 				limit = {
 					has_operation_token = {
 						tag = var:generic_operation_target
-						token = token_resistance_contacts
+						token = token_civilian
 					}
 				}
-
-				add_to_temp_array = { operation_types = token:operation_boost_resistance }
-				add_to_temp_array = { operation_types_scores = 1000 }
-			}
-
-			for_each_loop = {
-				array = operation_types
-
-				# randomization by half
-				set_temp_variable = { t = random }
-				multiply_temp_variable = { t = 0.5 }
-				add_to_temp_variable = { t = 0.5 }
-				multiply_temp_variable = { operation_types_scores^i = t }
-
-				if = {
-					limit = {
-						num_finished_operations = {
-							target = var:generic_operation_target
-							operation = var:v
-							value > 0
-						}
-					}
-
-					# lower score if we have a fizznished operation
-					multiply_temp_variable = { operation_types_scores^i = 0.5 }
-
-					# cancel if more than 1 is executed
-					if = {
-						limit = {
-							num_finished_operations = {
-								target = var:generic_operation_target
-								operation = var:v
-								value > 1
-							}
-						}
-
-						set_temp_variable = { operation_types_scores^i = -1 }
-					}
-				}
-			}
-
-			# highest score will be selected
-			find_highest_in_array = {
-				array = operation_types_scores
+				set_temp_variable = { cand_type = token:operation_steal_tech_civilian }
+				set_temp_variable = { cand_score = steal_tech_score }
+				set_temp_variable = { cand_network = 35 }
+				set_temp_variable = { cand_operatives = 3 }
+				operation_ai_add_candidate = yes
 			}
 			if = {
-				limit = { check_variable = { v > 0 } }
-				set_variable = { generic_operation_type_to_run = operation_types^i } # used in ai strat generic_operation_ai
+				limit = {
+					has_operation_token = {
+						tag = var:generic_operation_target
+						token = token_army
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_steal_tech_army }
+				set_temp_variable = { cand_score = steal_tech_score }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 3 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					has_operation_token = {
+						tag = var:generic_operation_target
+						token = token_airforce
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_steal_tech_airforce }
+				set_temp_variable = { cand_score = steal_tech_score }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 3 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					has_operation_token = {
+						tag = var:generic_operation_target
+						token = token_navy
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_steal_tech_navy }
+				set_temp_variable = { cand_score = steal_tech_score }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 3 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					has_operation_token = {
+						tag = var:generic_operation_target
+						token = token_civilian
+					}
+					var:generic_operation_target = {
+						is_in_array = { ROOT.potential_and_current_enemies = THIS }
+						NOT = { has_country_flag = increased_corruption_recently }
+					}
+				}
+				set_temp_variable = { cand_type = token:increase_graft }
+				set_temp_variable = { cand_score = 120 }
+				set_temp_variable = { cand_network = 70 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+			if = {
+				limit = {
+					has_operation_token = {
+						tag = var:generic_operation_target
+						token = token_civilian
+					}
+					NOT = { has_war_with = var:generic_operation_target }
+					var:generic_operation_target = {
+						is_top3_influencer = yes
+						NOT = { has_country_flag = influence_government_lobbied }
+					}
+				}
+				set_temp_variable = { cand_type = token:lobbying_government }
+				set_temp_variable = { cand_score = 130 }
+				set_temp_variable = { cand_network = 60 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+
+			if = {
+				limit = {
+					var:generic_operation_target = {
+						any_controlled_state = { has_resistance = yes }
+						is_in_array = { ROOT.potential_and_current_enemies = THIS }
+					}
+				}
+				if = {
+					limit = {
+						NOT = {
+							has_operation_token = {
+								tag = var:generic_operation_target
+								token = token_resistance_contacts
+							}
+						}
+					}
+					set_temp_variable = { cand_type = token:operation_make_resistance_contacts }
+					var:generic_operation_target = {
+						set_temp_variable = { t = num_controlled_states }
+						subtract_from_temp_variable = { t = num_owned_states }
+					}
+					clamp_temp_variable = { var = t min = 1 }
+					set_temp_variable = { cand_score = t }
+					multiply_temp_variable = { cand_score = 15 }
+					add_to_temp_variable = { cand_score = 50 }
+					clamp_temp_variable = { var = cand_score max = 200 }
+					set_temp_variable = { cand_network = 40 }
+					set_temp_variable = { cand_operatives = 2 }
+					operation_ai_add_candidate = yes
+				}
+				else = {
+					set_temp_variable = { cand_type = token:operation_boost_resistance }
+					set_temp_variable = { cand_score = 300 }
+					set_temp_variable = { cand_network = 35 }
+					set_temp_variable = { cand_operatives = 2 }
+					operation_ai_add_candidate = yes
+					if = {
+						limit = { has_war_with = var:generic_operation_target }
+						set_temp_variable = { cand_type = token:operation_targeted_sabotage_industry }
+						set_temp_variable = { cand_score = 250 }
+						set_temp_variable = { cand_network = 35 }
+						set_temp_variable = { cand_operatives = 3 }
+						operation_ai_add_candidate = yes
+						set_temp_variable = { cand_type = token:operation_targeted_sabotage_infrastructure }
+						set_temp_variable = { cand_score = 200 }
+						set_temp_variable = { cand_network = 35 }
+						set_temp_variable = { cand_operatives = 3 }
+						operation_ai_add_candidate = yes
+						set_temp_variable = { cand_type = token:operation_targeted_sabotage_resources }
+						set_temp_variable = { cand_score = 200 }
+						set_temp_variable = { cand_network = 35 }
+						set_temp_variable = { cand_operatives = 3 }
+						operation_ai_add_candidate = yes
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_done_agency_upgrade = upgrade_form_department
+					var:generic_operation_target = {
+						is_in_array = { ROOT.potential_and_current_enemies = THIS }
+						ROOT = { NOT = { is_fully_decrypted = PREV } }
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_capture_cipher }
+				set_temp_variable = { cand_score = 120 }
+				if = {
+					limit = { has_war_with = var:generic_operation_target }
+					multiply_temp_variable = { cand_score = 2 }
+				}
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+
+			if = {
+				limit = {
+					has_rule = can_create_collaboration_government
+					has_war_with = var:generic_operation_target
+					var:generic_operation_target = {
+						ROOT = {
+							has_collaboration = {
+								target = PREV
+								value < 0.5
+							}
+						}
+					}
+				}
+				set_temp_variable = { cand_type = token:operation_collaboration_government }
+				set_temp_variable = { cand_score = 200 }
+				set_temp_variable = { cand_network = 50 }
+				set_temp_variable = { cand_operatives = 2 }
+				operation_ai_add_candidate = yes
+			}
+
+			if = {
+				limit = { check_variable = { operation_types^num > 0 } }
+				find_highest_in_array = { array = operation_types_scores }
+				if = {
+					limit = { check_variable = { v > 0 } }
+					set_variable = { generic_operation_type_to_run = operation_types^i }
+					set_variable = { generic_operation_network_needed = operation_types_network^i }
+					set_country_flag = { flag = generic_operation_network_phase value = 1 days = 365 }
+					if = {
+						limit = { is_debug = yes }
+						log = "[GetDateText]: [Root.GetName]: Operation AI picked [?generic_operation_type_to_run.GetTokenKey] against [?generic_operation_target.GetTag]"
+					}
+				}
 			}
 		}
-		else = {
-			set_variable = { generic_operation_type_to_run = 0 }
-		}
 	}
+}
+
+# Effect: operation_ai_add_candidate
+# Purpose: Adds one operation to the weekly candidate list when enough operatives are free
+# Output: operation_types, operation_types_scores, and operation_types_network temp arrays
+# Parameters:
+# - cand_type: operation token
+# - cand_score: score before the random spread
+# - cand_network: network strength the operation needs
+# - cand_operatives: operatives the operation needs
+# - free_operatives: operatives that are not captured
+# - generic_operation_target (variable): target country id
+operation_ai_add_candidate = {
+	if = {
+		limit = { NOT = { check_variable = { free_operatives < cand_operatives } } }
+		set_temp_variable = { t = random }
+		multiply_temp_variable = { t = 0.5 }
+		add_to_temp_variable = { t = 0.5 }
+		multiply_temp_variable = { cand_score = t }
+		if = {
+			limit = {
+				num_finished_operations = {
+					target = var:generic_operation_target
+					operation = var:cand_type
+					value > 2
+				}
+			}
+			multiply_temp_variable = { cand_score = 0.25 }
+		}
+		else_if = {
+			limit = {
+				num_finished_operations = {
+					target = var:generic_operation_target
+					operation = var:cand_type
+					value > 0
+				}
+			}
+			multiply_temp_variable = { cand_score = 0.5 }
+		}
+		add_to_temp_array = { operation_types = cand_type }
+		add_to_temp_array = { operation_types_scores = cand_score }
+		add_to_temp_array = { operation_types_network = cand_network }
+	}
+}
+
+operation_ai_clear_selection = {
+	set_variable = { generic_operation_type_to_run = 0 }
+	clr_country_flag = generic_operation_started
+	clr_country_flag = generic_operation_start_window
+	clr_country_flag = generic_operation_completed
+	clr_country_flag = generic_operation_network_ready
+	clr_country_flag = generic_operation_launch_window
+	clr_country_flag = generic_operation_network_phase
+}
+
+# A dated flag on the target expires on its own, so no cleanup pass is needed
+operation_ai_time_out_target = {
+	if = {
+		limit = { is_debug = yes }
+		log = "[GetDateText]: [Root.GetName]: Operation AI timed out [?generic_operation_type_to_run.GetTokenKey] against [?generic_operation_target.GetTag]"
+	}
+	var:generic_operation_target = { set_country_flag = { flag = generic_operation_timeout_@ROOT value = 1 days = 180 } }
+	set_variable = { generic_operation_target = 0 }
+	operation_ai_clear_selection = yes
 }
