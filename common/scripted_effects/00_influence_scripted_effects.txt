@@ -132,40 +132,52 @@ calculate_influence_percentage = {
 	multiply_variable = { democratic_drift_influence_var = 0.001 }
 }
 
-# Influence AI Section:
-# These are general macro effects used in the influence AI.
-# Spread Influence:
-# Corresponds with the general spread influence button.
-spread_influence = {
-	PREV = { add_political_power = -50 }
+# Influence actions, shared by the influence GUI and the AI pulse (influence.500).
+# THIS is the target and ROOT is the influencer. Availability lives in 00_influence_scripted_triggers.txt.
+influence_economic_aid_effect = {
+	ROOT = { save_event_target_as = influence_sender }
+	save_event_target_as = influence_recipient
+	if = {
+		limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+		# MP path: mp_economic_aid_transfer sets the cooldown once an amount is chosen (influence.2 has no cancel option)
+		ROOT = { country_event = influence.2 }
+	}
+	else = {
+		country_event = influence.0
+		ROOT = { set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 } }
+	}
+	# Read by the AI pulse so several donors do not stack aid popups on one country
+	if = { limit = { is_ai = no }
+		set_country_flag = { flag = recently_received_aid value = 1 days = 180 }
+	}
+	else = {
+		set_country_flag = { flag = recently_received_aid value = 1 days = 90 }
+	}
+	update_money_dirty_variable = yes
+}
 
-	set_temp_variable = { percent_change = global.percent_change_value }
-	set_temp_variable = { tag_index = PREV.id }
-	set_temp_variable = { influence_target = THIS.id }
-	change_influence_percentage = yes
+influence_military_aid_effect = {
+	ROOT = {
+		save_event_target_as = influence_sender
+		set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+	}
+	country_event = influence.50
+}
 
-	if = { limit = { economic_aid_available = yes }
-		PREV.PREV = {
-			country_event = influence.0
-		}
-	}
-	if = { limit = { manipulate_politics_action_available = yes }
-		manipulate_politics_action = yes
-	}
-	if = { limit = { coup_is_available = yes }
-		PREV.PREV = {
-			country_event = influence.44
-		}
-	}
-	if = { limit = { make_puppet_action_available = yes }
-		make_puppet_action = yes
-	}
+influence_target_other_effect = {
+	ROOT = { save_event_target_as = influence_sender }
+	country_event = influence.7
+}
+
+influence_coup_effect = {
+	ROOT = { save_event_target_as = influence_sender }
+	country_event = influence.44
 }
 
 # Effect: make_puppet_action
-# Purpose: This is the main effect that is used to puppet another nation
+# Purpose: make THIS a loose associated state of ROOT, close to independence
 make_puppet_action = {
-	#eventually remove explotation idea (shouldn't double up)
+	# Remove exploitation ideas so they do not double up with the subject relationship
 	for_loop_effect = {
 		end = influence_array^num
 		value = v
@@ -178,44 +190,53 @@ make_puppet_action = {
 		}
 	}
 
-	PREV = {
+	ROOT = {
 		set_autonomy = {
 			target = PREV
-			autonomy_state = autonomy_satellite_state
-			freedom_level = 0.5
+			autonomy_state = autonomy_associated_state
+			freedom_level = 0.95
+			end_wars = no
+			end_civil_wars = no
 		}
-		add_named_threat = { threat = 2 name = created_puppet_loc }
+		add_named_threat = { threat = 3 name = created_puppet_loc }
+		PREV = {
+			set_temp_variable = { overlord_to_match = ROOT.id }
+			effect_puppet_match_ruling_party_to_overlord = yes
+		}
 	}
 	every_neighbor_country = {
-		add_opinion_modifier = { target = PREV modifier = puppeted_neighbor }
+		limit = { NOT = { is_subject_of = ROOT } }
+		add_opinion_modifier = { target = ROOT modifier = puppeted_neighbor }
 	}
 }
 
 # Effect: economic_exploitation_action
-# Purpose: This is the main effect that is used to economically exploit another nation
+# Purpose: ROOT extracts tribute from THIS for 180 days at the cost of influence and opinion
 economic_exploitation_action = {
 	meta_effect = {
 		text = {
 			add_timed_idea = {
 				idea = tribute_idea_[ROOTTAG]
-				days = 90
+				days = 180
 			}
 		}
-		ROOTTAG = "[var:influence_array^0.GetTag]"
+		ROOTTAG = "[ROOT.GetTag]"
 	}
 
-	# Remove 10% Influence
-	set_temp_variable = { percent_change = -10 }
-	set_temp_variable = { tag_index = PREV.id }
+	ROOT = { add_political_power = -75 }
+
+	set_temp_variable = { percent_change = -5 }
+	set_temp_variable = { influence_target = THIS.id }
 	change_influence_percentage = yes
 
-	#Opinion Modifiers
-	add_opinion_modifier = { target = PREV modifier = exploited_us }
+	set_country_flag = { flag = country_exploited value = 1 days = 180 }
+	add_opinion_modifier = { target = ROOT modifier = exploited_us }
 	every_neighbor_country = {
-		add_opinion_modifier = { target = PREV modifier = exploited_neighbor }
+		limit = { NOT = { is_subject_of = ROOT } }
+		add_opinion_modifier = { target = ROOT modifier = exploited_neighbor }
 	}
 	every_allied_country = {
-		add_opinion_modifier = { target = PREV modifier = exploited_ally }
+		add_opinion_modifier = { target = ROOT modifier = exploited_ally }
 	}
 }
 
@@ -223,7 +244,7 @@ economic_exploitation_action = {
 # Purpose: This is the main effect that is used to manipulate the politics of another nation.
 # Runs in the target country's scope (THIS = target, ROOT = influencer).
 # No parameters. var_pop (the base popularity shift) is derived from political_manipulation_corruption_factor, or 0.08 when no corruption idea is active.
-# Sets manipulate_politics_pp_cost (temp var) to -100, or -50 for PER+IRQ/AFG and ENG+COL special cases.
+# Charges ROOT 100 PP, or 50 for the PER+IRQ/AFG and ENG+COL special cases, and sets the 28-day cooldown.
 manipulate_politics_action = {
 	# Corruption raises political-manipulation vulnerability; the modifier carries the per-level base.
 	set_temp_variable = { var_pop = modifier@political_manipulation_corruption_factor }
@@ -353,6 +374,11 @@ manipulate_politics_action = {
 	# Reduce Relations if different gov
 	if = { limit = { NOT = { has_government = ROOT } }
 		add_opinion_modifier = { target = ROOT modifier = supported_opposition }
+	}
+
+	ROOT = {
+		set_country_flag = { flag = recently_manipulated_politics@PREV days = 28 value = 1 }
+		add_political_power = manipulate_politics_pp_cost
 	}
 }
 
@@ -1244,15 +1270,18 @@ create_new_auto_influencer_request = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: Creation of Auto-Influencer Request. Influencing Nation: [PREV.GetName]"
 	}
+	# Own break name: the shared 'break' would stop the caller's next loop
 	for_each_loop = {
 		array = auto_influence_array
+		break = free_slot_found
 		if = {
 			limit = { check_variable = { v = 0 } }
 
 			set_variable = { new_auto_influencer = i }
-			set_temp_variable = { break = 1 }
+			set_temp_variable = { free_slot_found = 1 }
 		}
 	}
+	set_temp_variable = { free_slot_found = 0 }
 
 	if = { limit = { has_variable = new_auto_influencer }
 		set_variable = { auto_influence_array^new_auto_influencer = PREV.id }
@@ -1275,6 +1304,7 @@ remove_auto_influencer_request = {
 		array = auto_influence_array
 		index = i
 		value = v
+		break = found_match
 		if = {
 			limit = {
 				check_variable = { v = PREV.id }
@@ -1282,7 +1312,6 @@ remove_auto_influencer_request = {
 			}
 			set_temp_variable = { index = i }
 			set_temp_variable = { found_match = 1 }
-			set_temp_variable = { break = 1 }
 		}
 	}
 

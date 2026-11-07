@@ -550,79 +550,186 @@ influence_less_70 = {
 	}
 }
 
-# AI Scripted Triggers
-coup_is_available = {
-	check_variable = { influence_array^0 = PREV }
-	check_variable = { influence_array_val^0 > 49.999 }
-	NOT = { has_government = PREV }
-	NOT = { is_subject_of = PREV }
-	has_war = no
-	has_opinion = { target = PREV value < 49 }
-	NOT = { has_country_flag = trade_agreement@PREV }
+# Influence action triggers, shared by the influence GUI and the AI pulse.
+# THIS is the target and ROOT is the influencer.
+economic_aid_available = {
 	if = {
-		limit = { has_government = democratic }
-		has_game_rule = {
-			rule = rule_disable_western_outlook_features
-			option = no
+		limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+		custom_trigger_tooltip = {
+			tooltip = influence_aid_button_TT
+			ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
 		}
 	}
+	else = {
+		custom_trigger_tooltip = {
+			set_temp_variable = { gdp_total_temp = ROOT.gdp_total }
+			multiply_temp_variable = { gdp_total_temp = 2 }
+			check_variable = { gdp_total_temp > THIS.gdp_total }
+			tooltip = gdp_total_cannot_be_double_ours
+		}
+		custom_trigger_tooltip = {
+			tooltip = more_civs_than_other
+			check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
+		}
+		custom_trigger_tooltip = {
+			tooltip = influence_aid_button_TT
+			ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
+		}
+	}
+	ERI_is_not_transitional_government = yes
+}
+
+military_aid_available = {
+	is_influencer = yes
+	if = {
+		limit = {
+			ENG = { has_idea = ENG_the_macabre_alliance }
+			original_tag = COL
+		}
+		original_tag = COL
+	}
+	else = {
+		ai_is_threatened = yes
+	}
+	OR = {
+		ROOT = { has_idea = defense_industry }
+		ROOT = { num_of_military_factories > 10 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = influence_military_aid_TT
+		ROOT = { NOT = { has_country_flag = recently_sent_military_aid@PREV } }
+	}
+	# Target has not received aid from us in the past 90 days, or is losing a war badly
+	custom_trigger_tooltip = {
+		tooltip = influence_recently_received_aid_TT
+		OR = {
+			NOT = { has_country_flag = received_military_aid_recently@ROOT }
+			AND = {
+				has_war = yes
+				surrender_progress > 0.30
+			}
+		}
+	}
+	ERI_is_not_transitional_government = yes
 }
 
 target_other_influence_available = {
-	OR = {
-		check_variable = { influence_array^0 = PREV }
-		check_variable = { influence_array^1 = PREV }
-		check_variable = { influence_array^2 = PREV }
+	custom_trigger_tooltip = {
+		tooltip = is_top_three_influencer_tt
+		OR = {
+			check_variable = { influence_array^0 = ROOT }
+			check_variable = { influence_array^1 = ROOT }
+			check_variable = { influence_array^2 = ROOT }
+		}
 	}
-	has_idea = economic_boom
+	ROOT = { has_political_power > 99 }
+	ERI_is_not_transitional_government = yes
 }
 
 manipulate_politics_action_available = {
-	OR = {
-		AND = {
-			check_variable = { influence_array^0 = PREV }
-			check_variable = { influence_array_val^0 > 44.999 }
+	if = {
+		limit = {
+			ROOT = {
+				original_tag = PER
+				has_completed_focus = PER_puppeteer_iraqi_politcs
+				OR = {
+					emerging_hardline_shiite_are_in_power = yes
+					emerging_moderate_shiite_are_in_power = yes
+				}
+			}
+			original_tag = IRQ
 		}
-		AND = {
-			check_variable = { influence_array^1 = PREV }
-			check_variable = { influence_array_val^1 > 44.999 }
-		}
+		is_top3_twenty_influencer = yes
+		ROOT = { has_political_power > 49 }
 	}
-	OR = {
-		AND = {
-			PREV = { has_government = democratic }
-			NOT = { check_variable = { party_popularity@democratic > 0.35 } }
+	else_if = {
+		limit = {
+			ROOT = { original_tag = PER }
+			original_tag = AFG
 		}
-		AND = {
-			PREV = { has_government = communism }
-			NOT = { check_variable = { party_popularity@communism > 0.35 } }
-		}
-		AND = {
-			PREV = { has_government = fascism }
-			NOT = { check_variable = { party_popularity@fascism > 0.35 } }
-		}
-		AND = {
-			PREV = { has_government = neutrality }
-			NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
-		}
-		AND = {
-			PREV = { has_government = nationalist }
-			NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
-		}
+		is_top3_twenty_influencer = yes
+		ROOT = { has_political_power > 1 }
 	}
-	has_opinion = { target = PREV value < 49 }
-	has_idea = economic_boom
+	else_if = {
+		limit = {
+			ROOT = {
+				original_tag = ENG
+				has_idea = ENG_the_macabre_alliance
+			}
+			original_tag = COL
+		}
+		ROOT = { has_political_power > 74 }
+	}
+	else = {
+		is_top3_thirty_influencer = yes
+		ROOT = { has_political_power > 99 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = influence_manipulate_politics_TT
+		ROOT = { NOT = { has_country_flag = recently_manipulated_politics@PREV } }
+	}
+	ERI_is_not_transitional_government = yes
+}
+
+coup_is_available = {
+	NOT = { has_government = ROOT }
+	NOT = { is_subject_of = ROOT }
+	ROOT = { has_political_power > 200 }
+	is_top_fifty_influencer = yes
+	ERI_is_not_transitional_government = yes
+	if = {
+		limit = {
+			has_game_rule = {
+				rule = rule_disable_western_outlook_features
+				option = yes
+			}
+		}
+		ROOT = { NOT = { has_government = democratic } }
+	}
+}
+
+economic_exploitation_available = {
+	custom_trigger_tooltip = {
+		tooltip = is_top_influencer_fifty_percent
+		check_variable = { influence_array^0 = ROOT }
+		check_variable = { influence_array_val^0 > 49.999 }
+	}
+	NOT = { is_subject_of = ROOT }
+	ROOT = { has_political_power > 75 }
+	NOT = { has_country_flag = country_exploited }
+	ERI_is_not_transitional_government = yes
 }
 
 make_puppet_action_available = {
-	check_variable = { influence_array^0 = PREV }
-	check_variable = { influence_array_val^0 > 79.999 }
-	has_government = PREV
+	custom_trigger_tooltip = {
+		tooltip = is_top_influencer_eighty_percent
+		check_variable = { influence_array^0 = ROOT }
+		check_variable = { influence_array_val^0 > 79.999 }
+	}
+	has_government = ROOT
+	NOT = { is_subject_of = ROOT }
 	is_subject = no
 	has_war = no
-	has_game_rule = {
-		rule = rule_disable_ai_influence_puppeting
-		option = no
+	ROOT = { is_subject = no }
+	if = {
+		limit = {
+			ROOT = { original_tag = IRQ }
+			original_tag = KUR
+		}
+		custom_trigger_tooltip = {
+			tooltip = IRQ_federalized_TT
+			ROOT = { NOT = { has_country_flag = IRQ_federalized } }
+		}
+	}
+	if = {
+		limit = {
+			ROOT = { original_tag = CHI }
+			original_tag = NKO
+		}
+		custom_trigger_tooltip = {
+			tooltip = CHI_NKO_no_influence_puppet_TT
+			always = no
+		}
 	}
 	if = {
 		limit = {
@@ -631,39 +738,25 @@ make_puppet_action_available = {
 				option = yes
 			}
 		}
-		PREV = { NOT = { has_government = democratic } }
-	}
-	if = {
-		limit = {
-			original_tag = NKO
-			PREV = { original_tag = CHI }
-		}
-		always = no
+		ROOT = { NOT = { has_government = democratic } }
 	}
 }
 
-economic_exploitation_available = {
-	check_variable = { influence_array^0 = PREV }
-	check_variable = { influence_array_val^0 > 59.999 }
-	NOT = { is_subject_of = PREV }
-	NOT = { has_country_flag = country_exploited }
-	has_opinion = { target = PREV value < 49 }
-	NOT = { has_country_flag = trade_agreement@PREV }
-	has_idea = economic_boom
-}
-
-economic_aid_available = {
+# AI influence triggers (common/scripted_effects/99_AI_influence_scripted_effects.txt and the influence scorer)
+ai_influence_historical_mode = {
 	OR = {
-		check_variable = { influence_array^0 = PREV }
-		check_variable = { influence_array^1 = PREV }
-		check_variable = { influence_array^2 = PREV }
-		check_variable = { influence_array^3 = PREV }
+		is_historical_focus_on = yes
+		has_game_rule = { rule = rule_ai_influence_behavior option = ai_influence_historical }
 	}
-	check_variable = { ROOT.gdp_total > gdp_total }
-	NOT = { is_subject_of = PREV }
-	NOT = { has_country_flag = recently_refused_aid_from@PREV }
-	check_variable = { interest_rate > 5 }
-	has_idea = economic_boom
+}
+
+# THIS is the target and ROOT the AI. Puppets, coups, and exploitation stay inside historical targets and neighbors unless the Free rule is on.
+ai_influence_in_action_reach = {
+	OR = {
+		has_game_rule = { rule = rule_ai_influence_behavior option = ai_influence_free }
+		is_in_array = { ROOT.influence_targets = this }
+		is_in_array = { ROOT.neighbors = this }
+	}
 }
 
 has_trade_agreement_with_PREV_nation = {
