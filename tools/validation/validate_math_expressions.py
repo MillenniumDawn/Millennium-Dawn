@@ -17,19 +17,24 @@ of the file. Two documented failure classes, nothing broader:
 `--clamp-bounds` (opt-in, #5321) also reports a `clamp`, `clamp_variable`, or
 `clamp_temp_variable` whose literal `min` is above its literal `max`.
 
+Weight blocks also warn when they write temp variables, directly or through
+scripted triggers (#6452). Scorer `score` blocks are checked only in common/scorers.
+
 Statement names follow resources/documentation/script_math_functions.md.
 """
 
+import hashlib
 import os
 import re
 import sys
-from typing import Iterator, List, Tuple
+from functools import partial
+from typing import Dict, FrozenSet, Iterator, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from equipment_module_slots import blank_comments
-from shared_utils import blank_quoted_strings, extract_block_from_text
+from guard_scan import read_file, sanitize
+from shared_utils import extract_block_from_text
 from validator_common import BaseValidator, run_validator_main
 
 # Every effect whose value can be a math expression (not modulo_variable /
@@ -95,6 +100,16 @@ CLAMP_RE = re.compile(
 )
 CLAMP_BOUNDS_CATEGORY = "clamp-min-above-max"
 _NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
+AI_WEIGHT_TEMP_CATEGORY = "ai-weight-temp-variable"
+_WEIGHT_BLOCK_RE = re.compile(r"\b(ai_will_do|ai_chance|score)\s*=\s*\{")
+_TEMP_WRITE_RE = re.compile(
+    r"\b(?:set_temp_variable|add_to_temp_variable|subtract_from_temp_variable|"
+    r"multiply_temp_variable|divide_temp_variable|modulo_temp_variable|"
+    r"clamp_temp_variable|round_temp_variable|randomize_temp_variable|"
+    r"set_temp_variable_to_random|career_profile_set_temp_variable|"
+    r"career_profile_set_temp_playthrough_variable)\s*="
+)
+_SCRIPTED_CALL_RE = re.compile(r"(?<![\w.:])([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
 
 Finding = Tuple[int, str, str]
 
@@ -216,28 +231,80 @@ def _scan_clamp_bounds(text: str, findings: List[Finding]) -> None:
             )
 
 
-def scan_text(raw: str) -> List[Finding]:
+def _temp_writing_triggers(files: List[str]) -> FrozenSet[str]:
+    """Find scripted triggers that write temps, including through other triggers."""
+    definitions: Dict[str, str] = {}
+    for path in files:
+        text = sanitize(read_file(path))
+        for name, body, is_block, _offset in _iter_statements(text):
+            if is_block:
+                definitions[name] = body
+
+    writers: Set[str] = set()
+    callers: Dict[str, Set[str]] = {}
+    for name, body in definitions.items():
+        if _TEMP_WRITE_RE.search(body):
+            writers.add(name)
+        for call in _SCRIPTED_CALL_RE.finditer(body):
+            callers.setdefault(call[1], set()).add(name)
+
+    pending = list(writers)
+    while pending:
+        for caller in callers.get(pending.pop(), set()):
+            if caller not in writers:
+                writers.add(caller)
+                pending.append(caller)
+    return frozenset(writers)
+
+
+def scan_text(
+    raw: str, temp_triggers: FrozenSet[str] = frozenset(), *, scorer: bool = False
+) -> List[Finding]:
     """Scan script text; returns (line, category, message)."""
-    text = blank_quoted_strings(blank_comments(raw))
+    text = sanitize(raw)
     findings: List[Finding] = []
     for line, _name, block in _iter_blocks(text, VAR_EFFECT_RE):
         _scan_effect_block(block, line, findings)
     _scan_clamp_bounds(text, findings)
+    for line, name, block in _iter_blocks(text, _WEIGHT_BLOCK_RE):
+        if name == "score" and not scorer:
+            continue
+        if _TEMP_WRITE_RE.search(block) or any(
+            call[1] in temp_triggers for call in _SCRIPTED_CALL_RE.finditer(block)
+        ):
+            findings.append(
+                (
+                    line,
+                    AI_WEIGHT_TEMP_CATEGORY,
+                    f"{name} writes temp variables directly or through a scripted "
+                    "trigger; use check_expr for comparisons or threshold "
+                    "modifiers for computed weights",
+                )
+            )
     return findings
 
 
-def _scan_file(args: Tuple[str, str]) -> List[Finding]:
+def _scan_file(
+    args: Tuple[str, str],
+    temp_triggers: FrozenSet[str],
+    namespace: str,
+) -> List[Finding]:
     """Pool worker: scan one file for math-expression traps, content-cached."""
     filepath, mod_path = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as handle:
-            raw = handle.read()
-    except OSError:
+    raw = read_file(filepath)
+    if "variable" not in raw and not _WEIGHT_BLOCK_RE.search(raw):
         return []
-    if "variable" not in raw:
-        return []
+    scorer = (
+        os.path.relpath(filepath, mod_path)
+        .replace(os.sep, "/")
+        .startswith("common/scorers/")
+    )
     return disk_cache.per_file_cached_by_content(
-        mod_path, "math_expr.scan", filepath, raw, lambda: scan_text(raw)
+        mod_path,
+        namespace,
+        filepath,
+        raw,
+        lambda: scan_text(raw, temp_triggers, scorer=scorer),
     )
 
 
@@ -256,23 +323,39 @@ class Validator(BaseValidator):
             for path in files
             if not any(part in path.replace("\\", "/") for part in _EXCLUDED_PARTS)
         ]
-        self._log_section("Scanning variable effects for math-expression traps")
+        self._log_section("Scanning math expressions and AI weight temp writes")
+        trigger_files = self._collect_files(
+            ["common/scripted_triggers/**/*.txt"], ignore_staged=True
+        )
+        temp_triggers = _temp_writing_triggers(trigger_files)
+        digest = hashlib.sha256("\n".join(sorted(temp_triggers)).encode()).hexdigest()
+        scan = partial(
+            _scan_file,
+            temp_triggers=temp_triggers,
+            namespace="math_expr.scan." + digest,
+        )
         self.log(f"  Scanning {len(files)} files")
         total = 0
         for path, file_findings in zip(
             files,
-            self._pool_map(_scan_file, [(f, self.mod_path) for f in files]),
+            self._pool_map(scan, [(f, self.mod_path) for f in files]),
         ):
             rel = os.path.relpath(path, self.mod_path)
             for line, category, message in file_findings:
                 if category == CLAMP_BOUNDS_CATEGORY and not self.clamp_bounds:
                     continue
-                self.add_error(category, message, rel, line)
+                if category == AI_WEIGHT_TEMP_CATEGORY:
+                    self.add_warning(category, message, rel, line)
+                else:
+                    self.add_error(category, message, rel, line)
                 total += 1
         if not total:
-            self.log("No math-expression traps found")
+            self.log("No math-expression traps or AI weight temp writes found")
         else:
-            self.log(f"  {total} math-expression trap(s) found", "error")
+            self.log(
+                f"  {total} math-expression issue(s) found",
+                "error" if self.errors_found else "warning",
+            )
 
 
 def _add_extra_args(parser):
