@@ -39,16 +39,17 @@ my_array^0                # array element, zero-indexed
 my_array^i                # element at a dynamic index
 var:my_var = { ... }      # scope into the country or state stored in my_var
 var:my_array^i = { ... }  # scope into the country stored at index i
+my_var@PREV               # targeted variable: one value per target country
 ```
 
 - Temp variables (`set_temp_variable`) exist only for the current scripted block and
   belong to no scope. Read, write, and check them by bare name from any scope. A `ROOT.`
   or `PREV.` prefix breaks the read, and a `ROOT = { check_variable = ... }` wrapper
   adds nothing.
-- Do not give a scripted variable a target in its name (`set_variable = { x@PREV = 1 }`).
-  A variable holds a country as its value (`x = PREV.id`). Keep state for a pair of
-  countries in a targeted flag (`flag@PREV`) or a partner array on the owner. Engine
-  dynamic variables such as `opinion@TAG` and `modifier@X` are separate and fine to read.
+- A targeted variable keeps one value per target: `set_variable = { my_var@PREV = 1 }`,
+  `check_variable = { my_var@PREV > 0 }`, `clear_variable = my_var@PREV`. Vanilla La
+  Resistance uses this form. When code has to loop over the related countries, use a
+  partner array on the owner instead.
 - Arrays cap at 1000 elements. `add_to_array` past index 999 silently does nothing.
 - In a loop, `value = v` holds the scalar element, not an array reference. Scope with
   `var:v = { ... }` or `var:ARRAY^i = { ... }`. Never `var:v^i`.
