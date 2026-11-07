@@ -239,7 +239,7 @@ project_monetary_cost_calculation = {
 			if = {
 				limit = {
 					PREV.PREV = {
-						has_country_flag = mutual_investment_treaty_@PREV
+						is_in_array = { investment_treaty_partners = PREV }
 					}
 				}
 				add_to_temp_variable = { investments_cost_modifier = -0.05 }
@@ -323,6 +323,26 @@ get_available_project = {
 		}
 	}
 	set_temp_variable = { free_project_found = 0 }
+}
+
+# Effect: get_project_slot_in_state
+# Purpose: find the slot of THIS investor's project in a state. An investor runs at most one project per state.
+# Parameters:
+# - project_state: the state's id, as start_project_two stores it in project_array
+# Sets temp project_slot to the slot index, or -1 when there is no project there.
+get_project_slot_in_state = {
+	set_temp_variable = { project_slot = -1 }
+	set_temp_variable = { project_slot_found = 0 }
+	for_each_loop = {
+		array = project_array
+		value = slot_state
+		index = slot_index
+		break = project_slot_found
+		if = { limit = { check_variable = { slot_state = project_state } }
+			set_temp_variable = { project_slot = slot_index }
+			set_temp_variable = { project_slot_found = 1 }
+		}
+	}
 }
 
 # Add completed building to state (called by complete_project).
@@ -442,7 +462,7 @@ precompute_state_construction_data = {
 		if = {
 			limit = {
 				PREV.PREV = {
-					has_country_flag = mutual_investment_treaty_@PREV
+					is_in_array = { investment_treaty_partners = PREV }
 				}
 			}
 			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
@@ -535,7 +555,6 @@ start_project_two = {
 			add_to_array = { projects_in_state = PREV.id } # Should be FROM
 			# Create a new array for this
 			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
-			set_variable = { project_target_state_@PREV = PREV.project }
 			# Sets the starting nation
 			set_variable = { PREV.project_array^PREV.project = THIS.id }
 			CONTROLLER = {
@@ -621,7 +640,6 @@ end_project = {
 		if = { limit = { check_variable = { project_array^project < 0 } }
 			random_state = {
 				limit = { state = PREV.project_array^PREV.project }
-				clear_variable = project_target_state_@PREV
 				for_each_loop = {
 					value = v
 					index = i

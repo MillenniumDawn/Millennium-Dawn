@@ -14,8 +14,10 @@ relevant to the effects and triggers you are changing.
 - `threat` uses a 0.0 to 1.0 scale. Write `threat > 0.40`, not `threat > 40`.
 - `is_in_faction` accepts `yes` or `no`. Membership with a country uses
   `is_in_faction_with = TAG`. `add_to_faction = TAG` takes a country, not a faction name.
-- MD trade agreements use `has_country_flag = trade_agreement@TAG`.
-  `has_trade_agreement_with` is not a valid trigger.
+- MD trade agreements and mutual investment treaties are partner arrays on both
+  countries: `is_in_array = { trade_agreement_partners = TAG }` and
+  `investment_treaty_partners`. Add to both sides only when the partner is not there yet,
+  and remove from both. `has_trade_agreement_with` is not a valid trigger.
 - There is no `has_idea = democratic_*`. Check the ruling subideology through the
   matching scripted trigger: `western_conservatism_are_in_power`,
   `western_liberals_are_in_power`, `western_social_democrats_are_in_power`, or

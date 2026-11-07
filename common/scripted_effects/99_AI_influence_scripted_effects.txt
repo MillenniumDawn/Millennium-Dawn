@@ -8,16 +8,21 @@ ai_influence_pulse = {
 		resize_array = { array = auto_influence_months value = 0 size = 10 }
 	}
 
-	# Slot budget: the auto-influence cap, trimmed by difficulty, PP income, the economy and our own independence
+	# Slot budget: the auto-influence cap, trimmed by difficulty, PP income, the economy and our own independence.
+	# Difficulty also sets the lowest target score worth a slot.
 	set_temp_variable = { ai_slot_budget = auto_influence_cap }
+	set_temp_variable = { ai_min_score = 40 }
 	if = { limit = { difficulty < 1 }
 		clamp_temp_variable = { var = ai_slot_budget max = 1 }
+		set_temp_variable = { ai_min_score = 120 }
 	}
 	else_if = { limit = { difficulty < 2 }
 		clamp_temp_variable = { var = ai_slot_budget max = 2 }
+		set_temp_variable = { ai_min_score = 80 }
 	}
 	else_if = { limit = { difficulty < 3 }
 		clamp_temp_variable = { var = ai_slot_budget max = 3 }
+		set_temp_variable = { ai_min_score = 60 }
 	}
 	# Each slot costs 1.5 PP a day and political_power_daily is already net of it, so size the budget on gross income.
 	# Every step keeps at least 0.5 PP a day spare.
@@ -56,17 +61,6 @@ ai_influence_pulse = {
 			}
 		}
 		clamp_temp_variable = { var = ai_slot_budget max = 1 }
-	}
-
-	set_temp_variable = { ai_min_score = 40 }
-	if = { limit = { difficulty < 1 }
-		set_temp_variable = { ai_min_score = 120 }
-	}
-	else_if = { limit = { difficulty < 2 }
-		set_temp_variable = { ai_min_score = 80 }
-	}
-	else_if = { limit = { difficulty < 3 }
-		set_temp_variable = { ai_min_score = 60 }
 	}
 
 	# Age the slots; rank targets only when a slot is free or a year is up
@@ -227,7 +221,7 @@ ai_influence_take_action = {
 			NOT = { is_ally_with = ROOT }
 			has_war = no
 			has_opinion = { target = ROOT value < 49 }
-			NOT = { has_country_flag = trade_agreement@ROOT }
+			NOT = { is_in_array = { trade_agreement_partners = ROOT } }
 			coup_is_available = yes
 		}
 		influence_coup_effect = yes

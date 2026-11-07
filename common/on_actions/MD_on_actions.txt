@@ -376,28 +376,32 @@ on_actions = {
 				}
 			}
 
-			# FROM still exists here and can be released later, so clear both sides of its trade agreements
-			every_country = {
-				limit = { has_country_flag = trade_agreement@FROM }
-				clr_country_flag = trade_agreement@FROM
-				add_to_variable = { signed_trade_agreements = -1 }
-				if = {
-					limit = { original_tag = SIN }
-					SIN_calculate_singaporean_trade_agreements = yes
-				}
-				FROM = {
-					clr_country_flag = trade_agreement@PREV
+			# FROM still exists here and can be released later, so clear both sides of its trade agreements and investment treaties
+			for_each_scope_loop = {
+				array = FROM.trade_agreement_partners
+				if = { limit = { exists = yes }
+					remove_from_array = { trade_agreement_partners = FROM }
 					add_to_variable = { signed_trade_agreements = -1 }
 					if = {
 						limit = { original_tag = SIN }
-						remove_from_array = { SIN_singaporean_trade_agreement = PREV.id }
 						SIN_calculate_singaporean_trade_agreements = yes
 					}
 				}
 			}
-			if = {
-				limit = { is_in_array = { SIN.SIN_singaporean_trade_agreement = FROM.id } }
-				remove_from_array = { SIN.SIN_singaporean_trade_agreement = FROM.id }
+			for_each_scope_loop = {
+				array = FROM.investment_treaty_partners
+				if = { limit = { exists = yes }
+					remove_from_array = { investment_treaty_partners = FROM }
+				}
+			}
+			FROM = {
+				subtract_from_variable = { signed_trade_agreements = trade_agreement_partners^num }
+				clear_array = trade_agreement_partners
+				clear_array = investment_treaty_partners
+				if = {
+					limit = { original_tag = SIN }
+					SIN_calculate_singaporean_trade_agreements = yes
+				}
 			}
 
 			EDU_learn_to_annex_your_neighbours = yes

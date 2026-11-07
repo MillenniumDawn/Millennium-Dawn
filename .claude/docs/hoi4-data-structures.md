@@ -45,6 +45,10 @@ var:my_array^i = { ... }  # scope into the country stored at index i
   belong to no scope. Read, write, and check them by bare name from any scope. A `ROOT.`
   or `PREV.` prefix breaks the read, and a `ROOT = { check_variable = ... }` wrapper
   adds nothing.
+- Do not give a scripted variable a target in its name (`set_variable = { x@PREV = 1 }`).
+  A variable holds a country as its value (`x = PREV.id`). Keep state for a pair of
+  countries in a targeted flag (`flag@PREV`) or a partner array on the owner. Engine
+  dynamic variables such as `opinion@TAG` and `modifier@X` are separate and fine to read.
 - Arrays cap at 1000 elements. `add_to_array` past index 999 silently does nothing.
 - In a loop, `value = v` holds the scalar element, not an array reference. Scope with
   `var:v = { ... }` or `var:ARRAY^i = { ... }`. Never `var:v^i`.
