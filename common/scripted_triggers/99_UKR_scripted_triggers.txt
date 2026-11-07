@@ -632,6 +632,30 @@ UKR_storage_has_old_artillery = {
 UKR_storage_has_old_small_arms = {
 	check_variable = { UKR_storage_total_8 > 0 }
 }
+
+UKR_storage_can_sell_brdm1 = {
+	UKR_storage_has_old_vehicles = yes
+	has_country_flag = UKR_brdm1_kept_flag
+}
+
+UKR_storage_can_sell_9p148 = {
+	check_variable = { ukraine_has_9p148_stockpile > 8 }
+	has_country_flag = UKR_9p148_kept_flag
+}
+
+# Trigger: UKR_storage_upkeep_can_pay
+# Purpose: Checks the whole-million treasury payment due for a depot service order.
+# Parameters:
+# - ukr_storage_upkeep_bill: The current service price in thousands of dollars.
+UKR_storage_upkeep_can_pay = {
+	check_variable = { ukr_storage_upkeep_bill > 0 }
+	set_temp_variable = { ukr_storage_upkeep_balance = { value = UKR_storage_upkeep_due add = ukr_storage_upkeep_bill } }
+	set_temp_variable = { ukr_storage_upkeep_remainder = ukr_storage_upkeep_balance }
+	modulo_temp_variable = { var = ukr_storage_upkeep_remainder value = 1000 }
+	set_temp_variable = { ukr_storage_upkeep_charge = { value = ukr_storage_upkeep_balance subtract = ukr_storage_upkeep_remainder divide = 1000000 } }
+	check_variable = { var = treasury value = ukr_storage_upkeep_charge compare = greater_than_or_equals }
+}
+
 # Old gear orders, checked in the buyer's answer event (FROM = Ukraine). Earlier buyers need 10 less opinion.
 UKR_storage_buyer_old_gear = {
 	OR = {
