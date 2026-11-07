@@ -134,17 +134,21 @@ calculate_influence_percentage = {
 
 # Influence actions, shared by the influence GUI and the AI pulse (influence.500).
 # THIS is the target and ROOT is the influencer. Availability lives in 00_influence_scripted_triggers.txt.
+# Target events fire from inside ROOT so their FROM is the influencer, and they answer through FROM.
 influence_economic_aid_effect = {
-	ROOT = { save_event_target_as = influence_sender }
-	save_event_target_as = influence_recipient
 	if = {
 		limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
-		# MP path: mp_economic_aid_transfer sets the cooldown once an amount is chosen (influence.2 has no cancel option)
+		# MP path: influence.2 fires on the sender itself, so mp_economic_aid_transfer still needs both event targets.
+		# It sets the cooldown once an amount is chosen (influence.2 has no cancel option).
+		ROOT = { save_event_target_as = influence_sender }
+		save_event_target_as = influence_recipient
 		ROOT = { country_event = influence.2 }
 	}
 	else = {
-		country_event = influence.0
-		ROOT = { set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 } }
+		ROOT = {
+			PREV = { country_event = influence.0 }
+			set_country_flag = { flag = recently_sent_aid@PREV value = 1 days = 30 }
+		}
 	}
 	# Read by the AI pulse so several donors do not stack aid popups on one country
 	if = { limit = { is_ai = no }
@@ -158,20 +162,21 @@ influence_economic_aid_effect = {
 
 influence_military_aid_effect = {
 	ROOT = {
-		save_event_target_as = influence_sender
 		set_country_flag = { flag = recently_sent_military_aid@PREV value = 1 days = 60 }
+		PREV = { country_event = influence.50 }
 	}
-	country_event = influence.50
 }
 
 influence_target_other_effect = {
-	ROOT = { save_event_target_as = influence_sender }
-	country_event = influence.7
+	ROOT = {
+		PREV = { country_event = influence.7 }
+	}
 }
 
 influence_coup_effect = {
-	ROOT = { save_event_target_as = influence_sender }
-	country_event = influence.44
+	ROOT = {
+		PREV = { country_event = influence.44 }
+	}
 }
 
 # Effect: make_puppet_action

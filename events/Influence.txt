@@ -22,8 +22,7 @@ country_event = {
 		multiply_variable = { fifteen_gift_sum = 0.15 }
 		clamp_variable = { var = fifteen_gift_sum min = 1 max = 5000 } # Max Gift Amount Period
 
-		# event_target is set in the targeting scope
-		event_target:influence_sender = { country_event = influence.1 }
+		FROM = { country_event = influence.1 }
 	}
 }
 
@@ -46,7 +45,7 @@ country_event = {
 		custom_effect_tooltip = economic_aid_influence_value_TT
 		add_to_variable = { treasury = temp_amount_gift_sum }
 		FROM = {
-			set_variable = { aid_offer_share@PREV = 5 }
+			set_country_flag = sending_five_percent_of_gdp_@PREV
 			effect_tooltip = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 2 }
@@ -90,7 +89,7 @@ country_event = {
 		custom_effect_tooltip = economic_aid_influence_value_TT
 		add_to_variable = { treasury = temp_amount_gift_sum }
 		FROM = {
-			set_variable = { aid_offer_share@PREV = 10 }
+			set_country_flag = sending_ten_percent_of_gdp_@PREV
 			effect_tooltip = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 4 }
@@ -134,7 +133,7 @@ country_event = {
 		custom_effect_tooltip = economic_aid_influence_value_TT
 		add_to_variable = { treasury = temp_amount_gift_sum }
 		FROM = {
-			set_variable = { aid_offer_share@PREV = 15 }
+			set_country_flag = sending_fifteen_percent_of_gdp_@PREV
 			effect_tooltip = {
 				custom_effect_tooltip = accept_money
 				set_temp_variable = { percent_change = 6 }
@@ -192,7 +191,7 @@ country_event = {
 
 # Economic Aid - MP Enhancements Event
 # Flat-amount aid chooser, only reachable when rule_allow_MP_enhancements = yes.
-# Fires on the sender. event_target:influence_sender / influence_recipient are set in opt_aid_button_click.
+# Fires on the sender. event_target:influence_sender / influence_recipient are set in influence_economic_aid_effect.
 country_event = {
 	id = influence.2
 	title = influence.2.t
@@ -249,15 +248,15 @@ country_event = {
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: News_influence.0 executed"
 		if = {
-			limit = { check_variable = { aid_offer_share@FROM = 5 } }
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
 			set_variable = { gift_sum = five_gift_sum }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 10 } }
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
 			set_variable = { gift_sum = ten_gift_sum }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 15 } }
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
 			set_variable = { gift_sum = fifteen_gift_sum }
 		}
 	}
@@ -268,7 +267,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: News_influence.0.a executed"
 
 		if = {
-			limit = { check_variable = { aid_offer_share@FROM = 5 } }
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
 
@@ -279,7 +278,7 @@ country_event = {
 			add_opinion_modifier = { target = FROM modifier = given_gift }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 10 } }
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
 
@@ -290,7 +289,7 @@ country_event = {
 			add_opinion_modifier = { target = FROM modifier = given_gift_ten }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 15 } }
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
 
 			set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
 
@@ -304,7 +303,9 @@ country_event = {
 		custom_effect_tooltip = economic_aid_influence_value_TT
 		add_to_variable = { treasury = temp_amount_gift_sum }
 
-		clear_variable = aid_offer_share@FROM
+		clr_country_flag = sending_five_percent_of_gdp_@FROM
+		clr_country_flag = sending_ten_percent_of_gdp_@FROM
+		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
 
 		# Every nation we are at war with takes a diplomatic hit at the donor for funding our war effort
 		every_enemy_country = {
@@ -381,15 +382,15 @@ country_event = {
 
 		# Returns Funds to the Influencer Nation
 		if = {
-			limit = { check_variable = { aid_offer_share@FROM = 5 } }
+			limit = { has_country_flag = sending_five_percent_of_gdp_@FROM }
 			set_temp_variable = { temp_amount_gift_sum = five_gift_sum }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 10 } }
+			limit = { has_country_flag = sending_ten_percent_of_gdp_@FROM }
 			set_temp_variable = { temp_amount_gift_sum = ten_gift_sum }
 		}
 		else_if = {
-			limit = { check_variable = { aid_offer_share@FROM = 15 } }
+			limit = { has_country_flag = sending_fifteen_percent_of_gdp_@FROM }
 			set_temp_variable = { temp_amount_gift_sum = fifteen_gift_sum }
 		}
 		FROM = {
@@ -399,7 +400,9 @@ country_event = {
 			country_event = diplomatic_response.2
 		}
 
-		clear_variable = aid_offer_share@FROM
+		clr_country_flag = sending_five_percent_of_gdp_@FROM
+		clr_country_flag = sending_ten_percent_of_gdp_@FROM
+		clr_country_flag = sending_fifteen_percent_of_gdp_@FROM
 
 		update_money_dirty_variable = yes
 
@@ -476,8 +479,7 @@ country_event = {
 	hidden = yes
 	is_triggered_only = yes
 	immediate = {
-		save_event_target_as = influence_target
-		event_target:influence_sender = {
+		FROM = {
 			country_event = influence.3
 		}
 	}
@@ -496,7 +498,7 @@ country_event = {
 		name = influence.3.a
 		log = "[GetDateText]: [This.GetName]: influence.3.a executed"
 
-		event_target:influence_target = {
+		FROM = {
 			news_event = News_influence.2
 			set_temp_variable = { percent_change = -2 }
 			change_domestic_influence_percentage = yes
@@ -507,7 +509,7 @@ country_event = {
 
 		set_temp_variable = { percent_change = -1 }
 		set_temp_variable = { tag_index = THIS.id }
-		set_temp_variable = { influence_target = event_target:influence_target.id }
+		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 
 		add_political_power = -100
@@ -516,7 +518,7 @@ country_event = {
 			base = 8
 			modifier = { add = 4 has_government = nationalist }
 			modifier = { add = 3 has_government = fascism }
-			modifier = { add = 2 event_target:influence_target = { check_variable = { domestic_influence_amount > 30 } } }
+			modifier = { add = 2 FROM = { check_variable = { domestic_influence_amount > 30 } } }
 			modifier = { factor = 1.3 has_government = communism }
 			modifier = { factor = 0.7 has_government = democratic }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -528,7 +530,7 @@ country_event = {
 		name = influence.3.b
 		log = "[GetDateText]: [This.GetName]: influence.3.b executed"
 		trigger = {
-			event_target:influence_target = {
+			FROM = {
 				has_variable = influence_array^0
 				NOT = {
 					check_variable = { influence_array^0 = ROOT }
@@ -537,8 +539,8 @@ country_event = {
 		}
 		ai_chance = {
 			base = 8
-			modifier = { add = 5 event_target:influence_target = { check_variable = { influence_array_val^0 > 40 } } }
-			modifier = { add = 4 event_target:influence_target = { OR = { check_variable = { influence_array^0 = CHI } check_variable = { influence_array^0 = SOV } check_variable = { influence_array^0 = PER } } } }
+			modifier = { add = 5 FROM = { check_variable = { influence_array_val^0 > 40 } } }
+			modifier = { add = 4 FROM = { OR = { check_variable = { influence_array^0 = CHI } check_variable = { influence_array^0 = SOV } check_variable = { influence_array^0 = PER } } } }
 			modifier = { add = 3 has_idea = great_power }
 			modifier = { add = 4 has_idea = super_power }
 			modifier = { factor = 1.3 has_government = democratic }
@@ -547,7 +549,7 @@ country_event = {
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
-		event_target:influence_target = {
+		FROM = {
 			var:influence_array^0 = { news_event = News_influence.1 }
 			set_temp_variable = { percent_change = -2 }
 			set_temp_variable = { influencer_index = 0 }
@@ -556,7 +558,7 @@ country_event = {
 
 		set_temp_variable = { percent_change = -1 }
 		set_temp_variable = { tag_index = THIS.id }
-		set_temp_variable = { influence_target = event_target:influence_target.id }
+		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 
 		add_political_power = -100
@@ -567,14 +569,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.3.c executed"
 		ai_chance = {
 			base = 4
-			modifier = { add = 3 event_target:influence_target = { check_variable = { influence_array_val^1 > 30 } } }
-			modifier = { add = 4 event_target:influence_target = { OR = { check_variable = { influence_array^1 = CHI } check_variable = { influence_array^1 = SOV } check_variable = { influence_array^1 = PER } } } }
+			modifier = { add = 3 FROM = { check_variable = { influence_array_val^1 > 30 } } }
+			modifier = { add = 4 FROM = { OR = { check_variable = { influence_array^1 = CHI } check_variable = { influence_array^1 = SOV } check_variable = { influence_array^1 = PER } } } }
 			modifier = { add = 2 has_idea = great_power }
 			modifier = { factor = 0.8 num_of_factories < 30 }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		trigger = {
-			event_target:influence_target = {
+			FROM = {
 				has_variable = influence_array^1
 				NOT = {
 					check_variable = { influence_array^1 = ROOT }
@@ -584,10 +586,10 @@ country_event = {
 
 		set_temp_variable = { percent_change = -1 }
 		set_temp_variable = { tag_index = THIS.id }
-		set_temp_variable = { influence_target = event_target:influence_target.id }
+		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 
-		event_target:influence_target = {
+		FROM = {
 			var:influence_array^1 = { news_event = News_influence.1 }
 			set_temp_variable = { percent_change = -2 }
 			set_temp_variable = { influencer_index = 1 }
@@ -603,18 +605,18 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: influence.3.e executed"
 		ai_chance = {
 			base = 2
-			modifier = { add = 3 event_target:influence_target = { OR = { check_variable = { influence_array^2 = CHI } check_variable = { influence_array^2 = SOV } check_variable = { influence_array^2 = PER } } } }
+			modifier = { add = 3 FROM = { OR = { check_variable = { influence_array^2 = CHI } check_variable = { influence_array^2 = SOV } check_variable = { influence_array^2 = PER } } } }
 			modifier = { add = 1 has_idea = super_power }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		trigger = {
-			event_target:influence_target = {
+			FROM = {
 				has_variable = influence_array^2
 				NOT = { check_variable = { influence_array^2 = ROOT } }
 			}
 		}
 
-		event_target:influence_target = {
+		FROM = {
 			var:influence_array^2 = { news_event = News_influence.1 }
 			set_temp_variable = { percent_change = -2 }
 			set_temp_variable = { influencer_index = 2 }
@@ -623,7 +625,7 @@ country_event = {
 
 		set_temp_variable = { percent_change = -1 }
 		set_temp_variable = { tag_index = THIS.id }
-		set_temp_variable = { influence_target = event_target:influence_target.id }
+		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 
 		add_political_power = -100
@@ -730,7 +732,7 @@ country_event = {
 		## Coup success rate ##
 		# Base success rate is popularity of the attacking Outlook
 		# This is multiplied by how much foreign influence there is in support for the attacking Outlook
-		if = { limit = { event_target:influence_sender = { has_government = democratic } }
+		if = { limit = { FROM = { has_government = democratic } }
 			set_variable = { success_factor_biggest = party_popularity@democratic }
 
 			set_temp_variable = { success_influence_multiplier = influence_democratic }
@@ -782,7 +784,7 @@ country_event = {
 				set_variable = { influence_coup_party = 0 }
 			}
 		}
-		else_if = { limit = { event_target:influence_sender = { has_government = neutrality } }
+		else_if = { limit = { FROM = { has_government = neutrality } }
 			set_variable = { success_factor_biggest = party_popularity@neutrality }
 
 			set_temp_variable = { success_influence_multiplier = influence_neutrality }
@@ -874,7 +876,7 @@ country_event = {
 				set_variable = { influence_coup_party = 12 }
 			}
 		}
-		else_if = { limit = { event_target:influence_sender = { has_government = communism } }
+		else_if = { limit = { FROM = { has_government = communism } }
 			set_variable = { success_factor_biggest = party_popularity@communism }
 
 			set_temp_variable = { success_influence_multiplier = influence_communism }
@@ -946,7 +948,7 @@ country_event = {
 				set_variable = { influence_coup_party = 5 }
 			}
 		}
-		else_if = { limit = { event_target:influence_sender = { has_government = nationalist } }
+		else_if = { limit = { FROM = { has_government = nationalist } }
 			set_variable = { success_factor_biggest = party_popularity@nationalist }
 
 			set_temp_variable = { success_influence_multiplier = influence_nationalist }
@@ -997,7 +999,7 @@ country_event = {
 				set_variable = { influence_coup_party = 23 }
 			}
 		}
-		else_if = { limit = { event_target:influence_sender = { has_government = fascism } }
+		else_if = { limit = { FROM = { has_government = fascism } }
 			set_variable = { success_factor_biggest = party_popularity@fascism }
 
 			set_temp_variable = { success_influence_multiplier = influence_fascism }
@@ -1031,7 +1033,7 @@ country_event = {
 
 		set_temp_variable = { influence_defense_modifier = 1 }
 		add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_defense_modifier }
-		event_target:influence_sender = {
+		FROM = {
 			add_to_temp_variable = { influence_defense_modifier = modifier@foreign_influence_modifier }
 			add_to_temp_variable = { influence_defense_modifier = modifier@influence_coup_modifier }
 		}
@@ -1049,42 +1051,42 @@ country_event = {
 		if = {
 			limit = {
 				NOT = { has_government = democratic }
-				NOT = { event_target:influence_sender = { has_government = democratic } }
+				NOT = { FROM = { has_government = democratic } }
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_democratic }
 		}
 		if = {
 			limit = {
 				NOT = { has_government = neutrality }
-				NOT = { event_target:influence_sender = { has_government = neutrality } }
+				NOT = { FROM = { has_government = neutrality } }
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_neutrality }
 		}
 		if = {
 			limit = {
 				NOT = { has_government = communism }
-				NOT = { event_target:influence_sender = { has_government = communism } }
+				NOT = { FROM = { has_government = communism } }
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_communism }
 		}
 		if = {
 			limit = {
 				NOT = { has_government = nationalist }
-				NOT = { event_target:influence_sender = { has_government = nationalist } }
+				NOT = { FROM = { has_government = nationalist } }
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_nationalist }
 		}
 		if = {
 			limit = {
 				NOT = { has_government = fascism }
-				NOT = { event_target:influence_sender = { has_government = fascism } }
+				NOT = { FROM = { has_government = fascism } }
 			}
 			add_to_temp_variable = { civil_war_influence_multiplier = influence_fascism }
 		}
 		multiply_temp_variable = { civil_war_influence_multiplier = 0.01 }
 		multiply_variable = { civil_war_factor = civil_war_influence_multiplier }
 
-		event_target:influence_sender = { country_event = influence.5 }
+		FROM = { country_event = influence.5 }
 	}
 }
 
@@ -2209,7 +2211,7 @@ country_event = {
 	is_triggered_only = yes
 	immediate = {
 		save_event_target_as = military_aid_target
-		event_target:influence_sender = {
+		FROM = {
 			country_event = influence.51
 		}
 	}
