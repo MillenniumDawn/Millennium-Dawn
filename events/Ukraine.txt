@@ -16125,11 +16125,17 @@ country_event = {
 		original_tag = UKR
 	}
 
+	immediate = { UKR_quote_t55_reactivation = yes }
+
 	option = {
 		name = ukr_modernize_sov_equipment_t55_procurement_program.2.a
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t55_procurement_program.2.a executed"
 
-		ai_chance = { base = 60 }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0 check_variable = { treasury < UKR_t55_reactivation_company_cost } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696 #Kharkiv
@@ -16143,7 +16149,11 @@ country_event = {
 		name = ukr_modernize_sov_equipment_t55_procurement_program.2.b
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t55_procurement_program.2.b executed"
 
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 check_variable = { treasury < UKR_t55_reactivation_company_cost } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696 #Kharkiv
@@ -16225,21 +16235,45 @@ country_event = {
 		original_tag = UKR
 	}
 
+	immediate = { UKR_quote_t55_reactivation = yes }
+
 	option = {
 		name = ukr_modernize_sov_equipment_t55_procurement_program.3.a
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t55_procurement_program.3.a executed"
 
-		ai_chance = { base = 80 }
+		ai_chance = {
+			base = 80
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696
 			check_variable = { ukraine_has_t55_stockpile > 12 }
+			has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+			NOR = {
+				has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+				has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+			}
+			check_variable = { var = treasury value = UKR_t55_reactivation_company_cost compare = greater_than_or_equals }
 		}
 
 		if = {
 			limit = {
 				controls_state = 696
 				check_variable = { ukraine_has_t55_stockpile > 12 }
+				has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+				}
+				check_variable = { var = treasury value = UKR_t55_reactivation_company_cost compare = greater_than_or_equals }
+			}
+			hidden_effect = {
+				set_temp_variable = { treasury_change = UKR_t55_reactivation_company_cost }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+				set_variable = { UKR_t55_reactivation_batch_days = UKR_t55_reactivation_company_days }
 			}
 			army_experience = 1
 
@@ -16276,24 +16310,55 @@ country_event = {
 
 			set_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
 		}
-		else = { country_event = ukr_modernize_sov_equipment_t55_procurement_program.2 }
+		else_if = {
+			limit = {
+				has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+				}
+			}
+			country_event = ukr_modernize_sov_equipment_t55_procurement_program.2
+		}
 	}
 
 	option = {
 		name = ukr_modernize_sov_equipment_t55_procurement_program.3.b
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t55_procurement_program.3.b executed"
 
-		ai_chance = { base = 20 }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696
 			check_variable = { ukraine_has_t55_stockpile > 39 }
+			has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+			NOR = {
+				has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+				has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+			}
+			check_variable = { var = treasury value = UKR_t55_reactivation_battalion_cost compare = greater_than_or_equals }
 		}
 
 		if = {
 			limit = {
 				controls_state = 696
 				check_variable = { ukraine_has_t55_stockpile > 39 }
+				has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+				}
+				check_variable = { var = treasury value = UKR_t55_reactivation_battalion_cost compare = greater_than_or_equals }
+			}
+			hidden_effect = {
+				set_temp_variable = { treasury_change = UKR_t55_reactivation_battalion_cost }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+				set_variable = { UKR_t55_reactivation_batch_days = UKR_t55_reactivation_battalion_days }
 			}
 			army_experience = 4
 
@@ -16330,7 +16395,16 @@ country_event = {
 
 			set_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
 		}
-		else = { country_event = ukr_modernize_sov_equipment_t55_procurement_program.2 }
+		else_if = {
+			limit = {
+				has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_battalion_ongoing_flag
+				}
+			}
+			country_event = ukr_modernize_sov_equipment_t55_procurement_program.2
+		}
 	}
 
 	option = {
@@ -17032,11 +17106,17 @@ country_event = {
 		original_tag = UKR
 	}
 
+	immediate = { UKR_quote_t62_reactivation = yes }
+
 	option = {
 		name = ukr_modernize_sov_equipment_t62_procurement_program.2.a
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t62_procurement_program.2.a executed"
 
-		ai_chance = { base = 60 }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0 check_variable = { treasury < UKR_t62_reactivation_company_cost } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696 #Kharkiv
@@ -17050,7 +17130,11 @@ country_event = {
 		name = ukr_modernize_sov_equipment_t62_procurement_program.2.b
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t62_procurement_program.2.b executed"
 
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 check_variable = { treasury < UKR_t62_reactivation_company_cost } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696 #Kharkiv
@@ -17126,21 +17210,45 @@ country_event = {
 		original_tag = UKR
 	}
 
+	immediate = { UKR_quote_t62_reactivation = yes }
+
 	option = {
 		name = ukr_modernize_sov_equipment_t62_procurement_program.3.a
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t62_procurement_program.3.a executed"
 
-		ai_chance = { base = 80 }
+		ai_chance = {
+			base = 80
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696
 			check_variable = { ukraine_has_t62_stockpile > 12 }
+			has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+			NOR = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+			}
+			check_variable = { var = treasury value = UKR_t62_reactivation_company_cost compare = greater_than_or_equals }
 		}
 
 		if = {
 			limit = {
 				controls_state = 696
 				check_variable = { ukraine_has_t62_stockpile > 12 }
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+				}
+				check_variable = { var = treasury value = UKR_t62_reactivation_company_cost compare = greater_than_or_equals }
+			}
+			hidden_effect = {
+				set_temp_variable = { treasury_change = UKR_t62_reactivation_company_cost }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+				set_variable = { UKR_t62_reactivation_batch_days = UKR_t62_reactivation_company_days }
 			}
 			army_experience = 1
 
@@ -17172,24 +17280,55 @@ country_event = {
 
 			set_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
 		}
-		else = { country_event = ukr_modernize_sov_equipment_t62_procurement_program.2 }
+		else_if = {
+			limit = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+				}
+			}
+			country_event = ukr_modernize_sov_equipment_t62_procurement_program.2
+		}
 	}
 
 	option = {
 		name = ukr_modernize_sov_equipment_t62_procurement_program.3.b
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_t62_procurement_program.3.b executed"
 
-		ai_chance = { base = 20 }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 
 		trigger = {
 			controls_state = 696
 			check_variable = { ukraine_has_t62_stockpile > 39 }
+			has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+			NOR = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+			}
+			check_variable = { var = treasury value = UKR_t62_reactivation_battalion_cost compare = greater_than_or_equals }
 		}
 
 		if = {
 			limit = {
 				controls_state = 696
 				check_variable = { ukraine_has_t62_stockpile > 39 }
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+				}
+				check_variable = { var = treasury value = UKR_t62_reactivation_battalion_cost compare = greater_than_or_equals }
+			}
+			hidden_effect = {
+				set_temp_variable = { treasury_change = UKR_t62_reactivation_battalion_cost }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
+				set_variable = { UKR_t62_reactivation_batch_days = UKR_t62_reactivation_battalion_days }
 			}
 			army_experience = 4
 
@@ -17221,7 +17360,16 @@ country_event = {
 
 			set_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
 		}
-		else = { country_event = ukr_modernize_sov_equipment_t62_procurement_program.2 }
+		else_if = {
+			limit = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag
+				NOR = {
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_company_ongoing_flag
+					has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_battalion_ongoing_flag
+				}
+			}
+			country_event = ukr_modernize_sov_equipment_t62_procurement_program.2
+		}
 	}
 
 	option = {
@@ -32452,42 +32600,6 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.1.b
-		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.1.b executed"
-
-		ai_chance = { base = 10 }
-
-		trigger = {
-			controls_state = 698 #Kyiv
-			698 = { #Kyiv
-				arms_factory > 2
-			}
-		}
-
-		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_luch_tt
-
-		set_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
-	}
-
-	option = {
-		name = ukraine_develop_or_modernize_mrl_system.1.c
-		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.1.c executed"
-
-		ai_chance = { base = 15 }
-
-		trigger = {
-			controls_state = 1087 #Dnipropetrovsk
-			1087 = { #Dnipropetrovsk
-				arms_factory > 1
-			}
-		}
-
-		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_pivdenne_tt
-
-		set_country_flag = ukraine_develop_or_modernize_mrl_system_pivdenne_flag
-	}
-
-	option = {
 		name = ukraine_develop_or_modernize_mrl_system.1.d
 		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.1.d executed"
 
@@ -32519,6 +32631,151 @@ country_event = {
 		}
 		add_to_variable = { UKR_modernize_sov_equipment_effect_equipment_conversion_speed = -0.01 tooltip = equipment_conversion_speed_tt }
 		add_to_variable = { UKR_modernize_sov_equipment_effect_military_industrial_organization_funds_gain = -0.01 tooltip = military_industrial_organization_funds_gain_tt }
+	}
+}
+
+country_event = {
+	id = ukraine_develop_or_modernize_mrl_system.2
+	title = ukraine_develop_or_modernize_mrl_system.2.t
+	desc = ukraine_develop_or_modernize_mrl_system.2.d
+	picture = GFX_UKR_Modernize_SOV_Equipment_BRDM_2
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.2.a executed"
+
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_country_flag = ukraine_develop_or_modernize_mrl_system_kharkiv_flag }
+		}
+
+		hidden_effect = {
+			set_variable = { UKR_mrls_verba_cost = 0.25 }
+			set_variable = { UKR_mrls_verba_days = 180 }
+			if = {
+				limit = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kharkiv_flag }
+				set_variable = { UKR_mrls_verba_cost = 0.2 }
+				set_variable = { UKR_mrls_verba_days = 135 }
+			}
+		}
+		if = {
+			limit = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kharkiv_flag }
+			custom_effect_tooltip = UKR_mrls_continued_contract_tt
+		}
+
+		set_country_flag = UKR_mrls_stage2_kharkiv
+		unlock_decision_tooltip = UKR_develop_mrls_verba
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.2.b executed"
+
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_country_flag = ukraine_develop_or_modernize_mrl_system_shepetivka_flag }
+		}
+
+		hidden_effect = {
+			set_variable = { UKR_mrls_bastion03_cost = 1 }
+			set_variable = { UKR_mrls_bastion03_days = 130 }
+			if = {
+				limit = { has_country_flag = ukraine_develop_or_modernize_mrl_system_shepetivka_flag }
+				set_variable = { UKR_mrls_bastion03_cost = 0.8 }
+				set_variable = { UKR_mrls_bastion03_days = 98 }
+			}
+		}
+		if = {
+			limit = { has_country_flag = ukraine_develop_or_modernize_mrl_system_shepetivka_flag }
+			custom_effect_tooltip = UKR_mrls_continued_contract_tt
+		}
+
+		set_country_flag = UKR_mrls_stage2_shepetivka
+		unlock_decision_tooltip = UKR_develop_mrls_bastion03
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.2.c
+
+		ai_chance = { base = 5 }
+	}
+}
+
+country_event = {
+	id = ukraine_develop_or_modernize_mrl_system.3
+	title = ukraine_develop_or_modernize_mrl_system.3.t
+	desc = ukraine_develop_or_modernize_mrl_system.3.d
+	picture = GFX_UKR_Modernize_SOV_Equipment_BRDM_2
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.3.a executed"
+
+		ai_chance = {
+			base = 40
+			modifier = { factor = 2 has_country_flag = UKR_mrls_stage2_shepetivka }
+		}
+
+		hidden_effect = {
+			set_variable = { UKR_mrls_shepetivka_wartime_days = 160 }
+			set_variable = { UKR_mrls_vilkha_days = 220 }
+			set_variable = { UKR_mrls_berest_cost = 0.5 }
+			set_variable = { UKR_mrls_bureviy_cost = 1 }
+			if = {
+				limit = { has_country_flag = UKR_mrls_stage2_shepetivka }
+				set_variable = { UKR_mrls_shepetivka_wartime_days = 135 }
+				set_variable = { UKR_mrls_berest_cost = 0.4 }
+				set_variable = { UKR_mrls_bureviy_cost = 0.8 }
+			}
+		}
+		if = {
+			limit = { has_country_flag = UKR_mrls_stage2_shepetivka }
+			custom_effect_tooltip = UKR_mrls_continued_contract_tt
+		}
+
+		set_country_flag = UKR_mrls_stage3_shepetivka
+		custom_effect_tooltip = UKR_mrls_joint_wartime_tt
+		custom_effect_tooltip = UKR_mrls_shepetivka_priority_tt
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.3.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.3.b executed"
+
+		ai_chance = { base = 35 }
+
+		hidden_effect = {
+			set_variable = { UKR_mrls_shepetivka_wartime_days = 180 }
+			set_variable = { UKR_mrls_vilkha_days = 190 }
+			set_variable = { UKR_mrls_berest_cost = 0.5 }
+			set_variable = { UKR_mrls_bureviy_cost = 1 }
+		}
+
+		set_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
+		custom_effect_tooltip = UKR_mrls_joint_wartime_tt
+		custom_effect_tooltip = UKR_mrls_luch_priority_tt
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.3.c
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.3.c executed"
+
+		ai_chance = { base = 30 }
+
+		set_country_flag = ukraine_develop_or_modernize_mrl_system_pivdenne_flag
+		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_pivdenne_tt
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.3.d
+
+		ai_chance = { base = 5 }
 	}
 }
 
@@ -33306,6 +33563,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.9.a executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = GEO
 		}
 
@@ -33326,6 +33584,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.9.b executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = AZE
 		}
 
@@ -33346,6 +33605,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.9.c executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = ARM
 		}
 
@@ -33385,15 +33645,22 @@ country_event = {
 		ai_chance = { base = 10 }
 
 		trigger = {
-			FROM = { check_variable = { ukraine_has_9p148_stockpile > 8 } }
+			FROM = {
+				UKR_storage_can_sell_9p148 = yes
+			}
 			UKR_storage_buyer_9p148_9 = yes
 		}
 
 		FROM = {
-			set_temp_variable = { ukr_sov_amount = 9 }
-			set_temp_variable = { ukr_sale_price = 0.009 }
-			UKR_storage_sell_9p148 = yes
-			country_event = ukr_modernize_sov_equipment_storage_sale.14
+			if = {
+				limit = {
+					UKR_storage_can_sell_9p148 = yes
+				}
+				set_temp_variable = { ukr_sov_amount = 9 }
+				set_temp_variable = { ukr_sale_price = 0.009 }
+				UKR_storage_sell_9p148 = yes
+				country_event = ukr_modernize_sov_equipment_storage_sale.14
+			}
 		}
 	}
 
@@ -33404,15 +33671,24 @@ country_event = {
 		ai_chance = { base = 10 }
 
 		trigger = {
-			FROM = { check_variable = { ukraine_has_9p148_stockpile > 26 } }
+			FROM = {
+				UKR_storage_can_sell_9p148 = yes
+				check_variable = { ukraine_has_9p148_stockpile > 26 }
+			}
 			UKR_storage_buyer_9p148_27 = yes
 		}
 
 		FROM = {
-			set_temp_variable = { ukr_sov_amount = 27 }
-			set_temp_variable = { ukr_sale_price = 0.027 }
-			UKR_storage_sell_9p148 = yes
-			country_event = ukr_modernize_sov_equipment_storage_sale.14
+			if = {
+				limit = {
+					UKR_storage_can_sell_9p148 = yes
+					check_variable = { ukraine_has_9p148_stockpile > 26 }
+				}
+				set_temp_variable = { ukr_sov_amount = 27 }
+				set_temp_variable = { ukr_sale_price = 0.027 }
+				UKR_storage_sell_9p148 = yes
+				country_event = ukr_modernize_sov_equipment_storage_sale.14
+			}
 		}
 	}
 
@@ -33440,6 +33716,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.11.a executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = SUD
 		}
 
@@ -33452,6 +33729,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.11.b executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = ETH
 		}
 
@@ -33464,6 +33742,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.11.c executed"
 
 		trigger = {
+			UKR_storage_can_sell_9p148 = yes
 			country_exists = CHA
 		}
 
@@ -34484,13 +34763,16 @@ country_event = {
 		ai_chance = { base = 10 }
 
 		trigger = {
-			FROM = { UKR_storage_has_old_vehicles = yes }
+			FROM = { UKR_storage_can_sell_brdm1 = yes }
 			UKR_storage_buyer_old_gear = yes
 		}
 
 		FROM = {
-			UKR_storage_sell_vehicles = yes
-			country_event = ukr_modernize_sov_equipment_storage_sale.14
+			if = {
+				limit = { UKR_storage_can_sell_brdm1 = yes }
+				UKR_storage_sell_vehicles = yes
+				country_event = ukr_modernize_sov_equipment_storage_sale.14
+			}
 		}
 	}
 
