@@ -123,8 +123,8 @@ Each command makes that subideology your ruling party and adds 50% to its popula
 | Emerging    | `effect cheat_party_anarchist_communism`        | Left-Wing Radicals            |
 | Emerging    | `effect cheat_party_reactionary`                | Reactionaries                 |
 | Emerging    | `effect cheat_party_autocracy`                  | Autocrats                     |
-| Emerging    | `effect cheat_party_mod_vilayat_e_faqih`        | Moderate Shiite Revolutionary |
-| Emerging    | `effect cheat_party_vilayat_e_faqih`            | Hardline Shiite Revolutionary |
+| Emerging    | `effect cheat_party_moderate_shiite`            | Moderate Shiite Revolutionary |
+| Emerging    | `effect cheat_party_hardline_shiite`            | Hardline Shiite Revolutionary |
 | Salafist    | `effect cheat_party_kingdom`                    | Pro-Establishment Salafism    |
 | Salafist    | `effect cheat_party_caliphate`                  | Salafi Jihadism               |
 | Non-Aligned | `effect cheat_party_neutral_muslim_brotherhood` | Moderate Islamists            |
