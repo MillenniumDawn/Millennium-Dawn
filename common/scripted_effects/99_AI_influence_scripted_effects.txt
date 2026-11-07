@@ -19,17 +19,20 @@ ai_influence_pulse = {
 	else_if = { limit = { difficulty < 3 }
 		clamp_temp_variable = { var = ai_slot_budget max = 3 }
 	}
-	# Each slot costs 1.5 PP a day; every step keeps at least 0.5 PP a day spare
-	if = { limit = { political_power_daily < 2 }
+	# Each slot costs 1.5 PP a day and political_power_daily is already net of it, so size the budget on gross income.
+	# Every step keeps at least 0.5 PP a day spare.
+	set_temp_variable = { ai_gross_pp = political_power_daily }
+	add_to_temp_variable = { ai_gross_pp = auto_influence_cost }
+	if = { limit = { check_variable = { ai_gross_pp < 2 } }
 		set_temp_variable = { ai_slot_budget = 0 }
 	}
-	else_if = { limit = { political_power_daily < 3.5 }
+	else_if = { limit = { check_variable = { ai_gross_pp < 3.5 } }
 		clamp_temp_variable = { var = ai_slot_budget max = 1 }
 	}
-	else_if = { limit = { political_power_daily < 5 }
+	else_if = { limit = { check_variable = { ai_gross_pp < 5 } }
 		clamp_temp_variable = { var = ai_slot_budget max = 2 }
 	}
-	else_if = { limit = { political_power_daily < 6.5 }
+	else_if = { limit = { check_variable = { ai_gross_pp < 6.5 } }
 		clamp_temp_variable = { var = ai_slot_budget max = 3 }
 	}
 	if = {

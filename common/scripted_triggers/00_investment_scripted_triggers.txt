@@ -590,6 +590,52 @@ has_available_treasury_investment = {
 	}
 }
 
+# Investment GUI triggers: THIS is the selected state and ROOT the investor.
+# A new project is staged and the investor is free to start it.
+investment_new_project_ready = {
+	ROOT = {
+		check_variable = { active_projects < 15 }
+		check_variable = { project_building_type^-1 > 0 }
+		check_variable = { project_build_amount^-1 > 0 }
+		NOT = { has_war_with = PREV.CONTROLLER }
+		NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
+	}
+	selected_investment_building_available = yes
+}
+
+# Gates every press of the Build button, offer or cancel
+investment_offer_gates = {
+	hidden_trigger = {
+		CONTROLLER = { NOT = { tag = ROOT } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = disabled_foreign_investment_flag_tt
+		ROOT = { NOT = { has_country_flag = disabled_foreign_investment } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = int_auto_reject_investment_flag_tt
+		CONTROLLER = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = not_investment_target_tt
+		CONTROLLER = { NOT = { has_country_flag = not_investment_target } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = not_recently_canceled_a_project_in_state_tt
+		ROOT = { NOT = { has_country_flag = recently_canceled_a_project_in_this_state_@PREV } }
+	}
+	if = {
+		limit = {
+			has_game_rule = {
+				rule = rule_enable_investment_collapse_lock
+				option = yes
+			}
+		}
+		ROOT = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
+	}
+	ROOT = { NOT = { has_active_mission = cheap_loan_from_the_imf_mission } }
+}
+
 # AI do not invest in these states
 AI_no_investment_in_these_states = {
 	NOT = {

@@ -116,58 +116,31 @@ scripted_gui = {
 
 			# Build Button Click Enabled
 			invest_button_click_enabled = {
-				hidden_trigger = {
-					PREV = { CONTROLLER = { NOT = { tag = ROOT } } }
-				}
-				# #Cannot be at war
-				# NOT = { OWNER = { has_war_with = ROOT } }
-				# NOT = { ROOT = { controls_state = PREV.id } }
-				# #Cannot be being justified upon investment country
-				# ROOT = { NOT = { is_justifying_wargoal_against = PREV } }
 				if = { limit = { NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } } currently_is_considering_a_project = yes }
-					ROOT = {
-						check_variable = { active_projects < 15 }
-						check_variable = { project_building_type^-1 > 0 }
-						check_variable = { project_build_amount^-1 > 0 }
-						NOT = { has_war_with = PREV.CONTROLLER }
-						NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
-						# General things
-						has_available_treasury_investment = yes
-					}
-					selected_investment_building_available = yes
+					investment_new_project_ready = yes
+					ROOT = { has_available_treasury_investment = yes }
 				}
 				else = {
 					always = yes
 				}
-				custom_trigger_tooltip = {
-					tooltip = disabled_foreign_investment_flag_tt
-					ROOT = { NOT = { has_country_flag = disabled_foreign_investment } }
-				}
-				custom_trigger_tooltip = {
-					tooltip = int_auto_reject_investment_flag_tt
-					PREV = { CONTROLLER = { NOT = { has_country_flag = int_auto_reject_investment_flag } } }
-				}
-				custom_trigger_tooltip = {
-					tooltip = not_investment_target_tt
-					PREV = { CONTROLLER = { NOT = { has_country_flag = not_investment_target } } }
-				}
-				custom_trigger_tooltip = {
-					tooltip = not_recently_canceled_a_project_in_state_tt
-					ROOT = { NOT = { has_country_flag = recently_canceled_a_project_in_this_state_@PREV } }
-				}
-				if = {
-					limit = {
-						has_game_rule = {
-							rule = rule_enable_investment_collapse_lock
-							option = yes
-						}
-					}
-					ROOT = { NOT = { has_active_mission = bankruptcy_incoming_collapse } }
-				}
-				ROOT = { NOT = { has_active_mission = cheap_loan_from_the_imf_mission } }
+				investment_offer_gates = yes
 			}
-			# The right-click effect rechecks the offer conditions, including the extra 10%
-			invest_button_right_click_enabled = { always = yes }
+
+			# Fully funded offer: the investor also covers the controller's 10% share
+			invest_button_right_click_enabled = {
+				NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
+				currently_is_considering_a_project = yes
+				investment_new_project_ready = yes
+				investment_offer_gates = yes
+				custom_trigger_tooltip = {
+					tooltip = has_available_treasury_tt
+					ROOT = {
+						set_temp_variable = { fully_funded_cost = project_monetary_cost^-1 }
+						multiply_temp_variable = { fully_funded_cost = 1.1 }
+						check_variable = { var = treasury value = fully_funded_cost compare = greater_than_or_equals }
+					}
+				}
+			}
 
 			select_civ_button_click_enabled = {
 				investments_building_cic_available = yes
@@ -310,52 +283,17 @@ scripted_gui = {
 
 			# Fully funded offer: we also pay the recipient's 10% share, so a broke country can still accept
 			invest_button_right_click = {
-				hidden_effect = {
-					ROOT = {
-						update_gui = yes
-						refresh_investment_gui = yes
-					}
+				# invest_button_right_click_enabled already checked the offer conditions and the 110% treasury
+				set_variable = { ROOT.investments_state_target = THIS.id }
+				CONTROLLER = {
+					set_variable = { ROOT.investments_nation_target = THIS.id }
+					ROOT = { set_country_flag = { flag = this_investment_offer_pending@PREV days = 90 value = 1 } }
 				}
 				ROOT = {
-					calculate_investment_spendable_treasury = yes
-					set_temp_variable = { fully_funded_cost = project_monetary_cost^-1 }
-					multiply_temp_variable = { fully_funded_cost = 1.1 }
-				}
-				if = {
-					limit = {
-						NOT = { is_in_array = { array = THIS.projects_in_state value = ROOT.id } }
-						selected_investment_building_available = yes
-						check_variable = { var = investment_spendable_treasury value = fully_funded_cost compare = greater_than_or_equals }
-						CONTROLLER = { NOT = { has_country_flag = int_auto_reject_investment_flag } }
-						ROOT = {
-							check_variable = { active_projects < 15 }
-							check_variable = { project_building_type^-1 > 0 }
-							check_variable = { project_build_amount^-1 > 0 }
-							NOT = { has_war_with = PREV.CONTROLLER }
-							NOT = { has_country_flag = disabled_foreign_investment }
-							NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
-							OR = {
-								NOT = {
-									has_game_rule = {
-										rule = rule_enable_investment_collapse_lock
-										option = yes
-									}
-								}
-								NOT = { has_active_mission = bankruptcy_incoming_collapse }
-							}
-						}
-					}
-					set_variable = { ROOT.investments_state_target = THIS.id }
-					CONTROLLER = {
-						set_variable = { ROOT.investments_nation_target = THIS.id }
-						ROOT = { set_country_flag = { flag = this_investment_offer_pending@PREV days = 90 value = 1 } }
-					}
-					ROOT = {
-						set_variable = { investment_offer_fully_funded = 1 }
-						update_gui = yes
-						refresh_investment_gui = yes
-						country_event = investments_event.3
-					}
+					set_variable = { investment_offer_fully_funded = 1 }
+					update_gui = yes
+					refresh_investment_gui = yes
+					country_event = investments_event.3
 				}
 			}
 
