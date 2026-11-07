@@ -244,6 +244,8 @@ _INFLUENCE_SCOPE_KEYWORDS: Set[str] = {
 _TAG_LITERAL_RE = re.compile(r"[A-Z][A-Z0-9_]{2}")
 _MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
 _NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
+# change_influence_percentage clamps every gain to this many points
+_INFLUENCE_GAIN_CAP = 20
 
 
 def _load_valid_country_tags(mod_path: str) -> Tuple["frozenset[str]", List[str]]:
@@ -767,6 +769,21 @@ def _validate_call_sites_in_file(
             # call N).  Values are normalized so "USA"/"USA.id" and the other
             # .id variants compare equal.
             if value == "change_influence_percentage":
+                gain = visible.get("percent_change")
+                if (
+                    gain
+                    and _NUMERIC_RE.fullmatch(gain["value"])
+                    and float(gain["value"]) > _INFLUENCE_GAIN_CAP
+                ):
+                    results.append(
+                        (
+                            "influence-gain-over-cap",
+                            f"{rel}:{lineno} - 'change_influence_percentage' gains "
+                            f"{gain['value']} (set at line {gain['line']}); one change "
+                            f"realizes at most {_INFLUENCE_GAIN_CAP}",
+                            lineno,
+                        )
+                    )
                 tag_entry = visible.get("tag_index")
                 inf_entry = visible.get("influence_target")
                 if tag_entry and inf_entry:
@@ -1284,6 +1301,7 @@ class Validator(BaseValidator):
         scope_violation_results = []
         identical_param_results = []
         invalid_tag_results = []
+        gain_cap_results = []
         shared_line_results = []
         audit_shared_line_results = []
         unsupported_argument_results = []
@@ -1300,6 +1318,8 @@ class Validator(BaseValidator):
                     identical_param_results.append(message)
                 elif category == "invalid-influence-tag":
                     invalid_tag_results.append(message)
+                elif category == "influence-gain-over-cap":
+                    gain_cap_results.append(message)
                 elif category == "call-shares-line":
                     shared_line_results.append(message)
                 elif category == "audit-call-shares-line":
@@ -1365,6 +1385,14 @@ class Validator(BaseValidator):
             "tag_index / influence_target set to an unknown country tag (typo or removed tag):",
             severity=Severity.ERROR,
             category="invalid-influence-tag",
+        )
+
+        self._report(
+            gain_cap_results,
+            f"No change_influence_percentage base gain exceeds {_INFLUENCE_GAIN_CAP}",
+            f"change_influence_percentage base gains above {_INFLUENCE_GAIN_CAP} (clamped at runtime):",
+            severity=Severity.WARNING,
+            category="influence-gain-over-cap",
         )
 
         self._report(

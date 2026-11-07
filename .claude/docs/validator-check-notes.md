@@ -861,6 +861,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
+- `influence-gain-over-cap` (WARNING): a literal `percent_change` above 20 visible at a
+  `change_influence_percentage` call. The effect clamps every gain to 20 after the
+  influence modifiers, so the extra never applies. Losses, variables, and expressions
+  are not checked. Advisory while the existing backlog is worked down.
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.

@@ -80,7 +80,12 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     out = []
     for cat, msg, _line in results:
         if (
-            cat in ("missing-required-param", "identical-influence-params")
+            cat
+            in (
+                "missing-required-param",
+                "identical-influence-params",
+                "influence-gain-over-cap",
+            )
             and "change_influence_percentage" in msg
         ):
             out.append((cat, msg))
@@ -605,6 +610,45 @@ def _tag_body(param, value):
 
 def _invalid_tags(issues):
     return [m for c, m in issues if c == "invalid-influence-tag"]
+
+
+@pytest.mark.parametrize(
+    "value,flagged",
+    [
+        ("20", False),
+        ("20.5", True),
+        ("33", True),
+        ("-50", False),
+        ("global.percent_change_value", False),
+    ],
+)
+def test_influence_gain_above_cap_is_flagged(tmp_path, cip_contract, value, flagged):
+    """Literal base gains above 20 are flagged; losses and variables are not."""
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        f"        set_temp_variable = {{ percent_change = {value} }}\n"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(c == "influence-gain-over-cap" for c, _ in issues) is flagged
+
+
+def test_influence_gain_above_cap_reports_a_warning(tmp_path):
+    _write(
+        tmp_path / "events" / "caller.txt",
+        "option = {\n"
+        "\tset_temp_variable = { percent_change = 25 }\n"
+        "\tchange_influence_percentage = yes\n"
+        "}\n",
+    )
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == [("influence-gain-over-cap", vsp.Severity.WARNING, 3)]
 
 
 @pytest.mark.parametrize("value", ["CHI", "CHI.id", "USA", "USA.ID"])
