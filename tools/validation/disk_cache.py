@@ -104,7 +104,7 @@ _HELPER_DEPENDENCIES = {
     "focus_tree": ("validate_events.py",),
     "ideas": ("equipment_module_slots.py",),
     "influence_calls_scan_v2": ("guard_scan.py",),
-    "math_expr": ("equipment_module_slots.py",),
+    "math_expr": ("guard_scan.py",),
     "modifiers": ("equipment_module_slots.py",),
     "oob_units": ("equipment_module_slots.py",),
     "sprite_index": ("validate_gfx_references.py",),

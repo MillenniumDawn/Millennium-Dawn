@@ -129,7 +129,25 @@ since the engine silently zeroes what it cannot parse. Operands confirmed workin
 targeted game variables (`opinion@PREV`, `building_level@X`, `modifier@X`). Those are
 plain variables: use them directly, with no temp copy.
 
-`validate_math_expressions.py` warns in CI on the sibling form and on `FROM` reads.
+`validate_math_expressions.py` reports the sibling form and `FROM` reads in CI.
+
+### Math in weight blocks
+
+Keep temp-variable writes out of `ai_will_do`, `ai_chance`, and scorer `score` blocks,
+including the scripted triggers they call. Use `check_expr` to calculate and compare
+in one expression, or `check_variable` for a single existing variable.
+
+For a computed weight, use threshold modifiers instead of an expression in `add` or
+`factor`. A scaled existing variable can stay exact with separate variable and literal
+factors:
+
+```
+modifier = { factor = domestic_influence_amount }
+modifier = { factor = 0.1 }
+```
+
+`validate_math_expressions.py` warns on direct and scripted-trigger temp writes in
+these weight blocks. Candidate weights are rechecked; event chances run once per event.
 
 ## Loops
 
