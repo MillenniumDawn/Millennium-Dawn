@@ -149,6 +149,26 @@ modifier = { factor = 0.1 }
 `validate_math_expressions.py` warns on direct and scripted-trigger temp writes in
 these weight blocks. Candidate weights are rechecked; event chances run once per event.
 
+### Math in weight blocks
+
+Weight blocks (`ai_will_do`, `ai_chance`, scorer `score`) do their math in one
+`check_expr`, not a `set_temp_variable` chain that a `check_variable` then reads. The
+cost is in the ones the AI rechecks for every candidate: decision, focus, and scripted
+GUI `ai_will_do`, occupation laws, and scorers. Event `ai_chance` runs once per event. Compare a single existing variable with plain
+`check_variable`. No MD or vanilla code passes an expression to `add` or `factor`, so
+express a computed weight as threshold steps:
+
+```
+modifier = {
+    check_expr = {
+        value = building_level@industrial_complex
+        add = building_level@arms_factory
+        greater_than = 1
+    }
+    add = 24000
+}
+```
+
 ## Loops
 
 ```
