@@ -12987,11 +12987,10 @@ UKR_modernize_sov_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { treasury > 0.1 }
 			has_political_power > 10
 			has_army_experience > 4
 		}
-		custom_cost_text = development_cost_0_10_pp_10_army_4
+		custom_cost_text = development_cost_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -13000,8 +12999,6 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = -0.1 }
-				modify_treasury_effect = yes
 			}
 
 			set_country_flag = UKR_equipment_modernize_or_develop_mrls_flag
@@ -13062,11 +13059,10 @@ UKR_modernize_sov_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { treasury > 0.05 }
 			has_political_power > 10
 			has_army_experience > 2
 		}
-		custom_cost_text = development_cost_0_05_pp_10_army_2
+		custom_cost_text = development_cost_pp_10_army_2
 		ai_hint_pp_cost = 10
 
 		days_mission_timeout = 20
@@ -13080,8 +13076,6 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -2
-				set_temp_variable = { treasury_change = -0.05 }
-				modify_treasury_effect = yes
 			}
 
 			set_country_flag = UKR_equipment_modernize_or_develop_mrls_flag
@@ -13371,6 +13365,110 @@ UKR_modernize_sov_category = {
 		}
 	}
 
+	UKR_develop_mrls_vilkha = {
+		icon = GFX_decision_ukrpom_button
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				AND = {
+					date > 2018.01.01
+					date < 2022.01.01
+
+					NOT = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag }
+				}
+
+				AND = {
+					date > 2012.01.01
+					date < 2020.01.01
+
+					has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
+				}
+			}
+		}
+
+		available = {
+			OR = {
+				AND = {
+					date > 2018.01.01
+					date < 2022.01.01
+
+					NOT = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag }
+				}
+
+				AND = {
+					date > 2012.01.01
+					date < 2020.01.01
+
+					has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
+				}
+			}
+
+			has_tech = mbt_tech_2
+			has_tech = nsb_special_ammo_3
+			has_tech = nsb_artillery_ammo_3
+
+			controls_state = 698 #Kyiv
+			698 = { #Kyiv
+				arms_factory > 2
+			}
+		}
+
+		days_remove = 220
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.8 }
+			has_political_power > 40
+			has_army_experience > 12
+		}
+		custom_cost_text = development_cost_0_80_pp_40_army_12
+		ai_hint_pp_cost = 40
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_vilkha"
+
+			hidden_effect = {
+				add_political_power = -40
+				air_experience = -12
+				set_temp_variable = { treasury_change = -0.8 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_vilkha"
+			UKR_count_domestic_development = yes
+			create_equipment_variant = {
+				name = "Vilkha"
+				type = medium_tank_rocket_chassis_2
+				parent_version = 0 #Current Version: 0
+				allow_without_tech = yes
+				modules = {
+					main_armament_slot = art_med_rocket_gen3
+					turret_type_slot = tank_no_turret
+					reload_type_slot = eight_missile_pack
+					ammunition_load_slot = artillery_heavy_ammo_3
+					suspension_type_slot = tank_wheeled_suspension_medium
+					engine_type_slot = tank_diesel_engine_gen2
+					special_type_slot_1 = mine_ammo_1
+					special_type_slot_2 = cluster_ammo_1
+					special_type_slot_3 = heat_ammo_1
+					special_type_slot_4 = tank_battlestation_3
+					special_type_slot_5 = laser_guided_ammo_2
+				}
+				upgrades = { tank_nsb_fire_upgrade = 3 }
+				icon = "GFX_VILKHA"
+				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+			}
+		}
+	}
+
 	UKR_modernize_mi24pu1 = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
 		fire_only_once = yes
@@ -13383,9 +13481,14 @@ UKR_modernize_sov_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
+		visible = {
+			date > 2008.01.01
+			date < 2016.01.01
+		}
+
 		available = {
-			date > 2010.01.01
-			date < 2014.01.01
+			date > 2008.01.01
+			date < 2016.01.01
 
 			has_completed_focus = UKR_army_aviation
 		}
@@ -13445,14 +13548,22 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
-			has_country_flag = UKR_modernize_mi24pu1_flag
+			date > 2016.01.01
+			date < 2026.01.01
+
+			OR = {
+				has_country_flag = UKR_modernize_mi24pu1_flag
+				has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			}
 		}
 
 		available = {
-			date > 2020.01.01
+			date > 2016.01.01
 			date < 2026.01.01
+
 			has_country_flag = UKR_modernize_mi24pu1_flag
 			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+
 			country_exists = FRA
 			FRA = { has_opinion = { target = ROOT value > 29 } }
 		}
@@ -17717,8 +17828,6 @@ UKR_modernize_planes_category = {
 			NOT = { has_country_flag = UKR_restore_an_71_flag }
 
 			is_special_project_completed = sp:sp_awacs_project
-
-			has_completed_focus = UKR_avia_zavod
 		}
 
 		available = {
@@ -17789,8 +17898,6 @@ UKR_modernize_planes_category = {
 			NOT = { has_country_flag = UKR_restore_an_71_flag }
 
 			NOT = { is_special_project_completed = sp:sp_awacs_project }
-
-			has_completed_focus = UKR_avia_zavod
 		}
 
 
@@ -17802,6 +17909,8 @@ UKR_modernize_planes_category = {
 			698 = { #Kyiv
 				arms_factory > 2
 			}
+
+			NOT = { is_special_project_completed = sp:sp_awacs_project }
 
 			has_completed_focus = UKR_avia_zavod
 		}
@@ -20765,107 +20874,6 @@ UKR_develop_domestic_category = {
 		}
 	}
 
-	UKR_develop_mrls_vilkha = {
-		icon = GFX_decision_ukrpom_button
-		fire_only_once = yes
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-
-		visible = {
-			OR = {
-				date > 2018.01.01
-				date < 2022.01.01
-
-				NOT = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag }
-			}
-
-			OR = {
-				date > 2012.01.01
-				date < 2020.01.01
-
-				has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
-			}
-		}
-
-		available = {
-			OR = {
-				date > 2018.01.01
-				date < 2022.01.01
-
-				NOT = { has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag }
-			}
-
-			OR = {
-				date > 2012.01.01
-				date < 2020.01.01
-
-				has_country_flag = UKR_develop_mrls_bureviy_flag
-				has_country_flag = ukraine_develop_or_modernize_mrl_system_kyiv_flag
-			}
-
-			has_tech = mbt_tech_2
-			has_tech = nsb_special_ammo_3
-			has_tech = nsb_artillery_ammo_3
-
-			controls_state = 698 #Kyiv
-			698 = { #Kyiv
-				arms_factory > 2
-			}
-		}
-
-		days_remove = 220
-
-		custom_cost_trigger = {
-			check_variable = { treasury > 0.8 }
-			has_political_power > 40
-			has_army_experience > 12
-		}
-		custom_cost_text = development_cost_0_80_pp_40_army_12
-		ai_hint_pp_cost = 40
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_vilkha"
-
-			hidden_effect = {
-				add_political_power = -40
-				air_experience = -12
-				set_temp_variable = { treasury_change = -0.8 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_vilkha"
-			UKR_count_domestic_development = yes
-			create_equipment_variant = {
-				name = "Vilkha"
-				type = medium_tank_rocket_chassis_2
-				parent_version = 0 #Current Version: 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = art_med_rocket_gen3
-					turret_type_slot = tank_no_turret
-					reload_type_slot = eight_missile_pack
-					ammunition_load_slot = artillery_heavy_ammo_3
-					suspension_type_slot = tank_wheeled_suspension_medium
-					engine_type_slot = tank_diesel_engine_gen2
-					special_type_slot_1 = mine_ammo_1
-					special_type_slot_2 = cluster_ammo_1
-					special_type_slot_3 = heat_ammo_1
-					special_type_slot_4 = tank_battlestation_3
-					special_type_slot_5 = laser_guided_ammo_2
-				}
-				upgrades = { tank_nsb_fire_upgrade = 3 }
-				icon = "GFX_VILKHA"
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-			}
-		}
-	}
-
 	UKR_develop_kba27 = {
 		icon = GFX_decision_icon_UKR_develop_domestic_kba27
 		fire_only_once = yes
@@ -20879,8 +20887,18 @@ UKR_develop_domestic_category = {
 		custom_cost_trigger = { check_variable = { treasury > 0.03 } }
 		custom_cost_text = cost_0_03
 
+		visible = {
+			date < 2010.01.01
+		}
+
 		available = {
+			date < 2010.01.01
+
 			controls_state = 698 #Kyiv
+			698 = { #Kyiv
+				arms_factory > 1
+			}
+
 			has_army_experience > 4
 		}
 
@@ -20913,6 +20931,8 @@ UKR_develop_domestic_category = {
 			UKR_count_domestic_development = yes
 			army_experience = 2
 			set_technology = { nsb_artillery_2 = 1 }
+
+			set_country_flag = UKR_develop_kba27_flag
 		}
 	}
 
@@ -20927,9 +20947,24 @@ UKR_develop_domestic_category = {
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
-		available = {
-			date > 2015.08.01
+		visible = {
+			date > 2012.01.01
 			date < 2022.06.01
+
+			has_country_flag = UKR_develop_kba27_flag
+		}
+		available = {
+			date > 2012.01.01
+			date < 2022.06.01
+
+			controls_state = 1030 #Western Donetsk
+			1030 = { #Western Donetsk
+				arms_factory > 0
+			}
+
+			has_army_experience > 12
+
+			has_country_flag = UKR_develop_kba27_flag
 		}
 
 		days_remove = 220
