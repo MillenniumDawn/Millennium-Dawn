@@ -124,7 +124,7 @@ country_event = {
 					check_variable = { FROM.project_building_type^-1 = 12 }
 					check_variable = { FROM.project_building_type^-1 = 13 }
 				}
-				check_variable = { unfulfilled_energy_demand_var > -0.02 }
+				check_variable = { unfulfilled_energy_demand_var < -0.02 }
 			}
 			modifier = {
 				factor = 0
@@ -161,6 +161,19 @@ country_event = {
 		# AI chance for rejecting
 		ai_chance = {
 			base = 0
+			# Accept is zeroed here; this keeps refusal positive through the opinion penalties and factors below
+			modifier = {
+				add = 100
+				OR = {
+					check_variable = { interest_rate > 9.999 }
+					has_country_flag = recently_refused_investment@FROM
+					AND = {
+						original_tag = BOS
+						has_stability < 0.40
+						date < 2000.6.01
+					}
+				}
+			}
 			modifier = {
 				add = -5
 				check_variable = { opinion@FROM > 50 }
@@ -191,11 +204,13 @@ country_event = {
 			}
 			modifier = { #Less likely is not a top influencer
 				add = 1
-				OR = {
-					NOT = { check_variable = { influence_array^0 = FROM } }
-					NOT = { check_variable = { influence_array^1 = FROM } }
-					NOT = { check_variable = { influence_array^2 = FROM } }
-					NOT = { check_variable = { influence_array^3 = FROM } }
+				NOT = {
+					OR = {
+						check_variable = { influence_array^0 = FROM }
+						check_variable = { influence_array^1 = FROM }
+						check_variable = { influence_array^2 = FROM }
+						check_variable = { influence_array^3 = FROM }
+					}
 				}
 			}
 			# Tag Specific Rejections
@@ -255,7 +270,7 @@ country_event = {
 					check_variable = { FROM.project_building_type^-1 = 5 }
 					check_variable = { FROM.project_building_type^-1 = 14 }
 				}
-				check_variable = { unfulfilled_energy_demand_var > -0.02 }
+				check_variable = { unfulfilled_energy_demand_var < -0.02 }
 			}
 			# Reject ALL investments if I recently rejected an offer
 			modifier = {
@@ -331,6 +346,8 @@ country_event = {
 	trigger = {
 		is_ai = yes
 		NOT = { has_country_flag = investments_ai_pending }
+		NOT = { has_active_mission = bankruptcy_incoming_collapse }
+		NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 		check_variable = { active_projects < 15 }
 		check_variable = { debt_ratio < 2.50 }
 		check_variable = { interest_rate < 8.000 }
@@ -373,9 +390,10 @@ country_event = {
 				if = {
 					limit = {
 						country_exists = THIS
+						NOT = { tag = ROOT }
 						NOT = { has_country_flag = int_auto_reject_investment_flag }
 						NOT = { has_country_flag = not_investment_target }
-						NOT = { has_country_flag = recently_failed_to_invest }
+						NOT = { has_country_flag = recently_failed_to_invest@ROOT }
 						OR = {
 							is_subject = no
 							is_subject_of = ROOT
@@ -592,17 +610,17 @@ country_event = {
 				# Regardless it will always be one for sake of AI balance
 				set_variable = { project_build_amount^-1 = 1 }
 
-				project_monetary_cost_calculation = yes
+				# The cost effect reads the target state as PREV, like the GUI's update_gui
+				var:AI_best_target = {
+					ROOT = { project_monetary_cost_calculation = yes }
+				}
 				calculate_investment_spendable_treasury = yes
 
 				# Init Project Variables (writes ^-1 staging slot since project = -1)
 				# AI_best_target is the best state to invest in
 				set_variable = { project = -1 }
 				set_variable = { project_type = project_building_type^-1 }
-				random_state = {
-					limit = { state = ROOT.AI_best_target }
-					precompute_state_construction_data = yes
-				}
+				var:AI_best_target = { precompute_state_construction_data = yes }
 				calculate_project_duration = yes
 
 				# Log Values
@@ -642,7 +660,7 @@ country_event = {
 				else_if = {
 					limit = { check_variable = { var = investment_spendable_treasury value = project_monetary_cost^-1 compare = greater_than_or_equals } }
 					var:AI_best_country = {
-						set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
+						set_country_flag = { flag = recently_failed_to_invest@ROOT value = 1 days = 75 }
 					}
 					log = "[GetDateText]: [This.GetName]: Investment Failed: project_construction_duration out of range or slot unavailable in [?abt.GetName]. Duration: [?pd], score: [?abs]. Skipping this investment pulse."
 				}
@@ -652,7 +670,7 @@ country_event = {
 			}
 			else = {
 				var:AI_best_country = {
-					set_country_flag = { flag = recently_failed_to_invest value = 1 days = 75 }
+					set_country_flag = { flag = recently_failed_to_invest@ROOT value = 1 days = 75 }
 				}
 				log = "[GetDateText]: [This.GetName]: Investment Failed: no state met minimum score [?AI_MIN_STATE_SCORE] (best [?AI_best_score]). Skipping this investment pulse."
 			}

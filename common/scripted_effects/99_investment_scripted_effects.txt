@@ -223,7 +223,7 @@ project_monetary_cost_calculation = {
 			if = {
 				limit = {
 					PREV.PREV = {
-						has_country_flag = mutual_investment_treaty_@ROOT
+						has_country_flag = mutual_investment_treaty_@PREV
 					}
 				}
 				add_to_temp_variable = { investments_cost_modifier = -0.05 }
@@ -447,24 +447,15 @@ calculate_project_duration = {
 	# receiving_investment_duration_temp was pre-computed by precompute_state_construction_data
 	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
 	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
-	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
-		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
-	}
-	else = {
-		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
-	}
+	# Duration modifiers are bad when positive, so they slow construction
+	subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	clamp_temp_variable = { var = construction_speed min = 0.05 }
 
 	set_variable = { displayable_construction_modifier = construction_speed }
 
 	# Assume 5 × 15 Civilian Industry devoted to a single construction line
 	multiply_temp_variable = { construction_speed = 75 }
-	if = { limit = { check_variable = { construction_speed > 0 } }
-		divide_temp_variable = { building_cost = construction_speed }
-	}
-	else = {
-		# construction_speed <= 0 means instant or broken; clamp to 1 day to avoid instant completion
-		set_temp_variable = { building_cost = 1 }
-	}
+	divide_temp_variable = { building_cost = construction_speed }
 
 	set_variable = {
 		project_construction_duration^project = {
