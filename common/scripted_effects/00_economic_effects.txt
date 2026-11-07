@@ -139,6 +139,99 @@ set_improved_trade_agreement = {
 		}
 		custom_effect_tooltip = remove_improved_trade_agreement_tt
 	}
+	var:sender_nation = {
+		if = { limit = { original_tag = SIN }
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+	}
+	var:receiver_nation = {
+		if = { limit = { original_tag = SIN }
+			SIN_calculate_singaporean_trade_agreements = yes
+		}
+	}
+}
+
+# Effect: set_mutual_investment_treaty
+# Purpose: sign or cancel a mutual investment treaty on both sides, with its opinion, influence, and permanent investment target changes.
+# Parameters:
+# - sender_nation: the country signing or canceling the treaty
+# - receiver_nation: the other country
+# - remove_agreement (optional): 1 cancels the treaty
+set_mutual_investment_treaty = {
+	if = {
+		limit = {
+			NOT = { check_variable = { remove_agreement = 1 } }
+			var:receiver_nation = {
+				var:sender_nation = {
+					NOT = { is_in_array = { investment_treaty_partners = PREV } }
+				}
+			}
+		}
+		var:receiver_nation = {
+			var:sender_nation = {
+				add_to_array = { investment_treaty_partners = PREV }
+				PREV = { add_to_array = { investment_treaty_partners = PREV } }
+				add_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_opinion }
+				add_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_trade_opinion }
+				reverse_add_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_opinion }
+				reverse_add_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_trade_opinion }
+			}
+		}
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = sender_nation }
+		set_temp_variable = { influence_target = receiver_nation }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = 1 }
+		set_temp_variable = { tag_index = receiver_nation }
+		set_temp_variable = { influence_target = sender_nation }
+		change_influence_percentage = yes
+
+		set_temp_variable = { remove_nation = 0 }
+		set_temp_variable = { target_nation = receiver_nation }
+		set_temp_variable = { adding_nation = sender_nation }
+		change_permanent_investment_target = yes
+		set_temp_variable = { target_nation = sender_nation }
+		set_temp_variable = { adding_nation = receiver_nation }
+		change_permanent_investment_target = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { remove_agreement = 1 }
+			var:receiver_nation = {
+				var:sender_nation = {
+					is_in_array = { investment_treaty_partners = PREV }
+				}
+			}
+		}
+		var:receiver_nation = {
+			var:sender_nation = {
+				remove_from_array = { investment_treaty_partners = PREV }
+				PREV = { remove_from_array = { investment_treaty_partners = PREV } }
+				remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_opinion }
+				remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_trade_opinion }
+				PREV = {
+					remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_opinion }
+					remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_trade_opinion }
+				}
+			}
+		}
+		set_temp_variable = { percent_change = -1.25 }
+		set_temp_variable = { tag_index = sender_nation }
+		set_temp_variable = { influence_target = receiver_nation }
+		change_influence_percentage = yes
+		set_temp_variable = { percent_change = -1.25 }
+		set_temp_variable = { tag_index = receiver_nation }
+		set_temp_variable = { influence_target = sender_nation }
+		change_influence_percentage = yes
+
+		set_temp_variable = { adding_nation = 0 }
+		set_temp_variable = { target_nation = receiver_nation }
+		set_temp_variable = { remove_nation = sender_nation }
+		change_permanent_investment_target = yes
+		set_temp_variable = { target_nation = sender_nation }
+		set_temp_variable = { remove_nation = receiver_nation }
+		change_permanent_investment_target = yes
+	}
 }
 
 # ROOT = the country that was just puppeted, FROM = its new overlord.
