@@ -52,7 +52,7 @@ scripted_gui = {
 				}
 			 }
 			ct_gui_ledger_button_click_enabled = {
-				no_jihadist_government = yes
+				OR = { no_jihadist_government = yes TOP_country_eligible = yes TOP_security_country_eligible = yes }
 			}
 		}
 
@@ -112,6 +112,19 @@ scripted_gui = {
 			}
 			ct_gui_ledger_button_click = {
 				set_variable = { var_open_MD_CT_gui = 2 }
+				if = {
+					limit = { TOP_enabled = yes }
+					if = {
+						limit = {
+							NOT = { salafist_caliphate_are_in_power = yes }
+							NOT = { salafist_caliphate_are_in_coalition = yes }
+						}
+						set_variable = { TOP_open = 0 }
+						set_variable = { TOP_security_open = 0 }
+						TOP_refresh_view = yes
+					}
+					else = { TOP_open_dossiers = yes }
+				}
 				clear_variable = var_open_MD_space_gui
 				clear_variable = var_open_MD_PMC_gui
 				clear_variable = var_open_MD_UN_gui
@@ -2936,6 +2949,7 @@ scripted_gui = {
 		}
 
 		triggers = {
+			TOP_open_button_visible = { TOP_enabled = yes }
 			ct_funding_button_click_enabled = {
 				has_political_power > 50
 			}
@@ -3113,6 +3127,7 @@ scripted_gui = {
 		}
 
 		effects = {
+			TOP_open_button_click = { TOP_open_dossiers = yes }
 			ct_funding_button_click = {
 				add_political_power = -50
 				set_temp_variable = { base_detect_adjust = 0.5 }
@@ -3230,7 +3245,7 @@ scripted_gui = {
 					distribution = uniform
 				}
 				add_to_temp_variable = { num_add = 1 }
-				add_to_variable = { ct_mass_gather_store_var = num_add }
+				add_to_variable = { ct_mass_gather_store_var^selected_org = num_add }
 				set_country_flag = {
 					flag = recent_ct_intel_op
 					days = 210
