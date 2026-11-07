@@ -661,26 +661,38 @@ SIA_junta_party_shift = {
 	recalculate_party = yes
 }
 
-# TRADE DIPLOMACY — trade-agreement-scaled foreign influence Reads the generic MD
-# signed_trade_agreements counter (maintained for every country in 00_economic_effects.txt /.
+# TRADE DIPLOMACY: trade-agreement-scaled foreign influence. SIA_fta_decade counts as three
+# agreements on top of the signed ones in trade_agreement_partners.
 SIA_recalculate_trade_diplomacy = {
+	set_temp_variable = { sia_trade_agreements = trade_agreement_partners^num }
+	if = { limit = { has_completed_focus = SIA_fta_decade }
+		add_to_temp_variable = { sia_trade_agreements = 3 }
+	}
 	# force_update_dynamic_modifier refreshes every dynamic modifier on the country, so only pay
 	# for it when the agreement count has actually moved.
 	if = {
-		limit = { NOT = { check_variable = { SIA_trade_agreements_last = signed_trade_agreements } } }
-		set_variable = { SIA_trade_agreements_last = signed_trade_agreements }
-		set_variable = { SIA_trade_influence_strength = signed_trade_agreements }
-		multiply_variable = { SIA_trade_influence_strength = 0.01 }
-		clamp_variable = { var = SIA_trade_influence_strength min = 0 max = 0.10 }
+		limit = { NOT = { check_variable = { SIA_trade_agreements_last = sia_trade_agreements } } }
+		set_variable = { SIA_trade_agreements_last = sia_trade_agreements }
+		set_variable = {
+			SIA_trade_influence_strength = {
+				value = sia_trade_agreements
+				multiply = 0.01
+				clamp = { min = 0 max = 0.10 }
+			}
+		}
 		force_update_dynamic_modifier = yes
 	}
 }
 
+# Reads the count SIA_recalculate_trade_diplomacy stored just before it in the monthly tick
 SIA_collect_trade_dividend = {
-	set_temp_variable = { sia_trade_agreements_counted = signed_trade_agreements }
-	clamp_temp_variable = { var = sia_trade_agreements_counted min = 0 max = 6 }
-	set_temp_variable = { treasury_change = sia_trade_agreements_counted }
-	multiply_temp_variable = { treasury_change = 0.15 }
+	set_temp_variable = {
+		treasury_change = {
+			value = SIA_trade_agreements_last
+			clamp = { min = 0 max = 6 }
+			multiply = 0.15
+		}
+	}
 	modify_treasury_effect = yes
 	custom_effect_tooltip = SIA_trade_dividend_tt
 }

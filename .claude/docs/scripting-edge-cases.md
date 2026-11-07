@@ -17,7 +17,8 @@ relevant to the effects and triggers you are changing.
 - MD trade agreements and mutual investment treaties are partner arrays on both
   countries: `is_in_array = { trade_agreement_partners = TAG }` and
   `investment_treaty_partners`. Add to both sides only when the partner is not there yet,
-  and remove from both. `has_trade_agreement_with` is not a valid trigger.
+  and remove from both. Count agreements with `trade_agreement_partners^num`; there is
+  no separate counter. `has_trade_agreement_with` is not a valid trigger.
 - There is no `has_idea = democratic_*`. Check the ruling subideology through the
   matching scripted trigger: `western_conservatism_are_in_power`,
   `western_liberals_are_in_power`, `western_social_democrats_are_in_power`, or
