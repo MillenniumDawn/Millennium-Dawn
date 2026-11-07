@@ -740,7 +740,7 @@ def test_investor_funding_failure_does_not_blacklist_the_target(spendable, black
         )["probe"],
         1,
     )
-    assert ("recently_failed_to_invest" in target["flags"]) is blacklisted
+    assert ("recently_failed_to_invest@ROOT" in target["flags"]) is blacklisted
 
 
 @pytest.mark.parametrize("spendable", [-1, 0, 5])
@@ -756,7 +756,7 @@ def test_unfunded_investor_skips_target_scoring_on_repeated_pulses(spendable):
     for _pulse in range(10):
         race.execute(scoring, 1)
     assert "AI_country_score" not in race.temps
-    assert "recently_failed_to_invest" not in target["flags"]
+    assert "recently_failed_to_invest@ROOT" not in target["flags"]
 
 
 def _construction_plan(race):
