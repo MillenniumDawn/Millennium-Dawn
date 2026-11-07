@@ -140,28 +140,12 @@ plain variables: use them directly, with no temp copy.
 
 Keep temp-variable writes out of `ai_will_do`, `ai_chance`, and scorer `score` blocks,
 including the scripted triggers they call. Use `check_expr` to calculate and compare
-in one expression, or `check_variable` for a single existing variable.
+in one expression, or `check_variable` for a single existing variable. The cost is in
+the blocks the AI rechecks for every candidate: decision, focus, and scripted GUI
+`ai_will_do`, occupation laws, and scorers. Event `ai_chance` runs once per event.
 
-For a computed weight, use threshold modifiers instead of an expression in `add` or
-`factor`. A scaled existing variable can stay exact with separate variable and literal
-factors:
-
-```
-modifier = { factor = domestic_influence_amount }
-modifier = { factor = 0.1 }
-```
-
-`validate_math_expressions.py` warns on direct and scripted-trigger temp writes in
-these weight blocks. Candidate weights are rechecked; event chances run once per event.
-
-### Math in weight blocks
-
-Weight blocks (`ai_will_do`, `ai_chance`, scorer `score`) do their math in one
-`check_expr`, not a `set_temp_variable` chain that a `check_variable` then reads. The
-cost is in the ones the AI rechecks for every candidate: decision, focus, and scripted
-GUI `ai_will_do`, occupation laws, and scorers. Event `ai_chance` runs once per event. Compare a single existing variable with plain
-`check_variable`. No MD or vanilla code passes an expression to `add` or `factor`, so
-express a computed weight as threshold steps:
+No MD or vanilla code passes an expression to `add` or `factor`, so express a computed
+weight as threshold steps:
 
 ```
 modifier = {
@@ -173,6 +157,16 @@ modifier = {
     add = 24000
 }
 ```
+
+A scaled existing variable can stay exact with separate variable and literal factors:
+
+```
+modifier = { factor = domestic_influence_amount }
+modifier = { factor = 0.1 }
+```
+
+`validate_math_expressions.py` warns on direct and scripted-trigger temp writes in
+these weight blocks.
 
 ## Loops
 

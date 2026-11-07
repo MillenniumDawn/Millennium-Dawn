@@ -149,16 +149,11 @@ accept_pending_investment_offer = {
 					}
 				}
 
+				set_temp_variable = { treasury_change = { value = PREV.project_monetary_cost_effect multiply = 0.1 } }
 				if = { limit = { check_variable = { pending_offer_fully_funded = 1 } }
-					PREV = {
-						set_temp_variable = { treasury_change = project_monetary_cost_effect }
-						multiply_temp_variable = { treasury_change = 0.1 }
-						modify_treasury_effect = yes
-					}
+					PREV = { modify_treasury_effect = yes }
 				}
 				else = {
-					set_temp_variable = { treasury_change = PREV.project_monetary_cost_effect }
-					multiply_temp_variable = { treasury_change = 0.1 }
 					modify_treasury_effect = yes
 				}
 			}
@@ -480,15 +475,19 @@ precompute_state_construction_data = {
 calculate_project_duration = {
 	get_building_construction_values = yes
 
-	# local_state_modifier was pre-computed by precompute_state_construction_data
-	add_to_temp_variable = { construction_speed = local_state_modifier }
-
-	# receiving_investment_duration_temp was pre-computed by precompute_state_construction_data
-	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
-	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
 	# Duration modifiers are bad when positive, so they slow construction
-	subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
-	clamp_temp_variable = { var = construction_speed min = 0.05 }
+	set_temp_variable = {
+		construction_speed = {
+			value = construction_speed
+			add = local_state_modifier
+			subtract = {
+				value = receiving_investment_duration_temp
+				add = modifier@investment_duration_modifier
+				max = -1
+			}
+			max = 0.05
+		}
+	}
 
 	set_variable = { displayable_construction_modifier = construction_speed }
 
