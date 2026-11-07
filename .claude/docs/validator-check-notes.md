@@ -224,8 +224,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `decision-trigger-reads-temp-variable` (WARNING): `custom_cost_trigger`, `available`,
   or `visible` reads a name in a `check_variable` that the decision's effects set only
   with `*_temp_variable`. A name the trigger sets, or that any scripted trigger sets as
-  a temp variable, is exempt, since MD triggers such as `calculate_ai_interest` can set
-  one. Known gaps: a name set persistently elsewhere in the mod still counts as temp,
+  a temp variable, is exempt, since scripted triggers can calculate their own temps.
+  Known gaps: a name set persistently elsewhere in the mod still counts as temp,
   and a value read inside a math block is not seen.
 - `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
   reported by the same pass as `decision-log-not-first`.
@@ -527,6 +527,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `ai-weight-temp-variable` (WARNING): a temp-variable write inside `ai_will_do`,
+  `ai_chance`, or a scorer `score` block in `common/scorers/`. Follows scripted-trigger calls,
+  including nested and negated calls, and reports once per weight block. Does not
+  follow dynamically generated `meta_trigger` calls.
 - `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
   `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
   `max`. A bound that is a variable, an `@constant`, or an expression block is not
