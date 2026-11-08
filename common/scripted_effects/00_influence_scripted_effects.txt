@@ -76,21 +76,17 @@ sort_influence = {
 	clear_temp_array = influence_array_val_temp
 	clear_temp_array = influence_array_temp
 
-	clamp_temp_variable = { var = influence_total min = 0.01 }
-	set_temp_variable = { new_influence_scalar = { value = 100 divide = influence_total } }
+	set_temp_variable = { new_influence_scalar = { value = 100 divide = { value = influence_total max = 0.01 } } }
 
 	set_temp_variable = { foreign_sum = 0 }
 	for_each_loop = {
 		array = influence_array_val
 		value = v
 		index = i
-		multiply_variable = { influence_array_val^i = new_influence_scalar }
-		clamp_variable = { var = influence_array_val^i max = 100 min = 0 }
+		set_variable = { influence_array_val^i = { value = v multiply = new_influence_scalar clamp = { min = 0 max = 100 } } }
 		add_to_temp_variable = { foreign_sum = influence_array_val^i }
 	}
-	set_variable = { domestic_influence_amount = 100 }
-	subtract_from_variable = { domestic_influence_amount = foreign_sum }
-	clamp_variable = { var = domestic_influence_amount max = 100 min = 0 }
+	set_variable = { domestic_influence_amount = { value = 100 subtract = foreign_sum clamp = { min = 0 max = 100 } } }
 }
 
 # Effect: calculate_influence_percentage
@@ -278,17 +274,7 @@ manipulate_politics_action = {
 	# Base PP cost; special cases refund 50.
 	set_temp_variable = { manipulate_politics_pp_cost = -100 }
 
-	# Scale var_pop by the influencer's foreign influence mod minus the target's defense.
-	set_temp_variable = {
-		influence_defense_change = {
-			value = modifier@foreign_influence_defense_modifier
-			subtract = {
-				value = 1
-				add = ROOT.modifier@foreign_influence_modifier
-			}
-		}
-	}
-
+	# Scale var_pop by the influencer's foreign influence mod.
 	multiply_temp_variable = {
 		var = var_pop
 		value = {
@@ -574,14 +560,9 @@ automation_influence_attack_action = {
 automation_influence_daily = {
 	set_temp_variable = { automation_domestic_influence_fee_paid = 0 }
 	set_temp_variable = { automation_influence_attack_fee_paid = 0 }
+	set_temp_variable = { automation_available_pp = { value = political_power subtract = automation_pp_reserve } }
 	if = {
 		limit = { has_country_flag = automation_combat_foreign_influence }
-		set_temp_variable = {
-			automation_available_pp = {
-				value = political_power
-				subtract = automation_pp_reserve
-			}
-		}
 		if = {
 			limit = {
 				check_variable = {
@@ -591,17 +572,12 @@ automation_influence_daily = {
 				}
 			}
 			add_political_power = -0.05
+			subtract_from_temp_variable = { automation_available_pp = 0.05 }
 			set_temp_variable = { automation_domestic_influence_fee_paid = 1 }
 		}
 	}
 	if = {
 		limit = { has_country_flag = automation_attack_foreign_influencers }
-		set_temp_variable = {
-			automation_available_pp = {
-				value = political_power
-				subtract = automation_pp_reserve
-			}
-		}
 		if = {
 			limit = {
 				check_variable = {
@@ -680,14 +656,10 @@ redistribute_influence_pool = {
 		}
 	}
 
-	clamp_temp_variable = { var = influence_outlook_amount min = 0.01 }
-	set_temp_variable = { temp_total = { value = 100 subtract = held_value divide = influence_outlook_amount } }
+	set_temp_variable = { temp_total = { value = 100 subtract = held_value divide = { value = influence_outlook_amount max = 0.01 } } }
 
 	if = { limit = { check_variable = { scale_domestic = 1 } }
-		if = { limit = { check_variable = { domestic_influence_amount < 1 } }
-			set_variable = { domestic_influence_amount = 1 }
-		}
-		multiply_variable = { domestic_influence_amount = temp_total }
+		set_variable = { domestic_influence_amount = { value = domestic_influence_amount max = 1 multiply = temp_total } }
 	}
 	for_each_loop = {
 		array = influence_array_val
@@ -1149,10 +1121,10 @@ change_influence_percentage = {
 	}
 	set_temp_variable = { tg = tag_index }
 	set_temp_variable = { it = influence_target }
-	set_temp_variable = { itd = 0 }
 
 	# Debugging/Logging Handling  in the first section
 	if = { limit = { is_debug = yes }
+		var:influence_target = { set_temp_variable = { itd = domestic_influence_amount } }
 		log = "[GetDateText]: [ROOT.GetName]: DEBUG: Influence Change, Influencer: [?var:tg.GetName], Influencee: [?var:it.GetName], Influence Domestic Independence: [?itd]"
 	}
 
@@ -1165,7 +1137,6 @@ change_influence_percentage = {
 	else = {
 		# The realized gain is worked out outside hidden_effect so the tooltip line can show it
 		var:influence_target = {
-			set_temp_variable = { itd = THIS.domestic_influence_amount }
 			set_temp_variable = { influencer_index = -1 }
 
 			# Own break name: a 'break' left set by the caller would end this search early and duplicate the influencer
@@ -1195,24 +1166,16 @@ change_influence_percentage = {
 					}
 				}
 
-				set_temp_variable = { influence_defense_change = modifier@foreign_influence_defense_modifier }
-				subtract_from_temp_variable = { influence_change = influence_defense_change }
-
+				subtract_from_temp_variable = { influence_change = modifier@foreign_influence_defense_modifier }
 
 				apply_influence_special_modifiers = yes
 
-				add_to_temp_variable = { influence_change = 1 }
-				multiply_temp_variable = { percent_change = influence_change }
 				# One change gains 0.25 to 20 points; validate_scripted_params.py flags base values outside that range
-				clamp_temp_variable = { var = percent_change min = 0.25 max = 20 }
+				set_temp_variable = { percent_change = { value = influence_change add = 1 multiply = percent_change clamp = { min = 0.25 max = 20 } } }
 
-				# Cap the gain at the remaining headroom to 100% so the shown value matches the realized share.
-				set_temp_variable = { influence_headroom = 100 }
+				# Cap the gain at the headroom to 100% so the shown value matches; a new influencer's 100 is above the cap
 				if = { limit = { check_variable = { influencer_index > -1 } }
-					subtract_from_temp_variable = { influence_headroom = influence_array_val^influencer_index }
-				}
-				if = { limit = { check_variable = { percent_change > influence_headroom } }
-					set_temp_variable = { percent_change = influence_headroom }
+					set_temp_variable = { percent_change = { value = percent_change min = { value = 100 subtract = influence_array_val^influencer_index } } }
 				}
 			}
 		}
