@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import fnmatch
 import json
 import os
 import re
@@ -15,7 +16,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
-from itertools import chain
+from itertools import chain, islice
 from pathlib import Path
 from typing import (
     Any,
@@ -102,10 +103,10 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
     3: "socialism",
     4: "communist_state",
     5: "anarchist_communism",
-    6: "Conservative",
+    6: "reactionary",
     7: "Autocracy",
-    8: "Mod_Vilayat_e_Faqih",
-    9: "Vilayat_e_Faqih",
+    8: "moderate_shiite",
+    9: "hardline_shiite",
     10: "Kingdom",
     11: "Caliphate",
     12: "Neutral_Muslim_Brotherhood",
@@ -389,6 +390,16 @@ def compact_block(block_lines: List[str]) -> List[str]:
             compacted.append(line.rstrip())
 
     return compacted
+
+
+# A stock idea on_add/on_remove log; the id is whichever id group matched
+# (m.lastgroup). A hand-written message or a runtime [name] does not match.
+STOCK_IDEA_LOG_RE = re.compile(
+    r'(?P<prefix>\blog\s*=\s*"\[GetDateText\]: \[[\w.]+\]: )'
+    r"(?:Idea (?P<standard>[\w.-]+) (?:added|removed)"
+    r"|(?:add|remove)(?: idea)? (?P<legacy>[\w.-]+)"
+    r'|(?P<trailing>[\w.-]+) idea added)"'
+)
 
 
 def count_braces(text: str) -> Tuple[int, int]:
@@ -978,14 +989,7 @@ def _editor_settings_files() -> List[str]:
     mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
     vscode = os.path.join(mod_root, ".vscode")
     files = [os.path.join(vscode, "settings.json")]
-    try:
-        files.extend(
-            os.path.join(vscode, f)
-            for f in sorted(os.listdir(vscode))
-            if f.endswith(".code-workspace")
-        )
-    except OSError:
-        pass
+    files.extend(list_files(vscode, patterns=("*.code-workspace",), recursive=False))
     appdata = os.environ.get("APPDATA", "")
     files.extend(
         os.path.expanduser(p)
@@ -1073,15 +1077,7 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         return []
 
     out: List[Dict] = []
-    try:
-        filenames = sorted(os.listdir(tags_dir))
-    except OSError:
-        return out
-
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
-        fpath = os.path.join(tags_dir, fname)
+    for fpath in list_files(tags_dir, recursive=False):
         try:
             with open(fpath, "r", encoding="utf-8") as f:
                 text = re.sub(r"#.*", "", f.read())
@@ -1496,7 +1492,7 @@ def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
     """
     root = Path(mod_path) / "common" / "decisions" / "categories"
     names: Dict[str, str] = {}
-    for path in sorted(root.rglob("*.txt")):
+    for path in map(Path, list_files(root)):
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
         except OSError:
@@ -1712,10 +1708,45 @@ def collect_files_by_mode(
 
 
 def get_root_dir() -> str:
-    """Resolve the mod root directory (two levels up from tools/linting/)."""
-    return os.path.dirname(
-        os.path.dirname(os.path.dirname(os.path.realpath(sys.argv[0])))
-    )
+    """The checkout root that holds this tools/ directory."""
+    return os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+
+
+def find_mod_root(
+    start: str | os.PathLike[str], markers: Tuple[str, ...]
+) -> Optional[str]:
+    """The nearest of *start* and its parents that holds every *markers* directory."""
+    path = os.path.abspath(start)
+    while not all(os.path.isdir(os.path.join(path, marker)) for marker in markers):
+        parent = os.path.dirname(path)
+        if parent == path:
+            return None
+        path = parent
+    return path
+
+
+def list_files(
+    directory: str | os.PathLike[str],
+    patterns: Tuple[str, ...] = ("*.txt",),
+    recursive: bool = True,
+) -> List[str]:
+    """Sorted paths of the files in *directory* whose names match a pattern.
+
+    Subdirectories are searched only when *recursive*. Hidden files and
+    directories are skipped, as glob skips them. A missing directory gives an
+    empty list.
+    """
+    walk = os.walk(directory)
+    found: List[str] = []
+    for dirpath, dirnames, filenames in walk if recursive else islice(walk, 1):
+        dirnames[:] = [name for name in dirnames if not name.startswith(".")]
+        found.extend(
+            os.path.join(dirpath, name)
+            for name in filenames
+            if not name.startswith(".")
+            and any(fnmatch.fnmatch(name, pattern) for pattern in patterns)
+        )
+    return sorted(found)
 
 
 def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
@@ -1883,19 +1914,13 @@ def get_all_txt_files(
     include_interface: bool = False,
 ) -> List[str]:
     """Get all .txt files from relevant directories."""
-    import fnmatch
-
     if include_interface:
         directories = _DIRECTORIES_WITH_INTERFACE
-
-    files_list = []
-    for directory in directories:
-        dir_path = os.path.join(root_dir, directory)
-        if os.path.exists(dir_path):
-            for root, _, filenames in os.walk(dir_path):
-                for filename in fnmatch.filter(filenames, "*.txt"):
-                    files_list.append(os.path.join(root, filename))
-    return files_list
+    return [
+        path
+        for directory in directories
+        for path in list_files(os.path.join(root_dir, directory))
+    ]
 
 
 def get_staged_files(

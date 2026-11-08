@@ -52,6 +52,7 @@ from shared_utils import (
     iter_statement_ops,
     iter_statements,
     line_of,
+    list_files,
     read_script,
     read_text_strict,
     strip_comments,
@@ -60,12 +61,14 @@ from shared_utils import (
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validate_events import (
+    CostLookups,
+    EventPayments,
     ai_weight_cost_checks,
     building_payment_effects,
-    commits_money,
+    chooser_costs,
     effect_costs,
     load_cost_lookups,
-    possible_costs,
+    load_event_payments,
     unneeded_treasury_reason,
 )
 from validator_common import (
@@ -615,8 +618,8 @@ def _scan_activations_and_removals(
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
-    pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
-    for filename in glob.iglob(pattern):
+    loc_dir = os.path.join(mod_path, "common", "scripted_localisation")
+    for filename in list_files(loc_dir, recursive=False):
         if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
@@ -1000,11 +1003,10 @@ def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
 
 
 def _find_decision_file(mod_path: str, basename: str) -> str | None:
-    pattern = str(Path(mod_path) / "common" / "decisions" / "**" / "*.txt")
     return next(
         (
             filepath
-            for filepath in glob.iglob(pattern, recursive=True)
+            for filepath in list_files(Path(mod_path) / "common" / "decisions")
             if os.path.basename(filepath) == basename
         ),
         None,
@@ -1420,7 +1422,7 @@ def parse_all_decisions(
         decisions = []
         paths = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1492,7 +1494,7 @@ def parse_decision_categories(
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
@@ -1535,7 +1537,7 @@ def parse_categories_with_decisions(
 
         filepath = str(Path(mod_path) / "common" / "decisions")
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1756,19 +1758,24 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
-        self._cost_lookups: Optional[
-            Tuple[Dict[str, str], Dict[str, int], Set[str]]
-        ] = None
+        self._cost_lookups: Optional[CostLookups] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
         self._building_payments: Optional[Set[str]] = None
         if self.no_cache:
             _set_cache_enabled(False)
 
-    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int], Set[str]]:
+    def _get_cost_lookups(self) -> CostLookups:
         """load_cost_lookups, read once per run."""
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
         return self._cost_lookups
+
+    def _get_event_payments(self) -> EventPayments:
+        """load_event_payments, read once per run."""
+        return self.cached(
+            "event_payments",
+            lambda: load_event_payments(self, self._get_cost_lookups()),
+        )
 
     def _get_scripted_triggers(self) -> Dict[str, str]:
         """Body of every `common/scripted_triggers` definition, read once per run."""
@@ -1982,7 +1989,7 @@ class Validator(BaseValidator):
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
         found_files = False
-        for filename in glob.iglob(bop_path + "/**/*.txt", recursive=True):
+        for filename in list_files(bop_path):
             found_files = True
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -2781,7 +2788,7 @@ class Validator(BaseValidator):
 
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
-        for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
+        for filename in list_files(dec_filepath):
             if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
@@ -2995,7 +3002,7 @@ class Validator(BaseValidator):
             if not prefix or prefix.group(1) not in country_tags:
                 continue
             pins = _flat_tag_pins(d.allowed) or {
-                tag for _, tag in cat_pins.get(token_to_cat.get(d.token), set())
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
                 prefix_results.append(
@@ -3439,7 +3446,8 @@ class Validator(BaseValidator):
         """
 
         def scan():
-            effects, stored, commitments = self._get_cost_lookups()
+            lookups = self._get_cost_lookups()
+            effects, stored = lookups.effects, lookups.stored
             ignored_rows: List[Tuple[str, str, int]] = []
             unneeded_rows: List[Tuple[str, str, int]] = []
             for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
@@ -3470,12 +3478,18 @@ class Validator(BaseValidator):
 
                 if not lowering:
                     continue
-                costs = possible_costs(d.raw, effects, stored) | _custom_cost_claims(d)
-                if {d.cost, d.ai_hint_pp_cost} - {"", "0"}:
-                    costs.add("political power")
-                reason = unneeded_treasury_reason(
-                    lowering, costs, commits_money(d.raw, commitments), "decision"
+                kinds = chooser_costs(
+                    d.raw[d.raw.index("{") + 1 : d.raw.rindex("}")],
+                    lookups,
+                    self._get_event_payments(),
                 )
+                claims = _custom_cost_claims(d)
+                priced = {d.cost, d.ai_hint_pp_cost} - {"", "0"}
+                if "treasury" in claims:
+                    kinds.add("money")
+                if "political power" in claims or priced:
+                    kinds.add("political power")
+                reason = unneeded_treasury_reason(lowering, kinds, "decision")
                 if reason:
                     unneeded_rows.append(
                         (f"{d.token} - ai_will_do {reason}", d.source_path, d.line)
@@ -3506,9 +3520,9 @@ class Validator(BaseValidator):
         """Flag ai_will_do treasury checks for a cost the decision does not have.
 
         The inverse of validate_ai_will_do_ignores_cost, from the same pass.
-        Costs are what any effect block may charge (possible_costs), a custom
-        cost, and a `cost` or `ai_hint_pp_cost` price. The `modifier` block
-        counts toward commits_money. See validate_events.unneeded_treasury_reason.
+        Costs are what the decision may charge its own country
+        (validate_events.chooser_costs), a custom cost, and a `cost` or
+        `ai_hint_pp_cost` price. The `modifier` block can commit money.
         """
         self._log_section("Checking decisions for AI treasury checks with no cost...")
         self._report(
@@ -3532,7 +3546,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking custom costs are charged in complete_effect...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -3583,7 +3597,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for money charged after entry...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         buildings = self._get_building_payments()
         followed = {
             name: body for name, body in effects.items() if name not in buildings
@@ -3935,8 +3949,7 @@ class Validator(BaseValidator):
 
         extra_texts: Dict[str, str] = {}
         for parts in _COMMIT_SCAN_DIRS:
-            pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
-            for filename in glob.iglob(pattern, recursive=True):
+            for filename in list_files(os.path.join(self.mod_path, *parts)):
                 if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
