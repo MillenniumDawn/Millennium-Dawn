@@ -116,13 +116,19 @@ ai_acceptance = {
 	}
 	condition_three = {
 		base = 0
-		modifier = {
-			check_opinion_calculation = yes
-			add = opinion_calculator
-		}
+		modifier = { add = 3 has_opinion = { target = ROOT value > 25 } }
+		modifier = { add = 3 has_opinion = { target = ROOT value > 50 } }
+		modifier = { add = 4 has_opinion = { target = ROOT value > 75 } }
+		modifier = { add = -3 has_opinion = { target = ROOT value < -25 } }
+		modifier = { add = -3 has_opinion = { target = ROOT value < -50 } }
+		modifier = { add = -4 has_opinion = { target = ROOT value < -75 } }
 	}
 }
 ```
+
+Write computed terms as threshold steps, not temp-variable math (see "Math in weight
+blocks" in `hoi4-data-structures.md`). Opinion runs from -100 to 100, so `value > 99` is
+the top band and a higher threshold never fires.
 
 ### Mirror rule
 
@@ -163,6 +169,10 @@ ai_desire = {
 	modifier = { factor = 0  ROOT = { has_war = yes } }
 }
 ```
+
+The engine will not send an action the sender cannot pay `cost` for, so do not weigh
+`has_political_power`. Weigh a cost with
+`modifier = { factor = 0.25 ROOT = { has_active_mission = bankruptcy_incoming_collapse } }`.
 
 ## Common `selectable` checks
 
