@@ -614,32 +614,55 @@ def _invalid_tags(issues):
     return [m for c, m in issues if c == "invalid-influence-tag"]
 
 
+_ADD_TO_GAIN = "        add_to_temp_variable = { percent_change = 0.1 }\n"
+_FILLER = "        add_political_power = 1\n" * 20
+
+
+# gain: (percent_change set, statements between the set and the call, gain findings)
 @pytest.mark.parametrize(
-    "value,expected",
+    "value,between,expected",
     [
-        ("20", []),
-        ("20.5", ["influence-gain-over-cap"]),
-        ("33", ["influence-gain-over-cap"]),
-        ("0.25", []),
-        ("0.2", ["influence-gain-under-floor"]),
-        ("-50", []),
-        ("global.percent_change_value", []),
+        ("20", "", []),
+        ("20.5", "", ["influence-gain-over-cap"]),
+        ("0.25", "", []),
+        ("0.2", "", ["influence-gain-under-floor"]),
+        ("-50", "", []),
+        ("global.percent_change_value", "", []),
+        pytest.param("5", _ADD_TO_GAIN, [], id="add_to is not the base"),
+        pytest.param(
+            "25",
+            "        add_to_temp_variable = {\n            percent_change = 1\n        }\n",
+            ["influence-gain-over-cap"],
+            id="a multi-line add_to leaves the set base",
+        ),
+        pytest.param("25", _FILLER, [], id="set beyond the 20-line window"),
     ],
 )
 def test_influence_gain_outside_range_is_flagged(
-    tmp_path, cip_contract, value, expected
+    tmp_path, cip_contract, value, between, expected
 ):
     """Literal base gains above 20 or below 0.25 are flagged; losses and variables are not."""
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
         f"        set_temp_variable = {{ percent_change = {value} }}\n"
+        f"{between}"
         "        change_influence_percentage = yes\n"
         "    }\n"
         "}\n"
     )
     issues = _issues(body, cip_contract, tmp_path)
     assert [c for c, _ in issues if c.startswith("influence-gain-")] == expected
+
+
+def _partner_call(wrapper):
+    return (
+        "        CHI = {\n"
+        f"            {wrapper} = {{\n"
+        "                change_influence_percentage = yes\n"
+        "            }\n"
+        "        }\n"
+    )
 
 
 @pytest.mark.parametrize(
@@ -686,6 +709,32 @@ def test_influence_gain_outside_range_is_flagged(
             "        }\n",
             False,
             id="a scope change inside the partner block",
+        ),
+        pytest.param(_partner_call("else_if"), True, id="an else_if keeps its scope"),
+        pytest.param(
+            _partner_call("hidden_effect"), True, id="a hidden_effect keeps its scope"
+        ),
+        pytest.param(
+            _partner_call("effect_tooltip"),
+            True,
+            id="an effect_tooltip keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("for_each_loop"), True, id="a for_each_loop keeps its scope"
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            random_list = {\n"
+            "                50 = {\n"
+            "                    change_influence_percentage = yes\n"
+            "                }\n"
+            "            }\n"
+            "        }\n",
+            True,
+            id="a random_list weight block keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("123"), False, id="a state block outside random_list"
         ),
     ],
 )

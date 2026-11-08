@@ -146,10 +146,10 @@ class Scanner:
         self.findings.append(
             (
                 line,
-                f"change_influence_percentage = yes runs inside {missing} without a "
-                f"per-iteration influence_target; temp variables persist across "
-                f"iterations, so every pass after the first re-targets the first "
-                f"iterated country",
+                f"change_influence_percentage = yes runs inside {missing} without "
+                f"setting influence_target on every pass; a value left from before "
+                f"the loop or an earlier pass carries into this one, so set it "
+                f"inside the loop before the call",
             )
         )
 

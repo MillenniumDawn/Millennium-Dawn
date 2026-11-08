@@ -1,9 +1,10 @@
 """Tests for validate_influence_calls.
 
 `change_influence_percentage` defaults `influence_target` only when the temp
-variable is 0, and temp variables persist across `every_*` iterations, so a loop
-call without a per-iteration set locks onto the first iterated country
-(issue #4592: Spain's Hispanidad focus stacked ~20 passes onto Mexico).
+variable is 0, and the effect restores the caller's value afterward. A loop call
+that does not set the target on every pass reuses whatever the caller left from
+before the loop or an earlier pass (issue #4592: Spain's Hispanidad focus stacked
+~20 passes onto Mexico, before the effect restored its inputs).
 """
 
 import pytest

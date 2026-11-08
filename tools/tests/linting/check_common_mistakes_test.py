@@ -2854,6 +2854,12 @@ _EXPECTED = {
             "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
         )
     ],
+    "investment treaty opinion outside its effect": [
+        (
+            1,
+            "mutual_investment_treaty_opinion belongs to the shared effects in common/scripted_effects/00_economic_effects.txt -- call set_mutual_investment_treaty instead",
+        )
+    ],
 }
 
 
@@ -3398,6 +3404,13 @@ _EXACT_CASES = [
         "war support 15",
         _check_stat_effect_magnitude,
         ["\tadd_war_support = 15\n"],
+    ),
+    _exact(
+        "investment treaty opinion outside its effect",
+        _check_trade_modifier_outside_shared_effects,
+        [
+            "\tadd_opinion_modifier = { target = SER modifier = mutual_investment_treaty_opinion }\n"
+        ],
     ),
 ]
 

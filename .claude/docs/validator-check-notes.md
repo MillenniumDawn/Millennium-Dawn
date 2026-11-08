@@ -863,9 +863,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   uncontracted mixed lines as WARNING.
 - `influence-gain-over-cap` and `influence-gain-under-floor` (WARNING): a literal
   `percent_change` above 20, or above 0 and below 0.25, visible at a
-  `change_influence_percentage` call. The effect clamps every gain to 0.25 through 20 after
-  the influence modifiers, so the literal never applies as written. Losses, variables,
-  and expressions are not checked.
+  `change_influence_percentage` call. The base is the last
+  `set_temp_variable = { percent_change = N }` in scope within 20 lines of the call.
+  Losses, variables, and expressions are not checked. Known gaps: `add_to`,
+  `subtract_from`, `multiply`, and `divide` after the set are not applied to the base,
+  and the effect clamps the base times its influence modifiers, so a flagged literal can
+  still land in range and an unflagged one can land outside it.
 - `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
   scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
   The target defaults to THIS, so the tag influences itself. Only a tag block counts;

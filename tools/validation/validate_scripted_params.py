@@ -195,7 +195,7 @@ def _unreadable(filepath: str, mod_path: str, exc: Exception) -> str:
 
 
 # Blocks that keep THIS, so a call inside them runs in the enclosing scope
-_SAME_SCOPE_BLOCKS = {
+_KEEP_THIS_BLOCKS = {
     "if",
     "else_if",
     "else",
@@ -203,13 +203,20 @@ _SAME_SCOPE_BLOCKS = {
     "effect_tooltip",
     "random",
     "random_list",
+    "for_each_loop",
+    "for_loop_effect",
+    "while_loop_effect",
 }
 
 
 def _enclosing_tag(open_blocks: List[str], valid_tags: "frozenset[str]") -> str:
     """Return the tag of the innermost scope block around a call, or "" for any other scope."""
-    for name in reversed(open_blocks):
-        if name in _SAME_SCOPE_BLOCKS or name.isdigit():
+    for index in range(len(open_blocks) - 1, -1, -1):
+        name = open_blocks[index]
+        if name in _KEEP_THIS_BLOCKS:
+            continue
+        # A number is a weight block under random_list, but a state scope anywhere else.
+        if name.isdigit() and index and open_blocks[index - 1] == "random_list":
             continue
         return name if name in valid_tags else ""
     return ""
@@ -442,7 +449,7 @@ def _normalize_multiline_set_temp(text: str) -> str:
     """Collapse multi-line temp-variable writes without changing line numbers."""
     normalized = []
     cursor = 0
-    pattern = re.compile(r"\b" + _TEMP_WRITERS + r"\s*=\s*\{")
+    pattern = re.compile(r"\b(" + _TEMP_WRITERS + r")\s*=\s*\{")
     target = re.compile(r"\s*" + _TEMP_TARGET)
 
     while match := pattern.search(text, cursor):
@@ -467,7 +474,7 @@ def _normalize_multiline_set_temp(text: str) -> str:
             continue
 
         normalized.append(text[cursor : match.start()])
-        normalized.append(f"set_temp_variable = {{ {name_match.group(1)} = 0 }}")
+        normalized.append(f"{match.group(1)} = {{ {name_match.group(1)} = 0 }}")
         normalized.append("\n" * text[match.start() : block_end].count("\n"))
         cursor = block_end
 
@@ -480,6 +487,7 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
 
     Each token is (kind, line_number, value, rhs):
       "set_temp"   — set_temp_variable = { NAME = RHS }  (value=NAME, rhs=RHS)
+      "add_temp"   — add_to/subtract_from_temp_variable  (value=NAME, rhs=RHS)
       "call"       — NAME = yes                           (value=NAME, rhs="")
       "scope_open" — NAME = { (scope-changing or effect)  (value=NAME, rhs="")
       "plain_open" — NAME = { (any other block)           (value=NAME, rhs="")
@@ -498,8 +506,13 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     for lineno, raw in enumerate(lines, start=1):
         line_tokens = []
         for m in _SET_TEMP_RE.finditer(raw):
+            kind = (
+                "add_temp"
+                if m.group().startswith(("add_to", "subtract_from"))
+                else "set_temp"
+            )
             line_tokens.append(
-                (m.start(), 0, ("set_temp", lineno, m.group(1), m.group(2).strip()))
+                (m.start(), 0, (kind, lineno, m.group(1), m.group(2).strip()))
             )
         for m in _KW_OPEN_RE.finditer(raw):
             kw = m.group(1)
@@ -707,7 +720,7 @@ def _validate_call_sites_in_file(
             if open_blocks:
                 open_blocks.pop()
 
-        elif kind == "set_temp":
+        elif kind in ("set_temp", "add_temp"):
             # Record in the current frame. Track both the line and the RHS
             # value: the line is used for the existing missing-param check,
             # and the RHS powers the identical-params check for
@@ -717,6 +730,9 @@ def _validate_call_sites_in_file(
                 "value": rhs,
                 "scope_depth": len(stack),
             }
+            # Only a plain set gives the gain check a base it can read.
+            if kind == "set_temp" and value == "percent_change":
+                stack[-1]["gain"] = stack[-1]["temps"][value]
 
             # Tag-validity check: an influencer/influencee written as a literal
             # that is neither a real tag nor an alias is a silent typo (resolves
@@ -797,8 +813,14 @@ def _validate_call_sites_in_file(
             # call N).  Values are normalized so "USA"/"USA.id" and the other
             # .id variants compare equal.
             if value == "change_influence_percentage":
-                gain = visible.get("percent_change")
-                if gain and _NUMERIC_RE.fullmatch(gain["value"]):
+                gain = None
+                for frame in stack:
+                    gain = frame.get("gain", gain)
+                if (
+                    gain
+                    and _NUMERIC_RE.fullmatch(gain["value"])
+                    and abs(lineno - gain["line"]) <= 20
+                ):
                     base = float(gain["value"])
                     out_of_range = None
                     if base > _INFLUENCE_GAIN_CAP:
