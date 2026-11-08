@@ -16685,7 +16685,10 @@ UKR_reactivate_sov_category = {
 				check_variable = { UKR_storage_selected_row = 31 }
 				check_variable = { UKR_storage_selected_row = 33 }
 			}
-			check_variable = { UKR_storage_total_3 > 0 }
+			OR = {
+				check_variable = { ukraine_has_2k11_stockpile > 0 }
+				check_variable = { ukraine_has_s125_stockpile > 0 }
+			}
 			NOT = { has_country_flag = UKR_storage_sams_kept_flag }
 		}
 
@@ -18231,6 +18234,78 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	UKR_retire_su15_mission = {
+		icon = GFX_decision_jet_aircraft
+		activation = { always = no }
+		available = { UKR_retire_su15_stock_ready = yes }
+		days_mission_timeout = 30
+		days_remove = 1
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_su15_mission completed"
+			UKR_retire_su15_to_storage = yes
+			custom_effect_tooltip = UKR_retire_su15_mission_stored_tt
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_su15_mission timed out"
+			if = {
+				limit = { UKR_retire_su15_stock_ready = yes }
+				UKR_retire_su15_to_storage = yes
+				custom_effect_tooltip = UKR_retire_su15_mission_stored_tt
+			}
+			else = { custom_effect_tooltip = UKR_legacy_aircraft_retirement_lapsed_tt }
+		}
+	}
+
+	UKR_retire_mig23_mission = {
+		icon = GFX_decision_jet_aircraft
+		activation = { always = no }
+		available = { UKR_retire_mig23_stock_ready = yes }
+		days_mission_timeout = 30
+		days_remove = 1
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_mig23_mission completed"
+			UKR_retire_mig23_to_storage = yes
+			custom_effect_tooltip = UKR_retire_mig23_mission_stored_tt
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_mig23_mission timed out"
+			if = {
+				limit = { UKR_retire_mig23_stock_ready = yes }
+				UKR_retire_mig23_to_storage = yes
+				custom_effect_tooltip = UKR_retire_mig23_mission_stored_tt
+			}
+			else = { custom_effect_tooltip = UKR_legacy_aircraft_retirement_lapsed_tt }
+		}
+	}
+
+	UKR_retire_su17_mission = {
+		icon = GFX_decision_jet_aircraft
+		activation = { always = no }
+		available = { UKR_retire_su17_stock_ready = yes }
+		days_mission_timeout = 30
+		days_remove = 1
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_su17_mission completed"
+			UKR_retire_su17_to_storage = yes
+			custom_effect_tooltip = UKR_retire_su17_mission_stored_tt
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_retire_su17_mission timed out"
+			if = {
+				limit = { UKR_retire_su17_stock_ready = yes }
+				UKR_retire_su17_to_storage = yes
+				custom_effect_tooltip = UKR_retire_su17_mission_stored_tt
+			}
+			else = { custom_effect_tooltip = UKR_legacy_aircraft_retirement_lapsed_tt }
+		}
+	}
+
 	ukr_modernize_sov_equipment_combat_aircraft_upkeep = {
 		icon = jet_aircraft
 		ai_will_do = {
@@ -18251,6 +18326,8 @@ UKR_reactivate_sov_category = {
 				check_variable = { UKR_storage_selected_row = 62 }
 				check_variable = { UKR_storage_selected_row = 63 }
 				check_variable = { UKR_storage_selected_row = 64 }
+				check_variable = { UKR_storage_selected_row = 65 }
+				check_variable = { UKR_storage_selected_row = 66 }
 			}
 			check_variable = { UKR_storage_total_6 > 0 }
 			NOT = { has_country_flag = UKR_storage_combat_aircraft_kept_flag }
@@ -18280,6 +18357,73 @@ UKR_reactivate_sov_category = {
 
 			set_country_flag = { flag = UKR_storage_combat_aircraft_kept_flag days = 1825 value = 1 }
 			custom_effect_tooltip = UKR_storage_combat_aircraft_kept_tt
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig21_croatia_overhaul = {
+		icon = GFX_decision_jet_aircraft
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 6 }
+				check_variable = { UKR_storage_selected_row = 65 }
+			}
+			date > 2013.4.1
+			date < 2014.1.1
+			country_exists = CRO
+			check_variable = { ukraine_has_mig21_stockpile > 4 }
+			NOT = { has_country_flag = UKR_mig21_croatia_completed }
+		}
+		available = {
+			controls_state = 695
+			NOT = { has_war_with = CRO }
+			NOT = { has_country_flag = UKR_mig21_croatia_open }
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_combat_aircraft_maintenance_required_tt
+				has_country_flag = UKR_storage_combat_aircraft_kept_flag
+			}
+		}
+		ai_will_do = { base = 8 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig21_croatia_overhaul"
+			set_country_flag = UKR_mig21_croatia_open
+			set_variable = { UKR_mig21_croatia_price = 0.014 }
+			CRO = { country_event = ukraine_croatian_mig21.1 }
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig21_croatia_upgrade = {
+		icon = GFX_decision_jet_aircraft
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 6 }
+				check_variable = { UKR_storage_selected_row = 65 }
+			}
+			date > 2013.4.1
+			date < 2014.1.1
+			country_exists = CRO
+			check_variable = { ukraine_has_mig21_stockpile > 4 }
+			NOT = { has_country_flag = UKR_mig21_croatia_completed }
+		}
+		available = {
+			controls_state = 695
+			NOT = { has_war_with = CRO }
+			NOT = { has_country_flag = UKR_mig21_croatia_open }
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_combat_aircraft_maintenance_required_tt
+				has_country_flag = UKR_storage_combat_aircraft_kept_flag
+			}
+		}
+		ai_will_do = { base = 3 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig21_croatia_upgrade"
+			set_country_flag = UKR_mig21_croatia_open
+			set_variable = { UKR_mig21_croatia_price = 0.024 }
+			set_country_flag = UKR_mig21_croatia_upgraded
+			CRO = { country_event = ukraine_croatian_mig21.1 }
 		}
 	}
 
@@ -18427,6 +18571,7 @@ UKR_reactivate_sov_category = {
 			# 10 million plus up to 10 million more, depending on how many are still stored
 			set_temp_variable = { treasury_change = ukraine_has_mig23_stockpile }
 			divide_temp_variable = { treasury_change = 100 }
+			clamp_temp_variable = { var = treasury_change max = 1 }
 			add_to_temp_variable = { treasury_change = 1 }
 			multiply_temp_variable = { treasury_change = -0.01 }
 			modify_treasury_effect = yes
@@ -18526,7 +18671,7 @@ UKR_reactivate_sov_category = {
 				check_variable = { UKR_storage_selected_row = 63 }
 			}
 			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_scrap_done_flag }
-			check_variable = { ukraine_has_mig25_stockpile > 0 }
+			check_variable = { UKR_storage_mig25_total > 0 }
 			OR = {
 				date > 2006.01.01
 				AND = {
@@ -18566,14 +18711,16 @@ UKR_reactivate_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig25_scrap"
 
 			# 10 million plus up to 10 million more, depending on how many are still stored
-			set_temp_variable = { treasury_change = ukraine_has_mig25_stockpile }
-			divide_temp_variable = { treasury_change = 12 }
+			set_temp_variable = { treasury_change = UKR_storage_mig25_total }
+			divide_temp_variable = { treasury_change = 28 }
+			clamp_temp_variable = { var = treasury_change max = 1 }
 			add_to_temp_variable = { treasury_change = 1 }
 			multiply_temp_variable = { treasury_change = -0.01 }
 			modify_treasury_effect = yes
 
 			hidden_effect = {
 				set_variable = { ukraine_has_mig25_stockpile = 0 }
+				set_variable = { ukraine_has_mig25rb_stockpile = 0 }
 				UKR_storage_refresh = yes
 			}
 		}
@@ -18684,6 +18831,7 @@ UKR_reactivate_sov_category = {
 			# 10 million plus up to 10 million more, depending on how many are still stored
 			set_temp_variable = { treasury_change = ukraine_has_su17_stockpile }
 			divide_temp_variable = { treasury_change = 74 }
+			clamp_temp_variable = { var = treasury_change max = 1 }
 			add_to_temp_variable = { treasury_change = 1 }
 			multiply_temp_variable = { treasury_change = -0.01 }
 			modify_treasury_effect = yes
@@ -18691,6 +18839,7 @@ UKR_reactivate_sov_category = {
 			hidden_effect = {
 				set_variable = { ukraine_has_su17m2_stockpile = 0 }
 				set_variable = { ukraine_has_su17m4_stockpile = 0 }
+				set_variable = { ukraine_has_su17m4r_stockpile = 0 }
 				UKR_storage_refresh = yes
 			}
 		}
@@ -22616,7 +22765,6 @@ UKR_develop_domestic_category = {
 		icon = GFX_decision_icon_UKR_develop_domestic_yatahan
 		activation = { always = no }
 		available = { UKR_yatahan_turkey_tender_ready = yes }
-		ai_will_do = { base = 100 }
 		days_mission_timeout = 120
 		days_remove = 1
 		is_good = yes
