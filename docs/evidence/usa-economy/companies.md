@@ -26,6 +26,8 @@ The permanent budget counts every beneficial source contribution, including mutu
 - Economic warnings and disruptions offer a funded relief response or private adjustment with a stability cost. These choices retain the existing outcome flags and unlocks.
 - Each popularity call sets its beneficiary and outlook increment, then resets the optional outlook parameter. Court cases record resolution when delivered, and company events check their existing mutually exclusive outcomes.
 
+The opening Visio, AOL, Microsoft antitrust, Datapoint, and Mac OS X events use the same policy and support budgets. Private mergers and the Microsoft settlement no longer grant free factories or a national economic-cycle upgrade. A recorded Microsoft review prevents repeat rewards, and an early conduct settlement prevents a second verdict in the later remedy event.
+
 ## Corporate History modes
 
 Full mode presents the authored choices. Outcomes Only retains the historical permanent payload through the same guarded effects and omits one-time rewards. Off schedules no optional corporate milestones. The crisis lifecycle is handled separately by the next PR.
