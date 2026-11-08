@@ -156,6 +156,11 @@
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
+	-- Market AI
+	NDefines.NAI.EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.10 -- 0.1
+	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
+	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
+
 	-- Raid AI
 	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.12 -- 0.65 -- Scaled by 0.10 more for some reason
 	NDefines.NAI.RAIDS_CREATE_FREQUENCY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
@@ -166,10 +171,7 @@
 	NDefines.NAI.RAIDS_NUKE_TARGET_CUT_OFF = 10 -- 10
 	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
 	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
-	-- Market AI
-	NDefines.NAI.EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
-	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
-	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
+
 	-- NCountry Releated Defines
 	NDefines.NCountry.AIR_SUPPLY_CONVERSION_SCALE = 0.1 -- 0.01
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
@@ -194,7 +196,7 @@
 	NDefines.NCountry.INDUSTRY_SCORE_MULTIPLIER = 0 -- 1.0
 	NDefines.NCountry.PROVINCE_SCORE_MULTIPLIER = 0 -- 0.1
 	NDefines.NCountry.MAJOR_IC_RATIO = 3                            -- difference in total factories needed to be considered major with respect to other nation
-	NDefines.NCountry.MAJOR_MIN_FACTORIES = 35						-- need at least these many factories to become a major
+	NDefines.NCountry.MAJOR_MIN_FACTORIES = 50						-- need at least these many factories to become a major
 	NDefines.NCountry.MIN_MAJOR_COUNTRIES	= 8						-- MIN_MAJOR_COUNTRIES countries with most factories will be considered as major countries
 	NDefines.NCountry.ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO = 0.7		-- Countries will also be considered major when having more factories that the average of top MIN_MAJOR_COUNTRIES countries' factories times ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO
 	NDefines.NCountry.MAX_INTELLIGENCE_MILITARY_DATA_DEVIATION = 0.5
@@ -210,12 +212,19 @@
 	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 250.0                       -- base value for maximum command power -- 200 in vanilla
 	NDefines.NCountry.AIR_VOLUNTEER_PLANES_RATIO = 0.25				-- Ratio for volunteer planes available for sending in relation to sender air force
 	NDefines.NCountry.AIR_VOLUNTEER_BASES_CAPACITY_LIMIT = 0.2		-- Ratio for volunteer planes available for sending in relation to receiver air base capacity
+
+	-- Fuel base defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 16						-- base amount of fuel gained hourly per excess oil
 	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
-	NDefines.NCountry.BASE_FUEL_CAPACITY = 750000
+	NDefines.NCountry.BASE_FUEL_CAPACITY = 1000000
+
+	-- Political Power Defines
 	NDefines.NCountry.POLITICAL_POWER_LOWER_CAP = -300
 	NDefines.NCountry.POLITICAL_POWER_UPPER_CAP = 2500
+	NDefines.NPolitics.BASE_POLITICAL_POWER_INCREASE = 2.5 -- Was 2  but gives a slight boost for better gameplay loop
+	NDefines.NAI.MIN_POLITICAL_POWER_MONTHLY_GAIN_FOR_IMPROVE_RELATIONS = 3.0 -- AI should not use improve relations until theres a reason to use them or they have a ton spare
+
 	NDefines.NCountry.FEMALE_UNIT_LEADER_BASE_CHANCE = {
 		-- applies as a factor to female unit leader randomization
 		-- the values needs to be zero if you don't actually have random portraits
@@ -1193,8 +1202,9 @@
 		100, -- NAVAL INVASION SUPPORT
 	}
 
+	-- Military Industrial Organisation (MIO)
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.025					-- 0.1
-	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.05		-- 0
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.025		-- 0
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 700
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
