@@ -706,42 +706,49 @@ def test_influence_target_defaulting_to_the_influencer_is_flagged(
     assert any(c == "influence-self-default" for c, _ in issues) is flagged
 
 
-def test_influence_target_defaulting_to_the_influencer_reports_an_error(tmp_path):
-    _write(tmp_path / "common" / "country_tags" / "00_countries.txt", 'CHI = "x"\n')
-    _write(
-        tmp_path / "events" / "caller.txt",
-        "option = {\n"
-        "\tset_temp_variable = { percent_change = 2 }\n"
-        "\tset_temp_variable = { tag_index = CHI.id }\n"
-        "\tCHI = {\n"
-        "\t\tchange_influence_percentage = yes\n"
-        "\t}\n"
-        "}\n",
-    )
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    assert [
-        (issue.category, issue.severity, issue.line) for issue in validator._issues
-    ] == [("influence-self-default", vsp.Severity.ERROR, 5)]
-
-
-@pytest.mark.parametrize(
-    "value,category",
-    [("25", "influence-gain-over-cap"), ("0.2", "influence-gain-under-floor")],
-)
-def test_influence_gain_outside_range_reports_a_warning(tmp_path, value, category):
-    _write(
-        tmp_path / "events" / "caller.txt",
+def _gain_caller(value):
+    return (
         "option = {\n"
         f"\tset_temp_variable = {{ percent_change = {value} }}\n"
         "\tchange_influence_percentage = yes\n"
-        "}\n",
+        "}\n"
     )
+
+
+@pytest.mark.parametrize(
+    "caller,expected",
+    [
+        pytest.param(
+            "option = {\n"
+            "\tset_temp_variable = { percent_change = 2 }\n"
+            "\tset_temp_variable = { tag_index = CHI.id }\n"
+            "\tCHI = {\n"
+            "\t\tchange_influence_percentage = yes\n"
+            "\t}\n"
+            "}\n",
+            ("influence-self-default", vsp.Severity.ERROR, 5),
+            id="self-default",
+        ),
+        pytest.param(
+            _gain_caller("25"),
+            ("influence-gain-over-cap", vsp.Severity.WARNING, 3),
+            id="over cap",
+        ),
+        pytest.param(
+            _gain_caller("0.2"),
+            ("influence-gain-under-floor", vsp.Severity.WARNING, 3),
+            id="under floor",
+        ),
+    ],
+)
+def test_influence_checks_report_their_severity(tmp_path, caller, expected):
+    _write(tmp_path / "common" / "country_tags" / "00_countries.txt", 'CHI = "x"\n')
+    _write(tmp_path / "events" / "caller.txt", caller)
     validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
     validator.run_validations()
     assert [
         (issue.category, issue.severity, issue.line) for issue in validator._issues
-    ] == [(category, vsp.Severity.WARNING, 3)]
+    ] == [expected]
 
 
 @pytest.mark.parametrize("value", ["CHI", "CHI.id", "USA", "USA.ID"])
