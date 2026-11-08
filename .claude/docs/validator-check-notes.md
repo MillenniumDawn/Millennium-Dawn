@@ -865,7 +865,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `percent_change` above 20, or above 0 and below 0.25, visible at a
   `change_influence_percentage` call. The effect clamps every gain to 0.25 through 20 after
   the influence modifiers, so the literal never applies as written. Losses, variables,
-  and expressions are not checked. Advisory while the over-cap backlog is worked down.
+  and expressions are not checked.
 - `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
   scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
   The target defaults to THIS, so the tag influences itself. Only a tag block counts;
