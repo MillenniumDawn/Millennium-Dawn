@@ -2384,7 +2384,7 @@ USA_corporate_history_2007 = {
 USA_corporate_history_2008 = {
 	if = {
 		limit = { NOT = { has_country_flag = collapsed_nation } }
-		USA_aig_milestone_2008 = yes
+
 		USA_microsoft_milestone_2008 = yes
 		USA_apple_milestone_2008 = yes
 		USA_ti_milestone_2008 = yes
@@ -2679,12 +2679,7 @@ USA_palantir_milestone_2025 = {
 # a weighted monthly draw (usa_economic_events.warning and its Economic Rumors chain) that
 # often lands after any fixed day of year, and an event whose trigger fails on arrival is
 # discarded rather than retried.
-USA_aig_milestone_2008 = {
-	if = {
-		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
-		set_country_flag = USA_aig_outcome_taxpayer_vindication
-	}
-}
+
 
 USA_microsoft_milestone_2002 = {
 	if = {
@@ -7715,5 +7710,177 @@ USA_company_milestone_475_2 = {
 		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = us_economic_policies }
 		add_to_variable = { econ_factory_output = 0.00192 tooltip = industrial_capacity_factory_tt }
 		set_country_flag = USA_microsoft_sun_separate_procurement
+	}
+}
+
+USA_queue_crisis_downturn = {
+	if = {
+		limit = {
+			NOT = { has_country_flag = USA_crisis_downturn_queued }
+			NOT = { has_country_flag = USA_american_recession_occurred }
+			OR = { has_country_flag = usa_nationalize_one has_country_flag = usa_bailout_one has_country_flag = usa_nothing_one }
+			OR = { has_country_flag = usa_nationalize_two has_country_flag = usa_bailout_two has_country_flag = usa_nothing_two }
+			OR = { has_country_flag = usa_nationalize_three has_country_flag = usa_bailout_three has_country_flag = usa_nothing_three }
+			OR = { has_country_flag = USA_aig_equity_stake has_country_flag = USA_aig_creditor_only has_country_flag = USA_aig_consortium_succeeded has_country_flag = USA_aig_no_bailout }
+		}
+		set_country_flag = USA_crisis_downturn_queued
+		country_event = { id = usa_economic_events.5 days = 1 }
+	}
+}
+
+USA_aig_initial_equity_intervention = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_aig_equity_stake
+					has_country_flag = USA_aig_creditor_only
+					has_country_flag = USA_aig_consortium_succeeded
+					has_country_flag = USA_aig_no_bailout
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -40 }
+		modify_treasury_effect = yes
+		add_political_power = -25
+		add_stability = 0.01
+		set_country_flag = USA_aig_rescue_active
+		set_country_flag = USA_aig_equity_stake
+		set_country_flag = usa_nationalize_four
+		USA_queue_crisis_downturn = yes
+	}
+}
+
+USA_aig_initial_creditor_intervention = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_aig_equity_stake
+					has_country_flag = USA_aig_creditor_only
+					has_country_flag = USA_aig_consortium_succeeded
+					has_country_flag = USA_aig_no_bailout
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -40 }
+		modify_treasury_effect = yes
+		add_political_power = 25
+		set_country_flag = USA_aig_rescue_active
+		set_country_flag = USA_aig_creditor_only
+		set_country_flag = usa_bailout_four
+		USA_queue_crisis_downturn = yes
+	}
+}
+
+USA_aig_initial_private_intervention = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_aig_equity_stake
+					has_country_flag = USA_aig_creditor_only
+					has_country_flag = USA_aig_consortium_succeeded
+					has_country_flag = USA_aig_no_bailout
+				}
+			}
+		}
+		set_country_flag = USA_aig_rescue_active
+		set_country_flag = USA_aig_consortium_succeeded
+		set_country_flag = usa_bailout_four
+		USA_queue_crisis_downturn = yes
+	}
+}
+
+USA_aig_initial_nonintervention = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_country_flag = USA_aig_equity_stake
+					has_country_flag = USA_aig_creditor_only
+					has_country_flag = USA_aig_consortium_succeeded
+					has_country_flag = USA_aig_no_bailout
+				}
+			}
+		}
+		add_stability = -0.03
+		set_country_flag = USA_aig_no_bailout
+		set_country_flag = usa_nothing_four
+		USA_queue_crisis_downturn = yes
+	}
+}
+
+USA_apply_crisis_severity = {
+	set_temp_variable = {
+		USA_crisis_risk = { value = 100 subtract = USA_economic_regulation_var add = USA_strength_of_wall_street_var }
+	}
+	if = {
+		limit = { has_global_flag = USA_iraqi_energy_crisis }
+		add_to_temp_variable = { USA_crisis_risk = 10 }
+	}
+	if = {
+		limit = { has_country_flag = usa_nationalize_one }
+		subtract_from_temp_variable = { USA_crisis_risk = 10 }
+	}
+	else_if = {
+		limit = { has_country_flag = usa_bailout_one }
+		subtract_from_temp_variable = { USA_crisis_risk = 5 }
+	}
+	if = {
+		limit = { has_country_flag = usa_nationalize_two }
+		subtract_from_temp_variable = { USA_crisis_risk = 10 }
+	}
+	else_if = {
+		limit = { has_country_flag = usa_bailout_two }
+		subtract_from_temp_variable = { USA_crisis_risk = 5 }
+	}
+	if = {
+		limit = { has_country_flag = usa_nationalize_three }
+		subtract_from_temp_variable = { USA_crisis_risk = 10 }
+	}
+	else_if = {
+		limit = { has_country_flag = usa_bailout_three }
+		subtract_from_temp_variable = { USA_crisis_risk = 5 }
+	}
+	if = {
+		limit = { has_country_flag = USA_aig_equity_stake }
+		subtract_from_temp_variable = { USA_crisis_risk = 10 }
+	}
+	else_if = {
+		limit = { OR = { has_country_flag = USA_aig_creditor_only has_country_flag = USA_aig_consortium_succeeded } }
+		subtract_from_temp_variable = { USA_crisis_risk = 5 }
+	}
+	if = {
+		limit = { has_game_rule = { rule = historic_events option = yes } has_country_flag = USA_housing_problems_detected }
+		subtract_from_temp_variable = { USA_crisis_risk = 20 }
+	}
+	clamp_temp_variable = { var = USA_crisis_risk min = 0 max = 150 }
+	custom_effect_tooltip = USA_crisis_risk_tt
+	if = {
+		limit = { check_variable = { USA_crisis_risk < 50 } }
+		if = { limit = { NOT = { has_idea = recession } NOT = { has_idea = depression } } recession = yes }
+		random_list = {
+			25 = { add_timed_idea = { idea = USA_economic_crisis_light_idea days = 180 } }
+			50 = { add_timed_idea = { idea = USA_economic_crisis_light_idea days = 210 } }
+			25 = { add_timed_idea = { idea = USA_economic_crisis_light_idea days = 240 } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { USA_crisis_risk < 90 } }
+		if = { limit = { NOT = { has_idea = recession } NOT = { has_idea = depression } } recession = yes }
+		random_list = {
+			25 = { add_timed_idea = { idea = USA_economic_crisis_medium_idea days = 300 } }
+			50 = { add_timed_idea = { idea = USA_economic_crisis_medium_idea days = 330 } }
+			25 = { add_timed_idea = { idea = USA_economic_crisis_medium_idea days = 360 } }
+		}
+	}
+	else = {
+		if = { limit = { NOT = { has_idea = depression } } depression = yes }
+		random_list = {
+			25 = { add_timed_idea = { idea = USA_economic_crisis_severe_idea days = 480 } }
+			50 = { add_timed_idea = { idea = USA_economic_crisis_severe_idea days = 510 } }
+			25 = { add_timed_idea = { idea = USA_economic_crisis_severe_idea days = 540 } }
+		}
 	}
 }
