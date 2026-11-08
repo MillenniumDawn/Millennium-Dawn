@@ -553,17 +553,14 @@ influence_less_70 = {
 # Influence action triggers, shared by the influence GUI and the AI pulse.
 # THIS is the target and ROOT is the influencer.
 economic_aid_available = {
+	# The MP flat-amount aid skips the size checks; the AI always uses the percent aid
 	if = {
 		limit = {
-			has_game_rule = { rule = rule_allow_MP_enhancements option = yes }
-			ROOT = { is_ai = no }
+			OR = {
+				NOT = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+				ROOT = { is_ai = yes }
+			}
 		}
-		custom_trigger_tooltip = {
-			tooltip = influence_aid_button_TT
-			ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
-		}
-	}
-	else = {
 		custom_trigger_tooltip = {
 			tooltip = gdp_total_cannot_be_double_ours
 			check_expr = {
@@ -576,10 +573,10 @@ economic_aid_available = {
 			tooltip = more_civs_than_other
 			check_variable = { num_of_civilian_factories < ROOT.num_of_civilian_factories }
 		}
-		custom_trigger_tooltip = {
-			tooltip = influence_aid_button_TT
-			ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
-		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = influence_aid_button_TT
+		ROOT = { NOT = { has_country_flag = recently_sent_aid@PREV } }
 	}
 	ERI_is_not_transitional_government = yes
 }
@@ -619,14 +616,7 @@ military_aid_available = {
 }
 
 target_other_influence_available = {
-	custom_trigger_tooltip = {
-		tooltip = is_top_three_influencer_tt
-		OR = {
-			check_variable = { influence_array^0 = ROOT }
-			check_variable = { influence_array^1 = ROOT }
-			check_variable = { influence_array^2 = ROOT }
-		}
-	}
+	is_top3_influencer = yes
 	ROOT = { has_political_power > 99 }
 	ERI_is_not_transitional_government = yes
 }
@@ -694,11 +684,7 @@ coup_is_available = {
 }
 
 economic_exploitation_available = {
-	custom_trigger_tooltip = {
-		tooltip = is_top_influencer_fifty_percent
-		check_variable = { influence_array^0 = ROOT }
-		check_variable = { influence_array_val^0 > 49.999 }
-	}
+	is_top_fifty_influencer = yes
 	NOT = { is_subject_of = ROOT }
 	ROOT = { has_political_power > 75 }
 	NOT = { has_country_flag = country_exploited }
@@ -706,11 +692,7 @@ economic_exploitation_available = {
 }
 
 make_puppet_action_available = {
-	custom_trigger_tooltip = {
-		tooltip = is_top_influencer_eighty_percent
-		check_variable = { influence_array^0 = ROOT }
-		check_variable = { influence_array_val^0 > 79.999 }
-	}
+	is_top_eighty_influencer = yes
 	has_government = ROOT
 	NOT = { is_subject_of = ROOT }
 	is_subject = no
@@ -747,7 +729,6 @@ make_puppet_action_available = {
 	}
 }
 
-# AI influence triggers (common/scripted_effects/99_AI_influence_scripted_effects.txt and the influence scorer)
 ai_influence_historical_mode = {
 	OR = {
 		is_historical_focus_on = yes

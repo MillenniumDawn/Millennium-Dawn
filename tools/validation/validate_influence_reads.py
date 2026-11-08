@@ -28,9 +28,6 @@ CONTRACTS = {
             f"influence_higher_{n}"
             for n in (5, 10, 15, 20, 25, 30, 35, 40, 50, 60, 70, 75, 80, 90)
         ),
-        "target_other_influence_available",
-        "make_puppet_action_available",
-        "economic_exploitation_available",
     )
 }
 CONTRACTS.update(

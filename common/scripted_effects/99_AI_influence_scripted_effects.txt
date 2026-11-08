@@ -1,7 +1,4 @@
-# Effect: ai_influence_pulse
-# Purpose: monthly AI influence turn, fired through influence.500 so ROOT and THIS are the AI.
-# The AI spreads influence through the same auto-influence slots players use. It fills them from
-# ai_influence_target_scorer, holds each target for a year, and takes at most one action a month.
+# Monthly AI influence turn, fired through influence.500 so ROOT and THIS are the AI
 ai_influence_pulse = {
 	update_auto_influence_array = yes
 	if = { limit = { check_variable = { auto_influence_months^num < 10 } }
@@ -215,10 +212,11 @@ ai_influence_pulse = {
 	}
 }
 
-# Effect: ai_influence_take_action
-# Purpose: pick one influence action against THIS for the AI influencer ROOT. Sets ai_action_taken = 1 when one runs.
-# Order: military aid, puppet, coup, manipulate politics, target another influencer, economic aid, exploitation.
+# One influence action against THIS for the AI influencer ROOT; sets ai_action_taken = 1 when one runs
 ai_influence_take_action = {
+	# Read by the manipulate politics check: our outlook's popularity in the target
+	ROOT = { set_current_outlook_id = yes }
+	set_outlook_popularity_array = yes
 	if = {
 		limit = {
 			NOT = { has_war_with = ROOT }
@@ -253,28 +251,7 @@ ai_influence_take_action = {
 	else_if = {
 		limit = {
 			has_opinion = { target = ROOT value < 49 }
-			OR = {
-				AND = {
-					ROOT = { has_government = democratic }
-					NOT = { check_variable = { party_popularity@democratic > 0.35 } }
-				}
-				AND = {
-					ROOT = { has_government = communism }
-					NOT = { check_variable = { party_popularity@communism > 0.35 } }
-				}
-				AND = {
-					ROOT = { has_government = fascism }
-					NOT = { check_variable = { party_popularity@fascism > 0.35 } }
-				}
-				AND = {
-					ROOT = { has_government = neutrality }
-					NOT = { check_variable = { party_popularity@neutrality > 0.35 } }
-				}
-				AND = {
-					ROOT = { has_government = nationalist }
-					NOT = { check_variable = { party_popularity@nationalist > 0.35 } }
-				}
-			}
+			NOT = { check_variable = { outlook_popularity_by_id^current_outlook_id > 0.35 } }
 			manipulate_politics_action_available = yes
 		}
 		manipulate_politics_action = yes
