@@ -178,6 +178,7 @@ ai_influence_pulse = {
 					check_variable = { auto_influence_users < ai_slot_budget }
 					NOT = { check_variable = { ai_influence_ranked_scores^rank_idx < ai_min_score } }
 					NOT = { is_in_array = { auto_influence_array = ranked_target } }
+					var:ranked_target = { auto_influence_allowed = yes }
 				}
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: AI influence commits to [?var:ranked_target.GetName], score [?ai_influence_ranked_scores^rank_idx]"
@@ -316,26 +317,26 @@ ai_influence_take_action = {
 	}
 }
 
-# Purpose: remove permanent_influence_target or add permanent_influence_target
-# target_nation - The nation that is the nation we want to impact their investment targets
-# adding_nation - The nation that is being added to the investment targeted
+# Purpose: add a country to, or remove it from, the influence_targets the AI scorer reads
+# target_nation - The nation whose influence targets change
+# adding_nation - The nation that is being added as an influence target
 # remove_nation - Executes the removal version of this script
 change_permanent_influence_target = {
 	if = {
 		limit = {
-			NOT = { var:target_nation = { is_in_array = { permanent_influence_target = var:adding_nation } } }
+			NOT = { var:target_nation = { is_in_array = { influence_targets = var:adding_nation } } }
 			NOT = { check_variable = { adding_nation = 0 } }
 		}
 		custom_effect_tooltip = change_permanent_influence_target_tt
 		var:target_nation = {
-			add_to_array = { permanent_influence_target = var:adding_nation }
+			add_to_array = { influence_targets = var:adding_nation }
 		}
 	}
 	else_if = {
 		limit = { NOT = { check_variable = { remove_nation = 0 } } }
 		custom_effect_tooltip = change_permanent_influence_target_remove_tt
 		var:target_nation = {
-			remove_from_array = { permanent_influence_target = var:remove_nation }
+			remove_from_array = { influence_targets = var:remove_nation }
 		}
 	}
 }
