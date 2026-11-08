@@ -266,7 +266,7 @@ _TAG_LITERAL_RE = re.compile(r"[A-Z][A-Z0-9_]{2}")
 _MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
 _NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
 # change_influence_percentage clamps every gain to this range of points
-_INFLUENCE_GAIN_FLOOR = 0.5
+_INFLUENCE_GAIN_FLOOR = 0.25
 _INFLUENCE_GAIN_CAP = 20
 
 
