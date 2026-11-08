@@ -44,6 +44,8 @@ Construction charges depend on projects actually eligible to run. Each explicit 
 
 Lower worker requirements free labor. They do not create positions. Service-related unemployment tolerance retains its existing meaning as social tolerance and is not counted as employment.
 
+The dairy-aid restart and construction-supplier investment program each spend 0.2% of current GDP once. Dairy aid also raises the welfare-cost modifier by two points instead of reducing it. The ledger lists GDP-based costs and other treasury expressions separately from nominal fixed-dollar totals.
+
 ## Verification limits
 
 Source inspection and changed-file hooks cover this change. Content checks run in hosted CI. Native loading, economic pacing, AI behavior, and tooltip rendering have not been tested.
