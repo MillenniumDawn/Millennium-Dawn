@@ -194,6 +194,27 @@ def _unreadable(filepath: str, mod_path: str, exc: Exception) -> str:
     return f"{rel}:0 - cannot read file ({type(exc).__name__})"
 
 
+# Blocks that keep THIS, so a call inside them runs in the enclosing scope
+_SAME_SCOPE_BLOCKS = {
+    "if",
+    "else_if",
+    "else",
+    "hidden_effect",
+    "effect_tooltip",
+    "random",
+    "random_list",
+}
+
+
+def _enclosing_tag(open_blocks: List[str], valid_tags: "frozenset[str]") -> str:
+    """Return the tag of the innermost scope block around a call, or "" for any other scope."""
+    for name in reversed(open_blocks):
+        if name in _SAME_SCOPE_BLOCKS or name.isdigit():
+            continue
+        return name if name in valid_tags else ""
+    return ""
+
+
 def _normalize_influence_value(value: str) -> str:
     """Normalize a tag_index / influence_target value for identity comparison.
 
@@ -663,15 +684,19 @@ def _validate_call_sites_in_file(
     # a scope-boundary violation.
 
     stack: List[Dict] = [{"scope_changing": False, "temps": {}, "depth": 0}]
+    # Every open block's name, innermost last, for the self-default check
+    open_blocks: List[str] = []
 
     for kind, lineno, value, rhs in tokens:
         if kind == "scope_open":
             # Push a new scope frame
             stack.append({"scope_changing": True, "temps": {}, "depth": 0})
+            open_blocks.append(value)
 
         elif kind == "plain_open":
             # Non-scope-changing open: increment depth counter on current frame
             stack[-1]["depth"] += 1
+            open_blocks.append(value)
 
         elif kind == "close":
             if stack[-1]["depth"] > 0:
@@ -679,6 +704,8 @@ def _validate_call_sites_in_file(
             elif len(stack) > 1:
                 stack.pop()
             # else: extra close at root, ignore
+            if open_blocks:
+                open_blocks.pop()
 
         elif kind == "set_temp":
             # Record in the current frame. Track both the line and the RHS
@@ -821,6 +848,26 @@ def _validate_call_sites_in_file(
                                 lineno,
                             )
                         )
+                # influence_target defaults to THIS, so a call inside TAG = { } with
+                # tag_index = TAG and no target influences TAG itself.
+                scope_tag = _enclosing_tag(open_blocks, valid_tags)
+                if (
+                    scope_tag
+                    and tag_entry
+                    and not inf_entry
+                    and _normalize_influence_value(tag_entry["value"]) == scope_tag
+                    and abs(lineno - tag_entry["line"]) <= 20
+                ):
+                    results.append(
+                        (
+                            "influence-self-default",
+                            f"{rel}:{lineno} - 'change_influence_percentage' runs inside "
+                            f"{scope_tag} = {{ }} with tag_index = {tag_entry['value']!r} "
+                            f"and no influence_target, so {scope_tag} influences itself "
+                            f"(Code 5001); set tag_index to the influencer",
+                            lineno,
+                        )
+                    )
 
             # Scope-boundary violations (temp set inside a popped scope-changing
             # frame, call outside) are already caught by the missing-param check:
@@ -1311,6 +1358,7 @@ class Validator(BaseValidator):
         missing_param_results = []
         scope_violation_results = []
         identical_param_results = []
+        self_default_results = []
         invalid_tag_results = []
         gain_cap_results = []
         gain_floor_results = []
@@ -1328,6 +1376,8 @@ class Validator(BaseValidator):
                     scope_violation_results.append(message)
                 elif category == "identical-influence-params":
                     identical_param_results.append(message)
+                elif category == "influence-self-default":
+                    self_default_results.append(message)
                 elif category == "invalid-influence-tag":
                     invalid_tag_results.append(message)
                 elif category == "influence-gain-over-cap":
@@ -1391,6 +1441,14 @@ class Validator(BaseValidator):
             "change_influence_percentage calls with tag_index == influence_target (self-influence):",
             severity=Severity.ERROR,
             category="identical-influence-params",
+        )
+
+        self._report(
+            self_default_results,
+            "No change_influence_percentage call defaults its target to its own influencer",
+            "change_influence_percentage calls inside TAG = { } with tag_index = TAG and no influence_target (self-influence):",
+            severity=Severity.ERROR,
+            category="influence-self-default",
         )
 
         self._report(

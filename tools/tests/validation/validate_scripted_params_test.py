@@ -86,6 +86,7 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
                 "identical-influence-params",
                 "influence-gain-over-cap",
                 "influence-gain-under-floor",
+                "influence-self-default",
             )
             and "change_influence_percentage" in msg
         ):
@@ -639,6 +640,89 @@ def test_influence_gain_outside_range_is_flagged(
     )
     issues = _issues(body, cip_contract, tmp_path)
     assert [c for c, _ in issues if c.startswith("influence-gain-")] == expected
+
+
+@pytest.mark.parametrize(
+    "partner_block,flagged",
+    [
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { percent_change = 1 }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            True,
+            id="partner block reuses the partner as influencer",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            if = { limit = { has_war = no }\n"
+            "                change_influence_percentage = yes\n"
+            "            }\n"
+            "        }\n",
+            True,
+            id="an if inside the partner block keeps its scope",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { tag_index = ROOT.id }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            False,
+            id="influencer reset before the call",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { influence_target = KOR.id }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            False,
+            id="explicit target",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            every_neighbor_country = {\n"
+            "                change_influence_percentage = yes\n"
+            "            }\n"
+            "        }\n",
+            False,
+            id="a scope change inside the partner block",
+        ),
+    ],
+)
+def test_influence_target_defaulting_to_the_influencer_is_flagged(
+    tmp_path, cip_contract, partner_block, flagged
+):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = { percent_change = 2 }\n"
+        "        set_temp_variable = { tag_index = CHI.id }\n"
+        "        change_influence_percentage = yes\n"
+        f"{partner_block}"
+        "    }\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(c == "influence-self-default" for c, _ in issues) is flagged
+
+
+def test_influence_target_defaulting_to_the_influencer_reports_an_error(tmp_path):
+    _write(tmp_path / "common" / "country_tags" / "00_countries.txt", 'CHI = "x"\n')
+    _write(
+        tmp_path / "events" / "caller.txt",
+        "option = {\n"
+        "\tset_temp_variable = { percent_change = 2 }\n"
+        "\tset_temp_variable = { tag_index = CHI.id }\n"
+        "\tCHI = {\n"
+        "\t\tchange_influence_percentage = yes\n"
+        "\t}\n"
+        "}\n",
+    )
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == [("influence-self-default", vsp.Severity.ERROR, 5)]
 
 
 @pytest.mark.parametrize(

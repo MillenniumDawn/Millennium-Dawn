@@ -866,6 +866,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `change_influence_percentage` call. The effect clamps every gain to 1 through 20 after
   the influence modifiers, so the literal never applies as written. Losses, variables,
   and expressions are not checked. Advisory while the existing backlogs are worked down.
+- `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
+  scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
+  The target defaults to THIS, so the tag influences itself. Only a tag block counts;
+  any other scope change stops the check. `change_influence_percentage` restores the
+  caller's `tag_index` and `influence_target`, so a default never carries into the next
+  call, but an explicit value does.
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
