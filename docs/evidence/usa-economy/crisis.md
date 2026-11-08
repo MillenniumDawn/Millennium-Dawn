@@ -45,6 +45,8 @@ The monthly pulse checks recovery directly after the severity spirit expires and
 
 Housing, financial, protest, and long-recession reports require an active crisis. Longer-term reports are scheduled relative to the downturn rather than unrelated calendar years. Their old overlapping national penalty ideas are removed.
 
+AIG settlement spirits follow the same half-percentage-point structural reward ceiling. Interest adjustments use their actual additive percentage-point units, capped at 0.5 points; fractional national modifiers use 0.005. The outcomes remain mutually exclusive.
+
 ## Verification limits
 
 [The source review receipt](crisis.json) records arithmetic examples, severity boundaries, duration cases, scheduling, and lifecycle ownership. Changed-file hooks and hosted CI inspect script correctness. Native parsing, gameplay pacing, AI performance, save behavior, and tooltip rendering have not been tested.
