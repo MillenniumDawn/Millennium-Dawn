@@ -47,7 +47,7 @@ ai_influence_pulse = {
 		limit = {
 			OR = {
 				is_subject = yes
-				has_political_power < 50
+				has_political_power < 0
 				has_active_mission = bankruptcy_incoming_collapse
 				has_active_mission = cheap_loan_from_the_imf_mission
 				check_variable = { domestic_influence_amount < 30 }
@@ -65,6 +65,14 @@ ai_influence_pulse = {
 		}
 		clamp_temp_variable = { var = ai_slot_budget max = 1 }
 	}
+	# Below 50 PP keep the slots we hold but take no new ones, so paying for an action does not drop them all
+	if = {
+		limit = {
+			has_political_power < 50
+			check_variable = { ai_slot_budget > auto_influence_users }
+		}
+		set_temp_variable = { ai_slot_budget = auto_influence_users }
+	}
 
 	# Age the slots; rank targets only when a slot is free or a year is up
 	set_temp_variable = { ai_needs_ranking = 0 }
@@ -77,6 +85,10 @@ ai_influence_pulse = {
 			if = { limit = { check_variable = { auto_influence_months^slot_idx > 11 } }
 				set_temp_variable = { ai_needs_ranking = 1 }
 			}
+		}
+		# Slots emptied by annexation or a cap drop start fresh
+		else = {
+			set_variable = { auto_influence_months^slot_idx = 0 }
 		}
 	}
 	if = { limit = { check_variable = { auto_influence_users < ai_slot_budget } }
@@ -164,8 +176,6 @@ ai_influence_pulse = {
 			array = ai_influence_ranked
 			value = ranked_target
 			index = rank_idx
-			# create_new_auto_influencer_request sets the shared temp 'break', so this loop uses its own
-			break = ai_fill_break
 			if = {
 				limit = {
 					check_variable = { auto_influence_users < ai_slot_budget }
@@ -183,12 +193,22 @@ ai_influence_pulse = {
 	}
 	update_auto_influence_array = yes
 
-	# One action a month, on the first committed target that warrants one
+	# One action a month. The starting slot rotates so one target does not take every action.
+	set_temp_variable = { ai_slot_count = auto_influence_cap }
+	clamp_temp_variable = { var = ai_slot_count min = 1 }
+	add_to_variable = { ai_action_slot_offset = 1 }
+	set_temp_variable = { ai_action_start = ai_action_slot_offset }
+	modulo_temp_variable = { ai_action_start = ai_slot_count }
+	set_variable = { ai_action_slot_offset = ai_action_start }
 	set_temp_variable = { ai_action_taken = 0 }
-	for_each_loop = {
-		array = auto_influence_array
-		value = slot_target
+	for_loop_effect = {
+		end = ai_slot_count
+		value = slot_step
 		break = ai_action_taken
+		set_temp_variable = { slot_idx = slot_step }
+		add_to_temp_variable = { slot_idx = ai_action_start }
+		modulo_temp_variable = { slot_idx = ai_slot_count }
+		set_temp_variable = { slot_target = auto_influence_array^slot_idx }
 		if = { limit = { NOT = { check_variable = { slot_target = 0 } } }
 			var:slot_target = { ai_influence_take_action = yes }
 		}
@@ -264,6 +284,7 @@ ai_influence_take_action = {
 		limit = {
 			check_variable = { influence_array^0 > 0 }
 			NOT = { check_variable = { influence_array^0 = ROOT } }
+			ROOT = { NOT = { has_country_flag = ai_targeted_other_influencer@PREV } }
 			var:influence_array^0 = {
 				ROOT = {
 					OR = {
@@ -275,6 +296,7 @@ ai_influence_take_action = {
 			target_other_influence_available = yes
 		}
 		influence_target_other_effect = yes
+		ROOT = { set_country_flag = { flag = ai_targeted_other_influencer@PREV value = 1 days = 60 } }
 		set_temp_variable = { ai_action_taken = 1 }
 	}
 	else_if = {
@@ -299,6 +321,7 @@ ai_influence_take_action = {
 	else_if = {
 		limit = {
 			ai_influence_historical_mode = no
+			ai_influence_in_action_reach = yes
 			NOT = { is_ally_with = ROOT }
 			ROOT = {
 				OR = {

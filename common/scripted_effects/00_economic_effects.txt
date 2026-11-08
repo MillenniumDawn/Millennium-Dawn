@@ -92,7 +92,9 @@ set_improved_trade_agreement = {
 	if = {
 		limit = {
 			var:receiver_nation = {
+				exists = yes
 				var:sender_nation = {
+					exists = yes
 					NOT = { is_in_array = { trade_agreement_partners = PREV } }
 				}
 			}
@@ -163,7 +165,9 @@ set_mutual_investment_treaty = {
 		limit = {
 			NOT = { check_variable = { remove_agreement = 1 } }
 			var:receiver_nation = {
+				exists = yes
 				var:sender_nation = {
+					exists = yes
 					NOT = { is_in_array = { investment_treaty_partners = PREV } }
 				}
 			}
@@ -225,14 +229,6 @@ set_mutual_investment_treaty = {
 		set_temp_variable = { tag_index = receiver_nation }
 		set_temp_variable = { influence_target = sender_nation }
 		change_influence_percentage = yes
-
-		set_temp_variable = { adding_nation = 0 }
-		set_temp_variable = { target_nation = receiver_nation }
-		set_temp_variable = { remove_nation = sender_nation }
-		change_permanent_investment_target = yes
-		set_temp_variable = { target_nation = sender_nation }
-		set_temp_variable = { remove_nation = receiver_nation }
-		change_permanent_investment_target = yes
 	}
 }
 
@@ -251,6 +247,20 @@ reapply_agreement_opinion_modifiers = {
 		add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
 		reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
 		reverse_add_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+	}
+}
+
+# THIS = a partner of FROM, which is being annexed. Drops both countries' agreement opinion modifiers toward each other.
+remove_agreement_opinion_modifiers = {
+	remove_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }
+	remove_opinion_modifier = { target = FROM modifier = mutual_trade_opinion }
+	remove_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_opinion }
+	remove_opinion_modifier = { target = FROM modifier = mutual_investment_treaty_trade_opinion }
+	FROM = {
+		remove_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
+		remove_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
+		remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_opinion }
+		remove_opinion_modifier = { target = PREV modifier = mutual_investment_treaty_trade_opinion }
 	}
 }
 

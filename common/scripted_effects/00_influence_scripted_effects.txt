@@ -136,8 +136,12 @@ calculate_influence_percentage = {
 # THIS is the target and ROOT is the influencer. Availability lives in 00_influence_scripted_triggers.txt.
 # Target events fire from inside ROOT so their FROM is the influencer, and they answer through FROM.
 influence_economic_aid_effect = {
+	# The AI always uses the percent-of-GDP aid; the MP flat-amount chooser has no AI weights
 	if = {
-		limit = { has_game_rule = { rule = rule_allow_MP_enhancements option = yes } }
+		limit = {
+			has_game_rule = { rule = rule_allow_MP_enhancements option = yes }
+			ROOT = { is_ai = no }
+		}
 		# MP path: influence.2 fires on the sender itself, so mp_economic_aid_transfer still needs both event targets.
 		# It sets the cooldown once an amount is chosen (influence.2 has no cancel option).
 		ROOT = { save_event_target_as = influence_sender }
@@ -157,7 +161,15 @@ influence_economic_aid_effect = {
 	else = {
 		set_country_flag = { flag = recently_received_aid value = 1 days = 90 }
 	}
-	update_money_dirty_variable = yes
+	if = {
+		limit = {
+			OR = {
+				is_ai = no
+				ROOT = { is_ai = no }
+			}
+		}
+		update_money_dirty_variable = yes
+	}
 }
 
 influence_military_aid_effect = {
@@ -210,7 +222,10 @@ make_puppet_action = {
 		}
 	}
 	every_neighbor_country = {
-		limit = { NOT = { is_subject_of = ROOT } }
+		limit = {
+			NOT = { tag = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
 		add_opinion_modifier = { target = ROOT modifier = puppeted_neighbor }
 	}
 }
@@ -237,7 +252,10 @@ economic_exploitation_action = {
 	set_country_flag = { flag = country_exploited value = 1 days = 180 }
 	add_opinion_modifier = { target = ROOT modifier = exploited_us }
 	every_neighbor_country = {
-		limit = { NOT = { is_subject_of = ROOT } }
+		limit = {
+			NOT = { tag = ROOT }
+			NOT = { is_subject_of = ROOT }
+		}
 		add_opinion_modifier = { target = ROOT modifier = exploited_neighbor }
 	}
 	every_allied_country = {
@@ -1185,7 +1203,7 @@ change_influence_percentage = {
 
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
-				# One change gains 1 to 20 points; validate_scripted_params.py flags base values outside that range
+				# One change gains 0.25 to 20 points; validate_scripted_params.py flags base values outside that range
 				clamp_temp_variable = { var = percent_change min = 0.25 max = 20 }
 
 				# Cap the gain at the remaining headroom to 100% so the shown value matches the realized share.
