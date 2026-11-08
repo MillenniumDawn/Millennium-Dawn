@@ -85,6 +85,7 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
                 "missing-required-param",
                 "identical-influence-params",
                 "influence-gain-over-cap",
+                "influence-gain-under-floor",
             )
             and "change_influence_percentage" in msg
         ):
@@ -613,17 +614,21 @@ def _invalid_tags(issues):
 
 
 @pytest.mark.parametrize(
-    "value,flagged",
+    "value,expected",
     [
-        ("20", False),
-        ("20.5", True),
-        ("33", True),
-        ("-50", False),
-        ("global.percent_change_value", False),
+        ("20", []),
+        ("20.5", ["influence-gain-over-cap"]),
+        ("33", ["influence-gain-over-cap"]),
+        ("1", []),
+        ("0.5", ["influence-gain-under-floor"]),
+        ("-50", []),
+        ("global.percent_change_value", []),
     ],
 )
-def test_influence_gain_above_cap_is_flagged(tmp_path, cip_contract, value, flagged):
-    """Literal base gains above 20 are flagged; losses and variables are not."""
+def test_influence_gain_outside_range_is_flagged(
+    tmp_path, cip_contract, value, expected
+):
+    """Literal base gains above 20 or below 1 are flagged; losses and variables are not."""
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
@@ -633,14 +638,18 @@ def test_influence_gain_above_cap_is_flagged(tmp_path, cip_contract, value, flag
         "}\n"
     )
     issues = _issues(body, cip_contract, tmp_path)
-    assert any(c == "influence-gain-over-cap" for c, _ in issues) is flagged
+    assert [c for c, _ in issues if c.startswith("influence-gain-")] == expected
 
 
-def test_influence_gain_above_cap_reports_a_warning(tmp_path):
+@pytest.mark.parametrize(
+    "value,category",
+    [("25", "influence-gain-over-cap"), ("0.5", "influence-gain-under-floor")],
+)
+def test_influence_gain_outside_range_reports_a_warning(tmp_path, value, category):
     _write(
         tmp_path / "events" / "caller.txt",
         "option = {\n"
-        "\tset_temp_variable = { percent_change = 25 }\n"
+        f"\tset_temp_variable = {{ percent_change = {value} }}\n"
         "\tchange_influence_percentage = yes\n"
         "}\n",
     )
@@ -648,7 +657,7 @@ def test_influence_gain_above_cap_reports_a_warning(tmp_path):
     validator.run_validations()
     assert [
         (issue.category, issue.severity, issue.line) for issue in validator._issues
-    ] == [("influence-gain-over-cap", vsp.Severity.WARNING, 3)]
+    ] == [(category, vsp.Severity.WARNING, 3)]
 
 
 @pytest.mark.parametrize("value", ["CHI", "CHI.id", "USA", "USA.ID"])

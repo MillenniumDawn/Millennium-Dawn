@@ -1190,6 +1190,8 @@ change_influence_percentage = {
 
 				add_to_temp_variable = { influence_change = 1 }
 				multiply_temp_variable = { percent_change = influence_change }
+				# One change gains 1 to 20 points; validate_scripted_params.py flags base values outside that range
+				clamp_temp_variable = { var = percent_change min = 1 max = 20 }
 
 				# Cap the gain at the remaining headroom to 100% so the shown value matches the realized share.
 				set_temp_variable = { influence_headroom = 100 }
@@ -1197,8 +1199,6 @@ change_influence_percentage = {
 				if = { limit = { check_variable = { percent_change > influence_headroom } }
 					set_temp_variable = { percent_change = influence_headroom }
 				}
-				# One change gains at most 20 points; validate_scripted_params.py flags larger base values
-				clamp_temp_variable = { var = percent_change max = 20 }
 			}
 
 			# Lock this influencer's updated value; rebalance domestic + every other share around it.

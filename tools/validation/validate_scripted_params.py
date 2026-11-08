@@ -244,7 +244,8 @@ _INFLUENCE_SCOPE_KEYWORDS: Set[str] = {
 _TAG_LITERAL_RE = re.compile(r"[A-Z][A-Z0-9_]{2}")
 _MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
 _NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
-# change_influence_percentage clamps every gain to this many points
+# change_influence_percentage clamps every gain to this range of points
+_INFLUENCE_GAIN_FLOOR = 1
 _INFLUENCE_GAIN_CAP = 20
 
 
@@ -770,20 +771,30 @@ def _validate_call_sites_in_file(
             # .id variants compare equal.
             if value == "change_influence_percentage":
                 gain = visible.get("percent_change")
-                if (
-                    gain
-                    and _NUMERIC_RE.fullmatch(gain["value"])
-                    and float(gain["value"]) > _INFLUENCE_GAIN_CAP
-                ):
-                    results.append(
-                        (
+                if gain and _NUMERIC_RE.fullmatch(gain["value"]):
+                    base = float(gain["value"])
+                    out_of_range = None
+                    if base > _INFLUENCE_GAIN_CAP:
+                        out_of_range = (
                             "influence-gain-over-cap",
-                            f"{rel}:{lineno} - 'change_influence_percentage' gains "
-                            f"{gain['value']} (set at line {gain['line']}); one change "
-                            f"realizes at most {_INFLUENCE_GAIN_CAP}",
-                            lineno,
+                            f"at most {_INFLUENCE_GAIN_CAP}",
                         )
-                    )
+                    elif 0 < base < _INFLUENCE_GAIN_FLOOR:
+                        out_of_range = (
+                            "influence-gain-under-floor",
+                            f"at least {_INFLUENCE_GAIN_FLOOR}",
+                        )
+                    if out_of_range:
+                        category, bound = out_of_range
+                        results.append(
+                            (
+                                category,
+                                f"{rel}:{lineno} - 'change_influence_percentage' gains "
+                                f"{gain['value']} (set at line {gain['line']}); one change "
+                                f"realizes {bound}",
+                                lineno,
+                            )
+                        )
                 tag_entry = visible.get("tag_index")
                 inf_entry = visible.get("influence_target")
                 if tag_entry and inf_entry:
@@ -1302,6 +1313,7 @@ class Validator(BaseValidator):
         identical_param_results = []
         invalid_tag_results = []
         gain_cap_results = []
+        gain_floor_results = []
         shared_line_results = []
         audit_shared_line_results = []
         unsupported_argument_results = []
@@ -1320,6 +1332,8 @@ class Validator(BaseValidator):
                     invalid_tag_results.append(message)
                 elif category == "influence-gain-over-cap":
                     gain_cap_results.append(message)
+                elif category == "influence-gain-under-floor":
+                    gain_floor_results.append(message)
                 elif category == "call-shares-line":
                     shared_line_results.append(message)
                 elif category == "audit-call-shares-line":
@@ -1393,6 +1407,14 @@ class Validator(BaseValidator):
             f"change_influence_percentage base gains above {_INFLUENCE_GAIN_CAP} (clamped at runtime):",
             severity=Severity.WARNING,
             category="influence-gain-over-cap",
+        )
+
+        self._report(
+            gain_floor_results,
+            f"No change_influence_percentage base gain is below {_INFLUENCE_GAIN_FLOOR}",
+            f"change_influence_percentage base gains below {_INFLUENCE_GAIN_FLOOR} (raised at runtime):",
+            severity=Severity.WARNING,
+            category="influence-gain-under-floor",
         )
 
         self._report(
