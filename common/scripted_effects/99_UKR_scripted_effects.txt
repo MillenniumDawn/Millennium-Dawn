@@ -8684,6 +8684,7 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 3 } }
 			if = { limit = { check_variable = { ukraine_has_2k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 31 } }
 			if = { limit = { check_variable = { ukraine_has_s125_stockpile > 0 } } add_to_array = { UKR_storage_rows = 33 } }
+			if = { limit = { check_variable = { ukraine_has_zsu57_stockpile > 0 } } add_to_array = { UKR_storage_rows = 36 } }
 			if = { limit = { check_variable = { ukraine_s75_regiments > 0 } } add_to_array = { UKR_storage_rows = 35 } } # on duty, not counted in the total
 		}
 	}
@@ -8717,8 +8718,10 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 6 } }
 			if = { limit = { check_variable = { ukraine_has_mig23_stockpile > 0 } } add_to_array = { UKR_storage_rows = 61 } }
 			if = { limit = { check_variable = { ukraine_has_mig27_stockpile > 0 } } add_to_array = { UKR_storage_rows = 62 } }
-			if = { limit = { check_variable = { ukraine_has_mig25_stockpile > 0 } } add_to_array = { UKR_storage_rows = 63 } }
+			if = { limit = { check_variable = { UKR_storage_mig25_total > 0 } } add_to_array = { UKR_storage_rows = 63 } }
 			if = { limit = { check_variable = { ukraine_has_su17_stockpile > 0 } } add_to_array = { UKR_storage_rows = 64 } }
+			if = { limit = { check_variable = { UKR_storage_mig21_total > 0 } } add_to_array = { UKR_storage_rows = 65 } }
+			if = { limit = { check_variable = { ukraine_has_su15_stockpile > 0 } } add_to_array = { UKR_storage_rows = 66 } }
 		}
 	}	if = {
 		limit = { check_variable = { UKR_storage_total_7 > 0 } }
@@ -8787,6 +8790,24 @@ UKR_storage_pay_upkeep = {
 	}
 }
 
+UKR_retire_su15_to_storage = {
+	add_equipment_to_stockpile = { type = ukr_legacy_su15tm variant_name = "Su-15TM" amount = -16 producer = UKR }
+	add_to_variable = { ukraine_has_su15_stockpile = 16 }
+	UKR_storage_refresh = yes
+}
+
+UKR_retire_mig23_to_storage = {
+	add_equipment_to_stockpile = { type = ukr_legacy_mig23mld variant_name = "MiG-23MLD" amount = -32 producer = UKR }
+	add_to_variable = { ukraine_has_mig23_stockpile = 32 }
+	UKR_storage_refresh = yes
+}
+
+UKR_retire_su17_to_storage = {
+	add_equipment_to_stockpile = { type = ukr_legacy_su17m4r variant_name = "Su-17M4R" amount = -30 producer = UKR }
+	add_to_variable = { ukraine_has_su17m4r_stockpile = 30 }
+	UKR_storage_refresh = yes
+}
+
 # Call after every change of a ukraine_has_*_stockpile variable: section totals, rows and a GUI refresh
 UKR_storage_refresh = {
 	set_variable = { ukraine_s75_regiments = 0 }
@@ -8807,6 +8828,7 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_2 = ukraine_has_brdm1_stockpile }
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_s125_stockpile }
+	add_to_variable = { UKR_storage_total_3 = ukraine_has_zsu57_stockpile }
 	set_variable = { UKR_storage_total_4 = ukraine_has_9p148_stockpile }
 	add_to_variable = { UKR_storage_total_4 = ukraine_has_2p27_stockpile }
 	add_to_variable = { UKR_storage_total_4 = ukraine_has_2p32_stockpile }
@@ -8823,10 +8845,15 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_5 = UKR_storage_tu22_total }
 	set_variable = { ukraine_has_su17_stockpile = ukraine_has_su17m2_stockpile }
 	add_to_variable = { ukraine_has_su17_stockpile = ukraine_has_su17m4_stockpile }
+	add_to_variable = { ukraine_has_su17_stockpile = ukraine_has_su17m4r_stockpile }
+	set_variable = { UKR_storage_mig21_total = { value = ukraine_has_mig21_stockpile add = ukraine_has_mig21_early_stockpile } }
+	set_variable = { UKR_storage_mig25_total = { value = ukraine_has_mig25_stockpile add = ukraine_has_mig25rb_stockpile } }
 	set_variable = { UKR_storage_total_6 = ukraine_has_mig23_stockpile }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig27_stockpile }
-	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig25_stockpile }
+	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig25_total }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_su17_stockpile }
+	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig21_total }
+	add_to_variable = { UKR_storage_total_6 = ukraine_has_su15_stockpile }
 	set_variable = { UKR_storage_total_7 = ukraine_has_m46_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_m30_stockpile }
 	set_variable = { UKR_storage_total_8 = ukraine_has_mosin_stockpile }
@@ -9370,6 +9397,78 @@ UKR_storage_sanctioned_sale_backlash = {
 	}
 }
 
+UKR_mig21_croatia_create_upgrade = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		create_equipment_variant = {
+			name = "MiG-21bisD (Odesa)"
+			type = small_plane_strike_airframe_1
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				fixed_main_weapon_slot = weap_mp_light_hardpoint_1
+				fixed_gun_slot = weap_multi_gun_2
+				engine_type_slot = engine_light_single_2
+				avionics_type_slot = avionics_manned_2
+				wingform_type_slot = wing_delta
+				special_slot_type_1 = spec_countermeasures_1
+				special_slot_type_2 = spec_redundant_2
+			}
+			upgrades = {
+				plane_bba_radar_upgrade = 4
+				plane_bba_engine_upgrade = 4
+			}
+			obsolete = no
+			model = "SOV_small_plane_airframe_1_entity"
+			icon = "GFX_UKR_AIR_MiG_21Bis"
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "MiG-21bisD (Odesa)"
+			type = MR_Fighter1
+			parent_version = 0
+			allow_without_tech = yes
+			upgrades = {
+				plane_range_upgrade = 1
+				plane_reliability_upgrade = 2
+			}
+			icon = "GFX_UKR_AIR_MiG_21Bis"
+		}
+	}
+}
+
+UKR_mig21_croatia_deliver = {
+	if = {
+		limit = { has_country_flag = UKR_mig21_croatia_upgraded }
+		UKR_mig21_croatia_create_upgrade = yes
+		CRO = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = { type = small_plane_strike_airframe_1 variant_name = "MiG-21bisD (Odesa)" amount = 5 producer = UKR }
+			}
+			else = {
+				add_equipment_to_stockpile = { type = MR_Fighter1 variant_name = "MiG-21bisD (Odesa)" amount = 5 producer = UKR }
+			}
+		}
+	}
+	else = {
+		CRO = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = { type = small_plane_strike_airframe_1 variant_name = "MiG-21bis" amount = 5 producer = SOV }
+			}
+			else = {
+				add_equipment_to_stockpile = { type = MR_Fighter1 amount = 5 producer = SOV }
+			}
+		}
+	}
+	set_temp_variable = { treasury_change = { value = UKR_mig21_croatia_price multiply = -1 } }
+	CRO = { modify_treasury_effect = yes }
+	set_temp_variable = { treasury_change = UKR_mig21_croatia_price }
+	modify_treasury_effect = yes
+}
+
 # MiG-25 for buyers
 UKR_sov_deliver_mig25 = {
 	if = {
@@ -9399,6 +9498,10 @@ UKR_sov_deliver_su17 = {
 			limit = { check_variable = { ukr_su17m2_amount > 0 } }
 			add_equipment_to_stockpile = { type = medium_plane_cas_airframe_1 variant_name = "Su-17M2" amount = ukr_su17m2_amount producer = SOV }
 		}
+		if = {
+			limit = { check_variable = { ukr_su17m4r_amount > 0 } }
+			add_equipment_to_stockpile = { type = medium_plane_airframe_1 variant_name = "Su-17M4R" amount = ukr_su17m4r_amount producer = SOV }
+		}
 	}
 	else = {
 		add_equipment_to_stockpile = { type = Strike_fighter1 amount = ukr_sov_amount producer = SOV }
@@ -9407,12 +9510,14 @@ UKR_sov_deliver_su17 = {
 UKR_storage_sell_su17 = {
 	set_temp_variable = { ukr_su17m4_amount = ukraine_has_su17m4_stockpile }
 	clamp_temp_variable = { var = ukr_su17m4_amount min = 0 max = ukr_sov_amount }
-	set_temp_variable = { ukr_su17m2_amount = ukr_sov_amount }
-	subtract_from_temp_variable = { ukr_su17m2_amount = ukr_su17m4_amount }
+	set_temp_variable = { ukr_su17m2_amount = { value = ukr_sov_amount subtract = ukr_su17m4_amount } }
+	clamp_temp_variable = { var = ukr_su17m2_amount min = 0 max = ukraine_has_su17m2_stockpile }
+	set_temp_variable = { ukr_su17m4r_amount = { value = ukr_sov_amount subtract = ukr_su17m4_amount subtract = ukr_su17m2_amount } }
 	custom_effect_tooltip = ukraine_storage_su17_sold_tt
 	hidden_effect = {
 		subtract_from_variable = { ukraine_has_su17m4_stockpile = ukr_su17m4_amount }
 		subtract_from_variable = { ukraine_has_su17m2_stockpile = ukr_su17m2_amount }
+		subtract_from_variable = { ukraine_has_su17m4r_stockpile = ukr_su17m4r_amount }
 	}
 	event_target:ukr_storage_buyer = { UKR_sov_deliver_su17 = yes }
 	UKR_storage_sale_payment = yes
