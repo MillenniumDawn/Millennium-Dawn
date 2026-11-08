@@ -722,6 +722,18 @@ def _partner_call(wrapper):
         pytest.param(
             _partner_call("for_each_loop"), True, id="a for_each_loop keeps its scope"
         ),
+        pytest.param(_partner_call("else"), True, id="an else keeps its scope"),
+        pytest.param(_partner_call("random"), True, id="a random keeps its scope"),
+        pytest.param(
+            _partner_call("for_loop_effect"),
+            True,
+            id="a for_loop_effect keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("while_loop_effect"),
+            True,
+            id="a while_loop_effect keeps its scope",
+        ),
         pytest.param(
             "        CHI = {\n"
             "            random_list = {\n"
