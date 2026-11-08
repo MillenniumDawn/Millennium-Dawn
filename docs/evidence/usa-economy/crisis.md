@@ -6,7 +6,7 @@ One systemic downturn follows the initial institutional responses. Regulation, W
 
 Historical games schedule warnings in July 2007, Bear Stearns on March 16, 2008, Fannie Mae and Freddie Mac on September 7, Lehman on September 15, and the AIG response one day later. The institution sequence follows the [Federal Reserve](https://www.federalreserve.gov/newsevents/files/bernanke-lecture-three-20120327.pdf) and [FDIC](https://www.fdic.gov/history/2000-2009).
 
-Housing safeguards reduce historical crisis risk by 20. They continue to prevent nonhistorical onset. Calendar scheduling owns historical onset; nonhistorical warnings retain their existing policy-sensitive random dispatch.
+The three investigation stages each cost 25 political power once, replacing the old permanent political-power-income penalties. Closing an investigation grants 10 political power once rather than a permanent income bonus. Housing safeguards reduce historical crisis risk by 20. They continue to prevent nonhistorical onset. Calendar scheduling owns historical onset; nonhistorical warnings retain their existing policy-sensitive random dispatch.
 
 ## Initial responses and risk
 
