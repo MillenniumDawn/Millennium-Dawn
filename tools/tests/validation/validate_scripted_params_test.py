@@ -620,8 +620,8 @@ def _invalid_tags(issues):
         ("20", []),
         ("20.5", ["influence-gain-over-cap"]),
         ("33", ["influence-gain-over-cap"]),
-        ("1", []),
-        ("0.5", ["influence-gain-under-floor"]),
+        ("0.5", []),
+        ("0.25", ["influence-gain-under-floor"]),
         ("-50", []),
         ("global.percent_change_value", []),
     ],
@@ -629,7 +629,7 @@ def _invalid_tags(issues):
 def test_influence_gain_outside_range_is_flagged(
     tmp_path, cip_contract, value, expected
 ):
-    """Literal base gains above 20 or below 1 are flagged; losses and variables are not."""
+    """Literal base gains above 20 or below 0.5 are flagged; losses and variables are not."""
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
@@ -727,7 +727,7 @@ def test_influence_target_defaulting_to_the_influencer_reports_an_error(tmp_path
 
 @pytest.mark.parametrize(
     "value,category",
-    [("25", "influence-gain-over-cap"), ("0.5", "influence-gain-under-floor")],
+    [("25", "influence-gain-over-cap"), ("0.25", "influence-gain-under-floor")],
 )
 def test_influence_gain_outside_range_reports_a_warning(tmp_path, value, category):
     _write(

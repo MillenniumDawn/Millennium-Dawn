@@ -862,10 +862,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
 - `influence-gain-over-cap` and `influence-gain-under-floor` (WARNING): a literal
-  `percent_change` above 20, or above 0 and below 1, visible at a
-  `change_influence_percentage` call. The effect clamps every gain to 1 through 20 after
+  `percent_change` above 20, or above 0 and below 0.5, visible at a
+  `change_influence_percentage` call. The effect clamps every gain to 0.5 through 20 after
   the influence modifiers, so the literal never applies as written. Losses, variables,
-  and expressions are not checked. Advisory while the existing backlogs are worked down.
+  and expressions are not checked. Advisory while the over-cap backlog is worked down.
 - `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
   scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
   The target defaults to THIS, so the tag influences itself. Only a tag block counts;
