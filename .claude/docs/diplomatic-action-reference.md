@@ -116,19 +116,19 @@ ai_acceptance = {
 	}
 	condition_three = {
 		base = 0
-		modifier = { add = 3 has_opinion = { target = ROOT value > 25 } }
-		modifier = { add = 3 has_opinion = { target = ROOT value > 50 } }
-		modifier = { add = 4 has_opinion = { target = ROOT value > 75 } }
-		modifier = { add = -3 has_opinion = { target = ROOT value < -25 } }
-		modifier = { add = -3 has_opinion = { target = ROOT value < -50 } }
-		modifier = { add = -4 has_opinion = { target = ROOT value < -75 } }
+		modifier = {
+			set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+			add = var:opinion_weight
+		}
 	}
 }
 ```
 
-Write computed terms as threshold steps, not temp-variable math (see "Math in weight
-blocks" in `hoi4-data-structures.md`). Opinion runs from -100 to 100, so `value > 99` is
-the top band and a higher threshold never fires.
+`ai_acceptance` runs once per offer, so a computed term is one math expression in a temp
+variable, added with `add = var:`. `ai_desire` is weighed for every candidate target, so
+keep temp writes out of it and use threshold steps (see "Math in weight blocks" in
+`hoi4-data-structures.md`). Opinion runs from -100 to 100, so `value > 99` is the top
+band and a higher threshold never fires.
 
 ### Mirror rule
 
