@@ -624,8 +624,10 @@ _FILLER = "        add_political_power = 1\n" * 20
     [
         ("20", "", []),
         ("20.5", "", ["influence-gain-over-cap"]),
+        ("\n20.5\n", "", ["influence-gain-over-cap"]),
         ("0.25", "", []),
         ("0.2", "", ["influence-gain-under-floor"]),
+        ("\n0.2\n", "", ["influence-gain-under-floor"]),
         ("-50", "", []),
         ("global.percent_change_value", "", []),
         pytest.param("5", _ADD_TO_GAIN, [], id="add_to is not the base"),
@@ -1377,16 +1379,24 @@ def test_single_leaf_formatter_output_passes_the_call_rule(tmp_path, wrapper):
     )
 
 
+@pytest.mark.parametrize(
+    "assignment",
+    [
+        "set_temp_variable = {{ {name} = {value} }}",
+        "set_temp_variable = {{\n {name} = {value}\n}}",
+        "set_temp_variable = {{\n var = {name}\n value = {value}\n}}",
+    ],
+)
 def test_splitting_statements_preserves_influence_values_and_errors(
-    tmp_path, cip_contract
+    tmp_path, cip_contract, assignment
 ):
     statements = [
         "option = {",
-        "set_temp_variable = { percent_change = 2.00 }",
-        "set_temp_variable = { tag_index = USA }",
-        "set_temp_variable = { influence_target = USA }",
+        assignment.format(name="percent_change", value="2.00"),
+        assignment.format(name="tag_index", value="USA"),
+        assignment.format(name="influence_target", value="USA"),
         "change_influence_percentage = yes",
-        "set_temp_variable = { tag_index = ZZZ }",
+        assignment.format(name="tag_index", value="ZZZ"),
         "change_influence_percentage = yes",
         "}",
     ]

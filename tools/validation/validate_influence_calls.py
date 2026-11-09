@@ -131,7 +131,9 @@ class Scanner:
                 inherited = [(loop, covered or state) for loop, covered in loops]
                 self.walk(body_start, body_end, inherited + [(name, False)])
             else:
-                self.walk(body_start, body_end, loops, state)
+                child_state = self.walk(body_start, body_end, loops, state)
+                if name == "hidden_effect":
+                    state = child_state
             i += 1
         for line in self._own_call_lines(cursor, end, children):
             self._report(line, loops, state)

@@ -451,6 +451,7 @@ def _normalize_multiline_set_temp(text: str) -> str:
     cursor = 0
     pattern = re.compile(r"\b(" + _TEMP_WRITERS + r")\s*=\s*\{")
     target = re.compile(r"\s*" + _TEMP_TARGET)
+    scalar = re.compile(r"\s*(?:=|value\s*=)\s*([^\s{}=]+)\s*")
 
     while match := pattern.search(text, cursor):
         block_start = match.end() - 1
@@ -473,8 +474,10 @@ def _normalize_multiline_set_temp(text: str) -> str:
             cursor = match.end()
             continue
 
+        value_match = scalar.fullmatch(text[name_match.end() : block_end - 1])
+        value = value_match.group(1) if value_match else "0"
         normalized.append(text[cursor : match.start()])
-        normalized.append(f"{match.group(1)} = {{ {name_match.group(1)} = 0 }}")
+        normalized.append(f"{match.group(1)} = {{ {name_match.group(1)} = {value} }}")
         normalized.append("\n" * text[match.start() : block_end].count("\n"))
         cursor = block_end
 

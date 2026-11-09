@@ -427,7 +427,7 @@ def test_target_uses_remaining_paid_work_and_exact_36_month_lookahead(
 @pytest.mark.parametrize("criterion", range(6))
 def test_paid_capacity_damage_selects_recovery_before_expansion(criterion):
     race, country = _planner(stage=1, year=2019)
-    ratios = [1] * 6
+    ratios = [1.0] * 6
     ratios[criterion] = 0.9
     _capacity(race, country, 1, ratios)
     _choose_target(race)
@@ -773,7 +773,7 @@ def test_each_actionable_shortage_can_become_the_construction_priority(
     criterion, priority
 ):
     race, country = _planner()
-    ratios = [1] * 6
+    ratios = [1.0] * 6
     ratios[race.criteria.index(criterion)] = 0.5
     _capacity(race, country, 1, ratios)
     _construction_plan(race)
@@ -1064,6 +1064,7 @@ def test_every_research_strategy_matches_technology_year_and_has_live_abort_gate
                     "ai_race_ai_support_tech",
                 }:
                     country["vars"][operand[0][0]] = float(operand[0][2])
+        assert year_limit is not None, technology
         assert year_limit == int(start_year[1]) - 1, technology
         race.goto(max(year_limit, 2013), 1)
         assert race.condition(data["enable"], 1), name
@@ -1438,6 +1439,7 @@ def test_fossil_fuel_reserve_covers_the_existing_fleet_and_the_new_plant(plants)
     owner = re.search(
         r"set_variable = \{\s*fossil_pp_fuel_consumption = \{.*?\n\t\t\}", energy, re.S
     )
+    assert owner is not None
     race.execute(_parse_race_script("owner = {" + owner[0] + "}")["owner"], 1)
     assert country["vars"]["fossil_pp_fuel_consumption"] == -20 * plants
     race.run("ai_race_ai_cache_construction", 1)

@@ -373,8 +373,11 @@ def test_only_target_assignments_cover_calls(assignment, expected):
     assert len(_findings(script)) == expected
 
 
-@pytest.mark.parametrize("wrapper", ["effect_tooltip", "limit", "if"])
-def test_nested_set_does_not_cover_later_call(wrapper):
+@pytest.mark.parametrize(
+    "wrapper,expected",
+    [("effect_tooltip", 1), ("limit", 1), ("if", 1), ("hidden_effect", 0)],
+)
+def test_nested_set_coverage_requires_an_executed_wrapper(wrapper, expected):
     script = (
         "every_country = { "
         + wrapper
@@ -382,4 +385,4 @@ def test_nested_set_does_not_cover_later_call(wrapper):
         + LOOP_CALL
         + " }"
     )
-    assert len(_findings(script)) == 1
+    assert len(_findings(script)) == expected
