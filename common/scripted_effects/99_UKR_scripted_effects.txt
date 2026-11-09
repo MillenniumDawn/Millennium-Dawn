@@ -8725,7 +8725,9 @@ UKR_storage_rebuild_rows = {
 		if = {
 			limit = { check_variable = { UKR_storage_open_section = 7 } }
 			if = { limit = { check_variable = { ukraine_has_m46_stockpile > 0 } } add_to_array = { UKR_storage_rows = 71 } }
+			if = { limit = { check_variable = { ukraine_has_d1_stockpile > 0 } } add_to_array = { UKR_storage_rows = 72 } }
 			if = { limit = { check_variable = { ukraine_has_m30_stockpile > 0 } } add_to_array = { UKR_storage_rows = 73 } }
+			if = { limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } } add_to_array = { UKR_storage_rows = 74 } }
 		}
 	}
 	if = {
@@ -8920,7 +8922,9 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig21_total }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_su15_stockpile }
 	set_variable = { UKR_storage_total_7 = ukraine_has_m46_stockpile }
+	add_to_variable = { UKR_storage_total_7 = ukraine_has_d1_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_m30_stockpile }
+	add_to_variable = { UKR_storage_total_7 = ukraine_has_ml20_stockpile }
 	set_variable = { UKR_storage_total_8 = ukraine_has_mosin_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_sks_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_ak47_stockpile }
@@ -9810,10 +9814,28 @@ UKR_old_gear_deliver_m46 = {
 		add_equipment_to_stockpile = { type = artillery_1 amount = ukr_sov_amount producer = SOV }
 	}
 }
+UKR_old_gear_deliver_d1 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = artillery_1 variant_name = "D-1" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = artillery_1 amount = ukr_sov_amount producer = SOV }
+	}
+}
 UKR_old_gear_deliver_m30 = {
 	if = {
 		limit = { has_dlc = "No Step Back" }
 		add_equipment_to_stockpile = { type = artillery_1 variant_name = "M-30" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = artillery_1 amount = ukr_sov_amount producer = SOV }
+	}
+}
+UKR_old_gear_deliver_ml20 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = artillery_1 variant_name = "ML-20" amount = ukr_sov_amount producer = SOV }
 	}
 	else = {
 		add_equipment_to_stockpile = { type = artillery_1 amount = ukr_sov_amount producer = SOV }
@@ -9891,6 +9913,15 @@ UKR_storage_sell_artillery = {
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m46 = yes }
 	}
 	if = {
+		limit = { check_variable = { ukraine_has_d1_stockpile > 0 } }
+		set_temp_variable = { ukr_sov_amount = ukraine_has_d1_stockpile }
+		set_temp_variable = { ukr_item_price = ukr_sov_amount }
+		multiply_temp_variable = { ukr_item_price = 100 }
+		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
+		subtract_from_variable = { ukraine_has_d1_stockpile = ukr_sov_amount tooltip = ukraine_storage_d1_sold_tt }
+		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_d1 = yes }
+	}
+	if = {
 		limit = { check_variable = { ukraine_has_m30_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_m30_stockpile }
 		set_temp_variable = { ukr_item_price = ukr_sov_amount }
@@ -9898,6 +9929,15 @@ UKR_storage_sell_artillery = {
 		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_m30_stockpile = ukr_sov_amount tooltip = ukraine_storage_m30_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m30 = yes }
+	}
+	if = {
+		limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } }
+		set_temp_variable = { ukr_sov_amount = ukraine_has_ml20_stockpile }
+		set_temp_variable = { ukr_item_price = ukr_sov_amount }
+		multiply_temp_variable = { ukr_item_price = 120 }
+		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
+		subtract_from_variable = { ukraine_has_ml20_stockpile = ukr_sov_amount tooltip = ukraine_storage_ml20_sold_tt }
+		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ml20 = yes }
 	}
 	divide_temp_variable = { ukr_sale_price = 1000000 } # thousands of dollars to billions
 	UKR_storage_sale_payment = yes
@@ -9967,9 +10007,15 @@ UKR_old_artillery_return_all = {
 	set_temp_variable = { ukr_sov_amount = ukraine_has_m46_stockpile }
 	UKR_old_gear_deliver_m46 = yes
 	set_variable = { ukraine_has_m46_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_d1_stockpile }
+	UKR_old_gear_deliver_d1 = yes
+	set_variable = { ukraine_has_d1_stockpile = 0 }
 	set_temp_variable = { ukr_sov_amount = ukraine_has_m30_stockpile }
 	UKR_old_gear_deliver_m30 = yes
 	set_variable = { ukraine_has_m30_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_ml20_stockpile }
+	UKR_old_gear_deliver_ml20 = yes
+	set_variable = { ukraine_has_ml20_stockpile = 0 }
 	UKR_storage_refresh = yes
 }
 UKR_old_artillery_return_part = {
@@ -9978,11 +10024,21 @@ UKR_old_artillery_return_part = {
 	round_temp_variable = ukr_sov_amount
 	UKR_old_gear_deliver_m46 = yes
 	set_variable = { ukraine_has_m46_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_d1_stockpile }
+	multiply_temp_variable = { ukr_sov_amount = 0.67 }
+	round_temp_variable = ukr_sov_amount
+	UKR_old_gear_deliver_d1 = yes
+	set_variable = { ukraine_has_d1_stockpile = 0 }
 	set_temp_variable = { ukr_sov_amount = ukraine_has_m30_stockpile }
 	multiply_temp_variable = { ukr_sov_amount = 0.67 }
 	round_temp_variable = ukr_sov_amount
 	UKR_old_gear_deliver_m30 = yes
 	set_variable = { ukraine_has_m30_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_ml20_stockpile }
+	multiply_temp_variable = { ukr_sov_amount = 0.67 }
+	round_temp_variable = ukr_sov_amount
+	UKR_old_gear_deliver_ml20 = yes
+	set_variable = { ukraine_has_ml20_stockpile = 0 }
 	UKR_storage_refresh = yes
 }
 
@@ -10031,7 +10087,7 @@ UKR_old_support_weapons_issue = {
 
 # Separatists seize part of our storage when the Donbas war starts (event storage_sale.28).
 # 2% of each pool with well-kept depots, up to 5% after years of neglect (UKR_depot_neglect 0-16).
-# Neglect also opens more depots: AK-47 only; from 6 the other small arms, SPG-9 and Strela-2; from 11 the 9P148 Konkurs carriers, M-46 guns and M-30 howitzers.
+# Neglect also opens more depots: AK-47 only; from 6 the other small arms, SPG-9 and Strela-2; from 11 the 9P148 Konkurs carriers, M-46 and ML-20 guns and D-1 and M-30 howitzers.
 # DPR gets 65%, LPR 35%, all as Soviet-made equipment.
 UKR_donbas_seize_depots = {
 	set_temp_variable = { ukr_seize_share = UKR_depot_neglect }
@@ -10046,7 +10102,9 @@ UKR_donbas_seize_depots = {
 	set_variable = { ukraine_seized_strela2 = 0 }
 	set_variable = { ukraine_seized_9p148 = 0 }
 	set_variable = { ukraine_seized_m46 = 0 }
+	set_variable = { ukraine_seized_d1 = 0 }
 	set_variable = { ukraine_seized_m30 = 0 }
+	set_variable = { ukraine_seized_ml20 = 0 }
 	if = {
 		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
 		set_variable = { ukraine_seized_ak47 = ukraine_has_ak47_stockpile }
@@ -10186,6 +10244,25 @@ UKR_donbas_seize_depots = {
 			}
 		}
 		if = {
+			limit = { check_variable = { ukraine_has_d1_stockpile > 0 } }
+			set_variable = { ukraine_seized_d1 = ukraine_has_d1_stockpile }
+			multiply_variable = { ukraine_seized_d1 = ukr_seize_share }
+			round_variable = ukraine_seized_d1
+			subtract_from_variable = { ukraine_has_d1_stockpile = ukraine_seized_d1 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_d1 }
+			UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_d1 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_d1 = yes }
+			}
+		}
+		if = {
 			limit = { check_variable = { ukraine_has_m30_stockpile > 0 } }
 			set_variable = { ukraine_seized_m30 = ukraine_has_m30_stockpile }
 			multiply_variable = { ukraine_seized_m30 = ukr_seize_share }
@@ -10202,6 +10279,25 @@ UKR_donbas_seize_depots = {
 				limit = { check_variable = { ukr_lpr_amount > 0 } }
 				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
 				LPR = { UKR_old_gear_deliver_m30 = yes }
+			}
+		}
+		if = {
+			limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } }
+			set_variable = { ukraine_seized_ml20 = ukraine_has_ml20_stockpile }
+			multiply_variable = { ukraine_seized_ml20 = ukr_seize_share }
+			round_variable = ukraine_seized_ml20
+			subtract_from_variable = { ukraine_has_ml20_stockpile = ukraine_seized_ml20 }
+			set_temp_variable = { ukr_seized_now = ukraine_seized_ml20 }
+			UKR_donbas_seized_split = yes
+			if = {
+				limit = { check_variable = { ukr_dpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_dpr_amount }
+				DPR = { UKR_old_gear_deliver_ml20 = yes }
+			}
+			if = {
+				limit = { check_variable = { ukr_lpr_amount > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukr_lpr_amount }
+				LPR = { UKR_old_gear_deliver_ml20 = yes }
 			}
 		}
 	}
