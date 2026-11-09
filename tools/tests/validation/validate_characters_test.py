@@ -257,7 +257,7 @@ def test_collect_trait_uses_ignores_advisor_and_country_leader_traits():
         "\ttraits = { army_chief_defensive_2 }\n"
         "}\n"
         "country_leader = {\n"
-        "\ttraits = { emerging_Conservative }\n"
+        "\ttraits = { emerging_reactionary }\n"
         "}\n"
     )
 

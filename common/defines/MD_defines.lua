@@ -156,6 +156,11 @@
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
+	-- Market AI
+	NDefines.NAI.EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.10 -- 0.1
+	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
+	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
+
 	-- Raid AI
 	NDefines.NAI.RAIDS_MIN_SUCCESS_FOR_LAUNCH = 0.12 -- 0.65 -- Scaled by 0.10 more for some reason
 	NDefines.NAI.RAIDS_CREATE_FREQUENCY_DAYS = 30 -- 7 -- Changed this to monthly to reduce the performance hit, given the number of raids present
@@ -166,10 +171,7 @@
 	NDefines.NAI.RAIDS_NUKE_TARGET_CUT_OFF = 10 -- 10
 	NDefines.NAI.RAIDS_UNIT_SCORE_SUCCESS_CHANCE_FACTOR = 500.0 -- 500.0
 	NDefines.NAI.RAIDS_UNIT_SCORE_DISTANCE_KM_FACTOR = 0.1 -- 0.1
-	-- Market AI
-	NDefines.NAI.EQUIPMENT_MARKET_MAX_CIVS_FOR_PURCHASES_RATIO = 0.05 -- 0.1
-	NDefines.NAI.EQUIPMENT_MARKET_BASE_MARKET_RATIO = 0.1 -- 0.2
-	NDefines.NAI.EQUIPMENT_MARKET_NR_DELIVERIES_SOFT_MAX = 400 -- 10 -- this should get AI to never add more than one factory
+
 	-- NCountry Releated Defines
 	NDefines.NCountry.AIR_SUPPLY_CONVERSION_SCALE = 0.1 -- 0.01
 	NDefines.NCountry.AIR_SUPPLY_DROP_EXPIRATION_HOURS = 168 -- 168
@@ -194,7 +196,7 @@
 	NDefines.NCountry.INDUSTRY_SCORE_MULTIPLIER = 0 -- 1.0
 	NDefines.NCountry.PROVINCE_SCORE_MULTIPLIER = 0 -- 0.1
 	NDefines.NCountry.MAJOR_IC_RATIO = 3                            -- difference in total factories needed to be considered major with respect to other nation
-	NDefines.NCountry.MAJOR_MIN_FACTORIES = 35						-- need at least these many factories to become a major
+	NDefines.NCountry.MAJOR_MIN_FACTORIES = 50						-- need at least these many factories to become a major
 	NDefines.NCountry.MIN_MAJOR_COUNTRIES	= 8						-- MIN_MAJOR_COUNTRIES countries with most factories will be considered as major countries
 	NDefines.NCountry.ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO = 0.7		-- Countries will also be considered major when having more factories that the average of top MIN_MAJOR_COUNTRIES countries' factories times ADDITIONAL_MAJOR_COUNTRIES_IC_RATIO
 	NDefines.NCountry.MAX_INTELLIGENCE_MILITARY_DATA_DEVIATION = 0.5
@@ -210,12 +212,19 @@
 	NDefines.NCountry.BASE_MAX_COMMAND_POWER = 250.0                       -- base value for maximum command power -- 200 in vanilla
 	NDefines.NCountry.AIR_VOLUNTEER_PLANES_RATIO = 0.25				-- Ratio for volunteer planes available for sending in relation to sender air force
 	NDefines.NCountry.AIR_VOLUNTEER_BASES_CAPACITY_LIMIT = 0.2		-- Ratio for volunteer planes available for sending in relation to receiver air base capacity
+
+	-- Fuel base defines
 	NDefines.NCountry.STARTING_FUEL_RATIO = 1					-- starting fuel ratio compared to max fuel for countries
 	NDefines.NCountry.BASE_FUEL_GAIN_PER_OIL = 16						-- base amount of fuel gained hourly per excess oil
 	NDefines.NCountry.BASE_FUEL_GAIN = 0.1							-- base amount of fuel gained hourly, independent of excess oil
-	NDefines.NCountry.BASE_FUEL_CAPACITY = 750000
+	NDefines.NCountry.BASE_FUEL_CAPACITY = 1000000
+
+	-- Political Power Defines
 	NDefines.NCountry.POLITICAL_POWER_LOWER_CAP = -300
 	NDefines.NCountry.POLITICAL_POWER_UPPER_CAP = 2500
+	NDefines.NPolitics.BASE_POLITICAL_POWER_INCREASE = 2.5 -- Was 2  but gives a slight boost for better gameplay loop
+	NDefines.NAI.MIN_POLITICAL_POWER_MONTHLY_GAIN_FOR_IMPROVE_RELATIONS = 3.0 -- AI should not use improve relations until theres a reason to use them or they have a ton spare
+
 	NDefines.NCountry.FEMALE_UNIT_LEADER_BASE_CHANCE = {
 		-- applies as a factor to female unit leader randomization
 		-- the values needs to be zero if you don't actually have random portraits
@@ -275,7 +284,7 @@
 
 	NDefines.NBuildings.MAX_BUILDING_LEVELS = 50
 	NDefines.NBuildings.SAM_MISSION_SUPERIORITY = 25.0	-- How much air superiority each SAM mission gives per rocket wing performing SAM missions.
-	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 24
+	NDefines.NBuildings.AIRBASE_CAPACITY_MULT = 48 -- 200 vanilla; planes per airbase level, 2x the old 24
 	NDefines.NBuildings.ROCKETSITE_CAPACITY_MULT = 50
 	NDefines.NBuildings.NAVALBASE_REPAIR_MULT = 0.075 -- 0.05 -- Each level of navalbase building repairs X strength and can repair as many ships as its level
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
@@ -446,6 +455,7 @@
 	NDefines.NMilitary.NUKE_DELAY_HOURS = 0.0							-- How many hours does it take for the nuclear drop to happen
 
 	-- Disabled as it seems like this is causing performance problems?
+	-- FIXME: Figure out what issue they are here please
 	NDefines.NMilitary.BASE_FEMALE_DIVISIONAL_COMMANDER_CHANCE = 0 -- Vanilla sets this to 0
 	NDefines.NMilitary.GENERATE_AI_DIV_COMMAND_HISTORY_ENTRIES = false -- Reduces save game file size -- Vanilla has this set to true, but we don't care about division history for non-player nations
 
@@ -458,6 +468,7 @@
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
 	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 30 -- 100 vanilla; was 50. Reduced to reflect MD wing sizes (land=50, cv=10, strat=25). Used for air volunteer calculations.
+	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
 	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 10 -- 2
 	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.05 -- 0.10 vanilla; was 0.15 — too many carrier planes held back from deployment
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
@@ -854,14 +865,11 @@
 	NDefines.NAI.AI_FRONT_MOVEMENT_FACTOR_FOR_READY = 0.15 --default 0.25
 	NDefines.NAI.PLAN_VALUE_TO_EXECUTE = -0.2 --default -0.5
 	NDefines.NAI.REQUEST_LEND_LEASE_CONTAINS_VALUE = 60				-- 100
-	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0				-- 0
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30 					--20 reduced by 50% to reduce the AI spamming planes over naval battles
 	NDefines.NAI.FOCUS_TREE_CONTINUE_FACTOR = 1		-- Factor for score of how likely the AI is to keep going down a focus tree rather than starting a new path.
 
 	NDefines.NAI.NAVY_PREFERED_MAX_SIZE = 20						-- 20 #Now AI like big fleet
 	NDefines.NAI.MAX_DISTANCE_NAVAL_INVASION = 400.0				-- 200.0
 	NDefines.NAI.INVASION_COASTAL_PROVS_PER_ORDER = 8				-- 12
-	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0					-- 12.0
 	NDefines.NAI.TRANSPORTS_PER_PARATROOPER = 10					-- 20
 
 	-- BNA-inspired naval AI improvements
@@ -872,17 +880,6 @@
 	NDefines.NAI.REGION_THREAT_LEVEL_TO_AVOID_REGION = 5000			-- 250 vanilla; fleets don't hide from minor threats
 	NDefines.NAI.REGION_THREAT_LEVEL_TO_BLOCK_REGION = 10000		-- 2500 vanilla; extreme threat needed to block regions
 
-	NDefines.NAI.NAVAL_FIGHTERS_PER_PLANE = 2					-- 1.1
-	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1					-- 0
-	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10				-- 150
-	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5				-- 100
-
-	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25				-- 20
-	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30				-- 25
-	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 5				-- 15
-	NDefines.NAI.RECON_PLANES_NAVAL = 5						-- 50
-	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5					-- 25
-	NDefines.NAI.RECON_PLANES_STRATEGIC = 5						-- 50
 	NDefines.NAI.MAX_CARRIER_OVERFILL = 1.85					-- 1.85 vanilla; restored to allow AI to fill carriers with more wings
 	NDefines.NAI.WANTED_CARRIER_PLANES_PER_CARRIER_CAPACITY_FACTOR = 2.0	-- 1.5 vanilla; AI wants 2x deck space filled to ensure carriers always have planes
 	NDefines.NAI.AI_WANTED_CARRIER_BASED_PLANES_FACTOR = 2.0			-- 1.0 vanilla; boost AI desire for carrier planes — MD uses carrier_air_wing_size = 10, so carriers need many small wings
@@ -920,26 +917,16 @@
 		0, -- RESERVE_FLEET
 		4, -- NAVAL INVASION SUPPORT
 	}
-	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7			-- 15
-	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5		-- 10
-	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4
 	NDefines.NAI.PLAN_ACTIVATION_SUPERIORITY_AGGRO = 0.1				-- 1.0
 	NDefines.NAI.WAIT_YEARS_BEFORE_FREER_BUILDING = 4				-- 3 is vanilla -- setting this to 4 so the AI is focusing on industrial base on the early game
 	NDefines.NAI.UPGRADES_DEFICIT_LIMIT_DAYS = 40				 	-- 50
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_FOR_FUEL_SAVING_MODE = 1.0			-- fuel consumptions will be limited by this ratio in fuel saving mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_REGULAR_FUEL_MODE = 2.0				-- fuel consumptions will be limited by this ratio in regular fuel mode
 	NDefines.NAI.FUEL_CONSUMPTION_MULT_AGRESSIVE_FUEL_MODE = 5.0				-- fuel consumptions will be limited by this ratio in aggressive fuel usage mode
-	NDefines.NAI.AIR_SUPERIORITY_FACTOR = 2.7
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE = 60				-- countries will enter fuel saving mode if they will be out of fuel in this number of days and their fuel ratio is below next define
 	NDefines.NAI.DAYS_FUEL_REMAINING_TO_ENTER_FUEL_SAVING_MODE_FUEL_RATIO = 0.25
 	NDefines.NAI.FUEL_RATIO_TO_EXIST_FUEL_SAVING_MODE = 0.30 					-- countries will exit fuel saving mode if they have more fuel ratio than this
-	NDefines.NAI.LAND_COMBAT_CAS_PLANES_PER_ENEMY_ARMY_LIMIT = 5	-- 200 vanilla; limit of CAS planes requested by enemy armies
-	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20				-- Amount of CAS planes requested per enemy army
-
-	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65
 	NDefines.NAI.MIN_WANTED_MAX_FUEL = 25
-	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5 -- Reduced from 5 to 2.5/originally was 10 but caused issues with the AI being unable to use their planes on missions
-	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1
 
 	NDefines.NAI.TRADEABLE_FACTORIES_FRACTION = 0.80 -- Updated from 0.80
 	NDefines.NAI.DIPLOMACY_CREATE_FACTION_FACTOR = 1.25 --0.75 in Vanilla		-- Factor for AI desire to create a new faction. Val < 1.0 makes it less likely to create than to join.
@@ -964,23 +951,65 @@
 	NDefines.NAI.DIPLOMACY_FACTION_JOIN_COUP_INITIATOR_BONUS = 70	-- If a country initiated coup on an another country, civil war revolter is more likely to join initiator's faction
 	NDefines.NAI.DEMOCRATIC_AI_FACTION_KICKING_PLAYER_THREAT_DIFFERENCE = 6.0 -- World threat generation difference needed to kick a player from a democratic faction
 	NDefines.NAI.GENERATE_WARGOAL_ANTAGONIZE_SCALE = 0.10    -- works to scale the AIs antagonize value vs the threat baseline for when it should act on existing claims: threat used for baseline is min_threat - antagonize * scale
-	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100
-	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200		-- Strategic importance of our armies in the combats
-	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25
 	NDefines.NAI.NUM_AI_MESSAGES = 300
-	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05
-	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 1.5
-	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 1.5
-	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.8
-	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3
-	NDefines.NAI.LAND_COMBAT_GUIDE_DISTANCE = 400.0 -- 290; wider zone for CAS plane assignment
-	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7 -- 0.10; AI actually escorts its strategic bomber fleets
-	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
-	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
-	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
-	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 30 -- 10; a month of focus progress banks while the slot sits empty
-	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
-	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
+
+	-- AI Air Planes
+	NDefines.NAI.AIR_SUPERIORITY_FACTOR = 2.7								-- 2.5 vanilla; factor for the air superiority score
+	NDefines.NAI.AIR_SCORE_DISTANCE_IMPACT = 0.4							-- 0.3 vanilla; how much distance lowers a region's air score
+	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7							-- 6 vanilla; regions the AI splits its planes across, leftovers still go elsewhere
+	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10	-- 0.25 vanilla; share of fighters held for interception instead of air superiority
+	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 8						-- 20 vanilla; land-based planes the AI wants for each division it wants
+	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2			-- 1.0 vanilla; share of affordable fuel the AI spends on air training
+	NDefines.NAI.AIR_ACTUAL_FUEL_USAGE_WEIGHT_ON_OIL_REQUEST = 0.05			-- 0.5 vanilla; weight of actual plane fuel use vs mission requests when trading for oil
+
+	-- Naval air
+	NDefines.NAI.NAVAL_COMBAT_AIR_IMPORTANCE = 24.0							-- 8.0 vanilla; importance of naval combats
+	NDefines.NAI.NAVAL_TRANSFER_AIR_IMPORTANCE = 1.0						-- 0.0 vanilla; importance of enemy naval transfers
+	NDefines.NAI.NAVAL_FIGHTERS_PER_PLANE = 2								-- 1.1 vanilla; air superiority planes requested per enemy plane
+	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_SHIP = 30							-- 20 vanilla; bombers requested per enemy ship
+	NDefines.NAI.NAVAL_STRIKE_PLANES_PER_ARMY = 1							-- 0 vanilla; planes requested per enemy army
+	NDefines.NAI.MINES_SWEEPING_PLANES_PER_MAX_MINES = 10					-- 150 vanilla; planes requested to sweep a region at the enemy mine cap
+	NDefines.NAI.MINES_PLANTING_PLANES_PER_MAX_DESIRE = 5					-- 100 vanilla; planes requested to plant mines at max desire
+
+	-- Land defense air
+	NDefines.NAI.LAND_DEFENSE_AIR_SUPERIORITY_IMPORTANCE = 1.5				-- vanilla; importance of enemy planes over our regions
+	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0					-- vanilla; how much AA counts toward region importance (0.0 to 1.0)
+	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2			-- 5 vanilla; factories needed before they add air importance, so small nations defend too
+	NDefines.NAI.LAND_DEFENSE_FIGHERS_PER_PLANE = 1.8						-- vanilla; air superiority planes requested per enemy plane (key misspelled in vanilla)
+	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4			-- 0.2 vanilla; how much SAMs count toward region importance; 0.6 put too many SAMs on rocket sites
+
+	-- Land combat air
+	NDefines.NAI.LAND_COMBAT_AIR_SUPERIORITY_IMPORTANCE = 1.5				-- 0.40 vanilla; importance of enemy planes over land combat
+	NDefines.NAI.LAND_COMBAT_OUR_ARMIES_AIR_IMPORTANCE = 100				-- 20 vanilla; importance of our armies
+	NDefines.NAI.LAND_COMBAT_OUR_COMBATS_AIR_IMPORTANCE = 200				-- 155 vanilla; importance of our armies in combat
+	NDefines.NAI.LAND_COMBAT_FRIEND_ARMIES_AIR_IMPORTANCE = 25				-- 10 vanilla; importance of friendly armies
+	NDefines.NAI.LAND_COMBAT_GUIDE_DISTANCE = 400.0							-- 290 vanilla; range where the AI sends planes even when our units are not losing; wider CAS zone
+	NDefines.NAI.LAND_COMBAT_FIGHTERS_PER_PLANE = 1.3						-- 1.0 vanilla; air superiority planes requested per enemy plane
+	NDefines.NAI.LAND_COMBAT_INTERCEPT_PER_PLANE = 1						-- 0.25 vanilla; interceptors requested per enemy plane
+	NDefines.NAI.LAND_COMBAT_CAS_PER_ENEMY_ARMY = 20						-- 30 vanilla; CAS planes requested per enemy division
+	NDefines.NAI.LAND_COMBAT_CAS_PLANES_PER_ENEMY_ARMY_LIMIT = 5			-- 200 vanilla; cap on CAS planes requested for enemy armies
+	NDefines.NAI.LAND_COMBAT_CAS_PER_COMBAT = 65							-- 60 vanilla; CAS planes requested per combat
+	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_LAND_FORT_LEVEL = 7				-- 6 vanilla; bombers requested per enemy land fort level
+	NDefines.NAI.LAND_COMBAT_BOMBERS_PER_COASTAL_FORT_LEVEL = 5				-- 6 vanilla; bombers requested per enemy coastal fort level
+	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75				-- 1.5 vanilla; how much missiles count toward region importance
+
+	-- Strategic bombing air
+	NDefines.NAI.STR_BOMB_IMPORTANCE_SCALE = 2.5							-- 1.0 vanilla; scales every strategic bombing score; MD's old 10 left the AI no planes for other missions
+	NDefines.NAI.STR_BOMB_AIR_SUPERIORITY_IMPORTANCE = 0.7					-- 0.10 vanilla; importance of enemy planes over targets, so the AI escorts its bombers
+	NDefines.NAI.STR_BOMB_PLANES_PER_CIV_FACTORY = 25						-- 20 vanilla; planes requested per enemy civilian factory
+	NDefines.NAI.STR_BOMB_PLANES_PER_MIL_FACTORY = 30						-- 25 vanilla; planes requested per enemy military factory
+	NDefines.NAI.STR_BOMB_PLANES_PER_NAV_FACTORY = 5						-- 15 vanilla; planes requested per enemy dockyard
+
+	-- Recon air
+	NDefines.NAI.RECON_PLANES_NAVAL = 5										-- 50 vanilla; recon plane scale for naval regions
+	NDefines.NAI.RECON_PLANES_LAND_COMBAT = 5								-- 25 vanilla; recon plane scale for land combat regions
+	NDefines.NAI.RECON_PLANES_STRATEGIC = 5									-- 50 vanilla; recon plane scale for strategic regions
+
+	-- Rocket air
+	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0			-- 0.5 vanilla; region score lost per assigned missile wing; vanilla stacked about 20 wings per region
+	NDefines.NAI.ROCKET_MIN_ASSIGN_SCORE = 10								-- vanilla; minimum region score for rocket missions; with the reduction above, about 5 wings per region
+
+	-- Construction Defines
 	NDefines.NAI.CONSTRUCTION_PRIO_INFRASTRUCTURE = 0.25				-- 0.20 vanilla; base prio for infrastructure in the construction queue
 	NDefines.NAI.CONSTRUCTION_PRIO_CIV_FACTORY = 0.90					-- 0.80 vanilla; base prio for civilian factories in the construction queue
 	NDefines.NAI.CONSTRUCTION_PRIO_MIL_FACTORY = 0.65					-- 0.70 vanilla; base prio for military factories in the construction queue
@@ -995,7 +1024,6 @@
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
 		'fossil_powerplant', 'renewable_energy_infra', 'nuclear_reactor', 'enrichment_facility', 'industrial_complex', 'internet_station', 'microchip_plant', 'arms_factory', 'dockyard', 'fuel_silo', 'composite_plant', 'offices', 'synthetic_refinery', 'infrastructure', 'rail_terminal', 'agriculture_district'
 	}
-	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_AIR_TRAINING = 0.2
 	NDefines.NAI.NUM_SILOS_PER_CIVILIAN_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of civ factories
 	NDefines.NAI.NUM_SILOS_PER_MILITARY_FACTORIES = 0.03		-- ai will try to build a silo per this ratio of mil factories
 	NDefines.NAI.NUM_SILOS_PER_DOCKYARDS = 0.03
@@ -1044,11 +1072,9 @@
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CORE = true				-- Whether AI should evaluate giving states to other winners if state is their core (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_IF_CLAIM = true				-- Whether AI should evaluate giving states to other winners if they have a claim on the state (may affect performance on new conference turn)
 	NDefines.NAI.PEACE_AI_EVALUATE_OTHER_ALWAYS = false				-- Whether AI should always evaluate giving states to other winners (!!! may heavily affect performance on new conference turn for large peace conferences !!!)
-	NDefines.NAI.LAND_DEFENSE_SAM_MISSILE_IMPORTANCE_FACTOR = 0.4 -- 0.2 vanilla; was 0.6 (3x vanilla caused AI to overstack rocket sites with SAMs)
-	NDefines.NAI.LAND_COMBAT_MISSILE_IMPORTANCE_FACTOR = 1.75 -- Importance of missiles for regions of strat importance. Higher = more -- 1.5
-	NDefines.NAI.LAND_DEFENSE_AA_IMPORTANCE_FACTOR = 1.0 -- Factor of AA on stat importance
-	NDefines.NAI.ROCKET_ASSIGN_SCORE_REDUCTION_PER_ASSIGNMENT = 2.0 -- 0.5 vanilla; each assigned missile wing reduces region score to prevent overstacking (vanilla 0.5 allowed ~20 wings per region)
-	NDefines.NAI.ROCKET_MIN_ASSIGN_SCORE = 10 -- 10 vanilla; with reduction of 2.0, AI assigns ~5 wings per region before stopping
+
+	-- NFocus Defines
+	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 30 -- 10; a month of focus progress banks while the slot sits empty
 
 	-- NOperatives Defines
 	NDefines.NOperatives.AGENCY_AI_BASE_NUM_FACTORIES = 25.0 -- (We do not need factories aside from establishment)
@@ -1176,8 +1202,9 @@
 		100, -- NAVAL INVASION SUPPORT
 	}
 
+	-- Military Industrial Organisation (MIO)
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.025					-- 0.1
-	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.05		-- 0
+	NDefines.NIndustrialOrganisation.ASSIGN_INDUSTRIAL_MANUFACTURER_PP_COST_PER_DAY = 0.025		-- 0
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP = 1000					-- 700
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
