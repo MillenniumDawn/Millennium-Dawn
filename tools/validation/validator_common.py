@@ -284,7 +284,7 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         # game_rules_l_english.yml — vanilla game rule option name reused by MD.
         "ETH_AI_BEHAVIOR",
         # diplomacy_l_english.yml — vanilla opinion modifier names; MD redefines
-        # the modifiers in common/opinion_modifiers/generic_modifiers.txt but
+        # the modifiers in common/opinion_modifiers/00_generic_opinion_modifiers.txt but
         # reuses the vanilla strings.
         "same_ruling_party",
         "unstable_alliance",

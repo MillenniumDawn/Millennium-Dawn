@@ -51,7 +51,7 @@ def test_ct_ledger_preserves_main_navigation_and_explicit_top_access():
     gate = _named_block(triggers, "ct_gui_ledger_button_click_enabled")
     eligibility = _named_block(gate, "OR")
     for token in (
-        "no_jihadist_government = yes",
+        "jihadist_government = no",
         "TOP_country_eligible = yes",
         "TOP_security_country_eligible = yes",
     ):
