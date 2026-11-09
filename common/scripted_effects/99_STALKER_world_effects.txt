@@ -1,0 +1,761 @@
+# How the rest of the world reacts to the Zones: diplomacy before Kaimanov, casualties among foreign teams.
+STALKER_monthly_world_pulse = {
+	STALKER_refresh_unsc_expected = yes
+	STALKER_finish_security_council = yes
+	if = {
+		limit = {
+			NOT = { has_global_flag = STALKER_kaimanov_outcome }
+			NOT = { has_global_flag = STALKER_ipsf_formed }
+			NOT = { has_global_flag = STALKER_great_power_talks_cooldown }
+			any_of_scopes = {
+				array = global.STALKER_active_zone_anchors
+				check_variable = { STALKER_zone_id = 1 }
+				check_variable = { STALKER_zone_containment < 40 }
+			}
+		}
+		random = {
+			chance = 10
+			set_global_flag = { flag = STALKER_great_power_talks_cooldown value = 1 days = 730 }
+			random_scope_in_array = {
+				array = global.STALKER_active_zone_anchors
+				limit = {
+					check_variable = { STALKER_zone_id = 1 }
+					controller = { exists = yes }
+				}
+				controller = { save_global_event_target_as = STALKER_zone_host_target set_variable = { global.STALKER_zone_host_target = THIS } }
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = STALKER.132 }
+			}
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = STALKER.133 }
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_expedition_casualty_cooldown } }
+		random = {
+			chance = 3
+			random_country = {
+				limit = {
+					has_country_flag = STALKER_zone_research_access
+					NOT = { STALKER_controls_active_zone = yes }
+				}
+				set_global_flag = { flag = STALKER_expedition_casualty_cooldown value = 1 days = 365 }
+				save_global_event_target_as = STALKER_casualty_country
+				set_variable = { global.STALKER_casualty_country = THIS }
+				random_scope_in_array = {
+					array = global.STALKER_active_zone_anchors
+					limit = { controller = { exists = yes } }
+					controller = { save_event_target_as = STALKER_zone_controller_target }
+				}
+				country_event = STALKER.134
+				news_event = STALKER.135
+			}
+		}
+	}
+}
+
+# A catastrophic emission (containment already below 20) makes world news, at most once a year.
+STALKER_report_major_emission = {
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_containment < 20 }
+			NOT = { has_global_flag = STALKER_major_emission_news_cooldown }
+			controller = { exists = yes }
+		}
+		set_global_flag = { flag = STALKER_major_emission_news_cooldown value = 1 days = 365 }
+		STALKER_target_zone = yes
+		controller = { news_event = STALKER.130 }
+	}
+}
+
+# One scripted Council session after the worldwide Kaymanov news. Not a UN resolution type.
+# Ballots are sent to each permanent member, and to the original Zone's controller when that country is not already seated.
+STALKER_schedule_security_council = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			NOT = { has_global_flag = STALKER_unsc_scheduled }
+		}
+		set_global_flag = STALKER_unsc_scheduled
+		set_variable = { global.STALKER_unsc_ballots = 0 }
+		set_variable = { global.STALKER_unsc_containment = 0 }
+		set_variable = { global.STALKER_unsc_access = 0 }
+		set_variable = { global.STALKER_unsc_adjourn = 0 }
+		set_variable = { global.STALKER_unsc_expected = 0 }
+		set_variable = { global.STALKER_unsc_result = 0 }
+		for_each_scope_loop = {
+			array = global.p5_sc_members
+			if = {
+				limit = {
+					exists = yes
+					NOT = { has_country_flag = STALKER_unsc_seat }
+				}
+				set_country_flag = STALKER_unsc_seat
+				country_event = { id = STALKER.137 days = 50 }
+				add_to_variable = { global.STALKER_unsc_expected = 1 }
+			}
+		}
+		698 = {
+			if = {
+				limit = {
+					controller = {
+						exists = yes
+						NOT = { has_country_flag = STALKER_unsc_seat }
+					}
+				}
+				controller = {
+					set_country_flag = STALKER_unsc_seat
+					country_event = { id = STALKER.137 days = 50 }
+				}
+				add_to_variable = { global.STALKER_unsc_expected = 1 }
+			}
+		}
+	}
+}
+
+STALKER_refresh_unsc_expected = {
+	if = {
+		limit = {
+			has_global_flag = STALKER_unsc_scheduled
+			NOT = { has_global_flag = STALKER_unsc_resolved }
+		}
+		set_variable = { global.STALKER_unsc_expected = global.STALKER_unsc_ballots }
+		every_country = {
+			limit = {
+				has_country_flag = STALKER_unsc_seat
+				NOT = { has_country_flag = STALKER_unsc_voted }
+			}
+			add_to_variable = { global.STALKER_unsc_expected = 1 }
+		}
+	}
+}
+
+STALKER_finish_security_council = {
+	STALKER_refresh_unsc_expected = yes
+	if = {
+		limit = {
+			has_global_flag = STALKER_unsc_scheduled
+			NOT = { has_global_flag = STALKER_unsc_resolved }
+			check_variable = { global.STALKER_unsc_ballots = global.STALKER_unsc_expected }
+		}
+		set_global_flag = STALKER_unsc_resolved
+		set_variable = { global.STALKER_unsc_result = 3 }
+		if = {
+			limit = {
+				check_variable = { global.STALKER_unsc_containment > global.STALKER_unsc_access }
+				check_variable = { global.STALKER_unsc_containment > global.STALKER_unsc_adjourn }
+			}
+			set_variable = { global.STALKER_unsc_result = 1 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { global.STALKER_unsc_access > global.STALKER_unsc_containment }
+				check_variable = { global.STALKER_unsc_access > global.STALKER_unsc_adjourn }
+			}
+			set_variable = { global.STALKER_unsc_result = 2 }
+			every_country = {
+				limit = { has_country_flag = STALKER_unsc_voted_access }
+				STALKER_grant_zone_research_access = yes
+			}
+		}
+		news_event = STALKER.138
+	}
+}
+
+# ---- 99_STALKER_global_effects.txt (consolidated) ----
+# After Kaimanov, the registered reference-map Zones awaken one at a time rather than all at once.
+STALKER_monthly_proliferation_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			has_global_flag = STALKER_global_proliferation
+		}
+		random = {
+			chance = 50
+			random_scope_in_array = {
+				array = global.STALKER_zone_anchor_states
+				limit = {
+					STALKER_is_zone_location = yes
+					NOT = { check_variable = { STALKER_zone_id = 1 } }
+					NOT = { STALKER_is_active_zone = yes }
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+				}
+				STALKER_awaken_reference_zone = yes
+			}
+		}
+	}
+}
+
+STALKER_awaken_reference_zone = {
+	log = "[GetDateText]: STALKER reference Zone [?STALKER_zone_id] awakens in [THIS.GetName]"
+	# Expires so a lost policy answer cannot freeze the Zone; the event times out long before.
+	set_state_flag = { flag = STALKER_zone_policy_pending value = 1 days = 60 }
+	if = {
+		limit = { controller = { exists = yes } }
+		STALKER_target_zone = yes
+		controller = { country_event = STALKER.1 }
+		if = {
+			limit = { controller = { is_major = yes } }
+			controller = {
+				set_variable = { STALKER_reaction_zone = PREV }
+				country_event = { id = STALKER.136 days = 30 }
+			}
+		}
+	}
+	else = { STALKER_activate_zone = yes }
+}
+
+# ---- 99_STALKER_regional_effects.txt (consolidated) ----
+# Regional profiles adjust a Zone's starting values once it awakens.
+STALKER_apply_zone_profile = {
+	if = {
+		limit = { check_variable = { STALKER_zone_profile = 1 } }
+		add_to_variable = { STALKER_zone_activity = 10 }
+		add_to_variable = { STALKER_zone_containment = 10 }
+		add_to_variable = { STALKER_zone_stalkers = -10 }
+		add_to_variable = { STALKER_zone_bandits = -15 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 2 } }
+		add_to_variable = { STALKER_zone_containment = -10 }
+		add_to_variable = { STALKER_zone_stalkers = 10 }
+		add_to_variable = { STALKER_zone_bandits = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 3 } }
+		add_to_variable = { STALKER_zone_activity = 10 }
+		add_to_variable = { STALKER_zone_containment = -10 }
+		add_to_variable = { STALKER_zone_bandits = 15 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 4 } }
+		add_to_variable = { STALKER_zone_containment = 15 }
+		add_to_variable = { STALKER_zone_exploitation = 10 }
+		if = {
+			limit = { check_variable = { STALKER_zone_id = 1 } }
+			add_to_variable = { STALKER_zone_duty = 10 }
+		}
+		else = { add_to_variable = { STALKER_zone_military = 10 } }
+	}
+	clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+	STALKER_clamp_zone_society = yes
+}
+
+STALKER_roll_regional_event = {
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_profile > 0 }
+			NOT = { has_state_flag = STALKER_regional_event_cooldown }
+			controller = { exists = yes }
+		}
+		random = {
+			chance = 5
+			set_state_flag = { flag = STALKER_regional_event_cooldown value = 1 days = 365 }
+			STALKER_target_zone = yes
+			if = {
+				limit = { check_variable = { STALKER_zone_profile = 1 } }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { STALKER_zone_id = 2 }
+							check_variable = { STALKER_zone_id = 6 }
+							check_variable = { STALKER_zone_id = 7 }
+							check_variable = { STALKER_zone_id = 19 }
+							check_variable = { STALKER_zone_id = 20 }
+							check_variable = { STALKER_zone_id = 21 }
+							check_variable = { STALKER_zone_id = 22 }
+						}
+					}
+					random_list = {
+						50 = { controller = { country_event = STALKER.41 } }
+						50 = { controller = { country_event = STALKER.46 } }
+					}
+				}
+				else = { controller = { country_event = STALKER.41 } }
+			}
+			else_if = {
+				limit = { check_variable = { STALKER_zone_profile = 2 } }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { STALKER_zone_id = 13 }
+							check_variable = { STALKER_zone_id = 23 }
+						}
+					}
+					random_list = {
+						50 = { controller = { country_event = STALKER.42 } }
+						50 = { controller = { country_event = STALKER.47 } }
+					}
+				}
+				else = { controller = { country_event = STALKER.42 } }
+			}
+			else_if = {
+				limit = { check_variable = { STALKER_zone_profile = 3 } }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { STALKER_zone_id = 9 }
+							check_variable = { STALKER_zone_id = 10 }
+							check_variable = { STALKER_zone_id = 11 }
+							check_variable = { STALKER_zone_id = 25 }
+							check_variable = { STALKER_zone_id = 30 }
+							check_variable = { STALKER_zone_id = 36 }
+							check_variable = { STALKER_zone_id = 37 }
+						}
+					}
+					random_list = {
+						50 = { controller = { country_event = STALKER.43 } }
+						50 = { controller = { country_event = STALKER.48 } }
+					}
+				}
+				else = { controller = { country_event = STALKER.43 } }
+			}
+			else = {
+				if = {
+					limit = { check_variable = { STALKER_zone_id = 17 } }
+					random_list = {
+						50 = { controller = { country_event = STALKER.44 } }
+						50 = { controller = { country_event = STALKER.45 } }
+					}
+				}
+				else = { controller = { country_event = STALKER.44 } }
+			}
+		}
+	}
+}
+
+# ---- 99_STALKER_footprint_effects.txt (consolidated) ----
+# A barely contained, highly active Zone spills into neighbouring states; a well-held one pulls back. A
+# reference Zone at its full footprint can split, and one between the two extremes drifts.
+STALKER_monthly_footprint_pulse = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_footprint_cooldown }
+				controller = { exists = yes }
+			}
+			if = {
+				limit = {
+					check_variable = { STALKER_zone_id > 1 }
+					check_variable = { STALKER_zone_id < 100 }
+					NOT = { has_state_flag = STALKER_zone_split }
+					check_variable = { STALKER_zone_activity > 89 }
+					check_variable = { STALKER_zone_containment < 25 }
+					check_variable = { STALKER_zone_footprint^num > 2 }
+				}
+				random = {
+					chance = 10
+					STALKER_split_zone = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { STALKER_zone_activity > 74 }
+					check_variable = { STALKER_zone_containment < 40 }
+					NOT = { check_variable = { STALKER_zone_footprint^num > 2 } }
+				}
+				random = {
+					chance = 10
+					STALKER_spread_zone_footprint = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { STALKER_zone_containment > 69 }
+					check_variable = { STALKER_zone_activity < 40 }
+					check_variable = { STALKER_zone_footprint^num > 0 }
+				}
+				random = {
+					chance = 10
+					STALKER_recede_zone_footprint = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { STALKER_zone_activity > 49 }
+					check_variable = { STALKER_zone_containment < 70 }
+					check_variable = { STALKER_zone_footprint^num > 0 }
+				}
+				random = {
+					chance = 5
+					STALKER_drift_zone_footprint = yes
+				}
+			}
+		}
+	}
+}
+
+STALKER_spread_zone_footprint = {
+	controller = { save_event_target_as = STALKER_footprint_controller }
+	random_neighbor_state = {
+		limit = {
+			is_controlled_by = event_target:STALKER_footprint_controller
+			NOT = { STALKER_is_zone_location = yes }
+			NOT = { has_state_flag = STALKER_zone_footprint }
+		}
+		set_state_flag = STALKER_zone_footprint
+		set_variable = { STALKER_footprint_anchor = PREV }
+		add_dynamic_modifier = { modifier = STALKER_zone_presence }
+		save_event_target_as = STALKER_footprint_event_target
+		PREV = {
+			add_to_array = { STALKER_zone_footprint = PREV }
+			set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+		}
+		log = "[GetDateText]: STALKER Zone [?PREV.STALKER_zone_id] spreads into [THIS.GetName]"
+		PREV = { STALKER_target_zone = yes }
+		event_target:STALKER_footprint_controller = {
+			STALKER_refresh_zone_administration = yes
+			country_event = STALKER.110
+		}
+	}
+}
+
+# The newest footprint state is released first.
+STALKER_recede_zone_footprint = {
+	set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+	set_temp_variable = { STALKER_footprint_last = { value = STALKER_zone_footprint^num subtract = 1 } }
+	set_temp_variable = { STALKER_footprint_state = STALKER_zone_footprint^STALKER_footprint_last }
+	remove_from_array = { array = STALKER_zone_footprint index = STALKER_footprint_last }
+	STALKER_target_zone = yes
+	var:STALKER_footprint_state = {
+		STALKER_clear_zone_footprint_state = yes
+		save_event_target_as = STALKER_footprint_event_target
+		log = "[GetDateText]: STALKER Zone recedes from [THIS.GetName]"
+	}
+	if = {
+		limit = { controller = { exists = yes } }
+		controller = {
+			STALKER_refresh_zone_administration = yes
+			country_event = STALKER.111
+		}
+	}
+}
+
+# The oldest footprint state is released and a new neighbour taken, so the Zone's edge moves.
+STALKER_drift_zone_footprint = {
+	controller = { save_event_target_as = STALKER_footprint_controller }
+	set_temp_variable = { STALKER_footprint_count = STALKER_zone_footprint^num }
+	random_neighbor_state = {
+		limit = {
+			is_controlled_by = event_target:STALKER_footprint_controller
+			NOT = { STALKER_is_zone_location = yes }
+			NOT = { has_state_flag = STALKER_zone_footprint }
+		}
+		set_state_flag = STALKER_zone_footprint
+		set_variable = { STALKER_footprint_anchor = PREV }
+		add_dynamic_modifier = { modifier = STALKER_zone_presence }
+		save_event_target_as = STALKER_footprint_event_target
+		PREV = { add_to_array = { STALKER_zone_footprint = PREV } }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_footprint^num > STALKER_footprint_count } }
+		set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+		set_temp_variable = { STALKER_footprint_state = STALKER_zone_footprint^0 }
+		remove_from_array = { array = STALKER_zone_footprint index = 0 }
+		var:STALKER_footprint_state = {
+			STALKER_clear_zone_footprint_state = yes
+			save_event_target_as = STALKER_footprint_released_target
+		}
+		log = "[GetDateText]: STALKER Zone [?STALKER_zone_id] drifts into a new neighbouring state"
+		STALKER_target_zone = yes
+		event_target:STALKER_footprint_controller = {
+			STALKER_refresh_zone_administration = yes
+			country_event = STALKER.110
+		}
+	}
+}
+
+# The oldest footprint state breaks away as a new Zone whose ID is this Zone's plus 100.
+STALKER_split_zone = {
+	set_state_flag = STALKER_zone_split
+	set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+	add_to_variable = { STALKER_zone_activity = -15 }
+	set_temp_variable = { STALKER_footprint_state = STALKER_zone_footprint^0 }
+	remove_from_array = { array = STALKER_zone_footprint index = 0 }
+	var:STALKER_footprint_state = {
+		STALKER_clear_zone_footprint_state = yes
+		set_temp_variable = { STALKER_new_zone_id = { value = PREV.STALKER_zone_id add = 100 } }
+		set_temp_variable = { STALKER_new_zone_profile = PREV.STALKER_zone_profile }
+		STALKER_register_zone_anchor = yes
+		log = "[GetDateText]: STALKER Zone [?PREV.STALKER_zone_id] splits into [THIS.GetName]"
+		STALKER_awaken_reference_zone = yes
+	}
+	if = {
+		limit = { controller = { exists = yes } }
+		controller = { STALKER_refresh_zone_administration = yes }
+	}
+}
+
+STALKER_clear_zone_footprint_state = {
+	clr_state_flag = STALKER_zone_footprint
+	clear_variable = STALKER_footprint_anchor
+	if = {
+		limit = { has_dynamic_modifier = { modifier = STALKER_zone_presence } }
+		remove_dynamic_modifier = { modifier = STALKER_zone_presence }
+	}
+}
+
+# ---- 99_STALKER_international_effects.txt (consolidated) ----
+STALKER_monthly_international_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { global.STALKER_active_zone_anchors^num > 0 }
+		}
+		STALKER_roll_artifact_seizure = yes
+		STALKER_monthly_polesie_pulse = yes
+		for_each_scope_loop = {
+			array = global.STALKER_active_zone_anchors
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					NOT = { has_state_flag = STALKER_access_request_cooldown }
+					controller = { exists = yes }
+				}
+				random = {
+					chance = 5
+					STALKER_send_access_request = yes
+				}
+			}
+		}
+		STALKER_monthly_mdst_pulse = yes
+	}
+}
+
+# Smuggled artifacts pool globally; every five can surface as a foreign customs seizure. The seizure is traced
+# to the Zone whose black market leaked the most last month.
+STALKER_roll_artifact_seizure = {
+	if = {
+		limit = {
+			check_variable = { global.STALKER_smuggled_artifacts > 4.99 }
+			NOT = { has_global_flag = STALKER_artifact_seizure_cooldown }
+		}
+		random = {
+			chance = 25
+			set_temp_variable = { STALKER_seizure_state = 0 }
+			set_temp_variable = { STALKER_seizure_best = 0 }
+			for_each_scope_loop = {
+				array = global.STALKER_active_zone_anchors
+				if = {
+					limit = {
+						controller = { exists = yes }
+						check_variable = { STALKER_zone_black_market > STALKER_seizure_best }
+					}
+					set_temp_variable = { STALKER_seizure_best = STALKER_zone_black_market }
+					set_temp_variable = { STALKER_seizure_state = THIS }
+				}
+			}
+			if = {
+				limit = { NOT = { check_variable = { STALKER_seizure_state = 0 } } }
+				var:STALKER_seizure_state = {
+					controller = { save_event_target_as = STALKER_zone_controller_target }
+				}
+			}
+			random_scope_in_array = {
+				array = global.majors
+				limit = {
+					exists = yes
+					NOT = { STALKER_controls_active_zone = yes }
+				}
+				set_global_flag = { flag = STALKER_artifact_seizure_cooldown value = 1 days = 180 }
+				add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+				country_event = STALKER.20
+			}
+		}
+	}
+}
+
+STALKER_send_access_request = {
+	STALKER_target_zone = yes
+	controller = { save_event_target_as = STALKER_zone_controller_target }
+	random_scope_in_array = {
+		array = global.majors
+		limit = {
+			exists = yes
+			NOT = { STALKER_controls_active_zone = yes }
+			NOT = { has_country_flag = STALKER_zone_research_access }
+			NOT = { has_war_with = event_target:STALKER_zone_controller_target }
+		}
+		PREV = { set_state_flag = { flag = STALKER_access_request_cooldown value = 1 days = 365 } }
+		save_event_target_as = STALKER_access_requester
+		event_target:STALKER_zone_controller_target = { country_event = STALKER.21 }
+	}
+}
+
+STALKER_grant_zone_research_access = {
+	if = {
+		limit = { NOT = { has_country_flag = STALKER_zone_research_access } }
+		add_to_variable = { global.STALKER_research_access_count = 1 }
+	}
+	set_country_flag = STALKER_zone_research_access
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = STALKER_foreign_zone_access } } }
+		add_dynamic_modifier = { modifier = STALKER_foreign_zone_access }
+	}
+}
+
+# Each call adds 5 containment and removes 5 bandit influence in every Zone the host controls.
+STALKER_reinforce_host_zones = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				is_controlled_by = event_target:STALKER_ipsf_host
+			}
+			add_to_variable = { STALKER_zone_containment = 5 }
+			add_to_variable = { STALKER_zone_bandits = -5 }
+			STALKER_clamp_zone_society = yes
+		}
+	}
+}
+
+# ---- 99_STALKER_intel_effects.txt (consolidated) ----
+# Foreign services follow the access agreements and the artifact money into every Zone.
+STALKER_monthly_intel_pulse = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				controller = { exists = yes }
+			}
+			set_temp_variable = {
+				STALKER_intel_target = {
+					value = global.STALKER_research_access_count
+					multiply = 5
+					add = { value = STALKER_zone_exploitation multiply = 0.4 }
+					clamp = { min = 0 max = 100 }
+				}
+			}
+			add_to_variable = { STALKER_zone_foreign_intel = { value = STALKER_intel_target subtract = STALKER_zone_foreign_intel multiply = 0.1 } }
+			clamp_variable = { var = STALKER_zone_foreign_intel min = 0 max = 100 }
+			if = {
+				limit = { check_variable = { STALKER_zone_id = 1 } }
+				set_temp_variable = {
+					STALKER_merc_target = {
+						value = STALKER_zone_foreign_intel
+						multiply = 0.7
+						add = { value = STALKER_zone_exploitation multiply = 0.15 }
+						clamp = { min = 0 max = 100 }
+					}
+				}
+				add_to_variable = { STALKER_zone_mercenaries = { value = STALKER_merc_target subtract = STALKER_zone_mercenaries multiply = 0.1 } }
+				clamp_variable = { var = STALKER_zone_mercenaries min = 0 max = 100 }
+				STALKER_update_zone_leader = yes
+				if = {
+					limit = {
+						check_variable = { STALKER_zone_mercenaries > 39 }
+						NOT = { has_state_flag = STALKER_mercenary_cooldown }
+					}
+					random = {
+						chance = 10
+						set_state_flag = { flag = STALKER_mercenary_cooldown value = 1 days = 365 }
+						STALKER_target_zone = yes
+						controller = { country_event = STALKER.141 }
+					}
+				}
+			}
+			if = {
+				limit = { check_variable = { STALKER_zone_foreign_intel > 49 } }
+				controller = {
+					if = {
+						limit = { has_variable = STALKER_mdst_penetration }
+						add_to_variable = { STALKER_mdst_penetration = 1 }
+						clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+					}
+				}
+				if = {
+					limit = { NOT = { has_state_flag = STALKER_foreign_agents_cooldown } }
+					random = {
+						chance = 10
+						set_state_flag = { flag = STALKER_foreign_agents_cooldown value = 1 days = 365 }
+						STALKER_target_zone = yes
+						controller = { country_event = STALKER.140 }
+					}
+				}
+			}
+		}
+	}
+}
+
+# ---- 99_STALKER_belarus_effects.txt (consolidated) ----
+# The Belarusian half of the exclusion zone (the Polesie reserve) slips a little each month unless Minsk reinforces it.
+STALKER_monthly_polesie_pulse = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = STALKER_kaimanov_outcome }
+			698 = { STALKER_is_active_zone_anchor = yes }
+			country_exists = BLR
+		}
+		BLR = {
+			if = {
+				limit = { NOT = { has_variable = STALKER_polesie_security } }
+				set_variable = { STALKER_polesie_security = 40 }
+			}
+			add_to_variable = { STALKER_polesie_security = -1 }
+			clamp_variable = { var = STALKER_polesie_security min = 0 max = 100 }
+			if = {
+				limit = {
+					check_variable = { STALKER_polesie_security < 30 }
+					NOT = { has_country_flag = STALKER_polesie_leak_cooldown }
+				}
+				random = {
+					chance = 10
+					set_country_flag = { flag = STALKER_polesie_leak_cooldown value = 1 days = 90 }
+					country_event = STALKER.60
+				}
+			}
+		}
+	}
+}
+
+# Success scales with Polesie security; a high roll exposes officials on the smugglers' payroll.
+STALKER_run_kgb_investigation = {
+	set_temp_variable = { STALKER_kgb_roll = 0 }
+	randomize_temp_variable = { var = STALKER_kgb_roll min = 1 max = 100 distribution = uniform }
+	set_temp_variable = { STALKER_kgb_success = { value = STALKER_polesie_security divide = 2 add = 25 } }
+	if = {
+		limit = { check_variable = { STALKER_kgb_roll < STALKER_kgb_success } }
+		country_event = STALKER.61
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_kgb_roll > 80 } }
+		country_event = STALKER.62
+	}
+	else = {
+		country_event = STALKER.64
+	}
+}
+
+# ---- 99_STALKER_antarctic_effects.txt (consolidated) ----
+# Treaty observers who reach a station during a polar artifact study seize the samples and report them.
+# The cut-short flag outlives the 180-day result event by a day.
+STALKER_polar_study_detected = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = STALKER_polar_artifact_samples } }
+		remove_dynamic_modifier = { modifier = STALKER_polar_artifact_samples }
+	}
+	set_country_flag = { flag = STALKER_polar_study_cut_short days = 181 value = 1 }
+	news_event = STALKER.191
+}
+
+# The study's Radiation Laboratory stopped: damage, lost fuel or power, a replaced module or a dismantled station.
+# The samples are lost and the result never comes.
+STALKER_polar_study_lab_lost = {
+	log = "[GetDateText]: [THIS.GetName]: STALKER polar artifact study ended, laboratory down"
+	if = {
+		limit = { has_dynamic_modifier = { modifier = STALKER_polar_artifact_samples } }
+		remove_dynamic_modifier = { modifier = STALKER_polar_artifact_samples }
+	}
+	set_country_flag = { flag = STALKER_polar_study_cut_short days = 181 value = 1 }
+}

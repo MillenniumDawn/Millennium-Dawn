@@ -48,15 +48,19 @@ class Validator(BaseValidator):
             focuses, decisions, flags = set(), set(), set()
         else:
             focuses, decisions, flags = _scan_global_refs(self.mod_path)
-        errors, warnings = [], []
-        for file_errors, file_warnings in self._pool_map_init(
+        errors, shadowed, warnings = [], [], []
+        for file_errors, file_shadowed, file_warnings in self._pool_map_init(
             check_file,
             files,
             initializer=_init_worker,
             initargs=(focuses, decisions, flags),
             chunksize=20,
         ):
-            for found, results in ((file_errors, errors), (file_warnings, warnings)):
+            for found, results in (
+                (file_errors, errors),
+                (file_shadowed, shadowed),
+                (file_warnings, warnings),
+            ):
                 results.extend(
                     (message, os.path.relpath(filepath, self.mod_path), line)
                     for filepath, line, message in found
@@ -69,11 +73,18 @@ class Validator(BaseValidator):
             category="common-mistakes",
         )
         self._report(
-            warnings,
+            shadowed,
             "No shadowed else_if branches found",
             "Shadowed else_if branches:",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="shadowed-branch",
+        )
+        self._report(
+            warnings,
+            "No idea logs beside tooltips only",
+            "Idea logs that are not needed:",
+            severity=Severity.WARNING,
+            category="unneeded-idea-log",
         )
 
 

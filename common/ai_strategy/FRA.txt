@@ -573,20 +573,58 @@ FRA_comoros_guarantee = {
 	ai_strategy = { type = diplo_action_desire id = "COM" value = 50 target = guarantee }
 }
 
-# FRA Air Doctrine — Rafale-dominant multirole, balanced coverage
+# FRA Air Doctrine — "tout Rafale" (see common/ai_equipment/FRA_plane.txt)
+
 FRA_air_doctrine = {
 	allowed = { original_tag = FRA }
 	enable = { always = yes }
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = unit_ratio id = fighter value = 8 }
-	ai_strategy = { type = unit_ratio id = cas value = 12 }
-	ai_strategy = { type = unit_ratio id = naval_bomber value = 15 }
-	ai_strategy = { type = unit_ratio id = tactical_bomber value = 25 }
-	ai_strategy = { type = unit_ratio id = interceptor value = 30 }
-	ai_strategy = { type = unit_ratio id = scout_plane value = 3 }
-	ai_strategy = { type = unit_ratio id = suicide value = 5 }
-	ai_strategy = { type = unit_ratio id = strategic_bomber value = 8 }
+	ai_strategy = { type = unit_ratio id = heavy_fighter value = 12 }
+	ai_strategy = { type = unit_ratio id = interceptor value = 8 }
+	ai_strategy = { type = unit_ratio id = cv_fighter value = 4 }
+	ai_strategy = { type = unit_ratio id = cas value = 2 }
+	ai_strategy = { type = unit_ratio id = naval_bomber value = 2 }
+	ai_strategy = { type = unit_ratio id = scout_plane value = 1 }
+	ai_strategy = { type = unit_ratio id = suicide value = 2 }
+
+	# Light airframes share AI buckets with the Rafale (Mirage 2000 = interceptor like Rafale C) - block them so only Rafale fills those ratios (same pattern as GER.txt)
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_airframe value = -25 }
+	ai_strategy = { type = equipment_variant_production_factor id = small_plane_strike_airframe value = -100 }
+}
+
+
+FRA_keep_rafale_m_line = {
+	allowed = { original_tag = FRA }
+	enable = { has_navy_size = { unit = carrier size > 0 } }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = cv_medium_plane_airframe value = 1 }
+}
+
+# Guaranteed Rafale B / C lines: unit_ratio alone never opened a Rafale C line in testing (likely because the ~200 Mirage 2000/F1 already fill the interceptor ratio)
+FRA_keep_rafale_lines = {
+	allowed = { original_tag = FRA }
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_airframe value = 1 }
+	ai_strategy = { type = equipment_production_min_factories_archetype id = medium_plane_fighter_airframe value = 1 }
+}
+
+
+FRA_missile_ratios = {
+	allowed = {
+		original_tag = FRA
+		has_dlc = "Gotterdammerung"
+	}
+	enable = { always = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = sam_missile value = 1000 }
+	ai_strategy = { type = role_ratio id = missile value = 0 }
+	ai_strategy = { type = role_ratio id = ballistic_missile value = 0 }
+	ai_strategy = { type = role_ratio id = nuclear_missile value = 250 }
 }
 
 FRA_commune_confront_the_west = {

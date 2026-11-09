@@ -1,9 +1,38 @@
 import check_changelog
-from check_changelog import check_lines, order_lines
+import pytest
+from check_changelog import check_lines, clean_lines, order_lines
+
+OLD_VERSION = "\nv2.0.1\nContent:\n - [USA] Old\n - Global old\n - Global old\n"
 
 
 def _lines(text):
     return text.strip("\n").splitlines()
+
+
+@pytest.mark.parametrize(
+    ("content", "expected", "removed"),
+    [
+        ("  -  Added  a   tank\n", " - Added a tank.\n", []),
+        ("- [KOR][NKO] Reworked OOBs\n", " - [KOR]/[NKO] Reworked OOBs.\n", []),
+        (
+            " - [SIA/CBD]Added a border war\n",
+            " - [SIA]/[CBD] Added a border war.\n",
+            [],
+        ),
+        (" - Fixed a tooltip (Issue #5)\n", " - Fixed a tooltip (Issue #5)\n", []),
+        (" - Renamed icons to `GFX_`\n", " - Renamed icons to `GFX_`\n", []),
+        (" - [ENG] Kept [brackets] later\n", " - [ENG] Kept [brackets] later.\n", []),
+        (" - A.\n  - A.\n - B.\n", " - A.\n - B.\n", [" - A."]),
+        (" - A.\n\n  Bugfix:  \n - A.\n", " - A.\n\nBugfix:\n - A.\n", []),
+        (" - [ERI] Added an OOB.\n - [ETH] Added an OOB.\n", None, []),
+        (" - [ENG] Added a tank.\n - Added a tank.\n", None, []),
+    ],
+)
+def test_clean_lines(content, expected, removed):
+    head = "v2.1.0\n\nContent:\n"
+    lines, dropped = clean_lines((head + content + OLD_VERSION).splitlines(True))
+    assert "".join(lines) == head + (expected or content) + OLD_VERSION
+    assert dropped == removed
 
 
 def test_ordered_block_passes():
@@ -220,8 +249,22 @@ def test_sort_preserves_an_absent_final_newline():
     )
 
 
-def test_main_passes_clean_file(tmp_path, monkeypatch):
+def test_main_passes_clean_file(tmp_path, monkeypatch, capsys):
     path = tmp_path / "Changelog.txt"
-    path.write_text("v2.0.1\n\nContent:\n - A\n - [ENG] B\n", encoding="utf-8")
+    path.write_text("v2.0.1\n\nContent:\n - A.\n - [ENG] B.\n", encoding="utf-8")
     monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
     assert check_changelog.main() == 0
+    assert capsys.readouterr().err == ""
+
+
+def test_main_warns_about_duplicates_and_untidy_entries(tmp_path, monkeypatch, capsys):
+    path = tmp_path / "Changelog.txt"
+    path.write_text(
+        "v2.0.1\n\nContent:\n - A.\n - [ENG] B\n\nAI:\n - A.\n", encoding="utf-8"
+    )
+    monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
+    assert check_changelog.main() == 0
+    assert capsys.readouterr().err.splitlines() == [
+        f"{path}: line 8: warning: duplicate of line 4; keep one of Content and AI",
+        f"{path}: warning: run python3 tools/merge_changelog.py --fix to tidy entries",
+    ]

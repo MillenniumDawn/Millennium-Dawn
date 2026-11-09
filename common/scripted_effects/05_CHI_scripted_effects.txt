@@ -1793,12 +1793,10 @@ CHI_update_us_president_support = {
 			NOT = { check_variable = { CHI_us_president_applied = CHI_us_president_index } }
 		}
 		clr_country_flag = CHI_trump_is_president
-		clr_country_flag = CHI_harris_us_support_floor
-		add_to_variable = { var = CHI_taiwan_us_support value = CHI_us_president_delta tooltip = CHI_taiwan_us_support_tt }
-		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		if = {
-			limit = { check_variable = { CHI_us_president_index = 4 } }
-			set_country_flag = CHI_harris_us_support_floor
+			limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+			add_to_variable = { var = CHI_taiwan_us_support value = CHI_us_president_delta tooltip = CHI_taiwan_us_support_tt }
+			clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		}
 		if = {
 			limit = { check_variable = { CHI_us_president_index = 10 } }
@@ -2070,7 +2068,7 @@ CHI_bri_clear_loan = {
 CHI_TAI_recompute_isolation = {
 	# iso_index: +15 = fully isolated (0 recognisers), -15 = broadly recognised (30+)
 	set_temp_variable = { CHI_TAI_iso_index = 15 }
-	subtract_from_temp_variable = { CHI_TAI_iso_index = Granted_Recognition }
+	subtract_from_temp_variable = { CHI_TAI_iso_index = recognised_by^num }
 	clamp_temp_variable = { var = CHI_TAI_iso_index min = -15 max = 15 }
 
 	set_variable = { CHI_TAI_isolation_trade = CHI_TAI_iso_index }
@@ -2685,4 +2683,15 @@ CHI_initialize_party_bans = {
 	add_to_temp_array = { ban_except_array = 7 }
 	add_to_temp_array = { ban_except_array = 18 }
 	ban_all_parties_except_array = yes
+}
+
+CHI_SAR_match_ruling_party = {
+	hidden_effect = {
+		set_temp_variable = { overlord_to_match = CHI.id }
+		effect_puppet_match_ruling_party_to_overlord = yes
+		if = {
+			limit = { has_elections = yes }
+			set_elections_60_months = yes
+		}
+	}
 }

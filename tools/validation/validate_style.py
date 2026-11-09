@@ -10,6 +10,7 @@ ERROR-level checks (fail the run):
   - Orphaned `newline = yes` with no visible effect left after it
 
 WARNING-level checks (reported, do not fail):
+  - Line indented off its brace depth (one finding per run of lines)
   - Missing space around open/close braces
   - Missing or doubled space around '='
   - Odd number of quotation marks on a line
@@ -26,7 +27,12 @@ from typing import List, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import OPTION_OPEN_RE as _RE_OPTION
-from shared_utils import blank_quoted_strings, strip_inline_comment, validation_config
+from shared_utils import (
+    blank_quoted_strings,
+    count_braces,
+    strip_inline_comment,
+    validation_config,
+)
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -197,6 +203,42 @@ def _check_indent_and_brackets(text: str, path: str):
             )
         )
     return errors
+
+
+_INDENT_DEPTH_PREFIX = "Indented "
+
+
+def _indent_depth_message(indent: str, expected: int) -> str:
+    if " " in indent:
+        return f"{_INDENT_DEPTH_PREFIX}with spaces; use {expected} tab(s)"
+    offset = len(indent) - expected
+    if not offset:
+        return ""
+    direction = "deeper" if offset > 0 else "shallower"
+    return f"{_INDENT_DEPTH_PREFIX}{abs(offset)} tab(s) {direction} than its braces"
+
+
+def _check_indent_depth(text: str, path: str):
+    """Lines whose leading tabs differ from their brace depth, reported once per
+    run of lines off by the same amount. The depth rule is the one
+    reindent_by_brace_depth uses, so a standardizer run clears these."""
+    warnings = []
+    depth = 0
+    previous = ""
+    for line_num, line in enumerate(text.splitlines(), 1):
+        stripped = line.strip()
+        if not stripped:
+            continue
+        expected = max(0, depth - 1) if stripped.startswith("}") else depth
+        opens, closes = count_braces(stripped)
+        depth = max(0, depth + opens - closes)
+        indent = line[: len(line) - len(line.lstrip())]
+        # Four leading spaces are already an ERROR.
+        message = "" if "    " in indent else _indent_depth_message(indent, expected)
+        if message and message != previous:
+            warnings.append((message, line_num))
+        previous = message
+    return warnings
 
 
 def line_spacing_warnings(line: str) -> List[str]:
@@ -492,6 +534,8 @@ def _scan_file(text: str, path: str):
     findings.extend(_check_brace_matching(text, rel))
     # ERROR-level: indent and bracket balance
     findings.extend(_check_indent_and_brackets(text, rel))
+    # WARNING-level: indentation off brace depth
+    findings.extend(_check_indent_depth(text, rel))
     # WARNING-level: spacing and quotes
     findings.extend(_check_spacing_and_quotes(text, rel))
     # ERROR-level: orphaned tooltip separators
@@ -573,6 +617,21 @@ class Validator(BaseValidator):
             severity=Severity.ERROR,
             category="orphan-newline",
         )
+
+        self._log_section("Indentation Depth (WARNING)")
+        indent_depth_warnings = [
+            r for r in warning_results if r[0].startswith(_INDENT_DEPTH_PREFIX)
+        ]
+        self._report(
+            indent_depth_warnings,
+            "Indentation follows brace depth",
+            "Lines indented off their brace depth:",
+            severity=Severity.WARNING,
+            category="indent-depth",
+        )
+        warning_results = [
+            r for r in warning_results if not r[0].startswith(_INDENT_DEPTH_PREFIX)
+        ]
 
         self._log_section("Spacing & Quotes (WARNING)")
         spacing_warnings = [

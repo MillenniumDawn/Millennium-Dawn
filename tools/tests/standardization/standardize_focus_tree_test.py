@@ -542,6 +542,7 @@ def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
 \t\t\tadd_stability = 0.01
 \t\t\t}
 \t}
+\t\t#europe
 }
 """,
         encoding="utf-8",
@@ -550,6 +551,7 @@ def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
     assert standardize_focus_tree(str(source), str(output)) is True
 
     lines = output.read_text(encoding="utf-8").splitlines()
+    assert "\t#europe" in lines
     assert "\t\t\t\tadd_building_construction = {" in lines
     assert "\t\t\t\t\ttype = infrastructure" in lines
     assert "\t\t\t\t\tlevel = 1" in lines
@@ -816,6 +818,15 @@ def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     assert "log =" not in "".join(
         effect_block_with_log(["completion_reward = { add_political_power = 1 }"], "")
     )
+
+
+def test_effect_block_with_log_keeps_effects_packed_after_the_log():
+    packed = [
+        '\t\tcompletion_reward = { log = "[GetDateText]: [Root.GetName]: Focus TST_x"'
+        " add_ideas = { TST_idea } }\n"
+    ]
+
+    assert "add_ideas = { TST_idea }" in "".join(effect_block_with_log(packed, "TST_x"))
 
 
 def test_effect_block_with_log_drops_empty_and_log_only_blocks():
