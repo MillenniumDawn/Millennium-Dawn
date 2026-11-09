@@ -24,7 +24,7 @@ The implementation is in `01_econ_forum_effects.txt`,
 
 Global arrays share a zero-based forum index. Effects take it in temporary
 variable `ef_i`; program tracks use `ef_t`. Country attendance arrays share the
-forum index. Sector arrays use `forum * 6 + track`, with 54 entries for nine forums.
+forum index. Sector arrays use `forum * 6 + track`, with 126 entries for 21 forums.
 
 | ID | Forum | Initial summit month | Host or eligible founder |
 | --- | --- | --- | --- |
@@ -37,6 +37,37 @@ forum index. Sector arrays use `forum * 6 + track`, with 54 entries for nine for
 | 6 | Arctic Economic Forum | October | Norway, Denmark, Iceland, Finland, Sweden, Canada, Russia, United States |
 | 7 | Transatlantic Technology Forum | April | NATO regional or greater power |
 | 8 | Independent Economic Forum | Chosen at founding | Great or super power boycotting an existing forum |
+| 9 | ASEAN Economic Partnership Forum | February | Singapore, Malaysia, Indonesia, Thailand, Vietnam |
+| 10 | South Asian Growth Forum | July | India, Bangladesh, Sri Lanka, Nepal |
+| 11 | Pacific Island Economies Summit | August | Fiji, Papua New Guinea, Samoa |
+| 12 | Caribbean Maritime Investment Summit | December | Jamaica, Trinidad and Tobago, Barbados |
+| 13 | Andean Economic Cooperation Forum | February | Colombia, Peru, Ecuador, Bolivia |
+| 14 | Southern Cone Production Forum | July | Brazil, Argentina, Uruguay, Paraguay |
+| 15 | Maghreb Investment Forum | August | Morocco, Algeria, Tunisia |
+| 16 | Adriatic Enterprise Forum | December | Croatia, Slovenia, Albania |
+| 17 | East African Connectivity Forum | March | Kenya, Tanzania, Uganda, Rwanda |
+| 18 | Tokyo Industrial Innovation Forum | September | Japan |
+| 19 | Astana Economic Forum | May | Kazakhstan, from 2008 |
+| 20 | Future Investment Initiative | October | Saudi Arabia, from 2017 |
+
+Slots 9-20 start inactive and require a founding decision. Slots 9-18 are
+alternate-history regional proposals available from the 2000 start, not claims
+that these exact institutions existed then. Astana and the Future Investment
+Initiative represent real institutions with inception-year gates. Their initial
+months, tracks, membership, costs, and effects are gameplay choices, not historical
+attendance or budget data. The inception sources are the
+[Astana forum's 2008 history](https://forum-astana.org/en/history/2008) and
+[PIF's FII history](https://www.pif.gov.sa/en/fii-riyadh-2025/).
+
+Pacific Islands, Caribbean, Adriatic, and East African founding costs are 50
+Political Power; the other new forums cost 100. All require peace, stability above
+40%, no hosted forum, and an unused forum host and seat slot. Availability repeats
+these live uniqueness checks so another founder cannot claim a cached decision.
+New founding decisions have AI weight 0.1 and retain a Political Power reserve.
+Core invitations include the eligible founders. Tokyo also includes South Korea,
+China, and Taiwan; Astana includes Uzbekistan, Kyrgyzstan, Tajikistan, and
+Turkmenistan; FII includes the United Arab Emirates, Qatar, Kuwait, Oman, and Bahrain.
+
 
 The WEF starts at 80 prestige and St. Petersburg at 35. Newly founded forums start
 at 15. A forum follows its seat state if ownership changes. Its current cycle is
@@ -97,7 +128,8 @@ future weekly balance.
 ## Player Choices and State
 
 The Forums tab lists active or vacant founded forums by prestige and shows sector
-leaders. Guest buttons support sponsoring a session, bidding for a keynote,
+leaders. Its dynamic rows use a scrollable panel without a fixed vertical slot
+limit, so all founded entries remain reachable. Guest buttons support sponsoring a session, bidding for a keynote,
 requesting an invitation, and boycotting or rejoining. Host preparation uses the
 Economic Forums decision category.
 
@@ -120,8 +152,21 @@ Global Leaders add WEF-specific activity.
 
 Keep every registry array aligned. Add the forum's host, state-led status,
 prestige, month, seat handling, identity tracks, founders, and localization. Increase
-all fixed nine-slot country and global arrays together. A new track also requires
+all 21-slot country and global arrays, their allocation guards, and the 126-slot
+sector arrays together. Extend seat flags and every name getter, including event
+scopes, row names, and sector leaders. A new track also requires
 changing the flattened index width and every six-track loop.
 
 Start a new campaign when changing the registry or serialization model. Development
 saves are not migrated.
+
+
+## Regression Coverage
+
+`tools/tests/content/economic_forum_state_test.py` checks registry alignment,
+array sizing, track identity and the three-track cap, founder eligibility and
+uniqueness, inception gates, core membership, seat flags, English keys, and name
+lookups in every forum context. It also checks the dynamic scrollable list wiring.
+These source-level tests do not verify native UI rendering, a campaign's annual
+cycle, or gameplay balance. The expansion does not change cash costs or provide
+save migration.
