@@ -4391,6 +4391,13 @@ focus_tree = {
 				OR = {
 					has_global_flag = DEN_NATIONALIST_FOCUS_PATH
 					has_global_flag = DEN_MONARCHIST_FOCUS_PATH
+					AND = {
+						DEN_ai_any_path = no
+						OR = {
+							nationalist_right_wing_populists_are_in_power = yes
+							nationalist_monarchists_are_in_power = yes
+						}
+					}
 				}
 			}
 		}
@@ -4449,6 +4456,13 @@ focus_tree = {
 					OR = {
 						has_global_flag = DEN_NATIONALIST_FOCUS_PATH
 						has_global_flag = DEN_MONARCHIST_FOCUS_PATH
+						AND = {
+							DEN_ai_any_path = no
+							OR = {
+								nationalist_right_wing_populists_are_in_power = yes
+								nationalist_monarchists_are_in_power = yes
+							}
+						}
 					}
 				}
 			}
@@ -4469,7 +4483,12 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INDUSTRY FOCUS_FILTER_TFV_AUTONOMY }
 
-		available = { 40_percent_government_popularity = yes }
+		available = {
+			40_percent_government_popularity = yes
+			GRN = { is_subject_of = DEN }
+		}
+
+		bypass = { NOT = { GRN = { is_subject_of = DEN } } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_greenlandic_referendum"
@@ -4493,7 +4512,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_INDUSTRY FOCUS_FILTER_TFV_AUTONOMY }
 
-		available = { 40_percent_government_popularity = yes }
+		available = {
+			40_percent_government_popularity = yes
+			FAO = { is_subject_of = DEN }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_the_faroes_referendum"
@@ -4728,46 +4750,26 @@ focus_tree = {
 
 		available = {
 			OR = {
-				owns_state = 2
-				FAO = { is_subject_of = DEN }
-			}
-			OR = {
-				AND = {
-					owns_state = 1
-					owns_state = 1161
-					owns_state = 1162
-				}
-				GRN = { is_subject_of = DEN }
+				1161 = { state_owned_or_puppet_owned_by_root = yes }
+				2 = { state_owned_or_puppet_owned_by_root = yes }
 			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_colonial_investments"
 			if = {
-				limit = {
-					owns_state = 1
-					if = {
-						limit = { country_exists = GRN }
-						GRN = { is_subject_of = DEN }
-					}
-				}
-				1 = {
+				limit = { 1161 = { state_owned_or_puppet_owned_by_root = yes } }
+				1161 = {
 					add_dynamic_modifier = {
 						modifier = DEN_colonial_investment_modifier
 						days = 365
 					}
 				}
 				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
-			modify_treasury_effect = yes
+				modify_treasury_effect = yes
 			}
 			if = {
-				limit = {
-					owns_state = 2
-					if = {
-						limit = { country_exists = FAO }
-						FAO = { is_subject_of = DEN }
-					}
-				}
+				limit = { 2 = { state_owned_or_puppet_owned_by_root = yes } }
 				2 = {
 					add_dynamic_modifier = {
 						modifier = DEN_colonial_investment_modifier
@@ -4775,9 +4777,8 @@ focus_tree = {
 					}
 				}
 				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
-			modify_treasury_effect = yes
+				modify_treasury_effect = yes
 			}
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -12832,7 +12833,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			owns_state = 1
+			1161 = { state_owned_or_puppet_owned_by_root = yes }
 			nationalist_right_wing_populists_are_in_power = yes
 		}
 
