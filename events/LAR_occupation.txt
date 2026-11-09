@@ -1,23 +1,45 @@
-
 add_namespace = occupied_countries
 
-#instantiate a collabration government
+# Fired by compliance_80. FROM.FROM is the occupied country
 country_event = {
 	id = occupied_countries.1
 	title = occupied_countries.1.title
 	desc = occupied_countries.1.desc
-	picture = GFX_generic_soldiers
+	picture = GFX_political_deal
 	is_triggered_only = yes
 
-	# todo lar
-	#picture = GFX_report_event_canadian_soldiers
 	option = {
 		name = occupied_countries.1.a
-		ai_chance = { base = 100 }
+		log = "[GetDateText]: [This.GetName]: occupied_countries.1.a executed"
+		if = {
+			limit = {
+				has_core_occupation_modifier = {
+					occupied_country_tag = FROM.FROM
+					modifier = compliance_80
+				}
+				NOT = {
+					any_country_with_original_tag = {
+						original_tag_to_check = FROM.FROM
+						is_subject_of = PREV
+					}
+				}
+			}
+			set_temp_variable = { country_to_initiate = FROM.FROM }
+			instantiate_collaboration_government = yes
+		}
+		ai_chance = { base = 0 }
 	}
 
 	option = {
 		name = occupied_countries.1.b
-		# do nothing
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = occupied_countries.1.c
+		log = "[GetDateText]: [This.GetName]: occupied_countries.1.c executed"
+		custom_effect_tooltip = collaboration_government_stop_events_tt
+		hidden_effect = { set_country_flag = stop_collaboration_government_events }
+		ai_chance = { base = 0 }
 	}
 }
