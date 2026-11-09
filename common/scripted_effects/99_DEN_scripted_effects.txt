@@ -266,6 +266,35 @@ DEN_conservation_policy_payout = {
 	recalculate_party = yes
 }
 
+DEN_logistics_partner_deals = {
+	custom_effect_tooltip = DEN_logistics_partner_deals_tt
+	hidden_effect = {
+		every_country = {
+			limit = {
+				OR = {
+					tag = CHI
+					tag = HKG
+					tag = JAP
+					tag = IND
+				}
+			}
+			set_temp_variable = { percent_change = 1.2 }
+			# change_influence_percentage keeps the first target for later calls
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = { value = ROOT.gdp_per_capita multiply = 0.01 } }
+			modify_treasury_effect = yes
+			set_temp_variable = { DEN_partner_gdp_per_capita = gdp_per_capita }
+			ROOT = {
+				set_temp_variable = { int_investment_change = { value = DEN_partner_gdp_per_capita multiply = 0.03 } }
+				modify_international_investment_effect = yes
+				set_temp_variable = { debt_change = { value = DEN_partner_gdp_per_capita multiply = 0.02 } }
+				modify_debt_effect = yes
+			}
+		}
+	}
+}
+
 # Novo Nordisk corporate history. Five milestones set the route; the closing milestone
 # resolves pricing discipline against owned capacity into one of four outcomes.
 DEN_novo_apply_pharmaceutical_powerhouse = {
