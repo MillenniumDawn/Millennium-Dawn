@@ -32151,7 +32151,7 @@ country_event = {
 
 					design_team = mio:UKR_antonov_aircraft_manufacturer
 
-					icon = "GFX_UKR_AIR_An_71_TK300"
+					icon = "GFX_UKR_AIR_An_71TK_300"
 					model = "SOV_awacs_equipment_entity"
 				}
 			}
@@ -35730,6 +35730,82 @@ country_event = {
 	option = { name = ukr_modernize_sov_equipment_storage_sale.37.a }
 }
 
+
+country_event = {
+	id = ukr_modernize_sov_equipment_storage_sale.38
+	title = ukr_modernize_sov_equipment_storage_sale.38.name
+	desc = ukr_modernize_sov_equipment_storage_sale.38.desc
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+
+	trigger = { FROM = { original_tag = UKR } }
+
+	option = {
+		name = ukr_modernize_sov_equipment_storage_sale.38.a
+		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.38.a executed"
+
+		trigger = {
+			FROM = {
+				has_country_flag = UKR_zsu57_kept_flag
+				check_variable = { ukraine_has_zsu57_stockpile > 19 }
+			}
+			NOT = { has_war_with = FROM }
+			has_opinion = { target = FROM value > 9 }
+			check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals }
+		}
+		ai_chance = { base = 10 }
+
+		save_event_target_as = ukr_storage_buyer
+		FROM = {
+			if = {
+				limit = {
+					has_country_flag = UKR_zsu57_kept_flag
+					check_variable = { ukraine_has_zsu57_stockpile > 19 }
+					NOT = { has_war_with = ROOT }
+					ROOT = {
+						has_opinion = { target = PREV value > 9 }
+						check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals }
+					}
+				}
+				custom_effect_tooltip = UKR_storage_zsu57_sold_tt
+				subtract_from_variable = { ukraine_has_zsu57_stockpile = 20 }
+				ROOT = {
+					if = {
+						limit = { has_dlc = "No Step Back" }
+						add_equipment_to_stockpile = { type = medium_tank_aa_chassis_0 variant_name = "ZSU-57-2" amount = 20 producer = SOV }
+					}
+					else = {
+						add_equipment_to_stockpile = { type = SP_Anti_Air_0 amount = 20 producer = SOV }
+					}
+				}
+				set_temp_variable = { ukr_sale_price = 0.02 }
+				UKR_storage_sale_payment = yes
+				UKR_storage_vietnam_sale_backlash = yes
+				country_event = ukr_modernize_sov_equipment_storage_sale.14
+			}
+			else = { country_event = ukr_modernize_sov_equipment_storage_sale.39 }
+		}
+	}
+
+	option = {
+		name = ukr_modernize_sov_equipment_storage_sale.38.b
+		log = "[GetDateText]: [This.GetName]: ukr_modernize_sov_equipment_storage_sale.38.b executed"
+
+		ai_chance = { base = 1 }
+		FROM = { country_event = ukr_modernize_sov_equipment_storage_sale.15 }
+	}
+}
+
+country_event = {
+	id = ukr_modernize_sov_equipment_storage_sale.39
+	title = ukr_modernize_sov_equipment_storage_sale.39.name
+	desc = ukr_modernize_sov_equipment_storage_sale.39.desc
+	picture = GFX_weapons_arms1
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukr_modernize_sov_equipment_storage_sale.39.a }
+}
 
 country_event = {
 	id = ukraine_croatian_mig21.1

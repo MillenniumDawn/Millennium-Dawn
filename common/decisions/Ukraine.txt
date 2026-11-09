@@ -7931,7 +7931,12 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_state = 1086 #Mykolayiv
+			date < 2001.07.01
+
+			controls_state = 1086 #Mykolaiv
+			1086 = { #Mykolaiv
+				arms_factory > 0
+			}
 		}
 
 		custom_cost_trigger = {
@@ -10117,6 +10122,36 @@ UKR_modernize_sov_category = {
 			date < 2001.01.01
 		}
 
+		available = {
+			date < 2001.01.01
+
+			OR = {
+				AND = {
+					controls_state = 1086 #Mykolaiv
+					1086 = { #Mykolaiv
+						arms_factory > 0
+					}
+				}
+				AND = {
+					controls_state = 698 #Kyiv
+					698 = { #Kyiv
+						arms_factory > 1
+					}
+				}
+				AND = {
+					controls_state =  699 #Vinnytsia
+					699 = { #Vinnytsia
+						arms_factory > 0
+					}
+				}
+				AND = {
+					controls_state = 1089 #Poltava
+					1089 = { #Poltava
+						arms_factory > 0
+					}
+				}
+			}
+		}
 		highlight_states = {
 			highlight_states_trigger = { state = 698 }
 			highlight_color_while_active = 3
@@ -10125,8 +10160,20 @@ UKR_modernize_sov_category = {
 
 		on_map_mode = map_and_decisions_view
 
+		custom_cost_trigger = {
+			has_political_power > 5
+			has_army_experience > 2
+		}
+		custom_cost_text = development_cost_pp_5_army_2
+		ai_hint_pp_cost = 5
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_offers"
+
+			hidden_effect = {
+				add_political_power = -5
+				army_experience = -2
+			}
 
 			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_offers_flag
 
@@ -16667,7 +16714,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_sams_upkeep = {
-		icon = generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -16723,8 +16770,155 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	ukr_modernize_sov_equipment_zsu57_upkeep = {
+		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_zsu57_upkeep
+				}
+				check_variable = { UKR_storage_selected_row = 36 }
+			}
+			check_variable = { ukraine_has_zsu57_stockpile > 0 }
+			NOT = { has_country_flag = UKR_zsu57_kept_flag }
+		}
+
+		available = { has_war = no }
+
+		custom_cost_trigger = {
+			set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_zsu57_upkeep_price }
+			UKR_storage_upkeep_can_pay = yes
+		}
+		custom_cost_text = UKR_storage_zsu57_upkeep_price
+
+		days_remove = var:UKR_storage_zsu57_upkeep_days
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_zsu57_upkeep"
+
+			hidden_effect = {
+				set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_zsu57_upkeep_price }
+				UKR_storage_pay_upkeep = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_zsu57_upkeep"
+
+			set_country_flag = { flag = UKR_zsu57_kept_flag days = 1825 value = 1 }
+			hidden_effect = {
+				set_variable = { UKR_storage_zsu57_last_service = global.date }
+				UKR_storage_update_maintenance_dates = yes
+			}
+			custom_effect_tooltip = ukr_modernize_sov_equipment_zsu57_kept_tt
+		}
+	}
+
+	ukr_modernize_sov_equipment_zsu57_scrap = {
+		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		ai_will_do = { base = 0 }
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_zsu57_scrap
+				}
+				check_variable = { UKR_storage_selected_row = 36 }
+			}
+			check_variable = { ukraine_has_zsu57_stockpile > 0 }
+		}
+
+		available = {
+			NOT = { has_decision = ukr_modernize_sov_equipment_zsu57_upkeep }
+			NOT = { has_decision = ukr_modernize_sov_equipment_zsu57_vietnam_offer }
+		}
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.01 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_01
+		days_remove = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_zsu57_scrap"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_zsu57_scrap_tt
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+				set_variable = { ukraine_has_zsu57_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
+	ukr_modernize_sov_equipment_zsu57_vietnam_offer = {
+		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_zsu57_vietnam_offer
+				}
+				check_variable = { UKR_storage_selected_row = 36 }
+			}
+			country_exists = VIE
+			check_variable = { ukraine_has_zsu57_stockpile > 19 }
+		}
+
+		available = {
+			NOT = { has_war_with = VIE }
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_zsu57_maintenance_required_tt
+				has_country_flag = UKR_zsu57_kept_flag
+			}
+		}
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_zsu57_vietnam_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_zsu57_vietnam_offer_tt
+			if = {
+				limit = { country_exists = USA date < 2016.5.23 }
+				custom_effect_tooltip = ukr_storage_vietnam_sale_backlash_tt
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_zsu57_vietnam_offer"
+
+			hidden_effect = {
+				if = {
+					limit = {
+						country_exists = VIE
+						NOT = { has_war_with = VIE }
+						has_country_flag = UKR_zsu57_kept_flag
+						check_variable = { ukraine_has_zsu57_stockpile > 19 }
+					}
+					VIE = { country_event = ukr_modernize_sov_equipment_storage_sale.38 }
+				}
+				else = { country_event = ukr_modernize_sov_equipment_storage_sale.39 }
+			}
+		}
+	}
+
 	ukr_modernize_sov_equipment_2k11_caucasus_offer = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		fire_only_once = yes
 		ai_will_do = { base = 10 }
 
@@ -16774,7 +16968,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_2k11_central_asia_offer = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = { base = 10 }
 
 		visible = {
@@ -16911,7 +17105,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_2k11_scrap = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		fire_only_once = yes
 		ai_will_do = {
 			base = 10
@@ -17154,11 +17348,11 @@ UKR_reactivate_sov_category = {
 				}
 				check_variable = { UKR_storage_selected_row = 42 }
 			}
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
 			check_variable = { ukraine_has_9p148_stockpile > 0 }
 		}
 
 		available = {
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
 			controls_state = 698 #Kyiv
 			NOT = { has_decision = ukr_modernize_sov_equipment_9p122_barrier_v }
 		}
@@ -17221,6 +17415,97 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	ukr_modernize_sov_equipment_malyutka_upkeep = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 4 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_malyutka_upkeep
+				}
+				check_variable = { UKR_storage_selected_row = 44 }
+			}
+			check_variable = { UKR_storage_malyutka_total > 0 }
+			NOT = { has_country_flag = UKR_malyutka_kept_flag }
+		}
+
+		available = { has_war = no }
+
+		custom_cost_trigger = {
+			set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_malyutka_upkeep_price }
+			UKR_storage_upkeep_can_pay = yes
+		}
+		custom_cost_text = UKR_storage_malyutka_upkeep_price
+
+		days_remove = var:UKR_storage_malyutka_upkeep_days
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_malyutka_upkeep"
+
+			hidden_effect = {
+				set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_malyutka_upkeep_price }
+				UKR_storage_pay_upkeep = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_malyutka_upkeep"
+
+			set_country_flag = { flag = UKR_malyutka_kept_flag days = 1825 value = 1 }
+			hidden_effect = {
+				set_variable = { UKR_storage_malyutka_last_service = global.date }
+				UKR_storage_update_maintenance_dates = yes
+			}
+			custom_effect_tooltip = ukr_modernize_sov_equipment_malyutka_kept_tt
+		}
+	}
+
+	ukr_modernize_sov_equipment_malyutka_scrap = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		ai_will_do = { base = 0 }
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 4 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_malyutka_scrap
+				}
+				check_variable = { UKR_storage_selected_row = 44 }
+			}
+			check_variable = { UKR_storage_malyutka_total > 0 }
+		}
+
+		available = {
+			NOT = { has_decision = ukr_modernize_sov_equipment_malyutka_upkeep }
+		}
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.01 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_01
+		days_remove = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_malyutka_scrap"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_malyutka_scrap_tt
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+				set_variable = { ukraine_has_malyutka_brdm1_stockpile = 0 }
+				set_variable = { ukraine_has_malyutka_brdm2_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+		}
+	}
+
 	ukr_modernize_sov_equipment_9p110_barrier_v = {
 		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
 		ai_will_do = {
@@ -17239,12 +17524,16 @@ UKR_reactivate_sov_category = {
 					has_decision = ukr_modernize_sov_equipment_9p110_barrier_v
 				}
 			}
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
 			check_variable = { ukraine_has_malyutka_brdm1_stockpile > 0 }
 		}
 
 		available = {
 			controls_state = 698
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_malyutka_maintenance_required_tt
+				has_country_flag = UKR_malyutka_kept_flag
+			}
 		}
 		custom_cost_trigger = { check_variable = { var = treasury value = UKR_storage_brdm1_barrier_order_cost compare = greater_than_or_equals } }
 		custom_cost_text = UKR_storage_brdm1_barrier_order_cost
@@ -17345,12 +17634,16 @@ UKR_reactivate_sov_category = {
 					has_decision = ukr_modernize_sov_equipment_9p122_barrier_v
 				}
 			}
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
 			check_variable = { ukraine_has_malyutka_brdm2_stockpile > 0 }
 		}
 
 		available = {
 			controls_state = 698
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_malyutka_maintenance_required_tt
+				has_country_flag = UKR_malyutka_kept_flag
+			}
 			NOT = { has_decision = ukr_modernize_sov_equipment_atgm_barrier_v }
 		}
 		custom_cost_trigger = { check_variable = { var = treasury value = UKR_storage_barrier_order_cost compare = greater_than_or_equals } }
@@ -17953,13 +18246,14 @@ UKR_reactivate_sov_category = {
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
 			}
-			date > 2005.12.31
 			date < 2008.1.1
 			country_exists = YEM
-			check_variable = { ukraine_has_mig21_stockpile > 11 }
+			check_variable = { UKR_storage_mig21_total > 0 }
 		}
 
 		available = {
+			date > 2005.12.31
+			check_variable = { ukraine_has_mig21_stockpile > 11 }
 			NOT = { has_war_with = YEM }
 			custom_trigger_tooltip = {
 				tooltip = UKR_storage_combat_aircraft_maintenance_required_tt
@@ -18180,13 +18474,14 @@ UKR_reactivate_sov_category = {
 				}
 				check_variable = { UKR_storage_selected_row = 65 }
 			}
-			date > 2011.12.31
 			date < 2015.1.1
 			country_exists = MOZ
-			check_variable = { ukraine_has_mig21_stockpile > 5 }
+			check_variable = { UKR_storage_mig21_total > 0 }
 		}
 
 		available = {
+			date > 2011.12.31
+			check_variable = { ukraine_has_mig21_stockpile > 5 }
 			NOT = { has_war_with = MOZ }
 			custom_trigger_tooltip = {
 				tooltip = UKR_storage_combat_aircraft_maintenance_required_tt
@@ -18288,13 +18583,14 @@ UKR_reactivate_sov_category = {
 				check_variable = { UKR_storage_selected_row = 6 }
 				check_variable = { UKR_storage_selected_row = 65 }
 			}
-			date > 2013.4.1
 			date < 2014.1.1
 			country_exists = CRO
-			check_variable = { ukraine_has_mig21_stockpile > 4 }
+			check_variable = { UKR_storage_mig21_total > 0 }
 			NOT = { has_country_flag = UKR_mig21_croatia_completed }
 		}
 		available = {
+			date > 2013.4.1
+			check_variable = { ukraine_has_mig21_stockpile > 4 }
 			controls_state = 695
 			NOT = { has_war_with = CRO }
 			NOT = { has_country_flag = UKR_mig21_croatia_open }
@@ -18321,13 +18617,14 @@ UKR_reactivate_sov_category = {
 				check_variable = { UKR_storage_selected_row = 6 }
 				check_variable = { UKR_storage_selected_row = 65 }
 			}
-			date > 2013.4.1
 			date < 2014.1.1
 			country_exists = CRO
-			check_variable = { ukraine_has_mig21_stockpile > 4 }
+			check_variable = { UKR_storage_mig21_total > 0 }
 			NOT = { has_country_flag = UKR_mig21_croatia_completed }
 		}
 		available = {
+			date > 2013.4.1
+			check_variable = { ukraine_has_mig21_stockpile > 4 }
 			controls_state = 695
 			NOT = { has_war_with = CRO }
 			NOT = { has_country_flag = UKR_mig21_croatia_open }
@@ -19063,7 +19360,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s75_offer = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 3
 			modifier = { factor = 0 has_war = yes }
@@ -19116,7 +19413,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s75_scrap = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 1
 			modifier = { factor = 0 has_war = yes }
@@ -19177,7 +19474,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	UKR_modernize_s125_spaa = {
-		icon = GFX_decision_ukrpom_button
+		icon = GFX_decision_launch_missile
 		fire_only_once = yes
 
 		ai_will_do = {
@@ -19285,7 +19582,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	UKR_modernize_s125m_spaa = {
-		icon = GFX_decision_ukrpom_button
+		icon = GFX_decision_launch_missile
 		fire_only_once = yes
 
 		ai_will_do = {
@@ -19387,7 +19684,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s125_reactivate_site = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 30
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -19456,7 +19753,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s125_reactivate_battery = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 30
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -19504,7 +19801,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s125_reactivate_modernized_site = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 30
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -19579,7 +19876,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s125_reactivate_modernized_battery = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = {
 			base = 30
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -19632,7 +19929,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_s125_offer = {
-		icon = GFX_decision_generic_air
+		icon = GFX_decision_launch_missile
 		ai_will_do = { base = 3 }
 
 		visible = {
@@ -19682,7 +19979,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_gear_offer = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = { base = 5 }
 
 		visible = {
@@ -19812,7 +20109,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_brdm1_scrap = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
 		fire_only_once = yes
 		ai_will_do = {
 			base = 10
@@ -20031,7 +20328,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_small_arms_upkeep = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -20086,7 +20383,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_small_arms_issue = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = { base = 50 }
 
 		visible = {
@@ -20128,7 +20425,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_small_arms_issue_neglected = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = { base = 50 }
 
 		visible = {
@@ -20170,7 +20467,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_support_weapons_upkeep = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = {
 			base = 5
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -20224,7 +20521,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_support_weapons_issue = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = { base = 50 }
 
 		visible = {
@@ -20265,7 +20562,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_old_support_weapons_issue_neglected = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_arms_industry
 		ai_will_do = { base = 50 }
 
 		visible = {
@@ -20306,7 +20603,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_gtmu_tractors = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
 		fire_only_once = yes
 		ai_will_do = {
 			base = 10
@@ -20367,7 +20664,7 @@ UKR_reactivate_sov_category = {
 	}
 
 	ukr_modernize_sov_equipment_gtmu_scrap = {
-		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
 		fire_only_once = yes
 		ai_will_do = {
 			base = 10
