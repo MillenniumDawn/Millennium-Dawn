@@ -1,0 +1,341 @@
+add_namespace = varyag
+
+country_event = {
+	id = varyag.1
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				varyag_transit_possible = yes
+				varyag_ukrainian_shipyard_available = yes
+			}
+			set_global_flag = varyag_dispute_open
+			country_event = varyag.2
+			UKR = { country_event = varyag.2 }
+			TUR = { country_event = varyag.2 }
+		}
+		else = { varyag_close_without_delivery = yes }
+	}
+}
+
+country_event = {
+	id = varyag.2
+	title = varyag.2.t
+	desc = {
+		text = varyag.2.d_ukraine
+		trigger = { tag = UKR }
+	}
+	desc = {
+		text = varyag.2.d
+		trigger = { NOT = { tag = UKR } }
+	}
+	picture = GFX_carrier2
+	is_triggered_only = yes
+
+	option = {
+		name = varyag.2.a
+		unlock_decision_category_tooltip = varyag_dispute_category
+	}
+}
+
+country_event = {
+	id = varyag.3
+	hidden = yes
+	is_triggered_only = yes
+	trigger = { has_global_flag = varyag_dispute_open }
+
+	immediate = {
+		if = {
+			limit = { varyag_transit_possible = yes }
+			if = {
+				limit = { is_historical_focus_on = yes }
+				varyag_allow_standard_passage = yes
+			}
+			else = {
+				random_list = {
+					85 = { varyag_allow_standard_passage = yes }
+					15 = { varyag_refuse_transit = yes }
+				}
+			}
+		}
+		else = { varyag_close_without_delivery = yes }
+	}
+}
+
+country_event = {
+	id = varyag.4
+	title = varyag.4.t
+	desc = varyag.4.d
+	picture = GFX_bosphorus
+	is_triggered_only = yes
+
+	option = {
+		name = varyag.4.a
+		log = "[GetDateText]: [This.GetName]: varyag.4.a executed"
+		if = {
+			limit = {
+				has_global_flag = varyag_dispute_open
+				varyag_transit_possible = yes
+				CHI = { check_variable = { var = treasury value = 2.0 compare = greater_than_or_equals } }
+			}
+			set_temp_variable = { treasury_change = 2.0 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = varyag_transit_approved_tt
+			hidden_effect = {
+				CHI = {
+					set_temp_variable = { treasury_change = -2.0 }
+					modify_treasury_effect = yes
+				}
+				varyag_send_hull_to_china = yes
+			}
+		}
+		else = { custom_effect_tooltip = varyag_offer_lapsed_tt }
+		ai_chance = {
+			base = 60
+			modifier = { add = 25 has_opinion = { target = CHI value > 25 } }
+			modifier = { factor = 0.25 has_opinion = { target = CHI value < -25 } }
+		}
+	}
+
+	option = {
+		name = varyag.4.b
+		trigger = {
+			OR = {
+				AND = { has_dlc = "Gotterdammerung" NOT = { has_tech = IRBM2 } }
+				NOT = { has_dlc = "Gotterdammerung" has_tech = TEL_5_non_got }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: varyag.4.b executed"
+		if = {
+			limit = {
+				has_global_flag = varyag_dispute_open
+				varyag_transit_possible = yes
+				CHI = { check_variable = { var = treasury value = 1.0 compare = greater_than_or_equals } }
+			}
+			set_temp_variable = { treasury_change = 1.0 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				add_tech_bonus = { name = varyag_missile_assistance bonus = 0.75 uses = 1 technology = IRBM2 }
+			}
+			else = {
+				add_tech_bonus = { name = varyag_missile_assistance bonus = 0.75 uses = 1 technology = TEL_5_non_got }
+			}
+			custom_effect_tooltip = varyag_transit_approved_tt
+			hidden_effect = {
+				CHI = {
+					set_temp_variable = { treasury_change = -1.0 }
+					modify_treasury_effect = yes
+				}
+				varyag_send_hull_to_china = yes
+			}
+		}
+		else = { custom_effect_tooltip = varyag_offer_lapsed_tt }
+		ai_chance = {
+			base = 35
+			modifier = { add = 25 has_opinion = { target = CHI value > 25 } }
+			modifier = { factor = 0.25 has_opinion = { target = CHI value < -25 } }
+		}
+	}
+
+	option = {
+		name = varyag.4.c
+		log = "[GetDateText]: [This.GetName]: varyag.4.c executed"
+		if = {
+			limit = { has_global_flag = varyag_dispute_open }
+			custom_effect_tooltip = varyag_transit_refused_tt
+			hidden_effect = { varyag_refuse_transit = yes }
+		}
+		else = { custom_effect_tooltip = varyag_offer_lapsed_tt }
+		ai_chance = {
+			base = 5
+			modifier = { add = 30 has_opinion = { target = CHI value < -25 } }
+		}
+	}
+}
+
+country_event = {
+	id = varyag.5
+	title = varyag.5.t
+	desc = varyag.5.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = CHI_varyag_hull_acquired
+		if = {
+			limit = { NOT = { has_tech = carrier_hull_2 } }
+			add_tech_bonus = { name = varyag_hull_studies bonus = 0.75 uses = 1 technology = carrier_hull_2 }
+		}
+		if = {
+			limit = { NOT = { has_tech = carrier_hull_3 } }
+			add_tech_bonus = { name = varyag_hull_studies bonus = 0.75 uses = 1 technology = carrier_hull_3 }
+		}
+	}
+
+	option = {
+		name = varyag.5.a
+		custom_effect_tooltip = varyag_chinese_refit_tt
+	}
+}
+
+country_event = {
+	id = varyag.6
+	title = varyag.6.t
+	desc = varyag.6.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+
+	option = {
+		name = varyag.6.a
+		log = "[GetDateText]: [This.GetName]: varyag.6.a executed"
+		if = {
+			limit = {
+				has_global_flag = varyag_dispute_open
+				varyag_transit_possible = yes
+				varyag_ukrainian_shipyard_available = yes
+				TUR = {
+					varyag_refit_shipyard_available = yes
+					check_variable = { var = treasury value = 2.7 compare = greater_than_or_equals }
+				}
+			}
+			set_temp_variable = { treasury_change = 2.5 }
+			modify_treasury_effect = yes
+			if = {
+				limit = { NOT = { has_tech = carrier_hull_2 } }
+				add_tech_bonus = { name = varyag_joint_shipbuilding bonus = 0.35 uses = 1 technology = carrier_hull_2 }
+			}
+			custom_effect_tooltip = varyag_joint_deal_tt
+			hidden_effect = {
+				TUR = {
+					set_temp_variable = { treasury_change = -2.7 }
+					modify_treasury_effect = yes
+					set_country_flag = varyag_hull_at_shipyard
+					if = {
+						limit = { NOT = { has_tech = carrier_hull_2 } }
+						add_tech_bonus = { name = varyag_joint_shipbuilding bonus = 0.50 uses = 1 technology = carrier_hull_2 }
+					}
+					country_event = varyag.12
+				}
+				CHI = {
+					set_temp_variable = { treasury_change = 0.2 }
+					modify_treasury_effect = yes
+					add_opinion_modifier = { target = UKR modifier = varyag_contract_cancelled }
+					add_opinion_modifier = { target = TUR modifier = varyag_contract_cancelled }
+				}
+				varyag_close_without_delivery = yes
+			}
+		}
+		else = { custom_effect_tooltip = varyag_offer_lapsed_tt }
+		ai_chance = {
+			base = 35
+			modifier = { add = 35 has_opinion = { target = TUR value > 25 } }
+			modifier = { factor = 0.25 has_opinion = { target = TUR value < -25 } }
+		}
+	}
+
+	option = {
+		name = varyag.6.b
+		log = "[GetDateText]: [This.GetName]: varyag.6.b executed"
+		hidden_effect = {
+			if = {
+				limit = { has_global_flag = varyag_dispute_open country_exists = TUR }
+				TUR = { country_event = varyag.11 }
+			}
+		}
+		ai_chance = {
+			base = 65
+			modifier = { add = 20 has_opinion = { target = CHI value > 25 } }
+		}
+	}
+}
+
+country_event = {
+	id = varyag.7
+	title = varyag.7.t
+	desc = varyag.7.d
+	picture = GFX_carrier2
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = varyag.7.a }
+}
+
+country_event = {
+	id = varyag.8
+	title = varyag.8.t
+	desc = varyag.8.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = varyag.8.a }
+}
+
+country_event = {
+	id = varyag.9
+	title = varyag.9.t
+	desc = varyag.9.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = varyag.9.a }
+}
+
+country_event = {
+	id = varyag.10
+	title = varyag.10.t
+	desc = varyag.10.d
+	picture = GFX_carrier2
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = varyag.10.a
+		if = {
+			limit = { NOT = { has_tech = carrier_hull_2 } }
+			custom_effect_tooltip = varyag_blueprints_tt
+		}
+	}
+}
+
+country_event = {
+	id = varyag.11
+	title = varyag.11.t
+	desc = varyag.11.d
+	picture = GFX_bosphorus
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = varyag.11.a }
+}
+
+country_event = {
+	id = varyag.12
+	title = varyag.12.t
+	desc = varyag.12.d
+	picture = GFX_carrier
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = {
+		name = varyag.12.a
+		unlock_decision_tooltip = varyag_complete_the_carrier
+	}
+}
+
+country_event = {
+	id = varyag.13
+	title = varyag.13.t
+	desc = varyag.13.d
+	picture = GFX_bosphorus
+	is_triggered_only = yes
+
+	option = {
+		name = varyag.13.a
+		unlock_decision_tooltip = UKR_varyag_buy_back_hull
+	}
+}
