@@ -1,5 +1,5 @@
 import pytest
-from targeted_operations_helpers import ScriptModel, _parse_race_script
+from script_model import ScriptModel, _parse_race_script
 from targeted_operations_helpers import (
     _extract_block as _extract_block,
 )

@@ -5,19 +5,15 @@ from datetime import date
 from pathlib import Path
 
 import pytest
+from script_model import ScopedScriptModel
+from script_model import ScriptArray as ScriptArray
 from targeted_operations_helpers import (
-    TargetedScript,
     _named_block,
     _parse_race_script,
     read_top_source,
 )
 
 ROOT = Path(__file__).resolve().parents[3]
-
-
-class ScriptArray(list):
-    def get(self, index, default=0):
-        return self[index] if 0 <= index < len(self) else default
 
 
 def _seed_bda_archive(variables, entries):
@@ -29,7 +25,7 @@ def _seed_bda_archive(variables, entries):
         variables["TOP_archive_bda_token"][row] = token
 
 
-class TargetScript(TargetedScript):
+class TargetScript(ScopedScriptModel):
     """Execute TOP source while recording separately owned engine and legacy effects."""
 
     def __init__(self):
@@ -138,19 +134,8 @@ class TargetScript(TargetedScript):
             self.run("TOP_country_initialize", ident)
 
     def state(self, ident, controller):
-        self.country(ident, tag=f"state_{ident}")
-        self.countries[ident].update(controller=controller, states=[])
-        self.countries[ident]["vars"]["infrastructure"] = 3
-        self.countries[ident]["vars"]["arms_factory"] = 2
-        self.countries[ident]["vars"]["industrial_complex"] = 2
+        super().state(ident, controller)
         self.countries[ident]["resources"] = ["oil"]
-        self.countries[controller]["states"].append(ident)
-
-    def tag(self, token):
-        return next(
-            (ident for ident, data in self.countries.items() if data["tag"] == token),
-            None,
-        )
 
     def protection_country(self, target):
         if int(target) in self.protection_overrides:
@@ -183,19 +168,6 @@ class TargetScript(TargetedScript):
         }
         return self.tag(protection_tags.get(int(target), "---"))
 
-    def _scope(self, name, identifier):
-        if name.startswith("PREV."):
-            return self._scope(name[5:], self.scope_stack[-1])
-        if "^" in name:
-            array, index = name.split("^", 1)
-            scope, key = super()._scope(array, identifier)
-            values = scope.setdefault(key, ScriptArray())
-            if not isinstance(values, ScriptArray):
-                values = ScriptArray(values)
-                scope[key] = values
-            return values, int(self.value(index, identifier))
-        return super()._scope(name, identifier)
-
     def facility_callback(self, actor=1, tier=2):
         group = self.temps["TOP_group_target"]
         variables = self.countries[actor]["vars"]
@@ -217,49 +189,9 @@ class TargetScript(TargetedScript):
         self.run("TOP_native_facility_damage", actor)
         self.run("TOP_native_facility_result", actor)
 
-    def value(self, name, identifier):
-        if isinstance(name, str):
-            if name in {"THIS", "THIS.id", "ROOT"}:
-                return identifier
-            if name == "PREV":
-                return self.scope_stack[-1]
-            if name == "controller":
-                return self.countries[identifier].get("controller", 0)
-            if name.startswith("var:"):
-                return self.value(name[4:], identifier)
-            if name.endswith("^num"):
-                return len(self.value(name[:-4], identifier) or [])
-            country = self.tag(name)
-            if country is not None:
-                return country
-        return super().value(name, identifier)
-
-    def scoped(self, operand, identifier, target, condition=False):
-        self.scope_stack.append(identifier)
-        try:
-            if condition:
-                return self.condition(operand, target)
-            self.execute(operand, target)
-        finally:
-            self.scope_stack.pop()
-
     def condition_statement(self, statement, identifier):
         key, comparison, operand = statement
-        if key in {
-            "set_temp_variable",
-            "add_to_temp_variable",
-            "subtract_from_temp_variable",
-            "multiply_temp_variable",
-            "divide_temp_variable",
-            "clamp_temp_variable",
-        }:
-            self.execute_statement(statement, identifier)
-            result = True
-        elif key.startswith("var:") or key == "controller" or self.tag(key) is not None:
-            result = self.scoped(
-                operand, identifier, self.value(key, identifier), condition=True
-            )
-        elif key == "raid_show_target_intervention_check":
+        if key == "raid_show_target_intervention_check":
             result = operand == "yes"
         elif key == "TOP_authored_role_eligible":
             # No longer parameterised: the caller sets TOP_role_target,
@@ -290,27 +222,6 @@ class TargetScript(TargetedScript):
             result = self.value(member, identifier) in (
                 self.value(name, identifier) or []
             )
-        elif key == "is_controlled_by":
-            result = self.value("controller", identifier) == self.value(
-                operand, identifier
-            )
-        elif key in {
-            "num_of_controlled_states",
-            "has_political_power",
-            "arms_factory",
-            "industrial_complex",
-            "infrastructure",
-        }:
-            value = (
-                len(self.countries[identifier]["states"])
-                if key == "num_of_controlled_states"
-                else self.countries[identifier]["vars"].get(
-                    "political_power" if key == "has_political_power" else key, 0
-                )
-            )
-            result = self.comparisons[comparison](
-                value, self.value(operand, identifier)
-            )
         elif key in {"has_war_with", "is_in_faction_with"}:
             result = self.value(operand, identifier) in self.countries[identifier].get(
                 key, set()
@@ -340,8 +251,8 @@ class TargetScript(TargetedScript):
         return result
 
     def run(self, name, identifier):
+        super().run(name, identifier)
         if name in self.stubs:
-            self.external[name, identifier] += 1
             if name == "TOP_get_protection_country":
                 self.temps["TOP_security_country"] = self.protection_country(
                     self.value("TOP_target", identifier)
@@ -350,8 +261,6 @@ class TargetScript(TargetedScript):
                 self.legacy_first_removals.append(
                     self.value("TOP_first_removal", identifier)
                 )
-        else:
-            self.execute(self.effects[name], identifier)
 
     def call(self, name, identifier=1, **arguments):
         # Scripted effects no longer take parameters: the engine does not
@@ -363,11 +272,7 @@ class TargetScript(TargetedScript):
 
     def execute_statement(self, statement, identifier):
         key, comparison, operand = statement
-        if key in self.stubs:
-            self.run(key, identifier)
-        elif key == "controller" or self.tag(key) is not None:
-            self.scoped(operand, identifier, self.value(key, identifier))
-        elif key in {"random_controlled_state", "capital_scope"}:
+        if key in {"random_controlled_state", "capital_scope"}:
             states = self.countries[identifier]["states"]
             limits = [value for name, _, value in operand if name == "limit"]
             body = [entry for entry in operand if entry[0] != "limit"]
@@ -430,22 +335,6 @@ class TargetScript(TargetedScript):
             data = {name: value for name, _, value in operand}
             self.random_draws += 1
             self.temps[data["var"]] = self.value(data["min"], identifier)
-        elif key == "add_political_power":
-            variables = self.countries[identifier]["vars"]
-            variables["political_power"] = variables.get(
-                "political_power", 0
-            ) + self.value(operand, identifier)
-        elif key == "add_stability":
-            variables = self.countries[identifier]["vars"]
-            variables["stability"] = variables.get("stability", 0) + self.value(
-                operand, identifier
-            )
-        elif key == "add_opinion_modifier":
-            self.external[key, identifier] += 1
-        elif key == "damage_building":
-            self.external[key, identifier] += 1
-        elif key == "add_dynamic_modifier":
-            self.external[key, identifier] += 1
         else:
             super().execute_statement(statement, identifier)
 

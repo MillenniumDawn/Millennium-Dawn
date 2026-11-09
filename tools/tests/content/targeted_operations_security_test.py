@@ -1,8 +1,9 @@
 from pathlib import Path
 
 import pytest
+from script_model import TempScriptModel
 from targeted_operations_core_test import TargetScript
-from targeted_operations_helpers import TargetedScript, _named_block, _parse_race_script
+from targeted_operations_helpers import _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
 EFFECTS = ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
@@ -10,7 +11,7 @@ REDESIGN_EFFECTS = ROOT / "common/scripted_effects/00_targeted_operations_effect
 TRIGGERS = ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"
 
 
-class SecurityScript(TargetedScript):
+class SecurityScript(TempScriptModel):
     """Execute policy source with roster and economy interfaces as fixtures."""
 
     country_trigger_fields = {

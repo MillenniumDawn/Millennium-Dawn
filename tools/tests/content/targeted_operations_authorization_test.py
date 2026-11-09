@@ -4,8 +4,8 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
+from script_model import TempScriptModel
 from targeted_operations_helpers import (
-    TargetedScript,
     _extract_block,
     _named_block,
     _parse_race_script,
@@ -19,7 +19,7 @@ TRIGGER_PATH = "common/scripted_triggers/01_targeted_operations_triggers.txt"
 EVENT_PATH = "events/Targeted Operations.txt"
 
 
-class ReviewScript(TargetedScript):
+class ReviewScript(TempScriptModel):
     """Execute approval source with engine diplomacy and core eligibility as fixtures."""
 
     country_trigger_fields = {

@@ -6,12 +6,13 @@ from datetime import date
 from pathlib import Path
 
 import pytest
-from targeted_operations_helpers import TargetedScript, _named_block, _parse_race_script
+from script_model import TempScriptModel
+from targeted_operations_helpers import _named_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
 
 
-class PoliticalScript(TargetedScript):
+class PoliticalScript(TempScriptModel):
     """Execute authored role and mandate source with engine identities as fixtures."""
 
     country_trigger_fields = {
