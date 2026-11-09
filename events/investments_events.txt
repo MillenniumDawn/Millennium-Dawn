@@ -61,10 +61,20 @@ country_event = {
 				ai_has_same_organization = yes
 			}
 			modifier = {
-				set_temp_variable = { opinion_calculator = opinion@FROM }
-				multiply_temp_variable = { opinion_calculator = 0.05 }
-				check_variable = { opinion_calculator > -30 }
-				add = opinion_calculator
+				add = 5
+				check_variable = { opinion@FROM > 50 }
+			}
+			modifier = {
+				add = 5
+				check_variable = { opinion@FROM > 150 }
+			}
+			modifier = {
+				add = -5
+				check_variable = { opinion@FROM < -50 }
+			}
+			modifier = {
+				add = -5
+				check_variable = { opinion@FROM < -150 }
 			}
 			modifier = {
 				add = 1
@@ -97,12 +107,12 @@ country_event = {
 			}
 			modifier = {
 				factor = 5
-				set_temp_variable = { tmp = gdp_total }
-				multiply_temp_variable = { tmp = 0.03 }
-				divide_temp_variable = { tmp = 56 }
-
-				# Check if weekly treasury leads to spending at 3% of GDP or greater. Be more likely to accept if this is the case.
-				check_variable = { treasury_rate > tmp }
+				check_expr = {
+					value = gdp_total
+					multiply = 0.03
+					divide = 56
+					less_than = treasury_rate
+				}
 				OR = {
 					check_variable = { FROM.project_building_type^-1 = 1 }
 					check_variable = { FROM.project_building_type^-1 = 5 }
@@ -152,10 +162,20 @@ country_event = {
 		ai_chance = {
 			base = 0
 			modifier = {
-				set_temp_variable = { opinion_calculator = opinion@FROM }
-				multiply_temp_variable = { opinion_calculator = -0.05 }
-				check_variable = { opinion_calculator > -30 }
-				add = opinion_calculator
+				add = -5
+				check_variable = { opinion@FROM > 50 }
+			}
+			modifier = {
+				add = -5
+				check_variable = { opinion@FROM > 150 }
+			}
+			modifier = {
+				add = 5
+				check_variable = { opinion@FROM < -50 }
+			}
+			modifier = {
+				add = 5
+				check_variable = { opinion@FROM < -150 }
 			}
 			modifier = {
 				factor = 2
@@ -497,71 +517,71 @@ country_event = {
 				}
 
 				if = { limit = { check_variable = { tgt_at_war_with_investor = 0 } }
-				for_each_scope_loop = {
-					array = controlled_states
+					for_each_scope_loop = {
+						array = controlled_states
 
-					if = {
-						limit = {
-							# Check if the Investable State
-							is_in_home_area = yes
-							# Check whether the AI can invest in these states
-							AI_no_investment_in_these_states = yes
-							NOT = {
-								is_in_array = { array = projects_in_state value = ROOT.id }
+						if = {
+							limit = {
+								# Check if the Investable State
+								is_in_home_area = yes
+								# Check whether the AI can invest in these states
+								AI_no_investment_in_these_states = yes
+								NOT = {
+									is_in_array = { array = projects_in_state value = ROOT.id }
+								}
 							}
-						}
 
 
-						AI_count_pending_projects = yes
-						AI_get_state_score_adjustment = yes
+							AI_count_pending_projects = yes
+							AI_get_state_score_adjustment = yes
 
-						# Free Building Slot Buildings
-						if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
-							# Get Industrial Complex Score - Building Type - 1
-							AI_get_civilian_industry_score = yes
-							# Get a Military Industry Score if you have defense industry
-							# - Building Type - 2
-							if = { limit = { ROOT = { has_idea = defense_industry } }
-								AI_get_military_industry_score = yes
+							# Free Building Slot Buildings
+							if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
+								# Get Industrial Complex Score - Building Type - 1
+								AI_get_civilian_industry_score = yes
+								# Get a Military Industry Score if you have defense industry
+								# - Building Type - 2
+								if = { limit = { ROOT = { has_idea = defense_industry } }
+									AI_get_military_industry_score = yes
+								}
+								# Get Naval Dockyard Score if you have Maritime Industry
+								# - Building Type - 3
+								if = { limit = { ROOT = { has_idea = maritime_industry } is_coastal = yes }
+									AI_get_dockyard_score = yes
+								}
+								# Offices - Building Type - 5
+								AI_get_offices_score = yes
 							}
-							# Get Naval Dockyard Score if you have Maritime Industry
-							# - Building Type - 3
-							if = { limit = { ROOT = { has_idea = maritime_industry } is_coastal = yes }
-								AI_get_dockyard_score = yes
+							# Infrastructure - Building Type - 4
+							AI_get_infrastructure_score = yes
+							# Surface to Air Missiles - Building Type - 6
+							if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+								AI_get_antiair_score = yes
 							}
-							# Offices - Building Type - 5
-							AI_get_offices_score = yes
-						}
-						# Infrastructure - Building Type - 4
-						AI_get_infrastructure_score = yes
-						# Surface to Air Missiles - Building Type - 6
-						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
-							AI_get_antiair_score = yes
-						}
-						# Radar Stations - Building Type - 7
-						if = { limit = { OR = { check_variable = { AI_has_military_ideas = 1 } check_variable = { AI_has_radar_tech = 1 } } }
-							AI_get_radar_score = yes
-						}
-						# Air Bases - Building Type - 8
-						if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
-							AI_get_airbase_score = yes
-						}
-						# Fuel Silos - Building Type - 9
-						AI_get_fuel_silo_score = yes
-						# Network Infrastructure - Building Type - 10
-						AI_get_network_infrastructure_score = yes
-						# Renewable Powerplant - Building Type - 11
-						if = { limit = { check_variable = { AI_has_fuel_silo_tech = 1 } }
-							AI_get_renewable_energy_score = yes
-						}
-						# Fossil Fuel Powerplant - Building Type - 12
-						AI_get_fossil_powerplant_score = yes
-						# Nuclear Reactor - Building Type - 13
-						if = { limit = { check_variable = { AI_has_reactor_tech = 1 } check_variable = { tgt_can_build_reactors = 1 } }
-							AI_get_nuclear_reactor_score = yes
+							# Radar Stations - Building Type - 7
+							if = { limit = { OR = { check_variable = { AI_has_military_ideas = 1 } check_variable = { AI_has_radar_tech = 1 } } }
+								AI_get_radar_score = yes
+							}
+							# Air Bases - Building Type - 8
+							if = { limit = { check_variable = { AI_has_military_ideas = 1 } }
+								AI_get_airbase_score = yes
+							}
+							# Fuel Silos - Building Type - 9
+							AI_get_fuel_silo_score = yes
+							# Network Infrastructure - Building Type - 10
+							AI_get_network_infrastructure_score = yes
+							# Renewable Powerplant - Building Type - 11
+							if = { limit = { check_variable = { AI_has_fuel_silo_tech = 1 } }
+								AI_get_renewable_energy_score = yes
+							}
+							# Fossil Fuel Powerplant - Building Type - 12
+							AI_get_fossil_powerplant_score = yes
+							# Nuclear Reactor - Building Type - 13
+							if = { limit = { check_variable = { AI_has_reactor_tech = 1 } check_variable = { tgt_can_build_reactors = 1 } }
+								AI_get_nuclear_reactor_score = yes
+							}
 						}
 					}
-				}
 				}
 			}
 			if = { limit = { check_variable = { AI_best_score > AI_MIN_STATE_SCORE } }

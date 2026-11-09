@@ -50,6 +50,11 @@ bare `naval_base > 0` comparison or `any_province_building_level` instead.
 country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
+
+The advisory random-infrastructure check only covers direct construction effects
+in selected random-state iterators and randomly limited every-state iterators.
+It looks for a recognized slot check in the selector's own limit, not arbitrary
+guards.
 """
 
 import os
@@ -80,6 +85,20 @@ _UNPROVEN_IN = frozenset({"not", "or", "nand", "nor", "count_triggers"})
 _QUANTIFIER_SCOPE_RE = re.compile(r"^(?:any|all)_")
 # Scopes that pick their own state, so an outer guard says nothing about them.
 _STATE_SELECTOR_RE = re.compile(r"^(?:random|every)_\w*state\w*$")
+_RANDOM_SELECT_RE = re.compile(r"\brandom_select_amount\s*=")
+_RANDOM_STATE_SELECTORS = frozenset(
+    {
+        "random_owned_state",
+        "random_controlled_state",
+        "random_owned_controlled_state",
+        "random_core_state",
+    }
+)
+_RANDOM_SUBSET_SELECTORS = frozenset({"every_owned_state", "every_controlled_state"})
+_CHECKED_RANDOM_SELECTORS = _RANDOM_STATE_SELECTORS | _RANDOM_SUBSET_SELECTORS
+_INFRASTRUCTURE_GUARD_RE = re.compile(r"\binfrastructure_random_build_loc\s*=\s*yes\b")
+_SLOT_BUILDING_RE = re.compile(r"\bbuilding\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_SLOT_COUNT_RE = re.compile(r"\bsize\s*(>=|==|>|<=|!=|<)\s*(-?\d+)(?![\w.])")
 
 _BUILDING_EFFECTS = {
     "damage_building": "unguarded-damage-building",
@@ -226,6 +245,51 @@ def _extract_absent_buildings(text: str) -> Set[str]:
     return buildings
 
 
+def _direct_text(text: str, start: int, end: int, blocks) -> str:
+    parts = []
+    cursor = start
+    for _, name_start, _, body_end in blocks:
+        parts.append(text[cursor:name_start])
+        cursor = body_end + 1
+    parts.append(text[cursor:end])
+    return " ".join(parts)
+
+
+def _has_infrastructure_slot_guard(text: str) -> bool:
+    """Recognize guards in this state, without following alternate scopes."""
+    blocks = _child_blocks(text, 0, len(text))
+    cursor = 0
+    for name, name_start, body_start, body_end in blocks:
+        if _INFRASTRUCTURE_GUARD_RE.search(text, cursor, name_start):
+            return True
+        body = text[body_start:body_end]
+        if name == "free_building_slots":
+            fields = _direct_text(body, 0, len(body), _child_blocks(body, 0, len(body)))
+            building = _SLOT_BUILDING_RE.search(fields)
+            if building and building.group(1) == "infrastructure":
+                if any(
+                    _proves_present(match.group(1), int(match.group(2)))
+                    for match in _SLOT_COUNT_RE.finditer(fields)
+                ):
+                    return True
+        elif name.lower() == "and" and _has_infrastructure_slot_guard(body):
+            return True
+        cursor = body_end + 1
+    return bool(_INFRASTRUCTURE_GUARD_RE.search(text, cursor))
+
+
+def _has_infrastructure_level_bound(text: str) -> bool:
+    """Find a same-state upper bound without inferring that a slot is free."""
+    if "infrastructure" in _comparisons_outside_blocks(
+        text, lambda op, _: op in ("<", "<=")
+    ):
+        return True
+    return any(
+        name.lower() == "and" and _has_infrastructure_level_bound(text[start:end])
+        for name, _, start, end in _child_blocks(text, 0, len(text))
+    )
+
+
 class Scanner:
     """Walks one file's script tree, tracking buildings proven present."""
 
@@ -243,6 +307,57 @@ class Scanner:
                 f"`{building} > 0` or any_province_building_level"
             )
             self.findings.append(("province-building-state-trigger", line, message))
+
+    def check_random_infrastructure_slots(self, start: int, end: int):
+        text = self.text[start:end]
+        if (
+            "add_building_construction" not in text
+            or "infrastructure" not in text
+            or not any(name in text for name in _CHECKED_RANDOM_SELECTORS)
+        ):
+            return
+        for name, _, body_start, body_end in _child_blocks(self.text, start, end):
+            if name in _SKIP_BLOCKS or name == "modifier":
+                continue
+            blocks = _child_blocks(self.text, body_start, body_end)
+            selected = name in _RANDOM_STATE_SELECTORS
+            if name in _RANDOM_SUBSET_SELECTORS:
+                # Only a direct random_select_amount field applies to this iterator.
+                direct = _direct_text(self.text, body_start, body_end, blocks)
+                selected = bool(_RANDOM_SELECT_RE.search(direct))
+            if selected:
+                guarded = any(
+                    child == "limit"
+                    and _has_infrastructure_slot_guard(self.text[c_start:c_end])
+                    for child, _, c_start, c_end in blocks
+                )
+                if not guarded:
+                    level_bound = any(
+                        child == "limit"
+                        and _has_infrastructure_level_bound(self.text[c_start:c_end])
+                        for child, _, c_start, c_end in blocks
+                    )
+                    for child, _, c_start, c_end in blocks:
+                        if child != "add_building_construction":
+                            continue
+                        building = _TYPE_RE.search(self.text[c_start:c_end])
+                        if building and building.group(1) == "infrastructure":
+                            line = line_for_offset(self.offsets, c_start)
+                            self.findings.append(
+                                (
+                                    "random-infrastructure-slot-guard",
+                                    line,
+                                    "randomly selected state builds infrastructure "
+                                    "without a recognized slot guard in its limit"
+                                    + (
+                                        "; a level bound is present but slot availability "
+                                        "is not verified"
+                                        if level_bound
+                                        else ""
+                                    ),
+                                )
+                            )
+            self.check_random_infrastructure_slots(body_start, body_end)
 
     def _check_effect(
         self, effect: str, category: str, body_start: int, body_end: int, ctx: Context
@@ -296,24 +411,33 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
     """Return (category, relative path, line, message) for one content file."""
     filepath, mod_path = args
     raw = read_file(filepath)
-    if not any(
+    has_existing_checks = any(
         token in raw
         for token in (
             "damage_building",
             "remove_building",
             *_STATE_ONLY_BUILDING_TRIGGERS,
         )
-    ):
+    )
+    has_random_infrastructure = (
+        "add_building_construction" in raw
+        and "infrastructure" in raw
+        and any(name in raw for name in _CHECKED_RANDOM_SELECTORS)
+    )
+    if not has_existing_checks and not has_random_infrastructure:
         return []
 
     def compute():
         scanner = Scanner(_sanitize(raw))
-        scanner.walk(0, len(scanner.text), Context())
-        scanner.check_province_building_triggers()
+        if has_existing_checks:
+            scanner.walk(0, len(scanner.text), Context())
+            scanner.check_province_building_triggers()
+        if has_random_infrastructure:
+            scanner.check_random_infrastructure_slots(0, len(scanner.text))
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan_v5", filepath, raw, compute
+        mod_path, "building_guards_scan_v7", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
@@ -331,7 +455,7 @@ class Validator(BaseValidator):
 
         report_findings(
             self,
-            [row for row in rows if row[0] != "province-building-state-trigger"],
+            [row for row in rows if row[0].startswith("unguarded-")],
             self.add_error,
             "unguarded building effect(s)",
             "All damage_building/remove_building effects are guarded",
@@ -344,6 +468,15 @@ class Validator(BaseValidator):
             self.add_error,
             "province building(s) named in a state-only trigger",
             "No province buildings named in state-only building triggers",
+        )
+
+        self._log_section("randomly selected infrastructure construction")
+        report_findings(
+            self,
+            [row for row in rows if row[0] == "random-infrastructure-slot-guard"],
+            self.add_warning,
+            "random infrastructure construction(s) without a recognized slot guard",
+            "Checked random-state infrastructure constructions have recognized slot guards",
         )
 
     def run_validations(self):
