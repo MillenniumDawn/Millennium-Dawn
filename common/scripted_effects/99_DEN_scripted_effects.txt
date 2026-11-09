@@ -39,16 +39,19 @@ DEN_agrar_resolve_generic = {
 	set_temp_variable = { DEN_agrar_offset = 0 }
 	# Polled monthly, so each band needs a no-protest bucket — without one the event is guaranteed every month.
 	if = {
-		limit = {
-			check_variable = { DEN_agrar_anger_input < 10 }
-			OR = {
-				check_variable = { DEN_agrar_anger_input > 1 }
-				NOT = { DEN_no_active_agri_policy = yes }
+		limit = { check_variable = { DEN_agrar_anger_input < 10 } }
+		# Anger at the floor with no active policy is the calm state
+		if = {
+			limit = {
+				OR = {
+					check_variable = { DEN_agrar_anger_input > 1 }
+					NOT = { DEN_no_active_agri_policy = yes }
+				}
 			}
-		}
-		random = {
-			chance = 10
-			set_temp_variable = { DEN_agrar_fire = 1 }
+			random = {
+				chance = 10
+				set_temp_variable = { DEN_agrar_fire = 1 }
+			}
 		}
 	}
 	else_if = {
