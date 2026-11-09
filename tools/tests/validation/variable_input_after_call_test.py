@@ -43,6 +43,7 @@ _CASES = {
         ["hidden_effect = {", CALL, "}", WRITE],
         [("party_pop", 4)],
     ),
+    "call inside effect_tooltip": (["effect_tooltip = {", CALL, "}", WRITE], []),
     "another country's variable": ([CALL, "SYR = {", WRITE, "}"], []),
     "next dated block": (["2000.1.1 = {", CALL, "}", "2017.1.1 = {", WRITE, "}"], []),
     "longer variable name": ([CALL, "set_variable = { party_pop_elect^1 = 0.5 }"], []),
