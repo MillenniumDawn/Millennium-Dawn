@@ -1,0 +1,514 @@
+##########################
+#  Russian Army Events   #
+##########################
+
+add_namespace = sov_army
+
+# Kadyrov changes sides
+country_event = {
+	id = sov_army.1
+	title = sov_army.1.t
+	desc = sov_army.1.d
+	picture = GFX_chech_soldiers_loyal
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.1.a
+		log = "[GetDateText]: [This.GetName]: sov_army.1.a executed"
+		add_stability = 0.02
+		if = {
+			limit = { NOT = { CHE = { is_subject_of = SOV } } }
+			hidden_effect = {
+				if = {
+					limit = { country_exists = CHE has_war_with = CHE }
+					white_peace = CHE
+				}
+				if = {
+					limit = { NOT = { country_exists = CHE } }
+					release = CHE
+				}
+				CHE = {
+					set_country_flag = SOV_subject_republic
+					transfer_state = 672
+					add_state_core = 672
+				}
+				set_autonomy = {
+					target = CHE
+					autonomy_state = autonomy_republic_rf
+				}
+				add_state_core = 672
+				CHE = {
+					set_temp_variable = { rul_party_temp = 6 }
+					set_temp_variable = { change_leader_temp = 1 }
+					change_ruling_party_effect = yes
+					add_ideas = SUB_small_taxes
+				}
+				set_temp_variable = { modify_subjectnalogs = 3 }
+				modify_subjectnalogs_support = yes
+				SUB_separatism_plus_subject = yes
+			}
+			custom_effect_tooltip = SOV_kadyrov_autonomy_tt
+		}
+		country_event = { id = sov_army.2 days = 1300 random_days = 200 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Kadyrov is killed, succession
+country_event = {
+	id = sov_army.2
+	title = sov_army.2.t
+	desc = sov_army.2.d
+	picture = GFX_che_kadyrov_alkhanov
+	is_triggered_only = yes
+
+	trigger = { has_idea = SOV_idea_kadyrov_deal }
+
+	option = {
+		name = sov_army.2.a
+		log = "[GetDateText]: [This.GetName]: sov_army.2.a executed"
+		swap_ideas = {
+			remove_idea = SOV_idea_kadyrov_deal
+			add_idea = SOV_idea_kadyrov_dynasty
+		}
+		hidden_effect = {
+			if = {
+				limit = { country_exists = CHE CHE = { is_subject_of = SOV } }
+				CHE = {
+					set_temp_variable = { modify_subjectavtoritet = -10 }
+					modify_subjectavtoritet_support = yes
+				}
+			}
+		}
+		country_event = { id = sov_army.3 days = 700 random_days = 200 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 SOV_ai_historical_path = yes }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = sov_army.2.b
+		log = "[GetDateText]: [This.GetName]: sov_army.2.b executed"
+		remove_ideas = SOV_idea_kadyrovtsy
+		add_stability = -0.01
+		hidden_effect = {
+			if = {
+				limit = { country_exists = CHE CHE = { is_subject_of = SOV } }
+				CHE = {
+					set_temp_variable = { modify_subjectavtoritet = 8 }
+					modify_subjectavtoritet_support = yes
+				}
+			}
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+# Ramzan's invoice
+country_event = {
+	id = sov_army.3
+	title = sov_army.3.t
+	desc = sov_army.3.d
+	picture = GFX_chechnya_rage_kadyrov
+	is_triggered_only = yes
+
+	trigger = { has_idea = SOV_idea_kadyrov_dynasty }
+
+	option = {
+		name = sov_army.3.a
+		log = "[GetDateText]: [This.GetName]: sov_army.3.a executed"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		hidden_effect = {
+			if = {
+				limit = { country_exists = CHE CHE = { is_subject_of = SOV } }
+				CHE = {
+					set_temp_variable = { modify_subjectavtoritet = 6 }
+					modify_subjectavtoritet_support = yes
+				}
+			}
+		}
+		country_event = { id = sov_army.3 days = 900 random_days = 300 }
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = sov_army.3.b
+		log = "[GetDateText]: [This.GetName]: sov_army.3.b executed"
+		add_stability = -0.02
+		add_political_power = -25
+		hidden_effect = {
+			if = {
+				limit = { country_exists = CHE CHE = { is_subject_of = SOV } }
+				CHE = {
+					set_temp_variable = { modify_subjectavtoritet = -10 }
+					modify_subjectavtoritet_support = yes
+					set_temp_variable = { modify_subjectinped = 8 }
+					modify_subjectinped_support = yes
+				}
+			}
+		}
+		country_event = { id = sov_army.3 days = 900 random_days = 300 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Direct rule: sweeps
+country_event = {
+	id = sov_army.4
+	title = sov_army.4.t
+	desc = sov_army.4.d
+	picture = GFX_sov_kto_start
+	is_triggered_only = yes
+
+	trigger = { has_idea = SOV_idea_chechen_counterinsurgency }
+
+	option = {
+		name = sov_army.4.a
+		log = "[GetDateText]: [This.GetName]: sov_army.4.a executed"
+		army_experience = 20
+		add_stability = -0.02
+		hidden_effect = { SUB_separatism_plus_subject = yes }
+		country_event = { id = sov_army.5 days = 2800 random_days = 365 }
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.4.b
+		log = "[GetDateText]: [This.GetName]: sov_army.4.b executed"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		swap_ideas = {
+			remove_idea = SOV_idea_chechen_counterinsurgency
+			add_idea = SOV_idea_chechen_veterans
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# Direct rule: end of the counter-terrorist operation
+country_event = {
+	id = sov_army.5
+	title = sov_army.5.t
+	desc = sov_army.5.d
+	picture = GFX_sov_united_group_troops_caucas
+	is_triggered_only = yes
+
+	trigger = { has_idea = SOV_idea_chechen_counterinsurgency }
+
+	option = {
+		name = sov_army.5.a
+		log = "[GetDateText]: [This.GetName]: sov_army.5.a executed"
+		add_stability = 0.03
+		swap_ideas = {
+			remove_idea = SOV_idea_chechen_counterinsurgency
+			add_idea = SOV_idea_chechen_veterans
+		}
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.5.b
+		log = "[GetDateText]: [This.GetName]: sov_army.5.b executed"
+		army_experience = 5
+		add_stability = -0.01
+		country_event = { id = sov_army.5 days = 365 }
+		ai_chance = { base = 1 }
+	}
+}
+
+# Georgia lessons
+country_event = {
+	id = sov_army.6
+	title = sov_army.6.t
+	desc = {
+		text = sov_army.6.d_war
+		trigger = { has_idea = SOV_idea_five_day_war }
+	}
+	desc = {
+		text = sov_army.6.d_nowar
+		trigger = { NOT = { has_idea = SOV_idea_five_day_war } }
+	}
+	picture = GFX_georg_army2008
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.6.a
+		log = "[GetDateText]: [This.GetName]: sov_army.6.a executed"
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_landforce_modifier }
+		add_to_variable = { SOV_land_max_planning_factor = 0.05 tooltip = max_planning_factor_tt }
+		add_to_variable = { SOV_land_planning_speed = 0.05 tooltip = planning_speed_tt }
+		add_to_variable = { SOV_land_army_intel_factor = 0.05 tooltip = army_intel_factor_tt }
+		army_experience = 10
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.6.b
+		log = "[GetDateText]: [This.GetName]: sov_army.6.b executed"
+		SOV_aviation_script = yes
+		air_experience = 15
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.6.c
+		log = "[GetDateText]: [This.GetName]: sov_army.6.c executed"
+		set_temp_variable = { treasury_change = -6 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 8 }
+		change_defense_industry_opinion = yes
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_rostec_manufacturer = { add_mio_funds = 600 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# Oboronservis scandal
+country_event = {
+	id = sov_army.7
+	title = sov_army.7.t
+	desc = sov_army.7.d
+	picture = GFX_army_objections
+	is_triggered_only = yes
+
+	trigger = { has_idea = SOV_oligarch_supply_army_idea }
+
+	option = {
+		name = sov_army.7.a
+		log = "[GetDateText]: [This.GetName]: sov_army.7.a executed"
+		remove_ideas = SOV_oligarch_supply_army_idea
+		add_stability = 0.02
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_military_opinion = yes
+		ai_chance = { base = 6 }
+	}
+
+	option = {
+		name = sov_army.7.b
+		log = "[GetDateText]: [This.GetName]: sov_army.7.b executed"
+		add_stability = -0.02
+		set_temp_variable = { temp_opinion = -8 }
+		change_the_military_opinion = yes
+		ai_chance = { base = 4 }
+	}
+}
+
+# Armata
+country_event = {
+	id = sov_army.8
+	title = sov_army.8.t
+	desc = sov_army.8.d
+	picture = GFX_military_exercise
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.8.a
+		log = "[GetDateText]: [This.GetName]: sov_army.8.a executed"
+		set_temp_variable = { treasury_change = -8 }
+		modify_treasury_effect = yes
+		add_ideas = SOV_idea_armata_programme
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_uralvagonzavod_tank_manufacturer = { add_mio_funds = 600 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = sov_army.8.b
+		log = "[GetDateText]: [This.GetName]: sov_army.8.b executed"
+		set_temp_variable = { treasury_change = -2 }
+		modify_treasury_effect = yes
+		add_ideas = SOV_idea_t90m_backbone
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_uralvagonzavod_tank_manufacturer = { add_mio_funds = 200 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# PAK FA and India
+country_event = {
+	id = sov_army.9
+	title = sov_army.9.t
+	desc = sov_army.9.d
+	picture = GFX_fighter_jet
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.9.a
+		log = "[GetDateText]: [This.GetName]: sov_army.9.a executed"
+		set_temp_variable = { treasury_change = -5 }
+		modify_treasury_effect = yes
+		SOV_aviation_script = yes
+		air_experience = 10
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_united_aircraft_corporation_aircraft_manufacturer = { add_mio_funds = 600 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = sov_army.9.b
+		log = "[GetDateText]: [This.GetName]: sov_army.9.b executed"
+		trigger = { country_exists = RAJ }
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		SOV_aviation_script = yes
+		add_opinion_modifier = { target = RAJ modifier = diplomatic_support }
+		reverse_add_opinion_modifier = { target = RAJ modifier = diplomatic_support }
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_united_aircraft_corporation_aircraft_manufacturer = { add_mio_funds = 200 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 3 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# Bulava
+country_event = {
+	id = sov_army.10
+	title = sov_army.10.t
+	desc = sov_army.10.d
+	picture = GFX_submarine
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.10.a
+		log = "[GetDateText]: [This.GetName]: sov_army.10.a executed"
+		set_temp_variable = { treasury_change = -3 }
+		modify_treasury_effect = yes
+		navy_experience = 10
+		add_war_support = 0.02
+		if = {
+			limit = { has_dlc = "Arms Against Tyranny" }
+			mio:SOV_united_shipbuilding_corporation_naval_manufacturer = { add_mio_funds = 400 }
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	option = {
+		name = sov_army.10.b
+		log = "[GetDateText]: [This.GetName]: sov_army.10.b executed"
+		navy_experience = 5
+		647 = { one_state_dockyard = yes }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+# Iskander in Kaliningrad
+country_event = {
+	id = sov_army.11
+	title = sov_army.11.t
+	desc = sov_army.11.d
+	picture = GFX_sov_iskander
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.11.a
+		log = "[GetDateText]: [This.GetName]: sov_army.11.a executed"
+		add_war_support = 0.03
+		if = {
+			limit = { country_exists = POL }
+			add_opinion_modifier = { target = POL modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = POL modifier = recent_actions_negative }
+		}
+		if = {
+			limit = { country_exists = CZE }
+			add_opinion_modifier = { target = CZE modifier = recent_actions_negative }
+			reverse_add_opinion_modifier = { target = CZE modifier = recent_actions_negative }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.11.b
+		log = "[GetDateText]: [This.GetName]: sov_army.11.b executed"
+		add_political_power = 25
+		if = {
+			limit = { country_exists = POL }
+			add_opinion_modifier = { target = POL modifier = diplomatic_support }
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+# Strategic exercises
+country_event = {
+	id = sov_army.12
+	title = sov_army.12.t
+	desc = sov_army.12.d
+	picture = GFX_sov_empire_exercises
+	is_triggered_only = yes
+
+	option = {
+		name = sov_army.12.a
+		log = "[GetDateText]: [This.GetName]: sov_army.12.a executed"
+		add_timed_idea = { idea = SOV_military_exercises_allied_resolve_idea days = 365 }
+		if = {
+			limit = { country_exists = BLR }
+			add_opinion_modifier = { target = BLR modifier = diplomatic_support }
+			reverse_add_opinion_modifier = { target = BLR modifier = diplomatic_support }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = sov_army.12.b
+		log = "[GetDateText]: [This.GetName]: sov_army.12.b executed"
+		add_timed_idea = { idea = SOV_military_exercises_anti_turkey1_idea days = 365 }
+		if = {
+			limit = { country_exists = TUR }
+			add_opinion_modifier = { target = TUR modifier = recent_actions_negative }
+		}
+		if = {
+			limit = { country_exists = ARM }
+			add_opinion_modifier = { target = ARM modifier = diplomatic_support }
+		}
+		ai_chance = { base = 5 }
+	}
+}

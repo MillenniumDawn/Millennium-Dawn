@@ -1,0 +1,281 @@
+add_namespace = sov_war
+
+#The West answers Crimea
+country_event = {
+	id = sov_war.1
+	title = sov_war.1.t
+	desc = sov_war.1.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		hidden_effect = {
+			if = {
+				limit = { NOT = { has_country_flag = SOV_western_sanctions } }
+				set_country_flag = SOV_western_sanctions
+				add_dynamic_modifier = { modifier = SOV_western_sanctions_modifier }
+				SOV_economy_cars_western_lose_script = yes
+			}
+			SOV_apply_western_sanctions = yes
+		}
+	}
+
+	option = {
+		name = sov_war.1.a
+		log = "[GetDateText]: [This.GetName]: sov_war.1.a executed"
+		add_ideas = SOV_idea_counter_sanctions
+		ai_chance = {
+			base = 70
+			modifier = { factor = 0.5 SOV_ai_favors_private_business = yes }
+		}
+	}
+
+	option = {
+		name = sov_war.1.b
+		log = "[GetDateText]: [This.GetName]: sov_war.1.b executed"
+		add_political_power = -25
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SOV_western_sanctions_modifier }
+		hidden_effect = {
+			set_variable = { SOV_sanctions_invest_cost = { value = SOV_sanctions_invest_cost subtract = 0.04 clamp = { min = 0 max = 0.4 } } }
+			set_variable = { SOV_sanctions_roi = { value = SOV_sanctions_roi add = 0.04 clamp = { min = -0.16 max = 0 } } }
+			set_variable = { SOV_sanctions_office_tax_gain = { value = SOV_sanctions_office_tax_gain add = 0.04 clamp = { min = -0.16 max = 0 } } }
+		}
+		custom_effect_tooltip = SOV_sanctions_eras_TT
+		set_temp_variable = { temp_opinion = 4 }
+		change_oligarchs_opinion = yes
+		if = {
+			limit = { country_exists = GER }
+			GER = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+		if = {
+			limit = { country_exists = ITA }
+			ITA = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+		ai_chance = {
+			base = 30
+			modifier = { factor = 2 SOV_ai_favors_private_business = yes }
+		}
+	}
+}
+
+#Syria: what the intervention is for
+country_event = {
+	id = sov_war.2
+	title = sov_war.2.t
+	desc = sov_war.2.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = sov_war.2.a
+		log = "[GetDateText]: [This.GetName]: sov_war.2.a executed"
+		add_ideas = SOV_idea_syria_expedition
+		air_experience = 15
+		army_experience = 5
+		ai_chance = { base = 40 }
+	}
+
+	option = {
+		name = sov_war.2.b
+		log = "[GetDateText]: [This.GetName]: sov_war.2.b executed"
+		if = {
+			limit = { country_exists = PER }
+			PER = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
+		}
+		if = {
+			limit = { country_exists = TUR }
+			TUR = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+		add_power_balance_value = {
+			id = SOV_west_east_bop
+			value = 0.10
+			tooltip_side = SOV_west_east_bop_right_side
+		}
+		ai_chance = { base = 35 }
+	}
+
+	option = {
+		name = sov_war.2.c
+		log = "[GetDateText]: [This.GetName]: sov_war.2.c executed"
+		set_temp_variable = { treasury_change = 12 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = SYR }
+			SYR = { add_opinion_modifier = { target = ROOT modifier = large_increase } }
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+#Wagner marches on Moscow
+country_event = {
+	id = sov_war.3
+	title = sov_war.3.t
+	desc = sov_war.3.d
+	picture = GFX_wagner_events
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = sov_war.3.a
+		log = "[GetDateText]: [This.GetName]: sov_war.3.a executed"
+		add_stability = -0.03
+		add_manpower = 15000
+		if = {
+			limit = { country_exists = BLR }
+			BLR = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+		hidden_effect = { remove_ideas = SOV_wagner }
+		custom_effect_tooltip = sov_war_wagner_disbanded_tt
+		ai_chance = { base = 50 }
+	}
+
+	option = {
+		name = sov_war.3.b
+		log = "[GetDateText]: [This.GetName]: sov_war.3.b executed"
+		add_stability = -0.08
+		add_war_support = -0.04
+		army_experience = 10
+		hidden_effect = { remove_ideas = SOV_wagner }
+		custom_effect_tooltip = sov_war_wagner_disbanded_tt
+		ai_chance = { base = 20 }
+	}
+
+	option = {
+		name = sov_war.3.c
+		log = "[GetDateText]: [This.GetName]: sov_war.3.c executed"
+		add_stability = -0.02
+		add_political_power = -50
+		set_temp_variable = { treasury_change = -10 }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = sov_war_wagner_kept_tt
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+#Talks on the war in Ukraine
+country_event = {
+	id = sov_war.4
+	title = sov_war.4.t
+	desc = sov_war.4.d
+	picture = GFX_SOV_generic
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = sov_war.4.a
+		log = "[GetDateText]: [This.GetName]: sov_war.4.a executed"
+		if = {
+			limit = { has_war_with = UKR }
+			white_peace = UKR
+		}
+		add_stability = 0.05
+		add_war_support = -0.06
+		if = {
+			limit = { has_idea = SOV_idea_svo_rally }
+			remove_ideas = SOV_idea_svo_rally
+		}
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = sov_war.4.b
+		log = "[GetDateText]: [This.GetName]: sov_war.4.b executed"
+		add_political_power = 50
+		add_war_support = 0.03
+		add_stability = -0.02
+		if = {
+			limit = { country_exists = UKR }
+			UKR = { add_opinion_modifier = { target = ROOT modifier = large_decrease } }
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+#Moscow offers a gas contract
+country_event = {
+	id = sov_war.5
+	title = sov_war.5.t
+	desc = sov_war.5.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	option = {
+		name = sov_war.5.a
+		log = "[GetDateText]: [This.GetName]: sov_war.5.a executed"
+		add_opinion_modifier = { target = FROM modifier = large_increase }
+		add_stability = 0.02
+		set_temp_variable = { percent_change = 5 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = UKR }
+		change_influence_percentage = yes
+		ai_chance = {
+			base = 12
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 15 }
+			}
+		}
+	}
+
+	option = {
+		name = sov_war.5.b
+		log = "[GetDateText]: [This.GetName]: sov_war.5.b executed"
+		add_opinion_modifier = { target = FROM modifier = large_decrease }
+		FROM = { add_political_power = -25 }
+		ai_chance = {
+			base = 6
+			modifier = {
+				add = 8
+				has_opinion = { target = FROM value < -15 }
+			}
+		}
+	}
+}
+
+#Moscow offers a customs union
+country_event = {
+	id = sov_war.6
+	title = sov_war.6.t
+	desc = sov_war.6.d
+	picture = GFX_handshake_black
+	is_triggered_only = yes
+
+	option = {
+		name = sov_war.6.a
+		log = "[GetDateText]: [This.GetName]: sov_war.6.a executed"
+		add_opinion_modifier = { target = FROM modifier = large_increase }
+		set_temp_variable = { percent_change = 8 }
+		set_temp_variable = { tag_index = SOV }
+		set_temp_variable = { influence_target = UKR }
+		change_influence_percentage = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 10
+				has_opinion = { target = FROM value > 15 }
+			}
+		}
+	}
+
+	option = {
+		name = sov_war.6.b
+		log = "[GetDateText]: [This.GetName]: sov_war.6.b executed"
+		add_stability = 0.03
+		add_opinion_modifier = { target = FROM modifier = medium_decrease }
+		FROM = { add_political_power = -25 }
+		ai_chance = {
+			base = 8
+			modifier = {
+				add = 8
+				has_opinion = { target = FROM value < -15 }
+			}
+		}
+	}
+}
