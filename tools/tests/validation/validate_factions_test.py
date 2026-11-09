@@ -5,7 +5,6 @@ import sys
 
 import pytest
 import validate_factions
-from shared.suite import broken_symlink
 from shared.suite import write_text as _write_text
 from validate_factions import (
     Validator,
@@ -352,7 +351,9 @@ def test_unreadable_interface_file_is_named_in_the_icon_report(tmp_path):
         "template_alpha = {\n\ticon = GFX_faction_alpha\n}\n",
     )
     _write_text(root / "icons" / "pool.txt", "GFX_faction_alpha\n")
-    unreadable = broken_symlink(tmp_path / "interface" / "factions.gfx")
+    # A directory named *.gfx makes the read raise instead of returning text.
+    unreadable = tmp_path / "interface" / "factions.gfx"
+    unreadable.mkdir()
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
     validator._collect_definitions()
 

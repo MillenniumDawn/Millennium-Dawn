@@ -17,7 +17,6 @@ from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     iter_statements,
-    list_files,
     strip_comments,
 )
 from validator_common import (
@@ -395,9 +394,13 @@ class Validator(BaseValidator):
         gui_dir = os.path.join(self.mod_path, "interface")
         if not os.path.isdir(gui_dir):
             return
-        files = list_files(gui_dir, ("*.gui",))
+        files = []
+        for root, _, names in os.walk(gui_dir):
+            for n in names:
+                if n.endswith(".gui"):
+                    files.append(os.path.join(root, n))
 
-        for filepath in files:
+        for filepath in sorted(files):
             self._parse_one_gui_file(filepath)
 
         self.log(
@@ -500,7 +503,12 @@ class Validator(BaseValidator):
         ]
         files: List[str] = []
         for base in roots:
-            files.extend(list_files(base))
+            if not os.path.isdir(base):
+                continue
+            for root, _, names in os.walk(base):
+                for n in names:
+                    if n.endswith(".txt"):
+                        files.append(os.path.join(root, n))
         for filepath in sorted(files):
             try:
                 with open(filepath, "r", encoding="utf-8-sig") as fh:
@@ -531,15 +539,19 @@ class Validator(BaseValidator):
         self._loc_file_texts: List[Tuple[str, str]] = []
         if not os.path.isdir(loc_dir):
             return frozenset()
-        for fp in list_files(loc_dir, ("*.yml",)):
-            try:
-                with open(fp, "r", encoding="utf-8-sig") as fh:
-                    text = fh.read()
-            except Exception:
-                continue
-            self._loc_file_texts.append((fp, text))
-            for m in _LOC_KEY.finditer(text):
-                keys.add(m.group(1))
+        for root, _, names in os.walk(loc_dir):
+            for n in names:
+                if not n.endswith(".yml"):
+                    continue
+                fp = os.path.join(root, n)
+                try:
+                    with open(fp, "r", encoding="utf-8-sig") as fh:
+                        text = fh.read()
+                except Exception:
+                    continue
+                self._loc_file_texts.append((fp, text))
+                for m in _LOC_KEY.finditer(text):
+                    keys.add(m.group(1))
         self.log(
             f"  Indexed {len(keys)} loc keys across {len(self._loc_file_texts)} files"
         )

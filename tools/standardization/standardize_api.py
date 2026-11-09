@@ -16,7 +16,6 @@ from typing import List, Optional, Tuple
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from common_utils import render_standardized
-from shared_utils import reindent_by_brace_depth
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import format_focus_tree_lines
@@ -35,11 +34,6 @@ ROUTES: Tuple[Tuple[str, str], ...] = (
     ("common/military_industrial_organization/", "mio"),
     ("common/technologies/", "technology"),
     ("history/", "history"),
-    # No block layout rules for these yet: tabs and spacing only.
-    ("common/ai_equipment/", "indent"),
-    ("common/characters/", "indent"),
-    ("common/scripted_effects/", "indent"),
-    ("common/scripted_triggers/", "indent"),
 )
 
 _STANDARDIZERS = {
@@ -74,8 +68,6 @@ def standardize_lines(
     if kind == "focus":
         output_lines, _ = format_focus_tree_lines(lines)
         return output_lines
-    if kind == "indent":
-        return reindent_by_brace_depth(lines)
     if kind == "history":
         return HistoryStandardizer(verbose=False, mod_root=mod_root).standardize_lines(
             lines

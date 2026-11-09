@@ -966,19 +966,14 @@ def test_frame_count_of_a_missing_dir_is_none():
 
 
 def test_frame_count_ignores_an_unlistable_directory(tmp_path, monkeypatch):
-    _write(
-        tmp_path,
-        "x.gfx",
-        'spriteType = { name = "GFX_idea_categories" noOfFrames = 4 }',
-    )
-    real_scandir = os.scandir
+    real_listdir = os.listdir
 
-    def failing_scandir(path):
+    def failing_listdir(path):
         if str(path) == str(tmp_path):
             raise PermissionError("denied")
-        return real_scandir(path)
+        return real_listdir(path)
 
-    monkeypatch.setattr(os, "scandir", failing_scandir)
+    monkeypatch.setattr(os, "listdir", failing_listdir)
     assert _idea_categories_frame_count([str(tmp_path)]) is None
 
 

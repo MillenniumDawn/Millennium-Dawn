@@ -3,6 +3,7 @@
 point at missing files. Vanilla HoI4 installs are auto-detected so vanilla
 sprite refs don't get flagged; pass --hoi4-path to override."""
 
+import glob
 import os
 import re
 import sys
@@ -15,7 +16,6 @@ import disk_cache
 from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
-    list_files,
     strip_inline_comment,
 )
 from validate_gfx_references import (
@@ -70,11 +70,11 @@ _FLAG_DIR_PREFIX = "gfx/flags/"
 
 def find_texture_files(mod_path: str) -> Set[str]:
     """Find all texture files in the gfx/ directory."""
-    gfx_path = str(Path(mod_path) / "gfx")
+    gfx_path = str(Path(mod_path) / "gfx") + "/"
     texture_files = set()
 
     for ext in TEXTURE_EXTENSIONS:
-        for filename in list_files(gfx_path, (f"*{ext}",)):
+        for filename in glob.iglob(gfx_path + f"**/*{ext}", recursive=True):
             # Check only for specific skip patterns (not the default gfx skip)
             skip = False
             for pattern in EXTRA_SKIP_PATTERNS:
@@ -261,13 +261,13 @@ class Validator(BaseValidator):
 
         # Search in both gfx/ and interface/ directories (common locations for .gfx files)
         search_dirs = [
-            str(Path(base_path) / "gfx"),
-            str(Path(base_path) / "interface"),
+            str(Path(base_path) / "gfx") + "/",
+            str(Path(base_path) / "interface") + "/",
         ]
 
         for search_dir in search_dirs:
             if os.path.exists(search_dir):
-                for filename in list_files(search_dir, ("*.gfx",)):
+                for filename in glob.iglob(search_dir + "**/*.gfx", recursive=True):
                     # Check only for specific skip patterns (not the default gfx skip)
                     skip = False
                     for pattern in EXTRA_SKIP_PATTERNS:
@@ -326,7 +326,7 @@ class Validator(BaseValidator):
         for dir_name in search_dirs:
             search_path = str(Path(self.mod_path) / dir_name)
             if os.path.exists(search_path):
-                for filename in list_files(search_path):
+                for filename in glob.iglob(search_path + "/**/*.txt", recursive=True):
                     # should_skip_file ignores gfx/ wholesale; here we want it,
                     # because that is where the texture databases live.
                     if dir_name != "gfx" and should_skip_file(
@@ -362,7 +362,7 @@ class Validator(BaseValidator):
         pattern = re.compile(rb"[A-Za-z0-9_\-.]+\.(?:dds|tga)", re.IGNORECASE)
         mesh_root = str(Path(self.mod_path) / "gfx")
         count = 0
-        for filename in list_files(mesh_root, ("*.mesh",)):
+        for filename in glob.iglob(mesh_root + "/**/*.mesh", recursive=True):
             count += 1
             try:
                 with open(filename, "rb") as fh:

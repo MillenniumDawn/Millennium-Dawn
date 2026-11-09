@@ -3,6 +3,7 @@
 # but never set), unused tags (set but never referenced), and unused tag colors
 # (defined in cosmetic.txt but never set).
 # Based on Kaiserreich Autotests by Pelmen, https://github.com/Pelmen323
+import glob
 import os
 import re
 from functools import partial
@@ -11,7 +12,7 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 import disk_cache
 from shared_utils import COUNTRY_TAG_ASSIGNMENT_LINE_RE as _COUNTRY_TAG_RE
-from shared_utils import list_files, validation_config
+from shared_utils import validation_config
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -220,8 +221,8 @@ class Validator(BaseValidator):
 
         def _build():
             tags: Set[str] = set()
-            tags_dir = Path(self.mod_path) / "common" / "country_tags"
-            for filename in list_files(tags_dir, recursive=False):
+            pattern = str(Path(self.mod_path) / "common" / "country_tags" / "*.txt")
+            for filename in glob.iglob(pattern):
                 text_file = FileOpener.open_text_file(
                     filename, lowercase=False, strip_comments_flag=True
                 )
@@ -296,8 +297,8 @@ class Validator(BaseValidator):
                     cosmetic_tags[tag] += 1
 
         country_flags = []
-        flag_dir = Path(self.mod_path) / "gfx" / "flags"
-        for filename in list_files(flag_dir, ("*.tga",)):
+        flag_path = str(Path(self.mod_path) / "gfx" / "flags" / "**/*.tga")
+        for filename in glob.iglob(flag_path, recursive=True):
             country_flags.append(os.path.basename(filename)[:-4])
 
         for tag in list(cosmetic_tags.keys()):
@@ -331,7 +332,11 @@ class Validator(BaseValidator):
                 t for t in cosmetic_tags if cosmetic_tags[t] == 0
             )
             if remaining_tags:
-                yml_files = list_files(self.mod_path, ("*.yml",))
+                yml_files = list(
+                    glob.iglob(
+                        os.path.join(self.mod_path, "**", "*.yml"), recursive=True
+                    )
+                )
                 yml_files = [
                     f for f in yml_files if not _should_skip(f, mod_path=self.mod_path)
                 ]

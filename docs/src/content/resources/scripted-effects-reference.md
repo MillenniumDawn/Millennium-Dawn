@@ -286,7 +286,7 @@ Consult the [Subideology Slots table](#subideology-slots) below to pick the subi
 
 ### Step 2: Add Localisation
 
-In `localisation/english/MD_politics_view_parties_l_english.yml`, add three entries for the party using the format below:
+In `localisation/english/MD_subideology_parties_l_english.yml`, add three entries for the party using the format below:
 
 ```yaml
 TAG.subideology: "£TAG_icon_name (ABBRV) - Party Name"
@@ -355,10 +355,10 @@ If the country has scripted leader rotation, add the leader's `create_country_le
 | 3     | `socialism`                  | Pro-Western (democratic)  |
 | 4     | `communist_state`            | Emerging (communism)      |
 | 5     | `anarchist_communism`        | Emerging (communism)      |
-| 6     | `reactionary`                | Emerging (communism)      |
+| 6     | `Conservative`               | Emerging (communism)      |
 | 7     | `Autocracy`                  | Emerging (communism)      |
-| 8     | `moderate_shiite`            | Emerging (communism)      |
-| 9     | `hardline_shiite`            | Emerging (communism)      |
+| 8     | `Mod_Vilayat_e_Faqih`        | Emerging (communism)      |
+| 9     | `Vilayat_e_Faqih`            | Emerging (communism)      |
 | 10    | `Kingdom`                    | Salafist (fascism)        |
 | 11    | `Caliphate`                  | Salafist (fascism)        |
 | 12    | `Neutral_Muslim_Brotherhood` | Non-Aligned (neutrality)  |

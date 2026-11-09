@@ -35,7 +35,7 @@ Ukraine is a country surrounded by Poland, Slovakia and Hungary from the West, R
 
 ## Ideology
 
-Its ruling party is Emerging Reactionary with 23.9% of Popularity. The second closest party is Non-Aligned Oligarchy with 23.6%. The third closest party is Non-Aligned Conservatives with 10.1%. The other party with any sort of footing is Western Liberalism with 10%. The rest of the Pie-Chart goes to Nationalistic Outlook with 7%.
+Its ruling party is Emerging Conservative with 23.9% of Popularity. The second closest party is Non-Aligned Oligarchy with 23.6%. The third closest party is Non-Aligned Conservatives with 10.1%. The other party with any sort of footing is Western Liberalism with 10%. The rest of the Pie-Chart goes to Nationalistic Outlook with 7%.
 
 ## Diplomacy
 

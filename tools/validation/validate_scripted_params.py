@@ -20,7 +20,6 @@ from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     get_staged_files,
-    list_files,
 )
 from validate_unused_scripted import extract_definitions
 from validator_common import (
@@ -171,55 +170,11 @@ _DOLLAR_PARAM_RE = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$")
 
 _READ_ERRORS = (OSError, UnicodeDecodeError)
 
-_PARAM_LINE_RE = re.compile(
-    r"^[-\*]?\s*([A-Za-z][A-Za-z0-9_]*)\s*"
-    r"(?:\((variable|optional|set by [^)]*)\)\s*)?[-:]"
-)
-# These run in the scope and effect of the block around them.
-_SAME_SCOPE_BLOCKS = {"if", "else", "else_if", "hidden_effect", "random", "random_list"}
-_VARIABLE_WRITERS = {
-    "set_variable",
-    "add_to_variable",
-    "subtract_from_variable",
-    "multiply_variable",
-    "divide_variable",
-    "add_to_array",
-    "remove_from_array",
-}
-
 
 def _unreadable(filepath: str, mod_path: str, exc: Exception) -> str:
     """Describe an input that could not be read, in the `file:line - text` form."""
     rel = os.path.relpath(filepath, mod_path)
     return f"{rel}:0 - cannot read file ({type(exc).__name__})"
-
-
-# Blocks that keep THIS, so a call inside them runs in the enclosing scope
-_KEEP_THIS_BLOCKS = {
-    "if",
-    "else_if",
-    "else",
-    "hidden_effect",
-    "effect_tooltip",
-    "random",
-    "random_list",
-    "for_each_loop",
-    "for_loop_effect",
-    "while_loop_effect",
-}
-
-
-def _enclosing_tag(open_blocks: List[str], valid_tags: "frozenset[str]") -> str:
-    """Return the tag of the innermost scope block around a call, or "" for any other scope."""
-    for index in range(len(open_blocks) - 1, -1, -1):
-        name = open_blocks[index]
-        if name in _KEEP_THIS_BLOCKS:
-            continue
-        # A number is a weight block under random_list, but a state scope anywhere else.
-        if name.isdigit() and index and open_blocks[index - 1] == "random_list":
-            continue
-        return name if name in valid_tags else ""
-    return ""
 
 
 def _normalize_influence_value(value: str) -> str:
@@ -272,9 +227,6 @@ _INFLUENCE_SCOPE_KEYWORDS: Set[str] = {
 _TAG_LITERAL_RE = re.compile(r"[A-Z][A-Z0-9_]{2}")
 _MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
 _NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
-# change_influence_percentage clamps every gain to this range of points
-_INFLUENCE_GAIN_FLOOR = 0.25
-_INFLUENCE_GAIN_CAP = 20
 
 
 def _load_valid_country_tags(mod_path: str) -> Tuple["frozenset[str]", List[str]]:
@@ -347,9 +299,6 @@ def _parse_effect_contracts_from_file(
     Looks for the pattern:
         # Parameters:
         # - param_name: description
-        # - param_name (optional): a temp variable callers may skip
-        # - param_name (set by other_effect): a temp variable that effect leaves
-        # - param_name (variable): a real variable the effect reads
         effect_name = {
 
     A read or decode error propagates so the caller can report the file.
@@ -367,7 +316,6 @@ def _parse_effect_contracts_from_file(
         if re.match(r"^#\s*[Pp]arameters?\s*:", stripped):
             params_required: List[str] = []
             params_optional: List[str] = []
-            params_variable: List[str] = []
             j = i + 1
 
             while j < len(lines):
@@ -393,10 +341,9 @@ def _parse_effect_contracts_from_file(
                     continue
 
                 # "# - param_name: ..." or "# - param_name - ..."
-                plain_m = _PARAM_LINE_RE.match(inner)
+                plain_m = re.match(r"^[-\*]?\s*([A-Za-z][A-Za-z0-9_]*)\s*[-:]", inner)
                 if plain_m:
                     pname = plain_m.group(1)
-                    kind = plain_m.group(2) or ""
                     skip_words = {
                         "note",
                         "purpose",
@@ -415,9 +362,7 @@ def _parse_effect_contracts_from_file(
                         "usage",
                     }
                     if pname.lower() not in skip_words:
-                        if kind == "variable":
-                            params_variable.append(pname)
-                        elif kind.startswith("set by") or "optional" in inner.lower():
+                        if "optional" in inner.lower():
                             params_optional.append(pname)
                         else:
                             params_required.append(pname)
@@ -429,15 +374,13 @@ def _parse_effect_contracts_from_file(
                 k += 1
             if k < len(lines):
                 def_m = re.match(r"^([A-Za-z][A-Za-z0-9_]*)\s*=\s*\{", lines[k].strip())
-                if def_m and (params_required or params_optional or params_variable):
+                if def_m and (params_required or params_optional):
                     eff_name = def_m.group(1)
                     if eff_name not in HARDCODED_CONTRACTS:
                         contracts[eff_name] = {
                             "required": params_required,
                             "optional": params_optional,
                         }
-                        if params_variable:
-                            contracts[eff_name]["variables"] = params_variable
             i = j
             continue
         i += 1
@@ -449,9 +392,8 @@ def _normalize_multiline_set_temp(text: str) -> str:
     """Collapse multi-line temp-variable writes without changing line numbers."""
     normalized = []
     cursor = 0
-    pattern = re.compile(r"\b(" + _TEMP_WRITERS + r")\s*=\s*\{")
+    pattern = re.compile(r"\b" + _TEMP_WRITERS + r"\s*=\s*\{")
     target = re.compile(r"\s*" + _TEMP_TARGET)
-    scalar = re.compile(r"\s*(?:=|value\s*=)\s*([^\s{}=]+)\s*")
 
     while match := pattern.search(text, cursor):
         block_start = match.end() - 1
@@ -474,10 +416,8 @@ def _normalize_multiline_set_temp(text: str) -> str:
             cursor = match.end()
             continue
 
-        value_match = scalar.fullmatch(text[name_match.end() : block_end - 1])
-        value = value_match.group(1) if value_match else "0"
         normalized.append(text[cursor : match.start()])
-        normalized.append(f"{match.group(1)} = {{ {name_match.group(1)} = {value} }}")
+        normalized.append(f"set_temp_variable = {{ {name_match.group(1)} = 0 }}")
         normalized.append("\n" * text[match.start() : block_end].count("\n"))
         cursor = block_end
 
@@ -490,7 +430,6 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
 
     Each token is (kind, line_number, value, rhs):
       "set_temp"   — set_temp_variable = { NAME = RHS }  (value=NAME, rhs=RHS)
-      "add_temp"   — add_to/subtract_from_temp_variable  (value=NAME, rhs=RHS)
       "call"       — NAME = yes                           (value=NAME, rhs="")
       "scope_open" — NAME = { (scope-changing or effect)  (value=NAME, rhs="")
       "plain_open" — NAME = { (any other block)           (value=NAME, rhs="")
@@ -509,13 +448,8 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     for lineno, raw in enumerate(lines, start=1):
         line_tokens = []
         for m in _SET_TEMP_RE.finditer(raw):
-            kind = (
-                "add_temp"
-                if m.group().startswith(("add_to", "subtract_from"))
-                else "set_temp"
-            )
             line_tokens.append(
-                (m.start(), 0, (kind, lineno, m.group(1), m.group(2).strip()))
+                (m.start(), 0, ("set_temp", lineno, m.group(1), m.group(2).strip()))
             )
         for m in _KW_OPEN_RE.finditer(raw):
             kw = m.group(1)
@@ -700,19 +634,15 @@ def _validate_call_sites_in_file(
     # a scope-boundary violation.
 
     stack: List[Dict] = [{"scope_changing": False, "temps": {}, "depth": 0}]
-    # Every open block's name, innermost last, for the self-default check
-    open_blocks: List[str] = []
 
     for kind, lineno, value, rhs in tokens:
         if kind == "scope_open":
             # Push a new scope frame
             stack.append({"scope_changing": True, "temps": {}, "depth": 0})
-            open_blocks.append(value)
 
         elif kind == "plain_open":
             # Non-scope-changing open: increment depth counter on current frame
             stack[-1]["depth"] += 1
-            open_blocks.append(value)
 
         elif kind == "close":
             if stack[-1]["depth"] > 0:
@@ -720,10 +650,8 @@ def _validate_call_sites_in_file(
             elif len(stack) > 1:
                 stack.pop()
             # else: extra close at root, ignore
-            if open_blocks:
-                open_blocks.pop()
 
-        elif kind in ("set_temp", "add_temp"):
+        elif kind == "set_temp":
             # Record in the current frame. Track both the line and the RHS
             # value: the line is used for the existing missing-param check,
             # and the RHS powers the identical-params check for
@@ -733,9 +661,6 @@ def _validate_call_sites_in_file(
                 "value": rhs,
                 "scope_depth": len(stack),
             }
-            # Only a plain set gives the gain check a base it can read.
-            if kind == "set_temp" and value == "percent_change":
-                stack[-1]["gain"] = stack[-1]["temps"][value]
 
             # Tag-validity check: an influencer/influencee written as a literal
             # that is neither a real tag nor an alias is a silent typo (resolves
@@ -816,37 +741,6 @@ def _validate_call_sites_in_file(
             # call N).  Values are normalized so "USA"/"USA.id" and the other
             # .id variants compare equal.
             if value == "change_influence_percentage":
-                gain = None
-                for frame in stack:
-                    gain = frame.get("gain", gain)
-                if (
-                    gain
-                    and _NUMERIC_RE.fullmatch(gain["value"])
-                    and abs(lineno - gain["line"]) <= 20
-                ):
-                    base = float(gain["value"])
-                    out_of_range = None
-                    if base > _INFLUENCE_GAIN_CAP:
-                        out_of_range = (
-                            "influence-gain-over-cap",
-                            f"at most {_INFLUENCE_GAIN_CAP}",
-                        )
-                    elif 0 < base < _INFLUENCE_GAIN_FLOOR:
-                        out_of_range = (
-                            "influence-gain-under-floor",
-                            f"at least {_INFLUENCE_GAIN_FLOOR}",
-                        )
-                    if out_of_range:
-                        category, bound = out_of_range
-                        results.append(
-                            (
-                                category,
-                                f"{rel}:{lineno} - 'change_influence_percentage' gains "
-                                f"{gain['value']} (set at line {gain['line']}); one change "
-                                f"realizes {bound}",
-                                lineno,
-                            )
-                        )
                 tag_entry = visible.get("tag_index")
                 inf_entry = visible.get("influence_target")
                 if tag_entry and inf_entry:
@@ -873,26 +767,6 @@ def _validate_call_sites_in_file(
                                 lineno,
                             )
                         )
-                # influence_target defaults to THIS, so a call inside TAG = { } with
-                # tag_index = TAG and no target influences TAG itself.
-                scope_tag = _enclosing_tag(open_blocks, valid_tags)
-                if (
-                    scope_tag
-                    and tag_entry
-                    and not inf_entry
-                    and _normalize_influence_value(tag_entry["value"]) == scope_tag
-                    and abs(lineno - tag_entry["line"]) <= 20
-                ):
-                    results.append(
-                        (
-                            "influence-self-default",
-                            f"{rel}:{lineno} - 'change_influence_percentage' runs inside "
-                            f"{scope_tag} = {{ }} with tag_index = {tag_entry['value']!r} "
-                            f"and no influence_target, so {scope_tag} influences itself "
-                            f"(Code 5001); set tag_index to the influencer",
-                            lineno,
-                        )
-                    )
 
             # Scope-boundary violations (temp set inside a popped scope-changing
             # frame, call outside) are already caught by the missing-param check:
@@ -1164,97 +1038,6 @@ def _scan_orphan_setters_in_file(
     return results
 
 
-def _find_variables_written_after_call(
-    text: str, inputs: Mapping[str, Iterable[str]]
-) -> List[Tuple[str, str, int]]:
-    """Find declared variable inputs written after the last call that reads them.
-
-    A call and a write only compare inside one scope and effect block. Returns
-    (variable, effect, line) triples.
-    """
-    readers: Dict[str, Set[str]] = {}
-    for effect, variables in inputs.items():
-        for var in variables:
-            readers.setdefault(var, set()).add(effect)
-    var_names = "|".join(re.escape(var) for var in sorted(readers))
-    effect_names = "|".join(re.escape(effect) for effect in sorted(inputs))
-    token_re = re.compile(
-        r"\bclear_array\s*=\s*(?P<cleared>" + var_names + r")\b"
-        r"|\b(?P<call>" + effect_names + r")\s*=\s*yes\b"
-        r"|(?P<open>[A-Za-z0-9_:.@^+-]+)\s*=\s*\{"
-        r"|(?P<close>\})"
-    )
-    write_target_re = re.compile(
-        r"\s*(?:(?:var|array)\s*=\s*)?(" + var_names + r")(?![A-Za-z0-9_])"
-    )
-
-    found: List[Tuple[str, str, int]] = []
-    # Each frame: calls seen, unflushed writes (var -> effect, line), open if-style blocks.
-    stack: List[Dict] = [{"called": set(), "late": {}, "depth": 0}]
-
-    def record_write(var: str, position: int) -> None:
-        frame = stack[-1]
-        called = sorted(frame["called"] & readers[var])
-        if called:
-            line = text.count("\n", 0, position) + 1
-            frame["late"].setdefault(var, (called[0], line))
-
-    def flush(frame: Dict) -> None:
-        found.extend(
-            (var, effect, line) for var, (effect, line) in frame["late"].items()
-        )
-
-    for m in token_re.finditer(text):
-        if m.group("cleared"):
-            record_write(m.group("cleared"), m.start())
-        elif m.group("call"):
-            effect = m.group("call")
-            frame = stack[-1]
-            frame["called"].add(effect)
-            for var in inputs[effect]:
-                frame["late"].pop(var, None)
-        elif m.group("open"):
-            keyword = m.group("open")
-            if keyword in _VARIABLE_WRITERS:
-                target = write_target_re.match(text, m.end())
-                if target:
-                    record_write(target.group(1), m.start())
-            if keyword in _SAME_SCOPE_BLOCKS or keyword.isdigit():
-                stack[-1]["depth"] += 1
-            else:
-                stack.append({"called": set(), "late": {}, "depth": 0})
-        elif stack[-1]["depth"]:
-            stack[-1]["depth"] -= 1
-        elif len(stack) > 1:
-            flush(stack.pop())
-    for frame in stack:
-        flush(frame)
-    return found
-
-
-def _scan_variable_inputs_in_file(
-    args: Tuple[str, str, Dict[str, List[str]]],
-) -> List[str]:
-    """Report the declared variable inputs one file writes too late."""
-    filepath, mod_path, inputs = args
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            raw = fh.read()
-    except _READ_ERRORS:
-        # The call-site pass reads the same file and reports it.
-        return []
-    if not any(effect in raw for effect in inputs):
-        return []
-
-    rel = os.path.relpath(filepath, mod_path)
-    text = blank_quoted_strings(strip_comments(raw))
-    return [
-        f"{rel}:{line} - '{var}' is written after '{effect}', which reads it, and no"
-        f" later call picks it up; move the call below the write"
-        for var, effect, line in _find_variables_written_after_call(text, inputs)
-    ]
-
-
 class Validator(BaseValidator):
     TITLE = "SCRIPTED EFFECT PARAMETER VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1266,8 +1049,6 @@ class Validator(BaseValidator):
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         # Every declared parameter, required or optional -> effects declaring it.
         self._declared: Dict[str, Set[str]] = {}
-        # Effect -> the real variables it declares as inputs.
-        self._variable_inputs: Dict[str, List[str]] = {}
         self._consumers: Dict[str, frozenset] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
@@ -1302,12 +1083,12 @@ class Validator(BaseValidator):
 
         # Auto-discover from scripted effect files (always full scan — definitions
         # are the truth set and must be complete even in staged mode)
-        effect_files = list_files(
-            os.path.join(self.mod_path, "common", "scripted_effects"), recursive=False
+        effect_files = glob.glob(
+            os.path.join(self.mod_path, "common", "scripted_effects", "*.txt")
         )
         discovered = 0
         bodies: Dict[str, str] = {}
-        for filepath in effect_files:
+        for filepath in sorted(effect_files):
             try:
                 parsed = _parse_effect_contracts_from_file(filepath)
                 bodies.update(_scripted_bodies(filepath))
@@ -1320,16 +1101,14 @@ class Validator(BaseValidator):
             )
             for eff_name, contract in parsed.items():
                 self._declare(eff_name, contract)
-                if contract.get("variables"):
-                    self._variable_inputs[eff_name] = contract["variables"]
                 if eff_name not in self._contracts and contract["required"]:
                     self._contracts[eff_name] = contract
                     discovered += 1
         # A scripted trigger reads a parameter the same way an effect does.
-        trigger_files = list_files(
-            os.path.join(self.mod_path, "common", "scripted_triggers"), recursive=False
+        trigger_files = glob.glob(
+            os.path.join(self.mod_path, "common", "scripted_triggers", "*.txt")
         )
-        for filepath in trigger_files:
+        for filepath in sorted(trigger_files):
             try:
                 bodies.update(_scripted_bodies(filepath))
             except _READ_ERRORS as exc:
@@ -1383,10 +1162,7 @@ class Validator(BaseValidator):
         missing_param_results = []
         scope_violation_results = []
         identical_param_results = []
-        self_default_results = []
         invalid_tag_results = []
-        gain_cap_results = []
-        gain_floor_results = []
         shared_line_results = []
         audit_shared_line_results = []
         unsupported_argument_results = []
@@ -1401,14 +1177,8 @@ class Validator(BaseValidator):
                     scope_violation_results.append(message)
                 elif category == "identical-influence-params":
                     identical_param_results.append(message)
-                elif category == "influence-self-default":
-                    self_default_results.append(message)
                 elif category == "invalid-influence-tag":
                     invalid_tag_results.append(message)
-                elif category == "influence-gain-over-cap":
-                    gain_cap_results.append(message)
-                elif category == "influence-gain-under-floor":
-                    gain_floor_results.append(message)
                 elif category == "call-shares-line":
                     shared_line_results.append(message)
                 elif category == "audit-call-shares-line":
@@ -1469,35 +1239,11 @@ class Validator(BaseValidator):
         )
 
         self._report(
-            self_default_results,
-            "No change_influence_percentage call defaults its target to its own influencer",
-            "change_influence_percentage calls inside TAG = { } with tag_index = TAG and no influence_target (self-influence):",
-            severity=Severity.ERROR,
-            category="influence-self-default",
-        )
-
-        self._report(
             invalid_tag_results,
             "All tag_index / influence_target values are valid country tags or aliases",
             "tag_index / influence_target set to an unknown country tag (typo or removed tag):",
             severity=Severity.ERROR,
             category="invalid-influence-tag",
-        )
-
-        self._report(
-            gain_cap_results,
-            f"No change_influence_percentage base gain exceeds {_INFLUENCE_GAIN_CAP}",
-            f"change_influence_percentage base gains above {_INFLUENCE_GAIN_CAP} (clamped at runtime):",
-            severity=Severity.WARNING,
-            category="influence-gain-over-cap",
-        )
-
-        self._report(
-            gain_floor_results,
-            f"No change_influence_percentage base gain is below {_INFLUENCE_GAIN_FLOOR}",
-            f"change_influence_percentage base gains below {_INFLUENCE_GAIN_FLOOR} (raised at runtime):",
-            severity=Severity.WARNING,
-            category="influence-gain-under-floor",
         )
 
         self._report(
@@ -1532,19 +1278,6 @@ class Validator(BaseValidator):
             "Declared parameters set and never used, or overwritten before use:",
             severity=Severity.ERROR,
             category="orphan-param-setter",
-        )
-
-        late_write_results = self._pool_map(
-            _scan_variable_inputs_in_file,
-            [(f, self.mod_path, self._variable_inputs) for f in files],
-            chunksize=20,
-        )
-        self._report(
-            [m for file_results in late_write_results for m in file_results],
-            "No declared variable input is written after the effect reads it",
-            "Variable inputs written after the effect that reads them:",
-            severity=Severity.ERROR,
-            category="variable-input-after-call",
         )
 
     def run_validations(self):

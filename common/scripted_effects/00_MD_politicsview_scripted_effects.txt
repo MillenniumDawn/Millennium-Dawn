@@ -1,7 +1,6 @@
-# Effect: steal_from_party
-# Purpose: Steals 1% popularity from the given party and gives it to the ruling party
-# Parameters:
-# - steal_party_index: party slot 0-23
+# steal_from_party: helper for steal_popularity_from_* effects
+# Parameters: steal_party_index (0-23)
+# Steals 1% popularity from the given party and gives it to the ruling party
 steal_from_party = {
 	if = {
 		limit = { check_variable = { party_pop_array^steal_party_index > 0.01 } }
@@ -178,11 +177,10 @@ set_party_index_to_ruling_party = {
 	}
 }
 
-# Effect: set_outlook_from_party_index
-# Purpose: Maps a party slot to its numeric outlook ID
-# Output: outlook_id
+# Maps a party slot (0-23) to its numeric outlook ID.
 # Parameters:
-# - outlook_party_index: party slot 0-23
+# set_temp_variable = { outlook_party_index = X }
+# set_outlook_from_party_index = yes
 set_outlook_from_party_index = {
 	set_temp_variable = {
 		outlook_id = {
@@ -254,12 +252,19 @@ change_outlook_popularity = {
 	}
 }
 
-# Effect: change_relative_party_popularity
-# Purpose: Adds or subtracts relative party popularity
+# Change Relative Party Popularity:
+#
+# This scripted effect adds (or substracts) relative party popularity. How to use:
+#
+# 2022/04/30 - Added a additional parameter Z to allow you to increase the outlook within the script
+#
 # Parameters:
-# - party_index (optional): party slot 0-23, defaults to the ruling party
-# - party_popularity_increase (optional): decimal, so 2% is 0.02. Defaults to no change
-# - temp_outlook_increase (optional): outlook change as a decimal, so 2% is 0.02
+# set_temp_variable = { party_index = X } #OPTIONAL -- Index of party to be changed 0-23. Defaults to ruling party if not set.
+# set_temp_variable = { party_popularity_increase = Y } #OPTIONAL -- How much party popularity is changed, must be in decimals so 2% is 0.02. Defaults to no change.
+# set_temp_variable = { temp_outlook_increase = Z } #OPTIONAL PARAMETER -- Must be in decimals so 2% is 0.02
+# change_relative_party_popularity = yes
+#
+#NOTE! The temp variable names must be the same as above!
 change_relative_party_popularity = {
 	if = {
 		limit = { NOT = { has_variable = party_index } }
@@ -373,7 +378,7 @@ scale_party_popularity = {
 
 # Effect: effect_puppet_match_ruling_party_to_overlord
 # Purpose: Sets the outlook of a nation when being puppetted to the outlook of the overlord.
-# Parameters:
+# Parameter:
 # - overlord_to_match: id of the overlord whose ruling party the subject adopts
 effect_puppet_match_ruling_party_to_overlord = {		#Used in target scope
 	var:overlord_to_match = {
@@ -442,12 +447,6 @@ seed_ruling_party_if_unset = {
 	}
 }
 
-# Effect: startup_politics
-# Purpose: Totals party support and sets up elections and the coalition from the party setup above the call
-# Parameters:
-# - party_pop_array (variable): party support, failsafe values fill anything unset
-# - ruling_party (variable): seeded from the largest party when unset
-# - gov_coalition_array (variable): coalition partners
 startup_politics = {
 	set_failsafe_values = yes #adds needed values if missing
 	seed_ruling_party_if_unset = yes
@@ -707,7 +706,7 @@ find_two_highest_parties = {
 	set_variable = { party_pop_elect_array^max_index_1 = max_1_tmp }
 }
 
-# Effect: update_party_name
+# function: update_party_name
 # Purpose: Updates the political ideology
 update_party_name = {
 	if = { limit = { has_variable = ruling_party }
@@ -724,7 +723,7 @@ update_party_name = {
 	}
 }
 
-# Effect: gov_pop_calculation
+# Function: gov_pop_calculation
 # Purpose: The gov pop calculation is to calculate the penalty from your government popularity swinging
 # from -100% to 100% of their current popularity
 # How-to Adjust: Adjust the penalty by changing line 1904 from 0.002 to 0.005
@@ -1094,7 +1093,7 @@ AI_setup_government = {
 						check_variable = { ruling_party = 5 }
 					}
 					AND = {
-						has_country_leader_with_trait = emerging_reactionary
+						has_country_leader_with_trait = emerging_Conservative
 						check_variable = { ruling_party = 6 }
 					}
 					AND = {
@@ -1102,11 +1101,11 @@ AI_setup_government = {
 						check_variable = { ruling_party = 7 }
 					}
 					AND = {
-						has_country_leader_with_trait = emerging_moderate_shiite
+						has_country_leader_with_trait = emerging_Mod_Vilayat_e_Faqih
 						check_variable = { ruling_party = 8 }
 					}
 					AND = {
-						has_country_leader_with_trait = emerging_hardline_shiite
+						has_country_leader_with_trait = emerging_Vilayat_e_Faqih
 						check_variable = { ruling_party = 9 }
 					}
 					AND = {
@@ -1198,14 +1197,6 @@ make_affinity_arrays = {
 					OR = {
 						check_variable = { max_index_1 = v }
 						check_variable = { max_index_2 = v }
-					}
-				}
-				NOT = {
-					AND = {
-						original_tag = PAK
-						is_ai = yes
-						is_historical_focus_on = yes
-						check_variable = { v = 11 }
 					}
 				}
 			}
@@ -1500,7 +1491,7 @@ init_pol_distance_matrix = {
 	set_variable = { global.pol_dist_matrix^141 = 1.0 }
 	set_variable = { global.pol_dist_matrix^142 = 0.8 }
 	set_variable = { global.pol_dist_matrix^143 = 1.0 }
-	#reactionary (target 6)
+	#Conservative (target 6)
 	set_variable = { global.pol_dist_matrix^144 = 0.7 }
 	set_variable = { global.pol_dist_matrix^145 = 0.9 }
 	set_variable = { global.pol_dist_matrix^146 = 0.9 }
@@ -1548,7 +1539,7 @@ init_pol_distance_matrix = {
 	set_variable = { global.pol_dist_matrix^189 = 0.6 }
 	set_variable = { global.pol_dist_matrix^190 = 0.5 }
 	set_variable = { global.pol_dist_matrix^191 = 0.5 }
-	#moderate_shiite (target 8)
+	#Mod_Vilayat_e_Faqih (target 8)
 	set_variable = { global.pol_dist_matrix^192 = 0.7 }
 	set_variable = { global.pol_dist_matrix^193 = 0.9 }
 	set_variable = { global.pol_dist_matrix^194 = 0.9 }
@@ -1572,7 +1563,7 @@ init_pol_distance_matrix = {
 	set_variable = { global.pol_dist_matrix^213 = 0.6 }
 	set_variable = { global.pol_dist_matrix^214 = 0.2 }
 	set_variable = { global.pol_dist_matrix^215 = 1.0 }
-	#hardline_shiite (target 9)
+	#Vilayat_e_Faqih (target 9)
 	set_variable = { global.pol_dist_matrix^216 = 0.8 }
 	set_variable = { global.pol_dist_matrix^217 = 1.0 }
 	set_variable = { global.pol_dist_matrix^218 = 1.0 }
@@ -1935,12 +1926,9 @@ init_pol_distance_matrix = {
 	set_variable = { global.pol_dist_initialized = 1 }
 }
 
-# Effect: get_pol_distance
-# Purpose: Reads the political distance between two party slots
+# get_pol_distance: replaces all pol_distance_X effects
+# Parameters: pol_dist_target_index (0-23), pol_dist_source_index (0-23)
 # Output: pol_distance_current
-# Parameters:
-# - pol_dist_target_index: party slot 0-23
-# - pol_dist_source_index: party slot 0-23
 get_pol_distance = {
 	if = {
 		limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
@@ -1967,10 +1955,8 @@ add_coalition_members_effect = {
 	}
 }
 
-# Effect: remove_coalition_members_effect
-# Purpose: Removes a party from the governing coalition
-# Parameters:
-# - remove_col_one: party slot 0-23
+# Function: Remove Coalition Member
+# Parameters: set_temp_variable = { remove_col_one = 0-23 }
 remove_coalition_members_effect = {
 	if = { limit = { is_in_array = { gov_coalition_array = remove_col_one } }
 		custom_effect_tooltip = remove_coalition_members_effect_TT
@@ -1981,17 +1967,16 @@ remove_coalition_members_effect = {
 	}
 }
 
-# Effect: change_ruling_party_effect
-# Purpose: Changes the ruling party and its coalition, and allows or disables elections
+# Function: Change Party Command
 # Parameters:
-# - rul_party_temp: party slot 0-23, the new ruling party
-# - col_one (optional): party slot 0-23, a coalition partner
-# - col_two (optional): party slot 0-23, a coalition partner
-# - col_three (optional): party slot 0-23, a coalition partner
-# - col_four (optional): party slot 0-23, a coalition partner
-# - col_five (optional): party slot 0-23, a coalition partner
-# - change_leader_temp (optional): 1 keeps the current leader from retiring
-# - disable_elections (optional): 1 turns elections off, 0 or unset allows them
+# set_temp_variable = { rul_party_temp = 0-23 }
+# set_temp_variable = { col_one = 0 - 23 }  -- Optional
+# set_temp_variable = { col_two = 0 - 23 }  -- Optional
+# set_temp_variable = { col_three = 0 - 23 }  -- Optional
+# set_temp_variable = { col_four = 0 - 23 }  -- Optional
+# set_temp_variable = { col_five = 0 - 23 }  -- Optional
+# set_temp_variable = { change_leader_temp = 0-1 } -- Optional
+# set_temp_variable = { disable_elections = 0-1 } -- Optional
 change_ruling_party_effect = {
 	# Do Not Retire Section
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
@@ -2072,7 +2057,7 @@ change_ruling_party_effect = {
 	force_update_map_mode = { mapmode = subideology_map_mode }
 }
 
-# Effect: update_dirty_politicsview_expanded
+# Function: update_dirty_politicsview_expanded
 # Purpose: updates the politicsview_expanded dirty variable to ensure the UI is up-to-date
 update_dirty_politicsview_expanded = {
 	if = {
@@ -2180,12 +2165,8 @@ set_partyall_allowed = {
 	update_dirty_politicsview_expanded = yes
 }
 
-# Effect: set_elections_with_frequency
-# Purpose: Allows elections and sets their frequency and last election date
-# Parameters:
-# - election_freq: months between elections (48, 60, or 72)
-# - election_year_param (optional): year of the last election
-# - election_month_param (optional): month of the last election
+# set_elections_with_frequency: parameterized election setup
+# Parameters: election_freq (48/60/72), uses global.year and global.month
 set_elections_with_frequency = {
 	set_country_flag = no_leader_change
 	meta_effect = {
@@ -2396,10 +2377,10 @@ copy_subideolgy_leader_throughput = {
 
 	set_variable = { communist_state_leader = nation_to_copy_from.communist_state_leader?0 }
 	set_variable = { anarchist_communism_leader = nation_to_copy_from.anarchist_communism_leader?0 }
-	set_variable = { reactionary_leader = nation_to_copy_from.reactionary_leader?0 }
+	set_variable = { Conservative_leader = nation_to_copy_from.Conservative_leader?0 }
 	set_variable = { Autocracy_leader = nation_to_copy_from.Autocracy_leader?0 }
-	set_variable = { moderate_shiite_leader = nation_to_copy_from.moderate_shiite_leader?0 }
-	set_variable = { hardline_shiite_leader = nation_to_copy_from.hardline_shiite_leader?0 }
+	set_variable = { Mod_Vilayat_e_Faqih_leader = nation_to_copy_from.Mod_Vilayat_e_Faqih_leader?0 }
+	set_variable = { Vilayat_e_Faqih_leader = nation_to_copy_from.Vilayat_e_Faqih_leader?0 }
 
 	set_variable = { Kingdom_leader = nation_to_copy_from.Kingdom_leader?0 }
 	set_variable = { Caliphate_leader = nation_to_copy_from.Caliphate_leader?0 }

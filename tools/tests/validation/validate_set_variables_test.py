@@ -54,7 +54,7 @@ def _findings(validator):
 
 
 def test_mod_root_is_found_from_a_subdirectory(tmp_path):
-    (tmp_path / "localisation").mkdir()
+    _write(tmp_path, "descriptor.mod", 'name = "test"\n')
     nested = tmp_path / "common" / "scripted_effects"
     nested.mkdir(parents=True)
 

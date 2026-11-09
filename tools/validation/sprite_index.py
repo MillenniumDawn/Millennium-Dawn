@@ -8,6 +8,7 @@ and returns the set of defined sprite names so a validator can flag references
 that point at nothing.
 """
 
+import glob
 import os
 import re
 import sys
@@ -17,7 +18,7 @@ sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
 from image_size import read_image_size
-from shared_utils import extract_block_from_text, list_files
+from shared_utils import extract_block_from_text
 from validate_gfx_references import (
     _GFX_SPRITE_TYPES,
     _load_vanilla_sprite_sizes,
@@ -85,7 +86,9 @@ def build_sprite_index(
             Focus/idea/decision icons may legitimately reuse vanilla sprites, so
             those keep the default.
     """
-    gfx_files: List[str] = list_files(os.path.join(mod_path, "interface"), ("*.gfx",))
+    gfx_files: List[str] = glob.glob(
+        os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+    )
     if include_vanilla:
         gfx_files.extend(_vanilla_gfx_files())
 
@@ -152,7 +155,9 @@ def build_sprite_texture_index(
         jobs.extend((f, mod_path) for f in _vanilla_gfx_files())
     jobs.extend(
         (f, mod_path)
-        for f in list_files(os.path.join(mod_path, "interface"), ("*.gfx",))
+        for f in glob.glob(
+            os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+        )
     )
 
     mapper = pool_map if pool_map is not None else lambda fn, it: map(fn, it)

@@ -320,6 +320,11 @@ def test_unknown_original_tag_is_an_error(tmp_path, write_path):
     assert all("original_tag = WAG," in issue.message for issue in validator._issues)
 
 
+def test_registered_original_tag_is_not_unknown(tmp_path, write_path):
+    validator = _run(tmp_path, write_path, _GRE_NAME + _GRE_DESC, _GRE_HOOKS)
+    assert validator._issues == []
+
+
 def test_unknown_tag_inside_an_or_gate_is_an_error(tmp_path, write_path):
     hooks = (
         "defined_text = {\n"

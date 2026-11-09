@@ -165,15 +165,6 @@ country_event = {
 
 	option = {
 		name = korea.5.b #Some risks are too big too take.
-		log = "[GetDateText]: [This.GetName]: korea.5.b executed"
-		if = {
-			limit = { original_tag = KOR }
-			NKO = { set_country_flag = NKO_peace_talks_failed }
-		}
-		else_if = {
-			limit = { original_tag = NKO }
-			KOR = { set_country_flag = KOR_peace_talks_failed }
-		}
 		ai_chance = {
 			base = 40
 			modifier = {
@@ -936,16 +927,12 @@ country_event = {
 			owns_state = 606
 			owns_state = 607
 			owns_state = 608
-			owns_state = 1099
 		}
 		else_if = {
 			limit = { original_tag = KOR }
 			owns_state = 601
 			owns_state = 602
 			owns_state = 603
-			owns_state = 1199
-			owns_state = 1200
-			owns_state = 1201
 		}
 	}
 
@@ -1307,7 +1294,6 @@ country_event = {
 				NOT = { has_government = communism }
 				NOT = { has_government = nationalist }
 			}
-			modifier = { factor = 0.25 has_war_support < 0.4 }
 			# Killswitch
 			modifier = {
 				factor = 0
@@ -1440,7 +1426,12 @@ news_event = {
 	picture = GFX_chinese_soldiers_back_home1
 	is_triggered_only = yes
 
-	trigger = { tag = KOR }
+	trigger = {
+		OR = {
+			tag = KOR
+			tag = CHI
+		}
+	}
 
 	option = { name = korea.31.a }
 }
@@ -1562,10 +1553,6 @@ country_event = {
 		country_exists = NKO
 	}
 
-	immediate = {
-		hidden_effect = { KOR_roll_north_proposal = yes }
-	}
-
 	option = {
 		name = korea.26.a #Our country will be whole again!
 		trigger = {
@@ -1573,7 +1560,7 @@ country_event = {
 			NKO = { has_government = communism }
 		}
 		log = "[GetDateText]: [This.GetName]: korea.34.a executed"
-		clr_country_flag = KOR_accepts_north_proposal
+		add_war_support = -0.05
 		support_for_reunification_2 = yes
 		add_opinion_modifier = {
 			target = NKO
@@ -1588,8 +1575,86 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 5 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 6 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 7 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 8 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 9 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 10 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 11 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 12 }
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > -1
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > 9
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > 24
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > 49
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > 74
+				}
+			}
+			modifier = {
+				add = 1
+				has_opinion = {
+					target = NKO
+					value > 99
+				}
+			}
+			modifier = {
 				factor = 0
-				NOT = { has_country_flag = KOR_accepts_north_proposal }
+				OR = {
+					has_war_with = NKO
+					NOT = { KOR = { check_variable = { SFR > 50 } } }
+					check_variable = { KOR.reunification_chance < 6 }
+				}
 			}
 		}
 	}
@@ -1597,7 +1662,6 @@ country_event = {
 	option = {
 		name = korea.26.b #Reunification can never take place on these terms...
 		log = "[GetDateText]: [This.GetName]: korea.34.b executed"
-		clr_country_flag = KOR_accepts_north_proposal
 		NKO = {
 			country_event = {
 				days = 1
@@ -1606,12 +1670,10 @@ country_event = {
 			clr_country_flag = NKO_proposed_north_reunification
 		}
 		ai_chance = {
-			base = 1
+			base = 5
 			modifier = {
-				factor = 0
-				has_country_flag = KOR_accepts_north_proposal
-				has_government = communism
-				NKO = { has_government = communism }
+				factor = 3
+				NKO = { has_country_flag = NKO_proposed_north_reunification }
 			}
 		}
 	}
@@ -1637,7 +1699,6 @@ country_event = {
 				NOT = { has_country_flag = korea_peninsula_reunited }
 				country_exists = KOR
 			}
-			set_country_flag = { flag = NKO_reunified_by_agreement days = 1 value = 1 }
 			annex_country = {
 				target = KOR
 				transfer_troops = yes
@@ -1768,11 +1829,22 @@ country_event = {
 	option = {
 		name = korea.40.a
 		log = "[GetDateText]: [This.GetName]: korea.40.a executed"
-		set_autonomy = {
-			target = FROM
-			autonomy_state = autonomy_autonomous_state
-			end_wars = no
-			end_civil_wars = no
+		if = {
+			limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state_colored
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = FROM
+				autonomy_state = autonomy_autonomous_state
+				end_wars = no
+				end_civil_wars = no
+			}
 		}
 		if = {
 			limit = {
@@ -1801,15 +1873,11 @@ country_event = {
 		country_exists = NKO
 	}
 
-	immediate = {
-		hidden_effect = { KOR_roll_north_proposal = yes }
-	}
-
 	option = {
 		name = korea.41.a
 		trigger = { KOR = { has_government = communism } }
 		log = "[GetDateText]: [This.GetName]: korea.41.a executed"
-		clr_country_flag = KOR_accepts_north_proposal
+		add_war_support = -0.05
 		support_for_reunification_2 = yes
 		NKO = {
 			country_event = {
@@ -1820,8 +1888,86 @@ country_event = {
 		ai_chance = {
 			base = 1
 			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 5 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 6 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 7 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 8 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 9 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 10 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 11 }
+			}
+			modifier = {
+				add = 1
+				check_variable = { KOR.reunification_chance > 12 }
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > -1
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 9
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 24
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 49
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 74
+				}
+			}
+			modifier = {
+				add = 2
+				has_opinion = {
+					target = NKO
+					value > 99
+				}
+			}
+			modifier = {
 				factor = 0
-				NOT = { has_country_flag = KOR_accepts_north_proposal }
+				OR = {
+					has_war_with = NKO
+					NOT = { KOR = { check_variable = { SFR > 50 } } }
+					check_variable = { KOR.reunification_chance < 6 }
+				}
 			}
 		}
 	}
@@ -1829,7 +1975,6 @@ country_event = {
 	option = {
 		name = korea.41.b #Reunification can never take place on these terms...
 		log = "[GetDateText]: [This.GetName]: korea.41.b executed"
-		clr_country_flag = KOR_accepts_north_proposal
 		set_country_flag = KOR_confederation_talks_failed
 		NKO = {
 			country_event = {
@@ -1838,12 +1983,7 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 1
-			modifier = {
-				factor = 0
-				has_country_flag = KOR_accepts_north_proposal
-				has_government = communism
-			}
+			base = 5
 		}
 	}
 }
@@ -1938,9 +2078,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 50 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = RAJ.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = RAJ
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -1970,9 +2111,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 20 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = RAJ.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = RAJ
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2002,19 +2144,12 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = RAJ.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = RAJ
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = { base = 5 }
-	}
-
-	option = {
-		name = korea.60.e
-		ai_chance = {
-			base = 2
-			modifier = { add = 8 has_active_mission = bankruptcy_incoming_collapse }
-		}
 	}
 }
 
@@ -2049,9 +2184,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 50 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = MEX.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = MEX
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2079,9 +2215,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 20 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = MEX.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = MEX
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2110,19 +2247,12 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = MEX.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = MEX
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = { base = 5 }
-	}
-
-	option = {
-		name = korea.61.e
-		ai_chance = {
-			base = 2
-			modifier = { add = 8 has_active_mission = bankruptcy_incoming_collapse }
-		}
 	}
 }
 
@@ -2157,9 +2287,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 50 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = VIE.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = VIE
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2187,9 +2318,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 20 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = VIE.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = VIE
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2218,19 +2350,12 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = VIE.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = VIE
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = { base = 5 }
-	}
-
-	option = {
-		name = korea.62.e
-		ai_chance = {
-			base = 2
-			modifier = { add = 8 has_active_mission = bankruptcy_incoming_collapse }
-		}
 	}
 }
 
@@ -2262,9 +2387,7 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 50 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = ARG.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = { target = ARG modifier = mutual_trade_agreement }
 		}
 		ai_chance = {
 			base = 10
@@ -2292,9 +2415,10 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 20 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = ARG.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = ARG
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -2323,19 +2447,12 @@ country_event = {
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 10 }
 			modify_international_investment_effect = yes
-			set_temp_variable = { sender_nation = KOR.id }
-			set_temp_variable = { receiver_nation = ARG.id }
-			set_improved_trade_agreement = yes
+			add_opinion_modifier = {
+				target = ARG
+				modifier = mutual_trade_agreement
+			}
 		}
 		ai_chance = { base = 5 }
-	}
-
-	option = {
-		name = korea.63.e
-		ai_chance = {
-			base = 2
-			modifier = { add = 8 has_active_mission = bankruptcy_incoming_collapse }
-		}
 	}
 }
 

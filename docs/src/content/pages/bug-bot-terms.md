@@ -2,7 +2,7 @@
 title: Bug Bot Terms of Service
 description: The terms under which the Millennium Dawn Bug Bot is provided to the community. Covers acceptable use, what the team promises, and the limits of liability.
 permalink: /bug-bot-terms/
-last_updated: 2026-11-09
+last_updated: 2026-06-29
 ---
 
 These terms cover the [Millennium Dawn Bug Bot](/bug-bot/), the Discord bot used in the Millennium Dawn community to turn bug reports and suggestions posted in our Discord forum into issues on our public GitHub tracker. The bot is operated by the Millennium Dawn team, a volunteer, non-profit mod project. In these terms, "we" means that team and "you" means anyone who uses the bot or posts in a tracked forum channel.
@@ -15,7 +15,7 @@ For what the bot collects, how that data is used, and how to have it deleted, se
 
 The bot reads posts and replies in tracked forum channels on our Discord server, processes the text, and publishes it as an issue on our public [GitHub repository](https://github.com/MillenniumDawn/Millennium-Dawn/issues). An AI model, self-hosted or run on Ollama's cloud, may be used to suggest a title, severity, and likely cause for the report before the issue is filed. The bot also accepts a small set of commands: `/register` to link your GitHub username, `/whoami` to show that link, `/privacy` for a short data summary, and `/forget` to delete the data the bot holds about you.
 
-Beyond the report you post, the bot keeps your public Discord user ID (the numeric account ID, not your username) so the team can ping you on the issue thread for follow-ups. Linking a GitHub username with `/register` is opt-in, added by the team for ease of tracking reports, not to profile you. For registered users, the bot also caches one Discord display name for assignment autocomplete. The bot does not collect your email, presence, member list, or anything else unrelated to filing a report. For the full list of what is collected and how long it is kept, see the [privacy policy](/bug-bot-privacy/).
+Beyond the report you post, the only personal identifier the bot keeps is your public Discord user ID (the numeric account ID, not your username), kept solely so the team can ping you on the issue thread for follow-ups. Linking a GitHub username with `/register` is opt-in, added by the team for ease of tracking reports, not to profile you. The bot does not collect your email, presence, member list, or anything else unrelated to filing a report. For the full list of what is collected and how long it is kept, see the [privacy policy](/bug-bot-privacy/).
 
 The full description of the bot's behavior is in the [Bug Bot overview](/bug-bot/). The overview and the [privacy policy](/bug-bot-privacy/) describe what the bot actually does; if anything on this page conflicts with them, those pages control.
 
@@ -67,7 +67,7 @@ You confirm that you have the rights needed to grant this license. If you do not
 
 - Run **`/forget`** in Discord to delete the data the bot holds about you. This removes your `/register` entry and de-identifies your Discord ID from stored reports and logs. Published GitHub issues already carry no Discord username; the report text stays as the tracked bug. If you need an issue itself removed, ask a maintainer.
 - If you can no longer use Discord commands (for example, you left the server), email us at <millenniumdawnmod@gmail.com> and we will do the same on request.
-- For the full data-handling details, including how long logs, webhook payloads, attachment-recovery data, and cached display names are kept, see the [Bug Bot Privacy Policy](/bug-bot-privacy/).
+- For the full data-handling details, including the 30-day automatic deletion of operational and audit logs, see the [Bug Bot Privacy Policy](/bug-bot-privacy/).
 
 ## Changes to these terms
 

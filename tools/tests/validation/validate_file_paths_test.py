@@ -136,38 +136,6 @@ def test_source_art_is_an_error(tmp_path, monkeypatch):
     assert validator._issues[0].category == "source-art-format"
 
 
-def test_scripted_localisation_prefix_check_is_scoped_and_advisory(
-    tmp_path, monkeypatch
-):
-    validator = _validator(
-        tmp_path,
-        [
-            "common/scripted_localisation/00_generic.txt",
-            "common/scripted_localisation/99_USA_scripted_localisation.txt",
-            "common/scripted_localisation/02_system.txt",
-            "common/scripted_localisation/SAU_scripted_localisation.txt",
-            "common/scripted_localisation/١٢_unicode_digits.txt",
-            "common/scripted_localisation/nested/unprefixed.txt",
-            "common/scripted_localisation/README.md",
-            "common/ideas/unprefixed.txt",
-        ],
-        ["common/dynamic_modifiers/wuw_dynamic_modifiers.txt"],
-        monkeypatch,
-    )
-    assert [(i.severity, i.category, i.file) for i in validator._issues] == [
-        (
-            "warning",
-            "scripted-loc-file-prefix",
-            "common/scripted_localisation/SAU_scripted_localisation.txt",
-        ),
-        (
-            "warning",
-            "scripted-loc-file-prefix",
-            "common/scripted_localisation/١٢_unicode_digits.txt",
-        ),
-    ]
-
-
 def test_source_art_check_is_scoped_to_gfx(tmp_path, monkeypatch):
     # map/ ships a PNG modding guide that is not a texture.
     validator = _validator(

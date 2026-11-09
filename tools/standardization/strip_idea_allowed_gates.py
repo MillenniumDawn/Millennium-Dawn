@@ -12,6 +12,7 @@ slotless category is covered without editing this script.
 Rewrites in place, touching nothing but the blocks it removes.
 """
 
+import glob
 import os
 import re
 import sys
@@ -22,9 +23,7 @@ import common_utils
 from shared_utils import (
     atomic_write_text,
     create_backup,
-    get_root_dir,
     get_slotless_idea_categories,
-    list_files,
     log_message,
 )
 
@@ -107,7 +106,9 @@ def main() -> int:
         __doc__ or "", "idea files (default: common/ideas/)"
     ).parse_args()
 
-    root = args.root or get_root_dir()
+    root = args.root or os.path.normpath(
+        os.path.join(os.path.dirname(__file__), "..", "..")
+    )
     slotless = get_slotless_idea_categories(root)
 
     files = args.files
@@ -116,7 +117,9 @@ def main() -> int:
         if not os.path.isdir(ideas_dir):
             log_message("ERROR", f"directory not found: {ideas_dir}")
             return 1
-        files = list_files(ideas_dir)
+        files = sorted(
+            glob.iglob(os.path.join(ideas_dir, "**", "*.txt"), recursive=True)
+        )
 
     total = 0
     touched = 0

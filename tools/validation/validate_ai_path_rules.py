@@ -7,6 +7,7 @@ least a `HISTORICAL` option and a `default = { }` block to steer it. Shared tree
 (several owner tags) and tags that only spawn later are out of scope.
 """
 
+import glob
 import re
 import sys
 from pathlib import Path
@@ -14,7 +15,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from shared_utils import list_files, validation_config
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
     extract_block_from_text,
@@ -75,18 +76,18 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         mod = Path(self.mod_path)
-        focus_files = list_files(mod / FOCUS_DIR, recursive=False)
+        focus_files = sorted(glob.glob(str(mod / FOCUS_DIR / "*.txt")))
         if not focus_files:
             return
         if self.staged_only and not self.staged_touches(SCOPE_DIRS):
             return
 
         owners: Set[str] = set()
-        for path in list_files(mod / STATES_DIR, recursive=False):
+        for path in sorted(glob.glob(str(mod / STATES_DIR / "*.txt"))):
             owners |= _state_owners(self._read(path))
 
         rules: Dict[str, Tuple[str, int, List[str], bool]] = {}
-        for path in list_files(mod / GAME_RULES_DIR, recursive=False):
+        for path in sorted(glob.glob(str(mod / GAME_RULES_DIR / "*.txt"))):
             rel = Path(path).relative_to(mod).as_posix()
             for tag, (line, options, has_default) in _rules(self._read(path)).items():
                 rules[tag] = (rel, line, options, has_default)

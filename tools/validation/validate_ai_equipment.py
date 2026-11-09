@@ -3,39 +3,38 @@
 # land generic_tank.txt / generic_afv.txt) have every required equipment role
 # covered in a custom or shared file, and flag role templates whose names
 # collide across overlapping files.
-import json
+import glob
 import logging
 import os
 import re
 import sys
-from collections import Counter
 from typing import Any, Dict, List, Optional, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from ai_equipment_buildability import (
-    check_ammunition_compatibility,
-    check_buildability,
-    project_unlocks,
-)
-from ai_equipment_buildability import parse_designs as parse_buildability_designs
-from equipment_module_slots import (
-    ADVISORY_KINDS,
-    KIND_LABELS,
-    build_equipment_index,
-    check_target_variant_role_icons,
-    check_target_variant_upgrades,
-    check_target_variants,
-    role_strip_frames,
-)
-from equipment_variant_context import VariantContext, script_nodes, value
-from shared_utils import atomic_write_text, list_files, strip_inline_comment
-from validate_equipment_variants import equipment_unlocks
+from equipment_module_slots import build_equipment_index, check_target_variants
+from shared_utils import strip_inline_comment
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
-# The engine's "not an archetype" rule is documented for create_equipment_variant.
-# An AI template naming one is not proven broken, so it advises here.
-_AI_ADVISORY_KINDS = ADVISORY_KINDS | {"archetype_type"}
+_NAVAL_SLOT_CATEGORIES = {
+    "unknown_hull": "NAVAL VARIANT: unknown hull type",
+    "unknown_slot": "NAVAL VARIANT: slot not on hull",
+    "unknown_module": "NAVAL VARIANT: unknown module reference",
+    "category_mismatch": "NAVAL VARIANT: module category not allowed in slot",
+    "missing_required_module": "NAVAL VARIANT: required slot left empty",
+    "count_limit_exceeded": "NAVAL VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "NAVAL VARIANT: module forbidden on hull type",
+}
+
+_EQUIPMENT_SLOT_CATEGORIES = {
+    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
+    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
+    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
+    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+}
 
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -211,174 +210,11 @@ def parse_designs(content: str) -> List[Dict]:
 class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
-    STAGED_INCLUDE_MISSING = True
-
-    def __init__(self, *args, check_buildability=False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.check_buildability = check_buildability
-        self.analysis_records = []
-
-    def save_output(self):
-        super().save_output()
-        if self.output_file:
-            path = os.path.splitext(self.output_file)[0] + ".analysis.jsonl"
-            lines = sorted(
-                json.dumps(record, sort_keys=True) for record in self.analysis_records
-            )
-            atomic_write_text(path, "\n".join(lines) + ("\n" if lines else ""))
 
     def run_validations(self):
         self._validate_coverage()
         self._validate_variant_modules()
         self._validate_history_consistency()
-        if self.check_buildability:
-            self._validate_buildability()
-        if self.analysis_records:
-            counts = Counter(
-                (record["kind"], record["status"]) for record in self.analysis_records
-            )
-            self.log(
-                "Analysis records (not warning counts): "
-                + ", ".join(
-                    f"{kind}/{status}={count}"
-                    for (kind, status), count in sorted(counts.items())
-                ),
-                "always",
-            )
-            if self.output_file:
-                self.log(
-                    f"Analysis detail: {os.path.splitext(self.output_file)[0]}.analysis.jsonl",
-                    "always",
-                )
-
-    def _validate_buildability(self):
-        directories = (
-            "common/ai_equipment",
-            "common/units/equipment",
-            "common/technologies",
-            "history/countries",
-        )
-        if not all(
-            os.path.isdir(os.path.join(self.mod_path, path)) for path in directories
-        ):
-            return
-        if self.staged_only and not self.staged_touches(
-            (
-                *directories,
-                "common/bookmarks",
-                "common/technology_tags",
-                "common/scripted_effects",
-                "common/special_projects",
-            )
-        ):
-            return
-        self._log_section("Checking advisory starting AI equipment buildability...")
-        context = VariantContext()
-        hull_techs = {}
-        module_techs = {}
-        read_failures = []
-
-        def read_source(path):
-            try:
-                with open(path, encoding="utf-8-sig") as source:
-                    return source.read()
-            except (OSError, UnicodeError) as error:
-                read_failures.append(
-                    Issue(
-                        Severity.WARNING,
-                        "ai-buildability-input-unavailable",
-                        f"Buildability inputs could not be read: {error}",
-                        os.path.relpath(path, self.mod_path).replace("\\", "/"),
-                    )
-                )
-                return ""
-
-        folders = {}
-        technologies = []
-        projects = []
-        for path in self._collect_files(
-            [
-                "history/countries/*.txt",
-                "common/bookmarks/*.txt",
-                "common/technologies/*.txt",
-                "common/technology_tags/*.txt",
-                "common/scripted_effects/*.txt",
-                "common/special_projects/**/*.txt",
-            ],
-            ignore_staged=True,
-        ):
-            text = read_source(path)
-            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
-            nodes = script_nodes(text)
-            context.documents[relative] = nodes
-            if relative.startswith("common/special_projects/"):
-                projects.append(text)
-            if relative.startswith("common/technologies/"):
-                for hull, techs in equipment_unlocks(text).items():
-                    hull_techs.setdefault(hull, set()).update(techs)
-                for module, techs in equipment_unlocks(
-                    text, "enable_equipment_modules"
-                ).items():
-                    module_techs.setdefault(module, set()).update(techs)
-            for node in nodes:
-                if node.key == "technology_folders":
-                    for folder in node.children:
-                        folders[folder.key] = [
-                            child
-                            for available in folder.children
-                            if available.key == "available"
-                            for child in available.children
-                        ]
-                elif node.key == "technologies":
-                    technologies.extend(node.children)
-        context.index()
-        gates = {}
-        for tech in technologies:
-            gates[tech.key] = [
-                child
-                for block in tech.children
-                if block.key == "allow_branch"
-                for child in block.children
-            ]
-            for folder in tech.children:
-                if folder.key == "folder":
-                    gates[tech.key].extend(folders.get(value(folder, "name"), []))
-        designs = []
-        for path in self._collect_files(
-            ["common/ai_equipment/*.txt"], ignore_staged=True
-        ):
-            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
-            designs.extend(parse_buildability_designs(read_source(path), relative))
-        if read_failures:
-            self._report(
-                read_failures,
-                "",
-                "Starting buildability inputs unavailable:",
-                severity=Severity.WARNING,
-            )
-            return
-        index = self.cached(
-            "equipment_hull_index",
-            lambda: build_equipment_index(
-                os.path.join(self.mod_path, "common/units/equipment")
-            ),
-        )
-        analysis = check_buildability(
-            designs,
-            index,
-            context,
-            hull_techs,
-            module_techs,
-            gates,
-            project_unlocks(projects, context),
-        )
-        self.analysis_records.extend(analysis.records)
-        self._report(
-            analysis.findings,
-            "✓ No starting-research mismatches proved; unsupported cases are analysis records",
-            "Advisory starting AI equipment buildability:",
-            severity=Severity.WARNING,
-        )
 
     def _validate_variant_modules(self):
         equip_dir = os.path.join(self.mod_path, "common", "ai_equipment")
@@ -400,44 +236,28 @@ class Validator(BaseValidator):
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
-        frames = role_strip_frames(
-            _read_text(fp)
-            for fp in list_files(
-                os.path.join(self.mod_path, "interface"), ("*.gfx",), recursive=False
-            )
-        )
         results = []
-        for fp in list_files(equip_dir, recursive=False):
+        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
             content = _read_text(fp)
             rel = os.path.relpath(fp, self.mod_path)
-            for f in (
-                check_target_variants(content, index)
-                + check_target_variant_upgrades(content, index)
-                + check_target_variant_role_icons(content, index, frames)
-            ):
-                prefix = "NAVAL" if f.hull in index.ship_hulls else "EQUIPMENT"
+            for f in check_target_variants(content, index):
+                labels = (
+                    _NAVAL_SLOT_CATEGORIES
+                    if f.hull in index.ship_hulls
+                    else _EQUIPMENT_SLOT_CATEGORIES
+                )
                 results.append(
                     Issue(
-                        severity=(
-                            Severity.WARNING
-                            if f.kind in _AI_ADVISORY_KINDS
-                            else Severity.ERROR
-                        ),
-                        category=f"{prefix} VARIANT: {KIND_LABELS[f.kind]}",
+                        severity=Severity.ERROR,
+                        category=labels[f.kind],
                         message=f.message,
                         file=rel,
                         line=f.line,
                     )
                 )
-
-            analysis = check_ammunition_compatibility(
-                parse_buildability_designs(content, rel), index
-            )
-            results.extend(analysis.findings)
-            self.analysis_records.extend(analysis.records)
 
         self._report(
             results,
@@ -461,7 +281,7 @@ class Validator(BaseValidator):
         self._log_section("Checking history = yes consistency within design groups...")
 
         results = []
-        for fp in list_files(equip_dir, recursive=False):
+        for fp in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
             basename = os.path.basename(fp)
             if staged_equip is not None and basename not in staged_equip:
                 continue
@@ -515,7 +335,7 @@ class Validator(BaseValidator):
         generic_templates = []
         custom_templates = []
 
-        for filepath in list_files(equip_dir, recursive=False):
+        for filepath in sorted(glob.iglob(os.path.join(equip_dir, "*.txt"))):
             filename = os.path.basename(filepath)
             templates = parse_equipment_file(filepath)
 
@@ -605,13 +425,5 @@ class Validator(BaseValidator):
         )
 
 
-def _extra_args(parser):
-    parser.add_argument(
-        "--check-buildability",
-        action="store_true",
-        help="Report advisory starting-research and usable-fallback checks",
-    )
-
-
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate AI equipment coverage", _extra_args)
+    run_validator_main(Validator, "Validate AI equipment coverage")

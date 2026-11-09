@@ -6,6 +6,7 @@
 # likely typos.
 import collections
 import difflib
+import glob
 import os
 import re
 import sys
@@ -14,7 +15,6 @@ from typing import Dict, List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import WORD_BLOCK_START_RE as TASKFORCE_DEF_RE
-from shared_utils import list_files
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Valid HOI4 naval mission types
@@ -80,7 +80,7 @@ def parse_naval_units(mod_path: str) -> Set[str]:
     units_dir = os.path.join(mod_path, "common", "units")
     ship_types = set()
 
-    for filepath in list_files(units_dir, recursive=False):
+    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
         # Only parse naval unit files
         basename = os.path.basename(filepath).lower()
         if "naval" not in basename and "ship" not in basename:
@@ -146,7 +146,7 @@ def parse_taskforce_files(
     mission_refs: List[Tuple[str, str, int]] = []
     optimal_compositions: List[Tuple[str, str, int, Dict[str, int]]] = []
 
-    for filepath in list_files(taskforce_dir, recursive=False):
+    for filepath in glob.iglob(os.path.join(taskforce_dir, "*.txt")):
         filename = os.path.basename(filepath)
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:
@@ -261,7 +261,7 @@ def parse_fleet_files(
 
     refs: List[Tuple[str, str, int]] = []
 
-    for filepath in list_files(fleet_dir, recursive=False):
+    for filepath in glob.iglob(os.path.join(fleet_dir, "*.txt")):
         filename = os.path.basename(filepath)
         try:
             with open(filepath, "r", encoding="utf-8-sig") as f:

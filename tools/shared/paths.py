@@ -6,10 +6,8 @@
 
 from pathlib import Path
 
-from shared_utils import get_root_dir
-
-REPO_ROOT = Path(get_root_dir())
-TOOLS_DIR = REPO_ROOT / "tools"
+TOOLS_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = TOOLS_DIR.parent
 VALIDATION_DIR = TOOLS_DIR / "validation"
 STANDARDIZATION_DIR = TOOLS_DIR / "standardization"
 ASSETS_DIR = TOOLS_DIR / "assets"

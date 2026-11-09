@@ -2,6 +2,7 @@
 # Cross-reference faction templates, goals, rules, manifests, upgrades, and icons
 # to catch broken references and duplicate IDs that cause crashes or silent
 # failures, and warn about orphaned manifests.
+import glob
 import os
 import re
 import sys
@@ -11,7 +12,7 @@ from typing import Dict, List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import WORD_BLOCK_LINE_RE as BLOCK_DEF_RE
-from shared_utils import blank_quoted_strings, extract_block_from_text, list_files
+from shared_utils import blank_quoted_strings, extract_block_from_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -220,7 +221,7 @@ class Validator(BaseValidator):
 
         # Collect template IDs
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             for block_id in extract_block_ids(content):
                 fname = os.path.basename(filepath)
@@ -230,7 +231,7 @@ class Validator(BaseValidator):
 
         # Collect goal and manifest IDs from goals/
         goals_dir = self._faction_path("goals")
-        for filepath in list_files(goals_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(goals_dir, "*.txt")):
             content = read_file(filepath)
             # Scan at each block's definition site, not the first substring
             # occurrence of its id (a reference earlier in the file would grab
@@ -247,21 +248,21 @@ class Validator(BaseValidator):
 
         # Collect rule IDs from rules/
         rules_dir = self._faction_path("rules")
-        for filepath in list_files(rules_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(rules_dir, "*.txt")):
             content = read_file(filepath)
             for block_id in extract_block_ids(content):
                 self.rule_ids.add(block_id)
 
         # Collect upgrade IDs
         upgrades_dir = self._faction_path("upgrades")
-        for filepath in list_files(upgrades_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(upgrades_dir, "*.txt")):
             content = read_file(filepath)
             for block_id in extract_block_ids(content):
                 self.upgrade_ids.add(block_id)
 
         # Collect member upgrade IDs
         member_dir = self._faction_path("member_upgrades")
-        for filepath in list_files(member_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(member_dir, "*.txt")):
             content = read_file(filepath)
             for block_id in extract_block_ids(content):
                 self.upgrade_ids.add(block_id)
@@ -277,7 +278,9 @@ class Validator(BaseValidator):
         # icon) can't drop the whole file and masquerade as dozens of bogus
         # "icon not found" errors; a genuine IO failure is logged, never silent.
         interface_dir = os.path.join(self.mod_path, "interface")
-        for filepath in list_files(interface_dir, ("*.gfx",)):
+        for filepath in glob.glob(
+            os.path.join(interface_dir, "**", "*.gfx"), recursive=True
+        ):
             try:
                 with open(filepath, "r", encoding="utf-8-sig", errors="replace") as f:
                     content = f.read()
@@ -302,7 +305,7 @@ class Validator(BaseValidator):
 
         results = []
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for match in MANIFEST_RE.finditer(content):
@@ -321,7 +324,7 @@ class Validator(BaseValidator):
     def _iter_templates(self):
         """Yield each template block with its source filename."""
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for template_id in extract_block_ids(content):
@@ -400,7 +403,7 @@ class Validator(BaseValidator):
         results = []
         referenced: Set[str] = set()
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for match in ICON_RE.finditer(content):
@@ -468,7 +471,7 @@ class Validator(BaseValidator):
 
         results = []
         rules_dir = self._faction_path("rules")
-        for filepath in list_files(rules_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(rules_dir, "*.txt")):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for match in TYPE_RE.finditer(content):
@@ -489,7 +492,7 @@ class Validator(BaseValidator):
         results = []
         seen: Dict[str, str] = {}
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in sorted(glob.glob(os.path.join(template_dir, "*.txt"))):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for block_id in extract_block_ids(content):
@@ -512,7 +515,7 @@ class Validator(BaseValidator):
         results = []
         seen: Dict[str, str] = {}
         goals_dir = self._faction_path("goals")
-        for filepath in list_files(goals_dir, recursive=False):
+        for filepath in sorted(glob.glob(os.path.join(goals_dir, "*.txt"))):
             content = read_file(filepath)
             fname = os.path.basename(filepath)
             for block_id in extract_block_ids(content):
@@ -534,7 +537,7 @@ class Validator(BaseValidator):
 
         results = []
         goals_dir = self._faction_path("goals")
-        for filepath in list_files(goals_dir, recursive=False):
+        for filepath in sorted(glob.glob(os.path.join(goals_dir, "*.txt"))):
             rel = os.path.relpath(filepath, self.mod_path)
             for line, variable in find_faction_scope_cache_reads(read_file(filepath)):
                 results.append(
@@ -561,7 +564,7 @@ class Validator(BaseValidator):
         results = []
         seen: Dict[str, str] = {}
         rules_dir = self._faction_path("rules")
-        for filepath in list_files(rules_dir, recursive=False):
+        for filepath in sorted(glob.glob(os.path.join(rules_dir, "*.txt"))):
             if "groups" in filepath:
                 continue
             content = read_file(filepath)
@@ -586,7 +589,7 @@ class Validator(BaseValidator):
         results = []
         for subdir in ["upgrades/groups", "member_upgrades/member_groups"]:
             groups_dir = self._faction_path(subdir)
-            for filepath in list_files(groups_dir, recursive=False):
+            for filepath in glob.glob(os.path.join(groups_dir, "*.txt")):
                 content = read_file(filepath)
                 fname = os.path.basename(filepath)
                 groups = extract_upgrade_group_ids(content)
@@ -609,7 +612,7 @@ class Validator(BaseValidator):
 
         referenced_manifests: Set[str] = set()
         template_dir = self._faction_path("templates")
-        for filepath in list_files(template_dir, recursive=False):
+        for filepath in glob.glob(os.path.join(template_dir, "*.txt")):
             content = read_file(filepath)
             for match in MANIFEST_RE.finditer(content):
                 referenced_manifests.add(match.group(1))

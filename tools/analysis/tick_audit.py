@@ -63,15 +63,13 @@ from shared_utils import (  # noqa: E402
     Colors,
     atomic_write_text,
     extract_block_from_text,
-    get_root_dir,
     line_of,
-    list_files,
     read_text_strict,
     read_text_under,
     strip_comments,
 )
 
-REPO_ROOT = get_root_dir()
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # --- HOI4 cadence facts -----------------------------------------------------
 
@@ -138,11 +136,17 @@ def bucket_for_days(days):
 
 def _iter_txt(subdir):
     """Yield (path, text) for every .txt under REPO_ROOT/<subdir>."""
-    for path in list_files(os.path.join(REPO_ROOT, subdir)):
-        try:
-            yield path, read_text_under(path, REPO_ROOT)
-        except OSError:
-            continue
+    base = os.path.join(REPO_ROOT, subdir)
+    if not os.path.isdir(base):
+        return
+    for root, _dirs, files in os.walk(base):
+        for name in files:
+            if name.endswith(".txt"):
+                path = os.path.join(root, name)
+                try:
+                    yield path, read_text_under(path, REPO_ROOT)
+                except OSError:
+                    continue
 
 
 def _rel(path):

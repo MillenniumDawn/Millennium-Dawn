@@ -35,38 +35,12 @@ def test_focus_finder_dispatches_to_focus_and_decision():
     from check_common_mistakes import _find_decision_log_mismatches as dec_fn
     from check_common_mistakes import _find_event_log_mismatches as event_fn
     from check_common_mistakes import _find_focus_log_mismatches as focus_fn
-    from check_common_mistakes import _find_idea_log_mismatches as idea_fn
     from fix_log_ids import _finder_for
 
     assert _finder_for("common/national_focus/y.txt") is focus_fn
     assert _finder_for("common/decisions/x.txt") is dec_fn
     assert _finder_for("events/x.txt") is event_fn
-    assert _finder_for("common/ideas/x.txt") is idea_fn
-    assert _finder_for("common/units/x.txt") is None
-
-
-def test_apply_rewrites_idea_log_token(tmp_path):
-    from fix_log_ids import fix_file
-
-    idea = tmp_path / "mod/common/ideas/tst.txt"
-    _write(
-        idea,
-        (
-            "ideas = {\n"
-            "\tcountry = {\n"
-            "\t\tTST_right = {\n"
-            "\t\t\ton_add = {\n"
-            '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: add idea TST_wrong"\n'
-            "\t\t\t\tadd_stability = 0.1\n"
-            "\t\t\t}\n"
-            "\t\t}\n"
-            "\t}\n"
-            "}\n"
-        ),
-    )
-
-    assert fix_file(str(idea)) == (str(idea), 1)
-    assert 'add idea TST_right"\n' in idea.read_text(encoding="utf-8")
+    assert _finder_for("common/ideas/x.txt") is None
 
 
 def test_apply_rewrites_bare_event_option_log_token(tmp_path):
@@ -344,8 +318,9 @@ def test_apply_returns_zero_for_unknown_path(tmp_path):
 
 
 def test_cli_writes_fix_across_the_mod_root(tmp_path, monkeypatch):
+    # The sweep derives its root from the script path, so a script path inside
+    # a temporary tree keeps the write out of the real repository.
     import fix_log_ids
-    import shared_utils
 
     root = _shared_tree(tmp_path)
     target = root / "common/national_focus/focus.txt"
@@ -361,8 +336,8 @@ def test_cli_writes_fix_across_the_mod_root(tmp_path, monkeypatch):
             "}\n"
         ),
     )
-    monkeypatch.setattr(shared_utils, "get_root_dir", lambda: str(root))
-    monkeypatch.setattr(sys, "argv", ["fix_log_ids.py", "--workers", "1"])
+    script = root / "tools" / "linting" / "fix_log_ids.py"
+    monkeypatch.setattr(sys, "argv", [str(script), "--workers", "1"])
 
     assert fix_log_ids.main() == 0
     body = target.read_text(encoding="utf-8")

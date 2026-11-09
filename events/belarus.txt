@@ -24,28 +24,7 @@ country_event = {
 			idea = BLR_agricultural_shock
 			days = 365
 		}
-		if = {
-			limit = { has_idea = BLR_agriculture }
-			remove_ideas = BLR_agriculture
-		}
-		else_if = {
-			limit = { has_idea = BLR_agriculture_reduced }
-			remove_ideas = BLR_agriculture_reduced
-		}
-		else_if = {
-			limit = { has_idea = BLR_agriculture2 }
-			swap_ideas = {
-				remove_idea = BLR_agriculture2
-				add_idea = BLR_agriculture
-			}
-		}
-		else_if = {
-			limit = { has_idea = BLR_agriculture3 }
-			swap_ideas = {
-				remove_idea = BLR_agriculture3
-				add_idea = BLR_agriculture2
-			}
-		}
+		remove_ideas = BLR_agriculture
 		ai_chance = { base = 10 }
 	}
 }
@@ -609,7 +588,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -712,7 +691,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -796,7 +775,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -887,7 +866,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { add = 10 has_war = yes }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -1110,7 +1089,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { add = 10 has_war = yes }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -1195,7 +1174,7 @@ country_event = {
 				sender_influence_higher_10 = yes
 				add = 10
 			}
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 10 has_country_flag = trade_agreement@BLR }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -1476,7 +1455,7 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = { add = 20 has_opinion = { target = BLR value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = BLR } }
+			modifier = { add = 15 has_country_flag = trade_agreement@BLR }
 			modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -1849,12 +1828,25 @@ country_event = {
 				add = 10
 			}
 		}
-		FROM = {
-			set_autonomy = {
-				target = ROOT
-				autonomy_state = autonomy_satellite_state
-				end_wars = no
-				end_civil_wars = no
+		if = {
+			limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+			FROM = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_satellite_state_colored
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
+		}
+		else = {
+			FROM = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_satellite_state
+					end_wars = no
+					end_civil_wars = no
+				}
 			}
 		}
 		hidden_effect = {
@@ -1932,11 +1924,22 @@ country_event = {
 				SIL = { country_event = { id = belarus_another.22 days = 1 }
 						transfer_state = 115
 						transfer_state = 626 }
-			set_autonomy = {
-				target = SIL
-				autonomy_state = autonomy_satellite_state
-				end_wars = no
-				end_civil_wars = no
+			if = {
+				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+				set_autonomy = {
+					target = SIL
+					autonomy_state = autonomy_satellite_state_colored
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = SIL
+					autonomy_state = autonomy_satellite_state
+					end_wars = no
+					end_civil_wars = no
+				}
 			}
 			POL = {
 				declare_war_on = {
@@ -2738,7 +2741,7 @@ country_event = {
 			ai_chance = {
 				base = 50
 				modifier = { add = 20 has_opinion = { target = BLR value > 49 } }
-				modifier = { add = 15 is_in_array = { trade_agreement_partners = BLR } }
+				modifier = { add = 15 has_country_flag = trade_agreement@BLR }
 				modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 				modifier = { factor = 0.5 ai_has_high_deficit = yes }
 				modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -2890,7 +2893,7 @@ country_event = {
 			ai_chance = {
 				base = 100
 				modifier = { add = 20 has_opinion = { target = BLR value > 49 } }
-				modifier = { add = 15 is_in_array = { trade_agreement_partners = BLR } }
+				modifier = { add = 15 has_country_flag = trade_agreement@BLR }
 				modifier = { factor = 0.25 has_opinion = { target = BLR value < -25 } }
 				modifier = { factor = 0.5 ai_has_high_deficit = yes }
 				modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }

@@ -13,7 +13,6 @@ from typing import Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from equipment_module_slots import blank_comments
 from shared_utils import (
     blank_quoted_strings,
     compute_line_offsets,
@@ -657,48 +656,10 @@ _UNBALANCED_INFLATION_VAR = "inflation_rate_var"
 _UNBALANCED_INFLATION_START_CAP = 0.50
 _INFLATION_HISTORY_HARD_CAP = 1.0
 
-_INCOME_MODIFIER_KEYS: FrozenSet[str] = frozenset(
-    {
-        "tax_gain_multiplier_modifier",
-        "corporate_tax_income_multiplier_modifier",
-        "population_tax_income_multiplier_modifier",
-        "healthcare_income_multiplier_modifier",
-        "infrastructure_tax_gain_multiplier_modifier",
-        "civilian_industry_tax_modifier",
-        "military_industry_tax_modifier",
-        "agriculture_tax_modifier",
-        "dockyard_income_tax_modifier",
-        "office_park_income_tax_modifier",
-        "agriculture_district_income_tax_modifier",
-        "microchip_plant_income_tax_modifier",
-        "composite_plant_income_tax_modifier",
-        "synthetic_refinery_income_tax_modifier",
-        "resource_export_multiplier_modifier",
-        "oil_export_multiplier_modifier",
-        "steel_export_multiplier_modifier",
-        "aluminium_export_multiplier_modifier",
-        "tungsten_export_multiplier_modifier",
-        "chromium_export_multiplier_modifier",
-        "rubber_export_multiplier_modifier",
-        "microchip_export_multiplier_modifier",
-        "composite_export_multiplier_modifier",
-        "international_market_income_modifier",
-    }
-)
-_INCOME_MODIFIER_CAP = 0.25
-_INCOME_BLOCK_KEYS = frozenset({"modifier", "country_modifier", "state_modifier"})
-_INCOME_TOKEN_RE = re.compile(
-    r"(?<![A-Za-z0-9_:.@])(?P<key>[A-Za-z_][A-Za-z0-9_:.@]*)"
-    r"\s*=\s*(?P<value>\{|[^\s{}]+)|(?P<brace>[{}])"
-)
-
 # Documented ROI exceptions, as "owner::key". A single reward above the ROI
 # cap must justify itself there; undocumented ones fail the opt-in check.
 _UNBALANCED_ROI_EXCEPTIONS: FrozenSet[str] = frozenset(
     validation_config("validate_modifiers", "unbalanced_roi_exceptions")
-)
-_INCOME_EXCEPTIONS: FrozenSet[str] = frozenset(
-    validation_config("validate_modifiers", "income_over_25_percent_exceptions")
 )
 
 _NUMERIC_BARE_ASSIGNMENT_RE = re.compile(
@@ -772,41 +733,6 @@ def _scan_numeric_modifier_entries(text: str) -> List[Tuple[str, float, int, str
                     stack[-1][0] if stack else "",
                 )
             )
-    return entries
-
-
-def _scan_income_modifiers(
-    text: str, direct_depth: int
-) -> List[Tuple[str, float, int, str]]:
-    """(key, value, line, owner) for literal income bonuses above the cap.
-
-    The owner is the idea, trait, or modifier name that holds the bonus.
-    """
-    clean = blank_quoted_strings(blank_comments(text))
-    offsets = compute_line_offsets(clean)
-    stack: List[str] = []
-    entries = []
-    for match in _INCOME_TOKEN_RE.finditer(clean):
-        key, value, brace = match.group("key", "value", "brace")
-        if brace == "}":
-            if stack:
-                stack.pop()
-            continue
-        if brace == "{" or value == "{":
-            stack.append(key or "")
-            continue
-        if key not in _INCOME_MODIFIER_KEYS or not stack:
-            continue
-        if stack[-1] in _INCOME_BLOCK_KEYS:
-            owner = stack[-2] if len(stack) > 1 else ""
-        elif len(stack) == direct_depth:
-            owner = stack[-1]
-        else:
-            continue
-        numeric = _parse_entry_value(value or "")
-        if numeric is not None and numeric > _INCOME_MODIFIER_CAP:
-            line = line_for_offset(offsets, match.start())
-            entries.append((key, numeric, line, owner))
     return entries
 
 
@@ -1124,54 +1050,6 @@ class Validator(BaseValidator):
             category="dynamic-modifier-enable-block",
         )
 
-    def validate_income_modifiers(self):
-        """Warn on individual tax, export, and market income bonuses above +25%."""
-        self._log_section("Checking tax and income bonuses above +25%...")
-        results = []
-        for filepath in self._collect_files(self._UNBALANCED_PATTERNS):
-            if should_skip_file(filepath, mod_path=self.mod_path):
-                continue
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=False
-            )
-            rel = os.path.relpath(filepath, self.mod_path)
-            path = rel.replace("\\", "/")
-            direct_depth = 0
-            if path.startswith(("common/dynamic_modifiers/", "common/modifiers/")):
-                direct_depth = 1
-            elif path.startswith(("common/country_leader/", "common/unit_leader/")):
-                direct_depth = 2
-            entries = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                f"modifiers.income.{direct_depth}",
-                filepath,
-                text,
-                lambda text=text, depth=direct_depth: _scan_income_modifiers(
-                    text, depth
-                ),
-            )
-            for key, value, line, owner in entries:
-                if f"{owner}::{key}" in _INCOME_EXCEPTIONS:
-                    continue
-                results.append(
-                    (
-                        f"'{owner}': {key} = {value:g} grants +{value * 100:g}%, "
-                        "above +25% per source; verify the balance and decimal "
-                        f"placement. If intentional, add '{owner}::{key}' with a "
-                        "reason to validation_config.json "
-                        "income_over_25_percent_exceptions (issue #6371)",
-                        rel,
-                        line,
-                    )
-                )
-        self._report(
-            results,
-            "No individual tax or income bonuses above +25%",
-            "Tax and income bonuses above +25% (review balance):",
-            severity=Severity.WARNING,
-            category="income-over-25-percent",
-        )
-
     def validate_unbalanced_modifiers(self):
         """Flag overpowered single-reward economy modifiers (issue #4370).
 
@@ -1336,7 +1214,6 @@ class Validator(BaseValidator):
         self.validate_dynamic_modifier_name_loc()
         self.validate_redundant_enable_gates()
         self.validate_dynamic_modifier_enable_blocks()
-        self.validate_income_modifiers()
         self.validate_unbalanced_modifiers()
         self.validate_history_inflation_hard_cap()
 

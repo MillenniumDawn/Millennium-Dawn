@@ -14,7 +14,7 @@ from typing import Dict, FrozenSet, Iterable, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import FileOpener, blank_quoted_strings, find_unquoted_brace_close
+from shared_utils import FileOpener, find_unquoted_brace_close
 from validator_common import BaseValidator, Severity, run_validator_main
 
 # The tag block in common/technology_tags/. Every bare token inside it is a
@@ -205,18 +205,17 @@ def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
     `name = CAT_tribute` (a tech-bonus name) out of this.
     """
     found: List[Tuple[str, int]] = []
-    unquoted = blank_quoted_strings(text)
-    for m in _CATEGORY_ASSIGN_RE.finditer(unquoted):
+    for m in _CATEGORY_ASSIGN_RE.finditer(text):
         found.append((m.group(1), m.start(1)))
-    for body, offset in _block_bodies(unquoted, _KEYED_BLOCK_RE):
+    for body, offset in _block_bodies(text, _KEYED_BLOCK_RE):
         for km in _KEYED_CATEGORY_RE.finditer(body):
             found.append((km.group(1), offset + km.start(1)))
     listed = [_LISTED_BLOCK_RE]
     if tech_file:
         listed.append(_TECH_CATEGORIES_RE)
     for opener in listed:
-        for body, offset in _block_bodies(unquoted, opener):
-            for tm in _TOKEN_RE.finditer(text[offset : offset + len(body)]):
+        for body, offset in _block_bodies(text, opener):
+            for tm in _TOKEN_RE.finditer(body):
                 found.append((tm.group(0), offset + tm.start()))
     return found
 

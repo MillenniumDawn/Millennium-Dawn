@@ -12,10 +12,8 @@ from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
 
-import pytest
 import yaml
 from report_lib.models import Issue, Severity
-from shared_utils import iter_statements
 
 from shared.paths import REPO_ROOT
 
@@ -282,13 +280,6 @@ def event_block(event_id, *fields, kind="country_event"):
     return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
 
 
-def only_block(script, name):
-    """The body of the single `name = { ... }` statement directly in `script`."""
-    blocks = [body for key, _, body in iter_statements(script) if key == name]
-    assert len(blocks) == 1 and blocks[0] is not None, name
-    return blocks[0]
-
-
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
     """Run a `validate_decisions.Validator` check on `factories`; return its results.
 
@@ -406,16 +397,6 @@ def write_tree(root: Path, files: dict) -> Path:
     for relative_path, content in files.items():
         write_under(root, relative_path, content)
     return root
-
-
-def broken_symlink(path: Path) -> str:
-    """A listed file whose read raises, or a skip where symlinks are unavailable."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.symlink(str(path.parent / "no_such_target"), str(path))
-    except (OSError, NotImplementedError):
-        pytest.skip("symlinks unavailable on this platform")
-    return str(path)
 
 
 def write_focus_file(root: Path, content: str) -> Path:

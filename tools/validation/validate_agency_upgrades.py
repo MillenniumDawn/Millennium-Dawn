@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Validate intelligence agency upgrade definitions and their mod-wide references."""
 
+import glob
 import re
 from pathlib import Path
 from typing import Dict, List, Set
 
 import disk_cache
-from shared_utils import list_files
 from validator_common import BaseValidator, line_of, run_validator_main, strip_comments
 
 UPGRADES_DIR = "common/intelligence_agency_upgrades"
@@ -75,7 +75,8 @@ class Validator(BaseValidator):
         self.gfx_defined: Set[str] = set()
 
     def _collect_upgrade_defs(self) -> None:
-        for filepath in list_files(Path(self.mod_path) / UPGRADES_DIR, recursive=False):
+        pattern = str(Path(self.mod_path) / UPGRADES_DIR / "*.txt")
+        for filepath in glob.iglob(pattern):
             text = _read(Path(filepath))
             if not text:
                 continue
@@ -102,7 +103,8 @@ class Validator(BaseValidator):
                     self.upgrade_defs[name] = info
 
     def _collect_gfx(self) -> None:
-        for filepath in list_files(Path(self.mod_path) / "interface", ("*.gfx",)):
+        pattern = str(Path(self.mod_path) / "interface" / "**" / "*.gfx")
+        for filepath in glob.iglob(pattern, recursive=True):
             self.gfx_defined.update(GFX_NAME_RE.findall(_read(Path(filepath))))
 
     def _validate_duplicates(self) -> None:

@@ -136,7 +136,7 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
-    # The CI workspace ships entity definitions but no meshes or textures.
+    # The CI workspace ships no gfx/models or gfx/entities.
     "validate_mesh_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
@@ -1266,7 +1266,6 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert [spec.name for spec in ALL_SPECS if not spec.strict] == [
         "simplifications",
-        "influence-reads",
         "graphical-cultures",
     ]
 

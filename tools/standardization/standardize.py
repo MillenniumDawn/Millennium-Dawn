@@ -8,28 +8,18 @@ Unified command-line interface for all HOI4 file standardizers
 import argparse
 import os
 import sys
-import time
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from common_utils import (
-    read_lines_for_standardization,
-    resolve_output_file_and_backup,
-    run_standardizer,
-    write_standardized_output,
-)
-from shared_utils import (
-    add_standard_file_arguments,
-    find_mod_root,
-    reindent_by_brace_depth,
-)
+from common_utils import run_standardizer
+from shared_utils import add_standard_file_arguments
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import add_check_naming_argument, standardize_focus_tree
 from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
-from standardize_localisation import MOD_ROOT_MARKERS, LocalisationStandardizer
+from standardize_localisation import LocalisationStandardizer, _detect_mod_root
 from standardize_mio import MIOStandardizer
 from standardize_technologies import TechnologyStandardizer
 
@@ -48,11 +38,6 @@ _SUBCOMMANDS = (
         "history",
         "Standardize history/countries files (dated blocks)",
         "Input history file",
-    ),
-    (
-        "indent",
-        "Fix tabs and spacing in AI equipment, character, scripted effect, and scripted trigger files",
-        "Input script file",
     ),
     (
         "localisation",
@@ -102,7 +87,6 @@ Examples:
   python3 standardize.py mio input.txt
   python3 standardize.py technology common/technologies/infantry.txt
   python3 standardize.py history "history/countries/CHI - China.txt"
-  python3 standardize.py indent common/characters/CHI.txt
   python3 standardize.py localisation input.yml --mod-root /path/to/mod
         """,
     )
@@ -160,25 +144,20 @@ def main():
             args.input_file, output_file, args.verbose, args.check_naming
         ):
             sys.exit(1)
-    elif args.command == "indent":
-        output_file = resolve_output_file_and_backup(args)
-        lines = read_lines_for_standardization(args.input_file, verbose=args.verbose)
-        if lines is None or not write_standardized_output(
-            output_file,
-            reindent_by_brace_depth(lines),
-            start_time=time.time(),
-            processed_count=len(lines),
-            unit_label="lines",
-        ):
-            sys.exit(1)
     elif args.command == "localisation":
         input_path = Path(args.input_file)
         output_path = Path(args.output) if args.output else input_path
 
-        mod_root = args.mod_root or find_mod_root(input_path, MOD_ROOT_MARKERS)
-        if not mod_root:
-            print("Error: could not detect mod root. Use --mod-root.", file=sys.stderr)
-            sys.exit(1)
+        if args.mod_root:
+            mod_root = Path(args.mod_root)
+        else:
+            mod_root = _detect_mod_root(input_path)
+            if not mod_root:
+                print(
+                    "Error: could not detect mod root. Use --mod-root.",
+                    file=sys.stderr,
+                )
+                sys.exit(1)
 
         if args.backup:
             from shared_utils import create_backup

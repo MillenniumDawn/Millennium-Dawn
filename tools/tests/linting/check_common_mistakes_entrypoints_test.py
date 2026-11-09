@@ -22,8 +22,8 @@ def _script(*lines):
 def _messages(tmp_path, rel, *lines):
     path = tmp_path / rel
     _write(path, _script(*lines))
-    errors, shadowed, warnings = checker.check_file(str(path))
-    return [message for _fp, _line, message in errors + shadowed + warnings]
+    errors, warnings = checker.check_file(str(path))
+    return [message for _fp, _line, message in errors + warnings]
 
 
 def _matching(messages, needle):
@@ -57,7 +57,7 @@ def fake_mod_root(monkeypatch, tmp_path):
     root.mkdir()
     for function in cached:
         function.cache_clear()
-    monkeypatch.setattr(checker, "get_root_dir", lambda: str(root))
+    monkeypatch.setattr(checker, "_mod_root", lambda: str(root))
     yield root
     for function in cached:
         function.cache_clear()
@@ -167,7 +167,7 @@ _DIVISION = "use multiplication instead of division (/ 100 -> * 0.01)"
                 (4, _DIVISION),
                 (
                     7,
-                    "has_trade_agreement_with is not a valid trigger -- use is_in_array = { trade_agreement_partners = TAG }",
+                    "has_trade_agreement_with is not a valid trigger -- use has_country_flag = trade_agreement@TAG",
                 ),
             ],
             id="faction rules and an unspaced division",
@@ -295,36 +295,8 @@ _DIVISION = "use multiplication instead of division (/ 100 -> * 0.01)"
     ],
 )
 def test_check_file_line_checks(tmp_path, scoped_refs, rel_path, text, expected):
-    errors, _shadowed, _warnings = checker.check_file(
-        write_under_str(tmp_path, rel_path, text)
-    )
+    errors, _warnings = checker.check_file(write_under_str(tmp_path, rel_path, text))
     assert [(line, message) for _path, line, message in errors] == expected
-
-
-def test_idea_file_dispatch_covers_the_idea_log_checks(tmp_path, scoped_refs):
-    text = _script(
-        "ideas = {",
-        "\tcountry = {",
-        "\t\tTST_idea = {",
-        "\t\t\ton_add = {",
-        '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: add idea TST_other"',
-        "\t\t\t\tcustom_effect_tooltip = TST_tt",
-        "\t\t\t}",
-        "\t\t}",
-        "\t}",
-        "}",
-    )
-
-    errors, _shadowed, warnings = checker.check_file(
-        write_under_str(tmp_path, _IDEAS, text)
-    )
-
-    assert [line for _path, line, _message in errors] == [5]
-    assert [line for _path, line, _message in warnings] == [4]
-    outside_ideas = checker.check_file(
-        write_under_str(tmp_path, "common/scripted_effects/tst.txt", text)
-    )
-    assert outside_ideas[2] == []
 
 
 def test_focus_file_dispatch_covers_the_focus_only_checks(tmp_path, scoped_refs):
@@ -385,39 +357,6 @@ def test_event_file_dispatch_covers_the_event_only_checks(tmp_path, scoped_refs)
     )
 
     assert _matching(messages, "log references Event test.2")
-
-
-def test_stat_effect_magnitude_is_wired(tmp_path, scoped_refs):
-    messages = _messages(
-        tmp_path,
-        "events/MD_stat.txt",
-        "country_event = {",
-        "\toption = {",
-        "\t\tadd_war_support = 15",
-        "\t}",
-        "}",
-    )
-    assert messages == [
-        "add_war_support = 15 is at least 100% -- "
-        "add_war_support takes a fraction (0.05 is 5%)"
-    ]
-
-
-def test_trade_modifier_outside_shared_effects_is_wired(tmp_path, scoped_refs):
-    messages = _messages(
-        tmp_path,
-        "events/MD_trade.txt",
-        "country_event = {",
-        "\toption = {",
-        "\t\tadd_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }",
-        "\t}",
-        "}",
-    )
-    assert _matching(messages, "belongs to the shared effects") == [
-        "mutual_trade_agreement belongs to the shared effects in "
-        "common/scripted_effects/00_economic_effects.txt -- "
-        "call set_improved_trade_agreement instead"
-    ]
 
 
 def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
@@ -482,7 +421,7 @@ def test_check_file_ignores_a_path_it_cannot_read(tmp_path):
     directory = tmp_path / "common" / "unreadable.txt"
     directory.mkdir(parents=True)
 
-    assert checker.check_file(str(directory)) == ([], [], [])
+    assert checker.check_file(str(directory)) == ([], [])
 
 
 # ---------------------------------------------------------------------------

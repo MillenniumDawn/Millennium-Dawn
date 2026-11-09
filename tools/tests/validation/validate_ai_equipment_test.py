@@ -6,7 +6,6 @@ never produces designs for that role; duplicate template names mean the
 last-loaded file silently wins.
 """
 
-from shared.suite import broken_symlink
 from validate_ai_equipment import Validator, parse_equipment_file
 
 
@@ -158,7 +157,7 @@ def test_unreadable_design_file_is_reported_and_skipped(tmp_path, caplog):
     _write_equipment(
         tmp_path, "usa_naval.txt", _template("usa_destroyer", "naval_destroyer")
     )
-    broken_symlink(tmp_path / "common" / "ai_equipment" / "broken.txt")
+    (tmp_path / "common" / "ai_equipment" / "broken.txt").mkdir()
 
     with caplog.at_level(logging.WARNING):
         validator = _run(tmp_path)

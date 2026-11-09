@@ -94,13 +94,6 @@ country_event = {
 	picture = GFX_submarine
 	is_triggered_only = yes
 	fire_only_once = yes
-	trigger = {
-		original_tag = SOV
-		has_navy_size = {
-			size > 0
-			type = submarine
-		}
-	}
 
 	option = { #Horrible!
 		name = russia.1.o1
@@ -168,7 +161,7 @@ country_event = {
 				add = 30
 			}
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 10 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 10 has_country_flag = trade_agreement@SOV }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 		add_political_power = -100
@@ -200,17 +193,7 @@ country_event = {
 				transfer_state = 1112
 			}
 		}
-		ai_chance = {
-			base = 60
-			modifier = {
-				add = 25
-				UKR_ai_historical_path = yes
-			}
-			modifier = {
-				add = 20
-				strength_ratio = { tag = FROM ratio < 0.25 }
-			}
-		}
+		ai_chance = { base = 75 }
 	}
 
 	option = { #We will stand and fight!
@@ -228,57 +211,12 @@ country_event = {
 				}
 			}
 		}
-		# Army strength, NATO and each Ukrainian deterrent shift weight from backing down to fighting
 		ai_chance = {
-			base = 10
+			base = 25
 			modifier = {
+				is_historical_focus_on = yes
 				add = 10
-				strength_ratio = { tag = FROM ratio > 0.5 }
 			}
-			modifier = {
-				add = 15
-				strength_ratio = { tag = FROM ratio > 0.8 }
-			}
-			modifier = {
-				add = 10
-				has_idea = NATO_member
-			}
-			modifier = {
-				add = 6
-				has_completed_focus = UKR_sapsan
-			}
-			modifier = {
-				add = 6
-				has_country_flag = UKR_develop_nota_flag
-			}
-			modifier = {
-				add = 6
-				has_country_flag = UKR_reorganize_navy_built_project_58250_corvette_flag
-			}
-			modifier = {
-				add = 6
-				OR = {
-					has_country_flag = UKR_developed_an_lbl_flag
-					has_country_flag = UKR_developed_an_bfv_flag
-				}
-			}
-			modifier = {
-				add = 6
-				has_completed_focus = UKR_hur_reform
-			}
-			modifier = {
-				add = 6
-				OR = {
-					has_completed_focus = UKR_ukrainian_armed_forces_reform
-					has_completed_focus = UKR_poroshenko_army_reform
-				}
-			}
-			modifier = {
-				factor = 0.5
-				has_war_support < 0.3
-			}
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -554,7 +492,7 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -665,7 +603,7 @@ country_event = {
 			base = 90
 			modifier = { add = 20 has_war = yes }
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -731,7 +669,7 @@ country_event = {
 			base = 90
 			modifier = { add = 20 has_war = yes }
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -844,11 +782,22 @@ country_event = {
 		name = russia.51.a
 		log = "[GetDateText]: [This.GetName]: russia.51.a executed"
 		SOV = {
-			set_autonomy = {
-				target = ROOT
-				autonomy_state = autonomy_puppet_state
-				end_wars = no
-				end_civil_wars = no
+			if = {
+				limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_puppet_state_colored
+					end_wars = no
+					end_civil_wars = no
+				}
+			}
+			else = {
+				set_autonomy = {
+					target = ROOT
+					autonomy_state = autonomy_puppet_state
+					end_wars = no
+					end_civil_wars = no
+				}
 			}
 		}
 	}
@@ -1044,7 +993,6 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
-
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1078,7 +1026,6 @@ country_event = {
 			regiments = {
 				Militia_Bat = { x = 0 y = 0 }
 				Militia_Bat = { x = 0 y = 1 }
-
 				Militia_Bat = { x = 1 y = 0 }
 				Militia_Bat = { x = 1 y = 1 }
 			}
@@ -1113,7 +1060,6 @@ country_event = {
 				L_Inf_Bat = { x = 0 y = 0 }
 				L_Inf_Bat = { x = 0 y = 1 }
 				L_Inf_Bat = { x = 0 y = 2 }
-
 				L_Inf_Bat = { x = 1 y = 0 }
 			}
 			priority = 2
@@ -1154,7 +1100,7 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -1224,7 +1170,7 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -1478,7 +1424,7 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -3394,9 +3340,9 @@ country_event = {
 		create_country_leader = {
 			name = "Dmitriy Medvedev"
 			picture = "Dimitry_Medvedev.dds"
-			ideology = reactionary
+			ideology = Conservative
 			traits = {
-				emerging_reactionary
+				emerging_Conservative
 				political_dancer
 				western_liberalism
 			}
@@ -3446,9 +3392,9 @@ country_event = {
 		create_country_leader = {
 			name = "Vladimir V.Putin"
 			picture = "Vladimir_Putin_older.dds"
-			ideology = reactionary
+			ideology = Conservative
 			traits = {
-				spy emerging_reactionary geopolitical_thinker political_dancer likeable sly rational
+				spy emerging_Conservative geopolitical_thinker political_dancer likeable sly rational
 			}
 		}
 		add_stability = -0.1
@@ -3909,7 +3855,7 @@ country_event = {
 		name = sov_other.22.a
 		log = "[GetDateText]: [This.GetName]: sov_other.22.a executed"
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_0
+			type = medium_tank_artillery_chassis_1
 			variant_name = "M-1978 Kok'San"
 			amount = -1300
 		}
@@ -3941,7 +3887,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_0
+			type = medium_tank_artillery_chassis_1
 			variant_name = "M-1978 Kok'San"
 			amount = 1100
 			producer = NKO
@@ -3979,7 +3925,7 @@ country_event = {
 		add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		reverse_add_opinion_modifier = { target = NKO modifier = recent_actions_positive }
 		add_equipment_to_stockpile = {
-			type = medium_tank_artillery_chassis_0
+			type = medium_tank_artillery_chassis_1
 			variant_name = "M-1978 Kok'San"
 			amount = 200
 			producer = NKO
@@ -5294,10 +5240,7 @@ country_event = {
 		name = sov_nationalists.28.a
 		log = "[GetDateText]: [This.GetName]: sov_nationalists.28.a executed"
 		ai_chance = { base = 100 }
-		ROOT = {
-			every_owned_state = { add_core_of = SOV }
-			clear_united_nations_member_state = yes
-		}
+		ROOT = { every_owned_state = { add_core_of = SOV } }
 		SOV = {
 			country_event = sov_nationalists.51
 			add_to_variable = { treasury = ROOT.treasury }
@@ -5833,7 +5776,6 @@ country_event = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
 					Special_Forces = { x = 0 y = 2 }
-
 					Special_Forces = { x = 1 y = 0 }
 				}
 				priority = 2
@@ -7319,7 +7261,7 @@ country_event = {
 			desc = "tandem"
 			picture = "dima_vova.dds"
 			expire = "2050.1.1"
-			ideology = reactionary
+			ideology = Conservative
 		}
 		ai_chance = { base = 50 }
 	}
@@ -7338,7 +7280,7 @@ country_event = {
 			desc = "iron dimon"
 			picture = "Dmitry_Medvedev_iron.dds"
 			expire = "2050.1.1"
-			ideology = reactionary
+			ideology = Conservative
 		}
 		ai_chance = { base = 50 }
 	}
@@ -8711,7 +8653,7 @@ country_event = {
 		ai_chance = {
 			base = 90
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -8789,7 +8731,7 @@ country_event = {
 		ai_chance = {
 			base = 90
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -8857,7 +8799,7 @@ country_event = {
 		ai_chance = {
 			base = 90
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -8925,7 +8867,7 @@ country_event = {
 		ai_chance = {
 			base = 90
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -8975,7 +8917,7 @@ country_event = {
 		ai_chance = {
 			base = 90
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -10379,21 +10321,6 @@ country_event = {
 					autonomy_state = autonomy_state_cis
 				}
 			}
-			set_temp_variable = { rul_party_temp = SOV.ruling_party }
-			set_temp_variable = { disable_elections = 1 }
-			if = {
-				limit = { SOV = { has_elections = yes } }
-				set_temp_variable = { disable_elections = 0 }
-			}
-			change_ruling_party_effect = yes
-			if = {
-				limit = { has_elections = yes }
-				set_elections_60_months = yes
-			}
-			set_temp_variable = { party_index = rul_party_temp }
-			set_temp_variable = { party_popularity_increase = 0.20 }
-			set_temp_variable = { temp_outlook_increase = 0.20 }
-			change_relative_party_popularity = yes
 		}
 		ai_chance = {
 			base = 1
@@ -10567,7 +10494,7 @@ country_event = {
 				factor = 20
 			}
 			modifier = { add = 20 has_opinion = { target = SOV value > 49 } }
-			modifier = { add = 15 is_in_array = { trade_agreement_partners = SOV } }
+			modifier = { add = 15 has_country_flag = trade_agreement@SOV }
 			modifier = { add = 15 SOV_influences_this_30 = yes }
 			modifier = { factor = 0.25 has_opinion = { target = SOV value < -25 } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -10898,10 +10825,7 @@ country_event = {
 		name = sov_nazbol.1.a
 		log = "[GetDateText]: [This.GetName]: sov_nazbol.1.a executed"
 		ai_chance = { base = 100 }
-		ROOT = {
-			every_owned_state = { add_core_of = SOV }
-			clear_united_nations_member_state = yes
-		}
+		ROOT = { every_owned_state = { add_core_of = SOV } }
 		SOV = {
 			country_event = sov_nazbol.2
 			add_to_variable = { treasury = ROOT.treasury }
@@ -11055,19 +10979,10 @@ country_event = {
 				regiments = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
-					Special_Forces = { x = 0 y = 2 }
-
-					Special_Forces = { x = 1 y = 0 }
-					Special_Forces = { x = 1 y = 1 }
-					Special_Forces = { x = 1 y = 2 }
 				}
-
-				regimental_support = {
-					L_Recce_Comp = { x = 0 y = 0 }
-				}
-
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -11197,28 +11112,17 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
-
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
-
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
-
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-
-				regimental_support = {
-					L_Recce_Comp = { x = 0 y = 0 }
-
-					L_Recce_Comp = { x = 1 y = 0 }
-
-					L_Recce_Comp = { x = 2 y = 0 }
-				}
-
 				support = {
-					L_Engi_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -11323,28 +11227,17 @@ country_event = {
 					L_Inf_Bat = { x = 0 y = 0 }
 					L_Inf_Bat = { x = 0 y = 1 }
 					L_Inf_Bat = { x = 0 y = 2 }
-
 					L_Inf_Bat = { x = 1 y = 0 }
 					L_Inf_Bat = { x = 1 y = 1 }
 					L_Inf_Bat = { x = 1 y = 2 }
-
 					L_Inf_Bat = { x = 2 y = 0 }
 					L_Inf_Bat = { x = 2 y = 1 }
-
 					Arty_Bat = { x = 3 y = 0 }
 					Arty_Bat = { x = 3 y = 1 }
 				}
-
-				regimental_support = {
-					L_Recce_Comp = { x = 0 y = 0 }
-
-					L_Recce_Comp = { x = 1 y = 0 }
-
-					L_Recce_Comp = { x = 2 y = 0 }
-				}
-
 				support = {
-					L_Engi_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 0 y = 0 }
+					L_Engi_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}

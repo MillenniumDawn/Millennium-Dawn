@@ -166,7 +166,6 @@ resistance_90 = {
 				set_temp_variable = { allowed_party_democratic = 1 }
 				set_temp_variable = { allowed_party_fascism = 1 }
 				set_temp_variable = { allowed_party_communism = 1 }
-				set_temp_variable = { allowed_party_nationalist = 1 }
 
 				# do not change ideology of occupier country
 				var:occupier_country = {
@@ -204,70 +203,35 @@ resistance_90 = {
 									has_government = neutrality
 									check_variable = { allowed_party_neutrality = 0 }
 								}
-								AND = {
-									has_government = nationalist
-									check_variable = { allowed_party_nationalist = 0 }
-								}
 							}
 						}
 
-						# Party slot range of the chosen outlook, as in seed_ruling_party_if_unset
 						random_list = {
 							allowed_party_democratic = {
-								set_temp_variable = { rp_lo = 0 }
-								set_temp_variable = { rp_hi = 4 }
-							}
-							allowed_party_communism = {
-								set_temp_variable = { rp_lo = 4 }
-								set_temp_variable = { rp_hi = 10 }
+								set_popularities = {
+									democratic = 100
+								}
+								set_politics = { ruling_party = democratic elections_allowed = yes }
 							}
 							allowed_party_fascism = {
-								set_temp_variable = { rp_lo = 10 }
-								set_temp_variable = { rp_hi = 12 }
+								set_popularities = {
+									fascism = 100
+								}
+								set_politics = { ruling_party = fascism elections_allowed = no }
+							}
+							allowed_party_communism = {
+								set_popularities = {
+									communism = 100
+								}
+								set_politics = { ruling_party = communism elections_allowed = no }
 							}
 							allowed_party_neutrality = {
-								set_temp_variable = { rp_lo = 12 }
-								set_temp_variable = { rp_hi = 20 }
-							}
-							allowed_party_nationalist = {
-								set_temp_variable = { rp_lo = 20 }
-								set_temp_variable = { rp_hi = 24 }
+								set_popularities = {
+									neutrality = 100
+								}
+								set_politics = { ruling_party = neutrality elections_allowed = no }
 							}
 						}
-
-						# Seat that outlook's largest party and back it, as effect_puppet_match_ruling_party_to_overlord does
-						set_temp_variable = { rp_best = -1 }
-						set_temp_variable = { rul_party_temp = rp_lo }
-						for_loop_effect = {
-							start = rp_lo
-							end = rp_hi
-							value = rp_i
-							if = {
-								limit = { check_variable = { party_pop_array^rp_i > rp_best } }
-								set_temp_variable = { rp_best = party_pop_array^rp_i }
-								set_temp_variable = { rul_party_temp = rp_i }
-							}
-						}
-						set_temp_variable = { disable_elections = 1 }
-						if = {
-							limit = { check_variable = { rp_lo = 0 } }
-							set_temp_variable = { disable_elections = 0 }
-						}
-						change_ruling_party_effect = yes
-
-						set_temp_variable = { resistance_outlook_swing = 0.60 }
-						set_temp_variable = { outlook_party_index = rul_party_temp }
-						set_outlook_from_party_index = yes
-						set_outlook_popularity_from_id = yes
-						subtract_from_temp_variable = { resistance_outlook_swing = outlook_popularity }
-						clamp_temp_variable = { var = resistance_outlook_swing min = 0 }
-						set_temp_variable = { outlook_popularity_change = resistance_outlook_swing }
-						change_outlook_popularity = yes
-
-						set_temp_variable = { party_index = rul_party_temp }
-						set_temp_variable = { party_popularity_increase = 0.40 }
-						change_relative_party_popularity = yes
-						recalculate_party = yes
 					}
 				}
 			}

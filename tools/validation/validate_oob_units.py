@@ -31,38 +31,25 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from equipment_module_slots import (
-    ADVISORY_KINDS,
-    KIND_LABELS,
     CreatedVariants,
     Finding,
     _iter_blocks,
     _iter_named_blocks,
-    _named_type_tokens,
     _scalar,
     blank_comments,
     build_equipment_index,
-    check_created_variant_references,
     check_created_variant_upgrades,
     check_created_variants,
     created_variant_spans,
-    entity_names_from_text,
     parse_variant_names,
-    role_strip_frames,
-)
-from equipment_variant_context import (
-    VariantContext,
-    script_nodes,
-    starting_techs,
 )
 from shared_utils import (
     get_staged_files,
     label_before_brace,
-    list_files,
     normalize_path_separators,
     read_text_under,
     validation_config,
 )
-from validate_equipment_variants import equipment_unlocks
 from validator_common import (
     BaseValidator,
     Issue,
@@ -71,7 +58,27 @@ from validator_common import (
     strip_comments,
 )
 
-_VANILLA_ENTITIES = os.path.join(os.path.dirname(__file__), "vanilla_entities.txt")
+_VARIANT_SLOT_CATEGORIES = {
+    "unknown_hull": "SHIP VARIANT: unknown hull type",
+    "unknown_slot": "SHIP VARIANT: slot not on hull",
+    "unknown_module": "SHIP VARIANT: unknown module reference",
+    "category_mismatch": "SHIP VARIANT: module category not allowed in slot",
+    "missing_required_module": "SHIP VARIANT: required slot left empty",
+    "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "SHIP VARIANT: unsupported upgrade",
+}
+
+_EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
+    "unknown_hull": "EQUIPMENT VARIANT: unknown hull type",
+    "unknown_slot": "EQUIPMENT VARIANT: slot not on hull",
+    "unknown_module": "EQUIPMENT VARIANT: unknown module reference",
+    "category_mismatch": "EQUIPMENT VARIANT: module category not allowed in slot",
+    "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
+    "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
+    "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
+}
 
 
 class VariantDefinition(NamedTuple):
@@ -80,7 +87,6 @@ class VariantDefinition(NamedTuple):
     file: str
     line: int
     alternatives: Dict[int, int]
-    allow_without_tech: bool = False
 
 
 _VariantIdentity = Tuple[Optional[str], Optional[str], str]
@@ -188,9 +194,6 @@ _TEMPLATE_LOCKED_ROW = "template-locked-row"
 _TEMPLATE_MISPLACED_SUPPORT = "template-misplaced-support"
 # A sub-unit that sets the flag to no cannot sit in that template block.
 _SUPPORT_BLOCK_FLAGS = {"support": "divisional", "regimental_support": "regimental"}
-_TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT = "template-incompatible-regimental-support"
-_ATTACH_GROUPS_KEY = "allowed_battalion_groups"
-_GROUP_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
@@ -253,14 +256,6 @@ _TEMPLATE_SOURCE_ROOTS = (
     "common/resistance_compliance_modifiers/",
     "common/special_projects/",
     "common/ideas/",
-)
-_AIRBASE_OVER_CAPACITY = "airbase-over-capacity"
-_AIR_OOB_PATTERN = "history/units/*.txt"
-_STATE_HISTORY_PATTERN = "history/states/*.txt"
-# Vanilla NDefines.NBuildings value: planes per air base level.
-_VANILLA_AIRBASE_CAPACITY_MULT = 200
-_AIRBASE_CAPACITY_RE = re.compile(
-    r"^\s*NDefines\.NBuildings\.AIRBASE_CAPACITY_MULT\s*=\s*(\d+)", re.M
 )
 
 
@@ -407,27 +402,12 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
     return equipment
 
 
-# Plain tuples: a class would pickle into the disk cache under the running module name.
-_UnitFlags = Tuple[
-    Set[str], Dict[str, Set[str]], Dict[str, str], Dict[str, FrozenSet[str]]
-]
-_UnitSource = Tuple[
-    Set[str],
-    Set[str],
-    Set[str],
-    Dict[str, Set[str]],
-    Dict[str, str],
-    Dict[str, FrozenSet[str]],
-]
-
-
-def _parse_unit_flags_file(content: str) -> _UnitFlags:
-    """Parachutable names, per-block barred names, groups, and attach groups."""
+def _parse_unit_flags_file(content: str) -> Tuple[Set[str], Dict[str, Set[str]]]:
+    """Sub-unit names declared `can_be_parachuted = yes` in one units file, and
+    per support block the names whose flag bars them from it."""
     text = blank_comments(content)
     parachutable = set()
     barred: Dict[str, Set[str]] = {block: set() for block in _SUPPORT_BLOCK_FLAGS}
-    groups: Dict[str, str] = {}
-    attach_groups: Dict[str, FrozenSet[str]] = {}
     for lo, hi in _iter_named_blocks(text, 0, len(text), "sub_units"):
         for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
             if _scalar(text, blo, bhi, "can_be_parachuted") == "yes":
@@ -435,18 +415,12 @@ def _parse_unit_flags_file(content: str) -> _UnitFlags:
             for block, flag in _SUPPORT_BLOCK_FLAGS.items():
                 if _scalar(text, blo, bhi, flag) == "no":
                     barred[block].add(name)
-            group = _scalar(text, blo, bhi, "group")
-            if group:
-                groups[name] = group
-            for key, llo, lhi, _ in _iter_blocks(text, blo, bhi):
-                if key == _ATTACH_GROUPS_KEY:
-                    attach_groups[name] = frozenset(
-                        _GROUP_TOKEN_RE.findall(text, llo, lhi)
-                    )
-    return parachutable, barred, groups, attach_groups
+    return parachutable, barred
 
 
-def _parse_canonical_unit_source(content: str) -> _UnitSource:
+def _parse_canonical_unit_source(
+    content: str,
+) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
     return (
         _parse_canonical_units_file(content),
         _parse_equipment_names_file(content),
@@ -454,15 +428,19 @@ def _parse_canonical_unit_source(content: str) -> _UnitSource:
     )
 
 
-def _parse_canonical_unit_sources(mod_path: str) -> List[_UnitSource]:
-    """Parse each unit source once for the canonical, paradrop, support
-    placement, and battalion group unit indexes."""
+def _parse_canonical_unit_sources(
+    mod_path: str,
+) -> List[Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]]:
+    """Parse each unit source once for the canonical, paradrop, and support
+    placement unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
-    for filepath in list_files(units_dir, recursive=False):
+    for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
         content = _read_text(filepath, mod_path)
 
-        def compute(source_content: str = content) -> _UnitSource:
+        def compute(
+            source_content: str = content,
+        ) -> Tuple[Set[str], Set[str], Set[str], Dict[str, Set[str]]]:
             return _parse_canonical_unit_source(source_content)
 
         parsed.append(
@@ -569,8 +547,8 @@ def _extract_division_group_keys(content: str) -> Set[str]:
 def parse_division_group_keys(mod_path: str) -> Set[str]:
     """Return the set of all division_names_group keys defined across the mod."""
     keys = set()
-    names_dir = os.path.join(mod_path, "common", "units", "names_divisions")
-    for filepath in list_files(names_dir, recursive=False):
+    pattern = os.path.join(mod_path, "common", "units", "names_divisions", "*.txt")
+    for filepath in glob.iglob(pattern):
         content = _read_text(filepath, mod_path)
         if not content:
             continue
@@ -595,7 +573,7 @@ def _extract_division_names_group_refs(content: str) -> List[Tuple[str, int]]:
 
 
 def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
-    """Extract unit names from regiments, regimental_support, and support blocks.
+    """Extract unit names from regiments = { ... } and support = { ... } blocks.
 
     Handles two patterns:
       - unit_name = { x = 0 y = 0 }   (OOB / scripted effect style)
@@ -611,7 +589,7 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
         line = lines[i].strip()
 
         if not in_block:
-            if re.match(r"^(regiments|regimental_support|support)\s*=\s*\{", line):
+            if re.match(r"^(regiments|support)\s*=\s*\{", line):
                 in_block = True
                 brace_depth = 1
                 i += 1
@@ -620,7 +598,7 @@ def _extract_unit_refs_from_blocks(content: str) -> Set[str]:
             continue
 
         # Depth at the START of this line — unit references live at depth 1
-        # (direct children of the matched block). Deeper lines
+        # (direct children of the regiments/support block). Deeper lines
         # (e.g. position `x = 0` / `y = 0` inside `unit_name = { ... }`) must
         # be skipped.
         depth_at_line_start = brace_depth
@@ -1016,7 +994,6 @@ def _parse_variant_definitions(
             rel,
             variants.text.count("\n", 0, lo) + 1,
             _variant_alternatives(nodes, chain),
-            _field_value(variants.text, lo, hi, "allow_without_tech") == "yes",
         )
         definitions.setdefault((tag, equipment, name), []).append(record)
     return definitions
@@ -1348,12 +1325,9 @@ def _create_unit_variant_refs(text: str) -> List[Tuple[int, int, str, str, str]]
 
 
 def _literal_named_variant_refs(
-    content: str, default_producer: Optional[str] = None
+    content: str,
 ) -> List[Tuple[int, int, str, str, str]]:
     """Find literal air-wing, division, stockpile, and production consumers.
-
-    A stockpile with no ``producer`` is reported under *default_producer*, and
-    left out without one.
 
     AI ``target_variant`` blocks are intentionally outside this history-reference
     scan: their display names describe a design specification.
@@ -1399,8 +1373,6 @@ def _literal_named_variant_refs(
         if not named:
             continue
         producer = _literal_producer(masked, blo, bhi, ("producer",))
-        if _field_match(masked, blo, bhi, "producer") is None:
-            producer = default_producer
         equipment = _field_value(masked, blo, bhi, "type")
         ref = _named_variant_reference(
             named[2], named[1], producer, equipment, named[0]
@@ -1435,40 +1407,6 @@ def _literal_named_variant_refs(
                 refs.append(ref)
 
     return refs
-
-
-_ANY_CREATOR = "ANY"
-
-
-def check_any_creator_stockpiles(
-    content: str, registry: VariantRegistry, default_names: Set[str]
-) -> List[Finding]:
-    """A stockpile with no ``producer`` applies to all creators (effect docs), so
-    some country must create its named variant for that type."""
-    findings = []
-    for _, line, producer, equipment, name in _literal_named_variant_refs(
-        content, _ANY_CREATOR
-    ):
-        if producer != _ANY_CREATOR or name in default_names:
-            continue
-        types = {
-            etype for (_, etype, created) in registry.by_identity if created == name
-        }
-        if equipment in types or None in types:
-            continue
-        findings.append(
-            Finding(
-                line,
-                "wrong_variant_type" if types else "unknown_named_variant",
-                f'Stockpile with no producer names "{name}" for {equipment}, '
-                + (
-                    f"but it exists only for {', '.join(sorted(types))}"
-                    if types
-                    else "which no country creates"
-                ),
-            )
-        )
-    return findings
 
 
 def check_named_variant_refs(
@@ -1607,175 +1545,6 @@ def check_named_variant_refs(
                     f"and equipment type {equipment}",
                 )
             )
-    return findings
-
-
-_START_OOB_KEYS = {"oob", "set_oob", "set_naval_oob", "set_air_oob"}
-
-
-def _oob_ship_refs(content: str) -> List[Tuple[int, int, str, str, str]]:
-    """The ship references `check_oob_variant_refs` reads, as named references."""
-    text = blank_comments(content)
-    refs = []
-    for m in _OOB_EQUIPMENT_RE.finditer(text):
-        version = _VERSION_NAME_RE.search(m.group(2))
-        who = _OOB_CREATOR_RE.search(m.group(2)) or _OOB_OWNER_RE.search(m.group(2))
-        if version and who and len(who.group(1)) == 3:
-            refs.append(
-                (
-                    m.start(),
-                    text.count("\n", 0, m.start()) + 1,
-                    who.group(1).upper(),
-                    m.group(1),
-                    version.group(1),
-                )
-            )
-    return refs
-
-
-def _start_oob_names(histories: Iterable[list], start: Tuple[int, ...]) -> Set[str]:
-    """OOB files country histories load by the start date, in any branch."""
-    names: Set[str] = set()
-    pending = [node for nodes in histories for node in nodes]
-    while pending:
-        node = pending.pop()
-        if _HISTORY_DATE_RE.fullmatch(node.key) and (
-            tuple(int(part) for part in node.key.split("."))[:3] > tuple(start)[:3]
-        ):
-            continue
-        if node.key in _START_OOB_KEYS and node.value:
-            names.add(node.value.strip('"'))
-        pending.extend(node.children)
-    return names
-
-
-def _variant_creators(
-    registry: VariantRegistry, producer: str, equipment: str, name: str
-) -> List[Tuple[Optional[str], VariantDefinition]]:
-    """(creator, definition) pairs a consumer can use. A ``None`` creator is a
-    definition whose country is not known statically."""
-    if producer == _ANY_CREATOR:
-        return [
-            (tag, record)
-            for (tag, etype, created), records in registry.by_identity.items()
-            if etype == equipment and created == name
-            for record in records
-        ]
-    return [
-        (tag, record)
-        for tag in (producer, None)
-        for record in registry.by_identity.get((tag, equipment, name), [])
-    ]
-
-
-def check_start_variant_consumers(
-    sources: Iterable[Tuple[str, str]],
-    registry: VariantRegistry,
-    context: VariantContext,
-    unlocks: Dict[str, Set[str]],
-    hull_sources: Dict[str, str],
-) -> List[Issue]:
-    """Flag start-state consumers whose variant does not exist at the start.
-
-    A scripted-effect definition may run from history, so it proves nothing
-    either way. Starting research counts every branch that could grant the
-    technology, so a finding means no reading of the history grants it. A
-    stockpile with no ``producer`` passes if any creator satisfies it.
-    """
-    findings = []
-    start = tuple(context.start)[:3]
-    possible: Dict[Tuple[Any, ...], Set[str]] = {}
-
-    def has_tech(
-        tag: str, record: VariantDefinition, consumer: Dict, techs: Set
-    ) -> bool:
-        dlcs = {
-            dlc: enabled
-            for dlc, enabled in {**record.context, **consumer}.items()
-            if not dlc.startswith("__")
-        }
-        key = (tag, tuple(sorted(dlcs.items())))
-        if key not in possible:
-            possible[key] = starting_techs(
-                context.histories.get(tag, []),
-                dlcs,
-                start,
-                effects=context.effects,
-                possible=True,
-            )
-        return bool(techs & possible[key])
-
-    for rel, content in sources:
-        text = blank_comments(content)
-        nodes = _build_block_nodes(text)
-        for offset, line, producer, equipment, name in [
-            *_literal_named_variant_refs(content, _ANY_CREATOR),
-            *_oob_ship_refs(content),
-        ]:
-            consumer = _dlc_context_at_offset(text, nodes, offset, rel)
-            date = _history_date_at_offset(text, nodes, offset, rel)
-            if (
-                consumer is None
-                or _UNCERTAIN_DLC_CONTEXT in consumer
-                or (date is not None and date > start)
-            ):
-                continue
-            records = [
-                (tag, record)
-                for tag, record in _variant_creators(
-                    registry, producer, equipment, name
-                )
-                if _dlc_contexts_compatible(record.context, consumer)
-            ]
-            at_start = [
-                (tag, record)
-                for tag, record in records
-                if tag is not None
-                and record.file.startswith("history/countries/")
-                and (record.date is None or record.date <= start)
-            ]
-            if not at_start:
-                if records and not any(
-                    record.file.startswith(
-                        ("common/scripted_effects/", "history/countries/")
-                    )
-                    for _, record in records
-                ):
-                    who = "any creator" if producer == _ANY_CREATOR else producer
-                    first = records[0][1]
-                    findings.append(
-                        Issue(
-                            severity=Severity.ERROR,
-                            category="OOB VARIANT: created only after the start",
-                            message=f'"{name}" ({equipment}) from {who} is used '
-                            f"at the start but only {first.file}:{first.line} "
-                            "creates it",
-                            file=rel,
-                            line=line,
-                        )
-                    )
-                continue
-            techs = unlocks.get(equipment) or unlocks.get(
-                hull_sources.get(equipment, ""), set()
-            )
-            if not techs or any(record.allow_without_tech for _, record in at_start):
-                continue
-            if not any(
-                has_tech(tag, record, consumer, techs) for tag, record in at_start
-            ):
-                creators = " or ".join(sorted({tag for tag, _ in at_start}))
-                first = at_start[0][1]
-                findings.append(
-                    Issue(
-                        severity=Severity.WARNING,
-                        category="OOB VARIANT: hull technology missing at the start",
-                        message=f'"{name}" ({equipment}) waits for '
-                        f"{' or '.join(sorted(techs))}, which {creators} does not "
-                        f"have at the start; defined at {first.file}:{first.line}",
-                        file=rel,
-                        line=line,
-                    )
-                )
     return findings
 
 
@@ -2488,11 +2257,6 @@ def read_template_limits(mod_path: str) -> TemplateLimits:
 _TemplateGrids = Dict[str, Dict[int, Dict[int, int]]]
 
 
-def _slot_coords(text: str, node: Dict) -> Optional[Tuple[int, int]]:
-    pos = dict(_SLOT_COORD_RE.findall(text[node["start"] : node["end"]]))
-    return (int(pos["x"]), int(pos["y"])) if len(pos) == 2 else None
-
-
 def _read_template_grids(
     text: str, nodes: List[Dict], node: Dict, limits: TemplateLimits
 ) -> Tuple[_TemplateGrids, List[Tuple[int, str]]]:
@@ -2508,12 +2272,12 @@ def _read_template_grids(
         for unit_idx in nodes[block_idx]["children"]:
             unit = nodes[unit_idx]
             line = unit["line"]
-            coords = _slot_coords(text, unit)
-            if coords is None:
+            pos = dict(_SLOT_COORD_RE.findall(text[unit["start"] : unit["end"]]))
+            if len(pos) != 2:
                 label = unit["label"]
                 errors.append((line, f"{block} unit '{label}' has no readable x and y"))
                 continue
-            x, y = coords
+            x, y = int(pos["x"]), int(pos["y"])
             slot = f"{block} slot x = {x} y = {y}"
             rows = grids.setdefault(block, {}).setdefault(x, {})
             if y in rows:
@@ -2653,71 +2417,10 @@ def check_misplaced_support(
     return findings
 
 
-def check_regimental_support_groups(
-    text: str,
-    nodes: List[Dict],
-    battalion_groups: Dict[str, str],
-    attach_groups: Dict[str, FrozenSet[str]],
-) -> List[Tuple[int, str, str]]:
-    """``(line, category, message)`` per regimental_support company whose
-    regiments column has no battalion in its ``allowed_battalion_groups``.
-
-    Only a column whose every battalion has a known group can prove the
-    attachment wrong; one allowed battalion is enough to pass.
-    """
-    findings = []
-    for node in nodes:
-        if node["label"] != "division_template":
-            continue
-        columns: Dict[int, List[str]] = {}
-        companies = []
-        for block_idx in node["children"]:
-            block = nodes[block_idx]["label"]
-            for idx in nodes[block_idx]["children"]:
-                coords = _slot_coords(text, nodes[idx])
-                if coords is None:
-                    continue
-                x = coords[0]
-                if block == "regiments":
-                    columns.setdefault(x, []).append(nodes[idx]["label"])
-                elif block == "regimental_support":
-                    companies.append((idx, x))
-        name = _top_level_value(text, node["start"] + 1, node["end"], "name")
-        for idx, x in companies:
-            company = nodes[idx]["label"]
-            allowed = attach_groups.get(company)
-            battalions = columns.get(x, [])
-            # An empty column is template-slot's; an ungrouped battalion proves nothing.
-            if not allowed or not battalions:
-                continue
-            if any(battalion not in battalion_groups for battalion in battalions):
-                continue
-            groups = sorted({battalion_groups[battalion] for battalion in battalions})
-            if allowed.isdisjoint(groups):
-                findings.append(
-                    (
-                        nodes[idx]["line"],
-                        _TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT,
-                        f"template '{name}' (line {node['line']}): "
-                        f"regimental_support '{company}' is limited to battalion "
-                        f"groups {', '.join(sorted(allowed))}, but "
-                        f"regiments column x = {x} has only {', '.join(groups)}",
-                    )
-                )
-    return findings
-
-
 def _check_template_slots_file(
-    args: Tuple[
-        str,
-        str,
-        TemplateLimits,
-        Dict[str, Set[str]],
-        Dict[str, str],
-        Dict[str, FrozenSet[str]],
-    ],
+    args: Tuple[str, str, TemplateLimits, Dict[str, Set[str]]],
 ) -> List[Issue]:
-    filepath, mod_path, limits, barred, battalion_groups, attach_groups = args
+    filepath, mod_path, limits, barred = args
     raw = _read_text(filepath, mod_path)
     # Most candidates only name a template inside a create_unit string.
     if not _DIVISION_TEMPLATE_DEF_TEXT_RE.search(raw):
@@ -2743,111 +2446,7 @@ def _check_template_slots_file(
         )
         for line, category, message in check_template_slots(text, nodes, rel, limits)
         + check_misplaced_support(text, nodes, barred)
-        + check_regimental_support_groups(text, nodes, battalion_groups, attach_groups)
     ]
-
-
-def read_airbase_capacity(mod_path: str) -> Dict[str, Tuple[int, int]]:
-    """State id -> (air_base level, plane capacity) from undated state history."""
-    per_level = _VANILLA_AIRBASE_CAPACITY_MULT
-    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
-        for value in _AIRBASE_CAPACITY_RE.findall(_read_text(path, mod_path)):
-            per_level = int(value)
-    capacity: Dict[str, Tuple[int, int]] = {}
-    for path in _limit_sources(mod_path, _STATE_HISTORY_PATTERN):
-        text = strip_comments(_read_text(path, mod_path))
-        nodes = _build_block_nodes(text)
-        for state in nodes:
-            if state["parent"] != -1 or state["label"] != "state":
-                continue
-            state_id = _top_level_value(text, state["start"] + 1, state["end"], "id")
-            if not state_id:
-                continue
-            level = 0
-            for history in state["children"]:
-                if nodes[history]["label"] != "history":
-                    continue
-                for idx in nodes[history]["children"]:
-                    buildings = nodes[idx]
-                    if buildings["label"] != "buildings":
-                        continue
-                    value = _top_level_value(
-                        text, buildings["start"] + 1, buildings["end"], "air_base"
-                    )
-                    if value and value.isdigit():
-                        level = int(value)
-            capacity[state_id] = (level, level * per_level)
-    return capacity
-
-
-def read_air_wing_placements(mod_path: str) -> Dict[str, List[Tuple[str, int, int]]]:
-    """OOB file -> (state id, line, planes) for each state its air_wings use."""
-    placements: Dict[str, List[Tuple[str, int, int]]] = {}
-    for path in _limit_sources(mod_path, _AIR_OOB_PATTERN):
-        raw = _read_text(path, mod_path)
-        if "air_wings" not in raw:
-            continue
-        text = strip_comments(raw)
-        nodes = _build_block_nodes(text)
-        rows = []
-        for wings in nodes:
-            if wings["parent"] != -1 or wings["label"] != "air_wings":
-                continue
-            for idx in wings["children"]:
-                state = nodes[idx]
-                # Carrier wings are keyed by a quoted ship name, not a state id.
-                if not (state["label"] or "").isdigit():
-                    continue
-                planes = 0
-                for wing in state["children"]:
-                    amount = _top_level_value(
-                        text, nodes[wing]["start"] + 1, nodes[wing]["end"], "amount"
-                    )
-                    if amount and amount.isdigit():
-                        planes += int(amount)
-                rows.append((state["label"], state["line"], planes))
-        if rows:
-            rel = normalize_path_separators(os.path.relpath(path, mod_path))
-            placements[rel] = rows
-    return placements
-
-
-def check_airbase_capacity(
-    placements: Dict[str, List[Tuple[str, int, int]]],
-    capacity: Dict[str, Tuple[int, int]],
-) -> List[Issue]:
-    """One finding per OOB file and state whose starting planes, summed over
-    every country based there, exceed the state's air base capacity."""
-    planes: Dict[str, int] = {}
-    tags: Dict[str, Set[str]] = {}
-    for rel, rows in placements.items():
-        for state_id, _line, count in rows:
-            planes[state_id] = planes.get(state_id, 0) + count
-            tags.setdefault(state_id, set()).add(os.path.basename(rel)[:3])
-    issues = []
-    for rel, rows in sorted(placements.items()):
-        tag = os.path.basename(rel)[:3]
-        reported: Set[str] = set()
-        for state_id, line, _count in rows:
-            level, limit = capacity.get(state_id, (0, 0))
-            if planes[state_id] <= limit or state_id in reported:
-                continue
-            reported.add(state_id)
-            others = sorted(tags[state_id] - {tag})
-            shared = f" (shared with {', '.join(others)})" if others else ""
-            issues.append(
-                Issue(
-                    severity=Severity.WARNING,
-                    category=_AIRBASE_OVER_CAPACITY,
-                    message=(
-                        f"state {state_id} starts with {planes[state_id]} planes"
-                        f"{shared}, but air_base {level} holds {limit}"
-                    ),
-                    file=rel,
-                    line=line,
-                )
-            )
-    return issues
 
 
 def _read_division_template_entries(
@@ -3621,8 +3220,6 @@ class Validator(BaseValidator):
         self.canonical_lower = {}
         self.parachutable = set()
         self.barred_support: Dict[str, Set[str]] = {}
-        self.battalion_groups: Dict[str, str] = {}
-        self.attach_groups: Dict[str, FrozenSet[str]] = {}
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
         self._variant_sources_by_scope: Dict[
@@ -3635,20 +3232,10 @@ class Validator(BaseValidator):
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
         self.canonical = {name for sub_units, *_ in unit_sources for name in sub_units}
-        self.parachutable = {name for _, _, para, *_ in unit_sources for name in para}
+        self.parachutable = {name for _, _, para, _ in unit_sources for name in para}
         self.barred_support = {
-            block: {name for *_, barred, _, _ in unit_sources for name in barred[block]}
+            block: {name for *_, barred in unit_sources for name in barred[block]}
             for block in _SUPPORT_BLOCK_FLAGS
-        }
-        self.battalion_groups = {
-            name: group
-            for *_, groups, _ in unit_sources
-            for name, group in groups.items()
-        }
-        self.attach_groups = {
-            name: allowed
-            for *_, attach in unit_sources
-            for name, allowed in attach.items()
         }
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
@@ -3895,33 +3482,21 @@ class Validator(BaseValidator):
             "equipment_hull_index", lambda: build_equipment_index(units_dir)
         )
 
-        name_groups, entities, frames = self.cached(
-            "variant_reference_data", self._variant_reference_data
-        )
         results = []
         for rel, variants in variant_files:
-            findings = (
-                check_created_variants(variants, index)
-                + check_created_variant_upgrades(variants, index)
-                + check_created_variant_references(
-                    variants,
-                    index,
-                    name_groups,
-                    entities,
-                    frames,
-                    variant_tag_from_path(rel),
-                )
-            )
+            findings = check_created_variants(
+                variants, index
+            ) + check_created_variant_upgrades(variants, index)
             for f in findings:
-                prefix = "SHIP" if f.hull in index.ship_hulls else "EQUIPMENT"
+                labels = (
+                    _VARIANT_SLOT_CATEGORIES
+                    if f.hull in index.ship_hulls
+                    else _EQUIPMENT_VARIANT_SLOT_CATEGORIES
+                )
                 results.append(
                     Issue(
-                        severity=(
-                            Severity.WARNING
-                            if f.kind in ADVISORY_KINDS
-                            else Severity.ERROR
-                        ),
-                        category=f"{prefix} VARIANT: {KIND_LABELS[f.kind]}",
+                        severity=Severity.ERROR,
+                        category=labels[f.kind],
                         message=f.message,
                         file=rel,
                         line=f.line,
@@ -3932,120 +3507,6 @@ class Validator(BaseValidator):
             results,
             "✓ All created variants match their hull slot rules",
             "Created variant modules invalid for their hull slot:",
-        )
-
-    def _variant_reference_data(self):
-        """Name groups, entity names (None without entity files), and role strips."""
-        name_groups = {}
-        for filepath in self._collect_files(
-            ["common/units/names_ships/*.txt"], ignore_staged=True
-        ):
-            text = blank_comments(_read_text(filepath, self.mod_path))
-            for group, lo, hi, _ in _iter_blocks(text, 0, len(text)):
-                name_groups[group] = _named_type_tokens(text, lo, hi, "for_countries")
-        entities = None
-        if os.path.isdir(os.path.join(self.mod_path, "gfx", "entities")):
-            entities = set()
-            for root in ("entities", "models"):
-                for extension in ("asset", "gfx"):
-                    for filepath in list_files(
-                        os.path.join(self.mod_path, "gfx", root), (f"*.{extension}",)
-                    ):
-                        raw = _read_text(filepath, self.mod_path)
-                        entities |= disk_cache.per_file_cached_by_content(
-                            self.mod_path,
-                            "oob_units.entity_names",
-                            filepath,
-                            raw,
-                            partial(entity_names_from_text, raw),
-                        )
-            with open(_VANILLA_ENTITIES, encoding="utf-8") as handle:
-                entities.update(
-                    line.strip()
-                    for line in handle
-                    if line.strip() and not line.startswith("#")
-                )
-        frames = role_strip_frames(
-            _read_text(filepath, self.mod_path)
-            for filepath in self._collect_files(["interface/*.gfx"], ignore_staged=True)
-        )
-        return name_groups, entities, frames
-
-    def validate_start_variants(self):
-        """Check variants a start OOB or country history consumes exist at start.
-
-        The engine defers a variant until its type is researched unless it sets
-        `allow_without_tech`, and event or decision variants come later still, so
-        the bookmark loads equipment that does not exist yet. Cross-file, so it
-        runs on full scans only.
-        """
-        if self.staged_only:
-            return
-        self._log_section("Checking variants consumed at the game start...")
-        context = VariantContext()
-        for filepath in self._collect_files(
-            [
-                "history/countries/*.txt",
-                "common/bookmarks/*.txt",
-                "common/scripted_effects/*.txt",
-            ],
-            ignore_staged=True,
-        ):
-            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
-            context.documents[rel] = script_nodes(_read_text(filepath, self.mod_path))
-        context.index()
-        if not context.start:
-            self.log("  No bookmark start date — skipping")
-            return
-
-        unlocks: Dict[str, Set[str]] = {}
-        for filepath in self._collect_files(
-            ["common/technologies/**/*.txt"], ignore_staged=True
-        ):
-            for equipment, techs in equipment_unlocks(
-                _read_text(filepath, self.mod_path)
-            ).items():
-                unlocks.setdefault(equipment, set()).update(techs)
-        units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
-        hull_sources = (
-            self.cached(
-                "equipment_hull_index", lambda: build_equipment_index(units_dir)
-            ).hull_sources
-            if os.path.isdir(units_dir)
-            else {}
-        )
-
-        consumers = [
-            rel for rel in context.documents if rel.startswith("history/countries/")
-        ]
-        consumers.extend(
-            f"history/units/{name}.txt"
-            for name in sorted(
-                _start_oob_names(
-                    (
-                        nodes
-                        for rel, nodes in context.documents.items()
-                        if rel.startswith("history/countries/")
-                    ),
-                    context.start,
-                )
-            )
-        )
-        results = check_start_variant_consumers(
-            (
-                (rel, _read_text(os.path.join(self.mod_path, rel), self.mod_path))
-                for rel in consumers
-                if os.path.isfile(os.path.join(self.mod_path, rel))
-            ),
-            self._get_variant_registry(),
-            context,
-            unlocks,
-            hull_sources,
-        )
-        self._report(
-            results,
-            "✓ Variants consumed at the game start exist then",
-            "Variants consumed at the game start that do not exist yet:",
         )
 
     def validate_oob_variant_references(self):
@@ -4175,7 +3636,6 @@ class Validator(BaseValidator):
                     )
 
         if need_named_variants:
-            default_model_names = set(default_equipment_names.values())
             for filepath in named_files:
                 content = _read_text(filepath, self.mod_path)
                 if not any(
@@ -4205,18 +3665,6 @@ class Validator(BaseValidator):
                                 if finding.kind == "unknown_named_variant"
                                 else Severity.ERROR
                             ),
-                            category=_VARIANT_REF_CATEGORIES[finding.kind],
-                            message=finding.message,
-                            file=rel,
-                            line=finding.line,
-                        )
-                    )
-                for finding in check_any_creator_stockpiles(
-                    content, variant_registry, default_model_names
-                ):
-                    results.append(
-                        Issue(
-                            severity=Severity.WARNING,
                             category=_VARIANT_REF_CATEGORIES[finding.kind],
                             message=finding.message,
                             file=rel,
@@ -4432,7 +3880,7 @@ class Validator(BaseValidator):
 
     def validate_template_slots(self):
         """Flag division_template layouts the designer hides, keeps locked, or
-        drops units from, and regimental support on a column it does not fit."""
+        drops units from."""
         self._log_section("Checking division template slot layout...")
 
         files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
@@ -4450,17 +3898,7 @@ class Validator(BaseValidator):
         )
         results = self._pool_flat_map(
             _check_template_slots_file,
-            [
-                (
-                    f,
-                    self.mod_path,
-                    limits,
-                    self.barred_support,
-                    self.battalion_groups,
-                    self.attach_groups,
-                )
-                for f in files
-            ],
+            [(f, self.mod_path, limits, self.barred_support) for f in files],
             chunksize=20,
         )
 
@@ -4488,54 +3926,6 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category=_TEMPLATE_MISPLACED_SUPPORT,
         )
-        self._report(
-            [
-                issue
-                for issue in results
-                if issue.category == _TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT
-            ],
-            "✓ Every regimental support company fits its regiments column",
-            "Regimental support companies on a column with no allowed battalion group:",
-            severity=Severity.WARNING,
-            category=_TEMPLATE_INCOMPATIBLE_REGIMENTAL_SUPPORT,
-        )
-
-    def validate_airbase_capacity(self):
-        """Flag starting air wings that overfill a state's air bases."""
-        self._log_section("Checking starting air base capacity...")
-
-        checked = {
-            normalize_path_separators(os.path.relpath(path, self.mod_path))
-            for path in self._collect_files([_AIR_OOB_PATTERN])
-        }
-        if not checked:
-            return
-        # Totals cover every OOB, so a staged file still sees shared bases.
-        placements = disk_cache.aggregate_cached(
-            self.mod_path,
-            "oob_units.air_wing_placements",
-            self._collect_files([_AIR_OOB_PATTERN], ignore_staged=True),
-            lambda: read_air_wing_placements(self.mod_path),
-        )
-        capacity = disk_cache.aggregate_cached(
-            self.mod_path,
-            "oob_units.airbase_capacity",
-            self._collect_files(
-                [_DEFINES_PATTERN, _STATE_HISTORY_PATTERN], ignore_staged=True
-            ),
-            lambda: read_airbase_capacity(self.mod_path),
-        )
-        self._report(
-            [
-                issue
-                for issue in check_airbase_capacity(placements, capacity)
-                if issue.file in checked
-            ],
-            "✓ All starting air wings fit their air bases",
-            "Starting air wings over air base capacity:",
-            severity=Severity.WARNING,
-            category=_AIRBASE_OVER_CAPACITY,
-        )
 
     def run_validations(self):
         self._build_canonical_units()
@@ -4546,12 +3936,10 @@ class Validator(BaseValidator):
         self.validate_created_variant_modules()
         self.validate_duplicate_variant_creations()
         self.validate_oob_variant_references()
-        self.validate_start_variants()
         self.validate_load_oob_references()
         self.validate_created_units()
         self.validate_airborne_templates()
         self.validate_template_slots()
-        self.validate_airbase_capacity()
 
 
 def _add_extra_args(parser):

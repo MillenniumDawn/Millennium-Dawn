@@ -25,10 +25,10 @@ slot, set in `history/countries/<TAG>*.txt`.
 | 3    | `socialism`                  | `democratic`  | Social Democrats              |
 | 4    | `communist_state`            | `communism`   | Communists                    |
 | 5    | `anarchist_communism`        | `communism`   | Left-Wing Radicals            |
-| 6    | `reactionary`                | `communism`   | Reactionaries                 |
+| 6    | `Conservative`               | `communism`   | Reactionaries                 |
 | 7    | `Autocracy`                  | `communism`   | Autocrats                     |
-| 8    | `moderate_shiite`            | `communism`   | Moderate Shiite Revolutionary |
-| 9    | `hardline_shiite`            | `communism`   | Hardline Shiite Revolutionary |
+| 8    | `Mod_Vilayat_e_Faqih`        | `communism`   | Moderate Shiite Revolutionary |
+| 9    | `Vilayat_e_Faqih`            | `communism`   | Hardline Shiite Revolutionary |
 | 10   | `Kingdom`                    | `fascism`     | Pro-Establishment Salafism    |
 | 11   | `Caliphate`                  | `fascism`     | Salafi Jihadism               |
 | 12   | `Neutral_Muslim_Brotherhood` | `neutrality`  | Moderate Islamists            |

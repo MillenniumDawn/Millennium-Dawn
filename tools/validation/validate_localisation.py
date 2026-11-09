@@ -6,6 +6,7 @@ adapted for Millennium Dawn with multiprocessing.
 """
 
 import functools
+import glob
 import logging
 import os
 import re
@@ -20,7 +21,6 @@ from linting.fix_loc_yaml import check_line
 from shared_utils import (
     extract_block_from_text,
     iter_statements,
-    list_files,
     read_text_strict,
     strip_comments,
     validation_config,
@@ -498,12 +498,12 @@ def _parse_loc_keys_from_text(text: str) -> List[Tuple[str, str]]:
 def get_all_loc_keys(
     mod_path: str, lowercase: bool = False
 ) -> Tuple[Dict[str, str], List[str]]:
-    filepath = str(Path(mod_path) / "localisation" / "english")
+    filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     loc_dict: Dict[str, str] = {}
     duplicated_keys: List[str] = []
     namespace = f"loc.keys.lc={'1' if lowercase else '0'}"
 
-    for filename in list_files(filepath, ("*.yml",)):
+    for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
             filename, lowercase=lowercase, strip_comments_flag=True
         )
@@ -1163,9 +1163,9 @@ def _scan_shared_txt_file(args: Tuple[str, str, bool, bool]) -> Tuple:
 
 def _get_skipped_loc_keys(mod_path: str) -> set:
     """Get all loc keys defined in yml files matching EXTRA_SKIP_PATTERNS."""
-    filepath = str(Path(mod_path) / "localisation" / "english")
+    filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     keys = set()
-    for filename in list_files(filepath, ("*.yml",)):
+    for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         if not _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
@@ -1187,10 +1187,10 @@ def _get_skipped_loc_keys(mod_path: str) -> set:
 
 def _get_scripted_loc_keys(mod_path: str) -> set:
     """Get all keys defined via 'defined_text { name = KEY }' in scripted localisation."""
-    loc_dir = str(Path(mod_path) / "common" / "scripted_localisation")
+    loc_dir = str(Path(mod_path) / "common" / "scripted_localisation") + "/"
     keys = set()
     pattern = r"^\tname\s*=\s*(\S+)"
-    for filename in list_files(loc_dir):
+    for filename in glob.iglob(loc_dir + "**/*.txt", recursive=True):
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
         )

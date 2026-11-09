@@ -19,19 +19,14 @@ from shared.suite import (
     dds_stub,
     decision_factory,
     decisions_results_for,
-    event_block,
     issue_rows,
     write_tree,
 )
 from shared_utils import run_validator_main
 from sprite_index import SpriteSizeIndex
-from validate_events import CostLookups, EventPayments, costly_scripted_effects
+from validate_events import costly_scripted_effects
 
-_OPT_IN_CHECKS = {
-    "validate_missing_icons",
-    "validate_unannounced_categories",
-    "validate_naming_style",
-}
+_OPT_IN_CHECKS = {"validate_missing_icons", "validate_unannounced_categories"}
 
 
 def _flat(*parts, token="dec_one"):
@@ -96,18 +91,6 @@ _BANKRUPTCY_WEIGHT = (
     "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0 "
     "has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
 )
-_DEFICIT_WEIGHT = (
-    "\tai_will_do = {\n\t\tbase = 10\n\t\tmodifier = { factor = 0.5 "
-    "ai_has_high_deficit = yes }\n\t}\n"
-)
-_UNNEEDED_BANKRUPTCY = [
-    (
-        "dec_one - ai_will_do lowers the weight on bankruptcy, but the decision has"
-        " no money or political power cost",
-        "X.txt",
-        0,
-    )
-]
 _ZERO_BASE_ADD = (
     "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { add = 5 has_war = yes }\n\t}\n"
 )
@@ -627,106 +610,6 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [],
         ),
     },
-    "validate_unneeded_treasury_guard": {
-        "free decision": (
-            [_flat(_effect(_GAIN), _BANKRUPTCY_WEIGHT)],
-            _UNNEEDED_BANKRUPTCY,
-        ),
-        "treasury charge": ([_flat(_PAID, _BANKRUPTCY_WEIGHT)], []),
-        "scripted charge": (
-            [_flat(_effect("\t\tpay_the_bill = yes\n"), _BANKRUPTCY_WEIGHT)],
-            [],
-        ),
-        "charge back to ROOT from a state scope": (
-            [
-                _flat(
-                    _effect(
-                        "\t\trandom_owned_state = { ROOT = { pay_the_bill = yes } }\n"
-                    ),
-                    _BANKRUPTCY_WEIGHT,
-                )
-            ],
-            [],
-        ),
-        "bankruptcy check on a political power price": (
-            [_flat("\tcost = 25\n", _effect(_GAIN), _BANKRUPTCY_WEIGHT)],
-            [],
-        ),
-        "deficit check on a political power price": (
-            [_flat("\tcost = 25\n", _effect(_GAIN), _DEFICIT_WEIGHT)],
-            [
-                (
-                    "dec_one - ai_will_do lowers the weight on high deficit, but the"
-                    " decision has no money cost",
-                    "X.txt",
-                    0,
-                )
-            ],
-        ),
-        "money modifier while active": (
-            [
-                _flat(
-                    "\tdays_remove = 30\n",
-                    "\tmodifier = { social_cost_multiplier_modifier = 0.1 }\n",
-                    _effect(_GAIN),
-                    _DEFICIT_WEIGHT,
-                )
-            ],
-            [],
-        ),
-        "cost-cutting modifier while active": (
-            [
-                _flat(
-                    "\tdays_remove = 30\n",
-                    "\tmodifier = { social_cost_multiplier_modifier = -0.1 }\n",
-                    _effect(_GAIN),
-                    _DEFICIT_WEIGHT,
-                )
-            ],
-            [
-                (
-                    "dec_one - ai_will_do lowers the weight on high deficit, but the"
-                    " decision has no money cost",
-                    "X.txt",
-                    0,
-                )
-            ],
-        ),
-        "charge to the target": (
-            [_flat(_effect("\t\tFROM = { pay_the_bill = yes }\n"), _BANKRUPTCY_WEIGHT)],
-            _UNNEEDED_BANKRUPTCY,
-        ),
-        "charge to a tag that may be the owner": (
-            [_flat(_effect("\t\tGER = { pay_the_bill = yes }\n"), _BANKRUPTCY_WEIGHT)],
-            [],
-        ),
-        "treasury custom cost": (
-            [_flat(_TREASURY_GATE, _effect(_GAIN), _DEFICIT_WEIGHT)],
-            [],
-        ),
-        "remove_effect charge": (
-            [_flat("\tdays_remove = 30\n", _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
-            [],
-        ),
-        "selectable mission's timeout charge": (
-            [_flat(_SELECTABLE, _PAID_ON_REMOVE, _BANKRUPTCY_WEIGHT)],
-            [],
-        ),
-        "plain mission": ([_flat(_MISSION, _BANKRUPTCY_WEIGHT)], []),
-        "AI never takes it": (
-            [
-                _flat(
-                    "\tai_will_do = {\n\t\tbase = 0\n\t\tmodifier = { factor = 0"
-                    " has_active_mission = bankruptcy_incoming_collapse }\n\t}\n"
-                )
-            ],
-            [],
-        ),
-        "player only": (
-            [_flat(_BANKRUPTCY_WEIGHT, "\tavailable = { is_ai = no }\n")],
-            [],
-        ),
-    },
     "validate_custom_cost_charged": {
         "charged when taken": ([_flat(_TREASURY_GATE, _PAID)], []),
         "scripted charge": (
@@ -1104,12 +987,7 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
     ],
 )
 def test_decision_check(monkeypatch, check, decisions, expected):
-    monkeypatch.setattr(
-        V, "load_cost_lookups", lambda validator: CostLookups(_EFFECTS, {}, set(), {})
-    )
-    monkeypatch.setattr(
-        V, "load_event_payments", lambda validator, lookups: EventPayments({}, {})
-    )
+    monkeypatch.setattr(V, "load_cost_lookups", lambda validator: (_EFFECTS, {}))
     monkeypatch.setattr(V.Validator, "_get_ai_only_by_category", lambda self: {"md_ai"})
     monkeypatch.setattr(V.Validator, "_get_scripted_triggers", lambda self: _TRIGGERS)
     monkeypatch.setattr(
@@ -1139,138 +1017,6 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
             "decision-ai-will-do-ignores-cost",
             "dec_bill - ai_will_do ignores the treasury cost",
             "common/decisions/Bills.txt",
-            2,
-        )
-    ]
-
-
-@pytest.mark.parametrize(
-    "law_change, flagged", [("raise_spending", False), ("cut_spending", True)]
-)
-def test_unneeded_guard_follows_the_event_a_decision_fires(
-    tmp_path, law_change, flagged
-):
-    validator = _mod(
-        tmp_path,
-        {
-            "common/ideas/laws.txt": "ideas = { bureaucracy = {\n"
-            "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
-            "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
-            "} }\n",
-            "common/scripted_effects/00_laws.txt": "raise_spending = {\n"
-            "\tswap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }\n}\n"
-            "cut_spending = {\n"
-            "\tswap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }\n}\n",
-            "events/laws.txt": event_block(
-                "law.1", f"option = {{ {law_change} = yes }}"
-            ),
-            "common/decisions/Laws.txt": "laws_category = {\n"
-            + _nested(
-                "dec_law",
-                _block(
-                    "complete_effect",
-                    "if = { limit = { has_war = no } country_event = law.1 }",
-                )
-                + _block(
-                    "ai_will_do",
-                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
-                ),
-            )
-            + "}\n",
-        },
-    )
-
-    validator.validate_unneeded_treasury_guard()
-
-    assert bool(issue_rows(validator)) is flagged
-
-
-def test_idea_on_add_can_justify_decision_guard(tmp_path):
-    validator = _mod(
-        tmp_path,
-        {
-            "common/ideas/ideas.txt": (
-                "ideas = { country = { TAG_callback = "
-                "{ on_add = { subtract_from_variable = { var = treasury value = cost } } } } }"
-            ),
-            "common/decisions/Reform.txt": "reform_category = {\n"
-            + _nested(
-                "dec_reform",
-                _block("complete_effect", "add_ideas = TAG_callback")
-                + _block(
-                    "ai_will_do",
-                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
-                ),
-            )
-            + "}\n",
-        },
-    )
-    validator.validate_unneeded_treasury_guard()
-    assert issue_rows(validator) == []
-
-
-def test_unneeded_guard_on_immediately_readded_idea(tmp_path):
-    validator = _mod(
-        tmp_path,
-        {
-            "common/ideas/ideas.txt": (
-                "ideas = { country = { TAG_reform = "
-                "{ modifier = { personnel_cost_multiplier_modifier = 0.1 } } } }"
-            ),
-            "common/decisions/Reform.txt": "reform_category = {\n"
-            + _nested(
-                "dec_reform",
-                _block(
-                    "complete_effect",
-                    "if = { limit = { has_idea = TAG_reform } add_ideas = TAG_reform }",
-                )
-                + _block(
-                    "ai_will_do",
-                    "base = 1\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
-                ),
-            )
-            + "}\n",
-        },
-    )
-    validator.validate_unneeded_treasury_guard()
-    assert len(issue_rows(validator)) == 1
-
-
-def test_unneeded_treasury_guard_shares_the_cost_pass(tmp_path, monkeypatch):
-    walks = []
-    walk = V.ai_weight_cost_checks
-    monkeypatch.setattr(
-        V,
-        "ai_weight_cost_checks",
-        lambda weights: walks.append(weights) or walk(weights),
-    )
-    validator = _mod(
-        tmp_path,
-        {
-            "common/decisions/Free.txt": "free_category = {\n"
-            + _nested(
-                "dec_free",
-                _block("complete_effect", "add_political_power = 10")
-                + _block(
-                    "ai_will_do",
-                    "base = 10\nmodifier = { factor = 0.5 ai_has_high_deficit = yes }",
-                ),
-            )
-            + "}\n",
-        },
-    )
-
-    validator.validate_ai_will_do_ignores_cost()
-    validator.validate_unneeded_treasury_guard()
-
-    assert len(walks) == 1
-    assert {i.severity for i in validator._issues} == {V.Severity.WARNING}
-    assert issue_rows(validator) == [
-        (
-            "decision-unneeded-treasury-guard",
-            "dec_free - ai_will_do lowers the weight on high deficit, but the"
-            " decision has no money cost",
-            "common/decisions/Free.txt",
             2,
         )
     ]
@@ -2748,10 +2494,7 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
 
 @pytest.mark.parametrize(
     "flags",
-    (
-        {},
-        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
-    ),
+    ({}, {"missing_icons": True, "unannounced_categories": True}),
     ids=("default", "opt-in checks"),
 )
 def test_run_validations_calls_every_check(tmp_path, monkeypatch, flags):
@@ -2768,8 +2511,6 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
-    assert parser.parse_args(["--naming-style"]).naming_style
-    assert not parser.parse_args([]).naming_style
 
 
 _ICON = "\t\ticon = icon\n"
@@ -3116,98 +2857,6 @@ def test_timer_without_remove_effect(tmp_path, token, body, reported):
     )
     assert issue_rows(validator) == [expected] * reported
     assert validator.warnings_found == reported
-
-
-_DECISIONS_FILE = "common/decisions/ser.txt"
-_VOJ_PREFIX_ROW = (
-    "decision-prefix-owner",
-    "Decision VOJ_integrate has the VOJ prefix but allowed admits SER",
-    _DECISIONS_FILE,
-    2,
-)
-# case: (category, category allowed, decision, decision allowed, rows as
-#        (category, message, file, line))
-_NAMING_CASES = {
-    "lowercase ids": ("SER_main", "", "SER_invite_bosnia", "original_tag = SER", []),
-    "uppercase decision": (
-        "SER_main",
-        "",
-        "SER_The_Confederacy",
-        "original_tag = SER",
-        [
-            (
-                "decision-id-case",
-                "Decision SER_The_Confederacy is not lowercase after its prefix",
-                _DECISIONS_FILE,
-                2,
-            )
-        ],
-    ),
-    "uppercase category": (
-        "SER_Political",
-        "",
-        "SER_invite_bosnia",
-        "",
-        [
-            (
-                "decision-id-case",
-                "Category SER_Political is not lowercase after its prefix",
-                "common/decisions/categories/cats.txt",
-                1,
-            )
-        ],
-    ),
-    "decision allowed names another country": (
-        "SER_main",
-        "",
-        "VOJ_integrate",
-        "original_tag = SER",
-        [_VOJ_PREFIX_ROW],
-    ),
-    "category lock names another country": (
-        "SER_main",
-        "original_tag = SER",
-        "VOJ_integrate",
-        "",
-        [_VOJ_PREFIX_ROW],
-    ),
-    "prefix that is not a country": (
-        "SER_main",
-        "",
-        "SUB_annex",
-        "original_tag = SER",
-        [],
-    ),
-}
-
-
-@pytest.mark.parametrize(
-    ("category", "category_allowed", "token", "allowed", "rows"),
-    _NAMING_CASES.values(),
-    ids=_NAMING_CASES,
-)
-def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows):
-    category_body = (
-        f"\tallowed = {{ {category_allowed} }}\n" if category_allowed else ""
-    )
-    validator = _mod(
-        tmp_path,
-        {
-            "common/country_tags/00_countries.txt": 'SER = "countries/Serbia.txt"\n'
-            'VOJ = "countries/Vojvodina.txt"\n',
-            "common/decisions/categories/cats.txt": f"{category} = {{\n"
-            + category_body
-            + "}\n",
-            _DECISIONS_FILE: f"{category} = {{\n"
-            + _nested(token, _block("allowed", allowed) if allowed else "")
-            + "}\n",
-        },
-    )
-
-    validator.validate_naming_style()
-
-    assert issue_rows(validator) == rows
-    assert validator.warnings_found == len(rows)
 
 
 def test_unused_category_check_skips_bop_and_always_visible_categories(tmp_path):

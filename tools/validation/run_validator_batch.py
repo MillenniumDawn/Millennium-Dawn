@@ -49,11 +49,11 @@ def _count_severity(json_path: str, severity: str) -> int:
     try:
         with open(json_path, "r", encoding="utf-8") as handle:
             issues = json.load(handle)
-        if not isinstance(issues, list) or not all(
-            isinstance(issue, dict) for issue in issues
-        ):
-            return 0
-        return sum(1 for issue in issues if issue.get("severity") == severity)
+        return sum(
+            1
+            for issue in issues
+            if isinstance(issue, dict) and issue.get("severity") == severity
+        )
     except (OSError, json.JSONDecodeError):
         return 0
 
@@ -63,12 +63,12 @@ def classify_result(spec, returncode: int, output_dir: str) -> Tuple[str, str]:
     log_path, json_path = _output_paths(output_dir, spec.name)
     has_log = os.path.isfile(log_path)
     has_json = os.path.isfile(json_path)
+    if returncode != 0 and not has_json:
+        return "crash", f"exit code {returncode}"
     if returncode != 0:
         errors = _count_severity(json_path, "error")
         warnings = _count_severity(json_path, "warning")
-        if spec.strict and returncode == 1 and has_log and has_json and errors:
-            return "findings", f"{errors} error(s), {warnings} warning(s)"
-        return "crash", f"exit code {returncode}"
+        return "findings", f"{errors} error(s), {warnings} warning(s)"
     if not has_log or not has_json:
         missing = []
         if not has_log:
@@ -110,18 +110,6 @@ def _write_manifest(
 def run_batch(specs: List[ValidatorSpec], args) -> int:
     mod_path = os.path.abspath(args.path)
     os.makedirs(args.output_dir, exist_ok=True)
-    for path in [os.path.join(args.output_dir, MANIFEST_NAME)] + [
-        path
-        for spec in specs
-        for path in (
-            *_output_paths(args.output_dir, spec.name),
-            os.path.join(args.output_dir, f"{RESULT_PREFIX}{spec.name}.analysis.jsonl"),
-        )
-    ]:
-        try:
-            os.unlink(path)
-        except FileNotFoundError:
-            pass
     max_parallel, inner_workers = split_cpu_budget(len(specs))
     if running_in_ci():
         # A runner owns its cores. Capping the product at the core count left

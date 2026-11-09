@@ -12,6 +12,7 @@ from shared.suite import read_text as _read
 from shared.suite import write_text as _write
 from standardize_history import (
     HistoryStandardizer,
+    _detect_mod_root,
     _load_idea_classification,
     _load_modifier_variables,
     _variable_name,
@@ -73,19 +74,7 @@ _INFLUENCE_HISTORY = (
     "capital = 652\n\n2000.1.1 = {\n"
     "\tset_country_flag = TST_alpha\n" + _INFLUENCE_SETUP + "}\n"
 )
-_POLITICS_HISTORY = (
-    "capital = 652\n\n2000.1.1 = {\n"
-    "\tstart_politics_input = yes\n"
-    "\tset_variable = { party_pop_array^0 = 0.5 }\n"
-    "\tset_variable = { ruling_party = 0 }\n"
-    "\tstartup_politics = yes\n"
-    "}\n"
-)
-_IDEMPOTENT_CASES = {
-    "repeated statements": _HISTORY,
-    "influence": _INFLUENCE_HISTORY,
-    "politics": _POLITICS_HISTORY,
-}
+_IDEMPOTENT_CASES = {"repeated statements": _HISTORY, "influence": _INFLUENCE_HISTORY}
 
 
 def test_influence_setup_order_preserved(tmp_path):
@@ -93,19 +82,6 @@ def test_influence_setup_order_preserved(tmp_path):
     _write(src, _INFLUENCE_HISTORY)
     out = _standardize(src)
     assert _INFLUENCE_SETUP in out
-
-
-def test_startup_politics_runs_after_the_party_setup_it_reads(tmp_path):
-    # Issue #6247: it was hoisted above party_pop_array and ruling_party.
-    src = tmp_path / "hist.txt"
-    _write(src, _POLITICS_HISTORY)
-    out = _standardize(src)
-    assert (
-        out.index("start_politics_input")
-        < out.index("party_pop_array^0")
-        < out.index("ruling_party = 0")
-        < out.index("startup_politics")
-    )
 
 
 @pytest.mark.parametrize("history", _IDEMPOTENT_CASES.values(), ids=_IDEMPOTENT_CASES)
@@ -124,6 +100,12 @@ def test_quoted_string_and_comments_preserved(tmp_path):
     assert 'name = "Mark Rutte"' in out
     assert "# keep this standalone comment" in out
     assert "# inline note" in out
+
+
+def test_mod_root_search_gives_up_after_twelve_levels(tmp_path):
+    deep = tmp_path.joinpath(*[f"level{i}" for i in range(13)])
+    deep.mkdir(parents=True)
+    assert _detect_mod_root(str(deep)) is None
 
 
 _ODD_IDEAS = """top_double = { name = top_double } }
@@ -153,7 +135,7 @@ def test_loaders_skip_unreadable_entries_and_survive_stray_braces(tmp_path):
     modifiers = root / "common" / "dynamic_modifiers"
     ideas.mkdir(parents=True)
     modifiers.mkdir(parents=True)
-    # A directory named like a script is not a file to read.
+    # `*.txt` globs match directories, which cannot be read.
     (ideas / "a_directory.txt").mkdir()
     (modifiers / "a_directory.txt").mkdir()
     _write(ideas / "AA_law_odd.txt", _ODD_IDEAS)
@@ -283,12 +265,8 @@ def _mod(tmp_path):
 
 
 def test_mod_root_is_found_from_a_country_file(tmp_path):
-    history._IDEA_CACHE.clear()
-    history._MODIFIER_CACHE.clear()
     root, country = _mod(tmp_path)
-    standardizer = HistoryStandardizer()
-    standardizer._ensure_classification(str(country))
-    assert standardizer._classify_idea("law_income") == "law"
+    assert _detect_mod_root(str(country)) == str(root)
     assert history._iter_file_lines(str(root / "missing.txt")) is None
 
 
@@ -346,3 +324,4 @@ def test_without_a_mod_root_classification_is_empty(tmp_path):
         set(),
         {},
     )
+    assert _detect_mod_root(str(tmp_path)) is None

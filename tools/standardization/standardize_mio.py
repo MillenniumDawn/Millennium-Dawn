@@ -8,7 +8,7 @@ Millennium Dawn coding standards.
 
 from typing import Any, Dict, List
 
-from common_utils import BaseStandardizer, opener_with_comment, run_standardizer
+from common_utils import BaseStandardizer, run_standardizer
 from shared_utils import collapse_or_compact, compact_block, extract_block
 
 
@@ -51,7 +51,6 @@ class MIOStandardizer(BaseStandardizer):
 
         first_line = block_lines[0].strip()
         props["organization_id"] = first_line.split("=", 1)[0].strip()
-        props["opener"] = opener_with_comment(props["organization_id"], first_line)
 
         i = 1
 
@@ -138,7 +137,7 @@ class MIOStandardizer(BaseStandardizer):
 
     def format_block(self, props: Dict[str, Any]) -> List[str]:
         """Format MIO according to Millennium Dawn standard"""
-        lines = [props["opener"]]
+        lines = [f"{props['organization_id']} = {{"]
 
         if props["allowed"]:
             lines.extend(self._format_allowed_blocks(props["allowed"]))

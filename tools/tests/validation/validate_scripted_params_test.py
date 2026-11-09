@@ -80,14 +80,7 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     out = []
     for cat, msg, _line in results:
         if (
-            cat
-            in (
-                "missing-required-param",
-                "identical-influence-params",
-                "influence-gain-over-cap",
-                "influence-gain-under-floor",
-                "influence-self-default",
-            )
+            cat in ("missing-required-param", "identical-influence-params")
             and "change_influence_percentage" in msg
         ):
             out.append((cat, msg))
@@ -612,206 +605,6 @@ def _tag_body(param, value):
 
 def _invalid_tags(issues):
     return [m for c, m in issues if c == "invalid-influence-tag"]
-
-
-_ADD_TO_GAIN = "        add_to_temp_variable = { percent_change = 0.1 }\n"
-_FILLER = "        add_political_power = 1\n" * 20
-
-
-# gain: (percent_change set, statements between the set and the call, gain findings)
-@pytest.mark.parametrize(
-    "value,between,expected",
-    [
-        ("20", "", []),
-        ("20.5", "", ["influence-gain-over-cap"]),
-        ("\n20.5\n", "", ["influence-gain-over-cap"]),
-        ("0.25", "", []),
-        ("0.2", "", ["influence-gain-under-floor"]),
-        ("\n0.2\n", "", ["influence-gain-under-floor"]),
-        ("-50", "", []),
-        ("global.percent_change_value", "", []),
-        pytest.param("5", _ADD_TO_GAIN, [], id="add_to is not the base"),
-        pytest.param(
-            "25",
-            "        add_to_temp_variable = {\n            percent_change = 1\n        }\n",
-            ["influence-gain-over-cap"],
-            id="a multi-line add_to leaves the set base",
-        ),
-        pytest.param("25", _FILLER, [], id="set beyond the 20-line window"),
-    ],
-)
-def test_influence_gain_outside_range_is_flagged(
-    tmp_path, cip_contract, value, between, expected
-):
-    """Literal base gains above 20 or below 0.25 are flagged; losses and variables are not."""
-    body = (
-        "shared_focus = {\n"
-        "    completion_reward = {\n"
-        f"        set_temp_variable = {{ percent_change = {value} }}\n"
-        f"{between}"
-        "        change_influence_percentage = yes\n"
-        "    }\n"
-        "}\n"
-    )
-    issues = _issues(body, cip_contract, tmp_path)
-    assert [c for c, _ in issues if c.startswith("influence-gain-")] == expected
-
-
-def _partner_call(wrapper):
-    return (
-        "        CHI = {\n"
-        f"            {wrapper} = {{\n"
-        "                change_influence_percentage = yes\n"
-        "            }\n"
-        "        }\n"
-    )
-
-
-@pytest.mark.parametrize(
-    "partner_block,flagged",
-    [
-        pytest.param(
-            "        CHI = {\n"
-            "            set_temp_variable = { percent_change = 1 }\n"
-            "            change_influence_percentage = yes\n"
-            "        }\n",
-            True,
-            id="partner block reuses the partner as influencer",
-        ),
-        pytest.param(
-            "        CHI = {\n"
-            "            if = { limit = { has_war = no }\n"
-            "                change_influence_percentage = yes\n"
-            "            }\n"
-            "        }\n",
-            True,
-            id="an if inside the partner block keeps its scope",
-        ),
-        pytest.param(
-            "        CHI = {\n"
-            "            set_temp_variable = { tag_index = ROOT.id }\n"
-            "            change_influence_percentage = yes\n"
-            "        }\n",
-            False,
-            id="influencer reset before the call",
-        ),
-        pytest.param(
-            "        CHI = {\n"
-            "            set_temp_variable = { influence_target = KOR.id }\n"
-            "            change_influence_percentage = yes\n"
-            "        }\n",
-            False,
-            id="explicit target",
-        ),
-        pytest.param(
-            "        CHI = {\n"
-            "            every_neighbor_country = {\n"
-            "                change_influence_percentage = yes\n"
-            "            }\n"
-            "        }\n",
-            False,
-            id="a scope change inside the partner block",
-        ),
-        pytest.param(_partner_call("else_if"), True, id="an else_if keeps its scope"),
-        pytest.param(
-            _partner_call("hidden_effect"), True, id="a hidden_effect keeps its scope"
-        ),
-        pytest.param(
-            _partner_call("effect_tooltip"),
-            True,
-            id="an effect_tooltip keeps its scope",
-        ),
-        pytest.param(
-            _partner_call("for_each_loop"), True, id="a for_each_loop keeps its scope"
-        ),
-        pytest.param(_partner_call("else"), True, id="an else keeps its scope"),
-        pytest.param(_partner_call("random"), True, id="a random keeps its scope"),
-        pytest.param(
-            _partner_call("for_loop_effect"),
-            True,
-            id="a for_loop_effect keeps its scope",
-        ),
-        pytest.param(
-            _partner_call("while_loop_effect"),
-            True,
-            id="a while_loop_effect keeps its scope",
-        ),
-        pytest.param(
-            "        CHI = {\n"
-            "            random_list = {\n"
-            "                50 = {\n"
-            "                    change_influence_percentage = yes\n"
-            "                }\n"
-            "            }\n"
-            "        }\n",
-            True,
-            id="a random_list weight block keeps its scope",
-        ),
-        pytest.param(
-            _partner_call("123"), False, id="a state block outside random_list"
-        ),
-    ],
-)
-def test_influence_target_defaulting_to_the_influencer_is_flagged(
-    tmp_path, cip_contract, partner_block, flagged
-):
-    body = (
-        "shared_focus = {\n"
-        "    completion_reward = {\n"
-        "        set_temp_variable = { percent_change = 2 }\n"
-        "        set_temp_variable = { tag_index = CHI.id }\n"
-        "        change_influence_percentage = yes\n"
-        f"{partner_block}"
-        "    }\n"
-        "}\n"
-    )
-    issues = _issues(body, cip_contract, tmp_path)
-    assert any(c == "influence-self-default" for c, _ in issues) is flagged
-
-
-def _gain_caller(value):
-    return (
-        "option = {\n"
-        f"\tset_temp_variable = {{ percent_change = {value} }}\n"
-        "\tchange_influence_percentage = yes\n"
-        "}\n"
-    )
-
-
-@pytest.mark.parametrize(
-    "caller,expected",
-    [
-        pytest.param(
-            "option = {\n"
-            "\tset_temp_variable = { percent_change = 2 }\n"
-            "\tset_temp_variable = { tag_index = CHI.id }\n"
-            "\tCHI = {\n"
-            "\t\tchange_influence_percentage = yes\n"
-            "\t}\n"
-            "}\n",
-            ("influence-self-default", vsp.Severity.ERROR, 5),
-            id="self-default",
-        ),
-        pytest.param(
-            _gain_caller("25"),
-            ("influence-gain-over-cap", vsp.Severity.WARNING, 3),
-            id="over cap",
-        ),
-        pytest.param(
-            _gain_caller("0.2"),
-            ("influence-gain-under-floor", vsp.Severity.WARNING, 3),
-            id="under floor",
-        ),
-    ],
-)
-def test_influence_checks_report_their_severity(tmp_path, caller, expected):
-    _write(tmp_path / "common" / "country_tags" / "00_countries.txt", 'CHI = "x"\n')
-    _write(tmp_path / "events" / "caller.txt", caller)
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    assert [
-        (issue.category, issue.severity, issue.line) for issue in validator._issues
-    ] == [expected]
 
 
 @pytest.mark.parametrize("value", ["CHI", "CHI.id", "USA", "USA.ID"])
@@ -1379,24 +1172,16 @@ def test_single_leaf_formatter_output_passes_the_call_rule(tmp_path, wrapper):
     )
 
 
-@pytest.mark.parametrize(
-    "assignment",
-    [
-        "set_temp_variable = {{ {name} = {value} }}",
-        "set_temp_variable = {{\n {name} = {value}\n}}",
-        "set_temp_variable = {{\n var = {name}\n value = {value}\n}}",
-    ],
-)
 def test_splitting_statements_preserves_influence_values_and_errors(
-    tmp_path, cip_contract, assignment
+    tmp_path, cip_contract
 ):
     statements = [
         "option = {",
-        assignment.format(name="percent_change", value="2.00"),
-        assignment.format(name="tag_index", value="USA"),
-        assignment.format(name="influence_target", value="USA"),
+        "set_temp_variable = { percent_change = 2.00 }",
+        "set_temp_variable = { tag_index = USA }",
+        "set_temp_variable = { influence_target = USA }",
         "change_influence_percentage = yes",
-        assignment.format(name="tag_index", value="ZZZ"),
+        "set_temp_variable = { tag_index = ZZZ }",
         "change_influence_percentage = yes",
         "}",
     ]

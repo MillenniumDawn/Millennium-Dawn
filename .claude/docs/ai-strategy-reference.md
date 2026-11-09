@@ -200,28 +200,6 @@ Zombie roles: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`.
 - `ai_will_do` (focuses, tech, decisions): the AI rolls a random number up to the value
   and picks the highest.
 - `ai_chance` (event options): proportional probability with a 1% floor.
-- Math in a weight block goes in `check_expr`. See "Math in weight blocks" in
-  `hoi4-data-structures.md`.
-
-## Intelligence (La Resistance)
-
-- Operations: `update_operation_ai` (`common/scripted_effects/99_operation_strat_effects.txt`)
-  runs weekly for AI countries with an agency. It holds one target and operation until
-  it ends or stalls. A stall times the target out for 180 days.
-  - To add an operation, give it a candidate block that copies its `operatives` and
-    `network_strength` from the operation file and its token, war, and resistance gates.
-  - Register its token in `common/synchronized_dynamic_tokens/MD_tokens.txt`.
-- Scorers: `common/scorers/country/` holds MD copies of vanilla's operation target,
-  mission, and decryption scorers. A file with the same name replaces vanilla's file.
-  Rivalries come from `antagonize`, `contain`, and `conquer` strategies, not tag checks.
-- Country operations: `TAG_operations_against_TAG` strategies use values 950 and 1000,
-  above the generic 900, and need more than 3 operatives so the generic pick keeps
-  enough.
-- Agency upgrades cost treasury, not factories. `ai_can_afford_agency_upgrade` paces
-  them. The `upgrade_intelligence_agency` strategy cancels the factory defines.
-- Occupation laws: each law adds weight only in the band of `resistance_target_without_law`
-  where it is the mildest law that keeps resistance under 0.5, the `resistance_50`
-  threshold. When a law's `resistance_target` changes, move its band to match.
 
 ## Pitfalls
 

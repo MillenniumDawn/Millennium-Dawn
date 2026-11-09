@@ -318,17 +318,10 @@ def test_configured_helper_change_invalidates_affected_namespace_only(
     source = tmp_path / "data.txt"
     source.write_text("hello", encoding="utf-8")
     disk_cache._FINGERPRINT_CACHE.clear()
-    calls = {"owner": 0, "other": 0}
-    other = next(
-        f"{prefix}.result"
-        for prefix, owner in sorted(disk_cache._VALIDATOR_NAMESPACES.items())
-        if owner != helper
-        and prefix != namespace.split(".")[0]
-        and helper not in disk_cache._HELPER_DEPENDENCIES.get(prefix, ())
-    )
+    calls = {"owner": 0, "events": 0}
 
     def run_both():
-        for each_namespace, key in ((namespace, "owner"), (other, "other")):
+        for each_namespace, key in ((namespace, "owner"), ("events.result", "events")):
             disk_cache.per_file_cached_by_content(
                 str(tmp_path),
                 each_namespace,
@@ -342,7 +335,7 @@ def test_configured_helper_change_invalidates_affected_namespace_only(
     disk_cache._FINGERPRINT_CACHE.clear()
     run_both()
 
-    assert calls == {"owner": 2, "other": 1}
+    assert calls == {"owner": 2, "events": 1}
 
 
 def test_per_file_cached_hits_on_unchanged_file(tmp_path):

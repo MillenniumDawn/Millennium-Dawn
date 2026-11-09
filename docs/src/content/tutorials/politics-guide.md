@@ -108,14 +108,14 @@ Each ideology group contains several subideologies, for a total of 24. Each coun
 
 **Communism (indices 4-9):**
 
-| Index | Subideology          | Description                              |
-| ----- | -------------------- | ---------------------------------------- |
-| 4     | Communist State      | Marxist-Leninist single-party states     |
-| 5     | Anarchist Communism  | Libertarian communist movements          |
-| 6     | Reactionary          | Reactionary left-wing parties            |
-| 7     | Autocracy (Emerging) | Authoritarian communist regimes          |
-| 8     | Moderate Shiite      | Moderate Shiite revolutionary governance |
-| 9     | Hardline Shiite      | Hardline Shiite revolutionary governance |
+| Index | Subideology              | Description                              |
+| ----- | ------------------------ | ---------------------------------------- |
+| 4     | Communist State          | Marxist-Leninist single-party states     |
+| 5     | Anarchist Communism      | Libertarian communist movements          |
+| 6     | Conservative (Emerging)  | Reactionary left-wing parties            |
+| 7     | Autocracy (Emerging)     | Authoritarian communist regimes          |
+| 8     | Moderate Vilayat-e Faqih | Moderate Shiite revolutionary governance |
+| 9     | Hardline Vilayat-e Faqih | Hardline Shiite revolutionary governance |
 
 **Fascism (indices 10-11):**
 
@@ -352,16 +352,16 @@ Socialists focus on domestic welfare, economic interventionism, and peaceful dip
 
 ### Conservatives
 
-**Available to:** Conservatism (1), Reactionary (6), Moderate Shiite (8), Neutral Muslim Brotherhood (12), Neutral Conservatism (14), National Populism (20)
+**Available to:** Conservatism (1), Conservative/Emerging (6), Moderate Vilayat-e Faqih (8), Neutral Muslim Brotherhood (12), Neutral Conservatism (14), National Populism (20)
 
 Conservatives focus on stability, national identity, and resistance to foreign influence. They are the most defensively oriented political ideology.
 
-| Power                | Effect                                                                                                                  |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Good Old Days**    | +15% foreign influence defense -- nostalgia and tradition make the population resistant to foreign ideological pressure |
-| **Stable Society**   | +15% stability                                                                                                          |
-| **Patriotism**       | +15% war support. For Moderate Shiite and Muslim Brotherhood parties, this is replaced with +15% compliance growth      |
-| **[Country] First!** | -15% foreign influence effectiveness -- domestic focus makes it harder to project your own ideology abroad              |
+| Power                | Effect                                                                                                                      |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| **Good Old Days**    | +15% foreign influence defense -- nostalgia and tradition make the population resistant to foreign ideological pressure     |
+| **Stable Society**   | +15% stability                                                                                                              |
+| **Patriotism**       | +15% war support. For Moderate Vilayat-e Faqih and Muslim Brotherhood parties, this is replaced with +15% compliance growth |
+| **[Country] First!** | -15% foreign influence effectiveness -- domestic focus makes it harder to project your own ideology abroad                  |
 
 ### Liberals
 
@@ -404,13 +404,13 @@ Monarchists concentrate power in a royal family, providing governance efficiency
 
 ### Fundamentalists
 
-**Available to:** Hardline Shiite (9), Caliphate (11)
+**Available to:** Hardline Vilayat-e Faqih (9), Caliphate (11)
 
 Fundamentalists are hardline religious governments that focus on ideological expansion, recruitment, and militant foreign policy, but at the cost of international isolation.
 
 | Power                                | Effect                                                                                                                |
 | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------- |
-| **Sharia Law**                       | +10% ideology drift toward the ruling ideology (communism drift for Hardline Shiite, fascism drift for Caliphate)     |
+| **Sharia Law**                       | +10% ideology drift toward the ruling ideology (communism drift for Vilayat-e Faqih, fascism drift for Caliphate)     |
 | **Foreign Fighters**                 | +300 weekly manpower -- religious recruitment draws fighters from abroad                                              |
 | **Nationalist Liberation Movements** | -10% send volunteers tension, -10% lend-lease tension, +2 volunteer size -- easier to support allied movements abroad |
 | **International Pariah**             | -50% minimum export -- international isolation restricts trade                                                        |
@@ -427,7 +427,7 @@ Regime change can occur through several mechanisms:
 
 - Fascist extremist civil war
 - Communist state extremist civil war
-- Hardline Shiite extremist civil war
+- Vilayat-e Faqih extremist civil war
 - Nationalist autocracy extremist civil war
 - Monarchist extremist civil war
 - Caliphate extremist civil war

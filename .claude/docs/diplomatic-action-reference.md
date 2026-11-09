@@ -117,18 +117,12 @@ ai_acceptance = {
 	condition_three = {
 		base = 0
 		modifier = {
-			set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
-			add = var:opinion_weight
+			check_opinion_calculation = yes
+			add = opinion_calculator
 		}
 	}
 }
 ```
-
-`ai_acceptance` runs once per offer, so a computed term is one math expression in a temp
-variable, added with `add = var:`. `ai_desire` is weighed for every candidate target, so
-keep temp writes out of it and use threshold steps (see "Math in weight blocks" in
-`hoi4-data-structures.md`). MD opinion runs from -300 to 300 (`MD_defines.lua`), so
-thresholds above 100 are reachable.
 
 ### Mirror rule
 
@@ -169,11 +163,6 @@ ai_desire = {
 	modifier = { factor = 0  ROOT = { has_war = yes } }
 }
 ```
-
-Do not weigh `has_political_power`. Political Power can go negative, and `cost` should
-stop the AI from sending an action it cannot pay for (not yet confirmed in game). Weigh a
-cost with
-`modifier = { factor = 0.25 ROOT = { has_active_mission = bankruptcy_incoming_collapse } }`.
 
 ## Common `selectable` checks
 

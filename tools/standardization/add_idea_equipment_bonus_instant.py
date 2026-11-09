@@ -1,6 +1,7 @@
 """Add instant = yes to equipment bonuses in idea files without reformatting them."""
 
 import argparse
+import glob
 import os
 import re
 import sys
@@ -9,12 +10,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "validation"))
 
 from equipment_module_slots import _iter_blocks, blank_comments
-from shared_utils import (
-    atomic_write_text,
-    find_matching_brace,
-    get_root_dir,
-    list_files,
-)
+from shared_utils import atomic_write_text, find_matching_brace
 from validate_ideas import _EQUIPMENT_BONUS_START, _INSTANT_YES
 
 _INSTANT_KEY = re.compile(r"\binstant\s*=")
@@ -50,8 +46,10 @@ def main() -> int:
     )
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
-    root = get_root_dir()
-    files = args.files or list_files(os.path.join(root, "common", "ideas"))
+    root = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", ".."))
+    files = args.files or sorted(
+        glob.iglob(os.path.join(root, "common", "ideas", "**", "*.txt"), recursive=True)
+    )
     changes = []
     ideas_dir = os.path.realpath(os.path.join(root, "common", "ideas"))
     for path in files:

@@ -93,9 +93,6 @@ nation without a custom file. They exclude covered nations with `blocked_for`.
   it needs. `validate_ai_equipment.py` checks this.
 - Shared files: `NATO_tank.txt`, `SOV_tank.txt` (SOV and BLR), `CHI_tank.txt`,
   `USA_tank.txt`. Most nation files cover the MBT only.
-- Naval templates used by more than one nation live in `zz_shared_<ships>.txt`. Add a
-  tag to a shared `available_for` list instead of copying a template. Give each tag
-  one template per role.
 
 | Role                        | Equipment                 | Used by                            |
 | --------------------------- | ------------------------- | ---------------------------------- |
@@ -132,10 +129,10 @@ it explicitly on every carrier sub-archetype.
 
 ## Naval
 
-- Goal files in `common/ai_navy/goals/` must define all 10 objective types per nation:
+- Goal files in `common/ai_navy/goals/` must define all 11 objective types per nation:
   `naval_invasion_support`, `naval_invasion_defense`, `coast_defense`,
   `convoy_protection`, `convoy_raiding`, `naval_dominance`, `naval_blockade`,
-  `mines_sweeping`, `mines_planting`, `training`. Add the tag
+  `mines_sweeping`, `mines_planting`, `training`, `strike_force_objective`. Add the tag
   to `blocked_for` on every entry in `goals_generic.txt`. A partial override leaves
   both the generic and the custom goal active.
 - Destroyers are two sub-units on the same equipment: `destroyer` (capital ship) and

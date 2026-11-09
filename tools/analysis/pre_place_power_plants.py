@@ -52,9 +52,9 @@ from estimate_gdp import (
 )
 from estimate_gdp import calculate_gdp as _calculate_gdp  # noqa: E402
 from estimate_gdp import finalize_gdp as _finalize_gdp
-from shared_utils import atomic_write_text, get_root_dir, read_text_strict
+from shared_utils import atomic_write_text, read_text_strict
 
-REPO_ROOT = get_root_dir()
+REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 
 # ─── Energy formula constants (mirror !_energy_effects.txt) ────────────────────
 ENERGY_USE_BALANCE_MULT = 1.25

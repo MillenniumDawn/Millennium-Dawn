@@ -16,6 +16,7 @@ from standardize_localisation import (
     LocalisationStandardizer,
     _build_index,
     _build_reference_tokens,
+    _detect_mod_root,
     _find_category,
     _format_output,
     _parse_loc_file,
@@ -138,7 +139,8 @@ def _mod_root(tmp_path):
 
 
 def test_directories_named_like_scripts_are_skipped(tmp_path):
-    # A directory named like a script is not a file to read.
+    # `*.txt` globs match directories too; an unreadable entry must be skipped,
+    # not abort the whole index build.
     root = _mod_root(tmp_path)
     focus = root / "common" / "national_focus"
     focus.mkdir()
@@ -183,6 +185,17 @@ def test_national_focus_section_omitted_when_a_tag_file_has_none():
     )
     assert "# National Focus" not in out
     assert ' other_key: "x"' in out
+
+
+def test_detect_mod_root_walks_up_and_gives_up(tmp_path):
+    root = _mod_root(tmp_path)
+    loc_dir = root / "localisation" / "english"
+    loc_dir.mkdir(parents=True)
+    loc_file = loc_dir / "MD_test_l_english.yml"
+    _write(loc_file, "l_english:\n")
+
+    assert _detect_mod_root(loc_file) == root
+    assert _detect_mod_root(tmp_path / "not_a_mod") is None
 
 
 def _loc_file(root):
@@ -306,6 +319,7 @@ def test_index_and_references_read_every_script_folder(tmp_path):
     assert "TST_decision" in index["Decisions"]
     assert "tst_events" in index["Events"]
     assert "TST_gui" in references
+    assert standardize_localisation._scan_dir(root / "missing", recursive=False) == []
 
 
 @pytest.mark.parametrize(

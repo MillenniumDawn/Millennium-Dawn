@@ -9,9 +9,10 @@ carries. `Collision` materials never render and carry empty slots by design.
 A slot absent from the material is not reported: vanilla ships helper shapes
 (`dummyShape` in the bomber meshes) that way.
 
-The CI workspace ships no meshes or textures, so this runs on commit.
+The CI workspace ships no gfx/models or gfx/entities, so this runs on commit.
 """
 
+import glob
 import os
 import re
 import struct
@@ -22,7 +23,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import find_hoi4_install, list_files
+from shared_utils import find_hoi4_install
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 SLOTS = {"diff": "texture_diffuse", "n": "texture_normal", "spec": "texture_specular"}
@@ -204,7 +205,7 @@ class Validator(BaseValidator):
             return
         meshes = {
             Path(p).relative_to(mod).as_posix().lower(): p
-            for p in list_files(mod / "gfx", ("*.mesh",))
+            for p in glob.glob(str(mod / "gfx" / "**" / "*.mesh"), recursive=True)
         }
         if not meshes:
             return
@@ -221,7 +222,10 @@ class Validator(BaseValidator):
 
         parsed: Dict[str, List[Material]] = {}
         entries = findings = 0
-        for gfx in list_files(mod / "gfx", ("*.gfx", "*.asset")):
+        for gfx in sorted(
+            glob.glob(str(mod / "gfx" / "**" / "*.gfx"), recursive=True)
+            + glob.glob(str(mod / "gfx" / "**" / "*.asset"), recursive=True)
+        ):
             rel_gfx = Path(gfx).relative_to(mod).as_posix()
             try:
                 with open(gfx, encoding="utf-8-sig") as fh:

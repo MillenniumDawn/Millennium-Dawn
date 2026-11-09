@@ -1,10 +1,9 @@
 """Tests for validate_influence_calls.
 
 `change_influence_percentage` defaults `influence_target` only when the temp
-variable is 0, and the effect restores the caller's value afterward. A loop call
-that does not set the target on every pass reuses whatever the caller left from
-before the loop or an earlier pass (issue #4592: Spain's Hispanidad focus stacked
-~20 passes onto Mexico, before the effect restored its inputs).
+variable is 0, and temp variables persist across `every_*` iterations, so a loop
+call without a per-iteration set locks onto the first iterated country
+(issue #4592: Spain's Hispanidad focus stacked ~20 passes onto Mexico).
 """
 
 import pytest
@@ -373,11 +372,8 @@ def test_only_target_assignments_cover_calls(assignment, expected):
     assert len(_findings(script)) == expected
 
 
-@pytest.mark.parametrize(
-    "wrapper,expected",
-    [("effect_tooltip", 1), ("limit", 1), ("if", 1), ("hidden_effect", 0)],
-)
-def test_nested_set_coverage_requires_an_executed_wrapper(wrapper, expected):
+@pytest.mark.parametrize("wrapper", ["effect_tooltip", "limit", "if"])
+def test_nested_set_does_not_cover_later_call(wrapper):
     script = (
         "every_country = { "
         + wrapper
@@ -385,4 +381,4 @@ def test_nested_set_coverage_requires_an_executed_wrapper(wrapper, expected):
         + LOOP_CALL
         + " }"
     )
-    assert len(_findings(script)) == expected
+    assert len(_findings(script)) == 1

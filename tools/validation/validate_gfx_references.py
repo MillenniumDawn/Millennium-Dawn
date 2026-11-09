@@ -26,7 +26,6 @@ from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
     line_for_offset,
-    list_files,
     strip_comments,
     strip_inline_comment,
 )
@@ -302,7 +301,7 @@ def _vanilla_gfx_files() -> List[str]:
     base = find_hoi4_install()
     if not base:
         return []
-    files = list_files(os.path.join(base, "interface"), ("*.gfx",))
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gfx"), recursive=True)
     for sub in ("dlc", "integrated_dlc"):
         files.extend(
             glob.glob(
@@ -318,7 +317,7 @@ def _vanilla_gui_files() -> List[str]:
     base = find_hoi4_install()
     if not base:
         return []
-    files = list_files(os.path.join(base, "interface"), ("*.gui",))
+    files = glob.glob(os.path.join(base, "interface", "**", "*.gui"), recursive=True)
     for sub in ("dlc", "integrated_dlc"):
         files.extend(
             glob.glob(
@@ -456,7 +455,21 @@ def _search_filter_names_from_text(raw: str) -> List[str]:
 
 def _iter_txt_files(root: str, *, recursive: bool = True) -> List[str]:
     """Return `.txt` paths under `root`. Missing dirs yield an empty list."""
-    return list_files(root, recursive=recursive)
+    if not recursive:
+        try:
+            return [
+                os.path.join(root, fn)
+                for fn in os.listdir(root)
+                if fn.endswith(".txt") and os.path.isfile(os.path.join(root, fn))
+            ]
+        except OSError:
+            return []
+    files: List[str] = []
+    for dirpath, _dirnames, filenames in os.walk(root):
+        for fn in filenames:
+            if fn.endswith(".txt"):
+                files.append(os.path.join(dirpath, fn))
+    return files
 
 
 def _load_names_from_dir(
@@ -670,11 +683,11 @@ def _declaration_engine_refs(
 def _load_ace_pool_names(mod_path: str) -> FrozenSet[str]:
     """Return every country tag and graphical culture an ace portrait can key off."""
     names: Set[str] = set()
-    for subdir, name_re in (
-        (os.path.join("common", "country_tags"), _COUNTRY_TAG_RE),
-        (os.path.join("common", "countries"), _GRAPHICAL_CULTURE_RE),
+    for pattern, name_re in (
+        (os.path.join("common", "country_tags", "*.txt"), _COUNTRY_TAG_RE),
+        (os.path.join("common", "countries", "*.txt"), _GRAPHICAL_CULTURE_RE),
     ):
-        for filepath in list_files(os.path.join(mod_path, subdir), recursive=False):
+        for filepath in glob.glob(os.path.join(mod_path, pattern)):
             raw = _read_raw(filepath)
             if raw is None:
                 continue
@@ -758,11 +771,8 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
     return defs
 
 
-def _values_in_blocks(
-    text: str,
-    opener: re.Pattern,
-    token_re: re.Pattern,
-    keep: Callable[[str], bool] = _is_raw_icon_path,
+def _raw_paths_in_blocks(
+    text: str, opener: re.Pattern, token_re: re.Pattern
 ) -> List[Tuple[str, int]]:
     # Quote-aware: a `#` inside a variant name is not a comment.
     stripped = strip_comments(text)
@@ -774,29 +784,19 @@ def _values_in_blocks(
             continue
         for tm in token_re.finditer(body):
             value = _quoted_or_bare(tm)
-            if keep(value):
+            if _is_raw_icon_path(value):
                 hits.append((value, line_for_offset(offsets, m.end() + tm.start())))
     return hits
 
 
 def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
     """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
-    return _values_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
-
-
-def variant_icon_sprites(text: str) -> List[Tuple[str, int]]:
-    """Return (sprite, line) for `icon = GFX_x` in create_equipment_variant."""
-    return _values_in_blocks(
-        text,
-        _CREATE_EQUIPMENT_VARIANT,
-        _VARIANT_ICON,
-        lambda value: value.startswith("GFX_"),
-    )
+    return _raw_paths_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
 
 
 def raw_graphic_db_icon_paths(text: str) -> List[Tuple[str, int]]:
     """Return (value, line) for raw texture paths in `icons = { }` blocks."""
-    return _values_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
+    return _raw_paths_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
 
 
 def font_names_from_gfx_text(raw: str) -> Set[str]:
@@ -924,15 +924,6 @@ def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]
         "gfx_ref.raw_variant_icon",
         "create_equipment_variant",
         raw_variant_icon_paths,
-    )
-
-
-def _parse_variant_icon_sprites(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
-    return _parse_raw_icon_hits(
-        args,
-        "gfx_ref.variant_icon_sprite",
-        "create_equipment_variant",
-        variant_icon_sprites,
     )
 
 
@@ -1186,7 +1177,11 @@ class Validator(BaseValidator):
         )
         # should_skip_file ignores gfx/ wholesale, so _collect_files can't reach
         # the equipment-designer graphic_db there — and it names sprites literally.
-        files.extend(list_files(os.path.join(self.mod_path, "gfx")))
+        files.extend(
+            glob.iglob(
+                os.path.join(self.mod_path, "gfx", "**", "*.txt"), recursive=True
+            )
+        )
         refs = set(
             self._pool_flat_map(_parse_script_refs, [(f, self.mod_path) for f in files])
         )
@@ -1751,15 +1746,15 @@ class Validator(BaseValidator):
         )
 
     def _graphic_db_files(self) -> List[str]:
-        files = list_files(
+        files = glob.glob(
             os.path.join(
                 self.mod_path,
                 "gfx",
                 "interface",
                 "equipmentdesigner",
                 "graphic_db",
-            ),
-            recursive=False,
+                "*.txt",
+            )
         )
         if not self.staged_only:
             return files
@@ -1854,20 +1849,6 @@ class Validator(BaseValidator):
         loc_refs = self._collect_loc_refs()
         self._check_loc_refs(loc_refs, defined, casefold_index(defined))
         self._check_raw_icon_paths()
-
-        self._log_section("Checking undefined GFX sprites in equipment variant icons")
-        variant_files = self._collect_files(
-            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
-        )
-        self._check_undefined_refs(
-            self._pool_flat_map(
-                _parse_variant_icon_sprites, [(f, self.mod_path) for f in variant_files]
-            ),
-            defined,
-            source_label="create_equipment_variant icons",
-            category="undefined-sprite",
-            mod_defined_ci=mod_defined_ci,
-        )
 
         if not self.report_unused:
             self._log_section(

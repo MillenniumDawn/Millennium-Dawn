@@ -14,32 +14,14 @@ relevant to the effects and triggers you are changing.
 - `threat` uses a 0.0 to 1.0 scale. Write `threat > 0.40`, not `threat > 40`.
 - `is_in_faction` accepts `yes` or `no`. Membership with a country uses
   `is_in_faction_with = TAG`. `add_to_faction = TAG` takes a country, not a faction name.
-- MD trade agreements and mutual investment treaties are partner arrays on both
-  countries: `is_in_array = { trade_agreement_partners = TAG }` and
-  `investment_treaty_partners`. Add to both sides only when the partner is not there yet,
-  and remove from both. Count agreements with `trade_agreement_partners^num`; there is
-  no separate counter. `has_trade_agreement_with` is not a valid trigger.
+- MD trade agreements use `has_country_flag = trade_agreement@TAG`.
+  `has_trade_agreement_with` is not a valid trigger.
 - There is no `has_idea = democratic_*`. Check the ruling subideology through the
   matching scripted trigger: `western_conservatism_are_in_power`,
   `western_liberals_are_in_power`, `western_social_democrats_are_in_power`, or
   `western_autocrats_are_in_power`. Verify other parties in `common/scripted_triggers/`.
 - Modifier names: use the engine reference or [MD Custom Modifiers](md-custom-modifiers.md).
   Sprites: resolve the `name` in `interface/*.gfx` and check its texture exists.
-
-## HOI4 Syntax Only
-
-HOI4 script is not EU4, CK3, or Victoria 3 script. Do not carry over constructs from
-those games:
-
-- Scripted effects and triggers take no parameters. `my_effect = { mission = X }` with
-  `$mission$` inside is EU4/CK3 syntax. Call `my_effect = yes`, pass values through temp
-  variables, or substitute names with `meta_effect`/`meta_trigger`
-  ([Meta-Effect Patterns](meta-effect-patterns.md)). Otherwise write the blocks out.
-- Saved scopes use `save_event_target_as` and `event_target:`, not `save_scope_as` and
-  `scope:`.
-- Tooltips use `custom_effect_tooltip` and `custom_trigger_tooltip`, not `custom_tooltip`.
-- Variables use `set_variable`, `add_to_variable`, and `check_variable`, not
-  `change_variable`, `export_to_variable`, or `which =`.
 
 ## Relief Must Reduce the Actual Penalty
 
