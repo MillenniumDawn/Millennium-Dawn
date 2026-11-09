@@ -7685,6 +7685,41 @@ CHI_BRI_management = {
 		}
 	}
 
+	CHI_bri_deposit_treasury = {
+		icon = generic_fundraising
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_treasury_deposit_req_tt
+				check_variable = { var = treasury value = 50 compare = greater_than_or_equals }
+			}
+		}
+
+		cost = 10
+		fire_only_once = no
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_bri_deposit_treasury executed"
+			set_temp_variable = { treasury_change = -50 }
+			modify_treasury_effect = yes
+			add_to_variable = { CHI_bri_treasury = 50 tooltip = CHI_bri_treasury_tt }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				check_variable = { CHI_bri_treasury < 0 }
+				check_variable = { treasury > 100 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
 	CHI_Debt_Restructuring = {
 		icon = generic_fundraising
 		target_root_trigger = { has_completed_focus = CHI_Win_Win_Cooperation }
@@ -7809,8 +7844,6 @@ CHI_BRI_management = {
 		target_root_trigger = {
 			has_completed_focus = CHI_Digital_Silk_Road_Initiative
 			has_war = no
-			check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
-			check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
 		}
 
 		target_array = global.countries
@@ -7823,12 +7856,20 @@ CHI_BRI_management = {
 			}
 		}
 
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_bri_dual_treasury_80_tt
+				check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
+				check_variable = { var = treasury value = 80 compare = greater_than_or_equals }
+			}
+		}
+
 		cost = 75
 		days_re_enable = 365
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_Surveillance_Export executed"
-			subtract_from_variable = { CHI_bri_treasury = 80 }
+			add_to_variable = { CHI_bri_treasury = -80 tooltip = CHI_bri_treasury_tt }
 			FROM = { add_ideas = chinese_surveillance_systems }
 			newline = yes
 			set_temp_variable = { treasury_change = -80 }
