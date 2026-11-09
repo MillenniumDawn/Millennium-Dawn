@@ -2,6 +2,7 @@
 
 import operator
 import re
+from collections import Counter
 from datetime import date
 
 
@@ -765,6 +766,7 @@ class TempScriptModel(ScriptModel):
 class ScopedScriptModel(TempScriptModel):
     """Add country and state scopes, indexed arrays and stubbed effects."""
 
+    external: Counter
     stubs = frozenset()
     country_fields = {
         "num_of_controlled_states",
