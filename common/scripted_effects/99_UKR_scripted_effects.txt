@@ -9852,3 +9852,105 @@ UKR_storage_update_tank_development_costs = {
 	set_variable = { UKR_storage_t62_5tdf_development_cost = { value = t55_prior_models multiply = -0.002 add = 0.062 multiply = UKR_storage_project_multiplier } }
 	set_variable = { UKR_storage_t62ag_development_cost = { value = t55_prior_models multiply = -0.002 add = 0.074 multiply = UKR_storage_project_multiplier } }
 }
+
+varyag_send_hull_to_china = {
+	clr_global_flag = varyag_dispute_open
+	CHI = { country_event = { id = ukraine_varyag.5 days = 122 } }
+	TUR = { country_event = ukraine_varyag.7 }
+	if = {
+		limit = { country_exists = UKR }
+		UKR = { country_event = ukraine_varyag.7 }
+	}
+}
+
+varyag_allow_standard_passage = {
+	if = {
+		limit = { check_variable = { var = treasury value = 1.0 compare = greater_than_or_equals } }
+		set_temp_variable = { treasury_change = -1.0 }
+		modify_treasury_effect = yes
+		TUR = {
+			set_temp_variable = { treasury_change = 1.0 }
+			modify_treasury_effect = yes
+		}
+	}
+	varyag_send_hull_to_china = yes
+}
+
+varyag_close_without_delivery = {
+	clr_global_flag = varyag_dispute_open
+	CHI = {
+		set_country_flag = CHI_varyag_hull_lost
+		if = {
+			limit = { NOT = { has_tech = carrier_hull_2 } }
+			add_tech_bonus = { name = ukraine_varyag.10 bonus = 0.25 uses = 1 technology = carrier_hull_2 }
+		}
+		country_event = ukraine_varyag.10
+	}
+}
+
+varyag_refuse_transit = {
+	varyag_close_without_delivery = yes
+	if = {
+		limit = { country_exists = UKR }
+		UKR = {
+			set_country_flag = UKR_varyag_return_offer
+			country_event = ukraine_varyag.13
+		}
+	}
+}
+
+varyag_commission_carrier = {
+	if = {
+		limit = { NOT = { has_tech = carrier_hull_2 } }
+		set_technology = { carrier_hull_2 = 1 }
+	}
+	meta_effect = {
+		text = {
+			create_equipment_variant = {
+				name = "Project 1143.6 Varyag"
+				type = carrier_hull_2
+				modules = {
+					fixed_ship_engine_slot = module_surface_oil_power
+					fixed_ship_fire_control_system_slot = module_analog_fire_control
+					fixed_ship_radar_slot = module_radar_[RADAR]
+					fixed_ship_flight_deck = module_flight_deck_3
+					front_1_custom_slot = module_ciws_[WEAPONS]
+					front_2_custom_slot = module_naval_adl_[WEAPONS]
+				}
+			}
+		}
+		RADAR = "[?varyag_radar_tier|.0]"
+		WEAPONS = "[?varyag_weapons_tier|.0]"
+	}
+	create_ship = {
+		type = carrier_hull_2
+		equipment_variant = "Project 1143.6 Varyag"
+		name = "Varyag"
+	}
+	clr_country_flag = varyag_hull_at_shipyard
+	hidden_effect = { country_event = ukraine_varyag.9 }
+}
+
+UKR_varyag_starting_naval_aircraft = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		create_equipment_variant = {
+			name = "Su-25UTG"
+			type = cv_small_plane_cas_airframe_1
+			allow_without_tech = yes
+			obsolete = yes
+			modules = {
+				fixed_main_weapon_slot = weap_ag_cas_hardpoint_1
+				engine_type_slot = engine_light_double_1
+				avionics_type_slot = avionics_manned_1
+				wingform_type_slot = wing_swept
+			}
+		}
+		add_equipment_to_stockpile = { type = cv_small_plane_cas_airframe_1 variant_name = "Su-25UTG" amount = 2 producer = UKR }
+		add_equipment_to_stockpile = { type = cv_medium_plane_fighter_airframe_2 variant_name = "Su-33" amount = 1 producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = CV_MR_Fighter1 amount = 2 producer = UKR }
+		add_equipment_to_stockpile = { type = CV_MR_Fighter2 amount = 1 producer = SOV }
+	}
+}
