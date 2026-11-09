@@ -73,13 +73,11 @@
 	-- -- NDefines.NGraphics.COUNTRY_FLAG_LARGE_STRIPE_MAX_HEIGHT = 8192				-- Vanilla is 8192
 	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_AFTER = {0, 4, 9} -- 1-4 - small icon (square), 5-9 - medium icon (pentagon figure), 10 and above - big icon (circle)
 	NDefines.NGraphics.VICTORY_POINT_MAP_ICON_TEXT_CUTOFF = {180, 420, 1000}
-	NDefines.NGraphics.VICTORY_POINTS_DISTANCE_CUTOFF = {180, 420, 1000}
 	NDefines.NGraphics.NAVALBASE_ICON_DISTANCE_CUTOFF = 900
 	NDefines.NGraphics.CAPITAL_ICON_CUTOFF = 1000
 	NDefines.NGraphics.MAP_ICONS_GROUP_CAM_DISTANCE = 120.0
 	NDefines.NGraphics.MAP_ICONS_STATE_GROUP_CAM_DISTANCE = 330.0
 	NDefines.NGraphics.MAP_ICONS_STRATEGIC_GROUP_CAM_DISTANCE = 600
-	NDefines.NGraphics.MAPICON_GROUP_STRATEGIC_SIZE = 600
 	NDefines.NGraphics.MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE = 200
 	NDefines.NGraphics.MAP_ICONS_COARSE_COUNTRY_GROUPING_DISTANCE_STRATEGIC = 800
 	NDefines.NGraphics.CAMERA_OUTSIDE_MAP_DISTANCE_TOP = 100.0
@@ -88,7 +86,6 @@
 	NDefines.NGraphics.CAMERA_ZOOM_KEY_SCALE = 0.01
 	NDefines.NGraphics.CAMERA_ZOOM_SPEED_DISTANCE_MULT = 50.0
 
-	NDefines.NFrontend.CAMERA_LOOKAT_SETTINGS_X = 2058.0
 	NDefines.NFrontend.CAMERA_MIN_HEIGHT = 30.0
 
 	NDefines.NGraphics.ACCLIMATIZATION_CAMO_SHOW_AT = 0.05				-- The moment at which the division gains enough acclimatization to change it's model to the camouflage one.

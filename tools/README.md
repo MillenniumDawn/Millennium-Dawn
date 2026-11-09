@@ -202,6 +202,7 @@ python3 tools/run.py publish_workshop release --version 1.12.3  # pass args thro
 python3 tools/run.py gfx_entry_generator                   # works on any platform
 python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO balance report
 python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
+python3 -m tools.balance.naval_sim ui                      # naval combat simulator, see balance/naval_sim/README.md
 ```
 
 ### Clean up the changelog
