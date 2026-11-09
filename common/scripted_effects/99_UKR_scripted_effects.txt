@@ -8693,12 +8693,7 @@ UKR_storage_rebuild_rows = {
 		add_to_array = { UKR_storage_rows = 4 }
 		if = {
 			limit = { check_variable = { UKR_storage_open_section = 4 } }
-			if = { limit = { check_variable = { ukraine_has_2p27_stockpile > 0 } } add_to_array = { UKR_storage_rows = 41 } }
-			if = { limit = { check_variable = { ukraine_has_2p32_stockpile > 0 } } add_to_array = { UKR_storage_rows = 43 } }
-			if = { limit = { check_variable = { ukraine_has_9p110_stockpile > 0 } } add_to_array = { UKR_storage_rows = 44 } }
-			if = { limit = { check_variable = { ukraine_has_9p122_stockpile > 0 } } add_to_array = { UKR_storage_rows = 45 } }
-			if = { limit = { check_variable = { ukraine_has_9p133_stockpile > 0 } } add_to_array = { UKR_storage_rows = 46 } }
-			if = { limit = { check_variable = { ukraine_has_9p137_stockpile > 0 } } add_to_array = { UKR_storage_rows = 47 } }
+			if = { limit = { check_variable = { UKR_storage_malyutka_total > 0 } } add_to_array = { UKR_storage_rows = 44 } }
 			if = { limit = { check_variable = { ukraine_has_9p148_stockpile > 0 } } add_to_array = { UKR_storage_rows = 42 } }
 		}
 	}
@@ -8739,9 +8734,16 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 8 } }
 			if = { limit = { check_variable = { ukraine_has_mosin_stockpile > 0 } } add_to_array = { UKR_storage_rows = 81 } }
 			if = { limit = { check_variable = { ukraine_has_sks_stockpile > 0 } } add_to_array = { UKR_storage_rows = 82 } }
-			if = { limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } } add_to_array = { UKR_storage_rows = 84 } }
-			if = { limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } } add_to_array = { UKR_storage_rows = 85 } }
 			if = { limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } } add_to_array = { UKR_storage_rows = 86 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_9 > 0 } }
+		add_to_array = { UKR_storage_rows = 9 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 9 } }
+			if = { limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } } add_to_array = { UKR_storage_rows = 91 } }
+			if = { limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } } add_to_array = { UKR_storage_rows = 92 } }
 		}
 	}
 }
@@ -8791,25 +8793,80 @@ UKR_storage_pay_upkeep = {
 }
 
 UKR_retire_su15_to_storage = {
-	add_equipment_to_stockpile = { type = ukr_legacy_su15tm variant_name = "Su-15TM" amount = -16 producer = UKR }
-	add_to_variable = { ukraine_has_su15_stockpile = 16 }
+	set_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_fighter_airframe }
+	add_equipment_to_stockpile = { type = medium_plane_fighter_airframe_1 variant_name = "Su-15TM" amount = -16 producer = SOV }
+	subtract_from_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_fighter_airframe }
+	clamp_temp_variable = { var = ukr_retirement_aircraft_removed min = 0 max = 16 }
+	add_to_variable = { ukraine_has_su15_stockpile = ukr_retirement_aircraft_removed }
 	UKR_storage_refresh = yes
 }
 
 UKR_retire_mig23_to_storage = {
-	add_equipment_to_stockpile = { type = ukr_legacy_mig23mld variant_name = "MiG-23MLD" amount = -32 producer = UKR }
-	add_to_variable = { ukraine_has_mig23_stockpile = 32 }
+	set_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_airframe }
+	add_equipment_to_stockpile = { type = medium_plane_airframe_1 variant_name = "MiG-23MLD" amount = -32 producer = SOV }
+	subtract_from_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_airframe }
+	clamp_temp_variable = { var = ukr_retirement_aircraft_removed min = 0 max = 32 }
+	add_to_variable = { ukraine_has_mig23_stockpile = ukr_retirement_aircraft_removed }
 	UKR_storage_refresh = yes
 }
 
 UKR_retire_su17_to_storage = {
-	add_equipment_to_stockpile = { type = ukr_legacy_su17m4r variant_name = "Su-17M4R" amount = -30 producer = UKR }
-	add_to_variable = { ukraine_has_su17m4r_stockpile = 30 }
+	set_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_airframe }
+	add_equipment_to_stockpile = { type = medium_plane_airframe_1 variant_name = "Su-17M4R" amount = -30 producer = SOV }
+	subtract_from_temp_variable = { ukr_retirement_aircraft_removed = num_equipment@medium_plane_airframe }
+	clamp_temp_variable = { var = ukr_retirement_aircraft_removed min = 0 max = 30 }
+	add_to_variable = { ukraine_has_su17m4r_stockpile = ukr_retirement_aircraft_removed }
 	UKR_storage_refresh = yes
+}
+
+UKR_storage_update_maintenance_dates = {
+	if = {
+		limit = { has_variable = UKR_storage_brdm1_last_service }
+		set_variable = { UKR_storage_brdm1_next_service = { value = UKR_storage_brdm1_last_service add = 43.8 } }
+		set_variable = { UKR_storage_brdm1_months_until_service = { value = UKR_storage_brdm1_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_brdm1_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_sams_last_service }
+		set_variable = { UKR_storage_sams_next_service = { value = UKR_storage_sams_last_service add = 43.8 } }
+		set_variable = { UKR_storage_sams_months_until_service = { value = UKR_storage_sams_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_sams_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_9p148_last_service }
+		set_variable = { UKR_storage_9p148_next_service = { value = UKR_storage_9p148_last_service add = 43.8 } }
+		set_variable = { UKR_storage_9p148_months_until_service = { value = UKR_storage_9p148_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_9p148_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_artillery_last_service }
+		set_variable = { UKR_storage_artillery_next_service = { value = UKR_storage_artillery_last_service add = 43.8 } }
+		set_variable = { UKR_storage_artillery_months_until_service = { value = UKR_storage_artillery_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_artillery_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_small_arms_last_service }
+		set_variable = { UKR_storage_small_arms_next_service = { value = UKR_storage_small_arms_last_service add = 43.8 } }
+		set_variable = { UKR_storage_small_arms_months_until_service = { value = UKR_storage_small_arms_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_small_arms_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_support_weapons_last_service }
+		set_variable = { UKR_storage_support_weapons_next_service = { value = UKR_storage_support_weapons_last_service add = 43.8 } }
+		set_variable = { UKR_storage_support_weapons_months_until_service = { value = UKR_storage_support_weapons_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_support_weapons_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_bombers_last_service }
+		set_variable = { UKR_storage_bombers_next_service = { value = UKR_storage_bombers_last_service add = 43.8 } }
+		set_variable = { UKR_storage_bombers_months_until_service = { value = UKR_storage_bombers_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_bombers_months_until_service min = 0 }
+	}
 }
 
 # Call after every change of a ukraine_has_*_stockpile variable: section totals, rows and a GUI refresh
 UKR_storage_refresh = {
+	UKR_storage_update_maintenance_dates = yes
 	set_variable = { ukraine_s75_regiments = 0 }
 	every_owned_state = {
 		limit = { has_state_flag = UKR_s75_regiment_flag }
@@ -8829,13 +8886,8 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_s125_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_zsu57_stockpile }
-	set_variable = { UKR_storage_total_4 = ukraine_has_9p148_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_2p27_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_2p32_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_9p110_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_9p122_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_9p133_stockpile }
-	add_to_variable = { UKR_storage_total_4 = ukraine_has_9p137_stockpile }
+	set_variable = { UKR_storage_malyutka_total = { value = ukraine_has_malyutka_brdm1_stockpile add = ukraine_has_malyutka_brdm2_stockpile } }
+	set_variable = { UKR_storage_total_4 = { value = UKR_storage_malyutka_total add = ukraine_has_9p148_stockpile } }
 	# Tu-16 = Tu-16K + Tu-16R, Tu-22 = Tu-22KD + Tu-22RD
 	set_variable = { UKR_storage_tu16_total = ukraine_has_tu16k_stockpile }
 	add_to_variable = { UKR_storage_tu16_total = ukraine_has_tu16r_stockpile }
@@ -8858,12 +8910,13 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_m30_stockpile }
 	set_variable = { UKR_storage_total_8 = ukraine_has_mosin_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_sks_stockpile }
-	add_to_variable = { UKR_storage_total_8 = ukraine_has_spg9_stockpile }
-	add_to_variable = { UKR_storage_total_8 = ukraine_has_strela2_stockpile }
 	add_to_variable = { UKR_storage_total_8 = ukraine_has_ak47_stockpile }
+	set_variable = { UKR_storage_total_9 = ukraine_has_spg9_stockpile }
+	add_to_variable = { UKR_storage_total_9 = ukraine_has_strela2_stockpile }
 
 	set_variable = { UKR_storage_artillery_upkeep_price = { value = UKR_storage_total_7 multiply = 50 } }
 	set_variable = { UKR_storage_small_arms_upkeep_price = { value = UKR_storage_total_8 multiply = 1 } }
+	set_variable = { UKR_storage_support_weapons_upkeep_price = { value = UKR_storage_total_9 multiply = 1 } }
 	set_variable = { UKR_storage_9p148_upkeep_price = { value = ukraine_has_9p148_stockpile multiply = 100 } }
 	set_variable = { UKR_storage_brdm1_upkeep_price = { value = ukraine_has_brdm1_stockpile multiply = 50 } }
 	set_variable = { UKR_storage_combat_aircraft_upkeep_price = { value = UKR_storage_total_6 multiply = 200 } }
@@ -8876,6 +8929,7 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_sams_upkeep_price_billions = { value = UKR_storage_sams_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_artillery_upkeep_price_billions = { value = UKR_storage_artillery_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_small_arms_upkeep_price_billions = { value = UKR_storage_small_arms_upkeep_price divide = 1000000 } }
+	set_variable = { UKR_storage_support_weapons_upkeep_price_billions = { value = UKR_storage_support_weapons_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_9p148_upkeep_price_billions = { value = UKR_storage_9p148_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_brdm1_upkeep_price_billions = { value = UKR_storage_brdm1_upkeep_price divide = 1000000 } }
 
@@ -8885,6 +8939,9 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_small_arms_upkeep_days = { value = UKR_storage_small_arms_upkeep_price divide = 1000 add = 30 } }
 	round_variable = UKR_storage_small_arms_upkeep_days
 	clamp_variable = { var = UKR_storage_small_arms_upkeep_days min = 30 max = 60 }
+	set_variable = { UKR_storage_support_weapons_upkeep_days = { value = UKR_storage_support_weapons_upkeep_price divide = 1000 add = 30 } }
+	round_variable = UKR_storage_support_weapons_upkeep_days
+	clamp_variable = { var = UKR_storage_support_weapons_upkeep_days min = 30 max = 60 }
 	set_variable = { UKR_storage_9p148_upkeep_days = { value = UKR_storage_9p148_upkeep_price divide = 1000 add = 30 } }
 	round_variable = UKR_storage_9p148_upkeep_days
 	clamp_variable = { var = UKR_storage_9p148_upkeep_days min = 30 max = 60 }
@@ -9397,6 +9454,65 @@ UKR_storage_sanctioned_sale_backlash = {
 	}
 }
 
+# Effect: UKR_storage_sell_mig21bis
+# Purpose: Transfers stored MiG-21bis fighters to the buyer and settles payment.
+# Parameters:
+# - ukr_sov_amount: Number of airframes to remove from the reserve.
+# - ukr_sale_price: Contract price in billions.
+# - ukr_storage_buyer: Event target for the buyer.
+UKR_storage_sell_mig21bis = {
+	subtract_from_variable = { ukraine_has_mig21_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig21bis_sold_tt }
+	event_target:ukr_storage_buyer = {
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			add_equipment_to_stockpile = { type = small_plane_strike_airframe_1 variant_name = "MiG-21bis" amount = ukr_sov_amount producer = SOV }
+		}
+		else = {
+			add_equipment_to_stockpile = { type = MR_Fighter1 amount = ukr_sov_amount producer = SOV }
+		}
+	}
+	UKR_storage_sale_payment = yes
+}
+
+# Effect: UKR_storage_sell_mig23mld
+# Purpose: Transfers stored MiG-23MLD fighters to the buyer and settles payment.
+# Parameters:
+# - ukr_sov_amount: Number of airframes to remove from the reserve.
+# - ukr_sale_price: Contract price in billions.
+# - ukr_storage_buyer: Event target for the buyer.
+UKR_storage_sell_mig23mld = {
+	subtract_from_variable = { ukraine_has_mig23_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig23_sold_tt }
+	event_target:ukr_storage_buyer = {
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			add_equipment_to_stockpile = { type = medium_plane_airframe_1 variant_name = "MiG-23MLD" amount = ukr_sov_amount producer = SOV }
+		}
+		else = {
+			add_equipment_to_stockpile = { type = MR_Fighter1 amount = ukr_sov_amount producer = SOV }
+		}
+	}
+	UKR_storage_sale_payment = yes
+}
+
+# Effect: UKR_storage_sell_mig25rb_donors
+# Purpose: Sells stored MiG-25RB airframes for parts and settles payment.
+# Parameters:
+# - ukr_sov_amount: Number of airframes to remove from the reserve.
+# - ukr_sale_price: Contract price in billions.
+# - ukr_storage_buyer: Event target for the buyer.
+UKR_storage_sell_mig25rb_donors = {
+	subtract_from_variable = { ukraine_has_mig25rb_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig25rb_sold_tt }
+	UKR_storage_sale_payment = yes
+}
+
+UKR_storage_vietnam_sale_backlash = {
+	if = {
+		limit = { country_exists = USA date < 2016.5.23 }
+		custom_effect_tooltip = ukr_storage_vietnam_sale_backlash_tt
+		hidden_effect = { USA = { add_opinion_modifier = { target = PREV modifier = UKR_storage_sanctioned_sale } } }
+	}
+}
+
 UKR_mig21_croatia_create_upgrade = {
 	if = {
 		limit = { has_dlc = "By Blood Alone" }
@@ -9788,6 +9904,22 @@ UKR_storage_sell_small_arms = {
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_sks = yes }
 	}
 	if = {
+		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
+		set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
+		set_temp_variable = { ukr_item_price = ukr_sov_amount }
+		multiply_temp_variable = { ukr_item_price = 1 }
+		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
+		subtract_from_variable = { ukraine_has_ak47_stockpile = ukr_sov_amount tooltip = ukraine_storage_ak47_sold_tt }
+		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ak47 = yes }
+	}
+	divide_temp_variable = { ukr_sale_price = 1000000 } # thousands of dollars to billions
+	UKR_storage_sale_payment = yes
+	UKR_storage_sanctioned_sale_backlash = yes
+}
+
+UKR_storage_sell_support_weapons = {
+	set_temp_variable = { ukr_sale_price = 0 }
+	if = {
 		limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_spg9_stockpile }
 		set_temp_variable = { ukr_item_price = ukr_sov_amount }
@@ -9804,15 +9936,6 @@ UKR_storage_sell_small_arms = {
 		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_strela2_stockpile = ukr_sov_amount tooltip = ukraine_storage_strela2_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_strela2 = yes }
-	}
-	if = {
-		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
-		set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
-		subtract_from_variable = { ukraine_has_ak47_stockpile = ukr_sov_amount tooltip = ukraine_storage_ak47_sold_tt }
-		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ak47 = yes }
 	}
 	divide_temp_variable = { ukr_sale_price = 1000000 } # thousands of dollars to billions
 	UKR_storage_sale_payment = yes
@@ -9843,7 +9966,7 @@ UKR_old_artillery_return_part = {
 	UKR_storage_refresh = yes
 }
 
-# Stored small arms and light weapons to our stockpile for the mobilized
+# Stored small arms to our stockpile for the mobilized
 # Effect: UKR_old_small_arms_issue
 # Purpose: Issues the recoverable share of stored small arms and clears those reserves.
 # Parameters:
@@ -9859,21 +9982,30 @@ UKR_old_small_arms_issue = {
 	round_temp_variable = ukr_sov_amount
 	UKR_old_gear_deliver_sks = yes
 	set_variable = { ukraine_has_sks_stockpile = 0 }
-	set_temp_variable = { ukr_sov_amount = ukraine_has_spg9_stockpile }
-	multiply_temp_variable = { ukr_sov_amount = ukr_small_arms_issue_share }
-	round_temp_variable = ukr_sov_amount
-	UKR_old_gear_deliver_spg9 = yes
-	set_variable = { ukraine_has_spg9_stockpile = 0 }
-	set_temp_variable = { ukr_sov_amount = ukraine_has_strela2_stockpile }
-	multiply_temp_variable = { ukr_sov_amount = ukr_small_arms_issue_share }
-	round_temp_variable = ukr_sov_amount
-	UKR_old_gear_deliver_strela2 = yes
-	set_variable = { ukraine_has_strela2_stockpile = 0 }
 	set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
 	multiply_temp_variable = { ukr_sov_amount = ukr_small_arms_issue_share }
 	round_temp_variable = ukr_sov_amount
 	UKR_old_gear_deliver_ak47 = yes
 	set_variable = { ukraine_has_ak47_stockpile = 0 }
+	UKR_storage_refresh = yes
+}
+
+# Stored support weapons to our stockpile for the mobilized
+# Effect: UKR_old_support_weapons_issue
+# Purpose: Issues the recoverable share of stored support weapons and clears those reserves.
+# Parameters:
+# - ukr_support_weapons_issue_share: Recoverable fraction from 0 to 1.
+UKR_old_support_weapons_issue = {
+	set_temp_variable = { ukr_sov_amount = ukraine_has_spg9_stockpile }
+	multiply_temp_variable = { ukr_sov_amount = ukr_support_weapons_issue_share }
+	round_temp_variable = ukr_sov_amount
+	UKR_old_gear_deliver_spg9 = yes
+	set_variable = { ukraine_has_spg9_stockpile = 0 }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_strela2_stockpile }
+	multiply_temp_variable = { ukr_sov_amount = ukr_support_weapons_issue_share }
+	round_temp_variable = ukr_sov_amount
+	UKR_old_gear_deliver_strela2 = yes
+	set_variable = { ukraine_has_strela2_stockpile = 0 }
 	UKR_storage_refresh = yes
 }
 
