@@ -54,12 +54,23 @@ def test_main_creates_single_bom_localisation_file(tmp_path, monkeypatch):
     assert output.read_bytes() == first
 
 
-def test_readfile_reports_a_source_it_cannot_open(tmp_path, capsys):
-    keys, kinds = loc.readfile(str(tmp_path / "absent.txt"))
+# readfile failure: {case: (file name, bytes to write or None for absent)}
+_READFILE_FAILURE_CASES = {
+    "missing source": ("absent.txt", None),
+    "invalid utf-8": ("cp1252.txt", b"focus_tree = { id = caf\xe9 }\n"),
+}
 
-    assert keys == []
-    assert kinds == (False, False, False, False)
-    assert "Could not read file" in capsys.readouterr().out
+
+@pytest.mark.parametrize(
+    "name, data", _READFILE_FAILURE_CASES.values(), ids=_READFILE_FAILURE_CASES
+)
+def test_readfile_exits_naming_a_source_it_cannot_read(tmp_path, name, data):
+    source = tmp_path / name
+    if data is not None:
+        source.write_bytes(data)
+
+    with pytest.raises(SystemExit, match=f"Could not read file .*{name}"):
+        loc.readfile(str(source))
 
 
 def test_readfile_collects_event_title_desc_and_option_keys(tmp_path):

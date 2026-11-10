@@ -96,6 +96,38 @@ def test_call_site_scan_is_empty_for_unreadable_and_ignored_files(
     assert call_site_scan(read, section, tmp_path, tracked) != empty
 
 
+_EVENT_WITH_LOC_KEYS = (
+    "add_namespace = test\n"
+    "country_event = {\n"
+    "    id = test.1\n"
+    "    is_triggered_only = yes\n"
+    "    title = test.1.t\n"
+    "    desc = test.1.d\n"
+    "    option = { name = test.1.a }\n"
+    "}\n"
+)
+
+# case: (event file text, tracked ids, counts); callers zero-fill absent ids.
+_ID_COUNT_CASES = {
+    "loc keys do not count and an absent id is left out": (
+        _EVENT_WITH_LOC_KEYS,
+        {"test.1", "test.999"},
+        {"test.1": 1},
+    ),
+    "every fire counts": ("country_event = test.1\n" * 3, {"test.1"}, {"test.1": 3}),
+}
+
+
+@pytest.mark.parametrize(
+    ("text", "tracked", "counts"), _ID_COUNT_CASES.values(), ids=_ID_COUNT_CASES
+)
+def test_event_id_counts_whole_tokens(tmp_path, text, tracked, counts):
+    path = tmp_path / "events" / "test.txt"
+    path.parent.mkdir()
+    path.write_text(text)
+    assert call_site_scan(path, "counts", tmp_path, frozenset(tracked)) == counts
+
+
 def test_picture_worker_skips_unreadable_and_ignored_files(tmp_path):
     assert V._extract_event_pictures(str(tmp_path / "events" / "gone.txt")) == []
     skipped = _write(tmp_path, "tools/helper.txt", "picture = GFX_x\n")

@@ -26,10 +26,11 @@ This dispatcher:
   * runs them concurrently, splitting cores between the outer fan-out and each
     validator's own worker pool so the two layers don't oversubscribe.
 
-Only the commit-stage validators live here. The expensive cross-reference
-validators run in CI only (never on commit), and must stay out of this
-registry, or they would run on every commit — running the full suite on commit
-was measured at ~7s warm, a large regression. `validate_defines` keeps its own
+Only the commit-stage validators live here. That includes a few
+cross-reference validators that are fast enough for a commit (events, ideas,
+oob_units, mios, characters). The slower ones run in CI only and must stay out
+of this registry, or they would run on every commit — running the full suite on
+commit was measured at ~7s warm, a large regression. `validate_defines` keeps its own
 pre-commit hook because it is keyed off `.lua` files, which this dispatcher
 does not route.
 
@@ -81,10 +82,11 @@ class _Spec:
         return False
 
 
-# Only the commit-stage validators belong here. The expensive cross-reference
-# validators (cosmetic_tags, localisation, focus_tree, variables, decisions,
-# modifiers, scripted_params, simplifications, ...) run in CI only — they do NOT
-# run on commit. Folding them in here would drag them onto every commit, so this
+# Only the commit-stage validators belong here, including the cross-reference
+# validators cheap enough for a commit (events, ideas, oob_units, mios,
+# characters). The slower ones (cosmetic_tags, localisation, focus_tree,
+# variables, decisions, modifiers, scripted_params, simplifications, ...) run in
+# CI only — they do NOT run on commit. Folding them in here would drag them onto every commit, so this
 # registry mirrors exactly the run-on-commit validators (their `files:` patterns
 # and --strict flags). Keep in sync when the config changes; the golden test in
 # tools/tests/precommit_validate_test.py guards against drift.

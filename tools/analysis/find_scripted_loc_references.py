@@ -52,7 +52,7 @@ def make_scripted_loc_searcher(search_dirs: list[Path], source_file: Path):
     """Build a closure that scans each candidate file once for all names."""
 
     def record_file(refs, token_re, filepath, lines, is_loc_dir):
-        rel = str(filepath.relative_to(REPO_ROOT))
+        rel = filepath.relative_to(REPO_ROOT).as_posix()
         for line_number, line in enumerate(lines, 1):
             for name in dict.fromkeys(token_re.findall(line)):
                 if filepath == source_file and re.fullmatch(
