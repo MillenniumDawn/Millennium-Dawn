@@ -96,35 +96,15 @@ Standardizes idea files according to Millennium Dawn standards.
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
 ```
 
-### Redundant Gate Blocks (`strip_idea_allowed_gates.py`, `strip_dynmod_tag_gates.py`)
+### Idea and Dynamic Modifier Gates
 
-Surgical sweeps for two gates that never fail. Unlike the standardizers above they rewrite only the blocks they remove, so the diff carries no reformatting.
-
-`strip_idea_allowed_gates.py` drops `allowed` and `available` blocks from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults either gate. Use `cancel` if the idea should remove itself. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
-
-`strip_dynmod_tag_gates.py` drops `always = yes` and top-level `original_tag` / `tag` triggers from a dynamic modifier's `enable` block, removing the block when that empties it. `enable` is re-evaluated at runtime, so these cost something every pass. Only top-level triggers are touched: one inside `OR` / `NOT` is an alternative or an exclusion, and `country_exists`, `has_idea` and `has_completed_focus` stay, because those go false while the modifier is still attached. Every strip is reported — "only this country ever attaches it" is a claim about the rest of the repo that the script does not verify.
-
-Both find a block's closing brace by column, not by "the line where depth hit zero" — a closer sharing a line with the enclosing block's own `}` would otherwise be swallowed along with it. A block whose braces never balance is reported and left alone, and the run exits non-zero, rather than rewriting from the opener to EOF.
-
-`validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
-
-`add_idea_equipment_bonus_instant.py` adds `instant = yes` to idea equipment
-bonuses that lack it. It leaves other content and already instant bonuses unchanged.
-Run `python3 tools/standardization/add_idea_equipment_bonus_instant.py --dry-run`
-to preview the count, then omit `--dry-run` to update `common/ideas/`.
-
-**Usage:**
-
-```bash
-python3 strip_idea_allowed_gates.py --dry-run
-python3 strip_dynmod_tag_gates.py --backup
-```
+No script sweeps these. `validate_ideas.py` flags `allowed` and `available` blocks on ideas in a slotless category, and equipment bonuses without `instant = yes`. `validate_modifiers.py` flags redundant `enable` gates on dynamic modifiers. Fix new cases by hand.
 
 ### AI Path Weights (`apply_ai_path_weights.py`)
 
 Writes the `ai_will_do` path modifiers for a country's AI path game rule (issue #3162) from a
 mapping of focus id to ownership group, so the two-line boost/killswitch pair does not have to be
-hand-written across ~180 focuses. Like the gate sweeps above it rewrites only the blocks it owns.
+hand-written across ~180 focuses. It rewrites only the blocks it owns.
 
 A modifier is replaced only when it exists to route paths: it names a `<TAG>_*_FOCUS_PATH` flag, a
 `<TAG>_ai_*_path` trigger, or is a bare `factor = 0` `is_historical_focus_on` killswitch. Anything

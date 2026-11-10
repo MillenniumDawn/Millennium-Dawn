@@ -1120,6 +1120,19 @@ def test_decision_check(monkeypatch, check, decisions, expected):
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
 
 
+@pytest.mark.parametrize("no_cache", [False, True])
+def test_one_run_parses_decisions_once(tmp_path, no_cache):
+    write_tree(tmp_path, {"common/decisions/X.txt": "cat = {\n\tdec_one = {\n\t}\n}\n"})
+    validator = V.Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=no_cache
+    )
+
+    first = V.parse_all_decision_factories(validator.mod_path)
+
+    assert first
+    assert V.parse_all_decision_factories(validator.mod_path) is first
+
+
 def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
     validator = _mod(
         tmp_path,

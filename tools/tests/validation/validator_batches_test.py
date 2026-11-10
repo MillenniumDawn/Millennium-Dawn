@@ -4,6 +4,7 @@ import pytest
 import run_validator_batch as rvb
 import validator_batches as vb
 from shared.paths import VALIDATION_DIR
+from shared.suite import write_under
 
 
 @pytest.fixture(scope="module")
@@ -401,12 +402,12 @@ def test_import_graph_is_not_built_for_non_import_selections(monkeypatch):
 
 
 def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
-    tmp_path, monkeypatch, write_path
+    tmp_path, monkeypatch
 ):
     validation_dir = tmp_path / "validation"
     for name in ("validate_tech_categories", "validate_bonus_names", "equipment_stats"):
-        write_path(validation_dir, f"{name}.py")
-    write_path(validation_dir, "validate_ideas.py", "import equipment_stats\n")
+        write_under(validation_dir, f"{name}.py", "")
+    write_under(validation_dir, "validate_ideas.py", "import equipment_stats\n")
     monkeypatch.setattr(vb, "TOOLS_DIR", str(tmp_path))
     monkeypatch.setattr(vb, "VALIDATION_DIR", str(validation_dir))
     original = vb._build_import_graph
@@ -428,7 +429,7 @@ def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
     assert {spec.name for spec in first[0]} == {"tech-categories", "ideas"}
     assert first[1] == []
 
-    write_path(
+    write_under(
         validation_dir,
         "validate_bonus_names.py",
         "import validate_tech_categories\n",
