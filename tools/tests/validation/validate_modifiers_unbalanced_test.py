@@ -332,3 +332,108 @@ def test_modifier_run_calls_every_check(tmp_path, monkeypatch):
     validator = _validator(tmp_path, enabled=False)
     called, checks = checks_called_by_run(validator, monkeypatch)
     assert called == checks
+
+
+def _idea(name, key, value):
+    block = f"{name} = {{ modifier = {{ {key} = {value} }} }}"
+    return f"ideas = {{ country = {{ {block} }} }}\n"
+
+
+_WEEKLY_CASES = {
+    "flat over cap": ("stability_weekly", "0.06", 1),
+    "flat at cap": ("stability_weekly", "0.05", 0),
+    "flat penalty": ("war_support_weekly", "-0.06", 0),
+    "factor over cap": ("stability_weekly_factor", "0.3", 1),
+    "factor penalty over cap": ("war_support_weekly_factor", "-0.3", 1),
+    "factor at cap": ("stability_weekly_factor", "0.25", 0),
+}
+
+
+@pytest.mark.parametrize("key,value,count", _WEEKLY_CASES.values(), ids=_WEEKLY_CASES)
+def test_weekly_stability_war_support_caps(tmp_path, key, value, count):
+    _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", key, value))
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_weekly_stability_war_support()
+    assert [(i.category, i.severity) for i in validator._issues] == [
+        ("weekly-stability-war-support-over-cap", Severity.WARNING)
+    ] * count
+    if count:
+        assert "'test_idea'" in validator._issues[0].message
+
+
+_EXCESSIVE_CASES = {
+    "bonus over cap": ("research_speed_factor", "0.31", 1),
+    "bonus at cap": ("research_speed_factor", "0.30", 0),
+    "penalty": ("research_speed_factor", "-0.5", 0),
+    "cost bonus": ("corruption_cost_factor", "-0.4", 1),
+    "cost penalty": ("corruption_cost_factor", "0.4", 0),
+    "expected bonus": ("expected_welfare_modifier", "-0.4", 1),
+    "ai weight": ("ai_focus_aggressive_factor", "5", 0),
+    "income key": (_TAX, "0.5", 0),
+    "weekly key": ("stability_weekly_factor", "0.5", 0),
+}
+
+
+@pytest.mark.parametrize(
+    "key,value,count", _EXCESSIVE_CASES.values(), ids=_EXCESSIVE_CASES
+)
+def test_excessive_modifiers(tmp_path, key, value, count):
+    _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", key, value))
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_excessive_modifiers()
+    assert [(i.category, i.severity) for i in validator._issues] == [
+        ("excessive-modifier-over-30-percent", Severity.WARNING)
+    ] * count
+
+
+_GRANT_CASES = {
+    "timed idea only": ("add_timed_idea = { idea = test_idea days = 90 }", 0),
+    "timed and permanent idea": (
+        "add_timed_idea = { idea = test_idea days = 90 }\nadd_ideas = test_idea",
+        1,
+    ),
+    "idea in add_ideas list": ("add_ideas = { other_idea test_idea }", 1),
+    "idea via swap_ideas": (
+        "swap_ideas = { remove_idea = other_idea add_idea = test_idea }",
+        1,
+    ),
+    "never granted": ("", 1),
+}
+
+
+@pytest.mark.parametrize("grant,count", _GRANT_CASES.values(), ids=_GRANT_CASES)
+def test_timed_only_ideas_are_skipped(tmp_path, grant, count):
+    _write(
+        tmp_path,
+        "common/ideas/test.txt",
+        _idea("test_idea", "research_speed_factor", "0.5"),
+    )
+    _write(
+        tmp_path,
+        "common/national_focus/test.txt",
+        f"focus = {{ completion_reward = {{ {grant} }} }}\n",
+    )
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_excessive_modifiers()
+    assert len(validator._issues) == count
+
+
+@pytest.mark.parametrize(
+    "grant,count",
+    [
+        ("add_dynamic_modifier = { modifier = test_dm days = 30 }", 0),
+        ("add_dynamic_modifier = { modifier = test_dm }", 1),
+    ],
+)
+def test_timed_only_dynamic_modifiers_are_skipped(tmp_path, grant, count):
+    _write(
+        tmp_path,
+        "common/dynamic_modifiers/test.txt",
+        "test_dm = {\n\tstability_weekly = 0.1\n}\n",
+    )
+    _write(tmp_path, "events/test.txt", f"immediate = {{ {grant} }}\n")
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_weekly_stability_war_support()
+    assert len(validator._issues) == count
+    if count:
+        assert "'test_dm'" in validator._issues[0].message

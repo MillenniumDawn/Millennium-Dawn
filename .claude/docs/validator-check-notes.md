@@ -615,6 +615,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
   The owner is the idea, trait, or modifier name that holds the bonus. Do not
   blanket-exempt existing bonuses; review and explain each one (Issue #6371).
+- `weekly-stability-war-support-over-cap` (WARNING, always on): a permanent
+  `stability_weekly` or `war_support_weekly` above `0.05`, or a `*_weekly_factor` with
+  an absolute value above `0.25`. Weekly penalties are not flagged (Issue #6494).
+- `excessive-modifier-over-30-percent` (WARNING, always on): one permanent `*_factor` or
+  `*_modifier` literal above `0.30`. Keys containing `cost` or starting with `expected_`
+  are bonuses when negative, so they warn below `-0.30`. `ai_*`, income, and weekly
+  keys are skipped because they are AI weights or have their own caps (Issue #6494).
+- Both checks scan the same files as `income-over-25-percent`. They skip an idea that
+  is only ever granted through `add_timed_idea`, and a dynamic modifier that is only
+  added with `days`. Any `add_ideas`, `add_idea`, or untimed `add_dynamic_modifier` grant
+  makes the source permanent.
 
 ## validate_on_actions.py
 
