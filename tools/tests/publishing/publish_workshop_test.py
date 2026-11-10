@@ -1619,6 +1619,68 @@ def test_stop_process_stops_the_whole_group(
     assert "WARNING" not in capsys.readouterr().out
 
 
+_STAT = "10 (sh) {} 1 {} 4242"
+
+# case: (killpg reaches the group, files under a stand-in /proc, alive)
+_GROUP_ALIVE_CASES = {
+    "empty group": (False, {"10/stat": _STAT.format("S", 4242)}, False),
+    "no /proc": (True, {}, True),
+    "running member": (True, {"10/stat": _STAT.format("S", 4242)}, True),
+    "zombie member": (True, {"10/stat": _STAT.format("Z", 4242)}, False),
+    "dead member": (True, {"10/stat": _STAT.format("X", 4242)}, False),
+    "another group's process": (True, {"10/stat": _STAT.format("S", 7)}, False),
+    "name holding a parenthesis": (True, {"10/stat": "10 (a) Z (b) S 1 4242"}, True),
+    "unreadable and short stat files": (
+        True,
+        {"10/stat/x": "", "11/stat": "11 (sh)"},
+        False,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "reachable, files, alive", _GROUP_ALIVE_CASES.values(), ids=_GROUP_ALIVE_CASES
+)
+def test_group_alive_counts_only_live_members(
+    tmp_path, monkeypatch, reachable, files, alive
+):
+    for name, text in files.items():
+        write_text(tmp_path / name, text)
+    monkeypatch.setattr(pw, "_signal_group", lambda _pgid, _sig: reachable)
+    monkeypatch.setattr(pw, "Path", lambda _root: tmp_path)
+
+    assert pw._group_alive(4242) is alive
+
+
+def _wait_for_state(pid, state):
+    stat = Path(f"/proc/{pid}/stat")
+    deadline = time.monotonic() + 5
+    while stat.read_text().rpartition(")")[2].split()[0] != state:
+        assert time.monotonic() < deadline, f"{pid} never reached state {state}"
+        time.sleep(0.01)
+
+
+@pytest.mark.skipif(
+    not Path("/proc/self/stat").exists(), reason="reads Linux /proc process state"
+)
+@pytest.mark.parametrize(
+    "script, state, alive",
+    [("import time; time.sleep(60)", "S", True), ("pass", "Z", False)],
+    ids=["live member", "zombie only"],
+)
+def test_group_alive_ignores_zombies(script, state, alive):
+    proc = _spawn(script, start_new_session=True)
+    try:
+        _wait_for_state(proc.pid, state)
+        assert pw._signal_group(proc.pid, 0)
+        assert pw._group_alive(proc.pid) is alive
+    finally:
+        proc.kill()
+        proc.wait()
+        proc.stdout.close()
+        proc.stderr.close()
+
+
 @posix_only
 @pytest.mark.parametrize("error", [ProcessLookupError, PermissionError])
 def test_signal_group_reports_an_empty_group(monkeypatch, error):
@@ -1637,6 +1699,7 @@ def test_stop_process_warns_when_the_group_survives_escalation(monkeypatch, caps
     monkeypatch.setattr(
         pw, "_signal_group", lambda _pgid, sig: signals.append(sig) or True
     )
+    monkeypatch.setattr(pw, "_group_alive", lambda _pgid: True)
     proc = _SteamProc([])
     proc.pid = 4242
 
