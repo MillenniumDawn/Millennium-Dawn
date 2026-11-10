@@ -3838,8 +3838,9 @@ class Validator(BaseValidator):
         """Flag a days_remove timer that nothing reads.
 
         A timer keeps the decision active. That matters only when a
-        remove_effect runs at the end, a modifier lasts while it is active, or a
-        has_decision trigger reads it. Missions are skipped.
+        remove_effect, war_with_on_remove, or war_with_target_on_remove runs at
+        the end, a modifier lasts while it is active, or a has_decision trigger
+        reads it. Missions are skipped.
         """
         self._log_section("Checking decisions with days_remove but no remove_effect...")
 
@@ -3855,7 +3856,12 @@ class Validator(BaseValidator):
                 or d.token in checked
                 or any(
                     _top_level_field_value(d.raw, field)
-                    for field in ("modifier", "targeted_modifier")
+                    for field in (
+                        "modifier",
+                        "targeted_modifier",
+                        "war_with_on_remove",
+                        "war_with_target_on_remove",
+                    )
                 )
             ):
                 continue
