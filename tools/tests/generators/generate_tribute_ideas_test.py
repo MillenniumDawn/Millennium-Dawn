@@ -1,19 +1,12 @@
-import importlib.util
 import sys
 from pathlib import Path
 
 import pytest
+from shared.suite import load_tool_module
 
 
 def _module():
-    from shared.paths import GENERATORS_DIR
-
-    path = GENERATORS_DIR / "generate_tribute_ideas.py"
-    spec = importlib.util.spec_from_file_location("generate_tribute_ideas", path)
-    assert spec is not None and spec.loader is not None
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+    return load_tool_module("generators/generate_tribute_ideas.py")
 
 
 def test_generation_does_not_touch_caller_owned_temp_names(tmp_path, monkeypatch):

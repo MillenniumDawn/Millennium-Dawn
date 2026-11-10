@@ -57,6 +57,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   scan disabled; functional Indonesia contracts run in the `Content tests` job.
 - Strictness can differ by stage. `validate_ai_equipment.py` runs without `--strict`
   locally and with it in CI.
+- `git push` runs the full tools suite (`tools-pytest`, about a minute) only when the
+  push changes `tools/` or config files. `pre-commit install` and
+  `tools/dev_setup.py` install the push hook. Older clones need one re-run of either.
 - `validate_unused_textures.py` is a `stages: [manual]` hook. `validate_standardization.py`
   is unwired and run by hand. The `md-standardize` auto-fixer hook stays disabled.
 - The Test Suite runs on every PR to `main`, drafts included. Changes under
