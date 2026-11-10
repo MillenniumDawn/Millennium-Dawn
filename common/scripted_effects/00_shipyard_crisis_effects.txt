@@ -54,9 +54,25 @@ shipyard_recalc = {
 	set_variable = { shipyard_dockyards_in_use = num_of_naval_factories }
 	subtract_from_variable = { shipyard_dockyards_in_use = num_of_available_naval_factories }
 
+
+	# Hull classes a country can lay down at all come from real yards on the map.
+	set_variable = { shipyard_capital_yard = 0 }
+	set_variable = { shipyard_submarine_yard = 0 }
+	every_owned_state = {
+		if = {
+			limit = { check_variable = { building_level@large_slipway > 0 } }
+			ROOT = { set_variable = { shipyard_capital_yard = 1 } }
+		}
+		if = {
+			limit = { check_variable = { building_level@submarine_hall > 0 } }
+			ROOT = { set_variable = { shipyard_submarine_yard = 1 } }
+		}
+	}
+
 	shipyard_country_recalc = yes
 	force_update_dynamic_modifier = yes
 	shipyard_sync_equipment = yes
+	shipyard_sync_yard_locks = yes
 	shipyard_update_dirty_variable = yes
 }
 
@@ -189,6 +205,132 @@ shipyard_country_recalc = {
 	}
 	else = {
 		shipyard_effective_from_crisis = yes
+	}
+}
+
+# A country with no large slipway can still lay a capital ship down, at a price nobody
+# pays twice. The same for submarines without a submarine hall. add_equipment_bonus cannot
+# be removed, so each lock is toggled with its own negative.
+shipyard_sync_yard_locks = {
+	if = {
+		limit = {
+			check_variable = { shipyard_capital_yard = 0 }
+			check_variable = { shipyard_capital_locked = 0 }
+		}
+		shipyard_capital_lock_on = yes
+		set_variable = { shipyard_capital_locked = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { shipyard_capital_yard = 1 }
+			check_variable = { shipyard_capital_locked = 1 }
+		}
+		shipyard_capital_lock_off = yes
+		set_variable = { shipyard_capital_locked = 0 }
+	}
+	if = {
+		limit = {
+			check_variable = { shipyard_submarine_yard = 0 }
+			check_variable = { shipyard_submarine_locked = 0 }
+		}
+		shipyard_submarine_lock_on = yes
+		set_variable = { shipyard_submarine_locked = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { shipyard_submarine_yard = 1 }
+			check_variable = { shipyard_submarine_locked = 1 }
+		}
+		shipyard_submarine_lock_off = yes
+		set_variable = { shipyard_submarine_locked = 0 }
+	}
+}
+
+shipyard_capital_lock_on = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			cruiser = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+shipyard_capital_lock_off = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			cruiser = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
+	}
+}
+
+shipyard_submarine_lock_on = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+shipyard_submarine_lock_off = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
 	}
 }
 
