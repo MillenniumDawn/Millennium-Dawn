@@ -29,16 +29,6 @@ def pool_sizes(monkeypatch):
 
 
 @pytest.fixture
-def write_path():
-    from shared.suite import write_text
-
-    def write(root, relative_path, content=""):
-        return write_text(root / relative_path, content)
-
-    return write
-
-
-@pytest.fixture
 def issues_by_line():
     def run(validator_cls, root):
         validator = validator_cls(str(root), use_colors=False, workers=1)
@@ -48,17 +38,3 @@ def issues_by_line():
         }, validator
 
     return run
-
-
-@pytest.fixture
-def gfx_notices(monkeypatch):
-    from validate_gfx_references import Validator
-
-    def collect(tmp_path, check):
-        logged = []
-        validator = Validator(str(tmp_path), use_colors=False)
-        monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
-        check(validator)
-        return logged
-
-    return collect

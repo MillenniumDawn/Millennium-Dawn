@@ -3,16 +3,12 @@
 import json
 
 import pytest
-from shared.paths import TOOLS_DIR
 from shared.suite import (
     assert_findings,
     collecting_validator,
     initialize_git_repository,
-    issue_dict,
-    make_issue,
     make_results_tree,
     run_git,
-    write_slug_json,
     write_text,
 )
 
@@ -59,39 +55,6 @@ def test_assert_findings_matches_each_finding_once(results, expected, passes):
             assert_findings(results, expected)
 
 
-def test_issue_dict_defaults():
-    assert issue_dict("warning") == {
-        "severity": "warning",
-        "category": "c",
-        "message": "m",
-        "file": "a.txt",
-        "line": 1,
-    }
-
-
-def test_make_issue_defaults_and_overrides():
-    issue = make_issue()
-    assert issue.severity == "error"
-    assert issue.category == "missing_key"
-    assert issue.message == "key FOO not found"
-    assert issue.file == "events/MD_x.txt"
-    assert issue.line == 212
-    assert issue.validator == "events"
-    assert make_issue(file="other.txt", line=3).file == "other.txt"
-
-
-def test_write_text_creates_parents_and_returns_path(tmp_path):
-    path = write_text(tmp_path / "nested" / "file.txt", "hello\n")
-    assert path.read_text(encoding="utf-8") == "hello\n"
-    assert path == tmp_path / "nested" / "file.txt"
-
-
-def test_write_slug_json_writes_the_array(tmp_path):
-    payload = [{"severity": "error"}]
-    write_slug_json(tmp_path, "events", payload)
-    assert json.loads((tmp_path / "events.json").read_text(encoding="utf-8")) == payload
-
-
 def test_make_results_tree_writes_log_and_sidecar(tmp_path):
     issues = [{"severity": "warning", "message": "m"}]
     root = make_results_tree(tmp_path, {"events": {"log": "ok\n", "issues": issues}})
@@ -117,8 +80,3 @@ def test_initialize_git_repository_commits_added_paths(tmp_path):
     initialize_git_repository(tmp_path, "history/units")
     names = run_git(tmp_path, "ls-files").stdout.splitlines()
     assert "history/units/oob.txt" in names
-
-
-def test_suite_module_lives_in_shared_not_tests_root():
-    assert (TOOLS_DIR / "shared" / "suite.py").is_file()
-    assert not (TOOLS_DIR / "suite_helpers.py").exists()

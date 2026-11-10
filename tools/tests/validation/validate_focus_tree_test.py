@@ -1535,7 +1535,7 @@ def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
     validator = _validator(tmp_path)
 
     staffable = validator._staffable_effect_map()
-    money = validator._money_cost_effect_names()
+    money = validator._scripted_effect_data_for_guards().money
     assert staffable["direct_builder"] == frozenset({"arms_factory"})
     assert staffable["builder_outer"] == frozenset({"arms_factory"})
     assert {"direct_money", "money_wrapper", "money_outer"} <= money
@@ -1554,7 +1554,7 @@ def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkey
     monkeypatch.setattr(V, "_read_scripted_effect_file", read)
     validator = _validator(tmp_path)
     validator._staffable_effect_map()
-    validator._money_cost_effect_names()
+    validator._scripted_effect_data_for_guards()
 
     assert len(reads) == 1
 

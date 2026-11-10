@@ -120,12 +120,10 @@ def _discovery_env():
     return env
 
 
-def _repo_path(filepath):
-    absolute = os.path.abspath(filepath)
-    parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
-    discovery_env = os.environ.copy()
-    discovery_env.pop("GIT_DIR", None)
-    discovery_env.pop("GIT_WORK_TREE", None)
+_REPO_ROOTS = {}
+
+
+def _find_repo_root(parent, filepath):
     try:
         result = subprocess.run(
             ["git", "-C", parent, "rev-parse", "--show-toplevel"],
@@ -142,7 +140,15 @@ def _repo_path(filepath):
     if result.returncode:
         detail = result.stderr.strip() or "not a Git worktree"
         raise StagedDiffError(f"cannot find Git repository for {filepath}: {detail}")
-    root = os.path.realpath(result.stdout.strip())
+    return os.path.realpath(result.stdout.strip())
+
+
+def _repo_path(filepath):
+    absolute = os.path.abspath(filepath)
+    parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
+    root = _REPO_ROOTS.get(parent)
+    if root is None:
+        root = _REPO_ROOTS[parent] = _find_repo_root(parent, filepath)
     try:
         relative = os.path.relpath(os.path.realpath(absolute), root)
     except ValueError as error:

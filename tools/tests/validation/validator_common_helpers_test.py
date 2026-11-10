@@ -7,6 +7,7 @@ from decimal import Decimal
 
 import pytest
 import validator_common as VC
+from shared.suite import write_under
 
 
 class _Dummy(VC.BaseValidator):
@@ -344,13 +345,13 @@ def test_script_commits_money(script, commits):
 # ---- leader trait parsing -------------------------------------------------
 
 
-def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
-    write_path(
+def test_parse_leader_trait_names_reads_only_txt_files(tmp_path):
+    write_under(
         tmp_path,
         "common/country_leader/traits.txt",
         "leader_traits = {\n\temerging_communist_state = {\n\t}\n}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/country_leader/notes.md",
         "leader_traits = {\n\tnot_a_trait = {\n\t}\n}\n",
@@ -377,8 +378,8 @@ def test_parse_leader_trait_names_missing_dir(tmp_path):
 # ---- meta template scanning -----------------------------------------------
 
 
-def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path, write_path):
-    live = write_path(
+def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path):
+    live = write_under(
         tmp_path, "meta.txt", "meta_effect = {\n\tset_leader_[IDEOLOGY] = yes\n}\n"
     )
     files = [str(tmp_path / "gone.txt"), str(live)]
@@ -388,8 +389,8 @@ def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path, write_path
     }
 
 
-def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path, write_path):
-    path = write_path(
+def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path):
+    path = write_under(
         tmp_path,
         "meta.txt",
         'meta_effect = {\n\ttext = "[ANY]"\n}\n',
@@ -400,8 +401,8 @@ def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path, writ
     )
 
 
-def test_scan_meta_constructed_names_reports_each_name_once(tmp_path, write_path):
-    path = write_path(
+def test_scan_meta_constructed_names_reports_each_name_once(tmp_path):
+    path = write_under(
         tmp_path,
         "meta.txt",
         "meta_effect = {\n"
@@ -414,10 +415,10 @@ def test_scan_meta_constructed_names_reports_each_name_once(tmp_path, write_path
     assert VC.scan_meta_constructed_names([str(path)], names) == names
 
 
-def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path, write_path):
+def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path):
     """`set_leader_[X]` must not claim the bare name `set_leader_` itself — the
     placeholder always expands to at least one character."""
-    path = write_path(
+    path = write_under(
         tmp_path,
         "meta.txt",
         "meta_effect = {\n\tset_leader_[IDEOLOGY] = yes\n}\n",
@@ -491,27 +492,27 @@ def test_unknown_severity_counts_as_neither_error_nor_warning(dummy):
 # ---- file indexes ---------------------------------------------------------
 
 
-def test_basename_index_is_memoized(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_basename_index_is_memoized(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     first = dummy._basename_index(("**/*.txt",))
-    write_path(tmp_path, "common/b.txt", "y")
+    write_under(tmp_path, "common/b.txt", "y")
     assert dummy._basename_index(("**/*.txt",)) is first
 
 
-def test_basename_index_dedupes_overlapping_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_basename_index_dedupes_overlapping_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     index = dummy._basename_index(("**/*.txt", "common/*.txt"))
     assert len(index["a.txt"]) == 1
 
 
-def test_basename_index_skips_ignored_paths(dummy, write_path, tmp_path):
-    write_path(tmp_path, "docs/skipped.txt", "x")
-    write_path(tmp_path, "common/kept.txt", "y")
+def test_basename_index_skips_ignored_paths(dummy, tmp_path):
+    write_under(tmp_path, "docs/skipped.txt", "x")
+    write_under(tmp_path, "common/kept.txt", "y")
     assert sorted(dummy._basename_index(("**/*.txt",))) == ["kept.txt"]
 
 
-def test_get_full_path_finds_the_file_holding_the_item(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/one/shared.txt", "wanted_item = yes\n")
+def test_get_full_path_finds_the_file_holding_the_item(dummy, tmp_path):
+    write_under(tmp_path, "common/one/shared.txt", "wanted_item = yes\n")
 
     hit = dummy.get_full_path("shared.txt", "wanted_item")
 
@@ -519,11 +520,9 @@ def test_get_full_path_finds_the_file_holding_the_item(dummy, write_path, tmp_pa
     assert hit.endswith(os.path.join("one", "shared.txt"))
 
 
-def test_get_full_path_returns_none_when_no_candidate_has_the_item(
-    dummy, write_path, tmp_path
-):
-    write_path(tmp_path, "common/one/shared.txt", "nothing here\n")
-    write_path(tmp_path, "common/two/shared.txt", "nothing here either\n")
+def test_get_full_path_returns_none_when_no_candidate_has_the_item(dummy, tmp_path):
+    write_under(tmp_path, "common/one/shared.txt", "nothing here\n")
+    write_under(tmp_path, "common/two/shared.txt", "nothing here either\n")
 
     assert dummy.get_full_path("shared.txt", "wanted_item") is None
 
@@ -536,34 +535,34 @@ def test_get_full_path_returns_none_when_unreadable(dummy, tmp_path):
 # ---- file collection ------------------------------------------------------
 
 
-def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch, write_path):
+def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch):
     # A full scan would find this file, so an empty result proves the staged path.
-    write_path(tmp_path, "common/a.txt", "x")
+    write_under(tmp_path, "common/a.txt", "x")
     monkeypatch.setenv("MD_STAGED_FILES", "")
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1)
     assert v._collect_files(["common/**/*.txt"]) == []
 
 
-def test_collect_files_dedupes_overlapping_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_collect_files_dedupes_overlapping_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     files = dummy._collect_files(["common/*.txt", "**/*.txt"])
     assert len(files) == 1
 
 
-def test_collect_files_dedupes_nested_dir_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/sub/a.txt", "x")
+def test_collect_files_dedupes_nested_dir_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/sub/a.txt", "x")
     files = dummy._collect_files(["common/sub/*.txt", "common/**/*.txt"])
     assert len(files) == 1
 
 
 @pytest.mark.parametrize("staged_only", [False, True])
 def test_worktree_collection_and_basename_index_use_checkout_root(
-    tmp_path, write_path, monkeypatch, staged_only
+    tmp_path, monkeypatch, staged_only
 ):
     root = tmp_path / ".claude/worktrees/repo"
-    kept = write_path(root, "events/kept.txt", "wanted_item = yes\n")
-    nested = write_path(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
-    write_path(root, "resources/vanilla/events/reference.txt", "ignored")
+    kept = write_under(root, "events/kept.txt", "wanted_item = yes\n")
+    nested = write_under(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
+    write_under(root, "resources/vanilla/events/reference.txt", "ignored")
     monkeypatch.setenv(
         "MD_STAGED_FILES", "events/kept.txt\n.claude/worktrees/stale/events/nested.txt"
     )
@@ -621,8 +620,8 @@ def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
 # ---- localisation keys ----------------------------------------------------
 
 
-def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
-    write_path(
+def test_localisation_loader_skips_unreadable_yml(dummy, tmp_path):
+    write_under(
         tmp_path, "localisation/english/good_l_english.yml", 'l_english:\n k: "v"\n'
     )
     (tmp_path / "localisation" / "english" / "broken_l_english.yml").mkdir()
@@ -641,13 +640,13 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
     ],
     ids=["tokens", "empty registry"],
 )
-def test_dynamic_token_names(write_path, tmp_path, registry, expected):
-    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+def test_dynamic_token_names(tmp_path, registry, expected):
+    write_under(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
     assert VC.load_dynamic_token_names(str(tmp_path)) == expected
 
 
-def _loc_tree(write_path, tmp_path):
-    write_path(
+def _loc_tree(tmp_path):
+    write_under(
         tmp_path,
         "localisation/english/test_l_english.yml",
         'l_english:\n TEST_key_one:0 "One"\n TEST_key_two:0 "Two"\n',
@@ -656,24 +655,22 @@ def _loc_tree(write_path, tmp_path):
 
 # A staged .txt reads its loc keys from unstaged files. Restricting the lookup
 # to staged files once flooded --staged runs with false positives.
-def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, write_path, tmp_path):
-    _loc_tree(write_path, tmp_path)
+def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, tmp_path):
+    _loc_tree(tmp_path)
     dummy.staged_only = True
     dummy.staged_files = ["events/some_event.txt"]
 
     assert {"TEST_key_one", "TEST_key_two"} <= dummy._load_localisation_keys()
 
 
-def test_loc_keys_are_memoized(dummy, write_path, tmp_path):
-    _loc_tree(write_path, tmp_path)
+def test_loc_keys_are_memoized(dummy, tmp_path):
+    _loc_tree(tmp_path)
     assert dummy._load_localisation_keys() is dummy._load_localisation_keys()
 
 
-def test_loc_keys_hit_the_disk_cache_across_instances(
-    write_path, tmp_path, monkeypatch
-):
+def test_loc_keys_hit_the_disk_cache_across_instances(tmp_path, monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    _loc_tree(write_path, tmp_path)
+    _loc_tree(tmp_path)
     first = _Dummy(
         mod_path=str(tmp_path), use_colors=False, workers=1
     )._load_localisation_keys()

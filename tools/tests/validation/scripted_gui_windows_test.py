@@ -5,18 +5,19 @@ import sys
 import pytest
 import validate_scripted_gui as V
 from run_validator_batch import selected_specs
+from shared.suite import write_under
 
 SCRIPTED_GUI_FILE = "common/scripted_guis/00_MD_economyview_scripted_guis.txt"
 GUI_FILE = "interface/windows.gui"
 
 
 @pytest.fixture
-def window_repo(tmp_path, write_path):
+def window_repo(tmp_path):
     def build(window, gui="", parent=None, before_window="", staged_only=False):
         parent_line = f"\t\tparent_window_name = {parent}\n" if parent else ""
         if gui is not None:
-            write_path(tmp_path, GUI_FILE, gui)
-        write_path(
+            write_under(tmp_path, GUI_FILE, gui)
+        write_under(
             tmp_path,
             SCRIPTED_GUI_FILE,
             "scripted_gui = {\n"
@@ -60,13 +61,11 @@ def test_undefined_investment_window_is_reported(window_repo, window, quoted):
 
 
 @pytest.mark.parametrize("quoted", [False, True])
-def test_container_in_another_gui_file_resolves(
-    tmp_path, write_path, window_repo, quoted
-):
+def test_container_in_another_gui_file_resolves(tmp_path, window_repo, quoted):
     window = "investments_treasury_container"
     value = f'"{window}"' if quoted else window
     validator = window_repo(value)
-    write_path(
+    write_under(
         tmp_path,
         "interface/investments.gui",
         f"guiTypes = {{\n\tcontainerWindowType = {{ name = {value} }}\n}}\n",
@@ -111,11 +110,11 @@ def test_commented_container_does_not_hide_a_missing_window(window_repo):
     assert [issue.category for issue in validator._issues] == ["MISSING_WINDOW"]
 
 
-def test_commented_window_reference_is_ignored(tmp_path, write_path, window_repo):
+def test_commented_window_reference_is_ignored(tmp_path, window_repo):
     validator = window_repo(
         "live_window", "containerWindowType = { name = live_window }\n"
     )
-    write_path(
+    write_under(
         tmp_path,
         SCRIPTED_GUI_FILE,
         "scripted_gui = {\n"

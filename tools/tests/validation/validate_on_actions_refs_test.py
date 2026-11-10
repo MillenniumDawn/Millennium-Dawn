@@ -18,6 +18,7 @@ from validate_on_actions import (
     _scan_date_polls_file,
     _scan_event_file,
     _scan_event_text,
+    _scan_on_action_block,
 )
 
 EVENTS = """add_namespace = test
@@ -171,6 +172,36 @@ def test_same_event_in_exclusive_branches_is_not_a_duplicate():
         ("test.1", 8),
     ]
     assert dupes == []
+
+
+# case: (block body, line offset, references, duplicates)
+_BLOCK_SCAN_CASES = {
+    "duplicate keeps its file line past the offset": (
+        "country_event = test.1\ncountry_event = test.1\n",
+        10,
+        [("test.1", "on_action_test", 11)],
+        [("test.1", "on_action_test", 12)],
+    ),
+    "same event in if and else_if branches": (
+        "if = { limit = { has_country_flag = A } country_event = test.1 }\n"
+        "else_if = { limit = { has_country_flag = B } country_event = test.1 }\n",
+        0,
+        [("test.1", "on_action_test", 1), ("test.1", "on_action_test", 2)],
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("body", "offset", "refs", "dupes"),
+    _BLOCK_SCAN_CASES.values(),
+    ids=_BLOCK_SCAN_CASES,
+)
+def test_on_action_block_scan(body, offset, refs, dupes):
+    assert _scan_on_action_block(body, "on_action_test", "test.txt", offset) == (
+        refs,
+        dupes,
+    )
 
 
 def test_long_form_call_is_not_counted_twice():

@@ -44,8 +44,8 @@ _BLOCK_PROPS = {
 
 # Blocks that get filtered out when they contain `always = no`.
 # `allowed` is not in this set: on a slotted idea it hides the entry from the
-# picker while add_idea still applies it. Slotless allowed blocks are stripped
-# by strip_idea_allowed_gates.py instead.
+# picker while add_idea still applies it. validate_ideas.py flags slotless
+# allowed blocks instead.
 _ALWAYS_NO_FILTERED = {"allowed_civil_war", "cancel"}
 
 # Block pattern for wrapper blocks / idea blocks
