@@ -11027,7 +11027,7 @@ UKR_check_mrls_followup_tenders = {
 	if = {
 		limit = {
 			date > 2007.6.30
-			date < 2009.1.1
+			date < 2010.1.1
 			NOT = { has_country_flag = UKR_mrls_stage2_offered }
 			OR = {
 				has_country_flag = UKR_develop_mrls_bm21k_flag
@@ -11276,8 +11276,12 @@ UKR_tha_deliver_btr3 = {
 	modify_treasury_effect = yes
 	set_variable = { UKR_tha_btr3_ready = 0 }
 	subtract_from_variable = { UKR_tha_btr3_left = 1 }
-	set_country_flag = UKR_tha_btr3_on_time_flag
-	UKR_tha_on_time = yes
+	if = {
+		limit = { NOT = { has_country_flag = UKR_tha_btr3_late_flag } }
+		set_country_flag = UKR_tha_btr3_on_time_flag
+		UKR_tha_on_time = yes
+	}
+	clr_country_flag = UKR_tha_btr3_late_flag
 	if = {
 		limit = { check_variable = { UKR_tha_btr3_left > 0 } }
 		country_event = { id = ukraine_thai_contract.10 days = 1 }
@@ -11294,11 +11298,19 @@ UKR_tha_deliver_btr3 = {
 }
 
 UKR_tha_btr3_late = {
+	set_country_flag = UKR_tha_btr3_late_flag
 	UKR_tha_add_strike = yes
 	if = {
-		limit = { NOT = { has_country_flag = UKR_tha_kyiv_build_mission_used } }
+		limit = {
+			has_country_flag = UKR_tha_contract_active
+			NOT = { has_country_flag = UKR_tha_kyiv_build_mission_used }
+		}
 		set_country_flag = UKR_tha_kyiv_build_mission_used
 		698 = { set_temp_variable = { af = building_level@arms_factory } }
+		if = {
+			limit = { has_decision = UKR_tha_prepare_btr3_kit }
+			add_to_temp_variable = { af = 1 }
+		}
 		set_variable = { UKR_tha_kyiv_af_base = af }
 		activate_mission = UKR_tha_build_kyiv_plant_mission
 	}
@@ -11320,8 +11332,12 @@ UKR_tha_deliver_oplot = {
 	modify_treasury_effect = yes
 	set_variable = { UKR_tha_oplot_ready = 0 }
 	subtract_from_variable = { UKR_tha_oplot_left = 1 }
-	set_country_flag = UKR_tha_oplot_on_time_flag
-	UKR_tha_on_time = yes
+	if = {
+		limit = { NOT = { has_country_flag = UKR_tha_oplot_late_flag } }
+		set_country_flag = UKR_tha_oplot_on_time_flag
+		UKR_tha_on_time = yes
+	}
+	clr_country_flag = UKR_tha_oplot_late_flag
 	if = {
 		limit = {
 			date > 2016.01.01
@@ -11347,11 +11363,19 @@ UKR_tha_deliver_oplot = {
 }
 
 UKR_tha_oplot_late = {
+	set_country_flag = UKR_tha_oplot_late_flag
 	UKR_tha_add_strike = yes
 	if = {
-		limit = { NOT = { has_country_flag = UKR_tha_kharkiv_build_mission_used } }
+		limit = {
+			has_country_flag = UKR_tha_contract_active
+			NOT = { has_country_flag = UKR_tha_kharkiv_build_mission_used }
+		}
 		set_country_flag = UKR_tha_kharkiv_build_mission_used
 		696 = { set_temp_variable = { af = building_level@arms_factory } }
+		if = {
+			limit = { has_decision = UKR_tha_prepare_oplot_kit }
+			add_to_temp_variable = { af = 1 }
+		}
 		set_variable = { UKR_tha_kharkiv_af_base = af }
 		activate_mission = UKR_tha_build_kharkiv_plant_mission
 	}
