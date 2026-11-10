@@ -1200,37 +1200,22 @@ class Validator(BaseValidator):
         """Warn on individual tax, export, and market income bonuses above +25%."""
         self._log_section("Checking tax and income bonuses above +25%...")
         results = []
-        for filepath in self._collect_files(self._UNBALANCED_PATTERNS):
-            if should_skip_file(filepath, mod_path=self.mod_path):
+        for key, value, rel, line, owner in self._scan_owned_files(
+            "modifiers.income", _scan_income_modifiers
+        ):
+            if f"{owner}::{key}" in _INCOME_EXCEPTIONS:
                 continue
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=False
-            )
-            rel = os.path.relpath(filepath, self.mod_path)
-            direct_depth = _direct_depth(rel)
-            entries = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                f"modifiers.income.{direct_depth}",
-                filepath,
-                text,
-                lambda text=text, depth=direct_depth: _scan_income_modifiers(
-                    text, depth
-                ),
-            )
-            for key, value, line, owner in entries:
-                if f"{owner}::{key}" in _INCOME_EXCEPTIONS:
-                    continue
-                results.append(
-                    (
-                        f"'{owner}': {key} = {value:g} grants +{value * 100:g}%, "
-                        "above +25% per source; verify the balance and decimal "
-                        f"placement. If intentional, add '{owner}::{key}' with a "
-                        "reason to validation_config.json "
-                        "income_over_25_percent_exceptions (issue #6371)",
-                        rel,
-                        line,
-                    )
+            results.append(
+                (
+                    f"'{owner}': {key} = {value:g} grants +{value * 100:g}%, "
+                    "above +25% per source; verify the balance and decimal "
+                    f"placement. If intentional, add '{owner}::{key}' with a "
+                    "reason to validation_config.json "
+                    "income_over_25_percent_exceptions (issue #6371)",
+                    rel,
+                    line,
                 )
+            )
         self._report(
             results,
             "No individual tax or income bonuses above +25%",
@@ -1245,30 +1230,37 @@ class Validator(BaseValidator):
         "history/**/*.txt",
     ]
 
+    def _scan_owned_files(self, namespace, scan):
+        """(key, value, rel, line, owner) from scan(text, depth) per source file."""
+        found = []
+        for filepath in self._collect_files(self._UNBALANCED_PATTERNS):
+            if should_skip_file(filepath, mod_path=self.mod_path):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=False
+            )
+            rel = os.path.relpath(filepath, self.mod_path)
+            depth = _direct_depth(rel)
+            entries = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                f"{namespace}.{depth}",
+                filepath,
+                text,
+                lambda text=text, depth=depth: scan(text, depth),
+            )
+            for key, value, line, owner in entries:
+                found.append((key, value, rel, line, owner))
+        return found
+
     def _owned_capped_entries(self):
         """(key, value, rel, line, owner) for weekly and percent-style literals."""
         if self._owned_capped_cache is None:
-            found = []
-            for filepath in self._collect_files(self._UNBALANCED_PATTERNS):
-                if should_skip_file(filepath, mod_path=self.mod_path):
-                    continue
-                text = FileOpener.open_text_file(
-                    filepath, lowercase=False, strip_comments_flag=False
-                )
-                rel = os.path.relpath(filepath, self.mod_path)
-                depth = _direct_depth(rel)
-                entries = disk_cache.per_file_cached_by_content(
-                    self.mod_path,
-                    f"modifiers.owned.{depth}",
-                    filepath,
-                    text,
-                    lambda text=text, depth=depth: _scan_owned_numeric_modifiers(
-                        text, depth, _is_capped_key
-                    ),
-                )
-                for key, value, line, owner in entries:
-                    found.append((key, value, rel, line, owner))
-            self._owned_capped_cache = found
+            self._owned_capped_cache = self._scan_owned_files(
+                "modifiers.owned",
+                lambda text, depth: _scan_owned_numeric_modifiers(
+                    text, depth, _is_capped_key
+                ),
+            )
         return self._owned_capped_cache
 
     def _timed_only_owners(self) -> Set[str]:
