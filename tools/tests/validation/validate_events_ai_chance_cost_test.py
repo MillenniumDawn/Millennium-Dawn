@@ -301,6 +301,38 @@ def test_both_cost_checks_share_one_scan(tmp_path, monkeypatch):
     ]
 
 
+def test_cost_tables_are_cached_until_an_input_file_changes(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    builds = []
+    for name in ("_costly_effects", "resolve_payments"):
+        real = getattr(validate_events, name)
+        monkeypatch.setattr(
+            validate_events,
+            name,
+            lambda *args, real=real, name=name: builds.append(name) or real(*args),
+        )
+    _write(tmp_path, _BUDGET, _SCRIPTED_EFFECTS)
+    _write(tmp_path, "events/Ev.txt", _two_options(_PP_COST + _FLAT))
+
+    def load():
+        v = _validator(tmp_path)
+        lookups = validate_events.load_cost_lookups(v)
+        return lookups, validate_events.load_event_payments(v, lookups)
+
+    first = load()
+    assert load() == first
+    assert builds == ["_costly_effects", "resolve_payments"]
+
+    _write(
+        tmp_path, "history/countries/TAG.txt", "set_variable = { TAG_rail_cost = -4 }\n"
+    )
+    lookups, payments = load()
+
+    assert lookups.stored == {"TAG_rail_cost": 1}
+    assert payments == first[1]
+    assert builds == ["_costly_effects", "resolve_payments"] * 2
+
+
 # case: (files, (message, line) per finding in Ev.txt)
 _VALIDATOR_CASES = {
     "flat weight on a costed option": (

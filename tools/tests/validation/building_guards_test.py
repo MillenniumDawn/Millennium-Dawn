@@ -10,6 +10,7 @@ flag the effect inside it.
 
 import pytest
 import validate_building_guards as V
+from shared.suite import write_under
 
 
 def _scan(script):
@@ -696,20 +697,19 @@ def test_modifier_without_factor_zero_is_not_a_guard():
 # --- validator wiring -------------------------------------------------------
 
 
-def _run(tmp_path, write_path, monkeypatch, script):
+def _run(tmp_path, monkeypatch, script):
     import validator_common
 
     monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
-    write_path(tmp_path, "events/test_events.txt", script)
+    write_under(tmp_path, "events/test_events.txt", script)
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
     validator.run_validations()
     return validator
 
 
-def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkeypatch):
+def test_run_reports_and_logs_each_unguarded_effect(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "652 = {\n\tdamage_building = { type = fuel_silo damage = 1 }\n}\n",
     )
@@ -727,12 +727,9 @@ def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkey
     )
 
 
-def test_run_reports_province_building_state_trigger_as_error(
-    tmp_path, write_path, monkeypatch
-):
+def test_run_reports_province_building_state_trigger_as_error(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "if = {\n"
         "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
@@ -744,12 +741,9 @@ def test_run_reports_province_building_state_trigger_as_error(
     ]
 
 
-def test_random_infrastructure_slot_guard_is_a_warning(
-    tmp_path, write_path, monkeypatch
-):
+def test_random_infrastructure_slot_guard_is_a_warning(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
     )
@@ -758,12 +752,9 @@ def test_random_infrastructure_slot_guard_is_a_warning(
     ]
 
 
-def test_run_stays_quiet_when_every_effect_is_guarded(
-    tmp_path, write_path, monkeypatch
-):
+def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "652 = {\n"
         "\tif = { limit = { fuel_silo > 0 }\n"

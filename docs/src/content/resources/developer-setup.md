@@ -96,7 +96,12 @@ The setup script installs pre-commit hooks and Python tool dependencies:
 python3 tools/dev_setup.py
 ```
 
-That's it. Pre-commit hooks will now run automatically on every commit.
+That's it. Hooks now run on every commit and push. The push hook runs the full
+tools test suite (about a minute), but only when a push changes `tools/` or
+config files.
+
+If you set up hooks before the push hook was added, run
+`python3 tools/dev_setup.py` (or `pre-commit install`) once more to install it.
 
 To verify your environment at any time:
 
@@ -145,9 +150,12 @@ pre-commit autoupdate
 | `md-validate-descriptors`     | Yes        | Yes     | Also runs in the core batch job      |
 | `fix-localization-encoding`   | Yes        | No      | Fixer; CI checks BOM without fixing  |
 | `fix-loc-yaml`                | Yes        | No      | Pre-commit only                      |
-| `md-fix-styling`              | Manual     | No      | CI checks style in batches           |
+| `check-yaml`                  | Yes        | No      | Localisation and `.github` YAML      |
+| `check-toml`                  | Yes        | No      | Pre-commit only                      |
+| `check-illegal-windows-names` | Yes        | No      | Pre-commit only                      |
+| `md-fix-styling`              | Yes        | No      | CI checks style in batches           |
 | `md-validate-unused-textures` | Manual     | No      | CI cannot run it                     |
-| `tools-pytest`                | Pre-push   | Yes     | CI Tools tests job when tools change |
+| `tools-pytest`                | On push    | Yes     | CI Tools tests job when tools change |
 
 The CI (PR) column is the Test Suite (`test-suite.yml`). The full pre-commit vs
 CI map, including per-validator strictness, lives in

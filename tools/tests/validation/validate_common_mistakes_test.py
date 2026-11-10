@@ -113,6 +113,56 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
     ]
 
 
+def test_cached_findings_follow_flags_set_in_other_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    checked = []
+    real_check = common_mistakes.check_file
+    monkeypatch.setattr(
+        common_mistakes,
+        "check_file",
+        lambda path: checked.append(path) or real_check(path),
+    )
+    _write(
+        tmp_path,
+        "common/scripted_effects/nation.txt",
+        "TST_effect = {\n\tif = { limit = { is_arab_nation = yes } }\n}\n",
+    )
+
+    def run():
+        validator = _validator(tmp_path)
+        validator.run_validations()
+        return _findings(validator)
+
+    assert run() == run() == []
+    assert len(checked) == 1
+
+    _write(
+        tmp_path,
+        "common/scripted_effects/flags.txt",
+        "TST_flags = {\n\tset_country_flag = arab_nation_flag\n}\n",
+    )
+
+    assert [(file, line) for file, line, _message in run()] == [
+        ("common/scripted_effects/nation.txt", 2)
+    ]
+    assert len(checked) == 3
+
+
+@pytest.mark.parametrize("entry", common_mistakes._SHARED_INPUTS)
+def test_shared_digest_changes_with_each_shared_input(tmp_path, monkeypatch, entry):
+    monkeypatch.setattr(common_mistakes, "get_root_dir", lambda: str(tmp_path))
+    path = entry if entry.endswith(".txt") else f"{entry}/sub/x.txt"
+    _write(tmp_path, path, "one")
+    before = common_mistakes._shared_digest(set(), set(), set())
+
+    _write(tmp_path, path, "two")
+
+    after = common_mistakes._shared_digest(set(), set(), set())
+
+    assert after != before
+    assert common_mistakes._shared_digest({"focus"}, set(), set()) != after
+
+
 def test_events_history_and_music_trees_are_scanned(tmp_path):
     _write(tmp_path, "events/MD_test.txt", FACTION_MISTAKE)
     _write(tmp_path, "history/countries/GER - Germany.txt", FACTION_MISTAKE)

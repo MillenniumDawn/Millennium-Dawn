@@ -352,11 +352,8 @@ _W_PAYMENTS = _NO_PAYMENTS
 _W_DIGEST = ""
 
 
-def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
-    global _W_LOOKUPS, _W_PAYMENTS, _W_DIGEST
-    _W_LOOKUPS = lookups
-    _W_PAYMENTS = payments
-    _W_DIGEST = hashlib.sha256(
+def _lookups_digest(lookups: CostLookups) -> str:
+    return hashlib.sha256(
         repr(
             (
                 sorted(lookups.effects.items()),
@@ -370,6 +367,13 @@ def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
             )
         ).encode("utf-8")
     ).hexdigest()
+
+
+def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
+    global _W_LOOKUPS, _W_PAYMENTS, _W_DIGEST
+    _W_LOOKUPS = lookups
+    _W_PAYMENTS = payments
+    _W_DIGEST = _lookups_digest(lookups)
 
 
 def _scan_stored_variable_signs(
@@ -408,25 +412,44 @@ def idea_callbacks(texts: Iterable[str]) -> Dict[str, str]:
     return callbacks
 
 
-def load_cost_lookups(validator: BaseValidator) -> CostLookups:
-    """CostLookups read from the whole mod."""
-    bodies = _effect_bodies(validator)
-    idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
-    ideas = idea_money_modifiers(idea_texts)
-    callbacks = idea_callbacks(idea_texts)
-    effects = _costly_effects(bodies)
-    commitments = money_commitment_effects(bodies, ideas)
-    stored: Dict[str, int] = {}
-    script_files = validator._collect_files(
+def _cost_input_files(validator: BaseValidator) -> List[str]:
+    """Every file the cost lookups and event payments read."""
+    return validator._collect_files(
         ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
         ignore_staged=True,
     )
-    for found in validator._pool_map(
-        partial(_scan_stored_variable_signs, mod_path=validator.mod_path), script_files
-    ):
-        for name, signs in found.items():
-            stored[name] = stored.get(name, 0) | signs
-    return CostLookups(effects, stored, commitments, ideas, callbacks)
+
+
+def load_cost_lookups(validator: BaseValidator) -> CostLookups:
+    """CostLookups read from the whole mod."""
+    script_files = _cost_input_files(validator)
+
+    def build() -> tuple:
+        bodies = _effect_bodies(validator)
+        idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
+        ideas = idea_money_modifiers(idea_texts)
+        callbacks = idea_callbacks(idea_texts)
+        effects = _costly_effects(bodies)
+        commitments = money_commitment_effects(bodies, ideas)
+        stored: Dict[str, int] = {}
+        for found in validator._pool_map(
+            partial(_scan_stored_variable_signs, mod_path=validator.mod_path),
+            script_files,
+        ):
+            for name, signs in found.items():
+                stored[name] = stored.get(name, 0) | signs
+        # A plain tuple: a pickled CostLookups names __main__ when run as a script.
+        return (effects, stored, commitments, ideas, callbacks)
+
+    return CostLookups(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.cost_lookups",
+            script_files,
+            build,
+            namespace="events",
+        )
+    )
 
 
 def _scan_event_payment_nodes(
@@ -469,16 +492,31 @@ def load_event_payments(
     validator: BaseValidator, lookups: CostLookups
 ) -> EventPayments:
     """resolve_payments over every event and scripted effect in the mod."""
-    nodes: Dict[str, _EventNode] = {}
-    for found in validator._pool_map_init(
-        partial(_scan_event_payment_nodes, mod_path=validator.mod_path),
-        validator._collect_files(["events/**/*.txt"], ignore_staged=True),
-        _init_cost_lookups,
-        (lookups, _NO_PAYMENTS),
-    ):
-        nodes.update(found)
-    return resolve_payments(
-        nodes, effect_payment_nodes(_effect_bodies(validator), lookups)
+
+    def build() -> tuple:
+        nodes: Dict[str, _EventNode] = {}
+        for found in validator._pool_map_init(
+            partial(_scan_event_payment_nodes, mod_path=validator.mod_path),
+            validator._collect_files(["events/**/*.txt"], ignore_staged=True),
+            _init_cost_lookups,
+            (lookups, _NO_PAYMENTS),
+        ):
+            nodes.update(found)
+        return tuple(
+            resolve_payments(
+                nodes, effect_payment_nodes(_effect_bodies(validator), lookups)
+            )
+        )
+
+    return EventPayments(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.event_payments",
+            _cost_input_files(validator),
+            build,
+            namespace="events",
+            salt=_lookups_digest(lookups),
+        )
     )
 
 
