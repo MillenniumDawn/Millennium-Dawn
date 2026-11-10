@@ -276,6 +276,8 @@ country_event = {
 			modifier = { add = 50 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { add = 25 ai_has_high_deficit = yes }
 			modifier = { add = 40 has_opinion = { target = AFG value < -25 } }
+			modifier = { add = 40 AFG = { NOT = { has_government = ROOT } } }
+			modifier = { add = 40 AFG = { has_idea = sunni } }
 		}
 	}
 }
@@ -867,7 +869,7 @@ country_event = {
 	trigger = {
 		tag = AFG
 		AFG = {
-			no_jihadist_government = yes
+			jihadist_government = no
 			has_country_flag = AFG_active_taliban_insurgency
 			check_variable = {
 				var = taliban_strength
@@ -883,7 +885,7 @@ country_event = {
 			if = {
 				limit = {
 					exists = yes
-					no_jihadist_government = yes
+					jihadist_government = no
 					has_military_access_to = AFG
 					NOT = { has_country_flag = wot_supporting_afghan_counter_insurgency }
 				}
@@ -942,7 +944,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 2
-				is_influencer = yes
+				AFG = { is_influencer = yes }
 			}
 		}
 	}
@@ -1092,7 +1094,7 @@ country_event = {
 	trigger = {
 		tag = AFG
 		AFG = {
-			no_jihadist_government = yes
+			jihadist_government = no
 			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
@@ -1103,7 +1105,7 @@ country_event = {
 			if = {
 				limit = {
 					exists = yes
-					no_jihadist_government = yes
+					jihadist_government = no
 					has_country_flag = wot_supporting_afghan_counter_insurgency
 					NOT = { has_military_access_to = AFG }
 				}
@@ -1122,7 +1124,7 @@ country_event = {
 	trigger = {
 		original_tag = AFG
 		ROOT = {
-			no_jihadist_government = yes
+			jihadist_government = no
 			has_country_flag = AFG_active_taliban_insurgency
 		}
 	}
@@ -1162,17 +1164,17 @@ country_event = {
 						OR = {
 							any_of_scopes = {
 								array = global.PR_superpowers
-								no_jihadist_government = yes
+								jihadist_government = no
 								has_military_access_to = AFG
 							}
 							any_of_scopes = {
 								array = global.PR_great_powers
-								no_jihadist_government = yes
+								jihadist_government = no
 								has_military_access_to = AFG
 							}
 							any_of_scopes = {
 								array = global.PR_large_powers
-								no_jihadist_government = yes
+								jihadist_government = no
 								has_military_access_to = AFG
 							}
 						}
@@ -2843,7 +2845,7 @@ country_event = {
 			base = 1
 			modifier = {
 				factor = 2
-				is_influencer = yes
+				AFG = { is_influencer = yes }
 			}
 			modifier = {
 				factor = 2
@@ -3624,15 +3626,41 @@ country_event = {
 	option = {
 		name = AFG_hostage_crisis.5.a
 		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.5.a executed"
-		ai_chance = { base = 1 }
-		KOR = { country_event = { id = AFG_hostage_crisis.8 days = 2 } }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+		set_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		if = {
+			limit = { country_exists = AFG }
+			AFG = {
+				diplomatic_relation = {
+					country = KOR
+					relation = military_access
+					active = no
+				}
+				hidden_effect = { country_event = { id = AFG_hostage_crisis.8 days = 2 } }
+			}
+		}
 	}
 
 	option = {
 		name = AFG_hostage_crisis.5.b
 		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.5.b executed"
 		ai_chance = { base = 0 }
-		KOR = { country_event = { id = AFG_hostage_crisis.9 days = 2 } }
+		add_popularity = {
+			ideology = democratic
+			popularity = -0.15
+		}
+		add_political_power = -50
+		hidden_effect = {
+			if = {
+				limit = { country_exists = AFG }
+				AFG = { country_event = { id = AFG_hostage_crisis.9 days = 2 } }
+			}
+		}
 	}
 }
 
@@ -3651,7 +3679,7 @@ country_event = {
 		ai_chance = { base = 1 }
 		AFG = { add_stability = -0.05 }
 		KOR = {
-			country_event = { id = AFG_hostage_crisis.4 days = 2 }
+			country_event = { id = AFG_hostage_crisis.5 days = 2 }
 			add_popularity = {
 				ideology = democratic
 				popularity = -0.05
@@ -3672,7 +3700,7 @@ country_event = {
 		name = AFG_hostage_crisis.7.a
 		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.7.a executed"
 		ai_chance = { base = 1 }
-		KOR = { country_event = { id = AFG_hostage_crisis.4 days = 2 } }
+		KOR = { country_event = { id = AFG_hostage_crisis.5 days = 2 } }
 		AFG = { add_stability = -0.1 }
 		KOR = {
 			add_popularity = {
@@ -3690,21 +3718,12 @@ country_event = {
 	desc = AFG_hostage_crisis.8.d
 	picture = GFX_afghan_sk_hostage_released
 	is_triggered_only = yes
+	minor_flavor = yes
 
 	#Good Ending
 	option = {
 		name = AFG_hostage_crisis.8.a
-		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.8.a executed"
 		ai_chance = { base = 1 }
-		KOR = {
-			set_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes
-		}
-		diplomatic_relation = {
-			country = KOR
-			relation = military_access
-			active = no
-		}
 	}
 }
 
@@ -3715,19 +3734,12 @@ country_event = {
 	desc = AFG_hostage_crisis.9.d
 	picture = GFX_afghan_sk_hostages_killed
 	is_triggered_only = yes
+	minor_flavor = yes
 
 	#Bad Ending
 	option = {
 		name = AFG_hostage_crisis.9.a
-		log = "[GetDateText]: [This.GetName]: AFG_hostage_crisis.9.a executed"
 		ai_chance = { base = 1 }
-		KOR = {
-			add_popularity = {
-				ideology = democratic
-				popularity = -0.15
-			}
-			add_political_power = -50
-		}
 	}
 }
 #Aloya jirga (No war on terror)
@@ -3941,6 +3953,7 @@ country_event = {
 	#they need american plans so send event to america
 	option = {
 		name = AFG_events.35.a
+		trigger = { country_exists = USA }
 		log = "[GetDateText]: [This.GetName]: AFG_events.35.a executed"
 		USA = { country_event = AFG_events.42 }
 		custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -3977,7 +3990,6 @@ country_event = {
 		news_event = AFG_news.18
 		set_temp_variable = { treasury_change = -2 }
 		modify_treasury_effect = yes
-		AFG = { set_country_flag = AFG_russian_airlift_is_active }
 		ai_chance = {
 			base = 100
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
@@ -4009,7 +4021,7 @@ country_event = {
 					amount = 4000
 					producer = SOV
 				}
-				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { percent_change = 3 }
 				set_temp_variable = { tag_index = SOV.id }
 				set_temp_variable = { influence_target = AFG.id }
 				change_influence_percentage = yes
@@ -4021,8 +4033,12 @@ country_event = {
 		}
 		set_temp_variable = { treasury_change = -15 }
 		modify_treasury_effect = yes
-		set_country_flag = AFG_russian_airlift_is_active
-		ai_chance = { base = 0 }
+		ai_chance = {
+			base = 0
+			modifier = { add = 100 NOT = { country_exists = USA } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = {
@@ -4033,7 +4049,8 @@ country_event = {
 			modifier = { add = 50 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { add = 25 ai_has_high_deficit = yes }
 			modifier = { add = 40 has_opinion = { target = AFG value < -25 } }
-			modifier = { factor = 0 is_influencer = yes }
+			modifier = { add = 40 AFG = { NOT = { has_government = ROOT } } }
+			modifier = { factor = 0 AFG = { is_influencer = yes } }
 		}
 		AFG = { country_event = AFG_events.41 }
 	}
@@ -4075,7 +4092,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 10
-				is_influencer = yes
+				AFG = { is_influencer = yes }
 			}
 		}
 	}
@@ -4177,6 +4194,7 @@ country_event = {
 		set_temp_variable = { influence_target = AFG.id }
 		change_influence_percentage = yes
 		add_ideas = AFG_russian_air_lift
+		set_country_flag = AFG_russian_airlift_is_active
 		SOV = {
 			add_opinion_modifier = { target = AFG modifier = trade_allies }
 		}
@@ -4246,27 +4264,25 @@ country_event = {
 	option = {
 		name = AFG_events.42.a
 		log = "[GetDateText]: [This.GetName]: AFG_events.42.a executed"
-		AFG = { country_event = AFG_events.38 }
-		effect_tooltip = {
-			add_equipment_to_stockpile = {
-				type = infantry_weapons_2
-				amount = 4000
-				producer = SOV
-			}
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { tag_index = SOV.id }
-			set_temp_variable = { influence_target = AFG.id }
-			change_influence_percentage = yes
-			add_ideas = AFG_russian_air_lift
-			SOV = {
-				add_opinion_modifier = { target = AFG modifier = trade_allies }
-			}
-		}
 		AFG = {
-			USA = {
-				add_opinion_modifier = { target = AFG modifier = trade_allies }
+			country_event = AFG_events.38
+			effect_tooltip = {
+				add_equipment_to_stockpile = {
+					type = infantry_weapons_2
+					amount = 4000
+					producer = SOV
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = SOV.id }
+				set_temp_variable = { influence_target = AFG.id }
+				change_influence_percentage = yes
+				add_ideas = AFG_russian_air_lift
+				SOV = {
+					add_opinion_modifier = { target = AFG modifier = trade_allies }
+				}
 			}
 		}
+		add_opinion_modifier = { target = AFG modifier = trade_allies }
 		set_temp_variable = { percent_change = 1 }
 		set_temp_variable = { tag_index = USA.id }
 		set_temp_variable = { influence_target = AFG.id }
@@ -4288,7 +4304,8 @@ country_event = {
 			modifier = { add = 50 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { add = 25 ai_has_high_deficit = yes }
 			modifier = { add = 40 has_opinion = { target = AFG value < -10 } }
-			modifier = { factor = 0 is_influencer = yes }
+			modifier = { add = 40 AFG = { NOT = { has_government = ROOT } } }
+			modifier = { factor = 0 AFG = { is_influencer = yes } }
 		}
 		AFG = { country_event = AFG_events.41 }
 	}
@@ -4387,7 +4404,7 @@ country_event = {
 			}
 			modifier = {
 				factor = 10
-				is_influencer = yes
+				AFG = { is_influencer = yes }
 			}
 		}
 	}
@@ -4512,7 +4529,7 @@ country_event = {
 		name = AFG_political_events.1.a
 		log = "[GetLogInfo]: event AFG_political_events.1.a"
 		ai_chance = {
-			base = 10
+			base = 100
 			modifier = {
 				add = 40
 				AFG = { is_top3_influencer = yes }
@@ -4523,48 +4540,35 @@ country_event = {
 			}
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.5 AFG = { NOT = { has_government = ROOT } } }
 			modifier = {
 				factor = 0
 				has_opinion = { target = AFG value < 0 }
 			}
 		}
-		AFG = { country_event = AFG_political_events.3 }
-		effect_tooltip = {
-			AFG = {
-				add_equipment_to_stockpile = {
-					type = infantry_weapons_type
-					producer = USA
-					amount = 5000
-				}
-				add_equipment_to_stockpile = {
-					type = artillery_equipment
-					producer = USA
-					amount = 100
-				}
-				add_equipment_to_stockpile = {
-					type = util_vehicle_type
-					producer = USA
-					amount = 500
-				}
+		send_equipment = {
+			type = infantry_weapons_type
+			amount = 5000
+			target = AFG
+		}
+		send_equipment = {
+			type = artillery_equipment
+			amount = 100
+			target = AFG
+		}
+		send_equipment = {
+			type = util_vehicle_type
+			amount = 500
+			target = AFG
+		}
+		custom_effect_tooltip = AFG_arms_stockpile_limit_tt
+		AFG = {
+			country_event = AFG_political_events.3
+			effect_tooltip = {
 				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = USA.id }
 				change_influence_percentage = yes
 			}
-		}
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_type
-			producer = USA
-			amount = -5000
-		}
-		add_equipment_to_stockpile = {
-			type = artillery_equipment
-			producer = USA
-			amount = -100
-		}
-		add_equipment_to_stockpile = {
-			type = util_vehicle_type
-			producer = USA
-			amount = -500
 		}
 		set_temp_variable = { treasury_change = -4.50 }
 		modify_treasury_effect = yes
@@ -4610,21 +4614,6 @@ country_event = {
 	option = {
 		name = AFG_political_events.3.a
 		log = "[GetLogInfo]: event AFG_political_events.3.a"
-		add_equipment_to_stockpile = {
-			type = infantry_weapons_type
-			producer = USA
-			amount = 5000
-		}
-		add_equipment_to_stockpile = {
-			type = artillery_equipment
-			producer = USA
-			amount = 100
-		}
-		add_equipment_to_stockpile = {
-			type = util_vehicle_type
-			producer = USA
-			amount = 500
-		}
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = USA.id }
 		set_temp_variable = { influence_target = AFG }
@@ -4845,7 +4834,9 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 1
+			base = 100
+			modifier = { factor = 2 has_opinion = { target = TAL value > 25 } }
+			modifier = { factor = 2 TAL = { is_influencer = yes } }
 		}
 	}
 
@@ -4858,7 +4849,12 @@ country_event = {
 				days = 1
 			}
 		}
-		ai_chance = { base = 0 }
+		ai_chance = {
+			base = 0
+			modifier = { add = 40 has_opinion = { target = TAL value < -25 } }
+			modifier = { add = 40 TAL = { NOT = { has_government = ROOT } } }
+			modifier = { factor = 0 is_in_faction_with = TAL }
+		}
 	}
 }
 
@@ -4874,7 +4870,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: AFG_border_wars.4.a executed"
 		set_country_flag = PAK_objected
 		ai_chance = {
-			base = 1
+			base = 10
+			modifier = { factor = 2 has_opinion = { target = PAK value > 25 } }
+			modifier = { factor = 2 has_war = yes }
+			modifier = { factor = 2 strength_ratio = { tag = PAK ratio < 0.5 } }
+			modifier = { factor = 2 has_war_support < 0.3 }
 		}
 	}
 
@@ -4888,7 +4888,9 @@ country_event = {
 			}
 		}
 		ai_chance = {
-			base = 1
+			base = 10
+			modifier = { factor = 2 has_opinion = { target = PAK value < -25 } }
+			modifier = { factor = 2 strength_ratio = { tag = PAK ratio > 1 } }
 		}
 	}
 }

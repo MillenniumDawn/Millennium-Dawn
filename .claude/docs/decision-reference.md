@@ -163,10 +163,18 @@ mission and halve it on a high deficit:
 - Leave the weight off when skipping the decision costs the AI more than the charge.
 - Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
   A bankruptcy check on it is still fine, a deficit check is not.
-- Do not lower the weight on bankruptcy or a high deficit for a decision that costs no
-  money. A war, a spending law change, or a money modifier counts as money.
+- Do not lower the weight on bankruptcy or a high deficit for a decision that costs its
+  own country no money. A war, a spending law raise, an idea or money modifier that
+  raises a cost, and a bill an event it fires sends back count as money. A charge to
+  the target or another tag does not.
 
 The Spanish decisions in `common/decisions/Spain.txt` are the reference.
+
+A flat `base` makes the AI take the same decision every campaign. Weigh `ai_will_do`
+by the variable the decision changes, war, opinion, alliance, and the selected path,
+as in "Situation weights" in `event-reference.md`. Do not `factor = 0` the decision
+on a proxy that ignores that variable. If a block zeroes the weight, another legal
+pick must remain.
 
 ## Prices
 

@@ -344,9 +344,8 @@ def test_apply_returns_zero_for_unknown_path(tmp_path):
 
 
 def test_cli_writes_fix_across_the_mod_root(tmp_path, monkeypatch):
-    # The sweep derives its root from the script path, so a script path inside
-    # a temporary tree keeps the write out of the real repository.
     import fix_log_ids
+    import shared_utils
 
     root = _shared_tree(tmp_path)
     target = root / "common/national_focus/focus.txt"
@@ -362,8 +361,8 @@ def test_cli_writes_fix_across_the_mod_root(tmp_path, monkeypatch):
             "}\n"
         ),
     )
-    script = root / "tools" / "linting" / "fix_log_ids.py"
-    monkeypatch.setattr(sys, "argv", [str(script), "--workers", "1"])
+    monkeypatch.setattr(shared_utils, "get_root_dir", lambda: str(root))
+    monkeypatch.setattr(sys, "argv", ["fix_log_ids.py", "--workers", "1"])
 
     assert fix_log_ids.main() == 0
     body = target.read_text(encoding="utf-8")

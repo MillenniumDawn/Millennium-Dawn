@@ -29,7 +29,10 @@ Detects mechanically-checkable rule violations:
   - every_country with has_idea = X_member when a pre-built array exists
     (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
-  - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
+  - has_trade_agreement_with (not a valid trigger; MD uses is_in_array = { trade_agreement_partners = TAG })
+  - The trade agreement and investment treaty opinion modifiers outside
+    common/scripted_effects/00_economic_effects.txt (set_improved_trade_agreement
+    and set_mutual_investment_treaty apply them with the partner arrays)
   - Stat comparisons with the wrong trigger name (stability > 0.5 -> has_stability,
     has_command_power -> command_power); bare names inside variable blocks are game variables
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
@@ -408,6 +411,11 @@ _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
 )
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+_TRADE_MODIFIER_HOME = "common/scripted_effects/00_economic_effects.txt"
+_RE_TRADE_MODIFIER = re.compile(
+    r"\b(has_opinion_modifier|modifier)\s*=\s*(mutual_trade_agreement|mutual_trade_opinion"
+    r"|mutual_investment_treaty_opinion|mutual_investment_treaty_trade_opinion)\b"
+)
 _WRONG_STAT_TRIGGERS = {
     "stability": "has_stability",
     "war_support": "has_war_support",
@@ -536,6 +544,7 @@ from shared_utils import (
     find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
+    list_files,
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
@@ -557,29 +566,22 @@ def _scan_global_refs(root_dir):
     decisions: set = set()
     nation_flags: set = set()
     for directory in ["common", "events", "history"]:
-        dir_path = os.path.join(root_dir, directory)
-        if not os.path.exists(dir_path):
-            continue
-        for root, _, filenames in os.walk(dir_path):
-            for filename in filenames:
-                if not filename.endswith(".txt"):
-                    continue
-                fp = os.path.join(root, filename)
-                try:
-                    with open(fp, "r", encoding="utf-8", errors="replace") as f:
-                        content = f.read()
-                except OSError:
-                    continue
-                # A \b-led pattern gets no literal-prefix scan, so test the
-                # literal every match contains before running it.
-                if "complete_national_focus" in content:
-                    focuses.update(_RE_COMPLETE_FOCUS.findall(content))
-                if "unlock_national_focus" in content:
-                    focuses.update(_RE_UNLOCK_FOCUS.findall(content))
-                if "activate_decision" in content:
-                    decisions.update(_RE_ACTIVATE_DECISION.findall(content))
-                if "_nation_flag" in content:
-                    nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
+        for fp in list_files(os.path.join(root_dir, directory)):
+            try:
+                with open(fp, "r", encoding="utf-8", errors="replace") as f:
+                    content = f.read()
+            except OSError:
+                continue
+            # A \b-led pattern gets no literal-prefix scan, so test the
+            # literal every match contains before running it.
+            if "complete_national_focus" in content:
+                focuses.update(_RE_COMPLETE_FOCUS.findall(content))
+            if "unlock_national_focus" in content:
+                focuses.update(_RE_UNLOCK_FOCUS.findall(content))
+            if "activate_decision" in content:
+                decisions.update(_RE_ACTIVATE_DECISION.findall(content))
+            if "_nation_flag" in content:
+                nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
     return focuses, decisions, nation_flags
 
 
@@ -1006,11 +1008,7 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
     if event_index is None:
         if not _EVENT_INDEX_BUILT:
-            try:
-                root_dir = get_root_dir()
-            except Exception:
-                root_dir = None
-            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX = _build_event_index(get_root_dir())
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
@@ -2566,6 +2564,47 @@ def _check_invalid_is_at_war(lines):
     return issues
 
 
+def _check_trade_modifier_outside_shared_effects(lines, filepath=""):
+    """Flag the trade agreement and treaty opinion modifiers outside their shared effects.
+
+    set_improved_trade_agreement and set_mutual_investment_treaty, which the
+    diplomatic actions also call, apply them together with the partner arrays. A
+    bare modifier gives the opinion with no agreement behind it, and checking the
+    modifier misses agreements that exist.
+    """
+    if filepath.replace("\\", "/").endswith(_TRADE_MODIFIER_HOME):
+        return []
+    src = _source(lines)
+    issues = []
+    for i in _lines_with(src, "mutual_"):
+        match = _RE_TRADE_MODIFIER.search(src.depth_code[i])
+        if not match:
+            continue
+        keyword, modifier = match.groups()
+        is_treaty = "investment" in modifier
+        if keyword == "has_opinion_modifier":
+            array = (
+                "investment_treaty_partners"
+                if is_treaty
+                else "trade_agreement_partners"
+            )
+            fix = f"check is_in_array = {{ {array} = TAG }}"
+        else:
+            effect = (
+                "set_mutual_investment_treaty"
+                if is_treaty
+                else "set_improved_trade_agreement"
+            )
+            fix = f"call {effect}"
+        issues.append(
+            (
+                i + 1,
+                f"{modifier} belongs to the shared effects in {_TRADE_MODIFIER_HOME} -- {fix} instead",
+            )
+        )
+    return issues
+
+
 def _check_has_opinion_modifier_block(lines):
     """Flag block-form has_opinion_modifier, which only accepts a modifier ID."""
     src = _source(lines)
@@ -2660,23 +2699,14 @@ def _provincial_building_types(mod_root=None):
     downgrades the check to a fixed list rather than silently disabling it.
     """
     if mod_root is None:
-        # Anchored on this file, not get_root_dir(): that reads sys.argv[0],
-        # which points at pytest rather than the linter when the tests import
-        # this. realpath so a symlinked checkout still lands on the real root.
-        mod_root = os.path.join(
-            os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-        )
+        mod_root = get_root_dir()
     types = set()
     buildings_dir = os.path.join(mod_root, "common", "buildings")
-    try:
-        filenames = sorted(os.listdir(buildings_dir))
-    except OSError:
+    if not os.path.isdir(buildings_dir):
         return _PROVINCIAL_BUILDINGS_FALLBACK
-    for fname in filenames:
-        if not fname.endswith(".txt"):
-            continue
+    for fpath in list_files(buildings_dir, recursive=False):
         try:
-            with open(os.path.join(buildings_dir, fname), encoding="utf-8") as f:
+            with open(fpath, encoding="utf-8") as f:
                 lines = f.readlines()
         except OSError:
             continue
@@ -2743,17 +2773,9 @@ def _direct_child_matches(body, pattern):
     return found
 
 
-@lru_cache(maxsize=None)
-def _mod_root():
-    """Repo root anchored on this file, not sys.argv[0] -- pytest imports this."""
-    return os.path.join(
-        os.path.dirname(os.path.realpath(__file__)), os.pardir, os.pardir
-    )
-
-
 def _read_dir_text(*parts):
     """Concatenated text of every .txt directly under the given mod directory."""
-    directory = os.path.join(_mod_root(), *parts)
+    directory = os.path.join(get_root_dir(), *parts)
     chunks = []
     try:
         filenames = sorted(os.listdir(directory))
@@ -2777,7 +2799,7 @@ def _equipment_bonus_enum():
     Returns None when the file can't be read, which disables the check rather
     than reporting every bonus as unknown.
     """
-    path = os.path.join(_mod_root(), "common", "script_enums.txt")
+    path = os.path.join(get_root_dir(), "common", "script_enums.txt")
     try:
         with open(path, encoding="utf-8") as f:
             text = f.read()
@@ -4515,7 +4537,7 @@ def check_file(filepath):
             issues.append(
                 (
                     line_num,
-                    "has_trade_agreement_with is not a valid trigger -- use has_country_flag = trade_agreement@TAG",
+                    "has_trade_agreement_with is not a valid trigger -- use is_in_array = { trade_agreement_partners = TAG }",
                 )
             )
 
@@ -4584,6 +4606,7 @@ def check_file(filepath):
     issues.extend(_check_stat_effect_magnitude(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
+    issues.extend(_check_trade_modifier_outside_shared_effects(lines, filepath))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_daily_mastery_index(lines))
     issues.extend(_check_var_index_shorthand(lines))

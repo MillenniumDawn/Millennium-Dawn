@@ -6,12 +6,13 @@ which only held already-resolved on-disk paths, so a reference that resolved to
 nothing was never in the set and the check was dead.
 """
 
+from shared.suite import write_under
 from validate_unused_textures import Validator
 
 
-def test_referenced_but_missing_texture_is_reported(tmp_path, write_path):
-    write_path(tmp_path, "gfx/present/real.dds")
-    write_path(
+def test_referenced_but_missing_texture_is_reported(tmp_path):
+    write_under(tmp_path, "gfx/present/real.dds", "")
+    write_under(
         tmp_path,
         "interface/test.gfx",
         "spriteTypes = {\n"

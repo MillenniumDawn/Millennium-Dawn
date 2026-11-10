@@ -37,7 +37,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
+from shared_utils import VALIDATION_CONFIG_PATH, list_files, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -58,7 +58,8 @@ _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
     "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
-    "building_guards_scan_v5": "validate_building_guards.py",
+    "building_guards_scan_v7": "validate_building_guards.py",
+    "common_mistakes": "validate_common_mistakes.py",
     "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
@@ -94,19 +95,54 @@ _FINGERPRINT_CACHE: Dict[str, Tuple[Tuple[Tuple[str, int, int], ...], str]] = {}
 _TOOLS_ROOT = Path(__file__).resolve().parent.parent
 _CACHE_RECORD = "md.cache.v9"
 
-# These helpers are called inside cached computations, so their source changes
-# must invalidate the owning namespace without making unrelated namespaces cold.
+# Every first-party module an owner imports, transitively, beyond the shared
+# files every fingerprint covers. A change to any of them must invalidate the
+# owning namespace without making unrelated namespaces cold.
+_CHECK_COMMON_MISTAKES = ("../cleanup_or.py", "../linting/check_common_mistakes.py")
+_SPRITES = ("image_size.py", "sprite_index.py", "validate_gfx_references.py")
+_EQUIPMENT = ("equipment_module_slots.py", "equipment_variant_context.py")
 _HELPER_DEPENDENCIES = {
-    "ai_weight_order_scan_v1": ("guard_scan.py",),
-    "building_guards_scan_v5": ("guard_scan.py",),
-    "dlc_guards_scan": ("validate_history.py",),
+    "ai_weight_order_scan_v1": ("guard_scan.py", "validate_unused_scripted.py"),
+    "building_guards_scan_v7": ("guard_scan.py",),
+    "common_mistakes": _CHECK_COMMON_MISTAKES,
+    "decisions": (*_CHECK_COMMON_MISTAKES, *_SPRITES, "validate_events.py"),
+    "dlc_guards_scan": (*_CHECK_COMMON_MISTAKES, *_EQUIPMENT, "validate_history.py"),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
-    "ideas": ("equipment_module_slots.py",),
+    "events": (*_CHECK_COMMON_MISTAKES, *_SPRITES),
+    "focus_tree": (
+        *_CHECK_COMMON_MISTAKES,
+        *_SPRITES,
+        "focus_geometry.py",
+        "validate_events.py",
+    ),
+    "history_techs": (*_CHECK_COMMON_MISTAKES, *_EQUIPMENT),
+    "ideas": (
+        "../linting/fix_loc_yaml.py",
+        "equipment_module_slots.py",
+        "equipment_stats.py",
+        "validate_gfx_references.py",
+        "validate_localisation.py",
+    ),
     "influence_calls_scan_v2": ("guard_scan.py",),
-    "math_expr": ("equipment_module_slots.py",),
-    "oob_units": ("equipment_module_slots.py",),
-    "sprite_index": ("validate_gfx_references.py",),
-    "variables": ("validate_focus_tree.py",),
+    "loc": ("../linting/fix_loc_yaml.py",),
+    "math_expr": ("guard_scan.py",),
+    "modifiers": ("equipment_module_slots.py",),
+    "oob_units": (
+        *_CHECK_COMMON_MISTAKES,
+        *_EQUIPMENT,
+        "validate_equipment_variants.py",
+    ),
+    "scripted_loc": ("validate_gfx_references.py",),
+    "scripted_params": ("validate_unused_scripted.py",),
+    "sprite_index": ("image_size.py", "validate_gfx_references.py"),
+    "unused_textures": ("validate_gfx_references.py",),
+    "variables": (
+        *_CHECK_COMMON_MISTAKES,
+        *_SPRITES,
+        "focus_geometry.py",
+        "validate_events.py",
+        "validate_focus_tree.py",
+    ),
 }
 
 
@@ -224,7 +260,9 @@ def _fingerprint_paths(namespace: str) -> tuple[Path, ...]:
     if owner:
         paths.append(Path(__file__).parent / owner)
     else:
-        paths.extend(Path(__file__).parent.glob("*.py"))
+        paths.extend(
+            map(Path, list_files(Path(__file__).parent, ("*.py",), recursive=False))
+        )
     for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
         paths.append(Path(__file__).parent / dependency)
     return tuple(sorted(set(paths)))
@@ -419,8 +457,9 @@ def _stats_tag(
     stats: Dict[str, Optional[Tuple[int, int]]],
     namespace: str = "",
     mod_path: str = "",
+    salt: str = "",
 ) -> str:
-    parts = []
+    parts = [salt] if salt else []
     for p in sorted(stats):
         v = stats[p]
         name = _source_key(mod_path, p) if mod_path else p
@@ -440,12 +479,14 @@ def aggregate_cached(
     factory_fn: Callable[[], Any],
     *,
     namespace: str = "",
+    salt: str = "",
 ) -> Any:
+    """*salt* keys the entry on inputs that are not files, such as a digest."""
     if _cache_disabled():
         return factory_fn()
     tracked: List[str] = list(tracked_files)
     current_stats = {p: _file_stat(p) for p in tracked}
-    tag = _stats_tag(current_stats, namespace, mod_path)
+    tag = _stats_tag(current_stats, namespace, mod_path, salt)
     hit, result = _get(mod_path, "__aggregate__", key, tag)
     if hit:
         return result

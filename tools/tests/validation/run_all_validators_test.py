@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 import run_all_validators as runner
-from shared.suite import write_text
+from shared.suite import write_text, write_under
 from validator_batches import ALL_SPECS
 
 
@@ -136,22 +136,22 @@ def test_a_line_that_is_not_a_number_sorts_first_in_its_file():
         pytest.param(None, "Event Chain", id="unreadable script"),
     ],
 )
-def test_validator_label_comes_from_the_script(tmp_path, write_path, source, label):
+def test_validator_label_comes_from_the_script(tmp_path, source, label):
     script = tmp_path / "validate_event_chain.py"
     if source is not None:
-        write_path(tmp_path, script.name, source)
+        write_under(tmp_path, script.name, source)
 
     assert runner._extract_label_from_script(str(script), "event-chain") == label
 
 
 def test_discovery_names_validators_from_their_scripts_in_name_order(
-    tmp_path, monkeypatch, write_path
+    tmp_path, monkeypatch
 ):
     scripts = [
-        str(write_path(tmp_path, name, 'TITLE = "STUB VALIDATION"\n'))
+        str(write_under(tmp_path, name, 'TITLE = "STUB VALIDATION"\n'))
         for name in ("validate_b_two.py", "validate_a.py")
     ]
-    monkeypatch.setattr(runner.glob, "glob", lambda _pattern: scripts)
+    monkeypatch.setattr(runner, "list_files", lambda *_args, **_kwargs: scripts)
 
     assert runner.discover_validators() == [
         ("a", "validate_a.py", "STUB"),
@@ -222,8 +222,8 @@ def test_launch_validator_closes_the_stderr_log_when_the_launch_fails(
         pytest.param("not json", (0, 0), id="unreadable sidecar"),
     ],
 )
-def test_read_validator_counts(tmp_path, write_path, sidecar, counts):
-    write_path(tmp_path, "stub.json", sidecar)
+def test_read_validator_counts(tmp_path, sidecar, counts):
+    write_under(tmp_path, "stub.json", sidecar)
 
     assert runner.read_validator_counts(str(tmp_path), "stub") == counts
 
@@ -640,23 +640,23 @@ def test_launch_validator_reports_an_unwritable_output_dir(tmp_path):
         )
 
 
-def test_print_stderr_tail_stays_silent_for_an_empty_log(tmp_path, capsys, write_path):
-    write_path(tmp_path, "stub.stderr.log", "\n\n")
+def test_print_stderr_tail_stays_silent_for_an_empty_log(tmp_path, capsys):
+    write_under(tmp_path, "stub.stderr.log", "\n\n")
 
     runner._print_stderr_tail(str(tmp_path), "stub")
 
     assert capsys.readouterr().out == ""
 
 
-def test_print_stderr_tail_prints_only_the_last_lines(tmp_path, capsys, write_path):
-    write_path(tmp_path, "stub.stderr.log", "one\ntwo\nthree\n")
+def test_print_stderr_tail_prints_only_the_last_lines(tmp_path, capsys):
+    write_under(tmp_path, "stub.stderr.log", "one\ntwo\nthree\n")
 
     runner._print_stderr_tail(str(tmp_path), "stub", max_lines=2)
 
     assert capsys.readouterr().out == "    two\n    three\n"
 
 
-def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_path):
+def test_report_lists_errors_warnings_and_crashed_validators(tmp_path):
     issues = [
         {
             "severity": "error",
@@ -673,7 +673,7 @@ def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_pat
             "line": 0,
         },
     ]
-    write_path(tmp_path, "one.json", json.dumps(issues))
+    write_under(tmp_path, "one.json", json.dumps(issues))
 
     report = runner.generate_combined_report(
         str(tmp_path), [("one", "one.py", "One")], ["Crashed"], use_colors=False
@@ -682,10 +682,10 @@ def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_pat
     assert "1 ERROR(S)\n\n  a.txt (1 issue(s))\n    - a.txt:2: [cat] bad" in report
     # A finding with no line number is listed by file alone.
     assert "1 WARNING(S)\n\n  b.txt (1 issue(s))\n    - b.txt: [warn] care" in report
-    assert "1 VALIDATOR(S) CRASHED (no output produced)\n\n  - Crashed" in report
+    assert "1 VALIDATOR(S) CRASHED OR WROTE NO RESULT\n\n  - Crashed" in report
 
 
-def test_report_groups_several_issues_under_one_file(tmp_path, write_path):
+def test_report_groups_several_issues_under_one_file(tmp_path):
     issues = [
         {
             "severity": "error",
@@ -696,7 +696,7 @@ def test_report_groups_several_issues_under_one_file(tmp_path, write_path):
         }
         for n in (2, 1)
     ]
-    write_path(tmp_path, "one.json", json.dumps(issues))
+    write_under(tmp_path, "one.json", json.dumps(issues))
 
     report = runner.generate_combined_report(
         str(tmp_path), [("one", "one.py", "One")], [], use_colors=False
@@ -770,6 +770,19 @@ def test_main_stays_quiet_when_the_cache_is_fresh(tmp_path, monkeypatch, capsys)
     assert "cleared and rebuilding" not in stdout
 
 
+def test_main_invalidates_previous_marker_before_a_run_fails(tmp_path, monkeypatch):
+    marker = write_text(tmp_path / runner.PERSISTENCE_MARKER, "complete\n")
+    monkeypatch.setattr(sys, "argv", ["runner", "--persist-results", str(tmp_path)])
+
+    def fail_discovery():
+        raise OSError("discovery failed")
+
+    monkeypatch.setattr(runner, "discover_validators", fail_discovery)
+    with pytest.raises(OSError, match="discovery failed"):
+        runner.main()
+    assert not marker.exists()
+
+
 def test_main_reports_a_stale_cache_and_pruned_versions(tmp_path, monkeypatch, capsys):
     calls = _run_main(
         monkeypatch,
@@ -838,3 +851,34 @@ def test_main_prints_unicode_with_windows_pipe_encoding(tmp_path, monkeypatch, f
     assert "✓ Stub" in output[format_ == "json"]
     if format_ == "json":
         assert json.loads(output[0])["total_errors"] == 0
+
+
+@pytest.mark.parametrize(
+    ("strict", "severity", "returncode", "crashed"),
+    [
+        pytest.param(False, "error", 2, True, id="baseline crash after findings"),
+        pytest.param(True, "warning", 1, True, id="strict warning cannot explain exit"),
+        pytest.param(True, "error", 2, True, id="strict unexpected exit code"),
+        pytest.param(True, "error", 1, False, id="strict findings exit"),
+        pytest.param(False, "warning", 0, False, id="advisory findings"),
+    ],
+)
+def test_suite_checks_exit_even_after_a_sidecar_is_written(
+    tmp_path, monkeypatch, capsys, strict, severity, returncode, crashed
+):
+    finding = {"severity": severity, "category": "test", "message": "finding"}
+    monkeypatch.setattr(
+        runner,
+        "launch_validator",
+        _launcher_with([finding], returncode, "failure detail\n"),
+    )
+    persisted = tmp_path / "persisted"
+    code = _run_stub(
+        tmp_path, _args("text", strict=strict, persist_results=str(persisted))
+    )
+    out = capsys.readouterr().out
+
+    assert ("crashed, exit code" in out) is crashed
+    assert ("failure detail" in out) is crashed
+    assert (persisted / runner.PERSISTENCE_MARKER).exists() is not crashed
+    assert code == (1 if crashed or (strict and severity == "error") else 0)

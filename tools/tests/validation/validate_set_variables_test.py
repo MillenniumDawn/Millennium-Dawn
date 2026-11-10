@@ -54,7 +54,7 @@ def _findings(validator):
 
 
 def test_mod_root_is_found_from_a_subdirectory(tmp_path):
-    _write(tmp_path, "descriptor.mod", 'name = "test"\n')
+    (tmp_path / "localisation").mkdir()
     nested = tmp_path / "common" / "scripted_effects"
     nested.mkdir(parents=True)
 
@@ -68,23 +68,56 @@ def test_mod_root_falls_back_to_the_given_path(tmp_path):
     assert _resolve_mod_root(str(lonely)) == str(lonely)
 
 
-def test_scope_prefixes_are_stripped_except_global():
-    assert _strip_scope_prefix("PREV.foo") == "foo"
-    assert _strip_scope_prefix("global.foo") == "global.foo"
-    assert _strip_scope_prefix("foo") == "foo"
+@pytest.mark.parametrize(
+    ("name", "stripped"),
+    [
+        ("PREV.foo", "foo"),
+        ("ALB.europeanism", "europeanism"),
+        ("global.foo", "global.foo"),
+        ("foo", "foo"),
+    ],
+    ids=["scope keyword", "country tag", "global namespace", "bare name"],
+)
+def test_scope_prefixes_are_stripped_except_global(name, stripped):
+    assert _strip_scope_prefix(name) == stripped
 
 
 def test_scan_skips_text_with_no_write_effect():
     assert _scan_set_variables("check_variable = { foo > 0 }\n") == []
 
 
-def test_scan_keeps_targets_and_drops_reserved_words():
-    text = (
-        "e = {\n\tset_variable = { foo = 1 }\n\tadd_to_variable = { bar = days }\n}\n"
-    )
+# case: (text, targets the scan keeps, names it must not keep)
+_SCAN_CASES = {
+    "reserved word is not a target": (
+        "e = {\n\tset_variable = { foo = 1 }\n\tadd_to_variable = { bar = days }\n}\n",
+        {"foo", "bar"},
+        {"days"},
+    ),
+    "tag-prefixed target is kept whole": (
+        "set_variable = { GER_event_counter_1_wot = 1 }\n",
+        {"GER_event_counter_1_wot"},
+        {"_event_counter_1_wot"},
+    ),
+    "scope-prefixed target is kept by its bare name": (
+        "set_variable = { PREV.foreign_celeb_country = THIS.id }\n",
+        {"foreign_celeb_country"},
+        {"PREV.foreign_celeb_country"},
+    ),
+    "non-ASCII target is kept whole": (
+        "set_variable = { additional_income_GER_Ökosteuer = 1 }\n",
+        {"additional_income_GER_Ökosteuer"},
+        {"kosteuer"},
+    ),
+}
 
-    assert set(_scan_set_variables(text)) >= {"foo", "bar"}
-    assert "days" not in _scan_set_variables(text)
+
+@pytest.mark.parametrize(
+    ("text", "kept", "dropped"), _SCAN_CASES.values(), ids=_SCAN_CASES
+)
+def test_scan_set_variable_targets(text, kept, dropped):
+    targets = set(_scan_set_variables(text))
+    assert targets >= kept
+    assert not targets & dropped
 
 
 def test_pass_one_skips_ignored_paths(tmp_path):
@@ -144,6 +177,61 @@ _REF_COUNT_CASES = {
         {},
         {},
     ),
+    "tag-prefixed target written twice and read once": (
+        "add_to_variable = { ger_event_counter_1_wot = 1 }\n"
+        "if = { limit = { check_variable = { ger_event_counter_1_wot > 6 } } }\n"
+        "set_variable = { ger_event_counter_1_wot = 0 }\n",
+        {"ger_event_counter_1_wot": "GER_event_counter_1_wot"},
+        {},
+        {"GER_event_counter_1_wot": 1},
+    ),
+    "set once and read once": (
+        "set_variable = { ruling_party_popularity_var = 5 }\n"
+        "if = { limit = { check_variable = { ruling_party_popularity_var < 10 } } }\n",
+        {"ruling_party_popularity_var": "ruling_party_popularity_var"},
+        {},
+        {"ruling_party_popularity_var": 1},
+    ),
+    "read followed by a set_variable line": (
+        "multiply_temp_variable = { income = global.price_per_gw_for_els }\n"
+        "set_variable = { other_var = income }\n",
+        {},
+        {"global.price_per_gw_for_els": "global.price_per_gw_for_els"},
+        {"global.price_per_gw_for_els": 1},
+    ),
+    "set_variable source value is a read": (
+        "set_variable = { target = source_var }\n",
+        {"source_var": "source_var", "target": "target"},
+        {},
+        {"source_var": 1},
+    ),
+    "target only ever set": (
+        "set_variable = { alg_drs_type = 6 }\nset_variable = { alg_drs_type = 5 }\n",
+        {"alg_drs_type": "ALG_drs_type"},
+        {},
+        {},
+    ),
+    "scoped set read through var:": (
+        "set_variable = { prev.foreign_celeb_country = this.id }\n"
+        "var:foreign_celeb_country = { add_stability = 0.05 }\n",
+        {"foreign_celeb_country": "foreign_celeb_country"},
+        {},
+        {"foreign_celeb_country": 1},
+    ),
+    "scoped target only ever set": (
+        "set_variable = { this.never_read_var = 1 }\n",
+        {"never_read_var": "never_read_var"},
+        {},
+        {},
+    ),
+    "non-ASCII target set and read": (
+        "set_variable = { additional_income_ger_ökosteuer = ger.gdp_per_capita }\n"
+        "add_to_variable = "
+        "{ additional_income_rate = additional_income_ger_ökosteuer }\n",
+        {"additional_income_ger_ökosteuer": "additional_income_GER_Ökosteuer"},
+        {},
+        {"additional_income_GER_Ökosteuer": 1},
+    ),
 }
 
 
@@ -154,10 +242,21 @@ def test_count_refs_in_text(text, bare, dotted, expected):
     assert _counts(text, bare=bare, dotted=dotted) == (expected, set())
 
 
-def test_dynamic_reference_patterns_need_a_literal_anchor():
-    _, patterns = _counts("tag_dyn_[index]_var and [getname]")
+@pytest.mark.parametrize(
+    ("text", "expected"),
+    [
+        ("tag_dyn_[index]_var and [getname]", {r"^tag_dyn_\w+_var$"}),
+        (
+            "check_variable = { global.eu_draft_party_[mep_sup_n]_variable > 0 }\n",
+            {r"^global\.eu_draft_party_\w+_variable$"},
+        ),
+    ],
+    ids=["bare reads", "global read"],
+)
+def test_dynamic_reference_patterns_need_a_literal_anchor(text, expected):
+    _, patterns = _counts(text)
 
-    assert patterns == {r"^tag_dyn_\w+_var$"}
+    assert patterns == expected
 
 
 @pytest.mark.parametrize(
@@ -179,10 +278,28 @@ def test_dynamic_refs_match_a_full_regex_scan(text, refs):
     assert refs == [m.group() for m in _DYNAMIC_REF_RE.finditer(text)]
 
 
-def test_dynamic_pattern_strips_a_scope_prefix_but_keeps_the_global_namespace():
-    assert _dynamic_ref_pattern("this.foo_[i]") == r"^foo_\w+$"
-    assert _dynamic_ref_pattern("global.foo_[i]") == r"^global\.foo_\w+$"
-    assert _dynamic_ref_pattern("[getname]") is None
+@pytest.mark.parametrize(
+    ("ref", "pattern"),
+    [
+        ("this.foo_[i]", r"^foo_\w+$"),
+        ("global.foo_[i]", r"^global\.foo_\w+$"),
+        (
+            "global.eu_draft_party_[mep_sup_n]_variable",
+            r"^global\.eu_draft_party_\w+_variable$",
+        ),
+        ("[getname]", None),
+    ],
+    ids=[
+        "scope prefix",
+        "global namespace",
+        "global with a suffix",
+        "no literal anchor",
+    ],
+)
+def test_dynamic_pattern_strips_a_scope_prefix_but_keeps_the_global_namespace(
+    ref, pattern
+):
+    assert _dynamic_ref_pattern(ref) == pattern
 
 
 def test_reference_counting_skips_ignored_and_empty_files(tmp_path):
