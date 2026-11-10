@@ -11199,3 +11199,162 @@ UKR_stylet_create_variant = {
 		}
 	}
 }
+
+# Thai BTR-3 and BM Oplot contract
+UKR_tha_start_contract = {
+	set_country_flag = UKR_tha_contract_active
+	set_variable = { UKR_tha_btr3_left = 4 }
+	set_variable = { UKR_tha_oplot_left = 5 }
+	set_variable = { UKR_tha_btr3_ready = 0 }
+	set_variable = { UKR_tha_oplot_ready = 0 }
+	set_variable = { UKR_tha_strikes = 0 }
+	set_variable = { UKR_tha_btr3_price = 0.3 }
+	set_variable = { UKR_tha_oplot_price = 0.48 }
+	activate_mission = UKR_tha_btr3_kit_mission
+	activate_mission = UKR_tha_oplot_kit_mission
+}
+
+UKR_tha_on_time = {
+	if = {
+		limit = { has_idea = UKR_reliable_arms_supplier }
+		remove_ideas = UKR_reliable_arms_supplier
+	}
+	add_timed_idea = { idea = UKR_reliable_arms_supplier days = 548 }
+}
+
+UKR_tha_add_strike = {
+	add_to_variable = { UKR_tha_strikes = 1 }
+	if = {
+		limit = { check_variable = { UKR_tha_strikes < 2 } }
+		SIA = { add_opinion_modifier = { target = ROOT modifier = UKR_thai_late_delivery } }
+		country_event = ukraine_thai_contract.3
+	}
+	else_if = {
+		limit = { check_variable = { UKR_tha_strikes < 4 } }
+		set_temp_variable = { treasury_change = -0.1 }
+		modify_treasury_effect = yes
+		country_event = ukraine_thai_contract.3
+	}
+	else = {
+		clr_country_flag = UKR_tha_contract_active
+		set_country_flag = UKR_tha_contract_terminated_flag
+		SIA = { add_opinion_modifier = { target = ROOT modifier = UKR_thai_contract_broken } }
+		every_country = {
+			limit = { is_western_nation = yes }
+			add_opinion_modifier = { target = ROOT modifier = UKR_unreliable_arms_supplier_opinion }
+		}
+		if = {
+			limit = { has_idea = UKR_reliable_arms_supplier }
+			remove_ideas = UKR_reliable_arms_supplier
+		}
+		add_timed_idea = { idea = UKR_unreliable_arms_supplier days = 365 }
+		country_event = ukraine_thai_contract.4
+	}
+}
+
+UKR_tha_deliver_btr3 = {
+	SIA = {
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_2 variant_name = "BTR-3E1" amount = 20 producer = UKR }
+		}
+		else = { add_equipment_to_stockpile = { type = APC_5 variant_name = "BTR-3E1" amount = 20 producer = UKR } }
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = medium_tank_artillery_chassis_1 variant_name = "BTR-3M2" amount = 4 producer = UKR }
+		}
+		else = { add_equipment_to_stockpile = { type = SP_arty_2 variant_name = "BTR-3M2" amount = 4 producer = UKR } }
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = Heavy_Anti_tank_3 variant_name = "BTR-3RK" amount = 4 producer = UKR }
+		}
+		else = { add_equipment_to_stockpile = { type = Heavy_Anti_tank_3 variant_name = "BTR-3RK" amount = 4 producer = UKR } }
+	}
+	set_temp_variable = { treasury_change = UKR_tha_btr3_price }
+	modify_treasury_effect = yes
+	set_variable = { UKR_tha_btr3_ready = 0 }
+	subtract_from_variable = { UKR_tha_btr3_left = 1 }
+	set_country_flag = UKR_tha_btr3_on_time_flag
+	UKR_tha_on_time = yes
+	if = {
+		limit = { check_variable = { UKR_tha_btr3_left > 0 } }
+		country_event = { id = ukraine_thai_contract.10 days = 1 }
+	}
+	else = {
+		set_country_flag = UKR_tha_btr3_done_flag
+		if = {
+			limit = {
+				NOT = { has_country_flag = UKR_tha_btr3_extended_flag }
+			}
+			country_event = { id = ukraine_thai_contract.5 days = 30 }
+		}
+	}
+}
+
+UKR_tha_btr3_late = {
+	UKR_tha_add_strike = yes
+	if = {
+		limit = { NOT = { has_country_flag = UKR_tha_kyiv_build_mission_used } }
+		set_country_flag = UKR_tha_kyiv_build_mission_used
+		698 = { set_temp_variable = { af = building_level@arms_factory } }
+		set_variable = { UKR_tha_kyiv_af_base = af }
+		activate_mission = UKR_tha_build_kyiv_plant_mission
+	}
+	if = {
+		limit = { has_country_flag = UKR_tha_contract_active }
+		country_event = { id = ukraine_thai_contract.10 days = 1 }
+	}
+}
+
+UKR_tha_deliver_oplot = {
+	SIA = {
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = medium_tank_chassis_2 variant_name = "T-84 BM Oplot" amount = 10 producer = UKR }
+		}
+		else = { add_equipment_to_stockpile = { type = MBT_4 variant_name = "T-84 BM Oplot" amount = 10 producer = UKR } }
+	}
+	set_temp_variable = { treasury_change = UKR_tha_oplot_price }
+	modify_treasury_effect = yes
+	set_variable = { UKR_tha_oplot_ready = 0 }
+	subtract_from_variable = { UKR_tha_oplot_left = 1 }
+	set_country_flag = UKR_tha_oplot_on_time_flag
+	UKR_tha_on_time = yes
+	if = {
+		limit = {
+			date > 2016.01.01
+			NOT = { has_country_flag = UKR_tha_vt4_fired_flag }
+		}
+		set_country_flag = UKR_tha_vt4_fired_flag
+		country_event = { id = ukraine_thai_contract.7 days = 7 }
+	}
+	if = {
+		limit = { check_variable = { UKR_tha_oplot_left > 0 } }
+		country_event = { id = ukraine_thai_contract.11 days = 1 }
+	}
+	else = {
+		set_country_flag = UKR_tha_oplot_done_flag
+		if = {
+			limit = {
+				NOT = { has_country_flag = UKR_tha_oplot_extended_flag }
+				NOT = { has_country_flag = UKR_tha_vt4_lost_flag }
+			}
+			country_event = { id = ukraine_thai_contract.6 days = 30 }
+		}
+	}
+}
+
+UKR_tha_oplot_late = {
+	UKR_tha_add_strike = yes
+	if = {
+		limit = { NOT = { has_country_flag = UKR_tha_kharkiv_build_mission_used } }
+		set_country_flag = UKR_tha_kharkiv_build_mission_used
+		696 = { set_temp_variable = { af = building_level@arms_factory } }
+		set_variable = { UKR_tha_kharkiv_af_base = af }
+		activate_mission = UKR_tha_build_kharkiv_plant_mission
+	}
+	if = {
+		limit = { has_country_flag = UKR_tha_contract_active }
+		country_event = { id = ukraine_thai_contract.11 days = 1 }
+	}
+}
