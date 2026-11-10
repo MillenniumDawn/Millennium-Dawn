@@ -327,6 +327,24 @@ def test_reselection_during_review_commits_only_the_immutable_snapshot_once():
     assert review.countries[1]["power"] == 150
 
 
+def test_host_request_preserves_temporary_actor_and_response_posture():
+    class HostReviewScript(ReviewScript):
+        def value(self, name, identifier):
+            if name in ("PREV.TOP_review_actor", "PREV.TOP_arg_posture"):
+                return 0
+            return super().value(name, identifier)
+
+    review = HostReviewScript()
+    review.ready_for_host()
+    review.run("TOP_send_host_request")
+    assert review.countries[2]["vars"]["TOP_incoming_actor"] == 1
+    review.call("TOP_answer_host_request", identifier=2, POSTURE=4)
+    assert review.actor["TOP_proposal_host_posture"] == 4
+    assert review.actor["TOP_proposal_consent"] == 1
+    assert review.actor["TOP_proposal_stage"] == 4
+
+
+
 def test_old_host_reply_cannot_approve_even_an_identical_later_proposal():
     review = ReviewScript()
     review.ready_for_host()

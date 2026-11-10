@@ -2198,13 +2198,21 @@ def test_training_disruption_is_frozen_as_a_native_success_probability_bonus():
 
 
 def test_custody_event_queue_preserves_two_same_day_captures():
-    script = TargetScript()
+    class CustodyScript(TargetScript):
+        def value(self, name, identifier):
+            if name in ("PREV.TOP_target", "PREV.TOP_capture_recipient_target"):
+                return 0
+            return super().value(name, identifier)
+
+    script = CustodyScript()
     first = script.target(11)
     script.target(12)
 
     script.call("TOP_capture_target", TARGET=11)
     script.call("TOP_capture_target", TARGET=12)
 
+    assert script.globals["TOP_custody_state"][11] == 100
+    assert script.globals["TOP_custody_state"][12] == 100
     assert first["TOP_custody_event_open"] == 1
     assert first["TOP_custody_event_target"] == 11
     assert first["TOP_custody_event_queue"] == [12]
