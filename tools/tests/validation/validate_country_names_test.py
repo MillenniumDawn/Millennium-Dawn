@@ -1,6 +1,7 @@
 """Tests for `validate_country_names.py` (every tag has a names block)."""
 
 import validate_country_names as V
+from shared.suite import write_under
 
 DEFAULT_TAGS = 'AAA = "countries/A.txt"\nBBB = "countries/B.txt"\n'
 NAME_BLOCK = "{name} = {{\n\tmale = {{\n\t\tnames = {{ X }}\n\t}}\n}}\n"
@@ -8,13 +9,13 @@ NAMES_AAA_ONLY = "default = {\n}\n" + NAME_BLOCK.format(name="AAA")
 NAMES_BOTH = NAMES_AAA_ONLY + NAME_BLOCK.format(name="BBB")
 
 
-def _write(tmp_path, write_path, tags=DEFAULT_TAGS, names=NAMES_BOTH):
-    write_path(tmp_path, "common/country_tags/00_countries.txt", tags)
-    write_path(tmp_path, "common/names/00_names.txt", names)
+def _write(tmp_path, tags=DEFAULT_TAGS, names=NAMES_BOTH):
+    write_under(tmp_path, "common/country_tags/00_countries.txt", tags)
+    write_under(tmp_path, "common/names/00_names.txt", names)
 
 
-def test_reports_tag_without_names_block(tmp_path, write_path):
-    _write(tmp_path, write_path, names=NAMES_AAA_ONLY)
+def test_reports_tag_without_names_block(tmp_path):
+    _write(tmp_path, names=NAMES_AAA_ONLY)
 
     v = V.Validator(str(tmp_path))
     v.run_validations()
@@ -27,8 +28,8 @@ def test_reports_tag_without_names_block(tmp_path, write_path):
     assert "'BBB'" in issue.message
 
 
-def test_every_tag_named_is_clean(tmp_path, write_path):
-    _write(tmp_path, write_path)
+def test_every_tag_named_is_clean(tmp_path):
+    _write(tmp_path)
 
     v = V.Validator(str(tmp_path))
     v.run_validations()
@@ -36,9 +37,9 @@ def test_every_tag_named_is_clean(tmp_path, write_path):
     assert v._issues == []
 
 
-def test_dynamic_tags_are_exempt(tmp_path, write_path):
-    _write(tmp_path, write_path)
-    write_path(
+def test_dynamic_tags_are_exempt(tmp_path):
+    _write(tmp_path)
+    write_under(
         tmp_path,
         "common/country_tags/zz_dynamic_countries.txt",
         'dynamic_tags = yes # any tags after this\nD01 = "countries/D01.txt"\n',
@@ -50,9 +51,9 @@ def test_dynamic_tags_are_exempt(tmp_path, write_path):
     assert v._issues == []
 
 
-def test_commented_tag_is_ignored(tmp_path, write_path):
+def test_commented_tag_is_ignored(tmp_path):
     tags = '#CCC = "countries/C.txt"\nAAA = "countries/A.txt"\n'
-    _write(tmp_path, write_path, tags=tags, names=NAMES_AAA_ONLY)
+    _write(tmp_path, tags=tags, names=NAMES_AAA_ONLY)
 
     v = V.Validator(str(tmp_path))
     v.run_validations()
@@ -67,9 +68,9 @@ def test_empty_tree_is_clean(tmp_path):
     assert v._issues == []
 
 
-def test_staged_mode_skips_when_scope_untouched(tmp_path, write_path, monkeypatch):
-    _write(tmp_path, write_path, names=NAMES_AAA_ONLY)
-    write_path(tmp_path, "common/technologies/x.txt", "")
+def test_staged_mode_skips_when_scope_untouched(tmp_path, monkeypatch):
+    _write(tmp_path, names=NAMES_AAA_ONLY)
+    write_under(tmp_path, "common/technologies/x.txt", "")
     monkeypatch.setenv("MD_STAGED_FILES", "common/technologies/x.txt")
 
     v = V.Validator(str(tmp_path), staged_only=True)
@@ -78,8 +79,8 @@ def test_staged_mode_skips_when_scope_untouched(tmp_path, write_path, monkeypatc
     assert v._issues == []
 
 
-def test_staged_mode_runs_when_names_file_staged(tmp_path, write_path, monkeypatch):
-    _write(tmp_path, write_path, names=NAMES_AAA_ONLY)
+def test_staged_mode_runs_when_names_file_staged(tmp_path, monkeypatch):
+    _write(tmp_path, names=NAMES_AAA_ONLY)
     monkeypatch.setenv("MD_STAGED_FILES", "common/names/00_names.txt")
 
     v = V.Validator(str(tmp_path), staged_only=True)

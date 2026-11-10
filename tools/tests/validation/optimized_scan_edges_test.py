@@ -8,7 +8,7 @@ import validate_localisation as loc
 import validate_mios as mios
 import validate_oob_units as oob
 import validate_variables as variables
-from shared.suite import yml_scan
+from shared.suite import write_under, yml_scan
 
 
 @pytest.mark.parametrize(
@@ -39,9 +39,9 @@ def test_localisation_variable_names_keep_scope_and_promote_rules(raw, expected)
     ],
 )
 def test_localisation_variable_writes_keep_malformed_block_behavior(
-    tmp_path, write_path, text, expected
+    tmp_path, text, expected
 ):
-    path = write_path(tmp_path, "common/scripted_effects/edge.txt", text)
+    path = write_under(tmp_path, "common/scripted_effects/edge.txt", text)
     assert loc.process_txt_for_var_writes((str(path),)) == expected
 
 
@@ -69,8 +69,8 @@ def test_shared_localisation_worker_skips_both_unselected_scan_groups(tmp_path):
     ) == ([], (set(), [], set()), set(), [], [])
 
 
-def test_localisation_variable_reference_scan_keeps_exact_lines(tmp_path, write_path):
-    path = write_path(
+def test_localisation_variable_reference_scan_keeps_exact_lines(tmp_path):
+    path = write_under(
         tmp_path, "edge.yml", 'l_english:\n KEY:0 "[?some_value] [?ROOT.GetName]"\n'
     )
     assert yml_scan(path, "var_refs") == [("some_value", "edge.yml", 2)]
@@ -80,10 +80,10 @@ def test_localisation_variable_reference_scan_keeps_exact_lines(tmp_path, write_
     "relative", ["tools/edge.txt", "events/missing.txt", "events/edge.txt"]
 )
 def test_shared_variable_worker_handles_skipped_missing_and_unselected_files(
-    tmp_path, write_path, relative
+    tmp_path, relative
 ):
     if "missing" not in relative:
-        write_path(tmp_path, relative, "some_value = yes\n")
+        write_under(tmp_path, relative, "some_value = yes\n")
     args = (
         str(tmp_path / relative),
         str(tmp_path),
@@ -121,8 +121,8 @@ def test_event_option_log_worker_handles_skipped_and_missing_files(tmp_path, rel
     )
 
 
-def test_event_option_log_worker_reports_effect_free_options(tmp_path, write_path):
-    path = write_path(
+def test_event_option_log_worker_reports_effect_free_options(tmp_path):
+    path = write_under(
         tmp_path,
         "events/edge.txt",
         'country_event = { option = { name = tst.1.a log = "tst.1.a" } }',
@@ -147,10 +147,8 @@ def test_shared_event_worker_handles_a_missing_file(tmp_path):
     )
 
 
-def test_relative_position_scan_ignores_focus_blocks_without_an_id(
-    tmp_path, write_path
-):
-    path = write_path(
+def test_relative_position_scan_ignores_focus_blocks_without_an_id(tmp_path):
+    path = write_under(
         tmp_path, "common/national_focus/edge.txt", "focus = { cost = 1 }"
     )
     source = focus._FocusFile(str(path), str(tmp_path))
@@ -187,8 +185,8 @@ def test_oob_focus_owner_rejects_ambiguous_or_dynamic_selectors(selector):
     assert oob._focus_root_owner(nodes, text, child) is None
 
 
-def test_mio_policy_scan_runs_icon_and_modifier_checks(tmp_path, write_path):
-    write_path(
+def test_mio_policy_scan_runs_icon_and_modifier_checks(tmp_path):
+    write_under(
         tmp_path,
         f"{mios.POLICY_DIR}/edge.txt",
         "organization_modifier = { military_industrial_organization_research_bonus = invalid }\n"
@@ -262,10 +260,8 @@ def test_mio_geometry_reports_symmetric_mutex_pairs_once(tmp_path, monkeypatch):
     ]
 
 
-def test_mio_scripted_trigger_index_ignores_blocks_without_tag_selectors(
-    tmp_path, write_path
-):
-    write_path(
+def test_mio_scripted_trigger_index_ignores_blocks_without_tag_selectors(tmp_path):
+    write_under(
         tmp_path,
         f"{mios.SCRIPTED_TRIGGER_DIR}/edge.txt",
         "any_tag = {\n always = yes\n}\nTST_only = {\n original_tag = TST\n}\n",
@@ -289,9 +285,9 @@ def test_mio_nested_bonus_with_unknown_equipment_does_not_invent_dead_stats(tmp_
     ] == [("mio-equipment-type-unknown", "edge.txt", 2)]
 
 
-def test_event_index_skips_non_definitions_and_non_script_files(tmp_path, write_path):
-    write_path(tmp_path, "events/ignored.md", "country_event = { id = ignored.1 }")
-    path = write_path(
+def test_event_index_skips_non_definitions_and_non_script_files(tmp_path):
+    write_under(tmp_path, "events/ignored.md", "country_event = { id = ignored.1 }")
+    path = write_under(
         tmp_path,
         "events/edge.txt",
         "country_event = { id = caller.1 }\n"
@@ -321,9 +317,9 @@ def test_event_index_lookup_handles_a_root_without_events(tmp_path, monkeypatch)
 
 
 def test_event_index_handles_a_definition_file_removed_after_collection(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
-    write_path(tmp_path, "events/edge.txt", "country_event = { id = tst.1 }")
+    write_under(tmp_path, "events/edge.txt", "country_event = { id = tst.1 }")
 
     def unreadable(*args, **kwargs):
         raise OSError("removed file")
@@ -341,8 +337,8 @@ def test_oob_focus_owner_requires_a_focus_tree():
 @pytest.mark.parametrize(
     "worker", [loc.process_txt_for_targeted_vars, loc.process_txt_for_script_var_reads]
 )
-def test_localisation_reference_workers_handle_empty_text(tmp_path, write_path, worker):
-    path = write_path(tmp_path, "common/empty.txt", "")
+def test_localisation_reference_workers_handle_empty_text(tmp_path, worker):
+    path = write_under(tmp_path, "common/empty.txt", "")
     assert worker((str(path),)) == []
 
 
@@ -367,8 +363,8 @@ def test_raid_localisation_handles_files_removed_after_collection(
     assert validator._issues == []
 
 
-def test_shared_localisation_worker_skips_unselected_script_reads(tmp_path, write_path):
-    path = write_path(tmp_path, "common/edge.txt", "some_value = yes\n")
+def test_shared_localisation_worker_skips_unselected_script_reads(tmp_path):
+    path = write_under(tmp_path, "common/edge.txt", "some_value = yes\n")
     assert loc._scan_shared_txt_file((str(path), str(tmp_path), True, False)) == (
         [],
         (set(), [], set()),

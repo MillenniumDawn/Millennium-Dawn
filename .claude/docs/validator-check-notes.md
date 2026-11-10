@@ -600,7 +600,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - No pre-commit hook, so `common/dynamic_modifiers/` edits get no local signal.
 - `redundant-enable-gate` (ERROR): a top-level `always = yes`, `original_tag`, or `tag` in
   a dynamic modifier's own `enable`. See `common/dynamic_modifiers/README.md`.
-  `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk.
 - `dynamic-modifier-name-loc` (ERROR): a dynamic modifier needs a bare-name English key.
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
@@ -678,7 +677,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     allowances. A dynamic pick or `allowed_modules` filler suspends the check only if
     it can touch the ammo: the ammo slot itself, or a module that widens it. Forbidden
     modules cannot widen other slots, including through a category selector.
-  - Regression source: `USA_APC_design/modern_APC_default` before
+  - Regression source: `USA_apc_design/modern_apc_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
     the autocannon mismatch. The historical pattern now warns; the corrected
@@ -861,6 +860,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
+- `influence-gain-over-cap` and `influence-gain-under-floor` (WARNING): a literal
+  `percent_change` above 20, or above 0 and below 0.25, visible at a
+  `change_influence_percentage` call. The base is the last
+  `set_temp_variable = { percent_change = N }` in scope within 20 lines of the call.
+  Losses, variables, and expressions are not checked. Known gaps: `add_to`,
+  `subtract_from`, `multiply`, and `divide` after the set are not applied to the base,
+  and the effect clamps the base times its influence modifiers, so a flagged literal can
+  still land in range and an unflagged one can land outside it.
+- `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
+  scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
+  The target defaults to THIS, so the tag influences itself. Only a tag block counts;
+  any other scope change stops the check. `change_influence_percentage` restores the
+  caller's `tag_index` and `influence_target`, so a default never carries into the next
+  call, but an explicit value does.
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
@@ -916,6 +929,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `add_relation_modifier`.
 - Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
   and a `#` comment swallowed into a `log` string.
+- The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
+  `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
+  `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
+  bare modifier skips the partner arrays.
 - `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
