@@ -140,6 +140,29 @@ def test_scan_returns_nothing_for_an_empty_file(tmp_path, rel, worker):
     assert worker(str(_write(tmp_path, rel, "")), str(tmp_path)) == ({}, {}, {})
 
 
+@pytest.mark.parametrize(
+    ("scan", "text", "expected"),
+    [
+        (V._scan_flags_in_file, "set_global_flag = FOO\n", (["FOO"], [], [])),
+        (V._scan_flags_in_file, "has_global_flag = FOO\r\n", ([], ["FOO"], [])),
+        (
+            V._scan_targets_in_text,
+            "save_event_target_as = FOO\r\n",
+            ({"FOO": "test.txt"}, {}, {}),
+        ),
+        (
+            V._scan_targets_in_text,
+            "event_target:FOO\r\n",
+            ({}, {"FOO": "test.txt"}, {}),
+        ),
+    ],
+    ids=["LF flag set", "CRLF flag read", "CRLF target set", "CRLF target read"],
+)
+def test_names_at_a_crlf_line_end_drop_the_carriage_return(scan, text, expected):
+    context = "global" if scan is V._scan_flags_in_file else "test.txt"
+    assert scan(text, context) == expected
+
+
 def test_flag_pass_scans_only_the_supported_flag_types(tmp_path):
     path = _write(
         tmp_path, _FLAGS, "set_country_flag = TST_c\nset_character_flag = TST_ch\n"

@@ -9,6 +9,7 @@ cannot run at all (ERROR) — plus the changed-files scoping the design rests on
 
 import standardize_api
 import validate_standardization
+from shared.suite import write_under
 from validate_standardization import Validator
 
 _MESSY_EVENT = """country_event = {
@@ -29,21 +30,21 @@ def _run(tmp_path, **kwargs):
     return validator
 
 
-def _write_event(write_path, tmp_path, body, name="events/Gulf.txt"):
-    return write_path(tmp_path, name, body)
+def _write_event(tmp_path, body, name="events/Gulf.txt"):
+    return write_under(tmp_path, name, body)
 
 
-def test_standardized_file_is_clean(write_path, tmp_path):
+def test_standardized_file_is_clean(tmp_path):
     standardized = standardize_api.standardize_text("event", _MESSY_EVENT)
-    _write_event(write_path, tmp_path, standardized)
+    _write_event(tmp_path, standardized)
 
     validator = _run(tmp_path)
 
     assert validator._issues == []
 
 
-def test_unstandardized_file_warns_with_the_fixing_command(write_path, tmp_path):
-    _write_event(write_path, tmp_path, _MESSY_EVENT)
+def test_unstandardized_file_warns_with_the_fixing_command(tmp_path):
+    _write_event(tmp_path, _MESSY_EVENT)
 
     validator = _run(tmp_path)
 
@@ -55,10 +56,10 @@ def test_unstandardized_file_warns_with_the_fixing_command(write_path, tmp_path)
     assert validator._issues[0].file == "events/Gulf.txt"
 
 
-def test_unowned_paths_are_skipped(write_path, tmp_path):
-    write_path(tmp_path, "common/units/MD_land_units.txt", _MESSY_EVENT)
+def test_unowned_paths_are_skipped(tmp_path):
+    write_under(tmp_path, "common/units/MD_land_units.txt", _MESSY_EVENT)
     # A history-owned path with no dated blocks is also skipped.
-    write_path(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_EVENT)
+    write_under(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_EVENT)
 
     assert _run(tmp_path)._issues == []
 
@@ -72,8 +73,8 @@ _MESSY_HISTORY = """capital = 652
 """
 
 
-def test_unstandardized_history_warns_with_the_fixing_command(write_path, tmp_path):
-    write_path(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_HISTORY)
+def test_unstandardized_history_warns_with_the_fixing_command(tmp_path):
+    write_under(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_HISTORY)
 
     validator = _run(tmp_path)
 
@@ -82,24 +83,24 @@ def test_unstandardized_history_warns_with_the_fixing_command(write_path, tmp_pa
     assert 'standardize.py history "history/countries/ARA - Arabistan.txt"' in message
 
 
-def test_standardized_history_is_clean(write_path, tmp_path):
+def test_standardized_history_is_clean(tmp_path):
     standardized = standardize_api.standardize_text(
         "history", _MESSY_HISTORY, mod_root=str(tmp_path)
     )
     assert standardized is not None
-    write_path(tmp_path, "history/countries/ARA - Arabistan.txt", standardized)
+    write_under(tmp_path, "history/countries/ARA - Arabistan.txt", standardized)
 
     assert _run(tmp_path)._issues == []
 
 
-def test_file_with_no_matching_block_is_skipped(write_path, tmp_path):
-    _write_event(write_path, tmp_path, "# nothing to standardize here\n")
+def test_file_with_no_matching_block_is_skipped(tmp_path):
+    _write_event(tmp_path, "# nothing to standardize here\n")
 
     assert _run(tmp_path)._issues == []
 
 
-def test_standardizer_failure_is_an_error(write_path, tmp_path, monkeypatch):
-    _write_event(write_path, tmp_path, _MESSY_EVENT)
+def test_standardizer_failure_is_an_error(tmp_path, monkeypatch):
+    _write_event(tmp_path, _MESSY_EVENT)
 
     def explode(kind, text, mod_root=None):
         raise ValueError("unbalanced braces")
@@ -113,9 +114,9 @@ def test_standardizer_failure_is_an_error(write_path, tmp_path, monkeypatch):
     assert "unbalanced braces" in validator._issues[0].message
 
 
-def test_unreadable_file_is_an_error(write_path, tmp_path):
+def test_unreadable_file_is_an_error(tmp_path):
     # Non-UTF-8 bytes: the file cannot be checked, so it must not pass silently.
-    path = write_path(tmp_path, "events/Gulf.txt", "")
+    path = write_under(tmp_path, "events/Gulf.txt", "")
     path.write_bytes(b"country_event = {\n\tid = \xff\xfe\n}\n")
 
     validator = _run(tmp_path)
@@ -132,9 +133,9 @@ def test_scan_file_ignores_a_path_no_standardizer_owns(tmp_path):
     assert validate_standardization._scan_file((str(unowned), str(tmp_path))) is None
 
 
-def test_staged_mode_only_checks_staged_files(write_path, tmp_path, monkeypatch):
-    _write_event(write_path, tmp_path, _MESSY_EVENT)
-    _write_event(write_path, tmp_path, _MESSY_EVENT, name="events/Syria.txt")
+def test_staged_mode_only_checks_staged_files(tmp_path, monkeypatch):
+    _write_event(tmp_path, _MESSY_EVENT)
+    _write_event(tmp_path, _MESSY_EVENT, name="events/Syria.txt")
     monkeypatch.setenv("MD_STAGED_FILES", "events/Syria.txt")
 
     validator = _run(tmp_path, staged_only=True)
@@ -142,9 +143,9 @@ def test_staged_mode_only_checks_staged_files(write_path, tmp_path, monkeypatch)
     assert [issue.file for issue in validator._issues] == ["events/Syria.txt"]
 
 
-def test_scan_all_overrides_staged_scope(write_path, tmp_path, monkeypatch):
-    _write_event(write_path, tmp_path, _MESSY_EVENT)
-    _write_event(write_path, tmp_path, _MESSY_EVENT, name="events/Syria.txt")
+def test_scan_all_overrides_staged_scope(tmp_path, monkeypatch):
+    _write_event(tmp_path, _MESSY_EVENT)
+    _write_event(tmp_path, _MESSY_EVENT, name="events/Syria.txt")
     monkeypatch.setenv("MD_STAGED_FILES", "events/Syria.txt")
 
     validator = _run(tmp_path, staged_only=True, scan_all=True)

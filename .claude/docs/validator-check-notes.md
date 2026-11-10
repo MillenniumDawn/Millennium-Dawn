@@ -600,7 +600,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - No pre-commit hook, so `common/dynamic_modifiers/` edits get no local signal.
 - `redundant-enable-gate` (ERROR): a top-level `always = yes`, `original_tag`, or `tag` in
   a dynamic modifier's own `enable`. See `common/dynamic_modifiers/README.md`.
-  `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk.
 - `dynamic-modifier-name-loc` (ERROR): a dynamic modifier needs a bare-name English key.
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the

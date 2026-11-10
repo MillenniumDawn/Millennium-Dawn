@@ -713,7 +713,7 @@ def scan_meta_constructed_names(files, defined_names):
         try:
             with open(filepath, "r", encoding="utf-8-sig") as fh:
                 content = fh.read()
-        except Exception:
+        except (OSError, UnicodeDecodeError):
             continue
 
         if "meta_effect" not in content and "meta_trigger" not in content:
@@ -1262,7 +1262,7 @@ class BaseValidator:
                 content = FileOpener.open_text_file(filename, lowercase=False)
                 if item in content:
                     return filename
-            except Exception:
+            except (OSError, UnicodeDecodeError):
                 pass
         return None
 
@@ -1445,7 +1445,7 @@ class BaseValidator:
                 try:
                     with open(filepath, encoding="utf-8-sig", errors="replace") as f:
                         text = f.read()
-                except Exception:
+                except OSError:
                     continue
                 all_keys.update(key_pattern.findall(text))
             all_keys.update(KNOWN_VANILLA_LOC_KEYS)
