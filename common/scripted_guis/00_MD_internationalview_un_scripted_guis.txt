@@ -18,6 +18,19 @@ scripted_gui = {
 				set_variable = { var_open_MD_un_aid = 2 }
 				set_variable = { var_open_MD_un_council = 2 }
 				set_variable = { var_open_MD_un_assembly = 2 }
+
+				if = {
+					limit = { is_ai = no }
+
+					clear_array = UN_recog_buttons_frames
+
+					for_each_loop = {
+						array = global.Unrecognised_States
+
+						add_to_array = { UN_recog_buttons_frames = 2 }
+					}
+				}
+
 				international_systems_update = yes
 			}
 			un_human_aid_btn_click = {
@@ -71,127 +84,23 @@ scripted_gui = {
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 		}
+	}
 
-		triggers = {
-			pressure_countries_recog_button_visible = {
-				NOT = { has_idea = lacks_international_recognition }
-			}
-			grant_recog_button_visible = {
-				NOT = { has_idea = lacks_international_recognition }
-			}
-			rescind_recog_button_visible = {
-				NOT = { has_idea = lacks_international_recognition }
-			}
-			pressure_countries_recog_button_click_enabled = {
-				var:open_state = { has_idea = lacks_international_recognition }
-				country_exists = var:open_state
-				is_full_state = yes
-				custom_trigger_tooltip = {
-					tooltip = has_recog_tt
-					var:open_state = { is_in_array = { recognised_by = ROOT } }
-				}
-				custom_trigger_tooltip = {
-					tooltip = recent_pressure_tt
-					NOT = { check_variable = { recognition_pressure_end@var:open_state > global.num_days } }
-				}
-				if = {
-					limit = { original_tag = SWI }
-					has_dynamic_modifier = { modifier = united_nations_member }
-				}
+	MD_UN_states_to_recognize_gui = {
+		window_name = UN_states_to_recognize_menu
+		context_type = player_context
+		parent_window_name = MD_UN_system_sub_window
 
-				has_political_power > 100
-			}
-			grant_recog_button_click_enabled = {
-				var:open_state = { has_idea = lacks_international_recognition }
-				country_exists = var:open_state
-				is_full_state = yes
-				if = {
-					limit = { original_tag = SWI }
-					has_dynamic_modifier = { modifier = united_nations_member }
-				}
-				custom_trigger_tooltip = {
-					tooltip = not_recog_tt
-					NOT = { var:open_state = { is_in_array = { recognised_by = ROOT } } }
-				}
+		dirty = global.international_systems_updated
 
-				has_political_power > 25
-			}
-			rescind_recog_button_click_enabled = {
-				var:open_state = { has_idea = lacks_international_recognition }
-				country_exists = var:open_state
-				is_full_state = yes
-				if = {
-					limit = { original_tag = SWI }
-					has_dynamic_modifier = { modifier = united_nations_member }
-				}
-				custom_trigger_tooltip = {
-					tooltip = has_recog_tt
-					var:open_state = { is_in_array = { recognised_by = ROOT } }
-				}
-				has_political_power > 25
-			}
-			un_improve_relations_button_visible = {
-				has_idea = lacks_international_recognition
-			}
-			un_improve_relations_button_click_enabled = {
-				has_political_power > 200
-				custom_trigger_tooltip = {
-					tooltip = recent_global_campaign_tt
-					NOT = { has_country_flag = recent_global_recog_campaign }
-				}
-				has_civil_war = no
-			}
-			un_campaign_for_recog_button_visible = {
-				has_idea = lacks_international_recognition
-			}
-			un_campaign_for_recog_button_click_enabled = {
-				has_political_power > 200
-				custom_trigger_tooltip = {
-					tooltip = recent_global_request_campaign_tt
-					NOT = { has_country_flag = recent_global_recog_request_campaign }
-				}
-				has_civil_war = no
-			}
-			un_ascension_button_visible = {
-				has_idea = lacks_international_recognition
-			}
-			un_ascension_button_click_enabled = {
-				custom_trigger_tooltip = {
-					tooltip = is_un_ascension_warning_tt
-					NOT = {
-						has_country_flag = recent_un_ascension_attempt
-					}
-				}
-				has_political_power > 200
-				has_civil_war = no
-				is_subject = no
-			}
-			un_ask_for_independence_button_visible = {
-				has_idea = lacks_international_recognition
-			}
-			un_ask_for_independence_button_click_enabled = {
-				has_political_power > 350
-				check_variable = { original_owners^num > 0 }
-
-				custom_trigger_tooltip = {
-					tooltip = has_not_recently_requested_independence
-					NOT = {
-						has_country_flag = recent_independence_request
-					}
-				}
-				has_civil_war = no
-				is_subject = no
-			}
-			ir_nation_unre_guide_visible = {
-				has_idea = lacks_international_recognition
-			}
-			nation_supporter_disp_info_visible = {
-				has_idea = lacks_international_recognition
-			}
+		visible = {
+			check_variable = { var_open_MD_state_recog = 1 }
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+			NOT = { has_idea = lacks_international_recognition }
 		}
 
 		effects = {
-			# International System
 			grant_recog_button_click = {
 				add_political_power = -25
 
@@ -282,6 +191,184 @@ scripted_gui = {
 				}
 				international_systems_update = yes
 			}
+			name_of_state_button_click = {
+				if = {
+					limit = { NOT = { open_state = 0 } }
+
+					set_variable = { UN_recog_buttons_frames^open_state_index = 2 }
+				}
+
+				set_variable = { UN_recog_buttons_frames^i = 1 }
+
+				set_variable = { open_state = v }
+				set_variable = { open_state_index = i }
+				if = { limit = { is_ai = yes }
+					set_country_flag = {
+						flag = state_swap_slow_flag
+						days = 120 value = 1
+					}
+				}
+				international_systems_update = yes
+			}
+		}
+
+		triggers = {
+			pressure_countries_recog_button_click_enabled = {
+				var:open_state = { has_idea = lacks_international_recognition }
+				country_exists = var:open_state
+				is_full_state = yes
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					var:open_state = { is_in_array = { recognised_by = ROOT } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = recent_pressure_tt
+					NOT = { check_variable = { recognition_pressure_end@var:open_state > global.num_days } }
+				}
+				if = {
+					limit = { original_tag = SWI }
+					has_dynamic_modifier = { modifier = united_nations_member }
+				}
+
+				has_political_power > 100
+			}
+			grant_recog_button_click_enabled = {
+				var:open_state = { has_idea = lacks_international_recognition }
+				country_exists = var:open_state
+				is_full_state = yes
+				if = {
+					limit = { original_tag = SWI }
+					has_dynamic_modifier = { modifier = united_nations_member }
+				}
+				custom_trigger_tooltip = {
+					tooltip = not_recog_tt
+					NOT = { var:open_state = { is_in_array = { recognised_by = ROOT } } }
+				}
+
+				has_political_power > 25
+			}
+			rescind_recog_button_click_enabled = {
+				var:open_state = { has_idea = lacks_international_recognition }
+				country_exists = var:open_state
+				is_full_state = yes
+				if = {
+					limit = { original_tag = SWI }
+					has_dynamic_modifier = { modifier = united_nations_member }
+				}
+				custom_trigger_tooltip = {
+					tooltip = has_recog_tt
+					var:open_state = { is_in_array = { recognised_by = ROOT } }
+				}
+				has_political_power > 25
+			}
+			name_of_state_button_visible = {
+				var:v = { has_idea = lacks_international_recognition }
+			}
+			name_of_state_button_text_visible = {
+				var:v = { has_idea = lacks_international_recognition }
+			}
+			name_of_state_button_click_enabled = {
+				NOT = { tag = var:v }
+				NOT = { has_war_with = var:v }
+				has_civil_war = no
+			}
+		}
+
+		dynamic_lists = {
+			list_of_unrecognized_states = {
+				array = global.Unrecognised_States
+				entry_container = IS_states_to_recognize_list
+			}
+		}
+
+		properties = {
+			name_of_state_button = {
+				frame = UN_recog_buttons_frames^i
+			}
+		}
+	}
+
+	MD_UN_persuade_to_recognize_gui = {
+		window_name = UN_persuade_to_recognize_menu
+		context_type = player_context
+		parent_window_name = MD_UN_system_sub_window
+
+		dirty = global.international_systems_updated
+
+		visible = {
+			check_variable = { var_open_MD_state_recog = 1 }
+			check_variable = { var_open_MD_UN_gui = 2 }
+			has_country_flag = open_MD_countrymissilesview
+			has_idea = lacks_international_recognition 
+		}
+
+		dynamic_lists = {
+			list_of_p5_nations_current = {
+				array = global.p5_sc_members
+				entry_container = IS_states_to_persuade_list
+			}
+		}
+
+		triggers = {
+			un_improve_relations_button_click_enabled = {
+				has_political_power > 200
+				custom_trigger_tooltip = {
+					tooltip = recent_global_campaign_tt
+					NOT = { has_country_flag = recent_global_recog_campaign }
+				}
+				has_civil_war = no
+			}
+			un_campaign_for_recog_button_click_enabled = {
+				has_political_power > 200
+				custom_trigger_tooltip = {
+					tooltip = recent_global_request_campaign_tt
+					NOT = { has_country_flag = recent_global_recog_request_campaign }
+				}
+				has_civil_war = no
+			}
+			un_ascension_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = is_un_ascension_warning_tt
+					NOT = {
+						has_country_flag = recent_un_ascension_attempt
+					}
+				}
+				has_political_power > 200
+				has_civil_war = no
+				is_subject = no
+			}
+			un_ask_for_independence_button_click_enabled = {
+				has_political_power > 350
+				check_variable = { original_owners^num > 0 }
+
+				custom_trigger_tooltip = {
+					tooltip = has_not_recently_requested_independence
+					NOT = {
+						has_country_flag = recent_independence_request
+					}
+				}
+				has_civil_war = no
+				is_subject = no
+			}
+			name_of_sc_state_button_click_enabled = {
+				NOT = { has_war_with = ROOT }
+				var:v = {
+					custom_trigger_tooltip = {
+						tooltip = no_recent_recog_campaign_tt
+						NOT = {
+							has_country_flag = recognition_campaign_from@ROOT
+						}
+					}
+					custom_trigger_tooltip = {
+						tooltip = not_recog_checker_tt
+						NOT = { is_in_array = { ROOT.recognised_by = THIS } }
+					}
+				}
+				has_political_power > 200
+			}
+		}
+
+		effects = {
 			un_ascension_button_click = {
 				custom_effect_tooltip = un_ascent_effect_tt
 				set_country_flag = {
@@ -329,22 +416,35 @@ scripted_gui = {
 				}
 				international_systems_update = yes
 			}
-			un_ask_for_independence_button_click = {
-				add_political_power = -350
 
-				custom_effect_tooltip = independence_request_tt
-
-				hidden_effect = {
-					country_event = recognition.30
+			name_of_sc_state_button_click = {
+				var:v = {
+					set_country_flag = {
+						flag = recognition_campaign_from@ROOT
+						days = 210
+						value = 1
+					}
+					add_opinion_modifier = {
+						target = ROOT
+						modifier = is_trying_to_win_our_favour
+					}
+					set_variable = { recog_requester = ROOT }
+					hidden_effect = {
+						country_event = recognition.20
+					}
 				}
+
+				add_political_power = -200
+
 				international_systems_update = yes
 			}
 		}
 	}
+
 	MD_UN_SC_gui = {
 		window_name = MD_UN_SC_window
 		context_type = player_context
-		parent_window_name = MD_UN_main_window_instance
+		parent_window_name = MD_UN_system_sub_window
 
 		dirty = global.international_systems_updated
 
@@ -570,7 +670,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_council = 2 }
+			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_country_flag = show_sc_vote_view
@@ -580,7 +680,7 @@ scripted_gui = {
 	MD_UN_GA_gui = {
 		window_name = MD_UN_GA_window
 		context_type = player_context
-		parent_window_name = MD_UN_main_window_instance
+		parent_window_name = MD_UN_system_sub_window
 
 		dirty = global.international_systems_updated
 
@@ -713,7 +813,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			check_variable = { ga_pop_out_view > 0 }
@@ -723,7 +823,7 @@ scripted_gui = {
 	MD_UN_aid_gui = {
 		window_name = MD_UN_aid_window
 		context_type = player_context
-		parent_window_name = MD_UN_main_window_instance
+		parent_window_name = MD_UN_system_sub_window
 
 		dirty = global.international_systems_updated
 
@@ -774,6 +874,9 @@ scripted_gui = {
 					is_in_array = { global.UN_budget_contribution_tracker = THIS }
 				}
 				has_political_power > 200
+			}
+			is_un_aid_request_subsidies_esco_button_visible = {
+
 			}
 			is_un_aid_request_subsidies_esco_button_click_enabled = {
 				custom_trigger_tooltip = {
@@ -1158,6 +1261,43 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 		}
+
+		dynamic_lists = {
+			list_of_aid_contributors = {
+				array = global.UN_budget_contribution_tracker
+				entry_container = IS_UN_aid_contribution_list
+				change_scope = yes
+			}
+			list_of_unesco_recipients = {
+				array = global.unesco_recipients
+				entry_container = IS_UN_aid_unesco_list
+				change_scope = yes
+			}
+			list_of_unido_recipients = {
+				array = global.unido_recipients
+				entry_container = IS_UN_aid_ido_list
+				change_scope = yes
+			}
+			list_of_uncdf_recipients = {
+				array = global.uncdf_recipients
+				entry_container = IS_UN_aid_cdf_list
+				change_scope = yes
+			}
+		}
+	}
+
+	is_un_aid_country_list = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_main_window
+		window_name = "UN_aid_country_list"
+		
+		dynamic_lists = {
+			UN_aid_country_list_grid = {
+				array = global.unesco_recipients
+				entry_container = UN_aid_country_entry
+				change_scope = yes
+			}
+		}
 	}
 
     is_un_sc_dynamic_lists = {
@@ -1168,7 +1308,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_council = 2 }
+			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 		}
@@ -1383,7 +1523,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_council = 2 }
+			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			is_on_un_sec_council = yes
@@ -1438,7 +1578,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_council = 2 }
+			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_country_flag = show_sc_vote_view
@@ -1505,7 +1645,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			check_variable = { ga_pop_out_view = 2 }
@@ -1572,7 +1712,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_global_flag = current_ongoing_ga_vote
@@ -1650,7 +1790,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_global_flag = current_ongoing_ga_vote
@@ -1728,7 +1868,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_global_flag = current_ongoing_ga_vote
@@ -1802,7 +1942,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			check_variable = { ga_pop_out_view = 1 }
@@ -1825,7 +1965,7 @@ scripted_gui = {
 		dirty = global.international_systems_updated
 
 		visible = {
-			check_variable = { var_open_MD_un_assembly = 2 }
+			check_variable = { var_open_MD_un_assembly = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			check_variable = { ga_pop_out_view = 3 }
@@ -2078,60 +2218,6 @@ scripted_gui = {
 		}
 	}
 
-	#This is the base budget for being a UN member
-	is_un_aid_contribution_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_UN_aid_gui
-		window_name = "IS_UN_aid_contribution_container"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			has_country_flag = open_MD_countrymissilesview
-			check_variable = { var_open_MD_UN_gui = 2 }
-			check_variable = { var_open_MD_un_aid = 2 }
-		}
-
-		dynamic_lists = {
-			list_of_aid_contributors = {
-				array = global.UN_budget_contribution_tracker
-				entry_container = IS_UN_aid_contribution_list
-				change_scope = yes
-			}
-		}
-	}
-	#This is nations that are receiving UN aid
-	is_un_aid_recipients_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_UN_aid_gui
-		window_name = "IS_UN_aid_recipients"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			has_country_flag = open_MD_countrymissilesview
-			check_variable = { var_open_MD_UN_gui = 2 }
-			check_variable = { var_open_MD_un_aid = 2 }
-		}
-
-		dynamic_lists = {
-			list_of_unesco_recipients = {
-				array = global.unesco_recipients
-				entry_container = IS_UN_aid_unesco_list
-				change_scope = yes
-			}
-			list_of_unido_recipients = {
-				array = global.unido_recipients
-				entry_container = IS_UN_aid_ido_list
-				change_scope = yes
-			}
-			list_of_uncdf_recipients = {
-				array = global.uncdf_recipients
-				entry_container = IS_UN_aid_cdf_list
-				change_scope = yes
-			}
-		}
-	}
 	#This is for the individual programs
 	is_un_aid_contributors_dynamic_lists = {
 		context_type = player_context
@@ -2161,119 +2247,6 @@ scripted_gui = {
 				array = global.un_aid_cdf_contributor
 				entry_container = IS_UN_aid_cdf_contributor_list
 				change_scope = yes
-			}
-		}
-	}
-
-	international_state_unrecognized_countries_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_UN_system_gui
-		window_name = "IS_unrecognized_states_container"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			check_variable = { var_open_MD_state_recog = 2 }
-			check_variable = { var_open_MD_UN_gui = 2 }
-			has_country_flag = open_MD_countrymissilesview
-		}
-
-		dynamic_lists = {
-			list_of_unrecognized_states = {
-				array = global.Unrecognised_States
-				entry_container = IS_states_to_recognize_list
-			}
-		}
-
-		triggers = {
-			name_of_state_button_visible = {
-				var:v = { has_idea = lacks_international_recognition }
-			}
-			name_of_state_button_click_enabled = {
-				NOT = { tag = var:v }
-				NOT = { has_war_with = var:v }
-				has_civil_war = no
-			}
-		}
-
-		effects = {
-			name_of_state_button_click = {
-				set_variable = { open_state = v }
-				if = { limit = { is_ai = yes }
-					set_country_flag = {
-						flag = state_swap_slow_flag
-						days = 120 value = 1
-					}
-				}
-				international_systems_update = yes
-			}
-		}
-	}
-
-	is_state_recog_sc_nations_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_UN_system_gui
-		window_name = "IS_p5_sc_nations_to_persuade_container"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			has_idea = lacks_international_recognition
-			check_variable = { var_open_MD_state_recog = 2 }
-			check_variable = { var_open_MD_UN_gui = 2 }
-			has_country_flag = open_MD_countrymissilesview
-		}
-
-		dynamic_lists = {
-			list_of_p5_nations_current = {
-				array = global.p5_sc_members
-				entry_container = IS_states_to_persuade_list
-			}
-		}
-
-		triggers = {
-			name_of_sc_state_button_visible = {
-				has_idea = lacks_international_recognition
-			}
-			name_of_sc_state_button_click_enabled = {
-				NOT = { has_war_with = ROOT }
-				var:v = {
-					custom_trigger_tooltip = {
-						tooltip = no_recent_recog_campaign_tt
-						NOT = {
-							has_country_flag = recognition_campaign_from@ROOT
-						}
-					}
-					custom_trigger_tooltip = {
-						tooltip = not_recog_checker_tt
-						NOT = { is_in_array = { ROOT.recognised_by = THIS } }
-					}
-				}
-				has_political_power > 200
-			}
-		}
-
-		effects = {
-			name_of_sc_state_button_click = {
-				var:v = {
-					set_country_flag = {
-						flag = recognition_campaign_from@ROOT
-						days = 210
-						value = 1
-					}
-					add_opinion_modifier = {
-						target = ROOT
-						modifier = is_trying_to_win_our_favour
-					}
-					set_variable = { recog_requester = ROOT }
-					hidden_effect = {
-						country_event = recognition.20
-					}
-				}
-
-				add_political_power = -200
-
-				international_systems_update = yes
 			}
 		}
 	}
