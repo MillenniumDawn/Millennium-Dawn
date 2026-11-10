@@ -7443,8 +7443,8 @@ UKR_reorganize_navy_category = {
 				custom_effect_tooltip = UKR_varyag_training_delivery_tt
 				hidden_effect = {
 					if = {
-						limit = { country_exists = SOV }
-						SOV = { add_opinion_modifier = { target = UKR modifier = varyag_carrier_concern } }
+						limit = { country_exists = SOV NOT = { has_war_with = SOV } }
+						SOV = { country_event = russia_varyag.1 }
 					}
 					for_each_scope_loop = {
 						array = global.nato_members
@@ -7470,6 +7470,86 @@ UKR_reorganize_navy_category = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
+	}
+
+	UKR_varyag_convert_mig29_squadron = {
+		icon = varyag_mig29k
+		days_re_enable = 30
+
+		visible = { UKR_varyag_air_group_available = yes }
+
+		available = { NOT = { has_country_flag = UKR_varyag_catapult_refit } }
+
+		custom_cost_trigger = { check_variable = { var = treasury value = 3 compare = greater_than_or_equals } }
+		custom_cost_text = UKR_varyag_mig_conversion_cost
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_varyag_convert_mig29_squadron"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			set_country_flag = UKR_varyag_air_group_ordered
+			activate_mission = UKR_varyag_prepare_mig29_squadron
+			hidden_effect = { country_event = { id = ukraine_varyag.29 days = 1 } }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_varyag_prepare_mig29_squadron = {
+		icon = varyag_mig29k
+		activation = { always = no }
+		days_mission_timeout = 120
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		available = { has_country_flag = UKR_varyag_mig_airframes_reserved }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_varyag_prepare_mig29_squadron completed"
+			UKR_varyag_start_mig_conversion = yes
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_varyag_prepare_mig29_squadron timed out"
+			if = {
+				limit = { has_country_flag = UKR_varyag_mig_airframes_reserved }
+				UKR_varyag_start_mig_conversion = yes
+			}
+			else = {
+				clr_country_flag = UKR_varyag_air_group_ordered
+				set_temp_variable = { treasury_change = 3 }
+				modify_treasury_effect = yes
+				hidden_effect = { country_event = ukraine_varyag.28 }
+			}
+		}
+	}
+
+	UKR_varyag_deck_trials = {
+		icon = varyag
+		days_re_enable = 30
+
+		visible = {
+			tag = UKR
+			has_country_flag = UKR_varyag_commissioned
+			NOT = { has_country_flag = UKR_varyag_deck_trials_completed }
+		}
+
+		available = {
+			UKR_varyag_trials_available = yes
+			UKR_varyag_training_aircraft_available = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_varyag_deck_trials"
+			country_event = ukraine_varyag.27
+		}
+
+		ai_will_do = { base = 20 }
 	}
 
 	UKR_varyag_restore_yak38 = {

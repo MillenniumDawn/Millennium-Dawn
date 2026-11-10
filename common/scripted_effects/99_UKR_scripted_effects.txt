@@ -9855,7 +9855,13 @@ UKR_storage_update_tank_development_costs = {
 
 varyag_send_hull_to_china = {
 	clr_global_flag = varyag_dispute_open
-	CHI = { country_event = { id = ukraine_varyag.5 days = 122 } }
+	CHI = {
+		set_country_flag = CHI_varyag_hull_in_transit
+		random_list = {
+			75 = { country_event = { id = ukraine_varyag.5 days = 122 } }
+			25 = { country_event = { id = ukraine_varyag.25 days = 30 } }
+		}
+	}
 	TUR = { country_event = ukraine_varyag.7 }
 	if = {
 		limit = { country_exists = UKR }
@@ -10006,6 +10012,96 @@ varyag_commission_carrier = {
 		}
 		set_country_flag = UKR_varyag_training_aircraft_received
 	}
+	if = {
+		limit = { tag = UKR }
+		set_country_flag = UKR_varyag_commissioned
+	}
+	else_if = {
+		limit = { tag = TUR country_exists = GRE NOT = { has_war_with = GRE } }
+		hidden_effect = { GRE = { country_event = { id = greece_varyag.1 days = 1 } } }
+	}
 	clr_country_flag = varyag_hull_at_shipyard
 	hidden_effect = { country_event = ukraine_varyag.9 }
+}
+
+UKR_varyag_reserve_mig29s = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		set_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@small_plane_airframe_2 }
+		add_equipment_to_stockpile = {
+			type = small_plane_airframe_2
+			variant_name = "MiG-29"
+			amount = -12
+			producer = SOV
+		}
+		subtract_from_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@small_plane_airframe_2 }
+	}
+	else = {
+		set_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@MR_Fighter2 }
+		add_equipment_to_stockpile = {
+			type = MR_Fighter2
+			amount = -12
+			producer = SOV
+		}
+		subtract_from_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@MR_Fighter2 }
+	}
+	if = {
+		limit = { check_variable = { var = UKR_varyag_reserved_aircraft value = 12 compare = greater_than_or_equals } }
+		set_country_flag = UKR_varyag_mig_airframes_reserved
+	}
+	else = {
+		# Refund only the aircraft removed by this incomplete reservation.
+		if = {
+			limit = { check_variable = { UKR_varyag_reserved_aircraft > 0 } }
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_airframe_2
+					variant_name = "MiG-29"
+					amount = UKR_varyag_reserved_aircraft
+					producer = SOV
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = MR_Fighter2
+					amount = UKR_varyag_reserved_aircraft
+					producer = SOV
+				}
+			}
+		}
+	}
+}
+
+UKR_varyag_start_mig_conversion = {
+	clr_country_flag = UKR_varyag_mig_airframes_reserved
+	set_country_flag = UKR_varyag_mig_conversion_in_progress
+	custom_effect_tooltip = UKR_varyag_mig_conversion_started_tt
+	hidden_effect = { country_event = { id = ukraine_varyag.26 days = 360 } }
+}
+
+UKR_varyag_run_training_trials = {
+	if = {
+		limit = {
+			UKR_varyag_trials_available = yes
+			UKR_varyag_training_aircraft_available = yes
+		}
+		set_country_flag = UKR_varyag_deck_trials_completed
+		navy_experience = 5
+		air_experience = 5
+	}
+	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
+}
+
+UKR_varyag_run_combat_trials = {
+	if = {
+		limit = {
+			UKR_varyag_trials_available = yes
+			UKR_varyag_combat_aircraft_available = yes
+		}
+		set_country_flag = UKR_varyag_deck_trials_completed
+		navy_experience = 15
+		air_experience = 10
+	}
+	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
 }

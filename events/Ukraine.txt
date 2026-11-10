@@ -34637,8 +34637,10 @@ country_event = {
 	desc = ukraine_varyag.5.desc
 	picture = GFX_UKR_varyag_refit
 	is_triggered_only = yes
+	trigger = { has_country_flag = CHI_varyag_hull_in_transit }
 
 	immediate = {
+		clr_country_flag = CHI_varyag_hull_in_transit
 		set_country_flag = CHI_varyag_hull_acquired
 		if = {
 			limit = { NOT = { has_tech = carrier_hull_2 } }
@@ -34758,14 +34760,53 @@ country_event = {
 		trigger = { has_country_flag = UKR_varyag_training_aircraft_received }
 	}
 	desc = {
+		text = ukraine_varyag.9.desc_ukraine_no_trainers
+		trigger = {
+			tag = UKR
+			NOT = { has_country_flag = UKR_varyag_training_aircraft_received }
+		}
+	}
+	desc = {
 		text = ukraine_varyag.9.desc
-		trigger = { NOT = { has_country_flag = UKR_varyag_training_aircraft_received } }
+		trigger = { NOT = { tag = UKR } }
 	}
 	picture = GFX_UKR_varyag_commissioned
 	is_triggered_only = yes
-	minor_flavor = yes
 
-	option = { name = ukraine_varyag.9.a }
+	option = {
+		name = ukraine_varyag.9.a
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.9.a executed"
+		if = {
+			limit = { tag = UKR }
+			unlock_decision_tooltip = UKR_varyag_deck_trials
+		}
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = ukraine_varyag.9.b
+		trigger = {
+			UKR_varyag_trials_available = yes
+			UKR_varyag_training_aircraft_available = yes
+		}
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.9.b executed"
+		UKR_varyag_run_training_trials = yes
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0 UKR_varyag_combat_aircraft_available = yes }
+		}
+	}
+
+	option = {
+		name = ukraine_varyag.9.c
+		trigger = {
+			UKR_varyag_trials_available = yes
+			UKR_varyag_combat_aircraft_available = yes
+		}
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.9.c executed"
+		UKR_varyag_run_combat_trials = yes
+		ai_chance = { base = 90 }
+	}
 }
 
 country_event = {
@@ -34855,6 +34896,7 @@ country_event = {
 		custom_effect_tooltip = varyag_legacy_weapons_tt
 		unlock_decision_tooltip = varyag_complete_the_carrier
 		unlock_decision_tooltip = UKR_varyag_install_catapults
+		unlock_decision_tooltip = UKR_varyag_convert_mig29_squadron
 		ai_chance = { base = 50 }
 	}
 
@@ -34866,6 +34908,7 @@ country_event = {
 		custom_effect_tooltip = varyag_western_weapons_tt
 		unlock_decision_tooltip = varyag_complete_the_carrier
 		unlock_decision_tooltip = UKR_varyag_install_catapults
+		unlock_decision_tooltip = UKR_varyag_convert_mig29_squadron
 		ai_chance = {
 			base = 50
 			modifier = { add = 25 has_opinion = { target = USA value > 25 } }
@@ -35166,6 +35209,176 @@ country_event = {
 				country_event = ukraine_varyag.1
 			}
 			else = { varyag_close_without_delivery = yes }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_varyag.25
+	title = ukraine_varyag.25.name
+	desc = ukraine_varyag.25.desc
+	picture = GFX_UKR_varyag_passage
+	is_triggered_only = yes
+	trigger = { has_country_flag = CHI_varyag_hull_in_transit }
+
+	option = {
+		name = ukraine_varyag.25.a
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.25.a executed"
+		if = {
+			limit = { check_variable = { var = treasury value = 0.2 compare = greater_than_or_equals } }
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = varyag_tow_on_schedule_tt
+			hidden_effect = { country_event = { id = ukraine_varyag.5 days = 92 } }
+		}
+		else = {
+			custom_effect_tooltip = varyag_tow_delayed_tt
+			hidden_effect = { country_event = { id = ukraine_varyag.5 days = 152 } }
+		}
+		ai_chance = {
+			base = 75
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0.2 } }
+		}
+	}
+
+	option = {
+		name = ukraine_varyag.25.b
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.25.b executed"
+		custom_effect_tooltip = varyag_tow_delayed_tt
+		hidden_effect = { country_event = { id = ukraine_varyag.5 days = 152 } }
+		ai_chance = {
+			base = 25
+			modifier = { add = 50 ai_has_high_deficit = yes }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_varyag.26
+	title = ukraine_varyag.26.name
+	desc = ukraine_varyag.26.desc
+	picture = GFX_UKR_varyag_mig29k
+	is_triggered_only = yes
+	minor_flavor = yes
+	trigger = { has_country_flag = UKR_varyag_mig_conversion_in_progress }
+
+	immediate = {
+		clr_country_flag = UKR_varyag_mig_conversion_in_progress
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			create_equipment_variant = {
+				name = "MiG-29 Varyag"
+				type = cv_small_plane_airframe_2
+				allow_without_tech = yes
+				icon = "GFX_SOV_AIR_MiG_29K"
+				modules = {
+					fixed_main_weapon_slot = weap_a2a_hardpoint_2
+					fixed_gun_slot = weap_multi_gun_3
+					fixed_auxiliary_weapon_slot_1 = weap_mp_light_hardpoint_2
+					engine_type_slot = engine_light_double_2
+					avionics_type_slot = avionics_manned_2
+					wingform_type_slot = wing_swept
+					special_slot_type_1 = spec_countermeasures_1
+					special_slot_type_3 = spec_redundant_2
+				}
+			}
+			add_equipment_to_stockpile = {
+				type = cv_small_plane_airframe_2
+				variant_name = "MiG-29 Varyag"
+				amount = 12
+				producer = UKR
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "MiG-29 Naval Conversion"
+				type = CV_MR_Fighter2
+				allow_without_tech = yes
+				icon = "GFX_SOV_AIR_MiG_29K"
+			}
+			add_equipment_to_stockpile = {
+				type = CV_MR_Fighter2
+				variant_name = "MiG-29 Naval Conversion"
+				amount = 12
+				producer = UKR
+			}
+		}
+	}
+
+	option = { name = ukraine_varyag.26.a }
+}
+
+country_event = {
+	id = ukraine_varyag.27
+	title = ukraine_varyag.27.name
+	desc = ukraine_varyag.27.desc
+	picture = GFX_UKR_varyag_commissioned
+	is_triggered_only = yes
+	trigger = { UKR_varyag_trials_available = yes }
+
+	option = {
+		name = ukraine_varyag.27.a
+		trigger = { UKR_varyag_training_aircraft_available = yes }
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.27.a executed"
+		UKR_varyag_run_training_trials = yes
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0 UKR_varyag_combat_aircraft_available = yes }
+		}
+	}
+
+	option = {
+		name = ukraine_varyag.27.b
+		trigger = { UKR_varyag_combat_aircraft_available = yes }
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.27.b executed"
+		UKR_varyag_run_combat_trials = yes
+		ai_chance = { base = 90 }
+	}
+
+	option = {
+		name = ukraine_varyag.27.c
+		ai_chance = { base = 5 }
+	}
+}
+
+country_event = {
+	id = ukraine_varyag.28
+	title = ukraine_varyag.28.name
+	desc = ukraine_varyag.28.desc
+	picture = GFX_UKR_varyag_mig29k
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukraine_varyag.28.a }
+}
+
+country_event = {
+	id = ukraine_varyag.29
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = {
+				has_active_mission = UKR_varyag_prepare_mig29_squadron
+				NOT = { has_country_flag = UKR_varyag_mig_airframes_reserved }
+			}
+			if = {
+				limit = {
+					if = {
+						limit = { has_dlc = "By Blood Alone" }
+						has_equipment = { small_plane_airframe_2 > 11 }
+					}
+					else = { has_equipment = { MR_Fighter2 > 11 } }
+				}
+				UKR_varyag_reserve_mig29s = yes
+			}
+			if = {
+				limit = { NOT = { has_country_flag = UKR_varyag_mig_airframes_reserved } }
+				country_event = { id = ukraine_varyag.29 days = 1 }
+			}
 		}
 	}
 }
