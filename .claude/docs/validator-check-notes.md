@@ -197,8 +197,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
   resource variables and scripted cost triggers still need manual review.
 - `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
-  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
-  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  reads. A `remove_effect`, a top-level `modifier`, `targeted_modifier`,
+  `war_with_on_remove`, or `war_with_target_on_remove`, or a `has_decision` naming the
+  decision anywhere in shipped script exempts it. Repeatable
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
