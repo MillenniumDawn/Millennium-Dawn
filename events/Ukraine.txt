@@ -35928,6 +35928,7 @@ country_event = {
 			modifier = { add = 10 has_opinion = { target = FROM value < 30 } }
 		}
 		FROM = {
+			set_country_flag = UKR_stylet_belarus_declined_flag
 			set_temp_variable = { treasury_change = UKR_stylet_share }
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
@@ -35951,7 +35952,22 @@ country_event = {
 country_event = {
 	id = ukraine_stylet.3
 	title = ukraine_stylet.3.name
-	desc = ukraine_stylet.3.desc
+	desc = {
+		text = ukraine_stylet.3.desc
+		trigger = {
+			NOT = { has_country_flag = UKR_stylet_tried_khkbm }
+			NOT = { has_country_flag = UKR_stylet_tried_tatra }
+		}
+	}
+	desc = {
+		text = ukraine_stylet.3.desc_retry
+		trigger = {
+			OR = {
+				has_country_flag = UKR_stylet_tried_khkbm
+				has_country_flag = UKR_stylet_tried_tatra
+			}
+		}
+	}
 	picture = GFX_UKR_Storage_of_Soviet_Equipment_s125
 	is_triggered_only = yes
 
@@ -35963,19 +35979,54 @@ country_event = {
 		ai_chance = { base = 10 }
 		custom_effect_tooltip = ukraine_stylet.3.a_tt
 		set_country_flag = UKR_stylet_chassis_kraz
+		UKR_stylet_create_variant = yes
 	}
 
 	option = {
 		name = ukraine_stylet.3.b
 		log = "[GetDateText]: [This.GetName]: ukraine_stylet.3.b executed"
+		trigger = {
+			NOT = { has_country_flag = UKR_stylet_tried_khkbm }
+			OR = {
+				check_variable = { btr4_current_step > 0 }
+				date < 2009.01.01
+			}
+		}
 		ai_chance = {
 			base = 10
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 		set_temp_variable = { treasury_change = -0.01 }
 		modify_treasury_effect = yes
+		set_country_flag = UKR_stylet_tried_khkbm
 		custom_effect_tooltip = ukraine_stylet.3.b_tt
-		set_country_flag = UKR_stylet_chassis_khkbm
+		if = {
+			limit = {
+				check_variable = { btr4_total_steps > 5 }
+				check_variable = { btr4_current_step = btr4_total_steps }
+			}
+			set_country_flag = UKR_stylet_chassis_khkbm
+			UKR_stylet_create_variant = yes
+		}
+		else = { activate_mission = UKR_stylet_khkbm_chassis_mission }
+	}
+
+	option = {
+		name = ukraine_stylet.3.c
+		log = "[GetDateText]: [This.GetName]: ukraine_stylet.3.c executed"
+		trigger = {
+			NOT = { has_country_flag = UKR_stylet_tried_tatra }
+			country_exists = CZE
+		}
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+		set_temp_variable = { treasury_change = -0.02 }
+		modify_treasury_effect = yes
+		set_country_flag = UKR_stylet_tried_tatra
+		custom_effect_tooltip = ukraine_stylet.3.c_tt
+		activate_mission = UKR_stylet_tatra_chassis_mission
 	}
 }
 
