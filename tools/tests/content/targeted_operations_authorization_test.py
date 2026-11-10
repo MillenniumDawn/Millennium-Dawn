@@ -344,7 +344,6 @@ def test_host_request_preserves_temporary_actor_and_response_posture():
     assert review.actor["TOP_proposal_stage"] == 4
 
 
-
 def test_old_host_reply_cannot_approve_even_an_identical_later_proposal():
     review = ReviewScript()
     review.ready_for_host()

@@ -187,7 +187,9 @@ def test_liaison_age_cache_requires_matching_subject_kind_for_overlapping_ids():
 
 
 @pytest.mark.parametrize("reported_state", (102, -10737.40616))
-def test_organization_sources_follow_authored_collection_and_liaison_reports(reported_state):
+def test_organization_sources_follow_authored_collection_and_liaison_reports(
+    reported_state,
+):
     script = TargetScript()
     script.organization_truth(2, state=101, public=True)
     variables = script.countries[1]["vars"]
