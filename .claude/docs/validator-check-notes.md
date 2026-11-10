@@ -197,8 +197,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
   resource variables and scripted cost triggers still need manual review.
 - `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
-  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
-  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  reads. A `remove_effect`, a top-level `modifier`, `targeted_modifier`,
+  `war_with_on_remove`, or `war_with_target_on_remove`, or a `has_decision` naming the
+  decision anywhere in shipped script exempts it. Repeatable
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
@@ -615,6 +616,23 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
   The owner is the idea, trait, or modifier name that holds the bonus. Do not
   blanket-exempt existing bonuses; review and explain each one (Issue #6371).
+- `weekly-stability-war-support-over-cap` (WARNING, always on): `stability_weekly` or
+  `war_support_weekly` above `0.05`, or a `*_weekly_factor` with an absolute value above
+  `0.25`. Flat weekly penalties are not flagged (Issue #6494).
+- `excessive-modifier-over-30-percent` (WARNING, always on): one `*_factor` or
+  `*_modifier` literal above `0.30`. Keys containing `cost`, starting with `expected_`,
+  or listed in `_NEGATIVE_BONUS_KEYS` (plus `*_worker_requirement_modifier` and
+  `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
+  `ai_*`, income, and weekly keys are skipped because they are AI weights or have
+  their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
+  number, not a percent. With `--unbalanced-modifiers`, productivity growth keys are skipped
+  too, because that check owns them (Issue #6494).
+- Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
+  skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
+  dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
+  untimed `add_dynamic_modifier` grant keeps the source in scope, as does no grant at
+  all (decisions, static modifiers). Grants are read from `common/`, `events/`, and
+  `history/`.
 
 ## validate_on_actions.py
 
