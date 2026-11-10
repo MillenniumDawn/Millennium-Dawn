@@ -10024,27 +10024,63 @@ varyag_commission_carrier = {
 	hidden_effect = { country_event = ukraine_varyag.9 }
 }
 
+# Native stockpile checks avoid adding synchronized dynamic tokens.
+UKR_varyag_count_source_airframes = {
+	set_temp_variable = { UKR_varyag_source_airframes = 0 }
+	set_temp_variable = { UKR_varyag_count_step = 1 }
+	while_loop_effect = {
+		limit = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_equipment = { small_plane_airframe_2 > UKR_varyag_count_step }
+			}
+			else = { has_equipment = { MR_Fighter2 > UKR_varyag_count_step } }
+		}
+		multiply_temp_variable = { UKR_varyag_count_step = 2 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { UKR_varyag_count_step > 0.9 } }
+		set_temp_variable = {
+			UKR_varyag_count_candidate = {
+				value = UKR_varyag_source_airframes
+				add = UKR_varyag_count_step
+			}
+		}
+		if = {
+			limit = {
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					NOT = { has_equipment = { small_plane_airframe_2 < UKR_varyag_count_candidate } }
+				}
+				else = { NOT = { has_equipment = { MR_Fighter2 < UKR_varyag_count_candidate } } }
+			}
+			set_temp_variable = { UKR_varyag_source_airframes = UKR_varyag_count_candidate }
+		}
+		divide_temp_variable = { UKR_varyag_count_step = 2 }
+	}
+}
+
 UKR_varyag_reserve_mig29s = {
+	UKR_varyag_count_source_airframes = yes
+	set_temp_variable = { UKR_varyag_reserved_aircraft = UKR_varyag_source_airframes }
 	if = {
 		limit = { has_dlc = "By Blood Alone" }
-		set_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@small_plane_airframe_2 }
 		add_equipment_to_stockpile = {
 			type = small_plane_airframe_2
 			variant_name = "MiG-29"
 			amount = -12
 			producer = SOV
 		}
-		subtract_from_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@small_plane_airframe_2 }
 	}
 	else = {
-		set_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@MR_Fighter2 }
 		add_equipment_to_stockpile = {
 			type = MR_Fighter2
 			amount = -12
 			producer = SOV
 		}
-		subtract_from_temp_variable = { UKR_varyag_reserved_aircraft = num_equipment@MR_Fighter2 }
 	}
+	UKR_varyag_count_source_airframes = yes
+	subtract_from_temp_variable = { UKR_varyag_reserved_aircraft = UKR_varyag_source_airframes }
 	if = {
 		limit = { check_variable = { var = UKR_varyag_reserved_aircraft value = 12 compare = greater_than_or_equals } }
 		set_country_flag = UKR_varyag_mig_airframes_reserved
