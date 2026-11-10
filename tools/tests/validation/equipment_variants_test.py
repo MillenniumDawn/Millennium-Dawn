@@ -1,5 +1,6 @@
 import pytest
 from equipment_variant_context import VariantContext, event_pool_targets, script_nodes
+from shared.suite import write_under
 from shared_utils import FileOpener
 from validate_equipment_variants import (
     Validator,
@@ -23,8 +24,8 @@ def test_unlock_reader_handles_compact_definitions_and_alternative_technologies(
     }
 
 
-def write_technology(tmp_path, write_path):
-    write_path(
+def write_technology(tmp_path):
+    write_under(
         tmp_path,
         "common/technologies/test.txt",
         "technologies = { naval_tech = { enable_equipments = { hull } } }",
@@ -228,13 +229,13 @@ def test_equipment_unlock_mapping():
         "history/countries/test.txt",
     ],
 )
-def test_validator_scans_all_effect_sources(tmp_path, write_path, path):
-    write_technology(tmp_path, write_path)
+def test_validator_scans_all_effect_sources(tmp_path, path):
+    write_technology(tmp_path)
     if path.startswith("common/scripted_effects/"):
-        write_path(tmp_path, path, "build_design = { " + reward() + " }")
-        write_path(tmp_path, "events/caller.txt", "build_design = yes")
+        write_under(tmp_path, path, "build_design = { " + reward() + " }")
+        write_under(tmp_path, "events/caller.txt", "build_design = yes")
     else:
-        write_path(tmp_path, path, reward())
+        write_under(tmp_path, path, reward())
     validator = Validator(mod_path=str(tmp_path), workers=1, use_colors=False)
     validator.run_validations()
     assert len(validator._issues) == 1
@@ -251,10 +252,10 @@ def test_ci_registration_is_strict():
 
 
 @pytest.mark.parametrize("staged", ["events/first.txt", "common/technologies/test.txt"])
-def test_staged_sources_and_technology_changes(tmp_path, write_path, staged):
-    write_technology(tmp_path, write_path)
+def test_staged_sources_and_technology_changes(tmp_path, staged):
+    write_technology(tmp_path)
     for name in ("first", "second"):
-        write_path(tmp_path, f"events/{name}.txt", reward())
+        write_under(tmp_path, f"events/{name}.txt", reward())
     validator = Validator(
         mod_path=str(tmp_path), staged_only=True, workers=1, use_colors=False
     )
@@ -644,29 +645,27 @@ def test_history_file_does_not_borrow_its_later_grant():
     assert check_variant_availability(body, UNLOCKS, context, history_country="GER")
 
 
-def test_context_is_loaded_for_staged_consumers_and_rescanned_for_history(
-    tmp_path, write_path
-):
+def test_context_is_loaded_for_staged_consumers_and_rescanned_for_history(tmp_path):
     body = event_body(reward(), trigger="tag = GER")
     docs = {
         "events/test.txt": body,
         "history/countries/GER - Test.txt": "2000.1.1 = { set_technology = { naval_tech = 1 } }",
     }
-    write_technology(tmp_path, write_path)
-    write_path(
+    write_technology(tmp_path)
+    write_under(
         tmp_path,
         "common/bookmarks/start.txt",
         "bookmarks = { bookmark = { date = 2000.1.1 } }",
     )
     for path, text in docs.items():
-        write_path(tmp_path, path, text)
+        write_under(tmp_path, path, text)
     validator = Validator(
         mod_path=str(tmp_path), staged_only=True, workers=1, use_colors=False
     )
     validator.staged_files = [str(tmp_path / "events/test.txt")]
     validator.run_validations()
     assert not validator._issues
-    write_path(
+    write_under(
         tmp_path,
         "history/countries/GER - Test.txt",
         "set_technology = { armor_tech = 1 }",
@@ -723,10 +722,10 @@ def test_negated_country_comparison_cannot_supply_history(guard):
     )
 
 
-def validate_documents(tmp_path, write_path, documents, staged=None):
-    write_technology(tmp_path, write_path)
+def validate_documents(tmp_path, documents, staged=None):
+    write_technology(tmp_path)
     for path, text in documents.items():
-        write_path(tmp_path, path, text)
+        write_under(tmp_path, path, text)
     validator = Validator(
         mod_path=str(tmp_path),
         staged_only=staged is not None,
@@ -743,13 +742,10 @@ def validate_documents(tmp_path, write_path, documents, staged=None):
     "consumer",
     ["add_equipment_production", "create_ship", "add_equipment_to_stockpile"],
 )
-def test_scripted_creation_reaches_caller_only_consumers(
-    tmp_path, write_path, consumer
-):
+def test_scripted_creation_reaches_caller_only_consumers(tmp_path, consumer):
     creation, use = reward(consumer=consumer).splitlines()
     validator = validate_documents(
         tmp_path,
-        write_path,
         {
             "common/scripted_effects/create.txt": "build_design = {\n"
             + creation
@@ -815,12 +811,9 @@ def test_scripted_body_inherits_caller_technology_and_guards(prefix):
         ),
     ],
 )
-def test_history_scripted_body_uses_call_site_technology(
-    tmp_path, write_path, history, expected
-):
+def test_history_scripted_body_uses_call_site_technology(tmp_path, history, expected):
     validator = validate_documents(
         tmp_path,
-        write_path,
         {
             "common/scripted_effects/create.txt": "build_design = {\n"
             + reward(creator="creator = ROOT")
@@ -847,13 +840,10 @@ def test_scripted_starting_grants_supply_proven_event_recipients(grant):
     )
 
 
-def test_nested_scripted_effects_share_pending_variants_and_sources(
-    tmp_path, write_path
-):
+def test_nested_scripted_effects_share_pending_variants_and_sources(tmp_path):
     creation, use = reward().splitlines()
     validator = validate_documents(
         tmp_path,
-        write_path,
         {
             "common/scripted_effects/wrapper.txt": "wrapper = { build_design = yes consume_design = yes }",
             "common/scripted_effects/create.txt": "build_design = {\n"
@@ -907,10 +897,9 @@ def test_scripted_foreign_calls_do_not_unlock_the_caller(scope):
     )
 
 
-def test_uncalled_scripted_definitions_are_not_executed(tmp_path, write_path):
+def test_uncalled_scripted_definitions_are_not_executed(tmp_path):
     validator = validate_documents(
         tmp_path,
-        write_path,
         {
             "common/scripted_effects/unused.txt": "unused = { " + reward() + " }",
             "events/caller.txt": "add_stability = 0.1",
@@ -919,16 +908,16 @@ def test_uncalled_scripted_definitions_are_not_executed(tmp_path, write_path):
     assert not validator._issues
 
 
-def test_scripted_bodies_are_checked_in_each_callers_context(tmp_path, write_path):
+def test_scripted_bodies_are_checked_in_each_callers_context(tmp_path):
     documents = {
         "common/scripted_effects/create.txt": "build_design = { " + reward() + " }",
         "events/unlocked.txt": "set_technology = { naval_tech = 1 } build_design = yes",
         "events/locked.txt": "build_design = yes",
     }
-    validator = validate_documents(tmp_path, write_path, documents)
+    validator = validate_documents(tmp_path, documents)
     assert len(validator._issues) == 1
     assert validator._issues[0].file == "common/scripted_effects/create.txt"
-    write_path(
+    write_under(
         tmp_path,
         "events/locked.txt",
         "set_technology = { naval_tech = 1 } build_design = yes",
@@ -947,11 +936,10 @@ def test_scripted_bodies_are_checked_in_each_callers_context(tmp_path, write_pat
         "common/on_actions/caller.txt",
     ],
 )
-def test_staged_scripted_changes_rescan_caller_only_files(tmp_path, write_path, staged):
+def test_staged_scripted_changes_rescan_caller_only_files(tmp_path, staged):
     creation, use = reward().splitlines()
     validator = validate_documents(
         tmp_path,
-        write_path,
         {
             "common/scripted_effects/grant.txt": "grant_tech = { set_technology = { naval_tech = 0 } }",
             "common/scripted_effects/wrapper.txt": "wrapper = { grant_tech = yes }",
