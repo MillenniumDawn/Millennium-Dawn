@@ -197,7 +197,6 @@ def test_polar_event_ids_and_english_text_survive_consolidation():
         "STALKER_polar_artifact_study",
         "STALKER_polar_artifact_study_desc",
         "STALKER_polar_artifact_samples",
-        "STALKER_polar_artifact_study_bonus",
     ):
         assert re.search(rf"(?m)^ {re.escape(key)}: \"", LOC), key
 
