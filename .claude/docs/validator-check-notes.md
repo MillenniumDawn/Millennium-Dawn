@@ -600,7 +600,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - No pre-commit hook, so `common/dynamic_modifiers/` edits get no local signal.
 - `redundant-enable-gate` (ERROR): a top-level `always = yes`, `original_tag`, or `tag` in
   a dynamic modifier's own `enable`. See `common/dynamic_modifiers/README.md`.
-  `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk.
 - `dynamic-modifier-name-loc` (ERROR): a dynamic modifier needs a bare-name English key.
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
@@ -678,7 +677,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     allowances. A dynamic pick or `allowed_modules` filler suspends the check only if
     it can touch the ammo: the ammo slot itself, or a module that widens it. Forbidden
     modules cannot widen other slots, including through a category selector.
-  - Regression source: `USA_APC_design/modern_APC_default` before
+  - Regression source: `USA_apc_design/modern_apc_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
     the autocannon mismatch. The historical pattern now warns; the corrected

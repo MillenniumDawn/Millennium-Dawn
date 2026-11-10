@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
     has_flat_is_ai,
@@ -732,15 +733,7 @@ _COMMIT_SCAN_DIRS = (
 def _block_body(text: str, open_brace_end: int) -> str:
     """Return the text between a block's opening brace (already consumed at
     ``open_brace_end``) and its matching closing brace."""
-    depth = 1
-    i = open_brace_end
-    while i < len(text) and depth:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[open_brace_end : i - 1]
+    return text[open_brace_end : find_unquoted_block_end(text, open_brace_end)[0] - 1]
 
 
 def _strip_effect_tooltip_blocks(text: str) -> str:
@@ -1379,16 +1372,8 @@ class DecisionFactory:
         )
 
 
-# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
-
-
-def _set_cache_enabled(enabled: bool):
-    """Enable or disable the decision parsing cache."""
-    global _DECISION_CACHE
-    _DECISION_CACHE["enabled"] = enabled
-    if not enabled:
-        _DECISION_CACHE["data"].clear()
+# Per-run parse memo. --no-cache bypasses only the disk cache, not this.
+_DECISION_CACHE: Dict[str, Any] = {}
 
 
 def _invalidate_decision_cache():
@@ -1397,19 +1382,16 @@ def _invalidate_decision_cache():
     Call this after any ``--fix`` pass that rewrites decision files so later
     validators see the patched contents instead of stale factories.
     """
-    _DECISION_CACHE["data"].clear()
+    _DECISION_CACHE.clear()
     FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
     """Get cached result or compute and cache it."""
-    if not _DECISION_CACHE["enabled"]:
-        return factory_fn()
-
     cache_key = f"{mod_path}:{lowercase}:{key}"
-    if cache_key not in _DECISION_CACHE["data"]:
-        _DECISION_CACHE["data"][cache_key] = factory_fn()
-    return _DECISION_CACHE["data"][cache_key]
+    if cache_key not in _DECISION_CACHE:
+        _DECISION_CACHE[cache_key] = factory_fn()
+    return _DECISION_CACHE[cache_key]
 
 
 def parse_all_decisions(
@@ -1761,8 +1743,7 @@ class Validator(BaseValidator):
         self._cost_lookups: Optional[CostLookups] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
         self._building_payments: Optional[Set[str]] = None
-        if self.no_cache:
-            _set_cache_enabled(False)
+        _DECISION_CACHE.clear()
 
     def _get_cost_lookups(self) -> CostLookups:
         """load_cost_lookups, read once per run."""
