@@ -1,0 +1,154 @@
+# Country scope. Needs the setup variables of the TAG_shipyard_setup effect.
+# Refreshes cost, drift and modifier variables from shipyard_crisis_level.
+shipyard_recalc = {
+	set_temp_variable = { shipyard_years_late = global.year }
+	subtract_from_temp_variable = { shipyard_years_late = shipyard_late_year }
+	clamp_temp_variable = { var = shipyard_years_late min = 0 max = 10 }
+	multiply_temp_variable = { shipyard_years_late = 0.15 }
+	set_temp_variable = { shipyard_severity = shipyard_crisis_level }
+	divide_temp_variable = { shipyard_severity = 100 }
+	set_temp_variable = { shipyard_level_part = shipyard_severity }
+	multiply_temp_variable = { shipyard_level_part = 0.5 }
+
+	set_variable = { shipyard_cost_mult = 1 }
+	add_to_variable = { shipyard_cost_mult = shipyard_years_late }
+	add_to_variable = { shipyard_cost_mult = shipyard_level_part }
+	set_variable = { shipyard_cost_drydock = shipyard_cost_base }
+	multiply_variable = { shipyard_cost_drydock = shipyard_cost_mult }
+
+	if = {
+		limit = { shipyard_is_late_phase = yes }
+		set_variable = { shipyard_drift = shipyard_drift_late }
+	}
+	else = {
+		set_variable = { shipyard_drift = shipyard_drift_early }
+	}
+	set_temp_variable = { shipyard_relief = 1 }
+	set_temp_variable = { shipyard_relief_part = shipyard_drydock_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.1 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	set_temp_variable = { shipyard_relief_part = shipyard_workforce_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.15 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	set_temp_variable = { shipyard_relief_part = shipyard_consolidation_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.1 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	# Every stage completed slows the drift. Fully invested freezes it, never reverses it.
+	clamp_temp_variable = { var = shipyard_relief min = 0 max = 1 }
+	multiply_variable = { shipyard_drift = shipyard_relief }
+
+	set_variable = { shipyard_mod_output = shipyard_cap_output }
+	multiply_variable = { shipyard_mod_output = shipyard_severity }
+	multiply_variable = { shipyard_mod_output = -1 }
+	set_variable = { shipyard_mod_repair = shipyard_cap_repair }
+	multiply_variable = { shipyard_mod_repair = shipyard_severity }
+	multiply_variable = { shipyard_mod_repair = -1 }
+	set_variable = { shipyard_mod_refit = shipyard_cap_refit }
+	multiply_variable = { shipyard_mod_refit = shipyard_severity }
+	multiply_variable = { shipyard_mod_refit = -1 }
+	set_variable = { shipyard_mod_refit_cost = shipyard_cap_refit }
+	multiply_variable = { shipyard_mod_refit_cost = shipyard_severity }
+
+	shipyard_country_recalc = yes
+	force_update_dynamic_modifier = yes
+	shipyard_sync_equipment = yes
+	shipyard_update_dirty_variable = yes
+}
+
+shipyard_monthly = {
+	add_to_variable = { shipyard_crisis_level = shipyard_drift }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+# Each completed stage also slows the monthly drift in shipyard_recalc.
+shipyard_drydock_complete = {
+	add_to_variable = { shipyard_drydock_stage = 1 }
+	add_to_variable = { shipyard_crisis_level = -15 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+shipyard_workforce_complete = {
+	add_to_variable = { shipyard_workforce_stage = 1 }
+	add_to_variable = { shipyard_crisis_level = -6 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+shipyard_pay_drydock = {
+	set_temp_variable = { treasury_change = shipyard_cost_drydock }
+	multiply_temp_variable = { treasury_change = -1 }
+	modify_treasury_effect = yes
+}
+
+# add_equipment_bonus cannot read variables and cannot be removed, so the penalty moves in
+# whole steps of 10 crisis points and is reverted with a negative step. The step count is
+# floored, so a starting level below 10 costs the player nothing.
+shipyard_sync_equipment = {
+	set_temp_variable = { shipyard_eq_target = shipyard_crisis_level }
+	divide_temp_variable = { shipyard_eq_target = 10 }
+	set_temp_variable = { shipyard_eq_fraction = shipyard_eq_target }
+	modulo_temp_variable = { var = shipyard_eq_fraction value = 1 }
+	subtract_from_temp_variable = { shipyard_eq_target = shipyard_eq_fraction }
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_eq_steps < shipyard_eq_target } }
+		shipyard_equipment_step_up = yes
+		add_to_variable = { shipyard_eq_steps = 1 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_eq_steps > shipyard_eq_target } }
+		shipyard_equipment_step_down = yes
+		subtract_from_variable = { shipyard_eq_steps = 1 }
+	}
+}
+
+shipyard_equipment_step_up = {
+	if = {
+		limit = { original_tag = USA }
+		USA_shipyard_equipment_step_up = yes
+	}
+	else_if = {
+		limit = { original_tag = UKR }
+		UKR_shipyard_equipment_step_up = yes
+	}
+	else_if = {
+		limit = { original_tag = SOV }
+		SOV_shipyard_equipment_step_up = yes
+	}
+}
+
+shipyard_equipment_step_down = {
+	if = {
+		limit = { original_tag = USA }
+		USA_shipyard_equipment_step_down = yes
+	}
+	else_if = {
+		limit = { original_tag = UKR }
+		UKR_shipyard_equipment_step_down = yes
+	}
+	else_if = {
+		limit = { original_tag = SOV }
+		SOV_shipyard_equipment_step_down = yes
+	}
+}
+
+shipyard_country_recalc = {
+	if = {
+		limit = { original_tag = UKR }
+		UKR_yard_recalc = yes
+	}
+}
+
+shipyard_update_dirty_variable = {
+	if = {
+		limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { shipyard_ui_dirty_var < 10000 } }
+			add_to_variable = { shipyard_ui_dirty_var = 1 }
+		}
+		else = {
+			set_variable = { shipyard_ui_dirty_var = 1 }
+		}
+	}
+}

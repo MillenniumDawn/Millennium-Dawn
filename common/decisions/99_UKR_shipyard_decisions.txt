@@ -1,0 +1,336 @@
+UKR_reorganize_navy_category = {
+
+	UKR_shipyard_drydock_modernization = {
+		icon = GFX_decision_dockyard_dec
+
+		cost = 100
+
+		visible = { shipyard_is_late_phase = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = shipyard_drydock_stages_tt
+				check_variable = { shipyard_drydock_stage < 5 }
+			}
+			NOT = { has_decision = UKR_shipyard_drydock_modernization_late }
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > shipyard_cost_drydock } }
+		custom_cost_text = shipyard_cost_drydock_tt
+
+		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_drydock_modernization"
+			shipyard_pay_drydock = yes
+			custom_effect_tooltip = shipyard_drydock_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_drydock_modernization"
+			hidden_effect = { shipyard_drydock_complete = yes }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 20 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_shipyard_drydock_modernization_late = {
+		icon = GFX_decision_dockyard_dec
+
+		cost = 150
+
+		visible = { shipyard_is_late_phase = yes }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = shipyard_drydock_stages_tt
+				check_variable = { shipyard_drydock_stage < 5 }
+			}
+			NOT = { has_decision = UKR_shipyard_drydock_modernization }
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > shipyard_cost_drydock } }
+		custom_cost_text = shipyard_cost_drydock_tt
+
+		days_remove = 360
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_drydock_modernization_late"
+			shipyard_pay_drydock = yes
+			custom_effect_tooltip = shipyard_drydock_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_drydock_modernization_late"
+			hidden_effect = { shipyard_drydock_complete = yes }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 20 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_shipyard_workforce_training = {
+		icon = GFX_decision_generic_civil_support
+
+		cost = 75
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = shipyard_workforce_stages_tt
+				check_variable = { shipyard_workforce_stage < 3 }
+			}
+		}
+
+		days_remove = 120
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_workforce_training"
+			add_stability = -0.01
+			custom_effect_tooltip = shipyard_workforce_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shipyard_workforce_training"
+			hidden_effect = { shipyard_workforce_complete = yes }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 20 } }
+		}
+	}
+
+	UKR_yard_restore_dockyard = {
+		icon = GFX_decision_dockyard_dec
+
+		cost = 60
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_free_slipway_tt
+				check_variable = { ukr_dockyards < ukr_effective_dockyards }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > ukr_cost_dockyard } }
+		custom_cost_text = ukr_cost_dockyard_tt
+
+		days_remove = 120
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_dockyard"
+			set_temp_variable = { treasury_change = ukr_cost_dockyard }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ukr_yard_restore_dockyard_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_dockyard"
+			hidden_effect = {
+				# An existing yard with room to grow first, any other valid coast after.
+				if = {
+					limit = {
+						any_controlled_state = {
+							dockyard_random_build_loc = yes
+							check_variable = { building_level@dockyard > 0 }
+							free_building_slots = { building = dockyard size > 0 include_locked = no }
+						}
+					}
+					random_controlled_state = {
+						limit = {
+							dockyard_random_build_loc = yes
+							check_variable = { building_level@dockyard > 0 }
+							free_building_slots = { building = dockyard size > 0 include_locked = no }
+						}
+						add_building_construction = {
+							type = dockyard
+							level = 1
+							instant_build = yes
+						}
+					}
+				}
+				else = {
+					set_temp_variable = { skip_payment = 1 }
+					one_random_dockyard = yes
+				}
+				shipyard_recalc = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_yard_restore_frigate_slipways = {
+		icon = GFX_decision_generic_construction
+
+		cost = 100
+
+		visible = { check_variable = { ukr_yard_tier = 2 } }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_crisis_under_80_tt
+				check_variable = { shipyard_crisis_level < 80 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > ukr_cost_frigate } }
+		custom_cost_text = ukr_cost_frigate_tt
+
+		days_remove = 300
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_frigate_slipways"
+			set_temp_variable = { treasury_change = ukr_cost_frigate }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ukr_yard_frigate_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_frigate_slipways"
+			hidden_effect = { UKR_yard_tier_up = yes }
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_yard_restore_large_slipways = {
+		icon = GFX_decision_generic_construction
+
+		cost = 150
+
+		visible = { check_variable = { ukr_yard_tier = 3 } }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_crisis_under_60_tt
+				check_variable = { shipyard_crisis_level < 60 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_needs_merger_tt
+				check_variable = { shipyard_consolidation_stage > 0 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > ukr_cost_large } }
+		custom_cost_text = ukr_cost_large_tt
+
+		days_remove = 540
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_large_slipways"
+			set_temp_variable = { treasury_change = ukr_cost_large }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = ukr_yard_large_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_large_slipways"
+			hidden_effect = { UKR_yard_tier_up = yes }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_yard_subsidize_shipbuilding = {
+		icon = GFX_decision_arms_industry
+
+		cost = 75
+
+		custom_cost_trigger = { check_variable = { treasury > ukr_cost_subsidy } }
+		custom_cost_text = ukr_cost_subsidy_tt
+
+		days_remove = 365
+		days_re_enable = 365
+
+		modifier = {
+			industrial_capacity_dockyard = 0.1
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_subsidize_shipbuilding"
+			set_temp_variable = { treasury_change = ukr_cost_subsidy }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			increase_corruption = yes
+			custom_effect_tooltip = ukr_yard_subsidy_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_subsidize_shipbuilding"
+			hidden_effect = { UKR_yard_subsidy_complete = yes }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 25 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_yard_consolidate_shipyards = {
+		icon = GFX_decision_generic_civil_support
+
+		cost = 100
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_merger_stages_tt
+				check_variable = { shipyard_consolidation_stage < 3 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > ukr_cost_consolidation } }
+		custom_cost_text = ukr_cost_consolidation_tt
+
+		days_remove = 150
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_consolidate_shipyards"
+			set_temp_variable = { treasury_change = ukr_cost_consolidation }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			add_stability = -0.02
+			custom_effect_tooltip = ukr_yard_consolidate_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_consolidate_shipyards"
+			hidden_effect = { UKR_yard_consolidate_complete = yes }
+		}
+
+		ai_will_do = {
+			base = 7
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
