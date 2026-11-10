@@ -3101,6 +3101,16 @@ _TIMER_CASES = {
         _TIMER + _block("targeted_modifier", "tag = FROM"),
         False,
     ),
+    "war_with_on_remove at the end": (
+        "timer_dec",
+        _TIMER + "\t\twar_with_on_remove = LIT\n",
+        False,
+    ),
+    "war_with_target_on_remove at the end": (
+        "timer_dec",
+        _TIMER + "\t\twar_with_target_on_remove = yes\n",
+        False,
+    ),
     "has_decision reads the timer": ("checked_timer", _TIMER, False),
     "mission": ("timer_dec", _TIMER + _MISSION_DAYS, False),
 }
