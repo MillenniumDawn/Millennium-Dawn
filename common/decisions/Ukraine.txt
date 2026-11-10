@@ -23272,9 +23272,7 @@ varyag_dispute_category = {
 		fire_only_once = yes
 
 		visible = {
-			tag = UKR
-			has_country_flag = varyag_hull_at_shipyard
-			check_variable = { varyag_weapons_tier > 0 }
+			varyag_refit_specification_ready = yes
 			NOT = { has_decision = varyag_complete_the_carrier }
 			NOT = { has_country_flag = UKR_varyag_air_group_ordered }
 		}
@@ -23289,19 +23287,29 @@ varyag_dispute_category = {
 			modify_treasury_effect = yes
 			set_country_flag = UKR_varyag_catapult_refit
 			custom_effect_tooltip = UKR_varyag_catapult_refit_tt
+			unlock_decision_tooltip = varyag_order_hornets
+			if = {
+				limit = { tag = UKR }
+				unlock_decision_tooltip = UKR_varyag_order_rafale_m
+			}
 		}
 
-		ai_will_do = { base = 0 }
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 NOT = { tag = TUR } }
+			modifier = { factor = 0 NOT = { has_idea = NATO_member } }
+			modifier = { factor = 0 has_war_with = USA }
+			modifier = { factor = 0 NOT = { country_exists = USA } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	varyag_complete_the_carrier = {
 		icon = varyag
 		days_remove = 730
 
-		visible = {
-			has_country_flag = varyag_hull_at_shipyard
-			check_variable = { varyag_weapons_tier > 0 }
-		}
+		visible = { varyag_refit_specification_ready = yes }
 
 		available = {
 			varyag_can_complete_refit = yes
@@ -23379,7 +23387,6 @@ varyag_dispute_category = {
 
 		visible = { UKR_varyag_air_group_available = yes }
 		available = {
-			date > 2003.12.31
 			has_country_flag = UKR_varyag_catapult_refit
 			country_exists = FRA
 			NOT = { has_war_with = FRA }
@@ -23406,20 +23413,30 @@ varyag_dispute_category = {
 		days_re_enable = 180
 
 		visible = { UKR_varyag_air_group_available = yes }
-		available = {
-			date > 2008.12.31
-			NOT = { has_country_flag = UKR_varyag_catapult_refit }
-			country_exists = SOV
-			NOT = { has_war_with = SOV }
-			custom_trigger_tooltip = {
-				tooltip = UKR_varyag_mig_funds_tt
-				check_variable = { var = treasury value = 6 compare = greater_than_or_equals }
-			}
-		}
+		available = { UKR_varyag_can_order_mig29k = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_varyag_order_mig29k"
 			hidden_effect = { SOV = { country_event = ukraine_varyag.19 } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	varyag_order_hornets = {
+		icon = varyag
+		fire_only_once = yes
+
+		visible = { varyag_hornet_program_available = yes }
+		available = { varyag_can_order_hornets = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision varyag_order_hornets"
+			hidden_effect = { USA = { country_event = ukraine_varyag.22 } }
 		}
 
 		ai_will_do = {

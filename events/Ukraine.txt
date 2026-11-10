@@ -34850,6 +34850,7 @@ country_event = {
 		set_variable = { varyag_weapons_tier = 1 }
 		custom_effect_tooltip = varyag_legacy_weapons_tt
 		unlock_decision_tooltip = varyag_complete_the_carrier
+		unlock_decision_tooltip = UKR_varyag_install_catapults
 		ai_chance = { base = 50 }
 	}
 
@@ -34863,6 +34864,7 @@ country_event = {
 		set_variable = { varyag_weapons_tier = 2 }
 		custom_effect_tooltip = varyag_western_weapons_tt
 		unlock_decision_tooltip = varyag_complete_the_carrier
+		unlock_decision_tooltip = UKR_varyag_install_catapults
 		ai_chance = {
 			base = 50
 			modifier = { add = 25 has_opinion = { target = USA value > 25 } }
@@ -34980,12 +34982,7 @@ country_event = {
 		if = {
 			limit = {
 				country_exists = UKR
-				NOT = { has_war_with = UKR }
-				UKR = {
-					UKR_varyag_air_group_available = yes
-					NOT = { has_country_flag = UKR_varyag_catapult_refit }
-					check_variable = { var = treasury value = 6 compare = greater_than_or_equals }
-				}
+				UKR = { UKR_varyag_can_order_mig29k = yes }
 			}
 			set_temp_variable = { treasury_change = 6 }
 			modify_treasury_effect = yes
@@ -35043,4 +35040,67 @@ country_event = {
 	minor_flavor = yes
 
 	option = { name = ukraine_varyag.21.a }
+}
+
+country_event = {
+	id = ukraine_varyag.22
+	title = ukraine_varyag.22.name
+	desc = ukraine_varyag.22.desc
+	picture = GFX_carrier
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_varyag.22.a
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.22.a executed"
+		if = {
+			limit = { FROM = { exists = yes varyag_can_order_hornets = yes } }
+			set_temp_variable = { treasury_change = 8 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				FROM = {
+					set_temp_variable = { treasury_change = -8 }
+					modify_treasury_effect = yes
+					set_country_flag = UKR_varyag_air_group_ordered
+					if = {
+						limit = { has_dlc = "By Blood Alone" }
+						add_equipment_to_stockpile = { type = cv_medium_plane_airframe_2 variant_name = "F/A-18C Hornet" amount = 12 producer = USA }
+					}
+					else = { add_equipment_to_stockpile = { type = CV_MR_Fighter2 amount = 12 producer = USA } }
+					country_event = ukraine_varyag.23
+				}
+			}
+		}
+		else = { custom_effect_tooltip = varyag_offer_lapsed_tt }
+		ai_chance = {
+			base = 5
+			modifier = { add = 70 FROM = { tag = TUR has_idea = NATO_member } }
+			modifier = { factor = 0.2 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = ukraine_varyag.22.b
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.22.b executed"
+		hidden_effect = {
+			if = {
+				limit = { FROM = { exists = yes varyag_hornet_program_available = yes } }
+				FROM = { country_event = ukraine_varyag.21 }
+			}
+		}
+		ai_chance = {
+			base = 95
+			modifier = { add = -70 FROM = { tag = TUR has_idea = NATO_member } }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_varyag.23
+	title = ukraine_varyag.23.name
+	desc = ukraine_varyag.23.desc
+	picture = GFX_carrier
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukraine_varyag.23.a }
 }
