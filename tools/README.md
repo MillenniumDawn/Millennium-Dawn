@@ -29,7 +29,10 @@ available. It does not install system packages. After installing, reopen your
 terminal and run `python tools/dev_setup.py --check`.
 
 CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
-and pylint on staged files only, plus mypy:
+and pylint on staged files only, plus mypy. The push hook runs the full tools test
+suite (about a minute) when a push changes `tools/` or config files. Clones set up
+before the push hook existed need `python tools/dev_setup.py` or `pre-commit install`
+once more:
 
 ```bash
 python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
@@ -90,13 +93,12 @@ into the real repository tree. Another worker may be scanning that tree.
 A test that reads live game files goes in `tools/tests/content/`. CI runs that
 directory once, in the `Content tests` job, on tools or game content changes. The
 tools test jobs skip it and check out only the game paths listed in the
-`tools-tests` checkout in `test-suite.yml`, which three live readers need:
+`tools-tests` checkout in `test-suite.yml`, which two live readers need:
 `estimate_gdp` loads `common/buildings/00_buildings.txt` and
-`common/scripted_effects/00_money_system.txt` at import, the common-mistakes lint
-cases resolve names from `common/decisions`, `common/modifiers`,
-`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`,
-and `balance/set_energy_tech_scurves_test.py` dry-runs against
-`common/technologies/industry.txt`. Every other test builds its input under
+`common/scripted_effects/00_money_system.txt` at import, and the common-mistakes
+lint cases resolve names from `common/decisions`, `common/modifiers`,
+`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`.
+Every other test builds its input under
 `tmp_path` or skips when the live tree is absent, so a new live reader belongs in
 `tools/tests/content/` or needs its path added to that checkout.
 Add regression coverage with changed validator, fixer, or report behavior. Run
@@ -181,8 +183,8 @@ not add more, and do not repeat an in-process case as a subprocess.
 
 A rule that depends on an external binary, such as ImageMagick, is tested on a stub
 of that binary, so it runs on every machine. At most a couple of tests drive the real
-binary, and they skip where it is missing. `tests/md_art_convert_test.py` is the
-model.
+binary, and they skip where it is missing. `tests/assets/md_art_convert_test.py` is
+the model.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
@@ -529,7 +531,7 @@ Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` w
 | ---------------------------------- | ----------------------------------------------------------------- |
 | **staged_validators_test.py**      | Tests staged validators using synthetic temporary files           |
 | **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues  |
-| **staged_harness_test.py**         | Checks that both harnesses fail on a crash, timeout, or no result |
+| **shared/staged_harness_test.py**  | Checks that both harnesses fail on a crash, timeout, or no result |
 
 Tests for individual validators live in `tests/validation/`:
 
