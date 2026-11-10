@@ -696,6 +696,18 @@ _WEEKLY_FACTOR_KEYS = frozenset(
     {"stability_weekly_factor", "war_support_weekly_factor"}
 )
 _EXCESSIVE_MODIFIER_CAP = 0.30
+_NEGATIVE_BONUS_KEYS: FrozenSet[str] = frozenset(
+    {
+        "consumer_goods_factor",
+        "truck_attrition_factor",
+        "out_of_supply_factor",
+        "supply_consumption_factor",
+        "training_time_factor",
+        "air_accidents_factor",
+        "wounded_chance_factor",
+        "general_death_chance_modifier",
+    }
+)
 _TIMED_GRANT_RE = re.compile(
     r"\b(?P<kind>add_timed_idea|add_dynamic_modifier)\s*=\s*\{(?P<body>[^{}]*)\}"
 )
@@ -793,19 +805,6 @@ def _scan_numeric_modifier_entries(text: str) -> List[Tuple[str, float, int, str
     return entries
 
 
-def _scan_income_modifiers(
-    text: str, direct_depth: int
-) -> List[Tuple[str, float, int, str]]:
-    """(key, value, line, owner) for literal income bonuses above the cap."""
-    return [
-        entry
-        for entry in _scan_owned_numeric_modifiers(
-            text, direct_depth, lambda key: key in _INCOME_MODIFIER_KEYS
-        )
-        if entry[1] > _INCOME_MODIFIER_CAP
-    ]
-
-
 def _scan_grants(text: str) -> Tuple[List[str], List[str]]:
     """(timed, permanent) idea and dynamic modifier names granted in text."""
     clean = blank_quoted_strings(blank_comments(text))
@@ -842,7 +841,12 @@ def _is_capped_key(key: str) -> bool:
 
 def _is_cost_style(key: str) -> bool:
     """A cost-style key is a bonus when negative."""
-    return "cost" in key or key.startswith("expected_")
+    return (
+        "cost" in key
+        or key.startswith("expected_")
+        or key in _NEGATIVE_BONUS_KEYS
+        or key.endswith(("_worker_requirement_modifier", "fuel_consumption_factor"))
+    )
 
 
 def _scan_owned_numeric_modifiers(
@@ -1200,10 +1204,12 @@ class Validator(BaseValidator):
         """Warn on individual tax, export, and market income bonuses above +25%."""
         self._log_section("Checking tax and income bonuses above +25%...")
         results = []
-        for key, value, rel, line, owner in self._scan_owned_files(
-            "modifiers.income", _scan_income_modifiers
-        ):
-            if f"{owner}::{key}" in _INCOME_EXCEPTIONS:
+        for key, value, rel, line, owner in self._owned_capped_entries():
+            if (
+                key not in _INCOME_MODIFIER_KEYS
+                or value <= _INCOME_MODIFIER_CAP
+                or f"{owner}::{key}" in _INCOME_EXCEPTIONS
+            ):
                 continue
             results.append(
                 (
@@ -1299,7 +1305,7 @@ class Validator(BaseValidator):
         return [entry for entry in candidates if entry[4] not in timed_only]
 
     def validate_weekly_stability_war_support(self):
-        """Warn on permanent weekly stability or war support above its cap."""
+        """Warn on weekly stability or war support above its cap."""
         self._log_section("Checking weekly stability and war support caps...")
 
         def over_cap(key, value):
@@ -1312,7 +1318,7 @@ class Validator(BaseValidator):
         results = [
             (
                 f"'{owner}': {key} = {value:g} exceeds the {_WEEKLY_CAPS[key]:g} "
-                "cap for permanent weekly modifiers; verify the balance (issue #6494)",
+                "cap for weekly modifiers; verify the balance (issue #6494)",
                 rel,
                 line,
             )
@@ -1320,21 +1326,24 @@ class Validator(BaseValidator):
         ]
         self._report(
             results,
-            "No permanent weekly stability or war support modifiers above the cap",
-            "Permanent weekly stability or war support modifiers above the cap:",
+            "No weekly stability or war support modifiers above the cap",
+            "Weekly stability or war support modifiers above the cap:",
             severity=Severity.WARNING,
             category="weekly-stability-war-support-over-cap",
         )
 
     def validate_excessive_modifiers(self):
-        """Warn on a permanent single percent-style bonus above 30%."""
-        self._log_section("Checking permanent modifier bonuses above 30%...")
+        """Warn on a single percent-style bonus above 30%."""
+        self._log_section("Checking modifier bonuses above 30%...")
 
         def over_cap(key, value):
             if (
                 key in _WEEKLY_CAPS
                 or key in _INCOME_MODIFIER_KEYS
                 or key.startswith("ai_")
+                # A number of percentage points, not a percent.
+                or key == "interest_rate_multiplier_modifier"
+                or (self.unbalanced_modifiers and key in _UNBALANCED_PRODUCTIVITY_KEYS)
             ):
                 return False
             if _is_cost_style(key):
@@ -1344,8 +1353,8 @@ class Validator(BaseValidator):
         results = [
             (
                 f"'{owner}': {key} = {value:g} is a {value * 100:+g}% bonus from one "
-                "permanent source, above 30%; verify the balance and decimal "
-                "placement (issue #6494)",
+                "source, above 30%; verify the balance and decimal placement "
+                "(issue #6494)",
                 rel,
                 line,
             )
@@ -1353,8 +1362,8 @@ class Validator(BaseValidator):
         ]
         self._report(
             results,
-            "No permanent modifier bonuses above 30%",
-            "Permanent modifier bonuses above 30% (review balance):",
+            "No modifier bonuses above 30%",
+            "Modifier bonuses above 30% (review balance):",
             severity=Severity.WARNING,
             category="excessive-modifier-over-30-percent",
         )

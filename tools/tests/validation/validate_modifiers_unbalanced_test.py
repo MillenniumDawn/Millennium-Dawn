@@ -98,6 +98,9 @@ def test_productivity_variants_end_to_end(tmp_path):
     prod = [i for i in validator._issues if i.category == "unbalanced-productivity"]
     assert len(prod) == 2
 
+    validator.validate_excessive_modifiers()
+    assert "excessive-modifier-over-30-percent" not in _categories(validator)
+
 
 def test_history_start_values_end_to_end(tmp_path):
     _write(
@@ -366,11 +369,20 @@ _EXCESSIVE_CASES = {
     "bonus at cap": ("research_speed_factor", "0.30", 0),
     "penalty": ("research_speed_factor", "-0.5", 0),
     "cost bonus": ("corruption_cost_factor", "-0.4", 1),
+    "cost bonus at cap": ("corruption_cost_factor", "-0.30", 0),
     "cost penalty": ("corruption_cost_factor", "0.4", 0),
     "expected bonus": ("expected_welfare_modifier", "-0.4", 1),
+    "listed malus key penalty": ("consumer_goods_factor", "0.4", 0),
+    "listed malus key bonus": ("consumer_goods_factor", "-0.4", 1),
+    "fuel suffix penalty": ("army_fuel_consumption_factor", "0.4", 0),
+    "fuel suffix bonus": ("army_fuel_consumption_factor", "-0.4", 1),
+    "worker requirement penalty": ("civ_facs_worker_requirement_modifier", "0.4", 0),
+    "worker requirement bonus": ("civ_facs_worker_requirement_modifier", "-0.4", 1),
+    "number-typed key": ("interest_rate_multiplier_modifier", "5", 0),
     "ai weight": ("ai_focus_aggressive_factor", "5", 0),
     "income key": (_TAX, "0.5", 0),
     "weekly key": ("stability_weekly_factor", "0.5", 0),
+    "productivity key, opt-in check off": ("productivity_growth_modifier", "0.5", 1),
 }
 
 
@@ -418,20 +430,29 @@ def test_timed_only_ideas_are_skipped(tmp_path, grant, count):
     assert len(validator._issues) == count
 
 
+_TIMED_DM = "add_dynamic_modifier = { modifier = test_dm days = 30 }"
+_UNTIMED_DM = "add_dynamic_modifier = { modifier = test_dm }"
+
+# grant file, grant source, expected warning count
+_DYNAMIC_GRANT_CASES = {
+    "timed only": ("events/test.txt", _TIMED_DM, 0),
+    "untimed": ("events/test.txt", _UNTIMED_DM, 1),
+    "timed and untimed": ("events/test.txt", f"{_TIMED_DM}\n{_UNTIMED_DM}", 1),
+    "timed only in history": ("history/countries/ABC - Test.txt", _TIMED_DM, 0),
+    "untimed in history": ("history/countries/ABC - Test.txt", _UNTIMED_DM, 1),
+}
+
+
 @pytest.mark.parametrize(
-    "grant,count",
-    [
-        ("add_dynamic_modifier = { modifier = test_dm days = 30 }", 0),
-        ("add_dynamic_modifier = { modifier = test_dm }", 1),
-    ],
+    "path,grant,count", _DYNAMIC_GRANT_CASES.values(), ids=_DYNAMIC_GRANT_CASES
 )
-def test_timed_only_dynamic_modifiers_are_skipped(tmp_path, grant, count):
+def test_timed_only_dynamic_modifiers_are_skipped(tmp_path, path, grant, count):
     _write(
         tmp_path,
         "common/dynamic_modifiers/test.txt",
         "test_dm = {\n\tstability_weekly = 0.1\n}\n",
     )
-    _write(tmp_path, "events/test.txt", f"immediate = {{ {grant} }}\n")
+    _write(tmp_path, path, f"immediate = {{ {grant} }}\n")
     validator = _validator(tmp_path, enabled=False)
     validator.validate_weekly_stability_war_support()
     assert len(validator._issues) == count
