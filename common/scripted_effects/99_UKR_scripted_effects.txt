@@ -8780,12 +8780,22 @@ UKR_storage_rebuild_rows = {
 			OR = {
 				check_variable = { UKR_storage_total_3 > 0 }
 				check_variable = { ukraine_s75_regiments > 0 }
+				check_variable = { ukraine_s200_on_duty > 0 }
 			}
 		}
 		add_to_array = { UKR_storage_rows = 3 }
 		if = {
 			limit = { check_variable = { UKR_storage_open_section = 3 } }
 			if = { limit = { check_variable = { ukraine_s75_regiments > 0 } } add_to_array = { UKR_storage_rows = 35 } } # on duty, not counted in the total
+			if = {
+				limit = {
+					OR = {
+						check_variable = { ukraine_s200_on_duty > 0 }
+						check_variable = { ukraine_has_s200_stockpile > 0 }
+					}
+				}
+				add_to_array = { UKR_storage_rows = 34 } # on duty or in storage; only the stored ones count in the total
+			}
 			if = { limit = { check_variable = { ukraine_has_s125_stockpile > 0 } } add_to_array = { UKR_storage_rows = 33 } }
 			if = { limit = { check_variable = { ukraine_has_2k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 31 } }
 			if = { limit = { check_variable = { ukraine_has_zsu57_stockpile > 0 } } add_to_array = { UKR_storage_rows = 36 } }
@@ -8970,6 +8980,12 @@ UKR_storage_update_maintenance_dates = {
 		set_variable = { UKR_storage_s125_next_service = { value = UKR_storage_s125_last_service add = 43.8 } }
 		set_variable = { UKR_storage_s125_months_until_service = { value = UKR_storage_s125_next_service subtract = global.date divide = 0.73 } }
 		clamp_variable = { var = UKR_storage_s125_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_s200_last_service }
+		set_variable = { UKR_storage_s200_next_service = { value = UKR_storage_s200_last_service add = 43.8 } }
+		set_variable = { UKR_storage_s200_months_until_service = { value = UKR_storage_s200_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_s200_months_until_service min = 0 }
 	}
 	if = {
 		limit = { has_variable = UKR_storage_zsu57_last_service }
@@ -9354,6 +9370,12 @@ UKR_storage_refresh = {
 		limit = { has_state_flag = UKR_s75_regiment_flag }
 		PREV = { add_to_variable = { ukraine_s75_regiments = 1 } }
 	}
+	set_variable = { ukraine_s200_on_duty = 0 }
+	every_owned_state = {
+		limit = { check_variable = { UKR_s200_battalions > 0 } }
+		set_temp_variable = { ukr_s200_here = UKR_s200_battalions }
+		PREV = { add_to_variable = { ukraine_s200_on_duty = ukr_s200_here } }
+	}
 	if = {
 		limit = { NOT = { has_country_flag = UKR_storage_initialized_flag } }
 		set_country_flag = UKR_storage_initialized_flag
@@ -9369,6 +9391,7 @@ UKR_storage_refresh = {
 	add_to_variable = { UKR_storage_total_2 = ukraine_has_mtlbu_stockpile }
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_s125_stockpile }
+	add_to_variable = { UKR_storage_total_3 = ukraine_has_s200_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_zsu57_stockpile }
 	set_variable = { UKR_storage_malyutka_total = { value = ukraine_has_malyutka_brdm1_stockpile add = ukraine_has_malyutka_brdm2_stockpile } }
 	set_variable = { UKR_storage_total_4 = { value = UKR_storage_malyutka_total add = ukraine_has_9p148_stockpile } }
@@ -9464,6 +9487,13 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_s125_upkeep_price_billions = { value = UKR_storage_s125_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_s125_upkeep_days = { value = UKR_storage_s125_upkeep_price divide = 1000 add = 90 } }
 	clamp_variable = { var = UKR_storage_s125_upkeep_days min = 90 max = 120 }
+	set_variable = { UKR_storage_s200_upkeep_price = { value = ukraine_has_s200_stockpile multiply = 5000 divide = 10000 } }
+	round_variable = UKR_storage_s200_upkeep_price
+	clamp_variable = { var = UKR_storage_s200_upkeep_price min = 1 }
+	multiply_variable = { UKR_storage_s200_upkeep_price = 10000 }
+	set_variable = { UKR_storage_s200_upkeep_price_billions = { value = UKR_storage_s200_upkeep_price divide = 1000000 } }
+	set_variable = { UKR_storage_s200_upkeep_days = { value = UKR_storage_s200_upkeep_price divide = 1000 add = 90 } }
+	clamp_variable = { var = UKR_storage_s200_upkeep_days min = 90 max = 120 }
 	set_variable = { UKR_storage_zsu57_upkeep_price = { value = ukraine_has_zsu57_stockpile multiply = 80 divide = 10000 } }
 	round_variable = UKR_storage_zsu57_upkeep_price
 	clamp_variable = { var = UKR_storage_zsu57_upkeep_price min = 1 }
@@ -15449,4 +15479,75 @@ UKR_t80_take_hulls = {
 	subtract_from_variable = { UKR_t80_hulls = ukr_t80_need }
 	clamp_variable = { var = UKR_t80_hulls min = 0 }
 	UKR_t80_oplot_update_costs = yes
+}
+
+# S-200: retire every battalion on duty into storage; each takes its oblast's anti-air level and brings 24 missiles
+UKR_s200_retire_all = {
+	every_owned_state = {
+		limit = { check_variable = { UKR_s200_battalions > 0 } }
+		set_temp_variable = { ukr_s200_here = UKR_s200_battalions }
+		if = {
+			limit = { anti_air_building > 0 }
+			remove_building = { type = anti_air_building level = 1 }
+		}
+		if = {
+			limit = {
+				check_variable = { UKR_s200_battalions > 1 }
+				anti_air_building > 0
+			}
+			remove_building = { type = anti_air_building level = 1 }
+		}
+		clear_variable = UKR_s200_battalions
+		PREV = {
+			add_to_variable = { ukraine_has_s200_stockpile = ukr_s200_here }
+			add_to_variable = { UKR_s200_missiles = { value = ukr_s200_here multiply = 24 } }
+		}
+	}
+	UKR_storage_s200_mark_serviced = yes
+	UKR_storage_refresh = yes
+}
+
+# One stored battalion leaves storage with up to 24 of its missiles
+UKR_s200_take_battalion = {
+	subtract_from_variable = { ukraine_has_s200_stockpile = 1 }
+	subtract_from_variable = { UKR_s200_missiles = 24 }
+	clamp_variable = { var = UKR_s200_missiles min = 0 }
+	hidden_effect = { UKR_storage_refresh = yes }
+}
+
+# A reactivated battalion goes back on duty in one of its old oblasts (or any free one): +1 anti-air
+UKR_s200_site_reactivate = {
+	if = {
+		limit = {
+			any_owned_state = {
+				UKR_s200_site_state = yes
+				is_controlled_by = ROOT
+				free_building_slots = { building = anti_air_building size > 0 }
+			}
+		}
+		random_owned_controlled_state = {
+			limit = {
+				UKR_s200_site_state = yes
+				free_building_slots = { building = anti_air_building size > 0 }
+			}
+			add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+			add_to_variable = { UKR_s200_battalions = 1 }
+		}
+	}
+	else = {
+		random_owned_controlled_state = {
+			limit = { free_building_slots = { building = anti_air_building size > 0 } }
+			add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+			add_to_variable = { UKR_s200_battalions = 1 }
+		}
+	}
+	hidden_effect = { UKR_storage_refresh = yes }
+}
+
+# Effect: UKR_storage_s200_mark_serviced
+# Purpose: Maintenance of the stored S-200 keeps them current for 5 years.
+UKR_storage_s200_mark_serviced = {
+	set_country_flag = { flag = UKR_storage_s200_kept_flag days = 1825 value = 1 }
+	set_variable = { UKR_storage_s200_last_service = global.date }
+	UKR_storage_update_maintenance_dates = yes
 }

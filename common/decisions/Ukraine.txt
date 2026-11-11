@@ -25779,6 +25779,255 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	ukr_modernize_sov_equipment_s200_fate = {
+		icon = GFX_decision_launch_missile
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_s200_fate
+				}
+				check_variable = { UKR_storage_selected_row = 34 }
+			}
+			date > 2001.01.01
+			date < 2005.01.01
+			check_variable = { ukraine_s200_on_duty > 0 }
+			NOT = { has_country_flag = UKR_s200_fate_done_flag }
+		}
+
+		available = { has_war = no }
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s200_fate"
+			set_country_flag = UKR_s200_fate_done_flag
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s200_fate"
+			country_event = ukraine_s200.1
+		}
+	}
+
+	ukr_modernize_sov_equipment_s200_upkeep = {
+		icon = GFX_decision_launch_missile
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_s200_upkeep
+				}
+				check_variable = { UKR_storage_selected_row = 34 }
+			}
+			check_variable = { ukraine_has_s200_stockpile > 0 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_s200_maintenance_due_tt
+				NOT = { has_country_flag = UKR_storage_s200_kept_flag }
+			}
+			has_war = no
+		}
+
+		custom_cost_trigger = {
+			set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_s200_upkeep_price }
+			UKR_storage_upkeep_can_pay = yes
+		}
+
+		custom_cost_text = UKR_storage_s200_upkeep_price
+		days_remove = var:UKR_storage_s200_upkeep_days
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s200_upkeep"
+			hidden_effect = {
+				set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_s200_upkeep_price }
+				UKR_storage_pay_upkeep = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s200_upkeep"
+			custom_effect_tooltip = UKR_storage_s200_kept_tt
+			hidden_effect = { UKR_storage_s200_mark_serviced = yes }
+		}
+	}
+
+	ukr_modernize_sov_equipment_s200_poland_offer = {
+		icon = GFX_decision_launch_missile
+		ai_will_do = { base = 3 }
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_s200_poland_offer
+				}
+				check_variable = { UKR_storage_selected_row = 34 }
+			}
+			date < 2012.01.01
+			check_variable = { ukraine_has_s200_stockpile > 0 }
+			country_exists = POL
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_s200_maintenance_required_tt
+				has_country_flag = UKR_storage_s200_kept_flag
+			}
+			custom_trigger_tooltip = {
+				tooltip = UKR_s200_missiles_24_tt
+				check_variable = { UKR_s200_missiles > 23 }
+			}
+			has_war = no
+			POL = {
+				NOT = { has_war_with = ROOT }
+				has_opinion = { target = ROOT value > 19 }
+				custom_trigger_tooltip = {
+					tooltip = UKR_s200_poland_money_tt
+					check_variable = { treasury > 0.1 }
+				}
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 60
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s200_poland_offer"
+			POL = { country_event = ukraine_s200.2 }
+		}
+	}
+
+	ukr_modernize_sov_equipment_s200_reactivate = {
+		icon = GFX_decision_launch_missile
+
+		ai_will_do = {
+			base = 30
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_s200_reactivate
+				}
+				check_variable = { UKR_storage_selected_row = 34 }
+			}
+			check_variable = { ukraine_has_s200_stockpile > 0 }
+		}
+
+		available = {
+			has_war_with = SOV
+			custom_trigger_tooltip = {
+				tooltip = UKR_s200_missiles_24_tt
+				check_variable = { UKR_s200_missiles > 23 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.02 } }
+		custom_cost_text = cost_0_02
+
+		highlight_states = {
+			highlight_states_trigger = { UKR_s200_site_state = yes }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 180
+		days_re_enable = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s200_reactivate"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+			custom_effect_tooltip = UKR_s200_battalion_leaves_storage_tt
+			hidden_effect = { UKR_s200_take_battalion = yes }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s200_reactivate"
+			custom_effect_tooltip = UKR_s200_back_on_duty_tt
+			UKR_s200_site_reactivate = yes
+		}
+	}
+
+	ukr_modernize_sov_equipment_s200_missiles = {
+		icon = GFX_decision_launch_missile
+
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 3 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 10 }
+					has_decision = ukr_modernize_sov_equipment_s200_missiles
+				}
+				check_variable = { UKR_storage_selected_row = 34 }
+			}
+			check_variable = { UKR_s200_missiles > 0 }
+		}
+
+		available = {
+			has_war_with = SOV
+			custom_trigger_tooltip = {
+				tooltip = UKR_s200_missiles_12_tt
+				check_variable = { UKR_s200_missiles > 11 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.01 } }
+		custom_cost_text = cost_0_01
+
+		days_remove = 60
+		days_re_enable = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s200_missiles"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+			}
+			subtract_from_variable = { UKR_s200_missiles = 12 tooltip = UKR_s200_missiles_used_tt }
+			hidden_effect = { UKR_storage_refresh = yes }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s200_missiles"
+			add_equipment_to_stockpile = { type = guided_missile_equipment_2 amount = 12 producer = UKR }
+		}
+	}
+
 	ukr_modernize_sov_equipment_s125_upkeep = {
 		icon = GFX_decision_launch_missile
 
