@@ -8716,6 +8716,8 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 2 } }
 			if = { limit = { check_variable = { ukraine_has_btr50_stockpile > 0 } } add_to_array = { UKR_storage_rows = 21 } }
 			if = { limit = { check_variable = { ukraine_has_brdm1_stockpile > 0 } } add_to_array = { UKR_storage_rows = 23 } }
+			if = { limit = { check_variable = { ukraine_has_mtlb_stockpile > 0 } } add_to_array = { UKR_storage_rows = 24 } }
+			if = { limit = { check_variable = { ukraine_has_mtlbu_stockpile > 0 } } add_to_array = { UKR_storage_rows = 25 } }
 			if = { limit = { check_variable = { ukraine_has_gtmu_stockpile > 0 } } add_to_array = { UKR_storage_rows = 22 } }
 		}
 	}
@@ -8899,6 +8901,18 @@ UKR_storage_update_maintenance_dates = {
 		set_variable = { UKR_storage_brdm1_next_service = { value = UKR_storage_brdm1_last_service add = 43.8 } }
 		set_variable = { UKR_storage_brdm1_months_until_service = { value = UKR_storage_brdm1_next_service subtract = global.date divide = 0.73 } }
 		clamp_variable = { var = UKR_storage_brdm1_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_mtlb_last_service }
+		set_variable = { UKR_storage_mtlb_next_service = { value = UKR_storage_mtlb_last_service add = 43.8 } }
+		set_variable = { UKR_storage_mtlb_months_until_service = { value = UKR_storage_mtlb_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_mtlb_months_until_service min = 0 }
+	}
+	if = {
+		limit = { has_variable = UKR_storage_mtlbu_last_service }
+		set_variable = { UKR_storage_mtlbu_next_service = { value = UKR_storage_mtlbu_last_service add = 43.8 } }
+		set_variable = { UKR_storage_mtlbu_months_until_service = { value = UKR_storage_mtlbu_next_service subtract = global.date divide = 0.73 } }
+		clamp_variable = { var = UKR_storage_mtlbu_months_until_service min = 0 }
 	}
 	if = {
 		limit = { has_variable = UKR_storage_2k11_last_service }
@@ -9125,6 +9139,20 @@ UKR_storage_brdm1_mark_serviced = {
 	set_variable = { UKR_storage_brdm1_last_service = global.date }
 	UKR_storage_update_maintenance_dates = yes
 }
+# Effect: UKR_storage_mtlb_mark_serviced
+# Purpose: Maintenance of the stored MT-LB keeps them current for 5 years.
+UKR_storage_mtlb_mark_serviced = {
+	set_country_flag = { flag = UKR_storage_mtlb_kept_flag days = 1825 value = 1 }
+	set_variable = { UKR_storage_mtlb_last_service = global.date }
+	UKR_storage_update_maintenance_dates = yes
+}
+# Effect: UKR_storage_mtlbu_mark_serviced
+# Purpose: Maintenance of the stored MT-LBu keeps them current for 5 years.
+UKR_storage_mtlbu_mark_serviced = {
+	set_country_flag = { flag = UKR_storage_mtlbu_kept_flag days = 1825 value = 1 }
+	set_variable = { UKR_storage_mtlbu_last_service = global.date }
+	UKR_storage_update_maintenance_dates = yes
+}
 # Effect: UKR_storage_2k11_mark_serviced
 # Purpose: Maintenance of the stored 2K11 Krug keeps them current for 5 years.
 UKR_storage_2k11_mark_serviced = {
@@ -9292,6 +9320,8 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_total_2 = ukraine_has_btr50_stockpile }
 	add_to_variable = { UKR_storage_total_2 = ukraine_has_gtmu_stockpile }
 	add_to_variable = { UKR_storage_total_2 = ukraine_has_brdm1_stockpile }
+	add_to_variable = { UKR_storage_total_2 = ukraine_has_mtlb_stockpile }
+	add_to_variable = { UKR_storage_total_2 = ukraine_has_mtlbu_stockpile }
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_s125_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_zsu57_stockpile }
@@ -9361,6 +9391,20 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_brdm1_upkeep_price_billions = { value = UKR_storage_brdm1_upkeep_price divide = 1000000 } }
 	set_variable = { UKR_storage_brdm1_upkeep_days = { value = UKR_storage_brdm1_upkeep_price divide = 1000 add = 30 } }
 	clamp_variable = { var = UKR_storage_brdm1_upkeep_days min = 30 max = 60 }
+	set_variable = { UKR_storage_mtlb_upkeep_price = { value = ukraine_has_mtlb_stockpile multiply = 40 divide = 10000 } }
+	round_variable = UKR_storage_mtlb_upkeep_price
+	clamp_variable = { var = UKR_storage_mtlb_upkeep_price min = 1 }
+	multiply_variable = { UKR_storage_mtlb_upkeep_price = 10000 }
+	set_variable = { UKR_storage_mtlb_upkeep_price_billions = { value = UKR_storage_mtlb_upkeep_price divide = 1000000 } }
+	set_variable = { UKR_storage_mtlb_upkeep_days = { value = UKR_storage_mtlb_upkeep_price divide = 1000 add = 50 } }
+	clamp_variable = { var = UKR_storage_mtlb_upkeep_days min = 50 max = 80 }
+	set_variable = { UKR_storage_mtlbu_upkeep_price = { value = ukraine_has_mtlbu_stockpile multiply = 50 divide = 10000 } }
+	round_variable = UKR_storage_mtlbu_upkeep_price
+	clamp_variable = { var = UKR_storage_mtlbu_upkeep_price min = 1 }
+	multiply_variable = { UKR_storage_mtlbu_upkeep_price = 10000 }
+	set_variable = { UKR_storage_mtlbu_upkeep_price_billions = { value = UKR_storage_mtlbu_upkeep_price divide = 1000000 } }
+	set_variable = { UKR_storage_mtlbu_upkeep_days = { value = UKR_storage_mtlbu_upkeep_price divide = 1000 add = 50 } }
+	clamp_variable = { var = UKR_storage_mtlbu_upkeep_days min = 50 max = 80 }
 	set_variable = { UKR_storage_2k11_upkeep_price = { value = ukraine_has_2k11_stockpile multiply = 400 divide = 10000 } }
 	round_variable = UKR_storage_2k11_upkeep_price
 	clamp_variable = { var = UKR_storage_2k11_upkeep_price min = 1 }
