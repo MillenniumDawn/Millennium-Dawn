@@ -10134,124 +10134,152 @@ country_event = {
 		}
 	}
 }
-#Start KOB events
 country_event = {
 	id = arm_empire.28
 	title = arm_empire.28.t
 	desc = arm_empire.28.d
 	picture = GFX_sov_koba
 	is_triggered_only = yes
+	trigger = { ARM_kob_campaign_valid = yes }
 
 	option = {
 		name = arm_empire.28.a
 		log = "[GetDateText]: [This.GetName]: arm_empire.28.a executed"
-		hidden_effect = {
-			ARM = {
-				country_event = {
-					id = arm_empire.29
-					days = 10
+		if = {
+			limit = { ARM_kob_campaign_valid = yes NOT = { has_country_flag = ARM_kob_campaign_active } }
+			add_political_power = -35
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			set_country_flag = ARM_kob_campaign_active
+			set_country_flag = { flag = ARM_kob_preparing days = 45 value = 1 }
+			unlock_decision_category_tooltip = ARM_kob_campaign
+			custom_effect_tooltip = ARM_kob_campaign_start_tt
+			SOV = {
+				set_temp_variable = { party_index = 22 }
+				set_temp_variable = { party_popularity_increase = 0.03 }
+				set_temp_variable = { temp_outlook_increase = 0.03 }
+				change_relative_party_popularity = yes
+			}
+			hidden_effect = {
+				SOV = {
+					clr_country_flag = SOV_kob_investigated
+					country_event = { id = arm_empire.29 days = 1 }
 				}
 			}
 		}
-		add_political_power = -35
-		set_temp_variable = { treasury_change = -5 }
-		modify_treasury_effect = yes
-		SOV = {
-			set_temp_variable = { party_index = 22 }
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			change_relative_party_popularity = yes
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 SOV = { has_opinion = { target = ARM value < -25 } } }
+			modifier = { add = 10 SOV = { has_stability < 0.4 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 SOV = { has_opinion = { target = ARM value > 50 } } }
 		}
 	}
+
+	option = {
+		name = arm_empire.28.b
+		ai_chance = { base = 20 }
+	}
 }
-#KOB Support growth
+
 country_event = {
 	id = arm_empire.29
 	title = arm_empire.29.t
 	desc = arm_empire.29.d
 	picture = GFX_sov_koba
 	is_triggered_only = yes
+	trigger = {
+		original_tag = SOV
+		ARM = { has_country_flag = ARM_kob_campaign_active ARM_kob_campaign_valid = yes }
+	}
 
 	option = {
 		name = arm_empire.29.a
 		log = "[GetDateText]: [This.GetName]: arm_empire.29.a executed"
-		hidden_effect = {
-			ARM = {
-				country_event = {
-					id = arm_empire.30
-					days = 10
-				}
+		if = {
+			limit = {
+				NOT = { has_country_flag = SOV_kob_investigated }
+				ARM = { has_country_flag = ARM_kob_campaign_active ARM_kob_campaign_valid = yes }
 			}
+			add_political_power = -50
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+			set_country_flag = SOV_kob_investigated
 		}
-		add_political_power = -95
-		set_temp_variable = { percent_change = 0.5 }
-		set_temp_variable = { tag_index = ARM }
-		set_temp_variable = { influence_target = SOV }
-		change_influence_percentage = yes
-		set_temp_variable = { treasury_change = -3 }
-		modify_treasury_effect = yes
-		SOV = {
-			set_temp_variable = { party_index = 22 }
-			set_temp_variable = { party_popularity_increase = 0.05 }
-			set_temp_variable = { temp_outlook_increase = 0.05 }
-			change_relative_party_popularity = yes
+		custom_effect_tooltip = SOV_kob_investigation_tt
+		unlock_decision_category_tooltip = SOV_kob_defense
+		ai_chance = {
+			base = 30
+			modifier = { add = 30 check_variable = { party_pop_array^22 > 0.149 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
+
+	option = {
+		name = arm_empire.29.b
+		unlock_decision_category_tooltip = SOV_kob_defense
+		ai_chance = { base = 20 }
+	}
 }
-#KOB Support again
+
 country_event = {
 	id = arm_empire.30
 	title = arm_empire.30.t
 	desc = arm_empire.30.d
 	picture = GFX_sov_koba
 	is_triggered_only = yes
+	trigger = {
+		original_tag = SOV
+		ARM = { has_country_flag = ARM_kob_coup_pending }
+	}
+
+	immediate = { ARM = { ARM_kob_update_coup_chance = yes } }
 
 	option = {
 		name = arm_empire.30.a
 		log = "[GetDateText]: [This.GetName]: arm_empire.30.a executed"
-		trigger = { SOV = { NOT = { 35_percent_nationalist_nat_autocracy_popularity = yes } } }
-		custom_effect_tooltip = ARM_kob_wait_tt
+		if = {
+			limit = { ARM = { has_country_flag = ARM_kob_coup_pending ARM_kob_campaign_valid = yes } }
+			add_political_power = -75
+			set_temp_variable = { treasury_change = -5 }
+			modify_treasury_effect = yes
+		}
+		custom_effect_tooltip = ARM_kob_odds_tt
+		custom_effect_tooltip = SOV_kob_crackdown_tt
+		custom_effect_tooltip = ARM_kob_go_tt
 		hidden_effect = {
 			ARM = {
-				country_event = {
-					id = arm_empire.29
-					days = 25
-				}
+				set_temp_variable = { ARM_kob_response_reduction = 20 }
+				ARM_kob_russia_script = yes
 			}
 		}
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 40
+			modifier = { add = 30 check_variable = { party_pop_array^22 > 0.349 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { party_pop_array^22 < 0.20 } }
+		}
 	}
 
 	option = {
 		name = arm_empire.30.b
 		log = "[GetDateText]: [This.GetName]: arm_empire.30.b executed"
+		custom_effect_tooltip = ARM_kob_odds_tt
 		custom_effect_tooltip = ARM_kob_go_tt
 		hidden_effect = {
 			ARM = {
-				country_event = {
-					id = arm_empire.31
-					days = 10
-				}
+				set_temp_variable = { ARM_kob_response_reduction = 0 }
+				ARM_kob_russia_script = yes
 			}
 		}
-		ai_chance = { base = 50 }
+		ai_chance = { base = 10 }
 	}
 }
-#KOB Finish line
-country_event = {
-	id = arm_empire.31
-	title = arm_empire.31.t
-	desc = arm_empire.31.d
-	picture = GFX_sov_koba
-	is_triggered_only = yes
 
-	option = {
-		name = arm_empire.31.a
-		log = "[GetDateText]: [This.GetName]: arm_empire.31.a executed"
-		hidden_effect = { ARM_kob_russia_script = yes }
-	}
-}
-#KOB Take Moscow
 country_event = {
 	id = arm_empire.32
 	title = arm_empire.32.t
@@ -10259,11 +10287,10 @@ country_event = {
 	picture = GFX_arm_kob_russia
 	is_triggered_only = yes
 
-	option = {
-		name = arm_empire.32.a
-		log = "[GetDateText]: [This.GetName]: arm_empire.32.a executed"
-		trigger = { original_tag = SOV }
-		hidden_effect = {
+	immediate = {
+		if = {
+			limit = { original_tag = SOV }
+			log = "[GetDateText]: [This.GetName]: Event arm_empire.32"
 			SUB_separatism_plus_subject = yes
 			SUB_separatism_plus_subject = yes
 			set_temp_variable = { party_index = 22 }
@@ -10271,20 +10298,23 @@ country_event = {
 			set_temp_variable = { temp_outlook_increase = 0.25 }
 			change_relative_party_popularity = yes
 			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
+			create_country_leader = {
+				name = "Constantine Petrov"
+				picture = "constantine_petrov.dds"
+				ideology = Nat_Autocracy
+				traits = { nationalist_Nat_Autocracy }
+			}
 			clr_country_flag = SOV_did_not_allow_duma_to_speak
 			mark_focus_tree_layout_dirty = yes
 			complete_national_focus = SOV_kob_party_start
 		}
-		custom_effect_tooltip = jreci_kick
-		create_country_leader = {
-			name = "Constantine Petrov"
-			picture = "constantine_petrov.dds"
-			ideology = Nat_Autocracy
-			traits = {
-				nationalist_Nat_Autocracy
-			}
-		}
+	}
+
+	option = {
+		name = arm_empire.32.a
+		trigger = { original_tag = SOV }
 	}
 
 	option = {
@@ -10292,7 +10322,7 @@ country_event = {
 		trigger = { original_tag = ARM }
 	}
 }
-#KOB Start Revoult
+
 country_event = {
 	id = arm_empire.33
 	title = arm_empire.33.t
@@ -10300,17 +10330,14 @@ country_event = {
 	picture = GFX_arm_kob_revoult
 	is_triggered_only = yes
 
-	option = {
-		name = arm_empire.33.a
-		log = "[GetDateText]: [This.GetName]: arm_empire.33.a executed"
-		trigger = { original_tag = SOV }
-		hidden_effect = {
+	immediate = {
+		if = {
+			limit = { original_tag = SOV }
+			log = "[GetDateText]: [This.GetName]: Event arm_empire.33"
 			start_civil_war = {
 				ruling_party = ROOT
 				ideology = nationalist
 				size = 0.1
-				capital = 658
-				states = { 1133 1135 681 658 656 }
 				set_popularities = {
 					democratic = 0
 					neutrality = 0
@@ -10329,36 +10356,43 @@ country_event = {
 					name = "Constantine Petrov"
 					picture = "constantine_petrov.dds"
 					ideology = Nat_Autocracy
-					traits = {
-						nationalist_Nat_Autocracy
-					}
+					traits = { nationalist_Nat_Autocracy }
 				}
 				clr_country_flag = SOV_did_not_allow_duma_to_speak
 				mark_focus_tree_layout_dirty = yes
 			}
+			SUB_separatism_plus_subject = yes
+			news_event = { id = arm_empire_news.3 hours = 6 }
 		}
-		SUB_separatism_plus_subject = yes
+	}
+
+	option = {
+		name = arm_empire.33.a
+		trigger = { original_tag = SOV }
 	}
 
 	option = {
 		name = arm_empire.33.b
-		log = "[GetDateText]: [This.GetName]: arm_empire.33.b executed"
 		trigger = { original_tag = ARM }
-		hidden_effect = {
-			news_event = {
-				hours = 6
-				id = arm_empire_news.3
-			}
-		}
 	}
 }
-#KOB Arrested
+
 country_event = {
 	id = arm_empire.34
 	title = arm_empire.34.t
 	desc = arm_empire.34.d
 	picture = GFX_arm_kob_revoult_pizda
 	is_triggered_only = yes
+
+	immediate = {
+		if = {
+			limit = { original_tag = ARM }
+			log = "[GetDateText]: [This.GetName]: Event arm_empire.34"
+			set_temp_variable = { percent_change = -3 }
+			set_temp_variable = { influence_target = SOV.id }
+			change_influence_percentage = yes
+		}
+	}
 
 	option = {
 		name = arm_empire.34.a
@@ -10367,12 +10401,7 @@ country_event = {
 
 	option = {
 		name = arm_empire.34.b
-		log = "[GetDateText]: [This.GetName]: arm_empire.34.b executed"
 		trigger = { original_tag = ARM }
-		set_temp_variable = { percent_change = -3 }
-		set_temp_variable = { tag_index = ARM }
-		set_temp_variable = { influence_target = SOV }
-		change_influence_percentage = yes
 	}
 }
 #Polish Civil War - World Event
