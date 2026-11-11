@@ -13117,3 +13117,204 @@ UKR_sov_deliver_mtlb_t23 = {
 		}
 	}
 }
+
+# MT-LBu in a war with Russia
+# MT-LBu returned as a light APC
+UKR_sov_variant_mtlbu = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+	create_equipment_variant = {
+		name = "MT-LBu"
+		type = medium_tank_amphibious_chassis_0
+		parent_version = 0
+		modules = {
+			main_armament_slot = afv_machine_gun
+			reload_type_slot = manual_loading
+			ammunition_load_slot = machine_gun_ammo_1
+			turret_type_slot = tank_soviet_turret
+			suspension_type_slot = tank_torsion_bar_suspension_light
+			armor_type_slot = tank_steel_armor_gen1
+			engine_type_slot = tank_diesel_engine_gen1
+			special_type_slot_4 = tank_battlestation_1
+			special_type_slot_5 = afv_troop_capacity
+		}
+		upgrades = { tank_nsb_armor_upgrade = 1 }
+		obsolete = yes
+		icon = "GFX_SOV_LAND_MT_LBU"
+		model = "SOV_MTLB_entity"
+		design_team = mio:UKR_khtz_tank_manufacturer
+	}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "MT-LBu"
+			type = APC_1
+			allow_without_tech = yes
+			design_team = mio:UKR_khtz_tank_manufacturer
+			icon = "GFX_SOV_LAND_MT_LBU"
+		}
+	}
+}
+# BMP-1LB: a BMP-1 turret on the MT-LBu hull
+UKR_sov_variant_bmp1lb = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+	create_equipment_variant = {
+		name = "BMP-1LB"
+		type = medium_tank_amphibious_chassis_0
+		parent_version = 1
+		allow_without_tech = yes
+		modules = {
+			main_armament_slot = afv_assault_gun
+			secondary_armament_slot = afv_coax_machine_gun_2
+			reload_type_slot = manual_loading
+			ammunition_load_slot = mixed_main_ammo_1
+			turret_type_slot = tank_base_tank_turret
+			suspension_type_slot = tank_torsion_bar_suspension_light
+			armor_type_slot = tank_steel_armor_gen1
+			engine_type_slot = tank_diesel_engine_gen1
+			special_type_slot_4 = tank_battlestation_1
+			special_type_slot_5 = afv_troop_capacity
+		}
+		upgrades = { tank_nsb_armor_upgrade = 1 }
+		icon = "GFX_SOV_LAND_MT_LBU_BM"
+		model = "SOV_MTLB_entity"
+	}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BMP-1LB"
+			type = IFV_1
+			allow_without_tech = yes
+			icon = "GFX_SOV_LAND_MT_LBU_BM"
+		}
+	}
+}
+UKR_sov_deliver_mtlbu = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_mtlbu_variant_flag } }
+		set_country_flag = UKR_mtlbu_variant_flag
+		UKR_sov_variant_mtlbu = yes
+	}
+	meta_effect = {
+		text = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "MT-LBu" amount = [?UKR_mtlbu_issue_apc_amount] producer = UKR }
+			}
+			else = {
+				add_equipment_to_stockpile = { type = APC_1 variant_name = "MT-LBu" amount = [?UKR_mtlbu_issue_apc_amount] producer = UKR }
+			}
+		}
+	}
+}
+UKR_sov_deliver_bmp1lb = {
+	meta_effect = {
+		text = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "BMP-1LB" amount = [?UKR_mtlbu_issue_bmp1lb_amount] producer = UKR }
+			}
+			else = {
+				add_equipment_to_stockpile = { type = IFV_1 variant_name = "BMP-1LB" amount = [?UKR_mtlbu_issue_bmp1lb_amount] producer = UKR }
+			}
+		}
+	}
+}
+
+# Obolon-A coverage: artillery vehicles x 6 guns against the guns of our artillery units (battalions 12, regimental batteries 4),
+# communications vehicles against our communications companies. Each fifth of coverage is one tier of unit bonuses.
+UKR_obolon_update = {
+	hidden_effect = {
+		set_temp_variable = { ukr_obolon_need = 0 }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@Arty_Bat }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@SP_Arty_Bat }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@SP_R_arty_Bat }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@air_assault_arty_Bat }
+		multiply_temp_variable = { ukr_obolon_need = 3 } # 12 guns per battalion / 4
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@Light_SP_Arty_Bat }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@Light_SP_R_arty_Bat }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@Arty_Battery }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@SP_R_arty_battery }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@SP_arty_battery }
+		add_to_temp_variable = { ukr_obolon_need = num_battalions_with_type@air_assault_arty_battery }
+		multiply_temp_variable = { ukr_obolon_need = 4 } # guns
+		set_variable = { UKR_obolon_art_coverage = 0 }
+		if = {
+			limit = { check_variable = { ukr_obolon_need > 0 } }
+			set_variable = { UKR_obolon_art_coverage = UKR_obolon_art_vehicles }
+			multiply_variable = { UKR_obolon_art_coverage = 6 }
+			divide_variable = { UKR_obolon_art_coverage = ukr_obolon_need }
+		}
+		clamp_variable = { var = UKR_obolon_art_coverage max = 1 }
+		set_variable = { UKR_obolon_art_coverage_pct = UKR_obolon_art_coverage }
+		multiply_variable = { UKR_obolon_art_coverage_pct = 100 }
+		set_temp_variable = { ukr_obolon_tier = UKR_obolon_art_coverage }
+		multiply_temp_variable = { ukr_obolon_tier = 5 }
+		round_temp_variable = ukr_obolon_tier
+		while_loop_effect = {
+			limit = { check_variable = { ukr_obolon_tier > UKR_obolon_art_tier } }
+			add_to_variable = { UKR_obolon_art_tier = 1 }
+			add_unit_bonus = {
+				name = ukr_obolon_art
+				Arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				SP_Arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				SP_R_arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				air_assault_arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				Light_SP_Arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				Light_SP_R_arty_Bat = { soft_attack = 0.02 breakthrough = 0.02 }
+				Arty_Battery = { soft_attack = 0.02 breakthrough = 0.02 }
+				SP_R_arty_battery = { soft_attack = 0.02 breakthrough = 0.02 }
+				SP_arty_battery = { soft_attack = 0.02 breakthrough = 0.02 }
+				air_assault_arty_battery = { soft_attack = 0.02 breakthrough = 0.02 }
+			}
+		}
+		while_loop_effect = {
+			limit = { check_variable = { ukr_obolon_tier < UKR_obolon_art_tier } }
+			subtract_from_variable = { UKR_obolon_art_tier = 1 }
+			add_unit_bonus = {
+				name = ukr_obolon_art
+				Arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				SP_Arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				SP_R_arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				air_assault_arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				Light_SP_Arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				Light_SP_R_arty_Bat = { soft_attack = -0.02 breakthrough = -0.02 }
+				Arty_Battery = { soft_attack = -0.02 breakthrough = -0.02 }
+				SP_R_arty_battery = { soft_attack = -0.02 breakthrough = -0.02 }
+				SP_arty_battery = { soft_attack = -0.02 breakthrough = -0.02 }
+				air_assault_arty_battery = { soft_attack = -0.02 breakthrough = -0.02 }
+			}
+		}
+		set_temp_variable = { ukr_obolon_need = num_battalions_with_type@communications_company }
+		set_variable = { UKR_obolon_comm_coverage = 0 }
+		if = {
+			limit = { check_variable = { ukr_obolon_need > 0 } }
+			set_variable = { UKR_obolon_comm_coverage = UKR_obolon_comm_vehicles }
+			multiply_variable = { UKR_obolon_comm_coverage = 1 }
+			divide_variable = { UKR_obolon_comm_coverage = ukr_obolon_need }
+		}
+		clamp_variable = { var = UKR_obolon_comm_coverage max = 1 }
+		set_variable = { UKR_obolon_comm_coverage_pct = UKR_obolon_comm_coverage }
+		multiply_variable = { UKR_obolon_comm_coverage_pct = 100 }
+		set_temp_variable = { ukr_obolon_tier = UKR_obolon_comm_coverage }
+		multiply_temp_variable = { ukr_obolon_tier = 5 }
+		round_temp_variable = ukr_obolon_tier
+		while_loop_effect = {
+			limit = { check_variable = { ukr_obolon_tier > UKR_obolon_comm_tier } }
+			add_to_variable = { UKR_obolon_comm_tier = 1 }
+			add_unit_bonus = {
+				name = ukr_obolon_comm
+				communications_company = { max_organisation = 0.02 defense = 0.02 }
+			}
+		}
+		while_loop_effect = {
+			limit = { check_variable = { ukr_obolon_tier < UKR_obolon_comm_tier } }
+			subtract_from_variable = { UKR_obolon_comm_tier = 1 }
+			add_unit_bonus = {
+				name = ukr_obolon_comm
+				communications_company = { max_organisation = -0.02 defense = -0.02 }
+			}
+		}
+	}
+}
