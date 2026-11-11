@@ -9449,6 +9449,7 @@ UKR_modernize_sov_category = {
 				has_country_flag = UKR_modernize_btr_70t_flag
 				has_country_flag = UKR_btr_line_80_flag
 			}
+			has_country_flag = UKR_varan_program_flag
 		}
 
 		available = {
@@ -9460,7 +9461,6 @@ UKR_modernize_sov_category = {
 			}
 			controls_state = 698 #Kyiv
 			has_army_experience > 4
-			has_tech = small_autocannon_tech_3
 		}
 
 		modifier = {
@@ -9524,6 +9524,85 @@ UKR_modernize_sov_category = {
 					icon = "GFX_UKR_LAND_AFV_Wheeled_Varan_Varan"
 				}
 			}
+			if = {
+				limit = {
+					has_dlc = "No Step Back"
+					NOT = { has_tech = small_autocannon_tech_3 }
+				}
+				set_technology = { small_autocannon_tech_3 = 1 }
+			}
+			set_country_flag = UKR_varan_developed_flag
+		}
+	}
+
+	UKR_varan_order_battalion = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		ai_will_do = { base = 5 }
+
+		visible = {
+			has_country_flag = UKR_varan_developed_flag
+			NOT = { has_country_flag = UKR_varan_dropped_flag }
+			NOT = { has_country_flag = UKR_varan_mission_flag }
+			NOT = { has_country_flag = UKR_varan_delivering_flag }
+			NOT = { has_country_flag = UKR_btr70_hulls_mission_flag }
+			NOT = { check_variable = { UKR_varan_sets > 2 } }
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+			custom_trigger_tooltip = {
+				tooltip = UKR_varan_money_tt
+				check_variable = { treasury > 0.08 }
+			}
+		}
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_varan_order_battalion"
+			set_country_flag = UKR_varan_mission_flag
+			activate_mission = UKR_varan_hulls_mission
+		}
+	}
+
+	UKR_varan_hulls_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_btr70_hulls_in_stock_tt
+				if = {
+					limit = { has_dlc = "No Step Back" }
+					has_equipment = { medium_tank_amphibious_chassis_1 > 39 }
+				}
+				else = { has_equipment = { APC_3 > 39 } }
+			}
+		}
+
+		days_mission_timeout = 120
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_varan_hulls_mission"
+			clr_country_flag = UKR_varan_mission_flag
+			set_country_flag = UKR_varan_delivering_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_1 variant_name = "BTR-70" amount = -40 producer = SOV }
+			}
+			else = { add_equipment_to_stockpile = { type = APC_3 amount = -40 } }
+			set_temp_variable = { treasury_change = -0.08 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_varan.3 days = 90 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_varan_hulls_mission"
+			clr_country_flag = UKR_varan_mission_flag
+			country_event = ukraine_varan.4
 		}
 	}
 
@@ -27571,6 +27650,7 @@ UKR_develop_domestic_category = {
 			has_country_flag = UKR_develop_btr3e_flag
 			NOT = { has_country_flag = UKR_btr70_hulls_mission_flag }
 			NOT = { has_country_flag = UKR_btr70_conversion_running_flag }
+			NOT = { has_country_flag = UKR_varan_mission_flag }
 		}
 
 		available = {
