@@ -7399,6 +7399,169 @@ UKR_sevastopol_naval_base_category = {
 }
 
 UKR_modernize_sov_category = {
+	UKR_shorad_request_projects = {
+		icon = GFX_decision_icon_UKR_develop_domestic_donets
+		fire_only_once = yes
+
+		visible = {
+			date < 2000.10.01
+			NOT = { has_country_flag = UKR_shorad_projects_received }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shorad_request_projects"
+			set_country_flag = UKR_shorad_projects_received
+			country_event = ukraine_aa.4
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	UKR_shorad_request_projects_mission = {
+		icon = GFX_decision_icon_UKR_develop_domestic_donets
+		fire_only_once = yes
+		activation = {
+			date > 2000.09.30
+			date < 2001.02.01
+			NOT = { has_country_flag = UKR_shorad_projects_received }
+		}
+
+		available = {
+			date < 2001.02.01
+			custom_trigger_tooltip = {
+				tooltip = UKR_shorad_treasury_requirement_tt
+				check_variable = { var = treasury value = 0.05 compare = greater_than_or_equals }
+			}
+			OR = { controls_state = 698 controls_state = 696 }
+			NOT = { has_army_experience < 10 }
+		}
+
+		days_mission_timeout = 123
+		days_remove = 1
+		selectable_mission = yes
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_shorad_request_projects_mission"
+			set_country_flag = UKR_shorad_projects_received
+			country_event = ukraine_aa.4
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	UKR_develop_zsu_23_4u = {
+		icon = GFX_decision_icon_UKR_develop_domestic_donets
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = UKR_shorad_zsu_23_4u_selected
+			NOT = { has_country_flag = UKR_zsu_23_4u_done }
+		}
+
+		available = {
+			controls_state = 698
+			698 = { arms_factory > 1 }
+		}
+
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_02
+		days_remove = 90
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_zsu_23_4u"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_zsu_23_4u"
+			UKR_sov_variant_zsu_23_4u = yes
+			set_country_flag = UKR_zsu_23_4u_done
+			UKR_count_sov_modernization = yes
+			country_event = ukraine_aa_production.13
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_develop_donets_spaa = {
+		icon = GFX_decision_icon_UKR_develop_domestic_donets
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = UKR_shorad_donets_selected
+			NOT = { has_country_flag = UKR_donets_done }
+		}
+
+		available = {
+			controls_state = 696
+			696 = { arms_factory > 1 }
+			has_army_experience > 8
+		}
+
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.04 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_04
+		days_remove = 120
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.004
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_donets_spaa"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.04 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_donets_spaa"
+			UKR_sov_variant_donets = yes
+			set_country_flag = UKR_donets_done
+			UKR_count_domestic_development = yes
+			army_experience = 4
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_tech_bonus = {
+					name = UKR_donets_development
+					bonus = 0.25
+					uses = 1
+					technology = nsb_AA_upgrade_2
+				}
+			}
+			country_event = ukraine_aa_production.14
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
 	UKR_independence_parade_mission = {
 		icon = GFX_decision_icon_UKR_independence_parade
 		activation = { always = no }
@@ -15733,8 +15896,9 @@ UKR_modernize_sov_category = {
 
 		visible = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				has_tech = nsb_Anti_Air_2
@@ -15747,8 +15911,9 @@ UKR_modernize_sov_category = {
 
 		available = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			controls_state = 698 #Kyiv
 			has_army_experience > 8
 		}
@@ -15805,8 +15970,9 @@ UKR_modernize_sov_category = {
 
 		visible = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			has_dlc = "No Step Back"
 			NOT = { has_tech = nsb_Anti_Air_2 }
 		}
@@ -15821,8 +15987,9 @@ UKR_modernize_sov_category = {
 
 		available = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			controls_state = 698 #Kyiv
 			has_army_experience > 8
 		}
@@ -15886,8 +16053,9 @@ UKR_modernize_sov_category = {
 
 		visible = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				has_tech = nsb_Anti_Air_2
@@ -15900,8 +16068,9 @@ UKR_modernize_sov_category = {
 
 		available = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			controls_state = 698 #Kyiv
 			has_army_experience > 8
 		}
@@ -15952,8 +16121,9 @@ UKR_modernize_sov_category = {
 
 		visible = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			has_dlc = "No Step Back"
 			NOT = { has_tech = nsb_Anti_Air_2 }
 		}
@@ -15968,8 +16138,9 @@ UKR_modernize_sov_category = {
 
 		available = {
 			NOT = { has_country_flag = UKR_rokach_done_flag }
-			date > 2015.01.01
-			date < 2020.06.01
+			date > 2011.12.31
+			date < 2019.01.01
+			has_war_with = SOV
 			controls_state = 698 #Kyiv
 			has_army_experience > 8
 		}
@@ -32982,90 +33153,6 @@ UKR_develop_domestic_category = {
 					design_team = mio:UKR_kmdb_tank_manufacturer
 					icon = "GFX_OBJECT_477A1_NOTA_PROTOTYPE"
 				}
-			}
-		}
-	}
-
-	UKR_develop_donets_spaa = {
-		icon = GFX_decision_icon_UKR_develop_domestic_donets
-		fire_only_once = yes
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-
-		visible = {
-			date > 2000.01.01
-			date < 2008.06.01
-		}
-
-		custom_cost_trigger = { check_variable = { treasury > 0.03 } }
-		custom_cost_text = cost_0_03
-
-		available = {
-			date > 2000.01.01
-			date < 2008.06.01
-			controls_state = 696 #Kharkiv
-			has_army_experience > 8
-		}
-
-		modifier = {
-			research_speed_factor = 0.02
-			industrial_capacity_factory = -0.004
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 696 #Kharkiv
-			}
-			highlight_color_while_active = 3
-			highlight_color_before_active = 2
-		}
-
-		on_map_mode = map_and_decisions_view
-		days_remove = 120
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_donets_spaa"
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.04 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_donets_spaa"
-			UKR_count_domestic_development = yes
-			army_experience = 4
-			create_equipment_variant = {
-				name = "Donets"
-				type = medium_tank_aa_chassis_1
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = spaa_autocannon_2
-					secondary_armament_slot = spaa_short_range_missiles_2
-					ammunition_load_slot = proximity_fuze_autocannon_ammo_1
-					turret_type_slot = tank_base_tank_turret
-					suspension_type_slot = tank_torsion_bar_suspension_medium
-					armor_type_slot = afv_composite_armor_gen3
-					engine_type_slot = tank_diesel_engine_gen3
-					reload_type_slot = four_missile_pack
-					special_type_slot_2 = spaced_armor_gen1
-					special_type_slot_3 = smoke_launchers
-					special_type_slot_4 = spaa_radar_gen2
-					special_type_slot_6 = reactive_armor_gen2
-				}
-				upgrades = { tank_nsb_fire_upgrade = 2 }
-				icon = "GFX_ZRAK_DONETS_PROTOTYPE"
-			}
-			add_tech_bonus = {
-				name = UKR_develop_donets_spaa
-				bonus = 0.25
-				uses = 1
-				technology = nsb_AA_upgrade_2
 			}
 		}
 	}
