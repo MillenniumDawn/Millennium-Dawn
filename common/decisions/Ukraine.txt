@@ -9786,6 +9786,317 @@ UKR_modernize_sov_category = {
 		}
 	}
 
+	UKR_khtz_future = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			date < 2005.01.01
+			NOT = { has_country_flag = UKR_khtz_future_decided_flag }
+			NOT = { has_completed_focus = UKR_kharkiv_tractor }
+		}
+
+		available = {
+			controls_state = 696 #Kharkiv
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_khtz_future"
+			country_event = ukraine_khtz.1
+		}
+	}
+
+	UKR_mtlb_order_for_army = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		ai_will_do = { base = 3 }
+
+		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			OR = {
+				has_country_flag = UKR_modernize_mt_lbr6_flag
+				has_country_flag = UKR_modernize_mt_lbr7_flag
+				has_country_flag = UKR_modernize_mt_lbmsh_flag
+			}
+			NOT = { has_country_flag = UKR_mtlb_order_running_flag }
+		}
+
+		available = {
+			controls_state = 696 #Kharkiv
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_mtlb_maintenance_required_tt
+				OR = {
+					has_country_flag = UKR_storage_mtlb_kept_flag
+					check_variable = { ukraine_has_mtlb_stockpile < 1 }
+				}
+			}
+		}
+
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_mtlb_order_for_army"
+			country_event = ukraine_khtz.2
+		}
+	}
+
+	UKR_khtz_restore_2s1 = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		ai_will_do = { base = 5 }
+
+		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			date > 2003.01.01
+			NOT = { has_country_flag = UKR_khtz_2s1_restarted_flag }
+		}
+
+		available = {
+			controls_state = 696 #Kharkiv
+		}
+
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_khtz_restore_2s1"
+			country_event = ukraine_khtz.4
+		}
+	}
+
+	UKR_planer_start = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+		ai_will_do = { base = 5 }
+
+		visible = {
+			has_country_flag = UKR_khtz_planer_flag
+			NOT = { has_country_flag = UKR_planer_abandoned_flag }
+		}
+
+		available = {
+			controls_state = 696 #Kharkiv
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_planer_start"
+			activate_mission = UKR_planer_stage1_mission
+		}
+	}
+
+	UKR_planer_stage1_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			controls_state = 696 #Kharkiv
+			custom_trigger_tooltip = {
+				tooltip = UKR_planer_stage1_money_tt
+				check_variable = { treasury > 0.05 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_planer_stage1_mission"
+			set_temp_variable = { treasury_change = -0.05 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_planer.1 days = 60 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_planer_stage1_mission"
+			set_variable = { UKR_planer_stage = 1 }
+			country_event = ukraine_planer.4
+		}
+	}
+
+	UKR_planer_stage2_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			696 = { arms_factory > 0 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_planer_stage2_money_tt
+				check_variable = { treasury > 0.03 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_planer_stage2_mission"
+			set_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_planer.2 days = 90 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_planer_stage2_mission"
+			set_variable = { UKR_planer_stage = 2 }
+			country_event = ukraine_planer.4
+		}
+	}
+
+	UKR_planer_stage3_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			has_army_experience > 4
+			custom_trigger_tooltip = {
+				tooltip = UKR_planer_stage3_money_tt
+				check_variable = { treasury > 0.03 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_planer_stage3_mission"
+			set_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			army_experience = -4
+			country_event = { id = ukraine_planer.3 days = 30 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_planer_stage3_mission"
+			set_variable = { UKR_planer_stage = 3 }
+			country_event = ukraine_planer.4
+		}
+	}
+
+	UKR_object14_start = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+		ai_will_do = { base = 5 }
+
+		visible = {
+			has_country_flag = UKR_planer_developed_flag
+			NOT = { has_country_flag = UKR_object14_abandoned_flag }
+		}
+
+		available = {
+			controls_state = 696 #Kharkiv
+			has_army_experience > 5
+		}
+
+		days_remove = 30
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_object14_start"
+			activate_mission = UKR_object14_stage1_mission
+		}
+	}
+
+	UKR_object14_stage1_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			controls_state = 696 #Kharkiv
+			custom_trigger_tooltip = {
+				tooltip = UKR_object14_stage1_money_tt
+				check_variable = { treasury > 0.04 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_object14_stage1_mission"
+			set_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_object14.1 days = 90 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_object14_stage1_mission"
+			set_variable = { UKR_object14_stage = 1 }
+			country_event = ukraine_object14.4
+		}
+	}
+
+	UKR_object14_stage2_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			696 = { arms_factory > 1 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_object14_stage2_money_tt
+				check_variable = { treasury > 0.08 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_object14_stage2_mission"
+			set_temp_variable = { treasury_change = -0.08 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_object14.2 days = 120 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_object14_stage2_mission"
+			set_variable = { UKR_object14_stage = 2 }
+			country_event = ukraine_object14.4
+		}
+	}
+
+	UKR_object14_stage3_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		activation = { always = no }
+
+		available = {
+			has_army_experience > 6
+			custom_trigger_tooltip = {
+				tooltip = UKR_object14_stage3_money_tt
+				check_variable = { treasury > 0.04 }
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_object14_stage3_mission"
+			set_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+			army_experience = -6
+			country_event = { id = ukraine_object14.3 days = 30 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_object14_stage3_mission"
+			set_variable = { UKR_object14_stage = 3 }
+			country_event = ukraine_object14.4
+		}
+	}
+
 	UKR_modernize_mt_lbr6 = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
 		fire_only_once = yes
@@ -9800,13 +10111,15 @@ UKR_modernize_sov_category = {
 		custom_cost_text = cost_0_02
 
 		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			date > 2002.01.01
-			date < 2004.01.01
+			date < 2006.01.01
 		}
 
 		available = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			date > 2002.01.01
-			date < 2004.01.01
+			date < 2006.01.01
 			controls_state = 696 #Kharkiv
 			has_army_experience > 2
 		}
@@ -9837,30 +10150,8 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbr6"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
-			create_equipment_variant = {
-				name = "MT-LBR6"
-				type = medium_tank_amphibious_chassis_0
-				parent_version = 0
-				modules = {
-					main_armament_slot = small_autocannon_2
-					turret_type_slot = tank_base_tank_turret
-					reload_type_slot = automatic_loading
-					suspension_type_slot = tank_torsion_bar_suspension_light
-					armor_type_slot = tank_steel_armor_gen1
-					engine_type_slot = tank_diesel_engine_gen2
-					special_type_slot_1 = smoke_launchers
-					special_type_slot_2 = empty
-					special_type_slot_4 = tank_battlestation_2
-					ammunition_load_slot = mixed_autocannon_ammo_2
-					secondary_armament_slot = afv_coax_machine_gun_2
-					special_type_slot_5 = afv_troop_capacity
-				}
-				upgrades = { tank_nsb_armor_upgrade = 2 }
-				obsolete = yes
-				icon = "GFX_UKR_LAND_AFV_Tracked_MT_LB_MT_LBR6"
-				model = "SOV_MTLB_entity"
-				design_team = mio:UKR_kmdb_tank_manufacturer
-			}
+			UKR_sov_variant_mtlbr6 = yes
+			country_event = ukraine_khtz_production.1
 			set_country_flag = UKR_modernize_mt_lbr6_flag
 		}
 	}
@@ -9879,12 +10170,14 @@ UKR_modernize_sov_category = {
 		custom_cost_text = cost_0_02
 
 		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			date > 2009.01.01
 			date < 2011.01.01
 			has_country_flag = UKR_modernize_mt_lbr6_flag
 		}
 
 		available = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			date > 2009.01.01
 			date < 2011.01.01
 			controls_state = 696 #Kharkiv
@@ -9918,31 +10211,15 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbr7"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
-			create_equipment_variant = {
-				name = "MT-LBR7"
-				type = medium_tank_amphibious_chassis_0
-				parent_version = 1 #Current Version: 7
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = small_autocannon_2
-					turret_type_slot = tank_base_tank_turret
-					reload_type_slot = automatic_loading
-					suspension_type_slot = tank_torsion_bar_suspension_light
-					armor_type_slot = tank_steel_armor_gen1
-					engine_type_slot = tank_diesel_engine_gen2
-					special_type_slot_1 = smoke_launchers
-					special_type_slot_2 = afv_atgm_gen2
-					special_type_slot_4 = tank_battlestation_2_thermal
-					ammunition_load_slot = mixed_autocannon_ammo_2
-					secondary_armament_slot = crows_mg
-					special_type_slot_5 = afv_troop_capacity
+			if = {
+				limit = {
+					has_dlc = "No Step Back"
+					NOT = { has_tech = tank_components_tech_3 }
 				}
-				upgrades = { tank_nsb_armor_upgrade = 2 }
-				obsolete = yes
-				icon = "GFX_UKR_LAND_AFV_Tracked_MT_LB_MT_LBR7"
-				model = "SOV_MTLB_entity"
-				design_team = mio:UKR_kmdb_tank_manufacturer
+				set_technology = { tank_components_tech_3 = 1 popup = no }
 			}
+			UKR_sov_variant_mtlbr7 = yes
+			country_event = ukraine_khtz_production.2
 			set_country_flag = UKR_modernize_mt_lbr7_flag
 		}
 	}
@@ -9961,6 +10238,7 @@ UKR_modernize_sov_category = {
 		custom_cost_text = cost_0_02
 
 		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			OR = {
 				has_country_flag = UKR_modernize_mt_lbr6_flag
 				has_country_flag = UKR_modernize_mt_lbr7_flag
@@ -9968,6 +10246,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
+			has_country_flag = UKR_khtz_mtlb_flag
 			controls_state = 696 #Kharkiv
 			has_army_experience > 4
 			OR = {
@@ -10002,32 +10281,23 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbmsh"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
-			create_equipment_variant = {
-				name = "MT-LBMSh"
-				type = medium_tank_amphibious_chassis_0
-				parent_version = 2 #Current Version: 8
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = small_autocannon_2
-					turret_type_slot = tank_base_tank_turret
-					reload_type_slot = automatic_loading
-					suspension_type_slot = tank_torsion_bar_suspension_light
-					armor_type_slot = tank_steel_armor_gen1
-					engine_type_slot = tank_diesel_engine_gen2
-					special_type_slot_1 = smoke_launchers
-					special_type_slot_2 = afv_atgm_gen3
-					special_type_slot_4 = tank_battlestation_2
-					ammunition_load_slot = mixed_autocannon_ammo_2
-					secondary_armament_slot = crows_mg
-					special_type_slot_5 = afv_troop_capacity
-					special_type_slot_3 = empty
+			if = {
+				limit = {
+					has_dlc = "No Step Back"
+					NOT = { has_tech = tank_components_tech_3 }
 				}
-				upgrades = { tank_nsb_armor_upgrade = 1 }
-				obsolete = yes
-				icon = "GFX_UKR_LAND_AFV_Tracked_MT_LB_MT_LBMSh"
-				model = "SOV_MTLB_entity"
-				design_team = mio:UKR_kmdb_tank_manufacturer
+				set_technology = { tank_components_tech_3 = 1 popup = no }
 			}
+			if = {
+				limit = {
+					has_dlc = "No Step Back"
+					NOT = { has_tech = Heavy_Anti_tank_3 }
+				}
+				set_technology = { Heavy_Anti_tank_3 = 1 popup = no }
+			}
+			UKR_sov_variant_mtlbmsh = yes
+			country_event = ukraine_khtz_production.3
+			set_country_flag = UKR_modernize_mt_lbmsh_flag
 			696 = { #Kharkiv
 				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
 			}
