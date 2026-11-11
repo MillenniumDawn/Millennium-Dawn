@@ -7765,6 +7765,13 @@ UKR_sov_btr60d_deliver = {
 		}
 	}
 }
+UKR_sov_build_production_line_696 = {
+	696 = {
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+	}
+	clr_country_flag = ukraine_sov_factories_696_ordered_flag
+}
 UKR_sov_build_production_line_698 = {
 	698 = {
 		add_extra_state_shared_building_slots = 1
@@ -7794,6 +7801,20 @@ UKR_sov_build_production_line_1089 = {
 	clr_country_flag = ukraine_sov_factories_1089_ordered_flag
 }
 # Caller sets temp variable ukr_sov_line_cost (negative cost) before calling
+UKR_sov_order_production_line_696 = {
+	custom_effect_tooltip = ukraine_sov_factory_plan_tt
+	if = {
+		limit = { NOT = { has_country_flag = ukraine_sov_factories_696_ordered_flag } }
+		set_country_flag = ukraine_sov_factories_696_ordered_flag
+		set_temp_variable = { treasury_change = ukr_sov_line_cost }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = { localization_key = ukraine_sov_factories_wait_tt DAYS = 240 }
+		hidden_effect = { country_event = { id = ukraine_sov_equipment_factories.15 days = 240 } }
+	}
+	else = {
+		custom_effect_tooltip = ukraine_sov_factories_already_ordered_tt
+	}
+}
 UKR_sov_order_production_line_698 = {
 	custom_effect_tooltip = ukraine_sov_factory_plan_tt
 	if = {
@@ -11432,6 +11453,7 @@ UKR_btr7_create_variant = {
 				icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_7"
 			}
 		}
+		country_event = ukraine_btr_production.12
 		1086 = { add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.04 } } }
 		UKR_check_light_armour_forge = yes
 	}
@@ -11496,5 +11518,689 @@ UKR_update_hrim_terms = {
 		}
 		set_variable = { UKR_hrim_cost = 0.015 }
 		set_variable = { UKR_hrim_days = 45 }
+	}
+}
+
+# BTR-70/BTR-80 line: equipment variants with and without No Step Back, and their production
+UKR_sov_variant_btr_70m = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-70M"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0
+			modules = {
+				main_armament_slot = afv_machine_gun_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = manual_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_gun_ports
+				special_type_slot_4 = tank_battlestation_1
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = machine_gun_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 0 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70"
+			model = btr80_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-70M"
+			type = APC_3
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70"
+		}
+	}
+}
+UKR_sov_variant_btr_70m_kba2 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-70M-KBA-2"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 1
+			modules = {
+				main_armament_slot = small_autocannon_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = automatic_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_3 = empty
+				special_type_slot_4 = tank_battlestation_2
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 0 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70_KBA2"
+			model = btr80a_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-70M-KBA-2"
+			type = APC_3
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70_KBA2"
+		}
+	}
+}
+UKR_sov_variant_btr_70m_hrim = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-70M Hrim"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 1 #Current Version: 1
+			allow_without_tech = yes
+			modules = {
+				main_armament_slot = small_autocannon_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = automatic_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_atgm_gen2
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_3 = afv_gun_ports
+				special_type_slot_4 = tank_battlestation_2
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				secondary_armament_slot = crows_mg
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70_Hrim"
+			model = btr80a_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-70M Hrim"
+			type = APC_3
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70_Hrim"
+		}
+	}
+}
+UKR_sov_variant_btr_70t = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-70T"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 1
+			modules = {
+				main_armament_slot = afv_machine_gun_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = manual_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_gun_ports
+				special_type_slot_4 = tank_battlestation_2
+				special_type_slot_3 = empty
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = machine_gun_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70"
+			model = btr80_vehicle_entity
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-70T"
+			type = APC_4
+			allow_without_tech = yes
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_70"
+		}
+	}
+}
+UKR_sov_variant_varan = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "Varan"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				main_armament_slot = small_autocannon_3
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = automatic_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = front_mounted_engine
+				special_type_slot_2 = smoke_launchers_2
+				special_type_slot_3 = afv_gun_ports
+				special_type_slot_4 = tank_battlestation_2_thermal
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				secondary_armament_slot = afv_atgm_gen3
+			}
+			upgrades = { tank_nsb_armor_upgrade = 0 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_Varan_Varan"
+			model = "UKR_btr3_entity"
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "Varan"
+			type = APC_4
+			allow_without_tech = yes
+			icon = "GFX_UKR_LAND_AFV_Wheeled_Varan_Varan"
+		}
+	}
+}
+UKR_sov_variant_btr_80_kba2 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-80-KBA-2"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0
+			modules = {
+				main_armament_slot = small_autocannon_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = automatic_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_3 = empty
+				special_type_slot_4 = tank_battlestation_2
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80_KBA2"
+			model = btr80a_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-80-KBA-2"
+			type = APC_4
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80_KBA2"
+		}
+	}
+}
+UKR_sov_variant_btr_80m_hrim = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-80M Hrim"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0 #Current Version: 1
+			allow_without_tech = yes
+			modules = {
+				main_armament_slot = small_autocannon_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = automatic_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_gun_ports
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_3 = afv_atgm_gen2
+				special_type_slot_4 = tank_battlestation_2
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				secondary_armament_slot = crows_mg
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80_Hrim"
+			model = btr80a_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-80M Hrim"
+			type = APC_4
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80_Hrim"
+		}
+	}
+}
+UKR_sov_variant_btr_80um_rohan = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-80UM Rohan"
+			type = medium_tank_flame_chassis_1
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				main_armament_slot = afv_assault_gun_2
+				secondary_armament_slot = afv_coax_autocannon_2
+				reload_type_slot = automatic_loading
+				ammunition_load_slot = anti_infantry_main_ammo_2
+				turret_type_slot = tank_base_tank_turret
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen3
+				special_type_slot_1 = smoke_launchers_2
+				special_type_slot_2 = smoothbore_atgm_gen2
+				special_type_slot_3 = afv_troop_capacity
+				special_type_slot_4 = tank_battlestation_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_7"
+			model = btr80a_vehicle_entity
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-80UM Rohan"
+			type = IFV_4
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_7"
+		}
+	}
+}
+UKR_sov_variant_bmp3_kharkiv = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BMP-3 Kharkiv"
+			type = medium_tank_flame_chassis_2
+			parent_version = 0
+			allow_without_tech = yes
+			modules = {
+				main_armament_slot = afv_assault_gun_2
+				secondary_armament_slot = afv_coax_autocannon_2
+				reload_type_slot = automatic_loading
+				ammunition_load_slot = anti_infantry_main_ammo_2
+				turret_type_slot = tank_base_tank_turret
+				suspension_type_slot = tank_torsion_bar_suspension_medium
+				armor_type_slot = afv_alum_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = smoke_launchers_2
+				special_type_slot_2 = smoothbore_atgm_gen2
+				special_type_slot_3 = afv_troop_capacity
+				special_type_slot_4 = tank_battlestation_2
+			}
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_7"
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BMP-3 Kharkiv"
+			type = IFV_4
+			allow_without_tech = yes
+			design_team = mio:UKR_kmdb_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_70_BTR_7"
+		}
+	}
+}
+UKR_sov_variant_btr_80up = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-80UP"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0
+			modules = {
+				main_armament_slot = afv_machine_gun_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = manual_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_3 = empty
+				special_type_slot_4 = tank_battlestation_1
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = machine_gun_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 2 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80"
+			model = UKR_btr3_entity
+			design_team = mio:UKR_mykolayiv_plant_tank_manufacturer
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-80UP"
+			type = APC_4
+			allow_without_tech = yes
+			design_team = mio:UKR_mykolayiv_plant_tank_manufacturer
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80"
+		}
+	}
+}
+UKR_sov_variant_btr_80t = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-80T"
+			type = medium_tank_amphibious_chassis_1
+			parent_version = 0
+			modules = {
+				main_armament_slot = afv_machine_gun_2
+				turret_type_slot = tank_base_tank_turret
+				reload_type_slot = manual_loading
+				suspension_type_slot = tank_wheeled_suspension_medium
+				armor_type_slot = tank_steel_armor_gen2
+				engine_type_slot = tank_diesel_engine_gen3
+				special_type_slot_1 = afv_gun_ports
+				special_type_slot_2 = smoke_launchers
+				special_type_slot_4 = tank_battlestation_1
+				special_type_slot_5 = afv_troop_capacity
+				ammunition_load_slot = machine_gun_ammo_2
+				secondary_armament_slot = afv_coax_machine_gun_2
+			}
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80"
+			model = btr80_vehicle_entity
+		}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "BTR-80T"
+			type = APC_4
+			allow_without_tech = yes
+			icon = "GFX_UKR_LAND_AFV_Wheeled_BTR_80_BTR_80"
+		}
+	}
+}
+UKR_sov_production_btr_70m = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-70M"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_3
+				version_name = "BTR-70M"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_70m_kba2 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-70M-KBA-2"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_3
+				version_name = "BTR-70M-KBA-2"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_70m_hrim = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-70M Hrim"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_3
+				version_name = "BTR-70M Hrim"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_70t = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-70T"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-70T"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_varan = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "Varan"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "Varan"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_80_kba2 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-80-KBA-2"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-80-KBA-2"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_80m_hrim = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-80M Hrim"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-80M Hrim"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_80um_rohan = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_flame_chassis_1
+				version_name = "BTR-80UM Rohan"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = IFV_4
+				version_name = "BTR-80UM Rohan"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_bmp3_kharkiv = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_flame_chassis_2
+				version_name = "BMP-3 Kharkiv"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = IFV_4
+				version_name = "BMP-3 Kharkiv"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_80up = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-80UP"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-80UP"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_80t = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-80T"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-80T"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+}
+UKR_sov_production_btr_7 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_production = {
+			equipment = {
+				type = medium_tank_amphibious_chassis_1
+				version_name = "BTR-7 Zakhysnyk"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
+	}
+	else = {
+		add_equipment_production = {
+			equipment = {
+				type = APC_4
+				version_name = "BTR-7 Zakhysnyk"
+			}
+			requested_factories = 2
+			progress = 0.1
+		}
 	}
 }
