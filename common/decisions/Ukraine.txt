@@ -27526,6 +27526,82 @@ UKR_develop_domestic_category = {
 		}
 	}
 
+	UKR_btr70_hulls_to_btr3 = {
+		icon = GFX_decision_icon_UKR_develop_domestic_btr3
+
+		ai_will_do = { base = 5 }
+
+		visible = {
+			has_country_flag = UKR_develop_btr3e_flag
+			NOT = { has_country_flag = UKR_btr70_hulls_mission_flag }
+			NOT = { has_country_flag = UKR_btr70_conversion_running_flag }
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+			698 = { arms_factory > 2 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_btr70_hulls_money_tt
+				check_variable = { treasury > 0.04 }
+			}
+		}
+
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_btr70_hulls_to_btr3"
+			set_country_flag = UKR_btr70_hulls_mission_flag
+			activate_mission = UKR_btr70_hulls_mission
+		}
+	}
+
+	UKR_btr70_hulls_mission = {
+		icon = GFX_decision_icon_UKR_develop_domestic_btr3
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_btr70_hulls_in_stock_tt
+				if = {
+					limit = { has_dlc = "No Step Back" }
+					has_equipment = { medium_tank_amphibious_chassis_1 > 39 }
+				}
+				else = { has_equipment = { APC_3 > 39 } }
+			}
+		}
+
+		days_mission_timeout = 90
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_btr70_hulls_mission"
+			clr_country_flag = UKR_btr70_hulls_mission_flag
+			set_country_flag = UKR_btr70_conversion_running_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_1 variant_name = "BTR-70" amount = -40 producer = SOV }
+			}
+			else = { add_equipment_to_stockpile = { type = APC_3 amount = -40 } }
+			698 = {
+				if = {
+					limit = { arms_factory > 0 }
+					remove_building = { type = arms_factory level = 1 }
+				}
+			}
+			set_temp_variable = { treasury_change = -0.04 }
+			modify_treasury_effect = yes
+			country_event = { id = ukraine_btr70_hulls.1 days = 90 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_btr70_hulls_mission"
+			clr_country_flag = UKR_btr70_hulls_mission_flag
+			country_event = ukraine_btr70_hulls.2
+		}
+	}
+
 	UKR_develop_t84u = {
 		icon = GFX_decision_icon_UKR_develop_domestic_t84
 		fire_only_once = yes
@@ -30878,6 +30954,8 @@ UKR_develop_domestic_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_tha_prepare_btr3_kit"
+			set_temp_variable = { ukr_hulls_need = 20 }
+			UKR_btr3_take_hulls = yes
 			hidden_effect = {
 				set_temp_variable = { treasury_change = -0.15 }
 				modify_treasury_effect = yes

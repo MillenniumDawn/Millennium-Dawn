@@ -11451,3 +11451,21 @@ UKR_check_light_armour_forge = {
 		1086 = { add_dynamic_modifier = { modifier = UKR_light_armour_forge days = 730 } }
 	}
 }
+
+# Export BTR-3 hulls: take ukr_hulls_need from the conversion pool; each missing hull costs 0.004 billion
+UKR_btr3_take_hulls = {
+	set_temp_variable = { ukr_hulls_short = ukr_hulls_need }
+	subtract_from_temp_variable = { ukr_hulls_short = UKR_btr3_hull_pool }
+	if = {
+		limit = { check_variable = { ukr_hulls_short > 0 } }
+		set_variable = { UKR_btr3_hull_pool = 0 }
+		set_temp_variable = { treasury_change = ukr_hulls_short }
+		multiply_temp_variable = { treasury_change = -0.004 }
+		modify_treasury_effect = yes
+		custom_effect_tooltip = UKR_btr3_new_hulls_tt
+	}
+	else = {
+		subtract_from_variable = { UKR_btr3_hull_pool = ukr_hulls_need }
+		custom_effect_tooltip = UKR_btr3_pool_hulls_tt
+	}
+}
