@@ -52,6 +52,12 @@ scripted_gui = {
 				set_variable = { var_open_MD_state_recog = 2 }
 				set_variable = { var_open_MD_un_aid = 2 }
 				set_variable = { var_open_MD_un_assembly = 2 }
+
+				set_variable = { sc_end_war_button_frame = 2 }
+				set_variable = { sc_sanction_button_frame = 2 }
+				set_variable = { sc_volunteers_button_frame = 2 }
+				set_variable = { sc_arms_embargo_button_frame = 2 }
+
 				international_systems_update = yes
 			}
 		}
@@ -455,190 +461,11 @@ scripted_gui = {
 		}
 
 		triggers = {
-			un_sc_vote_status_tracker_visible = {
-				OR = {
-					has_global_flag = current_ongoing_sc_vote
-					has_country_flag = unsc_permanent_seat_sc_pending
-					has_country_flag = unsc_permanent_seat_ga_pending
-					has_country_flag = unsc_permanent_seat_approved_pending_promotion
-					has_country_flag = unsc_permanent_seat_retry_cooldown
-				}
-			}
-			is_un_sc_propose_action_button_click_enabled = {
-				ROOT = {
-					check_variable = { sc_selected_action > 0 }
-					has_political_power > 250
-					has_offensive_war = no
-					NOT = {
-						has_war_with = PREV
-					}
-				}
-				custom_trigger_tooltip = {
-					tooltip = no_pending_unsc_actions_against_tt
-					NOT = {
-						has_global_flag = sc_action_against@THIS
-					}
-				}
-			}
+
 		}
 
 		effects = {
-			nations_at_war_button_click = {
-				clear_array = sc_selected_nations_list
-				clear_variable = sc_selected_action
-				for_each_loop = {
-					array = global.un_sc_pressure_end_war
-					value = v
 
-					var:v = {
-						if = {
-							limit = {
-								NOT = { has_active_mission = UNSC_end_all_offensive_wars }
-								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
-							}
-							add_to_array = { ROOT.sc_selected_nations_list = v }
-						}
-					}
-				}
-				set_variable = { sc_selected_action = 1 }
-				international_systems_update = yes
-			}
-			sanction_nations_button_click = {
-				clear_array = sc_selected_nations_list
-				clear_variable = sc_selected_action
-				for_each_loop = {
-					array = global.can_be_sc_sanctioned
-					value = v
-
-					var:v = {
-						if = {
-							limit = {
-								exists = yes
-								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
-							}
-							add_to_array = { ROOT.sc_selected_nations_list = v }
-						}
-					}
-				}
-				set_variable = { sc_selected_action = 2 }
-				international_systems_update = yes
-			}
-			manage_volunteers_button_click = {
-				clear_array = sc_selected_nations_list
-				clear_variable = sc_selected_action
-				for_each_loop = {
-					array = global.un_sc_pressure_end_war
-					value = v
-
-					var:v = {
-						if = {
-							limit = {
-								NOT = { has_idea = unsc_restricted_volunteers_too }
-							}
-							add_to_array = { ROOT.sc_selected_nations_list = v }
-						}
-					}
-				}
-				set_variable = { sc_selected_action = 3 }
-				international_systems_update = yes
-			}
-			arms_embargo_button_click = {
-				clear_array = sc_selected_nations_list
-				clear_variable = sc_selected_action
-				for_each_loop = {
-					array = global.can_be_sc_sanctioned
-					value = v
-
-					var:v = {
-						if = {
-							limit = {
-								NOT = { has_idea = unsc_arms_embargo }
-							}
-							add_to_array = { ROOT.sc_selected_nations_list = v }
-						}
-					}
-				}
-				for_each_loop = {
-					array = global.un_sc_pressure_end_war
-					value = v
-
-					var:v = {
-						if = {
-							limit = {
-								NOT = { has_idea = unsc_arms_embargo }
-							}
-							add_to_array = { ROOT.sc_selected_nations_list = v }
-						}
-					}
-				}
-				set_variable = { sc_selected_action = 4 }
-				international_systems_update = yes
-			}
-			un_sc_auto_accept_button_click = {
-				if = {
-					limit = {
-						has_country_flag = auto_accept_all_sc_votes
-					}
-					clr_country_flag = auto_accept_all_sc_votes
-					set_variable = { UN_SC_auto_accept_frame_var = 1 }
-				} else = {
-					set_country_flag = auto_accept_all_sc_votes
-					set_variable = { UN_SC_auto_accept_frame_var = 2 }
-				}
-				clr_country_flag = auto_reject_all_sc_votes
-				clr_country_flag = auto_abstain_all_sc_votes
-				set_variable = { UN_SC_auto_reject_frame_var = 1 }
-				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
-
-				international_systems_update = yes
-			}
-			un_sc_auto_reject_button_click = {
-				if = {
-					limit = {
-						has_country_flag = auto_reject_all_sc_votes
-					}
-					clr_country_flag = auto_reject_all_sc_votes
-					set_variable = { UN_SC_auto_reject_frame_var = 1 }
-				} else = {
-					set_country_flag = auto_reject_all_sc_votes
-					set_variable = { UN_SC_auto_reject_frame_var = 2 }
-				}
-				clr_country_flag = auto_accept_all_sc_votes
-				clr_country_flag = auto_abstain_all_sc_votes
-				set_variable = { UN_SC_auto_accept_frame_var = 1 }
-				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
-
-				international_systems_update = yes
-			}
-			un_sc_auto_abstain_button_click = {
-				if = {
-					limit = {
-						has_country_flag = auto_abstain_all_sc_votes
-					}
-					clr_country_flag = auto_abstain_all_sc_votes
-					set_variable = { UN_SC_auto_abstain_frame_var = 1 }
-				} else = {
-					set_country_flag = auto_abstain_all_sc_votes
-					set_variable = { UN_SC_auto_abstain_frame_var = 2 }
-				}
-				clr_country_flag = auto_accept_all_sc_votes
-				clr_country_flag = auto_reject_all_sc_votes
-				set_variable = { UN_SC_auto_accept_frame_var = 1 }
-				set_variable = { UN_SC_auto_reject_frame_var = 1 }
-
-				international_systems_update = yes
-			}
-			is_un_sc_propose_action_button_click = {
-				ROOT = {
-					add_political_power = -250
-
-					set_temp_variable = { sc_new_vote_type = sc_selected_action }
-					set_temp_variable = { sc_new_vote_nation = PREV }
-					set_global_flag = sc_action_against@PREV
-					update_sc_vote = yes
-				}
-				international_systems_update = yes
-			}
 		}
 
 		dynamic_lists = {
@@ -995,11 +822,15 @@ scripted_gui = {
 		}
 
 		effects = {
-			open_country_list_unescoe_click = {
+			open_country_list_unesco_click = {
 				if = {
-					limit = { check_variable = { un_extended_country_list = 0 } }
-
-					set_variable = { un_extended_country_list = 1 }
+					limit = {
+						check_variable = { opened_country_list_unesco = 0 } 
+					}
+					
+					set_variable = { opened_country_list_unesco = 2 }
+					clear_variable = opened_country_list_unido
+					clear_variable = opened_country_list_uncdf
 
 					clear_array = un_aid_current_countries_list
 				
@@ -1009,15 +840,21 @@ scripted_gui = {
 						add_to_array = { un_aid_current_countries_list = v }
 					}
 				} else = {
-					clear_variable = un_extended_country_list
+					clear_variable = opened_country_list_unesco
 					clear_array = un_aid_current_countries_list
 				}
+
+				international_systems_update = yes
 			}
 			open_country_list_unido_click = {
 				if = {
-					limit = { check_variable = { un_extended_country_list = 0 } }
+					limit = { 
+						check_variable = { opened_country_list_unido = 0 } 
+					}
 
-					set_variable = { un_extended_country_list = 1 }
+					set_variable = { opened_country_list_unido = 2 }
+					clear_variable = opened_country_list_unesco
+					clear_variable = opened_country_list_uncdf
 
 					clear_array = un_aid_current_countries_list
 				
@@ -1027,15 +864,21 @@ scripted_gui = {
 						add_to_array = { un_aid_current_countries_list = v }
 					}
 				} else = {
-					clear_variable = un_extended_country_list
+					clear_variable = opened_country_list_unido
 					clear_array = un_aid_current_countries_list
 				}
+				
+				international_systems_update = yes
 			}
 			open_country_list_uncdf_click = {
 				if = {
-					limit = { check_variable = { un_extended_country_list = 0 } }
+					limit = { 
+						check_variable = { opened_country_list_uncdf = 0 } 
+					}
 
-					set_variable = { un_extended_country_list = 1 }
+					set_variable = { opened_country_list_uncdf = 2 }
+					clear_variable = opened_country_list_unesco
+					clear_variable = opened_country_list_unido
 
 					clear_array = un_aid_current_countries_list
 				
@@ -1045,9 +888,11 @@ scripted_gui = {
 						add_to_array = { un_aid_current_countries_list = v }
 					}
 				} else = {
-					clear_variable = un_extended_country_list
+					clear_variable = opened_country_list_uncdf
 					clear_array = un_aid_current_countries_list
 				}
+				
+				international_systems_update = yes
 			}
 			cancel_all_contributions_button_click = {
 				add_political_power = -500
@@ -1324,6 +1169,18 @@ scripted_gui = {
 			}
 		}
 
+		properties = {
+			open_country_list_unesco = {
+				frame = opened_country_list_unesco
+			}
+			open_country_list_unido = {
+				frame = opened_country_list_unido
+			}
+			open_country_list_uncdf = {
+				frame = opened_country_list_uncdf
+			}
+		}
+
 		dynamic_lists = {
 			list_of_aid_contributors = {
 				array = global.UN_budget_contribution_tracker
@@ -1333,21 +1190,92 @@ scripted_gui = {
 		}
 	}
 
-	is_un_aid_country_list = {
+	is_un_extended_list = {
 		context_type = player_context
 		parent_scripted_gui = MD_UN_main_window
-		window_name = "UN_aid_country_list"
+		window_name = "UN_extended_list"
 
 		visible = {
-			check_variable = { var_open_MD_UN_gui = 2 }
-			check_variable = { un_extended_country_list = 1 }
 			has_country_flag = open_MD_countrymissilesview
+			check_variable = { var_open_MD_UN_gui = 2 }
+			OR = {
+				AND = {
+					check_variable = { var_open_MD_un_aid = 1 }
+					OR = {
+						check_variable = { opened_country_list_unesco = 2 }
+						check_variable = { opened_country_list_unido = 2 }
+						check_variable = { opened_country_list_uncdf = 2 }
+					}
+				}
+				AND = {
+					check_variable = { un_sc_pending_votes = 2 }
+					check_variable = { var_open_MD_un_council = 1 }
+				}
+			}
 		}
 
 		effects = {
 			close_country_list_click = {
-				clear_variable = un_extended_country_list
 				clear_array = un_aid_current_countries_list
+			}
+			
+			# UN SC
+			is_un_sc_manipulate_vote_button_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_sc_vote_front = yes
+
+				add_political_power = -150
+
+				international_systems_update = yes
+			}
+
+			is_un_sc_manipulate_vote_button_right_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_sc_vote_rear = yes
+
+				add_political_power = -150
+
+				international_systems_update = yes
+			}
+		}
+
+		triggers = {
+			# UN AID
+			UN_aid_country_list_grid_visible = {
+				check_variable = { var_open_MD_un_aid = 1 }
+				OR = {
+					check_variable = { opened_country_list_unesco = 2 }
+					check_variable = { opened_country_list_unido = 2 }
+					check_variable = { opened_country_list_uncdf = 2 }
+				}
+			}
+			# UN SC
+			list_of_pending_sc_votes_visible = {
+				check_variable = { un_sc_pending_votes = 2 }
+				check_variable = { var_open_MD_un_council = 1 }
+			}
+			is_un_sc_manipulate_vote_button_click_enabled = {
+				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = un_sc_vote_track_[DISP]
+							always = yes
+						}
+					}
+					DISP = "[?disp_var]"
+				}
+				has_political_power > 150
 			}
 		}
 		
@@ -1357,11 +1285,15 @@ scripted_gui = {
 				entry_container = UN_aid_country_entry
 				change_scope = yes
 			}
+			list_of_pending_sc_votes = {
+				array = global.sc_vote_nation_tracker
+				entry_container = IS_UN_SC_pending_vote_list
+			}
 		}
 
 		properties = {
 			flag_icon = {
-                image = "[?THIS.GetFlag]"
+                image = "[?v.GetFlag]"
             }
 		}
 	}
@@ -1377,7 +1309,272 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			check_variable = { sc_selected_action > 0 }
+			is_in_array = { global.p5_sc_members = ROOT }
+		}
+
+		effects = {
+			nations_at_war_button_click = {
+				clear_array = sc_selected_nations_list
+				clear_variable = sc_selected_action
+				for_each_loop = {
+					array = global.un_sc_pressure_end_war
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_active_mission = UNSC_end_all_offensive_wars }
+								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
+				}
+				set_variable = { sc_selected_action = 1 }
+				
+				clear_variable = sc_end_war_button_frame
+				set_variable = { sc_sanction_button_frame = 2 }
+				set_variable = { sc_volunteers_button_frame = 2 }
+				set_variable = { sc_arms_embargo_button_frame = 2 }
+
+				international_systems_update = yes
+			}
+			sanction_nations_button_click = {
+				clear_array = sc_selected_nations_list
+				clear_variable = sc_selected_action
+				for_each_loop = {
+					array = global.can_be_sc_sanctioned
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								exists = yes
+								NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
+				}
+				set_variable = { sc_selected_action = 2 }
+				
+				clear_variable = sc_sanction_button_frame
+				set_variable = { sc_end_war_button_frame = 2 }
+				set_variable = { sc_volunteers_button_frame = 2 }
+				set_variable = { sc_arms_embargo_button_frame = 2 }
+
+				international_systems_update = yes
+			}
+			manage_volunteers_button_click = {
+				clear_array = sc_selected_nations_list
+				clear_variable = sc_selected_action
+				for_each_loop = {
+					array = global.un_sc_pressure_end_war
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_restricted_volunteers_too }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
+				}
+				set_variable = { sc_selected_action = 3 }
+
+				clear_variable = sc_volunteers_button_frame
+				set_variable = { sc_end_war_button_frame = 2 }
+				set_variable = { sc_sanction_button_frame = 2 }
+				set_variable = { sc_arms_embargo_button_frame = 2 }
+				
+				international_systems_update = yes
+			}
+			arms_embargo_button_click = {
+				clear_array = sc_selected_nations_list
+				clear_variable = sc_selected_action
+				for_each_loop = {
+					array = global.can_be_sc_sanctioned
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_arms_embargo }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
+				}
+				for_each_loop = {
+					array = global.un_sc_pressure_end_war
+					value = v
+
+					var:v = {
+						if = {
+							limit = {
+								NOT = { has_idea = unsc_arms_embargo }
+							}
+							add_to_array = { ROOT.sc_selected_nations_list = v }
+						}
+					}
+				}
+				set_variable = { sc_selected_action = 4 }
+
+				clear_variable = sc_arms_embargo_button_frame
+				set_variable = { sc_end_war_button_frame = 2 }
+				set_variable = { sc_sanction_button_frame = 2 }
+				set_variable = { sc_volunteers_button_frame = 2 }
+
+				international_systems_update = yes
+			}
+			un_sc_auto_accept_button_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_accept_all_sc_votes
+					}
+					clr_country_flag = auto_accept_all_sc_votes
+					set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				} else = {
+					set_country_flag = auto_accept_all_sc_votes
+					set_variable = { UN_SC_auto_accept_frame_var = 2 }
+				}
+				clr_country_flag = auto_reject_all_sc_votes
+				clr_country_flag = auto_abstain_all_sc_votes
+				set_variable = { UN_SC_auto_reject_frame_var = 1 }
+				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+
+				international_systems_update = yes
+			}
+			un_sc_auto_reject_button_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_reject_all_sc_votes
+					}
+					clr_country_flag = auto_reject_all_sc_votes
+					set_variable = { UN_SC_auto_reject_frame_var = 1 }
+				} else = {
+					set_country_flag = auto_reject_all_sc_votes
+					set_variable = { UN_SC_auto_reject_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_sc_votes
+				clr_country_flag = auto_abstain_all_sc_votes
+				set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+
+				international_systems_update = yes
+			}
+			un_sc_auto_abstain_button_click = {
+				if = {
+					limit = {
+						has_country_flag = auto_abstain_all_sc_votes
+					}
+					clr_country_flag = auto_abstain_all_sc_votes
+					set_variable = { UN_SC_auto_abstain_frame_var = 1 }
+				} else = {
+					set_country_flag = auto_abstain_all_sc_votes
+					set_variable = { UN_SC_auto_abstain_frame_var = 2 }
+				}
+				clr_country_flag = auto_accept_all_sc_votes
+				clr_country_flag = auto_reject_all_sc_votes
+				set_variable = { UN_SC_auto_accept_frame_var = 1 }
+				set_variable = { UN_SC_auto_reject_frame_var = 1 }
+
+				international_systems_update = yes
+			}
+			is_un_sc_propose_action_button_click = {
+				ROOT = {
+					add_political_power = -250
+
+					set_temp_variable = { sc_new_vote_type = sc_selected_action }
+					set_temp_variable = { sc_new_vote_nation = PREV }
+					set_global_flag = sc_action_against@PREV
+					update_sc_vote = yes
+				}
+				international_systems_update = yes
+			}
+			un_sc_show_pending_votes_button_click = {
+				if = {
+					limit = {
+						check_variable = { un_sc_pending_votes = 2 }
+					}
+					clear_variable = un_sc_pending_votes
+				} else = {
+					set_variable = { un_sc_pending_votes = 2 }
+				}
+				international_systems_update = yes
+			}
+		}
+		
+		triggers = {
+			un_sc_sactions_container_no_nations_text_visible = {
+				check_variable = { sc_selected_action > 0 }
+				check_variable = { sc_selected_nations_list^num < 1 }
+			}
+			un_sc_vote_status_tracker_visible = {
+				OR = {
+					has_global_flag = current_ongoing_sc_vote
+					has_country_flag = unsc_permanent_seat_sc_pending
+					has_country_flag = unsc_permanent_seat_ga_pending
+					has_country_flag = unsc_permanent_seat_approved_pending_promotion
+					has_country_flag = unsc_permanent_seat_retry_cooldown
+				}
+			}
+			is_un_sc_propose_action_button_click_enabled = {
+				ROOT = {
+					check_variable = { sc_selected_action > 0 }
+					has_political_power > 250
+					has_offensive_war = no
+					NOT = {
+						has_war_with = PREV
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = no_pending_unsc_actions_against_tt
+					NOT = {
+						has_global_flag = sc_action_against@THIS
+					}
+				}
+			}
+		}
+
+		dynamic_lists = {
+			list_of_council_members = {
+				array = global.security_council_members
+				entry_container = IS_UN_SC_members_list
+			}
+			list_of_permanant_members = {
+				array = global.p5_sc_members
+				entry_container = IS_UN_SC_permanant_members_list
+			}
+			list_of_action_nations = {
+				array = sc_selected_nations_list
+				entry_container = IS_UN_SC_nation_entry
+				change_scope = yes
+			}
+			sc_list_of_votes = {
+				array = sc_selected_nations_list # TODO: change array to correct one
+				entry_container = IS_UN_vote_entry
+				change_scope = yes
+			}
+		}
+
+		properties = {
+			nations_at_war_button = {
+				frame = sc_end_war_button_frame
+			}
+			sanction_nations_button = {
+				frame = sc_sanction_button_frame
+			}
+			manage_volunteers_button = {
+				frame = sc_volunteers_button_frame
+			}
+			arms_embargo_button = {
+				frame = sc_arms_embargo_button_frame
+			}
+			un_sc_show_pending_votes_button = {
+				frame = un_sc_pending_votes
+			}
 		}
 	}
 
@@ -1392,7 +1589,7 @@ scripted_gui = {
 			check_variable = { var_open_MD_un_council = 1 }
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
-			NOT = { check_variable = { sc_selected_action > 0 } }
+			NOT = { is_in_array = { global.p5_sc_members = ROOT } }
 		}
 
 		dynamic_lists = {
@@ -1422,9 +1619,6 @@ scripted_gui = {
 		}
 
 		triggers = {
-			name_of_nation_button_visible = {
-				NOT = { is_in_array = { global.p5_sc_members = v } }
-			}
 			is_un_sc_vote_yes_button_click_enabled = {
 				NOT = { tag = ROOT }
 				custom_trigger_tooltip = {
@@ -1484,17 +1678,6 @@ scripted_gui = {
 		}
 
 		effects = {
-			un_sc_show_pending_votes_button_click = {
-				if = {
-					limit = {
-						has_country_flag = show_sc_vote_view
-					}
-					clr_country_flag = show_sc_vote_view
-				} else = {
-					set_country_flag = show_sc_vote_view
-				}
-				international_systems_update = yes
-			}
 			is_un_sc_vote_yes_button_click = {
 				set_temp_variable = { percent_change = -10 }
 				ROOT = {
@@ -1578,19 +1761,6 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 		}
-
-		properties = {
-			list_of_action_nations = {
-				array = sc_selected_nations_list
-				entry_container = IS_UN_SC_nation_entry
-				change_scope = yes
-			}
-			list_of_votes = {
-				array = sc_selected_nations_list
-				entry_container = IS_UN_vote_entry
-				change_scope = yes
-			}
-		}
 	}
 
 	is_un_sc_pending_vote_dynamic_lists = {
@@ -1630,7 +1800,7 @@ scripted_gui = {
 		}
 
 		effects = {
-			is_un_sc_manipulate_vote_button_click = {
+			un_sc_pending_vote_increase_priority_button_click = {
 				custom_effect_tooltip = un_sc_manipulate_vote_tt
 
 				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
@@ -1644,7 +1814,7 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 
-			is_un_sc_manipulate_vote_button_right_click = {
+			un_sc_pending_vote_decrease_priority_button_click = {
 				custom_effect_tooltip = un_sc_manipulate_vote_tt
 
 				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
@@ -1652,73 +1822,6 @@ scripted_gui = {
 				set_temp_variable = { index_track = i }
 
 				manipulate_sc_vote_rear = yes
-
-				add_political_power = -150
-
-				international_systems_update = yes
-			}
-		}
-	}
-
-	is_un_ga_pending_vote_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_unga_pop_out_window
-		window_name = "IS_UN_GA_pending_votes_container"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			check_variable = { var_open_MD_un_assembly = 1 }
-			check_variable = { var_open_MD_UN_gui = 2 }
-			has_country_flag = open_MD_countrymissilesview
-			check_variable = { ga_pop_out_view = 2 }
-		}
-		dynamic_lists = {
-			list_of_pending_ga_votes = {
-				array = global.ga_vote_nation_tracker
-				entry_container = IS_UN_GA_pending_vote_list
-			}
-		}
-
-		triggers = {
-			is_un_ga_manipulate_vote_button_click_enabled = {
-				set_temp_variable = { disp_var = global.ga_vote_type_tracker^i }
-				meta_trigger = {
-					text = {
-						custom_trigger_tooltip = {
-							tooltip = un_ga_vote_track_[DISP]
-							always = yes
-						}
-					}
-					DISP = "[?disp_var]"
-				}
-				has_political_power > 150
-			}
-		}
-
-		effects = {
-			is_un_ga_manipulate_vote_button_click = {
-				custom_effect_tooltip = un_ga_manipulate_vote_tt
-
-				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
-				set_temp_variable = { type_hold = global.ga_vote_type_tracker^i }
-				set_temp_variable = { index_track = i }
-
-				manipulate_ga_vote_front = yes
-
-				add_political_power = -150
-
-				international_systems_update = yes
-			}
-
-			is_un_ga_manipulate_vote_button_right_click = {
-				custom_effect_tooltip = un_ga_manipulate_vote_tt
-
-				set_temp_variable = { nation_hold = global.ga_vote_nation_tracker^i }
-				set_temp_variable = { type_hold = global.ga_vote_type_tracker^i }
-				set_temp_variable = { index_track = i }
-
-				manipulate_ga_vote_rear = yes
 
 				add_political_power = -150
 
