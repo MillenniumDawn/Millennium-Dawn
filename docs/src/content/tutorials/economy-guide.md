@@ -463,7 +463,7 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 | Fast Growth   | +0.015               |
 | Economic Boom | +0.025               |
 
-5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
+5. **Budget balance**: A deficit above a threshold of about 5% of GDP (2% to 8% depending on currency strength, debt, and interest) adds inflationary pressure proportional to the excess. A surplus lowers the adjustment by 0.02 times the surplus as a share of GDP at any growth rate, so a 10% surplus gives -0.002. Surpluses above 25% of GDP count as 25%.
 6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
 
 A national spirit or difficulty setting with a **Positive Quarterly Inflation** value scales a positive quarterly result by that percentage. At -20%, a quarterly result of 5% becomes 4%. It does not change a quarter of deflation.
