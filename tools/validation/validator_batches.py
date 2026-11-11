@@ -148,7 +148,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "tech-categories", "validate_tech_categories.py", ("common", "events")
         ),
-        ValidatorSpec("modifiers", "validate_modifiers.py", ("common",)),
+        ValidatorSpec(
+            "modifiers", "validate_modifiers.py", ("common", "events", "history")
+        ),
         ValidatorSpec(
             "simplifications",
             "validate_simplifications.py",
@@ -177,6 +179,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "ai-weight-order", "validate_ai_weight_order.py", ("common", "events")
         ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
+        ValidatorSpec("special-projects", "validate_special_projects.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
         ValidatorSpec(
             "graphical-cultures",

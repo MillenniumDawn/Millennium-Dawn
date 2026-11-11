@@ -6,7 +6,7 @@ import sys
 
 import pytest
 import validate_gfx_references as vg
-from shared.suite import run_validator, write_under
+from shared.suite import broken_symlink, run_validator, write_under
 from shared_utils import extract_block_from_text
 from validate_gfx_references import Validator as GfxReferenceValidator
 from validator_common import Severity
@@ -35,15 +35,6 @@ def _write(path, body):
 def _directory(path):
     """A directory whose name matches a scanned glob; reads as unreadable."""
     path.mkdir(parents=True, exist_ok=True)
-    return str(path)
-
-
-def _broken_symlink(path):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.symlink(str(path.parent / "no_such_target"), str(path))
-    except (OSError, NotImplementedError):
-        pytest.skip("symlinks unavailable on this platform")
     return str(path)
 
 
@@ -193,14 +184,14 @@ def test_missing_directory_yields_no_files(tmp_path):
 _UNREADABLE_DECLARATION_CASES = {
     "focus search filters": (
         "common/national_focus",
-        _broken_symlink,
+        broken_symlink,
         "focus = {\n\tsearch_filters = { FOCUS_FILTER_UKR }\n}\n",
         vg._load_search_filter_names,
         frozenset({"FOCUS_FILTER_UKR"}),
     ),
     "equipment archetypes": (
         "common/units/equipment",
-        _broken_symlink,
+        broken_symlink,
         "equipments = {\n\tutil_vehicle_1 = {\n\t}\n}\n",
         lambda mod: vg._load_equipment_tree(mod)[0],
         frozenset({"util_vehicle_1"}),
@@ -573,8 +564,11 @@ def test_only_a_placeholder_template_resolves_nothing(tmp_path):
     ],
     ids=["engine refs", "unused sprites"],
 )
-def test_missing_data_dirs_are_logged(tmp_path, gfx_notices, check, notices):
-    logged = gfx_notices(tmp_path, check)
+def test_missing_data_dirs_are_logged(tmp_path, monkeypatch, check, notices):
+    logged = []
+    validator = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
+    check(validator)
     for expected in notices:
         assert any(expected in msg for msg in logged)
 
@@ -699,6 +693,14 @@ _GUI_REF_CASES = {
         'spriteType = "GFX_NV_btn_add"\n',
         [("GFX_NV_btn_add", 3)],
     ),
+    "commented-out ref": (
+        '# spriteType = "GFX_commented_out"\nspriteType = "GFX_real"\n',
+        [("GFX_real", 2)],
+    ),
+    "trailing comment": (
+        'spriteType = "GFX_real" # spriteType = "GFX_commented"\n',
+        [("GFX_real", 1)],
+    ),
 }
 
 
@@ -774,12 +776,23 @@ def test_parse_script_refs(tmp_path, rel, text, refs):
             [("GFX_trigger_no", 2), ("GFX_mission_icons", 2)],
         ),
         ('l_english:\n A:0 "£GFX_$KEY$ : Jump"\n', []),
+        (
+            'l_english:\n# disabled: "£GFX_commented"\n'
+            ' live: "£GFX_live" # £GFX_trailing\n',
+            [("GFX_live", 3)],
+        ),
+        (
+            ' a: "£GFX_CTC.5"\n b: "£GFX_Polizistin-Kiesewetter"\n',
+            [("GFX_CTC.5", 1), ("GFX_Polizistin-Kiesewetter", 2)],
+        ),
     ],
     ids=[
         "punctuation and repeats",
         "prefix already present",
         "closing pound sign",
         "parameter-built name",
+        "hash comments",
+        "dotted and hyphenated names",
     ],
 )
 def test_parse_loc_refs(tmp_path, text, refs):
@@ -1455,6 +1468,40 @@ def _variant(icon, name="Su-57"):
 
 def _raw_icon_issues(validator):
     return _categories(validator, "raw-icon-path")
+
+
+# variant icon: {case: (icon value, sprites the variant check should return)}
+_VARIANT_ICON_CASES = {
+    "quoted sprite": ('"GFX_TST_a"', [("GFX_TST_a", 3)]),
+    "bare sprite": ("GFX_TST_a", [("GFX_TST_a", 3)]),
+    "raw path is another check's finding": ('"gfx/a.dds"', []),
+}
+
+
+@pytest.mark.parametrize(
+    ("icon", "sprites"), _VARIANT_ICON_CASES.values(), ids=_VARIANT_ICON_CASES
+)
+def test_variant_icon_sprites(icon, sprites):
+    assert vg.variant_icon_sprites(_variant(icon)) == sprites
+
+
+@pytest.mark.parametrize(
+    ("sprite", "expected"),
+    [("GFX_TST_defined", 0), ("GFX_TST_missing", 1), ("GFX_TST_DEFINED", 1)],
+    ids=["defined", "undefined", "wrong case"],
+)
+def test_run_reports_an_undefined_variant_icon(tmp_path, sprite, expected):
+    write_under(
+        tmp_path,
+        "interface/test.gfx",
+        'spriteTypes = { spriteType = { name = "GFX_TST_defined" texturefile = "a.dds" } }\n',
+    )
+    write_under(tmp_path, "history/countries/TST - Test.txt", _variant(f'"{sprite}"'))
+    issues = _categories(
+        run_validator(GfxReferenceValidator, tmp_path), "undefined-sprite"
+    )
+    assert len(issues) == expected
+    assert all(issue.severity == Severity.ERROR for issue in issues)
 
 
 @pytest.mark.parametrize(

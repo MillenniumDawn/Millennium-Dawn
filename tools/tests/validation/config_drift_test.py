@@ -4,6 +4,7 @@ import json
 import os
 import re
 import sys
+import tomllib
 
 import dev_setup
 import pytest
@@ -65,6 +66,13 @@ def _setup_python_version(steps):
         if "actions/setup-python@" in uses:
             return step["with"]["python-version"]
     raise AssertionError("no actions/setup-python step")
+
+
+def _precommit_hooks():
+    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
+    return {
+        hook["id"]: hook for repo in config["repos"] for hook in repo.get("hooks", [])
+    }
 
 
 def _parse_precommit():
@@ -136,7 +144,7 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
-    # The CI workspace ships no gfx/models or gfx/entities.
+    # The CI workspace ships entity definitions but no meshes or textures.
     "validate_mesh_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
@@ -1198,10 +1206,7 @@ def test_every_fingerprint_site_hashes_the_same_inputs():
 
 
 def test_tools_quality_checks_are_wired_in_precommit_and_ci():
-    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
-    hooks = {
-        hook["id"]: hook for repo in config["repos"] for hook in repo.get("hooks", [])
-    }
+    hooks = _precommit_hooks()
     assert {"black-tools", "pylint-tools", "mypy-tools"} <= hooks.keys()
     assert hooks["black-tools"]["entry"] == "black"
     assert hooks["pylint-tools"]["entry"].startswith("pylint ")
@@ -1225,11 +1230,23 @@ def test_tools_quality_checks_are_wired_in_precommit_and_ci():
     assert Coverage().config.include_namespace_packages is True
 
 
+def test_mypy_hook_files_match_mypy_config():
+    hook = _precommit_hooks()["mypy-tools"]
+    pattern = re.compile(hook["files"])
+    with (REPO_ROOT / "pyproject.toml").open("rb") as handle:
+        targets = tomllib.load(handle)["tool"]["mypy"]["files"]
+    for target in targets:
+        path = REPO_ROOT / target
+        files = sorted(path.rglob("*.py")) if path.is_dir() else [path]
+        assert files, target
+        for file in files:
+            assert pattern.search(file.relative_to(REPO_ROOT).as_posix()), file
+    assert pattern.search("pyproject.toml")
+    assert not pattern.search("tools/validation/validate_events.py")
+
+
 def test_pytest_collection_gate_cannot_self_exclude():
-    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
-    hooks = {
-        hook["id"]: hook for repo in config["repos"] for hook in repo.get("hooks", [])
-    }
+    hooks = _precommit_hooks()
     prepush_guard = hooks["tools-pytest-config"]["entry"]
     prepush_suite = hooks["tools-pytest"]["entry"]
     assert "tools/tests/collection_layout_test.py" in prepush_guard
@@ -1252,13 +1269,7 @@ def test_pytest_collection_gate_cannot_self_exclude():
     ],
 )
 def test_precommit_hook_run_settings(hook_id, key, expected):
-    config = yaml.safe_load(PRECOMMIT.read_text(encoding="utf-8"))
-    hook = next(
-        hook
-        for repo in config["repos"]
-        for hook in repo.get("hooks", [])
-        if hook.get("id") == hook_id
-    )
+    hook = _precommit_hooks()[hook_id]
     assert hook.get(key) is expected
 
 

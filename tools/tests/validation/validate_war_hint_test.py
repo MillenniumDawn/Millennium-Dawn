@@ -21,13 +21,9 @@ def _run(tmp_path, body: str, *, check="validate_missing_war_hint"):
     """Run one decision check over a single decisions file, return issues."""
     mod_path = _write_decisions(tmp_path, body)
     vd._invalidate_decision_cache()
-    vd._set_cache_enabled(False)
-    try:
-        validator = Validator(mod_path=mod_path, use_colors=False)
-        getattr(validator, check)()
-        return list(validator._issues)
-    finally:
-        vd._set_cache_enabled(True)
+    validator = Validator(mod_path=mod_path, use_colors=False)
+    getattr(validator, check)()
+    return list(validator._issues)
 
 
 def test_declares_war_without_hint_flagged(tmp_path):

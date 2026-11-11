@@ -45,20 +45,7 @@ CONTRACTS.update(
         )
     }
 )
-CONTRACTS.update(
-    {
-        name: ("PREV", "THIS")
-        for name in (
-            "prev_is_top3_influencer",
-            "coup_is_available",
-            "target_other_influence_available",
-            "manipulate_politics_action_available",
-            "make_puppet_action_available",
-            "economic_exploitation_available",
-            "economic_aid_available",
-        )
-    }
-)
+CONTRACTS["prev_is_top3_influencer"] = ("PREV", "THIS")
 CONTRACTS.update(
     {f"influence_less_{n}": ("THIS", "ROOT") for n in (5, 10, 20, 30, 40, 60, 70)}
 )
@@ -70,6 +57,7 @@ CONTRACTS.update(
 )
 
 _TAG = re.compile(r"[A-Z][A-Z0-9]{2}")
+_COUNTRY_WEEKLY = re.compile(rf"on_weekly_({_TAG.pattern})")
 _CONDITION_LISTS = frozenset(
     {
         "AND",
@@ -439,6 +427,23 @@ class Reader:
                                 for child in decision.children
                             )
                             self._entry(path, decision, not targeted)
+            elif path.startswith("common/on_actions/"):
+                for node in nodes:
+                    hooks = node.children if node.key == "on_actions" else (node,)
+                    for hook in hooks:
+                        match = _COUNTRY_WEEKLY.fullmatch(hook.key)
+                        if match:
+                            tag = match[1]
+                            self._walk(
+                                path,
+                                hook.children,
+                                Scope(tag, tag),
+                                f"{path}:{hook.line}",
+                            )
+                        else:
+                            self._walk(
+                                path, (hook,), Scope(), path + " (caller unresolved)"
+                            )
             elif path.startswith("history/countries/"):
                 match = re.match(
                     r"([A-Z][A-Z0-9]{2})(?:\s|\.)", path.rsplit("/", 1)[-1]

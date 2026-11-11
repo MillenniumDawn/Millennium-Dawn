@@ -433,11 +433,23 @@ def test_branch_diff_asks_git_for_the_merge_base_range(tmp_path, monkeypatch):
     assert calls[0][-1] == "release...HEAD"
 
 
-def test_branch_diff_without_git_is_empty(tmp_path, monkeypatch):
+# git failure: {case: error subprocess.run raises}
+_GIT_DIFF_FAILURE_CASES = {
+    "git missing": OSError("no git"),
+    "not a repository": subprocess.CalledProcessError(128, "git"),
+    "git hangs": subprocess.TimeoutExpired("git", 15),
+}
+
+
+@pytest.mark.parametrize(
+    "error", _GIT_DIFF_FAILURE_CASES.values(), ids=_GIT_DIFF_FAILURE_CASES
+)
+def test_branch_diff_warns_when_git_fails(tmp_path, monkeypatch, capsys, error):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("MD_STAGED_FILES", raising=False)
-    monkeypatch.setattr(U.subprocess, "run", _raise(OSError()))
+    monkeypatch.setattr(U.subprocess, "run", _raise(error))
     assert U.get_git_diff_files() == []
+    assert "WARNING: git diff failed" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(
@@ -451,6 +463,72 @@ def test_all_txt_files(tmp_path, include_interface, expected):
     assert U.get_all_txt_files(str(tmp_path), include_interface=include_interface) == [
         str(tmp_path / relative) for relative in expected
     ]
+
+
+# list_files: {case: (files under root, keyword arguments, expected paths)}
+_LIST_FILES_CASES = {
+    "recursive txt, sorted": (["b.txt", "a/c.txt", "d.yml"], {}, ["a/c.txt", "b.txt"]),
+    "flat": (["a.txt", "sub/b.txt"], {"recursive": False}, ["a.txt"]),
+    "any pattern": (
+        ["a.txt", "b.gui", "c.yml"],
+        {"patterns": ("*.txt", "*.gui")},
+        ["a.txt", "b.gui"],
+    ),
+    "directory named like a match": (["dir.txt/inner.yml"], {}, []),
+    "hidden entries": ([".a.txt", ".git/b.txt", "c.txt"], {}, ["c.txt"]),
+    "missing directory": ([], {}, []),
+}
+
+
+@pytest.mark.parametrize(
+    "files, kwargs, expected",
+    _LIST_FILES_CASES.values(),
+    ids=_LIST_FILES_CASES.keys(),
+)
+def test_list_files(tmp_path, files, kwargs, expected):
+    root = tmp_path / "root"
+    for relative in files:
+        _write(root / relative, "x")
+    assert U.list_files(root, **kwargs) == [str(root / path) for path in expected]
+
+
+# find_mod_root: {case: (directories, files, start, expected root or None)}
+_MOD_ROOT_CASES = {
+    "from a path below the root": (
+        ["mod/common", "mod/events", "mod/loc"],
+        [],
+        "mod/loc/x.yml",
+        "mod",
+    ),
+    "the nearest root wins": (
+        ["mod/common", "mod/events", "mod/sub/common", "mod/sub/events"],
+        [],
+        "mod/sub",
+        "mod/sub",
+    ),
+    "every marker is required": (["mod/common"], [], "mod", None),
+    "markers are directories": (["mod/common"], ["mod/events"], "mod", None),
+    "no root above": (["a/b"], [], "a/b", None),
+}
+
+
+@pytest.mark.parametrize(
+    "directories, files, start, expected",
+    _MOD_ROOT_CASES.values(),
+    ids=_MOD_ROOT_CASES.keys(),
+)
+def test_find_mod_root(tmp_path, directories, files, start, expected):
+    for relative in directories:
+        (tmp_path / relative).mkdir(parents=True)
+    for relative in files:
+        _write(tmp_path / relative, "x")
+    found = U.find_mod_root(tmp_path / start, ("common", "events"))
+    assert found == (expected and str(tmp_path / expected))
+
+
+def test_root_dir_is_anchored_on_the_module_not_the_command(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "argv", [str(tmp_path / "a" / "b" / "script.py")])
+    assert os.path.isfile(os.path.join(U.get_root_dir(), "tools", "shared_utils.py"))
 
 
 def test_txt_targets_of_a_directory_a_file_and_a_missing_path(tmp_path):

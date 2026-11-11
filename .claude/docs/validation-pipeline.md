@@ -57,6 +57,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   scan disabled; functional Indonesia contracts run in the `Content tests` job.
 - Strictness can differ by stage. `validate_ai_equipment.py` runs without `--strict`
   locally and with it in CI.
+- `git push` runs the full tools suite (`tools-pytest`, about a minute) only when the
+  push changes `tools/` or config files. `pre-commit install` and
+  `tools/dev_setup.py` install the push hook. Older clones need one re-run of either.
 - `validate_unused_textures.py` is a `stages: [manual]` hook. `validate_standardization.py`
   is unwired and run by hand. The `md-standardize` auto-fixer hook stays disabled.
 - The Test Suite runs on every PR to `main`, drafts included. Changes under
@@ -80,10 +83,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   confirm the vanilla culture source/policy; validate entity
   clone parents and `attach` targets (including vanilla entities); check that cultural
   sprite sets cover `_1` through `_7`, including the known tierless-only
-  `northamerican_gfx` entries; validate cross-file clone load order; report cosmetic-tag
-  users of tag-prefixed entity sets; and include `gfx/entities/` in the CI workspace.
-  Those checks depend on entity parsing and/or game lookup behavior and are not covered
-  by the country registration milestone.
+  `northamerican_gfx` entries; validate cross-file clone load order; and report
+  cosmetic-tag users of tag-prefixed entity sets. Those checks depend on entity parsing
+  and/or game lookup behavior and are not covered by the country registration milestone.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
@@ -100,7 +102,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
   and only `gfx/flags`, `gfx/interface/decisions`, and `gfx/texticons` from the art
-  trees. Size checks report art outside them as `decision-icon-unmeasured`.
+  trees, plus the entity definitions in `gfx/entities` and `gfx/models`. Size checks
+  report art outside them as `decision-icon-unmeasured`.
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
@@ -182,18 +185,19 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## Refreshing vanilla-derived data
 
-CI has no HOI4 install, so six checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
+CI has no HOI4 install, so seven checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
 
 Files live under `tools/validation/` except the `docs` target.
 
-| Target    | File                           | Read by                      |
-| --------- | ------------------------------ | ---------------------------- |
-| `defines` | `vanilla_defines.txt`          | `validate_defines.py`        |
-| `docs`    | `resources/documentation/*.md` | `validate_modifiers.py`      |
-| `fonts`   | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
-| `gui`     | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
-| `paths`   | `vanilla_paths.txt`            | `validate_file_paths.py`     |
-| `sprites` | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+| Target     | File                           | Read by                      |
+| ---------- | ------------------------------ | ---------------------------- |
+| `defines`  | `vanilla_defines.txt`          | `validate_defines.py`        |
+| `docs`     | `resources/documentation/*.md` | `validate_modifiers.py`      |
+| `entities` | `vanilla_entities.txt`         | `validate_oob_units.py`      |
+| `fonts`    | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
+| `gui`      | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
+| `paths`    | `vanilla_paths.txt`            | `validate_file_paths.py`     |
+| `sprites`  | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
 
 - `docs` files are verbatim copies of the game's own `documentation/`.
 - `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).

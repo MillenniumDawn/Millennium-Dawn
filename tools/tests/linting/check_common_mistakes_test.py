@@ -46,6 +46,8 @@ from check_common_mistakes import (
     _check_has_idea_mutex_in_not_block,
     _check_has_opinion_modifier_block,
     _check_hidden_trigger_in_ctt,
+    _check_idea_log_id,
+    _check_idea_log_not_needed,
     _check_influence_setter_scope,
     _check_invalid_is_at_war,
     _check_is_x_nation_runtime,
@@ -62,9 +64,11 @@ from check_common_mistakes import (
     _check_shadowed_branches,
     _check_stat_effect_magnitude,
     _check_tautological_or,
+    _check_trade_modifier_outside_shared_effects,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
     _check_wrong_stat_trigger,
+    _find_idea_log_mismatches,
     _get_block,
     _negates_bankruptcy_mission,
 )
@@ -1870,6 +1874,39 @@ _COUNT_CASES: dict[
             ],
         ),
     ],
+    _check_trade_modifier_outside_shared_effects: [
+        (
+            "every reserved modifier flagged in add, reverse, remove, and has forms",
+            4,
+            [
+                "\tadd_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                "\treverse_add_opinion_modifier = {\n",
+                "\t\tmodifier = mutual_trade_opinion\n",
+                "\t}\n",
+                "\tremove_opinion_modifier = { target = PRU modifier = mutual_investment_treaty_opinion }\n",
+                "\tUKR = { has_opinion_modifier = mutual_investment_treaty_trade_opinion }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+        (
+            "the shared effects file applies them",
+            0,
+            [
+                "\tadd_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }\n"
+            ],
+            "common\\scripted_effects\\00_economic_effects.txt",
+        ),
+        (
+            "comments, quoted strings, and other trade modifiers not flagged",
+            0,
+            [
+                "\t# add_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                '\tlog = "modifier = mutual_trade_opinion"\n',
+                "\tadd_opinion_modifier = { target = SER modifier = free_trade_agreement }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+    ],
     _check_wrong_stat_trigger: [
         (
             "bare stat names and has_command_power flagged",
@@ -2817,6 +2854,12 @@ _EXPECTED = {
             "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
         )
     ],
+    "investment treaty opinion outside its effect": [
+        (
+            1,
+            "mutual_investment_treaty_opinion belongs to the shared effects in common/scripted_effects/00_economic_effects.txt -- call set_mutual_investment_treaty instead",
+        )
+    ],
 }
 
 
@@ -3362,6 +3405,13 @@ _EXACT_CASES = [
         _check_stat_effect_magnitude,
         ["\tadd_war_support = 15\n"],
     ),
+    _exact(
+        "investment treaty opinion outside its effect",
+        _check_trade_modifier_outside_shared_effects,
+        [
+            "\tadd_opinion_modifier = { target = SER modifier = mutual_investment_treaty_opinion }\n"
+        ],
+    ),
 ]
 
 
@@ -3602,6 +3652,72 @@ def test_event_chain_revisits_shared_event_with_more_depth_remaining():
         True,
         ["start.1", "shared.1", "war.1"],
     )
+
+
+def _idea_with(hook_lines):
+    return [
+        "ideas = {\n",
+        "\tcountry = {\n",
+        "\t\tTST_idea = {\n",
+        *[f"\t\t\t{line}\n" for line in hook_lines],
+        "\t\t}\n",
+        "\t}\n",
+        "}\n",
+    ]
+
+
+_PREFIX = "[GetDateText]: [Root.GetName]: "
+
+
+# case: log text in on_add -> the wrong token the check reports, or None
+@pytest.mark.parametrize(
+    ("text", "bad"),
+    [
+        pytest.param(f"{_PREFIX}Idea TST_idea added", None, id="standard wording"),
+        pytest.param(f"{_PREFIX}add idea TST_idea", None, id="legacy wording"),
+        pytest.param(f"{_PREFIX}Idea TST_b added", "TST_b", id="standard copied id"),
+        pytest.param(f"{_PREFIX}add idea TST_b", "TST_b", id="add idea copied id"),
+        pytest.param(f"{_PREFIX}remove idea TST_b", "TST_b", id="remove copied id"),
+        pytest.param(f"{_PREFIX}add TST_b", "TST_b", id="short copied id"),
+        pytest.param(f"{_PREFIX}TST_b idea added", "TST_b", id="trailing copied id"),
+        pytest.param(f"{_PREFIX}Adopted TST_b reserve", None, id="hand-written"),
+        pytest.param(f"{_PREFIX}add idea [TST_b.GetName]", None, id="runtime name"),
+    ],
+)
+def test_idea_log_id(text, bad):
+    lines = _idea_with(
+        ["on_add = {", f'\tlog = "{text}"', "\tadd_stability = 0.1", "}"]
+    )
+
+    assert [row[-1] for row in _find_idea_log_mismatches(lines)] == (
+        [bad] if bad else []
+    )
+    assert bool(_check_idea_log_id(lines)) == bool(bad)
+
+
+# case: statements in on_add -> is the log flagged as not needed
+@pytest.mark.parametrize(
+    ("statements", "flagged"),
+    [
+        pytest.param(['log = "x"', "custom_effect_tooltip = a"], True, id="tooltip"),
+        pytest.param(
+            ['log = "x"', "effect_tooltip = {", "\tadd_stability = 0.1", "}"],
+            True,
+            id="effect_tooltip block",
+        ),
+        pytest.param(
+            ['log = "x"', "custom_effect_tooltip = a", "add_stability = 0.1"],
+            False,
+            id="tooltip beside a real effect",
+        ),
+        pytest.param(['log = "x"'], False, id="log-only is the other check"),
+        pytest.param(["custom_effect_tooltip = a"], False, id="no log"),
+    ],
+)
+def test_idea_log_not_needed(statements, flagged):
+    lines = _idea_with(["on_add = {", *[f"\t{s}" for s in statements], "}"])
+
+    assert bool(_check_idea_log_not_needed(lines)) == flagged
 
 
 def _log_only_block_types(lines):

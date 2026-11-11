@@ -28,7 +28,7 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
     group = next(
         text[header : hi + 1]
         for name, _, hi, header in _iter_blocks(blank_comments(text), 0, len(text))
-        if name == "USA_APC_design"
+        if name == "USA_apc_design"
     )
     weapon = "main_armament_slot = small_autocannon_3"
     ammunition = "ammunition_load_slot = anti_infantry_autocannon_ammo_3"
@@ -43,8 +43,8 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
     )
     findings = analysis.findings
     assert [(record["design"], record["status"]) for record in analysis.records] == [
-        ("modern_APC_default", "incompatible" if historical else "checked"),
-        ("new_APC_default", "checked"),
+        ("modern_apc_default", "incompatible" if historical else "checked"),
+        ("new_apc_default", "checked"),
     ]
     assert_findings(
         [f"{issue.category}: {issue.message}" for issue in findings],
@@ -52,7 +52,7 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
             [
                 (
                     "ai-equipment-incompatible-ammo",
-                    "USA_APC_design/modern_APC_default",
+                    "USA_apc_design/modern_apc_default",
                     "small_autocannon_3",
                     "machine_gun_ammo",
                 )
@@ -81,13 +81,15 @@ def live_naval_sources():
         "TUR": "Turkey",
     }
     paths = [
-        REPO_ROOT / path
+        REPO_ROOT / f"history/countries/{tag} - {name}.txt"
         for tag, name in countries.items()
-        for path in (
-            f"common/ai_equipment/{tag}_naval.txt",
-            f"history/countries/{tag} - {name}.txt",
-        )
     ]
+    naval_files = {f"{tag}_naval.txt" for tag in countries}
+    paths.extend(
+        path
+        for path in (REPO_ROOT / "common/ai_equipment").glob("*.txt")
+        if path.name in naval_files or path.name.startswith("zz_shared_")
+    )
     for directory in (
         "common/bookmarks",
         "common/technologies",
@@ -106,11 +108,17 @@ def live_naval_sources():
 def test_naval_regression_sources(tmp_path, live_naval_sources):
     sources = live_naval_sources
     write_tree(tmp_path, sources)
+    designs = [
+        design
+        for path, text in sources.items()
+        if path.startswith("common/ai_equipment/")
+        for design in parse_designs(text, path)
+    ]
     for country in ("GRE", "TUR"):
-        path = f"common/ai_equipment/{country}_naval.txt"
-        designs = parse_designs(sources[path], path)
-        assert designs and all(design.users == {country} for design in designs)
-        assert any(design.hull == "frigate_hull_2" for design in designs)
+        assert any(
+            country in design.users and design.hull == "frigate_hull_2"
+            for design in designs
+        )
     validator = build_validator(Validator, tmp_path, check_buildability=True)
     validator._validate_buildability()
     assert validator.errors_found == 0
@@ -131,24 +139,24 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
     (
         (
             "ALG - Algeria",
-            "ALG_corvettes",
-            "ALG_Corvette_1970s",
-            "module_torpedoes_2",
-            "tech_torpedoes_2",
+            "ALG_frigates",
+            "ALG_frigate_1965",
+            "module_light_surface_diesel_power_1",
+            "tech_diesel_power_systems_1",
         ),
         (
             "ARG - Argentina",
-            "ARG_attack_submarines",
-            "ARG_attack_sub_1960s",
+            "SHARED_attack_submarines_1",
+            "SHARED_attack_submarines_1_attack_submarine_hull_1",
             "module_sub_esm_1",
             "tech_combat_radar_2",
         ),
         (
             "AST - Australia",
-            "AST_unique_frigates",
-            "AST_adelaide_class_2",
-            "module_light_surface_diesel_power_1",
-            "tech_diesel_power_systems_1",
+            "SHARED_frigates_2",
+            "SHARED_frigates_2_frigate_hull_3",
+            "module_analog_fire_control",
+            "tech_fire_control_1",
         ),
     ),
 )
@@ -176,3 +184,49 @@ def test_live_module_claim_tracks_its_enabling_technology(
     assert records
     claim = f"{module} requires {technology}"
     assert any(claim in record["reason"] for record in records) is not researched
+
+
+def test_naval_technology_transitions(live_equipment_index):
+    from ai_equipment_buildability import _truth, _weight
+
+    designs = [
+        design
+        for path in (REPO_ROOT / "common/ai_equipment").glob("*.txt")
+        for design in parse_designs(path.read_text(encoding="utf-8-sig"), str(path))
+    ]
+
+    def active(design, techs, country):
+        def truth(nodes):
+            return _truth(nodes, techs, set(), {}, country, (2050, 1, 1, 0))
+
+        return all(
+            (weight := _weight(priority, truth)) is not None and weight[0] > 0
+            for priority in design.priorities
+        )
+
+    carriers = [d for d in designs if d.group == "CHI_carriers"]
+    hull2 = next(d for d in carriers if d.hull == "carrier_hull_2")
+    hull3 = next(d for d in carriers if d.hull == "carrier_hull_3")
+    assert hull3.slots == hull2.slots
+    assert not check_target_variants(
+        (REPO_ROOT / "common/ai_equipment/CHI_naval.txt").read_text(encoding="utf-8"),
+        live_equipment_index,
+    )
+    assert active(hull3, {"carrier_hull_1", "carrier_hull_2", "carrier_hull_3"}, "CHI")
+    assert not active(
+        hull3,
+        {"carrier_hull_1", "carrier_hull_2", "carrier_hull_3", "carrier_hull_4"},
+        "CHI",
+    )
+
+    techs = {f"frigate_hull_{tier}" for tier in range(1, 7)}
+    for (
+        country
+    ) in "AST BRA CAN CHI DEN EGY ENG FRA GER GRE HOL IND ITA JAP KOR NKO POR RAJ SIA SOV SWE USA".split():
+        assert any(
+            country in design.users
+            and "naval_frigate" in design.roles
+            and design.hull == "frigate_hull_5"
+            and active(design, techs, country)
+            for design in designs
+        ), country
