@@ -99,6 +99,7 @@ add_namespace = ukraine_t72
 add_namespace = ukraine_t72_production
 add_namespace = ukraine_t72_export
 add_namespace = ukraine_t80
+add_namespace = ukraine_s200
 add_namespace = ukraine_aa
 add_namespace = ukraine_aa_production
 add_namespace = ukraine_bmp1_production
@@ -43618,4 +43619,99 @@ country_event = {
 	trigger = { original_tag = UKR }
 
 	option = { name = ukraine_t72_export.21.a }
+}
+
+#################### S-200 ####################
+country_event = {
+	id = ukraine_s200.1
+	title = ukraine_s200.1.name
+	desc = ukraine_s200.1.desc
+	picture = GFX_UKR_Storage_of_Soviet_Equipment_s75
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_s200.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_s200.1.a executed"
+		ai_chance = { base = 10 }
+		custom_effect_tooltip = UKR_s200_keep_tt
+	}
+
+	option = {
+		name = ukraine_s200.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_s200.1.b executed"
+		ai_chance = { base = 2 }
+		custom_effect_tooltip = UKR_s200_retire_tt
+		hidden_effect = { UKR_s200_retire_all = yes }
+	}
+}
+
+country_event = {
+	id = ukraine_s200.2
+	title = ukraine_s200.2.name
+	desc = ukraine_s200.2.desc
+	picture = GFX_UKR_Storage_of_Soviet_Equipment_s75
+	is_triggered_only = yes
+
+	trigger = { FROM = { original_tag = UKR } }
+
+	option = {
+		name = ukraine_s200.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_s200.2.a executed"
+		trigger = {
+			check_variable = { treasury > 0.1 }
+			FROM = {
+				check_variable = { ukraine_has_s200_stockpile > 0 }
+				check_variable = { UKR_s200_missiles > 23 }
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		set_temp_variable = { treasury_change = -0.1 }
+		modify_treasury_effect = yes
+		UKR_air_defense_site_to_buyer = yes
+		add_opinion_modifier = { target = FROM modifier = UKR_storage_sale_buyer }
+		FROM = {
+			UKR_s200_take_battalion = yes
+			set_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+			country_event = ukraine_s200.3
+		}
+	}
+
+	option = {
+		name = ukraine_s200.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_s200.2.b executed"
+		ai_chance = { base = 3 }
+		FROM = { country_event = ukraine_s200.4 }
+	}
+}
+
+country_event = {
+	id = ukraine_s200.3
+	title = ukraine_s200.3.name
+	desc = ukraine_s200.3.desc
+	picture = GFX_UKR_Storage_of_Soviet_Equipment_s75
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { name = ukraine_s200.3.a }
+}
+
+country_event = {
+	id = ukraine_s200.4
+	title = ukraine_s200.4.name
+	desc = ukraine_s200.4.desc
+	picture = GFX_UKR_Storage_of_Soviet_Equipment_s75
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = { name = ukraine_s200.4.a }
 }
