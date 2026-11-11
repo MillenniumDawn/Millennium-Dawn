@@ -9098,6 +9098,11 @@ UKR_modernize_sov_category = {
 			date < 2008.01.01
 			has_country_flag = UKR_modernize_btr_70m_flag
 			NOT = { has_country_flag = UKR_modernize_btr_70m_kba2_flag }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = tank_components_tech_3
+			}
+			NOT = { has_country_flag = UKR_modernize_btr_70m_hrim_no_tech_taken_flag }
 		}
 
 		custom_cost_trigger = {
@@ -9142,13 +9147,82 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_70m_hrim"
 			UKR_count_sov_modernization = yes
 			army_experience = 3
+			UKR_sov_variant_btr_70m_hrim = yes
+			country_event = ukraine_btr_production.3
+			set_country_flag = UKR_modernize_btr_70m_hrim_flag
+		}
+	}
+
+	UKR_modernize_btr_70m_hrim_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			date > 2004.01.01
+			date < 2008.01.01
+			has_country_flag = UKR_modernize_btr_70m_flag
+			NOT = { has_country_flag = UKR_modernize_btr_70m_kba2_flag }
+			has_dlc = "No Step Back"
+			NOT = { has_tech = tank_components_tech_3 }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 5
+		}
+
+		custom_cost_text = UKR_modernize_btr_70m_hrim_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		available = {
+			date > 2004.01.01
+			date < 2008.01.01
+			has_country_flag = UKR_modernize_btr_70m_flag
+			NOT = { has_country_flag = UKR_modernize_btr_70m_kba2_flag }
+			controls_state = 696 #Kharkiv
+			has_army_experience > 4
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.004
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_btr_70m_hrim_no_tech"
+			set_country_flag = UKR_modernize_btr_70m_hrim_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -5
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_70m_hrim_no_tech"
 			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = tank_components_tech_3 }
-				}
+				limit = { has_dlc = "No Step Back" }
 				set_technology = { tank_components_tech_3 = 1 popup = no }
 			}
+			UKR_count_sov_modernization = yes
+			army_experience = 3
 			UKR_sov_variant_btr_70m_hrim = yes
 			country_event = ukraine_btr_production.3
 			set_country_flag = UKR_modernize_btr_70m_hrim_flag
@@ -9430,6 +9504,12 @@ UKR_modernize_sov_category = {
 				has_country_flag = UKR_btr_line_80_flag
 			}
 			has_country_flag = UKR_varan_program_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = small_autocannon_tech_3
+				has_tech = Heavy_Anti_tank_3
+			}
+			NOT = { has_country_flag = UKR_modernize_varan_no_tech_taken_flag }
 		}
 
 		available = {
@@ -9472,20 +9552,88 @@ UKR_modernize_sov_category = {
 			army_experience = 3
 			UKR_sov_variant_varan = yes
 			country_event = ukraine_btr_production.5
-			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = small_autocannon_tech_3 }
-				}
-				set_technology = { small_autocannon_tech_3 = 1 }
+			set_country_flag = UKR_varan_developed_flag
+			UKR_varan_check_hulls = yes
+		}
+	}
+
+	UKR_modernize_varan_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 5
+		}
+		custom_cost_text = UKR_modernize_varan_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		visible = {
+			date > 2012.01.01
+			date < 2017.01.01
+			OR = {
+				has_country_flag = UKR_modernize_btr_70t_flag
+				has_country_flag = UKR_btr_line_80_flag
 			}
-			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = Heavy_Anti_tank_3 }
-				}
-				set_technology = { Heavy_Anti_tank_3 = 1 popup = no }
+			has_country_flag = UKR_varan_program_flag
+			has_dlc = "No Step Back"
+			NOT = { AND = { has_tech = small_autocannon_tech_3 has_tech = Heavy_Anti_tank_3 } }
+		}
+
+		available = {
+			date > 2012.01.01
+			date < 2017.01.01
+			OR = {
+				has_country_flag = UKR_modernize_btr_70t_flag
+				has_country_flag = UKR_btr_line_80_flag
 			}
+			controls_state = 698 #Kyiv
+			has_army_experience > 4
+			has_war_with = SOV
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.004
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_varan_no_tech"
+			set_country_flag = UKR_modernize_varan_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -5
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_varan_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { small_autocannon_tech_3 = 1 Heavy_Anti_tank_3 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			army_experience = 3
+			UKR_sov_variant_varan = yes
+			country_event = ukraine_btr_production.5
 			set_country_flag = UKR_varan_developed_flag
 			UKR_varan_check_hulls = yes
 		}
@@ -9638,6 +9786,11 @@ UKR_modernize_sov_category = {
 			date < 2008.01.01
 			NOT = { has_country_flag = UKR_modernize_btr_80_kba2_flag }
 			has_country_flag = UKR_btr_line_80_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = tank_components_tech_3
+			}
+			NOT = { has_country_flag = UKR_modernize_btr_80m_hrim_no_tech_taken_flag }
 		}
 
 		custom_cost_trigger = {
@@ -9681,13 +9834,81 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_80m_hrim"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
+			UKR_sov_variant_btr_80m_hrim = yes
+			country_event = ukraine_btr_production.7
+			set_country_flag = UKR_modernize_btr_80m_hrim_flag
+		}
+	}
+
+	UKR_modernize_btr_80m_hrim_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			date > 2004.01.01
+			date < 2008.01.01
+			NOT = { has_country_flag = UKR_modernize_btr_80_kba2_flag }
+			has_country_flag = UKR_btr_line_80_flag
+			has_dlc = "No Step Back"
+			NOT = { has_tech = tank_components_tech_3 }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 5
+		}
+
+		custom_cost_text = UKR_modernize_btr_80m_hrim_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		available = {
+			date > 2004.01.01
+			date < 2008.01.01
+			NOT = { has_country_flag = UKR_modernize_btr_80_kba2_flag }
+			controls_state = 696 #Kharkiv
+			has_army_experience > 4
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.004
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_btr_80m_hrim_no_tech"
+			set_country_flag = UKR_modernize_btr_80m_hrim_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -5
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_80m_hrim_no_tech"
 			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = tank_components_tech_3 }
-				}
+				limit = { has_dlc = "No Step Back" }
 				set_technology = { tank_components_tech_3 = 1 popup = no }
 			}
+			UKR_count_sov_modernization = yes
+			army_experience = 2
 			UKR_sov_variant_btr_80m_hrim = yes
 			country_event = ukraine_btr_production.7
 			set_country_flag = UKR_modernize_btr_80m_hrim_flag
@@ -9712,6 +9933,11 @@ UKR_modernize_sov_category = {
 				has_country_flag = UKR_modernize_btr_80_kba2_flag
 				has_country_flag = UKR_modernize_btr_80m_hrim_flag
 			}
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = assault_gun_tech_2
+			}
+			NOT = { has_country_flag = UKR_modernize_btr_80um_rohan_no_tech_taken_flag }
 		}
 
 		custom_cost_trigger = { check_variable = { treasury > 0.03 } }
@@ -9736,15 +9962,68 @@ UKR_modernize_sov_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_80um_rohan"
 			UKR_count_domestic_development = yes
-			hidden_effect = {
-				if = {
-					limit = {
-						has_dlc = "No Step Back"
-						NOT = { has_tech = assault_gun_tech_2 }
-					}
-					set_technology = { assault_gun_tech_2 = 1 popup = no }
-				}
+			UKR_sov_variant_btr_80um_rohan = yes
+			country_event = ukraine_btr_production.8
+			country_event = { id = ukraine_btr_line.4 days = 30 }
+		}
+	}
+
+	UKR_modernize_btr_80um_rohan_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_btr70
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			date > 2006.01.01
+			date < 2014.01.01
+			has_country_flag = UKR_btr_line_80_flag
+			OR = {
+				has_country_flag = UKR_modernize_btr_80_kba2_flag
+				has_country_flag = UKR_modernize_btr_80m_hrim_flag
 			}
+			has_dlc = "No Step Back"
+			NOT = { has_tech = assault_gun_tech_2 }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.05 }
+			has_political_power > 10
+			has_army_experience > 7
+		}
+		custom_cost_text = UKR_modernize_btr_80um_rohan_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		available = {
+			controls_state = 696 #Kharkiv
+			has_army_experience > 6
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 225
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_btr_80um_rohan_no_tech"
+			set_country_flag = UKR_modernize_btr_80um_rohan_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -7
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_btr_80um_rohan_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { assault_gun_tech_2 = 1 popup = no }
+			}
+			UKR_count_domestic_development = yes
 			UKR_sov_variant_btr_80um_rohan = yes
 			country_event = ukraine_btr_production.8
 			country_event = { id = ukraine_btr_line.4 days = 30 }
@@ -10507,6 +10786,11 @@ UKR_modernize_sov_category = {
 			date > 2009.01.01
 			date < 2011.01.01
 			has_country_flag = UKR_modernize_mt_lbr6_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = tank_components_tech_3
+			}
+			NOT = { has_country_flag = UKR_modernize_mt_lbr7_no_tech_taken_flag }
 		}
 
 		available = {
@@ -10544,13 +10828,81 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbr7"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
+			UKR_sov_variant_mtlbr7 = yes
+			country_event = ukraine_khtz_production.2
+			set_country_flag = UKR_modernize_mt_lbr7_flag
+		}
+	}
+
+	UKR_modernize_mt_lbr7_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 5
+		}
+		custom_cost_text = UKR_modernize_mt_lbr7_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			date > 2009.01.01
+			date < 2011.01.01
+			has_country_flag = UKR_modernize_mt_lbr6_flag
+			has_dlc = "No Step Back"
+			NOT = { has_tech = tank_components_tech_3 }
+		}
+
+		available = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			date > 2009.01.01
+			date < 2011.01.01
+			controls_state = 696 #Kharkiv
+			has_army_experience > 4
+			has_country_flag = UKR_modernize_mt_lbr6_flag
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mt_lbr7_no_tech"
+			set_country_flag = UKR_modernize_mt_lbr7_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -5
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbr7_no_tech"
 			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = tank_components_tech_3 }
-				}
+				limit = { has_dlc = "No Step Back" }
 				set_technology = { tank_components_tech_3 = 1 popup = no }
 			}
+			UKR_count_sov_modernization = yes
+			army_experience = 2
 			UKR_sov_variant_mtlbr7 = yes
 			country_event = ukraine_khtz_production.2
 			set_country_flag = UKR_modernize_mt_lbr7_flag
@@ -10576,6 +10928,12 @@ UKR_modernize_sov_category = {
 				has_country_flag = UKR_modernize_mt_lbr6_flag
 				has_country_flag = UKR_modernize_mt_lbr7_flag
 			}
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = tank_components_tech_3
+				has_tech = Heavy_Anti_tank_3
+			}
+			NOT = { has_country_flag = UKR_modernize_mt_lbmsh_no_tech_taken_flag }
 		}
 
 		available = {
@@ -10614,20 +10972,86 @@ UKR_modernize_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbmsh"
 			UKR_count_sov_modernization = yes
 			army_experience = 2
-			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = tank_components_tech_3 }
-				}
-				set_technology = { tank_components_tech_3 = 1 popup = no }
+			UKR_sov_variant_mtlbmsh = yes
+			country_event = ukraine_khtz_production.3
+			set_country_flag = UKR_modernize_mt_lbmsh_flag
+			696 = { #Kharkiv
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
 			}
-			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = Heavy_Anti_tank_3 }
-				}
-				set_technology = { Heavy_Anti_tank_3 = 1 popup = no }
+		}
+	}
+
+	UKR_modernize_mt_lbmsh_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 5
+		}
+		custom_cost_text = UKR_modernize_mt_lbmsh_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		visible = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			OR = {
+				has_country_flag = UKR_modernize_mt_lbr6_flag
+				has_country_flag = UKR_modernize_mt_lbr7_flag
 			}
+			has_dlc = "No Step Back"
+			NOT = { AND = { has_tech = tank_components_tech_3 has_tech = Heavy_Anti_tank_3 } }
+		}
+
+		available = {
+			has_country_flag = UKR_khtz_mtlb_flag
+			controls_state = 696 #Kharkiv
+			has_army_experience > 4
+			OR = {
+				has_country_flag = UKR_modernize_mt_lbr6_flag
+				has_country_flag = UKR_modernize_mt_lbr7_flag
+			}
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 135
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mt_lbmsh_no_tech"
+			set_country_flag = UKR_modernize_mt_lbmsh_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -5
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mt_lbmsh_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { tank_components_tech_3 = 1 Heavy_Anti_tank_3 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			army_experience = 2
 			UKR_sov_variant_mtlbmsh = yes
 			country_event = ukraine_khtz_production.3
 			set_country_flag = UKR_modernize_mt_lbmsh_flag
@@ -10692,7 +11116,7 @@ UKR_modernize_sov_category = {
 			set_country_flag = UKR_mtlb_t23_developed_flag
 		}
 	}
-	UKR_mtlb_issue_plain = {
+	UKR_mtlb_issue_kpvt = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
 		ai_will_do = {
 			base = 10
@@ -10709,8 +11133,8 @@ UKR_modernize_sov_category = {
 		available = {
 			has_war_with = SOV
 			custom_trigger_tooltip = {
-				tooltip = UKR_mtlb_issue_money_plain_tt
-				check_variable = { treasury > 0.005 }
+				tooltip = UKR_mtlb_issue_money_kpvt_tt
+				check_variable = { treasury > 0.01 }
 			}
 		}
 
@@ -10718,24 +11142,24 @@ UKR_modernize_sov_category = {
 		days_re_enable = 7
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_mtlb_issue_plain"
-			set_temp_variable = { treasury_change = -0.005 }
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_mtlb_issue_kpvt"
+			set_temp_variable = { treasury_change = -0.01 }
 			if = {
 				limit = { NOT = { has_country_flag = UKR_storage_mtlb_kept_flag } }
 				custom_effect_tooltip = UKR_mtlb_issue_unmaintained_tt
 				set_temp_variable = { treasury_change = -0.01 }
 			}
 			modify_treasury_effect = yes
-			set_variable = { UKR_mtlb_issue_amount_plain = 40 }
-			clamp_variable = { var = UKR_mtlb_issue_amount_plain max = ukraine_has_mtlb_stockpile }
-			subtract_from_variable = { ukraine_has_mtlb_stockpile = UKR_mtlb_issue_amount_plain }
+			set_variable = { UKR_mtlb_issue_amount_kpvt = 40 }
+			clamp_variable = { var = UKR_mtlb_issue_amount_kpvt max = ukraine_has_mtlb_stockpile }
+			subtract_from_variable = { ukraine_has_mtlb_stockpile = UKR_mtlb_issue_amount_kpvt }
 			custom_effect_tooltip = UKR_mtlb_issue_taken_tt
 			hidden_effect = { UKR_storage_refresh = yes }
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_mtlb_issue_plain"
-			UKR_sov_deliver_mtlb = yes
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_mtlb_issue_kpvt"
+			UKR_sov_deliver_mtlb_kpvt = yes
 		}
 	}
 
@@ -10872,6 +11296,11 @@ UKR_modernize_sov_category = {
 
 		visible = {
 			has_country_flag = UKR_mtlbu_apc_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = assault_gun_tech
+			}
+			NOT = { has_country_flag = UKR_develop_bmp1lb_no_tech_taken_flag }
 		}
 
 		available = {
@@ -10894,13 +11323,58 @@ UKR_modernize_sov_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_bmp1lb"
 			UKR_count_sov_modernization = yes
+			UKR_sov_variant_bmp1lb = yes
+			set_country_flag = UKR_bmp1lb_developed_flag
+		}
+	}
+
+	UKR_develop_bmp1lb_no_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
+		fire_only_once = yes
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mtlbu_apc_flag
+			has_dlc = "No Step Back"
+			NOT = { has_tech = assault_gun_tech }
+		}
+
+		available = {
+			date < 2025.01.01
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.035 }
+			has_political_power > 10
+			has_army_experience > 3
+		}
+		custom_cost_text = UKR_develop_bmp1lb_no_tech_cost
+		ai_hint_pp_cost = 10
+
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_bmp1lb_no_tech"
+			set_country_flag = UKR_develop_bmp1lb_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -3
+				set_temp_variable = { treasury_change = -0.035 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_bmp1lb_no_tech"
 			if = {
-				limit = {
-					has_dlc = "No Step Back"
-					NOT = { has_tech = assault_gun_tech }
-				}
+				limit = { has_dlc = "No Step Back" }
 				set_technology = { assault_gun_tech = 1 popup = no }
 			}
+			UKR_count_sov_modernization = yes
 			UKR_sov_variant_bmp1lb = yes
 			set_country_flag = UKR_bmp1lb_developed_flag
 		}

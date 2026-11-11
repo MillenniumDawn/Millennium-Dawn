@@ -13009,7 +13009,7 @@ UKR_sov_production_object14 = {
 }
 
 # MT-LB in a war with Russia
-# MT-LB-AT: No Step Back variant, or a non-NSB APC
+# MT-LB-AT artillery tractor: no turret, only a 7.62-mm machine gun for the crew
 UKR_sov_variant_mtlb_at = {
 	if = {
 		limit = { has_dlc = "No Step Back" }
@@ -13018,14 +13018,14 @@ UKR_sov_variant_mtlb_at = {
 			type = medium_tank_amphibious_chassis_0
 			parent_version = 0
 			modules = {
-				main_armament_slot = afv_machine_gun_2
+				main_armament_slot = afv_machine_gun
 				turret_type_slot = tank_no_turret
 				reload_type_slot = manual_loading
 				suspension_type_slot = tank_torsion_bar_suspension_light
 				armor_type_slot = tank_steel_armor_gen1
 				engine_type_slot = tank_diesel_engine_gen1
 				special_type_slot_4 = tank_battlestation_1
-				ammunition_load_slot = machine_gun_ammo_2
+				ammunition_load_slot = machine_gun_ammo_1
 				special_type_slot_5 = afv_troop_capacity
 			}
 			upgrades = { tank_nsb_armor_upgrade = 1 }
@@ -13077,16 +13077,57 @@ UKR_sov_variant_mtlb_t23 = {
 		}
 	}
 }
-# MT-LB returned to service from storage in a war with Russia: UKR_mtlb_issue_amount vehicles
-UKR_sov_deliver_mtlb = {
+# MT-LB returned to service from storage in a war with Russia with a BTR-70 or BRDM-2 turret (KPVT and PKT)
+UKR_sov_variant_mtlb_kpvt = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+	create_equipment_variant = {
+		name = "MT-LB KPVT"
+		type = medium_tank_amphibious_chassis_0
+		parent_version = 1
+		modules = {
+			main_armament_slot = afv_machine_gun_2
+			secondary_armament_slot = afv_coax_machine_gun_2
+			reload_type_slot = manual_loading
+			ammunition_load_slot = machine_gun_ammo_2
+			turret_type_slot = tank_base_tank_turret
+			suspension_type_slot = tank_torsion_bar_suspension_light
+			armor_type_slot = tank_steel_armor_gen1
+			engine_type_slot = tank_diesel_engine_gen1
+			special_type_slot_4 = tank_battlestation_1
+			special_type_slot_5 = afv_troop_capacity
+		}
+		upgrades = { tank_nsb_armor_upgrade = 1 }
+		obsolete = yes
+		icon = "GFX_MT_LB"
+		model = "SOV_MTLB_entity"
+		design_team = mio:UKR_khtz_tank_manufacturer
+	}
+	}
+	else = {
+		create_equipment_variant = {
+			name = "MT-LB KPVT"
+			type = APC_1
+			allow_without_tech = yes
+			design_team = mio:UKR_khtz_tank_manufacturer
+			icon = "GFX_MT_LB"
+		}
+	}
+}
+UKR_sov_deliver_mtlb_kpvt = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_mtlb_kpvt_variant_flag } }
+		set_country_flag = UKR_mtlb_kpvt_variant_flag
+		UKR_sov_variant_mtlb_kpvt = yes
+	}
 	meta_effect = {
 		text = {
 			if = {
 				limit = { has_dlc = "No Step Back" }
-				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "MT-LB" amount = [?UKR_mtlb_issue_amount_plain] producer = UKR }
+				add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "MT-LB KPVT" amount = [?UKR_mtlb_issue_amount_kpvt] producer = UKR }
 			}
 			else = {
-				add_equipment_to_stockpile = { type = APC_1 amount = [?UKR_mtlb_issue_amount_plain] producer = UKR }
+				add_equipment_to_stockpile = { type = APC_1 variant_name = "MT-LB KPVT" amount = [?UKR_mtlb_issue_amount_kpvt] producer = UKR }
 			}
 		}
 	}
