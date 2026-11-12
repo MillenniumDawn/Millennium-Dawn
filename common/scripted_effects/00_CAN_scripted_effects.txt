@@ -82,10 +82,77 @@ CAN_modify_french_happiness = {
 	CAN_update_french_happiness = yes
 }
 
-# set_temp_variable = { subsidy_change_tmp = +- }
-CAN_modify_subsidy_changes = {
-	add_to_variable = { CAN_subsidy_total = subsidy_change_tmp }
+CAN_calculate_subsidy_bill = {
+	if = {
+		limit = { NOT = { has_variable = CAN_subsidy_points_max } }
+		set_variable = { CAN_subsidy_points_max = 8 }
+		set_variable = { CAN_subsidy_sector_max = 3 }
+		set_variable = { CAN_subsidy_ai_civilian_point_cap = 5 }
+	}
+	if = {
+		limit = { NOT = { has_variable = CAN_subsidy_base } }
+		set_variable = { CAN_subsidy_base = 0 }
+	}
+	if = {
+		limit = { NOT = { has_variable = CAN_subsidy_military_stacks } }
+		set_variable = { CAN_subsidy_military_stacks = 0 }
+		set_variable = { CAN_subsidy_construction_stacks = 0 }
+		set_variable = { CAN_subsidy_infrastructure_stacks = 0 }
+		set_variable = { CAN_subsidy_oil_stacks = 0 }
+		set_variable = { CAN_subsidy_agriculture_stacks = 0 }
+		set_variable = { CAN_subsidy_maritime_stacks = 0 }
+		set_variable = { CAN_subsidy_aerospace_stacks = 0 }
+		set_variable = { CAN_industrial_capacity_dockyard_var = 0 }
+		set_variable = { CAN_production_speed_air_base_factor_var = 0 }
+	}
+
+	set_variable = { CAN_subsidy_points_used = CAN_subsidy_military_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_construction_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_infrastructure_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_oil_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_agriculture_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_maritime_stacks }
+	add_to_variable = { CAN_subsidy_points_used = CAN_subsidy_aerospace_stacks }
+
+	# Weekly share of GDP per stack. 0.0002 is about 1% of annual GDP.
+	set_variable = {
+		CAN_subsidy_scaled_share = {
+			value = CAN_subsidy_military_stacks
+			multiply = 0.00025
+			add = { value = CAN_subsidy_construction_stacks multiply = 0.0002 }
+			add = { value = CAN_subsidy_infrastructure_stacks multiply = 0.00012 }
+			add = { value = CAN_subsidy_oil_stacks multiply = 0.00012 }
+			add = { value = CAN_subsidy_agriculture_stacks multiply = 0.00008 }
+			add = { value = CAN_subsidy_maritime_stacks multiply = 0.00018 }
+			add = { value = CAN_subsidy_aerospace_stacks multiply = 0.00018 }
+		}
+	}
+	set_variable = { CAN_subsidy_total = CAN_subsidy_base }
+	set_temp_variable = {
+		CAN_subsidy_scaled_cost = {
+			value = gdp_total
+			multiply = CAN_subsidy_scaled_share
+		}
+	}
+	add_to_variable = { CAN_subsidy_total = CAN_subsidy_scaled_cost }
 	clamp_variable = { var = CAN_subsidy_total min = 0 }
+}
+
+CAN_finish_subsidy_change = {
+	CAN_calculate_subsidy_bill = yes
+	custom_effect_tooltip = CAN_subsidy_priority_changed_tt
+	ingame_update_setup = yes
+}
+
+# Effect: CAN_modify_subsidy_changes
+# Purpose: Adds a flat weekly subsidy charge from a focus or event and refreshes the bill
+# Output: CAN_subsidy_base, CAN_subsidy_total
+# Parameters:
+# - subsidy_change_tmp: weekly billions added to the flat subsidy bill
+CAN_modify_subsidy_changes = {
+	add_to_variable = { CAN_subsidy_base = subsidy_change_tmp }
+	clamp_variable = { var = CAN_subsidy_base min = 0 }
+	CAN_calculate_subsidy_bill = yes
 	custom_effect_tooltip = CAN_modify_subsidy_changes_tt
 	ingame_update_setup = yes
 }

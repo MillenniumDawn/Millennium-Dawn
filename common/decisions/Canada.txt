@@ -677,133 +677,611 @@ CAN_provincial_infrastructure = {
 }
 
 CAN_canadian_subsidies_projects = {
-	# set_variable = { CAN_stability_factor_var = 0 }
-	# set_variable = { CAN_industrial_capacity_factory_var = 0 }
-	# set_variable = { CAN_production_speed_buildings_var = 0 }
-	# set_variable = { CAN_production_speed_infrastructure_factor_var = 0 }
-	# set_variable = { CAN_production_oil_var = 0 }
-	# set_variable = { CAN_subsidy_total = 0 }
 	CAN_subsidize_military_industry = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 60
 		cost = 50
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_subsidize_military_industry"
-			set_temp_variable = { subsidy_change_tmp = 0.2 }
-			CAN_modify_subsidy_changes = yes
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
-			add_to_variable = { CAN_industrial_capacity_factory_var = 0.05 tooltip = industrial_capacity_factory_tt }
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_military_stacks < CAN_subsidy_sector_max }
+			}
 		}
 
-		ai_will_do = { base = 1 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_subsidize_military_industry"
+			add_to_variable = { CAN_subsidy_military_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_industrial_capacity_factory_var = 0.05 tooltip = industrial_capacity_factory_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = {
+				add = 80
+				has_war = yes
+			}
+			modifier = {
+				add = 30
+				num_of_civilian_factories > 19
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_war = no
+				num_of_civilian_factories < 20
+				date < 2004.1.1
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	CAN_reduce_military_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 30
 		cost = 50
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CAN_subsidy_total_above_20_tt
-				check_variable = { CAN_subsidy_total > 0.2 }
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_military_stacks > 0 }
 			}
 		}
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_reduce_military_subsidies"
-			set_temp_variable = { subsidy_change_tmp = -0.2 }
-			CAN_modify_subsidy_changes = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_military_subsidies"
+			add_to_variable = { CAN_subsidy_military_stacks = -1 }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
 			add_to_variable = { CAN_industrial_capacity_factory_var = -0.05 tooltip = industrial_capacity_factory_tt }
+			CAN_finish_subsidy_change = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				ai_has_high_deficit = yes
+				has_war = no
+			}
+			modifier = {
+				add = 40
+				has_active_mission = bankruptcy_incoming_collapse
+				has_war = no
+			}
+		}
 	}
 
 	CAN_construction_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 60
 		cost = 50
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_construction_subsidies"
-			set_temp_variable = { subsidy_change_tmp = 0.1 }
-			CAN_modify_subsidy_changes = yes
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
-			add_to_variable = { CAN_production_speed_buildings_var = 0.05 tooltip = production_speed_buildings_factor_tt }
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_construction_stacks < CAN_subsidy_sector_max }
+			}
 		}
 
-		ai_will_do = { base = 1 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_construction_subsidies"
+			add_to_variable = { CAN_subsidy_construction_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_speed_buildings_var = 0.05 tooltip = production_speed_buildings_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				add = 30
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.2
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_ai_civilian_point_cap compare = greater_than_or_equals }
+				has_war = no
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	CAN_reduce_construction_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 30
 		cost = 50
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CAN_subsidy_total_above_10_tt
-				check_variable = { CAN_subsidy_total > 0.1 }
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_construction_stacks > 0 }
 			}
 		}
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_reduce_construction_subsidies"
-			set_temp_variable = { subsidy_change_tmp = -0.1 }
-			CAN_modify_subsidy_changes = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_construction_subsidies"
+			add_to_variable = { CAN_subsidy_construction_stacks = -1 }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
 			add_to_variable = { CAN_production_speed_buildings_var = -0.05 tooltip = production_speed_buildings_factor_tt }
+			CAN_finish_subsidy_change = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 20
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks = 0 }
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_points_max compare = greater_than_or_equals }
+				check_variable = { CAN_subsidy_agriculture_stacks = 0 }
+				check_variable = { CAN_subsidy_oil_stacks = 0 }
+				check_variable = { CAN_subsidy_construction_stacks > 1 }
+			}
+		}
 	}
 
 	CAN_infrastructure_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 60
 		cost = 50
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_infrastructure_subsidies"
-			set_temp_variable = { subsidy_change_tmp = 0.1 }
-			CAN_modify_subsidy_changes = yes
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
-			add_to_variable = { CAN_production_speed_infrastructure_factor_var = 0.05 tooltip = production_speed_infrastructure_factor_tt }
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_infrastructure_stacks < CAN_subsidy_sector_max }
+			}
 		}
 
-		ai_will_do = { base = 1 }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_infrastructure_subsidies"
+			add_to_variable = { CAN_subsidy_infrastructure_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_speed_infrastructure_factor_var = 0.05 tooltip = production_speed_infrastructure_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 35
+			modifier = {
+				add = 20
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.3
+				num_of_civilian_factories > 19
+			}
+			modifier = {
+				factor = 0.3
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_ai_civilian_point_cap compare = greater_than_or_equals }
+				has_war = no
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	CAN_reduce_infrastructure_subsidies = {
 		icon = GFX_decision_attract_foreign_investor
-		days_remove = 60
-		days_re_enable = 1
+		days_re_enable = 30
 		cost = 50
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CAN_subsidy_total_above_10_tt
-				check_variable = { CAN_subsidy_total > 0.1 }
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_infrastructure_stacks > 0 }
 			}
 		}
 
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove CAN_reduce_infrastructure_subsidies"
-			set_temp_variable = { subsidy_change_tmp = -0.1 }
-			CAN_modify_subsidy_changes = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_infrastructure_subsidies"
+			add_to_variable = { CAN_subsidy_infrastructure_stacks = -1 }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
 			add_to_variable = { CAN_production_speed_infrastructure_factor_var = -0.05 tooltip = production_speed_infrastructure_factor_tt }
+			CAN_finish_subsidy_change = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 40
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks = 0 }
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_points_max compare = greater_than_or_equals }
+				check_variable = { CAN_subsidy_infrastructure_stacks > 1 }
+			}
+		}
+	}
+
+	CAN_subsidize_oil = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 60
+		cost = 50
+
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_oil_stacks < CAN_subsidy_sector_max }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_subsidize_oil"
+			add_to_variable = { CAN_subsidy_oil_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_oil_var = 0.05 tooltip = production_oil_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = {
+				add = 8
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.2
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { CAN_subsidy_construction_stacks < 1 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_ai_civilian_point_cap compare = greater_than_or_equals }
+				has_war = no
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks < CAN_subsidy_sector_max }
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_reduce_oil_subsidies = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 30
+		cost = 50
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_oil_stacks > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_oil_subsidies"
+			add_to_variable = { CAN_subsidy_oil_stacks = -1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_oil_var = -0.05 tooltip = production_oil_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 80
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks = 0 }
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_points_max compare = greater_than_or_equals }
+			}
+			modifier = {
+				add = 30
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_subsidize_agriculture = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 60
+		cost = 50
+
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_agriculture_stacks < CAN_subsidy_sector_max }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_subsidize_agriculture"
+			add_to_variable = { CAN_subsidy_agriculture_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_stability_factor_var = 0.02 tooltip = stability_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 8
+			modifier = {
+				add = 6
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0.2
+				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { CAN_subsidy_construction_stacks < 1 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_ai_civilian_point_cap compare = greater_than_or_equals }
+				has_war = no
+				num_of_civilian_factories < 20
+			}
+			modifier = {
+				factor = 0
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks < CAN_subsidy_sector_max }
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_reduce_agriculture_subsidies = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 30
+		cost = 50
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_agriculture_stacks > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_agriculture_subsidies"
+			add_to_variable = { CAN_subsidy_agriculture_stacks = -1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_stability_factor_var = -0.02 tooltip = stability_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 100
+				has_war = yes
+				check_variable = { CAN_subsidy_military_stacks = 0 }
+				check_variable = { var = CAN_subsidy_points_used value = CAN_subsidy_points_max compare = greater_than_or_equals }
+			}
+			modifier = {
+				add = 30
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_subsidize_maritime = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 60
+		cost = 50
+
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_maritime_stacks < CAN_subsidy_sector_max }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_subsidize_maritime"
+			add_to_variable = { CAN_subsidy_maritime_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_industrial_capacity_dockyard_var = 0.05 tooltip = industrial_capacity_dockyard_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				add = 50
+				has_war = yes
+			}
+			modifier = {
+				add = 15
+				num_of_civilian_factories > 19
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_war = no
+				num_of_civilian_factories < 20
+				date < 2004.1.1
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_reduce_maritime_subsidies = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 30
+		cost = 50
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_maritime_stacks > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_maritime_subsidies"
+			add_to_variable = { CAN_subsidy_maritime_stacks = -1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_industrial_capacity_dockyard_var = -0.05 tooltip = industrial_capacity_dockyard_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				ai_has_high_deficit = yes
+				has_war = no
+			}
+			modifier = {
+				add = 40
+				has_active_mission = bankruptcy_incoming_collapse
+				has_war = no
+			}
+		}
+	}
+
+	CAN_subsidize_aerospace = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 60
+		cost = 50
+
+		available = {
+			CAN_subsidy_priority_available = yes
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_below_cap_tt
+				check_variable = { CAN_subsidy_aerospace_stacks < CAN_subsidy_sector_max }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_subsidize_aerospace"
+			add_to_variable = { CAN_subsidy_aerospace_stacks = 1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_speed_air_base_factor_var = 0.05 tooltip = production_speed_air_base_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				add = 40
+				has_war = yes
+			}
+			modifier = {
+				add = 10
+				num_of_civilian_factories > 19
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_war = no
+				num_of_civilian_factories < 20
+				date < 2004.1.1
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	CAN_reduce_aerospace_subsidies = {
+		icon = GFX_decision_attract_foreign_investor
+		days_re_enable = 30
+		cost = 50
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = CAN_subsidy_sector_has_priority_tt
+				check_variable = { CAN_subsidy_aerospace_stacks > 0 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CAN_reduce_aerospace_subsidies"
+			add_to_variable = { CAN_subsidy_aerospace_stacks = -1 }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CAN_canadian_economy_dynamic_modifier }
+			add_to_variable = { CAN_production_speed_air_base_factor_var = -0.05 tooltip = production_speed_air_base_factor_tt }
+			CAN_finish_subsidy_change = yes
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				ai_has_high_deficit = yes
+				has_war = no
+			}
+			modifier = {
+				add = 40
+				has_active_mission = bankruptcy_incoming_collapse
+				has_war = no
+			}
+		}
 	}
 }
 
