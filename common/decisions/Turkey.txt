@@ -5352,3 +5352,108 @@ TUR_rebuilding_kurdistan = {
 		}
 	}
 }
+
+TUR_military_category = {
+	TUR_varyag_propose_joint_completion = {
+		icon = varyag_joint_refit
+		fire_only_once = yes
+		cost = 20
+
+		visible = { has_global_flag = varyag_dispute_open }
+
+		available = {
+			varyag_transit_possible = yes
+			varyag_ukrainian_shipyard_available = yes
+			varyag_refit_shipyard_available = yes
+			custom_trigger_tooltip = {
+				tooltip = varyag_turkish_funds_tt
+				check_variable = { var = treasury value = 2.7 compare = greater_than_or_equals }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_varyag_propose_joint_completion"
+			custom_effect_tooltip = varyag_joint_offer_tt
+			hidden_effect = { UKR = { country_event = ukraine_varyag.6 } }
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = { add = 5 has_opinion = { target = UKR value > 25 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
+	}
+
+	TUR_varyag_complete_the_carrier = {
+		icon = varyag
+		days_remove = 730
+
+		visible = { varyag_refit_specification_ready = yes }
+
+		available = {
+			varyag_can_complete_refit = yes
+			can_staff_an_dockyard = yes
+		}
+
+		cancel_trigger = { varyag_can_complete_refit = no }
+		custom_cost_trigger = { check_variable = { var = treasury value = 40 compare = greater_than_or_equals } }
+		custom_cost_text = cost_40_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_varyag_complete_the_carrier"
+			set_temp_variable = { treasury_change = -40 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_varyag_complete_the_carrier"
+			if = {
+				limit = { varyag_can_complete_refit = yes }
+				varyag_commission_carrier = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	TUR_varyag_order_hornets = {
+		icon = varyag_hornet
+		fire_only_once = yes
+
+		visible = {
+			varyag_hornet_program_available = yes
+			NOT = { has_decision = TUR_varyag_complete_the_carrier }
+		}
+
+		available = {
+			varyag_refit_shipyard_available = yes
+			varyag_us_supply_available = yes
+			custom_trigger_tooltip = {
+				tooltip = TUR_varyag_hornet_package_funds_tt
+				check_variable = { var = treasury value = 16 compare = greater_than_or_equals }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_varyag_order_hornets"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+			set_country_flag = UKR_varyag_catapult_refit
+			custom_effect_tooltip = UKR_varyag_catapult_refit_tt
+			hidden_effect = { USA = { country_event = ukraine_varyag.22 } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { add = 15 has_idea = NATO_member }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
