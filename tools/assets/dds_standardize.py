@@ -18,6 +18,7 @@ The format for each folder is in model_standards.py. Three things are fixed:
   pictures, loading screens, model textures) is compressed to DXT1 or DXT5.
 - Uncompressed GUI art is compressed only when the result passes the quality
   gate in model_standards.py, so smooth backgrounds shrink and icons stay sharp.
+  Tech, focus and idea icons are never compressed.
 
 Mipmaps then follow dds_mipmaps.py's rule. --max-size also halves model
 textures until their longer side fits. Without --write nothing is saved.
@@ -261,7 +262,8 @@ def standardize(data, rel_path, max_size=None):
     elif kind == "image":
         out = as_raw(payload)
         done.append("rewritten as A8R8G8B8")
-    if kind != "blocks" and not _wants_blocks(rule, payload):
+    gated = rule != model_standards.FORMAT_ICON and not _wants_blocks(rule, payload)
+    if kind != "blocks" and gated:
         trial = as_blocks(payload, _fourcc_for(rule, payload))
         if passes_gate(payload, trial):
             out = trial

@@ -209,6 +209,13 @@ _STANDARDIZE_CASES = {
         ["compressed, passes the quality gate"],
         ("DXT1", 32, 32, 1),
     ),
+    "smooth tech icon is never compressed": (
+        "gfx/interface/technologies/a.dds",
+        dds_standardize.as_raw(_smooth(32, 32)),
+        None,
+        [],
+        None,
+    ),
     "smooth dx10 art is rewritten then compressed": (
         "gfx/interface/a.dds",
         _dx10(_smooth(32, 32), 91),
