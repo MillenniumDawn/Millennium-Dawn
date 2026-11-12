@@ -56,6 +56,26 @@ class MeshPart:
     def triangles(self) -> int:
         return self.mesh.props["tri"][1].size // 3
 
+    def arrays(self):
+        """(positions, other per-vertex arrays, skin arrays), one row per vertex."""
+        props = self.mesh.props
+        positions = np.ascontiguousarray(props["p"][1].reshape(-1, 3), np.float32)
+        count = len(positions)
+        attrs = {
+            name: props[name][1].reshape(count, width)
+            for name, width in VERTEX_ATTRS.items()
+            if name != "p" and name in props and props[name][1].size == count * width
+        }
+        skin = {}
+        if self.skin is not None:
+            skin = {
+                name: self.skin.props[name][1].reshape(count, 4)
+                for name in ("ix", "w")
+                if name in self.skin.props
+                and self.skin.props[name][1].size == count * 4
+            }
+        return positions, attrs, skin
+
 
 def _parse_property(data: bytes, pos: int, node: Node) -> int:
     length = data[pos + 1]

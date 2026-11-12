@@ -20,6 +20,10 @@ UVs and bone weights. A guard measures how far the result strays from the
 original and locks the vertices involved until the model stays inside the
 guard tolerance, so thin parts such as antennas survive.
 
+--max-triangles N goes further for models the guarded pass leaves over N: it
+cuts every connected part in proportion and may merge across hard edges and
+texture seams, so textures can stretch on boxy models. Check the result in game.
+
 Needs numpy and scipy (`pip install --group analysis`). Simplification also
 needs `pip install meshoptimizer==0.2.30a0`.
 """
@@ -30,6 +34,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+import mesh_cap
 import model_standards
 import numpy as np
 import pdx_mesh
@@ -454,21 +459,8 @@ def _simplify(positions, index, attrs, skin, settings, backend, report):
 def optimize_part(part, settings, backend, report):
     """Weld, simplify and reorder one mesh in place."""
     props = part.mesh.props
-    positions = np.ascontiguousarray(props["p"][1].reshape(-1, 3), np.float32)
-    count = len(positions)
+    positions, attrs, skin = part.arrays()
     index = np.ascontiguousarray(props["tri"][1], np.uint32)
-    attrs = {
-        name: props[name][1].reshape(count, width)
-        for name, width in pdx_mesh.VERTEX_ATTRS.items()
-        if name != "p" and name in props and props[name][1].size == count * width
-    }
-    skin = {}
-    if part.skin is not None:
-        skin = {
-            name: part.skin.props[name][1].reshape(count, 4)
-            for name in ("ix", "w")
-            if name in part.skin.props and part.skin.props[name][1].size == count * 4
-        }
     if "n" in attrs and part.triangles >= model_standards.MIN_TRIANGLES:
         positions, index, attrs, skin = _weld_vertices(positions, index, attrs, skin)
         index = _simplify(positions, index, attrs, skin, settings, backend, report)
@@ -482,17 +474,24 @@ def optimize_part(part, settings, backend, report):
         part.skin.props[name] = (kind, np.ascontiguousarray(values[order]).ravel())
 
 
-def optimize_file(data, rel_path, backend=None):
-    """Repair a mesh file and, given a backend, simplify it.
-
-    Returns (new bytes, report). The report counts triangles before and after,
-    each repair, and the guard's retries.
-    """
+def _repaired_parts(data, fixes):
     root = pdx_mesh.parse(data)
-    report = Counter()
     parts = pdx_mesh.mesh_parts(root)
     for part in parts:
-        repair_part(part, report)
+        repair_part(part, fixes)
+    return root, parts
+
+
+def optimize_file(data, rel_path, backend=None, max_triangles=None):
+    """Repair a mesh file and, given a backend, simplify it.
+
+    With `max_triangles`, a file still over that many rendered triangles is cut
+    again from its repaired original by mesh_cap, which reaches the cap at some
+    cost in detail. Returns (new bytes, report). The report counts triangles
+    before and after, each repair, and the guard's retries.
+    """
+    report = Counter()
+    root, parts = _repaired_parts(data, report)
     rendered = [p for p in parts if p.rendered]
     report["triangles_before"] = sum(p.triangles for p in rendered)
     if backend is not None and rendered:
@@ -511,6 +510,20 @@ def optimize_file(data, rel_path, backend=None):
             )
             optimize_part(part, settings, backend, report)
     report["triangles_after"] = sum(p.triangles for p in rendered)
+    if (
+        backend is not None
+        and max_triangles
+        and report["triangles_after"] > max_triangles
+    ):
+        fresh = {}
+
+        def build():
+            fresh["root"], again = _repaired_parts(data, Counter())
+            return again
+
+        capped = mesh_cap.cap_parts(build, max_triangles, backend, report)
+        report["triangles_after"] = sum(p.triangles for p in capped)
+        root = fresh["root"]
     return pdx_mesh.write(root), report
 
 
@@ -520,6 +533,11 @@ def main(argv=None):
     parser.add_argument("--write", action="store_true", help="overwrite the files")
     parser.add_argument(
         "--repair-only", action="store_true", help="repair without simplifying"
+    )
+    parser.add_argument(
+        "--max-triangles",
+        type=int,
+        help="cut models still over this many triangles, at some cost in detail",
     )
     args = parser.parse_args(argv)
     paths = [Path(p) for p in args.meshes]
@@ -536,7 +554,7 @@ def main(argv=None):
         with open(path, "rb") as handle:
             data = handle.read()
         try:
-            result, report = optimize_file(data, rel_path, backend)
+            result, report = optimize_file(data, rel_path, backend, args.max_triangles)
         except pdx_mesh.MeshParseError as exc:
             print(f"{path}: unreadable: {exc}", file=sys.stderr)
             return 1
