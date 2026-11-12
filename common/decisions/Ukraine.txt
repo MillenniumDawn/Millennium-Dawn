@@ -7329,6 +7329,10 @@ UKR_reorganize_navy_category = {
 			set_country_flag = varyag_hull_at_shipyard
 			unlock_decision_tooltip = varyag_prepare_refit
 			unlock_decision_tooltip = UKR_varyag_expand_mykolaiv_shipyard
+			if = {
+				limit = { UKR_storage_has_carrier_aircraft = yes }
+				unlock_decision_tooltip = UKR_storage_prepare_carrier_aircraft
+			}
 			hidden_effect = {
 				CHI = {
 					set_temp_variable = { treasury_change = 0.2 }
@@ -7472,7 +7476,6 @@ UKR_reorganize_navy_category = {
 			set_temp_variable = { treasury_change = -40 }
 			modify_treasury_effect = yes
 			custom_effect_tooltip = varyag_carrier_protests_tt
-			custom_effect_tooltip = UKR_varyag_training_delivery_tt
 			hidden_effect = {
 				if = {
 					limit = { country_exists = SOV NOT = { has_war_with = SOV } }
@@ -26137,6 +26140,133 @@ UKR_reactivate_sov_category = {
 				limit = { owns_state = 696 controls_state = 696 }
 				696 = { add_dynamic_modifier = { modifier = UKR_scrapped_su17_resources days = 365 } }
 			}
+		}
+	}
+
+	UKR_storage_scrap_carrier_aircraft = {
+		icon = jet_aircraft
+
+		visible = {
+			UKR_storage_carrier_aircraft_selected = yes
+			UKR_storage_has_carrier_aircraft = yes
+		}
+
+		available = { NOT = { has_country_flag = UKR_storage_carrier_aircraft_offer_pending } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_scrap_carrier_aircraft"
+			custom_effect_tooltip = UKR_storage_carrier_aircraft_scrapped_tt
+			hidden_effect = { UKR_storage_clear_carrier_aircraft = yes }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	UKR_storage_exchange_carrier_aircraft = {
+		icon = jet_aircraft
+		days_re_enable = 180
+
+		visible = {
+			UKR_storage_carrier_aircraft_selected = yes
+			UKR_storage_has_carrier_aircraft = yes
+		}
+
+		available = {
+			NOT = { has_country_flag = UKR_storage_carrier_aircraft_offer_pending }
+			varyag_russian_supply_available = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_exchange_carrier_aircraft"
+			set_country_flag = UKR_storage_carrier_aircraft_offer_pending
+			custom_effect_tooltip = UKR_storage_carrier_aircraft_exchange_tt
+			hidden_effect = { SOV = { country_event = russia_varyag.2 } }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
+	}
+
+	UKR_storage_sell_carrier_aircraft_to_china = {
+		icon = jet_aircraft
+		days_re_enable = 180
+
+		visible = {
+			UKR_storage_carrier_aircraft_selected = yes
+			UKR_storage_has_carrier_aircraft = yes
+			UKR_storage_carrier_aircraft_chinese_buyer = yes
+		}
+
+		available = {
+			NOT = { has_country_flag = UKR_storage_carrier_aircraft_offer_pending }
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_carrier_aircraft_chinese_opinion_tt
+				CHI = { has_opinion = { target = ROOT value > 29 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_carrier_aircraft_chinese_funds_tt
+				CHI = { check_variable = { var = treasury value = 0.2 compare = greater_than_or_equals } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_sell_carrier_aircraft_to_china"
+			set_country_flag = UKR_storage_carrier_aircraft_offer_pending
+			custom_effect_tooltip = UKR_storage_carrier_aircraft_chinese_sale_tt
+			hidden_effect = { CHI = { country_event = china_varyag.1 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	UKR_storage_prepare_carrier_aircraft = {
+		icon = jet_aircraft
+		days_remove = 90
+
+		visible = {
+			OR = {
+				has_decision = UKR_storage_prepare_carrier_aircraft
+				AND = {
+					UKR_storage_carrier_aircraft_selected = yes
+					UKR_storage_has_carrier_aircraft = yes
+					UKR_storage_can_prepare_carrier_aircraft = yes
+				}
+			}
+		}
+
+		available = {
+			UKR_storage_can_prepare_carrier_aircraft = yes
+			NOT = { has_country_flag = UKR_storage_carrier_aircraft_offer_pending }
+		}
+
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_02
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_prepare_carrier_aircraft"
+			set_temp_variable = { treasury_change = -0.02 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = UKR_storage_carrier_aircraft_preparation_tt
+			hidden_effect = { UKR_storage_clear_carrier_aircraft = yes }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_prepare_carrier_aircraft"
+			custom_effect_tooltip = UKR_storage_carrier_aircraft_ready_tt
+			hidden_effect = {
+				UKR_storage_deliver_carrier_aircraft = yes
+				set_country_flag = UKR_varyag_training_aircraft_received
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
