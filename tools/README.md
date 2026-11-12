@@ -475,8 +475,9 @@ left alone. `--fix` adds or drops the chain and never re-encodes the full-size i
 Art Standards. It replaces what the game's loader was not written for (DX10 headers, 16-
 and 24-bit texels, PNG or JPEG data under a `.dds` name), compresses the folders the
 standards list as compressed, and compresses other GUI art only when it passes the quality
-gate. Mipmaps then follow the `dds_mipmaps.py` rule. It only prints unless you pass
-`--fix --write`. `--max-size N` also halves model textures until their longer side fits.
+gate. Tech, focus and idea icons are never compressed. Mipmaps then follow the
+`dds_mipmaps.py` rule. It only prints unless you pass `--fix --write`. `--max-size N` also
+halves model textures until their longer side fits.
 
 ```bash
 python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
