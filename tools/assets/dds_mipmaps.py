@@ -367,11 +367,27 @@ def run(paths, root, fix=False, write=False):
     return totals
 
 
-def main(argv=None):
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+def base_parser(description):
+    """The arguments the texture tools share."""
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("paths", nargs="*", help="DDS files or folders")
-    parser.add_argument("--fix", action="store_true", help="add or drop mipmaps")
+    parser.add_argument("--fix", action="store_true", help="rewrite the files")
     parser.add_argument("--write", action="store_true", help="with --fix: save")
+    return parser
+
+
+def scope(paths, root, default):
+    """The paths to check, or None after naming the ones that do not exist."""
+    paths = paths or [root / name for name in default]
+    missing = [str(p) for p in paths if not Path(p).exists()]
+    if missing:
+        print(f"Not found: {', '.join(missing)}", file=sys.stderr)
+        return None
+    return paths
+
+
+def main(argv=None):
+    parser = base_parser(__doc__.splitlines()[0])
     parser.add_argument("--tint", action="store_true", help="paths are IN OUT")
     args = parser.parse_args(argv)
     if args.tint:
@@ -387,10 +403,8 @@ def main(argv=None):
             handle.write(add(data, texture, tint=True))
         print(f"{args.paths[1]}: {texture.full_chain} levels, smaller ones tinted")
         return 0
-    paths = args.paths or [REPO_ROOT / name for name in DEFAULT_SCOPE]
-    missing = [str(p) for p in paths if not Path(p).exists()]
-    if missing:
-        print(f"Not found: {', '.join(missing)}", file=sys.stderr)
+    paths = scope(args.paths, REPO_ROOT, DEFAULT_SCOPE)
+    if paths is None:
         return 2
     totals = run(paths, REPO_ROOT, fix=args.fix, write=args.fix and args.write)
     checked = sum(totals[k] for k in ("add", "strip", "ok", "skip"))

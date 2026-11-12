@@ -11,7 +11,7 @@ pytest.importorskip("scipy")
 import optimize_mesh
 import pdx_mesh
 from shared.suite import MESH_QUAD as _QUAD
-from shared.suite import mesh_bytes
+from shared.suite import mesh_bytes, mesh_plate
 
 _NAN = float("nan")
 
@@ -241,30 +241,6 @@ def test_surface_samples_of_a_degenerate_mesh_are_its_vertices():
     assert samples.shape == (3, 3)
 
 
-def _plate(cells=23, spike=True, **extra):
-    """A flat plate of 2 * cells^2 triangles, with an optional thin spike on it."""
-    side = np.arange(cells + 1, dtype=float)
-    x, y = np.meshgrid(side, side)
-    points = np.c_[x.ravel(), y.ravel(), np.zeros(x.size)]
-    corner = np.arange(cells * (cells + 1)).reshape(cells, cells + 1)[:, :-1].ravel()
-    first = np.c_[corner, corner + 1, corner + cells + 2]
-    second = np.c_[corner, corner + cells + 2, corner + cells + 1]
-    triangles = np.vstack([first, second])
-    if spike:
-        tip = len(points)
-        points = np.vstack([points, [[5, 5, 0], [5.2, 5, 0], [5.1, 5, 12]]])
-        triangles = np.vstack([triangles, [[tip, tip + 1, tip + 2]]])
-    count = len(points)
-    part = {
-        "p": points,
-        "tri": triangles,
-        "n": [[0, 0, 1]] * count,
-        "ta": [[1, 0, 0, 1]] * count,
-        "u0": points[:, :2] / cells,
-    }
-    return {**part, **extra}
-
-
 class _FakeBackend:
     """Keeps the first plate row and whatever is locked; records each lock."""
 
@@ -295,7 +271,7 @@ def _optimize(part, backend, monkeypatch, joints=0):
 
 def test_guard_locks_a_thin_part_the_simplifier_dropped(monkeypatch):
     backend = _FakeBackend()
-    found, report = _optimize(_plate(), backend, monkeypatch)
+    found, report = _optimize(mesh_plate(), backend, monkeypatch)
     assert report["guard_retries"] == 1
     # One spike foot welds into the plate; the other foot and the tip come last.
     assert not backend.locks[0].any() and backend.locks[1][-2:].all()
@@ -306,7 +282,7 @@ def test_guard_locks_a_thin_part_the_simplifier_dropped(monkeypatch):
 
 def test_guard_gives_up_and_keeps_the_mesh(monkeypatch):
     monkeypatch.setattr(optimize_mesh.model_standards, "GUARD_ATTEMPTS", 2)
-    found, report = _optimize(_plate(), _FakeBackend(obey_locks=False), monkeypatch)
+    found, report = _optimize(mesh_plate(), _FakeBackend(obey_locks=False), monkeypatch)
     assert report["guard_gave_up"] == 1 and report["guard_retries"] == 2
     assert found.triangles == report["triangles_after"] == 2 * 23 * 23 + 1
 
@@ -332,7 +308,7 @@ _SEAM_CASES = {
 @pytest.mark.parametrize("soft, locked", _SEAM_CASES.values(), ids=_SEAM_CASES.keys())
 def test_bone_seams_are_locked_on_rigid_meshes(monkeypatch, soft, locked):
     backend = _FakeBackend()
-    part = _plate(spike=False)
+    part = mesh_plate(spike=False)
     _optimize(
         {**part, **_skin(len(part["p"]), 12, soft)}, backend, monkeypatch, joints=2
     )
@@ -341,14 +317,14 @@ def test_bone_seams_are_locked_on_rigid_meshes(monkeypatch, soft, locked):
 
 def test_small_and_collision_meshes_are_left_alone(monkeypatch):
     backend = _FakeBackend()
-    data = mesh_bytes(_QUAD, {**_plate(), "shader": "Collision"})
+    data = mesh_bytes(_QUAD, {**mesh_plate(), "shader": "Collision"})
     result, report = optimize_mesh.optimize_file(data, "gfx/models/x.mesh", backend)
     assert result == data and backend.locks == []
     assert report["triangles_before"] == report["triangles_after"] == 2
 
 
 def test_repair_only_keeps_the_triangle_count():
-    data = mesh_bytes(_plate())
+    data = mesh_bytes(mesh_plate())
     result, report = optimize_mesh.optimize_file(data, "gfx/models/x.mesh")
     assert result == data
     assert report["triangles_before"] == report["triangles_after"]
@@ -363,14 +339,14 @@ def test_triangle_target_is_shared_out_by_part_size(monkeypatch):
             return index
 
     monkeypatch.setattr(optimize_mesh, "GUARD_SAMPLES", 4000)
-    data = mesh_bytes(_plate(spike=False), _plate(spike=False))
+    data = mesh_bytes(mesh_plate(spike=False), mesh_plate(spike=False))
     optimize_mesh.optimize_file(data, "gfx/models/units/ships/x.mesh", _Recorder())
     assert seen == [(4000, 0.005), (4000, 0.005)]
 
 
 def test_meshopt_backend_simplifies_and_keeps_the_spike(monkeypatch):
     pytest.importorskip("meshoptimizer")
-    found, report = _optimize(_plate(), optimize_mesh.MeshoptBackend(), monkeypatch)
+    found, report = _optimize(mesh_plate(), optimize_mesh.MeshoptBackend(), monkeypatch)
     assert found.triangles < report["triangles_before"] // 2
     points = found.mesh.props["p"][1].reshape(-1, 3)
     assert points[:, 2].max() == 12

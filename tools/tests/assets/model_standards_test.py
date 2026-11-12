@@ -37,3 +37,23 @@ _MIPMAP_CASES = {
 @pytest.mark.parametrize("path, rule", _MIPMAP_CASES.values(), ids=_MIPMAP_CASES.keys())
 def test_mipmap_rule_follows_the_texture_folder(path, rule):
     assert model_standards.mipmap_rule(path) == rule
+
+
+# path -> texture format
+_FORMAT_CASES = {
+    "model texture": ("gfx/models/units/tanks/SOV/T72A.dds", "compressed"),
+    "event picture": ("gfx/event_pictures/europe/a.dds", "dxt5"),
+    "loading screen": ("gfx/loadingscreens/load_1.dds", "compressed"),
+    "leader portrait": ("gfx/leaders/USA/portrait.dds", "portrait"),
+    "focus icon": ("gfx/interface/goals/focus_x.dds", "raw"),
+    "terrain": ("map/terrain/atlas0.dds", "keep"),
+    "particle": ("gfx/particles/smoke.dds", "keep"),
+    "outside the game folders": ("docs/picture.dds", "keep"),
+}
+
+
+@pytest.mark.parametrize(
+    "path, expected", _FORMAT_CASES.values(), ids=_FORMAT_CASES.keys()
+)
+def test_texture_format_follows_the_folder(path, expected):
+    assert model_standards.texture_format(path) == expected

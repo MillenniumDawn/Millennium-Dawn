@@ -32,6 +32,17 @@ GUARD_ATTEMPTS = 6
 # normals differ by less than this.
 WELD_ANGLE_DEGREES = 20.0
 
+# Hard triangle cap (optimize_mesh.py --max-triangles). Every connected part is
+# cut in proportion. A part smaller than the prune size (a share of the model
+# diagonal) is dropped when it sits on a larger part; the size steps up only
+# when the cap cannot be met otherwise.
+CAP_PRUNE_SIZES = (0.01, 0.015, 0.02, 0.03, 0.05)
+CAP_MIN_PART_TRIANGLES = 8
+# A part may lose detail up to this share of its own extent, and may not get
+# shorter than this share of its size along any axis.
+CAP_PART_ERROR = 0.3
+CAP_MAX_SHRINK = 0.08
+
 # Model textures: compressed DDS with mipmaps, power-of-two, at most this size.
 MAX_TEXTURE_SIZE = 2048
 
@@ -50,6 +61,39 @@ MIPMAP_RULES = (
     ("/gfx/maparrows/", MIPMAP_KEEP),
     ("/gfx/", MIPMAP_NONE),
 )
+
+# Texture format per folder, from the Art Standards "File Formats" list.
+#   compressed: DXT1, or DXT5 when the alpha channel is used
+#   dxt5:       always DXT5
+#   portrait:   compressed, except small portraits, which stay uncompressed
+#   raw:        uncompressed A8R8G8B8
+#   keep:       left exactly as it is
+FORMAT_COMPRESSED = "compressed"
+FORMAT_DXT5 = "dxt5"
+FORMAT_PORTRAIT = "portrait"
+FORMAT_RAW = "raw"
+FORMAT_KEEP = "keep"
+TEXTURE_FORMATS = (
+    ("/gfx/models/", FORMAT_COMPRESSED),
+    ("/gfx/particles/", FORMAT_KEEP),
+    ("/map/", FORMAT_KEEP),
+    ("/gfx/fonts/", FORMAT_KEEP),
+    ("/gfx/maparrows/", FORMAT_KEEP),
+    ("/gfx/event_pictures/", FORMAT_DXT5),
+    ("/gfx/loadingscreens/", FORMAT_COMPRESSED),
+    ("/gfx/main_menu/", FORMAT_COMPRESSED),
+    ("/gfx/leaders/", FORMAT_PORTRAIT),
+    ("/gfx/", FORMAT_RAW),
+)
+# A portrait narrower than this is a small portrait.
+SMALL_PORTRAIT_SIZE = 100
+
+# Art the standards list as uncompressed is still compressed when the result
+# stays this close to the original: at least this many decibels, and 99.9% of
+# texels within this error (0-255). Large smooth backgrounds pass; icons with
+# fine detail, text or flat colour do not.
+COMPRESS_GATE_DB = 40.0
+COMPRESS_GATE_ERROR = 20.0
 
 
 def _lookup(table, rel_path, default):
@@ -73,3 +117,8 @@ def error_ceiling(rel_path):
 def mipmap_rule(rel_path):
     """Whether a texture path should carry mipmaps: needed, none or keep."""
     return _lookup(MIPMAP_RULES, rel_path, MIPMAP_KEEP)
+
+
+def texture_format(rel_path):
+    """The format a texture path should be stored in."""
+    return _lookup(TEXTURE_FORMATS, rel_path, FORMAT_KEEP)

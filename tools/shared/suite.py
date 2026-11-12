@@ -381,6 +381,32 @@ MESH_QUAD = {
 }
 
 
+def mesh_plate(cells=23, spike=True, offset=(0.0, 0.0, 0.0), **extra) -> dict:
+    """A mesh_bytes part: a flat plate of 2 * cells^2 triangles, optionally with a thin spike."""
+    import numpy as np
+
+    side = np.arange(cells + 1, dtype=float)
+    x, y = np.meshgrid(side, side)
+    points = np.c_[x.ravel(), y.ravel(), np.zeros(x.size)]
+    corner = np.arange(cells * (cells + 1)).reshape(cells, cells + 1)[:, :-1].ravel()
+    first = np.c_[corner, corner + 1, corner + cells + 2]
+    second = np.c_[corner, corner + cells + 2, corner + cells + 1]
+    triangles = np.vstack([first, second])
+    if spike:
+        tip = len(points)
+        points = np.vstack([points, [[5, 5, 0], [5.2, 5, 0], [5.1, 5, 12]]])
+        triangles = np.vstack([triangles, [[tip, tip + 1, tip + 2]]])
+    count = len(points)
+    part = {
+        "p": points + np.asarray(offset, float),
+        "tri": triangles,
+        "n": [[0, 0, 1]] * count,
+        "ta": [[1, 0, 0, 1]] * count,
+        "u0": points[:, :2] / cells,
+    }
+    return {**part, **extra}
+
+
 def mesh_bytes(*parts, joints: int = 0) -> bytes:
     """A binary `.mesh` with one shape per part, for the model tool tests.
 
