@@ -38,10 +38,16 @@ Clone the repository with GitHub Desktop by following the [Git & GitHub Desktop]
 - **Team members (write access)**: clone `https://github.com/MillenniumDawn/Millennium-Dawn.git` directly:
 
   ```bash
-  git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
+  git clone --filter=blob:none https://github.com/MillenniumDawn/Millennium-Dawn.git
   ```
 
 - **Outside contributors**: fork the repository first (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)), then clone your fork and add the upstream remote. The [Git Workflow](/dev-resources/git-workflow/) guide has the full fork-based walkthrough.
+
+## Use a Partial Clone
+
+Add `--filter=blob:none` when you clone, as shown above. A new clone is about 11 GB instead of 20 GB. You keep full log and blame, and `.git` is about 3.3 GB because old file versions download only when a command needs them.
+
+Commands that read old binary versions, such as checking out an old tag, download them at that point. Existing clones do not shrink. To get the benefit, re-clone with the flag. For a fork, use your fork's URL.
 
 ## Staying Up to Date
 

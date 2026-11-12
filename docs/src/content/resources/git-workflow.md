@@ -61,7 +61,7 @@ Outside contributors do not have write access to the main repository, so work fr
 2. Clone your fork:
 
    ```bash
-   git clone https://github.com/<your-username>/Millennium-Dawn.git
+   git clone --filter=blob:none https://github.com/<your-username>/Millennium-Dawn.git
    cd Millennium-Dawn
    ```
 
@@ -286,7 +286,7 @@ Ask a team leader, they can revert changes down to a single file. It's not the e
 Yes. Switch to their branch, sync, and make changes. Be careful not to break their work, coordinate on Discord first.
 
 **What if my download speed is very slow?**
-The repo is large. If cloning fails, try a shallow clone: `git clone --depth 1 https://github.com/MillenniumDawn/Millennium-Dawn.git`
+The repo is large. Clone with `--filter=blob:none` to cut the download from about 20 GB to about 11 GB (see [Use a Partial Clone](/dev-resources/developer-setup/#use-a-partial-clone)). If cloning still fails, try a shallow clone: `git clone --depth 1 https://github.com/MillenniumDawn/Millennium-Dawn.git`
 
 **GitHub Desktop?**
 [GitHub Desktop](/dev-resources/md-git-resources/) is the recommended Git GUI. It's free, simple, and integrates directly with GitHub.
