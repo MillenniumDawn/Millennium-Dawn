@@ -8817,6 +8817,8 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 6 } }
 			if = { limit = { check_variable = { UKR_storage_mig25_total > 0 } } add_to_array = { UKR_storage_rows = 63 } }
 			if = { limit = { check_variable = { ukraine_has_mig27_stockpile > 0 } } add_to_array = { UKR_storage_rows = 62 } }
+			if = { limit = { check_variable = { ukraine_has_su25utg_stockpile > 0 } } add_to_array = { UKR_storage_rows = 67 } }
+			if = { limit = { check_variable = { ukraine_has_su33_stockpile > 0 } } add_to_array = { UKR_storage_rows = 68 } }
 			if = { limit = { check_variable = { ukraine_has_mig23_stockpile > 0 } } add_to_array = { UKR_storage_rows = 61 } }
 			if = { limit = { check_variable = { UKR_storage_mig21_total > 0 } } add_to_array = { UKR_storage_rows = 65 } }
 			if = { limit = { check_variable = { ukraine_has_su15_stockpile > 0 } } add_to_array = { UKR_storage_rows = 66 } }
@@ -9409,6 +9411,8 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_mig25_total = { value = ukraine_has_mig25_stockpile add = ukraine_has_mig25rb_stockpile } }
 	set_variable = { UKR_storage_total_6 = ukraine_has_mig23_stockpile }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig27_stockpile }
+	add_to_variable = { UKR_storage_total_6 = ukraine_has_su25utg_stockpile }
+	add_to_variable = { UKR_storage_total_6 = ukraine_has_su33_stockpile }
 	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig25_total }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_su17_stockpile }
 	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig21_total }
@@ -16543,38 +16547,6 @@ varyag_commission_carrier = {
 		add_tech_bonus = { name = ukraine_varyag.9 bonus = 0.50 uses = 1 technology = carrier_hull_3 }
 	}
 	if = {
-		limit = {
-			original_tag = UKR
-			varyag_russian_supply_available = yes
-		}
-		if = {
-			limit = { has_dlc = "By Blood Alone" }
-			add_equipment_to_stockpile = {
-				type = cv_small_plane_cas_airframe_1
-				variant_name = "Su-25UTG"
-				amount = 2
-				producer = SOV
-			}
-			add_equipment_to_stockpile = {
-				type = cv_medium_plane_fighter_airframe_2
-				variant_name = "Su-33"
-				amount = 1
-				producer = SOV
-			}
-		}
-		else_if = {
-			limit = { NOT = { has_dlc = "By Blood Alone" } }
-			add_equipment_to_stockpile = {
-				type = CV_MR_Fighter1
-				variant_name = "Su-25UTG"
-				amount = 2
-				producer = SOV
-			}
-			add_equipment_to_stockpile = { type = CV_MR_Fighter2 amount = 1 producer = SOV }
-		}
-		set_country_flag = UKR_varyag_training_aircraft_received
-	}
-	if = {
 		limit = { original_tag = UKR }
 		set_country_flag = UKR_varyag_commissioned
 	}
@@ -16702,4 +16674,65 @@ UKR_varyag_run_combat_trials = {
 		air_experience = 10
 	}
 	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
+}
+
+UKR_storage_deliver_carrier_aircraft = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = {
+			type = cv_small_plane_cas_airframe_1
+			variant_name = "Su-25UTG"
+			amount = 2
+			producer = SOV
+		}
+		add_equipment_to_stockpile = {
+			type = cv_medium_plane_fighter_airframe_2
+			variant_name = "Su-33"
+			amount = 1
+			producer = SOV
+		}
+	}
+	else_if = {
+		limit = { NOT = { has_dlc = "By Blood Alone" } }
+		add_equipment_to_stockpile = {
+			type = CV_MR_Fighter1
+			variant_name = "Su-25UTG"
+			amount = 2
+			producer = SOV
+		}
+		add_equipment_to_stockpile = { type = CV_MR_Fighter2 amount = 1 producer = SOV }
+	}
+}
+
+UKR_storage_clear_carrier_aircraft = {
+	set_variable = { ukraine_has_su25utg_stockpile = 0 }
+	set_variable = { ukraine_has_su33_stockpile = 0 }
+	UKR_storage_refresh = yes
+}
+
+UKR_storage_deliver_exchange_aircraft = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = {
+			type = medium_plane_fighter_airframe_2
+			variant_name = "Su-27S"
+			amount = 1
+			producer = SOV
+		}
+		add_equipment_to_stockpile = {
+			type = small_plane_cas_airframe_2
+			variant_name = "Su-25"
+			amount = 2
+			producer = SOV
+		}
+	}
+	else = {
+		add_equipment_to_stockpile = {
+			type = AS_Fighter2
+			variant_name = "Su-27"
+			amount = 1
+			producer = SOV
+		}
+		add_equipment_to_stockpile = { type = cas1 amount = 2 producer = SOV }
+	}
 }
