@@ -627,8 +627,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
   `ai_*`, income, and weekly keys are skipped because they are AI weights or have
   their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
-  number, not a percent. With `--unbalanced-modifiers`, productivity growth keys are skipped
-  too, because that check owns them (Issue #6494).
+  number, not a percent. Keys defined with `value_type = number` in
+  `common/modifier_definitions/` are also skipped, including flat renewable capacity
+  and expected-spending tier adjustments. `tax_rate_change_multiplier_modifier`
+  is cost-style: a positive value raises the policy-change cost, so only negative
+  values below `-0.30` warn. With `--unbalanced-modifiers`, productivity growth keys
+  are skipped too, because that check owns them (Issue #6494).
 - Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
   skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
   dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
