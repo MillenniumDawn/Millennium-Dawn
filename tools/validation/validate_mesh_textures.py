@@ -9,10 +9,9 @@ carries. `Collision` materials never render and carry empty slots by design.
 A slot absent from the material is not reported: vanilla ships helper shapes
 (`dummyShape` in the bomber meshes) that way.
 
-The CI workspace ships no gfx/models or gfx/entities, so this runs on commit.
+The CI workspace ships no meshes or textures, so this runs on commit.
 """
 
-import glob
 import os
 import re
 import struct
@@ -23,7 +22,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import find_hoi4_install
+from shared_utils import find_hoi4_install, find_unquoted_block_end, list_files
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 SLOTS = {"diff": "texture_diffuse", "n": "texture_normal", "spec": "texture_specular"}
@@ -113,14 +112,7 @@ def parse_mesh_materials(data: bytes) -> List[Material]:
 
 
 def _block_body(text: str, open_brace_end: int) -> str:
-    depth, pos = 1, open_brace_end
-    while depth and pos < len(text):
-        if text[pos] == "{":
-            depth += 1
-        elif text[pos] == "}":
-            depth -= 1
-        pos += 1
-    return text[open_brace_end : pos - 1]
+    return text[open_brace_end : find_unquoted_block_end(text, open_brace_end)[0] - 1]
 
 
 def parse_pdxmeshes(text: str) -> List[Tuple[int, str, str, List[dict]]]:
@@ -205,7 +197,7 @@ class Validator(BaseValidator):
             return
         meshes = {
             Path(p).relative_to(mod).as_posix().lower(): p
-            for p in glob.glob(str(mod / "gfx" / "**" / "*.mesh"), recursive=True)
+            for p in list_files(mod / "gfx", ("*.mesh",))
         }
         if not meshes:
             return
@@ -222,10 +214,7 @@ class Validator(BaseValidator):
 
         parsed: Dict[str, List[Material]] = {}
         entries = findings = 0
-        for gfx in sorted(
-            glob.glob(str(mod / "gfx" / "**" / "*.gfx"), recursive=True)
-            + glob.glob(str(mod / "gfx" / "**" / "*.asset"), recursive=True)
-        ):
+        for gfx in list_files(mod / "gfx", ("*.gfx", "*.asset")):
             rel_gfx = Path(gfx).relative_to(mod).as_posix()
             try:
                 with open(gfx, encoding="utf-8-sig") as fh:

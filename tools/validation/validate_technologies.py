@@ -12,12 +12,16 @@ Rules:
     AA_upgrade) are intentionally different and are NOT flagged.
 """
 
-import glob
 import re
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-from validator_common import BaseValidator, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    list_files,
+    run_validator_main,
+    strip_comments,
+)
 
 TECH_DIR = "common/technologies"
 
@@ -68,8 +72,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def run_validations(self):
-        pattern = str(Path(self.mod_path) / TECH_DIR / "*.txt")
-        files = sorted(glob.glob(pattern))
+        files = list_files(Path(self.mod_path) / TECH_DIR, recursive=False)
         if not files:
             return
 

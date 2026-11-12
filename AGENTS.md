@@ -11,12 +11,16 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 - Keep edits within the requested scope.
 - Verify identifiers against their definitions before using them: exact case, caller
   scope, and tooltip behavior. Existing usage is a clue, not proof.
+- Write HOI4 script only. Scripted effects and triggers take no parameters, so
+  `my_effect = { x = y }` with `$x$` inside is invalid, as are other EU4 and CK3 forms.
+  See "HOI4 Syntax Only" in `scripting-edge-cases.md`.
 - Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
   current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
 - Keep the session working directory fixed. Use absolute paths or per-command flags.
-- Never add or maintain save-game compatibility steps for changes or updates. Development
-  builds may invalidate saves, and legacy migration support is not required.
+- Ignore save-game compatibility unless the request explicitly asks for it. Do not add
+  or maintain migration or compatibility steps, and do not weigh save breakage when
+  choosing a fix. Development builds may invalidate saves.
 
 ## KISS: Keep It Simple
 
@@ -29,10 +33,15 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   state or a historical transition.
 - Keep behavior-preserving cleanup separate from gameplay changes. Remove dead code
   introduced or exposed by the change, without refactoring unrelated systems.
-- Default to no comments. Explain only a non-obvious reason, in one short line.
+- Default to no comments. Explain only a non-obvious reason, in one short line. A scripted
+  effect or trigger that needs values from its caller is the exception: it gets the doc
+  header from the Code Stylization Guide. Other helpers do not.
 
 ## Validation
 
+- Regression tests must exercise general, reusable behavior or validators with
+  synthetic fixtures. Do not hard-code country content contracts, country-specific
+  identifiers, balance values, or country file layouts into regression tests.
 - Content validation runs in GitHub CI at PR time. Do not run it proactively.
 - Never run `pre-commit run --all-files`. Use normal staged-file hooks or
   `pre-commit run --files <changed paths>`; do not include unrelated formatter edits.
@@ -40,6 +49,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   [Validation Pipeline](.claude/docs/validation-pipeline.md). CI and hooks differ.
 - For `tools/` changes, run `python -m pytest` before merge. Fix regressions in the
   same change; never delete, skip, or weaken tests to pass.
+- Install the `dev` and `runtime` dependency groups from `pyproject.toml` before running
+  the suite. Without them, tests that need `pre-commit` or `coverage` fail. pip older
+  than 25.1 has no `--group`, so install the listed packages by name.
 - For docs-site changes, follow [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 - Standardization: [tools/standardization/README.md](tools/standardization/README.md).
   Branch summary: `python3 tools/analysis/review_branch.py [base-branch]`.

@@ -478,19 +478,23 @@ on_actions = {
 						else = {
 							# update project target country
 							# remove the target decision from the old controller
+							set_temp_variable = { project_state = PREV.id }
+							get_project_slot_in_state = yes
 							meta_effect = {
-								text = { var:project_target_country^PREV.project_target_state_@THIS = { remove_targeted_decision = { target = PREV decision = investments_project_[x]_target_decision } } }
-								x = "[?PREV.project_target_state_@THIS]"
+								text = { var:project_target_country^project_slot = { remove_targeted_decision = { target = PREV decision = investments_project_[x]_target_decision } } }
+								x = "[?project_slot]"
 							}
 
-							set_variable = { project_target_country^PREV.project_target_state_@THIS = ROOT.id }
+							set_variable = { project_target_country^project_slot = ROOT.id }
 						}
 					}
 
 					for_each_scope_loop = {
 						array = remove_projects
 
-						set_variable = { project = PREV.project_target_state_@THIS }
+						set_temp_variable = { project_state = PREV.id }
+						get_project_slot_in_state = yes
+						set_variable = { project = project_slot }
 						log = "AC - [GetDate] [This.GetTag] - on_state_control_changed - deleted invalid project [?project] in [?project_array^project] [?project_array^project.GetName] [?project_array^project.GetName]"
 						end_project = yes
 					}

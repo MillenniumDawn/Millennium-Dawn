@@ -6,7 +6,7 @@ a `factor = 0` modifier brings the zeroed weight back.
 
 import pytest
 import validate_ai_weight_order as V
-from shared.suite import issue_rows, run_validator
+from shared.suite import issue_rows, run_validator, write_under
 
 ZERO = "\tmodifier = { factor = 0 has_war = yes }\n"
 ADD = "\tmodifier = { add = 5 has_stability > 0.5 }\n"
@@ -25,6 +25,8 @@ def _modifier(weight):
 _CASES = {
     "add after zero": (_block(ZERO, ADD), [(4, "ai_chance")]),
     "ai_will_do": (_block(ZERO, ADD, name="ai_will_do"), [(4, "ai_will_do")]),
+    "diplomatic ai_desire": (_block(ZERO, ADD, name="ai_desire"), [(4, "ai_desire")]),
+    "diplomatic zero last": (_block(ADD, ZERO, name="ai_desire"), []),
     "decimal zero": (_block(_modifier("factor = 0.0"), ADD), [(4, "ai_chance")]),
     "once per block": (
         _block(ZERO, ADD, ADD) + _block(ADD, ZERO) + _block(ZERO, ADD),
@@ -114,18 +116,23 @@ def test_scan_text_reports_the_first_add_after_a_zero(script, expected):
 
 
 def test_validator_reports_the_same_cold_warm_and_uncached(
-    tmp_path, write_path, issues_by_line, monkeypatch
+    tmp_path, issues_by_line, monkeypatch
 ):
     option = "\t\t".join(("", "ai_chance = {\n", "\tbase = 10\n", ZERO, ADD, "}\n"))
-    write_path(
+    write_under(
         tmp_path,
         "events/Ev.txt",
         "country_event = {\n\tid = foo.1\n\toption = {\n\t\tname = foo.1.a\n"
         + option
         + "\t}\n}\n",
     )
-    write_path(tmp_path, "common/decisions/Clean.txt", _block(ADD, ZERO))
-    write_path(tmp_path, "common/decisions/Weightless.txt", "ai_chance = { base = 1 }")
+    write_under(
+        tmp_path,
+        "common/scripted_diplomatic_actions/Trade.txt",
+        _block(ZERO, ADD, name="ai_desire"),
+    )
+    write_under(tmp_path, "common/decisions/Clean.txt", _block(ADD, ZERO))
+    write_under(tmp_path, "common/decisions/Weightless.txt", "ai_chance = { base = 1 }")
     scans = []
     scan_text = V.scan_text
 
@@ -138,15 +145,16 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
 
     cold = issue_rows(issues_by_line(V.Validator, tmp_path)[1])
     warm = issue_rows(issues_by_line(V.Validator, tmp_path)[1])
-    assert len(scans) == 2
+    assert len(scans) == 3
     uncached = run_validator(V.Validator, tmp_path)
-    assert len(scans) == 4
+    assert len(scans) == 6
 
     assert cold == warm == issue_rows(uncached)
     assert [(category, path, line) for category, _, path, line in cold] == [
-        ("ai-weight-zero-then-add", "events/Ev.txt", 8)
+        ("ai-weight-zero-then-add", "events/Ev.txt", 8),
+        ("ai-weight-zero-then-add", "common/scripted_diplomatic_actions/Trade.txt", 4),
     ]
-    assert (uncached.warnings_found, uncached.errors_found) == (1, 0)
+    assert (uncached.warnings_found, uncached.errors_found) == (2, 0)
 
 
 _SCRIPTED_GUARDS = (
@@ -163,18 +171,18 @@ def test_only_defined_scripted_triggers_are_boolean():
 
 
 def test_changed_trigger_definitions_invalidate_cached_weights(
-    tmp_path, write_path, issues_by_line, monkeypatch
+    tmp_path, issues_by_line, monkeypatch
 ):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    write_path(tmp_path, "common/decisions/Test.txt", _SCRIPTED_GUARDS)
+    write_under(tmp_path, "common/decisions/Test.txt", _SCRIPTED_GUARDS)
     trigger_path = "common/scripted_triggers/Test.txt"
-    write_path(tmp_path, trigger_path, "other_path = { always = yes }")
+    write_under(tmp_path, trigger_path, "other_path = { always = yes }")
 
     assert len(issue_rows(issues_by_line(V.Validator, tmp_path)[1])) == 1
-    write_path(tmp_path, trigger_path, "test_path = { always = yes }")
+    write_under(tmp_path, trigger_path, "test_path = { always = yes }")
     assert issue_rows(issues_by_line(V.Validator, tmp_path)[1]) == []
     assert issue_rows(issues_by_line(V.Validator, tmp_path)[1]) == []
     assert issue_rows(run_validator(V.Validator, tmp_path)) == []
 
-    write_path(tmp_path, trigger_path, "other_path = { always = yes }")
+    write_under(tmp_path, trigger_path, "other_path = { always = yes }")
     assert len(issue_rows(issues_by_line(V.Validator, tmp_path)[1])) == 1
