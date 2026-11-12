@@ -41,7 +41,19 @@ Clone the repository with GitHub Desktop by following the [Git & GitHub Desktop]
   git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
   ```
 
+  Experienced Git users can save about 9 GB with a partial clone (see [Use a Partial Clone](#use-a-partial-clone)).
+
 - **Outside contributors**: fork the repository first (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)), then clone your fork and add the upstream remote. The [Git Workflow](/dev-resources/git-workflow/) guide has the full fork-based walkthrough.
+
+## Use a Partial Clone
+
+Partial clones are harder to manage and need some Git experience. If you are new to Git, use a full clone (plain `git clone` or GitHub Desktop) instead.
+
+This is a temporary measure for those who care about download size. It matters less once the one-time history cut in [issue #6523](https://github.com/MillenniumDawn/Millennium-Dawn/issues/6523) is done, which shrinks the clone for everyone.
+
+If you are comfortable with Git, add `--filter=blob:none` when you clone. A new clone is about 11 GB instead of 20 GB. You keep full log and blame, and `.git` is about 3.3 GB because old file versions download only when a command needs them.
+
+Commands that read old binary versions, such as checking out an old tag, download them at that point. Existing clones do not shrink. To get the benefit, re-clone with the flag. For a fork, use your fork's URL.
 
 ## Staying Up to Date
 
