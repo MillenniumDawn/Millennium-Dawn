@@ -371,7 +371,10 @@ _EXCESSIVE_CASES = {
     "cost bonus": ("corruption_cost_factor", "-0.4", 1),
     "cost bonus at cap": ("corruption_cost_factor", "-0.30", 0),
     "cost penalty": ("corruption_cost_factor", "0.4", 0),
-    "expected bonus": ("expected_welfare_modifier", "-0.4", 1),
+    "tax change penalty": ("tax_rate_change_multiplier_modifier", "0.5", 0),
+    "tax change bonus": ("tax_rate_change_multiplier_modifier", "-0.5", 1),
+    "tax change bonus at cap": ("tax_rate_change_multiplier_modifier", "-0.3", 0),
+    "expected-style key without definition": ("expected_welfare_modifier", "-0.4", 1),
     "listed malus key penalty": ("consumer_goods_factor", "0.4", 0),
     "listed malus key bonus": ("consumer_goods_factor", "-0.4", 1),
     "fuel suffix penalty": ("army_fuel_consumption_factor", "0.4", 0),
@@ -396,6 +399,40 @@ def test_excessive_modifiers(tmp_path, key, value, count):
     assert [(i.category, i.severity) for i in validator._issues] == [
         ("excessive-modifier-over-30-percent", Severity.WARNING)
     ] * count
+
+
+@pytest.mark.parametrize(
+    "key,value",
+    [
+        ("state_renewable_capacity_factor_modifier", "0.55"),
+        ("expected_mil_modifier", "-4"),
+        ("expected_police_modifier", "-3"),
+        ("expected_healthcare_modifier", "-2"),
+    ],
+)
+@pytest.mark.parametrize("value_type,count", [("number", 0), ("percentage", 1)])
+@pytest.mark.parametrize("source", ["idea", "state decision"])
+def test_excessive_modifiers_respect_definition_units(
+    tmp_path, key, value, value_type, count, source
+):
+    _write(
+        tmp_path,
+        "common/modifier_definitions/test.txt",
+        f"{key} = {{\n\t# value_type = number\n\tvalue_type = {value_type}\n}}\n",
+    )
+    if source == "idea":
+        _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", key, value))
+    else:
+        _write(
+            tmp_path,
+            "common/decisions/test.txt",
+            "test_category = { test_decision = { complete_effect = { 669 = {\n"
+            f"add_state_modifier = {{ modifier = {{ {key} = {value} }} }}\n"
+            "} } } }\n",
+        )
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_excessive_modifiers()
+    assert _categories(validator) == ["excessive-modifier-over-30-percent"] * count
 
 
 _GRANT_CASES = {

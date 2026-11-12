@@ -706,6 +706,7 @@ _NEGATIVE_BONUS_KEYS: FrozenSet[str] = frozenset(
         "air_accidents_factor",
         "wounded_chance_factor",
         "general_death_chance_modifier",
+        "tax_rate_change_multiplier_modifier",
     }
 )
 _TIMED_GRANT_RE = re.compile(
@@ -1336,10 +1337,24 @@ class Validator(BaseValidator):
         """Warn on a single percent-style bonus above 30%."""
         self._log_section("Checking modifier bonuses above 30%...")
 
+        number_keys = set()
+        for filepath in self._collect_files(
+            self._DEFINITION_PATTERNS, ignore_staged=True
+        ):
+            content = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not content:
+                continue
+            for key, _nl, _bl, body in _extract_top_level_definition_blocks(content):
+                if re.search(r"\bvalue_type\s*=\s*number\b", body):
+                    number_keys.add(key)
+
         def over_cap(key, value):
             if (
                 key in _WEEKLY_CAPS
                 or key in _INCOME_MODIFIER_KEYS
+                or key in number_keys
                 or key.startswith("ai_")
                 # A number of percentage points, not a percent.
                 or key == "interest_rate_multiplier_modifier"
