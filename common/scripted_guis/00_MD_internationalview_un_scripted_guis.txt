@@ -513,7 +513,7 @@ scripted_gui = {
 	}
 
 	MD_UN_GA_gui = {
-		window_name = MD_UN_GA_window
+		window_name = "MD_UN_GA_window"
 		context_type = player_context
 		parent_window_name = MD_UN_system_sub_window
 
@@ -625,6 +625,14 @@ scripted_gui = {
 				set_variable = { UN_GA_auto_reject_frame_var = 1 }
 
 				international_systems_update = yes
+			}
+		}
+
+		dynamic_lists = {
+			list_of_ga_yes_votes = {
+				array = global.general_assembly_vote_yes
+				entry_container = IS_UN_GA_yes_vote_list
+				change_scope = yes
 			}
 		}
 
@@ -1190,33 +1198,31 @@ scripted_gui = {
 		}
 	}
 
-	is_un_extended_list = {
+	is_aid_un_extended_list = {
 		context_type = player_context
 		parent_scripted_gui = MD_UN_main_window
-		window_name = "UN_extended_list"
+		window_name = "UN_aid_extended_list"
+
+		dirty = global.international_systems_updated
 
 		visible = {
 			has_country_flag = open_MD_countrymissilesview
 			check_variable = { var_open_MD_UN_gui = 2 }
+			check_variable = { var_open_MD_un_aid = 1 }
 			OR = {
-				AND = {
-					check_variable = { var_open_MD_un_aid = 1 }
-					OR = {
-						check_variable = { opened_country_list_unesco = 2 }
-						check_variable = { opened_country_list_unido = 2 }
-						check_variable = { opened_country_list_uncdf = 2 }
-					}
-				}
-				AND = {
-					check_variable = { un_sc_pending_votes = 2 }
-					check_variable = { var_open_MD_un_council = 1 }
-				}
+				check_variable = { opened_country_list_unesco = 2 }
+				check_variable = { opened_country_list_unido = 2 }
+				check_variable = { opened_country_list_uncdf = 2 }
 			}
 		}
 
 		effects = {
 			close_country_list_click = {
 				clear_array = un_aid_current_countries_list
+				clear_variable = opened_country_list_unesco
+				clear_variable = opened_country_list_unido
+				clear_variable = opened_country_list_uncdf
+				international_systems_update = yes
 			}
 			
 			# UN SC
@@ -1259,11 +1265,72 @@ scripted_gui = {
 					check_variable = { opened_country_list_uncdf = 2 }
 				}
 			}
-			# UN SC
-			list_of_pending_sc_votes_visible = {
-				check_variable = { un_sc_pending_votes = 2 }
-				check_variable = { var_open_MD_un_council = 1 }
+		}
+		
+		dynamic_lists = {
+			UN_aid_country_list_grid = {
+				array = un_aid_current_countries_list
+				entry_container = UN_aid_country_entry
+				change_scope = yes
 			}
+		}
+
+		properties = {
+			flag_icon = {
+                image = "[?v.GetFlag]"
+            }
+		}
+	}
+
+	is_sc_un_extended_list = {
+		context_type = player_context
+		parent_scripted_gui = MD_UN_main_window
+		window_name = "UN_sc_extended_list"
+		
+		dirty = global.international_systems_updated
+
+		visible = {
+			has_country_flag = open_MD_countrymissilesview
+			check_variable = { var_open_MD_UN_gui = 2 }
+			check_variable = { un_sc_pending_votes = 2 }
+			check_variable = { var_open_MD_un_council = 1 }
+		}
+
+		effects = {
+			close_country_list_click = {
+				clear_variable = un_sc_pending_votes
+				international_systems_update = yes
+			}
+			is_un_sc_manipulate_vote_button_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_sc_vote_front = yes
+
+				add_political_power = -150
+
+				international_systems_update = yes
+			}
+
+			is_un_sc_manipulate_vote_button_right_click = {
+				custom_effect_tooltip = un_sc_manipulate_vote_tt
+
+				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
+				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
+				set_temp_variable = { index_track = i }
+
+				manipulate_sc_vote_rear = yes
+
+				add_political_power = -150
+
+				international_systems_update = yes
+			}
+		}
+
+		triggers = {
 			is_un_sc_manipulate_vote_button_click_enabled = {
 				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
 				meta_trigger = {
@@ -1284,11 +1351,6 @@ scripted_gui = {
 		}
 		
 		dynamic_lists = {
-			UN_aid_country_list_grid = {
-				array = un_aid_current_countries_list
-				entry_container = UN_aid_country_entry
-				change_scope = yes
-			}
 			list_of_pending_sc_votes = {
 				array = global.sc_vote_nation_tracker
 				entry_container = IS_UN_SC_pending_vote_list
@@ -1454,7 +1516,7 @@ scripted_gui = {
 				}
 				international_systems_update = yes
 			}
-						un_sc_auto_accept_button_click = {
+			un_sc_auto_accept_button_click = {
 				if = {
 					limit = {
 						has_country_flag = auto_accept_all_sc_votes
@@ -1759,10 +1821,10 @@ scripted_gui = {
 		}
 	}
 
-	is_un_sc_pending_vote_dynamic_lists = {
+	IS_UN_SC_pending_vote_list = {
 		context_type = player_context
 		parent_scripted_gui = MD_unsc_pop_out_window
-		window_name = "IS_UN_SC_pending_votes_container"
+		window_name = "IS_UN_SC_pending_vote_list"
 
 		dirty = global.international_systems_updated
 
@@ -1772,15 +1834,25 @@ scripted_gui = {
 			has_country_flag = open_MD_countrymissilesview
 			has_country_flag = show_sc_vote_view
 		}
-		dynamic_lists = {
-			list_of_pending_sc_votes = {
-				array = global.sc_vote_nation_tracker
-				entry_container = IS_UN_SC_pending_vote_list
-			}
-		}
 
 		triggers = {
-			is_un_sc_manipulate_vote_button_click_enabled = {
+			un_sc_pending_vote_increase_priority_button_click_enabled = {
+				check_variable = { i > 0 }
+				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
+				meta_trigger = {
+					text = {
+						custom_trigger_tooltip = {
+							tooltip = un_sc_vote_track_[DISP]
+							always = yes
+						}
+					}
+					DISP = "[?disp_var]"
+				}
+				has_political_power > 150
+			}
+
+			un_sc_pending_vote_decrease_priority_button_click_enabled = {
+				check_variable = { i > global.sc_vote_nation_tracker^num }
 				set_temp_variable = { disp_var = global.sc_vote_type_tracker^i }
 				meta_trigger = {
 					text = {
@@ -1802,7 +1874,6 @@ scripted_gui = {
 				set_temp_variable = { nation_hold = global.sc_vote_nation_tracker^i }
 				set_temp_variable = { type_hold = global.sc_vote_type_tracker^i }
 				set_temp_variable = { index_track = i }
-
 				manipulate_sc_vote_front = yes
 
 				add_political_power = -150
@@ -1824,6 +1895,13 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 		}
+
+		dynamic_lists = {
+			list_of_pending_sc_votes = {
+				array = global.sc_vote_nation_tracker
+				entry_container = IS_UN_SC_pending_vote_list
+			}
+		}
 	}
 
 	is_un_ga_yes_lists = {
@@ -1838,14 +1916,6 @@ scripted_gui = {
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			has_global_flag = current_ongoing_ga_vote
-		}
-
-		dynamic_lists = {
-			list_of_ga_yes_votes = {
-				array = global.general_assembly_vote_yes
-				entry_container = IS_UN_GA_yes_vote_list
-				change_scope = yes
-			}
 		}
 
 		triggers = {
