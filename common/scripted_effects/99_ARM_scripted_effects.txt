@@ -839,131 +839,66 @@ ARM_italian_revoult_script = {
 		}
 	}
 }
-ARM_kob_russia_script = {
+ARM_kob_update_coup_chance = {
+	set_variable = { ARM_kob_coup_chance = { value = SOV.party_pop_array^22 multiply = 100 add = 10 } }
+	if = { limit = { SOV = { has_stability < 0.4 } } add_to_variable = { ARM_kob_coup_chance = 10 } }
+	if = { limit = { SOV = { has_stability > 0.6 } } subtract_from_variable = { ARM_kob_coup_chance = 10 } }
+	if = { limit = { SOV = { has_completed_focus = SOV_second_slujba } } subtract_from_variable = { ARM_kob_coup_chance = 10 } }
+	if = { limit = { SOV = { has_completed_focus = SOV_omon } } subtract_from_variable = { ARM_kob_coup_chance = 10 } }
+	if = { limit = { SOV = { SOV_has_internal_troops = yes } } subtract_from_variable = { ARM_kob_coup_chance = 10 } }
+	if = { limit = { SOV = { has_completed_focus = SOV_rosguard_start_org } } subtract_from_variable = { ARM_kob_coup_chance = 10 } }
 	if = {
 		limit = {
 			SOV = {
-				has_completed_focus = SOV_second_slujba
-				has_completed_focus = SOV_omon
-				OR = {
-					SOV_has_internal_troops = yes
-					has_completed_focus = SOV_rosguard_start_org
-				}
-				NOT = {
-					influence_higher_40 = yes
+				any_of = {
+					array = influence_array
+					value = v
+					index = i
+					var:v = { tag = ARM }
+					check_variable = { influence_array_val^i > 39.999 }
 				}
 			}
 		}
-		hidden_effect = {
-			ARM = {
-				country_event = {
-					id = arm_empire.34
-					days = 1
-				}
-			}
-			SOV = {
-				country_event = {
-					id = arm_empire.34
-					days = 1
-				}
-			}
-		}
+		add_to_variable = { ARM_kob_coup_chance = 10 }
 	}
-	else_if = {
-		limit = {
-			SOV = {
-				has_completed_focus = SOV_second_slujba
-				NOT = {
-					OR = {
-						has_completed_focus = SOV_omon
-						SOV_has_internal_troops = yes
-						has_completed_focus = SOV_rosguard_start_org
-					}
-				}
-				influence_higher_40 = yes
-			}
-		}
-		hidden_effect = {
-			SOV = {
-				country_event = {
-					id = arm_empire.34
-					days = 1
-				}
-			}
-			ARM = {
-				country_event = {
-					id = arm_empire.34
-					days = 1
-				}
-			}
-		}
-	}
-	else_if = {
+	clamp_variable = { var = ARM_kob_coup_chance min = 5 max = 75 }
+	if = {
 		limit = {
 			OR = {
-				SOV = {
-					has_completed_focus = SOV_second_slujba
-					NOT = {
-						OR = {
-							has_completed_focus = SOV_omon
-							SOV_has_internal_troops = yes
-							has_completed_focus = SOV_rosguard_start_org
-						}
-					}
-				}
-				SOV = {
-					NOT = {
-						OR = {
-							has_completed_focus = SOV_second_slujba
-							has_completed_focus = SOV_omon
-							SOV_has_internal_troops = yes
-							has_completed_focus = SOV_rosguard_start_org
-						}
-					}
-					influence_higher_40 = yes
-				}
+				NOT = { ARM_kob_campaign_valid = yes }
+				SOV = { check_variable = { party_pop_array^22 < 0.20 } }
 			}
 		}
-		hidden_effect = {
-			SOV = {
-				country_event = {
-					id = arm_empire.33
-					days = 1
-				}
-			}
-			ARM = {
-				country_event = {
-					id = arm_empire.33
-					days = 1
-				}
-			}
-		}
+		set_variable = { ARM_kob_coup_chance = 0 }
 	}
-	else_if = {
-		limit = {
-			SOV = {
-				NOT = {
-					OR = {
-						has_completed_focus = SOV_second_slujba
-						has_completed_focus = SOV_omon
-						SOV_has_internal_troops = yes
-						has_completed_focus = SOV_rosguard_start_org
+}
+
+ARM_kob_russia_script = {
+	clamp_variable = { var = ARM_kob_coup_chance min = 0 }
+	set_temp_variable = { ARM_kob_failure_chance = { value = 100 subtract = ARM_kob_coup_chance } }
+	random_list = {
+		ARM_kob_coup_chance = {
+			SOV = { country_event = arm_empire.32 }
+			country_event = arm_empire.32
+		}
+		ARM_kob_failure_chance = {
+			if = {
+				limit = { SOV = { 35_percent_nationalist_nat_autocracy_popularity = yes check_variable = { owned_controlled_states^num > 1 } } }
+				random_list = {
+					seed = random
+					ARM_kob_coup_chance = {
+						SOV = { country_event = arm_empire.33 }
+						country_event = arm_empire.33
+					}
+					ARM_kob_failure_chance = {
+						SOV = { country_event = arm_empire.34 }
+						country_event = arm_empire.34
 					}
 				}
 			}
-		}
-		hidden_effect = {
-			SOV = {
-				country_event = {
-					id = arm_empire.32
-					days = 1
-				}
-			}
-			ARM = {
-				country_event = {
-					id = arm_empire.32
-					days = 1
-				}
+			else = {
+				SOV = { country_event = arm_empire.34 }
+				country_event = arm_empire.34
 			}
 		}
 	}
