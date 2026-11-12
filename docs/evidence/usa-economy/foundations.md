@@ -42,6 +42,8 @@ Construction charges depend on projects actually eligible to run. Each explicit 
 
 [The complete focus ledger](foundations.csv) separates cash charges, recurring budget modifiers, worker requirements, and other permanent modifiers for every economic focus. Deltas are additive modifier values, not predicted percentage changes in GDP or unemployment. Conditional reward branches are listed as source totals and must not be treated as simultaneously executable outcomes.
 
+The ledger includes the military, socialist, and anarchist focus adjustments from [#6462](https://github.com/MillenniumDawn/Millennium-Dawn/pull/6462). Integration refreshed 746 modifier values across 141 of its 575 focus rows against the combined source. Prerequisites, nominal cash charges, GDP-based charges, and other treasury expressions are unchanged by this integration. Idea modifiers remain separate from the focus ledger and must be considered when evaluating total national bonuses.
+
 Lower worker requirements free labor. They do not create positions. Service-related unemployment tolerance retains its existing meaning as social tolerance and is not counted as employment.
 
 The dairy-aid restart and construction-supplier investment program each spend 0.2% of current GDP once. Dairy aid also raises the welfare-cost modifier by two points instead of reducing it. The ledger lists GDP-based costs and other treasury expressions separately from nominal fixed-dollar totals.
