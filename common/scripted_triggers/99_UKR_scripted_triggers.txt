@@ -867,3 +867,163 @@ UKR_s200_site_state = {
 		state = 669
 	}
 }
+
+varyag_transit_possible = {
+	country_exists = CHI
+	TUR = { controls_state = 1244 }
+	CHI = { NOT = { has_war_with = TUR } }
+}
+
+varyag_ukrainian_shipyard_available = {
+	UKR = {
+		controls_state = 1086
+		NOT = { has_war_with = TUR }
+	}
+}
+
+varyag_refit_shipyard_available = {
+	OR = {
+		AND = {
+			original_tag = UKR
+			controls_state = 1086
+			1086 = { dockyard > 0 }
+		}
+		AND = {
+			original_tag = TUR
+			controls_state = 155
+			155 = { dockyard > 0 }
+		}
+	}
+}
+
+varyag_can_complete_refit = {
+	varyag_refit_shipyard_available = yes
+	if = {
+		limit = { original_tag = UKR }
+		custom_trigger_tooltip = {
+			tooltip = UKR_varyag_mykolaiv_dockyards_tt
+			1086 = { dockyard > 1 }
+		}
+	}
+}
+
+varyag_refit_specification_ready = {
+	has_country_flag = varyag_hull_at_shipyard
+	check_variable = { varyag_weapons_tier > 0 }
+}
+
+varyag_french_supply_available = {
+	country_exists = FRA
+	NOT = { has_war_with = FRA }
+	custom_trigger_tooltip = {
+		tooltip = varyag_french_opinion_tt
+		FRA = { has_opinion = { target = PREV value > 29 } }
+	}
+}
+
+varyag_us_supply_available = {
+	country_exists = USA
+	NOT = { has_war_with = USA }
+	custom_trigger_tooltip = {
+		tooltip = varyag_us_opinion_tt
+		USA = { has_opinion = { target = PREV value > 29 } }
+	}
+}
+
+varyag_russian_supply_available = {
+	country_exists = SOV
+	NOT = { has_war_with = SOV }
+	custom_trigger_tooltip = {
+		tooltip = varyag_russian_opinion_tt
+		SOV = { has_opinion = { target = PREV value > 29 } }
+	}
+}
+
+UKR_varyag_air_group_available = {
+	check_variable = { varyag_weapons_tier > 0 }
+	NOT = { has_country_flag = UKR_varyag_air_group_ordered }
+}
+
+UKR_varyag_can_order_rafale = {
+	has_country_flag = UKR_varyag_catapult_refit
+	varyag_french_supply_available = yes
+	custom_trigger_tooltip = {
+		tooltip = UKR_varyag_rafale_funds_tt
+		check_variable = { var = treasury value = 9 compare = greater_than_or_equals }
+	}
+}
+
+UKR_varyag_can_order_mig29k = {
+	NOT = { has_country_flag = UKR_varyag_catapult_refit }
+	varyag_russian_supply_available = yes
+	custom_trigger_tooltip = {
+		tooltip = UKR_varyag_mig_funds_tt
+		check_variable = { var = treasury value = 6 compare = greater_than_or_equals }
+	}
+}
+
+varyag_hornet_program_available = {
+	OR = {
+		varyag_refit_specification_ready = yes
+		has_country_flag = UKR_varyag_catapult_refit
+	}
+	NOT = { has_country_flag = UKR_varyag_air_group_ordered }
+}
+
+varyag_can_order_hornets = {
+	has_country_flag = UKR_varyag_catapult_refit
+	varyag_us_supply_available = yes
+	custom_trigger_tooltip = {
+		tooltip = varyag_hornet_funds_tt
+		check_variable = { var = treasury value = 8 compare = greater_than_or_equals }
+	}
+}
+
+UKR_varyag_trials_available = {
+	original_tag = UKR
+	has_country_flag = UKR_varyag_commissioned
+	NOT = { has_country_flag = UKR_varyag_deck_trials_completed }
+	has_navy_size = { unit = carrier size > 0 }
+}
+
+UKR_varyag_combat_aircraft_available = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_varyag_combat_aircraft_tt
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			OR = {
+				has_equipment = { cv_small_plane_strike_airframe_2 > 11 }
+				has_equipment = { cv_medium_plane_airframe_2 > 11 }
+			}
+		}
+		else = {
+			OR = {
+				has_equipment = { CV_MR_Fighter2 > 11 }
+				has_equipment = { CV_MR_Fighter3 > 11 }
+			}
+		}
+	}
+}
+UKR_varyag_training_aircraft_available = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_varyag_training_aircraft_tt
+		OR = {
+			UKR_varyag_combat_aircraft_available = yes
+			AND = {
+				has_dlc = "By Blood Alone"
+				OR = {
+					has_equipment = { cv_small_plane_cas_airframe_1 > 0 }
+					has_equipment = { cv_medium_plane_fighter_airframe_2 > 0 }
+				}
+			}
+			AND = {
+				NOT = { has_dlc = "By Blood Alone" }
+				OR = {
+					has_equipment = { CV_MR_Fighter1 > 0 }
+					has_equipment = { CV_MR_Fighter2 > 0 }
+					has_equipment = { CV_MR_Fighter3 > 0 }
+				}
+			}
+		}
+	}
+}
