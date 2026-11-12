@@ -371,6 +371,50 @@ def dds_stub(width: int, height: int) -> bytes:
     return bytes(header)
 
 
+def mesh_bytes(*parts, joints: int = 0) -> bytes:
+    """A binary `.mesh` with one shape per part, for the model tool tests.
+
+    A part maps `p` and `tri` to arrays, and optionally `n`, `ta`, `u0`, `ix`,
+    `w` and `shader`. `joints` adds a skeleton of that size to every shape.
+    """
+    import numpy as np
+    import pdx_mesh
+
+    root = pdx_mesh.Node("", 0)
+    root.props["pdxasset"] = ("i", np.array([1, 0], "<i4"))
+    top = pdx_mesh.Node("object", 1)
+    root.children.append(top)
+    for number, part in enumerate(parts):
+        shape = pdx_mesh.Node(f"shape{number}", 2)
+        mesh = pdx_mesh.Node("mesh", 3)
+        for name in ("p", "n", "ta", "u0"):
+            if name in part:
+                mesh.props[name] = ("f", np.asarray(part[name], "<f4").ravel())
+        mesh.props["tri"] = ("i", np.asarray(part["tri"], "<i4").ravel())
+        material = pdx_mesh.Node("material", 4)
+        shader = part.get("shader", "PdxMeshAdvanced").encode() + b"\0"
+        material.props["shader"] = ("s", [shader])
+        mesh.children.append(material)
+        if "ix" in part:
+            skin = pdx_mesh.Node("skin", 4)
+            skin.props["bones"] = ("i", np.array([part.get("bones", 4)], "<i4"))
+            skin.props["ix"] = ("i", np.asarray(part["ix"], "<i4").ravel())
+            skin.props["w"] = ("f", np.asarray(part["w"], "<f4").ravel())
+            mesh.children.append(skin)
+        shape.children.append(mesh)
+        if joints:
+            skeleton = pdx_mesh.Node("skeleton", 3)
+            for joint in range(joints):
+                node = pdx_mesh.Node(f"joint{joint}", 4)
+                node.props["ix"] = ("i", np.array([joint], "<i4"))
+                if joint:
+                    node.props["pa"] = ("i", np.array([0], "<i4"))
+                skeleton.children.append(node)
+            shape.children.append(skeleton)
+        top.children.append(shape)
+    return pdx_mesh.write(root)
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
