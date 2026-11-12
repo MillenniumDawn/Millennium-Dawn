@@ -50,7 +50,7 @@ A leader portrait counts as small when its shorter side is under 100 pixels.
 
 Icons stay uncompressed because DXT damages fine detail, text, and flat color. Large smooth art, such as a panel background, can compress with no visible change.
 
-You do not have to decide this by hand. Save GUI art uncompressed. `dds_standardize.py` test-compresses each uncompressed GUI texture and keeps the result only when it scores at least 40 dB PSNR against the original, with 99.9% of texels within 20 of 255.
+You do not have to decide this by hand. Save GUI art uncompressed. `dds_standardize.py` test-compresses each uncompressed GUI texture and keeps the result only when it scores at least 40 dB PSNR against the original, with 99.9% of texels within 20 of 255. Tech, focus, and idea icons are never compressed, whatever they score.
 
 ### When block compression hurts
 
