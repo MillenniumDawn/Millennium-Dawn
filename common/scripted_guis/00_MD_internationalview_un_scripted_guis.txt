@@ -1277,6 +1277,10 @@ scripted_gui = {
 				}
 				has_political_power > 150
 			}
+			# old button to remove after implementation
+			is_un_sc_manipulate_vote_button_visible = {
+				always = no
+			}
 		}
 		
 		dynamic_lists = {
@@ -1428,7 +1432,29 @@ scripted_gui = {
 
 				international_systems_update = yes
 			}
-			un_sc_auto_accept_button_click = {
+			is_un_sc_propose_action_button_click = {
+				ROOT = {
+					add_political_power = -250
+
+					set_temp_variable = { sc_new_vote_type = sc_selected_action }
+					set_temp_variable = { sc_new_vote_nation = PREV }
+					set_global_flag = sc_action_against@PREV
+					update_sc_vote = yes
+				}
+				international_systems_update = yes
+			}
+			un_sc_show_pending_votes_button_click = {
+				if = {
+					limit = {
+						check_variable = { un_sc_pending_votes = 2 }
+					}
+					clear_variable = un_sc_pending_votes
+				} else = {
+					set_variable = { un_sc_pending_votes = 2 }
+				}
+				international_systems_update = yes
+			}
+						un_sc_auto_accept_button_click = {
 				if = {
 					limit = {
 						has_country_flag = auto_accept_all_sc_votes
@@ -1482,28 +1508,6 @@ scripted_gui = {
 
 				international_systems_update = yes
 			}
-			is_un_sc_propose_action_button_click = {
-				ROOT = {
-					add_political_power = -250
-
-					set_temp_variable = { sc_new_vote_type = sc_selected_action }
-					set_temp_variable = { sc_new_vote_nation = PREV }
-					set_global_flag = sc_action_against@PREV
-					update_sc_vote = yes
-				}
-				international_systems_update = yes
-			}
-			un_sc_show_pending_votes_button_click = {
-				if = {
-					limit = {
-						check_variable = { un_sc_pending_votes = 2 }
-					}
-					clear_variable = un_sc_pending_votes
-				} else = {
-					set_variable = { un_sc_pending_votes = 2 }
-				}
-				international_systems_update = yes
-			}
 		}
 		
 		triggers = {
@@ -1536,6 +1540,15 @@ scripted_gui = {
 					}
 				}
 			}
+			vote_yes_visible = {
+				is_in_array = { array = global.security_council_vote_yes value = v }
+			}
+			vote_no_visible = {
+				is_in_array = { array = global.security_council_vote_no value = v }
+			}
+			vote_abstain_visible = {
+				is_in_array = { array = global.security_council_vote_abstain value = v }
+			}
 		}
 
 		dynamic_lists = {
@@ -1553,7 +1566,7 @@ scripted_gui = {
 				change_scope = yes
 			}
 			sc_list_of_votes = {
-				array = sc_selected_nations_list # TODO: change array to correct one
+				array = global.security_council_members
 				entry_container = IS_UN_vote_entry
 				change_scope = yes
 			}
@@ -1575,6 +1588,15 @@ scripted_gui = {
 			un_sc_show_pending_votes_button = {
 				frame = un_sc_pending_votes
 			}
+						un_sc_auto_accept_button = {
+				frame = UN_SC_auto_accept_frame_var
+			}
+			un_sc_auto_reject_button = {
+				frame = UN_SC_auto_reject_frame_var
+			}
+			un_sc_auto_abstain_button = {
+				frame = UN_SC_auto_abstain_frame_var
+			}
 		}
 	}
 
@@ -1590,32 +1612,6 @@ scripted_gui = {
 			check_variable = { var_open_MD_UN_gui = 2 }
 			has_country_flag = open_MD_countrymissilesview
 			NOT = { is_in_array = { global.p5_sc_members = ROOT } }
-		}
-
-		dynamic_lists = {
-			list_of_council_members = {
-				array = global.security_council_members
-				entry_container = IS_UN_SC_members_list
-			}
-			list_of_permanant_members = {
-				array = global.p5_sc_members
-				entry_container = IS_UN_SC_permanant_members_list
-			}
-			list_of_sc_yes_votes = {
-				array = global.security_council_vote_yes
-				entry_container = IS_UN_SC_yes_vote_list
-				change_scope = yes
-			}
-			list_of_sc_no_votes = {
-				array = global.security_council_vote_no
-				entry_container = IS_UN_SC_no_vote_list
-				change_scope = yes
-			}
-			list_of_sc_abstain = {
-				array = global.security_council_vote_abstain
-				entry_container = IS_UN_SC_abstain_list
-				change_scope = yes
-			}
 		}
 
 		triggers = {
@@ -2340,39 +2336,6 @@ scripted_gui = {
 				add_political_power = -150
 				set_global_flag = { flag = proposed_ga_resolution_21 days = 365 value = 1 }
 				international_systems_update = yes
-			}
-		}
-	}
-
-	#This is for the individual programs
-	is_un_aid_contributors_dynamic_lists = {
-		context_type = player_context
-		parent_scripted_gui = MD_UN_aid_gui
-		window_name = "IS_UN_aid_contributors"
-
-		dirty = global.international_systems_updated
-
-		visible = {
-			has_country_flag = open_MD_countrymissilesview
-			check_variable = { var_open_MD_UN_gui = 2 }
-			check_variable = { var_open_MD_un_aid = 2 }
-		}
-
-		dynamic_lists = {
-			list_of_unesco_contributors = {
-				array = global.un_aid_esco_contributor
-				entry_container = IS_UN_aid_unesco_contributor_list
-				change_scope = yes
-			}
-			list_of_unido_contributors = {
-				array = global.un_aid_ido_contributor
-				entry_container = IS_UN_aid_ido_contributor_list
-				change_scope = yes
-			}
-			list_of_uncdf_contributors = {
-				array = global.un_aid_cdf_contributor
-				entry_container = IS_UN_aid_cdf_contributor_list
-				change_scope = yes
 			}
 		}
 	}
