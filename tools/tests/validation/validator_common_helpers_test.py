@@ -3,9 +3,11 @@
 import importlib.util
 import logging
 import os
+from decimal import Decimal
 
 import pytest
 import validator_common as VC
+from shared.suite import write_under
 
 
 class _Dummy(VC.BaseValidator):
@@ -61,16 +63,295 @@ def test_match_brace_returns_minus_one_when_unclosed():
     assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
+# ---- AI weight treasury checks ---------------------------------------------
+
+_BANKRUPT = "has_active_mission = bankruptcy_incoming_collapse"
+
+# case: (modifier body, treasury checks it lowers the weight on)
+_TREASURY_CHECK_CASES = {
+    "factor zero on bankruptcy": (f"factor = 0 {_BANKRUPT}", {"bankruptcy"}),
+    "factor below one on a deficit": (
+        "factor = 0.5 ai_has_high_deficit = yes",
+        {"deficit"},
+    ),
+    "no deficit": ("factor = 0.5 ai_has_high_deficit = no", set()),
+    "negative add": (f"add = -2 {_BANKRUPT}", {"bankruptcy"}),
+    "raising add": (f"add = 10 {_BANKRUPT}", set()),
+    "factor of one": (f"factor = 1 {_BANKRUPT}", set()),
+    "under NOT": (f"factor = 0.5 NOT = {{ {_BANKRUPT} }}", set()),
+    "after a closed NOT": (
+        f"factor = 0.5 NOT = {{ has_war = yes }} {_BANKRUPT}",
+        {"bankruptcy"},
+    ),
+    "factor inside a nested block": (f"OR = {{ factor = 0 }} {_BANKRUPT}", set()),
+}
+
+
+@pytest.mark.parametrize(
+    "modifier, checks", _TREASURY_CHECK_CASES.values(), ids=_TREASURY_CHECK_CASES
+)
+def test_lowering_treasury_checks(modifier, checks):
+    assert VC.lowering_treasury_checks(modifier) == checks
+
+
+_BOTH = {"bankruptcy", "deficit"}
+
+# case: (checks, money cost or commitment, political power cost, unneeded checks)
+_UNNEEDED_CHECK_CASES = {
+    "no cost": (_BOTH, False, False, _BOTH),
+    "money covers both": (_BOTH, True, False, set()),
+    "political power covers bankruptcy only": (_BOTH, False, True, {"deficit"}),
+}
+
+
+@pytest.mark.parametrize(
+    "checks, money, political_power, unneeded",
+    _UNNEEDED_CHECK_CASES.values(),
+    ids=_UNNEEDED_CHECK_CASES,
+)
+def test_unneeded_treasury_checks(checks, money, political_power, unneeded):
+    assert VC.unneeded_treasury_checks(checks, money, political_power) == unneeded
+
+
+_IDEAS = VC.idea_money_modifiers(
+    [
+        "ideas = { bureaucracy = {\n"
+        "\tbureau_01 = { on_add = { set_temp_variable = { spending_new_level = 1 } } }\n"
+        "\tbureau_02 = { on_add = { set_temp_variable = { spending_new_level = 2 } } }\n"
+        "\tbureau_dynamic = { on_add = { set_temp_variable = { spending_new_level = var:level } } }\n"
+        "\tbureau_multiple = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = var:level } } } }\n"
+        "\tbureau_conditional = { on_add = { set_temp_variable = { spending_new_level = 1 } "
+        "if = { set_temp_variable = { spending_new_level = 2 } } } }\n"
+        "}\n"
+        "country = {\n"
+        "\tTAG_reform = { modifier = { personnel_cost_multiplier_modifier = 0.1 } }\n"
+        "\tTAG_reform_2 = { modifier = { personnel_cost_multiplier_modifier = 0.2 } }\n"
+        "\tTAG_lean = { modifier = { personnel_cost_multiplier_modifier = -0.1 } }\n"
+        "\tTAG_drill = { modifier = { army_org = 5 } }\n"
+        "\tTAG_on_add = { on_add = { add_to_variable = { treasury = -10 } } }\n"
+        "\tTAG_on_remove = { on_remove = { add_to_variable = { treasury = -10 } } }\n"
+        "\tTAG_dynamic = { modifier = { personnel_cost_multiplier_modifier = TAG_value } }\n"
+        "\tTAG_tax_speed = { modifier = { tax_rate_change_multiplier_modifier = 0.5 } }\n"
+        "} }\n"
+    ]
+)
+
+
+def test_idea_money_modifiers_keep_money_and_spending_levels():
+    assert _IDEAS == {
+        "bureau_01": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 1},
+        "bureau_02": {VC._IDEA_CALLBACK: 0, VC.SPENDING_LEVEL: 2},
+        "bureau_dynamic": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_multiple": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "bureau_conditional": {
+            VC._IDEA_CALLBACK: 0,
+            VC._UNKNOWN_MONEY_MODIFIER: Decimal(0),
+        },
+        "TAG_reform": {"personnel_cost_multiplier_modifier": Decimal("0.1")},
+        "TAG_reform_2": {"personnel_cost_multiplier_modifier": Decimal("0.2")},
+        "TAG_lean": {"personnel_cost_multiplier_modifier": Decimal("-0.1")},
+        "TAG_drill": {},
+        "TAG_on_add": {VC._IDEA_CALLBACK: 0},
+        "TAG_on_remove": {VC._IDEA_CALLBACK: 0},
+        "TAG_dynamic": {VC._UNKNOWN_MONEY_MODIFIER: Decimal(0)},
+        "TAG_tax_speed": {},
+    }
+
+
+def _tooltip(op: str, amount: str, modifier: str) -> str:
+    return f"{op} = {{ TAG_x = {amount} tooltip = {modifier}_modifier_tt }}"
+
+
+# case: (script, commits money)
+_MONEY_COMMITMENT_CASES = {
+    "war goal": ("create_wargoal = { type = annex_everything target = GER }", True),
+    "declared war": ("declare_war_on = { target = GER }", True),
+    "border war": ("start_border_war = { change_state_after_war = no }", True),
+    "civil war": ("start_civil_war = { ideology = democratic }", True),
+    "decision war": ("war_with_target_on_complete = yes", True),
+    "spending law flag alone": (
+        "set_country_flag = spending_law_scripted_change",
+        False,
+    ),
+    "spending law raised": (
+        "swap_ideas = { remove_idea = bureau_01 add_idea = bureau_02 }",
+        True,
+    ),
+    "spending law lowered": (
+        "swap_ideas = { remove_idea = bureau_02 add_idea = bureau_01 }",
+        False,
+    ),
+    "spending law set from an unknown level": ("add_ideas = bureau_02", True),
+    "cost modifier raised": (
+        "modifier = { social_cost_multiplier_modifier = 0.1 }",
+        True,
+    ),
+    "cost modifier cut": (
+        "modifier = { social_cost_multiplier_modifier = -0.1 }",
+        False,
+    ),
+    "income modifier cut": ("modifier = { tax_gain_multiplier_modifier = -0.1 }", True),
+    "income modifier raised": (
+        "modifier = { tax_gain_multiplier_modifier = 0.1 }",
+        False,
+    ),
+    "short add cost raised": (
+        "add_to_variable = { social_cost_multiplier_modifier = 0.15 }",
+        True,
+    ),
+    "short add cost cut": (
+        "add_to_variable = { social_cost_multiplier_modifier = -0.15 }",
+        False,
+    ),
+    "long add income cut": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "long add income raised": (
+        "add_to_variable = { var = tax_gain_multiplier_modifier value = 0.15 }",
+        False,
+    ),
+    "short subtract cost cut": (
+        "subtract_from_variable = { social_cost_multiplier_modifier = 0.15 }",
+        False,
+    ),
+    "long subtract cost raised": (
+        "subtract_from_variable = { var = social_cost_multiplier_modifier value = -0.15 }",
+        True,
+    ),
+    "dynamic modifier change": (
+        "add_to_variable = { social_cost_multiplier_modifier = TAG_step }",
+        True,
+    ),
+    "unrelated dynamic variable": (
+        "add_to_variable = { other_variable = TAG_step }",
+        False,
+    ),
+    "computed money modifier": ("social_cost_multiplier_modifier = TAG_step", True),
+    "tax rate change price": ("tax_rate_change_multiplier_modifier = 0.5", False),
+    "dynamic cost raised": (
+        _tooltip("add_to_variable", "0.01", "police_cost_multiplier"),
+        True,
+    ),
+    "dynamic cost cut": (
+        _tooltip("add_to_variable", "-0.01", "police_cost_multiplier"),
+        False,
+    ),
+    "dynamic cost subtracted": (
+        _tooltip("subtract_from_variable", "0.01", "police_cost_multiplier"),
+        False,
+    ),
+    "dynamic income subtracted": (
+        _tooltip("subtract_from_variable", "0.01", "tax_gain_multiplier"),
+        True,
+    ),
+    "dynamic long form": (
+        "add_to_variable = { var = TAG_x value = 0.01"
+        " tooltip = police_cost_multiplier_modifier_tt }",
+        True,
+    ),
+    "dynamic computed change": (
+        _tooltip("add_to_variable", "TAG_step", "police_cost_multiplier"),
+        True,
+    ),
+    "dynamic set": (_tooltip("set_variable", "0.01", "police_cost_multiplier"), True),
+    "money modifier read": ("add = modifier@tax_gain_multiplier_modifier", False),
+    "money system scale": ("common_money_modifier = 1", False),
+    "other modifier": ("modifier = { stability_factor = 0.1 }", False),
+    "costly idea": ("add_ideas = TAG_reform", True),
+    "costly idea in a list": ("add_ideas = { TAG_drill TAG_reform }", True),
+    "costly timed idea": ("add_timed_idea = { idea = TAG_reform days = 30 }", True),
+    "idea swapped up": (
+        "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_reform_2 }",
+        True,
+    ),
+    "idea swapped down": (
+        "swap_ideas = { remove_idea = TAG_reform_2 add_idea = TAG_reform }",
+        False,
+    ),
+    "idea replaced with a cheaper one": (
+        "remove_ideas = TAG_reform_2 add_ideas = TAG_reform",
+        False,
+    ),
+    "removals in another block do not offset": (
+        "if = { limit = { has_war = yes } remove_ideas = TAG_reform_2 }"
+        " add_ideas = TAG_reform",
+        True,
+    ),
+    "saving removed": ("remove_ideas = TAG_lean", True),
+    "costly idea removed": ("remove_ideas = TAG_reform", False),
+    "non-economic idea": ("add_ideas = TAG_drill", False),
+    "tax rate change price idea": ("add_ideas = TAG_tax_speed", False),
+    "immediately readded held idea": (
+        "if = { limit = { has_idea = TAG_reform } add_ideas = TAG_reform }",
+        False,
+    ),
+    "unrelated prerequisite": (
+        "if = { limit = { has_idea = TAG_lean } add_ideas = TAG_reform }",
+        True,
+    ),
+    "negated prerequisite": (
+        "if = { limit = { NOT = { has_idea = TAG_reform } } add_ideas = TAG_reform }",
+        True,
+    ),
+    "held free modifier idea with on_add": (
+        "if = { limit = { has_idea = TAG_on_add } add_ideas = TAG_on_add }",
+        True,
+    ),
+    "held idea with on_remove": (
+        "if = { limit = { has_idea = TAG_on_remove } add_ideas = TAG_on_remove }",
+        True,
+    ),
+    "held idea with on_add": (
+        "if = { limit = { has_idea = bureau_02 } add_ideas = bureau_02 }",
+        True,
+    ),
+    "unknown required idea": (
+        "if = { limit = { has_idea = TAG_missing } add_ideas = TAG_missing }",
+        True,
+    ),
+    "intervening other idea removal": (
+        "if = { limit = { has_idea = TAG_reform } remove_ideas = TAG_lean "
+        "add_ideas = TAG_reform }",
+        True,
+    ),
+    "unknown idea": ("add_ideas = TAG_missing", True),
+    "unknown swap replacement": (
+        "swap_ideas = { remove_idea = TAG_reform add_idea = TAG_missing }",
+        True,
+    ),
+    "unknown removed idea": ("remove_ideas = TAG_missing", True),
+    "dynamic idea modifier": ("add_ideas = TAG_dynamic", True),
+    "dynamic spending level": ("add_ideas = bureau_dynamic", True),
+    "multiple spending levels": ("add_ideas = bureau_multiple", True),
+    "conditional spending levels": ("add_ideas = bureau_conditional", True),
+}
+
+
+@pytest.mark.parametrize(
+    "script, commits", _MONEY_COMMITMENT_CASES.values(), ids=_MONEY_COMMITMENT_CASES
+)
+def test_script_commits_money(script, commits):
+    assert VC.script_commits_money(script, _IDEAS) is commits
+
+
 # ---- leader trait parsing -------------------------------------------------
 
 
-def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
-    write_path(
+def test_parse_leader_trait_names_reads_only_txt_files(tmp_path):
+    write_under(
         tmp_path,
         "common/country_leader/traits.txt",
         "leader_traits = {\n\temerging_communist_state = {\n\t}\n}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/country_leader/notes.md",
         "leader_traits = {\n\tnot_a_trait = {\n\t}\n}\n",
@@ -97,8 +378,8 @@ def test_parse_leader_trait_names_missing_dir(tmp_path):
 # ---- meta template scanning -----------------------------------------------
 
 
-def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path, write_path):
-    live = write_path(
+def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path):
+    live = write_under(
         tmp_path, "meta.txt", "meta_effect = {\n\tset_leader_[IDEOLOGY] = yes\n}\n"
     )
     files = [str(tmp_path / "gone.txt"), str(live)]
@@ -108,8 +389,8 @@ def test_scan_meta_constructed_names_skips_unreadable_files(tmp_path, write_path
     }
 
 
-def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path, write_path):
-    path = write_path(
+def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path):
+    path = write_under(
         tmp_path,
         "meta.txt",
         'meta_effect = {\n\ttext = "[ANY]"\n}\n',
@@ -120,8 +401,8 @@ def test_scan_meta_constructed_names_ignores_anchorless_templates(tmp_path, writ
     )
 
 
-def test_scan_meta_constructed_names_reports_each_name_once(tmp_path, write_path):
-    path = write_path(
+def test_scan_meta_constructed_names_reports_each_name_once(tmp_path):
+    path = write_under(
         tmp_path,
         "meta.txt",
         "meta_effect = {\n"
@@ -134,10 +415,10 @@ def test_scan_meta_constructed_names_reports_each_name_once(tmp_path, write_path
     assert VC.scan_meta_constructed_names([str(path)], names) == names
 
 
-def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path, write_path):
+def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path):
     """`set_leader_[X]` must not claim the bare name `set_leader_` itself — the
     placeholder always expands to at least one character."""
-    path = write_path(
+    path = write_under(
         tmp_path,
         "meta.txt",
         "meta_effect = {\n\tset_leader_[IDEOLOGY] = yes\n}\n",
@@ -211,27 +492,27 @@ def test_unknown_severity_counts_as_neither_error_nor_warning(dummy):
 # ---- file indexes ---------------------------------------------------------
 
 
-def test_basename_index_is_memoized(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_basename_index_is_memoized(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     first = dummy._basename_index(("**/*.txt",))
-    write_path(tmp_path, "common/b.txt", "y")
+    write_under(tmp_path, "common/b.txt", "y")
     assert dummy._basename_index(("**/*.txt",)) is first
 
 
-def test_basename_index_dedupes_overlapping_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_basename_index_dedupes_overlapping_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     index = dummy._basename_index(("**/*.txt", "common/*.txt"))
     assert len(index["a.txt"]) == 1
 
 
-def test_basename_index_skips_ignored_paths(dummy, write_path, tmp_path):
-    write_path(tmp_path, "docs/skipped.txt", "x")
-    write_path(tmp_path, "common/kept.txt", "y")
+def test_basename_index_skips_ignored_paths(dummy, tmp_path):
+    write_under(tmp_path, "docs/skipped.txt", "x")
+    write_under(tmp_path, "common/kept.txt", "y")
     assert sorted(dummy._basename_index(("**/*.txt",))) == ["kept.txt"]
 
 
-def test_get_full_path_finds_the_file_holding_the_item(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/one/shared.txt", "wanted_item = yes\n")
+def test_get_full_path_finds_the_file_holding_the_item(dummy, tmp_path):
+    write_under(tmp_path, "common/one/shared.txt", "wanted_item = yes\n")
 
     hit = dummy.get_full_path("shared.txt", "wanted_item")
 
@@ -239,11 +520,9 @@ def test_get_full_path_finds_the_file_holding_the_item(dummy, write_path, tmp_pa
     assert hit.endswith(os.path.join("one", "shared.txt"))
 
 
-def test_get_full_path_returns_none_when_no_candidate_has_the_item(
-    dummy, write_path, tmp_path
-):
-    write_path(tmp_path, "common/one/shared.txt", "nothing here\n")
-    write_path(tmp_path, "common/two/shared.txt", "nothing here either\n")
+def test_get_full_path_returns_none_when_no_candidate_has_the_item(dummy, tmp_path):
+    write_under(tmp_path, "common/one/shared.txt", "nothing here\n")
+    write_under(tmp_path, "common/two/shared.txt", "nothing here either\n")
 
     assert dummy.get_full_path("shared.txt", "wanted_item") is None
 
@@ -256,34 +535,34 @@ def test_get_full_path_returns_none_when_unreadable(dummy, tmp_path):
 # ---- file collection ------------------------------------------------------
 
 
-def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch, write_path):
+def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch):
     # A full scan would find this file, so an empty result proves the staged path.
-    write_path(tmp_path, "common/a.txt", "x")
+    write_under(tmp_path, "common/a.txt", "x")
     monkeypatch.setenv("MD_STAGED_FILES", "")
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1)
     assert v._collect_files(["common/**/*.txt"]) == []
 
 
-def test_collect_files_dedupes_overlapping_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/a.txt", "x")
+def test_collect_files_dedupes_overlapping_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/a.txt", "x")
     files = dummy._collect_files(["common/*.txt", "**/*.txt"])
     assert len(files) == 1
 
 
-def test_collect_files_dedupes_nested_dir_patterns(dummy, write_path, tmp_path):
-    write_path(tmp_path, "common/sub/a.txt", "x")
+def test_collect_files_dedupes_nested_dir_patterns(dummy, tmp_path):
+    write_under(tmp_path, "common/sub/a.txt", "x")
     files = dummy._collect_files(["common/sub/*.txt", "common/**/*.txt"])
     assert len(files) == 1
 
 
 @pytest.mark.parametrize("staged_only", [False, True])
 def test_worktree_collection_and_basename_index_use_checkout_root(
-    tmp_path, write_path, monkeypatch, staged_only
+    tmp_path, monkeypatch, staged_only
 ):
     root = tmp_path / ".claude/worktrees/repo"
-    kept = write_path(root, "events/kept.txt", "wanted_item = yes\n")
-    nested = write_path(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
-    write_path(root, "resources/vanilla/events/reference.txt", "ignored")
+    kept = write_under(root, "events/kept.txt", "wanted_item = yes\n")
+    nested = write_under(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
+    write_under(root, "resources/vanilla/events/reference.txt", "ignored")
     monkeypatch.setenv(
         "MD_STAGED_FILES", "events/kept.txt\n.claude/worktrees/stale/events/nested.txt"
     )
@@ -341,8 +620,8 @@ def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
 # ---- localisation keys ----------------------------------------------------
 
 
-def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
-    write_path(
+def test_localisation_loader_skips_unreadable_yml(dummy, tmp_path):
+    write_under(
         tmp_path, "localisation/english/good_l_english.yml", 'l_english:\n k: "v"\n'
     )
     (tmp_path / "localisation" / "english" / "broken_l_english.yml").mkdir()
@@ -361,13 +640,13 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
     ],
     ids=["tokens", "empty registry"],
 )
-def test_dynamic_token_names(write_path, tmp_path, registry, expected):
-    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+def test_dynamic_token_names(tmp_path, registry, expected):
+    write_under(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
     assert VC.load_dynamic_token_names(str(tmp_path)) == expected
 
 
-def _loc_tree(write_path, tmp_path):
-    write_path(
+def _loc_tree(tmp_path):
+    write_under(
         tmp_path,
         "localisation/english/test_l_english.yml",
         'l_english:\n TEST_key_one:0 "One"\n TEST_key_two:0 "Two"\n',
@@ -376,24 +655,22 @@ def _loc_tree(write_path, tmp_path):
 
 # A staged .txt reads its loc keys from unstaged files. Restricting the lookup
 # to staged files once flooded --staged runs with false positives.
-def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, write_path, tmp_path):
-    _loc_tree(write_path, tmp_path)
+def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, tmp_path):
+    _loc_tree(tmp_path)
     dummy.staged_only = True
     dummy.staged_files = ["events/some_event.txt"]
 
     assert {"TEST_key_one", "TEST_key_two"} <= dummy._load_localisation_keys()
 
 
-def test_loc_keys_are_memoized(dummy, write_path, tmp_path):
-    _loc_tree(write_path, tmp_path)
+def test_loc_keys_are_memoized(dummy, tmp_path):
+    _loc_tree(tmp_path)
     assert dummy._load_localisation_keys() is dummy._load_localisation_keys()
 
 
-def test_loc_keys_hit_the_disk_cache_across_instances(
-    write_path, tmp_path, monkeypatch
-):
+def test_loc_keys_hit_the_disk_cache_across_instances(tmp_path, monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    _loc_tree(write_path, tmp_path)
+    _loc_tree(tmp_path)
     first = _Dummy(
         mod_path=str(tmp_path), use_colors=False, workers=1
     )._load_localisation_keys()

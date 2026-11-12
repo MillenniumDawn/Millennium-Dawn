@@ -1795,6 +1795,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: israel_economy.9.a executed"
 		custom_effect_tooltip = they_agree_tt
 		random_owned_controlled_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = infrastructure
@@ -1803,6 +1804,7 @@ country_event = {
 			}
 		}
 		random_owned_controlled_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = infrastructure
@@ -1811,6 +1813,7 @@ country_event = {
 			}
 		}
 		random_owned_controlled_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = infrastructure
@@ -4098,31 +4101,6 @@ country_event = {
 	option = {
 		name = israel_economy.62.a
 		log = "[GetDateText]: [This.GetName]: israel_economy.62.a executed"
-		if = {
-			limit = { has_idea = israeli_intelligenc_idea }
-			swap_ideas = {
-				remove_idea = israeli_intelligenc_idea
-				add_idea = israeli_intelligenc2_idea
-			}
-			custom_effect_tooltip = add_spendmos_three_tt
-		}
-		if = {
-			limit = { has_idea = israeli_intelligenc2_idea }
-			swap_ideas = {
-				remove_idea = israeli_intelligenc2_idea
-				add_idea = israeli_intelligenc3_idea
-			}
-			custom_effect_tooltip = add_spendmos_two_tt
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = israeli_intelligenc_idea }
-				NOT = { has_idea = israeli_intelligenc2_idea }
-				NOT = { has_idea = israeli_intelligenc3_idea }
-			}
-			add_ideas = israeli_intelligenc_idea
-			custom_effect_tooltip = add_spendmos_one_tt
-		}
 		set_temp_variable = { treasury_change = 10 }
 		modify_treasury_effect = yes
 		ISR = { country_event = israel_economy.63 }
@@ -4210,6 +4188,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: israel_economy.63.a executed"
 		set_temp_variable = { treasury_change = -10 }
 		modify_treasury_effect = yes
+		ISR_upgrade_mossad_network = yes
 		set_temp_variable = { percent_change = 5 }
 		set_temp_variable = { tag_index = ISR }
 		set_temp_variable = { influence_target = FROM }
@@ -4675,7 +4654,7 @@ country_event = {
 	id = israel_economy.75
 	title = israel_economy.75.t
 	desc = israel_economy.75.d
-	picture = GFX_rose_revolut
+	picture = GFX_treaty
 	is_triggered_only = yes
 
 	option = {
@@ -8351,6 +8330,7 @@ country_event = {
 		name = israel_economy.146.a
 		log = "[GetDateText]: [This.GetName]: israel_economy.146.a"
 		random_owned_controlled_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_extra_state_shared_building_slots = 1
 			add_building_construction = {
 				type = infrastructure
@@ -13636,10 +13616,9 @@ country_event = {
 		trigger = { tag = ISR }
 		if = {
 			limit = {
-				controls_state = 205
-				NOT = { controls_state = 201 }
-				205 = { NOT = { has_border_war = yes } }
-				201 = { NOT = { has_border_war = yes } }
+				set_temp_variable = { border_war_attacker_state = 205 }
+				set_temp_variable = { border_war_defender_state = 201 }
+				border_war_can_start = yes
 			}
 			start_border_war = {
 				change_state_after_war = no
@@ -15546,7 +15525,6 @@ country_event = {
 			base = 0
 			modifier = {
 				add = 5
-				factor = 2
 				sender_influence_higher_5 = yes
 			}
 			modifier = {
@@ -16989,28 +16967,36 @@ country_event = {
 		name = israel.106.a
 		trigger = {
 			tag = HAM
-			controls_state = 209
-			NOT = { controls_state = 206 }
+			set_temp_variable = { border_war_attacker_state = 209 }
+			set_temp_variable = { border_war_defender_state = 206 }
+			border_war_can_start = yes
 		}
 		log = "[GetDateText]: [This.GetName]: israel.106.a executed"
 		add_stability = -0.02
-		start_border_war = {
-			change_state_after_war = no
-			attacker = {
-				state = 209
-				num_provinces = 1
-				on_win = israel.107
-				on_lose = israel.108
-				on_cancel = israel.109
-				dig_in_factor = 155
-				terrain_factor = 15
+		if = {
+			limit = {
+				set_temp_variable = { border_war_attacker_state = 209 }
+				set_temp_variable = { border_war_defender_state = 206 }
+				border_war_can_start = yes
 			}
-			defender = {
-				state = 206
-				num_provinces = 4
-				on_win = israel.108
-				on_lose = israel.107
-				on_cancel = israel.109
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 209
+					num_provinces = 1
+					on_win = israel.107
+					on_lose = israel.108
+					on_cancel = israel.109
+					dig_in_factor = 155
+					terrain_factor = 15
+				}
+				defender = {
+					state = 206
+					num_provinces = 4
+					on_win = israel.108
+					on_lose = israel.107
+					on_cancel = israel.109
+				}
 			}
 		}
 		ai_chance = {
@@ -17111,28 +17097,36 @@ country_event = {
 		name = israel.110.a
 		trigger = {
 			tag = ISR
-			controls_state = 206
-			NOT = { controls_state = 209 }
+			set_temp_variable = { border_war_attacker_state = 206 }
+			set_temp_variable = { border_war_defender_state = 209 }
+			border_war_can_start = yes
 		}
 		log = "[GetDateText]: [This.GetName]: israel.110.a executed"
 		add_stability = -0.02
-		start_border_war = {
-			change_state_after_war = no
-			attacker = {
-				state = 206
-				num_provinces = 4
-				on_win = israel.111
-				on_lose = israel.112
-				on_cancel = israel.109
-				dig_in_factor = 155
-				terrain_factor = 15
+		if = {
+			limit = {
+				set_temp_variable = { border_war_attacker_state = 206 }
+				set_temp_variable = { border_war_defender_state = 209 }
+				border_war_can_start = yes
 			}
-			defender = {
-				state = 209
-				num_provinces = 1
-				on_win = israel.112
-				on_lose = israel.111
-				on_cancel = israel.109
+			start_border_war = {
+				change_state_after_war = no
+				attacker = {
+					state = 206
+					num_provinces = 4
+					on_win = israel.111
+					on_lose = israel.112
+					on_cancel = israel.109
+					dig_in_factor = 155
+					terrain_factor = 15
+				}
+				defender = {
+					state = 209
+					num_provinces = 1
+					on_win = israel.112
+					on_lose = israel.111
+					on_cancel = israel.109
+				}
 			}
 		}
 		ai_chance = {

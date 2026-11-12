@@ -1,3 +1,4 @@
+add_namespace = japan_varyag
 add_namespace = Japan
 add_namespace = japan_classic
 add_namespace = JAP_territorial
@@ -501,21 +502,21 @@ country_event = {
 		add_stability = -0.04
 		add_political_power = -25
 		country_event = {
-			 id = Japan.01
-			 days = 30
-			 random_days = 10
+			id = Japan.01
+			days = 30
+			random_days = 10
 		}
 		ai_chance = {
-			 base = 10
-			 modifier = {
+			base = 10
+			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
 				NOT = { has_global_flag = JAP_RETURN_OF_THE_EMPIRE_FOCUS_PATH }
-			 }
-			 modifier = {
+			}
+			modifier = {
 				factor = 999
 				has_global_flag = JAP_RETURN_OF_THE_EMPIRE_FOCUS_PATH
-			 }
+			}
 		}
 	}
 }
@@ -1793,7 +1794,10 @@ country_event = {
 
 	trigger = {
 		has_idea = JAP_ring_of_fire
-		var:JAP_quake_state = { is_owned_and_controlled_by = ROOT }
+		var:JAP_quake_state = {
+			is_owned_and_controlled_by = ROOT
+			NOT = { has_dynamic_modifier = { modifier = JAP_seismic_retrofit } }
+		}
 	}
 
 	option = {
@@ -2059,7 +2063,7 @@ country_event = {
 
 	#picture
 	option = {
-	name = Japan.201103111.a
+		name = Japan.201103111.a
 		log = "[GetDateText]: [This.GetName]: Japan.201103111.a executed"
 		add_stability = 0.1
 		newline = yes
@@ -2398,7 +2402,11 @@ country_event = {
 	is_triggered_only = yes
 
 	#picture
-	trigger = { NOT = { has_idea = non_nuclear_power } }
+	trigger = {
+		NOT = { has_idea = non_nuclear_power }
+		NOT = { has_completed_focus = JAP_nuclear_regulatory_compliance }
+		NOT = { has_completed_focus = JAP_local_consent_accords }
+	}
 
 	option = {
 		name = Japan.2011031150.a
@@ -2906,8 +2914,8 @@ country_event = {
 			transfer_state_to = JAP
 		}
 		SOV = {
-			 remove_state_core = 1168
-			 remove_opinion_modifier = {
+			remove_state_core = 1168
+			remove_opinion_modifier = {
 				target = JAP
 				modifier = minor_border_dispute
 			}
@@ -4862,7 +4870,7 @@ country_event = {
 		name = JAP_diplomacy.21.b
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.21.b executed"
 		JAP = { country_event = JAP_diplomacy.23 }
-	 }
+	}
 }
 country_event = {
 	id = JAP_diplomacy.22
@@ -5279,10 +5287,9 @@ country_event = {
 		trigger = { owns_state = 1168 }
 		if = {
 			limit = {
-				controls_state = 1168
-				NOT = { controls_state = 538 }
-				1168 = { NOT = { has_border_war = yes } }
-				538 = { NOT = { has_border_war = yes } }
+				set_temp_variable = { border_war_attacker_state = 1168 }
+				set_temp_variable = { border_war_defender_state = 538 }
+				border_war_can_start = yes
 			}
 			start_border_war = {
 				change_state_after_war = no
@@ -5406,10 +5413,9 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.76.b"
 		if = {
 			limit = {
-				controls_state = 617
-				NOT = { controls_state = 1168 }
-				617 = { NOT = { has_border_war = yes } }
-				1168 = { NOT = { has_border_war = yes } }
+				set_temp_variable = { border_war_attacker_state = 617 }
+				set_temp_variable = { border_war_defender_state = 1168 }
+				border_war_can_start = yes
 			}
 			start_border_war = {
 				change_state_after_war = no
@@ -5554,7 +5560,7 @@ country_event = {
 			transfer_state = 691
 			transfer_state = 1168
 			transfer_state = 690
-			}
+		}
 		ai_chance = { base = 10 }
 	}
 }
@@ -12412,5 +12418,35 @@ country_event = {
 		effect_tooltip = { add_timed_idea = { idea = JAP_softbank_broadband_reseller days = 365 } }
 		hidden_effect = { JAP_softbank_apply_broadband_reseller = yes }
 		ai_chance = { base = 100 }
+	}
+}
+
+country_event = {
+	id = japan_varyag.1
+	title = japan_varyag.1.t
+	desc = japan_varyag.1.desc
+	picture = GFX_carrier
+	is_triggered_only = yes
+	trigger = { country_exists = CHI NOT = { has_war_with = CHI } }
+
+	option = {
+		name = japan_varyag.1.a
+		log = "[GetDateText]: [This.GetName]: japan_varyag.1.a executed"
+		add_opinion_modifier = { target = CHI modifier = JAP_liaoning_concern }
+		add_political_power = 15
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_opinion = { target = CHI value < -20 } }
+		}
+	}
+
+	option = {
+		name = japan_varyag.1.b
+		log = "[GetDateText]: [This.GetName]: japan_varyag.1.b executed"
+		navy_experience = 5
+		ai_chance = {
+			base = 50
+			modifier = { add = 30 has_opinion = { target = CHI value > 29 } }
+		}
 	}
 }

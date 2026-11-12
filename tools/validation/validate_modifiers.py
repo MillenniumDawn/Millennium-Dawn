@@ -13,6 +13,7 @@ from typing import Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from equipment_module_slots import blank_comments
 from shared_utils import (
     blank_quoted_strings,
     compute_line_offsets,
@@ -656,10 +657,79 @@ _UNBALANCED_INFLATION_VAR = "inflation_rate_var"
 _UNBALANCED_INFLATION_START_CAP = 0.50
 _INFLATION_HISTORY_HARD_CAP = 1.0
 
+_INCOME_MODIFIER_KEYS: FrozenSet[str] = frozenset(
+    {
+        "tax_gain_multiplier_modifier",
+        "corporate_tax_income_multiplier_modifier",
+        "population_tax_income_multiplier_modifier",
+        "healthcare_income_multiplier_modifier",
+        "infrastructure_tax_gain_multiplier_modifier",
+        "civilian_industry_tax_modifier",
+        "military_industry_tax_modifier",
+        "agriculture_tax_modifier",
+        "dockyard_income_tax_modifier",
+        "office_park_income_tax_modifier",
+        "agriculture_district_income_tax_modifier",
+        "microchip_plant_income_tax_modifier",
+        "composite_plant_income_tax_modifier",
+        "synthetic_refinery_income_tax_modifier",
+        "resource_export_multiplier_modifier",
+        "oil_export_multiplier_modifier",
+        "steel_export_multiplier_modifier",
+        "aluminium_export_multiplier_modifier",
+        "tungsten_export_multiplier_modifier",
+        "chromium_export_multiplier_modifier",
+        "rubber_export_multiplier_modifier",
+        "microchip_export_multiplier_modifier",
+        "composite_export_multiplier_modifier",
+        "international_market_income_modifier",
+    }
+)
+_INCOME_MODIFIER_CAP = 0.25
+_WEEKLY_CAPS: Dict[str, float] = {
+    "stability_weekly": 0.05,
+    "war_support_weekly": 0.05,
+    "stability_weekly_factor": 0.25,
+    "war_support_weekly_factor": 0.25,
+}
+_WEEKLY_FACTOR_KEYS = frozenset(
+    {"stability_weekly_factor", "war_support_weekly_factor"}
+)
+_EXCESSIVE_MODIFIER_CAP = 0.30
+_NEGATIVE_BONUS_KEYS: FrozenSet[str] = frozenset(
+    {
+        "consumer_goods_factor",
+        "truck_attrition_factor",
+        "out_of_supply_factor",
+        "supply_consumption_factor",
+        "training_time_factor",
+        "air_accidents_factor",
+        "wounded_chance_factor",
+        "general_death_chance_modifier",
+        "tax_rate_change_multiplier_modifier",
+    }
+)
+_TIMED_GRANT_RE = re.compile(
+    r"\b(?P<kind>add_timed_idea|add_dynamic_modifier)\s*=\s*\{(?P<body>[^{}]*)\}"
+)
+_GRANT_NAME_RE = re.compile(r"\b(?:idea|modifier)\s*=\s*([A-Za-z0-9_.@:]+)")
+_GRANT_DAYS_RE = re.compile(r"\bdays\s*=")
+_PERMANENT_IDEA_RE = re.compile(
+    r"\badd_ideas?\s*=\s*(?:\{(?P<list>[^{}]*)\}|(?P<single>[A-Za-z0-9_.@:]+))"
+)
+_INCOME_BLOCK_KEYS = frozenset({"modifier", "country_modifier", "state_modifier"})
+_INCOME_TOKEN_RE = re.compile(
+    r"(?<![A-Za-z0-9_:.@])(?P<key>[A-Za-z_][A-Za-z0-9_:.@]*)"
+    r"\s*=\s*(?P<value>\{|[^\s{}]+)|(?P<brace>[{}])"
+)
+
 # Documented ROI exceptions, as "owner::key". A single reward above the ROI
 # cap must justify itself there; undocumented ones fail the opt-in check.
 _UNBALANCED_ROI_EXCEPTIONS: FrozenSet[str] = frozenset(
     validation_config("validate_modifiers", "unbalanced_roi_exceptions")
+)
+_INCOME_EXCEPTIONS: FrozenSet[str] = frozenset(
+    validation_config("validate_modifiers", "income_over_25_percent_exceptions")
 )
 
 _NUMERIC_BARE_ASSIGNMENT_RE = re.compile(
@@ -733,6 +803,85 @@ def _scan_numeric_modifier_entries(text: str) -> List[Tuple[str, float, int, str
                     stack[-1][0] if stack else "",
                 )
             )
+    return entries
+
+
+def _scan_grants(text: str) -> Tuple[List[str], List[str]]:
+    """(timed, permanent) idea and dynamic modifier names granted in text."""
+    clean = blank_quoted_strings(blank_comments(text))
+    timed: List[str] = []
+    permanent: List[str] = []
+    for match in _TIMED_GRANT_RE.finditer(clean):
+        body = match.group("body")
+        names = _GRANT_NAME_RE.findall(body)
+        if match.group("kind") == "add_timed_idea" or _GRANT_DAYS_RE.search(body):
+            timed.extend(names)
+        else:
+            permanent.extend(names)
+    for match in _PERMANENT_IDEA_RE.finditer(clean):
+        if match.group("single"):
+            permanent.append(match.group("single"))
+        else:
+            permanent.extend(match.group("list").split())
+    return timed, permanent
+
+
+def _direct_depth(rel: str) -> int:
+    """Block depth at which a file's modifier keys sit directly under their owner."""
+    path = rel.replace("\\", "/")
+    if path.startswith(("common/dynamic_modifiers/", "common/modifiers/")):
+        return 1
+    if path.startswith(("common/country_leader/", "common/unit_leader/")):
+        return 2
+    return 0
+
+
+def _is_capped_key(key: str) -> bool:
+    return key in _WEEKLY_CAPS or key.endswith(("_factor", "_modifier"))
+
+
+def _is_cost_style(key: str) -> bool:
+    """A cost-style key is a bonus when negative."""
+    return (
+        "cost" in key
+        or key.startswith("expected_")
+        or key in _NEGATIVE_BONUS_KEYS
+        or key.endswith(("_worker_requirement_modifier", "fuel_consumption_factor"))
+    )
+
+
+def _scan_owned_numeric_modifiers(
+    text: str, direct_depth: int, key_filter
+) -> List[Tuple[str, float, int, str]]:
+    """(key, value, line, owner) for literal modifiers whose key passes key_filter.
+
+    The owner is the idea, trait, or modifier name that holds the modifier.
+    """
+    clean = blank_quoted_strings(blank_comments(text))
+    offsets = compute_line_offsets(clean)
+    stack: List[str] = []
+    entries = []
+    for match in _INCOME_TOKEN_RE.finditer(clean):
+        key, value, brace = match.group("key", "value", "brace")
+        if brace == "}":
+            if stack:
+                stack.pop()
+            continue
+        if brace == "{" or value == "{":
+            stack.append(key or "")
+            continue
+        if not stack or not key_filter(key):
+            continue
+        if stack[-1] in _INCOME_BLOCK_KEYS:
+            owner = stack[-2] if len(stack) > 1 else ""
+        elif len(stack) == direct_depth:
+            owner = stack[-1]
+        else:
+            continue
+        numeric = _parse_entry_value(value or "")
+        if numeric is not None:
+            line = line_for_offset(offsets, match.start())
+            entries.append((key, numeric, line, owner))
     return entries
 
 
@@ -817,6 +966,8 @@ class Validator(BaseValidator):
 
     def __init__(self, *args, **kwargs):
         self.unbalanced_modifiers = kwargs.pop("unbalanced_modifiers", False)
+        self._owned_capped_cache = None
+        self._timed_only_cache = None
         super().__init__(*args, **kwargs)
 
     def _build_known_good_set(self) -> FrozenSet[str]:
@@ -1050,6 +1201,188 @@ class Validator(BaseValidator):
             category="dynamic-modifier-enable-block",
         )
 
+    def validate_income_modifiers(self):
+        """Warn on individual tax, export, and market income bonuses above +25%."""
+        self._log_section("Checking tax and income bonuses above +25%...")
+        results = []
+        for key, value, rel, line, owner in self._owned_capped_entries():
+            if (
+                key not in _INCOME_MODIFIER_KEYS
+                or value <= _INCOME_MODIFIER_CAP
+                or f"{owner}::{key}" in _INCOME_EXCEPTIONS
+            ):
+                continue
+            results.append(
+                (
+                    f"'{owner}': {key} = {value:g} grants +{value * 100:g}%, "
+                    "above +25% per source; verify the balance and decimal "
+                    f"placement. If intentional, add '{owner}::{key}' with a "
+                    "reason to validation_config.json "
+                    "income_over_25_percent_exceptions (issue #6371)",
+                    rel,
+                    line,
+                )
+            )
+        self._report(
+            results,
+            "No individual tax or income bonuses above +25%",
+            "Tax and income bonuses above +25% (review balance):",
+            severity=Severity.WARNING,
+            category="income-over-25-percent",
+        )
+
+    _GRANT_PATTERNS: List[str] = [
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+    ]
+
+    def _scan_owned_files(self, namespace, scan):
+        """(key, value, rel, line, owner) from scan(text, depth) per source file."""
+        found = []
+        for filepath in self._collect_files(self._UNBALANCED_PATTERNS):
+            if should_skip_file(filepath, mod_path=self.mod_path):
+                continue
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=False
+            )
+            rel = os.path.relpath(filepath, self.mod_path)
+            depth = _direct_depth(rel)
+            entries = disk_cache.per_file_cached_by_content(
+                self.mod_path,
+                f"{namespace}.{depth}",
+                filepath,
+                text,
+                lambda text=text, depth=depth: scan(text, depth),
+            )
+            for key, value, line, owner in entries:
+                found.append((key, value, rel, line, owner))
+        return found
+
+    def _owned_capped_entries(self):
+        """(key, value, rel, line, owner) for weekly and percent-style literals."""
+        if self._owned_capped_cache is None:
+            self._owned_capped_cache = self._scan_owned_files(
+                "modifiers.owned",
+                lambda text, depth: _scan_owned_numeric_modifiers(
+                    text, depth, _is_capped_key
+                ),
+            )
+        return self._owned_capped_cache
+
+    def _timed_only_owners(self) -> Set[str]:
+        """Ideas and dynamic modifiers that are only ever granted with a duration."""
+        if self._timed_only_cache is None:
+            timed: Set[str] = set()
+            permanent: Set[str] = set()
+            for filepath in self._collect_files(
+                self._GRANT_PATTERNS, ignore_staged=True
+            ):
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=False
+                )
+                if not text:
+                    continue
+                file_timed, file_permanent = disk_cache.per_file_cached_by_content(
+                    self.mod_path,
+                    "modifiers.grants",
+                    filepath,
+                    text,
+                    lambda text=text: _scan_grants(text),
+                )
+                timed.update(file_timed)
+                permanent.update(file_permanent)
+            self._timed_only_cache = timed - permanent
+        return self._timed_only_cache
+
+    def _permanent_candidates(self, is_over_cap):
+        """Owned entries over their cap, minus ones held by timed-only grants."""
+        candidates = [
+            entry for entry in self._owned_capped_entries() if is_over_cap(*entry[:2])
+        ]
+        if not candidates:
+            return []
+        timed_only = self._timed_only_owners()
+        return [entry for entry in candidates if entry[4] not in timed_only]
+
+    def validate_weekly_stability_war_support(self):
+        """Warn on weekly stability or war support above its cap."""
+        self._log_section("Checking weekly stability and war support caps...")
+
+        def over_cap(key, value):
+            if key not in _WEEKLY_CAPS:
+                return False
+            if key in _WEEKLY_FACTOR_KEYS:
+                return abs(value) > _WEEKLY_CAPS[key]
+            return value > _WEEKLY_CAPS[key]
+
+        results = [
+            (
+                f"'{owner}': {key} = {value:g} exceeds the {_WEEKLY_CAPS[key]:g} "
+                "cap for weekly modifiers; verify the balance (issue #6494)",
+                rel,
+                line,
+            )
+            for key, value, rel, line, owner in self._permanent_candidates(over_cap)
+        ]
+        self._report(
+            results,
+            "No weekly stability or war support modifiers above the cap",
+            "Weekly stability or war support modifiers above the cap:",
+            severity=Severity.WARNING,
+            category="weekly-stability-war-support-over-cap",
+        )
+
+    def validate_excessive_modifiers(self):
+        """Warn on a single percent-style bonus above 30%."""
+        self._log_section("Checking modifier bonuses above 30%...")
+
+        number_keys = set()
+        for filepath in self._collect_files(
+            self._DEFINITION_PATTERNS, ignore_staged=True
+        ):
+            content = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            if not content:
+                continue
+            for key, _nl, _bl, body in _extract_top_level_definition_blocks(content):
+                if re.search(r"\bvalue_type\s*=\s*number\b", body):
+                    number_keys.add(key)
+
+        def over_cap(key, value):
+            if (
+                key in _WEEKLY_CAPS
+                or key in _INCOME_MODIFIER_KEYS
+                or key in number_keys
+                or key.startswith("ai_")
+                # A number of percentage points, not a percent.
+                or key == "interest_rate_multiplier_modifier"
+                or (self.unbalanced_modifiers and key in _UNBALANCED_PRODUCTIVITY_KEYS)
+            ):
+                return False
+            if _is_cost_style(key):
+                return value < -_EXCESSIVE_MODIFIER_CAP
+            return value > _EXCESSIVE_MODIFIER_CAP
+
+        results = [
+            (
+                f"'{owner}': {key} = {value:g} is a {value * 100:+g}% bonus from one "
+                "source, above 30%; verify the balance and decimal placement "
+                "(issue #6494)",
+                rel,
+                line,
+            )
+            for key, value, rel, line, owner in self._permanent_candidates(over_cap)
+        ]
+        self._report(
+            results,
+            "No modifier bonuses above 30%",
+            "Modifier bonuses above 30% (review balance):",
+            severity=Severity.WARNING,
+            category="excessive-modifier-over-30-percent",
+        )
+
     def validate_unbalanced_modifiers(self):
         """Flag overpowered single-reward economy modifiers (issue #4370).
 
@@ -1214,6 +1547,9 @@ class Validator(BaseValidator):
         self.validate_dynamic_modifier_name_loc()
         self.validate_redundant_enable_gates()
         self.validate_dynamic_modifier_enable_blocks()
+        self.validate_income_modifiers()
+        self.validate_weekly_stability_war_support()
+        self.validate_excessive_modifiers()
         self.validate_unbalanced_modifiers()
         self.validate_history_inflation_hard_cap()
 

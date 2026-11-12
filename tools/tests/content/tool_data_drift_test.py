@@ -1,17 +1,19 @@
 """Tool-side lists, exemptions, and contracts checked against the live game tree."""
 
 import re
+from decimal import Decimal
 
 import pytest
 import validate_building_guards
 import validate_decisions
 import validate_scripted_params
 from shared.paths import REPO_ROOT
-from shared_utils import PARTY_SLOT_NAMES
+from shared_utils import PARTY_SLOT_NAMES, iter_statements, strip_comments
 from standardize_api import standardize_text
 from validate_focus_tree import _PP_MALUS_EXEMPT_FOCUS_IDS
 from validate_modifiers import _harvest_doctrine_folder_cost_factors
 from validate_tech_categories import _LEGACY_CATEGORIES, load_known_categories
+from validator_common import MONEY_MODIFIER_RE, money_modifier_raises_cost
 
 from tools.publishing import publish_workshop as pw
 
@@ -128,6 +130,33 @@ def test_game_file_still_declares_the_contract(rel, effect, required, optional):
     assert contracts[effect] == {"required": required, "optional": optional}
 
 
+def test_startup_politics_still_declares_its_party_inputs():
+    contracts = validate_scripted_params._parse_effect_contracts_from_file(
+        str(REPO_ROOT / _POLITICS)
+    )
+    assert contracts["startup_politics"]["variables"] == [
+        "party_pop_array",
+        "ruling_party",
+        "gov_coalition_array",
+    ]
+
+
+def test_money_modifier_direction_matches_its_color_type():
+    checked = []
+    for path in sorted((REPO_ROOT / "common" / "modifier_definitions").glob("*.txt")):
+        text = strip_comments(path.read_text(encoding="utf-8-sig"))
+        for name, _value, block in iter_statements(text):
+            if block is None or not MONEY_MODIFIER_RE.fullmatch(name):
+                continue
+            color = dict((key, value) for key, value, _b in iter_statements(block))
+            if color.get("color_type") in ("good", "bad"):
+                checked.append(name)
+                assert money_modifier_raises_cost(name, Decimal(1)) == (
+                    color["color_type"] == "bad"
+                ), name
+    assert checked
+
+
 def test_legacy_table_targets_exist_and_keys_do_not():
     known = load_known_categories(
         sorted((REPO_ROOT / "common" / "technology_tags").glob("*.txt"))
@@ -143,6 +172,18 @@ def test_unannounced_category_exemptions_are_still_live():
     assert not stale, (
         "unannounced_category_exempt names categories that no longer exist: "
         f"{stale}. Remove them from validation_config.json."
+    )
+
+
+def test_decision_cost_exemptions_are_still_live():
+    tokens = {
+        d.token for d in validate_decisions.parse_all_decision_factories(str(REPO_ROOT))
+    }
+    exempt = validate_decisions._AI_COST_EXEMPT | validate_decisions._LATE_CHARGE_EXEMPT
+    stale = sorted(exempt - tokens)
+    assert not stale, (
+        "ai_cost_exempt or late_charge_exempt names decisions that no longer "
+        f"exist: {stale}. Remove them from validation_config.json."
     )
 
 

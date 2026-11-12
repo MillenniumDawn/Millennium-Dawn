@@ -67,6 +67,20 @@ _SCAN_CASES = {
         _event(_option(_PP_COST + _DECREASE), _HIGH_CORRUPTION_GUARD),
         [],
     ),
+    "every OR branch must prove a corruption bound": (
+        _event(
+            _option(_PP_COST + _DECREASE),
+            "\t\tOR = { has_idea = corruption_level_02 has_war = yes }\n",
+        ),
+        [("foo.1.a", 6)],
+    ),
+    "one AND condition can prove a corruption bound": (
+        _event(
+            _option(_PP_COST + _DECREASE),
+            "\t\tAND = { has_idea = corruption_level_02 has_war = yes }\n",
+        ),
+        [],
+    ),
     "low corruption bound does not protect repeated decreases": (
         _event(
             _option(_PP_COST + _DECREASE + _DECREASE),

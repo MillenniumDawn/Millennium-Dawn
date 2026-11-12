@@ -32,12 +32,11 @@ unreachable without the DLC (issue #5328). It is a WARNING. Techs gated only by 
 folder are out of scope, and `has_tech` under OR or NOT is not a requirement.
 """
 
-import glob
 import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -45,6 +44,7 @@ from shared_utils import (  # noqa: E402
     blank_quoted_strings,
     compute_line_offsets,
     line_for_offset,
+    list_files,
 )
 from validate_history import (  # noqa: E402
     _SP_REQUIRED_RE,
@@ -154,8 +154,8 @@ class Context:
 def parse_folder_gates(mod_path: str) -> Dict[str, Gates]:
     """Map technology folder name -> DLC gate from its `available` block."""
     gates: Dict[str, Gates] = {}
-    pattern = os.path.join(mod_path, "common", "technology_tags", "*.txt")
-    for filepath in sorted(glob.iglob(pattern)):
+    tags_dir = os.path.join(mod_path, "common", "technology_tags")
+    for filepath in list_files(tags_dir, recursive=False):
         try:
             with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
                 text = _sanitize(handle.read())
@@ -221,8 +221,8 @@ def parse_tech_gates(
     tech_gates: Dict[str, Gates] = {}
     project_tech_gates: Dict[str, Gates] = {}
     category_members: Dict[str, List[Gates]] = defaultdict(list)
-    pattern = os.path.join(mod_path, "common", "technologies", "*.txt")
-    for filepath in sorted(glob.iglob(pattern)):
+    tech_dir = os.path.join(mod_path, "common", "technologies")
+    for filepath in list_files(tech_dir, recursive=False):
         try:
             with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
                 raw = handle.read()
@@ -250,8 +250,8 @@ def parse_tech_gates(
 def parse_project_gates(mod_path: str) -> Dict[str, Gates]:
     """Map special project id -> DLC gate from its `allowed` block."""
     gates: Dict[str, Gates] = {}
-    pattern = os.path.join(mod_path, "common", "special_projects", "projects", "*.txt")
-    for filepath in sorted(glob.iglob(pattern)):
+    projects_dir = os.path.join(mod_path, "common", "special_projects", "projects")
+    for filepath in list_files(projects_dir, recursive=False):
         try:
             with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
                 text = _sanitize(handle.read())
@@ -276,14 +276,14 @@ class Scanner:
         tech_gates: Dict[str, Gates],
         category_gates: Dict[str, Gates],
         project_gates: Dict[str, Gates],
-        project_tech_gates: Dict[str, Gates] = {},
+        project_tech_gates: Optional[Dict[str, Gates]] = None,
         availability: FrozenSet[str] = frozenset(),
     ):
         self.text = text
         self.tech_gates = tech_gates
         self.category_gates = category_gates
         self.project_gates = project_gates
-        self.project_tech_gates = project_tech_gates
+        self.project_tech_gates = project_tech_gates or {}
         self.availability = availability
         self.offsets = compute_line_offsets(text)
         self.findings: List[Tuple[str, int, str]] = []
@@ -360,7 +360,7 @@ class Scanner:
         start: int,
         end: int,
         ctx: Context,
-        chain: Conditions = (),
+        chain: Sequence[Tuple[str, str]] = (),
         required: bool = False,
     ):
         blocks = _child_blocks(self.text, start, end)
@@ -483,7 +483,7 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
     if "add_tech_bonus" not in raw and "sp:" not in raw and "has_tech" not in raw:
         return []
     relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
-    availability = frozenset()
+    availability: FrozenSet[str] = frozenset()
     if relative.startswith("common/national_focus/") or (
         relative.startswith("common/decisions/") and "/categories/" not in relative
     ):

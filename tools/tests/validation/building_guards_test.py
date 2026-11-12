@@ -10,6 +10,7 @@ flag the effect inside it.
 
 import pytest
 import validate_building_guards as V
+from shared.suite import write_under
 
 
 def _scan(script):
@@ -26,6 +27,147 @@ def _scan_province(script):
     scanner = V.Scanner(V._sanitize(script))
     scanner.check_province_building_triggers()
     return scanner.findings
+
+
+_RANDOM_INFRASTRUCTURE_CASES = {
+    "unguarded random state": (
+        "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "scripted guard": (
+        "random_owned_state = { limit = { infrastructure_random_build_loc = yes } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "matching free slots": (
+        "random_owned_state = { limit = { AND = { free_building_slots = "
+        "{ building = infrastructure size >= 1 } } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "wrong building": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = air_base size > 0 } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "zero slots": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = infrastructure size = 0 } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "fractional negative threshold": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = infrastructure size > -0.5 } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "nested size is not the slot count": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = infrastructure other = { size > 0 } } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "guard in OR": (
+        "random_owned_state = { limit = { OR = { infrastructure_random_build_loc = yes "
+        "always = yes } } add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "guard in other state": (
+        "random_owned_state = { limit = { any_owned_state = "
+        "{ infrastructure_random_build_loc = yes } } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "random subset": (
+        "every_owned_state = { random_select_amount = 2 "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "controlled state": (
+        "random_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "owned controlled state": (
+        "random_owned_controlled_state = { limit = { infrastructure_random_build_loc = yes } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "core state": (
+        "random_core_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "controlled subset": (
+        "every_controlled_state = { random_select_amount = 1 "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "all controlled states": (
+        "every_controlled_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "all states": (
+        "every_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "nested random selection": (
+        "every_owned_state = { if = { random_select_amount = 1 } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        0,
+    ),
+    "other building": (
+        "random_owned_state = { add_building_construction = { type = air_base level = 1 } }",
+        0,
+    ),
+    "nested effect excluded": (
+        "random_owned_state = { if = { add_building_construction = "
+        "{ type = infrastructure level = 1 } } }",
+        0,
+    ),
+    "tooltip excluded": (
+        "effect_tooltip = { random_owned_state = { add_building_construction = "
+        "{ type = infrastructure level = 1 } } }",
+        0,
+    ),
+    "quoted and commented guards": (
+        'random_owned_state = { limit = { log = "infrastructure_random_build_loc = yes" '
+        "# infrastructure_random_build_loc = yes\n } "
+        "add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "script,count",
+    _RANDOM_INFRASTRUCTURE_CASES.values(),
+    ids=_RANDOM_INFRASTRUCTURE_CASES,
+)
+def test_random_infrastructure_slots(script, count):
+    scanner = V.Scanner(V._sanitize(script))
+    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+    assert len(scanner.findings) == count
+
+
+@pytest.mark.parametrize(
+    "limit,has_bound",
+    [
+        ("infrastructure < 5", True),
+        ("AND = { infrastructure <= 4 }", True),
+        ("OR = { infrastructure < 5 always = yes }", False),
+        ("any_owned_state = { infrastructure < 5 }", False),
+    ],
+)
+def test_level_bounds_are_reported_without_suppressing_warning(limit, has_bound):
+    script = (
+        f"random_owned_state = {{ limit = {{ {limit} }} "
+        "add_building_construction = { type = infrastructure level = 1 } }"
+    )
+    scanner = V.Scanner(V._sanitize(script))
+    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+    assert len(scanner.findings) == 1
+    assert ("a level bound is present" in scanner.findings[0][2]) is has_bound
 
 
 # --- unguarded effects --------------------------------------------------
@@ -555,20 +697,19 @@ def test_modifier_without_factor_zero_is_not_a_guard():
 # --- validator wiring -------------------------------------------------------
 
 
-def _run(tmp_path, write_path, monkeypatch, script):
+def _run(tmp_path, monkeypatch, script):
     import validator_common
 
     monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
-    write_path(tmp_path, "events/test_events.txt", script)
+    write_under(tmp_path, "events/test_events.txt", script)
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
     validator.run_validations()
     return validator
 
 
-def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkeypatch):
+def test_run_reports_and_logs_each_unguarded_effect(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "652 = {\n\tdamage_building = { type = fuel_silo damage = 1 }\n}\n",
     )
@@ -586,12 +727,9 @@ def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkey
     )
 
 
-def test_run_reports_province_building_state_trigger_as_error(
-    tmp_path, write_path, monkeypatch
-):
+def test_run_reports_province_building_state_trigger_as_error(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
         monkeypatch,
         "if = {\n"
         "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
@@ -603,12 +741,20 @@ def test_run_reports_province_building_state_trigger_as_error(
     ]
 
 
-def test_run_stays_quiet_when_every_effect_is_guarded(
-    tmp_path, write_path, monkeypatch
-):
+def test_random_infrastructure_slot_guard_is_a_warning(tmp_path, monkeypatch):
     validator = _run(
         tmp_path,
-        write_path,
+        monkeypatch,
+        "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+    )
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        ("warning", "random-infrastructure-slot-guard")
+    ]
+
+
+def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
+    validator = _run(
+        tmp_path,
         monkeypatch,
         "652 = {\n"
         "\tif = { limit = { fuel_silo > 0 }\n"

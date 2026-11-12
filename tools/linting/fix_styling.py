@@ -21,6 +21,7 @@ from shared_utils import (
     normalize_spacing,
     print_timing_summary,
     read_text_strict,
+    reindent_by_brace_depth,
     run_with_pool,
 )
 from validate_style import line_spacing_warnings, split_code_and_comment
@@ -28,6 +29,8 @@ from validate_style import line_spacing_warnings, split_code_and_comment
 __version__ = 3.0
 
 _RE_EQ_SEP = re.compile(r"={3,}")
+# validate_style.py's scan scope; interface alignment is left alone.
+_REINDENT_DIRS = ("common", "events", "history", "music")
 
 FIXABLE_LINE_WARNINGS = frozenset(
     {
@@ -39,24 +42,11 @@ FIXABLE_LINE_WARNINGS = frozenset(
 )
 
 
-def fix_line(line, fix_indent=False, collapse_comment_alignment=False):
+def fix_line(line, collapse_comment_alignment=False):
     """Fix one line and return its replacement and fix count."""
     newline = line[len(line.rstrip("\r\n")) :]
     body = line[: len(line) - len(newline)]
     fixes = 0
-
-    if fix_indent:
-        stripped = body.lstrip(" \t")
-        leading = body[: len(body) - len(stripped)]
-        if " " in leading:
-            expanded = leading.replace("\t", "    ")
-            num_spaces = len(expanded)
-            tabs = num_spaces // 4
-            remainder = num_spaces % 4
-            new_body = "\t" * tabs + " " * remainder + stripped
-            if new_body != body:
-                fixes += 1
-            body = new_body
 
     code, comment = split_code_and_comment(body)
     warnings = line_spacing_warnings(body)
@@ -89,6 +79,30 @@ def _collapse_comment_separators(comment):
     return collapsed, int(collapsed != comment)
 
 
+def _in_reindent_scope(filepath):
+    parts = os.path.normpath(filepath).split(os.sep)[:-1]
+    return "interface" not in parts and any(part in _REINDENT_DIRS for part in parts)
+
+
+def _reindent(lines, only_lines=None):
+    """Set leading tabs to brace depth, the rule validate_style's indent-depth
+    check enforces. Depth comes from the whole file; only *only_lines* change."""
+    bodies = [line.removesuffix("\r") for line in lines]
+    fixed, fixes = [], 0
+    for number, (line, body, indented) in enumerate(
+        zip(lines, bodies, reindent_by_brace_depth(bodies)), 1
+    ):
+        stripped = body.lstrip(" \t")
+        new = indented[: len(indented) - len(indented.lstrip("\t"))] + stripped
+        skipped = only_lines is not None and number not in only_lines
+        if not stripped or new == body or skipped:
+            fixed.append(line)
+        else:
+            fixed.append(new + line[len(body) :])
+            fixes += 1
+    return fixed, fixes
+
+
 class StagedDiffError(RuntimeError):
     pass
 
@@ -106,12 +120,10 @@ def _discovery_env():
     return env
 
 
-def _repo_path(filepath):
-    absolute = os.path.abspath(filepath)
-    parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
-    discovery_env = os.environ.copy()
-    discovery_env.pop("GIT_DIR", None)
-    discovery_env.pop("GIT_WORK_TREE", None)
+_REPO_ROOTS = {}
+
+
+def _find_repo_root(parent, filepath):
     try:
         result = subprocess.run(
             ["git", "-C", parent, "rev-parse", "--show-toplevel"],
@@ -128,7 +140,15 @@ def _repo_path(filepath):
     if result.returncode:
         detail = result.stderr.strip() or "not a Git worktree"
         raise StagedDiffError(f"cannot find Git repository for {filepath}: {detail}")
-    root = os.path.realpath(result.stdout.strip())
+    return os.path.realpath(result.stdout.strip())
+
+
+def _repo_path(filepath):
+    absolute = os.path.abspath(filepath)
+    parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
+    root = _REPO_ROOTS.get(parent)
+    if root is None:
+        root = _REPO_ROOTS[parent] = _find_repo_root(parent, filepath)
     try:
         relative = os.path.relpath(os.path.realpath(absolute), root)
     except ValueError as error:
@@ -221,13 +241,15 @@ def fix_file(
         total_fixes = 0
         unfixable = []
 
+        if fix_indent and _in_reindent_scope(filepath):
+            lines, total_fixes = _reindent(lines, only_lines)
+
         for line_num, line in enumerate(lines, 1):
             if only_lines is not None and line_num not in only_lines:
                 fixed_lines.append(line)
             else:
                 fixed, fixes = fix_line(
                     line,
-                    fix_indent=fix_indent,
                     collapse_comment_alignment=collapse_comment_alignment,
                 )
                 total_fixes += fixes
@@ -302,7 +324,7 @@ def main():
         parser.add_argument(
             "--fix-indent",
             action="store_true",
-            help="Legacy bulk cleanup: convert leading spaces to tabs",
+            help="Reindent common, events, history, and music files by brace depth",
         )
         parser.add_argument(
             "--collapse-comment-alignment",
