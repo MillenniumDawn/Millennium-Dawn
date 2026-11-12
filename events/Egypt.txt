@@ -3687,3 +3687,166 @@ country_event = {
 		ai_chance = { base = 6 }
 	}
 }
+
+country_event = {
+	id = egypt_mubarak.13
+	title = egypt_mubarak.13.t
+	desc = {
+		text = egypt_mubarak.13.d_accepts
+		trigger = { check_variable = { the_military_opinion > 39 } }
+	}
+	desc = {
+		text = egypt_mubarak.13.d_refuses
+		trigger = { check_variable = { the_military_opinion < 40 } }
+	}
+	picture = GFX_Army_reforms_event
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.13.a
+		trigger = { check_variable = { the_military_opinion > 39 } }
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.13.a executed"
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = egypt_mubarak.13.b
+		trigger = { check_variable = { the_military_opinion < 40 } }
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.13.b executed"
+		set_temp_variable = { temp_opinion = -10 }
+		change_the_military_opinion = yes
+		set_temp_variable = { temp_influence = 5 }
+		EGY_change_military_influence = yes
+		add_stability = -0.05
+		ai_chance = { base = 1 }
+	}
+}
+
+# The Day of Revolt
+country_event = {
+	id = egypt_mubarak.92
+	title = egypt_mubarak.92.t
+	desc = egypt_mubarak.92.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = {
+		EGY_mubarak_in_power = yes
+		NOT = { has_country_flag = EGY_2011_crisis_fired }
+	}
+
+	immediate = {
+		hidden_effect = {
+			set_country_flag = EGY_2011_crisis_fired
+			set_country_flag = AS_arab_spring_completed
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.92.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.92.a executed"
+		set_temp_variable = { temp_influence = 5 }
+		EGY_change_security_influence = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_the_muslim_brotherhood_opinion = yes
+		if = {
+			limit = { check_variable = { the_military_opinion > 49 } }
+			set_variable = { EGY_revolt_response = 10 }
+			custom_effect_tooltip = EGY_revolt_response_crackdown_holds_tt
+		}
+		else = {
+			set_variable = { EGY_revolt_response = -10 }
+			custom_effect_tooltip = EGY_revolt_response_crackdown_fails_tt
+		}
+		activate_mission = EGY_eighteen_days_mission
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				check_variable = { the_military_opinion > 49 }
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.92.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.92.b executed"
+		set_temp_variable = { temp_authority = -5 }
+		EGY_change_mubarak_authority = yes
+		add_power_balance_value = { id = EGY_succession_bop value = -0.10 }
+		set_variable = { EGY_revolt_response = 10 }
+		custom_effect_tooltip = EGY_revolt_response_concession_tt
+		activate_mission = EGY_eighteen_days_mission
+		ai_chance = { base = 2 }
+	}
+
+	option = {
+		name = egypt_mubarak.92.c
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.92.c executed"
+		set_temp_variable = { temp_influence = 5 }
+		EGY_change_military_influence = yes
+		if = {
+			limit = { check_variable = { the_military_opinion > 59 } }
+			set_variable = { EGY_revolt_response = 15 }
+			custom_effect_tooltip = EGY_revolt_response_army_loyal_tt
+		}
+		else = {
+			set_variable = { EGY_revolt_response = -5 }
+			custom_effect_tooltip = EGY_revolt_response_army_wavers_tt
+		}
+		activate_mission = EGY_eighteen_days_mission
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 4
+				check_variable = { the_military_opinion > 59 }
+			}
+		}
+	}
+}
+
+# Mubarak Weathers the Storm
+country_event = {
+	id = egypt_mubarak.93
+	title = egypt_mubarak.93.t
+	desc = egypt_mubarak.93.d
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.93.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.93.a executed"
+		set_country_flag = EGY_survived_2011
+		add_stability = -0.05
+		set_temp_variable = { temp_authority = -3 }
+		EGY_change_mubarak_authority = yes
+		custom_effect_tooltip = EGY_question_of_2011_unlocked_tt
+	}
+}
+
+# Mubarak Steps Down
+country_event = {
+	id = egypt_mubarak.94
+	title = egypt_mubarak.94.t
+	desc = egypt_mubarak.94.d
+	picture = GFX_arab_spring_defection
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.94.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.94.a executed"
+		set_country_flag = EGY_mubarak_fell
+		add_stability = -0.10
+		remove_power_balance = { id = EGY_succession_bop }
+		hidden_effect = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = EGY_mubarak_modifier } }
+				remove_dynamic_modifier = { modifier = EGY_mubarak_modifier }
+			}
+		}
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+	}
+}
