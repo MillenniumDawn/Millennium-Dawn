@@ -39,6 +39,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 
 ## Validation
 
+- Regression tests must exercise general, reusable behavior or validators with
+  synthetic fixtures. Do not hard-code country content contracts, country-specific
+  identifiers, balance values, or country file layouts into regression tests.
 - Content validation runs in GitHub CI at PR time. Do not run it proactively.
 - Never run `pre-commit run --all-files`. Use normal staged-file hooks or
   `pre-commit run --files <changed paths>`; do not include unrelated formatter edits.
@@ -46,6 +49,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   [Validation Pipeline](.claude/docs/validation-pipeline.md). CI and hooks differ.
 - For `tools/` changes, run `python -m pytest` before merge. Fix regressions in the
   same change; never delete, skip, or weaken tests to pass.
+- Install the `dev` and `runtime` dependency groups from `pyproject.toml` before running
+  the suite. Without them, tests that need `pre-commit` or `coverage` fail. pip older
+  than 25.1 has no `--group`, so install the listed packages by name.
 - For docs-site changes, follow [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 - Standardization: [tools/standardization/README.md](tools/standardization/README.md).
   Branch summary: `python3 tools/analysis/review_branch.py [base-branch]`.

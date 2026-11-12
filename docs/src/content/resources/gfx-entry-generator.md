@@ -4,7 +4,7 @@ description: How to use gfx_entry_generator.py for goals
 ---
 
 <h1>How to use gfx_entry_generator.py for goals</h1>
-<h2>For whoever on gfx-input branch using this script:</h2>
+<h2>For whoever is using this script:</h2>
 
 1. Open powershell/cmd
 
