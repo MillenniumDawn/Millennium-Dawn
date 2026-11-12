@@ -30,7 +30,8 @@ from validate_events import CostLookups, EventPayments, costly_scripted_effects
 _OPT_IN_CHECKS = {
     "validate_missing_icons",
     "validate_unannounced_categories",
-    "validate_naming_style",
+    "validate_id_case",
+    "validate_prefix_owner",
 }
 
 
@@ -2763,7 +2764,12 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
     "flags",
     (
         {},
-        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
+        {
+            "missing_icons": True,
+            "unannounced_categories": True,
+            "id_case": True,
+            "prefix_owner": True,
+        },
     ),
     ids=("default", "opt-in checks"),
 )
@@ -2781,8 +2787,10 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
-    assert parser.parse_args(["--naming-style"]).naming_style
-    assert not parser.parse_args([]).naming_style
+    assert parser.parse_args(["--id-case"]).id_case
+    assert not parser.parse_args([]).id_case
+    assert parser.parse_args(["--prefix-owner"]).prefix_owner
+    assert not parser.parse_args([]).prefix_owner
 
 
 _ICON = "\t\ticon = icon\n"
@@ -3227,7 +3235,8 @@ def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows
         },
     )
 
-    validator.validate_naming_style()
+    validator.validate_id_case()
+    validator.validate_prefix_owner()
 
     assert issue_rows(validator) == rows
     assert validator.warnings_found == len(rows)

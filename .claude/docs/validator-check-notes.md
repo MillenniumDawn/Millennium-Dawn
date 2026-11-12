@@ -151,13 +151,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
-  CI): the case rule in the stylization guide, and a prefix-owner rule still under
-  review. Existing ids are never renamed, so
-  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
+  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
+  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
+  tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
   skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
-  `SIL_bund_*`), so review the owner rule before enforcing it.
+  `SIL_bund_*`), so most findings are intended. Run it by hand to spot copy-paste
+  prefixes such as `VOJ_*` on Serbian decisions.
+- A `Decision <id>` or `Mission <id>` log naming another decision is caught by
+  `_check_decision_log_id` in `check_common_mistakes.py`, not here.
+  `tools/linting/fix_log_ids.py` rewrites it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
