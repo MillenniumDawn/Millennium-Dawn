@@ -1,5 +1,6 @@
 add_namespace = korea_north
 add_namespace = kim_jong_il_death
+add_namespace = kim_jong_il_death_news
 add_namespace = korea_russia
 add_namespace = korea_russia_news
 add_namespace = korea_china
@@ -202,35 +203,45 @@ country_event = {
 	}
 }
 
-news_event = {
+country_event = {
 	id = kim_jong_il_death.2
 	title = kim_jong_il_death.2.t
 	desc = kim_jong_il_death.2.d
-	picture = GFX_kim_jong_il_funeral
+	picture = GFX_political_deal
 	is_triggered_only = yes
+
+	trigger = { original_tag = NKO }
 
 	option = {
 		name = kim_jong_il_death.2.a
-		if = {
-			limit = { original_tag = NKO }
-			set_country_flag = NKO_kim_jong_il_death_tt
-			kill_country_leader = yes
-			create_country_leader = {
-				name = "Funeral Committee"
-				picture = "Kim_Jong_il_death.dds"
-				expire = "2030.01.01"
-				ideology = communist_state
-				traits = {
-					Eternal_Leader
-					Eternal_Leader_D
-				}
-			}
-			mark_focus_tree_layout_dirty = yes
-			complete_national_focus = NKO_kim_jong_il_death
-		}
-		ai_chance = { base = 100 }
 		log = "[GetDateText]: [This.GetName]: kim_jong_il_death.2.a executed"
+		set_country_flag = NKO_kim_jong_il_death_tt
+		kill_country_leader = yes
+		create_country_leader = {
+			name = "Funeral Committee"
+			picture = "Kim_Jong_il_death.dds"
+			expire = "2030.01.01"
+			ideology = communist_state
+			traits = {
+				Eternal_Leader
+				Eternal_Leader_D
+			}
+		}
+		mark_focus_tree_layout_dirty = yes
+		complete_national_focus = NKO_kim_jong_il_death
+		hidden_effect = { news_event = kim_jong_il_death_news.1 }
 	}
+}
+
+news_event = {
+	id = kim_jong_il_death_news.1
+	title = kim_jong_il_death.2.t
+	desc = kim_jong_il_death.2.d
+	picture = GFX_kim_jong_il_funeral
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = kim_jong_il_death_news.1.a }
 }
 
 # A Report from Kim Jong-un...
@@ -491,7 +502,7 @@ country_event = {
 	option = {
 		name = korea_russia.4.b
 		log = "[GetDateText]: [This.GetName]: korea_russia.4.b executed"
-		NKO = { country_event = korea_russia.3 }
+		NKO = { country_event = korea_russia.25 }
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -556,7 +567,7 @@ country_event = {
 	option = {
 		name = korea_russia.7.b
 		log = "[GetDateText]: [This.GetName]: korea_russia.7.b executed"
-		NKO = { country_event = korea_russia.3 }
+		NKO = { country_event = korea_russia.26 }
 		ai_chance = {
 			base = 0
 			modifier = {
@@ -763,7 +774,7 @@ country_event = {
 	option = {
 		name = korea_russia.14.b
 		log = "[GetDateText]: [This.GetName]: korea_russia.14.b executed"
-		NKO = { country_event = korea_russia.3 }
+		NKO = { country_event = korea_russia.27 }
 		ai_chance = {
 			base = 0
 			modifier = { add = 50 has_active_mission = bankruptcy_incoming_collapse }
@@ -966,7 +977,7 @@ country_event = {
 	option = {
 		name = korea_russia.19.b
 		log = "[GetDateText]: [This.GetName]: korea_russia.19.b executed"
-		NKO = { country_event = korea_russia.3 }
+		NKO = { country_event = korea_russia.28 }
 		ai_chance = {
 			base = 0
 			modifier = { add = 50 has_active_mission = bankruptcy_incoming_collapse }
@@ -1084,6 +1095,46 @@ country_event = {
 	is_triggered_only = yes
 
 	option = { name = korea_russia.24.a }
+}
+
+country_event = {
+	id = korea_russia.25
+	title = korea_russia.3.t
+	desc = korea_russia.25.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = { name = korea_russia.3.a }
+}
+
+country_event = {
+	id = korea_russia.26
+	title = korea_russia.3.t
+	desc = korea_russia.26.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = { name = korea_russia.3.a }
+}
+
+country_event = {
+	id = korea_russia.27
+	title = korea_russia.3.t
+	desc = korea_russia.27.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = { name = korea_russia.3.a }
+}
+
+country_event = {
+	id = korea_russia.28
+	title = korea_russia.3.t
+	desc = korea_russia.28.d
+	picture = GFX_NKO_russian_treaty
+	is_triggered_only = yes
+
+	option = { name = korea_russia.3.a }
 }
 
 #Treaty on Comprehensive Strategic Partnership News
@@ -3522,6 +3573,7 @@ country_event = {
 		set_temp_variable = { NKO_arms_client_id = SOV.id }
 		SOV = { save_event_target_as = NKO_arms_client }
 		NKO_export_do_munitions = yes
+		SOV = { set_variable = { NKO_arms_request_type = 0 } }
 		set_temp_variable = { NKO_arms_export_payment = 2 }
 		NKO_arms_export_credit_payment = yes
 		add_tech_bonus = { name = NKO_export.1.t bonus = 0.5 uses = 1 category = CAT_tanks }
@@ -3653,6 +3705,14 @@ country_event = {
 		set_temp_variable = { NKO_arms_client_id = FROM.id }
 		FROM = { save_event_target_as = NKO_arms_client }
 		NKO_export_do_munitions = yes
+		FROM = {
+			if = {
+				limit = { check_variable = { NKO_arms_request_type > 0 } }
+				set_temp_variable = { treasury_change = { value = NKO_arms_export_payment multiply = -1 } }
+				modify_treasury_effect = yes
+			}
+			set_variable = { NKO_arms_request_type = 0 }
+		}
 	}
 
 	option = { name = NKO_export.11.a }
@@ -3769,11 +3829,9 @@ country_event = {
 		name = NKO_export.20.a # Send a tenth of our recruitable manpower
 		log = "[GetDateText]: [This.GetName]: NKO_export.20.a executed on [FROM.GetTag]"
 		custom_effect_tooltip = NKO_export_send_manpower_tt
-		set_temp_variable = { NKO_mp_send = manpower_k }
-		multiply_temp_variable = { NKO_mp_send = 100 }
-		clamp_temp_variable = { var = NKO_mp_send min = 0 }
+		set_temp_variable = { NKO_mp_send = { value = manpower_k multiply = 100 max = 0 } }
 		FROM = { add_manpower = NKO_mp_send }
-		multiply_temp_variable = { NKO_mp_send = -1 }
+		set_temp_variable = { NKO_mp_send = { value = NKO_mp_send multiply = -1 } }
 		add_manpower = NKO_mp_send
 		add_opinion_modifier = { target = FROM modifier = trade_mission }
 		FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
