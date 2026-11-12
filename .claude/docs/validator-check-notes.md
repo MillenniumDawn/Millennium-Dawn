@@ -116,6 +116,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_decisions.py
 
 - `missing-decision-log` (ERROR): a `complete_effect` with effects but no `log =`.
+- `redundant-fire-only-once` (ERROR): `fire_only_once = no` is the engine default.
+  Delete the line.
 - `undefined-unlock-tooltip-target` (ERROR): `unlock_decision_tooltip` and
   `unlock_decision_category_tooltip` name a definition the engine looks up at render. A
   stale name leaves the tooltip empty while the unlock still happens. The category form
