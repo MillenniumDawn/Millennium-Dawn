@@ -148,7 +148,6 @@ RAJ_religious_groups = {
 		icon = GFX_decision_generic_political_discourse
 		cost = 100
 		days_remove = 180
-		fire_only_once = no
 		available = { NOT = { has_civil_war = yes } }
 
 		complete_effect = {
@@ -433,73 +432,52 @@ RAJ_religious_groups = {
 }
 
 RAJ_Export_category = {
-	RAJ_ita_export = {
-		icon = GFX_decision_italian_guns
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = ITA
-			NOT = { has_war_with = ITA }
+	RAJ_arms_export = {
+		icon = {
+			key = GFX_decision_italian_guns
+			trigger = { FROM = { tag = ITA } }
 		}
 
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_ita_export"
-			ITA = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = ITA modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = ITA modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_italy_export_weapon_flag } }
-				set_country_flag = RAJ_italy_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-				set_temp_variable = { treasury_change = 3 }
-				modify_treasury_effect = yes
-			}
+		icon = {
+			key = GFX_decision_israeli_guns
+			trigger = { FROM = { tag = ISR } }
 		}
 
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
+		icon = {
+			key = GFX_decision_saudi_arabia
+			trigger = { FROM = { tag = SAU } }
 		}
-	}
 
-	RAJ_shri_export = {
+		icon = {
+			key = GFX_decision_armenia
+			trigger = { FROM = { tag = ARM } }
+		}
+
+		icon = {
+			key = GFX_decision_french_guns
+			trigger = { FROM = { tag = FRA } }
+		}
+
+		icon = {
+			key = GFX_decision_russian_guns
+			trigger = { FROM = { tag = SOV } }
+		}
+
 		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = SRI
-			NOT = { has_war_with = SRI }
-		}
-
+		targets = { ITA SRI ISR SAU ARM ETH NEP FRA SOV MLD MRT EGY UAE BHU }
+		target_root_trigger = { has_completed_focus = RAJ_indian_arms_exports }
+		available = { NOT = { has_war_with = FROM } }
 		cost = 65
+		days_re_enable = 300
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_shri_export"
-			SRI = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = SRI modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = SRI modifier = improve_trade }
+			log = "[GetDateText]: [Root.GetName]: Decision RAJ_arms_export target: [From.GetName]"
+			FROM = { country_event = { id = raj_exports.1 days = 1 } }
+			add_opinion_modifier = { target = FROM modifier = improve_trade }
+			reverse_add_opinion_modifier = { target = FROM modifier = improve_trade }
 			if = {
-				limit = { NOT = { has_country_flag = RAJ_srilanka_export_weapon_flag } }
-				set_country_flag = RAJ_srilanka_export_weapon_flag
+				limit = { NOT = { has_country_flag = RAJ_arms_export_partner_@FROM } }
+				hidden_effect = { set_country_flag = RAJ_arms_export_partner_@FROM }
 				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
 			}
 			custom_effect_tooltip = TT_IF_THEY_ACCEPT
@@ -509,521 +487,10 @@ RAJ_Export_category = {
 					amount = 40
 					producer = RAJ
 				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_isr_export = {
-		icon = GFX_decision_israeli_guns
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = ISR
-			NOT = { has_war_with = ISR }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_isr_export"
-			ISR = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = ISR modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = ISR modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_israeli_export_weapon_flag } }
-				set_country_flag = RAJ_israeli_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_sau_export = {
-		icon = GFX_decision_saudi_arabia
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = SAU
-			NOT = { has_war_with = SAU }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_sau_export"
-			SAU = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = SAU modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = SAU modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_saudi_export_weapon_flag } }
-				set_country_flag = RAJ_saudi_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_arm_export = {
-		icon = GFX_decision_armenia
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = ARM
-			NOT = { has_war_with = ARM }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_arm_export"
-			ARM = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = ARM modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = ARM modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_nardi_export_weapon_flag } }
-				set_country_flag = RAJ_nardi_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_eth_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = ETH
-			NOT = { has_war_with = ETH }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_eth_export"
-			ETH = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = ETH modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = ETH modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_ethiopia_export_weapon_flag } }
-				set_country_flag = RAJ_ethiopia_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_nep_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = NEP
-			NOT = { has_war_with = NEP }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_nep_export"
-			NEP = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = NEP modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = NEP modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_nepal_export_weapon_flag } }
-				set_country_flag = RAJ_nepal_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_fra_export = {
-		icon = GFX_decision_french_guns
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = FRA
-			NOT = { has_war_with = FRA }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_fra_export"
-			FRA = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = FRA modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = FRA modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_baguette_export_weapon_flag } }
-				set_country_flag = RAJ_baguette_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_sov_export = {
-		icon = GFX_decision_russian_guns
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = SOV
-			NOT = { has_war_with = SOV }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_sov_export"
-			SOV = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = SOV modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = SOV modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_russia_export_weapon_flag } }
-				set_country_flag = RAJ_russia_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_mld_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = MLD
-			NOT = { has_war_with = MLD }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_mld_export"
-			MLD = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = MLD modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = MLD modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_mld_export_weapon_flag } }
-				set_country_flag = RAJ_mld_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_mrt_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = MRT
-			NOT = { has_war_with = MRT }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_mrt_export"
-			MRT = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = MRT modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = MRT modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_mrt_export_weapon_flag } }
-				set_country_flag = RAJ_mrt_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_egy_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = EGY
-			NOT = { has_war_with = EGY }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_egy_export"
-			EGY = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = EGY modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = EGY modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_egy_export_weapon_flag } }
-				set_country_flag = RAJ_egy_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_uae_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-
-		available = {
-			country_exists = UAE
-			NOT = { has_war_with = UAE }
-		}
-
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_uae_export"
-			UAE = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = UAE modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = UAE modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_uae_export_weapon_flag } }
-				set_country_flag = RAJ_uae_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
-				}
-			}
-		}
-
-		ai_will_do = {
-			base = 10
-			modifier = {
-				factor = 0
-				has_war = yes
-			}
-		}
-	}
-
-	RAJ_bhu_export = {
-		icon = GFX_decision_generic_prepare_civil_war_new
-		days_remove = 300
-
-		available = {
-			country_exists = BHU
-			NOT = { has_war_with = BHU }
-		}
-
-		visible = { has_completed_focus = RAJ_indian_arms_exports }
-		cost = 65
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision RAJ_bhu_export"
-			BHU = {
-				country_event = { id = raj_exports.1 days = 1 }
-			}
-			add_opinion_modifier = { target = BHU modifier = improve_trade }
-			reverse_add_opinion_modifier = { target = BHU modifier = improve_trade }
-			if = {
-				limit = { NOT = { has_country_flag = RAJ_bhu_export_weapon_flag } }
-				set_country_flag = RAJ_bhu_export_weapon_flag
-				add_to_variable = { RAJ_arms_export_bonus = 0.01 tooltip = industrial_capacity_factory_tt }
-			}
-			custom_effect_tooltip = TT_IF_THEY_ACCEPT
-			effect_tooltip = {
-				add_equipment_to_stockpile = {
-					type = Anti_Air_0
-					amount = 40
-					producer = RAJ
+				if = {
+					limit = { FROM = { tag = ITA } }
+					set_temp_variable = { treasury_change = 3 }
+					modify_treasury_effect = yes
 				}
 			}
 		}
@@ -1080,7 +547,6 @@ RAJ_brics_alliance_decisions = {
 		}
 
 		days_remove = 60
-		fire_only_once = no
 		days_re_enable = 270
 		cost = 100
 
@@ -1121,7 +587,6 @@ RAJ_brics_alliance_decisions = {
 		}
 
 		days_remove = 45
-		fire_only_once = no
 		days_re_enable = 180
 		cost = 75
 
@@ -1159,7 +624,6 @@ RAJ_brics_alliance_decisions = {
 		}
 
 		days_remove = 30
-		fire_only_once = no
 		days_re_enable = 90
 		cost = 40
 
@@ -1200,7 +664,6 @@ RAJ_brics_alliance_decisions = {
 		}
 
 		days_remove = 45
-		fire_only_once = no
 		days_re_enable = 90
 		cost = 50
 
@@ -1234,7 +697,6 @@ RAJ_brics_alliance_decisions = {
 		}
 
 		days_remove = 60
-		fire_only_once = no
 		days_re_enable = 90
 		cost = 75
 
@@ -1259,7 +721,6 @@ maoist_decision_category = {
 		priority = 100
 		icon = GFX_decision_generic_nationalism
 		days_mission_timeout = 365
-		fire_only_once = no
 
 		activation = {
 			hidden_trigger = {
@@ -1360,7 +821,6 @@ maoist_decision_category = {
 		target_root_trigger = { RAJ_country_has_any_naxalite_states = yes }
 		cost = 60
 		fixed_random_seed = no
-		fire_only_once = no
 		days_remove = 15
 		available = { NOT = { has_country_flag = RAJ_suppression_active } }
 
@@ -1416,7 +876,6 @@ maoist_decision_category = {
 	RAJ_integrated_development_initiative = {
 		icon = GFX_decision_generic_construction
 		cost = 75
-		fire_only_once = no
 		days_remove = 60
 		fixed_random_seed = no
 
@@ -1473,7 +932,6 @@ maoist_decision_category = {
 	RAJ_surrender_rehabilitation_program = {
 		icon = GFX_decision_generic_political_discourse
 		cost = 50
-		fire_only_once = no
 		days_remove = 30
 		fixed_random_seed = no
 		available = { NOT = { has_country_flag = RAJ_rehabilitation_in_progress } }
@@ -1515,7 +973,6 @@ maoist_decision_category = {
 	RAJ_operation_green_hunt = {
 		icon = GFX_decision_generic_army_support
 		cost = 100
-		fire_only_once = no
 		days_remove = 90
 		fixed_random_seed = no
 
@@ -1941,7 +1398,6 @@ RAJ_PAK_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -2046,7 +1502,6 @@ RAJ_PAK_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 45
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -2151,7 +1606,6 @@ RAJ_PAK_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -2250,7 +1704,6 @@ RAJ_PAK_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -2354,7 +1807,6 @@ RAJ_PAK_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 45
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -2449,7 +1901,6 @@ RAJ_PAK_border_conflict_category = {
 		desc = pak_raj_border_negotiate_desc
 		icon = GFX_decision_negotiate_icon
 		cost = 75
-		fire_only_once = no
 		days_re_enable = 90
 
 		visible = {
@@ -2502,7 +1953,6 @@ RAJ_PAK_border_conflict_category = {
 		desc = pak_raj_border_issue_ultimatum_desc
 		icon = GFX_decisions_war_campaign_button
 		cost = 50
-		fire_only_once = no
 		days_re_enable = 60
 
 		visible = {
@@ -2545,7 +1995,6 @@ RAJ_PAK_border_conflict_category = {
 		desc = pak_raj_border_stand_down_desc
 		icon = GFX_decisions_cease_fire_button
 		cost = 50
-		fire_only_once = no
 		days_re_enable = 30
 		visible = { has_global_flag = GLOBAL_pak_raj_border_crisis_active }
 		available = { pak_raj_border_pair_valid = yes }
@@ -2582,7 +2031,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 427 } }
 
 		visible = {
@@ -2671,7 +2119,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 420 } }
 
 		visible = {
@@ -2760,7 +2207,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 420 } }
 
 		visible = {
@@ -2849,7 +2295,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 429 } }
 
 		visible = {
@@ -2938,7 +2383,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 563 } }
 
 		visible = {
@@ -3027,7 +2471,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 427 } }
 
 		visible = {
@@ -3116,7 +2559,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 429 } }
 
 		visible = {
@@ -3205,7 +2647,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 563 } }
 
 		visible = {
@@ -3294,7 +2735,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 573 } }
 
 		visible = {
@@ -3383,7 +2823,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 984 } }
 
 		visible = {
@@ -3472,7 +2911,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 573 } }
 
 		visible = {
@@ -3561,7 +2999,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 426 } }
 
 		visible = {
@@ -3650,7 +3087,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 984 } }
 
 		visible = {
@@ -3739,7 +3175,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 426 } }
 
 		visible = {
@@ -3828,7 +3263,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 426 } }
 
 		visible = {
@@ -3917,7 +3351,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 987 } }
 
 		visible = {
@@ -4006,7 +3439,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 987 } }
 
 		visible = {
@@ -4095,7 +3527,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 984 } }
 
 		visible = {
@@ -4184,7 +3615,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 420 } }
 		visible = { NOT = { controls_state = 420 } }
 
@@ -4243,7 +3673,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 427 } }
 		visible = { NOT = { controls_state = 427 } }
 
@@ -4302,7 +3731,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 429 } }
 		visible = { NOT = { controls_state = 429 } }
 
@@ -4361,7 +3789,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 563 } }
 		visible = { NOT = { controls_state = 563 } }
 
@@ -4420,7 +3847,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 573 } }
 		visible = { NOT = { controls_state = 573 } }
 
@@ -4479,7 +3905,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 426 } }
 		visible = { NOT = { controls_state = 426 } }
 
@@ -4538,7 +3963,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 987 } }
 		visible = { NOT = { controls_state = 987 } }
 
@@ -4597,7 +4021,6 @@ RAJ_PAK_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 984 } }
 		visible = { NOT = { controls_state = 984 } }
 
@@ -4666,7 +4089,6 @@ RAJ_CHI_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -4771,7 +4193,6 @@ RAJ_CHI_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 45
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -4876,7 +4297,6 @@ RAJ_CHI_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -4975,7 +4395,6 @@ RAJ_CHI_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 30
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -5079,7 +4498,6 @@ RAJ_CHI_border_conflict_category = {
 
 		days_remove = 15
 		days_re_enable = 45
-		fire_only_once = no
 		fixed_random_seed = no
 		custom_cost_text = command_power_more_than_20
 		custom_cost_trigger = { command_power > 20 }
@@ -5174,7 +4592,6 @@ RAJ_CHI_border_conflict_category = {
 		desc = raj_chi_border_negotiate_desc
 		icon = negotiate_icon
 		cost = 75
-		fire_only_once = no
 		days_re_enable = 90
 
 		visible = {
@@ -5217,7 +4634,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 475 } }
 
 		visible = {
@@ -5310,7 +4726,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 475 } }
 
 		visible = {
@@ -5403,7 +4818,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 982 } }
 
 		visible = {
@@ -5496,7 +4910,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 982 } }
 
 		visible = {
@@ -5589,7 +5002,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 591 } }
 
 		visible = {
@@ -5678,7 +5090,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 993 } }
 
 		visible = {
@@ -5771,7 +5182,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 993 } }
 
 		visible = {
@@ -5864,7 +5274,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 993 } }
 
 		visible = {
@@ -5957,7 +5366,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = GFX_decision_border_war
 		days_remove = 10
 		days_re_enable = 90
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 591 } }
 
 		visible = {
@@ -6046,7 +5454,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 475 } }
 		visible = {
 			NOT = { controls_state = 475 }
@@ -6111,7 +5518,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 982 } }
 		visible = {
 			NOT = { controls_state = 982 }
@@ -6176,7 +5582,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 591 } }
 		visible = { NOT = { controls_state = 591 } }
 
@@ -6235,7 +5640,6 @@ RAJ_CHI_border_conflict_category = {
 		icon = generic_confiscation
 		days_remove = 30
 		days_re_enable = 180
-		fire_only_once = no
 		highlight_states = { highlight_states_trigger = { state = 993 } }
 		visible = {
 			NOT = { controls_state = 993 }

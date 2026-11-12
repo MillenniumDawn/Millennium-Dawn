@@ -22,18 +22,7 @@ configure_import_paths()
 from _reference_finder import build_parser, run_reference_search  # noqa: E402
 from shared_utils import strip_inline_comment  # noqa: E402
 
-SEARCH_DIRS = [
-    "common/events",
-    "common/decisions",
-    "common/national_focus",
-    "history/countries",
-    "common/scripted_effects",
-    "events",
-    "common/on_actions",
-    "common/focuses",
-    "common/country_leader",
-    "common/ideas",
-]
+SEARCH_DIRS = ["common", "events", "history"]
 
 PATTERNS = [
     "add_ideas",
@@ -54,6 +43,9 @@ IDEA_BLOCK_RE = re.compile(
     r"\b(?:add_ideas|remove_ideas|swap_ideas|modify_ideas|add_timed_idea"
     r"|remove_timed_idea)\b"
 )
+
+# `remove_ideas = tribute_idea_[THISTAG]` references every idea with that prefix.
+META_REF_RE = re.compile(r"=\s*(\w+)\[")
 
 SKIP_KEYWORDS = {
     "ideas",
@@ -107,15 +99,21 @@ def make_idea_searcher(search_dirs: list[Path]):
             return refs
         token_re = compile_token_regex(names)
         for txt_file, lines in iter_readable_files(search_dirs, ("*.txt",)):
-            rel = str(txt_file.relative_to(REPO_ROOT))
+            rel = txt_file.relative_to(REPO_ROOT).as_posix()
             block_depth = 0
             for i, line in enumerate(lines, 1):
                 in_block = block_depth > 0
                 hits = set(token_re.findall(line))
-                if hits and (any(re.search(p, line) for p in PATTERNS) or in_block):
+                prefixes = tuple(META_REF_RE.findall(line))
+                if prefixes:
+                    hits.update(name for name in names if name.startswith(prefixes))
+                # Without the names, `X_idea = {` no longer matches `idea.*=`.
+                if hits and (
+                    in_block
+                    or any(re.search(p, token_re.sub("", line)) for p in PATTERNS)
+                ):
                     for name in hits:
-                        if any(re.search(p, line) for p in PATTERNS) or in_block:
-                            refs[name].append((rel, i, line.strip()))
+                        refs[name].append((rel, i, line.strip()))
                 if in_block or IDEA_BLOCK_RE.search(line):
                     code = strip_inline_comment(line)
                     block_depth += code.count("{") - code.count("}")

@@ -12,6 +12,7 @@ import sys
 
 import pytest
 import validate_simplifications as vs
+from shared.suite import write_under
 from validate_simplifications import (
     _count_children,
     _find_bare_not,
@@ -396,49 +397,17 @@ def test_extra_clause_gate_not_flagged():
     assert _gov(text) == []
 
 
-def test_extra_bare_condition_in_clause_not_flagged():
-    # Every clause carries an extra `has_war = yes`; collapsing to
-    # `has_government = FROM` would silently drop it.
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  has_war = yes  "
-            "FROM = {{ has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
-
-
-def test_extra_scope_block_in_clause_not_flagged():
-    # A second scope block (GER = { exists = yes }) is a real gate the collapse
-    # would drop.
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  GER = {{ exists = yes }}  "
-            "FROM = {{ has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
-
-
-def test_unrelated_not_inside_scope_not_misclassified():
-    # NOT wraps an unrelated trigger, not has_government; must not be read as a
-    # "different government" clause (and the extra trigger makes it non-clean).
-    text = (
-        "OR = {\n"
-        + "\n".join(
-            "  AND = {{ has_government = {i}  "
-            "FROM = {{ NOT = {{ has_war = yes }} has_government = {i} }} }}".format(i=i)
-            for i in ("democratic", "communism", "fascism", "neutrality", "nationalist")
-        )
-        + "\n}\n"
-    )
-    assert _gov(text) == []
+@pytest.mark.parametrize(
+    "scoped_template",
+    [
+        "has_war = yes  {t} = {{ has_government = {i} }}",
+        "GER = {{ exists = yes }}  {t} = {{ has_government = {i} }}",
+        "{t} = {{ NOT = {{ has_war = yes }} has_government = {i} }}",
+    ],
+    ids=["bare-condition", "extra-scope", "unrelated-not-in-scope"],
+)
+def test_extra_conditions_in_government_match_not_flagged(scoped_template):
+    assert _gov(_all_five("FROM", scoped_template)) == []
 
 
 def test_double_negation_collapses_to_same():
@@ -923,8 +892,8 @@ def test_composite_runs_both_passes_inside_the_effect_dirs():
     assert any("NOT with 2 children" in m for m in messages)
 
 
-def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
-    write_path(
+def test_validator_reports_findings_with_file_and_line(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/test_tree.txt",
         "focus_tree = {\n"
@@ -938,7 +907,7 @@ def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
         "\t}\n"
         "}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/ai_strategy/test_ai.txt",
         "ai_strategy = {\n\tallowed = { NOT = { tag = USA tag = GER } }\n}\n",
@@ -956,8 +925,8 @@ def test_validator_reports_findings_with_file_and_line(tmp_path, write_path):
     assert {issue.category for issue in validator._issues} == {"simplification"}
 
 
-def test_clean_tree_reports_nothing(tmp_path, write_path):
-    write_path(
+def test_clean_tree_reports_nothing(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/clean.txt",
         "focus_tree = {\n\tid = clean\n}\n",
@@ -1330,8 +1299,8 @@ def test_decision_lines_account_for_leading_lines():
     assert [line for line, _m in findings] == [6]
 
 
-def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
-    write_path(
+def test_full_run_reports_merge_and_owner_scope_passes(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/mix.txt",
         "focus_tree = {\n"
@@ -1350,14 +1319,6 @@ def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
         "\t}\n"
         "}\n",
     )
-
-    scoped = vs.Validator(
-        str(tmp_path), use_colors=False, workers=1, owner_scope_only=True
-    )
-    scoped.run_validations()
-    scoped_messages = [issue.message for issue in scoped._issues]
-    assert len(scoped_messages) == 1
-    assert "remove the wrapper" in scoped_messages[0]
 
     full = vs.Validator(str(tmp_path), use_colors=False, workers=1)
     full.run_validations()
@@ -1395,8 +1356,8 @@ def test_composite_routes_focus_and_decision_passes():
     assert any("remove the wrapper" in m for m in messages)
 
 
-def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
-    write_path(
+def test_cli_entry_point_exits_zero(tmp_path, monkeypatch):
+    write_under(
         tmp_path,
         "common/national_focus/clean.txt",
         "focus_tree = {\n\tid = clean\n}\n",
@@ -1417,8 +1378,8 @@ def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
 
 _MERGE_USA = "consecutive `USA = { }` blocks can be merged into one"
 _NOT_TWO = (
-    "NOT with 2 children is ambiguous (semantics disputed NAND vs NOR); "
-    "write `NOT = { OR = { ... } }` or one NOT per trigger"
+    "NOT with 2 children is NOR (true only when every child is false); "
+    "write `NOT = { OR = { ... } }` to say so, or `NOT = { AND = { ... } }` for not all"
 )
 
 # Quoted braces, a brace-only string, an escaped quote, an unclosed block, a
@@ -1455,8 +1416,8 @@ def test_block_end_matches_extract_block_from_text_for_every_brace_and_limit():
     assert checked > 1000
 
 
-def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
-    write_path(
+def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path):
+    write_under(
         tmp_path,
         "events/quoted.txt",
         "# USA = { a = yes } USA = { b = yes }\n"
@@ -1466,8 +1427,8 @@ def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
     assert _run(tmp_path) == [("events/quoted.txt", 3, _MERGE_USA)]
 
 
-def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_path):
-    path = write_path(
+def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch):
+    path = write_under(
         tmp_path, "events/twice.txt", "USA = { a = yes }\nUSA = { b = yes }\n"
     )
     monkeypatch.setattr(
@@ -1476,8 +1437,8 @@ def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_pa
     assert _run(tmp_path) == [("events/twice.txt", 2, _MERGE_USA)]
 
 
-def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path, write_path):
-    write_path(
+def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path):
+    write_under(
         tmp_path,
         "common/scripted_triggers/crlf.txt",
         "NOT = { tag = USA tag = GER }\r\nUSA = { a = yes }\r\nUSA = { b = yes }",
@@ -1511,17 +1472,17 @@ def test_government_gate_opens_on_spaceless_has_government():
     assert _find_government_match(_script(text)) == [(2, "has_government = FROM")]
 
 
-def test_pooled_run_matches_in_process_findings_and_order(
-    tmp_path, monkeypatch, write_path
-):
+def test_pooled_run_matches_in_process_findings_and_order(tmp_path, monkeypatch):
     # 61 files cross the pool threshold and span two map chunks.
     for index in range(60):
-        write_path(
+        write_under(
             tmp_path,
             f"events/pool_{index:02}.txt",
             "\n" * index + "USA = { a = yes }\nUSA = { b = yes }\n",
         )
-    write_path(tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }")
+    write_under(
+        tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }"
+    )
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
 
     pooled = vs.Validator(str(tmp_path), use_colors=False, workers=2)
@@ -1542,12 +1503,10 @@ def test_pooled_run_matches_in_process_findings_and_order(
     )
 
 
-def test_disk_cache_reuses_findings_until_the_content_changes(
-    tmp_path, monkeypatch, write_path
-):
+def test_disk_cache_reuses_findings_until_the_content_changes(tmp_path, monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
     merge = "USA = { a = yes }\nUSA = { b = yes }\n"
-    path = write_path(tmp_path, "events/cached.txt", merge)
+    path = write_under(tmp_path, "events/cached.txt", merge)
     scanned = []
     original = vs._scan_composite
 
@@ -1563,7 +1522,7 @@ def test_disk_cache_reuses_findings_until_the_content_changes(
     assert _run(tmp_path) == cold == [("events/cached.txt", 2, _MERGE_USA)]
     assert scanned == [], "the warm run must read the cached findings"
 
-    write_path(tmp_path, "events/cached.txt", "\n" + merge)
+    write_under(tmp_path, "events/cached.txt", "\n" + merge)
     vs.FileOpener.invalidate(str(path))  # in-process reads are memoized per path
     assert _run(tmp_path) == [("events/cached.txt", 3, _MERGE_USA)]
     assert scanned == [os.path.normpath("events/cached.txt")]

@@ -38,12 +38,14 @@ from linting.check_common_mistakes import (
 )
 from shared_utils import (
     ALWAYS_NO_RE,
+    COUNTRY_TAG_ASSIGNMENT_LINE_RE,
     IS_AI_NO_RE,
     ai_only_decision_categories,
     atomic_write_text,
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
     has_flat_is_ai,
@@ -51,6 +53,7 @@ from shared_utils import (
     iter_statement_ops,
     iter_statements,
     line_of,
+    list_files,
     read_script,
     read_text_strict,
     strip_comments,
@@ -58,7 +61,17 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
-from validate_events import effect_costs, load_cost_lookups, uncovered_costs
+from validate_events import (
+    CostLookups,
+    EventPayments,
+    ai_weight_cost_checks,
+    building_payment_effects,
+    chooser_costs,
+    effect_costs,
+    load_cost_lookups,
+    load_event_payments,
+    unneeded_treasury_reason,
+)
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -482,6 +495,10 @@ _MIDGAME_GATE_RE = re.compile(
 _UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
     validation_config("validate_decisions", "unannounced_category_exempt")
 )
+_AI_COST_EXEMPT = frozenset(validation_config("validate_decisions", "ai_cost_exempt"))
+_LATE_CHARGE_EXEMPT = frozenset(
+    validation_config("validate_decisions", "late_charge_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -602,8 +619,8 @@ def _scan_activations_and_removals(
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
-    pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
-    for filename in glob.iglob(pattern):
+    loc_dir = os.path.join(mod_path, "common", "scripted_localisation")
+    for filename in list_files(loc_dir, recursive=False):
         if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
@@ -630,18 +647,8 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
-# The money kinds validate_events.uncovered_costs can report.
+# The money kinds validate_events.effect_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
-# The scripted effects that move money; a decision calls them with its own amount.
-_PAYMENT_EFFECTS = frozenset(
-    {
-        "modify_treasury_effect",
-        "modify_debt_effect",
-        "modify_international_investment_effect",
-        "modify_corporate_tax_rate_effect",
-        "modify_population_tax_rate_effect",
-    }
-)
 # `treasury > 1.4` for a 1.5 charge is how the mod writes `>= 1.5`.
 _GATE_SLACK = 0.1
 # What a custom_cost_trigger can check, by the cost kind that pays for it.
@@ -726,15 +733,7 @@ _COMMIT_SCAN_DIRS = (
 def _block_body(text: str, open_brace_end: int) -> str:
     """Return the text between a block's opening brace (already consumed at
     ``open_brace_end``) and its matching closing brace."""
-    depth = 1
-    i = open_brace_end
-    while i < len(text) and depth:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[open_brace_end : i - 1]
+    return text[open_brace_end : find_unquoted_block_end(text, open_brace_end)[0] - 1]
 
 
 def _strip_effect_tooltip_blocks(text: str) -> str:
@@ -997,11 +996,10 @@ def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
 
 
 def _find_decision_file(mod_path: str, basename: str) -> str | None:
-    pattern = str(Path(mod_path) / "common" / "decisions" / "**" / "*.txt")
     return next(
         (
             filepath
-            for filepath in glob.iglob(pattern, recursive=True)
+            for filepath in list_files(Path(mod_path) / "common" / "decisions")
             if os.path.basename(filepath) == basename
         ),
         None,
@@ -1299,6 +1297,9 @@ def extract_value_multi_line(obj: str, s: str) -> str:
     return matches[0][1] if matches else ""
 
 
+_FIRE_ONLY_ONCE_NO_RE = re.compile(r"^\s*fire_only_once\s*=\s*no\b", re.MULTILINE)
+
+
 class DecisionFactory:
     def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
         self.source_path = source_path
@@ -1340,6 +1341,7 @@ class DecisionFactory:
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", rolls))
         self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", rolls))
         self.fire_only_once = "fire_only_once = yes" in dec
+        self.fire_only_once_no = bool(_FIRE_ONLY_ONCE_NO_RE.search(dec))
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -1374,16 +1376,8 @@ class DecisionFactory:
         )
 
 
-# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
-
-
-def _set_cache_enabled(enabled: bool):
-    """Enable or disable the decision parsing cache."""
-    global _DECISION_CACHE
-    _DECISION_CACHE["enabled"] = enabled
-    if not enabled:
-        _DECISION_CACHE["data"].clear()
+# Per-run parse memo. --no-cache bypasses only the disk cache, not this.
+_DECISION_CACHE: Dict[str, Any] = {}
 
 
 def _invalidate_decision_cache():
@@ -1392,19 +1386,16 @@ def _invalidate_decision_cache():
     Call this after any ``--fix`` pass that rewrites decision files so later
     validators see the patched contents instead of stale factories.
     """
-    _DECISION_CACHE["data"].clear()
+    _DECISION_CACHE.clear()
     FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
     """Get cached result or compute and cache it."""
-    if not _DECISION_CACHE["enabled"]:
-        return factory_fn()
-
     cache_key = f"{mod_path}:{lowercase}:{key}"
-    if cache_key not in _DECISION_CACHE["data"]:
-        _DECISION_CACHE["data"][cache_key] = factory_fn()
-    return _DECISION_CACHE["data"][cache_key]
+    if cache_key not in _DECISION_CACHE:
+        _DECISION_CACHE[cache_key] = factory_fn()
+    return _DECISION_CACHE[cache_key]
 
 
 def parse_all_decisions(
@@ -1417,7 +1408,7 @@ def parse_all_decisions(
         decisions = []
         paths = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1489,7 +1480,7 @@ def parse_decision_categories(
         filepath = str(Path(mod_path) / "common" / "decisions" / "categories")
         categories = {}
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=lowercase, strip_comments_flag=True
             )
@@ -1510,6 +1501,13 @@ def parse_decision_categories(
 # The keys that open a block at the start of a line, the only place a category
 # block can start.
 _LINE_OPENER_RE = re.compile(r"^(\S+) = \{", re.MULTILINE)
+_ID_PREFIX_RE = re.compile(r"^[A-Z][A-Z0-9]*_")
+_TAG_PREFIX_RE = re.compile(r"^([A-Z][A-Z0-9]{2})_")
+
+
+def _has_uppercase_after_prefix(name: str) -> bool:
+    rest = _ID_PREFIX_RE.sub("", name, count=1)
+    return rest != rest.lower()
 
 
 def parse_categories_with_decisions(
@@ -1525,7 +1523,7 @@ def parse_categories_with_decisions(
 
         filepath = str(Path(mod_path) / "common" / "decisions")
 
-        for filename in glob.iglob(filepath + "/**/*.txt", recursive=True):
+        for filename in list_files(filepath):
             if "categories" in filename:
                 continue
             text_file = FileOpener.open_text_file(
@@ -1636,6 +1634,14 @@ def _category_hides_from_ai(category: str) -> bool:
     )
 
 
+def _custom_cost_claims(d: DecisionFactory) -> Set[str]:
+    """Resources a decision's custom_cost_trigger checks."""
+    trigger = blank_quoted_strings(d.custom_cost_trigger)
+    return {
+        kind for kind, claim in _CUSTOM_COST_CLAIMS.items() if claim.search(trigger)
+    }
+
+
 def _unpaid_custom_costs(
     d: DecisionFactory, effects: Dict[str, str], stored: Dict[str, int]
 ) -> Tuple[Set[str], Set[str]]:
@@ -1643,10 +1649,7 @@ def _unpaid_custom_costs(
 
     Also returns the ones remove_effect charges instead.
     """
-    trigger = blank_quoted_strings(d.custom_cost_trigger)
-    claims = {
-        kind for kind, claim in _CUSTOM_COST_CLAIMS.items() if claim.search(trigger)
-    }
+    claims = _custom_cost_claims(d)
     if not claims:
         return set(), set()
     missing = claims - effect_costs(d.complete_effect[1:-1], effects, stored)
@@ -1726,12 +1729,14 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
+        naming_style: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
+        self.naming_style = naming_style
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -1739,16 +1744,23 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
-        self._cost_lookups: Optional[Tuple[Dict[str, str], Dict[str, int]]] = None
+        self._cost_lookups: Optional[CostLookups] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
-        if self.no_cache:
-            _set_cache_enabled(False)
+        self._building_payments: Optional[Set[str]] = None
+        _DECISION_CACHE.clear()
 
-    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int]]:
+    def _get_cost_lookups(self) -> CostLookups:
         """load_cost_lookups, read once per run."""
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
         return self._cost_lookups
+
+    def _get_event_payments(self) -> EventPayments:
+        """load_event_payments, read once per run."""
+        return self.cached(
+            "event_payments",
+            lambda: load_event_payments(self, self._get_cost_lookups()),
+        )
 
     def _get_scripted_triggers(self) -> Dict[str, str]:
         """Body of every `common/scripted_triggers` definition, read once per run."""
@@ -1762,6 +1774,19 @@ class Validator(BaseValidator):
                         bodies[name] = body
             self._scripted_triggers = bodies
         return self._scripted_triggers
+
+    def _get_building_payments(self) -> Set[str]:
+        """building_payment_effects over `common/scripted_effects`, read once per run."""
+        if self._building_payments is None:
+            bodies: Dict[str, str] = {}
+            for path in self._collect_files(
+                ["common/scripted_effects/**/*.txt"], ignore_staged=True
+            ):
+                for name, _scalar, body in iter_statements(read_script(path)):
+                    if body is not None:
+                        bodies[name] = body
+            self._building_payments = building_payment_effects(bodies)
+        return self._building_payments
 
     def _get_ai_only_categories(self) -> Dict[str, str]:
         """AI-only decision category names, mapped to their defining filename."""
@@ -1949,7 +1974,7 @@ class Validator(BaseValidator):
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
         found_files = False
-        for filename in glob.iglob(bop_path + "/**/*.txt", recursive=True):
+        for filename in list_files(bop_path):
             found_files = True
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -2086,6 +2111,67 @@ class Validator(BaseValidator):
             results,
             "✓ No targeted decisions without targets",
             "Decisions with target_root_trigger/target_trigger but no targets (checks every country daily):",
+        )
+
+    def validate_cosmetic_targeting(self) -> None:
+        """Warn about static country targeting that may only provide a flag overlay."""
+        self._log_section("Checking decisions for cosmetic country targeting...")
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            raw = strip_comments(d.raw)
+            body = raw[raw.index("{") + 1 : -1]
+            fields = {
+                key: block if block is not None else scalar or ""
+                for key, scalar, block in iter_statements(body)
+            }
+            targets = fields.get("targets", "").split()
+            if not targets or any(
+                re.fullmatch(r"[A-Z][A-Z0-9]{2}", tag) is None for tag in targets
+            ):
+                continue
+            if (
+                fields.get("target_array")
+                or fields.get("targets_dynamic") == "yes"
+                or fields.get("state_target", "no") != "no"
+                or fields.get("on_map_mode") in ("map_only", "map_and_decisions_view")
+                or first_flat_match(fields.get("allowed", ""), ALWAYS_NO_RE)
+            ):
+                continue
+
+            if len(targets) == 1:
+                advice = (
+                    f"single country target {targets[0]}; consider a normal decision"
+                    " with a custom icon"
+                )
+            else:
+                if re.search(r"\bFROM\b", blank_quoted_strings(body), re.IGNORECASE):
+                    continue
+                if any(
+                    fields.get(f"war_with_target_on_{when}") == "yes"
+                    for when in ("complete", "remove", "timeout")
+                ):
+                    continue
+                advice = (
+                    f"{len(targets)} country targets but no explicit FROM use;"
+                    " use FROM for target-dependent behavior, or review whether"
+                    " targeting is only cosmetic"
+                )
+            results.append(
+                (
+                    f"{d.token} - {advice}; verify localisation and called scripts"
+                    " before changing targeting",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No potentially cosmetic country targeting",
+            "Decisions with potentially cosmetic country targeting:",
+            severity=Severity.WARNING,
+            category="decision-cosmetic-targeting",
         )
 
     def validate_targets_no_trigger(self):
@@ -2687,7 +2773,7 @@ class Validator(BaseValidator):
 
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
-        for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
+        for filename in list_files(dec_filepath):
             if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
@@ -2864,6 +2950,83 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
+    def validate_naming_style(self):
+        """Flag decision and category ids that break the naming rules.
+
+        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        """
+        self._log_section("Checking decision and category naming style...")
+        token_to_cat = {
+            dec: cat
+            for cat, decs in parse_categories_with_decisions(self.mod_path).items()
+            for dec in decs
+        }
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        country_tags = set()
+        for path in self._collect_files(
+            ["common/country_tags/*.txt"], ignore_staged=True
+        ):
+            country_tags.update(
+                COUNTRY_TAG_ASSIGNMENT_LINE_RE.findall(
+                    FileOpener.open_text_file(path, strip_comments_flag=True)
+                )
+            )
+
+        case_results = []
+        prefix_results = []
+        for d in parse_all_decision_factories(self.mod_path):
+            if _has_uppercase_after_prefix(d.token):
+                case_results.append(
+                    (
+                        f"Decision {d.token} is not lowercase after its prefix",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+            prefix = _TAG_PREFIX_RE.match(d.token)
+            if not prefix or prefix.group(1) not in country_tags:
+                continue
+            pins = _flat_tag_pins(d.allowed) or {
+                tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
+            }
+            if pins and prefix.group(1) not in pins:
+                prefix_results.append(
+                    (
+                        f"Decision {d.token} has the {prefix.group(1)} prefix but"
+                        f" allowed admits {', '.join(sorted(pins))}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    case_results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            case_results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+        self._report(
+            prefix_results,
+            "✓ Decision prefixes match the countries allowed to take them",
+            "Decisions whose tag prefix names a country their allowed does not admit:",
+            Severity.WARNING,
+            category="decision-prefix-owner",
+        )
+
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
@@ -2977,6 +3140,24 @@ class Validator(BaseValidator):
             "Decision effect blocks with no log line:",
             Severity.ERROR,
             category="missing-decision-log",
+        )
+
+    def validate_redundant_fire_only_once(self):
+        """Flag `fire_only_once = no`, the engine default (Issue #6509)."""
+        self._log_section("Checking decisions for a redundant fire_only_once = no...")
+
+        results = [
+            f"{dec.token} - {dec.source_basename}: fire_only_once = no is the default"
+            for dec in parse_all_decision_factories(self.mod_path)
+            if dec.fire_only_once_no
+        ]
+
+        self._report(
+            results,
+            "✓ No decision sets fire_only_once = no",
+            "Decisions setting the default fire_only_once = no (remove the line):",
+            Severity.ERROR,
+            category="redundant-fire-only-once",
         )
 
     def validate_log_not_first(self):
@@ -3258,54 +3439,102 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
         )
 
+    def _ai_cost_weight_rows(
+        self,
+    ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+        """Rows for both decision AI weight cost checks, from one pass.
+
+        Skipped by both: decisions the AI cannot see or never takes, plain
+        missions, and a mission's `remove_effect`, which is a timeout outcome.
+        """
+
+        def scan():
+            lookups = self._get_cost_lookups()
+            effects, stored = lookups.effects, lookups.stored
+            ignored_rows: List[Tuple[str, str, int]] = []
+            unneeded_rows: List[Tuple[str, str, int]] = []
+            for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+                if d.mission_subtype and not d.selectable_mission:
+                    continue
+                if weight_stays_zero(d.ai_factor):
+                    continue
+                charged = effect_costs(d.complete_effect[1:-1], effects, stored)
+                if not d.mission_subtype:
+                    charged |= effect_costs(d.remove_effect[1:-1], effects, stored)
+                covered, lowering = ai_weight_cost_checks(d.ai_factor[1:-1])
+
+                ignored = (charged - covered) & _MONEY_COSTS
+                if ignored and d.token not in _AI_COST_EXEMPT:
+                    note = (
+                        _TREASURY_GATE_NOTE
+                        if "treasury" in d.custom_cost_trigger
+                        else ""
+                    )
+                    ignored_rows.append(
+                        (
+                            f"{d.token} - ai_will_do ignores the "
+                            f"{', '.join(sorted(ignored))} cost{note}",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+
+                if not lowering:
+                    continue
+                kinds = chooser_costs(
+                    d.raw[d.raw.index("{") + 1 : d.raw.rindex("}")],
+                    lookups,
+                    self._get_event_payments(),
+                )
+                claims = _custom_cost_claims(d)
+                priced = {d.cost, d.ai_hint_pp_cost} - {"", "0"}
+                if "treasury" in claims:
+                    kinds.add("money")
+                if "political power" in claims or priced:
+                    kinds.add("political power")
+                reason = unneeded_treasury_reason(lowering, kinds, "decision")
+                if reason:
+                    unneeded_rows.append(
+                        (f"{d.token} - ai_will_do {reason}", d.source_path, d.line)
+                    )
+            return ignored_rows, unneeded_rows
+
+        return self.cached("ai_cost_weight_rows", scan)
+
     def validate_ai_will_do_ignores_cost(self):
         """Flag decisions that charge money while ai_will_do never looks at money.
 
         The decision twin of the event check (issue #5738), with the same cost
-        and guard detection. Skipped: decisions the AI cannot see or never
-        takes, plain missions, and a selectable mission's `remove_effect`, which
-        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
-        broke country, so those findings carry a note.
+        and guard detection and the skips of _ai_cost_weight_rows, plus ids in
+        `ai_cost_exempt`. A treasury `custom_cost_trigger` already stops a broke
+        country, so those findings carry a note.
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
-
-        effects, stored = self._get_cost_lookups()
-        results = []
-
-        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
-            if d.mission_subtype and not d.selectable_mission:
-                continue
-            if weight_stays_zero(d.ai_factor):
-                continue
-            ai_weights = d.ai_factor[1:-1]
-
-            costs: Set[str] = set()
-            blocks = [d.complete_effect]
-            if not d.mission_subtype:
-                blocks.append(d.remove_effect)
-            for block in blocks:
-                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
-            costs &= _MONEY_COSTS
-            if not costs:
-                continue
-
-            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
-            results.append(
-                (
-                    f"{d.token} - ai_will_do ignores the "
-                    f"{', '.join(sorted(costs))} cost{note}",
-                    d.source_path,
-                    d.line,
-                )
-            )
-
         self._report(
-            results,
+            self._ai_cost_weight_rows()[0],
             "✓ No decision AI weights ignoring money costs",
             "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
             " deficit modifier):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-ai-will-do-ignores-cost",
+        )
+
+    def validate_unneeded_treasury_guard(self):
+        """Flag ai_will_do treasury checks for a cost the decision does not have.
+
+        The inverse of validate_ai_will_do_ignores_cost, from the same pass.
+        Costs are what the decision may charge its own country
+        (validate_events.chooser_costs), a custom cost, and a `cost` or
+        `ai_hint_pp_cost` price. The `modifier` block can commit money.
+        """
+        self._log_section("Checking decisions for AI treasury checks with no cost...")
+        self._report(
+            self._ai_cost_weight_rows()[1],
+            "✓ No decision AI treasury checks without a cost",
+            "Decisions whose ai_will_do lowers the weight on a treasury check the"
+            " decision has no cost for (drop the modifier, or add the missing cost):",
+            severity=Severity.WARNING,
+            category="decision-unneeded-treasury-guard",
         )
 
     def validate_custom_cost_charged(self):
@@ -3320,7 +3549,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking custom costs are charged in complete_effect...")
 
-        effects, stored = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -3362,25 +3591,28 @@ class Validator(BaseValidator):
 
         The country may no longer have the money when the decision ends, and
         nothing gated it. Treasury, debt, investment and tax rate follow
-        `effect_costs`, so a payout is not a finding. Only charges the decision
-        writes itself count, through the `modify_*` payment effects. A scripted
-        effect that pays for a building on delivery is intended and is not
-        followed. A treasury custom cost that `validate_custom_cost_charged`
-        already reports as late is left to it. Missions are skipped: their
-        `remove_effect` is a timeout outcome.
+        `effect_costs`, so a payout is not a finding. Scripted effects the
+        decision calls are followed, except a building payment, which is paid on
+        delivery by design. A treasury custom cost that
+        `validate_custom_cost_charged` already reports as late is left to it.
+        Missions are skipped: their `remove_effect` is a timeout outcome. So are
+        ids in `late_charge_exempt`.
         """
         self._log_section("Checking decisions for money charged after entry...")
 
-        effects, stored = self._get_cost_lookups()
-        payments = {
-            name: body for name, body in effects.items() if name in _PAYMENT_EFFECTS
+        effects, stored = self._get_cost_lookups()[:2]
+        buildings = self._get_building_payments()
+        followed = {
+            name: body for name, body in effects.items() if name not in buildings
         }
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
             if d.mission_subtype or not d.remove_effect:
                 continue
-            late = effect_costs(d.remove_effect[1:-1], payments, stored) & _MONEY_COSTS
+            if d.token in _LATE_CHARGE_EXEMPT:
+                continue
+            late = effect_costs(d.remove_effect[1:-1], followed, stored) & _MONEY_COSTS
             late -= _unpaid_custom_costs(d, effects, stored)[1]
             if not late:
                 continue
@@ -3398,7 +3630,7 @@ class Validator(BaseValidator):
             "✓ No decision charges money after entry",
             "Decisions that charge money in remove_effect (charge it in"
             " complete_effect):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="decision-money-charged-late",
         )
 
@@ -3628,8 +3860,9 @@ class Validator(BaseValidator):
         """Flag a days_remove timer that nothing reads.
 
         A timer keeps the decision active. That matters only when a
-        remove_effect runs at the end, a modifier lasts while it is active, or a
-        has_decision trigger reads it. Missions are skipped.
+        remove_effect, war_with_on_remove, or war_with_target_on_remove runs at
+        the end, a modifier lasts while it is active, or a has_decision trigger
+        reads it. Missions are skipped.
         """
         self._log_section("Checking decisions with days_remove but no remove_effect...")
 
@@ -3645,7 +3878,12 @@ class Validator(BaseValidator):
                 or d.token in checked
                 or any(
                     _top_level_field_value(d.raw, field)
-                    for field in ("modifier", "targeted_modifier")
+                    for field in (
+                        "modifier",
+                        "targeted_modifier",
+                        "war_with_on_remove",
+                        "war_with_target_on_remove",
+                    )
                 )
             ):
                 continue
@@ -3720,8 +3958,7 @@ class Validator(BaseValidator):
 
         extra_texts: Dict[str, str] = {}
         for parts in _COMMIT_SCAN_DIRS:
-            pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
-            for filename in glob.iglob(pattern, recursive=True):
+            for filename in list_files(os.path.join(self.mod_path, *parts)):
                 if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
@@ -3837,25 +4074,38 @@ class Validator(BaseValidator):
             _extract_decision_icons, [(f, self.mod_path) for f in files]
         )
 
-        results = []
+        results, unmeasured = [], []
         for filepath, refs in zip(files, ref_lists):
+            rel = os.path.relpath(filepath, self.mod_path)
             for owner, kind, value, line in refs:
+                unreadable = sprites.unreadable
                 msg = _icon_type_message(kind, owner, value, sprites)
-                if not msg:
-                    continue
-                results.append((msg, os.path.relpath(filepath, self.mod_path), line))
+                if msg:
+                    results.append((msg, rel, line))
+                # The size read failed: the texture is missing or not in this checkout.
+                elif sprites.unreadable > unreadable:
+                    unmeasured.append(
+                        (
+                            f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> its "
+                            "texture is not on disk, so its slot size is unchecked",
+                            rel,
+                            line,
+                        )
+                    )
 
-        if sprites.unreadable:
-            self.log(
-                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
-                "warning",
-            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
             Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+        self._report(
+            unmeasured,
+            "✓ Every decision icon's texture could be measured",
+            "Decision icons whose texture is not on disk:",
+            Severity.WARNING,
+            category="decision-icon-unmeasured",
         )
 
     def validate_category_desc_images(self):
@@ -3905,6 +4155,7 @@ class Validator(BaseValidator):
         self.validate_ai_factors()
         self.validate_custom_cost_trigger()
         self.validate_targeted_without_target()
+        self.validate_cosmetic_targeting()
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_from_checks_in_visible()
@@ -3922,6 +4173,7 @@ class Validator(BaseValidator):
         self.validate_undefined_unlock_tooltips()
         self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
+        self.validate_redundant_fire_only_once()
         self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
@@ -3929,6 +4181,7 @@ class Validator(BaseValidator):
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
         self.validate_ai_will_do_ignores_cost()
+        self.validate_unneeded_treasury_guard()
         self.validate_custom_cost_charged()
         self.validate_money_charged_after_entry()
         self.validate_treasury_gate_below_charge()
@@ -3957,6 +4210,13 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
+        if self.naming_style:
+            self.validate_naming_style()
+        else:
+            self._log_section(
+                "Skipping decision naming style check (pass --naming-style to enable)"
+            )
+
 
 def _add_extra_args(parser):
     parser.add_argument(
@@ -3975,6 +4235,12 @@ def _add_extra_args(parser):
         action="store_true",
         dest="unannounced_categories",
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
+    )
+    parser.add_argument(
+        "--naming-style",
+        action="store_true",
+        dest="naming_style",
+        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
     )
 
 

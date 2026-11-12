@@ -23,7 +23,7 @@ The Millennium Dawn repository includes a set of Claude Code skills, slash comma
 | `/review-branch`              | Quick standards review of the entire branch diff                                 |
 | `/audit <file>`               | Deep multi-agent audit: simplification + performance + content                   |
 | `/fix-issue <number>`         | Find and fix a GitHub issue, then open a PR                                      |
-| `/changelog`                  | Summarize branch changes and update `Changelog.txt`                              |
+| `/changelog`                  | Summarize branch changes, update `Changelog.txt`, and merge duplicates           |
 
 ---
 

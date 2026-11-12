@@ -1,6 +1,7 @@
 """Tests for `validate_ai_path_rules.py` (every playable country tree has an AI path rule)."""
 
 import validate_ai_path_rules as V
+from shared.suite import write_under
 
 TREE = "focus_tree = {{\n\tid = {tag}_focus\n\tcountry = {{\n\t\tfactor = 0\n\t\tmodifier = {{\n\t\t\tadd = 10\n\t\t\ttag = {tag}\n\t\t}}\n\t}}\n}}\n"
 SHARED_TREE = "focus_tree = {\n\tid = shared\n\tcountry = {\n\t\tmodifier = { tag = AAA }\n\t\tmodifier = { tag = BBB }\n\t}\n}\n"
@@ -25,23 +26,22 @@ NO_DEFAULT_RULE = (
 
 def _write(
     tmp_path,
-    write_path,
     tree=None,
     states=None,
     rules="",
     focus_path="common/national_focus/05_aaa.txt",
 ):
-    write_path(
+    write_under(
         tmp_path,
         focus_path,
         TREE.format(tag="AAA") if tree is None else tree,
     )
-    write_path(
+    write_under(
         tmp_path,
         "history/states/1-A.txt",
         STATE.format(tag="AAA") if states is None else states,
     )
-    write_path(tmp_path, "common/game_rules/00_game_rules.txt", rules)
+    write_under(tmp_path, "common/game_rules/00_game_rules.txt", rules)
 
 
 def _run(tmp_path, staged_only=False):
@@ -50,8 +50,8 @@ def _run(tmp_path, staged_only=False):
     return v._issues
 
 
-def test_reports_tree_without_rule(tmp_path, write_path):
-    _write(tmp_path, write_path)
+def test_reports_tree_without_rule(tmp_path):
+    _write(tmp_path)
 
     issues = _run(tmp_path)
 
@@ -63,12 +63,9 @@ def test_reports_tree_without_rule(tmp_path, write_path):
     assert "'AAA'" in issue.message
 
 
-def test_eritrea_puppet_tree_is_exempt_but_other_missing_rules_still_warn(
-    tmp_path, write_path
-):
+def test_eritrea_puppet_tree_is_exempt_but_other_missing_rules_still_warn(tmp_path):
     _write(
         tmp_path,
-        write_path,
         tree=TREE.format(tag="ERI"),
         states=STATE.format(tag="ERI"),
         focus_path="common/national_focus/eritrea_puppet.txt",
@@ -76,20 +73,20 @@ def test_eritrea_puppet_tree_is_exempt_but_other_missing_rules_still_warn(
 
     assert _run(tmp_path) == []
 
-    _write(tmp_path, write_path)
+    _write(tmp_path)
     issues = _run(tmp_path)
     assert [issue.category for issue in issues] == ["ai-path-rule-missing"]
     assert issues[0].file == "common/national_focus/05_aaa.txt"
 
 
-def test_full_rule_is_clean(tmp_path, write_path):
-    _write(tmp_path, write_path, rules=FULL_RULE)
+def test_full_rule_is_clean(tmp_path):
+    _write(tmp_path, rules=FULL_RULE)
 
     assert _run(tmp_path) == []
 
 
-def test_rule_without_historical_is_incomplete(tmp_path, write_path):
-    _write(tmp_path, write_path, rules=NO_HISTORICAL_RULE)
+def test_rule_without_historical_is_incomplete(tmp_path):
+    _write(tmp_path, rules=NO_HISTORICAL_RULE)
 
     issues = _run(tmp_path)
 
@@ -99,8 +96,8 @@ def test_rule_without_historical_is_incomplete(tmp_path, write_path):
     assert "HISTORICAL" in issues[0].message
 
 
-def test_rule_without_default_is_incomplete(tmp_path, write_path):
-    _write(tmp_path, write_path, rules=NO_DEFAULT_RULE)
+def test_rule_without_default_is_incomplete(tmp_path):
+    _write(tmp_path, rules=NO_DEFAULT_RULE)
 
     issues = _run(tmp_path)
 
@@ -108,20 +105,20 @@ def test_rule_without_default_is_incomplete(tmp_path, write_path):
     assert "default" in issues[0].message
 
 
-def test_shared_tree_is_skipped(tmp_path, write_path):
-    _write(tmp_path, write_path, tree=SHARED_TREE)
+def test_shared_tree_is_skipped(tmp_path):
+    _write(tmp_path, tree=SHARED_TREE)
 
     assert _run(tmp_path) == []
 
 
-def test_tag_without_start_states_is_skipped(tmp_path, write_path):
-    _write(tmp_path, write_path, states=STATE.format(tag="BBB"))
+def test_tag_without_start_states_is_skipped(tmp_path):
+    _write(tmp_path, states=STATE.format(tag="BBB"))
 
     assert _run(tmp_path) == []
 
 
-def test_commented_owner_is_ignored(tmp_path, write_path):
-    _write(tmp_path, write_path, states="#owner = AAA\n" + STATE.format(tag="BBB"))
+def test_commented_owner_is_ignored(tmp_path):
+    _write(tmp_path, states="#owner = AAA\n" + STATE.format(tag="BBB"))
 
     assert _run(tmp_path) == []
 
@@ -130,16 +127,16 @@ def test_empty_tree_is_clean(tmp_path):
     assert _run(tmp_path) == []
 
 
-def test_staged_mode_skips_when_scope_untouched(tmp_path, write_path, monkeypatch):
-    _write(tmp_path, write_path)
-    write_path(tmp_path, "common/technologies/x.txt", "")
+def test_staged_mode_skips_when_scope_untouched(tmp_path, monkeypatch):
+    _write(tmp_path)
+    write_under(tmp_path, "common/technologies/x.txt", "")
     monkeypatch.setenv("MD_STAGED_FILES", "common/technologies/x.txt")
 
     assert _run(tmp_path, staged_only=True) == []
 
 
-def test_staged_mode_runs_when_game_rules_staged(tmp_path, write_path, monkeypatch):
-    _write(tmp_path, write_path)
+def test_staged_mode_runs_when_game_rules_staged(tmp_path, monkeypatch):
+    _write(tmp_path)
     monkeypatch.setenv("MD_STAGED_FILES", "common/game_rules/00_game_rules.txt")
 
     assert len(_run(tmp_path, staged_only=True)) == 1

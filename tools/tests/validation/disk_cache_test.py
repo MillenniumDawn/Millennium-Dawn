@@ -10,7 +10,9 @@ from pathlib import Path
 import disk_cache
 import pytest
 import sprite_index
+import validator_batches
 from shared.paths import VALIDATION_DIR
+from shared.suite import write_under
 
 
 @pytest.fixture(autouse=True)
@@ -303,6 +305,30 @@ def test_guard_scan_users_declare_the_helper():
     )
 
 
+def test_fingerprint_covers_every_module_the_owner_imports():
+    graph = validator_batches._build_import_graph()
+    # Reversed, the importer walk reaches every module a node imports.
+    imported_by = {node: set() for node in graph}
+    for importer, targets in graph.items():
+        for target in targets:
+            imported_by[target].add(importer)
+    tools = Path(validator_batches.TOOLS_DIR).resolve()
+    gaps = {}
+    for namespace, owner in sorted(disk_cache._VALIDATOR_NAMESPACES.items()):
+        covered = {
+            path.resolve().relative_to(tools).with_suffix("").as_posix()
+            for path in disk_cache._fingerprint_paths(namespace)
+            if path.suffix == ".py"
+        }
+        imports = validator_batches._transitive_importers(
+            imported_by, f"validation/{owner[:-3]}"
+        )
+        if missing := sorted(imports - covered):
+            gaps[namespace] = missing
+
+    assert not gaps
+
+
 @pytest.mark.parametrize(
     ("namespace", "helper"),
     [
@@ -318,10 +344,17 @@ def test_configured_helper_change_invalidates_affected_namespace_only(
     source = tmp_path / "data.txt"
     source.write_text("hello", encoding="utf-8")
     disk_cache._FINGERPRINT_CACHE.clear()
-    calls = {"owner": 0, "events": 0}
+    calls = {"owner": 0, "other": 0}
+    other = next(
+        f"{prefix}.result"
+        for prefix, owner in sorted(disk_cache._VALIDATOR_NAMESPACES.items())
+        if owner != helper
+        and prefix != namespace.split(".")[0]
+        and helper not in disk_cache._HELPER_DEPENDENCIES.get(prefix, ())
+    )
 
     def run_both():
-        for each_namespace, key in ((namespace, "owner"), ("events.result", "events")):
+        for each_namespace, key in ((namespace, "owner"), (other, "other")):
             disk_cache.per_file_cached_by_content(
                 str(tmp_path),
                 each_namespace,
@@ -335,7 +368,7 @@ def test_configured_helper_change_invalidates_affected_namespace_only(
     disk_cache._FINGERPRINT_CACHE.clear()
     run_both()
 
-    assert calls == {"owner": 2, "events": 1}
+    assert calls == {"owner": 2, "other": 1}
 
 
 def test_per_file_cached_hits_on_unchanged_file(tmp_path):
@@ -498,26 +531,26 @@ def test_fingerprint_of_a_missing_source_is_stable(tmp_path, monkeypatch):
     assert first == second
 
 
-def test_aggregate_cached_hits_until_a_tracked_file_changes_or_appears(
-    tmp_path, write_path
-):
-    one = write_path(tmp_path, "one.txt", "one")
+def test_aggregate_cached_hits_until_a_tracked_file_or_the_salt_changes(tmp_path):
+    one = write_under(tmp_path, "one.txt", "one")
     late = tmp_path / "late.txt"
     calls = []
 
-    def run():
+    def run(salt=""):
         return disk_cache.aggregate_cached(
             str(tmp_path),
             "key",
             [str(one), str(late)],
             lambda: calls.append(1) or len(calls),
+            salt=salt,
         )
 
     assert (run(), run()) == (1, 1)
-    write_path(tmp_path, "one.txt", "changed")
+    write_under(tmp_path, "one.txt", "changed")
     assert run() == 2
-    write_path(tmp_path, "late.txt", "here")
+    write_under(tmp_path, "late.txt", "here")
     assert run() == 3
+    assert (run("digest"), run("digest")) == (4, 4)
 
 
 def test_per_file_cached_computes_every_time_for_a_missing_file(tmp_path):
@@ -530,8 +563,8 @@ def test_per_file_cached_computes_every_time_for_a_missing_file(tmp_path):
     assert len(calls) == 2
 
 
-def test_a_corrupt_cached_value_is_recomputed(tmp_path, write_path):
-    source = str(write_path(tmp_path, "source.txt", "one"))
+def test_a_corrupt_cached_value_is_recomputed(tmp_path):
+    source = str(write_under(tmp_path, "source.txt", "one"))
     calls = []
 
     def run():
@@ -615,18 +648,18 @@ def test_prune_old_versions_without_a_cache_dir(tmp_path):
     assert disk_cache.prune_old_versions(str(tmp_path)) == []
 
 
-def test_prune_old_versions_when_the_cache_root_is_not_a_dir(tmp_path, write_path):
-    write_path(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
+def test_prune_old_versions_when_the_cache_root_is_not_a_dir(tmp_path):
+    write_under(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
     assert disk_cache.prune_old_versions(str(tmp_path)) == []
 
 
-def test_prune_old_versions_removes_only_stale_version_dirs(tmp_path, write_path):
+def test_prune_old_versions_removes_only_stale_version_dirs(tmp_path):
     root = tmp_path / disk_cache._CACHE_DIR_NAME
     (root / "v4" / "old").mkdir(parents=True)
     (root / f"v{disk_cache.CACHE_VERSION}").mkdir(parents=True)
     (root / "not-a-version").mkdir()
-    write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/notes.txt", "keep me")
-    write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v3", "a file, not a dir")
+    write_under(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/notes.txt", "keep me")
+    write_under(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v3", "a file, not a dir")
 
     removed = disk_cache.prune_old_versions(str(tmp_path))
 
@@ -685,8 +718,8 @@ def test_clear_survives_a_failing_tree_removal(tmp_path, monkeypatch):
     assert (tmp_path / disk_cache._CACHE_DIR_NAME).exists()
 
 
-def test_stamp_created_survives_an_unwritable_cache_root(tmp_path, write_path):
-    write_path(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
+def test_stamp_created_survives_an_unwritable_cache_root(tmp_path):
+    write_under(tmp_path, disk_cache._CACHE_DIR_NAME, "not a directory")
 
     disk_cache.stamp_created(str(tmp_path))
 
@@ -705,14 +738,12 @@ def test_stamp_created_survives_an_unwritable_cache_root(tmp_path, write_path):
         pytest.param(None, 1, False, True, id="no marker yet"),
     ],
 )
-def test_clear_if_stale(
-    tmp_path, write_path, marker, max_age_days, cleared, clock_running
-):
+def test_clear_if_stale(tmp_path, marker, max_age_days, cleared, clock_running):
     """`marker` is the creation time on disk. `clock_running` is whether the
     cache has a creation time under a day old afterward."""
-    cached = write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v1/old", "old")
+    cached = write_under(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v1/old", "old")
     if marker is not None:
-        write_path(
+        write_under(
             tmp_path,
             f"{disk_cache._CACHE_DIR_NAME}/{disk_cache._CREATED_MARKER}",
             marker,

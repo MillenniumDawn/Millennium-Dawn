@@ -2,66 +2,23 @@
 
 Exercises the deterministic S-curve maths (logistic, cumulative, amplitudes,
 per-tech increments), the industry.txt regex parser/rewriter on a small
-fixture, and the CLI dry-run path.
-
-The module imports scipy at top level; the tests skip cleanly when scipy is
-not installed (the CI install matrix was extended to pull --group analysis
-alongside --group runtime, so this is the steady state).
+fixture, and the CLI --apply guard. The dry run against the shipped
+industry.txt lives in tools/tests/content/energy_tech_scurves_live_test.py.
 """
 
 from __future__ import annotations
 
-import importlib
-import importlib.util
 import sys
 from pathlib import Path
-from typing import Any, cast
 
 import pytest
-from shared.suite import write_text
+from shared.suite import load_tool_module, write_text
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 SCRIPT = REPO_ROOT / "tools" / "balance" / "set_energy_tech_scurves.py"
 
-# `importlib.util.find_spec` needs util explicitly imported for the type checker.
-importlib_util = importlib.util
-
-SCIPY_AVAILABLE = importlib_util.find_spec("scipy") is not None
-skip_no_scipy = pytest.mark.skipif(not SCIPY_AVAILABLE, reason="scipy required")
-
-# Module is gated on scipy: when scipy is missing, skip the entire test
-# module at collection time so the suite still runs cleanly on a dev install.
-pytestmark = skip_no_scipy
-
-# Load the module directly from tools/balance/ — name starts with `set_`, so
-# plain `import set_energy_tech_scurves` would need tools/balance on PYTHONPATH.
-# We only exec the module when scipy is available so the suite still
-# collects cleanly when the optional analysis group is not installed.
-_BALANCE_DIR = REPO_ROOT / "tools" / "balance"
-
-
-def _load_sc():
-    spec = importlib_util.spec_from_file_location(
-        "set_energy_tech_scurves_under_test",
-        _BALANCE_DIR / "set_energy_tech_scurves.py",
-    )
-    assert spec is not None
-    mod = importlib_util.module_from_spec(spec)
-    sys.modules["set_energy_tech_scurves_under_test"] = mod
-    assert spec.loader is not None
-    spec.loader.exec_module(mod)
-    return mod
-
-
-if SCIPY_AVAILABLE:
-    sc = _load_sc()
-else:
-    sc = cast(Any, None)
-    # Tell pytest to skip every test in this module
-    pytest.skip(
-        "scipy required for tools/balance/set_energy_tech_scurves.py",
-        allow_module_level=True,
-    )
+pytest.importorskip("scipy", reason="scipy is in the optional analysis group")
+sc = load_tool_module("balance/set_energy_tech_scurves.py")
 
 
 # --- logistic curve primitives ---------------------------------------------
@@ -149,7 +106,6 @@ def test_metric_monotone_in_power():
     assert high > base
 
 
-@skip_no_scipy
 def test_solve_amplitudes_matches_design_crossovers():
     pf, pr, pfis, pfus = sc.solve_amplitudes()
     amps = (pf, pr, pfis, pfus)
@@ -184,7 +140,6 @@ def test_solve_amplitudes_matches_design_crossovers():
 # --- increments -------------------------------------------------------------
 
 
-@skip_no_scipy
 def test_increments_chain_order_and_floors():
     amps = sc.solve_amplitudes()
     edits = sc.increments(amps)
@@ -201,7 +156,6 @@ def test_increments_chain_order_and_floors():
         assert -sc.MIN_GAIN >= iv >= sc.INFRA_CAP, tech
 
 
-@skip_no_scipy
 def test_increments_cumulate_to_chain_total():
     amps = sc.solve_amplitudes()
     edits = sc.increments(amps)
@@ -221,20 +175,20 @@ def test_increments_cumulate_to_chain_total():
 INDUSTRY_TEMPLATE = (
     "\tstart_year = 1990\n"
     "\tallow = { always = yes }\n"
-    "\tfuel_efficiency = {\n"
+    "\tfuel_efficiency_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.123\n"
     "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
     "\t\tproduction_speed_fossil_powerplant_factor = 0.02\n"
     "\t\tfossil_infra_cost_multiplier_modifier = -0.04\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\treactor1 = {\n"
+    "\treactor_01 = {\n"
     "\t\tnuclear_energy_generation_modifier = 0.10\n"
     "\t\tproduction_speed_nuclear_reactor_factor = 0.03\n"
     "\t\tnuclear_infra_cost_multiplier_modifier = -0.05\n"
     "\t\tstart_year = 1990\n"
     "\t}\n"
-    "\tearly_renewables = {\n"
+    "\trenewable_01 = {\n"
     "\t\trenewable_energy_gain_multiplier = 0.20\n"
     "\t\tproduction_speed_renewable_energy_infra_factor = 0.08\n"
     "\t\trenewable_infra_cost_multiplier_modifier = -0.10\n"
@@ -244,9 +198,9 @@ INDUSTRY_TEMPLATE = (
 
 
 ENERGY_EDITS = {
-    "fuel_efficiency": ("fos", 0.5, 0.25, -0.04),
-    "reactor1": ("nuc", 0.6, 0.18, -0.05),
-    "early_renewables": ("ren", 0.7, 0.28, -0.10),
+    "fuel_efficiency_01": ("fos", 0.5, 0.25, -0.04),
+    "reactor_01": ("nuc", 0.6, 0.18, -0.05),
+    "renewable_01": ("ren", 0.7, 0.28, -0.10),
 }
 
 
@@ -296,7 +250,7 @@ def test_apply_to_industry_inserts_missing_speed_and_infra(industry_path, monkey
     """Tech block that lacks the speed line gets it inserted by the rewriter."""
     template = (
         "\tstart_year = 1990\n"
-        "\tfuel_efficiency = {\n"
+        "\tfuel_efficiency_01 = {\n"
         "\t\trenewable_energy_gain_multiplier = 0.10\n"
         "\t\tfossil_pp_energy_generation_modifier = 0.05\n"
         "\t\tfossil_infra_cost_multiplier_modifier = -0.02\n"
@@ -305,12 +259,12 @@ def test_apply_to_industry_inserts_missing_speed_and_infra(industry_path, monkey
     )
     industry_path.write_text(template, encoding="utf-8")
     monkeypatch.setattr(sc, "INDUSTRY", str(industry_path))
-    edits = {"fuel_efficiency": ("fos", 0.5, 0.25, -0.04)}
+    edits = {"fuel_efficiency_01": ("fos", 0.5, 0.25, -0.04)}
     report, missing = sc.apply_to_industry((0.3, 1.0, 1.0, 1.0), edits, apply=True)
     assert missing == set()
     flags = {r[0]: (r[5], r[6]) for r in report}
-    assert flags["fuel_efficiency"][0] == "speed+"  # speed inserted
-    assert flags["fuel_efficiency"][1] == "infra="  # infra replaced
+    assert flags["fuel_efficiency_01"][0] == "speed+"  # speed inserted
+    assert flags["fuel_efficiency_01"][1] == "infra="  # infra replaced
     text = industry_path.read_text(encoding="utf-8")
     assert "\t\tproduction_speed_fossil_powerplant_factor = 0.25" in text
 
@@ -318,52 +272,11 @@ def test_apply_to_industry_inserts_missing_speed_and_infra(industry_path, monkey
 # --- CLI paths -------------------------------------------------------------
 
 
-@pytest.fixture(autouse=True)
-def _restore_industry_path():
-    # The module is only loaded when scipy is available; when it is not,
-    # pytest.mark.skipif handles the skip and this fixture short-circuits.
-    if not SCIPY_AVAILABLE or sc is None:
-        yield
-        return
-    original = sc.INDUSTRY
-    yield
-    setattr(sc, "INDUSTRY", original)
-
-
-def test_cli_dry_run_prints_crossovers():
-    """`python tools/balance/set_energy_tech_scurves.py` dry-runs against
-    the real industry.txt; it must NOT modify the file and must report the
-    2015/2020/2060 crossovers."""
-    if not SCIPY_AVAILABLE:
-        pytest.skip("scipy required for the CLI under test")
-    real_industry = REPO_ROOT / "common" / "technologies" / "industry.txt"
-    if not real_industry.exists():
-        pytest.skip("real industry.txt not in this checkout")
-    setattr(sc, "INDUSTRY", str(real_industry))
-    before = real_industry.read_text(encoding="utf-8")
-    import subprocess
-
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT)],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    assert "DRY RUN" in result.stdout
-    assert "best source by year" in result.stdout
-    assert "amplitudes:" in result.stdout
-    # file unchanged
-    after = real_industry.read_text(encoding="utf-8")
-    assert before == after
-
-
 def test_cli_apply_requires_complete_coverage(tmp_path):
     """--apply on a scratch industry.txt that doesn't contain every CHAIN
     tech must abort (return 1) without writing. We copy the script to a
     tmp location and rewrite its INDUSTRY constant so a fresh subprocess
     import (without our monkey-patch in scope) sees the scratch file."""
-    if not SCIPY_AVAILABLE:
-        pytest.skip("scipy required for the CLI under test")
     scratch = tmp_path / "industry.txt"
     scratch.write_text("\tstart_year = 1990\n", encoding="utf-8")
     script_copy = tmp_path / "scurves_copy.py"
