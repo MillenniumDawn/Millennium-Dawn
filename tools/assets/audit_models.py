@@ -16,17 +16,13 @@ Needs numpy (`pip install --group analysis`).
 """
 
 import argparse
-import os
 import struct
 import sys
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
-
-sys.path.insert(0, os.path.dirname(__file__))
-
 import model_standards
+import numpy as np
 import pdx_mesh
 
 REPO_ROOT = Path(__file__).resolve().parents[2]

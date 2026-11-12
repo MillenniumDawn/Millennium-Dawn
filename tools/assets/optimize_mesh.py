@@ -26,16 +26,12 @@ needs `pip install meshoptimizer==0.2.30a0`.
 
 import argparse
 import ctypes
-import os
 import sys
 from collections import Counter
 from pathlib import Path
 
-import numpy as np
-
-sys.path.insert(0, os.path.dirname(__file__))
-
 import model_standards
+import numpy as np
 import pdx_mesh
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -158,7 +154,8 @@ def _repair_normals(props, positions, triangles, fixes):
     off = np.abs(np.linalg.norm(normals, axis=1) - 1) > 0.01
     fixes["normals_renormalized"] += int((off & ~bad).sum())
     normals = _unit(normals)
-    props["n"] = ("f", normals.astype(np.float32).ravel())
+    if bad.any() or off.any():
+        props["n"] = ("f", normals.astype(np.float32).ravel())
     return normals
 
 
@@ -190,7 +187,8 @@ def _repair_tangents(props, positions, triangles, normals, fixes):
     if handed.any():
         tangents[handed, 3] = np.where(tangents[handed, 3] < 0, -1.0, 1.0)
         fixes["tangent_handedness_fixed"] += int(handed.sum())
-    props["ta"] = ("f", tangents.astype(np.float32).ravel())
+    if bad.any() or handed.any():
+        props["ta"] = ("f", tangents.astype(np.float32).ravel())
 
 
 def _repair_skin(part, positions, fixes):
@@ -226,8 +224,9 @@ def _repair_skin(part, positions, fixes):
     used = int((weight > 0).sum(1).max()) if count else 0
     if used > int(props.get("bones", ("i", [4]))[1][0]):
         props["bones"] = ("i", np.array([used], np.int32))
-    props["ix"] = ("i", index.astype(np.int32).ravel())
-    props["w"] = ("f", weight.astype(np.float32).ravel())
+    if invalid.any() or empty.any() or off.any():
+        props["ix"] = ("i", index.astype(np.int32).ravel())
+        props["w"] = ("f", weight.astype(np.float32).ravel())
 
 
 def repair_part(part, fixes):

@@ -371,6 +371,16 @@ def dds_stub(width: int, height: int) -> bytes:
     return bytes(header)
 
 
+# A unit square of two triangles with normals, tangents and UVs, for mesh_bytes.
+MESH_QUAD = {
+    "p": [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+    "tri": [0, 1, 2, 0, 2, 3],
+    "n": [[0, 0, 1]] * 4,
+    "ta": [[1, 0, 0, 1]] * 4,
+    "u0": [[0, 0], [1, 0], [1, 1], [0, 1]],
+}
+
+
 def mesh_bytes(*parts, joints: int = 0) -> bytes:
     """A binary `.mesh` with one shape per part, for the model tool tests.
 
