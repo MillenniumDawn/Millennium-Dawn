@@ -8742,7 +8742,7 @@ UKR_t55_count_developed_models = {
 }
 
 # Storage list in the UKR_reactivate_sov_category GUI (UKR_reactivate_sov_storage_gui).
-# Row ids: 1-8 are section headers, 11 and up are vehicles, the tens digit is their section.
+# Row ids: 1-10 are section headers; higher ids identify equipment models.
 # Empty sections are hidden, except Tanks because its development decisions can outlast the stockpile.
 # Only the selected section shows its equipment rows (0 = all closed).
 UKR_storage_rebuild_rows = {
@@ -8817,12 +8817,22 @@ UKR_storage_rebuild_rows = {
 			limit = { check_variable = { UKR_storage_open_section = 6 } }
 			if = { limit = { check_variable = { UKR_storage_mig25_total > 0 } } add_to_array = { UKR_storage_rows = 63 } }
 			if = { limit = { check_variable = { ukraine_has_mig27_stockpile > 0 } } add_to_array = { UKR_storage_rows = 62 } }
-			if = { limit = { check_variable = { ukraine_has_su25utg_stockpile > 0 } } add_to_array = { UKR_storage_rows = 67 } }
-			if = { limit = { check_variable = { ukraine_has_su33_stockpile > 0 } } add_to_array = { UKR_storage_rows = 68 } }
 			if = { limit = { check_variable = { ukraine_has_mig23_stockpile > 0 } } add_to_array = { UKR_storage_rows = 61 } }
 			if = { limit = { check_variable = { UKR_storage_mig21_total > 0 } } add_to_array = { UKR_storage_rows = 65 } }
 			if = { limit = { check_variable = { ukraine_has_su15_stockpile > 0 } } add_to_array = { UKR_storage_rows = 66 } }
 			if = { limit = { check_variable = { ukraine_has_su17_stockpile > 0 } } add_to_array = { UKR_storage_rows = 64 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_10 > 0 } }
+		add_to_array = { UKR_storage_rows = 10 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 10 } }
+			if = { limit = { check_variable = { ukraine_has_su25utg_stockpile > 0 } } add_to_array = { UKR_storage_rows = 67 } }
+			if = { limit = { check_variable = { ukraine_has_su33_stockpile > 0 } } add_to_array = { UKR_storage_rows = 68 } }
+			if = { limit = { check_variable = { ukraine_has_yak38_stockpile > 0 } } add_to_array = { UKR_storage_rows = 101 } }
+			if = { limit = { check_variable = { ukraine_has_yak38m_stockpile > 0 } } add_to_array = { UKR_storage_rows = 102 } }
+			if = { limit = { check_variable = { ukraine_has_yak38u_stockpile > 0 } } add_to_array = { UKR_storage_rows = 103 } }
 		}
 	}
 	if = {
@@ -9411,12 +9421,12 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_mig25_total = { value = ukraine_has_mig25_stockpile add = ukraine_has_mig25rb_stockpile } }
 	set_variable = { UKR_storage_total_6 = ukraine_has_mig23_stockpile }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_mig27_stockpile }
-	add_to_variable = { UKR_storage_total_6 = ukraine_has_su25utg_stockpile }
-	add_to_variable = { UKR_storage_total_6 = ukraine_has_su33_stockpile }
 	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig25_total }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_su17_stockpile }
 	add_to_variable = { UKR_storage_total_6 = UKR_storage_mig21_total }
 	add_to_variable = { UKR_storage_total_6 = ukraine_has_su15_stockpile }
+	set_variable = { UKR_storage_yak38_total = { value = ukraine_has_yak38_stockpile add = ukraine_has_yak38m_stockpile add = ukraine_has_yak38u_stockpile } }
+	set_variable = { UKR_storage_total_10 = { value = ukraine_has_su25utg_stockpile add = ukraine_has_su33_stockpile add = UKR_storage_yak38_total } }
 	set_variable = { UKR_storage_total_7 = ukraine_has_m46_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_d1_stockpile }
 	add_to_variable = { UKR_storage_total_7 = ukraine_has_m30_stockpile }
@@ -9636,7 +9646,7 @@ UKR_storage_refresh = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { UKR_storage_selected_row < 10 }
+				check_variable = { UKR_storage_selected_row < 11 }
 				NOT = { is_in_array = { UKR_storage_rows = var:UKR_storage_selected_row } }
 			}
 		}
@@ -16734,5 +16744,21 @@ UKR_storage_deliver_exchange_aircraft = {
 			producer = SOV
 		}
 		add_equipment_to_stockpile = { type = cas1 amount = 2 producer = SOV }
+	}
+}
+
+UKR_storage_consume_yak38_airframes = {
+	set_variable = { ukraine_has_yak38_stockpile = 0 }
+	set_variable = { ukraine_has_yak38m_stockpile = 0 }
+	set_variable = { ukraine_has_yak38u_stockpile = 0 }
+	UKR_storage_refresh = yes
+}
+
+UKR_storage_yak38_domestic_repairs = {
+	if = {
+		limit = { UKR_storage_yak38_inspection_ready = yes }
+		set_variable = { UKR_storage_yak38_repaired = 6 }
+		UKR_storage_consume_yak38_airframes = yes
+		country_event = { id = ukraine_varyag.16 days = 360 }
 	}
 }
