@@ -607,7 +607,7 @@ country_event = {
 	picture = GFX_terrorist_attack
 	is_triggered_only = yes
 
-	trigger = { EGY_mubarak_in_power = yes }
+	trigger = { EGY_mubarak_regime_continues = yes }
 
 	option = {
 		name = egypt_mubarak.7.a
@@ -3848,5 +3848,473 @@ country_event = {
 		}
 		set_temp_variable = { rul_party_temp = 22 }
 		change_ruling_party_effect = yes
+	}
+}
+
+# The Heir Is Sworn In
+country_event = {
+	id = egypt_mubarak.95
+	title = egypt_mubarak.95.t
+	desc = {
+		text = egypt_mubarak.95.d_accepts
+		trigger = { check_variable = { the_military_opinion > 39 } }
+	}
+	desc = {
+		text = egypt_mubarak.95.d_refuses
+		trigger = { check_variable = { the_military_opinion < 40 } }
+	}
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.95.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.95.a executed"
+		retire_country_leader = yes
+		create_country_leader = {
+			name = "Gamal Mubarak"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				experienced_banker
+				opposes_muslim_brotherhood
+				EGY_the_heir
+			}
+		}
+		hidden_effect = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = EGY_mubarak_modifier } }
+				remove_dynamic_modifier = { modifier = EGY_mubarak_modifier }
+			}
+			add_dynamic_modifier = { modifier = EGY_gamal_modifier }
+			set_variable = { EGY_mubarak_authority = 0 }
+		}
+		custom_effect_tooltip = EGY_gamal_modifier_added_tt
+		newline = yes
+		if = {
+			limit = { check_variable = { the_military_opinion > 39 } }
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+		}
+		else = {
+			set_temp_variable = { temp_authority = 2 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+		}
+	}
+}
+
+# The Generals Lose Patience
+country_event = {
+	id = egypt_mubarak.96
+	title = egypt_mubarak.96.t
+	desc = egypt_mubarak.96.d
+	picture = GFX_Army_reforms_event
+	is_triggered_only = yes
+
+	trigger = { EGY_gamal_in_power = yes }
+
+	option = {
+		name = egypt_mubarak.96.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.96.a executed"
+		add_political_power = -100
+		set_temp_variable = { temp_authority = -5 }
+		EGY_change_mubarak_authority = yes
+		set_temp_variable = { temp_opinion = 15 }
+		change_the_military_opinion = yes
+		add_power_balance_value = { id = EGY_succession_bop value = -0.15 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.96.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.96.b executed"
+		custom_effect_tooltip = EGY_generals_coup_tt
+		hidden_effect = {
+			random_list = {
+				50 = { country_event = { id = egypt_mubarak.97 days = 3 } }
+				50 = {
+					set_temp_variable = { temp_opinion = -5 }
+					change_the_military_opinion = yes
+				}
+			}
+		}
+		ai_chance = { base = 1 }
+	}
+}
+
+# The Army Removes the Heir
+country_event = {
+	id = egypt_mubarak.97
+	title = egypt_mubarak.97.t
+	desc = egypt_mubarak.97.d
+	picture = GFX_arab_spring_defection
+	is_triggered_only = yes
+
+	trigger = { EGY_gamal_in_power = yes }
+
+	option = {
+		name = egypt_mubarak.97.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.97.a executed"
+		set_country_flag = EGY_gamal_fell
+		add_stability = -0.10
+		remove_power_balance = { id = EGY_succession_bop }
+		hidden_effect = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = EGY_gamal_modifier } }
+				remove_dynamic_modifier = { modifier = EGY_gamal_modifier }
+			}
+		}
+		set_temp_variable = { rul_party_temp = 22 }
+		change_ruling_party_effect = yes
+	}
+}
+
+# The Field Marshal Retires
+country_event = {
+	id = egypt_mubarak.98
+	title = egypt_mubarak.98.t
+	desc = egypt_mubarak.98.d
+	picture = GFX_Army_reforms_event
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.98.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.98.a executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_military_opinion = yes
+		set_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.98.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.98.b executed"
+		set_temp_variable = { temp_authority = 2 }
+		EGY_change_mubarak_authority = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_military_opinion = yes
+		ai_chance = { base = 5 }
+	}
+}
+
+# Protests After the Sweep
+country_event = {
+	id = egypt_mubarak.99
+	title = egypt_mubarak.99.t
+	desc = egypt_mubarak.99.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.99.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.99.a executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_intelligence_community_opinion = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_stability < 0.3
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.99.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.99.b executed"
+		set_temp_variable = { temp_authority = -2 }
+		EGY_change_mubarak_authority = yes
+		add_stability = 0.02
+		ai_chance = { base = 5 }
+	}
+}
+
+# The Entebbe Agreement
+country_event = {
+	id = egypt_mubarak.100
+	title = egypt_mubarak.100.t
+	desc = egypt_mubarak.100.d
+	picture = GFX_message_signing
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.100.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.100.a executed"
+		add_war_support = 0.03
+		if = {
+			limit = { country_exists = ETH }
+			ETH = { add_opinion_modifier = { target = ROOT modifier = small_decrease } }
+		}
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = egypt_mubarak.100.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.100.b executed"
+		add_political_power = 25
+		if = {
+			limit = { country_exists = SUD }
+			SUD = { add_opinion_modifier = { target = ROOT modifier = small_increase } }
+		}
+		ai_chance = { base = 5 }
+	}
+}
+
+# The Renaissance Dam
+country_event = {
+	id = egypt_mubarak.101
+	title = egypt_mubarak.101.t
+	desc = egypt_mubarak.101.d
+	picture = GFX_zamfara_dam
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.101.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.101.a executed"
+		add_stability = -0.02
+		add_war_support = 0.05
+	}
+}
+
+# The IMF's Conditions
+country_event = {
+	id = egypt_mubarak.102
+	title = egypt_mubarak.102.t
+	desc = egypt_mubarak.102.d
+	picture = GFX_great_recession_protests
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.102.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.102.a executed"
+		set_temp_variable = { temp_bread = 10 }
+		EGY_change_bread_pressure = yes
+		set_temp_variable = { treasury_change = 3 }
+		modify_treasury_effect = yes
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 3
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	option = {
+		name = egypt_mubarak.102.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.102.b executed"
+		set_temp_variable = { int_investment_change = -2 }
+		modify_international_investment_effect = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 5
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+}
+
+# The Election Results
+country_event = {
+	id = egypt_mubarak.103
+	title = egypt_mubarak.103.t
+	desc = egypt_mubarak.103.d
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.103.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.103.a executed"
+		random_list = {
+			60 = {
+				set_temp_variable = { party_index = 0 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				change_relative_party_popularity = yes
+				add_stability = 0.05
+			}
+			40 = {
+				set_temp_variable = { party_index = 2 }
+				set_temp_variable = { party_popularity_increase = 0.08 }
+				change_relative_party_popularity = yes
+				set_temp_variable = { temp_authority = -3 }
+				EGY_change_mubarak_authority = yes
+				add_stability = 0.03
+			}
+		}
+		if = {
+			limit = { has_idea = EGY_rigged_parliament_idea }
+			remove_ideas = EGY_rigged_parliament_idea
+		}
+		if = {
+			limit = { country_exists = USA }
+			USA = { add_opinion_modifier = { target = ROOT modifier = medium_increase } }
+		}
+	}
+}
+
+# The General Takes the Oath
+country_event = {
+	id = egypt_mubarak.104
+	title = egypt_mubarak.104.t
+	desc = {
+		text = egypt_mubarak.104.d_accepts
+		trigger = { check_variable = { the_military_opinion > 39 } }
+	}
+	desc = {
+		text = egypt_mubarak.104.d_refuses
+		trigger = { check_variable = { the_military_opinion < 40 } }
+	}
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.104.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.104.a executed"
+		retire_country_leader = yes
+		create_country_leader = {
+			name = "Omar Suleiman"
+			ideology = Western_Autocracy
+			traits = {
+				western_Western_Autocracy
+				military_career
+				sly
+				opposes_muslim_brotherhood
+				EGY_the_spymaster
+			}
+		}
+		remove_power_balance = { id = EGY_succession_bop }
+		hidden_effect = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = EGY_mubarak_modifier } }
+				remove_dynamic_modifier = { modifier = EGY_mubarak_modifier }
+			}
+			add_dynamic_modifier = { modifier = EGY_suleiman_modifier }
+			set_variable = { EGY_mubarak_authority = 0 }
+			set_variable = { EGY_suleiman_health_risk = 4 }
+		}
+		custom_effect_tooltip = EGY_suleiman_modifier_added_tt
+		newline = yes
+		if = {
+			limit = { check_variable = { the_military_opinion > 39 } }
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+		}
+		else = {
+			set_temp_variable = { temp_authority = 2 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+		}
+	}
+}
+
+# The President Collapses
+country_event = {
+	id = egypt_mubarak.105
+	title = egypt_mubarak.105.t
+	desc = egypt_mubarak.105.d
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.105.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.105.a executed"
+		set_temp_variable = { temp_opinion = 3 }
+		change_intelligence_community_opinion = yes
+		ai_chance = { base = 5 }
+	}
+
+	option = {
+		name = egypt_mubarak.105.b
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.105.b executed"
+		add_stability = -0.03
+		set_temp_variable = { temp_health = -1 }
+		EGY_change_suleiman_health_risk = yes
+		ai_chance = { base = 5 }
+	}
+}
+
+# The President Is Dead
+country_event = {
+	id = egypt_mubarak.106
+	title = egypt_mubarak.106.t
+	desc = egypt_mubarak.106.d
+	picture = GFX_egy_flagg
+	is_triggered_only = yes
+
+	option = {
+		name = egypt_mubarak.106.a
+		log = "[GetDateText]: [This.GetName]: egypt_mubarak.106.a executed"
+		hidden_effect = {
+			if = {
+				limit = { has_dynamic_modifier = { modifier = EGY_suleiman_modifier } }
+				remove_dynamic_modifier = { modifier = EGY_suleiman_modifier }
+			}
+		}
+		retire_country_leader = yes
+		if = {
+			limit = { has_country_flag = EGY_heir_sisi }
+			create_country_leader = {
+				name = "Abdel Fattah el-Sisi"
+				picture = "EGY_Abdel_Fattah_el-Sisi.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					military_career
+					opposes_muslim_brotherhood
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = EGY_heir_anan }
+			create_country_leader = {
+				name = "Sami Hafez Anan"
+				picture = "Sami_Hafez_Anan.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					military_career
+					army_general
+				}
+			}
+		}
+		else = {
+			create_country_leader = {
+				name = "Mohamed Hussein Tantawi"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					military_career
+					cautious
+				}
+			}
+		}
+		newline = yes
+		if = {
+			limit = { has_completed_focus = EGY_secure_the_line_of_succession }
+			add_stability = -0.02
+		}
+		else = {
+			add_stability = -0.08
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
+		}
 	}
 }
