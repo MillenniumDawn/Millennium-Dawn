@@ -22,13 +22,13 @@ The app will be brought up when saving a copy of a file when using it as a plugi
 ### File Formats
 
 - Leader Portraits - DXT1 (BC1) - No Mipmaps
-- Leader Portraits Small - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
+- Leader Portraits Small - B8G8R8A8 (Linear A8R8G8B8) - No Mipmaps
 - Event Pictures - DXT5 (BC3) - No Mipmaps
 
-- Tech Icons/Variant Icons - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
-- Ideas - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
-- Goals/Focus - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
-- GUI icons - B8R8A8G8 (Linear A8R8G8B8) - No Mipmaps
+- Tech Icons/Variant Icons - B8G8R8A8 (Linear A8R8G8B8) - No Mipmaps
+- Ideas - B8G8R8A8 (Linear A8R8G8B8) - No Mipmaps
+- Goals/Focus - B8G8R8A8 (Linear A8R8G8B8) - No Mipmaps
+- GUI icons - B8G8R8A8 (Linear A8R8G8B8) - No Mipmaps
 
 - Loading Screens/Main Menu - DXT1 (BC1) - No Mipmaps - 1920x1440 - see [Add Loading Screens](/dev-resources/add-loading-screens/)
 
@@ -56,7 +56,7 @@ You do not have to decide this by hand. Save GUI art uncompressed. `dds_standard
 
 DXT1 and DXT5 are lossy. On photographs the damage is usually invisible, but on flat colour and hard edges (a logo, a map, a heraldic device) it blocks up badly. Measured on real event art, DXT5 lands around 26 dB PSNR on a two-colour logo against 30 dB on an oil painting.
 
-Save those as uncompressed B8R8A8G8 instead. It is four times the file size and bit-exact, and the game loads it fine: several hundred event pictures and leader portraits already ship that way. Use your judgement, and prefer uncompressed whenever the art has large flat areas.
+Save those as uncompressed B8G8R8A8 instead. It is four times the file size and bit-exact, and the game loads it fine: several hundred event pictures and leader portraits already ship that way. Use your judgement, and prefer uncompressed whenever the art has large flat areas.
 
 `dds_standardize.py` cannot tell flat art from a photograph. It lists every uncompressed event picture and large portrait as one it would compress, so leave the flat ones out when you run it with `--fix --write`.
 
