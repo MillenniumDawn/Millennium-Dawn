@@ -19,3 +19,21 @@ _CASES = {
 def test_settings_follow_the_model_folder(path, expected):
     found = (model_standards.triangle_target(path), model_standards.error_ceiling(path))
     assert found == expected
+
+
+# path -> mipmap rule
+_MIPMAP_CASES = {
+    "model texture": ("gfx/models/units/tanks/SOV/T72A.dds", "needed"),
+    "particle": ("gfx/particles/smoke.dds", "needed"),
+    "focus icon": ("gfx/interface/goals/focus_x.dds", "none"),
+    "leader portrait": ("gfx/leaders/USA/portrait.dds", "none"),
+    "terrain": ("map/terrain/atlas0.dds", "keep"),
+    "font": ("gfx/fonts/hoi_16.dds", "keep"),
+    "map arrow": ("gfx/maparrows/railway_pattern.dds", "keep"),
+    "outside the game folders": ("docs/picture.dds", "keep"),
+}
+
+
+@pytest.mark.parametrize("path, rule", _MIPMAP_CASES.values(), ids=_MIPMAP_CASES.keys())
+def test_mipmap_rule_follows_the_texture_folder(path, rule):
+    assert model_standards.mipmap_rule(path) == rule

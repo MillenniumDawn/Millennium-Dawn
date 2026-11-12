@@ -425,6 +425,30 @@ def mesh_bytes(*parts, joints: int = 0) -> bytes:
     return pdx_mesh.write(root)
 
 
+def dds_texture(width, height, fourcc=b"DXT1", mipmaps=1, body=b"", bits=32) -> bytes:
+    """A DDS file: a legacy header for the size, format and level count, then `body`.
+
+    An empty `fourcc` makes an uncompressed texture of `bits` per texel.
+    """
+    head = bytearray(128)
+    head[0:4] = b"DDS "
+    flags = 0x1007 | (0x20000 if mipmaps > 1 else 0)
+    struct.pack_into("<II", head, 4, 124, flags)
+    struct.pack_into("<II", head, 12, height, width)
+    struct.pack_into("<I", head, 28, mipmaps if mipmaps > 1 else 0)
+    struct.pack_into("<I", head, 76, 32)
+    if fourcc:
+        struct.pack_into("<I", head, 80, 4)
+        head[84:88] = fourcc
+    else:
+        alpha = 0xFF000000 if bits == 32 else 0
+        struct.pack_into("<I", head, 80, 0x41 if alpha else 0x40)
+        struct.pack_into("<I", head, 88, bits)
+        struct.pack_into("<4I", head, 92, 0xFF0000, 0xFF00, 0xFF, alpha)
+    struct.pack_into("<I", head, 108, 0x1000 | (0x400008 if mipmaps > 1 else 0))
+    return bytes(head) + body
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
