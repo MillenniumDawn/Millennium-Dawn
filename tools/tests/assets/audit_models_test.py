@@ -1,7 +1,5 @@
 """Tests for tools/assets/audit_models.py."""
 
-import struct
-
 import pytest
 
 np = pytest.importorskip("numpy")
@@ -9,7 +7,7 @@ np = pytest.importorskip("numpy")
 import audit_models
 import pdx_mesh
 from shared.suite import MESH_QUAD as _QUAD
-from shared.suite import mesh_bytes
+from shared.suite import dds_texture, mesh_bytes
 
 _SKIN = {"ix": [[0, 1, -1, -1]] * 4, "w": [[0.5, 0.5, 0, 0]] * 4}
 _NAN = float("nan")
@@ -134,15 +132,7 @@ def test_audit_mesh_reports_unreadable_file(tmp_path, data, start):
 
 
 def _dds(width, height, fourcc=b"DXT1", mipmaps=10):
-    head = bytearray(128)
-    head[0:4] = b"DDS "
-    struct.pack_into("<I", head, 8, 0x1007 | (0x20000 if mipmaps > 1 else 0))
-    struct.pack_into("<II", head, 12, height, width)
-    struct.pack_into("<I", head, 28, mipmaps)
-    if fourcc:
-        struct.pack_into("<I", head, 80, 4)
-        head[84:88] = fourcc
-    return bytes(head)
+    return dds_texture(width, height, fourcc, mipmaps)
 
 
 # case: (file bytes, findings)

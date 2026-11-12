@@ -442,6 +442,7 @@ DDS conversion, GFX entry generation, texture and flag tools.
 | **audit_models.py**            | Read-only report of broken mesh data, triangle budgets and model texture formats  |
 | **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
 | **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
+| **dds_mipmaps.py**             | Reports, adds or drops DDS mipmaps by folder rule; tints levels for game checks   |
 | **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
 | **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
 | **flag-reference-checker.py**  | Validates flag references across the mod                                          |
@@ -459,10 +460,18 @@ prints what would change unless you pass `--write`. Do not run it over the whole
 tree: check each changed model in game before committing it. Both need the `analysis`
 group; simplification also needs `pip install meshoptimizer==0.2.30a0`.
 
+`dds_mipmaps.py` follows the folder rule in `model_standards.py`: textures drawn on the
+3D map need mipmaps, GUI art should have none, and terrain, fonts and map arrows are
+left alone. `--fix` adds or drops the chain and never re-encodes the full-size image.
+`--tint` writes a debug copy with coloured levels, to see in game which level is drawn.
+
 ```bash
 python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
 python3 tools/assets/optimize_mesh.py gfx/models/units/tanks/SOV/T72A.mesh
 python3 tools/assets/optimize_mesh.py --write gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/dds_mipmaps.py gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --fix --write gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --tint in.dds out.dds
 ```
 
 ### Analysis (`analysis/`)

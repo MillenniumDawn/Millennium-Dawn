@@ -35,6 +35,22 @@ WELD_ANGLE_DEGREES = 20.0
 # Model textures: compressed DDS with mipmaps, power-of-two, at most this size.
 MAX_TEXTURE_SIZE = 2048
 
+# Mipmaps only pay off on textures drawn well below their full size. That is the
+# 3D map: unit and building models and particles. GUI art is drawn at full size,
+# so a chain there only adds a third to the file and to video memory.
+MIPMAP_NEEDED = "needed"
+MIPMAP_NONE = "none"
+MIPMAP_KEEP = "keep"
+MIPMAP_RULES = (
+    ("/gfx/models/", MIPMAP_NEEDED),
+    ("/gfx/particles/", MIPMAP_NEEDED),
+    # Terrain, fonts and map arrows mirror vanilla's layout: leave them as they are.
+    ("/map/", MIPMAP_KEEP),
+    ("/gfx/fonts/", MIPMAP_KEEP),
+    ("/gfx/maparrows/", MIPMAP_KEEP),
+    ("/gfx/", MIPMAP_NONE),
+)
+
 
 def _lookup(table, rel_path, default):
     path = "/" + rel_path.replace("\\", "/").lower()
@@ -52,3 +68,8 @@ def triangle_target(rel_path):
 def error_ceiling(rel_path):
     """Simplification error ceiling for a mesh path."""
     return _lookup(ERROR_CEILINGS, rel_path, ERROR_CEILING)
+
+
+def mipmap_rule(rel_path):
+    """Whether a texture path should carry mipmaps: needed, none or keep."""
+    return _lookup(MIPMAP_RULES, rel_path, MIPMAP_KEEP)
