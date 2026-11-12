@@ -46,6 +46,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   [Validation Pipeline](.claude/docs/validation-pipeline.md). CI and hooks differ.
 - For `tools/` changes, run `python -m pytest` before merge. Fix regressions in the
   same change; never delete, skip, or weaken tests to pass.
+- Install the `dev` and `runtime` dependency groups from `pyproject.toml` before running
+  the suite. Without them, tests that need `pre-commit` or `coverage` fail. pip older
+  than 25.1 has no `--group`, so install the listed packages by name.
 - For docs-site changes, follow [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
 - Standardization: [tools/standardization/README.md](tools/standardization/README.md).
   Branch summary: `python3 tools/analysis/review_branch.py [base-branch]`.
