@@ -66,12 +66,14 @@ MIPMAP_RULES = (
 #   compressed: DXT1, or DXT5 when the alpha channel is used
 #   dxt5:       always DXT5
 #   portrait:   compressed, except small portraits, which stay uncompressed
-#   raw:        uncompressed A8R8G8B8
+#   raw:        uncompressed A8R8G8B8, compressed when it passes the gate below
+#   icon:       uncompressed A8R8G8B8, never compressed
 #   keep:       left exactly as it is
 FORMAT_COMPRESSED = "compressed"
 FORMAT_DXT5 = "dxt5"
 FORMAT_PORTRAIT = "portrait"
 FORMAT_RAW = "raw"
+FORMAT_ICON = "icon"
 FORMAT_KEEP = "keep"
 TEXTURE_FORMATS = (
     ("/gfx/models/", FORMAT_COMPRESSED),
@@ -83,6 +85,9 @@ TEXTURE_FORMATS = (
     ("/gfx/loadingscreens/", FORMAT_COMPRESSED),
     ("/gfx/main_menu/", FORMAT_COMPRESSED),
     ("/gfx/leaders/", FORMAT_PORTRAIT),
+    ("/gfx/interface/technologies/", FORMAT_ICON),
+    ("/gfx/interface/goals/", FORMAT_ICON),
+    ("/gfx/interface/ideas/", FORMAT_ICON),
     ("/gfx/", FORMAT_RAW),
 )
 # A portrait narrower than this is a small portrait.
