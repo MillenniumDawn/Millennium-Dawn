@@ -56,3 +56,11 @@ It reports two things, both as errors:
 - `mesh-texture-missing`: a texture name matches no file in mod or vanilla `gfx/`. This check needs a local HoI4 install (set `HOI4_PATH` if it isn't found) and is skipped without one.
 
 CI doesn't check out model files, so the pre-commit hook is the only check. Don't skip it on model commits.
+
+To check a model's mesh data, triangle count and texture formats against the art standard, run the read-only audit on its folder:
+
+```bash
+python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
+```
+
+`tools/assets/optimize_mesh.py` can repair and simplify single mesh files. See the Assets section of [tools/README.md](../../tools/README.md).

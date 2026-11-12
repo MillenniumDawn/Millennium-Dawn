@@ -439,14 +439,31 @@ DDS conversion, GFX entry generation, texture and flag tools.
 
 | Script                         | Description                                                                       |
 | ------------------------------ | --------------------------------------------------------------------------------- |
+| **audit_models.py**            | Read-only report of broken mesh data, triangle budgets and model texture formats  |
 | **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
 | **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
 | **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
 | **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
 | **flag-reference-checker.py**  | Validates flag references across the mod                                          |
 | **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **model_standards.py**         | Triangle targets, error limits and texture rules shared by the model tools        |
+| **optimize_mesh.py**           | Repairs and simplifies the mesh files you name, guarding thin parts               |
+| **pdx_mesh.py**                | Reader and writer for Paradox binary `.mesh` files                                |
 | **resize_decision_icons.py**   | Resizes wrong-slot decision icon art in place or as a sibling sprite              |
 | **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
+
+The model tools read their limits from `model_standards.py`, which mirrors the
+[3D Model Performance Guidelines](../docs/src/content/resources/3d-model-performance-guidelines.md).
+`audit_models.py` only reports. `optimize_mesh.py` takes mesh files, never folders, and
+prints what would change unless you pass `--write`. Do not run it over the whole model
+tree: check each changed model in game before committing it. Both need the `analysis`
+group; simplification also needs `pip install meshoptimizer==0.2.30a0`.
+
+```bash
+python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
+python3 tools/assets/optimize_mesh.py gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/optimize_mesh.py --write gfx/models/units/tanks/SOV/T72A.mesh
+```
 
 ### Analysis (`analysis/`)
 
