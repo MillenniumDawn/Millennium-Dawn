@@ -10,15 +10,9 @@ pytest.importorskip("scipy")
 
 import optimize_mesh
 import pdx_mesh
+from shared.suite import MESH_QUAD as _QUAD
 from shared.suite import mesh_bytes
 
-_QUAD = {
-    "p": [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
-    "tri": [0, 1, 2, 0, 2, 3],
-    "n": [[0, 0, 1]] * 4,
-    "ta": [[1, 0, 0, 1]] * 4,
-    "u0": [[0, 0], [1, 0], [1, 1], [0, 1]],
-}
 _NAN = float("nan")
 
 

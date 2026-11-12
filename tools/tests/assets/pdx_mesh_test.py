@@ -46,6 +46,7 @@ _BROKEN = {
     "unterminated name": pdx_mesh.HEADER + b"[abc",
     "truncated values": mesh_bytes(_TRIANGLE)[:40],
     "truncated count": pdx_mesh.HEADER + b"!\x01ai\x05",
+    "truncated string": pdx_mesh.HEADER + b"!\x01as\x01\x00\x00\x00\x09\x00\x00\x00ab",
 }
 
 

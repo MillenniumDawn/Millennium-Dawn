@@ -71,9 +71,11 @@ def _parse_property(data: bytes, pos: int, node: Node) -> int:
         raise MeshParseError(f"unknown property type {kind!r} at byte {pos}")
     values = []
     for _ in range(count):
-        (size,) = struct.unpack_from("<I", data, pos)
+        size = int.from_bytes(data[pos : pos + 4], "little")
         values.append(data[pos + 4 : pos + 4 + size])
         pos += 4 + size
+    if pos > len(data):
+        raise MeshParseError(f"string property {name!r} runs past the end")
     node.props[name] = (kind, values)
     return pos
 
