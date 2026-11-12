@@ -39,6 +39,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 
 ## Validation
 
+- Regression tests must exercise general, reusable behavior or validators with
+  synthetic fixtures. Do not hard-code country content contracts, country-specific
+  identifiers, balance values, or country file layouts into regression tests.
 - Content validation runs in GitHub CI at PR time. Do not run it proactively.
 - Never run `pre-commit run --all-files`. Use normal staged-file hooks or
   `pre-commit run --files <changed paths>`; do not include unrelated formatter edits.
