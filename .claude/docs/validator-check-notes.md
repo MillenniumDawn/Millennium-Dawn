@@ -1009,6 +1009,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `validate_standardization.py` is manual. It runs the standardizers in memory and
   reports files they would rewrite. Pass `--all --no-color` for a full pass.
 - `validate_unused_textures.py` is a manual-stage hook. CI cannot run it.
+  A reference with a directory must match a file by full path. A bare filename, as
+  entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
+  Without a HOI4 install, missing references are warnings and include vanilla art.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`
