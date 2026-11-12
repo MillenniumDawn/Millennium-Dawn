@@ -2412,14 +2412,28 @@ def _event_payers(
     return _frozen(charged), _frozen(picked)
 
 
+def _grown(
+    old: Dict[str, FrozenSet[str]], new: Dict[str, FrozenSet[str]]
+) -> Dict[str, FrozenSet[str]]:
+    return {
+        role: old.get(role, frozenset()) | new.get(role, frozenset())
+        for role in {*old, *new}
+    }
+
+
 def resolve_payments(
     event_nodes: Dict[str, _EventNode], effect_nodes: Dict[str, ItemFacts]
 ) -> EventPayments:
     """EventPayments for every node, to a fixed point.
 
-    Payments only grow as the maps fill, so cycles settle. A cycle that never
+    Payments grow as the maps fill, so cycles settle. A cycle that never
     charges anyone stays free. A node is redone only when an event or effect it
     starts changes.
+
+    A free pick trades its kinds for "uncertain" once a pick is unknown, which
+    takes a kind back from the events around it. Events that fire each other can
+    then pass that kind around forever, so an event that returns to a value it
+    already held keeps both values from then on.
     """
     payments = EventPayments({}, {}, frozenset(event_nodes))
     readers: Dict[Tuple[str, str], Set[Tuple[str, str]]] = defaultdict(set)
@@ -2438,6 +2452,7 @@ def resolve_payments(
             readers[("effect", effect)].add((kind, name))
     pending = deque(dict.fromkeys((kind, name) for kind, name, _facts in nodes))
     queued = set(pending)
+    held: Dict[str, Set[tuple]] = defaultdict(set)
     while pending:
         key = pending.popleft()
         queued.discard(key)
@@ -2449,10 +2464,20 @@ def resolve_payments(
             payments.effects[name] = paid
         else:
             event_paid = _event_payers(event_nodes[name], payments)
-            if event_paid == payments.events.get(name, ({}, {})):
+            old = payments.events.get(name, ({}, {}))
+            if event_paid == old:
                 continue
+            value = tuple(frozenset(costs.items()) for costs in event_paid)
+            if value in held[name]:
+                event_paid = (
+                    _grown(old[0], event_paid[0]),
+                    _grown(old[1], event_paid[1]),
+                )
+                if event_paid == old:
+                    continue
+            held[name].add(value)
             payments.events[name] = event_paid
-        for reader in readers[key] - queued:
+        for reader in sorted(readers[key] - queued):
             pending.append(reader)
             queued.add(reader)
     return payments

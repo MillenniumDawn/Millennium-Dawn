@@ -43,7 +43,7 @@ GUI for this project: it is free, simple, and connects directly to GitHub.
    **[authentication failed cloning repo](/dev-resources/authentication-failed-cloning-repo/)**
    guide. If the cloned `Millennium_Dawn` file shows as a video or unknown type, open it in Notepad or Notepad++.
 
-5. Wait for the clone to finish. A slow connection (under 200 KB/s) can cause it to fail; retry, or use a shallow clone with `git clone --depth 1`.
+5. Wait for the clone to finish. Stay with this full clone if you are new to Git. Experienced users can save about 9 GB with `git clone --filter=blob:none` from the command line (see [Use a Partial Clone](/dev-resources/developer-setup/#use-a-partial-clone)). A slow connection (under 200 KB/s) can cause it to fail; retry, or use a shallow clone with `git clone --depth 1`.
 
 For connecting the cloned mod to the launcher and enabling the Developer Version, see
 [Developer Setup: Setting Up the Mod for Testing](/dev-resources/developer-setup/#setting-up-the-mod-for-testing).
