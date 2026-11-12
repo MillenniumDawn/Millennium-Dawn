@@ -45056,7 +45056,6 @@ country_event = {
 		unlock_decision_tooltip = varyag_complete_the_carrier
 		unlock_decision_tooltip = UKR_varyag_install_catapults
 		unlock_decision_tooltip = UKR_varyag_convert_mig29_squadron
-		unlock_decision_tooltip = UKR_varyag_restore_yak38
 		unlock_decision_tooltip = UKR_varyag_order_rafale_m
 		unlock_decision_tooltip = UKR_varyag_order_mig29k
 		unlock_decision_tooltip = varyag_order_hornets
@@ -45072,7 +45071,6 @@ country_event = {
 		unlock_decision_tooltip = varyag_complete_the_carrier
 		unlock_decision_tooltip = UKR_varyag_install_catapults
 		unlock_decision_tooltip = UKR_varyag_convert_mig29_squadron
-		unlock_decision_tooltip = UKR_varyag_restore_yak38
 		unlock_decision_tooltip = UKR_varyag_order_rafale_m
 		unlock_decision_tooltip = UKR_varyag_order_mig29k
 		unlock_decision_tooltip = varyag_order_hornets
@@ -45089,6 +45087,10 @@ country_event = {
 	desc = ukraine_varyag.16.desc
 	picture = GFX_UKR_varyag_yak38
 	is_triggered_only = yes
+	trigger = {
+		has_country_flag = UKR_storage_yak38_program_in_progress
+		check_variable = { UKR_storage_yak38_repaired > 0 }
+	}
 
 	option = {
 		name = ukraine_varyag.16.a
@@ -45098,7 +45100,7 @@ country_event = {
 			add_equipment_to_stockpile = {
 				type = cv_small_plane_cas_airframe_1
 				variant_name = "Yak-38"
-				amount = 6
+				amount = UKR_storage_yak38_repaired
 				producer = SOV
 			}
 		}
@@ -45106,10 +45108,12 @@ country_event = {
 			add_equipment_to_stockpile = {
 				type = CV_MR_Fighter1
 				variant_name = "Yak-38"
-				amount = 6
+				amount = UKR_storage_yak38_repaired
 				producer = SOV
 			}
 		}
+		clr_country_flag = UKR_storage_yak38_program_in_progress
+		clear_variable = UKR_storage_yak38_repaired
 	}
 }
 
@@ -45539,4 +45543,115 @@ country_event = {
 	minor_flavor = yes
 
 	option = { name = ukraine_varyag.31.a }
+}
+
+country_event = {
+	id = ukraine_varyag.32
+	title = ukraine_varyag.32.name
+	desc = ukraine_varyag.32.desc
+	picture = GFX_UKR_varyag_yak38
+	is_triggered_only = yes
+	trigger = { UKR_storage_yak38_inspection_ready = yes }
+
+	option = {
+		name = ukraine_varyag.32.a
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.32.a executed"
+		custom_effect_tooltip = UKR_storage_yak38_domestic_tt
+		hidden_effect = { UKR_storage_yak38_domestic_repairs = yes }
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = ukraine_varyag.32.b
+		trigger = {
+			country_exists = SOV
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_yak38_parts_funds_tt
+				check_variable = { var = treasury value = 0.05 compare = greater_than_or_equals }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: ukraine_varyag.32.b executed"
+		custom_effect_tooltip = UKR_storage_yak38_unofficial_terms_tt
+		hidden_effect = {
+			if = {
+				limit = { UKR_storage_yak38_inspection_ready = yes }
+				if = {
+					limit = {
+						country_exists = SOV
+						check_variable = { var = treasury value = 0.05 compare = greater_than_or_equals }
+					}
+					random_list = {
+						30 = {
+							set_temp_variable = { treasury_change = -0.05 }
+							modify_treasury_effect = yes
+							# Round 19 airframes up to the requested 10 operational aircraft.
+							set_variable = { UKR_storage_yak38_repaired = 10 }
+							UKR_storage_consume_yak38_airframes = yes
+							country_event = { id = ukraine_varyag.16 days = 180 }
+							country_event = ukraine_varyag.33
+						}
+						40 = {
+							set_temp_variable = { treasury_change = -0.05 }
+							modify_treasury_effect = yes
+							set_variable = { UKR_storage_yak38_repaired = 8 }
+							UKR_storage_consume_yak38_airframes = yes
+							SOV = {
+								add_opinion_modifier = { target = ROOT modifier = UKR_yak38_parts_scandal }
+								country_event = russia_varyag.3
+							}
+							country_event = { id = ukraine_varyag.16 days = 270 }
+							country_event = ukraine_varyag.34
+						}
+						30 = {
+							UKR_storage_yak38_domestic_repairs = yes
+							country_event = ukraine_varyag.35
+						}
+					}
+				}
+				else = {
+					UKR_storage_yak38_domestic_repairs = yes
+					country_event = ukraine_varyag.35
+				}
+			}
+		}
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 check_variable = { treasury < 0.05 } }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_varyag.33
+	title = ukraine_varyag.33.name
+	desc = ukraine_varyag.33.desc
+	picture = GFX_UKR_varyag_yak38
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukraine_varyag.33.a }
+}
+
+country_event = {
+	id = ukraine_varyag.34
+	title = ukraine_varyag.34.name
+	desc = ukraine_varyag.34.desc
+	picture = GFX_UKR_varyag_yak38
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukraine_varyag.34.a }
+}
+
+country_event = {
+	id = ukraine_varyag.35
+	title = ukraine_varyag.35.name
+	desc = ukraine_varyag.35.desc
+	picture = GFX_UKR_varyag_yak38
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = ukraine_varyag.35.a }
 }
