@@ -1729,14 +1729,16 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
-        naming_style: bool = False,
+        id_case: bool = False,
+        prefix_owner: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
-        self.naming_style = naming_style
+        self.id_case = id_case
+        self.prefix_owner = prefix_owner
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -2950,12 +2952,50 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
-    def validate_naming_style(self):
-        """Flag decision and category ids that break the naming rules.
+    def validate_id_case(self):
+        """Flag decision and category ids with uppercase after the tag prefix.
 
-        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        Opt-in: hundreds of existing ids predate the rule and are not renamed, so CI
+        enables it as a warning and the baseline comparison reports only new ids.
         """
-        self._log_section("Checking decision and category naming style...")
+        self._log_section("Checking decision and category id case...")
+        results = [
+            (
+                f"Decision {d.token} is not lowercase after its prefix",
+                d.source_path,
+                d.line,
+            )
+            for d in parse_all_decision_factories(self.mod_path)
+            if _has_uppercase_after_prefix(d.token)
+        ]
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+
+    def validate_prefix_owner(self):
+        """Flag decisions whose tag prefix names a country their allowed does not admit.
+
+        Opt-in: shared systems prefix with the subject country on purpose.
+        """
+        self._log_section("Checking decision prefixes against their owners...")
         token_to_cat = {
             dec: cat
             for cat, decs in parse_categories_with_decisions(self.mod_path).items()
@@ -2972,17 +3012,8 @@ class Validator(BaseValidator):
                 )
             )
 
-        case_results = []
-        prefix_results = []
+        results = []
         for d in parse_all_decision_factories(self.mod_path):
-            if _has_uppercase_after_prefix(d.token):
-                case_results.append(
-                    (
-                        f"Decision {d.token} is not lowercase after its prefix",
-                        d.source_path,
-                        d.line,
-                    )
-                )
             prefix = _TAG_PREFIX_RE.match(d.token)
             if not prefix or prefix.group(1) not in country_tags:
                 continue
@@ -2990,7 +3021,7 @@ class Validator(BaseValidator):
                 tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
-                prefix_results.append(
+                results.append(
                     (
                         f"Decision {d.token} has the {prefix.group(1)} prefix but"
                         f" allowed admits {', '.join(sorted(pins))}",
@@ -2998,29 +3029,9 @@ class Validator(BaseValidator):
                         d.line,
                     )
                 )
-        for path in self._collect_files(
-            ["common/decisions/categories/**/*.txt"], ignore_staged=True
-        ):
-            text = FileOpener.open_text_file(path, strip_comments_flag=True)
-            for m in _LINE_OPENER_RE.finditer(text):
-                if _has_uppercase_after_prefix(m.group(1)):
-                    case_results.append(
-                        (
-                            f"Category {m.group(1)} is not lowercase after its prefix",
-                            os.path.relpath(path, self.mod_path),
-                            line_of(text, m.start()),
-                        )
-                    )
 
         self._report(
-            case_results,
-            "✓ Decision and category ids are lowercase after their prefix",
-            "Decision and category ids with uppercase after the tag prefix:",
-            Severity.WARNING,
-            category="decision-id-case",
-        )
-        self._report(
-            prefix_results,
+            results,
             "✓ Decision prefixes match the countries allowed to take them",
             "Decisions whose tag prefix names a country their allowed does not admit:",
             Severity.WARNING,
@@ -4210,11 +4221,18 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
-        if self.naming_style:
-            self.validate_naming_style()
+        if self.id_case:
+            self.validate_id_case()
         else:
             self._log_section(
-                "Skipping decision naming style check (pass --naming-style to enable)"
+                "Skipping decision id case check (pass --id-case to enable)"
+            )
+
+        if self.prefix_owner:
+            self.validate_prefix_owner()
+        else:
+            self._log_section(
+                "Skipping decision prefix owner check (pass --prefix-owner to enable)"
             )
 
 
@@ -4237,10 +4255,16 @@ def _add_extra_args(parser):
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
     )
     parser.add_argument(
-        "--naming-style",
+        "--id-case",
         action="store_true",
-        dest="naming_style",
-        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
+        dest="id_case",
+        help="Flag decision and category ids with uppercase after the tag prefix",
+    )
+    parser.add_argument(
+        "--prefix-owner",
+        action="store_true",
+        dest="prefix_owner",
+        help="Flag decisions whose tag prefix names a country their allowed does not admit",
     )
 
 
