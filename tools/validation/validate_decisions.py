@@ -1297,6 +1297,9 @@ def extract_value_multi_line(obj: str, s: str) -> str:
     return matches[0][1] if matches else ""
 
 
+_FIRE_ONLY_ONCE_NO_RE = re.compile(r"^\s*fire_only_once\s*=\s*no\b", re.MULTILINE)
+
+
 class DecisionFactory:
     def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
         self.source_path = source_path
@@ -1338,6 +1341,7 @@ class DecisionFactory:
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", rolls))
         self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", rolls))
         self.fire_only_once = "fire_only_once = yes" in dec
+        self.fire_only_once_no = bool(_FIRE_ONLY_ONCE_NO_RE.search(dec))
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -3138,6 +3142,24 @@ class Validator(BaseValidator):
             category="missing-decision-log",
         )
 
+    def validate_redundant_fire_only_once(self):
+        """Flag `fire_only_once = no`, the engine default (Issue #6509)."""
+        self._log_section("Checking decisions for a redundant fire_only_once = no...")
+
+        results = [
+            f"{dec.token} - {dec.source_basename}: fire_only_once = no is the default"
+            for dec in parse_all_decision_factories(self.mod_path)
+            if dec.fire_only_once_no
+        ]
+
+        self._report(
+            results,
+            "✓ No decision sets fire_only_once = no",
+            "Decisions setting the default fire_only_once = no (remove the line):",
+            Severity.ERROR,
+            category="redundant-fire-only-once",
+        )
+
     def validate_log_not_first(self):
         """Flag effect blocks whose log is late, and blocks that log twice.
 
@@ -4151,6 +4173,7 @@ class Validator(BaseValidator):
         self.validate_undefined_unlock_tooltips()
         self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
+        self.validate_redundant_fire_only_once()
         self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
