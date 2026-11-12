@@ -76,7 +76,7 @@ Most tools write TGA with a top-left origin descriptor. Nearly every flag in the
 
 ## Placing Files
 
-Ensure that you are in the gfx-input branch on the GitHub repository before dropping anything into the mod. This is where all graphics go regardless of what they are being made for.
+There is no shared graphics branch. Put your graphics on a small branch of their own and open a pull request from it quickly, or put them on a content branch that is about to merge into `main`. Do not leave art on a long-lived branch. Large binary files cannot be merged, and a stale branch will conflict with everyone else's art.
 
 You can usually find the location where your graphics need to go relatively easily just by looking at the names of the folders. Compare them to what you’re working on. Folder layouts might vary; some are deeper in the files than others. Here are just some examples.
 
