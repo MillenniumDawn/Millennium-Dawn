@@ -220,6 +220,15 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [_NO_LOG % "remove_effect"],
         ),
     },
+    "validate_redundant_fire_only_once": {
+        "unset": ([_flat(_effect(_LOG))], []),
+        "yes": ([_flat("\tfire_only_once = yes\n")], []),
+        "no": (
+            [_flat("\tfire_only_once=no\n")],
+            ["dec_one - X.txt: fire_only_once = no is the default"],
+        ),
+        "commented out": ([_flat("\t#fire_only_once = no\n")], []),
+    },
     "validate_log_not_first": {
         "log first": ([_flat(_effect(_LOG + _GAIN, "remove_effect"))], []),
         "log after an effect": (
@@ -2856,6 +2865,7 @@ _FINDING_DECISIONS = {
     "temp_read": _block("available", "check_variable = { treasury > pay }")
     + _block("complete_effect", "set_temp_variable = { pay = 5 }"),
     "double_log": _block("complete_effect", 'log = "first"\nlog = "second"'),
+    "repeat_default": "\t\tfire_only_once = no\n",
 }
 _FINDINGS_MOD = {
     "common/decisions/categories/categories.txt": "cat_allowed = {\n"
@@ -2901,7 +2911,11 @@ _BACKLOG_WARNINGS = (
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
 )
-_PROMOTED_ERRORS = ("missing-decision-log", "decision-money-charged-late")
+_PROMOTED_ERRORS = (
+    "missing-decision-log",
+    "decision-money-charged-late",
+    "redundant-fire-only-once",
+)
 _REPORTED_CATEGORIES = (
     "missing-decision-localisation",
     *_PROMOTED_ERRORS,
