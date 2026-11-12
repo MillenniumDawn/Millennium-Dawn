@@ -8,7 +8,9 @@ Scripted effects library: `docs/src/content/resources/scripted-effects-reference
   MTTH weights in `random_events` pools are a separate mechanism, described below.
 - Match every id to the file's declared namespace and every option log to its own id.
   `tools/linting/fix_log_ids.py` fixes copied log ids.
-- Only an option that runs effects gets a log. Omit a log-only `immediate` block.
+- Always add a matching log to every event option with effects, including options
+  containing only tooltips. Leave effect-free acknowledgement options without a log
+  to avoid log-only warnings. Omit a log-only `immediate` block.
 - `fire_only_once = yes` does not stop an on_action from firing the event again. Guard
   in the caller's `limit`, on state the event changes or on a flag set at queue time.
 - Only news events use `major = yes`. Fire one broadcast, never one per country
