@@ -67,3 +67,9 @@ python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
 ```
 
 `tools/assets/optimize_mesh.py` can repair and simplify single mesh files. See the Assets section of [tools/README.md](../../tools/README.md).
+
+To list meshes no `pdxmesh` uses, and textures nothing uses, run the slow manual report:
+
+```bash
+pre-commit run md-validate-unused-textures --hook-stage manual
+```
