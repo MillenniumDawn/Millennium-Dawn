@@ -1,6 +1,6 @@
 # Author(s): XCezor
 
-# Makes AI apply Antarctic station module changes, restocks fuel and calls observers
+# Makes AI apply Antarctic station module changes and call observers
 ai_antarctica_monthly = {
 	if = {
 		limit = { is_debug = yes }
@@ -8,7 +8,6 @@ ai_antarctica_monthly = {
 	}
 
 	ai_install_station_module_in_empty_slot = yes
-	ai_restock_station_fuel = yes
 	ai_antarctica_call_observers = yes
 }
 
@@ -127,28 +126,6 @@ ai_install_station_module_in_empty_slot = {
 					}
 				}
 			}
-		}
-	}
-}
-
-# Simply restocks station fuel if the original triggers are met:
-# Station has at least one diesel engine, no delivery incoming, and under 62 days of fuel left
-# (62 = up to 31 days to the next monthly check + up to 30 days of delivery)
-ai_restock_station_fuel = {
-	antarctica_find_player_station = yes
-
-	if = {
-		limit = { check_variable = { player_station_id > 0 } }
-
-		set_variable = { selected_antarctica_station = player_station_id }
-		antarctica_set_selected_station_controller = yes
-
-		if = {
-			limit = {
-				is_station_fuel_supply_ready = yes
-				check_variable = { global.antarctica_station_output_fuel_capacity_days^selected_antarctica_station < 62 }
-			}
-			antarctica_send_supplies_to_selected_station = yes
 		}
 	}
 }
