@@ -40,6 +40,8 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
   (`common/scripted_effects/00_map_mode_palette_effects.txt`). The test checks the list.
 - Add variants only where the tuned bar beats Standard. Ramps and modes with a few
   colors keep one palette.
+- Tune one palette against all three bars first. The EU mode's seven colors clear
+  ΔE 20 under every vision with one palette, so it has no variants.
 - The variable lives on the country, so a tag switch or co-op on one country shares it.
   Standard is the reset.
 
