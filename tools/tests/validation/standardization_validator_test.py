@@ -7,9 +7,10 @@ the three outcomes that behaviour has to produce — clean, unstandardized
 cannot run at all (ERROR) — plus the changed-files scoping the design rests on.
 """
 
+import pytest
 import standardize_api
 import validate_standardization
-from shared.suite import write_under
+from shared.suite import checks_called_by_run, run_tool_script, write_under
 from validate_standardization import Validator
 
 _MESSY_EVENT = """country_event = {
@@ -154,3 +155,122 @@ def test_scan_all_overrides_staged_scope(tmp_path, monkeypatch):
         "events/Gulf.txt",
         "events/Syria.txt",
     ]
+
+
+_MESSY_FOCUS = "focus = {\n\tid = TST_first\n\tx = 0\n\ty = 0\n}\n"
+
+
+@pytest.mark.parametrize(
+    ("kind", "expected"),
+    [("focus", ["common/national_focus/test.txt"]), ("event", ["events/test.txt"])],
+)
+def test_kind_scope_checks_only_the_selected_standardizer(tmp_path, kind, expected):
+    write_under(tmp_path, "common/national_focus/test.txt", _MESSY_FOCUS)
+    write_under(tmp_path, "events/test.txt", _MESSY_EVENT)
+
+    assert [issue.file for issue in _run(tmp_path, kind=kind)._issues] == expected
+
+
+@pytest.mark.parametrize("ending", ["crlf", "missing newline", "added line"])
+def test_line_ending_drift_is_reported_without_writing(tmp_path, monkeypatch, ending):
+    formatted = standardize_api.standardize_text("event", _MESSY_EVENT)
+    assert formatted is not None
+    path = _write_event(tmp_path, "")
+    if ending == "crlf":
+        original = formatted.replace("\n", "\r\n").encode("utf-8")
+        line = 1
+    elif ending == "missing newline":
+        original = formatted.rstrip("\n").encode("utf-8")
+        line = len(formatted.splitlines())
+    else:
+        original = formatted.encode("utf-8")
+        line = len(formatted.splitlines()) + 1
+        monkeypatch.setattr(
+            validate_standardization,
+            "standardize_text",
+            lambda kind, text, mod_root=None: text.rstrip("\n") + "\n\n",
+        )
+    path.write_bytes(original)
+
+    validator = _run(tmp_path)
+
+    assert [(issue.category, issue.line) for issue in validator._issues] == [
+        ("not-standardized", line)
+    ]
+    assert path.read_bytes() == original
+
+
+_REWRITE_FAILURES = {
+    "unstable rewrite": ("unstable", "not idempotent", 0),
+    "changed reward": ("reward", "TST_first: completion_reward content changed", 1),
+    "changed identity": ("identity", "focus IDs, kinds, or order changed", 0),
+}
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message", "line"),
+    _REWRITE_FAILURES.values(),
+    ids=_REWRITE_FAILURES,
+)
+def test_unsafe_rewrite_is_an_error_without_writing(
+    tmp_path, monkeypatch, mutation, message, line
+):
+    source = (
+        "focus = {\n\tid = TST_first\n"
+        "\tcompletion_reward = { add_political_power = 5 }\n}\n"
+    )
+    path = write_under(tmp_path, "common/national_focus/test.txt", source)
+    standardize = validate_standardization.standardize_text
+
+    def rewrite(kind, text, mod_root=None):
+        if mutation == "unstable":
+            return text + "\n"
+        formatted = standardize(kind, text, mod_root=mod_root)
+        assert formatted is not None
+        if mutation == "reward":
+            return formatted.replace(
+                "add_political_power = 5", "add_political_power = 6"
+            )
+        return formatted.replace("TST_first", "TST_other")
+
+    monkeypatch.setattr(validate_standardization, "standardize_text", rewrite)
+
+    validator = _run(tmp_path)
+
+    assert validator.errors_found == 1
+    assert validator.warnings_found == 0
+    assert validator._issues[0].category == "standardizer-error"
+    assert message in validator._issues[0].message
+    assert validator._issues[0].line == line
+    assert path.read_text(encoding="utf-8") == source
+
+
+def test_run_calls_every_check(tmp_path, monkeypatch):
+    validator = Validator(str(tmp_path), workers=1)
+
+    called, defined = checks_called_by_run(validator, monkeypatch)
+
+    assert called == defined
+
+
+def test_cli_kind_scope_is_read_only(tmp_path):
+    path = write_under(tmp_path, "common/national_focus/test.txt", _MESSY_FOCUS)
+    write_under(tmp_path, "events/test.txt", _MESSY_EVENT)
+
+    result = run_tool_script(
+        "validation/validate_standardization.py",
+        "--path",
+        tmp_path,
+        "--all",
+        "--kind",
+        "focus",
+        "--no-color",
+        "--strict",
+    )
+
+    output = result.stdout + result.stderr
+    assert result.returncode == 0, output
+    assert "common/national_focus/test.txt" in output
+    assert "events/test.txt" not in output
+    assert "Files checked: 1; unchanged: 0; drifted: 1; failed: 0" in output
+    assert path.read_text(encoding="utf-8") == _MESSY_FOCUS
