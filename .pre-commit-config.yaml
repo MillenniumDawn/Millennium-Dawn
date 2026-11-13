@@ -10,8 +10,8 @@
 #   pre-commit run --files path/to/file1 path/to/file2
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want. Exception: md-fix-styling and the
-# md-validate-{defines,descriptors,mesh-textures} hooks read the git index, so
-# under --files they check what is staged, not the named files.
+# md-validate-{defines,descriptors,mesh-textures,model-assets} hooks read the
+# git index, so under --files they check what is staged, not the named files.
 #
 # `pre-commit install` installs both the pre-commit and pre-push hooks. Hooks
 # without `stages:` run at commit only; the tools pytest hooks run at push.
@@ -256,6 +256,17 @@ repos:
         language: system
         files: '^gfx/(models|entities)/'
         pass_filenames: false
+      - id: md-validate-model-assets
+        name: MD Validate 3D model mesh and texture data (warnings)
+        # Commit-stage only, like md-validate-mesh-textures. Warning-only
+        # while the backlog is fixed model by model, so verbose shows the
+        # findings on a passing run.
+        entry: >-
+          python3 tools/validation/validate_model_assets.py --staged --no-color
+        language: system
+        files: '^gfx/models/.*\.(mesh|dds)$'
+        pass_filenames: false
+        verbose: true
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
         # Manual: full-repo scan is slow and currently reports ~22k legacy

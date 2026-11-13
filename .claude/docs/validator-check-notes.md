@@ -550,6 +550,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
 
+## validate_model_assets.py
+
+- Commit-stage only, since the CI workspace ships no meshes. Runs the
+  `tools/assets/audit_models.py` checks on staged `.mesh` and `.dds` files under
+  `gfx/models/`. Every finding is a WARNING named `model-<finding>`, for example
+  `model-zero-area-triangles` or `model-uncompressed`, while the backlog is fixed one
+  model at a time. Needs numpy and logs a skip without it. Which findings become
+  errors is still open in
+  [#6531](https://github.com/MillenniumDawn/Millennium-Dawn/issues/6531).
+
 ## validate_mio_icons.py
 
 - The engine draws an equipment group as `GFX_<group>` and an archetype or type category

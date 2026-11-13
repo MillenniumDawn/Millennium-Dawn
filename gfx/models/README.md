@@ -57,7 +57,9 @@ It reports two things, both as errors:
 
 CI doesn't check out model files, so the pre-commit hook is the only check. Don't skip it on model commits.
 
-To check a model's mesh data, triangle count and texture formats against the art standard, run the read-only audit on its folder:
+The `md-validate-model-assets` hook runs when you stage a `.mesh` or `.dds` under `gfx/models/`. It warns about broken mesh data, triangle counts over the target and texture formats, and never blocks the commit. It needs numpy (`pip install --group analysis`) and skips with a notice without it.
+
+To check a whole model folder against the art standard, run the read-only audit on it:
 
 ```bash
 python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
