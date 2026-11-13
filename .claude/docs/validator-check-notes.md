@@ -1007,7 +1007,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## Other tools
 
 - `validate_standardization.py` is manual. It runs the standardizers in memory and
-  reports files they would rewrite. Pass `--all --no-color` for a full pass.
+  reports rewrite drift as warnings at the first changed line, with file totals.
+  Pass `--all --kind focus --no-color` for all focus files. Failed standardizers,
+  unstable rewrites, and unexpected focus-content changes are errors. The content
+  check allows documented formatter normalizations and does not inspect properties
+  outside focus blocks or prove gameplay correctness. `--strict` fails on errors,
+  not the existing drift backlog.
 - `validate_unused_textures.py` is a manual-stage hook. CI cannot run it.
   A reference with a directory must match a file by full path. A bare filename, as
   entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.

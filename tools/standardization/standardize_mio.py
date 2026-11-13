@@ -30,7 +30,7 @@ class MIOStandardizer(BaseStandardizer):
 
     def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
         """Extract properties from a MIO block"""
-        props = {
+        props: Dict[str, Any] = {
             "organization_id": "",
             "name": "",
             "allowed": [],
