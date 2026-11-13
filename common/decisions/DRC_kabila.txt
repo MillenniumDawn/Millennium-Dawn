@@ -1,0 +1,195 @@
+MDRC_LDK_programmes = {
+	MDRC_LDK_renew_talks = {
+		icon = generic_prepare_civil_war_new
+		visible = { has_completed_focus = MDRC_LDK_future }
+
+		available = {
+			has_country_flag = MDRC_LDK_negotiating
+			OR = {
+				has_war_with = RWA
+				has_war_with = UGA
+				has_war_with = RCD
+				has_war_with = MLC
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+		complete_effect = { log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_renew_talks" MDRC_offer_ceasefires = yes }
+		ai_will_do = { base = 1 }
+	}
+
+	MDRC_LDK_integration_offer = {
+		icon = generic_prepare_civil_war_new
+		visible = { has_country_flag = MDRC_LDK_reconciliation }
+
+		available = {
+			has_war = no
+			OR = {
+				AND = {
+					country_exists = RCD
+					RCD = {
+						OR = { is_subject = no is_subject_of = DRC }
+					}
+				}
+				AND = {
+					country_exists = MLC
+					MLC = {
+						OR = { is_subject = no is_subject_of = DRC }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_re_enable = 180
+		complete_effect = { log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_integration_offer" MDRC_offer_integration = yes }
+		ai_will_do = { base = 1 }
+	}
+
+	MDRC_LDK_literacy_campaign = {
+		icon = generic_prepare_civil_war_new
+
+		visible = {
+			OR = { has_completed_focus = MDRC_LDK_hewa_bora has_completed_focus = MDRC_literacy_adult }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = DRC_treasury_at_least_0_5_tt
+				check_variable = { var = treasury value = 0.5 compare = greater_than_or_equals }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_literacy_campaign"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { LR_change = 0.01 }
+			update_literacy_rate = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { var = treasury value = 0.5 compare = less_than }
+			}
+		}
+	}
+
+	MDRC_LDK_army_review = {
+		icon = generic_prepare_civil_war_new
+		visible = { has_completed_focus = MDRC_LDK_academies }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = DRC_treasury_at_least_0_5_tt
+				check_variable = { var = treasury value = 0.5 compare = greater_than_or_equals }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_army_review"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			army_experience = 15
+			add_equipment_to_stockpile = { type = cnc_equipment_1 amount = 150 producer = DRC }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				check_variable = { var = treasury value = 0.5 compare = less_than }
+			}
+		}
+	}
+
+	MDRC_LDK_officers_2003 = {
+		icon = generic_prepare_civil_war_new
+
+		visible = {
+			OR = { has_completed_focus = MDRC_ddr has_completed_focus = MDRC_LDK_justice_choice }
+			NOT = { has_country_flag = MDRC_LDK_officers_2003_done }
+		}
+
+		available = {
+			date > 2003.6.29
+			has_war = no
+			MDRC_LDK_reunited = yes
+			OR = {
+				AND = { has_completed_focus = MDRC_ddr }
+				AND = { has_country_flag = MDRC_LDK_reconciliation has_country_flag = MDRC_LDK_integration_open }
+			}
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_officers_2003"
+			MDRC_LDK_appoint_integration = yes
+			add_timed_idea = { idea = MDRC_LDK_purge days = 90 }
+			set_country_flag = MDRC_LDK_officers_2003_done
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	MDRC_LDK_nkunda_settlement = {
+		icon = generic_prepare_civil_war_new
+
+		visible = {
+			has_country_flag = MDRC_LDK_officers_2003_done
+			NOT = { has_country_flag = MDRC_LDK_nkunda_settlement_done }
+		}
+
+		available = {
+			date > 2003.6.29
+			has_war = no
+			MDRC_LDK_reunited = yes
+			OR = {
+				AND = { has_completed_focus = MDRC_ddr }
+				AND = { has_country_flag = MDRC_LDK_reconciliation has_country_flag = MDRC_LDK_integration_open }
+			}
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_nkunda_settlement"
+			MDRC_LDK_appoint_nkunda = yes
+			add_stability = -0.03
+			set_country_flag = MDRC_LDK_nkunda_settlement_done
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	MDRC_LDK_historical_staff = {
+		icon = generic_prepare_civil_war_new
+
+		visible = {
+			has_completed_focus = MDRC_fardc
+			NOT = { has_country_flag = MDRC_LDK_historical_staff_done }
+		}
+
+		available = { }
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision MDRC_LDK_historical_staff"
+			MDRC_LDK_appoint_loyalists = yes
+			MDRC_LDK_appoint_staff = yes
+			set_country_flag = MDRC_LDK_historical_staff_done
+		}
+
+		ai_will_do = { base = 1 }
+	}
+}

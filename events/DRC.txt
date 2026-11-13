@@ -1,25 +1,57 @@
-# AUTHOR(S): DREAD
 add_namespace = DRC
 
-# Kabila Assassination
 country_event = {
 	id = DRC.0
-	title = DRC.0.t
-	desc = DRC.0.d
+	title = mdrc_ldk.0.t
+	desc = mdrc_ldk.0.d
 	picture = GFX_african_demonstration
 	is_triggered_only = yes
 
+	trigger = {
+		tag = DRC
+		has_country_leader = { name = "Laurent-Désiré Kabila" }
+		NOT = { has_country_flag = MDRC_LDK_attempt_pending }
+		NOT = { has_country_flag = MDRC_LDK_survived }
+		NOT = { has_country_flag = MDRC_LDK_death_chosen }
+		NOT = { has_country_flag = DRC_kabila_dead }
+		NOT = { has_country_flag = MDRC_Joseph_succession }
+	}
+
+	immediate = { log = "[GetDateText]: [Root.GetName]: Event DRC.0" set_country_flag = MDRC_LDK_attempt_pending }
+
 	option = {
-		name = DRC.0.A
-		log = "[GetDateText]: [This.GetName]: DRC.0.A executed"
-		set_country_flag = DRC_kabila_dead
-		if = { limit = { NOT = { check_variable = { ruling_party = 18 } } }
-			set_temp_variable = { rul_party_temp = 18 }
-			change_ruling_party_effect = yes
+		log = "[GetDateText]: [Root.GetName]: Event DRC.0 option mdrc_ldk.0.a"
+		name = mdrc_ldk.0.a
+		ai_chance = {
+			base = 90
+			modifier = { factor = 0.1 has_stability < 0.3 }
 		}
-		set_temp_variable = { party_index = 18 }
-		set_temp_variable = { party_popularity_increase = 0.40 }
-		set_temp_variable = { temp_outlook_increase = 0.40 }
-		change_relative_party_popularity = yes
+		set_country_flag = MDRC_LDK_death_chosen
+		set_country_flag = DRC_kabila_dead
+		clr_country_flag = MDRC_LDK_attempt_pending
+		kill_country_leader = yes
+		create_country_leader = {
+			name = MDRC_LDK_interim_council
+			picture = "gfx/leaders/generic_politicians/black_026.dds"
+			ideology = anarchist_communism
+			traits = { emerging_anarchist_communism }
+		}
+		add_stability = -0.05
+		mark_focus_tree_layout_dirty = yes
+		country_event = { id = mdrc_ldk.1 days = 10 }
+	}
+
+	option = {
+		log = "[GetDateText]: [Root.GetName]: Event DRC.0 option mdrc_ldk.0.b"
+		name = mdrc_ldk.0.b
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.1 has_stability < 0.3 }
+		}
+		set_country_flag = MDRC_LDK_survived
+		clr_country_flag = MDRC_LDK_attempt_pending
+		add_stability = -0.03
+		add_war_support = 0.03
+		mark_focus_tree_layout_dirty = yes
 	}
 }
