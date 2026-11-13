@@ -313,6 +313,96 @@ def test_standardize(path, data, max_size, done, result):
         assert _format(out) == result
 
 
+# case: (path, file bytes, what was done, resulting format)
+_KEEP_RAW_CASES = {
+    "dxt5 is uncompressed": (
+        "gfx/interface/a.dds",
+        dds_standardize.as_blocks(_ICON, b"DXT5"),
+        ["uncompressed for transparencecheck"],
+        ("raw", 8, 8, 1),
+    ),
+    "dxt3 is left": (
+        "gfx/interface/a.dds",
+        dds_texture(8, 8, b"DXT3", body=bytes(64)),
+        [],
+        None,
+    ),
+    "smooth raw art is not compressed": (
+        "gfx/interface/a.dds",
+        dds_standardize.as_raw(_smooth(32, 32)),
+        [],
+        None,
+    ),
+    "event picture is not compressed": (
+        "gfx/event_pictures/a.dds",
+        dds_standardize.as_raw(_noise(16, 16)),
+        [],
+        None,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "path, data, done, result", _KEEP_RAW_CASES.values(), ids=_KEEP_RAW_CASES.keys()
+)
+def test_standardize_keeps_transparency_checked_textures_raw(path, data, done, result):
+    out, found = dds_standardize.standardize(data, path, keep_raw=True)
+    assert found == done
+    if result is None:
+        assert out == data
+    else:
+        assert _format(out) == result
+
+
+_SPRITES = """
+spriteTypes = {
+	spriteType = {
+		name = "GFX_checked"
+		texturefile = "GFX\\\\Interface\\\\Checked.dds"
+		transparencecheck = yes
+	}
+	spriteType = {
+		name = "GFX_nested"
+		texturefile = "gfx/interface/nested.dds"
+		animation = { animationmaskfile = "gfx/interface/mask.dds" }
+		transparencecheck = yes
+	}
+	spriteType = {
+		name = "GFX_plain"
+		texturefile = "gfx/interface/plain.dds"
+	}
+	spriteType = {
+		name = "GFX_commented"
+		texturefile = "gfx/interface/commented.dds"
+		# transparencecheck = yes
+	}
+}
+"""
+
+
+def test_transparency_checked_reads_the_sprite_files(tmp_path):
+    (tmp_path / "interface").mkdir()
+    (tmp_path / "interface" / "a.gfx").write_text(_SPRITES, encoding="utf-8")
+    assert dds_standardize.transparency_checked(tmp_path) == {
+        "gfx/interface/checked.dds",
+        "gfx/interface/nested.dds",
+    }
+
+
+def test_main_uncompresses_a_transparency_checked_texture(
+    tmp_path, monkeypatch, capsys
+):
+    (tmp_path / "interface").mkdir()
+    (tmp_path / "interface" / "a.gfx").write_text(_SPRITES, encoding="utf-8")
+    texture = tmp_path / "gfx" / "interface" / "Checked.dds"
+    texture.parent.mkdir(parents=True)
+    texture.write_bytes(dds_standardize.as_blocks(_ICON, b"DXT5"))
+    monkeypatch.setattr(dds_standardize, "REPO_ROOT", tmp_path)
+    assert dds_standardize.main(["--fix", "--write"]) == 0
+    assert "uncompressed for transparencecheck" in capsys.readouterr().out
+    assert _format(texture.read_bytes())[0] == "raw"
+
+
 def test_dx10_icon_keeps_every_texel():
     rgba = _noise(16, 16)
     out, _ = dds_standardize.standardize(_dx10(rgba, 91), "gfx/interface/a.dds")
