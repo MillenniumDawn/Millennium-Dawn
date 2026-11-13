@@ -30,7 +30,8 @@ from validate_events import CostLookups, EventPayments, costly_scripted_effects
 _OPT_IN_CHECKS = {
     "validate_missing_icons",
     "validate_unannounced_categories",
-    "validate_naming_style",
+    "validate_id_case",
+    "validate_prefix_owner",
 }
 
 
@@ -218,6 +219,15 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [_flat(_effect(_LOG + _GAIN), _effect(_GAIN, "remove_effect"))],
             [_NO_LOG % "remove_effect"],
         ),
+    },
+    "validate_redundant_fire_only_once": {
+        "unset": ([_flat(_effect(_LOG))], []),
+        "yes": ([_flat("\tfire_only_once = yes\n")], []),
+        "no": (
+            [_flat("\tfire_only_once=no\n")],
+            ["dec_one - X.txt: fire_only_once = no is the default"],
+        ),
+        "commented out": ([_flat("\t#fire_only_once = no\n")], []),
     },
     "validate_log_not_first": {
         "log first": ([_flat(_effect(_LOG + _GAIN, "remove_effect"))], []),
@@ -1118,6 +1128,19 @@ def test_decision_check(monkeypatch, check, decisions, expected):
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
+
+
+@pytest.mark.parametrize("no_cache", [False, True])
+def test_one_run_parses_decisions_once(tmp_path, no_cache):
+    write_tree(tmp_path, {"common/decisions/X.txt": "cat = {\n\tdec_one = {\n\t}\n}\n"})
+    validator = V.Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=no_cache
+    )
+
+    first = V.parse_all_decision_factories(validator.mod_path)
+
+    assert first
+    assert V.parse_all_decision_factories(validator.mod_path) is first
 
 
 def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
@@ -2750,7 +2773,12 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
     "flags",
     (
         {},
-        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
+        {
+            "missing_icons": True,
+            "unannounced_categories": True,
+            "id_case": True,
+            "prefix_owner": True,
+        },
     ),
     ids=("default", "opt-in checks"),
 )
@@ -2768,8 +2796,10 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
-    assert parser.parse_args(["--naming-style"]).naming_style
-    assert not parser.parse_args([]).naming_style
+    assert parser.parse_args(["--id-case"]).id_case
+    assert not parser.parse_args([]).id_case
+    assert parser.parse_args(["--prefix-owner"]).prefix_owner
+    assert not parser.parse_args([]).prefix_owner
 
 
 _ICON = "\t\ticon = icon\n"
@@ -2835,6 +2865,7 @@ _FINDING_DECISIONS = {
     "temp_read": _block("available", "check_variable = { treasury > pay }")
     + _block("complete_effect", "set_temp_variable = { pay = 5 }"),
     "double_log": _block("complete_effect", 'log = "first"\nlog = "second"'),
+    "repeat_default": "\t\tfire_only_once = no\n",
 }
 _FINDINGS_MOD = {
     "common/decisions/categories/categories.txt": "cat_allowed = {\n"
@@ -2880,7 +2911,11 @@ _BACKLOG_WARNINGS = (
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
 )
-_PROMOTED_ERRORS = ("missing-decision-log", "decision-money-charged-late")
+_PROMOTED_ERRORS = (
+    "missing-decision-log",
+    "decision-money-charged-late",
+    "redundant-fire-only-once",
+)
 _REPORTED_CATEGORIES = (
     "missing-decision-localisation",
     *_PROMOTED_ERRORS,
@@ -3088,6 +3123,16 @@ _TIMER_CASES = {
         _TIMER + _block("targeted_modifier", "tag = FROM"),
         False,
     ),
+    "war_with_on_remove at the end": (
+        "timer_dec",
+        _TIMER + "\t\twar_with_on_remove = LIT\n",
+        False,
+    ),
+    "war_with_target_on_remove at the end": (
+        "timer_dec",
+        _TIMER + "\t\twar_with_target_on_remove = yes\n",
+        False,
+    ),
     "has_decision reads the timer": ("checked_timer", _TIMER, False),
     "mission": ("timer_dec", _TIMER + _MISSION_DAYS, False),
 }
@@ -3204,7 +3249,8 @@ def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows
         },
     )
 
-    validator.validate_naming_style()
+    validator.validate_id_case()
+    validator.validate_prefix_owner()
 
     assert issue_rows(validator) == rows
     assert validator.warnings_found == len(rows)

@@ -145,7 +145,8 @@ def test_resolve_tool_ignores_a_non_executable_candidate(monkeypatch, tmp_path):
     bun.chmod(0o644)
     monkeypatch.setattr(dev_setup.Path, "home", staticmethod(lambda: tmp_path))
 
-    assert dev_setup._resolve_tool("bun") == ["bun"]
+    # A machine-wide /usr/local/bin/bun may still win, so only the skip is pinned.
+    assert dev_setup._resolve_tool("bun") != [str(bun)]
 
 
 def test_resolve_tool_survives_an_unreadable_candidate(monkeypatch, tmp_path):
@@ -357,13 +358,24 @@ def test_check_hooks_installed_reports_a_missing_hook(monkeypatch, tmp_path, cap
     assert "Git hooks: MISSING" in capsys.readouterr().out
 
 
-def test_check_hooks_installed_accepts_a_pre_commit_hook(monkeypatch, tmp_path):
+@pytest.mark.parametrize(
+    ("hooks", "expected"),
+    [
+        (("pre-commit", "pre-push"), True),
+        (("pre-commit",), False),
+        (("pre-push",), False),
+    ],
+)
+def test_check_hooks_installed_requires_commit_and_push_hooks(
+    monkeypatch, tmp_path, hooks, expected
+):
     monkeypatch.setattr(dev_setup, "REPO_ROOT", tmp_path)
     monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: False)
     stub_run(monkeypatch, lambda cmd: completed(stdout=""))
-    write(tmp_path / ".git" / "hooks" / "pre-commit", "#!/bin/sh\nexec pre-commit\n")
+    for name in hooks:
+        write(tmp_path / ".git" / "hooks" / name, "#!/bin/sh\nexec pre-commit\n")
 
-    assert dev_setup.check_hooks_installed() is True
+    assert dev_setup.check_hooks_installed() is expected
 
 
 def test_check_hooks_installed_requires_the_venv_interpreter(
@@ -373,12 +385,16 @@ def test_check_hooks_installed_requires_the_venv_interpreter(
     monkeypatch.setattr(dev_setup, "in_virtualenv", lambda: True)
     monkeypatch.setattr(dev_setup, "venv_python_path", lambda: tmp_path / "python")
     stub_run(monkeypatch, lambda cmd: completed(stdout=""))
-    hook = tmp_path / ".git" / "hooks" / "pre-commit"
-    write(hook, "#!/bin/sh\nexec /usr/bin/python -m pre-commit\n")
+    hooks = [tmp_path / ".git" / "hooks" / name for name in ("pre-commit", "pre-push")]
+    for hook in hooks:
+        write(hook, "#!/bin/sh\nexec /usr/bin/python -m pre-commit\n")
 
     assert dev_setup.check_hooks_installed() is False
 
-    write(hook, f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
+    write(hooks[0], f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
+    assert dev_setup.check_hooks_installed() is False
+
+    write(hooks[1], f"#!/bin/sh\nexec {sys.executable} -m pre-commit\n")
     assert dev_setup.check_hooks_installed() is True
     assert "Git hooks: OK" in capsys.readouterr().out
 

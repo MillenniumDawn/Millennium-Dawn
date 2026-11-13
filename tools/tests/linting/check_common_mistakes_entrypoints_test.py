@@ -167,7 +167,7 @@ _DIVISION = "use multiplication instead of division (/ 100 -> * 0.01)"
                 (4, _DIVISION),
                 (
                     7,
-                    "has_trade_agreement_with is not a valid trigger -- use has_country_flag = trade_agreement@TAG",
+                    "has_trade_agreement_with is not a valid trigger -- use is_in_array = { trade_agreement_partners = TAG }",
                 ),
             ],
             id="faction rules and an unspaced division",
@@ -400,6 +400,23 @@ def test_stat_effect_magnitude_is_wired(tmp_path, scoped_refs):
     assert messages == [
         "add_war_support = 15 is at least 100% -- "
         "add_war_support takes a fraction (0.05 is 5%)"
+    ]
+
+
+def test_trade_modifier_outside_shared_effects_is_wired(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "events/MD_trade.txt",
+        "country_event = {",
+        "\toption = {",
+        "\t\tadd_opinion_modifier = { target = FROM modifier = mutual_trade_agreement }",
+        "\t}",
+        "}",
+    )
+    assert _matching(messages, "belongs to the shared effects") == [
+        "mutual_trade_agreement belongs to the shared effects in "
+        "common/scripted_effects/00_economic_effects.txt -- "
+        "call set_improved_trade_agreement instead"
     ]
 
 
