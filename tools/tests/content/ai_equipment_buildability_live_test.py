@@ -28,7 +28,7 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
     group = next(
         text[header : hi + 1]
         for name, _, hi, header in _iter_blocks(blank_comments(text), 0, len(text))
-        if name == "USA_APC_design"
+        if name == "USA_apc_design"
     )
     weapon = "main_armament_slot = small_autocannon_3"
     ammunition = "ammunition_load_slot = anti_infantry_autocannon_ammo_3"
@@ -43,8 +43,8 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
     )
     findings = analysis.findings
     assert [(record["design"], record["status"]) for record in analysis.records] == [
-        ("modern_APC_default", "incompatible" if historical else "checked"),
-        ("new_APC_default", "checked"),
+        ("modern_apc_default", "incompatible" if historical else "checked"),
+        ("new_apc_default", "checked"),
     ]
     assert_findings(
         [f"{issue.category}: {issue.message}" for issue in findings],
@@ -52,7 +52,7 @@ def test_usa_apc_ammunition_regression(live_equipment_index, historical):
             [
                 (
                     "ai-equipment-incompatible-ammo",
-                    "USA_APC_design/modern_APC_default",
+                    "USA_apc_design/modern_apc_default",
                     "small_autocannon_3",
                     "machine_gun_ammo",
                 )
@@ -139,10 +139,10 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
     (
         (
             "ALG - Algeria",
-            "SHARED_corvettes_1",
-            "SHARED_corvettes_1_corvette_hull_2",
-            "module_torpedoes_2",
-            "tech_torpedoes_2",
+            "ALG_frigates",
+            "ALG_frigate_1965",
+            "module_light_surface_diesel_power_1",
+            "tech_diesel_power_systems_1",
         ),
         (
             "ARG - Argentina",
@@ -155,8 +155,8 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
             "AST - Australia",
             "SHARED_frigates_2",
             "SHARED_frigates_2_frigate_hull_3",
-            "module_light_surface_diesel_power_1",
-            "tech_diesel_power_systems_1",
+            "module_analog_fire_control",
+            "tech_fire_control_1",
         ),
     ),
 )
