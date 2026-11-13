@@ -550,15 +550,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
 
-## validate_model_assets.py
+## validate_asset_data.py
 
-- Commit-stage only, since the CI workspace ships no meshes. Runs the
-  `tools/assets/audit_models.py` checks on staged `.mesh` and `.dds` files under
-  `gfx/models/`. Every finding is a WARNING named `model-<finding>`, for example
-  `model-zero-area-triangles` or `model-uncompressed`, while the backlog is fixed one
-  model at a time. Needs numpy and logs a skip without it. Which findings become
-  errors is still open in
-  [#6531](https://github.com/MillenniumDawn/Millennium-Dawn/issues/6531).
+- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
+  staged files only, so the existing model backlog blocks a commit only when one of
+  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
+  TGA or truncated data. Stdlib only, so it runs without numpy.
+- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
+  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
+  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
+  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
+  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
+  the texture format findings are WARNING, since the standards call them targets.
+  These need numpy and log a skip without it.
 
 ## validate_mio_icons.py
 

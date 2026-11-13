@@ -146,7 +146,7 @@ CI_EXEMPT = {
     "validate_unused_textures.py",
     # The CI workspace ships entity definitions but no meshes or textures.
     "validate_mesh_textures.py",
-    "validate_model_assets.py",
+    "validate_asset_data.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
@@ -1265,8 +1265,8 @@ def test_pytest_collection_gate_cannot_self_exclude():
     [
         ("md-validate-unused-textures", "always_run", True),
         ("md-validate-unused-textures", "pass_filenames", False),
-        # Warning-only, so the findings show only when pre-commit is verbose.
-        ("md-validate-model-assets", "verbose", True),
+        # Its warnings show on a passing commit only when pre-commit is verbose.
+        ("md-validate-asset-data", "verbose", True),
         # The dispatcher validates the whole staged set on every run.
         ("md-validate-content", "require_serial", True),
     ],

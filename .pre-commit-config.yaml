@@ -10,7 +10,7 @@
 #   pre-commit run --files path/to/file1 path/to/file2
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want. Exception: md-fix-styling and the
-# md-validate-{defines,descriptors,mesh-textures,model-assets} hooks read the
+# md-validate-{defines,descriptors,mesh-textures,asset-data} hooks read the
 # git index, so under --files they check what is staged, not the named files.
 #
 # `pre-commit install` installs both the pre-commit and pre-push hooks. Hooks
@@ -256,15 +256,16 @@ repos:
         language: system
         files: '^gfx/(models|entities)/'
         pass_filenames: false
-      - id: md-validate-model-assets
-        name: MD Validate 3D model mesh and texture data (warnings)
-        # Commit-stage only, like md-validate-mesh-textures. Warning-only
-        # while the backlog is fixed model by model, so verbose shows the
-        # findings on a passing run.
+      - id: md-validate-asset-data
+        name: MD Validate 3D model meshes and texture data
+        # Commit-stage only, like md-validate-mesh-textures. Triangle counts
+        # and texture formats are warnings, so verbose shows them on a
+        # passing run.
         entry: >-
-          python3 tools/validation/validate_model_assets.py --staged --no-color
+          python3 tools/validation/validate_asset_data.py --staged --strict
+          --no-color
         language: system
-        files: '^gfx/models/.*\.(mesh|dds)$'
+        files: '(?i)^((gfx|map)/.*\.dds|gfx/models/.*\.mesh)$'
         pass_filenames: false
         verbose: true
       - id: md-validate-unused-textures

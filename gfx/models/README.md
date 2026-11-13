@@ -57,7 +57,7 @@ It reports two things, both as errors:
 
 CI doesn't check out model files, so the pre-commit hook is the only check. Don't skip it on model commits.
 
-The `md-validate-model-assets` hook runs when you stage a `.mesh` or `.dds` under `gfx/models/`. It warns about broken mesh data, triangle counts over the target and texture formats, and never blocks the commit. It needs numpy (`pip install --group analysis`) and skips with a notice without it.
+The `md-validate-asset-data` hook runs when you stage a `.mesh` or `.dds`. It blocks the commit on broken mesh data (bad normals, tangents, triangles or bone weights) and on a `.dds` that holds PNG, JPEG or TGA data. It only warns about triangle counts over the target and texture formats. The mesh checks need numpy (`pip install --group analysis`) and skip with a notice without it. Repair a blocked mesh with `tools/assets/optimize_mesh.py --repair-only`.
 
 To check a whole model folder against the art standard, run the read-only audit on it:
 
