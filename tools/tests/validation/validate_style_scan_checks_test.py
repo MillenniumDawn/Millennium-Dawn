@@ -320,8 +320,8 @@ def test_indent_depth_has_its_own_category(tmp_path):
     v.run_validations()
 
     assert [i.category for i in v._issues] == ["indent-depth"]
-    assert v.errors_found == 0
-    assert v.warnings_found == 1
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
 
 
 def test_focus_named_event_option_is_not_reported_as_a_focus_standard(tmp_path):
