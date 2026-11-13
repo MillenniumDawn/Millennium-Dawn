@@ -116,6 +116,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_decisions.py
 
 - `missing-decision-log` (ERROR): a `complete_effect` with effects but no `log =`.
+- `redundant-fire-only-once` (ERROR): `fire_only_once = no` is the engine default.
+  Delete the line.
 - `undefined-unlock-tooltip-target` (ERROR): `unlock_decision_tooltip` and
   `unlock_decision_category_tooltip` name a definition the engine looks up at render. A
   stale name leaves the tooltip empty while the unlock still happens. The category form
@@ -151,13 +153,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
-  CI): the case rule in the stylization guide, and a prefix-owner rule still under
-  review. Existing ids are never renamed, so
-  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
+  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
+  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
+  tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
   skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
-  `SIL_bund_*`), so review the owner rule before enforcing it.
+  `SIL_bund_*`), so most findings are intended. Run it by hand to spot copy-paste
+  prefixes such as `VOJ_*` on Serbian decisions.
+- A `Decision <id>` or `Mission <id>` log naming another decision is caught by
+  `_check_decision_log_id` in `check_common_mistakes.py`, not here.
+  `tools/linting/fix_log_ids.py` rewrites it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -197,8 +204,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
   resource variables and scripted cost triggers still need manual review.
 - `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
-  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
-  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  reads. A `remove_effect`, a top-level `modifier`, `targeted_modifier`,
+  `war_with_on_remove`, or `war_with_target_on_remove`, or a `has_decision` naming the
+  decision anywhere in shipped script exempts it. Repeatable
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
@@ -600,7 +608,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - No pre-commit hook, so `common/dynamic_modifiers/` edits get no local signal.
 - `redundant-enable-gate` (ERROR): a top-level `always = yes`, `original_tag`, or `tag` in
   a dynamic modifier's own `enable`. See `common/dynamic_modifiers/README.md`.
-  `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk.
 - `dynamic-modifier-name-loc` (ERROR): a dynamic modifier needs a bare-name English key.
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
@@ -616,6 +623,27 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
   The owner is the idea, trait, or modifier name that holds the bonus. Do not
   blanket-exempt existing bonuses; review and explain each one (Issue #6371).
+- `weekly-stability-war-support-over-cap` (WARNING, always on): `stability_weekly` or
+  `war_support_weekly` above `0.05`, or a `*_weekly_factor` with an absolute value above
+  `0.25`. Flat weekly penalties are not flagged (Issue #6494).
+- `excessive-modifier-over-30-percent` (WARNING, always on): one `*_factor` or
+  `*_modifier` literal above `0.30`. Keys containing `cost`, starting with `expected_`,
+  or listed in `_NEGATIVE_BONUS_KEYS` (plus `*_worker_requirement_modifier` and
+  `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
+  `ai_*`, income, and weekly keys are skipped because they are AI weights or have
+  their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
+  number, not a percent. Keys defined with `value_type = number` in
+  `common/modifier_definitions/` are also skipped, including flat renewable capacity
+  and expected-spending tier adjustments. `tax_rate_change_multiplier_modifier`
+  is cost-style: a positive value raises the policy-change cost, so only negative
+  values below `-0.30` warn. With `--unbalanced-modifiers`, productivity growth keys
+  are skipped too, because that check owns them (Issue #6494).
+- Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
+  skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
+  dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
+  untimed `add_dynamic_modifier` grant keeps the source in scope, as does no grant at
+  all (decisions, static modifiers). Grants are read from `common/`, `events/`, and
+  `history/`.
 
 ## validate_on_actions.py
 
@@ -678,7 +706,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     allowances. A dynamic pick or `allowed_modules` filler suspends the check only if
     it can touch the ammo: the ammo slot itself, or a module that widens it. Forbidden
     modules cannot widen other slots, including through a category selector.
-  - Regression source: `USA_APC_design/modern_APC_default` before
+  - Regression source: `USA_apc_design/modern_apc_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
     the autocannon mismatch. The historical pattern now warns; the corrected
@@ -861,6 +889,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
+- `influence-gain-over-cap` and `influence-gain-under-floor` (WARNING): a literal
+  `percent_change` above 20, or above 0 and below 0.25, visible at a
+  `change_influence_percentage` call. The base is the last
+  `set_temp_variable = { percent_change = N }` in scope within 20 lines of the call.
+  Losses, variables, and expressions are not checked. Known gaps: `add_to`,
+  `subtract_from`, `multiply`, and `divide` after the set are not applied to the base,
+  and the effect clamps the base times its influence modifiers, so a flagged literal can
+  still land in range and an unflagged one can land outside it.
+- `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
+  scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
+  The target defaults to THIS, so the tag influences itself. Only a tag block counts;
+  any other scope change stops the check. `change_influence_percentage` restores the
+  caller's `tag_index` and `influence_target`, so a default never carries into the next
+  call, but an explicit value does.
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
@@ -916,6 +958,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `add_relation_modifier`.
 - Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
   and a `#` comment swallowed into a `log` string.
+- The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
+  `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
+  `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
+  bare modifier skips the partner arrays.
 - `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
@@ -963,6 +1009,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `validate_standardization.py` is manual. It runs the standardizers in memory and
   reports files they would rewrite. Pass `--all --no-color` for a full pass.
 - `validate_unused_textures.py` is a manual-stage hook. CI cannot run it.
+  A reference with a directory must match a file by full path. A bare filename, as
+  entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
+  Without a HOI4 install, missing references are warnings and include vanilla art.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`

@@ -9,7 +9,7 @@ from types import SimpleNamespace
 
 import pytest
 import run_all_validators as runner
-from shared.suite import write_text
+from shared.suite import write_text, write_under
 from validator_batches import ALL_SPECS
 
 
@@ -136,19 +136,19 @@ def test_a_line_that_is_not_a_number_sorts_first_in_its_file():
         pytest.param(None, "Event Chain", id="unreadable script"),
     ],
 )
-def test_validator_label_comes_from_the_script(tmp_path, write_path, source, label):
+def test_validator_label_comes_from_the_script(tmp_path, source, label):
     script = tmp_path / "validate_event_chain.py"
     if source is not None:
-        write_path(tmp_path, script.name, source)
+        write_under(tmp_path, script.name, source)
 
     assert runner._extract_label_from_script(str(script), "event-chain") == label
 
 
 def test_discovery_names_validators_from_their_scripts_in_name_order(
-    tmp_path, monkeypatch, write_path
+    tmp_path, monkeypatch
 ):
     scripts = [
-        str(write_path(tmp_path, name, 'TITLE = "STUB VALIDATION"\n'))
+        str(write_under(tmp_path, name, 'TITLE = "STUB VALIDATION"\n'))
         for name in ("validate_b_two.py", "validate_a.py")
     ]
     monkeypatch.setattr(runner, "list_files", lambda *_args, **_kwargs: scripts)
@@ -222,8 +222,8 @@ def test_launch_validator_closes_the_stderr_log_when_the_launch_fails(
         pytest.param("not json", (0, 0), id="unreadable sidecar"),
     ],
 )
-def test_read_validator_counts(tmp_path, write_path, sidecar, counts):
-    write_path(tmp_path, "stub.json", sidecar)
+def test_read_validator_counts(tmp_path, sidecar, counts):
+    write_under(tmp_path, "stub.json", sidecar)
 
     assert runner.read_validator_counts(str(tmp_path), "stub") == counts
 
@@ -640,23 +640,23 @@ def test_launch_validator_reports_an_unwritable_output_dir(tmp_path):
         )
 
 
-def test_print_stderr_tail_stays_silent_for_an_empty_log(tmp_path, capsys, write_path):
-    write_path(tmp_path, "stub.stderr.log", "\n\n")
+def test_print_stderr_tail_stays_silent_for_an_empty_log(tmp_path, capsys):
+    write_under(tmp_path, "stub.stderr.log", "\n\n")
 
     runner._print_stderr_tail(str(tmp_path), "stub")
 
     assert capsys.readouterr().out == ""
 
 
-def test_print_stderr_tail_prints_only_the_last_lines(tmp_path, capsys, write_path):
-    write_path(tmp_path, "stub.stderr.log", "one\ntwo\nthree\n")
+def test_print_stderr_tail_prints_only_the_last_lines(tmp_path, capsys):
+    write_under(tmp_path, "stub.stderr.log", "one\ntwo\nthree\n")
 
     runner._print_stderr_tail(str(tmp_path), "stub", max_lines=2)
 
     assert capsys.readouterr().out == "    two\n    three\n"
 
 
-def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_path):
+def test_report_lists_errors_warnings_and_crashed_validators(tmp_path):
     issues = [
         {
             "severity": "error",
@@ -673,7 +673,7 @@ def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_pat
             "line": 0,
         },
     ]
-    write_path(tmp_path, "one.json", json.dumps(issues))
+    write_under(tmp_path, "one.json", json.dumps(issues))
 
     report = runner.generate_combined_report(
         str(tmp_path), [("one", "one.py", "One")], ["Crashed"], use_colors=False
@@ -685,7 +685,7 @@ def test_report_lists_errors_warnings_and_crashed_validators(tmp_path, write_pat
     assert "1 VALIDATOR(S) CRASHED OR WROTE NO RESULT\n\n  - Crashed" in report
 
 
-def test_report_groups_several_issues_under_one_file(tmp_path, write_path):
+def test_report_groups_several_issues_under_one_file(tmp_path):
     issues = [
         {
             "severity": "error",
@@ -696,7 +696,7 @@ def test_report_groups_several_issues_under_one_file(tmp_path, write_path):
         }
         for n in (2, 1)
     ]
-    write_path(tmp_path, "one.json", json.dumps(issues))
+    write_under(tmp_path, "one.json", json.dumps(issues))
 
     report = runner.generate_combined_report(
         str(tmp_path), [("one", "one.py", "One")], [], use_colors=False

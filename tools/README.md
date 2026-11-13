@@ -29,7 +29,10 @@ available. It does not install system packages. After installing, reopen your
 terminal and run `python tools/dev_setup.py --check`.
 
 CI runs these Python quality checks on `tools/`. The commit hooks run Ruff, Black,
-and pylint on staged files only, plus mypy:
+and pylint on staged files only, plus mypy. The push hook runs the full tools test
+suite (about a minute) when a push changes `tools/` or config files. Clones set up
+before the push hook existed need `python tools/dev_setup.py` or `pre-commit install`
+once more:
 
 ```bash
 python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
@@ -90,13 +93,12 @@ into the real repository tree. Another worker may be scanning that tree.
 A test that reads live game files goes in `tools/tests/content/`. CI runs that
 directory once, in the `Content tests` job, on tools or game content changes. The
 tools test jobs skip it and check out only the game paths listed in the
-`tools-tests` checkout in `test-suite.yml`, which three live readers need:
+`tools-tests` checkout in `test-suite.yml`, which two live readers need:
 `estimate_gdp` loads `common/buildings/00_buildings.txt` and
-`common/scripted_effects/00_money_system.txt` at import, the common-mistakes lint
-cases resolve names from `common/decisions`, `common/modifiers`,
-`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`,
-and `balance/set_energy_tech_scurves_test.py` dry-runs against
-`common/technologies/industry.txt`. Every other test builds its input under
+`common/scripted_effects/00_money_system.txt` at import, and the common-mistakes
+lint cases resolve names from `common/decisions`, `common/modifiers`,
+`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`.
+Every other test builds its input under
 `tmp_path` or skips when the live tree is absent, so a new live reader belongs in
 `tools/tests/content/` or needs its path added to that checkout.
 Add regression coverage with changed validator, fixer, or report behavior. Run
@@ -181,8 +183,8 @@ not add more, and do not repeat an in-process case as a subprocess.
 
 A rule that depends on an external binary, such as ImageMagick, is tested on a stub
 of that binary, so it runs on every machine. At most a couple of tests drive the real
-binary, and they skip where it is missing. `tests/md_art_convert_test.py` is the
-model.
+binary, and they skip where it is missing. `tests/assets/md_art_convert_test.py` is
+the model.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
@@ -437,14 +439,56 @@ DDS conversion, GFX entry generation, texture and flag tools.
 
 | Script                         | Description                                                                       |
 | ------------------------------ | --------------------------------------------------------------------------------- |
+| **audit_models.py**            | Read-only report of broken mesh data, triangle budgets and model texture formats  |
 | **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
 | **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
+| **dds_mipmaps.py**             | Reports, adds or drops DDS mipmaps by folder rule; tints levels for game checks   |
+| **dds_standardize.py**         | Rewrites DDS files in their folder's art-standard format, with a quality gate     |
 | **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
 | **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
 | **flag-reference-checker.py**  | Validates flag references across the mod                                          |
 | **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **mesh_cap.py**                | Hard triangle cap behind `optimize_mesh.py --max-triangles`, part by part         |
+| **model_standards.py**         | Triangle targets, error limits and texture rules shared by the model tools        |
+| **optimize_mesh.py**           | Repairs and simplifies the mesh files you name, guarding thin parts               |
+| **pdx_mesh.py**                | Reader and writer for Paradox binary `.mesh` files                                |
 | **resize_decision_icons.py**   | Resizes wrong-slot decision icon art in place or as a sibling sprite              |
 | **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
+
+The model tools read their limits from `model_standards.py`, which mirrors the
+[3D Model Performance Guidelines](../docs/src/content/resources/3d-model-performance-guidelines.md).
+`audit_models.py` only reports. `optimize_mesh.py` takes mesh files, never folders, and
+prints what would change unless you pass `--write`. Do not run it over the whole model
+tree: check each changed model in game before committing it. Both need the `analysis`
+group; simplification also needs `pip install meshoptimizer==0.2.30a0`.
+
+`optimize_mesh.py --max-triangles N` goes further for models the guarded pass leaves over
+N. It cuts every connected part in proportion and may merge across hard edges and texture
+seams, so boxy models lose detail and textures can stretch. Use it one model at a time.
+
+`dds_mipmaps.py` follows the folder rule in `model_standards.py`: textures drawn on the
+3D map need mipmaps, GUI art should have none, and terrain, fonts and map arrows are
+left alone. `--fix` adds or drops the chain and never re-encodes the full-size image.
+`--tint` writes a debug copy with coloured levels, to see in game which level is drawn.
+
+`dds_standardize.py` applies the per-folder formats in `model_standards.py`, taken from the
+Art Standards. It replaces what the game's loader was not written for (DX10 headers, 16-
+and 24-bit texels, PNG or JPEG data under a `.dds` name), compresses the folders the
+standards list as compressed, and compresses other GUI art only when it passes the quality
+gate. Tech, focus and idea icons are never compressed. Mipmaps then follow the
+`dds_mipmaps.py` rule. It only prints unless you pass `--fix --write`. `--max-size N` also
+halves model textures until their longer side fits.
+
+```bash
+python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
+python3 tools/assets/optimize_mesh.py gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/optimize_mesh.py --write gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/dds_mipmaps.py gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --fix --write gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --tint in.dds out.dds
+python3 tools/assets/dds_standardize.py gfx/interface/technologies
+python3 tools/assets/dds_standardize.py --fix --write gfx/interface/technologies
+```
 
 ### Analysis (`analysis/`)
 
@@ -506,7 +550,7 @@ Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` w
 | ---------------------------------- | ----------------------------------------------------------------- |
 | **staged_validators_test.py**      | Tests staged validators using synthetic temporary files           |
 | **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues  |
-| **staged_harness_test.py**         | Checks that both harnesses fail on a crash, timeout, or no result |
+| **shared/staged_harness_test.py**  | Checks that both harnesses fail on a crash, timeout, or no result |
 
 Tests for individual validators live in `tests/validation/`:
 
