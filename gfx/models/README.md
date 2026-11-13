@@ -44,16 +44,17 @@ For a missing normal or specular map, reuse a shared one: `basic_normal.dds` and
 
 ## Checking your work
 
-The `md-validate-mesh-textures` pre-commit hook runs when you stage anything under `gfx/models/` or `gfx/entities/`. To run it by hand:
+The `md-validate-mesh-textures` pre-commit hook runs when you stage anything under `gfx/`. To run it by hand:
 
 ```bash
 python3 tools/validation/validate_mesh_textures.py --no-color
 ```
 
-It reports two things, both as errors:
+It reports two errors and a warning:
 
 - `mesh-texture-empty`: a rendered material still has an empty texture name after `meshsettings`.
 - `mesh-texture-missing`: a texture name matches no file in mod or vanilla `gfx/`. This check needs a local HoI4 install (set `HOI4_PATH` if it isn't found) and is skipped without one.
+- `mesh-texture-name-clash`: a texture name the model uses is carried by several files under `gfx/` with different content, so the game may load the wrong one. Give every model texture a name no other art under `gfx/` uses.
 
 CI doesn't check out model files, so the pre-commit hook is the only check. Don't skip it on model commits.
 

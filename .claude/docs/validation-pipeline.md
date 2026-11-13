@@ -42,7 +42,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   stages its output; stage the changed lines and retry when it makes a correction.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, `validate_mesh_textures.py`
-  on staged `gfx/models/` or `gfx/entities/` paths, and `validate_asset_data.py` on
+  on any staged `gfx/` path, and `validate_asset_data.py` on
   staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. The
   model checks never run in CI.
   On a merge commit the dispatcher checks only the conflicted files pre-commit passes,

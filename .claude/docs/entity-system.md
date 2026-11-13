@@ -90,7 +90,8 @@ Run `tools/validation/validate_mesh_textures.py` instead of a hand-rolled scan. 
 reporting a missing or empty texture in a `.mesh`, or copying textures between folders:
 
 - The engine finds mesh textures by filename anywhere under `gfx/`, not only in the
-  mesh's own folder. Vanilla relies on this.
+  mesh's own folder. Vanilla relies on this. So a tech icon or other art that shares
+  a model texture's file name can be loaded in its place.
 - Empty diffuse, normal, or spec names on `Collision` shader materials are by design.
   A slot absent from a material is also fine.
 - Skip `#`-commented `pdxmesh` blocks, and apply `meshsettings` (`name` is the shape,

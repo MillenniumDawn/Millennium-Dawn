@@ -549,6 +549,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
+- `mesh-texture-name-clash` (WARNING): a name a rendered material uses that two or
+  more MD files under `gfx/` carry with different content, reported once per name.
+  Identical copies pass. MD files only, not vanilla. Any staged `gfx/` file runs the
+  hook, since a new icon can clash. WARNING while `black.dds` and `C7NLD.dds` (a tech
+  icon and a model texture each) are renamed in a backlog PR, then ERROR.
 
 ## validate_asset_data.py
 

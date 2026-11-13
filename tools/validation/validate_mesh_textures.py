@@ -7,7 +7,9 @@ names anywhere under gfx/, so only two things are real defects: a rendered
 material whose texture name is an empty string, and a name no texture file
 carries. `Collision` materials never render and carry empty slots by design.
 A slot absent from the material is not reported: vanilla ships helper shapes
-(`dummyShape` in the bomber meshes) that way.
+(`dummyShape` in the bomber meshes) that way. A name that several MD files
+under gfx/ carry with different content is a warning: the game may load any
+of them.
 
 The CI workspace ships no meshes or textures, so this runs on commit.
 """
@@ -27,7 +29,8 @@ from validator_common import BaseValidator, run_validator_main, strip_comments
 
 SLOTS = {"diff": "texture_diffuse", "n": "texture_normal", "spec": "texture_specular"}
 TEXTURE_EXTENSIONS = (".dds", ".tga", ".png")
-SCOPE_DIRS = ("gfx/models", "gfx/entities")
+# A staged texture anywhere under gfx/ can clash with a model's texture name.
+SCOPE_DIRS = ("gfx",)
 
 PDXMESH_RE = re.compile(r"\bpdxmesh\s*=\s*\{", re.IGNORECASE)
 MESHSETTINGS_RE = re.compile(r"\bmeshsettings\s*=\s*\{", re.IGNORECASE)
@@ -180,16 +183,27 @@ def effective_materials(
     return result
 
 
-def _texture_names(root: str) -> Set[str]:
-    names: Set[str] = set()
-    for _dirpath, _dirs, files in os.walk(os.path.join(root, "gfx")):
-        names.update(f.lower() for f in files if f.lower().endswith(TEXTURE_EXTENSIONS))
-    return names
+def _texture_files(root: str) -> Dict[str, List[str]]:
+    """Each texture file name under gfx/, lower-cased, with the paths carrying it."""
+    files: Dict[str, List[str]] = {}
+    for dirpath, _dirs, names in os.walk(os.path.join(root, "gfx")):
+        for name in names:
+            if name.lower().endswith(TEXTURE_EXTENSIONS):
+                files.setdefault(name.lower(), []).append(os.path.join(dirpath, name))
+    return files
+
+
+def _contents_differ(paths: List[str]) -> bool:
+    contents = set()
+    for path in paths:
+        with open(path, "rb") as fh:
+            contents.add(fh.read())
+    return len(contents) > 1
 
 
 class Validator(BaseValidator):
     TITLE = "MESH TEXTURES"
-    STAGED_EXTENSIONS = [".mesh", ".gfx", ".asset", ".dds", ".tga"]
+    STAGED_EXTENSIONS = [".mesh", ".gfx", ".asset", ".dds", ".tga", ".png"]
 
     def run_validations(self):
         mod = Path(self.mod_path)
@@ -202,10 +216,11 @@ class Validator(BaseValidator):
         if not meshes:
             return
 
-        textures = _texture_names(self.mod_path)
+        mod_textures = _texture_files(self.mod_path)
+        textures = set(mod_textures)
         install = find_hoi4_install()
         if install:
-            textures |= _texture_names(install)
+            textures |= set(_texture_files(install))
         else:
             self.log(
                 "  No HoI4 install found; skipping unresolved-name checks "
@@ -213,6 +228,7 @@ class Validator(BaseValidator):
             )
 
         parsed: Dict[str, List[Material]] = {}
+        clash_checked: Set[str] = set()
         entries = findings = 0
         for gfx in list_files(mod / "gfx", ("*.gfx", "*.asset")):
             rel_gfx = Path(gfx).relative_to(mod).as_posix()
@@ -256,10 +272,9 @@ class Validator(BaseValidator):
                             rel_gfx,
                             line,
                         )
-                    if not install:
-                        continue
                     for slot, texture in material.textures.items():
-                        if texture and texture.lower() not in textures:
+                        key = texture.lower()
+                        if install and texture and key not in textures:
                             findings += 1
                             self.add_error(
                                 "mesh-texture-missing",
@@ -267,10 +282,37 @@ class Validator(BaseValidator):
                                 rel_gfx,
                                 line,
                             )
+                        paths = mod_textures.get(key, [])
+                        if len(paths) < 2 or key in clash_checked:
+                            continue
+                        clash_checked.add(key)
+                        findings += self._report_name_clash(
+                            f"{where} {slot} '{texture}'", paths, rel_gfx, line
+                        )
         self.log(
             f"  Scanned {entries} pdxmesh entries | {len(parsed)} meshes | "
             f"{findings} findings"
         )
+
+    def _report_name_clash(self, what, paths, rel_gfx, line) -> int:
+        mod = Path(self.mod_path)
+        names = ", ".join(sorted(Path(p).relative_to(mod).as_posix() for p in paths))
+        try:
+            differ = _contents_differ(paths)
+        except OSError as exc:
+            self.add_error("mesh-read-error", f"cannot read {names}: {exc}", rel_gfx)
+            return 1
+        if not differ:
+            return 0
+        self.add_warning(
+            "mesh-texture-name-clash",
+            f"{what} is carried by {len(paths)} files with different content "
+            f"({names}); the game may load any of them, so rename the ones the "
+            "model should not use",
+            rel_gfx,
+            line,
+        )
+        return 1
 
 
 if __name__ == "__main__":

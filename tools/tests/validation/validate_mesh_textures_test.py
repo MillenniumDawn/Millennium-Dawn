@@ -162,28 +162,64 @@ def test_unresolved_names_are_skipped_without_an_install(run):
     assert run(_mesh(("body", [("PdxMeshAdvanced", FULL)]))) == []
 
 
+# case: (texture files and their bytes, expected categories)
+_CLASH_CASES = {
+    "one file": ({"gfx/models/a_diffuse.dds": b"model"}, []),
+    "same name, different content": (
+        {"gfx/models/a_diffuse.dds": b"model", "gfx/interface/A_DIFFUSE.dds": b"icon"},
+        ["mesh-texture-name-clash"],
+    ),
+    "same name, same content": (
+        {"gfx/models/a_diffuse.dds": b"same", "gfx/interface/a_diffuse.dds": b"same"},
+        [],
+    ),
+    "name no model uses": (
+        {"gfx/models/z.dds": b"model", "gfx/interface/z.dds": b"icon"},
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "textures, expected", _CLASH_CASES.values(), ids=_CLASH_CASES.keys()
+)
+def test_texture_name_clash(run, tmp_path, textures, expected):
+    for rel_path, data in textures.items():
+        write_under(tmp_path, rel_path, "").write_bytes(data)
+    mesh = _mesh(("body", [("PdxMeshAdvanced", {"diff": "a_diffuse.dds"})]))
+
+    issues = run(mesh)
+
+    assert [i.category for i in issues] == expected
+    assert all(i.severity == "warning" for i in issues)
+
+
 def test_unreadable_mesh_is_reported(run):
     issues = run(b"@@b@?")
 
     assert [i.category for i in issues] == ["mesh-read-error"]
 
 
-def test_staged_mode_runs_only_for_model_paths(tmp_path, monkeypatch):
+def test_staged_mode_runs_only_for_gfx_paths(tmp_path, monkeypatch):
     path = tmp_path / MESH
     path.parent.mkdir(parents=True)
     path.write_bytes(_mesh(("body", [("PdxMeshAdvanced", {"diff": ""})])))
     write_under(tmp_path, ENTITY, _pdxmesh())
     monkeypatch.setattr(V, "find_hoi4_install", lambda: None)
 
-    monkeypatch.setenv("MD_STAGED_FILES", "gfx/interface/x.dds")
-    untouched = V.Validator(str(tmp_path), staged_only=True)
-    untouched.run_validations()
-    monkeypatch.setenv("MD_STAGED_FILES", MESH)
-    touched = V.Validator(str(tmp_path), staged_only=True)
-    touched.run_validations()
+    write_under(tmp_path, "interface/x.dds", "")
+    write_under(tmp_path, "gfx/interface/x.dds", "")
 
-    assert untouched._issues == []
-    assert [i.category for i in touched._issues] == ["mesh-texture-empty"]
+    def staged_run(path):
+        monkeypatch.setenv("MD_STAGED_FILES", path)
+        validator = V.Validator(str(tmp_path), staged_only=True)
+        validator.run_validations()
+        return [i.category for i in validator._issues]
+
+    assert staged_run("interface/x.dds") == []
+    assert staged_run(MESH) == ["mesh-texture-empty"]
+    # A new texture under gfx/ can clash with a model's texture name.
+    assert staged_run("gfx/interface/x.dds") == ["mesh-texture-empty"]
 
 
 def test_empty_tree_is_clean(tmp_path):
