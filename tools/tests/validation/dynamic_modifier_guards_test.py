@@ -8,8 +8,8 @@ a guard and proves nothing.
 
 import re
 
-import pytest
 import validate_dynamic_modifier_guards as V
+from shared.suite import write_under
 
 REMOVE = "remove_dynamic_modifier = {{ modifier = {name} }}"
 GUARDED = (
@@ -190,61 +190,22 @@ def test_removal_without_a_modifier_field_is_ignored():
     assert _findings("remove_dynamic_modifier = { }\n") == []
 
 
-# --- scan_file --------------------------------------------------------------
-
-
-def test_scan_file_relativizes_the_path_and_reports_the_line(tmp_path, monkeypatch):
-    monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    target = tmp_path / "common" / "decisions"
-    target.mkdir(parents=True)
-    path = target / "Iran.txt"
-    path.write_text(
-        "PER_purge = {\n\tcomplete_effect = {\n\t\t"
-        + REMOVE.format(name="PER_pan_iranist_attack")
-        + "\n\t}\n}\n",
-        encoding="utf-8",
-    )
-    findings = V.scan_file((str(path), str(tmp_path) + "/"))
-    assert findings == [
-        (
-            "common/decisions/Iran.txt",
-            3,
-            "remove_dynamic_modifier = { modifier = PER_pan_iranist_attack } is not "
-            "guarded by a check that PER_pan_iranist_attack is applied",
-        )
-    ]
-
-
-def test_scan_file_skips_files_without_the_effect(tmp_path):
-    path = tmp_path / "quiet.txt"
-    path.write_text("add_dynamic_modifier = { modifier = X }\n", encoding="utf-8")
-    assert V.scan_file((str(path), str(tmp_path) + "/")) == []
-
-
-def test_scan_file_reports_an_unreadable_path(tmp_path):
-    (tmp_path / "remove_dynamic_modifier.txt").mkdir()
-    args = (str(tmp_path / "remove_dynamic_modifier.txt"), str(tmp_path))
-    with pytest.raises(ValueError, match="Cannot scan"):
-        V.scan_file(args)
-
-
 # --- validator wiring -------------------------------------------------------
 
 
-def _validate(tmp_path, write_path, monkeypatch, script):
+def _validate(tmp_path, monkeypatch, script):
     import validator_common
 
     monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
-    write_path(tmp_path, "common/decisions/Italy.txt", script)
+    write_under(tmp_path, "common/decisions/Italy.txt", script)
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
     validator.run_validations()
     return validator
 
 
-def test_run_raises_an_error_per_unguarded_removal(tmp_path, write_path, monkeypatch):
+def test_run_raises_an_error_per_unguarded_removal(tmp_path, monkeypatch):
     validator = _validate(
         tmp_path,
-        write_path,
         monkeypatch,
         REMOVE.format(name="ITA_mafia_modifier") + "\n",
     )
@@ -263,12 +224,9 @@ def test_run_raises_an_error_per_unguarded_removal(tmp_path, write_path, monkeyp
     )
 
 
-def test_run_stays_quiet_when_every_removal_is_guarded(
-    tmp_path, write_path, monkeypatch
-):
+def test_run_stays_quiet_when_every_removal_is_guarded(tmp_path, monkeypatch):
     validator = _validate(
         tmp_path,
-        write_path,
         monkeypatch,
         GUARDED.format(name="ITA_mafia_modifier") + "\n",
     )

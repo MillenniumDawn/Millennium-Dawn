@@ -743,6 +743,7 @@ CHI_bri_grant_project_reward = {
 			limit = {
 				is_coastal = yes
 				infrastructure < 5
+				free_building_slots = { building = infrastructure size > 0 }
 			}
 			add_dynamic_modifier = { modifier = CHI_bri_state_port }
 			add_building_construction = {
@@ -760,7 +761,10 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_rail = yes
 		}
 		random_owned_controlled_state = {
-			limit = { infrastructure < 5 }
+			limit = {
+				infrastructure < 5
+				free_building_slots = { building = infrastructure size > 0 }
+			}
 			add_dynamic_modifier = { modifier = CHI_bri_state_rail }
 			add_building_construction = {
 				type = infrastructure
@@ -1125,21 +1129,21 @@ CHI_bri_schedule_application = {
 CHI_apply_demographic_policy = {
 	if = {
 		limit = { check_variable = { CHI_demographic_stage_applied = 1 } }
-		add_to_variable = { CHI_economy_monthly_population = 0.90 }
+		add_to_variable = { CHI_economy_monthly_population = 1.50 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.08 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.10 }
 		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.08 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_stage_applied = 2 } }
-		add_to_variable = { CHI_economy_monthly_population = 0.45 }
+		add_to_variable = { CHI_economy_monthly_population = 0.75 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.04 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.05 }
 		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.04 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_stage_applied = 3 } }
-		add_to_variable = { CHI_economy_monthly_population = 0.15 }
+		add_to_variable = { CHI_economy_monthly_population = 0.25 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.015 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.02 }
 		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.01 }
@@ -1148,21 +1152,21 @@ CHI_apply_demographic_policy = {
 	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
 	if = {
 		limit = { check_variable = { CHI_demographic_policy_stage = 1 } }
-		subtract_from_variable = { CHI_economy_monthly_population = 0.90 tooltip = monthly_population_tt }
+		subtract_from_variable = { CHI_economy_monthly_population = 1.50 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.08 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.10 tooltip = consumer_goods_factor_tt }
 		add_to_variable = { CHI_economy_total_workforce_modifier = 0.08 tooltip = total_workforce_modifier_tt }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
-		subtract_from_variable = { CHI_economy_monthly_population = 0.45 tooltip = monthly_population_tt }
+		subtract_from_variable = { CHI_economy_monthly_population = 0.75 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.04 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.05 tooltip = consumer_goods_factor_tt }
 		add_to_variable = { CHI_economy_total_workforce_modifier = 0.04 tooltip = total_workforce_modifier_tt }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
-		subtract_from_variable = { CHI_economy_monthly_population = 0.15 tooltip = monthly_population_tt }
+		subtract_from_variable = { CHI_economy_monthly_population = 0.25 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.015 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
 		add_to_variable = { CHI_economy_total_workforce_modifier = 0.01 tooltip = total_workforce_modifier_tt }
@@ -1793,12 +1797,10 @@ CHI_update_us_president_support = {
 			NOT = { check_variable = { CHI_us_president_applied = CHI_us_president_index } }
 		}
 		clr_country_flag = CHI_trump_is_president
-		clr_country_flag = CHI_harris_us_support_floor
-		add_to_variable = { var = CHI_taiwan_us_support value = CHI_us_president_delta tooltip = CHI_taiwan_us_support_tt }
-		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		if = {
-			limit = { check_variable = { CHI_us_president_index = 4 } }
-			set_country_flag = CHI_harris_us_support_floor
+			limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+			add_to_variable = { var = CHI_taiwan_us_support value = CHI_us_president_delta tooltip = CHI_taiwan_us_support_tt }
+			clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		}
 		if = {
 			limit = { check_variable = { CHI_us_president_index = 10 } }
@@ -2070,7 +2072,7 @@ CHI_bri_clear_loan = {
 CHI_TAI_recompute_isolation = {
 	# iso_index: +15 = fully isolated (0 recognisers), -15 = broadly recognised (30+)
 	set_temp_variable = { CHI_TAI_iso_index = 15 }
-	subtract_from_temp_variable = { CHI_TAI_iso_index = Granted_Recognition }
+	subtract_from_temp_variable = { CHI_TAI_iso_index = recognised_by^num }
 	clamp_temp_variable = { var = CHI_TAI_iso_index min = -15 max = 15 }
 
 	set_variable = { CHI_TAI_isolation_trade = CHI_TAI_iso_index }
@@ -2685,4 +2687,34 @@ CHI_initialize_party_bans = {
 	add_to_temp_array = { ban_except_array = 7 }
 	add_to_temp_array = { ban_except_array = 18 }
 	ban_all_parties_except_array = yes
+}
+
+CHI_SAR_match_ruling_party = {
+	hidden_effect = {
+		set_temp_variable = { overlord_to_match = CHI.id }
+		effect_puppet_match_ruling_party_to_overlord = yes
+		if = {
+			limit = { has_elections = yes }
+			set_elections_60_months = yes
+		}
+	}
+}
+
+CHI_SAR_become_non_state_actor = {
+	if = {
+		limit = { has_idea = lacks_international_recognition }
+		swap_ideas = {
+			remove_idea = lacks_international_recognition
+			add_idea = non_state_actor
+		}
+	}
+	else_if = {
+		limit = { NOT = { has_idea = non_state_actor } }
+		add_ideas = non_state_actor
+	}
+	if = {
+		limit = { has_idea = Major_Non_NATO_Ally }
+		NATO_major_non_nato_ally_leave = yes
+	}
+	clear_array = recognised_by
 }

@@ -12,7 +12,6 @@ import json
 import os
 import subprocess
 import sys
-import time
 from typing import Dict, List, Optional, Set, TextIO, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,7 +23,6 @@ from validator_batches import BATCHES, ValidatorSpec, select_for_changed_files
 
 RESULT_PREFIX = "validation-"
 MANIFEST_NAME = "batch-manifest.json"
-_POLL_SECONDS = 0.05
 
 
 def parse_changed_groups(raw: str) -> Optional[Set[str]]:
@@ -51,11 +49,11 @@ def _count_severity(json_path: str, severity: str) -> int:
     try:
         with open(json_path, "r", encoding="utf-8") as handle:
             issues = json.load(handle)
-        return sum(
-            1
-            for issue in issues
-            if isinstance(issue, dict) and issue.get("severity") == severity
-        )
+        if not isinstance(issues, list) or not all(
+            isinstance(issue, dict) for issue in issues
+        ):
+            return 0
+        return sum(1 for issue in issues if issue.get("severity") == severity)
     except (OSError, json.JSONDecodeError):
         return 0
 
@@ -65,12 +63,12 @@ def classify_result(spec, returncode: int, output_dir: str) -> Tuple[str, str]:
     log_path, json_path = _output_paths(output_dir, spec.name)
     has_log = os.path.isfile(log_path)
     has_json = os.path.isfile(json_path)
-    if returncode != 0 and not has_json:
-        return "crash", f"exit code {returncode}"
     if returncode != 0:
         errors = _count_severity(json_path, "error")
         warnings = _count_severity(json_path, "warning")
-        return "findings", f"{errors} error(s), {warnings} warning(s)"
+        if spec.strict and returncode == 1 and has_log and has_json and errors:
+            return "findings", f"{errors} error(s), {warnings} warning(s)"
+        return "crash", f"exit code {returncode}"
     if not has_log or not has_json:
         missing = []
         if not has_log:
@@ -112,6 +110,18 @@ def _write_manifest(
 def run_batch(specs: List[ValidatorSpec], args) -> int:
     mod_path = os.path.abspath(args.path)
     os.makedirs(args.output_dir, exist_ok=True)
+    for path in [os.path.join(args.output_dir, MANIFEST_NAME)] + [
+        path
+        for spec in specs
+        for path in (
+            *_output_paths(args.output_dir, spec.name),
+            os.path.join(args.output_dir, f"{RESULT_PREFIX}{spec.name}.analysis.jsonl"),
+        )
+    ]:
+        try:
+            os.unlink(path)
+        except FileNotFoundError:
+            pass
     max_parallel, inner_workers = split_cpu_budget(len(specs))
     if running_in_ci():
         # A runner owns its cores. Capping the product at the core count left
@@ -129,7 +139,6 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     pending = list(specs)
     failures: List[str] = []
     outcomes: Dict[str, Tuple[int, str, str]] = {}
-    specs_by_name = {spec.name: spec for spec in specs}
 
     def launch_next() -> None:
         if pending:
@@ -147,54 +156,31 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
                 f"{RESULT_PREFIX}{spec.name}",
                 mod_path,
                 output_filename=f"{RESULT_PREFIX}{spec.name}.log",
-                apply_extra_flags=False,
             )
 
     for _ in range(max_parallel):
         launch_next()
 
-    report_index = 0
-    while processes:
-        completed_name = None
-        while completed_name is None:
-            for name, (proc, _) in processes.items():
-                if proc.poll() is not None:
-                    completed_name = name
-                    break
-            if completed_name is None:
-                # Polling waits portably for completion without a second scheduler.
-                time.sleep(_POLL_SECONDS)
-
-        proc, stderr_fh = processes.pop(completed_name)
-        returncode = proc.wait()
-        stderr_fh.close()
-        launch_next()
-
-        spec = specs_by_name[completed_name]
+    finished = run_all_validators.finish_in_order(
+        processes, launch_next, [spec.name for spec in specs]
+    )
+    for spec, returncode in zip(specs, finished, strict=True):
         status, detail = classify_result(spec, returncode, args.output_dir)
         outcomes[spec.name] = (returncode, status, detail)
-
-        while report_index < len(specs):
-            report_spec = specs[report_index]
-            if report_spec.name not in outcomes:
-                break
-            _, report_status, report_detail = outcomes[report_spec.name]
-            if report_status == "ok":
-                print(f"OK {report_spec.name} ({report_spec.script})", flush=True)
-            else:
-                failures.append(report_spec.name)
-                print(
-                    f"FAILED {report_spec.name} ({report_spec.script}): "
-                    f"{report_status} — {report_detail}",
-                    flush=True,
+        if status == "ok":
+            print(f"OK {spec.name} ({spec.script})", flush=True)
+        else:
+            failures.append(spec.name)
+            print(
+                f"FAILED {spec.name} ({spec.script}): {status} — {detail}",
+                flush=True,
+            )
+            if status == "crash":
+                run_all_validators._print_stderr_tail(
+                    args.output_dir,
+                    f"{RESULT_PREFIX}{spec.name}",
+                    stream=sys.stderr,
                 )
-                if report_status == "crash":
-                    run_all_validators._print_stderr_tail(
-                        args.output_dir,
-                        f"{RESULT_PREFIX}{report_spec.name}",
-                        stream=sys.stderr,
-                    )
-            report_index += 1
 
     _write_manifest(
         "impact" if getattr(args, "impact", False) else "batch",

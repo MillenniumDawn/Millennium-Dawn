@@ -1,14 +1,14 @@
 """Tests for validate_influence_calls.
 
 `change_influence_percentage` defaults `influence_target` only when the temp
-variable is 0, and temp variables persist across `every_*` iterations, so a loop
-call without a per-iteration set locks onto the first iterated country
-(issue #4592: Spain's Hispanidad focus stacked ~20 passes onto Mexico).
+variable is 0, and the effect restores the caller's value afterward. A loop call
+that does not set the target on every pass reuses whatever the caller left from
+before the loop or an earlier pass (issue #4592: Spain's Hispanidad focus stacked
+~20 passes onto Mexico, before the effect restored its inputs).
 """
 
 import pytest
 import validate_influence_calls as V
-from shared.paths import REPO_ROOT as _MOD_ROOT
 
 LOOP_CALL = "change_influence_percentage = yes"
 FIXED = "\t\t\t\tset_temp_variable = { influence_target = THIS }"
@@ -352,15 +352,6 @@ def test_validator_reports_error_category(tmp_path):
     assert issues[0]["line"] == 1
 
 
-def test_spain_focus_tree_is_clean():
-    path = _MOD_ROOT / "common" / "national_focus" / "05_spain.txt"
-    raw = path.read_text(encoding="utf-8")
-    setter = "set_temp_variable = { influence_target = THIS }"
-    assert raw.count(setter) == 6
-    assert V.scan_file((str(path), str(_MOD_ROOT))) == []
-    assert len(V.scan_text(raw.replace(setter, ""))) == 6
-
-
 @pytest.mark.parametrize(
     "assignment, expected",
     [
@@ -382,17 +373,11 @@ def test_only_target_assignments_cover_calls(assignment, expected):
     assert len(_findings(script)) == expected
 
 
-@pytest.mark.parametrize("validator", [V, pytest.param(None, id="dynamic-modifier")])
-def test_scan_file_missing_input_fails(tmp_path, validator):
-    import validate_dynamic_modifier_guards
-
-    scanner = validator or validate_dynamic_modifier_guards
-    with pytest.raises(ValueError, match="Cannot scan"):
-        scanner.scan_file((str(tmp_path / "missing.txt"), str(tmp_path)))
-
-
-@pytest.mark.parametrize("wrapper", ["effect_tooltip", "limit", "if"])
-def test_nested_set_does_not_cover_later_call(wrapper):
+@pytest.mark.parametrize(
+    "wrapper,expected",
+    [("effect_tooltip", 1), ("limit", 1), ("if", 1), ("hidden_effect", 0)],
+)
+def test_nested_set_coverage_requires_an_executed_wrapper(wrapper, expected):
     script = (
         "every_country = { "
         + wrapper
@@ -400,4 +385,4 @@ def test_nested_set_does_not_cover_later_call(wrapper):
         + LOOP_CALL
         + " }"
     )
-    assert len(_findings(script)) == 1
+    assert len(_findings(script)) == expected

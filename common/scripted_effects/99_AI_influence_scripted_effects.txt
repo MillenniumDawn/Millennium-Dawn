@@ -1,231 +1,342 @@
-AI_select_influence_target = {
-	# Find country with the best sore possible
-	set_temp_variable = { AI_best_country = 0 }
-	set_temp_variable = { AI_best_country_score = -1 }
-
-	# Difficulty Based Minimums for the AI to influence
-	if = {
-		limit = { difficulty > 2 } # Veteran or higher
-		set_temp_variable = { AI_minimum_influence = 10 }
-	}
-	else_if = {
-		limit = { difficulty > 1 } # Regular
-		set_temp_variable = { AI_minimum_influence = 20 }
-	}
-	else_if = {
-		limit = { difficulty > 0 } # Normal
-		set_temp_variable = { AI_minimum_influence = 35 }
-	}
-	else = { # Civilian
-		set_temp_variable = { AI_minimum_influence = 50 }
+# Monthly AI influence turn, fired through influence.500 so ROOT and THIS are the AI
+ai_influence_pulse = {
+	update_auto_influence_array = yes
+	if = { limit = { check_variable = { auto_influence_months^num < 10 } }
+		resize_array = { array = auto_influence_months value = 0 size = 10 }
 	}
 
-	for_each_scope_loop = {
-		array = influence_targets
-		if = { limit = { THIS = { exists = yes } }
-
-			set_temp_variable = { AI_selected_country = THIS.id }
-			set_temp_variable = { AI_country_score = 0 }
-			AI_influence_country_selection_calculation = yes
-
-			# Check if this does not need to conduct influence condition
-			AI_do_not_conduct_influence_condition = yes
-
-			# Sets the new best country
-			if = { limit = { check_variable = { AI_country_score > AI_best_country_score } }
-				set_temp_variable = { AI_best_country_score = AI_country_score }
-				set_temp_variable = { AI_best_country = AI_selected_country }
-			}
-		}
+	# Slot budget: the auto-influence cap, trimmed by difficulty, PP income, the economy and our own independence.
+	# Difficulty also sets the lowest target score worth a slot.
+	set_temp_variable = { ai_slot_budget = auto_influence_cap }
+	set_temp_variable = { ai_min_score = 40 }
+	if = { limit = { difficulty < 1 }
+		clamp_temp_variable = { var = ai_slot_budget max = 1 }
+		set_temp_variable = { ai_min_score = 120 }
 	}
-}
-
-AI_do_not_conduct_influence_condition = {
-	PREV = {
-		if = {
-			limit = { has_war = yes }
-			add_to_temp_variable = { AI_country_score = -50 }
-		}
-		if = { limit = { political_power_daily < 2 }
-			add_to_temp_variable = { AI_country_score = -200 }
-		}
-		else = {
-			# Cumulative PP scoring — else_if stops at first match (descending order)
-			if = { limit = { political_power_daily > 10 }
-				add_to_temp_variable = { AI_country_score = 140 }
-			}
-			else_if = { limit = { political_power_daily > 8 }
-				add_to_temp_variable = { AI_country_score = 90 }
-			}
-			else_if = { limit = { political_power_daily > 6 }
-				add_to_temp_variable = { AI_country_score = 70 }
-			}
-			else_if = { limit = { political_power_daily > 5 }
-				add_to_temp_variable = { AI_country_score = 50 }
-			}
-			else_if = { limit = { political_power_daily > 4 }
-				add_to_temp_variable = { AI_country_score = 30 }
-			}
-			else_if = { limit = { political_power_daily > 3 }
-				add_to_temp_variable = { AI_country_score = 15 }
-			}
-			else_if = { limit = { political_power_daily > 2 }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
-		}
+	else_if = { limit = { difficulty < 2 }
+		clamp_temp_variable = { var = ai_slot_budget max = 2 }
+		set_temp_variable = { ai_min_score = 80 }
 	}
-}
-
-AI_influence_country_selection_calculation = {
+	else_if = { limit = { difficulty < 3 }
+		clamp_temp_variable = { var = ai_slot_budget max = 3 }
+		set_temp_variable = { ai_min_score = 60 }
+	}
+	# Each slot costs 1.5 PP a day and political_power_daily is already net of it, so size the budget on gross income.
+	# Every step keeps at least 0.5 PP a day spare.
+	set_temp_variable = { ai_gross_pp = political_power_daily }
+	add_to_temp_variable = { ai_gross_pp = auto_influence_cost }
+	if = { limit = { check_variable = { ai_gross_pp < 2 } }
+		set_temp_variable = { ai_slot_budget = 0 }
+	}
+	else_if = { limit = { check_variable = { ai_gross_pp < 3.5 } }
+		clamp_temp_variable = { var = ai_slot_budget max = 1 }
+	}
+	else_if = { limit = { check_variable = { ai_gross_pp < 5 } }
+		clamp_temp_variable = { var = ai_slot_budget max = 2 }
+	}
+	else_if = { limit = { check_variable = { ai_gross_pp < 6.5 } }
+		clamp_temp_variable = { var = ai_slot_budget max = 3 }
+	}
+	else = {
+		clamp_temp_variable = { var = ai_slot_budget max = 4 }
+	}
 	if = {
 		limit = {
-			is_ai = no
 			OR = {
-				difficulty > 2 # Veteran or higher
-				has_game_rule = {
-					rule = rule_god_of_war
-					option = yes
+				is_subject = yes
+				has_political_power < 0
+				has_active_mission = bankruptcy_incoming_collapse
+				has_active_mission = cheap_loan_from_the_imf_mission
+				check_variable = { domestic_influence_amount < 30 }
+			}
+		}
+		set_temp_variable = { ai_slot_budget = 0 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				ai_has_major_economic_problems = yes
+				ai_has_high_deficit = yes
+				check_variable = { domestic_influence_amount < 50 }
+			}
+		}
+		clamp_temp_variable = { var = ai_slot_budget max = 1 }
+	}
+	# Below 50 PP keep the slots we hold but take no new ones, so paying for an action does not drop them all
+	if = {
+		limit = {
+			has_political_power < 50
+			check_variable = { ai_slot_budget > auto_influence_users }
+		}
+		set_temp_variable = { ai_slot_budget = auto_influence_users }
+	}
+
+	# Age the slots; rank targets only when a slot is free or a year is up
+	set_temp_variable = { ai_needs_ranking = 0 }
+	for_each_loop = {
+		array = auto_influence_array
+		value = slot_target
+		index = slot_idx
+		if = { limit = { NOT = { check_variable = { slot_target = 0 } } }
+			add_to_variable = { auto_influence_months^slot_idx = 1 }
+			if = { limit = { check_variable = { auto_influence_months^slot_idx > 11 } }
+				set_temp_variable = { ai_needs_ranking = 1 }
+			}
+		}
+		# Slots emptied by annexation or a cap drop start fresh
+		else = {
+			set_variable = { auto_influence_months^slot_idx = 0 }
+		}
+	}
+	if = { limit = { check_variable = { auto_influence_users < ai_slot_budget } }
+		set_temp_variable = { ai_needs_ranking = 1 }
+	}
+	if = { limit = { check_variable = { ai_needs_ranking = 1 } }
+		get_sorted_scored_countries_temp = {
+			scorer = ai_influence_target_scorer
+			array = ai_influence_ranked
+			scores = ai_influence_ranked_scores
+		}
+	}
+
+	# Release slots past the budget, on gone or hostile targets, and year-old ones that fell out of the top ranks
+	set_temp_variable = { ai_kept_slots = 0 }
+	for_each_loop = {
+		array = auto_influence_array
+		value = slot_target
+		index = slot_idx
+		if = { limit = { NOT = { check_variable = { slot_target = 0 } } }
+			set_temp_variable = { ai_release_slot = 0 }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { var = ai_kept_slots value = ai_slot_budget compare = greater_than_or_equals }
+						NOT = { var:slot_target = { exists = yes } }
+						var:slot_target = {
+							OR = {
+								has_war_with = ROOT
+								AND = {
+									is_subject = yes
+									NOT = { is_subject_of = ROOT }
+								}
+							}
+						}
+					}
+				}
+				set_temp_variable = { ai_release_slot = 1 }
+			}
+			else_if = { limit = { check_variable = { auto_influence_months^slot_idx > 11 } }
+				set_temp_variable = { ai_slot_rank = -1 }
+				for_each_loop = {
+					array = ai_influence_ranked
+					value = ranked_target
+					index = rank_idx
+					if = { limit = { check_variable = { ranked_target = slot_target } }
+						set_temp_variable = { ai_slot_rank = rank_idx }
+					}
+				}
+				if = {
+					limit = {
+						OR = {
+							check_variable = { ai_slot_rank < 0 }
+							check_variable = { var = ai_slot_rank value = ai_slot_budget compare = greater_than_or_equals }
+							check_variable = { ai_influence_ranked_scores^ai_slot_rank < ai_min_score }
+						}
+					}
+					set_temp_variable = { ai_release_slot = 1 }
+				}
+				else = {
+					set_variable = { auto_influence_months^slot_idx = 0 }
+				}
+			}
+			if = { limit = { check_variable = { ai_release_slot = 1 } }
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: AI influence releases slot [?slot_idx] on [?var:slot_target.GetName]"
+				}
+				set_variable = { auto_influence_array^slot_idx = 0 }
+				set_variable = { auto_influence_months^slot_idx = 0 }
+				subtract_from_variable = { auto_influence_users = 1 }
+			}
+			else = {
+				add_to_temp_variable = { ai_kept_slots = 1 }
+			}
+		}
+	}
+
+	# Fill free slots from the top of the ranking
+	if = {
+		limit = {
+			check_variable = { ai_needs_ranking = 1 }
+			check_variable = { auto_influence_users < ai_slot_budget }
+		}
+		for_each_loop = {
+			array = ai_influence_ranked
+			value = ranked_target
+			index = rank_idx
+			if = {
+				limit = {
+					check_variable = { auto_influence_users < ai_slot_budget }
+					NOT = { check_variable = { ai_influence_ranked_scores^rank_idx < ai_min_score } }
+					NOT = { is_in_array = { auto_influence_array = ranked_target } }
+					var:ranked_target = { auto_influence_allowed = yes }
+				}
+				if = { limit = { is_debug = yes }
+					log = "[GetDateText]: [THIS.GetName]: AI influence commits to [?var:ranked_target.GetName], score [?ai_influence_ranked_scores^rank_idx]"
+				}
+				var:ranked_target = {
+					ROOT = { create_new_auto_influencer_request = yes }
 				}
 			}
 		}
-		add_to_temp_variable = { AI_country_score = 30 }
 	}
+	update_auto_influence_array = yes
 
-	# Check
-	if = { limit = { has_idea = non_state_actor }
-		add_to_temp_variable = { AI_country_score = -80 }
-	}
-
-	# Influence those who are in your faction or in your faction
-	if = { limit = { is_in_faction_with = PREV }
-		add_to_temp_variable = { AI_country_score = 25 }
-	}
-	if = {
-		limit = {
-			PREV = {
-				any_enemy_country = { is_in_faction_with = PREV.PREV }
-			}
-		}
-		add_to_temp_variable = { AI_country_score = -25 }
-	}
-
-	if = {
-		limit = { is_guaranteed_by = PREV }
-		add_to_temp_variable = { AI_country_score = 20 }
-	}
-	if = {
-		limit = { is_embargoed_by = PREV }
-		add_to_temp_variable = { AI_country_score = -15 }
-	}
-
-	if = { limit = { has_country_flag = trade_agreement@PREV }
-		add_to_temp_variable = { AI_country_score = 35 }
-	}
-	if = {
-		limit = { has_country_flag = mutual_investment_treaty_@PREV }
-		add_to_temp_variable = { AI_country_score = 35 }
-	}
-
-	# If already an influencer do more influencing
-	# Uses for_loop_effect instead of for_each_scope_loop to keep variable access on the target country
+	# One action a month. The starting slot rotates so one target does not take every action.
+	set_temp_variable = { ai_slot_count = auto_influence_cap }
+	clamp_temp_variable = { var = ai_slot_count min = 1 }
+	add_to_variable = { ai_action_slot_offset = 1 }
+	set_temp_variable = { ai_action_start = ai_action_slot_offset }
+	modulo_temp_variable = { ai_action_start = ai_slot_count }
+	set_variable = { ai_action_slot_offset = ai_action_start }
+	set_temp_variable = { ai_action_taken = 0 }
 	for_loop_effect = {
-		start = 0
-		end = influence_array^num
-		value = v
-		# Check if you're an influencer at ALL
-		if = { limit = { check_variable = { influence_array^v = PREV.id } }
-			add_to_temp_variable = { AI_country_score = 40 }
-
-			# If v is in one of the top three add more fluff
-			if = {
-				limit = { check_variable = { v = 0 } }
-				add_to_temp_variable = { AI_country_score = 25 }
+		end = ai_slot_count
+		value = slot_step
+		break = ai_action_taken
+		set_temp_variable = { slot_idx = slot_step }
+		add_to_temp_variable = { slot_idx = ai_action_start }
+		modulo_temp_variable = { slot_idx = ai_slot_count }
+		set_temp_variable = { slot_target = auto_influence_array^slot_idx }
+		if = { limit = { NOT = { check_variable = { slot_target = 0 } } }
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [THIS.GetName]: AI influence tries an action in slot [?slot_idx] on [?var:slot_target.GetName]"
 			}
-			if = {
-				limit = { check_variable = { v = 1 } }
-				add_to_temp_variable = { AI_country_score = 25 }
-			}
-			if = {
-				limit = { check_variable = { v = 2 } }
-				add_to_temp_variable = { AI_country_score = 25 }
-			}
-
-			# If v is greater than this in one of these slots then calculate that difference
-			if = {
-				limit = { check_variable = { influence_array_val^v > 24.99 } }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
-			if = {
-				limit = { check_variable = { influence_array_val^v > 34.99 } }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
-			if = {
-				limit = { check_variable = { influence_array_val^v > 49.99 } }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
-			if = {
-				limit = { check_variable = { influence_array_val^v > 54.99 } }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
-			if = {
-				limit = { check_variable = { influence_array_val^v > 75.99 } }
-				add_to_temp_variable = { AI_country_score = 5 }
-			}
+			var:slot_target = { ai_influence_take_action = yes }
 		}
 	}
-
-	# Same Outlook means they should influence more!
-	if = {
-		limit = {
-			has_government = PREV
-		}
-		add_to_temp_variable = { AI_country_score = 25 }
-	}
-
-	# Opinion Calculator
-	set_temp_variable = { opinion_value = opinion@PREV }
-	multiply_temp_variable = { opinion_value = 0.30 }
-	clamp_temp_variable = { var = opinion_value min = -75 max = 100 }
-	add_to_temp_variable = { AI_country_score = opinion_value }
-
-	# Same continent same vibe
-	if = {
-		limit = {
-			country_exists = PREV
-			is_on_same_continent_as = PREV
-		}
-		add_to_temp_variable = { AI_country_score = 25 }
-	}
-
-	set_temp_variable_to_random = {
-		var = randomizer_country_score
-		min = 0
-		max = 20
-		integer = yes
-	}
-	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
 }
 
-# purpose: remove permanent_influence_target or add permanent_influence_target
-# target_nation - The nation that is the nation we want to impact their investment targets
-# adding_nation - The nation that is being added to the investment targeted
+# One influence action against THIS for the AI influencer ROOT; sets ai_action_taken = 1 when one runs
+ai_influence_take_action = {
+	# Read by the manipulate politics check: our outlook's popularity in the target
+	ROOT = { set_current_outlook_id = yes }
+	set_outlook_popularity_array = yes
+	if = {
+		limit = {
+			NOT = { has_war_with = ROOT }
+			has_opinion = { target = ROOT value > 0 }
+			military_aid_available = yes
+		}
+		influence_military_aid_effect = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			ai_influence_historical_mode = no
+			ai_influence_in_action_reach = yes
+			make_puppet_action_available = yes
+		}
+		make_puppet_action = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			ai_influence_historical_mode = no
+			ai_influence_in_action_reach = yes
+			NOT = { is_ally_with = ROOT }
+			has_war = no
+			has_opinion = { target = ROOT value < 49 }
+			NOT = { is_in_array = { trade_agreement_partners = ROOT } }
+			coup_is_available = yes
+		}
+		influence_coup_effect = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			has_opinion = { target = ROOT value < 49 }
+			NOT = { check_variable = { outlook_popularity_by_id^current_outlook_id > 0.35 } }
+			manipulate_politics_action_available = yes
+		}
+		manipulate_politics_action = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { influence_array^0 > 0 }
+			NOT = { check_variable = { influence_array^0 = ROOT } }
+			ROOT = { NOT = { has_country_flag = ai_targeted_other_influencer@PREV } }
+			var:influence_array^0 = {
+				ROOT = {
+					OR = {
+						check_variable = { ai_strategy_antagonize@PREV > 0 }
+						check_variable = { ai_strategy_contain@PREV > 0 }
+					}
+				}
+			}
+			target_other_influence_available = yes
+		}
+		influence_target_other_effect = yes
+		ROOT = { set_country_flag = { flag = ai_targeted_other_influencer@PREV value = 1 days = 60 } }
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			NOT = { has_country_flag = recently_received_aid }
+			NOT = { has_country_flag = recently_refused_aid_from@ROOT }
+			OR = {
+				has_idea = recession
+				has_idea = depression
+				check_variable = { interest_rate > 5 }
+			}
+			ROOT = {
+				ai_has_deficit = no
+				ai_has_major_economic_problems = no
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+			economic_aid_available = yes
+		}
+		influence_economic_aid_effect = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+	else_if = {
+		limit = {
+			ai_influence_historical_mode = no
+			ai_influence_in_action_reach = yes
+			NOT = { is_ally_with = ROOT }
+			ROOT = {
+				OR = {
+					check_variable = { ai_strategy_antagonize@PREV > 0 }
+					check_variable = { ai_strategy_contain@PREV > 0 }
+				}
+			}
+			economic_exploitation_available = yes
+		}
+		economic_exploitation_action = yes
+		set_temp_variable = { ai_action_taken = 1 }
+	}
+}
+
+# Purpose: add a country to, or remove it from, the influence_targets the AI scorer reads
+# target_nation - The nation whose influence targets change
+# adding_nation - The nation that is being added as an influence target
 # remove_nation - Executes the removal version of this script
 change_permanent_influence_target = {
 	if = {
 		limit = {
-			NOT = { var:target_nation = { is_in_array = { permanent_influence_target = var:adding_nation } } }
+			NOT = { var:target_nation = { is_in_array = { influence_targets = var:adding_nation } } }
 			NOT = { check_variable = { adding_nation = 0 } }
 		}
 		custom_effect_tooltip = change_permanent_influence_target_tt
 		var:target_nation = {
-			add_to_array = { permanent_influence_target = var:adding_nation }
+			add_to_array = { influence_targets = var:adding_nation }
 		}
 	}
 	else_if = {
 		limit = { NOT = { check_variable = { remove_nation = 0 } } }
 		custom_effect_tooltip = change_permanent_influence_target_remove_tt
 		var:target_nation = {
-			remove_from_array = { permanent_influence_target = var:remove_nation }
+			remove_from_array = { influence_targets = var:remove_nation }
 		}
 	}
 }

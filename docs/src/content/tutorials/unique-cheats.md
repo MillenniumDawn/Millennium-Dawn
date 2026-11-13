@@ -79,6 +79,10 @@ The free factories game rule calls these effects for every human player at start
 
 These grant each equipment type by archetype, so the game picks the model. Tanks, aircraft and ships are designs, so use the vanilla `add_equipment <amount> <equipment>` command with a specific variant instead.
 
+### MIO Catalog
+
+`effect cheat_add_mio_contract_tokens` adds 15 Contract Tokens. Nations with their own MIOs spend one token per company unlocked from the Generic MIO Catalog, and normally cannot earn more. Other nations unlock catalog companies without tokens, so the cheat changes nothing for them. Each unlock also costs 50 political power.
+
 ### AI Political Power
 
 Use `effect cheat_add_ai_political_power_250`, `effect cheat_add_ai_political_power_500` or `effect cheat_add_ai_political_power_1000` to grant that much political power to every current AI country. The AI starting political power game rule calls the same effects. Repeating a command grants the amount again; newly created AI countries are unaffected until you run it again.
@@ -117,10 +121,10 @@ Each command makes that subideology your ruling party and adds 50% to its popula
 | Western     | `effect cheat_party_socialism`                  | Social Democrats              |
 | Emerging    | `effect cheat_party_communist_state`            | Communists                    |
 | Emerging    | `effect cheat_party_anarchist_communism`        | Left-Wing Radicals            |
-| Emerging    | `effect cheat_party_conservative`               | Reactionaries                 |
+| Emerging    | `effect cheat_party_reactionary`                | Reactionaries                 |
 | Emerging    | `effect cheat_party_autocracy`                  | Autocrats                     |
-| Emerging    | `effect cheat_party_mod_vilayat_e_faqih`        | Moderate Shiite Revolutionary |
-| Emerging    | `effect cheat_party_vilayat_e_faqih`            | Hardline Shiite Revolutionary |
+| Emerging    | `effect cheat_party_moderate_shiite`            | Moderate Shiite Revolutionary |
+| Emerging    | `effect cheat_party_hardline_shiite`            | Hardline Shiite Revolutionary |
 | Salafist    | `effect cheat_party_kingdom`                    | Pro-Establishment Salafism    |
 | Salafist    | `effect cheat_party_caliphate`                  | Salafi Jihadism               |
 | Non-Aligned | `effect cheat_party_neutral_muslim_brotherhood` | Moderate Islamists            |

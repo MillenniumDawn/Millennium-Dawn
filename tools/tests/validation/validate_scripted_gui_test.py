@@ -1,6 +1,10 @@
 """Tests for scripted GUI parsing."""
 
+import sys
+
+import pytest
 import validate_scripted_gui as V
+from shared.suite import write_under
 from validate_scripted_gui import _parse_scripted_gui_text
 
 
@@ -78,16 +82,16 @@ _SGUI = """scripted_gui = {
 """
 
 
-def _repo(tmp_path, write_path):
-    write_path(tmp_path, "interface/windows.gui", _GUI)
-    write_path(tmp_path, "interface/notes.txt", "not a gui file\n")
-    write_path(tmp_path, "common/scripted_guis/main.txt", _SGUI)
-    write_path(tmp_path, "common/ideas/notes.md", "not scanned\n")
-    write_path(tmp_path, "events/writes.txt", "set_variable = { written_var = 1 }\n")
-    write_path(
+def _repo(tmp_path):
+    write_under(tmp_path, "interface/windows.gui", _GUI)
+    write_under(tmp_path, "interface/notes.txt", "not a gui file\n")
+    write_under(tmp_path, "common/scripted_guis/main.txt", _SGUI)
+    write_under(tmp_path, "common/ideas/notes.md", "not scanned\n")
+    write_under(tmp_path, "events/writes.txt", "set_variable = { written_var = 1 }\n")
+    write_under(
         tmp_path, "localisation/english/gui_l_english.yml", 'l_english:\n k:0 "ok"\n'
     )
-    write_path(tmp_path, "localisation/english/notes.txt", "not a loc file\n")
+    write_under(tmp_path, "localisation/english/notes.txt", "not a loc file\n")
 
 
 def _run(tmp_path, **kwargs):
@@ -98,8 +102,8 @@ def _run(tmp_path, **kwargs):
     return validator
 
 
-def test_resolvable_parent_windows_and_containers_are_clean(tmp_path, write_path):
-    _repo(tmp_path, write_path)
+def test_resolvable_parent_windows_and_containers_are_clean(tmp_path):
+    _repo(tmp_path)
 
     validator = _run(tmp_path)
 
@@ -112,8 +116,8 @@ def test_resolvable_parent_windows_and_containers_are_clean(tmp_path, write_path
     ]
 
 
-def test_undecodable_inputs_are_reported_and_skipped(tmp_path, write_path):
-    _repo(tmp_path, write_path)
+def test_undecodable_inputs_are_reported_and_skipped(tmp_path):
+    _repo(tmp_path)
     latin1 = b'name = "caf\xe9"\n'
     (tmp_path / "interface" / "broken.gui").write_bytes(latin1)
     (tmp_path / "common" / "scripted_guis" / "broken.txt").mkdir()
@@ -127,9 +131,9 @@ def test_undecodable_inputs_are_reported_and_skipped(tmp_path, write_path):
     assert [i.category for i in validator._issues] == ["DIRTY_VAR_UNDEFINED"]
 
 
-def test_repeated_bang_ref_on_one_line_is_reported_once(tmp_path, write_path):
-    _repo(tmp_path, write_path)
-    write_path(
+def test_repeated_bang_ref_on_one_line_is_reported_once(tmp_path):
+    _repo(tmp_path)
+    write_under(
         tmp_path,
         "localisation/english/bang_l_english.yml",
         'l_english:\n k:0 "[!never_click] then [!never_click]"\n',
@@ -140,9 +144,9 @@ def test_repeated_bang_ref_on_one_line_is_reported_once(tmp_path, write_path):
     assert [i.category for i in validator._issues].count("DEAD_BANG_REF") == 1
 
 
-def test_dirty_check_survives_a_missing_events_directory(tmp_path, write_path):
-    write_path(tmp_path, "interface/windows.gui", _GUI)
-    write_path(
+def test_dirty_check_survives_a_missing_events_directory(tmp_path):
+    write_under(tmp_path, "interface/windows.gui", _GUI)
+    write_under(
         tmp_path,
         "common/scripted_guis/main.txt",
         "scripted_gui = {\n"
@@ -158,10 +162,8 @@ def test_dirty_check_survives_a_missing_events_directory(tmp_path, write_path):
     assert [i.category for i in validator._issues] == ["DIRTY_VAR_UNDEFINED"]
 
 
-def test_staged_mode_suppresses_findings_outside_the_staged_set(
-    tmp_path, write_path, monkeypatch
-):
-    _repo(tmp_path, write_path)
+def test_staged_mode_suppresses_findings_outside_the_staged_set(tmp_path, monkeypatch):
+    _repo(tmp_path)
     monkeypatch.setenv("MD_STAGED_FILES", "interface/windows.gui")
 
     validator = _run(tmp_path, staged_only=True)
@@ -174,9 +176,9 @@ def test_repo_without_interface_or_scripted_guis_is_a_clean_pass(tmp_path):
     assert validator._issues == []
 
 
-def test_dirty_bound_to_engine_timer_is_flagged(tmp_path, write_path):
-    write_path(tmp_path, "interface/windows.gui", _GUI)
-    write_path(
+def test_dirty_bound_to_engine_timer_is_flagged(tmp_path):
+    write_under(tmp_path, "interface/windows.gui", _GUI)
+    write_under(
         tmp_path,
         "common/scripted_guis/main.txt",
         "scripted_gui = {\n"
@@ -201,9 +203,9 @@ def test_dirty_bound_to_engine_timer_is_flagged(tmp_path, write_path):
     assert "dirty = global.num_days" in validator._issues[1].message
 
 
-def test_dirty_bound_to_written_counter_is_clean(tmp_path, write_path):
-    write_path(tmp_path, "interface/windows.gui", _GUI)
-    write_path(
+def test_dirty_bound_to_written_counter_is_clean(tmp_path):
+    write_under(tmp_path, "interface/windows.gui", _GUI)
+    write_under(
         tmp_path,
         "common/scripted_guis/main.txt",
         "scripted_gui = {\n"
@@ -213,7 +215,7 @@ def test_dirty_bound_to_written_counter_is_clean(tmp_path, write_path):
         "\t}\n"
         "}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "events/writes.txt",
         "add_to_variable = { global.my_counter = 1 }\n",
@@ -224,9 +226,9 @@ def test_dirty_bound_to_written_counter_is_clean(tmp_path, write_path):
     assert validator._issues == []
 
 
-def test_dead_handlers_are_reported_in_name_order(tmp_path, write_path):
+def test_dead_handlers_are_reported_in_name_order(tmp_path):
     names = [f"gone_{letter}" for letter in "jihgfedcba"]
-    write_path(
+    write_under(
         tmp_path,
         "common/scripted_guis/main.txt",
         "scripted_gui = {\n\tquiet = {\n\t\tcontext_type = player_context\n\t}\n"
@@ -247,3 +249,238 @@ def test_dead_handlers_are_reported_in_name_order(tmp_path, write_path):
         )
         for name in sorted(names)
     ]
+
+
+@pytest.mark.parametrize(
+    "name, expected",
+    [("name_", True), ("x_TAG_y", True), ("ordinary", False)],
+)
+def test_template_names(name, expected):
+    assert V._looks_like_template(name) is expected
+
+
+def test_normalise_path():
+    assert V._normalise_path(r"./common\\x.txt") == "common//x.txt"
+
+
+def test_gui_parser_records_named_elements_and_windows():
+    parsed = V._parse_gui_text(
+        'containerWindowType = { name = "window" }\n'
+        "buttonType = { name = button }\n"
+        "buttonType = { visible = yes }\n",
+        "interface/test.gui",
+    )
+    assert set(parsed["elements"]) == {"window", "button"}
+    assert parsed["containers"] == ["window"]
+    assert parsed["windows"] == ["window"]
+    assert parsed["unsupported_button_origos"] == []
+
+
+def test_gui_parser_skips_an_unclosed_block():
+    assert V._parse_gui_text("buttonType = {", "interface/broken.gui") == {
+        "elements": {},
+        "element_files": {},
+        "containers": [],
+        "windows": [],
+        "unsupported_button_origos": [],
+    }
+
+
+def test_button_origo_reports_only_direct_button_properties(tmp_path):
+    gui = """containerWindowType = {
+ name = "legal_container"
+ origo = center
+ buttonType = {
+  name = "bad_button"
+  text = "quoted { origo = not_a_property }"
+  # origo = commented_out
+  OrIgO = center # } ignored comment brace
+  iconType = { name = "nested_icon" origo = center }
+  containerWindowType = {
+   name = "nested_container"
+   origo = center
+   BuTtOnTyPe = {
+    name = "nested_bad_button"
+    ORIGO = center
+   }
+  }
+ }
+}
+buttonType = {
+ origo = center
+}
+"""
+    write_under(tmp_path, "interface/nested.gui", gui)
+
+    validator = _run(tmp_path)
+
+    assert [
+        (issue.category, issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 8),
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 15),
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 21),
+    ]
+
+
+def test_scripted_gui_parser_reads_every_field():
+    blocks, triggers = _parse_scripted_gui_text(
+        "scripted_gui = {\n\tname = {\n"
+        "\t\tcontext_type = player_context\n"
+        "\t\twindow_name = window\n"
+        "\t\tparent_window_name = parent\n"
+        "\t\tparent_window_token = token\n"
+        "\t\tdirty = global.x\n"
+        "\t\tai_test_scopes = test_self_country\n"
+        "\t\tentry_container = foo_TAG_bar\n"
+        "\t\tbutton_alt_control_click_enabled = { }\n"
+        "\t}\n}\n",
+        "common/scripted_guis/x.txt",
+    )
+    assert blocks[0]["parent_window_token"] == "token"
+    assert "button_alt_control_click_enabled" in triggers
+
+
+def test_scripted_gui_parser_skips_an_unclosed_block():
+    assert _parse_scripted_gui_text("scripted_gui = { bad = {", "x.txt") == ([], set())
+
+
+def test_variable_writes_and_reads():
+    assert V._parse_var_writes_text(
+        "set_global_variable = { global.written = 1 }\n"
+        "set_variable = { var = ROOT.local }\n"
+        "global.read = yes\n"
+        "dirty = global.only_dirty\n"
+    ) == ({"written", "local"}, {"written", "read"})
+
+
+def test_full_run_reports_every_cross_reference_category(tmp_path):
+    write_under(
+        tmp_path,
+        "interface/windows.gui",
+        "containerWindowType = {\n"
+        "\tname = good_window\n"
+        "\tbuttonType = { name = good_button }\n"
+        "}\n",
+    )
+    write_under(
+        tmp_path,
+        "common/scripted_guis/test.txt",
+        """scripted_gui = {
+\tgood = {
+\t\tcontext_type = selected_country_context
+\t\twindow_name = good_window
+\t\tdirty = global.written
+\t\tai_test_scopes = test_self_country
+\t\tgood_button_click = { }
+\t}
+\tbad = {
+\t\tcontext_type = invalid_context
+\t\twindow_name = missing_window
+\t\tparent_window_name = missing_parent
+\t\tdirty = local_var
+\t\tai_test_scopes = invalid_scope
+\t\tmissing_button_visible = { }
+\t\tentry_container = missing_container
+\t\tentry_container = foo_TAG_bar
+\t}
+\tplayer_scopes = {
+\t\tcontext_type = player_context
+\t\tai_test_scopes = test_self_country
+\t}
+\tselected_bad = {
+\t\tcontext_type = selected_country_context
+\t\tai_test_scopes = invalid_scope
+\t}
+\tvanilla = {
+\t\tcontext_type = player_context
+\t\twindow_name = top_bar
+\t\tparent_window_name = top_bar_instance
+\t}
+\tno_context = { dirty = yes }
+\tglobal_none = { dirty = global.never_written }
+}
+""",
+    )
+    write_under(
+        tmp_path,
+        "events/writes.txt",
+        "set_global_variable = { global.written = 1 }\nglobal.local_var = yes\n",
+    )
+    write_under(
+        tmp_path,
+        "localisation/english/gui_l_english.yml",
+        'l_english:\nkey:0 "[!good_button_click] [!never_click]"\n',
+    )
+
+    validator = _run(tmp_path)
+
+    assert {issue.category for issue in validator._issues} == {
+        "DEAD_HANDLER",
+        "DEAD_BANG_REF",
+        "MISSING_WINDOW",
+        "MISSING_PARENT_WINDOW",
+        "MISSING_ENTRY_CONTAINER",
+        "INVALID_CONTEXT_TYPE",
+        "DIRTY_SCOPE_MISMATCH",
+        "DIRTY_VAR_UNDEFINED",
+        "INVALID_AI_TEST_SCOPE",
+        "AI_TEST_SCOPES_NOT_APPLICABLE",
+    }
+    assert any("global.never_written" in issue.message for issue in validator._issues)
+
+
+def _clean_repo(tmp_path):
+    write_under(
+        tmp_path, "interface/good.gui", "containerWindowType = { name = good_window }\n"
+    )
+    write_under(
+        tmp_path,
+        "common/scripted_guis/good.txt",
+        "scripted_gui = { good = { context_type = player_context } }\n",
+    )
+    write_under(tmp_path, "localisation/english/good.yml", 'l_english:\nkey:0 "ok"\n')
+
+
+@pytest.mark.parametrize("staged_only", [False, True], ids=["full", "staged"])
+def test_clean_repo_passes(tmp_path, monkeypatch, staged_only):
+    _clean_repo(tmp_path)
+    monkeypatch.setenv("MD_STAGED_FILES", str(tmp_path / "interface/good.gui"))
+    assert _run(tmp_path, staged_only=staged_only)._issues == []
+
+
+# case: (path argument relative to the repo, exit code)
+@pytest.mark.parametrize(
+    "path, code", [(".", 0), ("missing", 1)], ids=["repo", "missing"]
+)
+def test_cli_exit_code(tmp_path, monkeypatch, path, code):
+    _clean_repo(tmp_path)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["validate_scripted_gui.py", "--path", str(tmp_path / path), "--workers", "1"],
+    )
+    with pytest.raises(SystemExit) as result:
+        V.main()
+    assert result.value.code == code
+
+
+def test_button_origo_fails_strict_cli(tmp_path, monkeypatch):
+    _clean_repo(tmp_path)
+    write_under(
+        tmp_path,
+        "interface/good.gui",
+        "containerWindowType = { name = good_window }\n"
+        "buttonType = { origo = center }\n",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["validate_scripted_gui.py", "--path", str(tmp_path), "--strict"],
+    )
+
+    with pytest.raises(SystemExit) as result:
+        V.main()
+
+    assert result.value.code == 1

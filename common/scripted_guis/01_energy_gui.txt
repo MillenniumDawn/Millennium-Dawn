@@ -51,11 +51,13 @@ scripted_gui = {
 				NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				NOT = { has_active_mission = energy_building_battery_parks }
 				has_tech = utility_scale_battery_storage
+				has_battery_park_construction_space = yes
 			}
 			build_battery_park_button_shift_click_enabled = {
 				NOT = { has_active_mission = bankruptcy_incoming_collapse }
 				NOT = { has_active_mission = energy_building_battery_parks }
 				has_tech = utility_scale_battery_storage
+				has_battery_park_construction_space = yes
 			}
 			buy_fuel_for_money_button_click_enabled = {
 				NOT = { has_active_mission = bankruptcy_incoming_collapse }
@@ -68,7 +70,7 @@ scripted_gui = {
 				}
 			}
 			enable_nuclear_reactor_fuel_production_click_enabled = {
-				has_tech = reactor1
+				has_tech = reactor_01
 				has_enrichment_facilities = yes
 			}
 		}
@@ -129,6 +131,7 @@ scripted_gui = {
 					}
 					else = { add_ideas = heavy_power_restrictions_spirit }
 				}
+				else = { show_ideas_tooltip = heavy_power_restrictions_spirit }
 				if = {
 					limit = {
 						OR = {
@@ -137,10 +140,12 @@ scripted_gui = {
 							has_idea = heavy_additional_consumption_spirit
 						}
 					}
-					remove_ideas = {
-						some_power_restrictions_spirit
-						some_additional_consumption_spirit
-						heavy_additional_consumption_spirit
+					hidden_effect = {
+						remove_ideas = {
+							some_power_restrictions_spirit
+							some_additional_consumption_spirit
+							heavy_additional_consumption_spirit
+						}
 					}
 				}
 				update_energy_policy_change = yes
@@ -175,6 +180,7 @@ scripted_gui = {
 					}
 					else = { add_ideas = some_power_restrictions_spirit }
 				}
+				else = { show_ideas_tooltip = some_power_restrictions_spirit }
 				if = {
 					limit = {
 						OR = {
@@ -183,10 +189,12 @@ scripted_gui = {
 							has_idea = heavy_additional_consumption_spirit
 						}
 					}
-					remove_ideas = {
-						heavy_power_restrictions_spirit
-						some_additional_consumption_spirit
-						heavy_additional_consumption_spirit
+					hidden_effect = {
+						remove_ideas = {
+							heavy_power_restrictions_spirit
+							some_additional_consumption_spirit
+							heavy_additional_consumption_spirit
+						}
 					}
 				}
 				update_energy_policy_change = yes
@@ -221,11 +229,13 @@ scripted_gui = {
 							has_idea = heavy_additional_consumption_spirit
 						}
 					}
-					remove_ideas = {
-						heavy_power_restrictions_spirit
-						some_power_restrictions_spirit
-						some_additional_consumption_spirit
-						heavy_additional_consumption_spirit
+					hidden_effect = {
+						remove_ideas = {
+							heavy_power_restrictions_spirit
+							some_power_restrictions_spirit
+							some_additional_consumption_spirit
+							heavy_additional_consumption_spirit
+						}
 					}
 				}
 				update_energy_policy_change = yes
@@ -260,6 +270,7 @@ scripted_gui = {
 					}
 					else = { add_ideas = some_additional_consumption_spirit }
 				}
+				else = { show_ideas_tooltip = some_additional_consumption_spirit }
 				if = {
 					limit = {
 						OR = {
@@ -268,10 +279,12 @@ scripted_gui = {
 							has_idea = heavy_additional_consumption_spirit
 						}
 					}
-					remove_ideas = {
-						heavy_power_restrictions_spirit
-						some_power_restrictions_spirit
-						heavy_additional_consumption_spirit
+					hidden_effect = {
+						remove_ideas = {
+							heavy_power_restrictions_spirit
+							some_power_restrictions_spirit
+							heavy_additional_consumption_spirit
+						}
 					}
 				}
 				update_energy_policy_change = yes
@@ -306,6 +319,7 @@ scripted_gui = {
 					}
 					else = { add_ideas = heavy_additional_consumption_spirit }
 				}
+				else = { show_ideas_tooltip = heavy_additional_consumption_spirit }
 				if = {
 					limit = {
 						OR = {
@@ -314,10 +328,12 @@ scripted_gui = {
 							has_idea = some_additional_consumption_spirit
 						}
 					}
-					remove_ideas = {
-						heavy_power_restrictions_spirit
-						some_power_restrictions_spirit
-						some_additional_consumption_spirit
+					hidden_effect = {
+						remove_ideas = {
+							heavy_power_restrictions_spirit
+							some_power_restrictions_spirit
+							some_additional_consumption_spirit
+						}
 					}
 				}
 				update_energy_policy_change = yes
@@ -424,6 +440,7 @@ scripted_gui = {
 		ai_check = {
 			# The AI ignores _click_enabled, so mirror those guards here.
 			OR = {
+				ai_race_ai_needs_fossil_fuel = yes
 				AND = {
 					has_fuel < 400000
 					NOT = { has_country_flag = recently_bought_fuel }
@@ -438,6 +455,17 @@ scripted_gui = {
 			buy_fuel_for_money_button_click = {
 				ai_will_do = {
 					factor = 100
+					modifier = {
+						factor = 2
+						ai_race_ai_needs_fossil_fuel = yes
+					}
+					modifier = {
+						factor = 0
+						OR = {
+							check_variable = { treasury < 0.1 }
+							has_active_mission = bankruptcy_incoming_collapse
+						}
+					}
 					modifier = {
 						factor = 0
 						fuel_ratio > 0.9
@@ -583,6 +611,10 @@ scripted_gui = {
 						}
 					}
 					modifier = {
+						add = 100
+						original_tag = USA
+					}
+					modifier = {
 						factor = 0
 						check_variable = { energy_balance_value_display > 1.15 }
 						has_idea = heavy_additional_consumption_spirit
@@ -610,10 +642,6 @@ scripted_gui = {
 						}
 					}
 					modifier = {
-						add = 100
-						original_tag = USA
-					}
-					modifier = {
 						factor = 0
 						has_idea = some_additional_consumption_spirit
 					}
@@ -634,6 +662,10 @@ scripted_gui = {
 						}
 					}
 					modifier = {
+						add = 100
+						original_tag = USA
+					}
+					modifier = {
 						factor = 0
 						check_variable = { energy_balance_value_display > 0.95 }
 						check_variable = { energy_balance_value_display < 1.15 }
@@ -641,10 +673,6 @@ scripted_gui = {
 					modifier = {
 						factor = 0
 						check_variable = { energy_balance_value_display < 0.95 }
-					}
-					modifier = {
-						add = 100
-						original_tag = USA
 					}
 					modifier = {
 						factor = 0

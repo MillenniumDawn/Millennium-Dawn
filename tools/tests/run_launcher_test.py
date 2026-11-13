@@ -5,6 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 import run as launcher
+from shared.suite import run_tool_script
 
 
 def stub_subprocess(monkeypatch, returncode=0):
@@ -129,6 +130,7 @@ def test_exact_name_launches_the_script_and_propagates_its_exit_code(monkeypatch
     [
         ("batchdds-2", "batchdds-2"),
         ("flag_reference_checker", "flag-reference-checker"),
+        ("standardize-focus-tree", "standardize_focus_tree"),
     ],
 )
 def test_launcher_resolves_hyphenated_aliases(requested, discovered, monkeypatch):
@@ -170,6 +172,14 @@ def test_an_ambiguous_substring_lists_the_candidates_and_fails(monkeypatch, caps
     assert "  validate_events" in out
     assert "  validate_ideas" in out
     assert calls == []
+
+
+def test_the_script_lists_the_real_catalogue():
+    result = run_tool_script("run.py", "--list")
+
+    assert result.returncode == 0, result.stderr
+    assert "standardize" in result.stdout
+    assert "run.py" not in result.stdout
 
 
 def test_an_unknown_name_points_at_the_catalogue(monkeypatch, capsys):

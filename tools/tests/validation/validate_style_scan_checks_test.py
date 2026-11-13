@@ -5,7 +5,9 @@ here are single-purpose snippets: one deliberate defect per case, plus the
 comment/string-aware negatives that keep the scans from firing on valid script.
 """
 
+import pytest
 import validate_style as V
+from shared.suite import write_under
 
 
 def _braces(text):
@@ -69,6 +71,39 @@ def test_tab_indent_clean():
 
 def test_inline_alignment_spaces_are_not_an_indent():
     assert _indent("\ta = 1    }\n") == []
+
+
+_DEEPER = "Indented 1 tab(s) deeper than its braces"
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ("a = {\n\tb = {\n\t\tc = 1\n\t}\n}\n", []),
+        (
+            "a = {\n\t\tb = 1\n\t\tc = 1\n\td = 1\n\t\te = 1\n}\n",
+            [(_DEEPER, 2), (_DEEPER, 5)],
+        ),
+        ("a = {\nb = 1\n}\n", [("Indented 1 tab(s) shallower than its braces", 2)]),
+        ("a = {\n\t}\n", [(_DEEPER, 2)]),
+        ("a = {\n\t  b = 1\n}\n", [("Indented with spaces; use 1 tab(s)", 2)]),
+        ("a = {\n    b = 1\n}\n", []),
+        ('a = {\n\tlog = "{"\n\tb = 1\n}\n', []),
+        ("a = {\n\n\t\tb = 1\n\n\t\tc = 1\n}\n", [(_DEEPER, 3)]),
+    ],
+    ids=[
+        "clean",
+        "one-finding-per-run",
+        "shallower",
+        "closing-brace",
+        "spaces",
+        "four-spaces-left-to-error",
+        "quoted-brace",
+        "blank-lines-keep-run",
+    ],
+)
+def test_indent_depth(text, expected):
+    assert V._check_indent_depth(text, "common/x.txt") == expected
 
 
 def test_unbalanced_square_brackets_reported():
@@ -259,13 +294,13 @@ def test_scan_file_runs_the_focus_check_only_for_focus_files():
     assert V._scan_file(text, "/mod/common/decisions/x.txt") == []
 
 
-def test_run_validations_splits_errors_from_warnings(tmp_path, write_path):
-    write_path(
+def test_run_validations_splits_errors_from_warnings(tmp_path):
+    write_under(
         tmp_path,
         "events/Test.txt",
         "option = {\n\tname = foo.1.a\n\tadd_political_power=50\n}\n",
     )
-    write_path(tmp_path, "common/broken.txt", "a = {\n")
+    write_under(tmp_path, "common/broken.txt", "a = {\n")
 
     v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.run_validations()
@@ -278,11 +313,20 @@ def test_run_validations_splits_errors_from_warnings(tmp_path, write_path):
     assert v.warnings_found == 2
 
 
-def test_focus_named_event_option_is_not_reported_as_a_focus_standard(
-    tmp_path, write_path
-):
+def test_indent_depth_has_its_own_category(tmp_path):
+    write_under(tmp_path, "common/x.txt", "a = {\n\t\tb = 1\n}\n")
+
+    v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.run_validations()
+
+    assert [i.category for i in v._issues] == ["indent-depth"]
+    assert v.errors_found == 0
+    assert v.warnings_found == 1
+
+
+def test_focus_named_event_option_is_not_reported_as_a_focus_standard(tmp_path):
     """An option name carrying "Focus" belongs to event-log alone, not both buckets."""
-    write_path(
+    write_under(
         tmp_path,
         "events/Test.txt",
         "option = {\n\tname = LibyaFocus.104.a\n\tadd_political_power = 50\n}\n",
@@ -296,8 +340,8 @@ def test_focus_named_event_option_is_not_reported_as_a_focus_standard(
     assert v.warnings_found == 1
 
 
-def test_run_validations_scans_music_files(tmp_path, write_path):
-    write_path(tmp_path, "music/broken.txt", "a = {\n")
+def test_run_validations_scans_music_files(tmp_path):
+    write_under(tmp_path, "music/broken.txt", "a = {\n")
 
     v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.run_validations()

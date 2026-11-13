@@ -36,9 +36,11 @@ jobs:
           # Resolve main's live head so each run uses current base data.
           base_sha=$(gh api "repos/$GH_REPO/commits/main" --jq '.sha')
           pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
-          # Pagination keeps open PRs after the first 100 in the sweep.
-          prs=$(gh api --paginate "$pulls_url" \
-            --jq '.[] | [.number, .head.sha] | @tsv')
+          # Pagination keeps open PRs after the first 100 in the sweep. Test
+          # Suite refuses to dispatch fork PRs; their pull_request runs cover them.
+          prs=$(gh api --paginate "$pulls_url" --jq '.[]
+            | select(.head.repo.full_name == .base.repo.full_name)
+            | [.number, .head.sha] | @tsv')
           # The workflow run title is base-owned and carries both pins. A
           # successful head-only match is never enough to skip a validation.
           runs_url="repos/$GH_REPO/actions/workflows/test-suite.yml/runs"

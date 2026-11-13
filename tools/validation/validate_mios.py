@@ -37,7 +37,6 @@ legitimately design-teams an AST org. Those references are still checked for
 existence, never for tag reachability.
 """
 
-import glob
 import os
 import re
 from dataclasses import dataclass, field
@@ -60,6 +59,7 @@ from shared_utils import (
     blank_quoted_strings,
     find_unquoted_block_end,
     get_staged_files,
+    list_files,
     validation_config,
 )
 from sprite_index import build_sprite_index
@@ -214,9 +214,10 @@ NON_NAVAL_PRODUCTION_KEYS = frozenset(
 # Stats the engine gives a non-zero default, so a percentage bonus bites even
 # though no MD equipment file declares a base. Empty until one is confirmed in
 # game — an entry here silences a real finding, so it needs evidence, not a
-# hunch. The open candidates are the naval *_factor keys
-# (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
-# naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
+# hunch. The naval *_factor keys (naval_light_gun_hit_chance_factor,
+# naval_heavy_gun_hit_chance_factor, naval_torpedo_damage_reduction_factor,
+# naval_weather_penalty_factor) are not candidates: vanilla declares a base for
+# each on its hulls or modules, and MD declares none.
 ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset(
     validation_config("validate_mios", "zero_base_exempt_stats")
 )
@@ -416,8 +417,7 @@ class Validator(BaseValidator):
                 self.staged_files = staged
 
     def _org_files(self) -> List[str]:
-        pattern = str(Path(self.mod_path) / ORG_DIR / "*.txt")
-        files = sorted(glob.glob(pattern))
+        files = list_files(Path(self.mod_path) / ORG_DIR, recursive=False)
         if not self.staged_only:
             return files
         staged = {Path(f).resolve() for f in self.staged_files or []}
@@ -574,19 +574,14 @@ class Validator(BaseValidator):
     def _bonus_files(self) -> List[str]:
         """Files carrying the nested `equipment_bonus = { ARCHETYPE = {...} }`
         form: MIO policies and the country-leader company traits."""
-        files = sorted(glob.glob(str(Path(self.mod_path) / POLICY_DIR / "*.txt")))
+        files = list_files(Path(self.mod_path) / POLICY_DIR, recursive=False)
         company_traits = Path(self.mod_path) / COMPANY_TRAIT_FILE
         if company_traits.is_file():
             files.append(str(company_traits))
         return self._staged_bonus_subset(files)
 
     def _doctrine_files(self) -> List[str]:
-        files = sorted(
-            glob.glob(
-                str(Path(self.mod_path) / DOCTRINE_DIR / "**" / "*.txt"),
-                recursive=True,
-            )
-        )
+        files = list_files(Path(self.mod_path) / DOCTRINE_DIR)
         return self._staged_bonus_subset(files)
 
     def _staged_bonus_subset(self, files: List[str]) -> List[str]:
@@ -1089,7 +1084,7 @@ class Validator(BaseValidator):
                 continue
             line = line_of(m.start())
             if len(dead) == len(scope):
-                self.add_warning(
+                self.add_error(
                     "mio-bonus-no-base-stat",
                     f"equipment_bonus '{stat}' is inert: {', '.join(dead)} "
                     f"{'declares' if len(dead) == 1 else 'declare'} no base "
@@ -1210,6 +1205,9 @@ class Validator(BaseValidator):
             keyed: Dict[str, Set[str]] = {}
             token_at: Dict[str, int] = {}
             for token, token_start, inner in _named_sub_blocks(block):
+                # A policy's same_as_mio reaches whatever the attached MIO covers.
+                if token == "same_as_mio" and rel.startswith(POLICY_DIR + "/"):
+                    continue
                 line = block_offset + block.count("\n", 0, token_start) + 1
                 keyed[token] = {
                     stat
@@ -1338,8 +1336,10 @@ class Validator(BaseValidator):
         ):
             team = DESIGN_TEAM_RE.search(text, lo, hi)
             variant_type = _scalar(text, lo, hi, "type")
-            body = self._org_bodies.get(team.group(1)) if team else None
-            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if team is None or variant_type is None:
+                continue
+            body = self._org_bodies.get(team.group(1))
+            archetype = equipment.archetype_of(variant_type)
             if body is None or archetype is None:
                 continue
             tokens = self._org_equipment_types(team.group(1), body)

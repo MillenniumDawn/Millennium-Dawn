@@ -364,11 +364,25 @@ country_event = {
 				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 			}
 			30 = {
-				add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
-				clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+					add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
 			}
 		}
-		ai_chance = { base = 60 }
+		ai_chance = {
+			base = 40
+			modifier = {
+				add = 20
+				check_variable = { CHI_taiwan_us_support > 50 }
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = {
+				factor = 0.4
+				check_variable = { CHI_taiwan_us_support < 20 }
+			}
+		}
 	}
 
 	option = {
@@ -378,7 +392,13 @@ country_event = {
 		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
 		add_to_variable = { CHI_taiwan_strait_tension = 2 tooltip = CHI_taiwan_strait_tension_tt }
 		clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 15
+				check_variable = { CHI_taiwan_us_support > 40 }
+			}
+		}
 	}
 
 	option = {
@@ -390,7 +410,13 @@ country_event = {
 				days = 365
 			}
 		}
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = {
+				factor = 0.25
+				check_variable = { CHI_taiwan_us_support > 40 }
+			}
+		}
 	}
 }
 
@@ -419,8 +445,11 @@ country_event = {
 	option = {
 		name = china_sar.014.a
 		log = "[GetDateText]: [This.GetName]: china_sar.014.a executed"
-		add_to_variable = { CHI_taiwan_us_support = 15 tooltip = CHI_taiwan_us_support_tt }
-		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { CHI_taiwan_us_support > 0 } }
+			add_to_variable = { CHI_taiwan_us_support = 15 tooltip = CHI_taiwan_us_support_tt }
+			clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+		}
 		add_stability = -0.05
 		USA = { add_opinion_modifier = { target = CHI modifier = chi_usa_sanctions_response } }
 	}
@@ -505,6 +534,7 @@ country_event = {
 				factor = 0.1
 				CHI = { check_variable = { CHI_taiwan_us_support < 15 } }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -566,6 +596,7 @@ country_event = {
 				factor = 0.2
 				check_variable = { CHI_taiwan_us_support < 30 }
 			}
+			modifier = { factor = 0.25 has_war_support < 0.3 }
 		}
 	}
 
@@ -588,6 +619,8 @@ country_event = {
 				check_variable = { CHI_taiwan_us_support < 30 }
 				naval_strength_ratio = { tag = TAI ratio > 2 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
 		}
 	}
 }
@@ -613,6 +646,7 @@ country_event = {
 				factor = 0.1
 				CHI = { check_variable = { CHI_taiwan_us_support < 10 } }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -657,6 +691,8 @@ country_event = {
 				has_global_flag = CHI_HEGEMON_FOCUS_PATH
 				naval_strength_ratio = { tag = TAI ratio > 2 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
 		}
 	}
 
@@ -668,7 +704,11 @@ country_event = {
 		set_variable = { CHI_taiwan_strait_tension = 55 }
 		add_to_variable = { CHI_taiwan_us_support = 10 tooltip = CHI_taiwan_us_support_tt }
 		clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
-		ai_chance = { base = 100 }
+		ai_chance = {
+			base = 100
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
+		}
 	}
 }
 
@@ -701,7 +741,7 @@ country_event = {
 	option = {
 		name = china_sar.023.a
 		log = "[GetDateText]: [This.GetName]: china_sar.023.a executed"
-		remove_from_array = { recognised_countries = TAI }
+		TAI = { remove_from_array = { recognised_by = PREV } }
 		add_opinion_modifier = { target = CHI modifier = chi_tai_recognition_reward }
 		ai_chance = {
 			base = 3
@@ -767,6 +807,7 @@ country_event = {
 				add = 30
 				check_variable = { CHI_taiwan_strait_tension > 70 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -849,13 +890,16 @@ country_event = {
 	option = {
 		name = china_sar.028.a
 		log = "[GetDateText]: [This.GetName]: china_sar.028.a executed"
+		trigger = {
+			CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
+		}
 		CHI = {
 			country_event = { id = china_sar.029 days = 14 }
 			add_opinion_modifier = { target = USA modifier = tai_diplomatic_isolation }
 		}
 		TAI = { add_opinion_modifier = { target = USA modifier = reduced_tensions } }
 		ai_chance = {
-			base = 8
+			base = 4
 			modifier = {
 				add = 5
 				has_opinion = { target = CHI value < -10 }
@@ -865,8 +909,17 @@ country_event = {
 				TAI = { is_in_faction_with = USA }
 			}
 			modifier = {
+				add = 6
+				CHI = { check_variable = { CHI_taiwan_us_support > 60 } }
+			}
+			modifier = {
+				factor = 0.35
+				CHI = { check_variable = { CHI_taiwan_us_support < 25 } }
+			}
+			modifier = {
 				factor = 0
 				has_opinion = { target = CHI value > 30 }
+				NOT = { TAI = { is_in_faction_with = USA } }
 			}
 		}
 	}
@@ -882,8 +935,13 @@ country_event = {
 				has_opinion = { target = CHI value > 10 }
 			}
 			modifier = {
+				add = 8
+				CHI = { check_variable = { CHI_taiwan_us_support < 25 } }
+			}
+			modifier = {
 				factor = 0
 				TAI = { is_in_faction_with = USA }
+				CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 		}
 	}
@@ -968,6 +1026,10 @@ country_event = {
 				add = 5
 				has_completed_focus = CHI_SAR_one_system_declaration
 			}
+			modifier = {
+				add = 8
+				check_variable = { CHI_taiwan_us_support < 20 }
+			}
 		}
 	}
 }
@@ -990,12 +1052,18 @@ country_event = {
 				has_opinion = { target = CHI value > 20 }
 			}
 			modifier = {
+				add = 8
+				CHI = { check_variable = { CHI_taiwan_us_support < 20 } }
+			}
+			modifier = {
 				factor = 0
 				TAI = { is_in_faction_with = ROOT }
+				CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
 			}
 			modifier = {
 				factor = 0
 				check_variable = { num_of_military_factories > 150 }
+				CHI = { check_variable = { CHI_taiwan_us_support > 40 } }
 			}
 		}
 	}
@@ -1003,10 +1071,13 @@ country_event = {
 	option = {
 		name = china_sar.031.b
 		log = "[GetDateText]: [This.GetName]: china_sar.031.b executed"
+		trigger = {
+			CHI = { check_variable = { CHI_taiwan_us_support > 0 } }
+		}
 		CHI = { country_event = { id = china_sar.033 days = 7 } }
 		TAI = { add_opinion_modifier = { target = USA modifier = reduced_tensions } }
 		ai_chance = {
-			base = 7
+			base = 5
 			modifier = {
 				add = 5
 				has_opinion = { target = CHI value < 0 }
@@ -1014,6 +1085,14 @@ country_event = {
 			modifier = {
 				add = 5
 				TAI = { is_in_faction_with = ROOT }
+			}
+			modifier = {
+				add = 6
+				CHI = { check_variable = { CHI_taiwan_us_support > 50 } }
+			}
+			modifier = {
+				factor = 0.3
+				CHI = { check_variable = { CHI_taiwan_us_support < 30 } }
 			}
 		}
 	}
@@ -1104,7 +1183,11 @@ country_event = {
 		}
 		set_temp_variable = { sinicization_base_change = 2 }
 		CHI_apply_sinicization_ETK = yes
-		ai_chance = { base = 70 }
+		ai_chance = {
+			base = 70
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 
 	option = {
@@ -1195,9 +1278,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1235,9 +1318,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1284,9 +1367,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1343,9 +1426,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1380,9 +1463,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1409,6 +1492,7 @@ country_event = {
 		name = china_sar.043.a
 		log = "[GetDateText]: [This.GetName]: china_sar.043.a executed"
 		random_owned_state = {
+			limit = { free_building_slots = { building = infrastructure size > 0 } }
 			add_building_construction = {
 				type = infrastructure
 				level = 1
@@ -1427,9 +1511,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1472,9 +1556,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1522,9 +1606,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1574,9 +1658,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 40
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 30 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -1610,6 +1694,10 @@ country_event = {
 				target = TAI
 				autonomy_state = autonomy_special_administrative_region_TAI
 			}
+			TAI = {
+				CHI_SAR_match_ruling_party = yes
+				CHI_SAR_become_non_state_actor = yes
+			}
 			if = {
 				limit = { has_completed_focus = CHI_SAR_research_sharing }
 				TAI = { add_to_tech_sharing_group = Greater_China_Tech_Share }
@@ -1617,9 +1705,9 @@ country_event = {
 		}
 		ai_chance = {
 			base = 60
-			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 			modifier = { add = 30 OR = { check_variable = { ruling_party = 1 } check_variable = { ruling_party = 14 } } }
 			modifier = { add = 20 CHI = { check_variable = { CHI_TAI_trust > 80 } } }
+			modifier = { factor = 0 check_variable = { ruling_party = 2 } }
 		}
 	}
 
@@ -2086,14 +2174,20 @@ country_event = {
 		add_political_power = -50
 		add_to_variable = { CHI_sco_cohesion = 1 }
 		clamp_variable = { var = CHI_sco_cohesion min = 0 max = 100 }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
 		name = CHI_sco.20.b
 		log = "[GetDateText]: [This.GetName]: CHI_sco.20.b executed"
 		add_stability = -0.02
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 }
 
@@ -2168,7 +2262,10 @@ country_event = {
 		add_political_power = -75
 		add_to_variable = { CHI_sco_balance = 2 }
 		clamp_variable = { var = CHI_sco_balance min = -10 max = 10 }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
@@ -2177,7 +2274,10 @@ country_event = {
 		add_stability = -0.03
 		add_to_variable = { CHI_chinese_aggression = -2 tooltip = CHI_chinese_aggression_tt }
 		clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 }
 
@@ -2193,7 +2293,10 @@ country_event = {
 		name = CHI_foreign.012.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.012.a executed"
 		add_opinion_modifier = { target = CHI modifier = diplomatic_opening }
-		KOR = { add_to_variable = { SFR = 3 } }
+		KOR = {
+			add_to_variable = { SFR = 3 }
+			KOR_refresh_sfr = yes
+		}
 		ai_chance = { base = 3 }
 	}
 }
@@ -2254,6 +2357,7 @@ country_event = {
 		name = CHI_foreign.047.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.047.a executed"
 		add_to_variable = { SFR = 20 }
+		KOR_refresh_sfr = yes
 		add_stability = 0.05
 	}
 }
@@ -2337,7 +2441,10 @@ country_event = {
 		name = CHI_foreign.014.a
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.014.a executed"
 		add_political_power = 50
-		KOR = { add_to_variable = { SFR = 5 } }
+		KOR = {
+			add_to_variable = { SFR = 5 }
+			KOR_refresh_sfr = yes
+		}
 	}
 }
 
@@ -2607,7 +2714,11 @@ country_event = {
 		add_to_variable = { CHI_korea_peninsula_tension = -30 tooltip = CHI_korea_peninsula_tension_tt }
 		add_political_power = -50
 		add_stability = -0.05
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 
 	option = {
@@ -2695,7 +2806,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.107.b executed"
 		CHI = { add_opinion_modifier = { target = KOR modifier = CHI_replacement_partner } }
 		add_political_power = -50
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -2769,7 +2883,10 @@ country_event = {
 		add_political_power = 200
 		add_stability = 0.05
 		add_to_variable = { CHI_korea_peninsula_tension = -40 tooltip = CHI_korea_peninsula_tension_tt }
-		KOR = { add_to_variable = { SFR = 20 tooltip = SFR_tt } }
+		KOR = {
+			add_to_variable = { SFR = 20 tooltip = SFR_tt }
+			KOR_refresh_sfr = yes
+		}
 		every_state = {
 			limit = { is_owned_by = NKO }
 			KOR = { transfer_state = PREV }
@@ -2799,11 +2916,7 @@ country_event = {
 		ai_chance = { base = 5 }
 		KOR = {
 			add_to_variable = { SFR = 8 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = NKO modifier = KOR_beijing_mediated }
 		}
 		NKO = {
@@ -2824,11 +2937,7 @@ country_event = {
 		ai_chance = { base = 10 }
 		KOR = {
 			add_to_variable = { SFR = 5 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = NKO modifier = KOR_beijing_mediated }
 		}
 		NKO = {
@@ -2845,11 +2954,7 @@ country_event = {
 		ai_chance = { base = 3 }
 		KOR = {
 			add_to_variable = { SFR = 3 }
-			clamp_variable = {
-				var = SFR
-				min = 0
-				max = 100
-			}
+			KOR_refresh_sfr = yes
 			add_opinion_modifier = { target = CHI modifier = peace_contributor }
 		}
 		add_stability = 0.02
@@ -3315,6 +3420,7 @@ country_event = {
 				add = 10
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -3332,7 +3438,7 @@ country_event = {
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: china_scs.20.a executed"
+		log = "[GetDateText]: [This.GetName]: china_scs.20.a executed"
 		name = china_scs.20.a
 		trigger = {
 			NOT = { original_tag = CHI }
@@ -3811,10 +3917,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 813 }
-							531 = { NOT = { has_border_war = yes } }
-							813 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 813 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -3839,10 +3944,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 943 }
-							531 = { NOT = { has_border_war = yes } }
-							943 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 943 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -3867,10 +3971,9 @@ country_event = {
 				CHI = {
 					if = {
 						limit = {
-							controls_state = 531
-							NOT = { controls_state = 526 }
-							531 = { NOT = { has_border_war = yes } }
-							526 = { NOT = { has_border_war = yes } }
+							set_temp_variable = { border_war_attacker_state = 531 }
+							set_temp_variable = { border_war_defender_state = 526 }
+							border_war_can_start = yes
 						}
 						start_border_war = {
 							change_state_after_war = no
@@ -4025,14 +4128,6 @@ country_event = {
 		ai_chance = {
 			base = 10
 			modifier = {
-				factor = 0
-				OR = {
-					is_in_faction_with = VIE
-					is_in_faction_with = PHI
-					is_in_faction_with = MAY
-				}
-			}
-			modifier = {
 				add = 20
 				NOT = {
 					naval_strength_comparison = {
@@ -4044,6 +4139,14 @@ country_event = {
 			modifier = {
 				add = -20
 				has_country_flag = CHI_scs_china_already_lost_border_war
+			}
+			modifier = {
+				factor = 0
+				OR = {
+					is_in_faction_with = VIE
+					is_in_faction_with = PHI
+					is_in_faction_with = MAY
+				}
 			}
 		}
 	}
@@ -4429,6 +4532,7 @@ country_event = {
 				add = 20
 				check_variable = { CHI_chinese_aggression > 20 }
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -4555,10 +4659,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sino_indian.1.a executed"
 		CHI = {
 			create_wargoal = {
-			type = annex_everything
+				type = annex_everything
 				target = BHU
-	}
-}
+			}
+		}
 		add_war_support = 0.05
 		ai_chance = {
 			base = 30
@@ -4593,10 +4697,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sino_indian.1.e executed"
 		CHI = {
 			create_wargoal = {
-			type = annex_everything
-			target = BHU
-	}
-}
+				type = annex_everything
+				target = BHU
+			}
+		}
 		add_opinion_modifier = { target = RAJ modifier = territorial_integrity_violation }
 		ai_chance = { base = 20 }
 	}
@@ -4992,6 +5096,7 @@ country_event = {
 				add = -20
 				has_opinion = { target = CHI value < -30 }
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 }
@@ -6058,6 +6163,8 @@ country_event = {
 				factor = 0
 				num_of_military_factories > 50
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
 		}
 	}
 
@@ -6093,6 +6200,8 @@ country_event = {
 				}
 				num_of_military_factories < 30
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
+			modifier = { factor = 0.25 has_war_support < 0.3 }
 		}
 	}
 
@@ -6285,13 +6394,14 @@ country_event = {
 		ai_chance = {
 			base = 30
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
 			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
+			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -6354,12 +6464,12 @@ country_event = {
 		ai_chance = {
 			base = 40
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
 			}
 		}
 	}
@@ -6406,12 +6516,12 @@ country_event = {
 		ai_chance = {
 			base = 40
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
 			}
 		}
 	}
@@ -6459,12 +6569,12 @@ country_event = {
 		ai_chance = {
 			base = 45
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
 			}
 		}
 	}
@@ -6491,6 +6601,7 @@ country_event = {
 				add = 20
 				has_political_power > 200
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -6565,12 +6676,12 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
 			}
 		}
 	}
@@ -6610,12 +6721,12 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = {
-				factor = 0
-				has_government = nationalist
-			}
-			modifier = {
 				add = 30
 				NOT = { has_government = nationalist }
+			}
+			modifier = {
+				factor = 0
+				has_government = nationalist
 			}
 		}
 	}
@@ -6648,7 +6759,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: CHI_foreign.222.a executed"
 		remove_opinion_modifier = { target = CHI modifier = historic_enemies }
 		CHI = {
-			set_country_flag = CHI_JAP_threat_reduction
 			add_to_variable = { CHI_chinese_aggression = -2 tooltip = CHI_chinese_aggression_tt }
 			clamp_variable = { var = CHI_chinese_aggression min = -50 max = 50 }
 		}
@@ -6742,12 +6852,12 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = {
-				factor = 0
-				NOT = { sender_influence_higher_70 = yes }
-			}
-			modifier = {
 				add = 30
 				sender_influence_higher_90 = yes
+			}
+			modifier = {
+				factor = 0
+				NOT = { sender_influence_higher_70 = yes }
 			}
 		}
 	}
@@ -6885,7 +6995,6 @@ country_event = {
 	desc = china_news.boycott_streets.d
 	picture = GFX_CHI_anti_japan_protest
 	is_triggered_only = yes
-	major = yes
 
 	option = { name = china_news.boycott_streets.a }
 }
@@ -6896,7 +7005,6 @@ country_event = {
 	desc = china_news.panda_arrives_tokyo.d
 	picture = GFX_CHI_panda_diplomacy
 	is_triggered_only = yes
-	major = yes
 
 	option = {
 		name = china_news.panda_arrives_tokyo.a
@@ -8031,6 +8139,7 @@ country_event = {
 				add = 5
 				has_completed_focus = CHI_Predatory_Lending_Doctrine
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8280,6 +8389,7 @@ country_event = {
 				add = 4
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_stability < 0.3 }
 		}
 	}
 
@@ -8300,6 +8410,7 @@ country_event = {
 				add = 3
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8336,6 +8447,8 @@ country_event = {
 				add = 3
 				has_government = communism
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -8400,6 +8513,7 @@ country_event = {
 				add = 4
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8415,6 +8529,8 @@ country_event = {
 				add = 2
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 
@@ -8598,6 +8714,7 @@ country_event = {
 					original_tag = ISR
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8768,6 +8885,8 @@ country_event = {
 					compare = greater_than_or_equals
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 }
@@ -8813,6 +8932,7 @@ country_event = {
 					original_tag = USA
 				}
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8904,6 +9024,7 @@ country_event = {
 				add = 5
 				original_tag = USA
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -8979,6 +9100,7 @@ country_event = {
 				add = 5
 				original_tag = USA
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -9085,6 +9207,8 @@ country_event = {
 				add = 3
 				has_government = democratic
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 	}
 }
@@ -9190,7 +9314,10 @@ country_event = {
 		592 = { add_resistance = 2 }
 		set_temp_variable = { modify_uighur_threat = 2 }
 		CHI_modify_uighur_threat = yes
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
@@ -9203,7 +9330,10 @@ country_event = {
 		}
 		set_temp_variable = { modify_uighur_threat = -3 }
 		CHI_modify_uighur_threat = yes
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
@@ -9240,7 +9370,10 @@ country_event = {
 		}
 		set_temp_variable = { modify_uighur_threat = -5 }
 		CHI_modify_uighur_threat = yes
-		ai_chance = { base = 45 }
+		ai_chance = {
+			base = 45
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
@@ -9253,7 +9386,10 @@ country_event = {
 		}
 		set_temp_variable = { modify_uighur_threat = -6 }
 		CHI_modify_uighur_threat = yes
-		ai_chance = { base = 25 }
+		ai_chance = {
+			base = 25
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	option = {
@@ -9290,7 +9426,10 @@ country_event = {
 		set_temp_variable = { modify_uighur_threat = -10 }
 		CHI_modify_uighur_threat = yes
 		hidden_effect = { news_event = { id = chi_uighur.6 days = 1 } }
-		ai_chance = { base = 45 }
+		ai_chance = {
+			base = 45
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 
 	option = {
@@ -9309,7 +9448,10 @@ country_event = {
 			news_event = { id = chi_uighur.6 days = 1 }
 			country_event = { id = chi_uighur.4 days = 30 }
 		}
-		ai_chance = { base = 40 }
+		ai_chance = {
+			base = 40
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 
 	option = {
@@ -9331,7 +9473,10 @@ country_event = {
 		set_temp_variable = { modify_uighur_threat = -25 }
 		CHI_modify_uighur_threat = yes
 		hidden_effect = { news_event = { id = chi_uighur.6 days = 1 } }
-		ai_chance = { base = 15 }
+		ai_chance = {
+			base = 15
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -9380,6 +9525,7 @@ country_event = {
 				factor = 10
 				has_global_flag = CHI_PEACEFUL_RISE_FOCUS_PATH
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 }
@@ -9575,6 +9721,7 @@ country_event = {
 		ai_chance = {
 			base = 4
 			modifier = { factor = 0 surrender_progress > 0.30 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
@@ -10374,7 +10521,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: CHI_military_event.5.b executed"
 		add_war_support = 0.03
 		add_stability = -0.05
-		ai_chance = { base = 3 }
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 }
 
@@ -10397,7 +10547,10 @@ country_event = {
 		name = CHI_military_event.6.b
 		log = "[GetDateText]: [This.GetName]: CHI_military_event.6.b executed"
 		add_stability = -0.03
-		ai_chance = { base = 3 }
+		ai_chance = {
+			base = 3
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 }
 
@@ -10429,7 +10582,11 @@ country_event = {
 		change_the_military_opinion = yes
 		set_temp_variable = { temp_opinion = 5 }
 		change_communist_cadres_opinion = yes
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 5
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.3 }
+		}
 	}
 }
 
@@ -10484,7 +10641,11 @@ country_event = {
 		multiply_temp_variable = { treasury_change = -0.10 }
 		modify_treasury_effect = yes
 		country_event = { id = CHI_space_events.11 days = 90 }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = {
@@ -10511,7 +10672,11 @@ country_event = {
 		multiply_temp_variable = { treasury_change = -0.10 }
 		modify_treasury_effect = yes
 		country_event = { id = CHI_space_events.13 days = 180 }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	option = {
@@ -11289,6 +11454,7 @@ country_event = {
 				factor = 10
 				is_historical_focus_on = yes
 			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 

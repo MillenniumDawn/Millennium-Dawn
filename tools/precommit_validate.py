@@ -26,10 +26,11 @@ This dispatcher:
   * runs them concurrently, splitting cores between the outer fan-out and each
     validator's own worker pool so the two layers don't oversubscribe.
 
-Only the commit-stage validators live here. The expensive cross-reference
-validators run in CI only (never on commit), and must stay out of this
-registry, or they would run on every commit — running the full suite on commit
-was measured at ~7s warm, a large regression. `validate_defines` keeps its own
+Only the commit-stage validators live here. That includes a few
+cross-reference validators that are fast enough for a commit (events, ideas,
+oob_units, mios, characters). The slower ones run in CI only and must stay out
+of this registry, or they would run on every commit — running the full suite on
+commit was measured at ~7s warm, a large regression. `validate_defines` keeps its own
 pre-commit hook because it is keyed off `.lua` files, which this dispatcher
 does not route.
 
@@ -81,10 +82,11 @@ class _Spec:
         return False
 
 
-# Only the commit-stage validators belong here. The expensive cross-reference
-# validators (cosmetic_tags, localisation, focus_tree, variables, decisions,
-# modifiers, scripted_params, simplifications, ...) run in CI only — they do NOT
-# run on commit. Folding them in here would drag them onto every commit, so this
+# Only the commit-stage validators belong here, including the cross-reference
+# validators cheap enough for a commit (events, ideas, oob_units, mios,
+# characters). The slower ones (cosmetic_tags, localisation, focus_tree,
+# variables, decisions, modifiers, scripted_params, simplifications, ...) run in
+# CI only — they do NOT run on commit. Folding them in here would drag them onto every commit, so this
 # registry mirrors exactly the run-on-commit validators (their `files:` patterns
 # and --strict flags). Keep in sync when the config changes; the golden test in
 # tools/tests/precommit_validate_test.py guards against drift.
@@ -148,9 +150,13 @@ _REGISTRY = [
         "validate_agency_upgrades",
         [
             ("common/intelligence_agency_upgrades/", TXT),
-            ("common/on_actions/MD_auto_agency_on_actions.txt", ""),
-            ("common/scripted_guis/00_MD_auto_agency_scripted_gui.txt", ""),
-            ("localisation/english/MD_auto_agency_l_english.yml", ""),
+            ("common/decisions/", TXT),
+            ("common/factions/goals/", TXT),
+            ("common/national_focus/", TXT),
+            ("common/scripted_effects/", TXT),
+            ("events/", TXT),
+            ("history/countries/", TXT),
+            ("interface/", GFX),
         ],
     ),
     _Spec(
@@ -191,7 +197,12 @@ _REGISTRY = [
 
 
 def _discover_staged(mod_path, argv_files):
-    """Return staged paths relative to *mod_path*, including rename origins."""
+    """Return paths to validate, relative to *mod_path*.
+
+    With *argv_files* from pre-commit, that is those files plus the staged
+    deletions and rename origins pre-commit leaves out. Without them, it is
+    every staged path.
+    """
     from shared_utils import get_staged_files
 
     staged = (
@@ -210,7 +221,9 @@ def _discover_staged(mod_path, argv_files):
         normalize_path_separators(os.path.relpath(os.path.abspath(f), mod_path))
         for f in argv_files
     ]
-    return list(dict.fromkeys(passed + discovered))
+    # A merge commit passes only its conflicted files; the rest are main's.
+    missing = [p for p in discovered if not os.path.exists(os.path.join(mod_path, p))]
+    return list(dict.fromkeys(passed + missing))
 
 
 def _run(spec, mod_path, env, no_color, inner_workers):

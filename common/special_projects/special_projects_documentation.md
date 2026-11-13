@@ -1,17 +1,17 @@
 ```
 
 
- ## ###  ###  ##  ###  ##  #       ###  ###   ##   ### ###  ##  ### 
-#   #  # #   #  #  #  #  # #       #  # #  # #  #    # #   #  #  #  
- #  ###  ##  #     #  #### #       ###  ###  #  #    # ##  #     #  
-  # #    #   #  #  #  #  # #       #    #  # #  # #  # #   #  #  #  
-##  #    ###  ##  ### #  # ###     #    #  #  ##   ##  ###  ##   #  
+ ## ###  ###  ##  ###  ##  #       ###  ###   ##   ### ###  ##  ###
+#   #  # #   #  #  #  #  # #       #  # #  # #  #    # #   #  #  #
+ #  ###  ##  #     #  #### #       ###  ###  #  #    # ##  #     #
+  # #    #   #  #  #  #  # #       #    #  # #  # #  # #   #  #  #
+##  #    ###  ##  ### #  # ###     #    #  #  ##   ##  ###  ##   #
 
 
 #### SPECIAL PROJECT DEFINITION ####
 
 special_project_id = {
-	
+
 	# OPTIONAL
 	narrative = {
 		# OPTIONAL - by default getting it from loc string matching project ID: "special_project_id"
@@ -45,7 +45,7 @@ special_project_id = {
 
 	# MANDATORY - Type establishes things like in which kind of facility it can be developed, art assets etc.
 	special_project_type = nuclear / aircraft (advanced / weapons) / electronics / tank / artillery / rocket / missiles / naval
-	
+
 	# OPTIONAL - overrides the one applied by default based on the project type
 	blueprint_image = GFX_XXX
 
@@ -63,7 +63,7 @@ special_project_id = {
 	visible = {
 		# Special Projects progression, unlocked by content, etc.
 	}
-	
+
 	# OPTIONAL - default "always = yes"
 	available = {
 		# Extra requirements like resources, tech, focus/dec/event completed, etc.
@@ -121,7 +121,7 @@ special_project_id = {
 				# Province in which the facility is (code needs to check this but should be doable)
 				# Scientists array (position 0 always means main scientist)
 				# Project - with all its data
-		
+
 		### COUNTRY EFFECTS
 			ROOT = {
 				# New equipment variant, maybe with new archetype (super heavy tank, submarine carrier, mega-monstruous artillery etc.)
@@ -208,7 +208,7 @@ special_project_id = {
 
 			# Using TECH as script reference
 			unit_type = {
-				< bonuses > 
+				< bonuses >
 				...
 			}
 		}
@@ -226,11 +226,11 @@ special_project_id = {
 
 			infantry = {
 				hills = {
-					attack = 0.05 
+					attack = 0.05
 					movement = 0.1
 				}
 				mountain = {
-					attack = 0.05 
+					attack = 0.05
 					movement = 0.1
 				}
 			}
@@ -242,7 +242,7 @@ special_project_id = {
 				max_organisation = 10
 			}
 		}
-		
+
 		# Enable equipment - Make an equipment available as project reward. Works just like with technology
 		# Will read a list of items inside curly bracers.
 		enable_equipments = {
@@ -250,7 +250,7 @@ special_project_id = {
 			anti_tank_equipment_3
 		}
 
-		# Equipment bonuses & Unit bonuses will use the project's name by default when they show up in tooltips. 
+		# Equipment bonuses & Unit bonuses will use the project's name by default when they show up in tooltips.
 		# Additionally, a project_output can have a "name" parameter that will override default project name.
 		# Additionally to the additional, a unit_bonus or equipment_trait can have a "name" parameter that will override everything else.
 
@@ -264,7 +264,7 @@ special_project_id = {
 
 	# REWARDS
 	unique_reward_id = {
-		
+
 		narrative = {
 			# OPTIONAL - by default getting it from loc string matching reward ID: "unique_reward_id"
 			# Can have TAG_ to make it country-specific automatically (just like with MIOs)
@@ -291,6 +291,9 @@ special_project_id = {
 
 		# OPTIONAL - Defaults to no. Allows reward to be triggered more than once.
 		fire_only_once = yes/no
+
+		# OPTIONAL - When this reward becomes available it will have priority. If several available rewards have this set to true, the reward will be randomly chosen based on weight.
+		force_reward_if_available = yes/no
 
 		threshold = {
 			min = 35
@@ -333,7 +336,7 @@ special_project_id = {
 					# Province in which the facility is (code needs to check this but should be doable)
 					# Scientists array (position 0 always means main scientist)
 					# Project - with all its data
-			
+
 			### COUNTRY EFFECTS
 				ROOT = {
 					# New equipment variant, maybe with new archetype (super heavy tank, submarine carrier, mega-monstruous artillery etc.)
@@ -422,11 +425,11 @@ special_project_id = {
 			unit_bonus = { # -> NEW THING, based on tech
 
 				# OPTIONAL - will override any other name hooked-in by default (unique_reward name or project ID)
-				name = unit_bonus_name 
+				name = unit_bonus_name
 
 				# Using TECH as script reference
 				unit_type = {
-					< bonuses > 
+					< bonuses >
 					...
 				}
 			}
@@ -438,11 +441,11 @@ special_project_id = {
 
 				infantry = {
 					hills = {
-						attack = 0.05 
+						attack = 0.05
 						movement = 0.1
 					}
 					mountain = {
-						attack = 0.05 
+						attack = 0.05
 						movement = 0.1
 					}
 				}
@@ -454,7 +457,7 @@ special_project_id = {
 					max_organisation = 10
 				}
 			}
-			
+
 			# Enable sub units. Works just like technologies.
 			# OPTIONAL - Will read a list of items inside curly bracers.
 			enable_subunits = {
@@ -462,7 +465,7 @@ special_project_id = {
 				militia
 			}
 
-			# Equipment bonuses & Unit bonuses will use the project's name by default when they show up in tooltips. 
+			# Equipment bonuses & Unit bonuses will use the project's name by default when they show up in tooltips.
 			# Additionally, a unique_reward can have a "name" parameter that will override default project name.
 			# Additionally to the additional, a unit_bonus or equipment_trait can have a "name" parameter that will override everything else.
 
@@ -487,20 +490,20 @@ special_project_id = {
 	...
 
 
-	
+
 }
 
 
 
 
 
-### PROJECT SPECIALIZATION DEFINITION ### 
+### PROJECT SPECIALIZATION DEFINITION ###
 # A Facility belongs to one of these specializations
 # A Project belongs to one of these specializations or one of the sub_specializations defined in them.
 
 # For projects only AND facilities
 special_project_specialization_<name> = {
-	
+
 	# Any thematic art assets tied to the specialization
 
 	# MANDATORY - Default blueprint image - (overriden if sub-specialization or the individual project has one defined)
@@ -592,8 +595,8 @@ scientist = {
 		land_warfare_level = INT # (1-5 -> Inexperienced / Skilled / Experienced / Expert / Mastermind)
 		rockets_and_missiles_level = INT # (1-5 -> Inexperienced / Skilled / Experienced / Expert / Mastermind)
 		naval_engineering_level = INT # (1-5 -> Inexperienced / Skilled / Experienced / Expert / Mastermind)
-		... 
-		<any_existing_spec_levels_not_explicitly_here> = 0 
+		...
+		<any_existing_spec_levels_not_explicitly_here> = 0
 	}
 	# Use in content: Skill levels will boost the speed of a project of the same specialization.
 
@@ -622,35 +625,35 @@ scientist = {
 special_project_facility = {
 
 	icon_frame = INT # New icon for UI required
-	
+
 	provincial = yes # Built within a province
 
 	disabled_in_dmz = yes # TBD, probably should not be built in DMZ
 
 	base_cost = INT # Maybe around 20k-30k? - Reference: Supply node = 20k / Nuclear Reactor = 30k
-	
+
 	#max_level = 1 # -> This parameter will change (see "building_level_cap" further down)
-	
+
 	value = INT # Probably around 30-50? - Mil is 8, civ is 5, nuclear reeactor is 10 (multiplied per level) - Influences the PP cost for state in PC. - Would also influence the damage taken by Strat. Bombing (if it was applicable)
-	
-	damage_factor = -1 # I believe this should maake the building invulnerable for Strat. Bombing and Land combat, if that is what we want. 
+
+	damage_factor = -1 # I believe this should maake the building invulnerable for Strat. Bombing and Land combat, if that is what we want.
 
 	allied_build = yes # We might need a new parameter here "subject_build = yes" to specify that the building can only be built in subject's territory.
-	
+
 	show_on_map = 1 # We want 1 model to show up
-	
+
 	has_destroyed_mesh = yes # Lets be honest, we all want this - Not sure if this is applied only for totally destroyed building or just damaged
-	
+
 	infrastructure_construction_effect = yes # I guess we want it to be affected by infra in the state
 
-	
+
 	### NEW PARAMETERS ###
 
 	# New bloc to include both provincial and state max capacity, combining the old max_level parameter with a new state_max parameter.
 	# Need to discuss with code how this will affect the old max_level, since level is applied in many places, and in terms of cap the cap is applied on the state/province level based on the parameter "provincial = yes/no"
 	# Need to discuss with code how this will affect normal buildings
 	# Default values being 0? Meaning no limit?
-	building_level_cap = { 
+	building_level_cap = {
 		state_max = 1 # Old parameter "max_level" // Building Cap in the State
 		province_max = 1 # New Parameter // Building Cap in the Province
 	}
@@ -684,13 +687,6 @@ special_project_facility = {
 		ROOT = { has_country_leader_ideology = monarchism }  # ROOT/owner should allow us to scope to country building the facility
 	}
 
-	# WISHLIST - Depending on if we add Uranium as a resource for Nuclear Reacotrs.
-	resource_use = { # OPTIONAL. Resources utilized by the building ONCE BUILT. Potentially Used for Nuclear Reactor Building
-		steel = 2 # Resource needed
-		chromium = 1
-
-		lack_of_resource_efficiency_factor = 0.5 # FLOAT. Defaults to 0.5 or 0  -> 0 = building does not work if resources are not available // 1 = building keeps 100% efficiency and works normally even when resources are unavailable. 0.5 = 50%
-	}
 }
 
 

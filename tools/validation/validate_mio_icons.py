@@ -12,6 +12,7 @@ from typing import FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import WORD_BLOCK_LINE_RE as TOP_LEVEL_DEF_RE
 from shared_utils import extract_block_from_text
 from sprite_index import build_sprite_index
 from validate_gfx_references import _load_vanilla_sprite_manifest, _vanilla_gfx_files
@@ -24,7 +25,6 @@ ICON_FILE = (
 )
 TYPE_SPRITE_PREFIX = "GFX_military_industrial_organization_"
 
-TOP_LEVEL_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 # The lookbehind keeps `limit_to_equipment_type` out; trait limits carry no icon.
 EQUIPMENT_TYPE_RE = re.compile(r"(?<![A-Za-z0-9_])equipment_type\s*=\s*\{([^{}]*)\}")
 TOKEN_RE = re.compile(r"[A-Za-z0-9_]+")
@@ -46,7 +46,7 @@ def parse_org_equipment_types(content: str) -> List[Tuple[str, int]]:
     An org that only carries `include = <org>` lists nothing itself; the
     included org is checked on its own.
     """
-    found = []
+    found: List[Tuple[str, int]] = []
     for m in TOP_LEVEL_DEF_RE.finditer(content):
         body, _ = extract_block_from_text(content, m.end() - 1)
         block = EQUIPMENT_TYPE_RE.search(body)

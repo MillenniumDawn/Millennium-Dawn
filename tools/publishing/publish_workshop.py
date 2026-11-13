@@ -99,7 +99,6 @@ ROOT_ONLY_EXCLUDES = {
     ".pre-commit-config.yaml",
     ".gitignore",
     ".gitattributes",
-    ".secrets.baseline",
     "CODEOWNERS",
     "CONTRIBUTING.md",
     "SECURITY.md",
@@ -244,13 +243,34 @@ def _signal_group(pgid: int, sig: int) -> bool:
     return True
 
 
+def _group_alive(pgid: int) -> bool:
+    """Whether the group holds a process that has not exited.
+
+    killpg also reaches a zombie, and an orphaned member stays one until init
+    reaps it, so on Linux /proc decides whether any member is still live.
+    """
+    if not _signal_group(pgid, 0):
+        return False
+    stats = list(Path("/proc").glob("[0-9]*/stat"))
+    if not stats:
+        return True
+    for stat_file in stats:
+        try:
+            state, _ppid, group = stat_file.read_text().rpartition(")")[2].split()[:3]
+        except (OSError, ValueError):
+            continue
+        if group == str(pgid) and state not in ("Z", "X"):
+            return True
+    return False
+
+
 def _group_stopped(proc: subprocess.Popen) -> bool:
     """Wait up to STOP_TIMEOUT_SECS for the child's process group to empty."""
     deadline = time.monotonic() + STOP_TIMEOUT_SECS
     while True:
-        # Reap the leader first; a zombie still counts as a group member.
+        # Reap the leader first, so only orphaned members can be zombies.
         proc.poll()
-        if not _signal_group(proc.pid, 0):
+        if not _group_alive(proc.pid):
             return True
         if time.monotonic() >= deadline:
             return False

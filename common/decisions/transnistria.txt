@@ -569,7 +569,6 @@ PMR_eastern_europe_operations = {
 
 PMR_russia_moldovian_way = {
 	PMR_russia_refendum = {
-		fire_only_once = no
 
 		visible = {
 			SOV = {
@@ -624,7 +623,6 @@ PMR_russia_moldovian_way = {
 	}
 
 	PMR_annex_gagauzia = {
-		fire_only_once = no
 
 		visible = {
 			country_exists = GGZ
@@ -639,12 +637,15 @@ PMR_russia_moldovian_way = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove PMR_annex_gagauzia"
-			annex_country = { target = GGZ transfer_troops = yes }
-			GGZ = { every_core_state = { add_core_of = PMR } }
-			hidden_effect = {
-				add_to_variable = { treasury = GGZ.treasury }
-				add_to_variable = { debt = GGZ.debt }
-				add_to_variable = { int_investments = GGZ.int_investments }
+			if = {
+				limit = { country_exists = GGZ }
+				hidden_effect = {
+					add_to_variable = { treasury = GGZ.treasury }
+					add_to_variable = { debt = GGZ.debt }
+					add_to_variable = { int_investments = GGZ.int_investments }
+				}
+				annex_country = { target = GGZ transfer_troops = yes }
+				GGZ = { every_core_state = { add_core_of = PMR } }
 			}
 		}
 
@@ -662,11 +663,12 @@ PMR_russia_moldovian_way = {
 				has_global_flag = PMR_REPUBLICAN_FOCUS_PATH
 				add = 355
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	PMR_annex_odessa = {
-		fire_only_once = no
 
 		visible = {
 			country_exists = OPR
@@ -681,12 +683,15 @@ PMR_russia_moldovian_way = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove PMR_annex_odessa"
-			OPR = { every_core_state = { add_core_of = PMR } }
-			annex_country = { target = OPR transfer_troops = yes }
-			hidden_effect = {
-				add_to_variable = { treasury = OPR.treasury }
-				add_to_variable = { debt = OPR.debt }
-				add_to_variable = { int_investments = OPR.int_investments }
+			if = {
+				limit = { country_exists = OPR }
+				OPR = { every_core_state = { add_core_of = PMR } }
+				hidden_effect = {
+					add_to_variable = { treasury = OPR.treasury }
+					add_to_variable = { debt = OPR.debt }
+					add_to_variable = { int_investments = OPR.int_investments }
+				}
+				annex_country = { target = OPR transfer_troops = yes }
 			}
 		}
 
@@ -704,11 +709,12 @@ PMR_russia_moldovian_way = {
 				has_global_flag = PMR_REPUBLICAN_FOCUS_PATH
 				add = 355
 			}
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
 
 	PMR_moldova_refendum = {
-		fire_only_once = no
 
 		visible = {
 			MLV = {
@@ -896,6 +902,12 @@ PMR_economy_category = {
 		days_remove = 75
 		visible = { has_country_flag = PMR_ukr_invest }
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_buy_ukraininan_investments"
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PMR_buy_ukraininan_investments"
 			add_resource = {
@@ -903,8 +915,6 @@ PMR_economy_category = {
 				amount = 2
 				state = 149
 			}
-			set_temp_variable = { treasury_change = -0.2 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 0 }
@@ -916,6 +926,12 @@ PMR_economy_category = {
 		days_remove = 75
 		visible = { has_country_flag = PMR_rom_invest }
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PMR_buy_romanian_investments"
+			set_temp_variable = { treasury_change = -0.1 }
+			modify_treasury_effect = yes
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PMR_buy_romanian_investments"
 			add_resource = {
@@ -923,8 +939,6 @@ PMR_economy_category = {
 				amount = 1
 				state = 149
 			}
-			set_temp_variable = { treasury_change = -0.1 }
-			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 0 }
@@ -963,7 +977,7 @@ PMR_mvd_category = {
 	#SHERIFF DEAD
 	PMR_destroy_sheriff = {
 		icon = GFX_decision_sheriff_button
-		days_remove = 150
+		days_re_enable = 150
 
 		available = {
 			OR = {

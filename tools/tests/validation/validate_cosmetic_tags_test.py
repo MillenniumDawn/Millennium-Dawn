@@ -3,15 +3,15 @@
 import pytest
 import validate_cosmetic_tags as V
 from shared.suite import issue_categories as _categories
-from shared.suite import run_validator
+from shared.suite import run_validator, write_under
 
 
 def _run(tmp_path, **kwargs):
     return run_validator(V.Validator, tmp_path, **kwargs)
 
 
-def test_loc_worker_skips_ignored_paths(tmp_path, write_path):
-    skipped = write_path(tmp_path, ".git/x.yml", 'x:0 "TAG_A:"\n')
+def test_loc_worker_skips_ignored_paths(tmp_path):
+    skipped = write_under(tmp_path, ".git/x.yml", 'x:0 "TAG_A:"\n')
 
     assert (
         V.process_file_for_cosmetic_tag_in_loc((str(skipped), frozenset({"TAG_A"})))
@@ -19,9 +19,9 @@ def test_loc_worker_skips_ignored_paths(tmp_path, write_path):
     )
 
 
-def test_loc_worker_needs_a_key_shaped_reference(tmp_path, write_path):
+def test_loc_worker_needs_a_key_shaped_reference(tmp_path):
     """A bare mention in prose is not a localisation entry for the tag."""
-    loc = write_path(
+    loc = write_under(
         tmp_path, "localisation/english/x.yml", 'x:0 "see TAG_A for details"\n'
     )
 
@@ -30,13 +30,13 @@ def test_loc_worker_needs_a_key_shaped_reference(tmp_path, write_path):
     )
 
 
-def test_a_tag_named_in_two_files_is_reported_once(tmp_path, write_path):
-    write_path(
+def test_a_tag_named_in_two_files_is_reported_once(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/a.txt",
         "has_cosmetic_tag = TAG_MISSING\nset_cosmetic_tag = TAG_SET_UNUSED\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/national_focus/b.txt",
         "has_cosmetic_tag = TAG_MISSING\nset_cosmetic_tag = TAG_SET_UNUSED\n",
@@ -53,9 +53,9 @@ def test_a_tag_named_in_two_files_is_reported_once(tmp_path, write_path):
     assert by_category["missing-cosmetic-tag"][0].file in ("a.txt", "b.txt")
 
 
-def test_a_meta_effect_placeholder_is_not_a_cosmetic_tag(tmp_path, write_path):
+def test_a_meta_effect_placeholder_is_not_a_cosmetic_tag(tmp_path):
     """`set_cosmetic_tag = [ROOTTAG]_AUTH` names a substitution, not a tag."""
-    write_path(
+    write_under(
         tmp_path,
         "common/decisions/flags.txt",
         "set_cosmetic_tag = [ROOTTAG]_AUTH\nset_cosmetic_tag = [ROOTTAG]\n",
@@ -64,17 +64,42 @@ def test_a_meta_effect_placeholder_is_not_a_cosmetic_tag(tmp_path, write_path):
     assert _categories(_run(tmp_path)) == []
 
 
-def test_a_flag_named_exactly_after_the_tag_counts_as_used(tmp_path, write_path):
-    write_path(
+def test_a_meta_effect_template_sets_one_tag_per_country(tmp_path):
+    """`EFS_[TAG]` sets `EFS_GER`; a name no country tag builds is still unset."""
+    write_under(
+        tmp_path,
+        "common/country_tags/00_countries.txt",
+        'GER = "countries/Germany.txt"\n',
+    )
+    write_under(
+        tmp_path,
+        "common/countries/cosmetic.txt",
+        "EFS_GER = {\n}\nEFS_NOR = {\n}\n",
+    )
+    write_under(
+        tmp_path,
+        "common/decisions/flags.txt",
+        "has_cosmetic_tag = GER_REB\nhas_cosmetic_tag = NOR_REB\n"
+        "set_cosmetic_tag = EFS_[TAG]\nset_cosmetic_tag = [ROOTTAG]_REB\n",
+    )
+
+    assert _rows(_run(tmp_path)) == [
+        ("missing-cosmetic-tag", "NOR_REB", "flags.txt", 0),
+        ("unused-cosmetic-color", "EFS_NOR", "", 0),
+    ]
+
+
+def test_a_flag_named_exactly_after_the_tag_counts_as_used(tmp_path):
+    write_under(
         tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = TAG_EXACT\n"
     )
-    write_path(tmp_path, "gfx/flags/TAG_EXACT.tga", "")
+    write_under(tmp_path, "gfx/flags/TAG_EXACT.tga", "")
 
     assert _categories(_run(tmp_path)) == []
 
 
-def test_a_tag_referenced_only_in_script_needs_no_flag(tmp_path, write_path):
-    write_path(
+def test_a_tag_referenced_only_in_script_needs_no_flag(tmp_path):
+    write_under(
         tmp_path,
         "common/national_focus/tags.txt",
         "set_cosmetic_tag = TAG_ONLY_TXT\nhas_cosmetic_tag = TAG_ONLY_TXT\n",
@@ -83,11 +108,11 @@ def test_a_tag_referenced_only_in_script_needs_no_flag(tmp_path, write_path):
     assert _categories(_run(tmp_path)) == []
 
 
-def test_a_tag_referenced_only_in_localisation_counts_as_used(tmp_path, write_path):
-    write_path(
+def test_a_tag_referenced_only_in_localisation_counts_as_used(tmp_path):
+    write_under(
         tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = TAG_ONLY_LOC\n"
     )
-    write_path(
+    write_under(
         tmp_path,
         "localisation/english/tags_l_english.yml",
         'l_english:\nTAG_ONLY_LOC:0 "Loc Name"\n',
@@ -96,11 +121,9 @@ def test_a_tag_referenced_only_in_localisation_counts_as_used(tmp_path, write_pa
     assert _categories(_run(tmp_path)) == []
 
 
-def test_a_cosmetic_file_with_no_colour_definitions_is_a_clean_pass(
-    tmp_path, write_path
-):
-    write_path(tmp_path, "common/countries/cosmetic.txt", "# no definitions yet\n")
-    write_path(
+def test_a_cosmetic_file_with_no_colour_definitions_is_a_clean_pass(tmp_path):
+    write_under(tmp_path, "common/countries/cosmetic.txt", "# no definitions yet\n")
+    write_under(
         tmp_path,
         "common/national_focus/tags.txt",
         "set_cosmetic_tag = TAG_ONLY_TXT\nhas_cosmetic_tag = TAG_ONLY_TXT\n",
@@ -109,10 +132,10 @@ def test_a_cosmetic_file_with_no_colour_definitions_is_a_clean_pass(
     assert _categories(_run(tmp_path)) == []
 
 
-def test_colour_definitions_on_the_false_positive_list_are_not_reported(
-    tmp_path, write_path
-):
-    write_path(tmp_path, "common/countries/cosmetic.txt", "PER_REB = {\n}\n")
+def test_set_tags_on_the_incomplete_list_are_not_reported(tmp_path):
+    write_under(
+        tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = BSH_limonka\n"
+    )
 
     assert _categories(_run(tmp_path)) == []
 
@@ -121,8 +144,8 @@ def _rows(validator):
     return [(i.category, i.message, i.file, i.line) for i in validator._issues]
 
 
-def test_set_tag_counts_match_a_per_tag_count_on_every_site_shape(tmp_path, write_path):
-    path = write_path(
+def test_set_tag_counts_match_a_per_tag_count_on_every_site_shape(tmp_path):
+    path = write_under(
         tmp_path,
         "common/national_focus/sites.txt",
         "set_cosmetic_tag = ABC_long\r\n"
@@ -162,8 +185,8 @@ def test_set_tag_counts_match_a_per_tag_count_on_every_site_shape(tmp_path, writ
         ('# TAG_GONE:0 "c"\r\n TAG_AxB_:0 "d"\r\n', {}),
     ],
 )
-def test_loc_gate_lets_each_present_tag_through(tmp_path, write_path, body, found):
-    loc = write_path(
+def test_loc_gate_lets_each_present_tag_through(tmp_path, body, found):
+    loc = write_under(
         tmp_path, "localisation/english/tags_l_english.yml", "l_english:\r\n" + body
     )
     tags = frozenset({"TAG_A.B", "TAG_(X)", "TAG_LAST", "TAG_GONE"})
@@ -172,14 +195,14 @@ def test_loc_gate_lets_each_present_tag_through(tmp_path, write_path, body, foun
 
 
 def test_staged_missing_check_still_finds_setters_in_unstaged_files(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
-    write_path(
+    write_under(
         tmp_path,
         "common/national_focus/staged.txt",
         "has_cosmetic_tag = TAG_SET_ELSEWHERE\nhas_cosmetic_tag = TAG_NEVER_SET\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/national_focus/other.txt",
         "set_cosmetic_tag = TAG_SET_ELSEWHERE\n",
@@ -193,14 +216,14 @@ def test_staged_missing_check_still_finds_setters_in_unstaged_files(
     ]
 
 
-def _tag_tree(tmp_path, write_path, files=1):
-    write_path(
+def _tag_tree(tmp_path, files=1):
+    write_under(
         tmp_path,
         "common/countries/cosmetic.txt",
         "TAG_COLOUR_USED = {\n}\nTAG_COLOUR_IDLE = {\n}\n",
     )
     for index in range(files):
-        write_path(
+        write_under(
             tmp_path,
             f"common/national_focus/f{index:02}.txt",
             f"has_cosmetic_tag = TAG_HAS_{index:02}\n"
@@ -208,8 +231,8 @@ def _tag_tree(tmp_path, write_path, files=1):
         )
 
 
-def test_a_full_run_walks_the_script_tree_once(tmp_path, write_path, monkeypatch):
-    _tag_tree(tmp_path, write_path)
+def test_a_full_run_walks_the_script_tree_once(tmp_path, monkeypatch):
+    _tag_tree(tmp_path)
     patterns = []
     collect = V.Validator._collect_files
 
@@ -228,11 +251,9 @@ def test_a_full_run_walks_the_script_tree_once(tmp_path, write_path, monkeypatch
     ]
 
 
-def test_pooled_run_matches_the_in_process_run(
-    tmp_path, write_path, monkeypatch, pool_sizes
-):
+def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
-    _tag_tree(tmp_path, write_path, files=12)
+    _tag_tree(tmp_path, files=12)
 
     def run(workers):
         validator = V.Validator(
@@ -250,8 +271,8 @@ def test_pooled_run_matches_the_in_process_run(
     ] + [("unused-cosmetic-color", "TAG_COLOUR_IDLE", "", 0)]
 
 
-def test_staged_run_with_nothing_staged_skips(tmp_path, write_path, monkeypatch):
-    write_path(
+def test_staged_run_with_nothing_staged_skips(tmp_path, monkeypatch):
+    write_under(
         tmp_path, "common/national_focus/tags.txt", "has_cosmetic_tag = TAG_MISSING\n"
     )
     monkeypatch.setenv("MD_STAGED_FILES", "")
@@ -260,3 +281,139 @@ def test_staged_run_with_nothing_staged_skips(tmp_path, write_path, monkeypatch)
 
     assert validator._issues == []
     assert any("skipping cosmetic tags" in line for line in validator.output_lines)
+
+
+_TAGS = (
+    "# set_cosmetic_tag = ignored\n"
+    "set_cosmetic_tag = TAG_A\n"
+    "has_cosmetic_tag = TAG_B\n"
+    "has_cosmetic_tag = [ROOT.GetTag]\n"
+)
+
+
+def test_set_worker_counts_only_the_listed_tags(tmp_path):
+    path = write_under(tmp_path, "events/tags.txt", _TAGS)
+    assert V.process_file_for_set_cosmetic_tag(
+        (str(path), False, ["TAG_A", "TAG_B", "TAG_NONE"])
+    ) == {"TAG_A": 1}
+
+
+def test_both_scan_skips_comments_and_dynamic_tags(tmp_path):
+    path = write_under(tmp_path, "events/tags.txt", _TAGS)
+    has_tags, _, set_tags, _ = V.process_file_for_both_cosmetic_tags(
+        (str(path), False, str(tmp_path))
+    )
+    assert (has_tags, set_tags) == ({"TAG_B": 0}, {"TAG_A": 0})
+
+
+def test_has_lookup_returns_the_tags_it_finds(tmp_path):
+    path = write_under(tmp_path, "events/tags.txt", _TAGS)
+    assert V.process_file_for_has_cosmetic_tag_lookup(
+        (str(path), frozenset({"TAG_B", "TAG_NONE"}))
+    ) == {"TAG_B"}
+
+
+def test_loc_worker_counts_every_reference(tmp_path):
+    path = write_under(
+        tmp_path, "localisation/english/x.yml", 'x:0 "TAG_A: TAG_A_democratic:"\n'
+    )
+    assert V.process_file_for_cosmetic_tag_in_loc(
+        (str(path), frozenset({"TAG_A", "TAG_NONE"}))
+    ) == {"TAG_A": 2}
+
+
+# case: (file written, or None for a missing file; worker(path, root); result)
+_EMPTY_WORKER_CASES = {
+    "has lookup, missing file": (
+        None,
+        lambda path, _root: V.process_file_for_has_cosmetic_tag_lookup(
+            (path, frozenset({"TAG_A"}))
+        ),
+        set(),
+    ),
+    "loc worker, missing file": (
+        None,
+        lambda path, _root: V.process_file_for_cosmetic_tag_in_loc(
+            (path, frozenset({"TAG_A"}))
+        ),
+        {},
+    ),
+    "has lookup, ignored directory": (
+        (".git/tags.txt", "has_cosmetic_tag = TAG_A\n"),
+        lambda path, _root: V.process_file_for_has_cosmetic_tag_lookup(
+            (path, frozenset({"TAG_A"}))
+        ),
+        set(),
+    ),
+    "both scan, no tags": (
+        ("events/empty.txt", "plain = yes\n"),
+        lambda path, root: V.process_file_for_both_cosmetic_tags((path, False, root)),
+        ({}, {}, {}, {}),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("written", "worker", "expected"),
+    _EMPTY_WORKER_CASES.values(),
+    ids=_EMPTY_WORKER_CASES,
+)
+def test_workers_return_nothing_for_missing_ignored_or_empty_files(
+    tmp_path, written, worker, expected
+):
+    if written is None:
+        path = tmp_path / "missing.txt"
+    else:
+        path = write_under(tmp_path, *written)
+    assert worker(str(path), str(tmp_path)) == expected
+
+
+def test_a_full_run_reports_missing_unused_and_colour_findings(tmp_path):
+    write_under(
+        tmp_path,
+        "common/countries/cosmetic.txt",
+        "TAG_COLOR_UNUSED = {\n}\nTAG_COLOR_USED = {\n}\n",
+    )
+    write_under(
+        tmp_path,
+        "common/national_focus/tags.txt",
+        "set_cosmetic_tag = TAG_SET_UNUSED\n"
+        "set_cosmetic_tag = TAG_USED\n"
+        "set_cosmetic_tag = TAG_COLOR_USED\n"
+        "has_cosmetic_tag = TAG_MISSING\n"
+        "has_cosmetic_tag = TAG_USED\n",
+    )
+    write_under(
+        tmp_path,
+        "localisation/english/tags_l_english.yml",
+        'l_english:\nTAG_USED:0 "plain"\n',
+    )
+
+    validator = _run(tmp_path)
+
+    assert set(_categories(validator)) == {
+        "missing-cosmetic-tag",
+        "unused-cosmetic-tag",
+        "unused-cosmetic-color",
+    }
+    messages = " ".join(issue.message for issue in validator._issues)
+    for tag in ("TAG_MISSING", "TAG_SET_UNUSED", "TAG_COLOR_UNUSED"):
+        assert tag in messages
+
+
+@pytest.mark.parametrize("staged_only", [False, True], ids=["full", "staged"])
+def test_a_tag_with_a_colour_flag_and_a_reader_is_clean(
+    tmp_path, monkeypatch, staged_only
+):
+    write_under(tmp_path, "common/countries/cosmetic.txt", "TAG = { }\n")
+    write_under(tmp_path, "gfx/flags/TAG_FLAG_democratic.tga", "")
+    staged = write_under(
+        tmp_path,
+        "common/national_focus/staged.txt",
+        "set_cosmetic_tag = TAG\nset_cosmetic_tag = TAG_FLAG\nhas_cosmetic_tag = TAG\n",
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", str(staged))
+
+    validator = _run(tmp_path, staged_only=staged_only)
+
+    assert validator._issues == []

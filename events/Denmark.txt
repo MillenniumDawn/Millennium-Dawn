@@ -77,7 +77,7 @@ country_event = {
 				add_equipment_to_stockpile = {
 					type = small_plane_airframe_2
 					amount = 15
-					variant_name = "MiG-29 Fulcrum"
+					variant_name = "MiG-29"
 					producer = SOV
 				}
 			}
@@ -107,6 +107,7 @@ country_event = {
 					has_idea = depression
 				}
 			}
+			modifier = { factor = 0.25 has_war_support < 0.4 }
 		}
 	}
 }
@@ -202,7 +203,7 @@ country_event = {
 				add_equipment_to_stockpile = {
 					type = small_plane_airframe_2
 					amount = 15
-					variant_name = "MiG-29 Fulcrum"
+					variant_name = "MiG-29"
 					producer = SOV
 				}
 			}
@@ -280,17 +281,36 @@ country_event = {
 
 	option = {
 		name = denmark.8.a
-		ai_chance = { base = 0.3 }
+		log = "[GetDateText]: [This.GetName]: denmark.8.a executed"
+		add_stability = 0.02
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 is_historical_focus_on = yes }
+		}
 	}
 
 	option = {
 		name = denmark.8.b
-		ai_chance = { base = 0.3 }
+		trigger = { country_exists = SWE }
+		log = "[GetDateText]: [This.GetName]: denmark.8.b executed"
+		add_opinion_modifier = { target = SWE modifier = small_increase }
+		reverse_add_opinion_modifier = { target = SWE modifier = small_increase }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
 	}
 
 	option = {
 		name = denmark.8.c
-		ai_chance = { base = 0.3 }
+		trigger = { country_exists = NRY }
+		log = "[GetDateText]: [This.GetName]: denmark.8.c executed"
+		add_opinion_modifier = { target = NRY modifier = small_increase }
+		reverse_add_opinion_modifier = { target = NRY modifier = small_increase }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
 	}
 }
 
@@ -770,17 +790,20 @@ country_event = {
 		army_experience = 10
 		navy_experience = 15
 		air_experience = 10
-		1 = {
-			add_building_construction = {
-				type = air_base
-				level = 1
-				instant_build = yes
-			}
-			add_building_construction = {
-				type = naval_base
-				level = 1
-				province = 12512
-				instant_build = yes
+		1161 = {
+			if = {
+				limit = { state_owned_or_puppet_owned_by_root = yes }
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = naval_base
+					level = 1
+					province = 12512
+					instant_build = yes
+				}
 			}
 		}
 		ai_chance = { base = 1 }
@@ -916,7 +939,7 @@ country_event = {
 	id = denmark.36
 	title = denmark.36.t
 	desc = denmark.36.d
-	picture = GFX_trade_agreement
+	picture = GFX_european_migrant_crisis
 	is_triggered_only = yes
 	fire_only_once = yes
 
@@ -924,9 +947,21 @@ country_event = {
 		name = denmark.36.a
 		log = "[GetDateText]: [This.GetName]: denmark.36.a executed"
 		add_stability = -0.03
-		set_temp_variable = { treasury_change = 1 }
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.001 } }
 		modify_treasury_effect = yes
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 3 ai_has_high_deficit = yes }
+			modifier = { factor = 3 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+
+	option = {
+		name = denmark.36.b
+		log = "[GetDateText]: [This.GetName]: denmark.36.b executed"
+		add_stability = 0.02
+		ai_chance = { base = 2 }
 	}
 }
 
@@ -995,12 +1030,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: denmark.44.a executed"
 		set_temp_variable = { treasury_change = -5.00 }
 		modify_treasury_effect = yes
-		GRN = {
-			set_temp_variable = { treasury_change = 3.00 }
-			modify_treasury_effect = yes
+		if = {
+			limit = { GRN = { is_subject_of = DEN } }
+			GRN = {
+				set_temp_variable = { treasury_change = 3.00 }
+				modify_treasury_effect = yes
+				custom_effect_tooltip = GRN_country_flag_Self_Government_Act_Approved_desc
+				country_event = { id = greenland_event.300 days = 1 }
+			}
+			1161 = { add_extra_state_shared_building_slots = 1 }
+			1162 = { add_extra_state_shared_building_slots = 1 }
 		}
-		1161 = { add_extra_state_shared_building_slots = 1 }
-		1162 = { add_extra_state_shared_building_slots = 1 }
 		ai_chance = { base = 1 }
 	}
 }
@@ -1017,27 +1057,26 @@ country_event = {
 	option = {
 		name = denmark.45.a
 		log = "[GetDateText]: [This.GetName]: denmark.45.a executed"
-		set_autonomy = {
-			target = FAO
-			autonomy_state = autonomy_danish_crown_holding
-			end_wars = no
-			end_civil_wars = no
-		}
-		2 = {
-			if = { limit = { has_dynamic_modifier = { modifier = DEN_faroese_separatism_modifier } } remove_dynamic_modifier = { modifier = DEN_faroese_separatism_modifier } }
-		}
-		FAO = {
-			set_variable = { DEN_colonial_holding_modifier_1 = 0.05 }
-			set_variable = { DEN_colonial_holding_modifier_2 = 0.05 }
-			set_variable = { DEN_colonial_holding_modifier_3 = -0.02 }
-			set_variable = { DEN_colonial_holding_modifier_4 = 0.10 }
-			set_variable = { DEN_colonial_holding_modifier_5 = 0.10 }
-			set_variable = { DEN_colonial_holding_modifier_6 = 0.10 }
-			add_dynamic_modifier = { modifier = DEN_colonial_holding_modifier }
-		}
-		DEN = {
-			set_variable = { DEN_colonial_holding_modifier_1 = 0.10 }
-			set_variable = { DEN_colonial_holding_modifier_2 = 0.05 }
+		if = {
+			limit = { FAO = { is_subject_of = DEN } }
+			set_autonomy = {
+				target = FAO
+				autonomy_state = autonomy_danish_crown_holding
+				end_wars = no
+				end_civil_wars = no
+			}
+			2 = {
+				if = { limit = { has_dynamic_modifier = { modifier = DEN_faroese_separatism_modifier } } remove_dynamic_modifier = { modifier = DEN_faroese_separatism_modifier } }
+			}
+			FAO = {
+				set_variable = { DEN_colonial_holding_modifier_1 = 0.05 }
+				set_variable = { DEN_colonial_holding_modifier_2 = 0.05 }
+				set_variable = { DEN_colonial_holding_modifier_3 = -0.02 }
+				set_variable = { DEN_colonial_holding_modifier_4 = 0.10 }
+				set_variable = { DEN_colonial_holding_modifier_5 = 0.10 }
+				set_variable = { DEN_colonial_holding_modifier_6 = 0.10 }
+				add_dynamic_modifier = { modifier = DEN_colonial_holding_modifier }
+			}
 		}
 		ai_chance = { base = 1 }
 	}
@@ -1056,14 +1095,14 @@ country_event = {
 	option = {
 		name = denmark.46.a
 		log = "[GetDateText]: [This.GetName]: denmark.46.a executed"
-		custom_effect_tooltip = DEN_Euro_referendum_TT
+		custom_effect_tooltip = DEN_euro_referendum_TT
 		hidden_effect = {
 			if = {
 				limit = {
 					check_variable = {
-							var = THIS.europeanism
-							value = 0.5
-							compare = less_than_or_equals
+						var = THIS.europeanism
+						value = 0.5
+						compare = less_than_or_equals
 					}
 				}
 				random_list = {
@@ -1078,9 +1117,9 @@ country_event = {
 			else_if = {
 				limit = {
 					check_variable = {
-							var = THIS.europeanism
-							value = 0.6
-							compare = less_than_or_equals
+						var = THIS.europeanism
+						value = 0.6
+						compare = less_than_or_equals
 					}
 				}
 				random_list = {
@@ -1125,7 +1164,10 @@ country_event = {
 		set_temp_variable = { modify_europeanism = 0.05 }
 		set_temp_variable = { modify_europeanism_target = DEN }
 		europeanism_change = yes
-		ai_chance = { base = 0.5 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.1 DEN_ai_eu_exit_path = yes }
+		}
 	}
 
 	#don´t accept
@@ -1140,7 +1182,12 @@ country_event = {
 		set_temp_variable = { modify_europeanism = -0.05 }
 		set_temp_variable = { modify_europeanism_target = DEN }
 		europeanism_change = yes
-		ai_chance = { base = 0.5 }
+		ai_chance = {
+			base = 0.1
+			modifier = { factor = 10 DEN_ai_eu_exit_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 }
 
@@ -1162,7 +1209,10 @@ country_event = {
 		remove_ideas = DEN_euro_question_idea
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		change_relative_party_popularity = yes
-		ai_chance = { base = 0.5 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.2 has_global_flag = DEN_EUROPEAN_UNION_FOCUS_PATH }
+		}
 	}
 
 	#don´t accept
@@ -1178,7 +1228,12 @@ country_event = {
 		set_temp_variable = { modify_europeanism_target = DEN }
 		europeanism_change = yes
 		set_country_flag = DEN_accept
-		ai_chance = { base = 0.5 }
+		ai_chance = {
+			base = 0.1
+			modifier = { factor = 5 has_global_flag = DEN_EUROPEAN_UNION_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
 	}
 }
 
@@ -1419,7 +1474,25 @@ country_event = {
 		recalculate_party = yes
 		clear_variable = DEN_agrar_event_tier
 		clr_country_flag = DEN_agrar_event_pending
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+
+	option = {
+		name = denmark_agrar_event.10.b
+		log = "[GetDateText]: [This.GetName]: denmark_agrar_event.10.b executed"
+		add_political_power = -50
+		set_temp_variable = { modify_environmentalist_anger = -3 }
+		DEN_modify_environmentalist_anger = yes
+		clear_variable = DEN_agrar_event_tier
+		clr_country_flag = DEN_agrar_event_pending
+		ai_chance = {
+			base = 1
+			modifier = { factor = 2 check_variable = { DEN_environmentalist_anger > 19 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 
@@ -1516,6 +1589,10 @@ country_event = {
 				ideology = nationalist
 				popularity = 0.03
 			}
+			add_timed_idea = {
+				idea = DEN_protests
+				days = 90
+			}
 		}
 		else_if = {
 			limit = { check_variable = { DEN_agrar_event_tier_II = 18 } }
@@ -1551,7 +1628,25 @@ country_event = {
 		recalculate_party = yes
 		clear_variable = DEN_agrar_event_tier_II
 		clr_country_flag = DEN_agrar_event_pending_II
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+
+	option = {
+		name = denmark_agrar_event.15.b
+		log = "[GetDateText]: [This.GetName]: denmark_agrar_event.15.b executed"
+		add_political_power = -50
+		set_temp_variable = { modify_farmer_anger = -3 }
+		DEN_modify_farmer_anger = yes
+		clear_variable = DEN_agrar_event_tier_II
+		clr_country_flag = DEN_agrar_event_pending_II
+		ai_chance = {
+			base = 1
+			modifier = { factor = 2 check_variable = { DEN_farmer_anger > 19 } }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
 

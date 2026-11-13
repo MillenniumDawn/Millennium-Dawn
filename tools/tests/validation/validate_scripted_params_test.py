@@ -68,12 +68,26 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     fpath = focus_dir / "test_focus.txt"
     _write(fpath, caller_body)
     results = _validate_call_sites_in_file(
-        (str(fpath), contracts, str(mod_path), frozenset(valid_tags), frozenset())
+        (
+            str(fpath),
+            contracts,
+            str(mod_path),
+            frozenset(valid_tags),
+            frozenset(),
+            frozenset(),
+        )
     )
     out = []
     for cat, msg, _line in results:
         if (
-            cat in ("missing-required-param", "identical-influence-params")
+            cat
+            in (
+                "missing-required-param",
+                "identical-influence-params",
+                "influence-gain-over-cap",
+                "influence-gain-under-floor",
+                "influence-self-default",
+            )
             and "change_influence_percentage" in msg
         ):
             out.append((cat, msg))
@@ -600,6 +614,206 @@ def _invalid_tags(issues):
     return [m for c, m in issues if c == "invalid-influence-tag"]
 
 
+_ADD_TO_GAIN = "        add_to_temp_variable = { percent_change = 0.1 }\n"
+_FILLER = "        add_political_power = 1\n" * 20
+
+
+# gain: (percent_change set, statements between the set and the call, gain findings)
+@pytest.mark.parametrize(
+    "value,between,expected",
+    [
+        ("20", "", []),
+        ("20.5", "", ["influence-gain-over-cap"]),
+        ("\n20.5\n", "", ["influence-gain-over-cap"]),
+        ("0.25", "", []),
+        ("0.2", "", ["influence-gain-under-floor"]),
+        ("\n0.2\n", "", ["influence-gain-under-floor"]),
+        ("-50", "", []),
+        ("global.percent_change_value", "", []),
+        pytest.param("5", _ADD_TO_GAIN, [], id="add_to is not the base"),
+        pytest.param(
+            "25",
+            "        add_to_temp_variable = {\n            percent_change = 1\n        }\n",
+            ["influence-gain-over-cap"],
+            id="a multi-line add_to leaves the set base",
+        ),
+        pytest.param("25", _FILLER, [], id="set beyond the 20-line window"),
+    ],
+)
+def test_influence_gain_outside_range_is_flagged(
+    tmp_path, cip_contract, value, between, expected
+):
+    """Literal base gains above 20 or below 0.25 are flagged; losses and variables are not."""
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        f"        set_temp_variable = {{ percent_change = {value} }}\n"
+        f"{between}"
+        "        change_influence_percentage = yes\n"
+        "    }\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert [c for c, _ in issues if c.startswith("influence-gain-")] == expected
+
+
+def _partner_call(wrapper):
+    return (
+        "        CHI = {\n"
+        f"            {wrapper} = {{\n"
+        "                change_influence_percentage = yes\n"
+        "            }\n"
+        "        }\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "partner_block,flagged",
+    [
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { percent_change = 1 }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            True,
+            id="partner block reuses the partner as influencer",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            if = { limit = { has_war = no }\n"
+            "                change_influence_percentage = yes\n"
+            "            }\n"
+            "        }\n",
+            True,
+            id="an if inside the partner block keeps its scope",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { tag_index = ROOT.id }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            False,
+            id="influencer reset before the call",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            set_temp_variable = { influence_target = KOR.id }\n"
+            "            change_influence_percentage = yes\n"
+            "        }\n",
+            False,
+            id="explicit target",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            every_neighbor_country = {\n"
+            "                change_influence_percentage = yes\n"
+            "            }\n"
+            "        }\n",
+            False,
+            id="a scope change inside the partner block",
+        ),
+        pytest.param(_partner_call("else_if"), True, id="an else_if keeps its scope"),
+        pytest.param(
+            _partner_call("hidden_effect"), True, id="a hidden_effect keeps its scope"
+        ),
+        pytest.param(
+            _partner_call("effect_tooltip"),
+            True,
+            id="an effect_tooltip keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("for_each_loop"), True, id="a for_each_loop keeps its scope"
+        ),
+        pytest.param(_partner_call("else"), True, id="an else keeps its scope"),
+        pytest.param(_partner_call("random"), True, id="a random keeps its scope"),
+        pytest.param(
+            _partner_call("for_loop_effect"),
+            True,
+            id="a for_loop_effect keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("while_loop_effect"),
+            True,
+            id="a while_loop_effect keeps its scope",
+        ),
+        pytest.param(
+            "        CHI = {\n"
+            "            random_list = {\n"
+            "                50 = {\n"
+            "                    change_influence_percentage = yes\n"
+            "                }\n"
+            "            }\n"
+            "        }\n",
+            True,
+            id="a random_list weight block keeps its scope",
+        ),
+        pytest.param(
+            _partner_call("123"), False, id="a state block outside random_list"
+        ),
+    ],
+)
+def test_influence_target_defaulting_to_the_influencer_is_flagged(
+    tmp_path, cip_contract, partner_block, flagged
+):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = { percent_change = 2 }\n"
+        "        set_temp_variable = { tag_index = CHI.id }\n"
+        "        change_influence_percentage = yes\n"
+        f"{partner_block}"
+        "    }\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(c == "influence-self-default" for c, _ in issues) is flagged
+
+
+def _gain_caller(value):
+    return (
+        "option = {\n"
+        f"\tset_temp_variable = {{ percent_change = {value} }}\n"
+        "\tchange_influence_percentage = yes\n"
+        "}\n"
+    )
+
+
+@pytest.mark.parametrize(
+    "caller,expected",
+    [
+        pytest.param(
+            "option = {\n"
+            "\tset_temp_variable = { percent_change = 2 }\n"
+            "\tset_temp_variable = { tag_index = CHI.id }\n"
+            "\tCHI = {\n"
+            "\t\tchange_influence_percentage = yes\n"
+            "\t}\n"
+            "}\n",
+            ("influence-self-default", vsp.Severity.ERROR, 5),
+            id="self-default",
+        ),
+        pytest.param(
+            _gain_caller("25"),
+            ("influence-gain-over-cap", vsp.Severity.WARNING, 3),
+            id="over cap",
+        ),
+        pytest.param(
+            _gain_caller("0.2"),
+            ("influence-gain-under-floor", vsp.Severity.WARNING, 3),
+            id="under floor",
+        ),
+    ],
+)
+def test_influence_checks_report_their_severity(tmp_path, caller, expected):
+    _write(tmp_path / "common" / "country_tags" / "00_countries.txt", 'CHI = "x"\n')
+    _write(tmp_path / "events" / "caller.txt", caller)
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == [expected]
+
+
 @pytest.mark.parametrize("value", ["CHI", "CHI.id", "USA", "USA.ID"])
 def test_valid_country_tag_passes(tmp_path, cip_contract, value):
     """A real tag, with or without .id (any case), is never flagged."""
@@ -766,8 +980,7 @@ def test_discovered_contract_with_only_optional_params_is_not_registered(tmp_pat
 def test_tag_set_accepts_both_country_tags_and_aliases(tmp_path):
     _write(
         tmp_path / "common" / "country_tags" / "00_countries.txt",
-        "# Country tags\n"
-        '\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
+        '# Country tags\n\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
     )
     _write(
         tmp_path / "common" / "country_tag_aliases" / "00_aliases.txt",
@@ -854,7 +1067,7 @@ def test_unreadable_caller_file_is_reported(tmp_path, cip_contract):
     path.mkdir(parents=True)
 
     results = _validate_call_sites_in_file(
-        (str(path), cip_contract, str(tmp_path), frozenset(), frozenset())
+        (str(path), cip_contract, str(tmp_path), frozenset(), frozenset(), frozenset())
     )
 
     assert [category for category, _message, _line in results] == ["unreadable-input"]
@@ -1067,7 +1280,14 @@ def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, f
     script, expected = _SEMANTIC_FIXTURES[fixture]
     path = tmp_path / "events" / "fixture.txt"
     _write(path, script)
-    args = (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), frozenset())
+    args = (
+        str(path),
+        _AMOUNT_CONTRACT,
+        str(tmp_path),
+        frozenset(),
+        frozenset(),
+        frozenset(),
+    )
 
     monkeypatch.setenv("MD_NO_CACHE", "1")
     uncached = _validate_call_sites_in_file(args)
@@ -1123,7 +1343,14 @@ def test_contracted_call_owns_a_mixed_audit_line(tmp_path, calls):
     path = tmp_path / "mixed.txt"
     _write(path, "set_temp_variable = { amount = 1 }\n" + calls + "\n")
     findings = _validate_call_sites_in_file(
-        (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), {"plain_effect"})
+        (
+            str(path),
+            _AMOUNT_CONTRACT,
+            str(tmp_path),
+            frozenset(),
+            frozenset({"plain_effect"}),
+            frozenset(),
+        )
     )
     assert [(category, line) for category, _message, line in findings] == [(_SHARED, 2)]
     assert "'test_effect'" in findings[0][1]
@@ -1139,22 +1366,37 @@ def test_single_leaf_formatter_output_passes_the_call_rule(tmp_path, wrapper):
     _write(path, "set_temp_variable = { amount = 1 }\n" + rendered[0] + "\n")
     assert (
         _validate_call_sites_in_file(
-            (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), frozenset())
+            (
+                str(path),
+                _AMOUNT_CONTRACT,
+                str(tmp_path),
+                frozenset(),
+                frozenset(),
+                frozenset(),
+            )
         )
         == []
     )
 
 
+@pytest.mark.parametrize(
+    "assignment",
+    [
+        "set_temp_variable = {{ {name} = {value} }}",
+        "set_temp_variable = {{\n {name} = {value}\n}}",
+        "set_temp_variable = {{\n var = {name}\n value = {value}\n}}",
+    ],
+)
 def test_splitting_statements_preserves_influence_values_and_errors(
-    tmp_path, cip_contract
+    tmp_path, cip_contract, assignment
 ):
     statements = [
         "option = {",
-        "set_temp_variable = { percent_change = 2.00 }",
-        "set_temp_variable = { tag_index = USA }",
-        "set_temp_variable = { influence_target = USA }",
+        assignment.format(name="percent_change", value="2.00"),
+        assignment.format(name="tag_index", value="USA"),
+        assignment.format(name="influence_target", value="USA"),
         "change_influence_percentage = yes",
-        "set_temp_variable = { tag_index = ZZZ }",
+        assignment.format(name="tag_index", value="ZZZ"),
         "change_influence_percentage = yes",
         "}",
     ]
@@ -1167,7 +1409,14 @@ def test_splitting_statements_preserves_influence_values_and_errors(
             [(kind, name, rhs) for kind, _line, name, rhs in vsp._tokenize(script)]
         )
         findings = _validate_call_sites_in_file(
-            (str(path), cip_contract, str(tmp_path), _TEST_VALID_TAGS, frozenset())
+            (
+                str(path),
+                cip_contract,
+                str(tmp_path),
+                _TEST_VALID_TAGS,
+                frozenset(),
+                frozenset(),
+            )
         )
         assert [
             category for category, _message, _line in findings if category != _SHARED
@@ -1186,16 +1435,15 @@ def test_splitting_statements_preserves_influence_values_and_errors(
         ("hidden_effect = { plain_effect = yes }", False),
         ("plain_effect = yes add_stability = 0.1", False),
         (
-            "set_temp_variable = { amount = 1 }\n"
-            "test_effect = yes add_stability = 0.1",
+            "set_temp_variable = { amount = 1 }\ntest_effect = yes add_stability = 0.1",
             True,
         ),
         (
-            "set_temp_variable = { amount = 1 }\n"
-            "hidden_effect = { test_effect = yes }",
+            "set_temp_variable = { amount = 1 }\nhidden_effect = { test_effect = yes }",
             False,
         ),
         ("test_effect = yes", True),
+        ("plain_effect = { TARGET = FRA }", False),
     ],
 )
 def test_cli_keeps_audit_advisory_without_weakening_errors(
@@ -1308,6 +1556,139 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
         runpy.run_path(vsp.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# relative caller, effect definitions, caller text, expected category/file/line
+_UNSUPPORTED_SYNTAX_CASES = {
+    "vatican_parameter_template": (
+        "common/national_focus/vatican.txt",
+        "HLS_holy_wargoal = {\n"
+        "\tcreate_wargoal = { type = annex_everything target = $TARGET$ }\n}\n",
+        "focus_tree = {\n\tfocus = { completion_reward = {\n"
+        "\t\tHLS_holy_wargoal = { TARGET = FRA }\n\t} }\n}\n",
+        [
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 2),
+            ("unsupported-effect-arguments", "common/national_focus/vatican.txt", 3),
+        ],
+    ),
+    "corrected_country_scopes": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = {\n\tif = {\n\t\tlimit = { exists = yes }\n"
+        "\t\tPREV = { create_wargoal = { type = annex_everything target = PREV } }\n"
+        "\t}\n}\n",
+        "option = {\n\tFRA = { HLS_holy_wargoal = yes }\n}\n",
+        [],
+    ),
+    "uncontracted_effect_with_arguments": (
+        "history/countries/HLS.txt",
+        "HLS_holy_wargoal = { add_political_power = 1 }\n",
+        "HLS_holy_wargoal = { TARGET = FRA }\n",
+        [("unsupported-effect-arguments", "history/countries/HLS.txt", 1)],
+    ),
+    "indented_definition_and_multiline_call": (
+        "events/caller.txt",
+        "\tHLS_holy_wargoal = { add_political_power = 1 }\n",
+        "option = {\n\tHLS_holy_wargoal =\n\t{ TARGET = FRA }\n}\n",
+        [("unsupported-effect-arguments", "events/caller.txt", 2)],
+    ),
+    "nested_call_in_effect_definition": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = { }\n"
+        "wrapper = {\n\tHLS_holy_wargoal = { TARGET = FRA }\n}\n",
+        "",
+        [("unsupported-effect-arguments", "common/scripted_effects/e.txt", 3)],
+    ),
+    "placeholder_scope_and_repeated_values": (
+        "events/caller.txt",
+        "build_line = {\n\t$STATE$ = { add_extra_state_shared_building_slots = 1 }\n"
+        "\tset_variable = { amount = -$AMOUNT$ value = $AMOUNT$ }\n}\n",
+        "",
+        [
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 2),
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 3),
+        ],
+    ),
+    "comments_and_quoted_text": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = {\n\t# target = $TARGET$\n"
+        '\tlog = "a \\" # $TARGET$ HLS_holy_wargoal = { }"\n}\n',
+        "option = {\n\t# HLS_holy_wargoal = { TARGET = FRA }\n"
+        '\tlog = "HLS_holy_wargoal = {\n\tTARGET = FRA }"\n}\n',
+        [],
+    ),
+    "variable_and_event_target_scopes": (
+        "common/scripted_guis/caller.txt",
+        "HLS_holy_wargoal = { }\n",
+        "var:HLS_holy_wargoal = { HLS_holy_wargoal = yes }\n"
+        "event_target:HLS_holy_wargoal = { HLS_holy_wargoal = yes }\n",
+        [],
+    ),
+    "builtin_blocks_and_trigger_parameters": (
+        "common/scripted_triggers/trigger.txt",
+        "HLS_holy_wargoal = { create_wargoal = { type = annex_everything target = FRA } }\n",
+        "test_trigger = { tag = $TAG$ }\n",
+        [],
+    ),
+    "bom_crlf_and_empty_argument_block": (
+        "events/caller.txt",
+        "\N{ZERO WIDTH NO-BREAK SPACE}HLS_holy_wargoal = { }\r\n",
+        "\N{ZERO WIDTH NO-BREAK SPACE}option = {\r\n\tHLS_holy_wargoal = { }\r\n}\r\n",
+        [("unsupported-effect-arguments", "events/caller.txt", 2)],
+    ),
+    "multiple_definitions_and_calls": (
+        "events/caller.txt",
+        "first_effect = { }\nsecond_effect = { }\n",
+        "option = { first_effect = { AMOUNT = 1 } second_effect = { AMOUNT = 2 } }\n",
+        [
+            ("unsupported-effect-arguments", "events/caller.txt", 1),
+            ("unsupported-effect-arguments", "events/caller.txt", 1),
+        ],
+    ),
+    "scope_keyword_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tFROM = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "lowercase_scope_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tfrom = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [
+            ("lowercase-scope-shadowed-by-effect", "events/caller.txt", 3),
+        ],
+    ),
+    "idea_definition_sharing_effect_name": (
+        "common/ideas/test_ideas.txt",
+        "depression = { swap_ideas = { remove_idea = recession add_idea = depression } }\n",
+        "ideas = {\n\teconomic_cycles = {\n\t\tdepression = {\n"
+        "\t\t\tcost = 300\n\t\t\tmodifier = { stability_factor = -0.1 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "dynamic_modifier_definition_sharing_effect_name": (
+        "common/dynamic_modifiers/test_modifiers.txt",
+        "public_war_weariness_effect = { add_stability = 0.01 }\n",
+        "public_war_weariness_effect = {\n\twar_support_factor = war_support_factor_var\n}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize("case", _UNSUPPORTED_SYNTAX_CASES)
+def test_unsupported_scripted_effect_syntax(tmp_path, case):
+    relative, definitions, caller, expected = _UNSUPPORTED_SYNTAX_CASES[case]
+    _write(tmp_path / "common/scripted_effects/e.txt", definitions)
+    _write(tmp_path / relative, caller)
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+
+    assert sorted(
+        (issue.category, issue.file, issue.line) for issue in validator._issues
+    ) == sorted(expected)
+    assert all(issue.severity == vsp.Severity.WARNING for issue in validator._issues)
 
 
 # --- staged dependency rescans (#5185) -------------------------------------

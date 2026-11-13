@@ -2,6 +2,7 @@
 
 import pytest
 import validate_events as V
+from shared.suite import event_block
 from shared.suite import write_under_str as _write
 
 COUNTRY_ART = (217, 163)
@@ -24,8 +25,7 @@ def _validator(tmp_path):
 
 def _event(event_type, event_id, *fields):
     """One event definition; `is_triggered_only` first so field lines are stable."""
-    lines = "".join(f"\t{field}\n" for field in ("is_triggered_only = yes",) + fields)
-    return f"{event_type} = {{\n\tid = {event_id}\n{lines}}}\n"
+    return event_block(event_id, "is_triggered_only = yes", *fields, kind=event_type)
 
 
 def _run(tmp_path, monkeypatch, sizes, *events):
@@ -200,15 +200,3 @@ def test_hidden_event_picture_is_reported(tmp_path):
     assert v.errors_found == 1
     assert v.warnings_found == 0
     assert v._issues[0].category == "hidden-event-picture"
-
-
-def test_hidden_event_with_only_a_nested_portrait_is_clean(tmp_path):
-    _write(
-        tmp_path,
-        "events/Ev.txt",
-        _event("country_event", "hid.1", "hidden = yes", PORTRAIT_FIELD),
-    )
-    v = _validator(tmp_path)
-    v.validate_hidden_event_pictures()
-
-    assert v._issues == []

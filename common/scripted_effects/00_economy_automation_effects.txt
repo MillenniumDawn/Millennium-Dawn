@@ -291,6 +291,7 @@ automation_review_budget = {
 	if = {
 		limit = {
 			check_variable = { automation_budget_current_level < automation_budget_expected_level }
+			NOT = { check_variable = { automation_budget_transition_cost > 0.05 } }
 			check_variable = { treasury_rate > 0 }
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			OR = {
@@ -364,7 +365,9 @@ automation_economy_weekly = {
 				has_country_flag = automation_population_tax
 				has_country_flag = automation_corporate_tax
 			}
+			NOT = { has_country_flag = automation_tax_reviewed }
 		}
+		set_country_flag = { flag = automation_tax_reviewed value = 1 days = 27 }
 		calculate_tax_adjustments = yes
 		if = {
 			limit = {
@@ -386,6 +389,7 @@ automation_economy_weekly = {
 				set_temp_variable = { previous_tax_rate = population_tax_rate }
 				add_to_variable = { population_tax_rate = pop_tax_change }
 				clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+				population_tax_transition_check = yes
 				ingame_update_setup = yes
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: Automated population tax change: Old Taxes: [?previous_tax_rate]%, New Taxes: [?population_tax_rate]% (Balance: [?treasury_rate])"
@@ -412,6 +416,7 @@ automation_economy_weekly = {
 				set_temp_variable = { previous_tax_rate = corporate_tax_rate }
 				add_to_variable = { corporate_tax_rate = corp_tax_change }
 				clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
+				corporate_tax_transition_check = yes
 				ingame_update_setup = yes
 				if = { limit = { is_debug = yes }
 					log = "[GetDateText]: [THIS.GetName]: DEBUG: Automated corporate tax change: Old Taxes: [?previous_tax_rate]%, New Taxes: [?corporate_tax_rate]% (Balance: [?treasury_rate])"
@@ -435,6 +440,7 @@ automation_economy_weekly = {
 					has_variable = expected_adm_spending
 				}
 				set_temp_variable = { automation_budget_current_level = bureau_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_bureau_cost }
 				set_temp_variable = { automation_budget_expected_level = expected_adm_spending }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@bureaucracy_cost_factor } }
 				automation_review_budget = yes
@@ -447,6 +453,7 @@ automation_economy_weekly = {
 					has_variable = expected_police_spending
 				}
 				set_temp_variable = { automation_budget_current_level = police_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_police_cost }
 				set_temp_variable = { automation_budget_expected_level = expected_police_spending }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@crime_fighting_cost_factor } }
 				automation_review_budget = yes
@@ -459,6 +466,7 @@ automation_economy_weekly = {
 					has_variable = expected_edu_spending
 				}
 				set_temp_variable = { automation_budget_current_level = education_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_education_cost }
 				set_temp_variable = { automation_budget_expected_level = expected_edu_spending }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@education_budget_cost_factor } }
 				automation_review_budget = yes
@@ -471,6 +479,7 @@ automation_economy_weekly = {
 					has_variable = expected_health_spending
 				}
 				set_temp_variable = { automation_budget_current_level = health_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_health_cost }
 				set_temp_variable = { automation_budget_expected_level = expected_health_spending }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@health_budget_cost_factor } }
 				automation_review_budget = yes
@@ -483,6 +492,7 @@ automation_economy_weekly = {
 					has_variable = expected_welfare_spending
 				}
 				set_temp_variable = { automation_budget_current_level = social_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_social_cost }
 				set_temp_variable = { automation_budget_expected_level = expected_welfare_spending }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@social_budget_cost_factor } }
 				automation_review_budget = yes
@@ -492,12 +502,12 @@ automation_economy_weekly = {
 					check_variable = { automation_budget_category = 5 }
 					has_country_flag = automation_budget_military_spending
 					has_variable = military_law
-					has_variable = expected_military_sp
+					has_variable = expected_military_law
 				}
 				set_temp_variable = { automation_budget_current_level = military_law }
-				# Automation levels count from 1 like military_law; expected_military_sp counts from 0.
-				set_temp_variable = { automation_budget_expected_level = { value = expected_military_sp add = 1 } }
-				if = { limit = { has_idea = no_military } set_temp_variable = { automation_budget_expected_level = 1 } }
+				set_temp_variable = { automation_budget_expected_level = expected_military_law }
+				set_temp_variable = { automation_budget_transition_cost = policy_transition_military_cost }
+				if = { limit = { has_war = yes } set_temp_variable = { automation_budget_transition_cost = 0 } }
 				set_temp_variable = { automation_law_cost_factor = { value = 1 add = modifier@military_spending_cost_factor } }
 				automation_review_budget = yes
 			}

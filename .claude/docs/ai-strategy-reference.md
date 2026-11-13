@@ -82,9 +82,11 @@ ai_strategy = { type = avoid_starting_wars value = -200 }
 ai_strategy = { type = conquer id = GER value = 200 }
 ```
 
-- MD uses both signs on purpose: small positive values as a general brake, and negative
-  values for the suppression technique. Do not flag a value as a sign bug without
-  reading the surrounding `conquer` strategies.
+- Never write a positive targetless value. The engine adds it to `conquer` and reads the
+  sum as front war priority, so a positive value makes the country and every country
+  bordering its faction treat those fronts as top priority; it is not a brake. Use a
+  negative value for the suppression technique, and `declare_war id = TAG value = -4000`
+  to block one target. A targeted `avoid_starting_wars id = TAG` is never read.
 - `declare_war` needs `id = TAG`. `target =` is not accepted and `dont_declare_war` is
   not a token.
 - `enable = { has_war_with = TARGET }` makes `declare_war` a no-op. Gate on
@@ -102,11 +104,38 @@ ai_strategy = { type = conquer id = GER value = 200 }
 
 - Army and equipment strategies come in tiers by military factory count. Keep tier
   `enable` ranges exclusive so role weights do not stack.
+- Every tag uses the generic army tiers. A national composition block adds deltas to
+  them. It does not set absolute ratios.
+- Transport helicopters carry a negative factor in every tier, and
+  `MD_dont_build_transport_helicopter_strong` adds to it once a spare reserve exists.
+  Keep the sum at -100 or above.
+- `default_surplus_management` decides what spare factories build once needs are met.
+- APCs and IFVs share one spare-stock line for three blocks: `MD_low_*_stockpile` boosts
+  below it, `MD_high_*_stockpile` slows above it, and `focus_on_*` trains more of the
+  units that use them. Tanks have no high block. `medium_tank_chassis` is a base type,
+  and its subtypes inherit a factor set on it.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
-- Emergency strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`,
-  `default_AI_needs_to_live`) halt training and reprioritize when a stockpile runs out.
-- A country gets a custom chip or composite production strategy only when it is a
-  significant producer. Others use the generic logic.
+- Shortage strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`) only raise
+  production. A `role_ratio` or `build_army` on a shortage gate flips as stock moves, and
+  each flip deletes or re-queues training lines.
+- `default_AI_needs_to_live` adds light infantry once surrender progress passes 0.49.
+
+## Construction
+
+- `AI_construction_priorities` and `AI_wartime_construction_priorities` in
+  `MD_econ_ai.txt` hold the generic building weights and the only
+  `added_military_to_civilian_factory_ratio`. Tune them before adding a tier or per-tag
+  block. Microchip plants come only from `AI_build_microchip_plants`, and strategy plans
+  carry no construction strategies.
+- `CONSTRUCTION_PRIO_*` and `BUILDING_TARGETS_BUILDING_PRIORITIES` in `MD_defines.lua`
+  order the construction queue and competing `building_target` floors.
+- Gate on `num_of_civilian_factories`, never `num_of_available_civilian_factories`. AI
+  countries have no idle factories, so the available count stays near 0.
+- `build_building` without `target` on `industrial_complex` or `arms_factory` converts
+  an existing factory instead of building one, because both have `base_cost_conversion`.
+  Use `building_target` for a factory floor. Other buildings take weights.
+- The engine's own build picks weigh 1. Keep always-on generic weights in low single
+  digits so they do not crowd out factory construction.
 
 ## Strategy plans (`common/ai_strategy_plans/`)
 
@@ -171,6 +200,28 @@ Zombie roles: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`.
 - `ai_will_do` (focuses, tech, decisions): the AI rolls a random number up to the value
   and picks the highest.
 - `ai_chance` (event options): proportional probability with a 1% floor.
+- Math in a weight block goes in `check_expr`. See "Math in weight blocks" in
+  `hoi4-data-structures.md`.
+
+## Intelligence (La Resistance)
+
+- Operations: `update_operation_ai` (`common/scripted_effects/99_operation_strat_effects.txt`)
+  runs weekly for AI countries with an agency. It holds one target and operation until
+  it ends or stalls. A stall times the target out for 180 days.
+  - To add an operation, give it a candidate block that copies its `operatives` and
+    `network_strength` from the operation file and its token, war, and resistance gates.
+  - Register its token in `common/synchronized_dynamic_tokens/MD_tokens.txt`.
+- Scorers: `common/scorers/country/` holds MD copies of vanilla's operation target,
+  mission, and decryption scorers. A file with the same name replaces vanilla's file.
+  Rivalries come from `antagonize`, `contain`, and `conquer` strategies, not tag checks.
+- Country operations: `TAG_operations_against_TAG` strategies use values 950 and 1000,
+  above the generic 900, and need more than 3 operatives so the generic pick keeps
+  enough.
+- Agency upgrades cost treasury, not factories. `ai_can_afford_agency_upgrade` paces
+  them. The `upgrade_intelligence_agency` strategy cancels the factory defines.
+- Occupation laws: each law adds weight only in the band of `resistance_target_without_law`
+  where it is the mildest law that keeps resistance under 0.5, the `resistance_50`
+  threshold. When a law's `resistance_target` changes, move its band to match.
 
 ## Pitfalls
 

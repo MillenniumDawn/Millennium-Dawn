@@ -84,7 +84,7 @@ increase_spending_if_possible = {
 	if = {
 		# if we are good on taxes and not increased spending already
 		limit = {
-			check_variable = { treasury_rate > 0 }
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { corporate_tax_rate < 20 }
 			check_variable = { population_tax_rate < 25 }
 			has_bureau_idea_law_desired = yes
@@ -225,9 +225,7 @@ ai_reduce_spending_on_deficit = {
 			if = {
 				limit = {
 					check_variable = { military_law > 1 }
-					# military_law is the idea number + 1, so compare on the ai_will_do scale.
-					set_temp_variable = { held_military_level = { value = military_law subtract = 1 } }
-					check_variable = { held_military_level > expected_military_sp }
+					check_variable = { military_law > expected_military_law }
 				}
 				decrease_military_spending = yes
 			}
@@ -296,92 +294,106 @@ ai_lower_expected_spending_on_deficit = {
 		if = {
 			limit = { check_variable = { budget_balance_ratio < -0.03 } }
 			set_temp_variable = { desire_change = -1 }
-			set_temp_variable = { spending_cut = 0 }
-			random_list = {
-				10 = {
-					modifier = { factor = 0 check_variable = { social_law < 2 } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_trim_social }
-					modifier = { factor = 0 check_variable = { social_law < expected_welfare_spending } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_cut_social }
-					modifier = { factor = 0 check_variable = { social_desire_offset < -0.5 } has_social_law_desired = yes }
-					modifier = { factor = 0 check_variable = { social_desire_offset > 0 } check_variable = { expected_welfare_spending > 5 } }
-					if = { limit = { has_social_law_desired = yes }
-						change_expected_social_spending = yes
-						set_country_flag = ai_deficit_cut_social
-						set_country_flag = { flag = ai_deficit_trim_social days = 180 value = 1 } # events or AI picks can revert a trim
-					}
-					decrease_social_spending = yes
-					set_temp_variable = { spending_cut = 1 }
+			# Largest budget lines first. Each trim blocks its law for 180 days, so the chain moves down.
+			# Expected was rebuilt before this ran; each branch refreshes it so the cut law is not left below it.
+			if = {
+				limit = {
+					check_variable = { social_law > 1 }
+					NOT = { has_country_flag = ai_deficit_trim_social }
+					NOT = { has_country_flag = ai_deficit_cut_social }
+					NOT = { check_variable = { social_law < expected_welfare_spending } }
+					NOT = { AND = { check_variable = { social_desire_offset < -0.5 } has_social_law_desired = yes } }
+					NOT = { AND = { check_variable = { social_desire_offset > 0 } check_variable = { expected_welfare_spending > 5 } } }
 				}
-				10 = {
-					modifier = { factor = 0 check_variable = { health_law < 2 } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_trim_health }
-					modifier = { factor = 0 check_variable = { health_law < expected_health_spending } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_cut_health }
-					modifier = { factor = 0 check_variable = { health_desire_offset < -0.5 } has_health_law_desired = yes }
-					modifier = { factor = 0 check_variable = { health_desire_offset > 0 } check_variable = { expected_health_spending > 5 } }
-					if = { limit = { has_health_law_desired = yes }
-						change_expected_health_spending = yes
-						set_country_flag = ai_deficit_cut_health
-						set_country_flag = { flag = ai_deficit_trim_health days = 180 value = 1 }
-					}
-					decrease_healthcare_budget = yes
-					set_temp_variable = { spending_cut = 1 }
+				if = { limit = { has_social_law_desired = yes }
+					change_expected_social_spending = yes
+					set_country_flag = ai_deficit_cut_social
+					set_country_flag = { flag = ai_deficit_trim_social days = 180 value = 1 } # events or AI picks can revert a trim
 				}
-				10 = {
-					modifier = { factor = 0 check_variable = { education_law < 2 } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_trim_education }
-					modifier = { factor = 0 check_variable = { education_law < expected_edu_spending } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_cut_education }
-					modifier = { factor = 0 check_variable = { education_desire_offset < -0.5 } has_education_law_desired = yes }
-					modifier = { factor = 0 check_variable = { education_desire_offset > 0 } check_variable = { expected_edu_spending > 4 } }
-					if = { limit = { has_education_law_desired = yes }
-						change_expected_education_spending = yes
-						set_country_flag = ai_deficit_cut_education
-						set_country_flag = { flag = ai_deficit_trim_education days = 180 value = 1 }
-					}
-					decrease_education_budget = yes
-					set_temp_variable = { spending_cut = 1 }
-				}
-				10 = {
-					modifier = { factor = 0 check_variable = { police_law < 2 } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_trim_police }
-					modifier = { factor = 0 check_variable = { police_law < expected_police_spending } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_cut_police }
-					modifier = { factor = 0 check_variable = { police_desire_offset < -0.5 } has_police_idea_law_desired = yes }
-					modifier = { factor = 0 check_variable = { police_desire_offset > 0 } check_variable = { expected_police_spending > 4 } }
-					if = { limit = { has_police_idea_law_desired = yes }
-						change_expected_police_spending = yes
-						set_country_flag = ai_deficit_cut_police
-						set_country_flag = { flag = ai_deficit_trim_police days = 180 value = 1 }
-					}
-					decrease_policing_budget = yes
-					set_temp_variable = { spending_cut = 1 }
-				}
-				10 = {
-					modifier = { factor = 0 check_variable = { bureau_law < 2 } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_trim_bureau }
-					modifier = { factor = 0 check_variable = { bureau_law < expected_adm_spending } }
-					modifier = { factor = 0 has_country_flag = ai_deficit_cut_bureau }
-					modifier = { factor = 0 check_variable = { bureau_desire_offset < -0.5 } has_bureau_idea_law_desired = yes }
-					modifier = { factor = 0 check_variable = { bureau_desire_offset > 0 } check_variable = { expected_adm_spending > 4 } }
-					if = { limit = { has_bureau_idea_law_desired = yes }
-						change_expected_bureaucracy_spending = yes
-						set_country_flag = ai_deficit_cut_bureau
-						set_country_flag = { flag = ai_deficit_trim_bureau days = 180 value = 1 }
-					}
-					decrease_centralization = yes
-					set_temp_variable = { spending_cut = 1 }
-				}
+				decrease_social_spending = yes
+				calculate_expected_spending = yes
 			}
-			# Expected was rebuilt before this ran; refresh so the cut law is not left below it.
-			if = { limit = { check_variable = { spending_cut = 1 } }
+			else_if = {
+				limit = {
+					check_variable = { health_law > 1 }
+					NOT = { has_country_flag = ai_deficit_trim_health }
+					NOT = { has_country_flag = ai_deficit_cut_health }
+					NOT = { check_variable = { health_law < expected_health_spending } }
+					NOT = { AND = { check_variable = { health_desire_offset < -0.5 } has_health_law_desired = yes } }
+					NOT = { AND = { check_variable = { health_desire_offset > 0 } check_variable = { expected_health_spending > 5 } } }
+				}
+				if = { limit = { has_health_law_desired = yes }
+					change_expected_health_spending = yes
+					set_country_flag = ai_deficit_cut_health
+					set_country_flag = { flag = ai_deficit_trim_health days = 180 value = 1 }
+				}
+				decrease_healthcare_budget = yes
+				calculate_expected_spending = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { education_law > 1 }
+					NOT = { has_country_flag = ai_deficit_trim_education }
+					NOT = { has_country_flag = ai_deficit_cut_education }
+					NOT = { check_variable = { education_law < expected_edu_spending } }
+					NOT = { AND = { check_variable = { education_desire_offset < -0.5 } has_education_law_desired = yes } }
+					NOT = { AND = { check_variable = { education_desire_offset > 0 } check_variable = { expected_edu_spending > 4 } } }
+				}
+				if = { limit = { has_education_law_desired = yes }
+					change_expected_education_spending = yes
+					set_country_flag = ai_deficit_cut_education
+					set_country_flag = { flag = ai_deficit_trim_education days = 180 value = 1 }
+				}
+				decrease_education_budget = yes
+				calculate_expected_spending = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { police_law > 1 }
+					NOT = { has_country_flag = ai_deficit_trim_police }
+					NOT = { has_country_flag = ai_deficit_cut_police }
+					NOT = { check_variable = { police_law < expected_police_spending } }
+					NOT = { AND = { check_variable = { police_desire_offset < -0.5 } has_police_idea_law_desired = yes } }
+					NOT = { AND = { check_variable = { police_desire_offset > 0 } check_variable = { expected_police_spending > 4 } } }
+				}
+				if = { limit = { has_police_idea_law_desired = yes }
+					change_expected_police_spending = yes
+					set_country_flag = ai_deficit_cut_police
+					set_country_flag = { flag = ai_deficit_trim_police days = 180 value = 1 }
+				}
+				decrease_policing_budget = yes
+				calculate_expected_spending = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { bureau_law > 1 }
+					NOT = { has_country_flag = ai_deficit_trim_bureau }
+					NOT = { has_country_flag = ai_deficit_cut_bureau }
+					NOT = { check_variable = { bureau_law < expected_adm_spending } }
+					NOT = { AND = { check_variable = { bureau_desire_offset < -0.5 } has_bureau_idea_law_desired = yes } }
+					NOT = { AND = { check_variable = { bureau_desire_offset > 0 } check_variable = { expected_adm_spending > 4 } } }
+				}
+				if = { limit = { has_bureau_idea_law_desired = yes }
+					change_expected_bureaucracy_spending = yes
+					set_country_flag = ai_deficit_cut_bureau
+					set_country_flag = { flag = ai_deficit_trim_bureau days = 180 value = 1 }
+				}
+				decrease_centralization = yes
 				calculate_expected_spending = yes
 			}
 		}
 		# Undo one marked trim; restarts the cooldown in case the step reopens a deficit.
 		else_if = {
-			limit = { check_variable = { budget_balance_ratio > 0.08 } }
+			limit = {
+				check_variable = { budget_balance_ratio > 0.08 }
+				OR = {
+					has_country_flag = ai_deficit_cut_social
+					has_country_flag = ai_deficit_cut_health
+					has_country_flag = ai_deficit_cut_education
+					has_country_flag = ai_deficit_cut_police
+					has_country_flag = ai_deficit_cut_bureau
+				}
+			}
 			set_temp_variable = { desire_change = 1 }
 			random_list = {
 				10 = {

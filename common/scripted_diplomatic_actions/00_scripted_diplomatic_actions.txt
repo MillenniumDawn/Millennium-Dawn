@@ -1,58 +1,14 @@
 # Author(s): AngriestBird
 scripted_diplomatic_actions = {
-	##Yard1's Recall Volunteers mod integrated :D
-	recall_volunteers = {
-		allowed = {
-			has_game_rule = { rule = allow_recall_intervention_forces option = yes }
-			ROOT = { is_ai = no }
-		}
-		visible = {
-			has_volunteers_amount_from = { tag = ROOT count > 0 }
-		}
-
-		selectable = {
-			# doing this for nicer tooltips
-			if = {
-				limit = {
-					NOT = { has_volunteers_amount_from = { tag = ROOT count > 0 } }
-				}
-				custom_trigger_tooltip = {
-					tooltip = RECALL_VOLUNTEERS_TOOLTIP
-					always = no
-				}
-			}
-			else = {
-				custom_trigger_tooltip = {
-					tooltip = RECALL_VOLUNTEERS_TOOLTIP_G
-					always = yes
-				}
-			}
-		}
-
-		cost = 50
-		command_power = 15
-
-		requires_acceptance = no
-		show_acceptance_on_action_button = no
-
-		icon = 1
-
-		send_description = RECALL_VOLUNTEERS_SEND_DESC
-
-		complete_effect = {
-			ROOT = { recall_volunteers_from = PREV }
-		}
-	}
-
 	# Trade Agreements
 	propose_improved_trade_agreement = {
 		visible = {
-			NOT = { has_country_flag = trade_agreement@ROOT }
+			NOT = { is_in_array = { trade_agreement_partners = ROOT } }
 		}
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = PROPOSE_TRADE_AGREEMENT_TOOLTIP
-				NOT = { has_country_flag = trade_agreement@ROOT }
+				NOT = { is_in_array = { trade_agreement_partners = ROOT } }
 			}
 			if = {
 				limit = {
@@ -91,14 +47,11 @@ scripted_diplomatic_actions = {
 			ROOT = { set_variable = { pending_trade_offer_country = PREV.id } }
 		}
 		complete_effect = {
-			set_country_flag = trade_agreement@ROOT
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = THIS.id }
+			set_improved_trade_agreement = yes
 			ROOT = {
 				clear_variable = pending_trade_offer_country
-				set_country_flag = trade_agreement@PREV
-				if = {
-					limit = { original_tag = SIN }
-					add_to_array = { SIN_singaporean_trade_agreement = PREV.id }
-				}
 				if = { limit = { has_dlc = "By Blood Alone" }
 					if = {
 						limit = { is_embargoing = PREV }
@@ -110,34 +63,19 @@ scripted_diplomatic_actions = {
 					}
 				}
 			}
-			add_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
-			add_opinion_modifier = { target = ROOT modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = ROOT modifier = mutual_trade_opinion }
-			reverse_add_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
 			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { tag_index = ROOT.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
-			add_to_variable = { signed_trade_agreements = 1 }
-
-			if = {
-				limit = { original_tag = SIN }
-				add_to_array = { SIN_singaporean_trade_agreement = ROOT.id }
-			}
 			ROOT = {
 				set_temp_variable = { percent_change = 1 }
 				set_temp_variable = { tag_index = PREV.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
-				add_to_variable = { signed_trade_agreements = 1 }
-
-				if = {
-					limit = { ROOT = { original_tag = SIN } }
-					SIN_calculate_singaporean_trade_agreements = yes
-				}
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_trade_offer_country
 				set_country_flag = { flag = rejected_trade_agreement_@PREV days = 180 value = 1 }
@@ -153,6 +91,13 @@ scripted_diplomatic_actions = {
 		reject_description = PROPOSE_TRADE_AGREEMENT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_trade_condition = {
 				base = -25
 				modifier = {
@@ -181,6 +126,21 @@ scripted_diplomatic_actions = {
 					add = 50
 				}
 			}
+			trade_asean_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_idea = ASEAN_Member }
+					has_idea = ASEAN_Member
+					add = 10
+				}
+			}
+			trade_singapore_hub_condition = {
+				base = 0
+				modifier = {
+					ROOT = { has_dynamic_modifier = { modifier = SIN_singaporean_trade_strength } }
+					add = 15
+				}
+			}
 			condition_two = {
 				base = 0
 				modifier = {
@@ -195,8 +155,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 				modifier = {
 					add = -50
@@ -281,6 +241,11 @@ scripted_diplomatic_actions = {
 				add = 10
 				ROOT = { has_opinion = { target = PREV value > 50 } }
 			}
+			# Singapore earns tariff income per agreement once its trade mechanic is active
+			modifier = {
+				add = 25
+				ROOT = { has_dynamic_modifier = { modifier = SIN_singaporean_trade_strength } }
+			}
 			modifier = {
 				ROOT = { original_tag = SOV }
 				has_idea = NATO_member
@@ -315,10 +280,6 @@ scripted_diplomatic_actions = {
 			modifier = {
 				add = 5
 				is_top3_influencer = yes
-			}
-			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
 			}
 			modifier = {
 				add = -15
@@ -360,15 +321,10 @@ scripted_diplomatic_actions = {
 				check_variable = { ROOT.interest_rate > 8 }
 			}
 			modifier = {
-				factor = 0.5
-				ROOT = { has_political_power < 250 }
-			}
-			modifier = {
 				factor = 0
 				ROOT = {
 					OR = {
 						check_variable = { ROOT.interest_rate > 12 }
-						has_political_power < 100
 						has_active_mission = bankruptcy_incoming_collapse
 						NOT = { check_variable = { pending_trade_offer_country = 0 } }
 						has_country_flag = rejected_trade_agreement_@PREV
@@ -428,11 +384,11 @@ scripted_diplomatic_actions = {
 	}
 
 	cancel_trade_agreement = {
-		visible = { has_country_flag = trade_agreement@ROOT }
+		visible = { is_in_array = { trade_agreement_partners = ROOT } }
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = CANCEL_TRADE_AGREEMENT_TOOLTIP
-				has_country_flag = trade_agreement@ROOT
+				is_in_array = { trade_agreement_partners = ROOT }
 			}
 			ERI_is_not_transitional_government = yes
 		}
@@ -444,31 +400,21 @@ scripted_diplomatic_actions = {
 		send_description = CANCEL_TRADE_AGREEMENT_DESC
 
 		complete_effect = {
-			remove_opinion_modifier = { target = ROOT modifier = mutual_trade_agreement }
-			remove_opinion_modifier = { target = ROOT modifier = mutual_trade_opinion }
-			clr_country_flag = trade_agreement@ROOT
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = THIS.id }
+			set_temp_variable = { remove_agreement = 1 }
+			set_improved_trade_agreement = yes
 			set_temp_variable = { percent_change = -1.25 }
 			set_temp_variable = { tag_index = ROOT.id }
 			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
-			add_to_variable = { signed_trade_agreements = -1 }
 			set_country_flag = { flag = has_recently_canceled_trade_agreement_@ROOT days = 90 value = 1 }
 			ROOT = {
-				remove_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }
-				remove_opinion_modifier = { target = PREV modifier = mutual_trade_opinion }
-				add_opinion_modifier = { target = PREV modifier = broke_trade_agreement }
-				clr_country_flag = trade_agreement@PREV
 				set_temp_variable = { percent_change = -1.25 }
 				set_temp_variable = { tag_index = PREV.id }
 				set_temp_variable = { influence_target = THIS.id }
 				change_influence_percentage = yes
-				add_to_variable = { signed_trade_agreements = -1 }
-				if = {
-					limit = { ROOT = { original_tag = SIN } }
-					SIN_calculate_singaporean_trade_agreements = yes
-				}
 			}
-			add_opinion_modifier = { target = ROOT modifier = broke_trade_agreement }
 		}
 
 		ai_desire = {
@@ -517,16 +463,8 @@ scripted_diplomatic_actions = {
 				NOT = { has_war_with = ROOT }
 			}
 			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
-			}
-			modifier = {
-				factor = 0.50
-				ROOT = { has_political_power < 450 }
-			}
-			modifier = {
-				factor = 0.5
-				ROOT = { has_political_power < 100 }
+				factor = 0.25
+				ROOT = { has_active_mission = bankruptcy_incoming_collapse }
 			}
 		}
 	}
@@ -603,6 +541,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_assume_debt_offer
 				clear_variable = assuming_debt_value
@@ -617,6 +556,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ASSUME_DEBT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_assume_debt_condition = {
 				base = -50
 				modifier = {
@@ -654,8 +600,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			condition_four = {
@@ -703,14 +649,9 @@ scripted_diplomatic_actions = {
 			condition_nine = {
 				base = 0
 				modifier = {
-					set_temp_variable = {
-						temp_interest_rate = {
-							value = interest_rate
-							multiply = 2
-						}
-					}
-					check_variable = { temp_interest_rate > 0.8 }
-					add = temp_interest_rate
+					check_variable = { interest_rate > 0.4 }
+					set_temp_variable = { interest_weight = { value = interest_rate multiply = 2 } }
+					add = var:interest_weight
 				}
 			}
 		}
@@ -909,10 +850,6 @@ scripted_diplomatic_actions = {
 				}
 			}
 			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
-			}
-			modifier = {
 				factor = 0.25
 				check_variable = { ROOT.debt_ratio > 0.8 }
 			}
@@ -957,16 +894,12 @@ scripted_diplomatic_actions = {
 				check_variable = { ROOT.interest_rate > 10 }
 			}
 			modifier = {
-				factor = 0.5
-				ROOT = { has_political_power < 250 }
+				factor = 0.25
+				ROOT = { has_active_mission = bankruptcy_incoming_collapse }
 			}
 			modifier = {
 				factor = 0
-				ROOT = { has_political_power < 100 }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { NOT = { has_country_flag = AI_recently_sent_debt_assumption_offer_@PREV } }
+				ROOT = { has_country_flag = AI_recently_sent_debt_assumption_offer_@PREV }
 			}
 			modifier = {
 				factor = 0
@@ -978,12 +911,12 @@ scripted_diplomatic_actions = {
 	# Form a Mutual Investment Treaty
 	propose_mutual_investment_treaty = {
 		visible = {
-			NOT = { has_country_flag = mutual_investment_treaty_@ROOT }
+			NOT = { is_in_array = { investment_treaty_partners = ROOT } }
 		}
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = PROPOSE_MUTUAL_INVESTMENT_TREATY_TOOLTIP
-				NOT = { has_country_flag = mutual_investment_treaty_@ROOT }
+				NOT = { is_in_array = { investment_treaty_partners = ROOT } }
 			}
 			NOT = { has_war_with = ROOT }
 			has_opinion = { target = ROOT value > 25 }
@@ -1013,35 +946,11 @@ scripted_diplomatic_actions = {
 			ROOT = { set_variable = { pending_mutual_investment_treaty_offer = PREV.id } }
 		}
 		complete_effect = {
-			set_country_flag = mutual_investment_treaty_@ROOT
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = THIS.id }
+			set_mutual_investment_treaty = yes
 			ROOT = {
 				clear_variable = pending_mutual_investment_treaty_offer
-				set_country_flag = mutual_investment_treaty_@PREV
-			}
-			add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
-			add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
-			reverse_add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
-			reverse_add_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
-			set_temp_variable = { percent_change = 1 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
-
-			# Permanent Investment Targets
-			set_temp_variable = { target_nation = THIS.id }
-			set_temp_variable = { adding_nation = ROOT.id }
-			change_permanent_investment_target = yes
-			ROOT = {
-				set_temp_variable = { percent_change = 1 }
-				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-
-				# Permanent Investment Targets
-				set_temp_variable = { target_nation = THIS.id }
-				set_temp_variable = { adding_nation = PREV.id }
-				change_permanent_investment_target = yes
-
 				if = { limit = { has_dlc = "By Blood Alone" }
 					if = {
 						limit = { is_embargoing = PREV }
@@ -1055,6 +964,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_mutual_investment_treaty_offer
 			}
@@ -1068,6 +978,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_PROPOSE_MUTUAL_INVESTMENT_TREATY_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_mutual_investment_treaty_condition = {
 				base = -25
 				modifier = {
@@ -1110,8 +1027,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 				modifier = {
 					add = -50
@@ -1306,10 +1223,6 @@ scripted_diplomatic_actions = {
 				factor = 0
 			}
 			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
-			}
-			modifier = {
 				add = -15
 				date < 2000.6.1
 			}
@@ -1327,14 +1240,6 @@ scripted_diplomatic_actions = {
 				check_variable = { ROOT.interest_rate > 12 }
 			}
 			modifier = {
-				factor = 0.5
-				ROOT = { has_political_power < 250 }
-			}
-			modifier = {
-				factor = 0
-				ROOT = { has_political_power < 100 }
-			}
-			modifier = {
 				factor = 0
 				ROOT = { has_active_mission = bankruptcy_incoming_collapse }
 			}
@@ -1347,12 +1252,12 @@ scripted_diplomatic_actions = {
 
 	cancel_mutual_investment_treaty = {
 		visible = {
-			has_country_flag = mutual_investment_treaty_@ROOT
+			is_in_array = { investment_treaty_partners = ROOT }
 		}
 		selectable = {
 			custom_trigger_tooltip = {
 				tooltip = CANCEL_MUTUAL_INVESTMENT_TOOLTIP
-				has_country_flag = mutual_investment_treaty_@ROOT
+				is_in_array = { investment_treaty_partners = ROOT }
 			}
 			ERI_is_not_transitional_government = yes
 		}
@@ -1364,29 +1269,11 @@ scripted_diplomatic_actions = {
 		send_description = DIPLO_ACTION_CANCEL_MUTUAL_INVESTMENT_TREATY
 
 		complete_effect = {
-			clr_country_flag = mutual_investment_treaty_@ROOT
-			remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
-			remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
-			set_temp_variable = { target_nation = ROOT.id }
-			set_temp_variable = { remove_nation = THIS.id }
-			change_permanent_investment_target = yes
-			set_temp_variable = { percent_change = -1.25 }
-			set_temp_variable = { tag_index = ROOT.id }
-			set_temp_variable = { influence_target = THIS.id }
-			change_influence_percentage = yes
+			set_temp_variable = { sender_nation = ROOT.id }
+			set_temp_variable = { receiver_nation = THIS.id }
+			set_temp_variable = { remove_agreement = 1 }
+			set_mutual_investment_treaty = yes
 			set_country_flag = { flag = has_recently_canceled_mif_treaty_@ROOT days = 90 value = 1 }
-			ROOT = {
-				clr_country_flag = mutual_investment_treaty_@PREV
-				remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_opinion }
-				remove_opinion_modifier = { target = ROOT modifier = mutual_investment_treaty_trade_opinion }
-				set_temp_variable = { target_nation = THIS.id }
-				set_temp_variable = { remove_nation = ROOT.id }
-				change_permanent_investment_target = yes
-				set_temp_variable = { percent_change = -1.25 }
-				set_temp_variable = { tag_index = PREV.id }
-				set_temp_variable = { influence_target = THIS.id }
-				change_influence_percentage = yes
-			}
 		}
 
 		ai_desire = {
@@ -1430,16 +1317,8 @@ scripted_diplomatic_actions = {
 				is_in_faction_with = ROOT
 			}
 			modifier = {
-				factor = 1.10
-				ROOT = { has_political_power > 499 }
-			}
-			modifier = {
-				factor = 0.50
-				ROOT = { has_political_power < 450 }
-			}
-			modifier = {
-				factor = 0.5
-				ROOT = { has_political_power < 100 }
+				factor = 0.25
+				ROOT = { has_active_mission = bankruptcy_incoming_collapse }
 			}
 		}
 	}
@@ -1480,6 +1359,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			set_country_flag = { flag = recently_rejected_overlord_subsidies_offer value = 1 days = 90 }
 			ROOT = {
 				clear_variable = pending_overlord_subsidization_offer
@@ -1492,6 +1372,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_PROPOSE_SUBSIDIES_TO_SUBJECT_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_propose_subsidies_to_subject_condition = {
 				base = -15
 				modifier = {
@@ -1541,8 +1428,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 		}
@@ -1665,10 +1552,6 @@ scripted_diplomatic_actions = {
 		ai_desire = {
 			base = 5
 			modifier = {
-				factor = 0
-				is_in_faction_with = ROOT
-			}
-			modifier = {
 				add = -15
 				ROOT = { has_opinion = { target = PREV value > 75 } }
 			}
@@ -1689,6 +1572,10 @@ scripted_diplomatic_actions = {
 				add = 25
 				is_subject = no
 				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				is_in_faction_with = ROOT
 			}
 		}
 	}
@@ -1724,6 +1611,7 @@ scripted_diplomatic_actions = {
 			reverse_add_opinion_modifier = { target = ROOT modifier = negotiate_operative_release }
 
 			ROOT = {
+				clear_variable = pending_negotiate_operative_release_offer
 				set_temp_variable = { treasury_change = -2 }
 				modify_treasury_effect = yes
 
@@ -1733,6 +1621,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_negotiate_operative_release_offer
 				set_country_flag = { flag = recently_rejected_operative_release_@PREV days = 180 value = 1 }
@@ -1747,6 +1636,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_NEGOTIATE_OPERATIVE_RELEASE_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_negotiate_operative_release = {
 				base = -50
 				modifier = {
@@ -1784,8 +1680,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			difference_in_power_ranking = {
@@ -1971,8 +1867,8 @@ scripted_diplomatic_actions = {
 			}
 
 			set_temp_variable = { percent_change = -15 }
-			set_temp_variable = { tag_index = ROOT }
-			set_temp_variable = { influence_target = THIS }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = THIS.id }
 			change_influence_percentage = yes
 			ROOT = {
 				clear_variable = pending_enforce_peace_pending_offer
@@ -1980,6 +1876,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_enforce_peace_pending_offer
 				set_country_flag = { flag = recently_demanded_enforce_peace_@PREV value = 1 days = 90 }
@@ -1993,6 +1890,13 @@ scripted_diplomatic_actions = {
 
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_enforce_peace_option = {
 				base = -50
 				modifier = {
@@ -2030,8 +1934,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			difference_in_power_ranking = {
@@ -2117,15 +2021,8 @@ scripted_diplomatic_actions = {
 			surrender_progress_reluctance = {
 				base = 0
 				modifier = {
-					set_temp_variable = {
-						ep_sp = {
-							value = THIS.surrender_progress
-							multiply = 100
-							subtract = 50
-							clamp = { min = -50 max = 50 }
-						}
-					}
-					add = ep_sp
+					set_temp_variable = { surrender_weight = { value = THIS.surrender_progress multiply = 100 subtract = 50 } }
+					add = var:surrender_weight
 				}
 			}
 			# Desperation to end the war: a clearly losing belligerent grows
@@ -2252,6 +2149,7 @@ scripted_diplomatic_actions = {
 			ingame_update_setup = yes
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_proposal_to_energy_load_share
 				set_country_flag = { flag = recently_rejected_propose_energy_load_sharing_@PREV value = 1 days = 270 }
@@ -2264,6 +2162,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ENERGY_LOAD_SHARING_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_energy_load_sharing = {
 				base = 15
 				modifier = {
@@ -2301,8 +2206,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			proposer_energy_surplus = {
@@ -2448,6 +2353,7 @@ scripted_diplomatic_actions = {
 			ingame_update_setup = yes
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_request_to_energy_load_share
 				set_country_flag = { flag = recently_rejected_request_energy_load_sharing_@PREV value = 1 days = 270 }
@@ -2460,6 +2366,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_ENERGY_LOAD_SHARING_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_energy_load_sharing = {
 				base = 15
 				modifier = {
@@ -2497,8 +2410,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			sharer_energy_surplus = {
@@ -2734,21 +2647,38 @@ scripted_diplomatic_actions = {
 			ROOT = { set_variable = { pending_reactor_material_purchase = PREV.id } }
 		}
 		complete_effect = {
-			set_temp_variable = { change_resource = -5000 }
-			change_reactor_grade_material_effect = yes
-			set_temp_variable = { treasury_change = 4 }
-			modify_treasury_effect = yes
-			ROOT = {
-				clear_variable = pending_reactor_material_purchase
-				set_temp_variable = { change_resource = 5000 }
+			# Stockpile and treasury can change while the offer waits for acceptance.
+			if = {
+				limit = {
+					has_reactor_material_stockpile = yes
+					ROOT = {
+						NOT = { check_variable = { treasury < 4 } }
+						NOT = { has_active_mission = bankruptcy_incoming_collapse }
+					}
+				}
+				set_temp_variable = { change_resource = -5000 }
 				change_reactor_grade_material_effect = yes
-				set_temp_variable = { treasury_change = -4 }
+				set_temp_variable = { treasury_change = 4 }
 				modify_treasury_effect = yes
-				set_country_flag = { flag = recently_purchased_reactor_material_from_@PREV days = 90 value = 1 }
+				ROOT = {
+					clear_variable = pending_reactor_material_purchase
+					set_temp_variable = { change_resource = 5000 }
+					change_reactor_grade_material_effect = yes
+					set_temp_variable = { treasury_change = -4 }
+					modify_treasury_effect = yes
+					set_country_flag = { flag = recently_purchased_reactor_material_from_@PREV days = 90 value = 1 }
+				}
+				update_money_dirty_variable = yes
 			}
-			update_money_dirty_variable = yes
+			else = {
+				ROOT = {
+					clear_variable = pending_reactor_material_purchase
+					country_event = MD_nuclear_energy.2
+				}
+			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = {
 				clear_variable = pending_reactor_material_purchase
 				set_country_flag = { flag = recently_rejected_reactor_material_purchase_@PREV days = 180 value = 1 }
@@ -2761,6 +2691,13 @@ scripted_diplomatic_actions = {
 		reject_description = PURCHASE_REACTOR_GRADE_MATERIAL_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_purchase_reactor_grade = {
 				base = -10
 				modifier = {
@@ -2798,8 +2735,8 @@ scripted_diplomatic_actions = {
 			opinion_condition = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			condition_six = {
@@ -2890,6 +2827,10 @@ scripted_diplomatic_actions = {
 		ai_desire = {
 			base = 0
 			modifier = {
+				add = 50
+				ROOT = { ai_race_ai_needs_reactor_material = yes }
+			}
+			modifier = {
 				add = 10
 				ROOT = { is_ai = no }
 				check_variable = { global.difficulty = 0 }
@@ -2909,11 +2850,6 @@ scripted_diplomatic_actions = {
 				ROOT = { is_ai = no }
 				check_variable = { global.difficulty = 4 }
 			}
-			# Don't buy if we have our own enrichment facilities
-			modifier = {
-				factor = 0
-				ROOT = { has_enrichment_facilities = yes }
-			}
 			# Only desire purchase if consumption exceeds production (net deficit)
 			modifier = {
 				add = 50
@@ -2930,7 +2866,7 @@ scripted_diplomatic_actions = {
 					check_expr = {
 						value = var_reactor_material_stockpile
 						divide = nuclear_fuel_consumption
-						less_than = { value < 4 }
+						less_than = 4
 					}
 				}
 			}
@@ -2942,7 +2878,7 @@ scripted_diplomatic_actions = {
 					check_expr = {
 						value = var_reactor_material_stockpile
 						divide = nuclear_fuel_consumption
-						less_than = { value < 8 }
+						less_than = 8
 					}
 				}
 			}
@@ -2954,31 +2890,7 @@ scripted_diplomatic_actions = {
 					check_expr = {
 						value = var_reactor_material_stockpile
 						divide = nuclear_fuel_consumption
-						less_than = { value < 16 }
-					}
-				}
-			}
-			# No need: stockpile covers more than 26 weeks (half a year)
-			modifier = {
-				factor = 0
-				ROOT = {
-					check_variable = { nuclear_fuel_consumption > 0 }
-					check_expr = {
-						value = var_reactor_material_stockpile
-						divide = nuclear_fuel_consumption
-						less_than = { value < 26 }
-					}
-				}
-			}
-			# No need if own production exceeds consumption and stockpile is healthy
-			modifier = {
-				factor = 0
-				ROOT = {
-					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
-					check_expr = {
-						value = var_reactor_material_stockpile
-						divide = nuclear_fuel_consumption
-						greater_than = { value > 8 }
+						less_than = 16
 					}
 				}
 			}
@@ -3012,6 +2924,31 @@ scripted_diplomatic_actions = {
 				factor = 0.25
 				ROOT = { ai_has_moderate_economic_problems = yes }
 			}
+			# No need: stockpile covers more than 26 weeks (half a year)
+			modifier = {
+				factor = 0
+				ROOT = {
+					check_variable = { nuclear_fuel_consumption > 0 }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						greater_than = 26
+					}
+				}
+			}
+			# No need if own production exceeds consumption and stockpile is healthy
+			modifier = {
+				factor = 0
+				ROOT = {
+					check_variable = { nuclear_fuel_consumption > 0 }
+					check_variable = { total_nuclear_reactor_fuel_production > nuclear_fuel_consumption }
+					check_expr = {
+						value = var_reactor_material_stockpile
+						divide = nuclear_fuel_consumption
+						greater_than = 8
+					}
+				}
+			}
 			modifier = {
 				factor = 0
 				ROOT = { NOT = { check_variable = { pending_reactor_material_purchase = 0 } } }
@@ -3020,10 +2957,16 @@ scripted_diplomatic_actions = {
 				factor = 0
 				ROOT = { has_country_flag = recently_rejected_reactor_material_purchase_@PREV }
 			}
+			# Last, so no later weight can restore desire for a buyer that cannot pay.
 			modifier = {
 				factor = 0
-				is_ai = no
-				has_country_flag = MD_auto_reject_nuclear_fuel_offers
+				ROOT = {
+					OR = {
+						check_variable = { treasury < 4 }
+						has_active_mission = bankruptcy_incoming_collapse
+						has_country_flag = recently_purchased_reactor_material_from_@PREV
+					}
+				}
 			}
 		}
 	}
@@ -3054,7 +2997,6 @@ scripted_diplomatic_actions = {
 			set_country_flag = closed_embassy_@ROOT
 			set_country_flag = { flag = recently_closed_embassy_@ROOT days = 90 value = 1 }
 			ROOT = {
-				set_country_flag = recently_closed_embassy_@PREV
 				set_country_flag = { flag = recently_closed_embassy_@PREV days = 90 value = 1 }
 			}
 		}
@@ -3188,6 +3130,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		reject_effect = {
+			set_country_flag = { flag = recently_refused_diplomatic_action days = 30 value = 1 }
 			ROOT = { clear_variable = pending_reopen_embassy_option }
 		}
 
@@ -3197,6 +3140,13 @@ scripted_diplomatic_actions = {
 		reject_description = DIPLO_ACTION_REOPEN_EMBASSY_REJECT_DESC
 
 		ai_acceptance = {
+			recent_refusal_condition = {
+				base = 0
+				modifier = {
+					add = -25
+					has_country_flag = recently_refused_diplomatic_action
+				}
+			}
 			base_reopen_embassy = {
 				base = -40
 				modifier = {
@@ -3237,8 +3187,8 @@ scripted_diplomatic_actions = {
 			condition_three = {
 				base = 0
 				modifier = {
-					check_opinion_calculation = yes
-					add = opinion_calculator
+					set_temp_variable = { opinion_weight = { value = opinion@ROOT multiply = 0.1 } }
+					add = var:opinion_weight
 				}
 			}
 			condition_four = {
@@ -3314,7 +3264,7 @@ scripted_diplomatic_actions = {
 			modifier = {
 				factor = 0
 				OR = {
-					ROOT = { NOT = { has_country_flag = recently_closed_embassy_@PREV } }
+					ROOT = { has_country_flag = recently_closed_embassy_@PREV }
 					ROOT = { NOT = { check_variable = { pending_reopen_embassy_option = 0 } } }
 				}
 			}

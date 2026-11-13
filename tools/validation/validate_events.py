@@ -5,13 +5,27 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import hashlib
 import os
 import re
 import sys
-from collections import Counter
+from collections import Counter, defaultdict, deque
+from decimal import Decimal
 from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, Iterable, Iterator, List, Optional, Set, Tuple
+from typing import (
+    AbstractSet,
+    Callable,
+    Dict,
+    FrozenSet,
+    Iterable,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
@@ -20,22 +34,35 @@ import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
 from shared_utils import (
+    IS_AI_NO_RE,
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
+    first_flat_match,
     get_staged_files,
+    iter_statements,
     strip_comments,
     strip_inline_comment,
     validation_config,
 )
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from sprite_index import build_sprite_index, build_sprite_texture_index
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     FileOpener,
     Severity,
+    idea_money_modifiers,
+    iter_idea_bodies,
+    lowering_treasury_checks,
     run_validator_main,
+    script_commits_money,
     should_skip_file,
+    unneeded_treasury_checks,
+    weight_stays_zero,
 )
 
 EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
@@ -295,16 +322,58 @@ def _extract_event_log_id_mismatches(
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
 
-# Per-worker copies of costly_scripted_effects and stored_variable_signs, set
-# once by the Pool initializer.
-_W_COSTLY_EFFECTS: Dict[str, str] = {}
-_W_STORED_SIGNS: Dict[str, int] = {}
+
+class CostLookups(NamedTuple):
+    """What load_cost_lookups reads from the whole mod."""
+
+    effects: Dict[str, str]  # costly_scripted_effects
+    stored: Dict[str, int]  # stored_variable_signs
+    commitments: Set[str]  # money_commitment_effects
+    ideas: Dict[str, Dict[str, Decimal]]  # idea_money_modifiers
+    callbacks: Optional[Dict[str, str]] = None
 
 
-def _init_cost_lookups(effects: Dict[str, str], stored: Dict[str, int]) -> None:
-    global _W_COSTLY_EFFECTS, _W_STORED_SIGNS
-    _W_COSTLY_EFFECTS = effects
-    _W_STORED_SIGNS = stored
+class EventPayments(NamedTuple):
+    """Who pays when an event fires or a scripted effect runs, as role -> cost
+    kinds. An event has two maps: what any option charges, and what every free
+    pick charges. See resolve_payments."""
+
+    events: Dict[str, Tuple[Dict[str, FrozenSet[str]], Dict[str, FrozenSet[str]]]]
+    effects: Dict[str, Dict[str, FrozenSet[str]]]
+    known_events: FrozenSet[str] = frozenset()
+
+
+_NO_PAYMENTS = EventPayments({}, {})
+
+# Per-worker copies, set once by the Pool initializer. The digest keys cached
+# per-file results on the lookups they were read with.
+_W_LOOKUPS = CostLookups({}, {}, set(), {})
+_W_PAYMENTS = _NO_PAYMENTS
+_W_DIGEST = ""
+
+
+def _lookups_digest(lookups: CostLookups) -> str:
+    return hashlib.sha256(
+        repr(
+            (
+                sorted(lookups.effects.items()),
+                sorted(lookups.stored.items()),
+                sorted(lookups.commitments),
+                sorted((lookups.callbacks or {}).items()),
+                sorted(
+                    (name, sorted(money.items()))
+                    for name, money in lookups.ideas.items()
+                ),
+            )
+        ).encode("utf-8")
+    ).hexdigest()
+
+
+def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
+    global _W_LOOKUPS, _W_PAYMENTS, _W_DIGEST
+    _W_LOOKUPS = lookups
+    _W_PAYMENTS = payments
+    _W_DIGEST = _lookups_digest(lookups)
 
 
 def _scan_stored_variable_signs(
@@ -317,24 +386,177 @@ def _scan_stored_variable_signs(
     return stored_variable_signs([text])
 
 
-def _extract_cost_blind_options(
+def _mod_texts(validator: BaseValidator, pattern: str) -> Iterator[str]:
+    for path in validator._collect_files([pattern], ignore_staged=True):
+        text = _read_cleaned_text(path, mod_path=validator.mod_path)
+        if text:
+            yield text
+
+
+def _effect_bodies(validator: BaseValidator) -> Dict[str, str]:
+    return validator.cached(
+        "scripted_effect_bodies",
+        lambda: _scripted_effect_bodies(
+            _mod_texts(validator, "common/scripted_effects/**/*.txt")
+        ),
+    )
+
+
+def idea_callbacks(texts: Iterable[str]) -> Dict[str, str]:
+    """Idea callback node names and their script bodies."""
+    callbacks: Dict[str, str] = {}
+    for name, idea in iter_idea_bodies(texts):
+        for field, _value, body in iter_statements(idea):
+            if field in {"on_add", "on_remove"} and body is not None:
+                callbacks[f"@idea:{field}:{name}"] = body
+    return callbacks
+
+
+def _cost_input_files(validator: BaseValidator) -> List[str]:
+    """Every file the cost lookups and event payments read."""
+    return validator._collect_files(
+        ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+        ignore_staged=True,
+    )
+
+
+def load_cost_lookups(validator: BaseValidator) -> CostLookups:
+    """CostLookups read from the whole mod."""
+    script_files = _cost_input_files(validator)
+
+    def build() -> tuple:
+        bodies = _effect_bodies(validator)
+        idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
+        ideas = idea_money_modifiers(idea_texts)
+        callbacks = idea_callbacks(idea_texts)
+        effects = _costly_effects(bodies)
+        commitments = money_commitment_effects(bodies, ideas)
+        stored: Dict[str, int] = {}
+        for found in validator._pool_map(
+            partial(_scan_stored_variable_signs, mod_path=validator.mod_path),
+            script_files,
+        ):
+            for name, signs in found.items():
+                stored[name] = stored.get(name, 0) | signs
+        # A plain tuple: a pickled CostLookups names __main__ when run as a script.
+        return (effects, stored, commitments, ideas, callbacks)
+
+    return CostLookups(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.cost_lookups",
+            script_files,
+            build,
+            namespace="events",
+        )
+    )
+
+
+def _scan_event_payment_nodes(
     filename: str, *, mod_path: Optional[str] = None
-) -> List[Tuple[str, str, int]]:
-    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+) -> Dict[str, "_EventNode"]:
+    """Pool worker: event_payment_nodes for one file."""
+    text = _read_cleaned_text(filename, mod_path=mod_path)
+    if not text:
+        return {}
+
+    def plain_nodes():
+        nodes = event_payment_nodes(text, _W_LOOKUPS)
+        return {
+            event_id: (
+                own,
+                tuple(immediate) if immediate is not None else None,
+                tuple((tuple(option), free) for option, free in options),
+            )
+            for event_id, (own, immediate, options) in nodes.items()
+        }
+
+    cached = disk_cache.per_file_cached_by_content(
+        mod_path or "",
+        "events.payment_nodes.v2",
+        filename,
+        f"{text}\x00{_W_DIGEST}",
+        plain_nodes,
+    )
+    return {
+        event_id: (
+            own,
+            ItemFacts(*immediate) if immediate is not None else None,
+            tuple((ItemFacts(*option), free) for option, free in options),
+        )
+        for event_id, (own, immediate, options) in cached.items()
+    }
+
+
+def load_event_payments(
+    validator: BaseValidator, lookups: CostLookups
+) -> EventPayments:
+    """resolve_payments over every event and scripted effect in the mod."""
+
+    def build() -> tuple:
+        nodes: Dict[str, _EventNode] = {}
+        for found in validator._pool_map_init(
+            partial(_scan_event_payment_nodes, mod_path=validator.mod_path),
+            validator._collect_files(["events/**/*.txt"], ignore_staged=True),
+            _init_cost_lookups,
+            (lookups, _NO_PAYMENTS),
+        ):
+            nodes.update(found)
+        return tuple(
+            resolve_payments(
+                nodes, effect_payment_nodes(_effect_bodies(validator), lookups)
+            )
+        )
+
+    return EventPayments(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.event_payments",
+            _cost_input_files(validator),
+            build,
+            namespace="events",
+            salt=_lookups_digest(lookups),
+        )
+    )
+
+
+def _extract_option_cost_weights(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]:
+    """Pool worker: (message, path, line) rows for both AI weight cost checks."""
     text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
-        return []
-    basename = os.path.basename(filename)
+        return [], []
+    path = os.path.relpath(filename, mod_path)
+    blind, unneeded = find_option_cost_weights(text, _W_LOOKUPS, _W_PAYMENTS)
     return [
         (
-            f"{name} - flat ai_chance ignores the {costs} cost"
+            f"{name} - ai_chance ignores the {costs} cost"
             + (_ALL_GATED_NOTE if all_gated else ""),
-            basename,
+            path,
             line,
         )
-        for name, line, costs, all_gated in find_cost_blind_options(
-            text, _W_COSTLY_EFFECTS, _W_STORED_SIGNS
+        for name, line, costs, all_gated in blind
+    ], [(f"{name} - ai_chance {reason}", path, line) for name, line, reason in unneeded]
+
+
+def _extract_corruption_pp_cost_options(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: options that charge PP while decreasing corruption unguarded."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    text = FileOpener.open_text_file(filename)
+    path = os.path.relpath(filename, mod_path)
+    return [
+        (
+            f"{name} - PP charge above the {_MIN_CORRUPTION_REFUND} PP refund per "
+            f"decrease_corruption; no recognized local guard against "
+            f"{_MIN_CORRUPTION_ID}",
+            path,
+            line,
         )
+        for name, line in find_corruption_pp_cost_options(text)
     ]
 
 
@@ -432,6 +654,7 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
 def _iter_event_bodies(cleaned: str):
     """Yield (event_id, body, match_start) for defined events."""
     for eid, _event_type, body, start in _iter_typed_event_bodies(cleaned):
+        assert eid is not None
         yield eid, body, start
 
 
@@ -524,7 +747,6 @@ def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
 # Any bound is redundant on an event the yearly effects already schedule.
 _DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
-_TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
 def _event_trigger_body(body: str) -> Optional[str]:
@@ -893,7 +1115,6 @@ def _scan_shared_call_site_file(args) -> Tuple:
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
-_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
@@ -913,7 +1134,6 @@ _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 _OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
 _OPTION_TOKEN_RE = re.compile(r"[{}]|" + _OPTION_STATEMENT_RE.pattern)
 _BRACE_RE = re.compile(r"[{}]")
-_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
 
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
@@ -997,7 +1217,6 @@ _OWN_SCOPE_BLOCKS = frozenset(
         "else",
         "else_if",
         "hidden_effect",
-        "effect_tooltip",
         "random",
         "random_list",
         "meta_effect",
@@ -1010,13 +1229,38 @@ _VARIABLE_OPS = ("set", "add_to", "subtract_from", "multiply", "divide")
 # Kept whole: the math block nested in one (`x = { value = ... }`) is not a scope.
 _VARIABLE_EFFECTS = frozenset(
     f"{op}_{temp}variable" for op in _VARIABLE_OPS for temp in ("", "temp_")
+) | {"clamp_variable", "round_variable", "modulo_variable", "set_variable_to_random"}
+_IDEA_MUTATION_BLOCKS = frozenset(
+    {"add_ideas", "remove_ideas", "add_timed_idea", "remove_timed_idea", "swap_ideas"}
 )
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
-_AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
+_AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_FINANCIAL_GUARD_RE = re.compile(
+    _BANKRUPTCY_GUARD_RE.pattern + r"|\bai_has_high_deficit\s*=\s*(?:yes|no)\b"
+    r"|\bcheck_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:ROOT\.|THIS\.)?"
+    r"(?:treasury|debt|int_investments|treasury_rate|budget_balance_ratio|"
+    r"corporate_tax_rate|population_tax_rate)\b"
+)
+_COST_GUARDS = {
+    "treasury": _FINANCIAL_GUARD_RE,
+    "debt": _FINANCIAL_GUARD_RE,
+    "international investment": _FINANCIAL_GUARD_RE,
+    "tax rate": _FINANCIAL_GUARD_RE,
+    "political power": _BANKRUPTCY_GUARD_RE,
+    "stability": re.compile(r"\bhas_stability\s*[<>=]"),
+    "war support": re.compile(r"\bhas_war_support\s*[<>=]"),
+}
+_MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+# lowering_treasury_checks name -> label in findings.
+_TREASURY_CHECK_LABELS = {"bankruptcy": "bankruptcy", "deficit": "high deficit"}
+_TRIGGER_SCOPE_BLOCKS = frozenset(
+    {"AND", "OR", "NOT", "hidden_trigger", "custom_trigger_tooltip"}
+)
 
 # Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
 _NEG, _POS = 1, 2
+_EQUIPMENT_COSTS = {"add_equipment_to_stockpile": _NEG, "send_equipment": _POS}
 
 # Stored variable -> (signs of a change that cost the country, label). Debt is the
 # odd one out: adding to it is what hurts. A tax rate change costs either way.
@@ -1031,17 +1275,21 @@ _STAT_COSTS = {
     "add_political_power": "political power",
     "add_stability": "stability",
     "add_war_support": "war support",
+    "add_command_power": "command power",
+    "add_manpower": "manpower",
 }
-_COST_ORDER = (
-    *dict.fromkeys(kind for _cost_signs, kind in _COST_VARIABLES.values()),
-    *_STAT_COSTS.values(),
-)
+_COST_ORDER = tuple(_COST_GUARDS)
+_MIN_CORRUPTION_ID = "corruption_level_01"
+_MIN_CORRUPTION_REFUND = 150
+_CORRUPTION_LEVEL_RE = re.compile(r"corruption_level_(0[1-9]|10)")
+_CORRUPTION_ID_RE = re.compile(r"(?<![\w])corruption_level_(?:0[1-9]|10)(?![\w])")
+_NEGATIVE_NUMBER_RE = re.compile(r"-(?:\d+(?:\.\d*)?|\.\d+)")
 # `{ x = operand }` or the long form `{ var = x value = operand }`.
 _VARIABLE_ARGS = (
     r"\s*=\s*\{\s*(?:var\s*=\s*(?P<long>[^\s={}]+)\s+value\s*=\s*"
-    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{[^{}]*\}|[^\s{}]+)"
+    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{|[^\s{}]+)"
 )
-_STAT_COST = r"\b(?P<stat>add_political_power|add_stability|add_war_support)\s*=\s*-"
+_STAT_COST = r"\b(?P<stat>" + "|".join(_STAT_COSTS) + r")\s*=\s*"
 _COST_STEP_RE = re.compile(
     r"\b(?P<op>"
     + "|".join(_VARIABLE_OPS)
@@ -1049,22 +1297,34 @@ _COST_STEP_RE = re.compile(
     + _VARIABLE_ARGS
     + "|"
     + _STAT_COST
+    + r"(?P<stat_operand>[^\s{}]+)"
+    + r"|\b(?P<equipment>"
+    + "|".join(_EQUIPMENT_COSTS)
+    + r")\s*=\s*\{"
     + r"|\b(?P<call>[A-Za-z_]\w*)\s*=\s*yes\b"
-    r"|\b(?P<branch>if|else_if|else|random|\d+)\s*=\s*\{"
+    r"|\b(?P<branch>if|else_if|else|random_list|random|\d+)\s*=\s*\{"
 )
 _DIRECT_COST_RE = re.compile(
     r"\b(?:add_to|subtract_from)_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:"
     + "|".join(_COST_VARIABLES)
     + r")\b|"
     + _STAT_COST
+    + r"(?:-|[A-Za-z_])|\b(?:"
+    + "|".join(_EQUIPMENT_COSTS)
+    + r")\s*=\s*\{"
 )
 _EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+# A building effect, or a payment a caller can waive with skip_payment for a free build.
+_BUILDING_PAYMENT_RE = re.compile(
+    r"\b(?:add_building_construction|add_offsite_building|skip_payment)\b"
+)
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
-_MATH_TERM_RE = re.compile(r"\b(value|add|subtract|multiply|divide)\s*=\s*([^\s{}]+)")
 _STORED_LITERAL_RE = re.compile(
     r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
     r"|([^\s={}]+)\s*=\s*)(-?[\d.]+)\s*\}"
 )
+_VARIABLE_REFERENCE_RE = re.compile(r"[A-Za-z_][\w.:@^]*")
+_RANDOM_LIST_BUCKET_RE = re.compile(r"\b[\d.]+\s*=\s*\{")
 
 
 def _flip(signs: int) -> int:
@@ -1086,9 +1346,42 @@ def _combine(op: str, signs: int, term: int) -> int:
     return signs or (_flip(term) if op.startswith("subtract") else term)
 
 
+def _guaranteed_cost(signs: int, cost_signs: int) -> bool:
+    """Whether every possible nonzero sign represents a charge."""
+    return bool(signs) and not signs & ~cost_signs
+
+
 def _stored_name(variable: str) -> str:
     """`FROM.LBA_cost^2` -> `LBA_cost`: the name a stored variable is set under."""
     return variable.rsplit(".", 1)[-1].split("^", 1)[0]
+
+
+def _uses_conditional_variable(operand: str, conditional_variables: Set[str]) -> bool:
+    return any(
+        _stored_name(variable) in conditional_variables
+        for variable in _VARIABLE_REFERENCE_RE.findall(operand)
+    )
+
+
+def _skip_switch(limit: str) -> Optional[str]:
+    """The charge-skip switch a limit checks, when that is all it checks.
+
+    MD_skip_treasury_cost is set only around history-file setup. skip_payment is
+    a temp variable callers set to 1 for a free build.
+    """
+    guards = list(iter_statements(limit))
+    if len(guards) != 1 or guards[0][0] != "NOT" or guards[0][2] is None:
+        return None
+    skip = list(iter_statements(guards[0][2]))
+    if skip == [("has_country_flag", "MD_skip_treasury_cost", None)]:
+        return "MD_skip_treasury_cost"
+    if (
+        len(skip) == 1
+        and skip[0][0] == "check_variable"
+        and list(iter_statements(skip[0][2] or "")) == [("skip_payment", "1", None)]
+    ):
+        return "skip_payment"
+    return None
 
 
 def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
@@ -1099,8 +1392,11 @@ def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
     """
     if operand.startswith("{"):
         signs = 0
-        for op, term in _MATH_TERM_RE.findall(operand):
-            signs = _combine(op, signs, _signs(term, known, stored))
+        for op, value, block in iter_statements(operand[1:-1]):
+            if op in {"value", "add", "subtract", "multiply", "divide"}:
+                term = "{" + block + "}" if block is not None else value
+                if term is not None:
+                    signs = _combine(op, signs, _signs(term, known, stored))
         return signs
     if operand[0] in "-.0123456789":
         if not operand.strip("-.0"):
@@ -1111,14 +1407,38 @@ def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
     return stored.get(_stored_name(operand), _POS)
 
 
+def _branch_costs(
+    body: str,
+    start: Dict[str, int],
+    known: Dict[str, int],
+    conditional_variables: Set[str],
+    effects: Dict[str, str],
+    stored: Dict[str, int],
+    stack: Tuple[str, ...],
+) -> Tuple[Set[str], Set[str]]:
+    """Costs of a branch run from `start`; its variable changes merge into `known`."""
+    branch = dict(start)
+    branch_conditional = set(conditional_variables)
+    costs, guaranteed = _effect_costs(
+        body, effects, branch, stored, stack, branch_conditional
+    )
+    conditional_variables.update(branch_conditional)
+    for variable, signs in branch.items():
+        if signs != start.get(variable):
+            conditional_variables.add(variable)
+        known[variable] = signs | known.get(variable, 0)
+    return costs, guaranteed
+
+
 def _effect_costs(
     text: str,
     effects: Dict[str, str],
     known: Dict[str, int],
     stored: Dict[str, int],
     stack: Tuple[str, ...] = (),
-) -> Set[str]:
-    """What these effects cost the country running them, read in script order.
+    conditional_variables: Optional[Set[str]] = None,
+) -> Tuple[Set[str], Set[str]]:
+    """Possible and guaranteed costs to the country running these effects.
 
     Charges are rarely a plain negative literal: `treasury_change` is often set to
     a GDP variable and negated by `multiply_temp_variable`, or built in one math
@@ -1126,47 +1446,160 @@ def _effect_costs(
     effect. So this tracks the signs every variable can have and follows calls
     into `effects` (see costly_scripted_effects), which share the caller's temp
     variables the way the game does. A branch (`if`, `random`, a `random_list`
-    bucket) may or may not run, so what it sets is added to what was possible
-    before it, and an `else` starts from what held before its `if`. The cost
-    itself is always a write to a stored variable in _COST_VARIABLES or a negative
-    stat effect.
+    bucket) may or may not run, so its costs are possible but not guaranteed, and
+    its variable changes are added to what was possible before it. A cost every
+    arm of an `if`/`else` chain or every `random_list` bucket guarantees is
+    guaranteed, and so is an `if` that only checks a charge-skip switch this run
+    leaves off. An `else` starts from what held before its `if`. The cost itself
+    is a write to a stored variable in _COST_VARIABLES, a negative stat effect, or
+    equipment leaving the stockpile.
     """
+    # Sign unions omit zero, so retain conditional writes separately.
+    if conditional_variables is None:
+        conditional_variables = set()
     costs: Set[str] = set()
+    guaranteed: Set[str] = set()
     # Also right for the old `if = { ... else = { ... } }` form: this call is the `if`.
     before_if = dict(known)
+    # What every arm of the open `if`/`else_if` chain guarantees so far.
+    chain: Optional[Set[str]] = None
     pos = 0
     while True:
         m = _COST_STEP_RE.search(text, pos)
         if m is None:
-            return costs
+            return costs, guaranteed
         pos = m.end()
-        end = find_unquoted_brace_close(text, pos - 1) if m["branch"] else -1
+        branch_key = m["branch"]
+        if branch_key not in ("else_if", "else"):
+            chain = None
+        end = find_unquoted_brace_close(text, pos - 1) if branch_key else -1
         if end != -1:
-            if m["branch"] == "if":
-                before_if = dict(known)
-            branch = dict(before_if if m["branch"].startswith("else") else known)
-            costs |= _effect_costs(text[pos:end], effects, branch, stored, stack)
-            for variable, signs in branch.items():
-                known[variable] = signs | known.get(variable, 0)
+            body = text[pos:end]
             pos = end
+            limit = (
+                next((b for k, _v, b in iter_statements(body) if k == "limit"), None)
+                if branch_key == "if"
+                else None
+            )
+            switch = _skip_switch(limit or "")
+            if switch:
+                # Off unless this run set it, as skip_payment = 1 for a free build.
+                if not known.get(switch):
+                    body_costs, body_guaranteed = _effect_costs(
+                        body, effects, known, stored, stack, conditional_variables
+                    )
+                    costs |= body_costs
+                    guaranteed |= body_guaranteed
+            elif branch_key == "random_list":
+                start = dict(known)
+                bucket_guaranteed: List[Set[str]] = []
+                bucket = _RANDOM_LIST_BUCKET_RE.search(body)
+                while bucket is not None:
+                    bucket_end = find_unquoted_brace_close(body, bucket.end() - 1)
+                    if bucket_end == -1:
+                        break
+                    bucket_costs, bucket_kinds = _branch_costs(
+                        body[bucket.end() : bucket_end],
+                        start,
+                        known,
+                        conditional_variables,
+                        effects,
+                        stored,
+                        stack,
+                    )
+                    costs |= bucket_costs
+                    bucket_guaranteed.append(bucket_kinds)
+                    bucket = _RANDOM_LIST_BUCKET_RE.search(body, bucket_end)
+                if bucket_guaranteed:
+                    guaranteed |= set.intersection(*bucket_guaranteed)
+            else:
+                if branch_key == "if":
+                    before_if = dict(known)
+                branch_costs, branch_guaranteed = _branch_costs(
+                    body,
+                    before_if if branch_key.startswith("else") else known,
+                    known,
+                    conditional_variables,
+                    effects,
+                    stored,
+                    stack,
+                )
+                costs |= branch_costs
+                if branch_key == "if":
+                    chain = branch_guaranteed
+                elif chain is not None and branch_key.startswith("else"):
+                    chain &= branch_guaranteed
+                    if branch_key == "else":
+                        guaranteed |= chain
+                        chain = None
         elif m["stat"]:
-            costs.add(_STAT_COSTS[m["stat"]])
+            signs = _signs(m["stat_operand"], known, stored)
+            if signs & _NEG:
+                costs.add(_STAT_COSTS[m["stat"]])
+                if _guaranteed_cost(signs, _NEG) and not _uses_conditional_variable(
+                    m["stat_operand"], conditional_variables
+                ):
+                    guaranteed.add(_STAT_COSTS[m["stat"]])
+        elif m["equipment"]:
+            end = find_unquoted_brace_close(text, pos - 1)
+            if end == -1:
+                return costs, guaranteed
+            for key, value, block in iter_statements(text[pos:end]):
+                if key == "amount":
+                    operand = "{" + block + "}" if block is not None else value
+                    if operand:
+                        signs = _signs(operand, known, stored)
+                        cost_signs = _EQUIPMENT_COSTS[m["equipment"]]
+                        if signs & cost_signs:
+                            costs.add("equipment")
+                            if _guaranteed_cost(
+                                signs, cost_signs
+                            ) and not _uses_conditional_variable(
+                                operand, conditional_variables
+                            ):
+                                guaranteed.add("equipment")
+            pos = end + 1
         elif m["call"]:
             call = m["call"]
             if call in effects and call not in stack:
-                costs |= _effect_costs(
-                    effects[call], effects, known, stored, (*stack, call)
+                call_costs, call_guaranteed = _effect_costs(
+                    effects[call],
+                    effects,
+                    known,
+                    stored,
+                    (*stack, call),
+                    conditional_variables,
                 )
+                costs |= call_costs
+                guaranteed |= call_guaranteed
         elif m["op"]:
             target = m["long"] or m["short"]
-            term = _signs(m["operand"], known, stored)
+            operand = m["operand"]
+            if operand == "{":
+                end = find_unquoted_brace_close(text, pos - 1)
+                if end == -1:
+                    return costs, guaranteed
+                operand = text[pos - 1 : end + 1]
+                pos = end + 1
+            term = _signs(operand, known, stored)
             if target not in _COST_VARIABLES or m["temp"]:
                 current = 0 if m["op"] == "set" else _signs(target, known, stored)
                 known[target] = _combine(m["op"], current, term)
+                if _uses_conditional_variable(operand, conditional_variables):
+                    conditional_variables.add(target)
+                elif m["op"] == "set":
+                    conditional_variables.discard(target)
             elif m["op"] in ("add_to", "subtract_from"):
                 cost_signs, kind = _COST_VARIABLES[target]
-                if _combine(m["op"], 0, term) & cost_signs:
+                signs = _combine(m["op"], 0, term)
+                if signs & cost_signs:
                     costs.add(kind)
+                    if _guaranteed_cost(
+                        signs, cost_signs
+                    ) and not _uses_conditional_variable(
+                        operand, conditional_variables
+                    ):
+                        guaranteed.add(kind)
 
 
 def stored_variable_signs(texts: Iterable[str]) -> Dict[str, int]:
@@ -1184,13 +1617,8 @@ def stored_variable_signs(texts: Iterable[str]) -> Dict[str, int]:
     return {name: signs for name, signs in seen.items() if signs & _NEG}
 
 
-def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
-    """Own-scope body of every scripted effect that can charge the country calling it.
-
-    That is an effect that writes a money variable or lowers a stat itself, or
-    calls one that does. `modify_treasury_effect` and the `*_expenditure` presets
-    are found this way, not listed by hand.
-    """
+def _scripted_effect_bodies(texts: Iterable[str]) -> Dict[str, str]:
+    """Whole body of every scripted effect defined in `texts`, quotes blanked."""
     bodies: Dict[str, str] = {}
     for text in texts:
         code = blank_quoted_strings(text)
@@ -1200,96 +1628,1303 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
             end = find_unquoted_brace_close(code, m.end() - 1) if m else -1
             if m is None or end == -1:
                 break
-            bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
+            bodies[m.group(1)] = code[m.end() : end]
             pos = end
-    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    return bodies
+
+
+def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
+    """Own-scope body of every scripted effect that can charge the country calling it.
+
+    That is an effect that writes a money variable or lowers a stat itself, or
+    calls one that does. `modify_treasury_effect` and the `*_expenditure` presets
+    are found this way, not listed by hand.
+    """
+    return _costly_effects(_scripted_effect_bodies(texts))
+
+
+def _costly_effects(bodies: Dict[str, str]) -> Dict[str, str]:
+    own = {name: _split_option(body)[0] for name, body in bodies.items()}
+    costly = _with_callers(
+        {name for name, body in own.items() if _DIRECT_COST_RE.search(body)}, own
+    )
+    return {name: own[name] for name in costly}
+
+
+def money_commitment_effects(
+    bodies: Dict[str, str], ideas: Dict[str, Dict[str, Decimal]]
+) -> Set[str]:
+    """Scripted effects that commit their caller's money, and their callers."""
+    own = {
+        name: split_roles(body, top=_THIS)[0][_THIS] for name, body in bodies.items()
+    }
+    return _with_callers(
+        {name for name, body in own.items() if script_commits_money(body, ideas)},
+        own,
+    )
+
+
+def commits_money(
+    effect_text: str,
+    commitments: AbstractSet[str],
+    ideas: Dict[str, Dict[str, Decimal]],
+) -> bool:
+    """Whether effects anywhere in `effect_text` commit money, directly or through
+    a call to one of `commitments` (money_commitment_effects)."""
+    return script_commits_money(effect_text, ideas) or not commitments.isdisjoint(
+        _EFFECT_CALL_RE.findall(effect_text)
+    )
+
+
+def building_payment_effects(bodies: Dict[str, str]) -> Set[str]:
+    """Scripted effects that build or pay for a building, and every effect calling one.
+
+    `bodies` maps each scripted effect to its whole body, nested scopes included.
+    """
+    return _with_callers(
+        {name for name, body in bodies.items() if _BUILDING_PAYMENT_RE.search(body)},
+        bodies,
+    )
+
+
+def _with_callers(names: Set[str], bodies: Dict[str, str]) -> Set[str]:
+    """`names` plus every effect in `bodies` that calls one of them, at any depth."""
+    calls = {name: set(_EFFECT_CALL_RE.findall(body)) for name, body in bodies.items()}
     while True:
         callers = {
             name
-            for name, body in bodies.items()
-            if name not in costly
-            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+            for name, called in calls.items()
+            if name not in names and not names.isdisjoint(called)
         }
         if not callers:
-            return {name: bodies[name] for name in costly}
-        costly |= callers
+            return names
+        names |= callers
 
 
-def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
-    """(own-scope effects, option-level blocks left out of them as key -> (offset, body))."""
+def _disabled_cost_branch(key: str, body: str) -> bool:
+    for name, value, block in iter_statements(body):
+        if key == "random" and name == "chance" and value:
+            return _signs(value, {}, {}) == 0
+        if name == "limit" and block is not None:
+            return ("always", "no", None) in iter_statements(block)
+    return False
+
+
+def _split_option(
+    body: str,
+    country: Optional[str] = None,
+    *,
+    triggers: bool = False,
+    preserve_limits: bool = False,
+    numeric_state_scopes: bool = False,
+    preserve_idea_effects: bool = False,
+    preserve_root_reentry: bool = False,
+) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope text, excluded option-level blocks as key -> (offset, body))."""
+    scope_blocks = _OWN_SCOPE_BLOCKS
+    if triggers:
+        scope_blocks |= _TRIGGER_SCOPE_BLOCKS
     own: List[str] = []
     blocks: Dict[Optional[str], Tuple[int, str]] = {}
     depth = 0
     cursor = 0
     kept_whole = 0
-    skip: Optional[Tuple[int, int, Optional[str]]] = None
+    stack: List[Optional[str]] = []
+    skip: Optional[Tuple[int, int, Optional[str], Optional[str]]] = None
     for m in _BLOCK_TOKEN_RE.finditer(body):
         if m.group(0) != "}":
+            parent_key = stack[-1] if stack else None
             depth += 1
             key = m.group(1)
+            stack.append(key)
             if skip is not None or kept_whole:
                 continue
-            if key in _VARIABLE_EFFECTS:
+            if (
+                (
+                    key == "limit"
+                    and _skip_switch(
+                        body[m.end() : find_unquoted_brace_close(body, m.end() - 1)]
+                    )
+                )
+                or key in _VARIABLE_EFFECTS
+                or key in _EQUIPMENT_COSTS
+                or (triggers and key == "check_variable")
+                or (preserve_limits and key == "limit")
+                or (preserve_idea_effects and key in _IDEA_MUTATION_BLOCKS)
+            ):
                 kept_whole = depth
-            elif key not in _OWN_SCOPE_BLOCKS and not (key or "").isdigit():
-                own.append(body[cursor : m.start()])
-                skip = (depth, m.end(), key)
+            else:
+                excluded = (
+                    key not in scope_blocks
+                    and (country is None or key != country)
+                    and not (
+                        (key or "").isdigit()
+                        and (not numeric_state_scopes or parent_key == "random_list")
+                    )
+                )
+                if not triggers and key in {"if", "else_if", "random"}:
+                    end = find_unquoted_brace_close(body, m.end() - 1)
+                    excluded = _disabled_cost_branch(key, body[m.end() : end])
+                if excluded:
+                    own.append(body[cursor : m.start()])
+                    skip = (depth, m.end(), key, parent_key)
             continue
         if kept_whole == depth:
             kept_whole = 0
         if skip is not None and skip[0] == depth:
             if depth == 1:
                 blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
+            if (
+                preserve_root_reentry
+                and skip[2] not in {"limit", "trigger"}
+                and not ((skip[2] or "").isdigit() and skip[3] == "random_list")
+            ):
+                own.append(
+                    _root_reentry_effects(
+                        body[skip[1] : m.start()],
+                        country,
+                        preserve_limits=preserve_limits,
+                    )
+                )
             cursor = m.end()
             skip = None
         depth -= 1
+        if stack:
+            stack.pop()
     if skip is None:
         own.append(body[cursor:])
     return " ".join(own), blocks
 
 
-def find_cost_blind_options(
-    text: str, effects: Dict[str, str], stored: Dict[str, int]
-) -> List[Tuple[str, int, str, bool]]:
-    """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
+def _root_reentry_effects(
+    body: str, country: Optional[str], *, preserve_limits: bool
+) -> str:
+    """Keep only ROOT effects reached while executing in a foreign scope."""
+    effects: List[str] = []
+    for key, _value, block in iter_statements(body):
+        if (
+            block is None
+            or key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+            or key in _IDEA_MUTATION_BLOCKS
+        ):
+            continue
+        if key == "ROOT":
+            own, _blocks = _split_option(
+                block,
+                country,
+                preserve_limits=preserve_limits,
+                numeric_state_scopes=True,
+                preserve_idea_effects=True,
+                preserve_root_reentry=True,
+            )
+            if own.strip():
+                effects.append(f"ROOT = {{ {own} }}")
+        else:
+            effects.append(
+                _root_reentry_effects(block, country, preserve_limits=preserve_limits)
+            )
+    return " ".join(effect for effect in effects if effect)
 
-    Reports an option of a multi-option event when it charges its own country and
-    its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
-    A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
-    when there is one, since that is where the fix goes. `all gated` marks an event
-    where every option has a `trigger`: those may be variants the AI never chooses
-    between, so the finding needs a look before it is fixed. `effects` comes from
-    costly_scripted_effects and `stored` from stored_variable_signs.
+
+def ai_weight_cost_checks(
+    ai_weights: str, country: Optional[str] = None
+) -> Tuple[Set[str], Set[str]]:
+    """(cost kinds the weight covers, treasury checks lowering it), in one walk.
+
+    Each modifier is read in the choosing country's scope. A non-neutral one
+    covers the cost kinds of _COST_GUARDS it checks; the treasury checks come
+    from validator_common.lowering_treasury_checks.
+    """
+    covered: Set[str] = set()
+    lowering: Set[str] = set()
+    pos = 0
+    while True:
+        match = _AI_CHANCE_MODIFIER_RE.search(ai_weights, pos)
+        if match is None:
+            return covered, lowering
+        end = find_unquoted_brace_close(ai_weights, match.end() - 1)
+        if end == -1:
+            return covered, lowering
+        own, _blocks = _split_option(
+            ai_weights[match.end() : end], country, triggers=True
+        )
+        pos = end + 1
+        lowering |= lowering_treasury_checks(own)
+        if any(
+            float(value) != (1 if key == "factor" else 0)
+            for key, value, block in iter_statements(own)
+            if key in {"factor", "add"}
+            and block is None
+            and value is not None
+            and _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+        ):
+            covered.update(
+                kind for kind, guard in _COST_GUARDS.items() if guard.search(own)
+            )
+
+
+def unneeded_treasury_reason(
+    checks: Set[str], kinds: Set[str], item: str
+) -> Optional[str]:
+    """Why lowering treasury *checks* are unneeded, or None.
+
+    *kinds* are what the choosing country may pay, from chooser_costs. The rule
+    is validator_common.unneeded_treasury_checks. *item* names what the weight
+    belongs to.
+    """
+    unneeded = unneeded_treasury_checks(
+        checks, "money" in kinds, "political power" in kinds
+    )
+    if not unneeded:
+        return None
+    labels = [
+        label for name, label in _TREASURY_CHECK_LABELS.items() if name in unneeded
+    ]
+    cost_label = "money or political power" if "bankruptcy" in unneeded else "money"
+    return f"lowers the weight on {' and '.join(labels)}, but the {item} has no {cost_label} cost"
+
+
+def possible_costs(
+    effect_text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs effects anywhere in `effect_text` may charge, nested scopes included.
+
+    Wider than effect_costs: a charge back to ROOT from a state scope counts,
+    and so does one to another country.
+    """
+    return _effect_costs(blank_quoted_strings(effect_text), effects, {}, stored)[0]
+
+
+def effect_costs(
+    effect_text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block body charges its own country.
+
+    The body has comments already stripped. `effects` and `stored` come from
+    load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored)[0]
+
+
+def _receiver_tag(trigger: str) -> Optional[str]:
+    """A literal tag required on every trigger path, not just mentioned in one."""
+    tags = set()
+    for key, value, block in iter_statements(trigger):
+        if key == "tag" and value and re.fullmatch(r"[A-Z0-9]{3}", value):
+            tags.add(value)
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            tag = _receiver_tag(block)
+            if tag:
+                tags.add(tag)
+    return next(iter(tags)) if len(tags) == 1 else None
+
+
+def _option_tag_constraints(
+    trigger: str,
+) -> Tuple[Set[Tuple[str, str]], Set[Tuple[str, str]]]:
+    """Required and excluded receiver identities, without crossing scopes or ORs."""
+    required: Set[Tuple[str, str]] = set()
+    excluded: Set[Tuple[str, str]] = set()
+    for key, value, block in iter_statements(strip_comments(trigger)):
+        if (
+            key in {"tag", "original_tag"}
+            and value
+            and re.fullmatch(r"[A-Z0-9]{3}", value)
+        ):
+            required.add((key, value))
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            inner_required, inner_excluded = _option_tag_constraints(block)
+            required |= inner_required
+            excluded |= inner_excluded
+        elif key == "NOT" and block is not None:
+            for field, tag, nested in iter_statements(block):
+                if (
+                    field in {"tag", "original_tag"}
+                    and nested is None
+                    and tag
+                    and re.fullmatch(r"[A-Z0-9]{3}", tag)
+                ):
+                    excluded.add((field, tag))
+    return required, excluded
+
+
+def _options_have_disjoint_receivers(triggers: List[str]) -> bool:
+    """Prove no receiver can see two options using the same identity field."""
+    constraints = [_option_tag_constraints(trigger) for trigger in triggers]
+    for index, (required, excluded) in enumerate(constraints):
+        for other_required, other_excluded in constraints[:index]:
+            if not (
+                required & other_excluded
+                or other_required & excluded
+                or any(
+                    field == other_field and tag != other_tag
+                    for field, tag in required
+                    for other_field, other_tag in other_required
+                )
+            ):
+                return False
+    return True
+
+
+def _literal_cost_amounts(body: str) -> Optional[Dict[str, Decimal]]:
+    """Direct literal prices; refunds, balance rewrites, and calls stay unknown."""
+    amounts: Dict[str, Decimal] = {}
+    for key, value, block in iter_statements(strip_comments(body)):
+        if key in {"ROOT", "THIS", "hidden_effect"} and block is not None:
+            nested = _literal_cost_amounts(block)
+            if nested is None:
+                return None
+            for kind, amount in nested.items():
+                amounts[kind] = amounts.get(kind, Decimal(0)) + amount
+        elif (
+            (value == "yes" and key not in _OPTION_NON_EFFECT_KEYS)
+            or key
+            in {"if", "else_if", "else", "random", "random_list", "meta_effect", "text"}
+            or (block is not None and key.isdigit())
+        ):
+            return None
+        elif key in _STAT_COSTS and _STAT_COSTS[key] in _COST_GUARDS:
+            if value is None or not _AI_WEIGHT_LITERAL_RE.fullmatch(value):
+                return None
+            delta = -Decimal(value)
+            if delta < 0:
+                return None
+            kind = _STAT_COSTS[key]
+            amounts[kind] = amounts.get(kind, Decimal(0)) + delta
+        elif key in _VARIABLE_EFFECTS and "_temp_" not in key and block is not None:
+            fields = {name: scalar for name, scalar, _nested in iter_statements(block)}
+            target = fields.get("var")
+            if target is None:
+                if len(fields) != 1:
+                    return None
+                target, value = next(iter(fields.items()))
+            else:
+                value = fields.get("value")
+            cost = _COST_VARIABLES.get(target or "")
+            if cost is None or cost[1] == "tax rate":
+                continue
+            if (
+                key not in {"add_to_variable", "subtract_from_variable"}
+                or value is None
+                or not _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+            ):
+                return None
+            signs, kind = cost
+            delta = Decimal(value)
+            if key == "subtract_from_variable":
+                delta = -delta
+            if signs == _NEG:
+                delta = -delta
+            if delta < 0:
+                return None
+            amounts[kind] = amounts.get(kind, Decimal(0)) + delta
+    return amounts
+
+
+# Who pays for an outcome, as roles of the scope an item runs in: ROOT is the
+# country choosing, FROM the one that sent the event, a tag that country, OTHER
+# the countries an iterator reaches, and UNKNOWN an outcome that cannot be traced.
+# THIS is the scope a scripted effect is called in, which need not be ROOT.
+_ROOT, _FROM, _OTHER, _UNKNOWN, _THIS = "ROOT", "FROM", "OTHER", "?", "THIS"
+# A war costs the country it targets as well as the one that starts it.
+_WAR_TARGET_RE = re.compile(
+    r"\b(?:create_wargoal|declare_war_on)\s*=\s*\{(?:[^{}]|\{[^{}]*\})*?"
+    r"\btarget\s*=\s*([\w.:@]+)"
+)
+_PAYMENT_KINDS = frozenset({"money", "political power"})
+_TRACER_TOKEN_RE = re.compile(r"([\w.:@^\[\]]+)\s*=\s*(\{|[^\s{}]+)")
+_TAG_ROLE_RE = re.compile(r"[A-Z][A-Z0-9]{2}")
+_COUNTRY_ITERATOR_RE = re.compile(r"(?:every|random|all)_\w*(?:country|puppet)")
+_NOT_TAGS = frozenset({"AND", "NOT", "NOR"})
+_SKIP_SET_RE = re.compile(r"\bskip_payment\s*=\s*1\b")
+_SKIP_SET = "set_temp_variable = { skip_payment = 1 } "
+# Blocks a fire or call inside still runs in the enclosing scope.
+_TRACER_PASS_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "random",
+        "random_list",
+        "while_loop_effect",
+        "for_loop_effect",
+        "THIS",
+        "complete_effect",
+        "remove_effect",
+        "timeout_effect",
+        "cancel_effect",
+    }
+)
+# Triggers and weights hold no outcome, so the tracer leaves them as they are.
+_TRACER_SKIP_BLOCKS = frozenset(
+    {
+        "limit",
+        "trigger",
+        "ai_chance",
+        "ai_will_do",
+        "visible",
+        "available",
+        "allowed",
+        "custom_cost_trigger",
+        "cancel_trigger",
+        "remove_trigger",
+        "target_trigger",
+        "target_root_trigger",
+        "activation",
+        "targets",
+    }
+)
+
+
+class ItemFacts(NamedTuple):
+    """What one effect block charges directly, and the events and scripted effects
+    it starts, each as (scope it runs in, event id or effect name). A dynamic
+    event id is None."""
+
+    direct: Dict[str, FrozenSet[str]]
+    fires: Tuple[Tuple[str, Optional[str]], ...]
+    calls: Tuple[Tuple[str, str], ...]
+    sender: str = _ROOT
+
+
+# (receiver tags, immediate, ((option, whether the AI may pick it freely), ...))
+# of one event.
+_EventNode = Tuple[
+    Optional[FrozenSet[str]], Optional[ItemFacts], Tuple[Tuple[ItemFacts, bool], ...]
+]
+RoleCosts = Dict[str, Set[str]]
+
+
+def _fire_target(value: str) -> Optional[str]:
+    return None if "[" in value or value.endswith(".") else value
+
+
+def split_roles(
+    text: str,
+    own_tags: Optional[FrozenSet[str]] = None,
+    top: str = _ROOT,
+    *,
+    strip_triggers: bool = False,
+) -> Tuple[Dict[str, str], List[Tuple[str, Optional[str]]], List[Tuple[str, str]]]:
+    """(effect text per role, event fires, scripted effect calls) of *text*.
+
+    *text* has quotes blanked and runs as *top*. ROOT, FROM, literal tag, and
+    country iterator blocks move to their role at any depth, and a tag in
+    *own_tags* is ROOT.
+    A moved block keeps a skip_payment = 1 set before it, since temp variables
+    cross scopes. Other blocks stay in place, so a state scope charges its
+    parent's role. effect_tooltip previews are dropped. A fire or call inside a
+    block that is neither control flow nor a role block runs in the UNKNOWN
+    scope.
+    """
+    texts: Dict[str, List[str]] = defaultdict(list)
+    fires: List[Tuple[str, Optional[str]]] = []
+    calls: List[Tuple[str, str]] = []
+
+    def role_of(key: str) -> Optional[str]:
+        if key in (_ROOT, _FROM):
+            return key
+        if own_tags and key in own_tags:
+            return _ROOT
+        if _TAG_ROLE_RE.fullmatch(key) and key not in _NOT_TAGS:
+            return key
+        return _OTHER if _COUNTRY_ITERATOR_RE.fullmatch(key) else None
+
+    def walk(
+        body: str, role: str, scope: str, parent: Optional[str], waived: bool
+    ) -> str:
+        parts: List[str] = []
+        cursor = pos = 0
+        skip = _SKIP_SET_RE.search(body)
+        while True:
+            m = _TRACER_TOKEN_RE.search(body, pos)
+            if m is None:
+                break
+            key, value = m.groups()
+            if value != "{":
+                pos = m.end()
+                if key == "country_event":
+                    fires.append((scope, _fire_target(value)))
+                elif key in {"add_ideas", "remove_ideas"}:
+                    field = "on_add" if key == "add_ideas" else "on_remove"
+                    calls.append((scope, f"@idea:{field}:{value}"))
+                elif value == "yes":
+                    calls.append((scope, key))
+                continue
+            close = find_unquoted_brace_close(body, m.end() - 1)
+            if close == -1:
+                break
+            inner = body[m.end() : close]
+            pos = close + 1
+            if key in _TRACER_SKIP_BLOCKS:
+                if strip_triggers:
+                    parts.append(body[cursor : m.start()])
+                    cursor = pos
+                continue
+            if key in {"add_ideas", "remove_ideas", "add_timed_idea", "swap_ideas"}:
+                if key in {"add_ideas", "remove_ideas"}:
+                    field = "on_add" if key == "add_ideas" else "on_remove"
+                    calls.extend(
+                        (scope, f"@idea:{field}:{name}") for name in inner.split()
+                    )
+                else:
+                    for field, name, nested in iter_statements(inner):
+                        if nested is not None or name is None:
+                            continue
+                        if field in {"idea", "add_idea"}:
+                            calls.append((scope, f"@idea:on_add:{name}"))
+                            if key == "add_timed_idea":
+                                calls.append((scope, f"@idea:on_remove:{name}"))
+                        elif field == "remove_idea":
+                            calls.append((scope, f"@idea:on_remove:{name}"))
+            if key == "country_event":
+                fire = _FIRE_ID_RE.search(inner)
+                if fire:
+                    fires.append((scope, _fire_target(fire.group(1))))
+                continue
+            new_role = role_of(key)
+            waived_here = waived or bool(skip and skip.start() < m.start())
+            if key == "effect_tooltip" or (new_role and new_role != role):
+                parts.append(body[cursor : m.start()])
+                cursor = pos
+                if new_role:
+                    moved = walk(inner, new_role, new_role, key, waived_here)
+                    texts[new_role].append(_SKIP_SET + moved if waived_here else moved)
+                continue
+            passes = key in _TRACER_PASS_BLOCKS or (
+                key.isdigit() and parent == "random_list"
+            )
+            child_scope = new_role or (scope if passes else _UNKNOWN)
+            parts.append(body[cursor : m.end()])
+            parts.append(walk(inner, role, child_scope, key, waived_here))
+            parts.append("}")
+            cursor = pos
+        parts.append(body[cursor:])
+        return "".join(parts)
+
+    texts[top].append(walk(text, top, top, None, False))
+    return {role: " ".join(parts) for role, parts in texts.items()}, fires, calls
+
+
+def _cost_kinds(text: str, lookups: CostLookups) -> FrozenSet[str]:
+    costs = possible_costs(text, lookups.effects, lookups.stored)
+    kinds = set()
+    if costs & _MONEY_COSTS or commits_money(text, lookups.commitments, lookups.ideas):
+        kinds.add("money")
+    if "political power" in costs:
+        kinds.add("political power")
+    return frozenset(kinds)
+
+
+def war_target_payers(texts: Dict[str, str]) -> RoleCosts:
+    """Countries targeted by a war or war goal, by the role in *texts*."""
+    direct: RoleCosts = defaultdict(set)
+    for role, body in texts.items():
+        for target in _WAR_TARGET_RE.findall(body):
+            payer = role if target == _THIS else target
+            if payer in (_ROOT, _FROM) or _TAG_ROLE_RE.fullmatch(payer):
+                direct[payer].add("money")
+    return direct
+
+
+def item_facts(
+    text: str,
+    lookups: CostLookups,
+    own_tags: Optional[FrozenSet[str]] = None,
+    top: str = _ROOT,
+    *,
+    callback: bool = False,
+) -> ItemFacts:
+    """ItemFacts of an effect block running as *top*, with direct costs read per
+    role of split_roles. A war charges its target's role too. A scripted effect
+    runs as THIS, whose own charges its caller's cost lookups already read."""
+    texts, fires, calls = split_roles(
+        blank_quoted_strings(text), own_tags, top, strip_triggers=callback
+    )
+    direct = war_target_payers(texts)
+    for role, body in texts.items():
+        if role != _THIS or callback:
+            direct[role] |= _cost_kinds(body, lookups)
+    for scope, name in calls:
+        if name.startswith("@idea:") and name.rsplit(":", 1)[-1] not in lookups.ideas:
+            direct[scope].add("uncertain")
+    return ItemFacts(_frozen(direct), tuple(fires), tuple(calls), top)
+
+
+def event_payment_nodes(text: str, lookups: CostLookups) -> Dict[str, _EventNode]:
+    """Event id -> its immediate and option ItemFacts, for events with any.
+
+    A literal receiver tag counts as ROOT. An option with a `trigger`, or one the
+    AI never picks, is not a free pick.
+    """
+    nodes: Dict[str, _EventNode] = {}
+    for event_id, body, _start in _iter_event_bodies(blank_quoted_strings(text)):
+        receiver = _receiver_tag(_event_trigger_body(body) or "")
+        own = frozenset({receiver}) if receiver else None
+        immediate: Optional[ItemFacts] = None
+        options: List[Tuple[ItemFacts, bool]] = []
+        for key, _value, block in iter_statements(body):
+            if block is None:
+                continue
+            if key == "immediate":
+                immediate = item_facts(block, lookups, own)
+            elif key == "option":
+                fields = {name: nested for name, _v, nested in iter_statements(block)}
+                free_pick = "trigger" not in fields and not weight_stays_zero(
+                    fields.get("ai_chance") or ""
+                )
+                options.append((item_facts(block, lookups, own), free_pick))
+        nodes[event_id] = (own, immediate, tuple(options))
+    return nodes
+
+
+_TRACED_EFFECT_RE = re.compile(
+    r"\b(?:country_event|add_ideas|remove_ideas|add_timed_idea|swap_ideas)\b|(?<![\w.:@^])(?:ROOT|FROM|[A-Z][A-Z0-9]{2}"
+    r"|(?:every|random|all)_\w*(?:country|puppet))\s*=\s*\{"
+)
+
+
+def effect_payment_nodes(
+    bodies: Dict[str, str], lookups: CostLookups
+) -> Dict[str, ItemFacts]:
+    """Scripted effect -> ItemFacts as THIS, for effects that fire an event or
+    change scope to another country or to ROOT, and their callers."""
+    traced = _with_callers(
+        {name for name, body in bodies.items() if _TRACED_EFFECT_RE.search(body)},
+        bodies,
+    )
+    nodes = {name: item_facts(bodies[name], lookups, top=_THIS) for name in traced}
+    pending = deque((name, body) for name, body in (lookups.callbacks or {}).items())
+    seen: Set[str] = set()
+    while pending:
+        name, body = pending.popleft()
+        if name in seen:
+            continue
+        seen.add(name)
+        facts = item_facts(body, lookups, top=_THIS, callback=True)
+        calls = []
+        direct = {role: set(kinds) for role, kinds in facts.direct.items()}
+        for scope, callee in facts.calls:
+            if callee.startswith("@idea:"):
+                calls.append((scope, callee))
+            elif callee in bodies:
+                callback_name = "@callback_effect:" + callee
+                calls.append((scope, callback_name))
+                pending.append((callback_name, bodies[callee]))
+            else:
+                direct.setdefault(scope, set()).add("uncertain")
+        fires = tuple(
+            (scope, "@callback_event:" + (event_id or ""))
+            for scope, event_id in facts.fires
+        )
+        nodes[name] = ItemFacts(_frozen(direct), fires, tuple(calls), facts.sender)
+    return nodes
+
+
+def item_payers(
+    facts: ItemFacts,
+    payments: EventPayments,
+    own_tags: Optional[FrozenSet[str]] = None,
+) -> RoleCosts:
+    """Who pays for *facts*, in its own roles, with a tag in *own_tags* as ROOT.
+
+    A fired event's ROOT is the scope it fires into and its FROM is this ROOT.
+    The event's receiver picks its option, so a cost to the receiver counts
+    only when every free pick charges it. That includes FROM when this ROOT
+    fires the event to itself. A called effect's THIS is the scope it is
+    called in, and its ROOT is this ROOT.
+    """
+    out: RoleCosts = defaultdict(set)
+
+    def add(role: str, kinds: FrozenSet[str]) -> None:
+        out[_ROOT if own_tags and role in own_tags else role] |= kinds
+
+    for role, kinds in facts.direct.items():
+        add(role, kinds)
+    for scope, event_id in facts.fires:
+        if event_id is None:
+            add(_UNKNOWN, _PAYMENT_KINDS)
+            continue
+        callback_event = event_id.startswith("@callback_event:")
+        if callback_event:
+            event_id = event_id.removeprefix("@callback_event:")
+        if callback_event and event_id not in payments.known_events:
+            add(scope, frozenset({"uncertain"}))
+            add(facts.sender, frozenset({"uncertain"}))
+            continue
+        charged, picked = payments.events.get(event_id, ({}, {}))
+        for role, kinds in charged.items():
+            if role == _ROOT or (role == _FROM and scope == facts.sender):
+                kinds = picked.get(role, frozenset())
+            add(
+                scope if role == _ROOT else facts.sender if role == _FROM else role,
+                kinds,
+            )
+    for scope, name in facts.calls:
+        for role, kinds in payments.effects.get(name, {}).items():
+            add(scope if role == _THIS else role, kinds)
+    return out
+
+
+def _frozen(costs: RoleCosts) -> Dict[str, FrozenSet[str]]:
+    return {role: frozenset(kinds) for role, kinds in costs.items() if kinds}
+
+
+def _possible_picks(picks: List[RoleCosts], role: str) -> Set[str]:
+    possible = []
+    for costs in picks:
+        kinds = set(costs.get(role, ()))
+        if "uncertain" in kinds:
+            kinds.update(_PAYMENT_KINDS)
+        possible.append(kinds)
+    common = set.intersection(*possible)
+    if common & _PAYMENT_KINDS and any(
+        "uncertain" in cost.get(role, ()) for cost in picks
+    ):
+        common -= _PAYMENT_KINDS
+        common.add("uncertain")
+    return common
+
+
+def _event_payers(
+    node: _EventNode, payments: EventPayments
+) -> Tuple[Dict[str, FrozenSet[str]], Dict[str, FrozenSet[str]]]:
+    """(what any option charges, what every free pick charges) when an event
+    fires, per role. With no free pick, every pick is any option."""
+    own, immediate, options = node
+    base = item_payers(immediate, payments, own) if immediate else {}
+    costs = [(item_payers(option, payments, own), free) for option, free in options]
+    picks = [cost for cost, free in costs if free]
+    charged: RoleCosts = defaultdict(set)
+    picked: RoleCosts = defaultdict(set)
+    for role in set(base).union(*(cost for cost, _free in costs)):
+        paid = [cost.get(role, set()) for cost, _free in costs]
+        charged[role] = base.get(role, set()).union(*paid)
+        picked[role] = (
+            base.get(role, set()).union(_possible_picks(picks, role))
+            if picks
+            else charged[role]
+        )
+    return _frozen(charged), _frozen(picked)
+
+
+def _grown(
+    old: Dict[str, FrozenSet[str]], new: Dict[str, FrozenSet[str]]
+) -> Dict[str, FrozenSet[str]]:
+    return {
+        role: old.get(role, frozenset()) | new.get(role, frozenset())
+        for role in {*old, *new}
+    }
+
+
+def resolve_payments(
+    event_nodes: Dict[str, _EventNode], effect_nodes: Dict[str, ItemFacts]
+) -> EventPayments:
+    """EventPayments for every node, to a fixed point.
+
+    Payments grow as the maps fill, so cycles settle. A cycle that never
+    charges anyone stays free. A node is redone only when an event or effect it
+    starts changes.
+
+    A free pick trades its kinds for "uncertain" once a pick is unknown, which
+    takes a kind back from the events around it. Events that fire each other can
+    then pass that kind around forever, so an event that returns to a value it
+    already held keeps both values from then on.
+    """
+    payments = EventPayments({}, {}, frozenset(event_nodes))
+    readers: Dict[Tuple[str, str], Set[Tuple[str, str]]] = defaultdict(set)
+    nodes = [("effect", name, facts) for name, facts in effect_nodes.items()]
+    for event_id, (_own, immediate, options) in event_nodes.items():
+        nodes += [("event", event_id, facts) for facts, _free in options]
+        if immediate:
+            nodes.append(("event", event_id, immediate))
+    for kind, name, facts in nodes:
+        for _scope, fired_id in facts.fires:
+            if fired_id:
+                readers[("event", fired_id.removeprefix("@callback_event:"))].add(
+                    (kind, name)
+                )
+        for _scope, effect in facts.calls:
+            readers[("effect", effect)].add((kind, name))
+    pending = deque(dict.fromkeys((kind, name) for kind, name, _facts in nodes))
+    queued = set(pending)
+    held: Dict[str, Set[tuple]] = defaultdict(set)
+    while pending:
+        key = pending.popleft()
+        queued.discard(key)
+        kind, name = key
+        if kind == "effect":
+            paid = _frozen(item_payers(effect_nodes[name], payments))
+            if paid == payments.effects.get(name, {}):
+                continue
+            payments.effects[name] = paid
+        else:
+            event_paid = _event_payers(event_nodes[name], payments)
+            old = payments.events.get(name, ({}, {}))
+            if event_paid == old:
+                continue
+            value = tuple(frozenset(costs.items()) for costs in event_paid)
+            if value in held[name]:
+                event_paid = (
+                    _grown(old[0], event_paid[0]),
+                    _grown(old[1], event_paid[1]),
+                )
+                if event_paid == old:
+                    continue
+            held[name].add(value)
+            payments.events[name] = event_paid
+        for reader in sorted(readers[key] - queued):
+            pending.append(reader)
+            queued.add(reader)
+    return payments
+
+
+def chooser_costs(
+    text: str,
+    lookups: CostLookups,
+    payments: EventPayments,
+    own_tags: Optional[FrozenSet[str]] = None,
+) -> Set[str]:
+    """Cost kinds the country choosing *text* may pay, directly or through the
+    events and scripted effects it starts.
+
+    FROM, country iterators, and tags outside *own_tags* are other payers. With
+    no *own_tags*, any literal tag might be the chooser and counts.
+    """
+    return chooser_kinds(
+        item_payers(item_facts(text, lookups, own_tags), payments, own_tags),
+        bool(own_tags),
+    )
+
+
+def chooser_kinds(costs: RoleCosts, tags_known: bool) -> Set[str]:
+    """The kinds *costs* charge the chooser: ROOT, UNKNOWN, and, when the
+    chooser's tag is unknown, every literal tag."""
+    kinds = set(costs.get(_ROOT, ())) | set(costs.get(_UNKNOWN, ()))
+    if not tags_known:
+        for role, paid in costs.items():
+            if _TAG_ROLE_RE.fullmatch(role):
+                kinds |= paid
+    if "uncertain" in kinds:
+        kinds.update(_PAYMENT_KINDS)
+    return kinds
+
+
+def find_option_cost_weights(
+    text: str, lookups: CostLookups, payments: EventPayments
+) -> Tuple[List[Tuple[str, int, str, bool]], List[Tuple[str, int, str]]]:
+    """AI weights that ignore an option's cost, and treasury checks it lacks a cost for.
+
+    The first list holds (option name, 1-based line, costs, all gated): each cost
+    not covered by a relevant, non-neutral AI modifier in the choosing country's
+    scope. Opinion and path modifiers do not cover costs. A missing `ai_chance` is
+    the flat default weight. `all gated` marks an event where every option has a
+    `trigger`: those may be variants the AI never chooses between, so the finding
+    needs a look before it is fixed. The second list holds (option name, line,
+    reason) from unneeded_treasury_reason, against chooser_costs of the option.
+    The line is the `ai_chance` when there is one, since that is where the fix
+    goes. *lookups* come from load_cost_lookups, *payments* from
+    load_event_payments.
+
+    Skipped: an event whose own trigger requires `is_ai = no`, an event whose
+    option tag gates prove each receiver sees at most one option, an option the AI
+    never picks (`base = 0`, no `add`) while another option can win, and, for
+    ignored costs, a cost every option always pays, or every option pays only
+    sometimes, since a guard on each one scales them all alike. Unequal direct
+    literal prices need guards above the cheapest AI-eligible price when no option
+    has a trigger. Scripted, computed, and conditional prices remain unmeasured.
+    Tax rate is never shared: options can move it apart.
     """
     code = blank_quoted_strings(text)
     line = _line_lookup(code)
     out: List[Tuple[str, int, str, bool]] = []
+    unneeded: List[Tuple[str, int, str]] = []
+    effects, stored = lookups.effects, lookups.stored
     for _eid, body, start in _iter_event_bodies(code):
         base = code.index("{", start) + 1
         options = [
             (match.end(), find_unquoted_brace_close(body, match.end() - 1))
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
-        if len(options) < 2:
+        trigger = _event_trigger_body(body) or ""
+        if len(options) < 2 or first_flat_match(trigger, IS_AI_NO_RE):
             continue
+        country = _receiver_tag(trigger)
         splits = [
-            _split_option(body[opt_start:opt_end]) for opt_start, opt_end in options
+            _split_option(body[opt_start:opt_end], country)
+            for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
-        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+        if all_gated and _options_have_disjoint_receivers(
+            [blocks["trigger"][1] for _own, blocks in splits]
+        ):
+            continue
+        option_effect_costs = [
+            _effect_costs(own, effects, {}, stored) for own, _b in splits
+        ]
+        option_costs = [costs for costs, _guaranteed in option_effect_costs]
+        guaranteed_costs = [guaranteed for _costs, guaranteed in option_effect_costs]
+        # Shared when every option pays it always, or every option only sometimes.
+        always_somewhere: Set[str] = set().union(*guaranteed_costs)
+        shared = (
+            set.intersection(*guaranteed_costs)
+            | set.intersection(*option_costs) - always_somewhere
+        ) - {"tax rate"}
+        never_picked = [
+            weight_stays_zero(blocks.get("ai_chance", (0, ""))[1])
+            for _own, blocks in splits
+        ]
+        shared_by_option = [shared.copy() for _option in options]
+        eligible = [index for index, never in enumerate(never_picked) if not never]
+        if (
+            shared
+            and len(eligible) > 1
+            and not any("trigger" in blocks for _own, blocks in splits)
+        ):
+            prices = [_literal_cost_amounts(splits[index][0]) for index in eligible]
+            for kind in shared:
+                amounts = [
+                    price[kind]
+                    for price in prices
+                    if price is not None and price.get(kind, Decimal(0)) > 0
+                ]
+                if len(amounts) != len(eligible):
+                    continue
+                cheapest = min(amounts)
+                for index, amount in zip(eligible, amounts):
+                    if amount > cheapest:
+                        shared_by_option[index].discard(kind)
+        for (opt_start, opt_end), (_own, blocks), costs, never, shared_costs in zip(
+            options, splits, option_costs, never_picked, shared_by_option
+        ):
+            if never and not all(never_picked):
+                continue
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
-            if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
+            covered, lowering = ai_weight_cost_checks(ai_chance, country)
+            chooser = country or _receiver_tag(blocks.get("trigger", (0, ""))[1])
+            reason = (
+                unneeded_treasury_reason(
+                    lowering,
+                    chooser_costs(
+                        body[opt_start:opt_end],
+                        lookups,
+                        payments,
+                        frozenset({chooser}) if chooser else None,
+                    ),
+                    "option",
+                )
+                if lowering
+                else None
+            )
+            ignored = (costs - shared_costs - covered) & _COST_GUARDS.keys()
+            if not (ignored or reason):
                 continue
-            costs = _effect_costs(own, effects, {}, stored)
-            if not costs:
+            match = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
+            name = match.group(1) if match else "unnamed option"
+            ai_line = line(base + opt_start + ai_offset)
+            if ignored:
+                out.append(
+                    (
+                        name,
+                        ai_line,
+                        ", ".join(kind for kind in _COST_ORDER if kind in ignored),
+                        all_gated,
+                    )
+                )
+            if reason:
+                unneeded.append((name, ai_line, reason))
+    return out, unneeded
+
+
+def _statement_corruption_level_bound(
+    key: str,
+    value: Optional[str],
+    block: Optional[str],
+    country: Optional[str] = None,
+) -> Optional[int]:
+    """Minimum corruption level implied by one trigger statement, if known.
+
+    A level-1 exclusion supplies a floor of 2. Repeated decreases can still
+    reach the level-1 PP refund branch.
+    """
+    if key == "NOT" and block is not None:
+        statements = list(iter_statements(block))
+        if len(statements) == 1:
+            child_key, child_value, child_block = statements[0]
+            if (
+                child_key == "has_idea"
+                and child_value == _MIN_CORRUPTION_ID
+                and child_block is None
+            ):
+                return 2
+            if child_key == "OR" and child_block is not None:
+                excludes = any(
+                    branch_key == "has_idea"
+                    and branch_value == _MIN_CORRUPTION_ID
+                    and branch_block is None
+                    for branch_key, branch_value, branch_block in iter_statements(
+                        child_block
+                    )
+                )
+                return 2 if excludes else None
+        return None
+    if key == "has_idea" and value is not None and block is None:
+        match = _CORRUPTION_LEVEL_RE.fullmatch(value)
+        return int(match.group(1)) if match else None
+    if block is None:
+        return None
+    statements = list(iter_statements(block))
+    if key == "OR":
+        bounds = [
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
+        ]
+        proven = [bound for bound in bounds if bound is not None]
+        return min(proven) if proven and len(proven) == len(bounds) else None
+    if (
+        key in {"AND", "ROOT", "THIS", "hidden_trigger", "custom_trigger_tooltip"}
+        or key == country
+    ):
+        bounds = [
+            _statement_corruption_level_bound(
+                child_key, child_value, child_block, country=country
+            )
+            for child_key, child_value, child_block in statements
+        ]
+        proven = [bound for bound in bounds if bound is not None]
+        return max(proven) if proven else None
+    return None
+
+
+def _trigger_corruption_level_bound(
+    trigger: str, country: Optional[str] = None
+) -> Optional[int]:
+    """Minimum corruption level implied by a trigger's conjunctive conditions."""
+    bounds = [
+        _statement_corruption_level_bound(key, value, block, country)
+        for key, value, block in iter_statements(trigger)
+    ]
+    proven = [bound for bound in bounds if bound is not None]
+    return max(proven) if proven else None
+
+
+def _negative_pp_cost(value: Optional[str]) -> bool:
+    return bool(
+        value is not None
+        and _NEGATIVE_NUMBER_RE.fullmatch(value)
+        and any(character in "123456789" for character in value)
+    )
+
+
+def _effect_presence(body: str) -> Tuple[float, int]:
+    """Total literal negative PP charge and count of decrease_corruption calls."""
+    pp_charge = 0.0
+    decreases_corruption = 0
+    for key, value, block in iter_statements(body):
+        if (
+            key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+        ):
+            continue
+        if key == "add_political_power" and _negative_pp_cost(value):
+            pp_charge -= float(value or 0)
+        elif key == "decrease_corruption" and value == "yes":
+            decreases_corruption += 1
+        if block is not None:
+            nested_charge, nested_decrease = _effect_presence(block)
+            pp_charge += nested_charge
+            decreases_corruption += nested_decrease
+    return pp_charge, decreases_corruption
+
+
+def _guard_prevents_min_corruption_refund(
+    bound: Optional[int], decrease_calls: int
+) -> bool:
+    return bound is not None and decrease_calls < bound
+
+
+def _has_corruption_level_mutation(body: str) -> bool:
+    """Whether own-scope effects can invalidate a previously checked level bound."""
+    for key, value, block in iter_statements(body):
+        if key == "decrease_corruption" and value == "yes":
+            return True
+        if key in _IDEA_MUTATION_BLOCKS and _CORRUPTION_ID_RE.search(
+            value or block or ""
+        ):
+            return True
+        if (
+            block is not None
+            and key not in {"limit", "trigger"}
+            and key not in _VARIABLE_EFFECTS
+            and key not in _EQUIPMENT_COSTS
+            and _has_corruption_level_mutation(block)
+        ):
+            return True
+    return False
+
+
+def _idea_mutation_before_decrease(
+    body: str, changed_idea: bool = False
+) -> Tuple[bool, bool]:
+    """Whether an idea change precedes a decrease, and whether one remains pending."""
+    for key, value, block in iter_statements(body):
+        if key == "decrease_corruption" and value == "yes":
+            if changed_idea:
+                return True, True
+            continue
+        if key in _IDEA_MUTATION_BLOCKS and _CORRUPTION_ID_RE.search(
+            value or block or ""
+        ):
+            changed_idea = True
+            continue
+        if (
+            block is not None
+            and key not in {"limit", "trigger"}
+            and key not in _VARIABLE_EFFECTS
+            and key not in _EQUIPMENT_COSTS
+        ):
+            invalidated, nested_change = _idea_mutation_before_decrease(
+                block, changed_idea
+            )
+            if invalidated:
+                return True, True
+            changed_idea = nested_change
+    return False, changed_idea
+
+
+def _all_corruption_operations_guarded(
+    body: str, country: Optional[str] = None
+) -> bool:
+    """Require every relevant operation to sit in a guarded paid-decrease block."""
+    for key, value, block in iter_statements(body):
+        if (key == "add_political_power" and _negative_pp_cost(value)) or (
+            key == "decrease_corruption" and value == "yes"
+        ):
+            return False
+        if (
+            block is None
+            or key in {"limit", "trigger"}
+            or key in _VARIABLE_EFFECTS
+            or key in _EQUIPMENT_COSTS
+        ):
+            continue
+        if key in {"if", "else_if"}:
+            limit = next(
+                (
+                    nested
+                    for nested_key, _nested_value, nested in iter_statements(block)
+                    if nested_key == "limit" and nested is not None
+                ),
+                None,
+            )
+            bound = _trigger_corruption_level_bound(limit, country) if limit else None
+            if bound is not None:
+                pp_charge, decreases_corruption = _effect_presence(block)
+                idea_bound_invalidated, _idea_change_remains = (
+                    _idea_mutation_before_decrease(block)
+                )
+                if (
+                    pp_charge
+                    and decreases_corruption
+                    and not idea_bound_invalidated
+                    and _guard_prevents_min_corruption_refund(
+                        bound, decreases_corruption
+                    )
+                ):
+                    continue
+        if not _all_corruption_operations_guarded(block, country):
+            return False
+    return True
+
+
+def find_corruption_pp_cost_options(text: str) -> List[Tuple[str, int]]:
+    """Return event options charging literal PP while decreasing corruption unguarded.
+
+    Only a charge above the 150 PP each decrease refunds at level 1 can lose PP.
+    A level-1 exclusion must gate the event, the option, or an effect block that
+    contains both operations. Dynamic PP values and unrelated country scopes are
+    left to manual review.
+    """
+    source = strip_comments(text)
+    code = blank_quoted_strings(source)
+    line = _line_lookup(code)
+    out: List[Tuple[str, int]] = []
+    for _event_id, body, start in _iter_event_bodies(code):
+        event_trigger = _event_trigger_body(body) or ""
+        country = _receiver_tag(event_trigger)
+        event_bound = _trigger_corruption_level_bound(event_trigger, country)
+        event_immediate = next(
+            (
+                block
+                for key, _value, block in iter_statements(body)
+                if key == "immediate" and block is not None
+            ),
+            "",
+        )
+        immediate_effects, _immediate_blocks = _split_option(
+            event_immediate,
+            country,
+            numeric_state_scopes=True,
+            preserve_idea_effects=True,
+            preserve_root_reentry=True,
+        )
+        if _has_corruption_level_mutation(immediate_effects):
+            event_bound = None
+        base = code.index("{", start) + 1
+        for match in _OPTION_OPEN_RE.finditer(body):
+            end = find_unquoted_brace_close(body, match.end() - 1)
+            if end == -1:
                 continue
-            name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
+            option = body[match.end() : end]
+            own_effects, blocks = _split_option(
+                option,
+                country,
+                preserve_limits=True,
+                numeric_state_scopes=True,
+                preserve_idea_effects=True,
+                preserve_root_reentry=True,
+            )
+            option_trigger = blocks.get("trigger", (0, ""))[1]
+            option_bound = _trigger_corruption_level_bound(option_trigger, country)
+            idea_bound_invalidated, _idea_change_remains = (
+                _idea_mutation_before_decrease(own_effects)
+            )
+            if idea_bound_invalidated:
+                bound = None
+            else:
+                bound = max(
+                    (
+                        value
+                        for value in (event_bound, option_bound)
+                        if value is not None
+                    ),
+                    default=None,
+                )
+            pp_charge, decreases_corruption = _effect_presence(own_effects)
+            # At level 1 each decrease refunds this much, so a smaller charge loses nothing.
+            if (
+                not decreases_corruption
+                or pp_charge <= _MIN_CORRUPTION_REFUND * decreases_corruption
+            ):
+                continue
+            if _guard_prevents_min_corruption_refund(bound, decreases_corruption):
+                continue
+            if _all_corruption_operations_guarded(own_effects, country):
+                continue
+            option_name = _OPTION_NAME_RE.search(
+                source, base + match.start(), base + end
+            )
             out.append(
                 (
-                    name.group(1) if name else "unnamed option",
-                    line(base + opt_start + ai_offset),
-                    ", ".join(kind for kind in _COST_ORDER if kind in costs),
-                    all_gated,
+                    option_name.group(1) if option_name else "unnamed option",
+                    line(base + match.start()),
                 )
             )
     return out
@@ -1388,7 +3023,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
                 "has_mtth": "mean_time_to_happen" in body_nc,
-                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "option_count": len(_OPTION_OPEN_RE.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
                 ],
@@ -1401,9 +3036,16 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, check_ai_chance_costs: bool = False, **kwargs):
+    def __init__(
+        self,
+        *args,
+        check_ai_chance_costs: bool = False,
+        check_corruption_pp_costs: bool = False,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
         self.check_ai_chance_costs = check_ai_chance_costs
+        self.check_corruption_pp_costs = check_corruption_pp_costs
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._parsed_event_files: Dict[str, Tuple[List[dict], Set[str]]] = {}
         self._random_events_cache: Optional[set] = None
@@ -1419,8 +3061,8 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, picture_refs, is_triggered_only, fire_only_once,
+        Each metadata dict has: id (or None for malformed blocks), type, file
+        (basename), path (mod-relative), line, is_hidden, picture_refs, is_triggered_only, fire_only_once,
         is_major, has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is None:
@@ -1455,6 +3097,9 @@ class Validator(BaseValidator):
                     if text
                     else ([], set())
                 )
+                rel = self._rel_posix(filepath)
+                for ev in parsed[0]:
+                    ev["path"] = rel
                 self._parsed_event_files[filepath] = parsed
             meta.extend(parsed[0])
             namespaces |= parsed[1]
@@ -1852,7 +3497,9 @@ class Validator(BaseValidator):
             eid = ev["id"] or "unknown"
             for key in _LOC_REF_PATTERN.findall(ev["body"]):
                 if "." in key and key not in loc_keys:
-                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
+                    results.append(
+                        (f"{eid}: missing loc key '{key}'", ev["path"], ev["line"])
+                    )
 
         self._report(
             results,
@@ -1868,8 +3515,8 @@ class Validator(BaseValidator):
         )
 
         meta, _ = self._get_event_metadata()
-        triggered_only_ids: Dict[str, str] = {
-            ev["id"]: ev["file"]
+        triggered_only_ids: Dict[str, dict] = {
+            ev["id"]: ev
             for ev in meta
             if ev["id"] is not None
             and ev["is_triggered_only"]
@@ -1914,7 +3561,8 @@ class Validator(BaseValidator):
             ns = eid[:last_dot] if last_dot >= 0 else eid
             if ns in dynamic_namespaces:
                 continue
-            results.append(f"{eid} - {triggered_only_ids[eid]}")
+            ev = triggered_only_ids[eid]
+            results.append((f"{eid}: no references found", ev["path"], ev["line"]))
 
         self._report(
             results,
@@ -2029,7 +3677,8 @@ class Validator(BaseValidator):
         the day, so a `date` comparison on the event is redundant, and a
         `date <` bound can silently drop the event when `random_days` spills
         past it. Only events whose sole fire source is the yearly effects are
-        reported: a second fire path (focus, decision, chain) may need the guard.
+        reported: a second fire path (focus, decision, chain, `random_events`
+        pool) may need the guard.
         """
         self._log_section(
             "Checking scheduled events for redundant date bounds in their trigger..."
@@ -2049,7 +3698,7 @@ class Validator(BaseValidator):
                 [],
                 "✓ No scheduled event carries a redundant date bound",
                 f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-                Severity.WARNING,
+                Severity.ERROR,
                 category="scheduled-event-date-bound",
             )
             return
@@ -2059,18 +3708,19 @@ class Validator(BaseValidator):
             self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
             return
 
+        pool_ids = self._get_random_event_ids()
         results = [
             f"{eid} - {self._rel_posix(filename)}:{line} is scheduled from "
             f"{_YEARLY_EFFECTS_REL}, so the date bound in its trigger is redundant "
             "(remove it; drop the trigger block if nothing else is left)"
             for eid, filename, line in sorted(bounded)
-            if sources.get(eid) == {_YEARLY_EFFECTS_REL}
+            if sources.get(eid) == {_YEARLY_EFFECTS_REL} and eid not in pool_ids
         ]
         self._report(
             results,
             "✓ No scheduled event carries a redundant date bound",
             f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="scheduled-event-date-bound",
         )
 
@@ -2696,54 +4346,107 @@ class Validator(BaseValidator):
             category="event-option-log-id",
         )
 
-    def validate_ai_chance_ignores_cost(self):
-        """Flag options whose flat `ai_chance` ignores what the option costs.
+    def _option_cost_weight_rows(
+        self,
+    ) -> Optional[Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]]:
+        """Both AI weight cost checks' rows from one pass, or None with no files."""
 
-        Off unless `--check-ai-chance-costs` is passed: the backlog is mod-wide
-        (#5096), so the check stays out of CI until it is worked down.
-        """
+        def scan():
+            files = self._collect_files(["events/**/*.txt"])
+            if not files:
+                return None
+            blind: List[Tuple[str, str, int]] = []
+            unneeded: List[Tuple[str, str, int]] = []
+            lookups = load_cost_lookups(self)
+            payments = load_event_payments(self, lookups)
+            for file_blind, file_unneeded in self._pool_map_init(
+                partial(_extract_option_cost_weights, mod_path=self.mod_path),
+                files,
+                _init_cost_lookups,
+                (lookups, payments),
+            ):
+                blind.extend(file_blind)
+                unneeded.extend(file_unneeded)
+            return (
+                sorted(blind, key=lambda r: (r[1], r[2])),
+                sorted(unneeded, key=lambda r: (r[1], r[2])),
+            )
+
+        return self.cached("option_cost_weights", scan)
+
+    def validate_ai_chance_ignores_cost(self):
+        """Warn on cost-insensitive AI weights when enabled by CLI or the CI batch."""
         if not self.check_ai_chance_costs:
             self._log_section(
                 "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
             )
             return
         self._log_section("Checking event options for AI weights that ignore costs...")
+        rows = self._option_cost_weight_rows()
+        if rows is None:
+            self.log("  No event files in scope — skipping")
+            return
+        self._report(
+            rows[0],
+            "✓ No event AI weights ignoring option costs",
+            "Event options whose ai_chance ignores a cost (add a relevant modifier"
+            " in the choosing country's scope):",
+            Severity.WARNING,
+            category="event-ai-chance-ignores-cost",
+        )
+
+    def validate_unneeded_treasury_checks(self):
+        """Warn on ai_chance treasury checks for a cost the option does not have.
+
+        The inverse of validate_ai_chance_ignores_cost, from the same pass and
+        behind the same flag. See unneeded_treasury_reason.
+        """
+        if not self.check_ai_chance_costs:
+            self._log_section(
+                "Skipping AI treasury check scan (pass --check-ai-chance-costs to enable)"
+            )
+            return
+        self._log_section("Checking event options for treasury checks with no cost...")
+        rows = self._option_cost_weight_rows()
+        if rows is None:
+            self.log("  No event files in scope — skipping")
+            return
+        self._report(
+            rows[1],
+            "✓ No event AI treasury checks without a cost",
+            "Event options whose ai_chance lowers the weight on a treasury check the"
+            " option has no cost for (drop the modifier, or add the missing cost):",
+            Severity.WARNING,
+            category="event-unneeded-treasury-guard",
+        )
+
+    def validate_corruption_pp_cost(self):
+        """Warn when paid event options can waste PP at the minimum corruption level."""
+        if not self.check_corruption_pp_costs:
+            self._log_section(
+                "Skipping event corruption PP cost check "
+                "(pass --check-corruption-pp-costs to enable)"
+            )
+            return
+        self._log_section(
+            "Checking event options for paid corruption decreases without a level-1 guard..."
+        )
         files = self._collect_files(["events/**/*.txt"])
         if not files:
             self.log("  No event files in scope — skipping")
             return
-        effect_texts = (
-            _read_cleaned_text(path, mod_path=self.mod_path)
-            for path in self._collect_files(
-                ["common/scripted_effects/**/*.txt"], ignore_staged=True
-            )
-        )
-        effects = costly_scripted_effects(text for text in effect_texts if text)
-        stored: Dict[str, int] = {}
-        script_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
-            ignore_staged=True,
-        )
-        for found in self._pool_map(
-            partial(_scan_stored_variable_signs, mod_path=self.mod_path), script_files
-        ):
-            for name, signs in found.items():
-                stored[name] = stored.get(name, 0) | signs
         results: List[Tuple[str, str, int]] = []
-        for sub in self._pool_map_init(
-            partial(_extract_cost_blind_options, mod_path=self.mod_path),
-            files,
-            _init_cost_lookups,
-            (effects, stored),
+        for sub in self._pool_map(
+            partial(_extract_corruption_pp_cost_options, mod_path=self.mod_path), files
         ):
             results.extend(sub)
         self._report(
-            sorted(results, key=lambda r: (r[1], r[2])),
-            "✓ No event AI weights ignoring option costs",
-            "Event options with a cost and a flat ai_chance (add a modifier for"
-            " affordability or for the situation the cost solves):",
+            sorted(results, key=lambda result: (result[1], result[2])),
+            "✓ No charged event corruption decreases omit a level-1 guard",
+            "Event options needing review for a PP charge with decrease_corruption "
+            "and no recognized local minimum-corruption guard:",
             Severity.WARNING,
-            category="event-ai-chance-ignores-cost",
+            category="event-corruption-pp-cost",
         )
 
     def run_validations(self):
@@ -2770,7 +4473,9 @@ class Validator(BaseValidator):
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
         self.validate_option_log_id()
+        self.validate_corruption_pp_cost()
         self.validate_ai_chance_ignores_cost()
+        self.validate_unneeded_treasury_checks()
 
 
 def _add_extra_args(parser):
@@ -2778,7 +4483,16 @@ def _add_extra_args(parser):
         "--check-ai-chance-costs",
         action="store_true",
         dest="check_ai_chance_costs",
-        help="Report event options whose flat ai_chance ignores the option's cost",
+        help="Report event options whose ai_chance ignores the option's cost",
+    )
+    parser.add_argument(
+        "--check-corruption-pp-costs",
+        action="store_true",
+        dest="check_corruption_pp_costs",
+        help=(
+            "Warn on event options that charge political power to decrease "
+            "corruption without a minimum-corruption guard"
+        ),
     )
 
 

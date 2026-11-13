@@ -3,11 +3,23 @@
 import random
 import re
 
+import pytest
 import validate_mios as V
+from shared.suite import write_under
 
 
 def _validator(tmp_path):
-    return V.Validator(str(tmp_path))
+    return V.Validator(str(tmp_path), workers=1)
+
+
+def _assert_issues(issues, expected):
+    """Issues match *expected* in order. An entry is a category, or a tuple of a
+    category and fragments of `<severity> line <n>: <message>`."""
+    rows = [(i.category, f"{i.severity} line {i.line}: {i.message}") for i in issues]
+    assert len(rows) == len(expected), rows
+    for (category, text), entry in zip(rows, expected):
+        want, *fragments = (entry,) if isinstance(entry, str) else entry
+        assert category == want and all(f in text for f in fragments), (entry, rows)
 
 
 def test_commented_org_blocks_are_not_parsed():
@@ -23,213 +35,257 @@ def test_commented_org_blocks_are_not_parsed():
     ]
 
 
-def test_shared_org_ids_are_exempt(tmp_path):
+_NO_LOC = frozenset()
+
+_BLOCK_CHECKS = {
+    "id": lambda v, org, body, loc: v._check_id(org, "f.txt", 3),
+    "allowed": lambda v, org, body, loc: v._check_allowed(org, body, "f.txt", 3),
+    "initial_trait": lambda v, org, body, loc: v._check_initial_trait(
+        org, body, "f.txt", 3
+    ),
+    "position": lambda v, org, body, loc: v._check_positions(org, body, "f.txt", 3),
+    "organization_modifier": lambda v, org, body, loc: v._check_org_modifier_range(
+        body, "f.txt", 3
+    ),
+    "on_complete": lambda v, org, body, loc: v._check_on_complete(body, "f.txt", 3),
+    "header": lambda v, org, body, loc: v._check_header_text(
+        org, body, "f.txt", 3, loc
+    ),
+    "trait loc": lambda v, org, body, loc: v._check_trait_localisation(
+        org, body, "f.txt", 3, loc
+    ),
+}
+
+# check: {case: (org id, org body, English loc keys, expected issues)}
+_BLOCK_CASES = {
+    "id": {
+        "lowercase generic id is shared": (
+            "generic_AFV_equipment_organization",
+            "",
+            _NO_LOC,
+            [],
+        ),
+        "uppercase GENERIC id is shared": (
+            "GENERIC_marshall_tractor_works",
+            "",
+            _NO_LOC,
+            [],
+        ),
+        "id without a tag prefix": (
+            "norinco_manufacturer",
+            "",
+            _NO_LOC,
+            [("org-id-format", "line 4:")],
+        ),
+    },
+    "allowed": {
+        "tag matches the id": (
+            "ISR_rafael_materiel_manufacturer",
+            "\tallowed = { original_tag = ISR }\n",
+            _NO_LOC,
+            [],
+        ),
+        "tag differs from the id": (
+            "FRA_naval_manufacturer",
+            "\tallowed = { original_tag = GER }\n",
+            _NO_LOC,
+            [("org-allowed-tag", "original_tag = FRA")],
+        ),
+        "id without a tag prefix": (
+            "norinco_manufacturer",
+            "\tallowed = { always = yes }\n",
+            _NO_LOC,
+            [],
+        ),
+    },
+    "initial_trait": {
+        "named after the org tag": (
+            "GER_mercedes_manufacturer",
+            "initial_trait = {\n\tname = GER_Mercedes_trait\n}",
+            _NO_LOC,
+            [],
+        ),
+        "named without the org tag": (
+            "NKO_second_economic_committee",
+            "initial_trait = {\n\tname = tank_facility_foundry\n}",
+            _NO_LOC,
+            ["initial-trait-name"],
+        ),
+        "generic initial trait reference": (
+            "ARG_fabricaciones_militares_manufacturer",
+            "initial_trait = {\n"
+            "\tname = generic_mio_initial_trait_infantry_manufacturer\n}",
+            _NO_LOC,
+            [],
+        ),
+    },
+    "position": {
+        "x inside the bounds": (
+            "TST_org",
+            "\tposition = { x = -1 y = 0 }\n",
+            _NO_LOC,
+            [],
+        ),
+        "x past the bounds": (
+            "TST_org",
+            "\tposition = { x = 12 y = 3 }\n",
+            _NO_LOC,
+            ["trait-x-bounds"],
+        ),
+        "exempt shared org": (
+            "generic_naval_equipment_organization",
+            "\tposition = { x = 16 y = 0 }\n",
+            _NO_LOC,
+            [],
+        ),
+        "shared org not on the exempt list": (
+            "generic_some_new_org",
+            "\tposition = { x = 16 y = 0 }\n",
+            _NO_LOC,
+            ["trait-x-bounds"],
+        ),
+    },
+    "organization_modifier": {
+        "whole-number percentage": (
+            "TST_org",
+            "\tinitial_trait = {\n"
+            "\t\torganization_modifier = {\n"
+            "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
+            "\t\t}\n"
+            "\t}\n",
+            _NO_LOC,
+            [("org-modifier-out-of-range", "line 6:")],
+        ),
+        "fractional percentages": (
+            "TST_org",
+            "\torganization_modifier = {\n"
+            "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
+            "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
+            "\t}\n",
+            _NO_LOC,
+            [],
+        ),
+        "task capacity is exempt from the range": (
+            "TST_org",
+            "\torganization_modifier = "
+            "{ military_industrial_organization_task_capacity = 3 }\n",
+            _NO_LOC,
+            [],
+        ),
+    },
+    "on_complete": {
+        "empty": (
+            "TST_org",
+            "\ton_complete = {\n\t}\n",
+            _NO_LOC,
+            ["on-complete-empty"],
+        ),
+        "with an effect": (
+            "TST_org",
+            "\ton_complete = { expenditure_for_mio_upgrade = yes }\n",
+            _NO_LOC,
+            [],
+        ),
+    },
+    "header": {
+        "literal string": (
+            "AST_nioa_australia_material",
+            'tree_header_text = {\n\ttext = "Lithgow Lineage"\n\tx = 1\n}',
+            _NO_LOC,
+            [
+                (
+                    "header-text-not-tokenized",
+                    "error line",
+                    "AST_nioa_australia_material_mio_header_<slug>",
+                )
+            ],
+        ),
+        "token with loc": (
+            "NKO_1_bureau_materiel_manufacturer",
+            "tree_header_text = {\n\ttext = NKO_mio_header_armor\n\tx = 1\n}",
+            frozenset({"NKO_mio_header_armor"}),
+            [],
+        ),
+        "token resolves through the tag prefix": (
+            "ALG_khenchela_arms_manufacturer",
+            "tree_header_text = {\n\ttext = mio_header_foo\n\tx = 1\n}",
+            frozenset({"ALG_mio_header_foo"}),
+            [],
+        ),
+        "token without loc": (
+            "ENG_supacat_utility_manufacturer",
+            "tree_header_text = {\n\ttext = x\n\tx = 2\n}",
+            _NO_LOC,
+            [("header-text-loc-missing", "error line 4:")],
+        ),
+        "shared org has no tag fallback": (
+            "GENERIC_mil_kamov_rotorworks",
+            "tree_header_text = {\n\ttext = kamov_header\n\tx = 2\n}",
+            frozenset({"GEN_kamov_header"}),
+            ["header-text-loc-missing"],
+        ),
+        "block without a text key": (
+            "GRE_org",
+            "tree_header_text = {\n\tx = 1\n}",
+            _NO_LOC,
+            [],
+        ),
+    },
+    "trait loc": {
+        "name with loc": (
+            "ALG_khenchela_arms_manufacturer",
+            "trait = {\n\ttoken = ALG_khenchela_trait_desert_hardened\n"
+            "\tname = ALG_khenchela_trait_desert_hardened\n}",
+            frozenset({"ALG_khenchela_trait_desert_hardened"}),
+            [],
+        ),
+        "name without loc": (
+            "ROM_romarm_material_manufacturer",
+            "trait = {\n\ttoken = ROM_romarm_export_ammo\n"
+            "\tname = ROM_romarm_trait_export_ammo\n}",
+            _NO_LOC,
+            [("trait-loc-missing", "error line", "ROM_romarm_trait_export_ammo")],
+        ),
+        "nameless trait resolves through the org token": (
+            "FRA_arquus_manufacturer",
+            "trait = {\n\ttoken = FRA_arquus_griffon_vbmr\n}",
+            frozenset({"FRA_arquus_manufacturer_FRA_arquus_griffon_vbmr"}),
+            [],
+        ),
+        "nameless trait without the org token": (
+            "FRA_arquus_manufacturer",
+            "trait = {\n\ttoken = FRA_arquus_griffon_vbmr\n}",
+            _NO_LOC,
+            [("trait-loc-missing", "name = FRA_arquus_griffon_vbmr")],
+        ),
+        "initial_trait name without loc": (
+            "ARG_bersa_manufacturer",
+            "initial_trait = {\n\tname = generic_infantry_equipment_organization\n}",
+            _NO_LOC,
+            ["trait-loc-missing"],
+        ),
+        "trait without a name or token": (
+            "GRE_org",
+            "trait = {\n\tposition = { x = 1 }\n}",
+            _NO_LOC,
+            [],
+        ),
+    },
+}
+
+
+@pytest.mark.parametrize(
+    ("check", "org_id", "body", "loc_keys", "expected"),
+    [
+        pytest.param(check, *case, id=f"{check}: {name}")
+        for check, cases in _BLOCK_CASES.items()
+        for name, case in cases.items()
+    ],
+)
+def test_org_block_checks(tmp_path, check, org_id, body, loc_keys, expected):
     v = _validator(tmp_path)
-    v._check_id("generic_tank_equipment_organization", "f.txt", 0)
-    v._check_id("GENERIC_marshall_tractor_works", "f.txt", 0)
-    assert not v._issues
-
-
-def test_non_tag_id_flagged(tmp_path):
-    v = _validator(tmp_path)
-    v._check_id("norinco_manufacturer", "f.txt", 3)
-    assert v._issues[0].category == "org-id-format"
-    assert v._issues[0].line == 4
-
-
-def test_allowed_tag_mismatch_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = "\tallowed = { original_tag = GER }\n"
-    v._check_allowed("FRA_naval_manufacturer", body, "f.txt", 0)
-    assert v._issues[0].category == "org-allowed-tag"
-    assert "original_tag = FRA" in v._issues[0].message
-
-
-def test_allowed_tag_match_passes(tmp_path):
-    v = _validator(tmp_path)
-    body = "\tallowed = { original_tag = ISR }\n"
-    v._check_allowed("ISR_rafael_materiel_manufacturer", body, "f.txt", 0)
-    assert not v._issues
-
-
-def test_initial_trait_naming(tmp_path):
-    v = _validator(tmp_path)
-    good = "initial_trait = {\n\tname = GER_Mercedes_trait\n}"
-    v._check_initial_trait("GER_mercedes_manufacturer", good, "f.txt", 0)
-    assert not v._issues
-    bad = "initial_trait = {\n\tname = tank_facility_foundry\n}"
-    v._check_initial_trait("NKO_second_economic_committee", bad, "f.txt", 0)
-    assert v._issues[0].category == "initial-trait-name"
-
-
-def test_generic_initial_trait_reference_is_exempt(tmp_path):
-    v = _validator(tmp_path)
-    body = (
-        "initial_trait = {\n\tname = generic_mio_initial_trait_infantry_manufacturer\n}"
-    )
-    v._check_initial_trait("ARG_fabricaciones_militares_manufacturer", body, "f.txt", 0)
-    assert not v._issues
-
-
-def test_position_x_bounds(tmp_path):
-    v = _validator(tmp_path)
-    v._check_positions("TST_org", "\tposition = { x = -1 y = 0 }\n", "f.txt", 0)
-    assert not v._issues
-    v._check_positions("TST_org", "\tposition = { x = 12 y = 3 }\n", "f.txt", 0)
-    assert v._issues[0].category == "trait-x-bounds"
-
-
-def test_position_x_bounds_exempt_orgs(tmp_path):
-    body = "\tposition = { x = 16 y = 0 }\n"
-    v = _validator(tmp_path)
-    v._check_positions("generic_naval_equipment_organization", body, "f.txt", 0)
-    assert not v._issues
-
-    v = _validator(tmp_path)
-    v._check_positions("generic_some_new_org", body, "f.txt", 0)
-    assert v._issues[0].category == "trait-x-bounds"
-
-
-def test_percentage_org_modifier_whole_number_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = (
-        "\tinitial_trait = {\n"
-        "\t\torganization_modifier = {\n"
-        "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
-        "\t\t}\n"
-        "\t}\n"
-    )
-    v._check_org_modifier_range(body, "f.txt", 0)
-    assert len(v._issues) == 1
-    assert v._issues[0].category == "org-modifier-out-of-range"
-    assert v._issues[0].line == 3
-
-
-def test_fractional_org_modifier_passes(tmp_path):
-    v = _validator(tmp_path)
-    body = (
-        "\torganization_modifier = {\n"
-        "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
-        "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
-        "\t}\n"
-    )
-    v._check_org_modifier_range(body, "f.txt", 0)
-    assert not v._issues
-
-
-def test_task_capacity_is_exempt_from_range_check(tmp_path):
-    v = _validator(tmp_path)
-    body = "\torganization_modifier = { military_industrial_organization_task_capacity = 3 }\n"
-    v._check_org_modifier_range(body, "f.txt", 0)
-    assert not v._issues
-
-
-def test_empty_on_complete_flagged(tmp_path):
-    v = _validator(tmp_path)
-    v._check_on_complete("\ton_complete = {\n\t}\n", "f.txt", 0)
-    assert v._issues[0].category == "on-complete-empty"
-    v._check_on_complete(
-        "\ton_complete = { expenditure_for_mio_upgrade = yes }\n", "f.txt", 0
-    )
-    assert len(v._issues) == 1
-
-
-def test_header_literal_string_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = 'tree_header_text = {\n\ttext = "Lithgow Lineage"\n\tx = 1\n}'
-    v._check_header_text("AST_nioa_australia_material", body, "f.txt", 0, set())
-    assert v._issues[0].category == "header-text-not-tokenized"
-    assert v._issues[0].severity == "error"
-    assert "AST_nioa_australia_material_mio_header_<slug>" in v._issues[0].message
-
-
-def test_header_token_with_loc_passes(tmp_path):
-    v = _validator(tmp_path)
-    body = "tree_header_text = {\n\ttext = NKO_mio_header_armor\n\tx = 1\n}"
-    v._check_header_text(
-        "NKO_1_bureau_materiel_manufacturer",
-        body,
-        "f.txt",
-        0,
-        {"NKO_mio_header_armor"},
-    )
-    assert not v._issues
-
-
-def test_header_token_resolves_via_tag_prefix(tmp_path):
-    v = _validator(tmp_path)
-    body = "tree_header_text = {\n\ttext = mio_header_foo\n\tx = 1\n}"
-    v._check_header_text(
-        "ALG_khenchela_arms_manufacturer", body, "f.txt", 0, {"ALG_mio_header_foo"}
-    )
-    assert not v._issues
-
-
-def test_header_token_without_loc_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = "tree_header_text = {\n\ttext = x\n\tx = 2\n}"
-    v._check_header_text("ENG_supacat_utility_manufacturer", body, "f.txt", 4, set())
-    assert v._issues[0].category == "header-text-loc-missing"
-    assert v._issues[0].severity == "error"
-    assert v._issues[0].line == 5
-
-
-def test_shared_org_header_has_no_tag_fallback(tmp_path):
-    v = _validator(tmp_path)
-    body = "tree_header_text = {\n\ttext = kamov_header\n\tx = 2\n}"
-    v._check_header_text(
-        "GENERIC_mil_kamov_rotorworks", body, "f.txt", 0, {"GEN_kamov_header"}
-    )
-    assert v._issues[0].category == "header-text-loc-missing"
-
-
-def test_trait_name_with_loc_passes(tmp_path):
-    v = _validator(tmp_path)
-    body = "trait = {\n\ttoken = ALG_khenchela_trait_desert_hardened\n\tname = ALG_khenchela_trait_desert_hardened\n}"
-    v._check_trait_localisation(
-        "ALG_khenchela_arms_manufacturer",
-        body,
-        "f.txt",
-        0,
-        {"ALG_khenchela_trait_desert_hardened"},
-    )
-    assert not v._issues
-
-
-def test_trait_name_without_loc_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = "trait = {\n\ttoken = ROM_romarm_export_ammo\n\tname = ROM_romarm_trait_export_ammo\n}"
-    v._check_trait_localisation(
-        "ROM_romarm_material_manufacturer", body, "f.txt", 0, set()
-    )
-    assert v._issues[0].category == "trait-loc-missing"
-    assert v._issues[0].severity == "error"
-    assert "ROM_romarm_trait_export_ammo" in v._issues[0].message
-
-
-def test_trait_without_name_uses_org_token_fallback(tmp_path):
-    body = "trait = {\n\ttoken = FRA_arquus_griffon_vbmr\n}"
-    v = _validator(tmp_path)
-    v._check_trait_localisation(
-        "FRA_arquus_manufacturer",
-        body,
-        "f.txt",
-        0,
-        {"FRA_arquus_manufacturer_FRA_arquus_griffon_vbmr"},
-    )
-    assert not v._issues
-
-    v = _validator(tmp_path)
-    v._check_trait_localisation("FRA_arquus_manufacturer", body, "f.txt", 0, set())
-    assert v._issues[0].category == "trait-loc-missing"
-    assert "name = FRA_arquus_griffon_vbmr" in v._issues[0].message
-
-
-def test_initial_trait_name_without_loc_flagged(tmp_path):
-    v = _validator(tmp_path)
-    body = "initial_trait = {\n\tname = generic_infantry_equipment_organization\n}"
-    v._check_trait_localisation("ARG_bersa_manufacturer", body, "f.txt", 0, set())
-    assert [i.category for i in v._issues] == ["trait-loc-missing"]
+    _BLOCK_CHECKS[check](v, org_id, body, loc_keys)
+    _assert_issues(v._issues, expected)
 
 
 def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
@@ -251,7 +307,7 @@ def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
     v.run_validations()
 
     assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
@@ -324,9 +380,13 @@ def _equipment_index(tmp_path):
     return V.build_equipment_stat_index(str(tmp_path))
 
 
+_SHARED_TYPES = "\tequipment_type = {\n\t\tAA_Equipment\n\t}\n"
+
+
 def _run_org_check(tmp_path, body, org_id="TST_org"):
+    body = V.blank_comments(body)
     v = _validator(tmp_path)
-    v._org_bodies = {org_id: body}
+    v._org_bodies = {org_id: body, "generic_shared": _SHARED_TYPES}
     v._check_org_trait_bonuses(org_id, body, "f.txt", 0, _equipment_index(tmp_path))
     return v
 
@@ -343,147 +403,153 @@ _MANPADS_ORG = (
     "\t}\n"
 )
 
+_BOTH_TYPES = "\tequipment_type = {\n\t\tAA_Equipment\n\t\tcnc_equipment_type\n\t}\n"
 
-def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
-    v = _run_org_check(tmp_path, _MANPADS_ORG)
-    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert v._issues[0].severity == "warning"
-    assert "max_organisation" in v._issues[0].message
-    assert v._issues[0].line == 7
+_DEAD_BONUS = "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
 
-
-def test_bonus_on_declared_stat_passes(tmp_path):
-    body = _MANPADS_ORG.replace("max_organisation = 0.10", "air_attack = 0.10")
-    assert not _run_org_check(tmp_path, body)._issues
-
-
-def test_limit_to_equipment_type_narrows_the_scope(tmp_path):
-    # The org covers both, but the trait limits itself to the half that has no
-    # max_organisation, so the bonus is fully dead rather than partial.
-    body = (
-        "\tequipment_type = {\n"
-        "\t\tAA_Equipment\n"
-        "\t\tcnc_equipment_type\n"
-        "\t}\n"
-        "\ttrait = {\n"
-        "\t\tlimit_to_equipment_type = { AA_Equipment }\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-
-
-def test_partial_coverage_is_its_own_category(tmp_path):
-    body = (
-        "\tequipment_type = {\n"
-        "\t\tAA_Equipment\n"
-        "\t\tcnc_equipment_type\n"
-        "\t}\n"
-        "\ttrait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-bonus-partial-base-stat"]
-    assert [i.severity for i in v._issues] == ["error"]
-    assert "AA_Equipment" in v._issues[0].message
-    assert "cnc_equipment_type" in v._issues[0].message
-
-
-def test_initial_trait_partial_coverage_is_accepted(tmp_path):
-    """An org has one initial_trait and cannot split it, and a limit narrowing
-    it would restrict its production_bonus too, so a stat reaching only part of
-    the roster is unfixable there and must not be reported."""
-    body = (
-        "\tequipment_type = {\n"
-        "\t\tAA_Equipment\n"
-        "\t\tcnc_equipment_type\n"
-        "\t}\n"
-        "\tinitial_trait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    assert _run_org_check(tmp_path, body)._issues == []
-
-
-def test_initial_trait_still_reports_a_wholly_dead_bonus(tmp_path):
-    """The exemption covers partial coverage only: a stat no equipment in the
-    org declares is still a no-op the author can simply drop."""
-    body = (
-        "\tequipment_type = {\n"
-        "\t\tAA_Equipment\n"
-        "\t}\n"
-        "\tinitial_trait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-
-
-def test_include_supplies_the_equipment_type(tmp_path):
-    shared = "\tequipment_type = {\n\t\tAA_Equipment\n\t}\n"
-    body = (
-        "\tinclude = generic_shared\n"
-        "\ttrait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _validator(tmp_path)
-    v._org_bodies = {"TST_org": body, "generic_shared": shared}
-    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
-    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-
-
-def test_unresolvable_type_reports_itself_and_suppresses_the_bonus_check(tmp_path):
-    body = (
-        "\tequipment_type = {\n"
-        "\t\thelicopter_equipment\n"
-        "\t}\n"
-        "\ttrait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-equipment-type-unknown"]
-
-
-def test_initial_trait_bonus_is_checked(tmp_path):
-    body = (
+# case: (org body, expected issues)
+_BONUS_CASES = {
+    "stat the equipment lacks": (
+        _MANPADS_ORG,
+        [("mio-bonus-no-base-stat", "error line 7:", "max_organisation")],
+    ),
+    "stat the equipment declares": (
+        _MANPADS_ORG.replace("max_organisation = 0.10", "air_attack = 0.10"),
+        [],
+    ),
+    # The trait limits itself to the half without the stat: dead, not partial.
+    "limit_to_equipment_type narrows the scope": (
+        _BOTH_TYPES
+        + "\ttrait = {\n\t\tlimit_to_equipment_type = { AA_Equipment }\n"
+        + _DEAD_BONUS
+        + "\t}\n",
+        ["mio-bonus-no-base-stat"],
+    ),
+    "partial coverage": (
+        _BOTH_TYPES + "\ttrait = {\n" + _DEAD_BONUS + "\t}\n",
+        [
+            (
+                "mio-bonus-partial-base-stat",
+                "error line",
+                "AA_Equipment",
+                "cnc_equipment_type",
+            )
+        ],
+    ),
+    # An org's one initial_trait cannot be split, so partial coverage is unfixable.
+    "initial_trait partial coverage is accepted": (
+        _BOTH_TYPES + "\tinitial_trait = {\n" + _DEAD_BONUS + "\t}\n",
+        [],
+    ),
+    "initial_trait wholly dead bonus": (
+        _SHARED_TYPES + "\tinitial_trait = {\n" + _DEAD_BONUS + "\t}\n",
+        ["mio-bonus-no-base-stat"],
+    ),
+    "named initial_trait bonus": (
         "\tequipment_type = { AA_Equipment }\n"
         "\tinitial_trait = {\n"
         "\t\tname = TST_org_trait\n"
         "\t\tequipment_bonus = { max_organisation = 0.05 }\n"
-        "\t}\n"
-    )
-    assert [i.category for i in _run_org_check(tmp_path, body)._issues] == [
-        "mio-bonus-no-base-stat"
-    ]
-
-
-def test_commented_out_bonus_is_ignored(tmp_path):
-    body = (
+        "\t}\n",
+        ["mio-bonus-no-base-stat"],
+    ),
+    "include supplies the equipment type": (
+        "\tinclude = generic_shared\n\ttrait = {\n" + _DEAD_BONUS + "\t}\n",
+        ["mio-bonus-no-base-stat"],
+    ),
+    "include of an unknown org supplies nothing": (
+        "\tinclude = generic_missing\n\ttrait = {\n" + _DEAD_BONUS + "\t}\n",
+        [],
+    ),
+    "unresolvable type suppresses the bonus check": (
+        "\tequipment_type = {\n\t\thelicopter_equipment\n\t}\n"
+        "\ttrait = {\n" + _DEAD_BONUS + "\t}\n",
+        ["mio-equipment-type-unknown"],
+    ),
+    "commented-out bonus": (
         "\tequipment_type = { AA_Equipment }\n"
         "\ttrait = {\n"
         "\t\tequipment_bonus = {\n"
         "\t\t\t# max_organisation = 0.10\n"
         "\t\t\tair_attack = 0.05\n"
         "\t\t}\n"
-        "\t}\n"
-    )
-    v = _validator(tmp_path)
-    body = V.blank_comments(body)
-    v._org_bodies = {"TST_org": body}
-    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
-    assert not v._issues
+        "\t}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(("body", "expected"), _BONUS_CASES.values(), ids=_BONUS_CASES)
+def test_org_trait_equipment_bonus(tmp_path, body, expected):
+    _assert_issues(_run_org_check(tmp_path, body)._issues, expected)
+
+
+def test_zero_base_exempt_stat_is_not_flagged(tmp_path, monkeypatch):
+    monkeypatch.setattr(V, "ZERO_BASE_EXEMPT_STATS", frozenset({"max_organisation"}))
+    assert _run_org_check(tmp_path, _MANPADS_ORG)._issues == []
 
 
 # ---- naval production_bonus checks (issue #3878) ---------------------------
 
+_EFFICIENCY = "production_efficiency_gain_factor = 0.10"
 
-def _production_org(equipment_type: str, bonus: str, limit: str = "") -> str:
-    return (
+# case: (equipment_type, production_bonus, trait limit, expected issues)
+_PRODUCTION_CASES = {
+    "efficiency gain on a naval scope": (
+        "corvette",
+        _EFFICIENCY,
+        "",
+        [("mio-production-bonus-naval", "error line", "corvette")],
+    ),
+    "conversion speed on a naval scope": (
+        "corvette",
+        "production_conversion_speed_factor = 0.15",
+        "",
+        ["mio-production-bonus-naval"],
+    ),
+    # A type category owns no `types` entry, so it resolves only as a category.
+    "type category counts as naval": (
+        "screen_ship",
+        "production_efficiency_cap_factor = 0.08",
+        "",
+        ["mio-production-bonus-naval"],
+    ),
+    "efficiency gain on a land scope": ("AA_Equipment", _EFFICIENCY, "", []),
+    "live production keys on a naval scope": (
+        "corvette",
+        "production_capacity_factor = 0.10 production_cost_factor = -0.05",
+        "",
+        [],
+    ),
+    "mixed naval scope": (
+        "AA_Equipment corvette",
+        _EFFICIENCY,
+        "",
+        [
+            (
+                "mio-production-bonus-partial-naval",
+                "warning line",
+                "corvette",
+                "AA_Equipment",
+            )
+        ],
+    ),
+    "limit narrows a mixed org onto ships": (
+        "AA_Equipment corvette",
+        _EFFICIENCY,
+        "\t\tlimit_to_equipment_type = { corvette }\n",
+        ["mio-production-bonus-naval"],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("equipment_type", "bonus", "limit", "expected"),
+    _PRODUCTION_CASES.values(),
+    ids=_PRODUCTION_CASES,
+)
+def test_org_trait_production_bonus(tmp_path, equipment_type, bonus, limit, expected):
+    body = (
         f"\tequipment_type = {{ {equipment_type} }}\n"
         "\ttrait = {\n"
         "\t\ttoken = TST_trait\n"
@@ -491,81 +557,60 @@ def _production_org(equipment_type: str, bonus: str, limit: str = "") -> str:
         f"\t\tproduction_bonus = {{ {bonus} }}\n"
         "\t}\n"
     )
+    _assert_issues(_run_org_check(tmp_path, body)._issues, expected)
 
 
-def test_efficiency_bonus_on_a_wholly_naval_scope_is_flagged(tmp_path):
-    body = _production_org("corvette", "production_efficiency_gain_factor = 0.10")
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
-    assert v._issues[0].severity == "error"
-    assert "corvette" in v._issues[0].message
+def _archetype(name, *stats):
+    lines = "".join(f"\t\t\t{stat}\n" for stat in stats)
+    return f"\t\t{name} = {{\n{lines}\t\t}}\n"
 
 
-def test_conversion_speed_on_a_wholly_naval_scope_is_flagged(tmp_path):
-    body = _production_org("corvette", "production_conversion_speed_factor = 0.15")
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+# case: (equipment_bonus archetype blocks, file, expected issues)
+_NESTED_CASES = {
+    "each archetype is checked separately": (
+        _archetype("AA_Equipment", "max_organisation = 0.03")
+        + _archetype("cnc_equipment_type", "max_organisation = 0.03"),
+        "p.txt",
+        [("mio-bonus-no-base-stat", "AA_Equipment")],
+    ),
+    "production keys are not equipment stats": (
+        _archetype(
+            "AA_Equipment",
+            "production_cost_factor = -0.1",
+            "production_efficiency_cap_factor = 0.05",
+            "instant = yes",
+        ),
+        "p.txt",
+        [],
+    ),
+    "unknown archetype reports only the type": (
+        _archetype("not_an_archetype", "max_organisation = 0.03"),
+        "p.txt",
+        ["mio-equipment-type-unknown"],
+    ),
+    "same_as_mio in a policy is a keyword": (
+        _archetype("same_as_mio", "max_organisation = 0.03")
+        + _archetype("AA_Equipment", "max_organisation = 0.03"),
+        f"{V.POLICY_DIR}/p.txt",
+        ["mio-bonus-no-base-stat"],
+    ),
+    "same_as_mio in company traits is an archetype": (
+        _archetype("same_as_mio", "max_organisation = 0.03")
+        + _archetype("AA_Equipment", "max_organisation = 0.03"),
+        V.COMPANY_TRAIT_FILE,
+        ["mio-equipment-type-unknown", "mio-bonus-no-base-stat"],
+    ),
+}
 
 
-def test_type_category_token_counts_as_naval(tmp_path):
-    """`equipment_type` accepts a type category, which owns no `types` entry of
-    its own and so only resolves through the category set."""
-    body = _production_org("screen_ship", "production_efficiency_cap_factor = 0.08")
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
-
-
-def test_efficiency_bonus_on_a_land_scope_passes(tmp_path):
-    body = _production_org("AA_Equipment", "production_efficiency_gain_factor = 0.10")
-    assert not _run_org_check(tmp_path, body)._issues
-
-
-def test_live_production_keys_on_a_naval_scope_pass(tmp_path):
-    body = _production_org(
-        "corvette",
-        "production_capacity_factor = 0.10 production_cost_factor = -0.05",
-    )
-    assert not _run_org_check(tmp_path, body)._issues
-
-
-def test_mixed_naval_scope_is_its_own_category(tmp_path):
-    body = _production_org(
-        "AA_Equipment corvette", "production_efficiency_gain_factor = 0.10"
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-production-bonus-partial-naval"]
-    assert v._issues[0].severity == "warning"
-    assert "corvette" in v._issues[0].message
-    assert "AA_Equipment" in v._issues[0].message
-
-
-def test_limit_to_equipment_type_narrows_a_mixed_org_onto_ships(tmp_path):
-    body = _production_org(
-        "AA_Equipment corvette",
-        "production_efficiency_gain_factor = 0.10",
-        limit="\t\tlimit_to_equipment_type = { corvette }\n",
-    )
-    v = _run_org_check(tmp_path, body)
-    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
-
-
-def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
-    text = (
-        "mio_policy_test = {\n"
-        "\tequipment_bonus = {\n"
-        "\t\tAA_Equipment = {\n"
-        "\t\t\tmax_organisation = 0.03\n"
-        "\t\t}\n"
-        "\t\tcnc_equipment_type = {\n"
-        "\t\t\tmax_organisation = 0.03\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n"
-    )
+@pytest.mark.parametrize(
+    ("archetypes", "rel", "expected"), _NESTED_CASES.values(), ids=_NESTED_CASES
+)
+def test_nested_equipment_bonus(tmp_path, archetypes, rel, expected):
+    text = f"mio_policy_test = {{\n\tequipment_bonus = {{\n{archetypes}\t}}\n}}\n"
     v = _validator(tmp_path)
-    v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
-    assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert "AA_Equipment" in v._issues[0].message
+    v._check_nested_equipment_bonus(text, rel, _equipment_index(tmp_path))
+    _assert_issues(v._issues, expected)
 
 
 def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
@@ -606,23 +651,6 @@ def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
     assert v._issues[0].severity == "error"
     assert "helicopter_operator" in v._issues[0].message
     assert "carrier" in v._issues[0].message
-
-
-def test_production_keys_are_not_equipment_stats(tmp_path):
-    text = (
-        "mio_policy_test = {\n"
-        "\tequipment_bonus = {\n"
-        "\t\tAA_Equipment = {\n"
-        "\t\t\tproduction_cost_factor = -0.1\n"
-        "\t\t\tproduction_efficiency_cap_factor = 0.05\n"
-        "\t\t\tinstant = yes\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n"
-    )
-    v = _validator(tmp_path)
-    v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
-    assert not v._issues
 
 
 # ---- mio: reference reachability (issue #3049) -----------------------------
@@ -700,82 +728,63 @@ def _focus(focus_id: str, body: str, available: str = "") -> str:
     )
 
 
-def test_unknown_mio_reference_flagged(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = _focus("GRE_test", "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturr\n")
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert [i.category for i in v._issues] == ["mio-reference-unknown"]
-    assert v._issues[0].severity == "error"
+_GREECE_FOCUS_FILE = "common/national_focus/05_greece.txt"
 
-
-def test_cross_tag_design_team_flagged(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = _focus(
-        "GRE_m270_mlrs", "\t\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
-    )
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
-    assert "GRE scope" in v._issues[0].message
-
-
-def test_same_tag_design_team_passes(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = _focus(
-        "GRE_m270_mlrs", "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n"
-    )
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert not v._issues
-
-
-def test_multi_tag_allowed_block_passes(tmp_path):
-    """The `allowed = { OR = { ... } }` orgs need balanced-brace parsing."""
-    v = _reference_validator(tmp_path)
-    text = _focus("HKG_test", "\t\t\tdesign_team = mio:CHI_norinco_manufacturer\n")
-    v._check_mio_references(text, "common/national_focus/05_china.txt")
-    assert not v._issues
-
-
-def test_scripted_trigger_allowed_block_resolves_its_tags(tmp_path):
-    """`allowed = { is_usa_or_breakaway = yes }` reaches every tag the trigger names."""
-    v = _reference_validator(tmp_path)
-    text = "\tcreate_equipment_variant = {\n\t\tdesign_team = mio:USA_boeing_aircraft_manufacturer\n\t}\n"
-    v._check_mio_references(text, "history/countries/TEX - Texas.txt")
-    assert not v._issues
-    v._check_mio_references(text, "history/countries/GRE - Greece.txt")
-    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
-
-
-def test_scripted_trigger_allowed_block_pins_the_tag(tmp_path):
-    v = _reference_validator(tmp_path)
-    body = "\tallowed = { is_usa_or_breakaway = yes }\n"
-    v._check_allowed("USA_boeing_aircraft_manufacturer", body, "f.txt", 0)
-    assert not v._issues
-    v._check_allowed("GRE_eas_materiel_manufacturer", body, "f.txt", 0)
-    assert [i.category for i in v._issues] == ["org-allowed-tag"]
-
-
-def test_explicit_country_scope_wins_over_focus_owner(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = _focus(
-        "CHI_NKO_labor_export",
-        "\t\t\tCHI = {\n"
-        "\t\t\t\tmio:CHI_norinco_manufacturer = {\n"
-        "\t\t\t\t\tunlock_mio_trait_tooltip = CHI_nko_juche_production\n"
-        "\t\t\t\t}\n"
-        "\t\t\t}\n",
-        available="original_tag = NKO",
-    )
-    v._check_mio_references(
-        text, "common/national_focus/03_china_north_korea_joint.txt"
-    )
-    assert not v._issues
-
-
-def test_joint_focus_member_scope_passes(tmp_path):
-    """completion_reward_joint_member runs as the other participant, so every
-    tag the focus block names counts as reachable."""
-    v = _reference_validator(tmp_path)
-    text = (
+# case: (text, file, expected issues)
+_REFERENCE_CASES = {
+    "unknown org": (
+        _focus("GRE_test", "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturr\n"),
+        _GREECE_FOCUS_FILE,
+        [("mio-reference-unknown", "error line")],
+    ),
+    "design team of another tag": (
+        _focus(
+            "GRE_m270_mlrs",
+            "\t\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n",
+        ),
+        _GREECE_FOCUS_FILE,
+        [("mio-reference-wrong-tag", "GRE scope")],
+    ),
+    "design team of the same tag": (
+        _focus(
+            "GRE_m270_mlrs", "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n"
+        ),
+        _GREECE_FOCUS_FILE,
+        [],
+    ),
+    # `allowed = { OR = { ... } }` needs balanced-brace parsing.
+    "multi-tag allowed block": (
+        _focus("HKG_test", "\t\t\tdesign_team = mio:CHI_norinco_manufacturer\n"),
+        "common/national_focus/05_china.txt",
+        [],
+    ),
+    "scripted trigger allowed block reaches a tag it names": (
+        "\tcreate_equipment_variant = {\n"
+        "\t\tdesign_team = mio:USA_boeing_aircraft_manufacturer\n\t}\n",
+        "history/countries/TEX - Texas.txt",
+        [],
+    ),
+    "scripted trigger allowed block excludes a tag it omits": (
+        "\tcreate_equipment_variant = {\n"
+        "\t\tdesign_team = mio:USA_boeing_aircraft_manufacturer\n\t}\n",
+        "history/countries/GRE - Greece.txt",
+        ["mio-reference-wrong-tag"],
+    ),
+    "explicit country scope wins over the focus owner": (
+        _focus(
+            "CHI_NKO_labor_export",
+            "\t\t\tCHI = {\n"
+            "\t\t\t\tmio:CHI_norinco_manufacturer = {\n"
+            "\t\t\t\t\tunlock_mio_trait_tooltip = CHI_nko_juche_production\n"
+            "\t\t\t\t}\n"
+            "\t\t\t}\n",
+            available="original_tag = NKO",
+        ),
+        "common/national_focus/03_china_north_korea_joint.txt",
+        [],
+    ),
+    # completion_reward_joint_member runs as the other participant.
+    "joint focus member scope": (
         "joint_focus = {\n"
         "\tid = CHI_SOV_defense_industrial\n"
         "\tjoint_trigger = {\n"
@@ -790,23 +799,18 @@ def test_joint_focus_member_scope_passes(tmp_path):
         "\t\t\tunlock_mio_trait_tooltip = SOV_chi_rare_earth_supply\n"
         "\t\t}\n"
         "\t}\n"
-        "}\n"
-    )
-    v._check_mio_references(text, "common/national_focus/03_china_russia_joint.txt")
-    assert not v._issues
-
-
-def test_history_filename_supplies_the_tag(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = "\tset_variant_name = {\n\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n\t}\n"
-    v._check_mio_references(text, "history/countries/GRE - Greece.txt")
-    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
-
-
-def test_event_option_scope_is_not_guessed(tmp_path):
-    """An event's ROOT is whoever fired it, so only existence is checked."""
-    v = _reference_validator(tmp_path)
-    text = (
+        "}\n",
+        "common/national_focus/03_china_russia_joint.txt",
+        [],
+    ),
+    "history filename supplies the tag": (
+        "\tset_variant_name = {\n"
+        "\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n\t}\n",
+        "history/countries/GRE - Greece.txt",
+        ["mio-reference-wrong-tag"],
+    ),
+    # An event's ROOT is whoever fired it, so only existence is checked.
+    "event option scope is not guessed": (
         "country_event = {\n"
         "\tid = iranian_focus.117\n"
         "\toption = {\n"
@@ -814,49 +818,34 @@ def test_event_option_scope_is_not_guessed(tmp_path):
         "\t\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
         "\t\t}\n"
         "\t}\n"
-        "}\n"
-    )
-    v._check_mio_references(text, "events/Iran.txt")
-    assert not v._issues
-
-
-def test_commented_out_reference_is_ignored(tmp_path):
-    v = _reference_validator(tmp_path)
-    raw = _focus(
-        "GRE_test",
-        "\t\t\t# design_team = mio:SWE_does_not_exist_manufacturer\n",
-    )
-    v._check_mio_references(
-        V.blank_comments(raw), "common/national_focus/05_greece.txt"
-    )
-    assert not v._issues
-
-
-def test_org_open_to_every_tag_is_reachable_anywhere(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = _focus("GRE_test", "\t\t\tdesign_team = mio:GENERIC_open_organization\n")
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert not v._issues
-
-
-def test_reference_outside_every_focus_block_is_not_scoped(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = (
+        "}\n",
+        "events/Iran.txt",
+        [],
+    ),
+    "commented-out reference": (
+        _focus(
+            "GRE_test", "\t\t\t# design_team = mio:SWE_does_not_exist_manufacturer\n"
+        ),
+        _GREECE_FOCUS_FILE,
+        [],
+    ),
+    "org open to every tag": (
+        _focus("GRE_test", "\t\t\tdesign_team = mio:GENERIC_open_organization\n"),
+        _GREECE_FOCUS_FILE,
+        [],
+    ),
+    "reference outside every focus block": (
         "focus_tree = {\n"
         "\tid = greece\n"
         "\tmio:ENG_lockheed_martin_manufacturer = { }\n"
         "\tfocus = {\n"
         "\t\tid = GRE_other\n"
         "\t}\n"
-        "}\n"
-    )
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert not v._issues
-
-
-def test_focus_without_an_id_falls_back_to_the_tags_it_names(tmp_path):
-    v = _reference_validator(tmp_path)
-    text = (
+        "}\n",
+        _GREECE_FOCUS_FILE,
+        [],
+    ),
+    "focus without an id falls back to the tags it names": (
         "focus_tree = {\n"
         "\tfocus = {\n"
         "\t\tavailable = { original_tag = GRE }\n"
@@ -864,28 +853,43 @@ def test_focus_without_an_id_falls_back_to_the_tags_it_names(tmp_path):
         "\t\t\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
         "\t\t}\n"
         "\t}\n"
-        "}\n"
-    )
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
+        "}\n",
+        _GREECE_FOCUS_FILE,
+        ["mio-reference-wrong-tag"],
+    ),
+    "focus id prefix that is not a tag": (
+        _focus(
+            "generic_industrial_base",
+            "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n",
+            available="original_tag = GRE",
+        ),
+        _GREECE_FOCUS_FILE,
+        [],
+    ),
+    "history filename without a known tag": (
+        "\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n",
+        "history/countries/ZZZ - Nowhere.txt",
+        [],
+    ),
+}
 
 
-def test_focus_id_prefix_that_is_not_a_tag_is_ignored(tmp_path):
+@pytest.mark.parametrize(
+    ("text", "rel", "expected"), _REFERENCE_CASES.values(), ids=_REFERENCE_CASES
+)
+def test_mio_references(tmp_path, text, rel, expected):
     v = _reference_validator(tmp_path)
-    text = _focus(
-        "generic_industrial_base",
-        "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n",
-        available="original_tag = GRE",
-    )
-    v._check_mio_references(text, "common/national_focus/05_greece.txt")
-    assert not v._issues
+    v._check_mio_references(V.blank_comments(text), rel)
+    _assert_issues(v._issues, expected)
 
 
-def test_history_filename_without_a_known_tag_is_not_scoped(tmp_path):
+def test_scripted_trigger_allowed_block_pins_the_tag(tmp_path):
     v = _reference_validator(tmp_path)
-    text = "\tdesign_team = mio:ENG_lockheed_martin_manufacturer\n"
-    v._check_mio_references(text, "history/countries/ZZZ - Nowhere.txt")
+    body = "\tallowed = { is_usa_or_breakaway = yes }\n"
+    v._check_allowed("USA_boeing_aircraft_manufacturer", body, "f.txt", 0)
     assert not v._issues
+    v._check_allowed("GRE_eas_materiel_manufacturer", body, "f.txt", 0)
+    assert [i.category for i in v._issues] == ["org-allowed-tag"]
 
 
 def test_org_index_is_built_once_and_survives_an_unreadable_file(tmp_path):
@@ -916,58 +920,6 @@ def test_named_sub_blocks_walks_nested_bodies_to_the_end():
     assert [name for name, _start, _inner in V._named_sub_blocks(body)] == [
         "AA_Equipment"
     ]
-
-
-def test_allowed_check_skips_an_id_with_no_tag_prefix(tmp_path):
-    v = _validator(tmp_path)
-    v._check_allowed(
-        "norinco_manufacturer", "\tallowed = { always = yes }\n", "f.txt", 0
-    )
-    assert not v._issues
-
-
-def test_header_block_without_a_text_key_is_ignored(tmp_path):
-    v = _validator(tmp_path)
-    v._check_header_text(
-        "GRE_org", "tree_header_text = {\n\tx = 1\n}", "f.txt", 0, set()
-    )
-    assert not v._issues
-
-
-def test_trait_without_name_or_token_is_ignored(tmp_path):
-    v = _validator(tmp_path)
-    v._check_trait_localisation(
-        "GRE_org", "trait = {\n\tposition = { x = 1 }\n}", "f.txt", 0, set()
-    )
-    assert not v._issues
-
-
-def test_include_pointing_at_an_unknown_org_supplies_nothing(tmp_path):
-    body = (
-        "\tinclude = generic_missing\n"
-        "\ttrait = {\n"
-        "\t\tequipment_bonus = { max_organisation = 0.10 }\n"
-        "\t}\n"
-    )
-    v = _validator(tmp_path)
-    v._org_bodies = {"TST_org": body}
-    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
-    assert not v._issues
-
-
-def test_nested_bonus_on_an_unknown_archetype_reports_only_the_type(tmp_path):
-    text = (
-        "mio_policy_test = {\n"
-        "\tequipment_bonus = {\n"
-        "\t\tnot_an_archetype = {\n"
-        "\t\t\tmax_organisation = 0.03\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n"
-    )
-    v = _validator(tmp_path)
-    v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
-    assert [i.category for i in v._issues] == ["mio-equipment-type-unknown"]
 
 
 # ---- full-repo runs --------------------------------------------------------
@@ -1020,13 +972,13 @@ focus_tree = {
 """
 
 
-def _run_repo(tmp_path, write_path):
-    write_path(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", _RUN_ORGS)
-    write_path(tmp_path, f"{V.POLICY_DIR}/MD_TEST_policies.txt", _RUN_POLICY)
-    write_path(tmp_path, V.COMPANY_TRAIT_FILE, _RUN_COMPANY_TRAIT)
-    write_path(tmp_path, f"{V.COUNTRY_TAG_DIR}/00_countries.txt", "TST = { }\n")
-    write_path(tmp_path, "common/national_focus/05_test.txt", _RUN_FOCUS)
-    write_path(
+def _run_repo(tmp_path):
+    write_under(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", _RUN_ORGS)
+    write_under(tmp_path, f"{V.POLICY_DIR}/MD_TEST_policies.txt", _RUN_POLICY)
+    write_under(tmp_path, V.COMPANY_TRAIT_FILE, _RUN_COMPANY_TRAIT)
+    write_under(tmp_path, f"{V.COUNTRY_TAG_DIR}/00_countries.txt", "TST = { }\n")
+    write_under(tmp_path, "common/national_focus/05_test.txt", _RUN_FOCUS)
+    write_under(
         tmp_path,
         "localisation/english/MD_mio_l_english.yml",
         'l_english:\n TST_test_org_trait:0 "Trait"\n'
@@ -1036,8 +988,8 @@ def _run_repo(tmp_path, write_path):
     return tmp_path
 
 
-def test_full_run_covers_orgs_policies_and_references(tmp_path, write_path):
-    _run_repo(tmp_path, write_path)
+def test_full_run_covers_orgs_policies_and_references(tmp_path):
+    _run_repo(tmp_path)
     v = _validator(tmp_path)
 
     v.run_validations()
@@ -1081,15 +1033,15 @@ mio_cat_test_medium = {
 _COVERAGE_FILE = "history/countries/TST - Test.txt"
 
 
-def _coverage_issues(tmp_path, write_path, org_types, variant):
+def _coverage_issues(tmp_path, org_types, variant):
     """Issues for one variant written against a TST_org listing *org_types*."""
-    write_path(
+    write_under(
         tmp_path,
         f"{V.ORG_DIR}/MD_TST_organizations.txt",
         f"TST_org = {{\n\tequipment_type = {{ {org_types} }}\n}}\n",
     )
-    write_path(tmp_path, "common/units/equipment/MD_test.txt", _COVERAGE_EQUIPMENT)
-    write_path(tmp_path, "common/equipment_groups/mio_test.txt", _COVERAGE_GROUPS)
+    write_under(tmp_path, "common/units/equipment/MD_test.txt", _COVERAGE_EQUIPMENT)
+    write_under(tmp_path, "common/equipment_groups/mio_test.txt", _COVERAGE_GROUPS)
     v = _validator(tmp_path)
     v._org_bodies = v._load_org_bodies()
     text = "create_equipment_variant = {\n" f"{variant}" "}\n"
@@ -1103,82 +1055,74 @@ def _team(variant_type, team="\tdesign_team = mio:TST_org\n"):
     return f"\ttype = {variant_type}\n{team}"
 
 
-def test_design_team_type_outside_equipment_type_is_flagged(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "small_plane_airframe", _team("medium_plane_airframe_1")
-    )
-    assert [(i.category, i.severity, i.line) for i in issues] == [
-        ("mio-design-team-type-uncovered", "warning", 3)
-    ]
-    assert "medium_plane_airframe" in issues[0].message
-
-
-def test_design_team_type_listed_directly_passes(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "medium_plane_airframe", _team("medium_plane_airframe")
-    )
-    assert not issues
-
-
-def test_design_team_type_covered_through_mio_cat_group_passes(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "mio_cat_test_medium", _team("medium_plane_airframe_1")
-    )
-    assert not issues
-
-
-def test_design_team_numbered_type_listed_directly_passes(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path,
-        write_path,
+# case: (TST_org equipment_type, create_equipment_variant body, expected issues)
+_COVERAGE_CASES = {
+    "type outside the org's equipment_type": (
+        "small_plane_airframe",
+        _team("medium_plane_airframe_1"),
+        [
+            (
+                "mio-design-team-type-uncovered",
+                "warning line 3:",
+                "medium_plane_airframe",
+            )
+        ],
+    ),
+    "type listed directly": (
+        "medium_plane_airframe",
+        _team("medium_plane_airframe"),
+        [],
+    ),
+    "type covered through a mio_cat group": (
+        "mio_cat_test_medium",
+        _team("medium_plane_airframe_1"),
+        [],
+    ),
+    "numbered type listed directly": (
         "medium_plane_airframe_1",
         _team("medium_plane_airframe_1"),
-    )
-    assert not issues
-
-
-def test_design_team_type_covered_through_category_passes(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "test_fighter", _team("medium_plane_airframe_1")
-    )
-    assert not issues
-
-
-def test_design_team_numbered_type_matches_its_archetype(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "small_plane_airframe", _team("small_plane_airframe_1")
-    )
-    assert not issues
-
-
-def test_design_team_clone_is_its_own_archetype(tmp_path, write_path):
-    org_types = "small_plane_airframe"
-    issues = _coverage_issues(
-        tmp_path, write_path, org_types, _team("small_plane_cas_airframe_1")
-    )
-    assert [i.category for i in issues] == ["mio-design-team-type-uncovered"]
-    assert "small_plane_cas_airframe" in issues[0].message
-
-
-def test_variant_without_design_team_is_not_flagged(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path,
-        write_path,
+        [],
+    ),
+    "type covered through its category": (
+        "test_fighter",
+        _team("medium_plane_airframe_1"),
+        [],
+    ),
+    "numbered type matches its archetype": (
+        "small_plane_airframe",
+        _team("small_plane_airframe_1"),
+        [],
+    ),
+    "clone is its own archetype": (
+        "small_plane_airframe",
+        _team("small_plane_cas_airframe_1"),
+        [("mio-design-team-type-uncovered", "small_plane_cas_airframe")],
+    ),
+    "missing design team": (
         "small_plane_airframe",
         _team("medium_plane_airframe_1", ""),
-    )
-    assert not issues
+        [],
+    ),
+    "missing type": ("small_plane_airframe", "\tdesign_team = mio:TST_org\n", []),
+    "undefined vanilla type is skipped": (
+        "small_plane_airframe",
+        _team("fighter_equipment_1"),
+        [],
+    ),
+}
 
 
-def test_design_team_on_undefined_vanilla_type_is_skipped(tmp_path, write_path):
-    issues = _coverage_issues(
-        tmp_path, write_path, "small_plane_airframe", _team("fighter_equipment_1")
-    )
-    assert not issues
+@pytest.mark.parametrize(
+    ("org_types", "variant", "expected"),
+    _COVERAGE_CASES.values(),
+    ids=_COVERAGE_CASES,
+)
+def test_design_team_coverage(tmp_path, org_types, variant, expected):
+    _assert_issues(_coverage_issues(tmp_path, org_types, variant), expected)
 
 
-def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_path):
-    _run_repo(tmp_path, write_path)
+def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path):
+    _run_repo(tmp_path)
     (tmp_path / V.ORG_DIR / "broken.txt").mkdir()
     (tmp_path / V.POLICY_DIR / "broken.txt").mkdir()
     (tmp_path / "common" / "decisions").mkdir(parents=True)
@@ -1197,12 +1141,12 @@ def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_pa
     ]
 
 
-def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeypatch):
-    _run_repo(tmp_path, write_path)
+def test_a_staged_equipment_edit_rescans_every_org(tmp_path, monkeypatch):
+    _run_repo(tmp_path)
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/units/equipment/MD_test_equipment.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1212,25 +1156,23 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     ]
 
 
-def test_a_staged_scripted_trigger_rescans_orgs_and_references(
-    tmp_path, write_path, monkeypatch
-):
+def test_a_staged_scripted_trigger_rescans_orgs_and_references(tmp_path, monkeypatch):
     orgs = _REFERENCE_ORGS.replace(
         "GRE_eas_materiel_manufacturer = {\n\tallowed = { original_tag = GRE }",
         "GRE_eas_materiel_manufacturer = {\n\tallowed = { is_usa_or_breakaway = yes }",
     )
-    write_path(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", orgs)
-    write_path(
+    write_under(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", orgs)
+    write_under(
         tmp_path,
         f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
         _REFERENCE_TAGS,
     )
-    write_path(
+    write_under(
         tmp_path,
         f"{V.SCRIPTED_TRIGGER_DIR}/99_USA_scripted_triggers.txt",
         _REFERENCE_TRIGGERS,
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/national_focus/05_greece.txt",
         _focus(
@@ -1241,7 +1183,7 @@ def test_a_staged_scripted_trigger_rescans_orgs_and_references(
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1251,11 +1193,11 @@ def test_a_staged_scripted_trigger_rescans_orgs_and_references(
     ]
 
 
-def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
-    _run_repo(tmp_path, write_path)
-    write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
+def test_staged_run_with_no_mio_input_skips(tmp_path, monkeypatch):
+    _run_repo(tmp_path)
+    write_under(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/unrelated.txt")
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1263,20 +1205,20 @@ def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
     assert any("No staged MIO files" in line for line in v.output_lines)
 
 
-def test_staged_interface_edit_rescans_all_mios(tmp_path, write_path, monkeypatch):
-    _run_repo(tmp_path, write_path)
+def test_staged_interface_edit_rescans_all_mios(tmp_path, monkeypatch):
+    _run_repo(tmp_path)
     sprite = tmp_path / "interface" / "mio.gfx"
     sprite.parent.mkdir(parents=True)
     sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/mio.gfx")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     assert v._org_files()
 
 
-def test_staged_sprite_deletion_rescans_all_mios(tmp_path, write_path):
-    _run_repo(tmp_path, write_path)
+def test_staged_sprite_deletion_rescans_all_mios(tmp_path):
+    _run_repo(tmp_path)
     sprite = tmp_path / "interface" / "mio.gfx"
     sprite.parent.mkdir(parents=True)
     sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
@@ -1292,79 +1234,54 @@ def _sprite_set(*names):
     return frozenset(names) | {f"GFX_pad_{i}" for i in range(V._MIN_SPRITE_INDEX)}
 
 
-def test_icon_that_is_not_a_gfx_name_is_flagged(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = _sprite_set()
-
-    v._check_icons("\ticon = x # TODO: needs a company logo", "orgs.txt")
-
-    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
-    assert v._issues[0].line == 1
-
-
-def test_unresolved_gfx_icon_is_a_warning(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = _sprite_set("GFX_idea_other_org")
-
-    v._check_icons("\ticon = GFX_idea_ALG_seriana\n", "orgs.txt")
-
-    assert [i.category for i in v._issues] == ["mio-icon-unresolved"]
-    assert v._issues[0].severity == "warning"
-
-
-def test_resolved_gfx_icon_is_clean(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = _sprite_set(
-        "GFX_idea_ALG_khenchela_arms", "GFX_generic_mio_trait_icon_reliability"
-    )
-
-    v._check_icons(
+# case: (sprite names, text, expected issues)
+_ICON_CASES = {
+    "icon that is not a GFX name": (
+        _sprite_set(),
+        "\ticon = x # TODO: needs a company logo",
+        [("mio-icon-not-gfx", "line 1:")],
+    ),
+    "unresolved GFX icon": (
+        _sprite_set("GFX_idea_other_org"),
+        "\ticon = GFX_idea_ALG_seriana\n",
+        [("mio-icon-unresolved", "warning line")],
+    ),
+    "resolved GFX icons": (
+        _sprite_set(
+            "GFX_idea_ALG_khenchela_arms", "GFX_generic_mio_trait_icon_reliability"
+        ),
         "\ticon = GFX_idea_ALG_khenchela_arms\n"
         "\ttrait = {\n\t\ticon = GFX_generic_mio_trait_icon_reliability\n\t}\n",
-        "orgs.txt",
-    )
-
-    assert not v._issues
-
-
-def test_small_sprite_index_skips_resolution(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = frozenset({"GFX_something"})
-
-    v._check_icons("\ticon = GFX_idea_missing\n", "orgs.txt")
-
-    assert not v._issues
-
-
-def test_quoted_icon_value_is_checked(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = _sprite_set()
-
-    v._check_icons('\ticon = "bare_token"\n', "orgs.txt")
-
-    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
-
-
-def test_icon_scanner_ignores_quoted_assignments_and_accepts_punctuation(tmp_path):
-    v = _validator(tmp_path)
-    v._sprites = _sprite_set("GFX_company-logo")
-
-    v._check_icons(
+        [],
+    ),
+    "small sprite index skips resolution": (
+        frozenset({"GFX_something"}),
+        "\ticon = GFX_idea_missing\n",
+        [],
+    ),
+    "quoted icon value": (
+        _sprite_set(),
+        '\ticon = "bare_token"\n',
+        ["mio-icon-not-gfx"],
+    ),
+    "quoted assignment and punctuation in a name": (
+        _sprite_set("GFX_company-logo"),
         '\tdesc = "icon = not_a_reference"\n'
         "\ticon = GFX_company-logo # comment icon = fake\n",
-        "orgs.txt",
-    )
+        [],
+    ),
+    "empty value": (_sprite_set(), "\ticon = {}\n", ["mio-icon-not-gfx"]),
+}
 
-    assert not v._issues
 
-
-def test_icon_scanner_reports_empty_values(tmp_path):
+@pytest.mark.parametrize(
+    ("sprites", "text", "expected"), _ICON_CASES.values(), ids=_ICON_CASES
+)
+def test_icons(tmp_path, sprites, text, expected):
     v = _validator(tmp_path)
-    v._sprites = _sprite_set()
-
-    v._check_icons("\ticon = {}\n", "orgs.txt")
-
-    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
+    v._sprites = sprites
+    v._check_icons(text, "orgs.txt")
+    _assert_issues(v._issues, expected)
 
 
 def _geometry_trait(
@@ -1429,139 +1346,87 @@ def test_nested_relative_position_is_not_a_trait_anchor():
     assert trait.rel is None
 
 
-def test_child_below_parent_is_clean(tmp_path):
-    body = _geometry_trait("root", x=0, y=0) + _geometry_trait(
-        "child", x=0, y=1, rel="root", parents=["root"]
-    )
-    v = _geometry_validator(tmp_path, _index(body))
+_T = _geometry_trait
 
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+# case: (org body, another org's body, expected issues)
+_GEOMETRY_CASES = {
+    "child below its parent": (
+        _T("root", x=0, y=0) + _T("child", x=0, y=1, rel="root", parents=["root"]),
+        "",
+        [],
+    ),
+    "child on its parent's row": (
+        _T("root", x=0, y=0) + _T("child", x=0, y=0, rel="root", parents=["root"]),
+        "",
+        [("trait-geometry-parent-row", "error line", "`child`", "`root`")],
+    ),
+    "child above its parent's row": (
+        _T("root", x=0, y=2) + _T("child", x=0, y=1, parents=["root"]),
+        "",
+        ["trait-geometry-parent-row"],
+    ),
+    "relative position chain across orgs": (
+        _T("mid", x=0, y=1, rel="cross_org_root")
+        + _T("leaf", x=0, y=1, rel="mid", parents=["mid"]),
+        _T("cross_org_root", x=2, y=5),
+        [],
+    ),
+    "unresolvable anchor": (_T("orphan", x=0, y=1, rel="missing_anchor"), "", []),
+    "position anchor cycle": (
+        _T("a", x=0, y=1, rel="b")
+        + _T("b", x=0, y=1, rel="a")
+        + _T("child", x=0, y=1, rel="a", parents=["a"]),
+        "",
+        [],
+    ),
+    "mutually exclusive traits on different rows": (
+        _T("left", x=0, y=2, mutual=["right"]) + _T("right", x=1, y=3),
+        "",
+        [("trait-geometry-mutex-row", "error line")],
+    ),
+    "mutually exclusive traits sharing a row": (
+        _T("left", x=0, y=2, mutual=["right"]) + _T("right", x=1, y=2),
+        "",
+        [],
+    ),
+    "all_parents with mutually exclusive parents": (
+        _T("left", x=0, y=0, mutual=["right"])
+        + _T("right", x=1, y=0)
+        + _T("child", x=0, y=1, parents=["left", "right"]),
+        "",
+        [("trait-geometry-mutex-parents", "error line", "any_parent")],
+    ),
+    "any_parent with mutually exclusive parents": (
+        _T("left", x=0, y=0, mutual=["right"])
+        + _T("right", x=1, y=0)
+        + _T("child", x=0, y=1, any_parents=["left", "right"]),
+        "",
+        [],
+    ),
+    "unknown parent, anchor and mutex tokens": (
+        _T(
+            "child",
+            x=0,
+            y=1,
+            rel="no_such_anchor",
+            parents=["ghost_parent"],
+            mutual=["ghost_peer"],
+        ),
+        "",
+        [],
+    ),
+}
 
-    assert not v._issues
 
-
-def test_child_on_or_above_parent_row_is_flagged(tmp_path):
-    body = _geometry_trait("root", x=0, y=0) + _geometry_trait(
-        "child", x=0, y=0, rel="root", parents=["root"]
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert [(i.category, i.severity) for i in v._issues] == [
-        ("trait-geometry-parent-row", "error")
-    ]
-    assert "`child`" in v._issues[0].message and "`root`" in v._issues[0].message
-
-    v = _geometry_validator(tmp_path, _index(body))
-    body_above = _geometry_trait("root", x=0, y=2) + _geometry_trait(
-        "child", x=0, y=1, parents=["root"]
-    )
-    v._check_trait_geometry("TST_org", body_above, "orgs.txt", 0)
-    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
-
-
-def test_relative_position_chain_resolves_across_orgs(tmp_path):
-    other_org = _geometry_trait("cross_org_root", x=2, y=5)
-    body = _geometry_trait("mid", x=0, y=1, rel="cross_org_root") + _geometry_trait(
-        "leaf", x=0, y=1, rel="mid", parents=["mid"]
-    )
+@pytest.mark.parametrize(
+    ("body", "other_org", "expected"),
+    _GEOMETRY_CASES.values(),
+    ids=_GEOMETRY_CASES,
+)
+def test_trait_geometry(tmp_path, body, other_org, expected):
     v = _geometry_validator(tmp_path, _index(body, other_org))
-
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
-
-
-def test_unresolvable_anchor_reports_nothing(tmp_path):
-    body = _geometry_trait("orphan", x=0, y=1, rel="missing_anchor")
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
-
-
-def test_position_anchor_cycle_reports_nothing(tmp_path):
-    body = (
-        _geometry_trait("a", x=0, y=1, rel="b")
-        + _geometry_trait("b", x=0, y=1, rel="a")
-        + _geometry_trait("child", x=0, y=1, rel="a", parents=["a"])
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
-
-
-def test_mutually_exclusive_traits_on_different_rows_are_flagged(tmp_path):
-    body = _geometry_trait("left", x=0, y=2, mutual=["right"]) + _geometry_trait(
-        "right", x=1, y=3
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert [(i.category, i.severity) for i in v._issues] == [
-        ("trait-geometry-mutex-row", "error")
-    ]
-
-
-def test_mutually_exclusive_traits_sharing_a_row_are_clean(tmp_path):
-    body = _geometry_trait("left", x=0, y=2, mutual=["right"]) + _geometry_trait(
-        "right", x=1, y=2
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
-
-
-def test_all_parents_with_mutually_exclusive_parents_is_flagged(tmp_path):
-    body = (
-        _geometry_trait("left", x=0, y=0, mutual=["right"])
-        + _geometry_trait("right", x=1, y=0)
-        + _geometry_trait("child", x=0, y=1, parents=["left", "right"])
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert [(i.category, i.severity) for i in v._issues] == [
-        ("trait-geometry-mutex-parents", "error")
-    ]
-    assert "any_parent" in v._issues[0].message
-
-
-def test_any_parent_with_mutually_exclusive_parents_is_clean(tmp_path):
-    body = (
-        _geometry_trait("left", x=0, y=0, mutual=["right"])
-        + _geometry_trait("right", x=1, y=0)
-        + _geometry_trait("child", x=0, y=1, any_parents=["left", "right"])
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
-
-
-def test_unknown_parent_or_mutex_tokens_report_nothing(tmp_path):
-    body = _geometry_trait(
-        "child",
-        x=0,
-        y=1,
-        rel="no_such_anchor",
-        parents=["ghost_parent"],
-        mutual=["ghost_peer"],
-    )
-    v = _geometry_validator(tmp_path, _index(body))
-
-    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
-
-    assert not v._issues
+    _assert_issues(v._issues, expected)
 
 
 # ---- edge-case files through a full run ------------------------------------
@@ -1697,11 +1562,11 @@ _EDGE_FINDINGS = [
 ]
 
 
-def _write_edge_repo(tmp_path, write_path):
-    write_path(tmp_path, _EDGE_TST, _EDGE_TST_TEXT)
-    write_path(tmp_path, _EDGE_TSU, _EDGE_TSU_TEXT)
-    write_path(tmp_path, _EDGE_FOCUS, _EDGE_FOCUS_TEXT)
-    write_path(
+def _write_edge_repo(tmp_path):
+    write_under(tmp_path, _EDGE_TST, _EDGE_TST_TEXT)
+    write_under(tmp_path, _EDGE_TSU, _EDGE_TSU_TEXT)
+    write_under(tmp_path, _EDGE_FOCUS, _EDGE_FOCUS_TEXT)
+    write_under(
         tmp_path,
         f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
         "TST = { }\nTSU = { }\nGER = { }\n",
@@ -1723,30 +1588,28 @@ def _edge_rows(tmp_path, *, workers, sprites=None):
     return [(i.category, i.file, i.line, i.message) for i in v._issues], pooled
 
 
-def test_edge_case_files_report_exact_findings_in_order(tmp_path, write_path):
+def test_edge_case_files_report_exact_findings_in_order(tmp_path):
     """Quoted braces and `#`, a token-filled comment, first and last lines, a
     missing final newline, CRLF org and reference files, and a `shared_focus`
     owner all keep their findings, lines and order."""
-    _write_edge_repo(tmp_path, write_path)
+    _write_edge_repo(tmp_path)
 
     rows, _pooled = _edge_rows(tmp_path, workers=1, sprites=_sprite_set())
 
     assert rows == _EDGE_FINDINGS
 
 
-def test_pooled_run_matches_the_in_process_run_in_order(
-    tmp_path, write_path, monkeypatch
-):
+def test_pooled_run_matches_the_in_process_run_in_order(tmp_path, monkeypatch):
     """Twelve .gfx files cross the pool threshold for the sprite index, which
     also holds enough sprites to resolve icons."""
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
     monkeypatch.setenv("MD_NO_CACHE", "1")
-    _write_edge_repo(tmp_path, write_path)
+    _write_edge_repo(tmp_path)
     for index in range(12):
         sprites = "".join(
             f"\tspriteType = {{ name = GFX_pad_{index}_{n} }}\n" for n in range(100)
         )
-        write_path(
+        write_under(
             tmp_path,
             f"interface/pad_{index:02}.gfx",
             f"spriteTypes = {{\n{sprites}}}\n",
@@ -1901,8 +1764,8 @@ def test_relative_position_scan_matches_the_depth_walk():
         for index, char in enumerate(inner):
             if char in "{}":
                 depth += 1 if char == "{" else -1
-            elif depth == 0 and old.match(inner, index):
-                expected = old.match(inner, index).group(1)
+            elif depth == 0 and (match := old.match(inner, index)):
+                expected = match.group(1)
                 break
         assert V._parse_org_traits(body)["t"].rel == expected, text
 

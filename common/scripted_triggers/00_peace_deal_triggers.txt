@@ -508,8 +508,6 @@
 				OR = {
 					# DEFAULT
 						has_autonomy_state = autonomy_associated_state
-					# DEFAULT - COLOURED
-						has_autonomy_state = autonomy_associated_state_colored
 					# CALIPHATE
 						has_autonomy_state = autonomy_terrorist_branch
 					# DANISH
@@ -534,9 +532,6 @@
 					# DEFAULT
 						has_autonomy_state = autonomy_associated_state
 						has_autonomy_state = autonomy_satellite_state
-					# DEFAULT - COLOURED
-						has_autonomy_state = autonomy_associated_state_colored
-						has_autonomy_state = autonomy_satellite_state_colored
 					# CALIPHATE
 						has_autonomy_state = autonomy_terrorist_branch
 					# DANISH
@@ -818,6 +813,26 @@ CPC_off_nationalist = {
 	FROM = { has_government = nationalist }
 }
 
+# Scope is a side of the Bosnian civil war; PREV's peace deal also white-peaces it
+BOS_civil_war_side_covered_by_prev = {
+	BOS_civil_war_side_trigger = yes
+	OR = {
+		is_subject_of = PREV
+		AND = {
+			is_in_faction_with = PREV
+			PREV = { is_faction_leader = yes }
+		}
+	}
+}
+BOS_civil_war_peace_party = {
+	OR = {
+		BOS_civil_war_side_trigger = yes
+		BOS = { BOS_civil_war_side_covered_by_prev = yes }
+		HZG = { BOS_civil_war_side_covered_by_prev = yes }
+		RSK = { BOS_civil_war_side_covered_by_prev = yes }
+	}
+}
+
 # Custom Civil War Trigger
 CPD_is_a_custom_civil_war = {
 	# Somalia
@@ -935,6 +950,20 @@ CPD_is_a_custom_civil_war = {
 		limit = { ROOT = { original_tag = AFG } }
 		NOT = {
 			original_tag = TAL
+		}
+	}
+	# Bosnia: a deal signed by a side's faction leader or overlord white-peaces that side too
+	else_if = {
+		limit = { BOS = { has_country_flag = civil_war_bosnia } }
+		NOT = {
+			AND = {
+				BOS_civil_war_peace_party = yes
+				ROOT = { BOS_civil_war_peace_party = yes }
+				OR = {
+					BOS_civil_war_side_trigger = yes
+					ROOT = { BOS_civil_war_side_trigger = yes }
+				}
+			}
 		}
 	}
 

@@ -98,35 +98,18 @@ no_garrison = {
 
 	ai_will_do = {
 		base = 0
-
+		# Losing the war: pull the garrison manpower and equipment back home
 		modifier = {
-			FROM = {
-				has_government = democratic
-			}
-			has_active_resistance = no
-			add = 200
-		}
-		# if losing, get manpower & equipment back
-		modifier = {
-			FROM = {
-				surrender_progress > 0.15
-			}
-			add = 100
-		}
-		modifier = {
-			FROM = {
-				surrender_progress > 0.4
-			}
-			add = 500
-		}
-
-		modifier = {
-			check_variable = { uncapped_resistance_target > -0.4 }
-			add = -60
+			FROM = { surrender_progress > 0.4 }
+			add = 100000
 		}
 	}
 }
 
+# AI ladder: each law weighs in only where it is the mildest law that keeps resistance_target_without_law
+# under 0.5, the point where resistance_50 starts costing supply, speed, and garrison losses
+
+# compliance growth - western outlook only
 autonomous_occupation = {
 	icon = 2
 	sound_effect = "Martial_Law_Interface_Autonomous_Occupation_Unique_DEM"
@@ -143,20 +126,15 @@ autonomous_occupation = {
 	}
 
 	ai_will_do = {
-		base = 200
-
+		base = 0
 		modifier = {
-			add = 500
-			set_temp_variable = { resistance_limit = 30 }
-			if = {
-				limit = { occupation_law = martial_law_occupation }
-				set_temp_variable = { resistance_limit = 35 }
-			}
-			resistance < autonomous_occupation # if we are under base resistance try to build compliance instead
+			check_variable = { resistance_target_without_law < 0.40 }
+			add = 15000
 		}
 	}
 }
 
+# basic law
 foreign_civilian_oversight = {
 	icon = 3
 	sound_effect = "Martial_Law_Interface_Foreign_Cvilian_Oversight"
@@ -168,15 +146,15 @@ foreign_civilian_oversight = {
 	starting_law = yes
 
 	ai_will_do = {
-		base = 120
+		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.24 }
-			add = 100
+			check_variable = { resistance_target_without_law < 0.50 }
+			add = 10000
 		}
 	}
 }
 
-
+# less garrisons for less compliance growth
 local_police_force_garrison = {
 	icon = 11
 	sound_effect = "Martial_Law_Interface_Local_Police_Force_Garrison"
@@ -184,51 +162,57 @@ local_police_force_garrison = {
 	state_modifier = {
 		resistance_target = -0.10
 		compliance_gain = -0.025
-		required_garrison_factor = -0.30
-		resistance_damage_to_garrison = -0.5
+		required_garrison_factor = -0.40
+		resistance_damage_to_garrison = -0.4
 	}
 
 
 	ai_will_do = {
-		base = 100
+		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.44 }
-			add = 200
+			NOT = { check_variable = { resistance_target_without_law < 0.50 } }
+			check_variable = { resistance_target_without_law < 0.60 }
+			add = 20000
 		}
-
-
+		# Short on garrison troops: this law needs 40% fewer
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.34 }
-
-			set_temp_variable = { requirement_limit = 0.35 }
-			if = {
-				limit = { occupation_law = local_police_force_garrison }
-				set_temp_variable = { requirement_limit = 0.55 }
+			check_variable = { resistance_target_without_law < 0.60 }
+			OR = {
+				check_variable = { garrison_min_support_ratio < 0.35 }
+				AND = {
+					occupation_law = local_police_force_garrison
+					check_variable = { garrison_min_support_ratio < 0.55 }
+				}
 			}
-			check_variable = { garrison_min_support_ratio < requirement_limit }
-
-			add = 350
+			add = 20000
 		}
 	}
 }
 
+# resistance supression
 secret_police_oversight = {
 	icon = 4
 	sound_effect = "Martial_Law_Interface_Secret_Police_Oversight"
 
 	state_modifier = {
-		resistance_target = -0.30
+		resistance_target = -0.40
 		compliance_gain = -0.04
-		required_garrison_factor = -0.1
+		required_garrison_factor = 0.1
 		resistance_damage_to_garrison = -0.15
-		local_factories = 0.05
-		local_resources = 0.05
 		enemy_operative_detection_chance_over_occupied_tag = 1 # offset detection chance by +1%
 		enemy_intel_network_gain_factor_over_occupied_tag = -0.25 # -25% scaled by the number of occupied states and the ratio of the network covering those occupied states
-		# todo + spy defense
+	}
+
+	ai_will_do = {
+		base = 0
+		modifier = {
+			NOT = { check_variable = { resistance_target_without_law < 0.60 } }
+			add = 30000
+		}
 	}
 }
 
+# oligarch exploitation - emerging specific
 liberate_workers_occupation = {
 	icon = 5
 	sound_effect = "Martial_Law_Interface_Liberate_Workers_Occupation_Unique_COM"
@@ -243,146 +227,95 @@ liberate_workers_occupation = {
 		required_garrison_factor = -0.05
 		resistance_damage_to_garrison = 0.25
 		local_factories = 0.2
-		local_resources = 0.3
+		local_resources = 0.2
 	}
 
 	ai_will_do = {
-		base = 200
+		base = 0
+		modifier = {
+			compliance > 49
+			check_variable = { resistance_target_without_law < 0.65 }
+			add = 25000
+		}
 	}
 }
 
+# manpower occupation
 military_governor_occupation = {
 	icon = 6
 	sound_effect = "Martial_Law_Interface_Military_Governor_Occupation"
 
 	state_modifier = {
-		resistance_target = -0.3
-		compliance_gain = -0.045
-		required_garrison_factor = 0.0
-		#local_factories = 0.00
-		local_resources = 0.10
-		local_manpower = 0.08
+		resistance_target = -0.1
+		compliance_gain = -0.02
+		required_garrison_factor = -0.1
+		local_manpower = 0.15
 	}
 
 	ai_will_do = {
 		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.45 }
-			add = 400
+			compliance > 49
+			check_variable = { resistance_target_without_law < 0.60 }
+			FROM = { has_war = yes }
+			add = 22000
 		}
 	}
 }
 
+# factories occupation
 martial_law_occupation = {
 	icon = 7
 	sound_effect = "Martial_Law_Interface_Martial_Law_Occupation_Default"
 
 	state_modifier = {
-		resistance_target = -0.60
-		compliance_gain = -0.055
-		local_resources = 0.1
+		resistance_target = -0.1
+		compliance_gain = -0.015
+		local_factories = 0.25
 	}
 
 	ai_will_do = {
 		base = 0
-
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.69 }
-
-			set_temp_variable = { resistance_limit = 40 }
-			set_temp_variable = { requirement_limit = 0.8 }
-			if = {
-				limit = { occupation_law = martial_law_occupation }
-				set_temp_variable = { resistance_limit = 35 }
-				set_temp_variable = { requirement_limit = 0.6 }
+			compliance > 49
+			check_variable = { resistance_target_without_law < 0.60 }
+			check_expr = {
+				value = building_level@industrial_complex
+				add = building_level@arms_factory
+				greater_than = 1
 			}
-			check_variable = { garrison_min_support_ratio > requirement_limit }
-			resistance > resistance_limit
-
-			add = 500
+			add = 24000
 		}
 	}
 }
 
+# resources occupation
 forced_labor_occupation = {
 	icon = 8
 	sound_effect = "Martial_Law_Interface_Forced_Labor_Occupation"
 
 	state_modifier = {
-		resistance_target = -0.40
-		compliance_gain = -0.08
-		resistance_damage_to_garrison = 0.3
-		required_garrison_factor = 0.15
-		local_resources = 0.40
-		local_factories = 0.05
-		repair_speed_infrastructure_factor = 0.25
-
-		custom_modifier_tooltip = "resource_sabotage_decrease_tooltip"
+		resistance_target = -0.1
+		compliance_gain = -0.015
+		local_resources = 0.25
 	}
 
 	ai_will_do = {
 		base = 0
 		modifier = {
-			set_temp_variable = { requirement_limit = 1.5 }
-			if = {
-				limit = { occupation_law = forced_labor_occupation }
-				set_temp_variable = { requirement_limit = 1.3 }
+			compliance > 49
+			check_variable = { resistance_target_without_law < 0.60 }
+			# Resources here that we actually want
+			check_expr = {
+				value = { value = resource@oil multiply = ai_desire_oil }
+				add = { value = resource@aluminium multiply = ai_desire_aluminium }
+				add = { value = resource@rubber multiply = ai_desire_rubber }
+				add = { value = resource@tungsten multiply = ai_desire_tungsten }
+				add = { value = resource@steel multiply = ai_desire_steel }
+				add = { value = resource@chromium multiply = ai_desire_chromium }
+				greater_than = 0
 			}
-			check_variable = { garrison_min_support_ratio < requirement_limit }
-			factor = 0
-		}
-
-		modifier = {
-			set_temp_variable = { num_damaged = damaged_building_level@infrastructure }
-
-			check_variable = { num_damaged > 0 }
-			clamp_temp_variable = { var = num_damaged max = 8 }
-			multiply_temp_variable = { num_damaged = 80 }
-			add_to_temp_variable = { num_damaged = 200 }
-			FROM = {
-				has_war = yes
-				add_to_temp_variable = { num_damaged = 100 }
-			}
-			add = num_damaged
-		}
-
-		modifier = {
-			# if compliance is high enough, we are getting good enough resoruces already
-			compliance < 40
-
-			# if we are desiring a resource produced here
-			set_temp_variable = { releveant_resources = 0 }
-
-			set_temp_variable = { t = resource@oil }
-			multiply_temp_variable = { t = ai_desire_oil }
-			add_to_temp_variable = { releveant_resources = t }
-
-			set_temp_variable = { t = resource@aluminium }
-			multiply_temp_variable = { t = ai_desire_aluminium }
-			add_to_temp_variable = { releveant_resources = t }
-
-			set_temp_variable = { t = resource@rubber }
-			multiply_temp_variable = { t = ai_desire_rubber }
-			add_to_temp_variable = { releveant_resources = t }
-
-			set_temp_variable = { t = resource@tungsten }
-			multiply_temp_variable = { t = ai_desire_tungsten }
-			add_to_temp_variable = { releveant_resources = t }
-
-			set_temp_variable = { t = resource@steel }
-			multiply_temp_variable = { t = ai_desire_steel }
-			add_to_temp_variable = { releveant_resources = t }
-
-			set_temp_variable = { t = resource@chromium }
-			multiply_temp_variable = { t = ai_desire_chromium }
-			add_to_temp_variable = { releveant_resources = t }
-
-			check_variable = { releveant_resources > 0 }
-			clamp_temp_variable = { var = releveant_resources max = 40 }
-			multiply_temp_variable = { releveant_resources = 0.025 }
-			multiply_temp_variable = { releveant_resources = 200 }
-			add_to_temp_variable = { releveant_resources = 100 }
-			add = releveant_resources
+			add = 23000
 		}
 	}
 }
@@ -397,8 +330,8 @@ harsh_quotas_occupation = {
 		required_garrison_factor = 0.15
 		resistance_damage_to_garrison = 0.50
 
-		local_factories = 0.25
-		local_resources = 0.05
+		local_factories = 0.15
+		local_resources = 0.15
 
 		repair_speed_arms_factory_factor = 0.25
 		repair_speed_industrial_complex_factor = 0.25
@@ -408,16 +341,15 @@ harsh_quotas_occupation = {
 
 	ai_will_do = {
 		base = 0
+		# Secret police's band, but with factories to repair
 		modifier = {
-			set_temp_variable = { num_damaged = damaged_building_level@arms_factory }
-			add_to_temp_variable = { num_damaged = damaged_building_level@industrial_complex }
-
-			check_variable = { num_damaged > 0 }
-			clamp_temp_variable = { var = num_damaged max = 4 }
-			multiply_temp_variable = { num_damaged = 50 }
-			add_to_temp_variable = { num_damaged = 150 }
-
-			add = num_damaged
+			NOT = { check_variable = { resistance_target_without_law < 0.60 } }
+			check_expr = {
+				value = damaged_building_level@arms_factory
+				add = damaged_building_level@industrial_complex
+				greater_than = 0
+			}
+			add = 32000
 		}
 	}
 }
@@ -427,7 +359,10 @@ brutally_oppressive_occupation = {
 	sound_effect = "Martial_Law_Interface_Brutally_Oppressive_Occupation_Unique_FAS"
 
 	visible = {
-		has_government = fascism
+		OR = {
+			has_government = nationalist
+			has_government = fascism
+		}
 	}
 
 	state_modifier = {
@@ -435,30 +370,30 @@ brutally_oppressive_occupation = {
 		compliance_gain = -0.11
 		required_garrison_factor = 0.25
 		resistance_damage_to_garrison = 1.0
-		local_resources = 0.10
+		local_resources = 0.2
+		local_factories = 0.2
 		resistance_decay = 1.0
 	}
 
 	ai_will_do = {
 		base = 0
 
+		# Only past secret police's reach, and only with the extra garrison it needs
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.94 }
-
-			set_temp_variable = { resistance_limit = 40 }
-			set_temp_variable = { requirement_limit = 2.0 }
-			if = {
-				limit = { occupation_law = brutally_oppressive_occupation }
-				set_temp_variable = { resistance_limit = 35 }
-				set_temp_variable = { requirement_limit = 1.8 }
+			NOT = { check_variable = { resistance_target_without_law < 0.90 } }
+			OR = {
+				check_variable = { garrison_min_support_ratio > 2.0 }
+				AND = {
+					occupation_law = brutally_oppressive_occupation
+					check_variable = { garrison_min_support_ratio > 1.8 }
+				}
 			}
-			check_variable = { garrison_min_support_ratio > requirement_limit }
-			resistance > resistance_limit
-
-			add = 1000
+			add = 50000
 		}
 	}
 }
+
+# Special laws
 HOL_WIC_law = {
 	icon = 13
 	sound_effect = "Martial_Law_Interface_Autonomous_Occupation_Unique_DEM"
@@ -484,27 +419,16 @@ HOL_WIC_law = {
 		local_manpower = -0.90
 	}
 
-
+	# Outproduces the generic laws wherever its -0.30 keeps resistance under 0.5
 	ai_will_do = {
-		base = 250
+		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.3 }
-			add = 200
-		}
-		modifier = {
-			check_variable = { resistance_target_without_law > 0.44 }
-
-			set_temp_variable = { requirement_limit = 0.35 }
-			if = {
-				limit = { occupation_law = local_police_force_garrison }
-				set_temp_variable = { requirement_limit = 0.55 }
-			}
-			check_variable = { garrison_min_support_ratio < requirement_limit }
-
-			add = 350
+			check_variable = { resistance_target_without_law < 0.80 }
+			add = 35000
 		}
 	}
 }
+
 HOL_VOC_law = {
 	icon = 13
 	sound_effect = "Martial_Law_Interface_Autonomous_Occupation_Unique_DEM"
@@ -532,26 +456,11 @@ HOL_VOC_law = {
 		local_manpower = -0.90
 	}
 
-
 	ai_will_do = {
-		base = 250
+		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.3 }
-			add = 200
-		}
-
-
-		modifier = {
-			check_variable = { resistance_target_without_law > 0.44 }
-
-			set_temp_variable = { requirement_limit = 0.35 }
-			if = {
-				limit = { occupation_law = local_police_force_garrison }
-				set_temp_variable = { requirement_limit = 0.55 }
-			}
-			check_variable = { garrison_min_support_ratio < requirement_limit }
-
-			add = 350
+			check_variable = { resistance_target_without_law < 0.80 }
+			add = 35000
 		}
 	}
 }
@@ -582,24 +491,12 @@ senbu_occupation_law = {
 		local_resources = 0.10
 	}
 
+	# A mild law like Autonomous Occupation, plus factory and resource output
 	ai_will_do = {
-		base = 250
+		base = 0
 		modifier = {
-			check_variable = { resistance_target_without_law > 0.3 }
-			add = 200
-		}
-
-		modifier = {
-			check_variable = { resistance_target_without_law > 0.44 }
-
-			set_temp_variable = { requirement_limit = 0.35 }
-			if = {
-				limit = { occupation_law = local_police_force_garrison }
-				set_temp_variable = { requirement_limit = 0.55 }
-			}
-			check_variable = { garrison_min_support_ratio < requirement_limit }
-
-			add = 350
+			check_variable = { resistance_target_without_law < 0.45 }
+			add = 21000
 		}
 	}
 }
