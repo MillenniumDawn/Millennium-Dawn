@@ -22,6 +22,13 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 - Never lower a bar to pass. Merge or cut categories instead, as the EU mode does by
   grouping nine offices into five tiers.
 
+## Layers
+
+- Draw each country in one layer only. The EU mode painted members in both layers and
+  they showed off-white instead of blue (Issue #6005). Exclude the top layer's
+  countries from the bottom layer's color trigger.
+- Target each layer with the array its color trigger checks.
+
 ## The palette setting
 
 - `map_mode_palette` on the player country: unset or 0 is Standard, 1 is red-green, 2
@@ -53,3 +60,4 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 - That ROOT in the color trigger and in the tooltip is the local viewer in multiplayer,
   so each player sees their own setting.
 - That `force_update_map_mode` redraws the map on every client.
+- How two layers on one country blend. The off-white is inferred from a screenshot.
