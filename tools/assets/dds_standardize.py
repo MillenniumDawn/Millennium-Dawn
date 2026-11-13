@@ -19,6 +19,9 @@ The format for each folder is in model_standards.py. Three things are fixed:
 - Uncompressed GUI art is compressed only when the result passes the quality
   gate in model_standards.py, so smooth backgrounds shrink and icons stay sharp.
   Tech, focus and idea icons are never compressed.
+- The texture of a sprite with `transparencecheck = yes` is never compressed, and
+  a DXT1 or DXT5 one is rewritten as A8R8G8B8. The game logs "forbidden
+  compression" for those.
 
 Mipmaps then follow dds_mipmaps.py's rule. --max-size also halves model
 textures until their longer side fits. Without --write nothing is saved.
@@ -27,6 +30,7 @@ Needs numpy (`pip install --group analysis`) and Pillow (`--group runtime`).
 """
 
 import io
+import re
 import struct
 import sys
 from collections import Counter
@@ -52,6 +56,39 @@ DX10_BLOCKS = {
 # DXGI formats holding four 8-bit channels -> their order in the file.
 DX10_RAW = {87: "bgra", 91: "bgra", 88: "bgrx", 93: "bgrx", 28: "rgba", 29: "rgba"}
 BGRA_MASKS = (0xFF0000, 0xFF00, 0xFF, 0xFF000000)
+_TRANSPARENCY_CHECK = re.compile(r"transparencecheck\s*=\s*yes", re.IGNORECASE)
+_TEXTURE_FILE = re.compile(r'texturefile\s*=\s*"([^"]+)"', re.IGNORECASE)
+
+
+def _enclosing_block(text, at):
+    """The text of the innermost `{ }` block around a position."""
+    bounds = []
+    for step, opening, closing in ((-1, "{", "}"), (1, "}", "{")):
+        depth, index = 0, at
+        while 0 < index < len(text) - 1:
+            index += step
+            if text[index] == closing:
+                depth += 1
+            elif text[index] == opening:
+                if depth == 0:
+                    break
+                depth -= 1
+        bounds.append(index)
+    return text[bounds[0] : bounds[1] + 1]
+
+
+def transparency_checked(root):
+    """Lowercase texture paths of the sprites with `transparencecheck = yes`."""
+    found = set()
+    for path in sorted(Path(root, "interface").rglob("*.gfx")):
+        text = re.sub(r"#.*", "", path.read_text(encoding="utf-8", errors="replace"))
+        for match in _TRANSPARENCY_CHECK.finditer(text):
+            block = _enclosing_block(text, match.start())
+            found.update(
+                re.sub(r"[\\/]+", "/", name).lower()
+                for name in _TEXTURE_FILE.findall(block)
+            )
+    return found
 
 
 def _raw_header(width, height):
@@ -242,8 +279,11 @@ def _shrink(data, max_size):
     return as_blocks(small, texture.fourcc)
 
 
-def standardize(data, rel_path, max_size=None):
-    """The file as the standards want it. Returns (new bytes, what was done)."""
+def standardize(data, rel_path, max_size=None, keep_raw=False):
+    """The file as the standards want it. Returns (new bytes, what was done).
+
+    keep_raw marks the texture of a transparency-checked sprite.
+    """
     rule = model_standards.texture_format(rel_path)
     if rule == model_standards.FORMAT_KEEP:
         return data, []
@@ -256,14 +296,21 @@ def standardize(data, rel_path, max_size=None):
         if payload is not data:
             out = payload
             done.append("replaced the DX10 header")
-    elif _wants_blocks(rule, payload):
+        texture, _ = dds_mipmaps.read_header(out)
+        if keep_raw and texture.fourcc in (b"DXT1", b"DXT5"):
+            rgba, problem = _open_image(dds_mipmaps.strip(out, texture))
+            if rgba is None:
+                return data, [f"skipped: {problem}"]
+            out = as_raw(rgba)
+            done.append("uncompressed for transparencecheck")
+    elif _wants_blocks(rule, payload) and not keep_raw:
         out = as_blocks(payload, _fourcc_for(rule, payload))
         done.append("compressed, as the standards say")
     elif kind == "image":
         out = as_raw(payload)
         done.append("rewritten as A8R8G8B8")
     gated = rule != model_standards.FORMAT_ICON and not _wants_blocks(rule, payload)
-    if kind != "blocks" and gated:
+    if kind != "blocks" and gated and not keep_raw:
         trial = as_blocks(payload, _fourcc_for(rule, payload))
         if passes_gate(payload, trial):
             out = trial
@@ -290,11 +337,14 @@ def standardize(data, rel_path, max_size=None):
 def run(paths, root, fix=False, write=False, max_size=None):
     """Check the paths. Prints one line per file to change; returns totals."""
     totals = Counter()
+    checked = transparency_checked(root)
     for path in dds_mipmaps.collect(paths):
         rel_path = dds_mipmaps._relative(path, root)
         with open(path, "rb") as handle:
             data = handle.read()
-        result, done = standardize(data, rel_path, max_size)
+        result, done = standardize(
+            data, rel_path, max_size, rel_path.lower() in checked
+        )
         totals["checked"] += 1
         totals.update(done)
         if not done:
