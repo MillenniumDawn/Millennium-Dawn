@@ -183,6 +183,33 @@ setup_spending_law_tables = {
 	add_to_array = { global.health_workers = 0.70 }
 	add_to_array = { global.health_workers = 0.90 }
 	add_to_array = { global.health_workers = 1.10 }
+
+	# Migration bonus of the ruling party, indexed by ruling_party (0-23)
+	clear_array = global.immigration_government_factor
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = 0.05 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = 0.05 }
+	add_to_array = { global.immigration_government_factor = 0.05 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = 0 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
+	add_to_array = { global.immigration_government_factor = -0.05 }
 }
 
 # Effect: setup_spending_ladders
@@ -237,11 +264,42 @@ setup_spending_ladders = {
 	}
 }
 
+# Effect: set_money_stream_gate
+# Purpose: Sets money_stream_gate to 1 for countries whose original_tag has a country-specific income or expense stream (including dynamic civil-war tags), else 0
+# Keep the tag list a superset of every original_tag test in calculate_additional_income_rate and calculate_additional_expense_rate, plus the holders of the SAU pipeline transit ideas (YEM, JOR, FSA)
+set_money_stream_gate = {
+	set_variable = { money_stream_gate = 0 }
+	if = {
+		limit = {
+			OR = {
+				original_tag = ABK original_tag = ADS original_tag = AFG original_tag = ARM original_tag = BLR original_tag = BOL
+				original_tag = BOS original_tag = BOT original_tag = BUL original_tag = CAN original_tag = CHE original_tag = CHI
+				original_tag = COM original_tag = CRM original_tag = CUB original_tag = CYR original_tag = CZE original_tag = DEN
+				original_tag = EGY original_tag = ENG original_tag = FEZ original_tag = FRA original_tag = GEO original_tag = GER
+				original_tag = GRE original_tag = GRN original_tag = HEZ original_tag = HLS original_tag = HOL original_tag = HUN
+				original_tag = IRQ original_tag = ISR original_tag = ITA original_tag = JAP original_tag = KAZ original_tag = KHM
+				original_tag = KOR original_tag = KOS original_tag = LBA original_tag = LIC original_tag = MNT original_tag = NKO
+				original_tag = NKR original_tag = NRY original_tag = PER original_tag = QAT original_tag = RAJ original_tag = ROM
+				original_tag = SAU original_tag = SIN original_tag = SMA original_tag = SOO original_tag = SOV original_tag = SPR
+				original_tag = SWE original_tag = SYR original_tag = TAJ original_tag = TAT original_tag = TNZ original_tag = TRP
+				original_tag = TUR original_tag = UKR original_tag = USA original_tag = VEN original_tag = WAA
+				original_tag = YEM original_tag = JOR original_tag = FSA
+			}
+		}
+		set_variable = { money_stream_gate = 1 }
+	}
+}
+
 # Effect: ingame_update_setup
 # Purpose: Aggregates every income and expense stream, then refreshes the economy UI; the weekly economic tick
 ingame_update_setup = {
 	#National values (GDP, pop etc.) MUST BE FIRST
 	update_state_variables = yes
+
+	# Covers every country on its first tick, including dynamic civil-war tags
+	if = { limit = { NOT = { has_variable = money_stream_gate } }
+		set_money_stream_gate = yes
+	}
 
 	# create_dynamic_country (civil-war splits, copy_tag) can inherit an unowned capital, leaving capital_scope invalid; reassign it to an owned state.
 	if = {
@@ -313,11 +371,7 @@ expense_modifier_calculations = {
 	set_variable = {
 		common_money_modifier = {
 			value = inflation_multiplier
-			multiply = {
-				value = gdp_per_capita
-				multiply = @spending_laws_gdp_scaling
-				add = 1
-			}
+			multiply = gdp_scaling_modifier
 		}
 	}
 }
@@ -819,14 +873,16 @@ calculate_additional_income_rate = {
 		set_variable = { seigniorage_income_display = seigniorage_base }
 	}
 	# Additional incomes, set income amount as a variable (weekly gain)
-	if = { limit = { original_tag = GRN }
+	# Countries without a tag-specific stream (money_stream_gate = 0) stop at the empty first branch
+	if = { limit = { check_variable = { money_stream_gate = 0 } } }
+	else_if = { limit = { original_tag = GRN }
 		if = {
 			limit = { has_idea = GRN_idea_colonial_subsidy }
 			set_temp_variable = { GRN_colonial_subsidy = 0.300 }
 			add_to_variable = { additional_income_rate = GRN_colonial_subsidy }
 		}
 	}
-	if = { limit = { original_tag = HEZ }
+	else_if = { limit = { original_tag = HEZ }
 		if = {
 			limit = { has_idea = HEZ_our_cartels_in_south_america }
 			set_variable = { HEZ_south_american_cartels_income = 0.250 }
@@ -1088,8 +1144,9 @@ calculate_additional_income_rate = {
 	}
 
 	# Country Specific Income
+	if = { limit = { check_variable = { money_stream_gate = 0 } } }
 	# Abkhazia
-	if = {
+	else_if = {
 		limit = { original_tag = ABK }
 		if = {
 			limit = { has_idea = ABK_tourism1_idea }
@@ -2092,13 +2149,8 @@ calculate_additional_income_rate = {
 		}
 	}
 
-	if = {
-		limit = { has_idea = AZE_indian_ports_idea }
-		set_variable = { AZE_indian_ports_idea_gain = 0.25 }
-		add_to_variable = { additional_income_rate = AZE_indian_ports_idea_gain }
-	}
 	##Wa State
-	if = {
+	else_if = {
 		limit = {
 			original_tag = WAA
 			has_idea = WAA_Narcotics_Producer
@@ -2106,17 +2158,11 @@ calculate_additional_income_rate = {
 		set_variable = { additional_income_WAA_Narcotics_Producer = 0.08 }
 		add_to_variable = { additional_income_rate = additional_income_WAA_Narcotics_Producer }
 	}
-	# Gulf
-	if = {
-		limit = { has_idea = gulf_exploitation }
-		set_variable = { additional_income_gulf_exploitation = { value = gdp_total multiply = 0.0003 } }
-		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
-	}
 	# Saudi Arabia - Seperate from GULF
 	# === Saudi pipeline Additional Income (added by SAU pipeline feature) ===
 	# Each route must out-earn the transit fees charged for it in calculate_additional_expenses_rate,
 	# or opening it is a straight loss. The Turkey extension is billed there too, so it is paid here.
-	if = { limit = { original_tag = SAU }
+	else_if = { limit = { original_tag = SAU }
 		set_variable = { additional_income_SAU_pipeline_export = 0 }
 		# Arabian Sea route - fee 1.00 / 1.15 / 1.25
 		if = { limit = { has_idea = SAU_yemen_pipeline_t1 } add_to_variable = { additional_income_SAU_pipeline_export = 2.0 } }
@@ -2136,10 +2182,55 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SAU_pipeline_export }
 		}
 	}
+	# Greece
+	else_if = {
+		limit = { original_tag = GRE }
+		# Golden Visa Programme income
+		if = {
+			limit = { has_completed_focus = GRE_golden_visa_deals }
+			set_variable = {
+				GRE_golden_visa_income = {
+					value = gdp_total
+					multiply = {
+						value = corruption_level
+						subtract = 1
+						multiply = 0.00001
+						add = 0.00006
+					}
+				}
+			}
+			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
+		}
+	}
+	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
+	else_if = {
+		limit = {
+			original_tag = CHI
+			check_variable = { CHI_bri_loan_income > 0 }
+		}
+		set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
+		add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
+	}
+
+	if = {
+		limit = { has_idea = AZE_indian_ports_idea }
+		set_variable = { AZE_indian_ports_idea_gain = 0.25 }
+		add_to_variable = { additional_income_rate = AZE_indian_ports_idea_gain }
+	}
+	# Gulf
+	if = {
+		limit = { has_idea = gulf_exploitation }
+		set_variable = { additional_income_gulf_exploitation = { value = gdp_total multiply = 0.0003 } }
+		add_to_variable = { additional_income_rate = additional_income_gulf_exploitation }
+	}
 	# One entry per transit country the pipeline crosses; a host on more than one route is paid for each.
-	set_variable = { additional_income_SAU_pipeline_transit = 0 }
+	# Only YEM, JOR, SYR, FSA, IRQ and TUR can hold the transit ideas, and all six are in money_stream_gate.
+	if = { limit = { check_variable = { money_stream_gate = 1 } }
+		set_variable = { additional_income_SAU_pipeline_transit = 0 }
+	}
 	if = {
 		limit = {
+			check_variable = { money_stream_gate = 1 }
 			OR = {
 				has_idea = SAU_pipeline_transit_YEM_t1 has_idea = SAU_pipeline_transit_YEM_t2 has_idea = SAU_pipeline_transit_YEM_t3
 				has_idea = SAU_pipeline_transit_JOR_t1 has_idea = SAU_pipeline_transit_JOR_t2 has_idea = SAU_pipeline_transit_JOR_t3
@@ -2325,26 +2416,6 @@ calculate_additional_income_rate = {
 		CZE_HUN_gdp_stolen_calculation = yes
 		add_to_variable = { additional_income_rate = CZE_HUN_gain_income_trade }
 	}
-	# Greece
-	if = {
-		limit = { original_tag = GRE }
-		# Golden Visa Programme income
-		if = {
-			limit = { has_completed_focus = GRE_golden_visa_deals }
-			set_variable = {
-				GRE_golden_visa_income = {
-					value = gdp_total
-					multiply = {
-						value = corruption_level
-						subtract = 1
-						multiply = 0.00001
-						add = 0.00006
-					}
-				}
-			}
-			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
-		}
-	}
 	# Creditor income from holding Greek debt (runs on creditor nation scope)
 	if = {
 		limit = {
@@ -2353,16 +2424,6 @@ calculate_additional_income_rate = {
 		}
 		set_variable = { additional_income_GRE_creditor = GRE_interest_income_from_greece }
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
-	}
-
-	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
-	if = {
-		limit = {
-			original_tag = CHI
-			check_variable = { CHI_bri_loan_income > 0 }
-		}
-		set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
-		add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
 	}
 
 	# Energy Load Sharing Income
@@ -2564,9 +2625,6 @@ restructure_debt_after_financial_collapse = {
 # Effect: update_military_rate
 # Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
-	# Recreate the Array
-	resize_array = { array = array_defence_spend size = 10 value = 0 }
-
 	#A variable that stores the current military law the player has
 	set_temp_variable = { def_index = { value = military_law subtract = 1 clamp = { min = 0 max = 9 } } }
 
@@ -2587,21 +2645,16 @@ update_military_rate = {
 
 	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
 
-	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
-	for_each_loop = {
-		array = array_defence_spend
-		value = v
-		index = i
-		set_variable = {
-			array_defence_spend^i = {
-				value = num_of_naval_factories
-				add = military_factory_total
-				multiply = inflation_multiplier
-				multiply = global.spending_ladder_defence^i
-				divide = gdp_defence_modifier_industry
-				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
-				multiply = military_spending_cost_multiplier
-			}
+	#Cost of the active spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
+	set_temp_variable = {
+		defence_industry_cost = {
+			value = num_of_naval_factories
+			add = military_factory_total
+			multiply = inflation_multiplier
+			multiply = global.spending_ladder_defence^def_index
+			divide = gdp_defence_modifier_industry
+			multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+			multiply = military_spending_cost_multiplier
 		}
 	}
 
@@ -3022,7 +3075,7 @@ update_military_rate = {
 	set_temp_variable = { personnel_cost = { value = land_count add = navy_count add = airforce_count } }
 
 	#Values for breakdown tooltips
-	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 } }
+	set_variable = { defence_breakdown_industry = { value = defence_industry_cost multiply = 7 } }
 	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost } }
 	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 } }
 	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 } }
@@ -3063,24 +3116,43 @@ update_military_rate = {
 		}
 	}
 
-	#Add military industry and personnel costs together for the total
-	for_each_loop = {
-		array = array_defence_spend
-		index = i
-		value = v
-		#Industry cost + personnel, over 7 days, plus equipment upkeep
-		set_variable = {
-			array_defence_spend^i = {
-				value = array_defence_spend^i
-				add = personnel_cost
-				multiply = 7
-				add = equipment_operative_cost
-				clamp = { min = 0 max = @math_expressions_max }
-			}
+	#Industry cost + personnel, over 7 days, plus equipment upkeep
+	set_temp_variable = {
+		defence_level_cost = {
+			value = defence_industry_cost
+			add = personnel_cost
+			multiply = 7
+			add = equipment_operative_cost
+			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
 
-	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { defence_gain = { value = defence_level_cost add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
+
+	#Per-level costs are read only by the law tooltips
+	if = { limit = { is_ai = no }
+		resize_array = { array = array_defence_spend size = 10 value = 0 }
+		for_each_loop = {
+			array = array_defence_spend
+			index = i
+			value = v
+			set_variable = {
+				array_defence_spend^i = {
+					value = num_of_naval_factories
+					add = military_factory_total
+					multiply = inflation_multiplier
+					multiply = global.spending_ladder_defence^i
+					divide = gdp_defence_modifier_industry
+					multiply = 1.1
+					multiply = military_spending_cost_multiplier
+					add = personnel_cost
+					multiply = 7
+					add = equipment_operative_cost
+					clamp = { min = 0 max = @math_expressions_max }
+				}
+			}
+		}
+	}
 }
 
 # Effect: update_population_spending_rates
@@ -3127,34 +3199,37 @@ update_population_spending_rates = {
 		}
 	}
 
-	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
-	resize_array = { array = array_security_spend size = 5 value = 0 }
-	resize_array = { array = array_health_spend size = 6 value = 0 }
-	resize_array = { array = array_social_spend size = 6 value = 0 }
-
-	for_each_loop = {
-		array = array_social_spend
-		index = i
-		value = v
-
-		set_variable = { array_health_spend^i = { value = health_spending_base multiply = global.spending_ladder_health^i } }
-		set_variable = { array_social_spend^i = { value = welfare_spending_base multiply = global.spending_ladder_social^i } }
-		if = {
-			limit = { check_variable = { i < 5 } }
-			set_variable = { array_bureaucracy_spend^i = { value = bureaucracy_spending_base multiply = global.spending_ladder_standard^i } }
-			set_variable = { array_security_spend^i = { value = security_spending_base multiply = global.spending_ladder_standard^i } }
-		}
-	}
-
 	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { security_index = { value = police_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
 	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
 
-	set_variable = { bureaucracy_gain = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
-	set_variable = { security_gain = { value = array_security_spend^security_index clamp = { min = 0 max = @math_expressions_max } } }
-	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
-	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { bureaucracy_gain = { value = bureaucracy_spending_base multiply = global.spending_ladder_standard^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { security_gain = { value = security_spending_base multiply = global.spending_ladder_standard^security_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { health_gain = { value = health_spending_base multiply = global.spending_ladder_health^health_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { welfare_gain = { value = welfare_spending_base multiply = global.spending_ladder_social^social_index clamp = { min = 0 max = @math_expressions_max } } }
+
+	#Per-level costs are read only by the law tooltips
+	if = { limit = { is_ai = no }
+		resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
+		resize_array = { array = array_security_spend size = 5 value = 0 }
+		resize_array = { array = array_health_spend size = 6 value = 0 }
+		resize_array = { array = array_social_spend size = 6 value = 0 }
+
+		for_each_loop = {
+			array = array_social_spend
+			index = i
+			value = v
+
+			set_variable = { array_health_spend^i = { value = health_spending_base multiply = global.spending_ladder_health^i } }
+			set_variable = { array_social_spend^i = { value = welfare_spending_base multiply = global.spending_ladder_social^i } }
+			if = {
+				limit = { check_variable = { i < 5 } }
+				set_variable = { array_bureaucracy_spend^i = { value = bureaucracy_spending_base multiply = global.spending_ladder_standard^i } }
+				set_variable = { array_security_spend^i = { value = security_spending_base multiply = global.spending_ladder_standard^i } }
+			}
+		}
+	}
 }
 
 # Effect: update_education_rate
@@ -3176,9 +3251,6 @@ update_education_rate = {
 	set_temp_variable = { education_cost_multiplier = { value = 1 add = modifier@education_cost_multiplier_modifier add = research_slot_modifier multiply = common_money_modifier } }
 	set_variable = { education_cost_multiplier_display = { value = education_cost_multiplier subtract = 1 } }
 	multiply_temp_variable = { education_cost_multiplier = education_base_cost }
-
-	# Recreate the Array
-	resize_array = { array = array_education_spend size = 5 value = 0 }
 
 	set_temp_variable = { facilities_cost = 0 }
 	if = {
@@ -3235,29 +3307,43 @@ update_education_rate = {
 
 	set_variable = { THIS.total_facilities_spending_display_var = facilities_cost }
 
-	#Calculate the base cost of each education level (pop * cost multiplier + facilities), scaled by the per-level multiplier ladder
+	#Set which spending level the country is at
+	set_temp_variable = { education_index = { value = education_law subtract = 1 clamp = { min = 0 max = 4 } } }
+
+	#Cost of the active level (pop * cost multiplier + facilities), scaled by the per-level multiplier ladder
 	# Update facility display var if you change the ladder!
-	for_each_loop = {
-		array = array_education_spend
-		index = i
-		value = v
-		set_variable = {
-			array_education_spend^i = {
-				value = population_total #Unit 100 000
-				multiply = education_cost_multiplier
-				add = total_facilities_spending_display_var
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_education^i
+	set_variable = {
+		education_gain = {
+			value = population_total #Unit 100 000
+			multiply = education_cost_multiplier
+			add = total_facilities_spending_display_var
+			clamp = { min = 0 max = @math_expressions_max }
+			multiply = global.spending_ladder_education^education_index
+		}
+	}
+	clamp_variable = { var = education_gain min = 0 max = @math_expressions_max }
+
+	#Per-level costs are read only by the law tooltips
+	if = { limit = { is_ai = no }
+		resize_array = { array = array_education_spend size = 5 value = 0 }
+		for_each_loop = {
+			array = array_education_spend
+			index = i
+			value = v
+			set_variable = {
+				array_education_spend^i = {
+					value = population_total #Unit 100 000
+					multiply = education_cost_multiplier
+					add = total_facilities_spending_display_var
+					clamp = { min = 0 max = @math_expressions_max }
+					multiply = global.spending_ladder_education^i
+				}
 			}
 		}
 	}
 
-	#Set which spending level the country is at
-	set_temp_variable = { education_index = { value = education_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { edu_facilities_mult = { value = education_index multiply = 0.5 add = 1 } }
 	multiply_variable = { THIS.total_facilities_spending_display_var = edu_facilities_mult }
-
-	set_variable = { education_gain = { value = array_education_spend^education_index clamp = { min = 0 max = @math_expressions_max } } }
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
 }
 
@@ -3399,7 +3485,6 @@ calculate_additional_expense_rate = {
 		}
 
 		# NOTE: For now the AI do not lease factories. Do not count these.
-		set_temp_variable = { inflation_on_leases = { value = 1 add = modifier@inflation_cost_multiplier_modifier } }
 		if = {
 			limit = {
 				check_variable = { leased_civilian_factories > 0 }
@@ -3408,7 +3493,7 @@ calculate_additional_expense_rate = {
 					value = lease_factories_cumulative_cost
 					multiply = gdp_per_capita
 					multiply = 0.001
-					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_on_leases }
+					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_multiplier }
 					multiply = leased_civilian_factories
 					divide = leased_factories
 				} }
@@ -3420,7 +3505,7 @@ calculate_additional_expense_rate = {
 					value = lease_factories_cumulative_cost
 					multiply = gdp_per_capita
 					multiply = 0.001
-					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_on_leases }
+					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_multiplier }
 					multiply = leased_military_factories
 					divide = leased_factories
 				} }
@@ -3432,7 +3517,7 @@ calculate_additional_expense_rate = {
 					value = lease_factories_cumulative_cost
 					multiply = gdp_per_capita
 					multiply = 0.001
-					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_on_leases }
+					add = { value = lease_factories_cumulative_cost multiply = 0.1 multiply = inflation_multiplier }
 					multiply = leased_dockyards
 					divide = leased_factories
 				} }
@@ -3673,7 +3758,8 @@ calculate_additional_expense_rate = {
 	}
 
 	# Country Specific
-	if = {
+	if = { limit = { check_variable = { money_stream_gate = 0 } } }
+	else_if = {
 		limit = { original_tag = NKR }
 		if = {
 			limit = { has_idea = NKR_marz_arm }
@@ -4295,6 +4381,9 @@ update_display = {
 			add = united_nations_expenses
 		}
 	}
+
+	# Potential expense always counts debt service; the displayed expense skips it while repayment is paused
+	set_variable = { potential_expense = { value = display_expense add = debt_rate } }
 	if = {
 		limit = {
 			NOT = {
@@ -4335,18 +4424,6 @@ update_display = {
 		}
 	}
 
-	# Adjust Potential Expense to Include the Debt Rate
-	set_variable = { potential_expense = display_expense }
-	if = {
-		limit = {
-			OR = {
-				has_active_mission = cheap_loan_from_the_imf_mission
-				has_country_flag = paused_debt_repayment
-			}
-		}
-		add_to_variable = { potential_expense = debt_rate }
-	}
-
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 	if = {
 		limit = {
@@ -4371,7 +4448,7 @@ update_display = {
 	# Share of income paid as interest, read by ai_fiscal_last_resort_open
 	set_variable = { debt_service_share = { value = debt_rate divide = { value = potential_income clamp = { min = 0.001 max = 100000000 } } } }
 
-	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
+	if = { limit = { is_ai = no is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
 	}
 }
@@ -4546,42 +4623,6 @@ update_state_variables = {
 			}
 		}
 		set_variable = {
-			nuclear_facility_total = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@nuclear_facility
-				}
-			}
-		}
-		set_variable = {
-			air_facility_total = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@air_facility
-				}
-			}
-		}
-		set_variable = {
-			land_facility_total = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@land_facility
-				}
-			}
-		}
-		set_variable = {
-			naval_facility_total = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@naval_facility
-				}
-			}
-		}
-		set_variable = {
 			microchip_plant_total = {
 				value = 0
 				every_collection = {
@@ -4710,26 +4751,8 @@ update_state_variables = {
 			}
 		}
 
-		set_variable = {
-			minimum_renewable_energy_var_base = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					if = {
-						limit = { value = building_level@renewable_energy_infra greater_than = 0 }
-						add = {
-							value = building_level@renewable_energy_infra
-							multiply = 0.5
-							multiply = min_renewable_energy_var
-							multiply = {
-								value = 1
-								add = THIS.modifier@state_renewable_energy_generation_modifier
-							}
-						}
-					}
-				}
-			}
-		}
+		# min_renewable_energy_var is always 0
+		set_variable = { minimum_renewable_energy_var_base = 0 }
 
 		set_variable = {
 			maximum_renewable_energy_var_base = {
@@ -4818,27 +4841,6 @@ update_state_variables = {
 	calculate_gdp = yes
 }
 
-# Effect: register_sector_demand
-# Purpose: Adds one sector's job demand to the totals and to its priority level for solve_workforce_priority_share
-# Parameters:
-# - sector_priority: 1-10
-# - sector_max_workers: millions
-register_sector_demand = {
-	add_to_temp_variable = { workforce_demand_by_priority^sector_priority = sector_max_workers }
-	add_to_temp_variable = { open_demand = sector_max_workers }
-	set_temp_variable = { sector_weight = { value = sector_max_workers multiply = sector_priority } }
-	add_to_temp_variable = { open_weight = sector_weight }
-	# Sector counts only feed the fulfillment forecast, which only players see
-	if = {
-		limit = {
-			is_ai = no
-			check_variable = { sector_max_workers > 0 }
-		}
-		add_to_temp_variable = { workforce_sectors_by_priority^sector_priority = 1 }
-		add_to_temp_variable = { open_priority_sum = sector_priority }
-	}
-}
-
 # Effect: solve_workforce_priority_share
 # Purpose: Finds workforce_priority_share, the fulfillment each priority point buys (fulfillment = priority * share, max 100%).
 #          Levels that reach 100% take only the jobs they have, and the workers left over go to the lower levels.
@@ -4846,14 +4848,13 @@ register_sector_demand = {
 # Output (player): workforce_fulfillment_per_growth, the average fulfillment gained per 100% of population growth
 # Parameters:
 # - workforce_total: workers available
-# - open_demand (set by register_sector_demand): jobs still open
-# - open_weight (set by register_sector_demand): demand * priority
-# - open_priority_sum (set by register_sector_demand): priority total
-# - workforce_demand_by_priority (set by register_sector_demand): jobs per priority level
-# - workforce_sectors_by_priority (set by register_sector_demand): sectors per priority level
+# - open_demand (set by calculate_gdp): jobs still open
+# - open_weight (set by calculate_gdp): demand * priority
+# - open_priority_sum (set by calculate_gdp): priority total
+# - workforce_demand_by_priority (set by calculate_gdp): jobs per priority level
+# - workforce_sectors_by_priority (set by calculate_gdp): sectors per priority level
 solve_workforce_priority_share = {
-	set_temp_variable = { workforce_pool = workforce_total }
-	clamp_temp_variable = { var = workforce_pool min = 0 max = @math_expressions_max }
+	set_temp_variable = { workforce_pool = { value = workforce_total clamp = { min = 0 max = @math_expressions_max } } }
 
 	# Enough workers for every job: all sectors are full and priorities do not matter
 	set_temp_variable = { workforce_priority_share = 1 }
@@ -4880,13 +4881,11 @@ solve_workforce_priority_share = {
 				set_temp_variable = { share_found = 1 }
 			}
 			else = {
-				subtract_from_temp_variable = { workforce_remaining = workforce_demand_by_priority^priority_level }
-				set_temp_variable = { level_weight = workforce_demand_by_priority^priority_level }
-				multiply_temp_variable = { level_weight = priority_level }
-				subtract_from_temp_variable = { open_weight = level_weight }
+				set_temp_variable = { level_jobs = workforce_demand_by_priority^priority_level }
+				subtract_from_temp_variable = { workforce_remaining = level_jobs }
+				set_temp_variable = { open_weight = { value = open_weight subtract = { value = level_jobs multiply = priority_level } } }
 				set_temp_variable = { level_sectors = workforce_sectors_by_priority^priority_level }
-				multiply_temp_variable = { level_sectors = priority_level }
-				subtract_from_temp_variable = { open_priority_sum = level_sectors }
+				set_temp_variable = { open_priority_sum = { value = open_priority_sum subtract = { value = level_sectors multiply = priority_level } } }
 			}
 		}
 		# Fulfillment of the sectors still short of workers moves by priority * (extra workers / open_weight)
@@ -4905,30 +4904,6 @@ solve_workforce_priority_share = {
 	else_if = {
 		limit = { is_ai = no }
 		set_variable = { workforce_fulfillment_per_growth = 0 }
-	}
-}
-
-# Effect: assign_sector_workers
-# Purpose: Gives one sector its workers from workforce_priority_share and takes them out of workforce_total
-# Output (temp): sector_workers (millions), sector_fulfillment (1 for a sector with no jobs)
-# Parameters:
-# - sector_priority: 1-10
-# - sector_max_workers: millions
-# - workforce_priority_share (set by solve_workforce_priority_share): fulfillment per priority point
-assign_sector_workers = {
-	set_temp_variable = { sector_workers = 0 }
-	set_temp_variable = { sector_fulfillment = 1 }
-	if = {
-		limit = { check_variable = { sector_max_workers > 0 } }
-		set_temp_variable = {
-			sector_fulfillment = {
-				value = sector_priority
-				multiply = workforce_priority_share
-				clamp = { min = 0 max = 1 }
-			}
-		}
-		set_temp_variable = { sector_workers = { value = sector_max_workers multiply = sector_fulfillment } }
-		subtract_from_temp_variable = { workforce_total = sector_workers }
 	}
 }
 
@@ -4956,7 +4931,6 @@ calculate_gdp = {
 		}
 
 		set_variable = { last_quarter_gdp_total = gdp_total }
-		add_to_array = { quarterly_gdp_growth_rate = last_quarter_gdp_growth_rate }
 
 		#GDP/C Quarterly Growth
 		set_variable = {
@@ -4969,7 +4943,6 @@ calculate_gdp = {
 		}
 
 		set_variable = { last_quarter_gdpc_total = gdp_per_capita }
-		add_to_array = { quarterly_gdpc_growth_rate = last_quarter_gdpc_growth_rate }
 
 		set_country_flag = { flag = calculated_quarterly_gdp days = 85 value = 1 }
 
@@ -4995,10 +4968,13 @@ calculate_gdp = {
 
 	# Sets the total workforce displays
 	set_variable = { workforce_total_display = workforce_total }
-	set_variable = {
-		workforce_total_percentage_display = {
-			value = workforce_total_display
-			divide = { value = population_total_m clamp = { min = 0.001 max = @math_expressions_max } }
+	if = {
+		limit = { is_ai = no }
+		set_variable = {
+			workforce_total_percentage_display = {
+				value = workforce_total_display
+				divide = { value = population_total_m clamp = { min = 0.001 max = @math_expressions_max } }
+			}
 		}
 	}
 
@@ -5122,30 +5098,14 @@ calculate_gdp = {
 	}
 	subtract_from_temp_variable = { workforce_total = agriculture_workers }
 
-	# Factories & Offices Employment (all values in millions)
-	set_temp_variable = { workers_per_civ_fac = 0.206 } #millions of people who depend from these jobs, not just direct workers but including retail, services, food industry
-	set_temp_variable = { workers_per_mil_fac = 0.0188 }
-	set_temp_variable = { workers_per_dockyard = 0.0188 }
-	set_temp_variable = { workers_per_office = 0.473 }
-	set_temp_variable = { workers_per_agriculture_district = 0.188 }
-	set_temp_variable = { workers_per_microchip_plant = 0.0375 }
-	set_temp_variable = { workers_per_composite_plant = 0.0375 }
-	set_temp_variable = { workers_per_synthetic_refinery = 0.184 }
-	set_temp_variable = { workers_per_nuclear_reactor = 0.115 }
-	set_temp_variable = { workers_per_fossil_powerplant = 0.0075 }
-	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
-	set_temp_variable = { workers_per_internet_station = 0.012 }
-	set_temp_variable = { workers_per_rail_terminal = 0.015 }
-
 	# Workforce allocation by priority
+	# Base workers per building are millions of people who depend on these jobs, including retail, services and food industry
 	# Each sector asks for max_workers_in_<sector> and has a priority from 1 to 10.
 	# Fulfillment is priority * workforce_priority_share, capped at 100%, so a priority 10 sector is staffed 10 times as readily as a priority 1 sector.
 	clear_temp_array = workforce_demand_by_priority
 	resize_temp_array = { array = workforce_demand_by_priority size = 11 }
 	clear_temp_array = workforce_sectors_by_priority
 	resize_temp_array = { array = workforce_sectors_by_priority size = 11 }
-	set_temp_variable = { open_demand = 0 }
-	set_temp_variable = { open_weight = 0 }
 	set_temp_variable = { open_priority_sum = 0 }
 
 	# Power Plants
@@ -5153,7 +5113,7 @@ calculate_gdp = {
 	set_variable = {
 		max_workers_in_nuclear_reactors = {
 			value = nuclear_reactors
-			multiply = workers_per_nuclear_reactor
+			multiply = 0.115
 			multiply = {
 				value = 1
 				add = modifier@buildings_worker_requirement_modifier
@@ -5161,15 +5121,12 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = nuclear_reactor_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_nuclear_reactors }
-	register_sector_demand = yes
 
 	# Fossil Power Plants
 	set_variable = {
 		max_workers_in_fossil_powerplants = {
 			value = number_of_fossil_pps
-			multiply = workers_per_fossil_powerplant
+			multiply = 0.0075
 			multiply = {
 				value = 1
 				add = modifier@buildings_worker_requirement_modifier
@@ -5178,15 +5135,12 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = fossil_powerplant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_fossil_powerplants }
-	register_sector_demand = yes
 
 	# Renewable Energy Infrastructure
 	set_variable = {
 		max_workers_in_renewable_energy = {
 			value = renewable_energy_infra
-			multiply = workers_per_renewable_energy
+			multiply = 0.0225
 			multiply = {
 				value = 1
 				add = modifier@buildings_worker_requirement_modifier
@@ -5195,9 +5149,6 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = renewable_energy_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_renewable_energy }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		mil_facs_worker_requirement_multiplier = {
@@ -5207,8 +5158,8 @@ calculate_gdp = {
 			clamp = { min = 0.10 max = @math_expressions_max }
 		}
 	}
-	set_temp_variable = { workers_per_mil_fac = { value = workers_per_mil_fac multiply = mil_facs_worker_requirement_multiplier } }
-	set_temp_variable = { workers_per_dockyard = { value = workers_per_dockyard multiply = mil_facs_worker_requirement_multiplier } }
+	set_temp_variable = { workers_per_mil_fac = { value = 0.0188 multiply = mil_facs_worker_requirement_multiplier } }
+	set_temp_variable = { workers_per_dockyard = { value = 0.0188 multiply = mil_facs_worker_requirement_multiplier } }
 	set_variable = { workers_per_mil_fac_display = { value = workers_per_mil_fac multiply = 1000 } }
 	set_variable = { workers_per_dockyard_display = { value = workers_per_dockyard multiply = 1000 } }
 
@@ -5218,9 +5169,6 @@ calculate_gdp = {
 			multiply = workers_per_mil_fac
 		}
 	}
-	set_temp_variable = { sector_priority = military_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_mil_facs }
-	register_sector_demand = yes
 
 	set_variable = {
 		max_workers_in_dockyards = {
@@ -5228,9 +5176,6 @@ calculate_gdp = {
 			multiply = workers_per_dockyard
 		}
 	}
-	set_temp_variable = { sector_priority = naval_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_dockyards }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		worker_requirement_gdp_multiplier = {
@@ -5239,11 +5184,14 @@ calculate_gdp = {
 			add = 1
 		}
 	}
-	set_variable = { worker_requirement_gdp_multiplier_display = { value = worker_requirement_gdp_multiplier subtract = 1 } }
+	if = {
+		limit = { is_ai = no }
+		set_variable = { worker_requirement_gdp_multiplier_display = { value = worker_requirement_gdp_multiplier subtract = 1 } }
+	}
 
 	set_temp_variable = {
 		workers_per_civ_fac = {
-			value = workers_per_civ_fac
+			value = 0.206
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5261,13 +5209,10 @@ calculate_gdp = {
 			multiply = workers_per_civ_fac
 		}
 	}
-	set_temp_variable = { sector_priority = civilian_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_civ_facs }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_office = {
-			value = workers_per_office
+			value = 0.473
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5285,13 +5230,10 @@ calculate_gdp = {
 			multiply = workers_per_office
 		}
 	}
-	set_temp_variable = { sector_priority = office_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_offices }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_agriculture_district = {
-			value = workers_per_agriculture_district
+			value = 0.188
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5309,13 +5251,10 @@ calculate_gdp = {
 			multiply = workers_per_agriculture_district
 		}
 	}
-	set_temp_variable = { sector_priority = agriculture_district_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_agriculture_district }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_microchip_plant = {
-			value = workers_per_microchip_plant
+			value = 0.0375
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5333,13 +5272,10 @@ calculate_gdp = {
 			multiply = workers_per_microchip_plant
 		}
 	}
-	set_temp_variable = { sector_priority = microchip_plant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_microchip_plant }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_composite_plant = {
-			value = workers_per_composite_plant
+			value = 0.0375
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5357,13 +5293,10 @@ calculate_gdp = {
 			multiply = workers_per_composite_plant
 		}
 	}
-	set_temp_variable = { sector_priority = composite_plant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_composite_plant }
-	register_sector_demand = yes
 
 	set_temp_variable = {
 		workers_per_synthetic_refinery = {
-			value = workers_per_synthetic_refinery
+			value = 0.184
 			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
@@ -5381,15 +5314,12 @@ calculate_gdp = {
 			multiply = workers_per_synthetic_refinery
 		}
 	}
-	set_temp_variable = { sector_priority = synthetic_refinery_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_synthetic_refinery }
-	register_sector_demand = yes
 
 	# Internet Stations
 	set_variable = {
 		max_workers_in_internet_stations = {
 			value = internet_station_total
-			multiply = workers_per_internet_station
+			multiply = 0.012
 			multiply = {
 				value = 1
 				add = modifier@buildings_worker_requirement_modifier
@@ -5398,15 +5328,12 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = internet_station_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_internet_stations }
-	register_sector_demand = yes
 
 	# Rail Terminals
 	set_variable = {
 		max_workers_in_rail_terminals = {
 			value = rail_terminal_total
-			multiply = workers_per_rail_terminal
+			multiply = 0.015
 			multiply = {
 				value = 1
 				add = modifier@buildings_worker_requirement_modifier
@@ -5415,9 +5342,6 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = rail_terminal_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_rail_terminals }
-	register_sector_demand = yes
 
 	# Healthcare Sector
 	set_temp_variable = { healthcare_workforce_level_scalar = global.health_workers^health_law }
@@ -5433,9 +5357,6 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_temp_variable = { sector_priority = healthcare_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_healthcare }
-	register_sector_demand = yes
 
 	# Bureaucracy: civil servants required by the government administration level
 	set_temp_variable = { workers_per_bureau = global.bureau_workers^bureau_law }
@@ -5446,39 +5367,172 @@ calculate_gdp = {
 			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
-	set_temp_variable = { sector_priority = bureaucracy_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_bureaucracy }
-	register_sector_demand = yes
+
+	# Register every sector's jobs: jobs per priority level, total open jobs and total open weight (jobs * priority)
+	add_to_temp_variable = { workforce_demand_by_priority^nuclear_reactor_priority = max_workers_in_nuclear_reactors }
+	add_to_temp_variable = { workforce_demand_by_priority^fossil_powerplant_priority = max_workers_in_fossil_powerplants }
+	add_to_temp_variable = { workforce_demand_by_priority^renewable_energy_priority = max_workers_in_renewable_energy }
+	add_to_temp_variable = { workforce_demand_by_priority^military_factory_priority = max_workers_in_mil_facs }
+	add_to_temp_variable = { workforce_demand_by_priority^naval_factory_priority = max_workers_in_dockyards }
+	add_to_temp_variable = { workforce_demand_by_priority^civilian_factory_priority = max_workers_in_civ_facs }
+	add_to_temp_variable = { workforce_demand_by_priority^office_priority = max_workers_in_offices }
+	add_to_temp_variable = { workforce_demand_by_priority^agriculture_district_priority = max_workers_in_agriculture_district }
+	add_to_temp_variable = { workforce_demand_by_priority^microchip_plant_priority = max_workers_in_microchip_plant }
+	add_to_temp_variable = { workforce_demand_by_priority^composite_plant_priority = max_workers_in_composite_plant }
+	add_to_temp_variable = { workforce_demand_by_priority^synthetic_refinery_priority = max_workers_in_synthetic_refinery }
+	add_to_temp_variable = { workforce_demand_by_priority^internet_station_priority = max_workers_in_internet_stations }
+	add_to_temp_variable = { workforce_demand_by_priority^rail_terminal_priority = max_workers_in_rail_terminals }
+	add_to_temp_variable = { workforce_demand_by_priority^healthcare_priority = max_workers_in_healthcare }
+	add_to_temp_variable = { workforce_demand_by_priority^bureaucracy_priority = max_workers_in_bureaucracy }
+	set_temp_variable = {
+		open_demand = {
+			value = max_workers_in_nuclear_reactors
+			add = max_workers_in_fossil_powerplants
+			add = max_workers_in_renewable_energy
+			add = max_workers_in_mil_facs
+			add = max_workers_in_dockyards
+			add = max_workers_in_civ_facs
+			add = max_workers_in_offices
+			add = max_workers_in_agriculture_district
+			add = max_workers_in_microchip_plant
+			add = max_workers_in_composite_plant
+			add = max_workers_in_synthetic_refinery
+			add = max_workers_in_internet_stations
+			add = max_workers_in_rail_terminals
+			add = max_workers_in_healthcare
+			add = max_workers_in_bureaucracy
+		}
+	}
+	set_temp_variable = {
+		open_weight = {
+			value = 0
+			add = { value = max_workers_in_nuclear_reactors multiply = nuclear_reactor_priority }
+			add = { value = max_workers_in_fossil_powerplants multiply = fossil_powerplant_priority }
+			add = { value = max_workers_in_renewable_energy multiply = renewable_energy_priority }
+			add = { value = max_workers_in_mil_facs multiply = military_factory_priority }
+			add = { value = max_workers_in_dockyards multiply = naval_factory_priority }
+			add = { value = max_workers_in_civ_facs multiply = civilian_factory_priority }
+			add = { value = max_workers_in_offices multiply = office_priority }
+			add = { value = max_workers_in_agriculture_district multiply = agriculture_district_priority }
+			add = { value = max_workers_in_microchip_plant multiply = microchip_plant_priority }
+			add = { value = max_workers_in_composite_plant multiply = composite_plant_priority }
+			add = { value = max_workers_in_synthetic_refinery multiply = synthetic_refinery_priority }
+			add = { value = max_workers_in_internet_stations multiply = internet_station_priority }
+			add = { value = max_workers_in_rail_terminals multiply = rail_terminal_priority }
+			add = { value = max_workers_in_healthcare multiply = healthcare_priority }
+			add = { value = max_workers_in_bureaucracy multiply = bureaucracy_priority }
+		}
+	}
+	# Sector counts only feed the fulfillment forecast, which only players see
+	if = {
+		limit = { is_ai = no }
+		if = { limit = { check_variable = { max_workers_in_nuclear_reactors > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^nuclear_reactor_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = nuclear_reactor_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_fossil_powerplants > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^fossil_powerplant_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = fossil_powerplant_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_renewable_energy > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^renewable_energy_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = renewable_energy_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_mil_facs > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^military_factory_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = military_factory_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_dockyards > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^naval_factory_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = naval_factory_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_civ_facs > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^civilian_factory_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = civilian_factory_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_offices > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^office_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = office_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_agriculture_district > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^agriculture_district_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = agriculture_district_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_microchip_plant > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^microchip_plant_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = microchip_plant_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_composite_plant > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^composite_plant_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = composite_plant_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_synthetic_refinery > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^synthetic_refinery_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = synthetic_refinery_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_internet_stations > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^internet_station_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = internet_station_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_rail_terminals > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^rail_terminal_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = rail_terminal_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_healthcare > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^healthcare_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = healthcare_priority }
+		}
+		if = { limit = { check_variable = { max_workers_in_bureaucracy > 0 } }
+			add_to_temp_variable = { workforce_sectors_by_priority^bureaucracy_priority = 1 }
+			add_to_temp_variable = { open_priority_sum = bureaucracy_priority }
+		}
+	}
 
 	# Share out the workforce, then give every sector its workers
 	solve_workforce_priority_share = yes
 
-	set_temp_variable = { sector_priority = nuclear_reactor_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_nuclear_reactors }
-	assign_sector_workers = yes
-	set_variable = { workers_in_nuclear_reactors = sector_workers }
-	set_variable = { nuclear_reactors_manpower_fulfillment = sector_fulfillment }
+	# Fulfillment is priority * share, capped at 100%; a sector with no jobs stays at 100%
+	set_variable = {
+		nuclear_reactors_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_nuclear_reactors greater_than = 0 }
+				multiply = nuclear_reactor_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_nuclear_reactors = { value = max_workers_in_nuclear_reactors multiply = nuclear_reactors_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = fossil_powerplant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_fossil_powerplants }
-	assign_sector_workers = yes
-	set_variable = { workers_in_fossil_powerplants = sector_workers }
-	set_variable = { fossil_powerplants_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		fossil_powerplants_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_fossil_powerplants greater_than = 0 }
+				multiply = fossil_powerplant_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_fossil_powerplants = { value = max_workers_in_fossil_powerplants multiply = fossil_powerplants_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = renewable_energy_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_renewable_energy }
-	assign_sector_workers = yes
-	set_variable = { workers_in_renewable_energy = sector_workers }
-	set_variable = { renewable_energy_infra_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		renewable_energy_infra_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_renewable_energy greater_than = 0 }
+				multiply = renewable_energy_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_renewable_energy = { value = max_workers_in_renewable_energy multiply = renewable_energy_infra_manpower_fulfillment } }
 	set_variable = {
 		state_renewable_energy_var = {
 			value = state_renewable_energy_var
-			multiply = renewable_energy_infra_manpower_fulfillment
-		}
-	}
-	set_variable = {
-		minimum_renewable_energy_var_base = {
-			value = minimum_renewable_energy_var_base
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
@@ -5489,79 +5543,186 @@ calculate_gdp = {
 		}
 	}
 
-	set_temp_variable = { sector_priority = military_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_mil_facs }
-	assign_sector_workers = yes
-	set_variable = { workers_in_mil_facs = sector_workers }
-	set_variable = { military_factories_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		military_factories_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_mil_facs greater_than = 0 }
+				multiply = military_factory_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_mil_facs = { value = max_workers_in_mil_facs multiply = military_factories_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = naval_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_dockyards }
-	assign_sector_workers = yes
-	set_variable = { workers_in_dockyards = sector_workers }
-	set_variable = { naval_factories_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		naval_factories_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_dockyards greater_than = 0 }
+				multiply = naval_factory_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_dockyards = { value = max_workers_in_dockyards multiply = naval_factories_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = civilian_factory_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_civ_facs }
-	assign_sector_workers = yes
-	set_variable = { workers_in_civ_facs = sector_workers }
-	set_variable = { civilian_factories_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		civilian_factories_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_civ_facs greater_than = 0 }
+				multiply = civilian_factory_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_civ_facs = { value = max_workers_in_civ_facs multiply = civilian_factories_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = office_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_offices }
-	assign_sector_workers = yes
-	set_variable = { workers_in_offices = sector_workers }
-	set_variable = { offices_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		offices_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_offices greater_than = 0 }
+				multiply = office_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_offices = { value = max_workers_in_offices multiply = offices_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = agriculture_district_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_agriculture_district }
-	assign_sector_workers = yes
-	set_variable = { workers_in_agriculture_district = sector_workers }
-	set_variable = { agriculture_district_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		agriculture_district_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_agriculture_district greater_than = 0 }
+				multiply = agriculture_district_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_agriculture_district = { value = max_workers_in_agriculture_district multiply = agriculture_district_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = microchip_plant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_microchip_plant }
-	assign_sector_workers = yes
-	set_variable = { workers_in_microchip_plant = sector_workers }
-	set_variable = { microchip_plant_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		microchip_plant_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_microchip_plant greater_than = 0 }
+				multiply = microchip_plant_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_microchip_plant = { value = max_workers_in_microchip_plant multiply = microchip_plant_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = composite_plant_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_composite_plant }
-	assign_sector_workers = yes
-	set_variable = { workers_in_composite_plant = sector_workers }
-	set_variable = { composite_plant_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		composite_plant_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_composite_plant greater_than = 0 }
+				multiply = composite_plant_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_composite_plant = { value = max_workers_in_composite_plant multiply = composite_plant_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = synthetic_refinery_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_synthetic_refinery }
-	assign_sector_workers = yes
-	set_variable = { workers_in_synthetic_refinery = sector_workers }
-	set_variable = { synthetic_refinery_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		synthetic_refinery_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_synthetic_refinery greater_than = 0 }
+				multiply = synthetic_refinery_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_synthetic_refinery = { value = max_workers_in_synthetic_refinery multiply = synthetic_refinery_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = internet_station_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_internet_stations }
-	assign_sector_workers = yes
-	set_variable = { workers_in_internet_stations = sector_workers }
-	set_variable = { internet_stations_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		internet_stations_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_internet_stations greater_than = 0 }
+				multiply = internet_station_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_internet_stations = { value = max_workers_in_internet_stations multiply = internet_stations_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = rail_terminal_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_rail_terminals }
-	assign_sector_workers = yes
-	set_variable = { workers_in_rail_terminals = sector_workers }
-	set_variable = { rail_terminal_manpower_fulfillment = sector_fulfillment }
+	set_variable = {
+		rail_terminal_manpower_fulfillment = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_rail_terminals greater_than = 0 }
+				multiply = rail_terminal_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_rail_terminals = { value = max_workers_in_rail_terminals multiply = rail_terminal_manpower_fulfillment } }
 
-	set_temp_variable = { sector_priority = healthcare_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_healthcare }
-	assign_sector_workers = yes
-	set_variable = { workers_in_healthcare = sector_workers }
-	set_variable = { healthcare_manpower_fulfillment = { value = sector_fulfillment clamp = { min = 0.1 max = 1 } } }
+	# Healthcare and bureaucracy store a fulfillment of at least 10%, but their workers use the unfloored value
+	set_temp_variable = {
+		healthcare_fulfillment_raw = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_healthcare greater_than = 0 }
+				multiply = healthcare_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_healthcare = { value = max_workers_in_healthcare multiply = healthcare_fulfillment_raw } }
+	set_variable = { healthcare_manpower_fulfillment = { value = healthcare_fulfillment_raw clamp = { min = 0.1 max = 1 } } }
 
-	set_temp_variable = { sector_priority = bureaucracy_priority }
-	set_temp_variable = { sector_max_workers = max_workers_in_bureaucracy }
-	assign_sector_workers = yes
-	set_variable = { workers_in_bureaucracy = sector_workers }
-	set_variable = { bureaucracy_manpower_fulfillment = { value = sector_fulfillment clamp = { min = 0.1 max = 1 } } }
+	set_temp_variable = {
+		bureaucracy_fulfillment_raw = {
+			value = 1
+			if = {
+				limit = { value = max_workers_in_bureaucracy greater_than = 0 }
+				multiply = bureaucracy_priority
+				multiply = workforce_priority_share
+			}
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = { workers_in_bureaucracy = { value = max_workers_in_bureaucracy multiply = bureaucracy_fulfillment_raw } }
+	set_variable = { bureaucracy_manpower_fulfillment = { value = bureaucracy_fulfillment_raw clamp = { min = 0.1 max = 1 } } }
 
-	clamp_temp_variable = { var = workforce_total min = 0 max = @math_expressions_max }
+	set_temp_variable = {
+		workforce_total = {
+			value = workforce_total
+			subtract = workers_in_nuclear_reactors
+			subtract = workers_in_fossil_powerplants
+			subtract = workers_in_renewable_energy
+			subtract = workers_in_mil_facs
+			subtract = workers_in_dockyards
+			subtract = workers_in_civ_facs
+			subtract = workers_in_offices
+			subtract = workers_in_agriculture_district
+			subtract = workers_in_microchip_plant
+			subtract = workers_in_composite_plant
+			subtract = workers_in_synthetic_refinery
+			subtract = workers_in_internet_stations
+			subtract = workers_in_rail_terminals
+			subtract = workers_in_healthcare
+			subtract = workers_in_bureaucracy
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
 
 	# Share of the workforce each sector employs now and could employ when fully staffed, for the employment menu
 	if = {
@@ -5852,13 +6013,6 @@ calculate_gdp = {
 
 	# Calculate GDP Percentages
 	set_variable = {
-		civil_fac_percent = {
-			value = gdp_from_civs
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_variable = {
 		military_factory_total_percent = {
 			value = gdp_from_mils
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
@@ -5868,20 +6022,6 @@ calculate_gdp = {
 	set_variable = {
 		naval_factory_total_percent = {
 			value = gdp_from_dockyards
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_variable = {
-		office_fac_percent = {
-			value = gdp_from_offices
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_variable = {
-		agriculture_district_fac_percent = {
-			value = gdp_from_agriculture_district
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
@@ -5900,43 +6040,69 @@ calculate_gdp = {
 			clamp = { min = 0 max = 1 }
 		}
 	}
-	set_variable = {
-		microchip_plant_percent = {
-			value = gdp_from_microchip_plant
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
+
+	# Only the player's economy tooltip reads these
+	if = {
+		limit = { is_ai = no }
+		set_variable = {
+			civil_fac_percent = {
+				value = gdp_from_civs
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
 		}
-	}
-	set_variable = {
-		composite_plant_percent = {
-			value = gdp_from_composite_plant
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
+		set_variable = {
+			office_fac_percent = {
+				value = gdp_from_offices
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
 		}
-	}
-	set_variable = {
-		synthetic_refinery_percent = {
-			value = gdp_from_synthetic_refinery
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
+		set_variable = {
+			agriculture_district_fac_percent = {
+				value = gdp_from_agriculture_district
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
 		}
-	}
-	set_variable = {
-		infrastructure_gdp_percent = {
-			value = gdp_from_nuclear_reactors
-			add = gdp_from_fossil_powerplants
-			add = gdp_from_renewable_energy
-			add = gdp_from_internet_stations
-			add = gdp_from_rail_terminals
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
+		set_variable = {
+			microchip_plant_percent = {
+				value = gdp_from_microchip_plant
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
 		}
-	}
-	set_variable = {
-		healthcare_gdp_percent = {
-			value = gdp_from_healthcare
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
+		set_variable = {
+			composite_plant_percent = {
+				value = gdp_from_composite_plant
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
+		}
+		set_variable = {
+			synthetic_refinery_percent = {
+				value = gdp_from_synthetic_refinery
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
+		}
+		set_variable = {
+			infrastructure_gdp_percent = {
+				value = gdp_from_nuclear_reactors
+				add = gdp_from_fossil_powerplants
+				add = gdp_from_renewable_energy
+				add = gdp_from_internet_stations
+				add = gdp_from_rail_terminals
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
+		}
+		set_variable = {
+			healthcare_gdp_percent = {
+				value = gdp_from_healthcare
+				divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+				clamp = { min = 0 max = 1 }
+			}
 		}
 	}
 
@@ -6248,59 +6414,60 @@ calculate_new_education_spending_tooltip = {
 # Effect: worker_requirements_variable_gdpc_converging
 # Purpose: Converges worker requirements toward sector baselines as GDP per capita rises
 worker_requirements_variable_gdpc_converging = {
-	set_temp_variable = {
-		temp_difference = {
+	add_to_variable = {
+		gdpc_converging_var = {
 			value = gdp_per_capita
 			subtract = gdpc_converging_var
 			multiply = 0.25
 		}
 	}
-
-	add_to_variable = { gdpc_converging_var = temp_difference }
 }
 
 # Effect: calculate_migration_mechanic_values
 # Purpose: Calculates the effects of the migration mechanic.
 calculate_migration_mechanic_values = {
-	# Recreate the Array
-	resize_array = { array = array_border_control_spend size = 5 value = 0 }
-
 	#Calculate the base cost of police levels
-	for_each_loop = {
-		array = array_border_control_spend
-		index = i
-		value = v
-		set_variable = {
-			array_border_control_spend^i = {
-				value = population_total
-				# Multiplier for Country Content
-				multiply = {
-					value = 1
-					add = modifier@border_control_multiplier_modifier
-				}
-				multiply = {
-					value = 1
-					add = modifier@inflation_cost_multiplier_modifier
-				}
-				# GDP Per Capita Scaling
-				multiply = {
-					value = gdp_per_capita
-					multiply = @spending_laws_gdp_scaling
-					add = 1
-				}
-				# Scaling Costs + base cost per 10 000 000 people
-				multiply = 0.07
-				multiply = 0.004
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_standard^i
+	set_temp_variable = {
+		border_control_base = {
+			value = population_total
+			# Multiplier for Country Content
+			multiply = {
+				value = 1
+				add = modifier@border_control_multiplier_modifier
 			}
+			multiply = {
+				value = 1
+				add = modifier@inflation_cost_multiplier_modifier
+			}
+			# GDP Per Capita Scaling
+			multiply = {
+				value = gdp_per_capita
+				multiply = @spending_laws_gdp_scaling
+				add = 1
+			}
+			# Scaling Costs + base cost per 10 000 000 people
+			multiply = 0.07
+			multiply = 0.004
+			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
 
 	#Set which spending level the country is at
 	set_temp_variable = { border_control_index = { value = migration_law subtract = 1 clamp = { min = 0 max = 4 } } }
 
-	set_variable = { border_control_gain = { value = array_border_control_spend^border_control_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { border_control_gain = { value = border_control_base multiply = global.spending_ladder_standard^border_control_index clamp = { min = 0 max = @math_expressions_max } } }
+
+	# Only the player's law tooltips read the cost of every level
+	if = {
+		limit = { is_ai = no }
+		resize_array = { array = array_border_control_spend size = 5 value = 0 }
+		for_each_loop = {
+			array = array_border_control_spend
+			index = i
+			value = v
+			set_variable = { array_border_control_spend^i = { value = border_control_base multiply = global.spending_ladder_standard^i } }
+		}
+	}
 
 	# Productivity Calculation
 	set_variable = {
@@ -6321,14 +6488,10 @@ calculate_migration_mechanic_values = {
 	}
 
 	# Government Section
-	set_temp_variable = { immigration_government_factor = 0 }
-	if = { limit = { has_liberal_government = yes }
-		add_to_temp_variable = { immigration_government_factor = 0.05 }
+	set_variable = { immigration_government_factor_display = 0 }
+	if = { limit = { has_variable = ruling_party }
+		set_variable = { immigration_government_factor_display = global.immigration_government_factor^ruling_party }
 	}
-	if = { limit = { has_conservative_government = yes }
-		add_to_temp_variable = { immigration_government_factor = -0.05 }
-	}
-	set_variable = { immigration_government_factor_display = immigration_government_factor }
 
 	# Sum population of neighbors at war, scaled by the refugee adjuster
 	set_variable = {
