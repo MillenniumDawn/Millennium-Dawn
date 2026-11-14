@@ -41,8 +41,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   mismatches. The normal commit flow stashes unstaged work first. The fixer never
   stages its output; stage the changed lines and retry when it makes a correction.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
-  (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
-  on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
+  (`tools/precommit_validate.py`), `validate_defines.py`, `validate_mesh_textures.py`
+  on any staged `gfx/` path, and `validate_asset_data.py` on
+  staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. The
+  model checks never run in CI.
   On a merge commit the dispatcher checks only the conflicted files pre-commit passes,
   plus staged deletions and rename origins.
 - Run a CI-only validator locally with
