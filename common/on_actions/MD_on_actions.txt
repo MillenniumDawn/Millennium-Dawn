@@ -26,12 +26,6 @@ on_actions = {
 			microchip_update = yes
 			composite_update = yes
 
-			# Save migration — active_economic_project replaced five per-project flags; on_startup never refires for saves already in progress
-			if = { limit = { NOT = { has_country_flag = economic_project_flags_migrated } }
-				resync_economic_project_flag = yes
-				set_country_flag = economic_project_flags_migrated
-			}
-
 			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
 			update_tension_premium = yes
 			ingame_update_setup = yes
@@ -63,49 +57,47 @@ on_actions = {
 					has_country_flag = automation_energy_consumption_policy
 					has_country_flag = energy_state_bases_initialized
 				}
-				calculate_energy_use = yes
 				automation_energy_consumption_policy_weekly = yes
 			}
 			nuclear_reactor_fuel_consumption = yes
 
 			# Must follow ingame_update_setup — it charges the week via space_prod_weekly_expense, and the accrual here has to read the same var_space_paid_1X to bill the same amount
-			space_prod_weekly_bill = yes
-			if = {
-				limit = {
-					is_ai = no
-					OR = {
-						has_country_flag = space_auto_active
-						has_country_flag = space_auto_line_10
-						has_country_flag = space_auto_line_11
-						has_country_flag = space_auto_line_12
-						has_country_flag = space_auto_line_13
+			if = { limit = { check_variable = { space_prod_expense > 0 } } space_prod_weekly_bill = yes }
+			if = { limit = { is_ai = no }
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = space_auto_active
+							has_country_flag = space_auto_line_10
+							has_country_flag = space_auto_line_11
+							has_country_flag = space_auto_line_12
+							has_country_flag = space_auto_line_13
+						}
 					}
+					space_automation_weekly = yes
 				}
-				space_automation_weekly = yes
-			}
-			if = {
-				limit = {
-					is_ai = no
-					has_country_flag = automation_internal_investments
-					has_country_flag = automation_internal_investment_upkeep_paid
-				}
-				automation_internal_investments_weekly = yes
-			}
-			if = {
-				limit = {
-					is_ai = no
-					OR = {
-						has_country_flag = automation_population_tax
-						has_country_flag = automation_corporate_tax
-						has_country_flag = automation_budget_bureaucracy
-						has_country_flag = automation_budget_crime_fighting
-						has_country_flag = automation_budget_education_budget
-						has_country_flag = automation_budget_health_budget
-						has_country_flag = automation_budget_social_budget
-						has_country_flag = automation_budget_military_spending
+				if = {
+					limit = {
+						has_country_flag = automation_internal_investments
+						has_country_flag = automation_internal_investment_upkeep_paid
 					}
+					automation_internal_investments_weekly = yes
 				}
-				automation_economy_weekly = yes
+				if = {
+					limit = {
+						OR = {
+							has_country_flag = automation_population_tax
+							has_country_flag = automation_corporate_tax
+							has_country_flag = automation_budget_bureaucracy
+							has_country_flag = automation_budget_crime_fighting
+							has_country_flag = automation_budget_education_budget
+							has_country_flag = automation_budget_health_budget
+							has_country_flag = automation_budget_social_budget
+							has_country_flag = automation_budget_military_spending
+						}
+					}
+					automation_economy_weekly = yes
+				}
 			}
 
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
@@ -170,11 +162,8 @@ on_actions = {
 						check_variable = { treasury_rate > 0 }
 						check_variable = { debt > 0 }
 					}
-					set_temp_variable = { treasury_rate_debt_payment = { value = treasury_rate multiply = 0.25 } }
-					# Clamp to the remainder, or the overpayment is taken from the treasury without clearing any debt
-					if = { limit = { check_variable = { treasury_rate_debt_payment > debt } }
-						set_temp_variable = { treasury_rate_debt_payment = debt }
-					}
+					# Capped at the remainder, or the overpayment is taken from the treasury without clearing any debt
+					set_temp_variable = { treasury_rate_debt_payment = { value = treasury_rate multiply = 0.25 min = debt } }
 					subtract_from_variable = { debt = treasury_rate_debt_payment }
 					subtract_from_temp_variable = { treasury_rate_gain = treasury_rate_debt_payment }
 

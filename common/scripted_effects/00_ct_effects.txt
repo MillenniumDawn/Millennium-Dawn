@@ -249,19 +249,24 @@ ct_remove_nation_org_state = {
 }
 
 # One tick per staggered pass (~28 days); 13 ticks cover the old 365-day flag window.
+# ct_decay_pending is set to 13 wherever either array is set to 13, so the loop only runs while a value can be non-zero.
 ct_decay_org_id_state = {
-	for_each_loop = {
-		array = ct_attacked_by_org_arr
-		value = ct_decay_v
-		index = ct_decay_i
-		if = {
-			limit = { check_variable = { ct_decay_v > 0 } }
-			subtract_from_variable = { ct_attacked_by_org_arr^ct_decay_i = 1 }
+	if = {
+		limit = { check_variable = { ct_decay_pending > 0 } }
+		for_each_loop = {
+			array = ct_attacked_by_org_arr
+			value = ct_decay_v
+			index = ct_decay_i
+			if = {
+				limit = { check_variable = { ct_decay_v > 0 } }
+				subtract_from_variable = { ct_attacked_by_org_arr^ct_decay_i = 1 }
+			}
+			if = {
+				limit = { check_variable = { ct_failed_infil_org_arr^ct_decay_i > 0 } }
+				subtract_from_variable = { ct_failed_infil_org_arr^ct_decay_i = 1 }
+			}
 		}
-		if = {
-			limit = { check_variable = { ct_failed_infil_org_arr^ct_decay_i > 0 } }
-			subtract_from_variable = { ct_failed_infil_org_arr^ct_decay_i = 1 }
-		}
+		subtract_from_variable = { ct_decay_pending = 1 }
 	}
 }
 
@@ -593,6 +598,7 @@ calculate_national_global_threat_detection = {
 	set_temp_variable = {
 		foreign_ct_mod = {
 			value = foreign_counter_terror_support
+			max = 0
 			multiply = 0.01
 			add = 1
 		}
@@ -604,46 +610,23 @@ calculate_national_global_threat_detection = {
 		index = i
 
 		set_temp_variable = { cur_con = global.active_terror_hq_country^i }
-		set_variable = {
-			international_terror_org_intel^i = {
-				value = civilian_intel@var:cur_con
-				add = base_detection
-			}
-		}
-
-		if = {
-			limit = {
-				check_variable = { ct_mass_gather_store_var^i > 0 }
-			}
-			add_to_variable = {
-				international_terror_org_intel^i = {
-					value = ct_mass_gather_store_var^i
-					multiply = 0.5
-				}
-			}
-		}
-
-		multiply_variable = { international_terror_org_intel^i = 0.4 }
-		if = {
-			limit = {
-				check_variable = { foreign_counter_terror_support > 0 }
-			}
-			multiply_variable = { international_terror_org_intel^i = foreign_ct_mod }
-		}
-		multiply_variable = { international_terror_org_intel^i = base_mod }
 
 		#Under -1 the multiplier flips sign and the org stays blind forever
 		clamp_variable = { var = international_terror_org_specific_intel^i min = -0.9 }
 
-		if = {
-			limit = {
-				NOT = { check_variable = { international_terror_org_specific_intel^i = 0 } }
-			}
-			multiply_variable = {
-				international_terror_org_intel^i = {
-					value = international_terror_org_specific_intel^i
-					add = 1
-				}
+		set_variable = {
+			international_terror_org_intel^i = {
+				value = civilian_intel@var:cur_con
+				add = base_detection
+				add = { value = ct_mass_gather_store_var^i max = 0 multiply = 0.5 }
+				multiply = 0.4
+				multiply = foreign_ct_mod
+				multiply = base_mod
+				multiply = { value = international_terror_org_specific_intel^i add = 1 }
+				add = { value = international_terror_org_temp_specific_intel^i max = 0 }
+				add = global.active_terror_org_vis_lvl^i
+				subtract = 25
+				clamp = { min = 0 max = 100 }
 			}
 		}
 
@@ -651,21 +634,7 @@ calculate_national_global_threat_detection = {
 			limit = {
 				check_variable = { international_terror_org_temp_specific_intel^i > 0 }
 			}
-			add_to_variable = { international_terror_org_intel^i = international_terror_org_temp_specific_intel^i }
 			add_to_variable = { international_terror_org_temp_specific_intel^i = -1 }
-		}
-
-		add_to_variable = {
-			international_terror_org_intel^i = {
-				value = global.active_terror_org_vis_lvl^i
-				subtract = 25
-			}
-		}
-
-		clamp_variable = {
-			var = international_terror_org_intel^i
-			min = 0
-			max = 100
 		}
 	}
 }

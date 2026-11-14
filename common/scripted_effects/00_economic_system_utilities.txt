@@ -28,13 +28,10 @@ setup_starting_world_productivity = {
 # Purpose: Per week when you take too much debt out
 automated_debt_taker = { # Checks to see if treasury is negative at the same time as weekly balance adds or removes from treasury, borrowing debt automatically if treasury is negative (to make it positive).
 	if = { limit = { check_variable = { treasury < 0 } }
-		set_temp_variable = { treasury_temp = treasury }
-		multiply_temp_variable = { treasury_temp = -1.25 }
-		set_temp_variable = { gdp_adder = gdp_total }
-		multiply_temp_variable = { gdp_adder = 0.01 } # 1% of GDP
-		add_to_temp_variable = { treasury_temp = gdp_adder }
-		set_temp_variable = { debt_temp = treasury_temp }
-		multiply_temp_variable = { debt_temp = 1.01 } # adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
+		# Covers the shortfall plus 1% of GDP
+		set_temp_variable = { treasury_temp = { value = treasury multiply = -1.25 add = { value = gdp_total multiply = 0.01 } } }
+		# adding 1% fee to debt autmoatically taken out (manual borrowing also has this)
+		set_temp_variable = { debt_temp = { value = treasury_temp multiply = 1.01 } }
 
 		add_to_variable = { treasury = treasury_temp }
 		add_to_variable = { debt = debt_temp }
@@ -51,17 +48,14 @@ ai_repay_debt = {
 			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 			NOT = { has_country_flag = paused_debt_repayment }
 		}
-		set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 } }
-		if = { limit = { check_variable = { ai_debt_reserve_min < 1 } }
-			set_temp_variable = { ai_debt_reserve_min = 1 }
+		# Absolute floor, or a collapsed economy with near-zero GDP and expenses empties its whole treasury
+		set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 max = 1 } }
+		# A year of runway; automated_debt_taker borrows >=1% of GDP with a 1% fee on any dip below zero
+		set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 max = 0 } }
+		if = { limit = { check_variable = { treasury > debt } }
+			set_temp_variable = { ai_debt_full_payoff_buffer = { value = debt add = ai_debt_reserve_min add = ai_debt_deficit_runway } }
+			set_temp_variable = { ai_debt_cash_after_payoff = { value = treasury subtract = debt } }
 		}
-		set_temp_variable = { ai_debt_full_payoff_buffer = debt }
-		add_to_temp_variable = { ai_debt_full_payoff_buffer = ai_debt_reserve_min }
-		if = { limit = { check_variable = { treasury_rate < 0 } }
-			set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 } }
-			add_to_temp_variable = { ai_debt_full_payoff_buffer = ai_debt_deficit_runway }
-		}
-		set_temp_variable = { ai_debt_cash_after_payoff = { value = treasury subtract = debt } }
 
 		# Treasury already covers the whole debt: clear it in one payment if cash after payoff leaves an operating runway
 		if = {
@@ -106,20 +100,7 @@ ai_repay_debt = {
 		else = {
 			if = {
 				limit = { check_variable = { treasury > 0 } }
-				set_temp_variable = { ai_debt_reserve = { value = display_expense multiply = 8 } }
-				set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 } }
-				# Absolute floor, or a collapsed economy with near-zero GDP and expenses empties its whole treasury
-				if = { limit = { check_variable = { ai_debt_reserve_min < 1 } }
-					set_temp_variable = { ai_debt_reserve_min = 1 }
-				}
-				if = { limit = { check_variable = { ai_debt_reserve < ai_debt_reserve_min } }
-					set_temp_variable = { ai_debt_reserve = ai_debt_reserve_min }
-				}
-				# A year of runway; automated_debt_taker borrows >=1% of GDP with a 1% fee on any dip below zero
-				if = { limit = { check_variable = { treasury_rate < 0 } }
-					set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 } }
-					add_to_temp_variable = { ai_debt_reserve = ai_debt_deficit_runway }
-				}
+				set_temp_variable = { ai_debt_reserve = { value = display_expense multiply = 8 max = ai_debt_reserve_min add = ai_debt_deficit_runway } }
 				if = {
 					limit = {
 						check_variable = { ai_race_ai_savings_target > ai_debt_reserve }
@@ -128,19 +109,10 @@ ai_repay_debt = {
 					set_temp_variable = { ai_debt_reserve = ai_race_ai_savings_target }
 				}
 
-				set_temp_variable = { ai_debt_payment = { value = treasury subtract = ai_debt_reserve } }
-				if = { limit = { check_variable = { ai_debt_payment > debt } }
-					set_temp_variable = { ai_debt_payment = debt }
-				}
+				set_temp_variable = { ai_debt_payment = { value = treasury subtract = ai_debt_reserve min = debt } }
 
-				set_temp_variable = { ai_debt_payment_min = { value = gdp_total multiply = 0.005 } }
-				if = { limit = { check_variable = { ai_debt_payment_min < 0.01 } }
-					set_temp_variable = { ai_debt_payment_min = 0.01 }
-				}
-				# Collapsing the threshold to the remainder lets the final instalment clear the debt
-				if = { limit = { check_variable = { ai_debt_payment_min > debt } }
-					set_temp_variable = { ai_debt_payment_min = debt }
-				}
+				# Capping the threshold at the remainder lets the final instalment clear the debt
+				set_temp_variable = { ai_debt_payment_min = { value = gdp_total multiply = 0.005 max = 0.01 min = debt } }
 
 				if = {
 					limit = { check_variable = { var = ai_debt_payment value = ai_debt_payment_min compare = greater_than_or_equals } }
