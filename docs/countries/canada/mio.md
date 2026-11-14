@@ -238,18 +238,6 @@ Shipyards, and another way to interact with the French hapiness by boosting inve
 
 **IMPORTANT**: I'd remove "Marine Industries Limited". It becomes redundant with Davie Shipbuilding and Irving. Plus, it was actually merged into Davie in 1986.
 
-    D5["Program Icebreaker Batch Line<br/>Icebreaker production output +8%; build cost -4%"]
-    D6["National Icebreaker Centre<br/>Icebreaker research +8%; naval speed in ice +6%"]
-    D7["Commercial Hull Adaptation<br/>Converted ship build cost -10%; armor -4%"]
-    D8["NSS Inclusion Framework<br/>MIO funds gain +8%; research bonus +5%"]
-    D9["Quebec Capacity Expansion<br/>Production efficiency cap +8%; efficiency gain -5% (expansion phase)"]
-    D10["Bankruptcy Legacy<br/>Initial production efficiency -8%"]
-    D11["Dependence on Government Inclusion<br/>Political power gain -4%; MIO funds gain +4%"]
-    D12["Federal Ferry Contract<br/>Converted ship production output +5%; naval range +4%"]
-    D14["Arctic Passage Engineering<br/>Icebreaker naval range +10%; surface visibility -5%"]
-    D15["Polar Max Steel Cutting<br/>Icebreaker build cost -5%; production efficiency gain +6%"]
-    D16["Dual-Use Shipyard<br/>Converted ship build cost -6%; production output +4%"]
-
 ```mermaid
 flowchart TD
     D0["Arctic Shipyard Heritage<br/>Frigate reliability +4%; naval range +6%"]
@@ -265,17 +253,18 @@ flowchart TD
     D8["Asterix Replenishment Conversion<br/>Support ship naval range +8%; build cost -5%"]
     D9["Combat Vessel Contracts<br/>Screen ship research speed +6%; task capacity +1"]
     D10["Frigate ASW Modernisation<br/>Frigate sub attack +8%; torpedo_attack +3%"]
-    D11["Protecteur Class Contracts<br/>Repair ship naval range +8%; build cost -5%]
+    D11["Protecteur Class Contracts<br/>Repair ship naval range +8%; build cost -5%"]
 
     D12["Lévis Modular Berths<br/>Screen ship production efficiency +7%; task capacity +1"]
     D13["Champlain Dry Dock Repair<br/>Screen ship reliability +4%; build_cost -2%"]
     D14["Halifax Frigate Maintenance Contract<br/>Frigate max organisation +2%; reliability +5%"]
+    D16["NSS Inclusion Framework<br/>MIO funds gain +8%; research bonus +5%"]
+    D17["Quebec Capacity Expansion<br/>Production efficiency cap +2%"]
 
     D15["Polar Icebreaker Hull Engineering<br/>Support, and repair ship armor +6%"]
+    D18["Polar Max Steel Cutting<br/>Icebreaker build cost -5%; production efficiency gain +6%"]
 
     
-
-
     D0 --> D1
     D0 --> D2
     D1 --> D3
@@ -287,8 +276,12 @@ flowchart TD
 
     D8 --> D9
     D8 --> D11
+    D11 --> D15
+    D15 --> D18
     D9 --> D10
     D10 --> D14
+    D14 --> D16
+    D16 --> D17
 
     D5 --> D12
     D12 --> D13
