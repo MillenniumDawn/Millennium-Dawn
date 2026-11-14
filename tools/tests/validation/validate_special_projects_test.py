@@ -1,4 +1,4 @@
-"""Tests for validate_special_projects: special project unlock tooltips (#6382)."""
+"""Tests for validate_special_projects: unlock tooltips (#6382), inherit list (#2360)."""
 
 import pytest
 import validate_special_projects as V
@@ -71,6 +71,13 @@ _WAYS_CASES = {
 )
 def test_ways_in(trigger, expected):
     assert _ways(trigger) == expected
+
+
+def _rows(validator):
+    return [
+        f"{i.severity} {i.category} {i.file}:{i.line} {i.message}"
+        for i in validator._issues
+    ]
 
 
 def _tooltip(project, key="SP_UNLOCK_PROJECT"):
@@ -200,13 +207,104 @@ _TOOLTIP_CASES = {
 def test_unlock_tooltips(tmp_path, files, expected):
     write_tree(tmp_path, files)
 
+    validator = build_validator(V.Validator, tmp_path)
+    validator.validate_unlock_tooltips()
+
+    assert_findings(_rows(validator), expected)
+
+
+_INHERIT = V._INHERIT_FILE
+_OPEN = "allowed = { always = yes }"
+
+
+def _inherit(*projects, effect=V._INHERIT_EFFECT, comment=""):
+    lines = "".join(f"\tcomplete_special_project = sp:{p}\n" for p in projects)
+    return f"{effect} = {{\n{comment}{lines}}}\n"
+
+
+_NOT_COPIED = (
+    f"error sp-inherit-missing {_PROJECTS}:1 special project sp_a is open to "
+    f"every country, but {V._INHERIT_EFFECT} does not copy it"
+)
+
+_LOCKED = "allowed = { original_tag = GER }"
+_NO_EFFECT = (
+    f"error sp-inherit-effect-missing {_INHERIT}:1 {V._INHERIT_EFFECT} is not defined"
+)
+
+# case: (project lines, inherit file text or None for no file, findings)
+_INHERIT_CASES = {
+    "listed": ([_OPEN], _inherit("sp_a"), []),
+    "not listed": ([_OPEN], _inherit(), [_NOT_COPIED]),
+    "no allowed block is open": ([], _inherit(), [_NOT_COPIED]),
+    "dlc and game rule gates are open": (
+        [
+            'allowed = { OR = { has_dlc = "X" AND = { NOT = { has_game_rule = '
+            "{ rule = r option = o } } } } }"
+        ],
+        _inherit(),
+        [_NOT_COPIED],
+    ),
+    "an equals sign in a quoted string is not a trigger": (
+        ['allowed = { has_dlc = "a = b" }'],
+        _inherit(),
+        [_NOT_COPIED],
+    ),
+    "a country project is skipped": ([_LOCKED], _inherit(), []),
+    "a disabled project is skipped": (["allowed = { always = no }"], _inherit(), []),
+    "always no closes a project even under NOT": (
+        ["allowed = { NOT = { always = no } }"],
+        _inherit(),
+        [],
+    ),
+    "a comparison closes a project": (
+        ["allowed = { date > 2010.1.1 }"],
+        _inherit(),
+        [],
+    ),
+    "every allowed block must be open": ([_OPEN, _LOCKED], _inherit(), []),
+    "a country project in the list": (
+        [_LOCKED],
+        _inherit("sp_a"),
+        [
+            f"error sp-inherit-locked {_INHERIT}:2 {V._INHERIT_EFFECT} copies "
+            "country or scenario project sp_a"
+        ],
+    ),
+    "a commented line does not count": (
+        [_OPEN],
+        _inherit(comment="\t# complete_special_project = sp:sp_a\n"),
+        [_NOT_COPIED],
+    ),
+    "unknown project": (
+        [_OPEN],
+        _inherit("sp_a", "sp_gone"),
+        [
+            f"error sp-inherit-unknown {_INHERIT}:3 {V._INHERIT_EFFECT} copies "
+            "unknown special project sp_gone"
+        ],
+    ),
+    "effect not defined": (
+        [_OPEN],
+        _inherit("sp_a", effect="other_effect"),
+        [_NO_EFFECT],
+    ),
+    "effect file missing": ([_OPEN], None, [_NO_EFFECT]),
+}
+
+
+@pytest.mark.parametrize(
+    ("lines", "inherit", "expected"), _INHERIT_CASES.values(), ids=list(_INHERIT_CASES)
+)
+def test_inherit_list(tmp_path, lines, inherit, expected):
+    files = {_PROJECTS: _project("sp_a", *lines)}
+    if inherit is not None:
+        files[_INHERIT] = inherit
+    write_tree(tmp_path, files)
+
     validator = run_validator(V.Validator, tmp_path)
 
-    rows = [
-        f"{i.severity} {i.category} {i.file}:{i.line} {i.message}"
-        for i in validator._issues
-    ]
-    assert_findings(rows, expected)
+    assert_findings(_rows(validator), expected)
 
 
 def test_run_validations_calls_every_check(tmp_path, monkeypatch):

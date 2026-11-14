@@ -19,6 +19,23 @@ project's tooltip and a focus's `complete_special_project` count.
 project it does not unlock, or for a project that does not exist.
 
 Both are WARNING. Events, decisions and scripted effects are not read.
+
+`inherit_special_projects_from_prev` copies completed projects between countries
+with one line per project, so the list has to follow the project files.
+
+A project is open to every country when its `allowed` holds only `always = yes`,
+`has_dlc` and `has_game_rule`, alone or under `NOT`, `OR` and `AND`. Any other
+trigger, a comparison, or `always = no` anywhere ties it to a country or scenario.
+
+`sp-inherit-missing`: an open project is not in the effect.
+
+`sp-inherit-locked`: the effect names a project that is not open.
+
+`sp-inherit-unknown`: the effect names a project that does not exist.
+
+`sp-inherit-effect-missing`: the effect or its file is gone.
+
+All four are ERROR.
 """
 
 import os
@@ -26,7 +43,7 @@ import re
 import sys
 from collections import defaultdict
 from itertools import product
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import (  # noqa: E402
@@ -64,7 +81,17 @@ _FOCUS_BLOCKS = frozenset({"focus", "shared_focus", "joint_focus"})
 # Nothing under these has to hold for the project to unlock.
 _NOT_REQUIRED = frozenset({"NOT", "NOR", "NAND", "count_triggers", "limit"})
 
+_KEY_RE = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)\s*=")
+# `always = no` closes a project even under NOT, which nobody writes.
+_CLOSED_RE = re.compile(r"\balways\s*=\s*no\b|[<>]")
+# An `allowed` body made of these alone leaves the project open to every country.
+_OPEN_ALLOWED = frozenset(
+    {"always", "has_dlc", "has_game_rule", "rule", "option", "NOT", "OR", "AND"}
+)
+
 _PROJECTS_DIR = "common/special_projects/projects"
+_INHERIT_FILE = "common/scripted_effects/00_special_project_effects.txt"
+_INHERIT_EFFECT = "inherit_special_projects_from_prev"
 _SOURCE_DIRS = (
     ("tech", "common/technologies"),
     ("focus", "common/national_focus"),
@@ -188,6 +215,38 @@ def parse_sources(kind: str, text: str):
     return sites, completes
 
 
+def _is_open(allowed: str) -> bool:
+    return not _CLOSED_RE.search(allowed) and _OPEN_ALLOWED.issuperset(
+        _KEY_RE.findall(allowed)
+    )
+
+
+def parse_allowed(text: str) -> Dict[str, Tuple[int, bool]]:
+    """Map project id -> (definition offset, open to every country)."""
+    projects = {}
+    for name, name_start, start, end in _child_blocks(text, 0, len(text)):
+        projects[name] = (
+            name_start,
+            all(
+                _is_open(text[s_start:s_end])
+                for sub, _, s_start, s_end in _child_blocks(text, start, end)
+                if sub == "allowed"
+            ),
+        )
+    return projects
+
+
+def parse_inherit_list(text: str) -> Optional[Dict[str, int]]:
+    """Map each project the inherit effect copies to its offset, None without it."""
+    for name, _, start, end in _child_blocks(text, 0, len(text)):
+        if name == _INHERIT_EFFECT:
+            return {
+                match.group(1): match.start()
+                for match in _COMPLETE_RE.finditer(text, start, end)
+            }
+    return None
+
+
 class Validator(BaseValidator):
     TITLE = "SPECIAL PROJECT VALIDATION"
 
@@ -255,8 +314,53 @@ class Validator(BaseValidator):
             f"{self.warnings_found} findings"
         )
 
+    def validate_inherit_list(self):
+        self._log_section("Special project inherit list")
+        path = os.path.join(self.mod_path, _INHERIT_FILE)
+        text = _read(path) if os.path.isfile(path) else ""
+        listed = parse_inherit_list(text)
+        if listed is None:
+            self.add_error(
+                "sp-inherit-effect-missing",
+                f"{_INHERIT_EFFECT} is not defined",
+                _INHERIT_FILE,
+                1,
+            )
+            return
+
+        known: Dict[str, bool] = {}
+        for project_path in list_files(os.path.join(self.mod_path, _PROJECTS_DIR)):
+            project_text = _read(project_path)
+            offsets = compute_line_offsets(project_text)
+            for name, (offset, is_open) in parse_allowed(project_text).items():
+                known[name] = is_open
+                if is_open and name not in listed:
+                    self.add_error(
+                        "sp-inherit-missing",
+                        f"special project {name} is open to every country, but "
+                        f"{_INHERIT_EFFECT} does not copy it",
+                        self._relative(project_path),
+                        line_for_offset(offsets, offset),
+                    )
+
+        offsets = compute_line_offsets(text)
+        for name, offset in listed.items():
+            if name not in known:
+                category, what = "sp-inherit-unknown", "unknown special project"
+            elif not known[name]:
+                category, what = "sp-inherit-locked", "country or scenario project"
+            else:
+                continue
+            self.add_error(
+                category,
+                f"{_INHERIT_EFFECT} copies {what} {name}",
+                _INHERIT_FILE,
+                line_for_offset(offsets, offset),
+            )
+
     def run_validations(self):
         self.validate_unlock_tooltips()
+        self.validate_inherit_list()
 
 
 if __name__ == "__main__":
