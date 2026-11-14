@@ -85,6 +85,7 @@ increase_spending_if_possible = {
 		# if we are good on taxes and not increased spending already
 		limit = {
 			check_variable = { budget_balance_ratio > 0.03 }
+			check_variable = { treasury_rate_with_interest > 0 } # deficit room is no reason to raise expectations
 			check_variable = { corporate_tax_rate < 20 }
 			check_variable = { population_tax_rate < 25 }
 			has_bureau_idea_law_desired = yes
@@ -95,20 +96,27 @@ increase_spending_if_possible = {
 		}
 
 		set_temp_variable = { desire_change = 1 }
+		# A law trimmed for a deficit in the last 180 days is not bumped straight back
 		random_list = {
 			10 = {
+				modifier = { factor = 0 has_country_flag = ai_deficit_trim_bureau }
 				change_expected_bureaucracy_spending = yes
 			}
 			10 = {
 				change_expected_education_spending = yes
 			}
 			10 = {
+				modifier = { factor = 0 has_country_flag = ai_deficit_trim_health }
 				change_expected_health_spending = yes
 			}
 			10 = {
+				modifier = { factor = 0 has_country_flag = ai_deficit_trim_police }
+				# Democracies do not drift toward a police state
+				modifier = { factor = 0 has_government = democratic western_autocrats_are_in_power = no }
 				change_expected_police_spending = yes
 			}
 			10 = {
+				modifier = { factor = 0 has_country_flag = ai_deficit_trim_social }
 				change_expected_social_spending = yes
 			}
 		}
@@ -172,13 +180,20 @@ change_expected_defense_spending = {
 # Moves each AI spending law one level a month toward its expected level, with no political power cost.
 # The law ideas carry no AI weight, so this is the only way the AI changes them.
 ai_move_spending_laws_to_expected = {
+	# Civil laws move only when the unrounded expected level is 0.75 away, so a level near x.5 does not flip them monthly
+	set_temp_variable = { social_gap = { value = expected_welfare_raw subtract = social_law } }
+	set_temp_variable = { health_gap = { value = expected_health_raw subtract = health_law } }
+	set_temp_variable = { edu_gap = { value = expected_edu_raw subtract = education_law } }
+	set_temp_variable = { police_gap = { value = expected_police_raw subtract = police_law } }
+	set_temp_variable = { bureau_gap = { value = expected_adm_raw subtract = bureau_law } }
+
 	# A law that a focus, event or protest moved keeps that level for 90 days before a cut
-	# Cuts: every law above its expected level
+	# Cuts: every law well above its expected level. Education only falls in emergency austerity, so it never reverses.
 	if = {
 		limit = { budget_law_parliament_change_allowed = yes }
 		if = {
 			limit = {
-				check_variable = { social_law > expected_welfare_spending }
+				check_variable = { social_gap < -0.75 }
 				social_decrease_blocked = no
 				NOT = { has_country_flag = social_law_changed_outside_ai_pass }
 				NOT = { has_country_flag = ai_deficit_trim_social } # on trim cooldown; an event may have raised it
@@ -187,7 +202,7 @@ ai_move_spending_laws_to_expected = {
 		}
 		if = {
 			limit = {
-				check_variable = { health_law > expected_health_spending }
+				check_variable = { health_gap < -0.75 }
 				health_decrease_blocked = no
 				NOT = { has_country_flag = health_law_changed_outside_ai_pass }
 				NOT = { has_country_flag = ai_deficit_trim_health }
@@ -212,16 +227,7 @@ ai_move_spending_laws_to_expected = {
 		}
 		if = {
 			limit = {
-				check_variable = { education_law > expected_edu_spending }
-				edu_decrease_blocked = no
-				NOT = { has_country_flag = edu_law_changed_outside_ai_pass }
-				NOT = { has_country_flag = ai_deficit_trim_education }
-			}
-			decrease_education_budget = yes
-		}
-		if = {
-			limit = {
-				check_variable = { police_law > expected_police_spending }
+				check_variable = { police_gap < -0.75 }
 				police_decrease_blocked = no
 				NOT = { has_country_flag = police_law_changed_outside_ai_pass }
 				GER_Grundgesetz_allows_budget_law_change = yes
@@ -231,7 +237,7 @@ ai_move_spending_laws_to_expected = {
 		}
 		if = {
 			limit = {
-				check_variable = { bureau_law > expected_adm_spending }
+				check_variable = { bureau_gap < -0.75 }
 				bureau_decrease_blocked = no
 				NOT = { has_country_flag = bureau_law_changed_outside_ai_pass }
 				GER_Grundgesetz_allows_budget_law_change = yes
@@ -249,7 +255,7 @@ ai_move_spending_laws_to_expected = {
 			}
 			if = {
 				limit = {
-					check_variable = { social_law < expected_welfare_spending }
+					check_variable = { social_gap > 0.75 }
 					social_increase_blocked = no
 					NOT = { check_variable = { policy_transition_social_cost > 0.05 } }
 				}
@@ -257,7 +263,7 @@ ai_move_spending_laws_to_expected = {
 			}
 			else_if = {
 				limit = {
-					check_variable = { health_law < expected_health_spending }
+					check_variable = { health_gap > 0.75 }
 					health_increase_blocked = no
 					NOT = { check_variable = { policy_transition_health_cost > 0.05 } }
 					# Privatized healthcare cannot run on the highest budgets
@@ -281,7 +287,7 @@ ai_move_spending_laws_to_expected = {
 			}
 			else_if = {
 				limit = {
-					check_variable = { education_law < expected_edu_spending }
+					check_variable = { edu_gap > 0.75 }
 					edu_increase_blocked = no
 					NOT = { check_variable = { policy_transition_education_cost > 0.05 } }
 				}
@@ -289,16 +295,24 @@ ai_move_spending_laws_to_expected = {
 			}
 			else_if = {
 				limit = {
-					check_variable = { police_law < expected_police_spending }
+					check_variable = { police_gap > 0.75 }
 					police_increase_blocked = no
 					GER_Grundgesetz_allows_budget_law_change = yes
 					NOT = { check_variable = { policy_transition_police_cost > 0.05 } }
+					# Democracies stop at the standard police budget
+					NOT = {
+						AND = {
+							check_variable = { police_law > 2 }
+							has_government = democratic
+							western_autocrats_are_in_power = no
+						}
+					}
 				}
 				increase_policing_budget = yes
 			}
 			else_if = {
 				limit = {
-					check_variable = { bureau_law < expected_adm_spending }
+					check_variable = { bureau_gap > 0.75 }
 					bureau_increase_blocked = no
 					GER_Grundgesetz_allows_budget_law_change = yes
 					NOT = { check_variable = { policy_transition_bureau_cost > 0.05 } }
@@ -308,7 +322,8 @@ ai_move_spending_laws_to_expected = {
 		}
 	}
 
-	# Defence follows security pressure, in war and peace
+	# Defence follows security pressure, in war and peace. Threat checks flip its expected level in whole steps,
+	# so after a move it holds 180 days; a war can still raise it.
 	if = {
 		limit = { military_law_parliament_change_allowed = yes }
 		if = {
@@ -317,8 +332,10 @@ ai_move_spending_laws_to_expected = {
 				check_variable = { military_law > expected_military_law }
 				defence_decrease_blocked = no
 				NOT = { has_country_flag = defence_law_changed_outside_ai_pass }
+				NOT = { has_country_flag = ai_defence_law_moved }
 			}
 			decrease_military_spending = yes
+			set_country_flag = { flag = ai_defence_law_moved days = 180 value = 1 }
 		}
 		else_if = {
 			limit = {
@@ -337,10 +354,12 @@ ai_move_spending_laws_to_expected = {
 					AND = {
 						check_variable = { budget_balance_ratio > 0 }
 						NOT = { check_variable = { policy_transition_military_cost > 0.05 } }
+						NOT = { has_country_flag = ai_defence_law_moved }
 					}
 				}
 			}
 			increase_military_spending = yes
+			set_country_flag = { flag = ai_defence_law_moved days = 180 value = 1 }
 		}
 	}
 }
@@ -376,16 +395,17 @@ ai_reduce_spending_on_deficit = {
 				decrease_healthcare_budget = yes
 			}
 			else_if = {
-				limit = { check_variable = { education_law > 1 } }
-				decrease_education_budget = yes
-			}
-			else_if = {
 				limit = { check_variable = { police_law > 1 } }
 				decrease_policing_budget = yes
 			}
 			else_if = {
 				limit = { check_variable = { bureau_law > 1 } }
 				decrease_centralization = yes
+			}
+			# Education goes last: it is the one law the AI does not reverse
+			else_if = {
+				limit = { check_variable = { education_law > 1 } }
+				decrease_education_budget = yes
 			}
 			# Military LAST: only cut if all civilian categories are at minimum (level 1)
 			else_if = {
@@ -453,23 +473,6 @@ ai_lower_expected_spending_on_deficit = {
 			}
 			else_if = {
 				limit = {
-					check_variable = { education_law > 1 }
-					NOT = { has_country_flag = ai_deficit_trim_education }
-					NOT = { has_country_flag = ai_deficit_cut_education }
-					NOT = { check_variable = { education_law < expected_edu_spending } }
-					NOT = { AND = { check_variable = { education_desire_offset < -0.5 } has_education_law_desired = yes } }
-					NOT = { AND = { check_variable = { education_desire_offset > 0 } check_variable = { expected_edu_spending > 4 } } }
-				}
-				if = { limit = { has_education_law_desired = yes }
-					change_expected_education_spending = yes
-					set_country_flag = ai_deficit_cut_education
-					set_country_flag = { flag = ai_deficit_trim_education days = 180 value = 1 }
-				}
-				decrease_education_budget = yes
-				calculate_expected_spending = yes
-			}
-			else_if = {
-				limit = {
 					check_variable = { police_law > 1 }
 					NOT = { has_country_flag = ai_deficit_trim_police }
 					NOT = { has_country_flag = ai_deficit_cut_police }
@@ -510,7 +513,6 @@ ai_lower_expected_spending_on_deficit = {
 				OR = {
 					has_country_flag = ai_deficit_cut_social
 					has_country_flag = ai_deficit_cut_health
-					has_country_flag = ai_deficit_cut_education
 					has_country_flag = ai_deficit_cut_police
 					has_country_flag = ai_deficit_cut_bureau
 				}
@@ -535,16 +537,6 @@ ai_lower_expected_spending_on_deficit = {
 					calculate_expected_spending = yes
 					if = { limit = { check_variable = { health_law < expected_health_spending } }
 						increase_healthcare_budget = yes
-					}
-				}
-				10 = {
-					modifier = { factor = 0 NOT = { has_country_flag = ai_deficit_cut_education } }
-					clr_country_flag = ai_deficit_cut_education
-					set_country_flag = { flag = ai_deficit_trim_education days = 180 value = 1 }
-					change_expected_education_spending = yes
-					calculate_expected_spending = yes
-					if = { limit = { check_variable = { education_law < expected_edu_spending } }
-						increase_education_budget = yes
 					}
 				}
 				10 = {
