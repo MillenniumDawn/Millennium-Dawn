@@ -534,7 +534,7 @@ def _scan_file(text: str, path: str):
     findings.extend(_check_brace_matching(text, rel))
     # ERROR-level: indent and bracket balance
     findings.extend(_check_indent_and_brackets(text, rel))
-    # WARNING-level: indentation off brace depth
+    # ERROR-level: indentation off brace depth
     findings.extend(_check_indent_depth(text, rel))
     # WARNING-level: spacing and quotes
     findings.extend(_check_spacing_and_quotes(text, rel))
@@ -562,10 +562,14 @@ class Validator(BaseValidator):
 
         error_results = []
         warning_results = []
+        indent_depth_results = []
 
         for path, findings in parsed.items():
             rel = os.path.relpath(path, self.mod_path)
             for message, line in findings:
+                if message.startswith(_INDENT_DEPTH_PREFIX):
+                    indent_depth_results.append((message, rel, line))
+                    continue
                 # Brace matching and indent errors are ERROR; everything else WARNING
                 is_error = any(
                     kw in message
@@ -618,20 +622,14 @@ class Validator(BaseValidator):
             category="orphan-newline",
         )
 
-        self._log_section("Indentation Depth (WARNING)")
-        indent_depth_warnings = [
-            r for r in warning_results if r[0].startswith(_INDENT_DEPTH_PREFIX)
-        ]
+        self._log_section("Indentation Depth (ERROR)")
         self._report(
-            indent_depth_warnings,
+            indent_depth_results,
             "Indentation follows brace depth",
-            "Lines indented off their brace depth:",
-            severity=Severity.WARNING,
+            "Lines indented off their brace depth (fix_styling.py --fix-indent):",
+            severity=Severity.ERROR,
             category="indent-depth",
         )
-        warning_results = [
-            r for r in warning_results if not r[0].startswith(_INDENT_DEPTH_PREFIX)
-        ]
 
         self._log_section("Spacing & Quotes (WARNING)")
         spacing_warnings = [

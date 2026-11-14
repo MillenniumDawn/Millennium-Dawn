@@ -10,8 +10,8 @@
 #   pre-commit run --files path/to/file1 path/to/file2
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want. Exception: md-fix-styling and the
-# md-validate-{defines,descriptors,mesh-textures} hooks read the git index, so
-# under --files they check what is staged, not the named files.
+# md-validate-{defines,descriptors,mesh-textures,asset-data} hooks read the
+# git index, so under --files they check what is staged, not the named files.
 #
 # `pre-commit install` installs both the pre-commit and pre-push hooks. Hooks
 # without `stages:` run at commit only; the tools pytest hooks run at push.
@@ -249,17 +249,30 @@ repos:
       - id: md-validate-mesh-textures
         name: MD Validate 3D model textures
         # Commit-stage only: the CI workspace ships no gfx/models or
-        # gfx/entities, so this hook is the gate.
+        # gfx/entities, so this hook is the gate. Any staged gfx/ texture can
+        # clash with a model's texture name, so all of gfx/ triggers it.
         entry: >-
           python3 tools/validation/validate_mesh_textures.py --staged --strict
           --no-color
         language: system
-        files: '^gfx/(models|entities)/'
+        files: '^gfx/'
         pass_filenames: false
+      - id: md-validate-asset-data
+        name: MD Validate 3D model meshes and texture data
+        # Commit-stage only, like md-validate-mesh-textures. Triangle counts
+        # and texture formats are warnings, so verbose shows them on a
+        # passing run.
+        entry: >-
+          python3 tools/validation/validate_asset_data.py --staged --strict
+          --no-color
+        language: system
+        files: '(?i)^((gfx|map)/.*\.dds|gfx/models/.*\.mesh)$'
+        pass_filenames: false
+        verbose: true
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
-        # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # Manual: full-repo scan is slow and reports legacy unreferenced
+        # textures and meshes. CI cannot run it. Run before mod-size cleanup
         # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color

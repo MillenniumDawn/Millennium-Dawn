@@ -9,7 +9,12 @@ Millennium Dawn coding standards.
 from typing import Any, Dict, List
 
 from common_utils import BaseStandardizer, opener_with_comment, run_standardizer
-from shared_utils import collapse_or_compact, compact_block, extract_block
+from shared_utils import (
+    collapse_or_compact,
+    compact_block,
+    extract_block,
+    normalize_spacing,
+)
 
 
 class MIOStandardizer(BaseStandardizer):
@@ -30,7 +35,8 @@ class MIOStandardizer(BaseStandardizer):
 
     def extract_properties(self, block_lines: List[str]) -> Dict[str, Any]:
         """Extract properties from a MIO block"""
-        props = {
+        block_lines = [normalize_spacing(line) for line in block_lines]
+        props: Dict[str, Any] = {
             "organization_id": "",
             "name": "",
             "allowed": [],

@@ -84,7 +84,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "decisions",
             "validate_decisions.py",
             ("decisions", "localisation"),
-            args=("--unannounced-categories",),
+            args=("--unannounced-categories", "--id-case"),
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob", "localisation")),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
@@ -228,8 +228,9 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
 _IMPACT_ONLY_BY_SCRIPT = {spec.script: spec for spec in IMPACT_ONLY_SPECS}
 _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
-    # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
+    # Read gfx/models and gfx/entities, which the CI workspace does not ship.
     "validate_mesh_textures.py",
+    "validate_asset_data.py",
     "validate_tools.py",
     # Manual-only: the standardization report is deliberately unwired from
     # pre-commit and CI; editing the script must not re-select it.
