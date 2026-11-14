@@ -1,0 +1,362 @@
+UKR_shipyard_setup = {
+	set_variable = { shipyard_crisis_level = 15 }
+	set_variable = { shipyard_drift_early = 0.3 }
+	set_variable = { shipyard_drift_late = 0.4 }
+	set_variable = { shipyard_late_year = 2012 }
+	set_variable = { shipyard_cap_output = 0.3 }
+	set_variable = { shipyard_cap_repair = 0.5 }
+	set_variable = { shipyard_cap_refit = 0.35 }
+	set_variable = { shipyard_cost_base = 2 }
+	set_variable = { shipyard_drydock_stage = 0 }
+	set_variable = { shipyard_workforce_stage = 0 }
+	set_variable = { shipyard_consolidation_stage = 0 }
+	set_variable = { shipyard_eq_steps = 0 }
+	set_variable = { ukr_yard_tier = 2 }
+	add_dynamic_modifier = { modifier = shipyard_crisis_modifier }
+	add_dynamic_modifier = { modifier = ukr_shipyard_structure_modifier }
+	UKR_yard_condition_penalty = yes
+	UKR_yard_frigate_penalty = yes
+	UKR_yard_large_penalty = yes
+	shipyard_recalc = yes
+}
+
+# Standing surcharge for the state our yards are in. It is never lifted: the heavier the
+# hull, the less of the Soviet production chain behind it is left.
+UKR_yard_condition_penalty = {
+	add_equipment_bonus = {
+		name = ukr_yard_condition_equipment
+		bonus = {
+			patrol_boat = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			corvette = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			stealth_corvette = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			frigate = {
+				instant = yes
+				build_cost_ic = 0.1
+			}
+			stealth_frigate = {
+				instant = yes
+				build_cost_ic = 0.1
+			}
+			heavy_frigate = {
+				instant = yes
+				build_cost_ic = 0.1
+			}
+			destroyer = {
+				instant = yes
+				build_cost_ic = 0.3
+			}
+			stealth_destroyer = {
+				instant = yes
+				build_cost_ic = 0.3
+			}
+			cruiser = {
+				instant = yes
+				build_cost_ic = 0.5
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = 0.5
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = 0.5
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = 0.5
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = 0.6
+			}
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = 0.5
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = 0.6
+			}
+		}
+	}
+}
+
+# Effective dockyards: one per hull class our yards still keep in service, plus one per
+# merger. Four dockyards against two effective ones is the 2000 starting position.
+UKR_yard_recalc = {
+	set_variable = { shipyard_dockyards = num_of_naval_factories }
+	set_variable = { shipyard_effective_dockyards = ukr_yard_tier }
+	add_to_variable = { shipyard_effective_dockyards = shipyard_consolidation_stage }
+
+	set_variable = { ukr_idle_dockyards = shipyard_dockyards }
+	subtract_from_variable = { ukr_idle_dockyards = shipyard_effective_dockyards }
+	clamp_variable = { var = ukr_idle_dockyards min = 0 max = 1000 }
+
+	# An idle dockyard produces nothing, so the penalty is its share of the whole yard.
+	set_variable = { ukr_mod_structure = ukr_idle_dockyards }
+	if = {
+		limit = { check_variable = { shipyard_dockyards > 0 } }
+		divide_variable = { ukr_mod_structure = shipyard_dockyards }
+	}
+	multiply_variable = { ukr_mod_structure = -1 }
+	clamp_variable = { var = ukr_mod_structure min = -1 max = 0 }
+	set_temp_variable = { ukr_consolidation_bonus = shipyard_consolidation_stage }
+	multiply_temp_variable = { ukr_consolidation_bonus = 0.05 }
+	add_to_variable = { ukr_mod_structure = ukr_consolidation_bonus }
+
+	set_variable = { ukr_cost_dockyard = 5 }
+	multiply_variable = { ukr_cost_dockyard = shipyard_cost_mult }
+	set_variable = { ukr_cost_frigate = 8 }
+	multiply_variable = { ukr_cost_frigate = shipyard_cost_mult }
+	set_variable = { ukr_cost_large = 20 }
+	multiply_variable = { ukr_cost_large = shipyard_cost_mult }
+	set_variable = { ukr_cost_subsidy = 1.2 }
+	multiply_variable = { ukr_cost_subsidy = shipyard_cost_mult }
+	set_variable = { ukr_cost_consolidation = 1.5 }
+	multiply_variable = { ukr_cost_consolidation = shipyard_cost_mult }
+}
+
+UKR_yard_tier_up = {
+	add_to_variable = { ukr_yard_tier = 1 }
+	if = {
+		limit = { check_variable = { ukr_yard_tier = 3 } }
+		UKR_yard_frigate_relief = yes
+	}
+	else_if = {
+		limit = { check_variable = { ukr_yard_tier = 4 } }
+		UKR_yard_large_relief = yes
+	}
+	shipyard_recalc = yes
+}
+
+UKR_yard_subsidy_complete = {
+	add_to_variable = { shipyard_crisis_level = -3 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+UKR_yard_consolidate_complete = {
+	add_to_variable = { shipyard_consolidation_stage = 1 }
+	add_to_variable = { shipyard_crisis_level = -4 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+UKR_yard_frigate_penalty = {
+	add_equipment_bonus = {
+		name = ukr_yard_tier_equipment
+		bonus = {
+			frigate = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			stealth_frigate = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			heavy_frigate = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+UKR_yard_frigate_relief = {
+	add_equipment_bonus = {
+		name = ukr_yard_tier_equipment
+		bonus = {
+			frigate = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			stealth_frigate = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			heavy_frigate = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
+	}
+}
+
+UKR_yard_large_penalty = {
+	add_equipment_bonus = {
+		name = ukr_yard_tier_equipment
+		bonus = {
+			destroyer = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			stealth_destroyer = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+UKR_yard_large_relief = {
+	add_equipment_bonus = {
+		name = ukr_yard_tier_equipment
+		bonus = {
+			destroyer = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			stealth_destroyer = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
+	}
+}
+
+# One step per 10 crisis points. The heavier the hull, the fewer yards in the world can
+# take it, so the backlog bites harder the further up the class list it goes.
+UKR_shipyard_equipment_step_up = {
+	add_equipment_bonus = {
+		name = shipyard_crisis_equipment
+		bonus = {
+			patrol_boat = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			corvette = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			stealth_corvette = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			frigate = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			stealth_frigate = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			heavy_frigate = {
+				instant = yes
+				build_cost_ic = 0.03
+			}
+			destroyer = {
+				instant = yes
+				build_cost_ic = 0.04
+			}
+			stealth_destroyer = {
+				instant = yes
+				build_cost_ic = 0.04
+			}
+			cruiser = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = 0.06
+			}
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = 0.05
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = 0.06
+			}
+		}
+	}
+}
+
+UKR_shipyard_equipment_step_down = {
+	add_equipment_bonus = {
+		name = shipyard_crisis_equipment
+		bonus = {
+			patrol_boat = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			corvette = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			stealth_corvette = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			frigate = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			stealth_frigate = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			heavy_frigate = {
+				instant = yes
+				build_cost_ic = -0.03
+			}
+			destroyer = {
+				instant = yes
+				build_cost_ic = -0.04
+			}
+			stealth_destroyer = {
+				instant = yes
+				build_cost_ic = -0.04
+			}
+			cruiser = {
+				instant = yes
+				build_cost_ic = -0.05
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = -0.05
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = -0.05
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = -0.05
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = -0.06
+			}
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = -0.05
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = -0.06
+			}
+		}
+	}
+}

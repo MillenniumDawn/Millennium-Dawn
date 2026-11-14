@@ -1,0 +1,348 @@
+# Country scope. Needs the setup variables of the TAG_shipyard_setup effect.
+# Refreshes cost, drift and modifier variables from shipyard_crisis_level.
+shipyard_recalc = {
+	set_temp_variable = { shipyard_years_late = global.year }
+	subtract_from_temp_variable = { shipyard_years_late = shipyard_late_year }
+	clamp_temp_variable = { var = shipyard_years_late min = 0 max = 10 }
+	multiply_temp_variable = { shipyard_years_late = 0.15 }
+	set_temp_variable = { shipyard_severity = shipyard_crisis_level }
+	divide_temp_variable = { shipyard_severity = 100 }
+	set_temp_variable = { shipyard_level_part = shipyard_severity }
+	multiply_temp_variable = { shipyard_level_part = 0.5 }
+
+	set_variable = { shipyard_cost_mult = 1 }
+	add_to_variable = { shipyard_cost_mult = shipyard_years_late }
+	add_to_variable = { shipyard_cost_mult = shipyard_level_part }
+	set_variable = { shipyard_cost_drydock = shipyard_cost_base }
+	multiply_variable = { shipyard_cost_drydock = shipyard_cost_mult }
+
+	if = {
+		limit = { shipyard_is_late_phase = yes }
+		set_variable = { shipyard_drift = shipyard_drift_late }
+	}
+	else = {
+		set_variable = { shipyard_drift = shipyard_drift_early }
+	}
+	set_temp_variable = { shipyard_relief = 1 }
+	set_temp_variable = { shipyard_relief_part = shipyard_drydock_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.1 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	set_temp_variable = { shipyard_relief_part = shipyard_workforce_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.15 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	set_temp_variable = { shipyard_relief_part = shipyard_consolidation_stage }
+	multiply_temp_variable = { shipyard_relief_part = 0.1 }
+	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
+	# Every stage completed slows the drift. Fully invested freezes it, never reverses it.
+	clamp_temp_variable = { var = shipyard_relief min = 0 max = 1 }
+	multiply_variable = { shipyard_drift = shipyard_relief }
+
+	set_variable = { shipyard_mod_output = shipyard_cap_output }
+	multiply_variable = { shipyard_mod_output = shipyard_severity }
+	multiply_variable = { shipyard_mod_output = -1 }
+	set_variable = { shipyard_mod_repair = shipyard_cap_repair }
+	multiply_variable = { shipyard_mod_repair = shipyard_severity }
+	multiply_variable = { shipyard_mod_repair = -1 }
+	set_variable = { shipyard_mod_refit = shipyard_cap_refit }
+	multiply_variable = { shipyard_mod_refit = shipyard_severity }
+	multiply_variable = { shipyard_mod_refit = -1 }
+	set_variable = { shipyard_mod_refit_cost = shipyard_cap_refit }
+	multiply_variable = { shipyard_mod_refit_cost = shipyard_severity }
+
+	# Dockyards on a production line or a repair job. The engine exposes the free ones only.
+	set_variable = { shipyard_dockyards = num_of_naval_factories }
+	set_variable = { shipyard_dockyards_in_use = num_of_naval_factories }
+	subtract_from_variable = { shipyard_dockyards_in_use = num_of_available_naval_factories }
+
+
+	# Hull classes a country can lay down at all come from real yards on the map.
+	set_variable = { shipyard_capital_yard = 0 }
+	set_variable = { shipyard_submarine_yard = 0 }
+	every_owned_state = {
+		if = {
+			limit = { check_variable = { building_level@large_slipway > 0 } }
+			ROOT = { set_variable = { shipyard_capital_yard = 1 } }
+		}
+		if = {
+			limit = { check_variable = { building_level@submarine_hall > 0 } }
+			ROOT = { set_variable = { shipyard_submarine_yard = 1 } }
+		}
+	}
+
+	shipyard_country_recalc = yes
+	force_update_dynamic_modifier = yes
+	shipyard_sync_equipment = yes
+	shipyard_sync_yard_locks = yes
+	shipyard_update_dirty_variable = yes
+}
+
+shipyard_monthly = {
+	add_to_variable = { shipyard_crisis_level = shipyard_drift }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+	shipyard_overload_check = yes
+}
+
+# Each completed stage also slows the monthly drift in shipyard_recalc.
+shipyard_drydock_complete = {
+	add_to_variable = { shipyard_drydock_stage = 1 }
+	add_to_variable = { shipyard_crisis_level = -15 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+shipyard_workforce_complete = {
+	add_to_variable = { shipyard_workforce_stage = 1 }
+	add_to_variable = { shipyard_crisis_level = -6 }
+	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+	shipyard_recalc = yes
+}
+
+shipyard_pay_drydock = {
+	set_temp_variable = { treasury_change = shipyard_cost_drydock }
+	multiply_temp_variable = { treasury_change = -1 }
+	modify_treasury_effect = yes
+}
+
+# Running more dockyards than the yards can staff warns once, then bites every month until
+# the player frees one.
+shipyard_overload_check = {
+	if = {
+		limit = { check_variable = { shipyard_dockyards_in_use > shipyard_effective_dockyards } }
+		add_to_variable = { shipyard_overload_months = 1 }
+		if = {
+			limit = { check_variable = { shipyard_overload_months = 1 } }
+			country_event = { id = md_shipyard.1 days = 1 }
+		}
+		else = {
+			add_to_variable = { shipyard_crisis_level = 1 }
+			clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+			add_stability = -0.01
+			every_owned_state = {
+				limit = {
+					check_variable = { building_level@dockyard > 0 }
+					NOT = { has_dynamic_modifier = { modifier = shipyard_overload_modifier } }
+				}
+				add_dynamic_modifier = { modifier = shipyard_overload_modifier days = 60 }
+			}
+			shipyard_recalc = yes
+		}
+	}
+	else = {
+		set_variable = { shipyard_overload_months = 0 }
+	}
+}
+
+# Default for a country whose dockyards are all usable: the backlog takes up to half of
+# them out of productive work at a full crisis.
+shipyard_effective_from_crisis = {
+	set_variable = { shipyard_effective_dockyards = shipyard_crisis_level }
+	divide_variable = { shipyard_effective_dockyards = 100 }
+	multiply_variable = { shipyard_effective_dockyards = -0.5 }
+	add_to_variable = { shipyard_effective_dockyards = 1 }
+	multiply_variable = { shipyard_effective_dockyards = shipyard_dockyards }
+	set_temp_variable = { shipyard_eff_fraction = shipyard_effective_dockyards }
+	modulo_temp_variable = { var = shipyard_eff_fraction value = 1 }
+	subtract_from_variable = { shipyard_effective_dockyards = shipyard_eff_fraction }
+	clamp_variable = { var = shipyard_effective_dockyards min = 1 max = 1000 }
+}
+
+# add_equipment_bonus cannot be removed and cannot read variables, so the penalty moves in
+# whole steps of 10 crisis points and is reverted with a negative step. The step count is
+# floored, so a starting level below 10 costs the player nothing.
+shipyard_sync_equipment = {
+	set_temp_variable = { shipyard_eq_target = shipyard_crisis_level }
+	divide_temp_variable = { shipyard_eq_target = 10 }
+	set_temp_variable = { shipyard_eq_fraction = shipyard_eq_target }
+	modulo_temp_variable = { var = shipyard_eq_fraction value = 1 }
+	subtract_from_temp_variable = { shipyard_eq_target = shipyard_eq_fraction }
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_eq_steps < shipyard_eq_target } }
+		shipyard_equipment_step_up = yes
+		add_to_variable = { shipyard_eq_steps = 1 }
+	}
+	while_loop_effect = {
+		limit = { check_variable = { shipyard_eq_steps > shipyard_eq_target } }
+		shipyard_equipment_step_down = yes
+		subtract_from_variable = { shipyard_eq_steps = 1 }
+	}
+}
+
+shipyard_equipment_step_up = {
+	if = {
+		limit = { original_tag = USA }
+		USA_shipyard_equipment_step_up = yes
+	}
+	else_if = {
+		limit = { original_tag = UKR }
+		UKR_shipyard_equipment_step_up = yes
+	}
+	else_if = {
+		limit = { original_tag = SOV }
+		SOV_shipyard_equipment_step_up = yes
+	}
+}
+
+shipyard_equipment_step_down = {
+	if = {
+		limit = { original_tag = USA }
+		USA_shipyard_equipment_step_down = yes
+	}
+	else_if = {
+		limit = { original_tag = UKR }
+		UKR_shipyard_equipment_step_down = yes
+	}
+	else_if = {
+		limit = { original_tag = SOV }
+		SOV_shipyard_equipment_step_down = yes
+	}
+}
+
+shipyard_country_recalc = {
+	if = {
+		limit = { original_tag = UKR }
+		UKR_yard_recalc = yes
+	}
+	else = {
+		shipyard_effective_from_crisis = yes
+	}
+}
+
+# A country with no large slipway can still lay a capital ship down, at a price nobody
+# pays twice. The same for submarines without a submarine hall. add_equipment_bonus cannot
+# be removed, so each lock is toggled with its own negative.
+shipyard_sync_yard_locks = {
+	if = {
+		limit = {
+			check_variable = { shipyard_capital_yard = 0 }
+			check_variable = { shipyard_capital_locked = 0 }
+		}
+		shipyard_capital_lock_on = yes
+		set_variable = { shipyard_capital_locked = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { shipyard_capital_yard = 1 }
+			check_variable = { shipyard_capital_locked = 1 }
+		}
+		shipyard_capital_lock_off = yes
+		set_variable = { shipyard_capital_locked = 0 }
+	}
+	if = {
+		limit = {
+			check_variable = { shipyard_submarine_yard = 0 }
+			check_variable = { shipyard_submarine_locked = 0 }
+		}
+		shipyard_submarine_lock_on = yes
+		set_variable = { shipyard_submarine_locked = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { shipyard_submarine_yard = 1 }
+			check_variable = { shipyard_submarine_locked = 1 }
+		}
+		shipyard_submarine_lock_off = yes
+		set_variable = { shipyard_submarine_locked = 0 }
+	}
+}
+
+shipyard_capital_lock_on = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			cruiser = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+shipyard_capital_lock_off = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			cruiser = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			battle_cruiser = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			battleship = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			carrier = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			helicopter_operator = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
+	}
+}
+
+shipyard_submarine_lock_on = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = 2.0
+			}
+		}
+	}
+}
+
+shipyard_submarine_lock_off = {
+	add_equipment_bonus = {
+		name = shipyard_yard_class_equipment
+		bonus = {
+			attack_submarine = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+			missile_submarine = {
+				instant = yes
+				build_cost_ic = -2.0
+			}
+		}
+	}
+}
+
+shipyard_update_dirty_variable = {
+	if = {
+		limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { shipyard_ui_dirty_var < 10000 } }
+			add_to_variable = { shipyard_ui_dirty_var = 1 }
+		}
+		else = {
+			set_variable = { shipyard_ui_dirty_var = 1 }
+		}
+	}
+}
