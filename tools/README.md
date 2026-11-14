@@ -204,6 +204,7 @@ python3 tools/run.py publish_workshop release --version 1.12.3  # pass args thro
 python3 tools/run.py gfx_entry_generator                   # works on any platform
 python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO balance report
 python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
+python3 tools/generators/mio_mermaid_to_traits.py <source_mio_markdown> <mermaid_start_line> <destination_mio_file> <destination_insert_line>  # generate MIO traits from a Mermaid flowchart spec
 ```
 
 ### Clean up the changelog
