@@ -285,6 +285,8 @@ ingame_update_setup = {
 
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
+		log = "[GetDateText]: [THIS.GetName]: Economy Breakdown: GDP: [?THIS.gdp_total] Income: [?THIS.display_income] (Tax: [?THIS.tax_gain] Resources: [?THIS.resource_sale_rate] Investments: [?THIS.int_investments_collected_rate] Other: [?THIS.additional_income_rate]) Expense: [?THIS.potential_expense] (Bureaucracy: [?THIS.bureaucracy_gain] Defence: [?THIS.defence_gain] Security: [?THIS.security_gain] Education: [?THIS.education_gain] Health: [?THIS.health_gain] Welfare: [?THIS.welfare_gain] Infrastructure: [?THIS.infra_gain] Other: [?THIS.additional_expenses_rate] Border: [?THIS.border_control_gain] UN: [?THIS.united_nations_expenses] Debt Service: [?THIS.debt_rate]) Defence Law: [?THIS.military_law] Expected Defence Law: [?THIS.expected_military_law] Political Power: [?THIS.political_power]"
+		log = "[GetDateText]: [THIS.GetName]: Spending Laws (law/expected/offset): Bureaucracy: [?THIS.bureau_law]/[?THIS.expected_adm_spending]/[?THIS.bureau_desire_offset] Police: [?THIS.police_law]/[?THIS.expected_police_spending]/[?THIS.police_desire_offset] Education: [?THIS.education_law]/[?THIS.expected_edu_spending]/[?THIS.education_desire_offset] Health: [?THIS.health_law]/[?THIS.expected_health_spending]/[?THIS.health_desire_offset] Social: [?THIS.social_law]/[?THIS.expected_welfare_spending]/[?THIS.social_desire_offset] Defence: [?THIS.military_law]/[?THIS.expected_military_law]/[?THIS.defence_desire_offset] Balance Ratio: [?THIS.budget_balance_ratio] AI Balance: [?THIS.ai_budget_balance] Raw (B/P/E/H/S): [?THIS.expected_adm_raw]/[?THIS.expected_police_raw]/[?THIS.expected_edu_raw]/[?THIS.expected_health_raw]/[?THIS.expected_welfare_raw]"
 	}
 }
 
@@ -4361,11 +4363,38 @@ update_display = {
 		set_variable = { ai_race_finance_rate_component = ai_race_finance_expense_component }
 	}
 
-	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
-	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
+	# Counts paused debt service so a cheap loan does not read as a surplus.
+	set_variable = { treasury_rate_with_interest = { value = display_income subtract = potential_expense } }
+
+	# The balance the AI budget checks judge. Cheap debt leaves room for a deficit: 3% of income per point of interest under 6%.
+	# Interest lags debt, so the room also closes as debt nears 60% of GDP: full room under 30%, none at 60%.
+	# Deficits feed inflation, so each point of inflation above 4% takes a point of room back.
+	set_temp_variable = {
+		ai_deficit_room = {
+			value = 6
+			subtract = interest_rate
+			multiply = 0.03
+			clamp = { min = 0 max = 0.15 }
+			min = { value = 0.6 subtract = debt_ratio multiply = 0.5 }
+			subtract = { value = inflation_rate_var subtract = 0.04 clamp = { min = 0 max = 0.15 } }
+			clamp = { min = 0 max = 0.15 }
+		}
 	}
-	else_if = { limit = { check_variable = { potential_expense > display_income } }
+	set_variable = { ai_budget_balance = { value = display_income multiply = ai_deficit_room add = treasury_rate_with_interest } }
+	# The fixed deficit tiers are sized for a budget of 50 a week, so a larger economy's deficit is sized down to match.
+	if = {
+		limit = {
+			check_variable = { ai_budget_balance < 0 }
+			check_variable = { display_income > 50 }
+		}
+		set_variable = { ai_budget_balance = { value = ai_budget_balance multiply = 50 divide = display_income } }
+	}
+
+	# The same judgment as a share of income, so it also fits small economies.
+	if = { limit = { check_variable = { display_income > 0 } }
+		set_variable = { budget_balance_ratio = { value = treasury_rate_with_interest divide = display_income add = ai_deficit_room } }
+	}
+	else_if = { limit = { check_variable = { treasury_rate_with_interest < 0 } }
 		set_variable = { budget_balance_ratio = -1 }
 	}
 	else = {
@@ -5962,6 +5991,10 @@ calculate_gdp = {
 			clamp = { min = 0 max = 100000 }
 		}
 	}
+	# A country with no states keeps the 0.1 GDP floor over no population, which would read as 100000
+	if = { limit = { num_of_controlled_states < 1 }
+		set_variable = { gdp_per_capita = 0 }
+	}
 
 	calculate_gdp_modifiers = yes
 	set_country_flag = energy_state_bases_initialized
@@ -6089,13 +6122,13 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate < -1 }
+				check_variable = { ai_budget_balance< -1 }
 				check_variable = { budget_balance_ratio < -0.03 }
 			}
 			check_variable = { population_tax_rate < 40 }
 			OR = {
 				has_stability > 0.24
-				check_variable = { treasury_rate < -5 }
+				check_variable = { ai_budget_balance< -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6107,13 +6140,13 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate < -2 }
+				check_variable = { ai_budget_balance< -2 }
 				check_variable = { budget_balance_ratio < -0.06 }
 			}
 			check_variable = { corporate_tax_rate < 50 }
 			OR = {
 				check_variable = { population_tax_rate > 24 }
-				check_variable = { treasury_rate < -5 }
+				check_variable = { ai_budget_balance< -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6124,7 +6157,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			check_variable = { policy_transition_tax_stability < -0.1 }
-			check_variable = { treasury_rate > -5 }
+			check_variable = { ai_budget_balance> -5 }
 			check_variable = { budget_balance_ratio > -0.15 }
 		}
 		if = {
@@ -6153,7 +6186,7 @@ calculate_tax_adjustments = {
 				check_variable = { interest_rate > 8 }
 				check_variable = { debt_ratio > 1.0 }
 			}
-			check_variable = { treasury_rate < 0 }
+			check_variable = { ai_budget_balance< 0 }
 		}
 		if = {
 			limit = {
@@ -6178,12 +6211,14 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate > 2 }
+				check_variable = { ai_budget_balance> 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
 			check_variable = { budget_balance_ratio > 0.03 }
+			check_variable = { treasury_rate_with_interest > 0 } # deficit room is no reason to cut taxes
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
+			check_variable = { inflation_rate_var < 0.06 }
 			check_variable = { pop_tax_change = 0 }
 			check_variable = { corp_tax_change = 0 }
 		}
@@ -6203,6 +6238,7 @@ calculate_tax_adjustments = {
 			has_stability < 0.30
 			check_variable = { population_tax_rate > 20 }
 			check_variable = { budget_balance_ratio > 0.03 }
+			check_variable = { treasury_rate_with_interest > 0 }
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }

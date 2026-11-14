@@ -3163,6 +3163,33 @@ def test_timer_without_remove_effect(tmp_path, token, body, reported):
     assert validator.warnings_found == reported
 
 
+_NON_EXISTING = "\t\ttarget_non_existing = yes\n"
+# case: (decision body, reported)
+_NON_EXISTING_CASES = {
+    "no target list": (_NON_EXISTING, True),
+    "targets list": (_NON_EXISTING + _block("targets", "GER"), False),
+    "target_array": (_NON_EXISTING + "\t\ttarget_array = occupied_countries\n", False),
+}
+
+
+@pytest.mark.parametrize(
+    ("body", "reported"), _NON_EXISTING_CASES.values(), ids=_NON_EXISTING_CASES
+)
+def test_target_non_existing_needs_a_target_list(tmp_path, body, reported):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/targets.txt": "cat = {\n"
+            + _nested("target_dec", body)
+            + "}\n"
+        },
+    )
+
+    validator.validate_orphaned_target_modifiers()
+
+    assert bool(validator._issues) == reported
+
+
 _DECISIONS_FILE = "common/decisions/ser.txt"
 _VOJ_PREFIX_ROW = (
     "decision-prefix-owner",
