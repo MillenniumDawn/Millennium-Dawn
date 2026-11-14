@@ -1650,7 +1650,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_roads"
+			set_temp_variable = { skip_payment = 1 }
 			one_random_infrastructure = yes
+			set_temp_variable = { skip_payment = 0 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.15 min = -0.5 max = -3.5 } }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -1714,7 +1718,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_highways"
+			set_temp_variable = { skip_payment = 1 }
 			one_random_infrastructure = yes
+			set_temp_variable = { skip_payment = 0 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.15 min = -0.5 max = -3.5 } }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
@@ -2384,6 +2392,10 @@ focus_tree = {
 				check_variable = { interest_rate > 5 }
 				factor = 10
 			}
+			modifier = {
+				factor = 100
+				ai_is_fiscally_stressed = yes
+			}
 		}
 	}
 
@@ -2425,13 +2437,12 @@ focus_tree = {
 
 		available = { gdp_debt_ratio_higher_50 = yes }
 
+		continue_if_invalid = yes
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_debt_refactoring"
-			set_temp_variable = { debt_change = { value = debt multiply = 0.05 } }
-			clamp_temp_variable = { var = debt_change min = 0 max = 100 }
-			modify_debt_effect = yes
 			add_timed_idea = {
-				idea = idea_generic_temporary_debt_refactoring
+				idea = idea_generic_debt_restructuring
 				days = 730
 			}
 		}
@@ -2446,9 +2457,50 @@ focus_tree = {
 				factor = 5
 				gdp_debt_ratio_higher_50 = yes
 			}
+		}
+	}
+
+	focus = {
+		id = GENERIC_stabilization_program
+		icon = economic_prosperity
+
+		x = -4
+		y = 2
+		relative_position_id = GENERIC_ease_of_business_reforms
+
+		cost = 7.86
+
+		prerequisite = { focus = GENERIC_ease_of_business_reforms }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = GENERIC_stabilization_program_available_tt
+				OR = {
+					check_variable = { inflation_rate_var > 0.05 }
+					check_variable = { budget_balance_ratio < -0.10 }
+					check_variable = { treasury_rate < -3.00 }
+					check_variable = { debt_ratio > 0.5 }
+				}
+			}
+		}
+
+		continue_if_invalid = yes
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_stabilization_program"
+			add_timed_idea = {
+				idea = idea_generic_stabilization_program
+				days = 730
+			}
+		}
+
+		ai_will_do = {
+			base = 300
 			modifier = {
 				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
+				ai_is_fiscally_stressed = no
 			}
 		}
 	}
@@ -2697,15 +2749,12 @@ focus_tree = {
 				has_war = no
 				has_offensive_war = no
 			}
-			else = {
-				interest_rate_lower_than_15 = yes
-			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_mobilize_the_working_class"
 			add_war_support = 0.05
-			set_temp_variable = { treasury_change = -7.5 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.15 min = -0.5 max = -7.5 } }
 			modify_treasury_effect = yes
 			capital_scope = {
 				add_extra_state_shared_building_slots = 1
@@ -2719,6 +2768,10 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 3
+			modifier = {
+				factor = 0
+				interest_rate_lower_than_15 = no
+			}
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
@@ -2819,14 +2872,11 @@ focus_tree = {
 			if = { limit = { is_ai = no }
 				has_war = no
 			}
-			else = {
-				interest_rate_lower_than_15 = yes
-			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_light_industry_investments"
-			set_temp_variable = { treasury_change = -7.5 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.15 min = -0.5 max = -7.5 } }
 			modify_treasury_effect = yes
 			capital_scope = {
 				add_extra_state_shared_building_slots = 1
@@ -2845,8 +2895,8 @@ focus_tree = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				factor = 0.5
-				check_variable = { interest_rate > 14.99 }
+				factor = 0
+				interest_rate_lower_than_15 = no
 			}
 			modifier = {
 				factor = 2
@@ -3077,7 +3127,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_energy_sector"
-			set_temp_variable = { treasury_change = -10.5 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.15 min = -0.5 max = -10.5 } }
 			modify_treasury_effect = yes
 			capital_scope = {
 				add_extra_state_shared_building_slots = 1
