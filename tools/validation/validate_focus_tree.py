@@ -2201,18 +2201,6 @@ class Validator(BaseValidator):
         """
         return self._scripted_effect_data_for_guards().staffable
 
-    def _money_cost_effect_names(self) -> FrozenSet[str]:
-        """Scripted-effect names that (transitively) reduce the treasury or
-        raise debt, so a focus reward calling one counts as spending money.
-
-        Mirrors _staffable_effect_map: each effect's own body is scanned with
-        _body_money_cost, then call chains are resolved to a fixed point so a
-        money-spending wrapper of any depth stays visible. A computed
-        (non-literal) treasury_change is treated as a cost even though its sign
-        is unknown, so a handful of computed-income effects may be included.
-        """
-        return self._scripted_effect_data_for_guards().money
-
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
 

@@ -13,6 +13,7 @@ import validate_events as E
 import validate_scripted_localisation as SL
 import validate_variables as V
 from shared.suite import issue_rows as _rows
+from shared.suite import write_under
 
 
 def _staged(validator, *paths):
@@ -56,10 +57,10 @@ def _forbid_repo_usage_scan(monkeypatch):
 
 
 def test_scripted_loc_without_a_staged_definition_skips_the_usage_scan(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
-    write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
-    yml = write_path(
+    write_under(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
+    yml = write_under(
         tmp_path,
         "localisation/english/use_l_english.yml",
         'l_english:\n key: "[UsedLoc] [GhostLoc]"\n',
@@ -80,11 +81,9 @@ def test_scripted_loc_without_a_staged_definition_skips_the_usage_scan(
     ]
 
 
-def test_staged_scripted_loc_definition_still_reads_unstaged_consumers(
-    tmp_path, write_path
-):
-    defs = write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
-    write_path(tmp_path, "interface/use.gui", 'text = "[UsedLoc]"\n')
+def test_staged_scripted_loc_definition_still_reads_unstaged_consumers(tmp_path):
+    defs = write_under(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
+    write_under(tmp_path, "interface/use.gui", 'text = "[UsedLoc]"\n')
     validator = _staged(SL.Validator(str(tmp_path), use_colors=False, workers=1), defs)
 
     validator.run_validations()
@@ -102,10 +101,10 @@ def test_staged_scripted_loc_definition_still_reads_unstaged_consumers(
 _GETTER_YML = "localisation/english/use_l_english.yml"
 
 
-def _getter_repo(tmp_path, write_path, documented, call):
+def _getter_repo(tmp_path, documented, call):
     """Docs listing *documented* getters and one loc line making *call*."""
-    write_path(tmp_path, SL._LOC_OBJECTS_DOC, documented)
-    return write_path(tmp_path, _GETTER_YML, f'l_english:\n key: "{call}"\n')
+    write_under(tmp_path, SL._LOC_OBJECTS_DOC, documented)
+    return write_under(tmp_path, _GETTER_YML, f'l_english:\n key: "{call}"\n')
 
 
 def _getter_row(member, spelling):
@@ -113,17 +112,15 @@ def _getter_row(member, spelling):
     return ("loc-getter-spelling", message, _GETTER_YML, 2)
 
 
-def test_staged_definition_feeds_the_getter_and_unused_checks(tmp_path, write_path):
+def test_staged_definition_feeds_the_getter_and_unused_checks(tmp_path):
     """The getter check accepts a Get-named loc from an unstaged definition file."""
-    yml = _getter_repo(
-        tmp_path, write_path, "**GetName**\n", "[ROOT.GetOwnLoc] [ROOT.Getname]"
-    )
-    write_path(
+    yml = _getter_repo(tmp_path, "**GetName**\n", "[ROOT.GetOwnLoc] [ROOT.Getname]")
+    write_under(
         tmp_path,
         "common/scripted_localisation/other.txt",
         "defined_text = {\n\tname = GetOwnLoc\n}\n",
     )
-    defs = write_path(
+    defs = write_under(
         tmp_path,
         "common/scripted_localisation/defs.txt",
         "defined_text = {\n\tname = OrphanLoc\n}\n",
@@ -146,15 +143,16 @@ def test_staged_definition_feeds_the_getter_and_unused_checks(tmp_path, write_pa
 
 
 def test_staged_documentation_drives_the_getter_check_without_the_usage_scan(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
     _getter_repo(
         tmp_path,
-        write_path,
         "**GetName**\n**GetNewGetter**\n",
         "[ROOT.GetNewGetter] [ROOT.Getnewgetter]",
     )
-    write_path(tmp_path, "localisation/english/other_l_english.yml", "[ROOT.Getname]\n")
+    write_under(
+        tmp_path, "localisation/english/other_l_english.yml", "[ROOT.Getname]\n"
+    )
     _forbid_repo_usage_scan(monkeypatch)
 
     def staged_run(*paths):
@@ -173,12 +171,10 @@ def test_staged_documentation_drives_the_getter_check_without_the_usage_scan(
     assert staged_run(SL._LOC_OBJECTS_DOC) == []
 
 
-def test_unrelated_staged_file_reads_no_loc_for_the_getter_check(
-    tmp_path, write_path, monkeypatch
-):
-    _getter_repo(tmp_path, write_path, "**GetName**\n", "[ROOT.Getname] [GhostLoc]")
-    write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
-    txt = write_path(tmp_path, "common/ideas/unrelated.txt", "ideas = {\n}\n")
+def test_unrelated_staged_file_reads_no_loc_for_the_getter_check(tmp_path, monkeypatch):
+    _getter_repo(tmp_path, "**GetName**\n", "[ROOT.Getname] [GhostLoc]")
+    write_under(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
+    txt = write_under(tmp_path, "common/ideas/unrelated.txt", "ideas = {\n}\n")
     _forbid_repo_usage_scan(monkeypatch)
     _forbid(monkeypatch, SL, "process_file_for_getter_refs")
     validator = _staged(SL.Validator(str(tmp_path), use_colors=False, workers=4), txt)
@@ -192,14 +188,14 @@ def test_unrelated_staged_file_reads_no_loc_for_the_getter_check(
 # --- variables -------------------------------------------------------------
 
 
-def _variables_repo(tmp_path, write_path):
+def _variables_repo(tmp_path):
     """Unstaged definitions every staged-mode variables harvest reads."""
-    write_path(
+    write_under(
         tmp_path,
         "common/synchronized_dynamic_tokens/MD_tokens.txt",
         "TST_registered\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/scripted_effects/meter.txt",
         "TST_meter_effect = {\n"
@@ -207,17 +203,17 @@ def _variables_repo(tmp_path, write_path):
         "}\n"
         "TST_pay = {\n\tmodify_treasury_effect = yes\n}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/scripted_triggers/gate.txt",
         "TST_gate = {\n\thas_global_flag = TST_gate_open\n}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/dynamic_modifiers/dyn.txt",
         "TST_modifier = {\n\tpolitical_power_factor = TST_pp\n}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "localisation/english/flags_l_english.yml",
         "l_english:\n"
@@ -228,11 +224,9 @@ def _variables_repo(tmp_path, write_path):
     )
 
 
-def test_variables_staged_localisation_builds_no_script_index(
-    tmp_path, write_path, monkeypatch
-):
-    _variables_repo(tmp_path, write_path)
-    yml = write_path(
+def test_variables_staged_localisation_builds_no_script_index(tmp_path, monkeypatch):
+    _variables_repo(tmp_path)
+    yml = write_under(
         tmp_path,
         "localisation/english/tokens_l_english.yml",
         'l_english:\n a:0 "[token:TST_registered]"\n b:0 "[token:TST_stray]"\n',
@@ -263,9 +257,9 @@ def test_variables_staged_localisation_builds_no_script_index(
     ]
 
 
-def test_variables_staged_decision_still_reads_every_repo_index(tmp_path, write_path):
-    _variables_repo(tmp_path, write_path)
-    decision = write_path(
+def test_variables_staged_decision_still_reads_every_repo_index(tmp_path):
+    _variables_repo(tmp_path)
+    decision = write_under(
         tmp_path,
         "common/decisions/dec.txt",
         "TST_category = {\n"
@@ -390,10 +384,10 @@ _CALLER = (
 )
 
 
-def _events_validator(tmp_path, write_path, staged_rel):
+def _events_validator(tmp_path, staged_rel):
     paths = {
-        "events/tst.txt": write_path(tmp_path, "events/tst.txt", _EVENTS),
-        "common/decisions/dec.txt": write_path(
+        "events/tst.txt": write_under(tmp_path, "events/tst.txt", _EVENTS),
+        "common/decisions/dec.txt": write_under(
             tmp_path, "common/decisions/dec.txt", _CALLER
         ),
     }
@@ -402,9 +396,9 @@ def _events_validator(tmp_path, write_path, staged_rel):
 
 
 def test_events_run_with_no_script_staged_builds_no_call_site_index(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
-    validator = _events_validator(tmp_path, write_path, ())
+    validator = _events_validator(tmp_path, ())
     _forbid(
         monkeypatch,
         validator,
@@ -459,16 +453,16 @@ _TYPE_AND_UNDEFINED = [
 ]
 
 
-def test_events_staged_caller_still_reads_unstaged_event_flags(tmp_path, write_path):
-    validator = _events_validator(tmp_path, write_path, ["common/decisions/dec.txt"])
+def test_events_staged_caller_still_reads_unstaged_event_flags(tmp_path):
+    validator = _events_validator(tmp_path, ["common/decisions/dec.txt"])
 
     validator.run_validations()
 
     assert _rows(validator) == sorted(_CALLER_FINDINGS + _TYPE_AND_UNDEFINED)
 
 
-def test_events_staged_event_file_still_scans_unstaged_callers(tmp_path, write_path):
-    validator = _events_validator(tmp_path, write_path, ["events/tst.txt"])
+def test_events_staged_event_file_still_scans_unstaged_callers(tmp_path):
+    validator = _events_validator(tmp_path, ["events/tst.txt"])
 
     validator.run_validations()
 

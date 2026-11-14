@@ -1177,7 +1177,7 @@ def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int
         idx = content.find(needle)
         if idx >= 0:
             return content.count("\n", 0, idx) + 1
-    except Exception:
+    except (OSError, UnicodeDecodeError):
         pass
     return 0
 
@@ -1870,31 +1870,28 @@ def get_git_diff_files(
         if env_files is not None:
             all_files = env_files
         else:
+            if staged_only:
+                cmd = ["git", "diff", "--cached", "--name-only", "--diff-filter=ACMRT"]
+            else:
+                cmd = [
+                    "git",
+                    "diff",
+                    "--name-only",
+                    "--diff-filter=ACMRT",
+                    f"{base_branch}...HEAD",
+                ]
             try:
-                import subprocess as _sp
-
-                if staged_only:
-                    cmd = [
-                        "git",
-                        "diff",
-                        "--cached",
-                        "--name-only",
-                        "--diff-filter=ACMRT",
-                    ]
-                else:
-                    cmd = [
-                        "git",
-                        "diff",
-                        "--name-only",
-                        "--diff-filter=ACMRT",
-                        f"{base_branch}...HEAD",
-                    ]
-                result = _sp.run(
+                result = subprocess.run(
                     cmd, capture_output=True, text=True, check=True, timeout=15
                 )
-                all_files = [f for f in result.stdout.strip().split("\n") if f]
-            except Exception:
+            except (
+                OSError,
+                subprocess.CalledProcessError,
+                subprocess.TimeoutExpired,
+            ) as exc:
+                log_message("WARNING", f"git diff failed, checking no files: {exc}")
                 return []
+            all_files = [f for f in result.stdout.strip().split("\n") if f]
 
         if staged_only:
             _staged_files_cache = all_files
