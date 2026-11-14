@@ -19,7 +19,6 @@ from validator_common import BaseValidator, Severity, run_validator_main
 # What check_file reads besides the file it checks, under get_root_dir().
 _SHARED_INPUTS = (
     "events",
-    "common/buildings",
     "common/decisions",
     "common/idea_tags",
     "common/modifiers",

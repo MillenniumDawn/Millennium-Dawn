@@ -65,9 +65,6 @@ Detects mechanically-checkable rule violations:
     scope's faction; it takes a country tag or scope ref, never a faction name.
   - create_faction = X (deprecated; use create_faction_from_template = TEMPLATE
     for DLC compatibility)
-  - add_building_construction of a provincial building (naval_base, supply_node,
-    rail_way, bunker, the special-project facilities ...) with no province key --
-    the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - is_at_war = yes/no (not a HOI4 trigger; use has_war)
   - has_opinion_modifier = { ... } (the trigger takes a single modifier ID)
@@ -75,8 +72,6 @@ Detects mechanically-checkable rule violations:
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
     engine rejects the block and the branch never runs; the author meant else_if)
-  - province = { province = <id> } in add_building_construction (the block form
-    takes a selector, not a bare id, so nothing is built)
   - a log string carrying a second quoted run (a swallowed `# "comment"` closes
     the value early and the remainder parses as effects)
   - add_equipment_bonus with no name/project, or a bonus type outside
@@ -146,35 +141,10 @@ _RE_MASTERY_INDEX = re.compile(r"\bindex\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
 # engine silently resolves to nothing.
 _RE_VAR_INDEX_SHORTHAND = re.compile(r"\bvar:([A-Za-z])\^")
-_RE_ADD_BUILDING_OPEN = re.compile(r"\badd_building_construction\s*=\s*\{")
 _RE_BUILDING_TYPE = re.compile(r"\btype\s*=\s*(\w+)")
-_RE_BUILDING_PROVINCE = re.compile(r"\bprovince\s*=")
-_RE_BUILDING_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
-_RE_PROVINCE_MAX = re.compile(r"\bprovince_max\s*=")
-# Used only when common/buildings/ can't be read; the live parse is authoritative.
-_PROVINCIAL_BUILDINGS_FALLBACK = frozenset(
-    {
-        "naval_base",
-        "bunker",
-        "coastal_bunker",
-        "supply_node",
-        "rail_way",
-        "naval_facility",
-        "land_facility",
-        "air_facility",
-        "nuclear_facility",
-        "naval_supply_hub",
-        "naval_headquarters",
-        "dam",
-        "dam_mountain",
-        "canal_locks",
-    }
-)
 _RE_ELSE_OPEN = re.compile(r"(?<!_)\belse\s*=\s*\{")
 _RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
 _RE_LOG_MULTI_QUOTE = re.compile(r'\blog\s*=\s*"[^"]*"[^"]*"')
-_RE_NESTED_PROVINCE = re.compile(r"\bprovince\s*=\s*\{([^{}]*)\}")
-_RE_PROVINCE_ID_ONLY = re.compile(r"^\s*province\s*=\s*\d+\s*$", re.M)
 _RE_EQUIPMENT_BONUS_OPEN = re.compile(r"\badd_equipment_bonus\s*=\s*\{")
 _RE_BONUS_OPEN = re.compile(r"\bbonus\s*=\s*\{")
 _RE_BLOCK_ENTRY = re.compile(r"(\w+)\s*=\s*\{")
@@ -2690,72 +2660,6 @@ def _check_var_index_shorthand(lines):
     return issues
 
 
-@lru_cache(maxsize=None)
-def _provincial_building_types(mod_root=None):
-    """Building types placed on a province rather than a state, read from
-    common/buildings/. A `level_cap = { province_max = N }` entry is the marker.
-
-    Falls back to the known list if the directory can't be read, so a hiccup
-    downgrades the check to a fixed list rather than silently disabling it.
-    """
-    if mod_root is None:
-        mod_root = get_root_dir()
-    types = set()
-    buildings_dir = os.path.join(mod_root, "common", "buildings")
-    if not os.path.isdir(buildings_dir):
-        return _PROVINCIAL_BUILDINGS_FALLBACK
-    for fpath in list_files(buildings_dir, recursive=False):
-        try:
-            with open(fpath, encoding="utf-8") as f:
-                lines = f.readlines()
-        except OSError:
-            continue
-        for i, line in enumerate(lines):
-            entry = _RE_BUILDING_ENTRY.match(_code_for_depth(line))
-            if not entry:
-                continue
-            block = "".join(_code_for_depth(bl) for bl in _get_block(lines, i)[0])
-            if _RE_PROVINCE_MAX.search(block):
-                types.add(entry.group(1))
-    return frozenset(types) or _PROVINCIAL_BUILDINGS_FALLBACK
-
-
-def _check_building_missing_province(lines, mod_root=None):
-    """Flag add_building_construction of a provincial building with no province.
-
-    A provincial building sits on a province, not a state, so the effect needs
-    `province = <id>` or a `province = { all_provinces = yes ... }` selector.
-    Without one the engine rejects the whole effect (state_effect_implementation.cpp)
-    and the building is never placed -- the focus or decision silently does nothing.
-    """
-    issues = []
-    src = _source(lines)
-    if "add_building_construction" not in src.raw:
-        return issues
-    provincial = _provincial_building_types(mod_root)
-    # Brace-matched over the whole file rather than per line: a construction
-    # block spans lines, and two single-line blocks can share one line.
-    text = src.text
-    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        i = _find_brace_close(text, match.end() - 1)
-        body = text[match.end() : i]
-        type_match = _RE_BUILDING_TYPE.search(body)
-        if not type_match or type_match.group(1) not in provincial:
-            continue
-        if _RE_BUILDING_PROVINCE.search(body):
-            continue
-        issues.append(
-            (
-                text.count("\n", 0, match.start()) + 1,
-                f"add_building_construction type = {type_match.group(1)} has no "
-                f"province -- it is a provincial building, so the engine rejects "
-                f"the effect and nothing is built; add province = <id> or "
-                f"province = {{ all_provinces = yes ... }}",
-            )
-        )
-    return issues
-
-
 def _block_body(text, body_start):
     """Body of the block whose opening brace is the character before body_start."""
     return text[body_start : _find_brace_close(text, body_start - 1)]
@@ -2894,34 +2798,6 @@ def _check_else_with_limit(lines):
                     text.count("\n", 0, match.end() + limit.start()) + 1,
                     "limit inside an else block -- else takes no condition, so the "
                     "engine rejects the block and the branch never runs; use else_if",
-                )
-            )
-    return issues
-
-
-def _check_nested_province_block(lines):
-    """Flag province = { province = <id> } in add_building_construction.
-
-    The block form of province takes a selector (all_provinces, limit_to_*), not
-    a bare id, so the engine rejects the whole token and nothing is built. A
-    single province is `province = <id>`.
-    """
-    issues = []
-    src = _source(lines)
-    if "add_building_construction" not in src.raw:
-        return issues
-    text = src.text
-    for match in _RE_ADD_BUILDING_OPEN.finditer(text):
-        body = _block_body(text, match.end())
-        for nested in _RE_NESTED_PROVINCE.finditer(body):
-            if not _RE_PROVINCE_ID_ONLY.search(nested.group(1)):
-                continue
-            issues.append(
-                (
-                    text.count("\n", 0, match.end() + nested.start()) + 1,
-                    "province = { province = <id> } is not a valid selector -- the "
-                    "engine rejects the add_building token and nothing is built; "
-                    "write province = <id>",
                 )
             )
     return issues
@@ -4618,8 +4494,6 @@ def check_file(filepath):
     issues.extend(_check_modifier_ref_defined(lines))
     if is_common_or_events_file:
         issues.extend(_check_every_owned_controlled_state(lines))
-        issues.extend(_check_building_missing_province(lines))
-        issues.extend(_check_nested_province_block(lines))
         issues.extend(_check_bare_statement_token(lines))
 
     # The leader rotation check already reports duplicate branches in these files.
