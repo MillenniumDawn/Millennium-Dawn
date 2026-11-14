@@ -1938,23 +1938,24 @@ add_access_SPY_civ_vars = {
 ########################
 
 clear_spy_sat_mission_arrays = {
+	clear_temp_array = kept_spy_mission_array
+	clear_temp_array = kept_spy_mission_sat_num_array
 	for_each_loop = {
 		array = ROOT.spy_mission_array
-		var:ROOT.spy_mission_array^i = {
-			if = {
-				limit = {
-					NOT = { has_country_flag = spy_sat_mission_from_@ROOT }
-				}
-				remove_from_array = {
-					array = ROOT.spy_mission_array
-					index = i
-				}
-				remove_from_array = {
-					array = ROOT.spy_mission_sat_num_array
-					index = i
-				}
+		if = {
+			limit = {
+				var:ROOT.spy_mission_array^i = { has_country_flag = spy_sat_mission_from_@ROOT }
 			}
+			add_to_temp_array = { kept_spy_mission_array = v }
+			add_to_temp_array = { kept_spy_mission_sat_num_array = ROOT.spy_mission_sat_num_array^i }
 		}
+	}
+	clear_array = ROOT.spy_mission_array
+	clear_array = ROOT.spy_mission_sat_num_array
+	for_each_loop = {
+		array = kept_spy_mission_array
+		add_to_array = { ROOT.spy_mission_array = v }
+		add_to_array = { ROOT.spy_mission_sat_num_array = kept_spy_mission_sat_num_array^i }
 	}
 }
 
