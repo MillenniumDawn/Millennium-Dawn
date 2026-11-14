@@ -2,6 +2,8 @@ on_actions = {
 	on_startup = {
 		# Startup Antarctica Research Sites
 		effect = {
+			antarctica_initialize_reliability_tables = yes
+
 			# station_name_id mapping:
 			# 1 Amundsen-Scott South Pole, 2 Vostok, 3 Halley, 4 Esperanza, 5 Eduardo Frei, 6 Mawson,
 			# 7 Henryk Arctowski, 8 Dumont d'Urville, 9 Neumayer, 10 Syowa, 11 Scott Base,
@@ -432,6 +434,11 @@ on_actions = {
 				antarctica_process_delivery_queue = yes
 				antarctica_process_station_fuel_consumption = yes
 				antarctica_process_station_module_installations = yes
+				if = {
+					limit = { NOT = { has_global_flag = antarctic_station_startup_refresh } }
+					set_global_flag = antarctic_station_startup_refresh # One time refresh
+					antarctica_apply_station_maintenance_costs = yes
+				}
 			}
 			if = {
 				limit = {
@@ -454,11 +461,6 @@ on_actions = {
 			if = {
 				limit = { check_variable = { research_station_module_repair_days_remaining > 0 } }
 				antarctica_process_blizzard_repairs_daily = yes
-			}
-			if = {
-				limit = { NOT = { has_global_flag = antarctic_station_startup_refresh } }
-				set_global_flag = antarctic_station_startup_refresh # One time refresh
-				antarctica_apply_station_maintenance_costs = yes
 			}
 		}
 	}
