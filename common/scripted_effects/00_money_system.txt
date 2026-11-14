@@ -4364,7 +4364,17 @@ update_display = {
 	set_variable = { treasury_rate_with_interest = { value = display_income subtract = potential_expense } }
 
 	# The balance the AI budget checks judge. Cheap debt leaves room for a deficit: 3% of income per point of interest under 6%.
-	set_temp_variable = { ai_deficit_room = { value = 6 subtract = interest_rate multiply = 0.03 clamp = { min = 0 max = 0.15 } } }
+	# Deficits feed inflation, so each point of inflation above 4% takes a point of room back.
+	set_temp_variable = {
+		ai_deficit_room = {
+			value = 6
+			subtract = interest_rate
+			multiply = 0.03
+			clamp = { min = 0 max = 0.15 }
+			subtract = { value = inflation_rate_var subtract = 0.04 clamp = { min = 0 max = 0.15 } }
+			clamp = { min = 0 max = 0.15 }
+		}
+	}
 	set_variable = { ai_budget_balance = { value = display_income multiply = ai_deficit_room add = treasury_rate_with_interest } }
 	# The fixed deficit tiers are sized for a budget of 50 a week, so a larger economy's deficit is sized down to match.
 	if = {
@@ -6203,6 +6213,7 @@ calculate_tax_adjustments = {
 			check_variable = { treasury_rate_with_interest > 0 } # deficit room is no reason to cut taxes
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
+			check_variable = { inflation_rate_var < 0.06 }
 			check_variable = { pop_tax_change = 0 }
 			check_variable = { corp_tax_change = 0 }
 		}
