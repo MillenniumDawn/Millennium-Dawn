@@ -169,68 +169,177 @@ change_expected_defense_spending = {
 	}
 }
 
-ai_reduce_spending_on_deficit = {
-	if = { limit = { is_ai = yes }
-		# Defence steps down to its expected level every month, at war too; the law AI can take over a year to get to it
+# Moves each AI spending law one level a month toward its expected level, with no political power cost.
+# The law ideas carry no AI weight, so this is the only way the AI changes them.
+ai_move_spending_laws_to_expected = {
+	# Cuts: every law above its expected level
+	if = {
+		limit = { budget_law_parliament_change_allowed = yes }
+		if = {
+			limit = {
+				check_variable = { social_law > expected_welfare_spending }
+				social_decrease_blocked = no
+				NOT = { has_country_flag = ai_deficit_trim_social } # on trim cooldown; an event may have raised it
+			}
+			decrease_social_spending = yes
+		}
+		if = {
+			limit = {
+				check_variable = { health_law > expected_health_spending }
+				health_decrease_blocked = no
+				NOT = { has_country_flag = ai_deficit_trim_health }
+				# Nationalized healthcare cannot run on the lowest budgets
+				NOT = {
+					AND = {
+						check_variable = { health_law < 4 }
+						OR = {
+							has_idea = fully_nationalized_healthcare
+							has_idea = partially_nationalized_healthcare
+						}
+					}
+				}
+				NOT = {
+					AND = {
+						check_variable = { health_law = 4 }
+						has_idea = fully_nationalized_healthcare
+					}
+				}
+			}
+			decrease_healthcare_budget = yes
+		}
+		if = {
+			limit = {
+				check_variable = { education_law > expected_edu_spending }
+				edu_decrease_blocked = no
+				NOT = { has_country_flag = ai_deficit_trim_education }
+			}
+			decrease_education_budget = yes
+		}
+		if = {
+			limit = {
+				check_variable = { police_law > expected_police_spending }
+				police_decrease_blocked = no
+				GER_Grundgesetz_allows_budget_law_change = yes
+				NOT = { has_country_flag = ai_deficit_trim_police }
+			}
+			decrease_policing_budget = yes
+		}
+		if = {
+			limit = {
+				check_variable = { bureau_law > expected_adm_spending }
+				bureau_decrease_blocked = no
+				GER_Grundgesetz_allows_budget_law_change = yes
+				NOT = { has_country_flag = ai_deficit_trim_bureau }
+			}
+			decrease_centralization = yes
+		}
+
+		# Raises: one civil law a month, only from a balanced budget
+		if = {
+			limit = {
+				check_variable = { budget_balance_ratio > 0 }
+				NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+				NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			}
+			if = {
+				limit = {
+					check_variable = { social_law < expected_welfare_spending }
+					social_increase_blocked = no
+					NOT = { check_variable = { policy_transition_social_cost > 0.05 } }
+				}
+				increase_social_spending = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { health_law < expected_health_spending }
+					health_increase_blocked = no
+					NOT = { check_variable = { policy_transition_health_cost > 0.05 } }
+					# Privatized healthcare cannot run on the highest budgets
+					NOT = {
+						AND = {
+							check_variable = { health_law > 3 }
+							OR = {
+								has_idea = fully_privatized_healthcare
+								has_idea = partially_privatized_healthcare
+							}
+						}
+					}
+					NOT = {
+						AND = {
+							check_variable = { health_law = 3 }
+							has_idea = fully_privatized_healthcare
+						}
+					}
+				}
+				increase_healthcare_budget = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { education_law < expected_edu_spending }
+					edu_increase_blocked = no
+					NOT = { check_variable = { policy_transition_education_cost > 0.05 } }
+				}
+				increase_education_budget = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { police_law < expected_police_spending }
+					police_increase_blocked = no
+					GER_Grundgesetz_allows_budget_law_change = yes
+					NOT = { check_variable = { policy_transition_police_cost > 0.05 } }
+				}
+				increase_policing_budget = yes
+			}
+			else_if = {
+				limit = {
+					check_variable = { bureau_law < expected_adm_spending }
+					bureau_increase_blocked = no
+					GER_Grundgesetz_allows_budget_law_change = yes
+					NOT = { check_variable = { policy_transition_bureau_cost > 0.05 } }
+				}
+				increase_centralization = yes
+			}
+		}
+	}
+
+	# Defence follows security pressure, in war and peace
+	if = {
+		limit = { military_law_parliament_change_allowed = yes }
 		if = {
 			limit = {
 				check_variable = { military_law > 2 } # the step below 2 needs the no military spirit
 				check_variable = { military_law > expected_military_law }
-				military_law_parliament_change_allowed = yes
+				defence_decrease_blocked = no
 			}
 			decrease_military_spending = yes
 		}
-
-		# STEP 1: Trim any category above its expected level when running a high deficit
-		# Applies in peacetime only — wartime spending is handled by war multipliers
-		if = {
+		else_if = {
 			limit = {
-				has_war = no
-				ai_has_high_deficit = yes
-			}
-
-			# Reduce civilian categories first (welfare, health, education, police, admin)
-			if = {
-				limit = {
-					check_variable = { social_law > 1 }
-					check_variable = { social_law > expected_welfare_spending }
-					NOT = { has_country_flag = ai_deficit_trim_social } # on trim cooldown; an event may have raised it
+				check_variable = { military_law < expected_military_law }
+				defence_increase_blocked = no
+				NOT = {
+					AND = {
+						original_tag = GER
+						has_idea = german_legacy
+						check_variable = { military_law > 3 }
+					}
 				}
-				decrease_social_spending = yes
-			}
-			if = {
-				limit = {
-					check_variable = { police_law > 1 }
-					check_variable = { police_law > expected_police_spending }
-					NOT = { has_country_flag = ai_deficit_trim_police }
+				OR = {
+					has_war = yes
+					AND = {
+						check_variable = { budget_balance_ratio > 0 }
+						NOT = { check_variable = { policy_transition_military_cost > 0.05 } }
+					}
 				}
-				decrease_policing_budget = yes
 			}
-			if = {
-				limit = {
-					check_variable = { education_law > 1 }
-					check_variable = { education_law > expected_edu_spending }
-					NOT = { has_country_flag = ai_deficit_trim_education }
-				}
-				decrease_education_budget = yes
-			}
-			if = {
-				limit = {
-					check_variable = { health_law > 1 }
-					check_variable = { health_law > expected_health_spending }
-					NOT = { has_country_flag = ai_deficit_trim_health }
-				}
-				decrease_healthcare_budget = yes
-			}
-			if = {
-				limit = {
-					check_variable = { bureau_law > 1 }
-					check_variable = { bureau_law > expected_adm_spending }
-					NOT = { has_country_flag = ai_deficit_trim_bureau }
-				}
-				decrease_centralization = yes
-			}
+			increase_military_spending = yes
 		}
+	}
+}
+
+ai_reduce_spending_on_deficit = {
+	if = { limit = { is_ai = yes }
+		ai_move_spending_laws_to_expected = yes
 
 		# STEP 2: Emergency austerity during MAJOR crisis (interest >12% + rate < -9)
 		# Applies even during wartime — if the economy is collapsing, cuts must happen
