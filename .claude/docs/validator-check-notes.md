@@ -70,6 +70,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_building_guards.py
 
+- Every building check runs here, in one walk over `common/`, `events/`, and
+  `history/`. Province buildings (`level_cap = { province_max = N }`) and coastal
+  buildings (`only_costal = yes`) are read from `common/buildings/`, so no list is
+  kept by hand. These checks run in CI only, not on commit.
 - `damage_building` or `remove_building` against a building the state lacks spams
   `error.log`. The guard must name the same building as the effect's `type`.
 - Accepted guards: a count comparison in an enclosing `limit` (also on `random_owned_state`
@@ -89,6 +93,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   does not establish slot availability. Nested effects and other buildings or selectors
   are not checked, and a guard for one slot does not prove that every level requested
   will fit. The backlog is tracked by #6390.
+- `building-missing-province` (ERROR): `add_building_construction` of a province
+  building with no `province` key. The engine rejects the effect.
+- `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
+  `add_building_construction`. The block takes a selector, so nothing is built.
+- `coastal-building-not-coastal` (ERROR): a coastal province building sits in a
+  province that `map/definition.csv` does not mark as coastal land, or that is not
+  listed there. It reads `history/states/` `buildings = { 1234 = { ... } }` blocks and
+  `add_building_construction` with a numeric `province` or `province = { id = ... }`.
+  Provinces picked at runtime (`all_provinces`, `limit_to_coastal`, variables) are not
+  checked. State-level coastal buildings such as `dockyard` have no province to check.
+- `reactor-owner-without-nuclear-status` (ERROR): a tag starting with a
+  `nuclear_reactor` grants no non-default `nuclear_status` idea in its
+  `history/countries/` file. Skipped when no `nuclear_status` group exists.
+- `granted-building-without-project` (ERROR): a tag starting with a building that a
+  special project's `set_building_level` grants never completes that project in its
+  country file.
+- `map/definition.csv` is in the CI workspace and selects the validator through the
+  `map-definition` group. A staged change to it or to `common/buildings/` rescans every
+  file. A staged run always reads the state, country, idea, and project files the
+  ownership checks join, and reports their findings.
 
 ## validate_characters.py
 
@@ -549,6 +573,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
+- `mesh-texture-name-clash` (WARNING): a name a rendered material uses that two or
+  more MD files under `gfx/` carry with different content, reported once per name.
+  Identical copies pass. MD files only, not vanilla. Any staged `gfx/` file runs the
+  hook, since a new icon can clash. WARNING while `black.dds` and `C7NLD.dds` (a tech
+  icon and a model texture each) are renamed in a backlog PR, then ERROR.
+
+## validate_asset_data.py
+
+- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
+  staged files only, so the existing model backlog blocks a commit only when one of
+  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
+  TGA or truncated data. Stdlib only, so it runs without numpy.
+- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
+  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
+  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
+  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
+  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
+  the texture format findings are WARNING, since the standards call them targets.
+  These need numpy and log a skip without it.
 
 ## validate_mio_icons.py
 
@@ -956,18 +1000,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and
   `add_relation_modifier`.
-- Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
-  and a `#` comment swallowed into a `log` string.
+- Structural checks: a `limit` directly under `else` and a `#` comment swallowed into a
+  `log` string. Building checks live in `validate_building_guards.py`.
 - The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
   `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
   `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
   bare modifier skips the partner arrays.
-- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+- `indent-depth` (ERROR): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
   clears it. The scan strips comments, so comment-only lines are not checked. Four
-  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
-  tracked in #6248.
+  leading spaces stay the `indent-brackets` ERROR.
 
 ## validate_variables.py
 
@@ -1017,6 +1060,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   A reference with a directory must match a file by full path. A bare filename, as
   entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
   Without a HOI4 install, missing references are warnings and include vanilla art.
+- `unused-mesh`: a `.mesh` under `gfx/` that no `pdxmesh` `file =` in a mod or vanilla
+  `.gfx` or `.asset` names, matched case-insensitively. Only used meshes mark their
+  textures used. Without a HOI4 install, MD meshes that override a vanilla path read
+  as unused.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`
