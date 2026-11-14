@@ -18,7 +18,9 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
   Use one band per legend line, with thresholds that match the legend text.
 - **Ruling Party.** Its 25 colors (24 parties and a fallback) cannot reach the options'
   ΔE 15, so it keeps one palette that clears the Standard bar. Keep each party near its
-  outlook's hue family when retuning.
+  outlook's hue family when retuning. The 24 party colors live in
+  `setup_ruling_party_map_mode_colors` as three global arrays indexed by `ruling_party`,
+  filled on startup. The fallback stays in the map mode file. The test reads both.
 - Never lower a bar to pass. Merge or cut categories instead, as the EU mode does by
   grouping nine offices into five tiers.
 
@@ -53,3 +55,4 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 - That ROOT in the color trigger and in the tooltip is the local viewer in multiplayer,
   so each player sees their own setting.
 - That `force_update_map_mode` redraws the map on every client.
+- That a global array read indexed by `FROM.ruling_party` works in a color block.

@@ -14,7 +14,7 @@ from shared_utils import iter_statements, read_script
 
 ROOT = Path(__file__).resolve().parents[3]
 MAP_MODE_DIR = ROOT / "common/map_modes"
-REFRESH_EFFECT_FILE = ROOT / "common/scripted_effects/00_map_mode_palette_effects.txt"
+PALETTE_EFFECT_FILE = ROOT / "common/scripted_effects/00_map_mode_palette_effects.txt"
 REFRESH_EFFECT = "refresh_palette_map_modes"
 LEGEND_FILE = ROOT / "localisation/english/MD_map_modes_l_english.yml"
 # Text colors from interface/core.gfx that vanish on the dark tooltip background
@@ -69,6 +69,8 @@ MAP_MODES = {
 }
 
 _PALETTE_CONDITION = re.compile(r"\bmap_mode_palette\s*=\s*(\d+)")
+_ARRAY_READ = re.compile(r"global\.(\w+)\^")
+_ARRAY_WRITE = re.compile(r"\bglobal\.(\w+)\^(\d+)\s*=\s*([\d.]+)")
 _RGB = ("red", "green", "blue")
 
 
@@ -169,7 +171,39 @@ def _leaves(body, palettes, out):
         out.append((palettes, channels))
 
 
+def _global_arrays():
+    """Map each global array the palette effects fill by index to {index: value}."""
+    arrays = {}
+    text = read_script(str(PALETTE_EFFECT_FILE))
+    for name, index, value in _ARRAY_WRITE.findall(text):
+        arrays.setdefault(name, {})[int(index)] = value
+    return arrays
+
+
+def _expand_array_reads(leaves, arrays):
+    """Replace a color read from global arrays with one color per array index."""
+    expanded = []
+    for palettes, channels in leaves:
+        columns = {
+            name: arrays.get(read.group(1), {})
+            for name, value in channels.items()
+            if (read := _ARRAY_READ.match(value))
+        }
+        if not columns:
+            expanded.append((palettes, channels))
+            continue
+        fixed = {name: value for name, value in channels.items() if name not in columns}
+        for index in sorted(set().union(*columns.values())):
+            color = dict(fixed)
+            for name, column in columns.items():
+                if index in column:
+                    color[name] = column[index]
+            expanded.append((palettes, color))
+    return expanded
+
+
 def _parse_map_modes():
+    arrays = _global_arrays()
     modes = {}
     for path in sorted(MAP_MODE_DIR.glob("*.txt")):
         text = read_script(str(path))
@@ -180,7 +214,7 @@ def _parse_map_modes():
                     if layer in ("top", "bottom"):
                         _leaves(layer_body or "", set(PALETTES), leaves)
                 modes[mode] = {
-                    "leaves": leaves,
+                    "leaves": _expand_array_reads(leaves, arrays),
                     "palette_aware": "map_mode_palette" in (body or ""),
                 }
     return modes
@@ -287,7 +321,7 @@ def test_map_mode_legends_use_readable_text_colors():
 def test_palette_setting_refreshes_every_palette_aware_mode(map_modes):
     effects = dict(
         (key, body)
-        for key, _, body in iter_statements(read_script(str(REFRESH_EFFECT_FILE)))
+        for key, _, body in iter_statements(read_script(str(PALETTE_EFFECT_FILE)))
     )
     refreshed = set(re.findall(r"\bmapmode\s*=\s*(\w+)", effects[REFRESH_EFFECT]))
     aware = {mode for mode, data in map_modes.items() if data["palette_aware"]}
