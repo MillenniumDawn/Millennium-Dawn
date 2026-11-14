@@ -64,6 +64,7 @@ setup_coalition_idea_tokens = {
 
 # coalition_ideas_synced = 1 means coalition_applied_tokens holds exactly one slot per outlook, in outlook order.
 # Then only the slots whose target changed are swapped. Any other writer of the array clears the flag.
+# coalition_ideas_synced = 2 only while reset_coalition_ideas rebuilds the array slot by slot.
 reset_coalition_ideas = {
 	if = { limit = { check_variable = { coalition_ideas_synced = 1 } }
 		set_temp_variable = { coalition_idea_slot = 0 }
@@ -98,6 +99,7 @@ reset_coalition_ideas = {
 	}
 	else = {
 		clear_coalition_count_ideas = yes
+		set_variable = { coalition_ideas_synced = 2 }
 		reset_democratic_coalition_ideas = yes
 		reset_communism_coalition_ideas = yes
 		reset_fascism_coalition_ideas = yes
@@ -196,7 +198,7 @@ set_coalition_idea_level = {
 }
 
 # Effect: update_coalition_outlook_idea
-# Purpose: Replaces the outlook's idea when the array is synced; otherwise adds the target and records it so it can be cleared later
+# Purpose: Replaces the outlook's idea when the array is synced, appends during a full rebuild, and otherwise runs the full rebuild so a direct call cannot stack ideas
 # Parameters:
 # - coalition_idea_slot: outlook id 0-4, the index in coalition_applied_tokens
 # - coalition_idea_target_token: Desired idea token, or 0 for none.
@@ -204,12 +206,15 @@ update_coalition_outlook_idea = {
 	if = { limit = { check_variable = { coalition_ideas_synced = 1 } }
 		swap_coalition_outlook_idea = yes
 	}
-	else = {
+	else_if = { limit = { check_variable = { coalition_ideas_synced = 2 } }
 		if = {
 			limit = { NOT = { check_variable = { coalition_idea_target_token = 0 } } }
 			add_ideas = var:coalition_idea_target_token
 		}
 		add_to_array = { coalition_applied_tokens = coalition_idea_target_token }
+	}
+	else = {
+		reset_coalition_ideas = yes
 	}
 }
 

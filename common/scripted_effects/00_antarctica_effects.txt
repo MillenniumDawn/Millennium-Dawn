@@ -601,6 +601,33 @@ antarctica_transfer_research_stations_to_root = {
 				}
 			}
 			set_temp_variable = { station_transferred = 1 }
+
+			# Keep the station covered by the new controller's repair countdown.
+			set_temp_variable = { transfer_repair_days = global.antarctica_station_repair_days_remaining^transfer_station_id }
+			if = {
+				limit = {
+					check_variable = { transfer_repair_days < 1 }
+					OR = {
+						check_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^transfer_station_id > 0 }
+					}
+				}
+				set_temp_variable = { transfer_repair_days = 14 }
+			}
+			if = {
+				limit = { check_variable = { transfer_repair_days > 0 } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { research_station_module_repair_days_remaining < transfer_repair_days } }
+						set_variable = { research_station_module_repair_days_remaining = transfer_repair_days }
+					}
+				}
+			}
 		}
 	}
 	if = {
