@@ -505,6 +505,9 @@ on_actions = {
 	# ROOT is capitulated country, FROM is winner
 	on_capitulation = {
 		effect = {
+			if = { limit = { is_debug = yes }
+				log = "[GetDateText]: [ROOT.GetTag]: Capitulated to [FROM.GetTag]: Debt Ratio: [?ROOT.debt_ratio] Interest Rate: [?ROOT.interest_rate] Treasury Rate: [?ROOT.treasury_rate]"
+			}
 			FROM = {
 				if = {
 					limit = { NOT = { has_country_flag = reverse_engineering_cooldown } }
@@ -1911,6 +1914,7 @@ on_actions = {
 		effect = {
 			update_government_classification_arrays = yes
 			update_neighbors_effects = yes
+			calculate_expected_spending = yes # the law pass reads the unrounded expected levels
 			recalculate_law_desires = yes
 			add_own_ideology_drift = yes
 			# Clearing Economic Drifts
@@ -2093,6 +2097,17 @@ on_actions = {
 	# ROOT = attacker, FROM = defender
 	on_declare_war = {
 		effect = {
+			if = { limit = { is_debug = yes }
+				set_temp_variable = { war_attacker_crisis = 0 }
+				if = { limit = { OR = { has_active_mission = bankruptcy_incoming_collapse has_active_mission = debt_default_main_mission } }
+					set_temp_variable = { war_attacker_crisis = 1 }
+				}
+				set_temp_variable = { war_defender_crisis = 0 }
+				if = { limit = { FROM = { OR = { has_active_mission = bankruptcy_incoming_collapse has_active_mission = debt_default_main_mission } } }
+					set_temp_variable = { war_defender_crisis = 1 }
+				}
+				log = "[GetDateText]: [ROOT.GetTag]: War Declared on [FROM.GetTag]: Attacker Debt Ratio: [?ROOT.debt_ratio] Interest Rate: [?ROOT.interest_rate] Treasury Rate: [?ROOT.treasury_rate] Crisis: [?war_attacker_crisis] Defender Debt Ratio: [?FROM.debt_ratio] Interest Rate: [?FROM.interest_rate] Treasury Rate: [?FROM.treasury_rate] Crisis: [?war_defender_crisis]"
+			}
 			# Attacker AI adds defender to their cyber target list
 			if = {
 				limit = {
