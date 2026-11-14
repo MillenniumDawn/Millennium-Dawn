@@ -56,39 +56,7 @@ jihadist_conversion_setup = {
 	init_influence = yes
 	set_variable = { domestic_influence_amount = 200 }
 	sort_influence = yes
-	if = {
-		limit = { country_exists = AQY }
-		remove_opinion_modifier = {
-			target = AQY
-			modifier = AlQaida_Are_Terrorists
-		}
-		remove_opinion_modifier = {
-			target = AQY
-			modifier = AlQaida_Are_Terrorists_Trade
-		}
-	}
-	if = {
-		limit = { country_exists = TAL }
-		remove_opinion_modifier = {
-			target = TAL
-			modifier = AlQaida_Are_Terrorists
-		}
-		remove_opinion_modifier = {
-			target = TAL
-			modifier = AlQaida_Are_Terrorists_Trade
-		}
-	}
-	if = {
-		limit = { country_exists = TTP }
-		remove_opinion_modifier = {
-			target = TTP
-			modifier = AlQaida_Are_Terrorists
-		}
-		remove_opinion_modifier = {
-			target = TTP
-			modifier = AlQaida_Are_Terrorists_Trade
-		}
-	}
+	clear_terrorism_opinion_of_jihadists = yes
 	add_ideas = intervention_neo_imperialism
 	add_equipment_to_stockpile = {
 		type = infantry_weapons_1
@@ -247,11 +215,108 @@ jihadist_regional_war_declarations = {
 }
 
 # Apply terrorism opinion modifiers — consolidated from 4+ separate every_country loops
-# Scope: any scope (uses global iteration)
+# Scope: the jihadist country the world designates as a terrorist state
 apply_terrorism_opinion_to_world = {
+	set_country_flag = designated_terrorist_state
 	every_country = {
-		limit = { jihadist_government = no }
+		limit = {
+			jihadist_government = no
+			NOT = {
+				OR = {
+					original_tag = QAT
+					original_tag = PAK
+					original_tag = SAU
+					original_tag = TRK
+					original_tag = UAE
+					original_tag = ERI
+				}
+			}
+		}
 		add_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
 		add_opinion_modifier = { target = PREV modifier = terrorism_is_no_no_trade }
+	}
+}
+
+# Scope: a country that has just come under jihadist rule
+clear_terrorism_opinion_of_jihadists = {
+	every_other_country = {
+		limit = { jihadist_government = yes }
+		PREV = {
+			remove_opinion_modifier = { target = PREV modifier = AlQaida_Are_Terrorists }
+			remove_opinion_modifier = { target = PREV modifier = AlQaida_Are_Terrorists_Trade }
+			remove_opinion_modifier = { target = PREV modifier = Taliban_Are_Terrorists }
+			remove_opinion_modifier = { target = PREV modifier = Taliban_Are_Terrorists_Trade }
+			remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
+			remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no_trade }
+		}
+	}
+}
+
+# Scope: an existing country whose Salafist Caliphate party has just taken power
+jihadist_takeover_setup = {
+	add_named_threat = {
+		threat = 5
+		name = terror.threat
+	}
+	every_other_country = {
+		limit = { has_military_access_to = PREV }
+		diplomatic_relation = {
+			country = PREV
+			relation = military_access
+			active = no
+		}
+	}
+	if = {
+		limit = { is_in_faction = yes }
+		leave_faction = yes
+	}
+	clear_terrorism_opinion_of_jihadists = yes
+	apply_terrorism_opinion_to_world = yes
+}
+
+# Scope: a country that has just left Salafist rule
+lift_terrorist_state_designation = {
+	clr_country_flag = designated_terrorist_state
+	every_other_country = {
+		remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
+		remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no_trade }
+	}
+	# Restores the starting opinions that clear_terrorism_opinion_of_jihadists removed
+	if = {
+		limit = {
+			country_exists = TAL
+			TAL = { jihadist_government = yes }
+			NOT = {
+				OR = {
+					original_tag = TAL
+					original_tag = TTP
+					original_tag = CHI
+					original_tag = QAT
+					original_tag = PAK
+					original_tag = SAU
+					original_tag = TRK
+					original_tag = UAE
+					original_tag = ERI
+				}
+			}
+		}
+		add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists }
+		add_opinion_modifier = { target = TAL modifier = Taliban_Are_Terrorists_Trade }
+	}
+	if = {
+		limit = {
+			country_exists = TTP
+			TTP = { jihadist_government = yes }
+			NOT = {
+				OR = {
+					original_tag = TAL
+					original_tag = TTP
+					original_tag = CHI
+					original_tag = ERI
+				}
+			}
+		}
+		add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists }
+		add_opinion_modifier = { target = TTP modifier = AlQaida_Are_Terrorists_Trade }
 	}
 }
