@@ -161,7 +161,7 @@ These custom filters exist for other country trees, do not add them to Israel or
 | Only custom filter, no generic                                         | Always add the paired generic (see tables above)                                                                    |
 | `FOCUS_FILTER_MILITARY`                                                | Use `FOCUS_FILTER_MILITARY_LAWS` (MILITARY is a legacy/unused alias)                                                |
 | Using `FOCUS_FILTER_DIPLOMACY` for all foreign policy                  | Use `FOCUS_FILTER_FOREIGN_POLICY` for general relations; `FOCUS_FILTER_DIPLOMACY` for specific diplomatic actions   |
-| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to focuses whose reward spends treasury, and add a bankruptcy guard in `ai_will_do` |
+| Tagging economic investment focuses without `FOCUS_FILTER_EXPENDITURE` | Add `FOCUS_FILTER_EXPENDITURE` to focuses whose reward spends treasury, and add a bankruptcy guard in `ai_will_do`  |
 | Missing filter entirely                                                | Every focus must have at least one filter                                                                           |
 | Using another country's custom filter                                  | Custom filters (RUSSIA*\*, UKRAINE*\*, ISRPOLIT, etc.) are country-specific, never cross-assign                     |
 
