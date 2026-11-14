@@ -95,7 +95,9 @@ are under `.claude/docs/`.
 
 - All scripting: `hoi4-data-structures.md` and `scripting-edge-cases.md`.
 - Focuses: `focus-tree-reference.md` and `search-filters.md`.
-- Events: `event-reference.md`. Decisions: `decision-reference.md`.
+- Events: `event-reference.md`. Schedule one-off events with a fixed date in
+  `common/scripted_effects/00_yearly_effects.txt` instead of polling from on-actions.
+  Decisions: `decision-reference.md`.
 - Ideas: `idea-reference.md`. MIOs: `mio-reference.md`.
 - AI strategies, templates, equipment: `ai-strategy-reference.md` and
   `ai-equipment-reference.md`.

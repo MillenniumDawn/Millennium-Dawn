@@ -11785,11 +11785,38 @@ focus_tree = {
 				variant_name = "9K111 Fagot"
 				producer = SOV
 			}
-			add_equipment_to_stockpile = {
-				type = medium_tank_flame_chassis_0
-				variant_name = "BMP-1U Shkval"
-				amount = 15
-				producer = UKR
+			# The BMP-1U Shkval only if Ukraine has developed it and has not sold Georgia a set yet; then it is Ukraine's sale
+			if = {
+				limit = {
+					country_exists = UKR
+					UKR = {
+						has_country_flag = UKR_modernize_bmp1u_flag
+						NOT = { check_variable = { UKR_bmp1_georgia_sets > 0 } }
+					}
+				}
+				add_equipment_to_stockpile = {
+					type = medium_tank_flame_chassis_0
+					variant_name = "BMP-1U Shkval"
+					amount = 15
+					producer = UKR
+				}
+				UKR = {
+					add_to_variable = { UKR_bmp1_georgia_sets = 1 }
+					set_temp_variable = { treasury_change = 0.08 }
+					modify_treasury_effect = yes
+					if = {
+						limit = { country_exists = SOV }
+						SOV = { add_opinion_modifier = { target = UKR modifier = UKR_bmp1u_georgia } }
+					}
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = medium_tank_flame_chassis_0
+					variant_name = "BMP-1P"
+					amount = 15
+					producer = SOV
+				}
 			}
 			add_equipment_to_stockpile = {
 				type = medium_tank_flame_chassis_1

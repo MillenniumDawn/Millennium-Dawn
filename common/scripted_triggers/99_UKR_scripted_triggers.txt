@@ -632,6 +632,100 @@ UKR_storage_has_old_artillery = {
 UKR_storage_has_old_small_arms = {
 	check_variable = { UKR_storage_total_8 > 0 }
 }
+
+UKR_storage_has_old_support_weapons = {
+	check_variable = { UKR_storage_total_9 > 0 }
+}
+
+# Every artillery model left in storage has current maintenance
+UKR_storage_old_artillery_kept = {
+	OR = {
+		check_variable = { ukraine_has_m46_stockpile < 1 }
+		has_country_flag = UKR_storage_m46_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_d1_stockpile < 1 }
+		has_country_flag = UKR_storage_d1_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_m30_stockpile < 1 }
+		has_country_flag = UKR_storage_m30_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_ml20_stockpile < 1 }
+		has_country_flag = UKR_storage_ml20_kept_flag
+	}
+}
+# Every small arms model left in storage has current maintenance
+UKR_storage_old_small_arms_kept = {
+	OR = {
+		check_variable = { ukraine_has_mosin_stockpile < 1 }
+		has_country_flag = UKR_storage_mosin_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_sks_stockpile < 1 }
+		has_country_flag = UKR_storage_sks_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_ak47_stockpile < 1 }
+		has_country_flag = UKR_storage_ak47_kept_flag
+	}
+}
+# Every support weapons model left in storage has current maintenance
+UKR_storage_old_support_weapons_kept = {
+	OR = {
+		check_variable = { ukraine_has_spg9_stockpile < 1 }
+		has_country_flag = UKR_storage_spg9_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_strela2_stockpile < 1 }
+		has_country_flag = UKR_storage_strela2_kept_flag
+	}
+}
+
+UKR_storage_can_sell_brdm1 = {
+	UKR_storage_has_old_vehicles = yes
+	has_country_flag = UKR_storage_brdm1_kept_flag
+}
+
+UKR_yatahan_turkey_tender_ready = {
+	country_exists = TUR
+	NOT = { has_war_with = TUR }
+	controls_state = 696
+	OR = {
+		AND = {
+			has_country_flag = UKR_yatahan_tender_requirements_reduced_flag
+			TUR = {
+				influence_higher_10 = yes
+				has_opinion = { target = ROOT value > 29 }
+			}
+		}
+		TUR = {
+			influence_higher_15 = yes
+			has_opinion = { target = ROOT value > 39 }
+		}
+	}
+}
+
+
+UKR_storage_can_sell_9p148 = {
+	check_variable = { ukraine_has_9p148_stockpile > 8 }
+	has_country_flag = UKR_storage_9p148_kept_flag
+}
+
+# Trigger: UKR_storage_upkeep_can_pay
+# Purpose: Checks the whole-million treasury payment due for a depot service order.
+# Parameters:
+# - ukr_storage_upkeep_bill: The current service price in thousands of dollars.
+UKR_storage_upkeep_can_pay = {
+	check_variable = { ukr_storage_upkeep_bill > 0 }
+	set_temp_variable = { ukr_storage_upkeep_balance = { value = UKR_storage_upkeep_due add = ukr_storage_upkeep_bill } }
+	set_temp_variable = { ukr_storage_upkeep_remainder = ukr_storage_upkeep_balance }
+	modulo_temp_variable = { var = ukr_storage_upkeep_remainder value = 1000 }
+	set_temp_variable = { ukr_storage_upkeep_charge = { value = ukr_storage_upkeep_balance subtract = ukr_storage_upkeep_remainder divide = 1000000 } }
+	check_variable = { var = treasury value = ukr_storage_upkeep_charge compare = greater_than_or_equals }
+}
+
 # Old gear orders, checked in the buyer's answer event (FROM = Ukraine). Earlier buyers need 10 less opinion.
 UKR_storage_buyer_old_gear = {
 	OR = {
@@ -680,6 +774,100 @@ UKR_army_deters_crimea_demand = {
 	has_navy_size = { size > 100 }
 }
 
+# Scope: a foreign country. Ukraine has at least 5% influence there.
+UKR_has_influence_5 = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_has_influence_5_tt
+		any_of = {
+			array = influence_array
+			value = v
+			index = i
+
+			var:v = { tag = UKR }
+			check_variable = { influence_array_val^i > 4.999 }
+		}
+	}
+}
+
+# Scope: a foreign country. Ukraine has at least 10% influence there.
+UKR_has_influence_10 = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_has_influence_10_tt
+		any_of = {
+			array = influence_array
+			value = v
+			index = i
+
+			var:v = { tag = UKR }
+			check_variable = { influence_array_val^i > 9.999 }
+		}
+	}
+}
+
+# In a foreign country's scope: Russia has less than 20% of the influence there
+UKR_sov_influence_below_20 = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_sov_influence_below_20_tt
+		NOT = {
+			any_of = {
+				array = influence_array
+				value = v
+				index = i
+
+				var:v = { tag = SOV }
+				check_variable = { influence_array_val^i > 19.999 }
+			}
+		}
+	}
+}
+
+# The United States buys old gear for the new Iraqi army once its war with Iraq is over
+UKR_storage_usa_iraq_route = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_usa_iraq_route_tt
+		country_exists = USA
+		country_exists = IRQ
+		IRQ = { NOT = { has_war_with = USA } }
+		OR = {
+			has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded
+			USA = { has_country_flag = USA_wot_iraqi_freedom_flag }
+		}
+	}
+}
+
+# The United States buys old gear for the Afghan army once its war with the Taliban is over
+UKR_storage_usa_afghan_route = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_usa_afghan_route_tt
+		country_exists = USA
+		country_exists = AFG
+		AFG = { NOT = { has_war_with = USA } }
+		USA = { has_country_flag = USA_wot_enduring_freedom_flag }
+		OR = {
+			NOT = { country_exists = TAL }
+			USA = { NOT = { has_war_with = TAL } }
+		}
+	}
+}
+
+# The BTR-4 programme has reached its last step
+UKR_btr4_finished = {
+	check_variable = { btr4_total_steps > 5 }
+	check_variable = { btr4_current_step = btr4_total_steps }
+}
+
+# A state where a reactivated S-200 battalion goes back on duty (its 2000 garrisons)
+UKR_s200_site_state = {
+	OR = {
+		state = 698
+		state = 700
+		state = 696
+		state = 695
+		state = 694
+		state = 669
+	}
+}
+
 varyag_transit_possible = {
 	country_exists = CHI
 	TUR = { controls_state = 1244 }
@@ -720,7 +908,7 @@ varyag_can_complete_refit = {
 }
 
 varyag_refit_specification_ready = {
-	has_country_flag = varyag_hull_at_shipyard
+	has_country_flag = varyag_hull_at_shipyard_flag
 	check_variable = { varyag_weapons_tier > 0 }
 }
 
@@ -753,11 +941,11 @@ varyag_russian_supply_available = {
 
 UKR_varyag_air_group_available = {
 	check_variable = { varyag_weapons_tier > 0 }
-	NOT = { has_country_flag = UKR_varyag_air_group_ordered }
+	NOT = { has_country_flag = UKR_varyag_air_group_ordered_flag }
 }
 
 UKR_varyag_can_order_rafale = {
-	has_country_flag = UKR_varyag_catapult_refit
+	has_country_flag = UKR_varyag_catapult_refit_flag
 	varyag_french_supply_available = yes
 	custom_trigger_tooltip = {
 		tooltip = UKR_varyag_rafale_funds_tt
@@ -766,7 +954,7 @@ UKR_varyag_can_order_rafale = {
 }
 
 UKR_varyag_can_order_mig29k = {
-	NOT = { has_country_flag = UKR_varyag_catapult_refit }
+	NOT = { has_country_flag = UKR_varyag_catapult_refit_flag }
 	varyag_russian_supply_available = yes
 	custom_trigger_tooltip = {
 		tooltip = UKR_varyag_mig_funds_tt
@@ -777,13 +965,13 @@ UKR_varyag_can_order_mig29k = {
 varyag_hornet_program_available = {
 	OR = {
 		varyag_refit_specification_ready = yes
-		has_country_flag = UKR_varyag_catapult_refit
+		has_country_flag = UKR_varyag_catapult_refit_flag
 	}
-	NOT = { has_country_flag = UKR_varyag_air_group_ordered }
+	NOT = { has_country_flag = UKR_varyag_air_group_ordered_flag }
 }
 
 varyag_can_order_hornets = {
-	has_country_flag = UKR_varyag_catapult_refit
+	has_country_flag = UKR_varyag_catapult_refit_flag
 	varyag_us_supply_available = yes
 	custom_trigger_tooltip = {
 		tooltip = varyag_hornet_funds_tt
@@ -793,8 +981,8 @@ varyag_can_order_hornets = {
 
 UKR_varyag_trials_available = {
 	original_tag = UKR
-	has_country_flag = UKR_varyag_commissioned
-	NOT = { has_country_flag = UKR_varyag_deck_trials_completed }
+	has_country_flag = UKR_varyag_commissioned_flag
+	NOT = { has_country_flag = UKR_varyag_deck_trials_completed_flag }
 	has_navy_size = { unit = carrier size > 0 }
 }
 
@@ -816,7 +1004,6 @@ UKR_varyag_combat_aircraft_available = {
 		}
 	}
 }
-
 UKR_varyag_training_aircraft_available = {
 	custom_trigger_tooltip = {
 		tooltip = UKR_varyag_training_aircraft_tt
@@ -839,4 +1026,50 @@ UKR_varyag_training_aircraft_available = {
 			}
 		}
 	}
+}
+
+UKR_storage_has_carrier_aircraft = {
+	check_variable = { ukraine_has_su25utg_stockpile > 1 }
+	check_variable = { ukraine_has_su33_stockpile > 0 }
+}
+
+UKR_storage_carrier_aircraft_selected = {
+	OR = {
+		is_ai = yes
+		check_variable = { UKR_storage_selected_row = 10 }
+		check_variable = { UKR_storage_selected_row = 67 }
+		check_variable = { UKR_storage_selected_row = 68 }
+	}
+}
+
+UKR_storage_carrier_aircraft_chinese_buyer = {
+	CHI = {
+		OR = {
+			has_country_flag = CHI_varyag_hull_in_transit_flag
+			has_country_flag = CHI_varyag_hull_acquired_flag
+		}
+	}
+}
+
+UKR_storage_can_prepare_carrier_aircraft = {
+	OR = {
+		has_country_flag = varyag_hull_at_shipyard_flag
+		has_country_flag = UKR_varyag_commissioned_flag
+	}
+}
+
+UKR_storage_yak38_selected = {
+	OR = {
+		is_ai = yes
+		check_variable = { UKR_storage_selected_row = 10 }
+		check_variable = { UKR_storage_selected_row = 101 }
+		check_variable = { UKR_storage_selected_row = 102 }
+		check_variable = { UKR_storage_selected_row = 103 }
+	}
+}
+
+UKR_storage_yak38_inspection_ready = {
+	has_country_flag = UKR_storage_yak38_program_in_progress_flag
+	check_variable = { UKR_storage_yak38_total > 18 }
+	NOT = { check_variable = { UKR_storage_yak38_repaired > 0 } }
 }
