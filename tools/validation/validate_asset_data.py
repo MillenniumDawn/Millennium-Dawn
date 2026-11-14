@@ -51,13 +51,20 @@ def foreign_format(path):
 
 class Validator(BaseValidator):
     TITLE = "ASSET DATA"
-    STAGED_EXTENSIONS = [".mesh", ".dds", ".DDS"]
+    # Filter locally so mixed-case extensions reach the same checks as the hook.
+    STAGED_EXTENSIONS = [""]
+    # The shared collector includes rename destinations only in this mode.
+    STAGED_INCLUDE_MISSING = True
 
     def _files(self):
         """The staged files, or every mesh and texture under the asset folders."""
         mod = Path(self.mod_path).resolve()
         if self.staged_only:
-            return [(mod / name).resolve() for name in self.staged_files or []]
+            return [
+                mod / name
+                for name in self.staged_files or []
+                if Path(name).suffix.lower() in (".mesh", ".dds")
+            ]
         return [
             Path(folder, name)
             for top in TEXTURE_DIRS

@@ -2,7 +2,13 @@
 
 import pytest
 import validate_asset_data as V
-from shared.suite import MESH_QUAD, dds_texture, mesh_bytes
+from shared.suite import (
+    MESH_QUAD,
+    dds_texture,
+    initialize_git_repository,
+    mesh_bytes,
+    run_git,
+)
 from validator_common import Severity
 
 ERROR, WARNING = Severity.ERROR, Severity.WARNING
@@ -71,6 +77,11 @@ _DDS_CASES = {
         ["gfx/interface/I.DDS"],
         [("gfx/interface/I.DDS", "texture-not-dds-data", ERROR)],
     ),
+    "mixed-case extension": (
+        {"gfx/interface/I.Dds": PNG},
+        ["gfx/interface/I.Dds"],
+        [("gfx/interface/I.Dds", "texture-not-dds-data", ERROR)],
+    ),
     "outside gfx and map": ({"resources/r.dds": PNG}, ["resources/r.dds"], []),
     "tree scan": (
         {ICON: PNG, "resources/r.dds": PNG},
@@ -96,6 +107,16 @@ _MODEL_CASES = {
         [(MESH, "mesh-triangle-index-out-of-range", ERROR)],
     ),
     "unreadable mesh": ({MESH: b"junk"}, [MESH], [(MESH, "mesh-unreadable", ERROR)]),
+    "mixed-case mesh": (
+        {"gfx/models/tank.Mesh": b"junk"},
+        ["gfx/models/tank.Mesh"],
+        [("gfx/models/tank.Mesh", "mesh-unreadable", ERROR)],
+    ),
+    "unrelated model file": (
+        {"gfx/models/model.asset": b"junk"},
+        ["gfx/models/model.asset"],
+        [],
+    ),
     "triangles over target": (
         {"gfx/models/units/weapons/gun.mesh": {}},
         ["gfx/models/units/weapons/gun.mesh"],
@@ -150,3 +171,85 @@ def test_without_numpy_only_the_dds_check_runs(tmp_path, monkeypatch):
 
     assert _found(validator) == [(ICON, "texture-not-dds-data", ERROR)]
     assert any("numpy is not installed" in line for line in validator.output_lines)
+
+
+def test_staged_rename_checks_destination(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    _run(tmp_path, monkeypatch, {"source.png": PNG}, None)
+    initialize_git_repository(tmp_path, ".")
+    (tmp_path / "gfx/interface").mkdir(parents=True)
+    run_git(tmp_path, "mv", "source.png", ICON)
+
+    validator = V.Validator(str(tmp_path), staged_only=True, use_colors=False)
+    validator.run_validations()
+
+    assert _found(validator) == [(ICON, "texture-not-dds-data", ERROR)]
+
+
+# case: (target relative to mod, staged mode)
+_LINK_CASES = {
+    "renamed target": ("image.png", True),
+    "outside root": ("../image.png", True),
+    "tree scan": ("image.png", False),
+}
+
+
+@pytest.mark.parametrize("target, staged", _LINK_CASES.values(), ids=_LINK_CASES.keys())
+def test_dds_symlink_keeps_asset_name(tmp_path, monkeypatch, target, staged):
+    mod = tmp_path / "mod"
+    path = mod / ICON
+    path.parent.mkdir(parents=True)
+    source = mod / target
+    source.write_bytes(PNG)
+    try:
+        path.symlink_to(source)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+    if staged:
+        monkeypatch.setenv("MD_STAGED_FILES", ICON)
+    validator = V.Validator(str(mod), staged_only=staged, use_colors=False)
+    validator.run_validations()
+
+    assert _found(validator) == [(ICON, "texture-not-dds-data", ERROR)]
+
+
+# case: (asset name, target name, data, category, severity)
+_MODEL_LINK_CASES = {
+    "mesh error": (
+        MESH,
+        "source.bin",
+        {"tri": [0, 1, 9]},
+        "mesh-triangle-index-out-of-range",
+        ERROR,
+    ),
+    "texture warning": (
+        TEXTURE,
+        "source.mesh",
+        FLAT_DDS,
+        "texture-uncompressed",
+        WARNING,
+    ),
+}
+
+
+@needs_numpy
+@pytest.mark.parametrize(
+    "asset, target, data, category, severity",
+    _MODEL_LINK_CASES.values(),
+    ids=_MODEL_LINK_CASES.keys(),
+)
+def test_model_symlink_keeps_severity(
+    tmp_path, monkeypatch, asset, target, data, category, severity
+):
+    _run(tmp_path, monkeypatch, {target: data}, None)
+    path = tmp_path / asset
+    path.parent.mkdir(parents=True)
+    try:
+        path.symlink_to(tmp_path / target)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+    monkeypatch.setenv("MD_STAGED_FILES", asset)
+    validator = V.Validator(str(tmp_path), staged_only=True, use_colors=False)
+    validator.run_validations()
+
+    assert _found(validator) == [(asset, category, severity)]

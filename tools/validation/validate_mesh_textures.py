@@ -203,7 +203,8 @@ def _contents_differ(paths: List[str]) -> bool:
 
 class Validator(BaseValidator):
     TITLE = "MESH TEXTURES"
-    STAGED_EXTENSIONS = [".mesh", ".gfx", ".asset", ".dds", ".tga", ".png"]
+    STAGED_EXTENSIONS = [""]
+    STAGED_INCLUDE_MISSING = True
 
     def run_validations(self):
         mod = Path(self.mod_path)
