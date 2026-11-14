@@ -368,13 +368,9 @@ un_check_if_valid_for_sanctions = {
 			check_variable = { has_added_tension_amount > 0 }
 			NOT = { original_tag = ZOM }
 			NOT = { original_tag = ALN }
+			NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
 		}
-		if = {
-			limit = {
-				NOT = { has_dynamic_modifier = { modifier = united_nations_security_council_sanctions } }
-			}
-			add_to_array = { global.can_be_sc_sanctioned = THIS }
-		}
+		add_to_array = { global.can_be_sc_sanctioned = THIS }
 	}
 }
 
@@ -1142,37 +1138,45 @@ un_check_for_next_queued_vote = {
 	# Self-heal: an annexation path that skips on_annex leaves a dead nation seated in the GA or
 	# Council; run the canonical cleanup it missed. P5 arrays mirror the p5_member on_remove,
 	# which cannot fire on a dead country.
-	clear_array = md_dead_member_sweep
-	for_each_loop = {
-		array = global.UN_general_assembly
-		value = v
-		if = {
-			limit = { NOT = { var:v = { exists = yes } } }
-			add_to_array = { md_dead_member_sweep = v }
-		}
-	}
-	for_each_loop = {
-		array = global.security_council_members
-		value = v
-		if = {
-			limit = {
-				NOT = { var:v = { exists = yes } }
-				NOT = { is_in_array = { md_dead_member_sweep = v } }
+	if = {
+		limit = {
+			OR = {
+				any_of_scopes = { array = global.UN_general_assembly exists = no }
+				any_of_scopes = { array = global.security_council_members exists = no }
 			}
-			add_to_array = { md_dead_member_sweep = v }
 		}
-	}
-	for_each_loop = {
-		array = md_dead_member_sweep
-		value = v
-		if = {
-			limit = { is_in_array = { global.p5_sc_members = v } }
-			remove_from_array = { global.p5_sc_members = v }
-			remove_from_array = { global.security_council_members = v }
+		clear_array = md_dead_member_sweep
+		for_each_loop = {
+			array = global.UN_general_assembly
+			value = v
+			if = {
+				limit = { NOT = { var:v = { exists = yes } } }
+				add_to_array = { md_dead_member_sweep = v }
+			}
 		}
-		var:v = { clear_united_nations_member_state = yes }
+		for_each_loop = {
+			array = global.security_council_members
+			value = v
+			if = {
+				limit = {
+					NOT = { var:v = { exists = yes } }
+					NOT = { is_in_array = { md_dead_member_sweep = v } }
+				}
+				add_to_array = { md_dead_member_sweep = v }
+			}
+		}
+		for_each_loop = {
+			array = md_dead_member_sweep
+			value = v
+			if = {
+				limit = { is_in_array = { global.p5_sc_members = v } }
+				remove_from_array = { global.p5_sc_members = v }
+				remove_from_array = { global.security_council_members = v }
+			}
+			var:v = { clear_united_nations_member_state = yes }
+		}
+		clear_array = md_dead_member_sweep
 	}
-	clear_array = md_dead_member_sweep
 
 	if = {
 		limit = { has_global_flag = unsc_permanent_seat_application_active }
@@ -1866,12 +1870,15 @@ full_satellite_system_access = {
 #While spending a higher percentage will increase your benefits
 calculate_final_un_benefits = {
 	set_temp_variable = { current_receiving_budget_tracker = 0 }
+	#if you receive aid, you begin to lose some of the gains from giving aid
+	set_temp_variable = { contribution_multiplier = 1 }
 	if = {
 		limit = { has_country_flag = is_getting_esco_subsidies }
 		add_to_temp_variable = {
 			var = current_receiving_budget_tracker
 			value = { value = global.unescoe_budget divide = global.esco_recipient_divisor }
 		}
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 	if = {
 		limit = { has_country_flag = is_getting_ido_subsidies }
@@ -1879,6 +1886,7 @@ calculate_final_un_benefits = {
 			var = current_receiving_budget_tracker
 			value = { value = global.undio_budget divide = global.ido_recipient_divisor }
 		}
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 	if = {
 		limit = { has_country_flag = is_getting_cdf_subsidies }
@@ -1886,6 +1894,7 @@ calculate_final_un_benefits = {
 			var = current_receiving_budget_tracker
 			value = { value = global.uncdf_budget divide = global.cdf_recipient_divisor }
 		}
+		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 	set_temp_variable = {
 		current_receiving_budget_tracker = {
@@ -1893,27 +1902,6 @@ calculate_final_un_benefits = {
 			divide = global.full_aid_budget_calculator
 			multiply = -2
 		}
-	}
-
-	#if you receive aid, you begin to lose some of the gains from giving aid
-	set_temp_variable = { contribution_multiplier = 1 }
-	if = {
-		limit = {
-			has_country_flag = is_getting_ido_subsidies
-		}
-		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
-	}
-	if = {
-		limit = {
-			has_country_flag = is_getting_cdf_subsidies
-		}
-		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
-	}
-	if = {
-		limit = {
-			has_country_flag = is_getting_esco_subsidies
-		}
-		subtract_from_temp_variable = { contribution_multiplier = 0.2 }
 	}
 
 	set_temp_variable = {
@@ -1939,23 +1927,12 @@ calculate_final_un_benefits = {
 	}
 
 	set_variable = {
-		united_nations_influence_defense_var = {
-			value = united_nations_contribution_percent
-			add = aid_program_adder
-			add = current_receiving_budget_tracker
-		}
-	}
-
-	set_temp_variable = {
-		investment_adder = {
+		united_nations_investment_duration_var = {
 			value = united_nations_contribution_percent
 			add = aid_program_adder
 			multiply = -0.5
 		}
 	}
-
-	set_variable = { united_nations_investment_duration_var = investment_adder }
-	set_variable = { united_nations_investment_cost_var = investment_adder }
 }
 
 remove_un_aid_subsidies_modifier_if_unused = {
@@ -2011,42 +1988,46 @@ revoke_un_cdf_subsidies = {
 }
 
 check_for_subsidy_expiration = {
-	set_temp_variable = { research_check = modifier@research_speed_factor }
-	subtract_from_temp_variable = { research_check = un_esco_research_speed_var }
-	set_temp_variable = { unsubsidized_political_power_daily = political_power_daily }
-	set_temp_variable = { political_power_factor_with_esco = { value = modifier@political_power_factor add = 1 } }
 	if = {
-		limit = { check_variable = { political_power_factor_with_esco > 0 } }
-		set_temp_variable = { political_power_factor_without_esco = political_power_factor_with_esco }
-		subtract_from_temp_variable = { political_power_factor_without_esco = un_esco_political_power_var }
-		multiply_temp_variable = { unsubsidized_political_power_daily = political_power_factor_without_esco }
-		divide_temp_variable = { unsubsidized_political_power_daily = political_power_factor_with_esco }
+		limit = { has_country_flag = is_getting_esco_subsidies }
+		set_temp_variable = { research_check = modifier@research_speed_factor }
+		subtract_from_temp_variable = { research_check = un_esco_research_speed_var }
+		set_temp_variable = { unsubsidized_political_power_daily = political_power_daily }
+		set_temp_variable = { political_power_factor_with_esco = { value = modifier@political_power_factor add = 1 } }
+		if = {
+			limit = { check_variable = { political_power_factor_with_esco > 0 } }
+			set_temp_variable = { political_power_factor_without_esco = political_power_factor_with_esco }
+			subtract_from_temp_variable = { political_power_factor_without_esco = un_esco_political_power_var }
+			multiply_temp_variable = { unsubsidized_political_power_daily = political_power_factor_without_esco }
+			divide_temp_variable = { unsubsidized_political_power_daily = political_power_factor_with_esco }
+		}
+		if = {
+			limit = {
+				OR = {
+					check_variable = { research_check > global.target_research_speed_mod }
+					check_variable = { unsubsidized_political_power_daily > 6.999 }
+				}
+			}
+			revoke_un_esco_subsidies = yes
+			if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.300 }
+		}
 	}
 	if = {
-		limit = {
-			has_country_flag = is_getting_esco_subsidies
-			OR = {
-				check_variable = { research_check > global.target_research_speed_mod }
-				check_variable = { unsubsidized_political_power_daily > 6.999 }
+		limit = { has_country_flag = is_getting_ido_subsidies }
+		set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
+		subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
+		set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
+		subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { construction_check > global.target_const_speed_mod }
+					check_variable = { unsubsidized_civ_count > global.target_civ_count }
+				}
 			}
+			revoke_un_ido_subsidies = yes
+			if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.301 }
 		}
-		revoke_un_esco_subsidies = yes
-		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.300 }
-	}
-	set_temp_variable = { construction_check = modifier@production_speed_buildings_factor }
-	subtract_from_temp_variable = { construction_check = un_ido_construction_speed_var }
-	set_temp_variable = { unsubsidized_civ_count = industrial_complex_total }
-	subtract_from_temp_variable = { unsubsidized_civ_count = un_ido_old_building_count }
-	if = {
-		limit = {
-			has_country_flag = is_getting_ido_subsidies
-			OR = {
-				check_variable = { construction_check > global.target_const_speed_mod }
-				check_variable = { unsubsidized_civ_count > global.target_civ_count }
-			}
-		}
-		revoke_un_ido_subsidies = yes
-		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.301 }
 	}
 	if = {
 		limit = {
@@ -2059,7 +2040,6 @@ check_for_subsidy_expiration = {
 		revoke_un_cdf_subsidies = yes
 		if = { limit = { NOT = { has_global_flag = un_initial_subsidy_pass } } country_event = UN.302 }
 	}
-	remove_un_aid_subsidies_modifier_if_unused = yes
 }
 
 # ------------------------------------------------------------

@@ -62,13 +62,76 @@ setup_coalition_idea_tokens = {
 	add_to_array = { global.coalition_nationalist_idea = token:coalition_nationalist_9 }
 }
 
+# coalition_ideas_synced = 1 means coalition_applied_tokens holds exactly one slot per outlook, in outlook order.
+# Then only the slots whose target changed are swapped. Any other writer of the array clears the flag.
 reset_coalition_ideas = {
-	clear_coalition_count_ideas = yes
-	reset_democratic_coalition_ideas = yes
-	reset_communism_coalition_ideas = yes
-	reset_fascism_coalition_ideas = yes
-	reset_neutrality_coalition_ideas = yes
-	reset_nationalist_coalition_ideas = yes
+	if = { limit = { check_variable = { coalition_ideas_synced = 1 } }
+		set_temp_variable = { coalition_idea_slot = 0 }
+		set_temp_variable = { coalition_idea_share = coalition_democratic }
+		set_coalition_idea_level = yes
+		set_temp_variable = { coalition_idea_target_token = global.coalition_western_idea^coalition_idea_level }
+		swap_coalition_outlook_idea = yes
+
+		set_temp_variable = { coalition_idea_slot = 1 }
+		set_temp_variable = { coalition_idea_share = coalition_communism }
+		set_coalition_idea_level = yes
+		set_temp_variable = { coalition_idea_target_token = global.coalition_emerging_idea^coalition_idea_level }
+		swap_coalition_outlook_idea = yes
+
+		set_temp_variable = { coalition_idea_slot = 2 }
+		set_temp_variable = { coalition_idea_share = coalition_fascism }
+		set_coalition_idea_level = yes
+		set_temp_variable = { coalition_idea_target_token = global.coalition_salafist_idea^coalition_idea_level }
+		swap_coalition_outlook_idea = yes
+
+		set_temp_variable = { coalition_idea_slot = 3 }
+		set_temp_variable = { coalition_idea_share = coalition_neutrality }
+		set_coalition_idea_level = yes
+		set_temp_variable = { coalition_idea_target_token = global.coalition_non_alligned_idea^coalition_idea_level }
+		swap_coalition_outlook_idea = yes
+
+		set_temp_variable = { coalition_idea_slot = 4 }
+		set_temp_variable = { coalition_idea_share = coalition_nationalist }
+		set_coalition_idea_level = yes
+		set_temp_variable = { coalition_idea_target_token = global.coalition_nationalist_idea^coalition_idea_level }
+		swap_coalition_outlook_idea = yes
+	}
+	else = {
+		clear_coalition_count_ideas = yes
+		reset_democratic_coalition_ideas = yes
+		reset_communism_coalition_ideas = yes
+		reset_fascism_coalition_ideas = yes
+		reset_neutrality_coalition_ideas = yes
+		reset_nationalist_coalition_ideas = yes
+		set_variable = { coalition_ideas_synced = 1 }
+	}
+}
+
+# Effect: swap_coalition_outlook_idea
+# Purpose: Replaces the idea in one outlook slot only when its target token changed
+# Parameters:
+# - coalition_idea_slot: outlook id 0-4, the index in coalition_applied_tokens
+# - coalition_idea_target_token: Desired idea token, or 0 for none.
+swap_coalition_outlook_idea = {
+	set_temp_variable = { coalition_old_token = coalition_applied_tokens^coalition_idea_slot }
+	if = { limit = { check_variable = { coalition_old_token = coalition_idea_target_token } }
+		if = {
+			limit = {
+				NOT = { check_variable = { coalition_idea_target_token = 0 } }
+				NOT = { has_idea = var:coalition_idea_target_token }
+			}
+			add_ideas = var:coalition_idea_target_token
+		}
+	}
+	else = {
+		if = { limit = { NOT = { check_variable = { coalition_old_token = 0 } } }
+			remove_ideas = var:coalition_old_token
+		}
+		if = { limit = { NOT = { check_variable = { coalition_idea_target_token = 0 } } }
+			add_ideas = var:coalition_idea_target_token
+		}
+		set_variable = { coalition_applied_tokens^coalition_idea_slot = coalition_idea_target_token }
+	}
 }
 
 reset_democratic_coalition_ideas = {
@@ -137,6 +200,7 @@ update_coalition_outlook_idea = {
 		add_ideas = var:coalition_idea_target_token
 	}
 	add_to_array = { coalition_applied_tokens = coalition_idea_target_token }
+	set_variable = { coalition_ideas_synced = 0 }
 }
 
 clear_coalition_count_ideas = {
@@ -149,6 +213,7 @@ clear_coalition_count_ideas = {
 		}
 	}
 	clear_array = coalition_applied_tokens
+	set_variable = { coalition_ideas_synced = 0 }
 }
 
 setup_ruling_party_idea_tokens = {
