@@ -917,7 +917,7 @@ def test_placement(tmp_path, path, text, expected):
     assert_findings([issue.message for issue in validator._issues], expected)
 
 
-def test_finding_is_a_warning_with_file_and_line(tmp_path):
+def test_finding_is_an_error_with_file_and_line(tmp_path):
     write_tree(
         tmp_path,
         {
@@ -930,7 +930,7 @@ def test_finding_is_a_warning_with_file_and_line(tmp_path):
     (issue,) = run_validator(V.Validator, tmp_path)._issues
 
     assert (issue.severity, issue.category, issue.file, issue.line) == (
-        "warning",
+        "error",
         "coastal-building-not-coastal",
         "events/test.txt",
         4,

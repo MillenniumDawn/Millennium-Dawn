@@ -56,7 +56,7 @@ in selected random-state iterators and randomly limited every-state iterators.
 It looks for a recognized slot check in the selector's own limit, not arbitrary
 guards.
 
-The advisory coastal check flags a coastal provincial building (`only_costal =
+The coastal check flags a coastal provincial building (`only_costal =
 yes`, the engine's spelling, with a `province_max` cap) placed in a province that
 `map/definition.csv` does not mark as coastal land. It reads province blocks in a
 state history `buildings = { 1234 = { ... } }` and `add_building_construction`
@@ -674,7 +674,7 @@ class Validator(BaseValidator):
         report_findings(
             self,
             [row for row in rows if row[0] == "coastal-building-not-coastal"],
-            self.add_warning,
+            self.add_error,
             "coastal building(s) placed in a province that is not coastal land",
             "Every fixed-province coastal building sits in coastal land",
         )
