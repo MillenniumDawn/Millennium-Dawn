@@ -166,8 +166,36 @@ ideas = {
 			modifier = {
 				political_power_gain = 0.15
 			}
-			on_add = { set_variable = { global.eu_ambassador = ROOT.id } }
+			on_add = {
+				set_variable = { global.eu_ambassador = ROOT.id }
+				if = {
+					limit = { NOT = { has_idea = p5_member } }
+					set_country_flag = EU_ambassador_granted_p5
+					unsc_grant_permanent_member_or_defer = yes
+				}
+			}
 			on_remove = {
+				if = {
+					limit = { has_country_flag = EU_ambassador_granted_p5 }
+					clr_country_flag = EU_ambassador_granted_p5
+					if = {
+						limit = { is_in_array = { global.unsc_pending_permanent_member_grants = THIS } }
+						remove_from_array = { global.unsc_pending_permanent_member_grants = THIS }
+					}
+					if = {
+						limit = { has_idea = p5_member }
+						if = {
+							limit = { has_global_flag = current_ongoing_sc_vote }
+							if = {
+								limit = { NOT = { is_in_array = { global.unsc_pending_permanent_member_revocations = THIS } } }
+								add_to_array = { global.unsc_pending_permanent_member_revocations = THIS }
+							}
+						} else = {
+							remove_ideas = p5_member
+							international_systems_update = yes
+						}
+					}
+				}
 				for_each_scope_loop = {
 					array = global.EU_member
 					country_event = EUevent.21

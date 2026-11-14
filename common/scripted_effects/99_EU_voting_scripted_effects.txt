@@ -422,12 +422,25 @@ focus_EU111_QMV_result = {
 		# mid-iteration and skip most members, leaving them independent instead of forming USoE.
 		clear_array = global.USoE_formation_members
 		set_temp_variable = { usoe_inherits_un_membership = 0 }
+		set_temp_variable = { usoe_inherits_permanent_unsc_seat = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
 			add_to_array = { global.USoE_formation_members = THIS }
 			if = {
 				limit = { has_dynamic_modifier = { modifier = united_nations_member } }
 				set_temp_variable = { usoe_inherits_un_membership = 1 }
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							has_idea = p5_member
+							NOT = { is_in_array = { global.unsc_pending_permanent_member_revocations = THIS } }
+						}
+						has_country_flag = EU_ambassador_granted_p5
+					}
+				}
+				set_temp_variable = { usoe_inherits_permanent_unsc_seat = 1 }
 			}
 		}
 
@@ -493,6 +506,15 @@ focus_EU111_QMV_result = {
 			}
 			recompute_un_2_3_number = yes
 			international_systems_force_update = yes
+		}
+		if = {
+			limit = { check_variable = { usoe_inherits_permanent_unsc_seat > 0 } }
+			unsc_grant_permanent_member_or_defer = yes
+			clr_country_flag = EU_ambassador_granted_p5
+			if = {
+				limit = { is_in_array = { global.unsc_pending_permanent_member_revocations = THIS } }
+				remove_from_array = { global.unsc_pending_permanent_member_revocations = THIS }
+			}
 		}
 		set_cosmetic_tag = USoE
 		set_temp_variable = { special_formable_id = 101 }
