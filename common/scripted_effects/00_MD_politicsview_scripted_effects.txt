@@ -561,37 +561,94 @@ recalculate_party_strength = {
 }
 
 add_up_party_totals = {
-
-	clear_temp_array = pop_total_temp
-	resize_temp_array = { array = pop_total_temp size = 5 }
-
-	#Outlook popularity based on party popularities
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = current_id
-		set_temp_variable = { outlook_party_index = current_id }
-		set_outlook_from_party_index = yes
-		add_to_temp_variable = { pop_total_temp^outlook_id = party_pop_array^current_id }
+	# Outlook slices by party slot: democratic 0-3, communism 4-9, fascism 10-11, neutrality 12-19, nationalist 20-23.
+	# Each party is scaled to its outlook's real popularity as x1000, divide, multiply, x0.001, clamp, in that order.
+	set_temp_variable = { outlook_total_0 = { value = party_pop_array^0 add = party_pop_array^1 add = party_pop_array^2 add = party_pop_array^3 } }
+	if = {
+		limit = { check_variable = { outlook_total_0 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@democratic }
+		set_variable = { party_pop_array^0 = { value = party_pop_array^0 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^1 = { value = party_pop_array^1 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^2 = { value = party_pop_array^2 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^3 = { value = party_pop_array^3 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
 	}
-	set_outlook_popularity_array = yes
+	else = {
+		set_variable = { party_pop_array^0 = 0 }
+		set_variable = { party_pop_array^1 = 0 }
+		set_variable = { party_pop_array^2 = 0 }
+		set_variable = { party_pop_array^3 = 0 }
+	}
 
-	#Scale party popularity totals to match actual Outlook popularity
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = current_id
-		multiply_variable = { party_pop_array^current_id = 1000 }
-		set_temp_variable = { outlook_party_index = current_id }
-		set_outlook_from_party_index = yes
-		if = {
-			limit = { check_variable = { pop_total_temp^outlook_id > 0 } }
-			divide_variable = { party_pop_array^current_id = pop_total_temp^outlook_id }
-			multiply_variable = { party_pop_array^current_id = outlook_popularity_by_id^outlook_id }
-		}
-		else = {
-			set_variable = { party_pop_array^current_id = 0 }
-		}
-		multiply_variable = { party_pop_array^current_id = 0.001 }
-		clamp_variable = { var = party_pop_array^current_id min = 0 max = 1 }
+	set_temp_variable = { outlook_total_1 = { value = party_pop_array^4 add = party_pop_array^5 add = party_pop_array^6 add = party_pop_array^7 add = party_pop_array^8 add = party_pop_array^9 } }
+	if = {
+		limit = { check_variable = { outlook_total_1 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@communism }
+		set_variable = { party_pop_array^4 = { value = party_pop_array^4 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^5 = { value = party_pop_array^5 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^6 = { value = party_pop_array^6 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^7 = { value = party_pop_array^7 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^8 = { value = party_pop_array^8 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^9 = { value = party_pop_array^9 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^4 = 0 }
+		set_variable = { party_pop_array^5 = 0 }
+		set_variable = { party_pop_array^6 = 0 }
+		set_variable = { party_pop_array^7 = 0 }
+		set_variable = { party_pop_array^8 = 0 }
+		set_variable = { party_pop_array^9 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_2 = { value = party_pop_array^10 add = party_pop_array^11 } }
+	if = {
+		limit = { check_variable = { outlook_total_2 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@fascism }
+		set_variable = { party_pop_array^10 = { value = party_pop_array^10 multiply = 1000 divide = outlook_total_2 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^11 = { value = party_pop_array^11 multiply = 1000 divide = outlook_total_2 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^10 = 0 }
+		set_variable = { party_pop_array^11 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_3 = { value = party_pop_array^12 add = party_pop_array^13 add = party_pop_array^14 add = party_pop_array^15 add = party_pop_array^16 add = party_pop_array^17 add = party_pop_array^18 add = party_pop_array^19 } }
+	if = {
+		limit = { check_variable = { outlook_total_3 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@neutrality }
+		set_variable = { party_pop_array^12 = { value = party_pop_array^12 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^13 = { value = party_pop_array^13 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^14 = { value = party_pop_array^14 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^15 = { value = party_pop_array^15 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^16 = { value = party_pop_array^16 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^17 = { value = party_pop_array^17 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^18 = { value = party_pop_array^18 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^19 = { value = party_pop_array^19 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^12 = 0 }
+		set_variable = { party_pop_array^13 = 0 }
+		set_variable = { party_pop_array^14 = 0 }
+		set_variable = { party_pop_array^15 = 0 }
+		set_variable = { party_pop_array^16 = 0 }
+		set_variable = { party_pop_array^17 = 0 }
+		set_variable = { party_pop_array^18 = 0 }
+		set_variable = { party_pop_array^19 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_4 = { value = party_pop_array^20 add = party_pop_array^21 add = party_pop_array^22 add = party_pop_array^23 } }
+	if = {
+		limit = { check_variable = { outlook_total_4 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@nationalist }
+		set_variable = { party_pop_array^20 = { value = party_pop_array^20 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^21 = { value = party_pop_array^21 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^22 = { value = party_pop_array^22 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^23 = { value = party_pop_array^23 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^20 = 0 }
+		set_variable = { party_pop_array^21 = 0 }
+		set_variable = { party_pop_array^22 = 0 }
+		set_variable = { party_pop_array^23 = 0 }
 	}
 
 	#Make sure there are no Outlooks with popularity without any party popularities
@@ -599,7 +656,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			democratic > 0.01
-			check_variable = { pop_total_temp^0 < 0.01 }
+			check_variable = { outlook_total_0 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^0 = 0.01 } }
@@ -611,7 +668,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			communism > 0.01
-			check_variable = { pop_total_temp^1 < 0.01 }
+			check_variable = { outlook_total_1 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^4 = 0.01 } }
@@ -625,7 +682,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			fascism > 0.01
-			check_variable = { pop_total_temp^2 < 0.01 }
+			check_variable = { outlook_total_2 < 0.01 }
 		}
 		if = {
 			limit = { Is_Muslim_Country = yes }
@@ -638,7 +695,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			neutrality > 0.01
-			check_variable = { pop_total_temp^3 < 0.01 }
+			check_variable = { outlook_total_3 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^12 = 0.01 } }
@@ -654,7 +711,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			nationalist > 0.01
-			check_variable = { pop_total_temp^4 < 0.01 }
+			check_variable = { outlook_total_4 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^20 = 0.01 } }
@@ -801,27 +858,21 @@ update_government_coalition_strength = {
 		add_to_temp_variable = { sum = party_pop_array^v }
 		add_to_temp_variable = { sum_elect = party_pop_elect_array^v }
 	}
-	set_variable = { government_coalition_strength = sum }
-	set_variable = { government_coalition_strength_elect = sum_elect }
 
-	#strength of ruling_party is separate
-	set_temp_variable = { sum = 0 }
-	set_temp_variable = { sum_elect = 0 }
+	#strength of ruling_party is added on top of the coalition
 	if = { limit = { has_variable = ruling_party }
 		add_to_temp_variable = { sum = party_pop_array^ruling_party }
 		add_to_temp_variable = { sum_elect = party_pop_elect_array^ruling_party }
 	}
-	add_to_variable = { government_coalition_strength = sum }
-	add_to_variable = { government_coalition_strength_elect = sum_elect }
+	set_variable = { government_coalition_strength = sum }
+	set_variable = { government_coalition_strength_elect = sum_elect }
 
 	#find the differentials
-	set_variable = { government_coalition_differential = government_coalition_strength }
-	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
+	set_variable = { government_coalition_differential = { value = government_coalition_strength subtract = government_coalition_strength_elect } }
 	set_coalition_drift = yes
 
 	# opposition strenght
-	set_variable = { opposition_strength = 1 }
-	subtract_from_variable = { opposition_strength = government_coalition_strength }
+	set_variable = { opposition_strength = { value = 1 subtract = government_coalition_strength } }
 
 	if = { limit = { original_tag = HOL } HOL_evaluate_coalition_focus_loops = yes }
 }
