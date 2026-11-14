@@ -7,6 +7,7 @@ collaboration_government_decisions = {
 			is_subject = no
 		}
 		target_array = occupied_countries
+		target_non_existing = yes
 
 		visible = {
 			is_available_to_collaboration_government = yes
@@ -37,15 +38,36 @@ collaboration_government_decisions = {
 				threat < 0.35
 				factor = 0
 			}
+			# Larger occupations first
 			modifier = {
-				any_of_scopes = {
-					array = subjects
-					has_autonomy_state = autonomy_collaboration_government
+				set_temp_variable = { num_cores_we_control = 0 }
+				all_of_scopes = {
+					array = FROM.core_states
+					if = {
+						limit = { is_controlled_by = PREV }
+						add_to_temp_variable = { num_cores_we_control = 1 }
+					}
 				}
-				factor = 0.5
+				add = num_cores_we_control
 			}
+			# Each collaboration government already held raises the cores needed for the next
 			modifier = {
-				NOT = { any_controlled_state = { is_core_of = FROM } }
+				set_temp_variable = { num_min_cores = 1.5 }
+				all_of_scopes = {
+					array = subjects
+					if = {
+						limit = { has_autonomy_state = autonomy_collaboration_government }
+						add_to_temp_variable = { num_min_cores = 0.7 }
+					}
+				}
+				check_variable = { num_cores_we_control < num_min_cores }
+				factor = 0
+			}
+			# Needs at least half of the country, not a border state or an enclave
+			modifier = {
+				set_temp_variable = { half_of_cores = FROM.core_states^num }
+				multiply_temp_variable = { half_of_cores = 0.5 }
+				check_variable = { num_cores_we_control < half_of_cores }
 				factor = 0
 			}
 			modifier = {
