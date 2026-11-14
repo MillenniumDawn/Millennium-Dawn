@@ -90,6 +90,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   are not checked, and a guard for one slot does not prove that every level requested
   will fit. The backlog is tracked by #6390.
 
+## validate_coastal_buildings.py
+
+- `coastal-building-not-coastal` (WARNING): a building with `only_costal = yes` and a
+  `province_max` cap sits in a province that `map/definition.csv` does not mark as
+  coastal land, or that is not listed there. It reads state history
+  `buildings = { 1234 = { ... } }` blocks and `add_building_construction` with a numeric
+  `province` or `province = { id = ... }`. Placements chosen at runtime
+  (`all_provinces`, `limit_to_coastal`, variables) are not checked. State-level coastal
+  buildings such as `dockyard` have no province to check.
+- `map/definition.csv` is in the CI workspace and selects the check through the
+  `map-definition` group. Raise to ERROR once the existing hits are fixed.
+
 ## validate_characters.py
 
 - `trait-role-mismatch` (ERROR): a unit leader trait from the wrong branch (`land`,

@@ -59,6 +59,8 @@ _VALIDATOR_NAMESPACES = {
     "agency_upgrades": "validate_agency_upgrades.py",
     "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
     "building_guards_scan_v7": "validate_building_guards.py",
+    "coastal_building_defs": "validate_coastal_buildings.py",
+    "coastal_building_placements": "validate_coastal_buildings.py",
     "common_mistakes": "validate_common_mistakes.py",
     "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
