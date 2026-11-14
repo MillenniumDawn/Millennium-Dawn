@@ -2611,8 +2611,7 @@ update_military_rate = {
 	#Total wage modifier
 	set_temp_variable = { personnel_cost_multiplier = { value = 1 add = modifier@personnel_cost_multiplier_modifier } }
 	#Higher GDP/c makes personnel more expensive (linear approximation 0.004 * gdp/c + 0.129)
-	#Capped: a country that lost its states keeps the 0.1 GDP floor over no population, so GDP/c reads 100000 and wages rise 400-fold
-	set_temp_variable = { gdp_defence_modifier_personnel = { value = gdp_per_capita clamp = { min = 0 max = 200 } multiply = 0.004 add = 0.129 } }
+	set_temp_variable = { gdp_defence_modifier_personnel = { value = gdp_per_capita multiply = 0.004 add = 0.129 } }
 	set_temp_variable = { mobilization_level_modifier = { value = 0.25 multiply = def_index add = 0.75 } }
 
 	### Land ###
@@ -5963,6 +5962,10 @@ calculate_gdp = {
 			divide = population_total_m
 			clamp = { min = 0 max = 100000 }
 		}
+	}
+	# A country with no states keeps the 0.1 GDP floor over no population, which would read as 100000
+	if = { limit = { num_of_controlled_states < 1 }
+		set_variable = { gdp_per_capita = 0 }
 	}
 
 	calculate_gdp_modifiers = yes

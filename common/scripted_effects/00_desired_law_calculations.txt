@@ -171,6 +171,16 @@ change_expected_defense_spending = {
 
 ai_reduce_spending_on_deficit = {
 	if = { limit = { is_ai = yes }
+		# Defence steps down to its expected level every month, at war too; the law AI can take over a year to get to it
+		if = {
+			limit = {
+				check_variable = { military_law > 2 } # the step below 2 needs the no military spirit
+				check_variable = { military_law > expected_military_law }
+				military_law_parliament_change_allowed = yes
+			}
+			decrease_military_spending = yes
+		}
+
 		# STEP 1: Trim any category above its expected level when running a high deficit
 		# Applies in peacetime only — wartime spending is handled by war multipliers
 		if = {
@@ -219,15 +229,6 @@ ai_reduce_spending_on_deficit = {
 					NOT = { has_country_flag = ai_deficit_trim_bureau }
 				}
 				decrease_centralization = yes
-			}
-
-			# Military cut LAST: only reduce if above expected level
-			if = {
-				limit = {
-					check_variable = { military_law > 1 }
-					check_variable = { military_law > expected_military_law }
-				}
-				decrease_military_spending = yes
 			}
 		}
 
