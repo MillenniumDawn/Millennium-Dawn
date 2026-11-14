@@ -890,12 +890,7 @@ update_COM_system_stats = {
 		array = COM_satellite_array
 		### COM mil system
 		if = {
-			limit = {
-				OR = {
-					check_variable = { i = temp_COM_mil_idx }
-					check_variable = { i > temp_COM_mil_idx }
-				}
-			}
+			limit = { check_variable = { var = i value = temp_COM_mil_idx compare = greater_than_or_equals } }
 			add_to_variable = { var_COM_mil_sat_system_num = COM_satellite_array^i }
 			add_to_variable = {
 				var = var_COM_mil_receiver_cap
@@ -907,12 +902,7 @@ update_COM_system_stats = {
 		}
 		### COM civ system
 		if = {
-			limit = {
-				OR = {
-					check_variable = { i = temp_COM_civ_idx }
-					check_variable = { i > temp_COM_civ_idx }
-				}
-			}
+			limit = { check_variable = { var = i value = temp_COM_civ_idx compare = greater_than_or_equals } }
 			add_to_variable = { var_COM_civ_sat_system_num = COM_satellite_array^i }
 			add_to_variable = {
 				var = var_COM_civ_receiver_cap
@@ -1100,7 +1090,6 @@ update_SPY_system_stats = {
 			clamp = { min = 0 max = @prod_math_max }
 		}
 	}
-	update_SPY_mission_num = yes
 	### SPY civ system
 	set_variable = {
 		var_SPY_civ_sat_system_num = {
@@ -1559,182 +1548,166 @@ calculate_SPY_civ_gui_vars = {
 }
 
 add_access_GNSS_mil_vars = {
-	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
-	clear_array = temp_GNSS_mil_access_array
-	for_each_loop = {
-		array = GNSS_mil_access_array
-		value = v
-		if = {
-			limit = {
-				NOT = { check_variable = { v = 0 } }
-				var:v = { exists = yes }
-				NOT = { is_in_array = { array = temp_GNSS_mil_access_array value = v } }
-			}
-			add_to_array = { array = temp_GNSS_mil_access_array value = v }
-		}
-	}
-	clear_array = GNSS_mil_access_array
-	clear_array = GNSS_mil_access_system_idx_array
-	for_each_loop = {
-		array = temp_GNSS_mil_access_array
-		value = v
-		add_to_array = { array = GNSS_mil_access_array value = v }
-		var:v = {
-			add_to_array = { array = ROOT.GNSS_mil_access_system_idx_array value = var_GNSS_mil_system_idx }
-		}
-	}
-	clear_array = temp_GNSS_mil_access_array
-	set_temp_variable = { temp_GNSS_mil_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_mil_army_speed_factor = var_GNSS_mil_army_speed_factor_base }
 	set_variable = { var_GNSS_mil_air_cas_efficiency = var_GNSS_mil_air_cas_efficiency_base }
 	set_variable = { var_GNSS_mil_air_nav_efficiency = var_GNSS_mil_air_nav_efficiency_base }
 	set_variable = { var_GNSS_mil_air_strategic_bomber_bombing_factor = var_GNSS_mil_air_strategic_bomber_bombing_factor_base }
 	set_variable = { var_GNSS_mil_positioning = var_GNSS_mil_positioning_base }
 	set_variable = { var_GNSS_mil_naval_hit_chance = var_GNSS_mil_naval_hit_chance_base }
-	for_each_loop = {
-		array = GNSS_mil_access_system_idx_array
-		if = {
-			limit = {
-				check_variable = {
-					GNSS_mil_access_system_idx_array^i > temp_GNSS_mil_access_system_highest_idx
-				}
-			}
-			set_temp_variable = { temp_GNSS_mil_access_system_highest_idx = GNSS_mil_access_system_idx_array^i }
-		}
-	}
 	if = {
-		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_GNSS_mil_system_idx < temp_GNSS_mil_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_GNSS_mil_system_idx = temp_GNSS_mil_access_system_highest_idx
-				}
-			}
-		}
-		for_each_scope_loop = {
+		limit = { check_variable = { GNSS_mil_access_array^num > 0 } }
+		# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+		clear_array = temp_GNSS_mil_access_array
+		for_each_loop = {
 			array = GNSS_mil_access_array
+			value = v
 			if = {
 				limit = {
-					OR = {
-						check_variable = {
-							ROOT.var_GNSS_mil_system_idx < THIS.var_GNSS_mil_system_idx
-						}
-						check_variable = {
-							ROOT.var_GNSS_mil_system_idx = THIS.var_GNSS_mil_system_idx
-						}
+					NOT = { check_variable = { v = 0 } }
+					var:v = { exists = yes }
+					NOT = { is_in_array = { array = temp_GNSS_mil_access_array value = v } }
+				}
+				add_to_array = { array = temp_GNSS_mil_access_array value = v }
+			}
+		}
+		clear_array = GNSS_mil_access_array
+		clear_array = GNSS_mil_access_system_idx_array
+		for_each_loop = {
+			array = temp_GNSS_mil_access_array
+			value = v
+			add_to_array = { array = GNSS_mil_access_array value = v }
+			var:v = {
+				add_to_array = { array = ROOT.GNSS_mil_access_system_idx_array value = var_GNSS_mil_system_idx }
+			}
+		}
+		clear_array = temp_GNSS_mil_access_array
+		set_temp_variable = { temp_GNSS_mil_access_system_highest_idx = 0 }
+		for_each_loop = {
+			array = GNSS_mil_access_system_idx_array
+			if = {
+				limit = {
+					check_variable = {
+						GNSS_mil_access_system_idx_array^i > temp_GNSS_mil_access_system_highest_idx
 					}
 				}
-				add_to_variable = { ROOT.var_GNSS_mil_army_speed_factor = THIS.var_GNSS_mil_army_speed_factor_base }
-				add_to_variable = { ROOT.var_GNSS_mil_air_cas_efficiency = THIS.var_GNSS_mil_air_cas_efficiency_base }
-				add_to_variable = { ROOT.var_GNSS_mil_air_nav_efficiency = THIS.var_GNSS_mil_air_nav_efficiency_base }
-				add_to_variable = { ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor = THIS.var_GNSS_mil_air_strategic_bomber_bombing_factor_base }
-				add_to_variable = { ROOT.var_GNSS_mil_positioning = THIS.var_GNSS_mil_positioning_base }
-				add_to_variable = { ROOT.var_GNSS_mil_naval_hit_chance = THIS.var_GNSS_mil_naval_hit_chance_base }
+				set_temp_variable = { temp_GNSS_mil_access_system_highest_idx = GNSS_mil_access_system_idx_array^i }
 			}
 		}
 		if = {
 			limit = {
-				check_variable = {
-					ROOT.GNSS_mil_access_array^num > 0
+				check_variable = { var = ROOT.var_GNSS_mil_system_idx value = temp_GNSS_mil_access_system_highest_idx compare = less_than_or_equals }
+			}
+			for_each_scope_loop = {
+				array = GNSS_mil_access_array
+				if = {
+					limit = {
+						check_variable = { var = ROOT.var_GNSS_mil_system_idx value = THIS.var_GNSS_mil_system_idx compare = less_than_or_equals }
+					}
+					add_to_variable = { ROOT.var_GNSS_mil_army_speed_factor = THIS.var_GNSS_mil_army_speed_factor_base }
+					add_to_variable = { ROOT.var_GNSS_mil_air_cas_efficiency = THIS.var_GNSS_mil_air_cas_efficiency_base }
+					add_to_variable = { ROOT.var_GNSS_mil_air_nav_efficiency = THIS.var_GNSS_mil_air_nav_efficiency_base }
+					add_to_variable = { ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor = THIS.var_GNSS_mil_air_strategic_bomber_bombing_factor_base }
+					add_to_variable = { ROOT.var_GNSS_mil_positioning = THIS.var_GNSS_mil_positioning_base }
+					add_to_variable = { ROOT.var_GNSS_mil_naval_hit_chance = THIS.var_GNSS_mil_naval_hit_chance_base }
 				}
 			}
-			subtract_from_temp_variable = { temp_GNSS_mil_access_system_highest_idx = @GNSS_sat_idx_base }
-			#army_speed_factor
-			clamp_variable = { var = ROOT.var_GNSS_mil_army_speed_factor max = global.GNSS_mil_army_speed_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
-			#air_cas_efficiency
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_cas_efficiency max = global.GNSS_mil_air_cas_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
-			#air_nav_efficiency
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_nav_efficiency max = global.GNSS_mil_air_nav_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
-			#air_strategic_bomber_bombing_factor
-			clamp_variable = { var = ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor max = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
-			#positioning
-			clamp_variable = { var = ROOT.var_GNSS_mil_positioning max = global.GNSS_mil_positioning_max_array^temp_GNSS_mil_access_system_highest_idx }
-			#naval_hit_chance
-			clamp_variable = { var = ROOT.var_GNSS_mil_naval_hit_chance max = global.GNSS_mil_naval_hit_chance_max_array^temp_GNSS_mil_access_system_highest_idx }
+			if = {
+				limit = {
+					check_variable = {
+						ROOT.GNSS_mil_access_array^num > 0
+					}
+				}
+				subtract_from_temp_variable = { temp_GNSS_mil_access_system_highest_idx = @GNSS_sat_idx_base }
+				#army_speed_factor
+				clamp_variable = { var = ROOT.var_GNSS_mil_army_speed_factor max = global.GNSS_mil_army_speed_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
+				#air_cas_efficiency
+				clamp_variable = { var = ROOT.var_GNSS_mil_air_cas_efficiency max = global.GNSS_mil_air_cas_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
+				#air_nav_efficiency
+				clamp_variable = { var = ROOT.var_GNSS_mil_air_nav_efficiency max = global.GNSS_mil_air_nav_efficiency_max_array^temp_GNSS_mil_access_system_highest_idx }
+				#air_strategic_bomber_bombing_factor
+				clamp_variable = { var = ROOT.var_GNSS_mil_air_strategic_bomber_bombing_factor max = global.GNSS_mil_air_strategic_bomber_bombing_factor_max_array^temp_GNSS_mil_access_system_highest_idx }
+				#positioning
+				clamp_variable = { var = ROOT.var_GNSS_mil_positioning max = global.GNSS_mil_positioning_max_array^temp_GNSS_mil_access_system_highest_idx }
+				#naval_hit_chance
+				clamp_variable = { var = ROOT.var_GNSS_mil_naval_hit_chance max = global.GNSS_mil_naval_hit_chance_max_array^temp_GNSS_mil_access_system_highest_idx }
+			}
 		}
 	}
+	else = { clear_array = GNSS_mil_access_system_idx_array }
 }
 
 add_access_GNSS_civ_vars = {
-	# Rebuild access arrays so stale country scopes cannot survive into scope loops.
-	clear_array = temp_GNSS_civ_access_array
-	for_each_loop = {
-		array = GNSS_civ_access_array
-		value = v
-		if = {
-			limit = {
-				NOT = { check_variable = { v = 0 } }
-				var:v = { exists = yes }
-				NOT = { is_in_array = { array = temp_GNSS_civ_access_array value = v } }
-			}
-			add_to_array = { array = temp_GNSS_civ_access_array value = v }
-		}
-	}
-	clear_array = GNSS_civ_access_array
-	clear_array = GNSS_civ_access_system_idx_array
-	for_each_loop = {
-		array = temp_GNSS_civ_access_array
-		value = v
-		add_to_array = { array = GNSS_civ_access_array value = v }
-		var:v = {
-			add_to_array = { array = ROOT.GNSS_civ_access_system_idx_array value = var_GNSS_civ_system_idx }
-		}
-	}
-	clear_array = temp_GNSS_civ_access_array
-	set_temp_variable = { temp_GNSS_civ_access_system_highest_idx = 0 }
 	set_variable = { var_GNSS_civ_production_speed_buildings_factor = var_GNSS_civ_production_speed_buildings_factor_base }
 	set_variable = { var_GNSS_civ_production_speed_infrastructure_factor = var_GNSS_civ_production_speed_infrastructure_factor_base }
 	set_variable = { var_GNSS_civ_local_resources_factor = var_GNSS_civ_local_resources_factor_base }
-	for_each_loop = {
-		array = GNSS_civ_access_system_idx_array
-		if = {
-			limit = {
-				check_variable = {
-					GNSS_civ_access_system_idx_array^i > temp_GNSS_civ_access_system_highest_idx
-				}
-			}
-			set_temp_variable = { temp_GNSS_civ_access_system_highest_idx = GNSS_civ_access_system_idx_array^i }
-		}
-	}
 	if = {
-		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_GNSS_civ_system_idx < temp_GNSS_civ_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_GNSS_civ_system_idx = temp_GNSS_civ_access_system_highest_idx
-				}
-			}
-		}
-		for_each_scope_loop = {
+		limit = { check_variable = { GNSS_civ_access_array^num > 0 } }
+		# Rebuild access arrays so stale country scopes cannot survive into scope loops.
+		clear_array = temp_GNSS_civ_access_array
+		for_each_loop = {
 			array = GNSS_civ_access_array
+			value = v
 			if = {
 				limit = {
-					OR = {
-						check_variable = { ROOT.var_GNSS_civ_system_idx < THIS.var_GNSS_civ_system_idx }
-						check_variable = { ROOT.var_GNSS_civ_system_idx = THIS.var_GNSS_civ_system_idx }
-					}
+					NOT = { check_variable = { v = 0 } }
+					var:v = { exists = yes }
+					NOT = { is_in_array = { array = temp_GNSS_civ_access_array value = v } }
 				}
-				add_to_variable = { ROOT.var_GNSS_civ_production_speed_buildings_factor = THIS.var_GNSS_civ_production_speed_buildings_factor_base }
-				add_to_variable = { ROOT.var_GNSS_civ_production_speed_infrastructure_factor = THIS.var_GNSS_civ_production_speed_infrastructure_factor_base }
-				add_to_variable = { ROOT.var_GNSS_civ_local_resources_factor = THIS.var_GNSS_civ_local_resources_factor_base }
+				add_to_array = { array = temp_GNSS_civ_access_array value = v }
 			}
 		}
+		clear_array = GNSS_civ_access_array
+		clear_array = GNSS_civ_access_system_idx_array
+		for_each_loop = {
+			array = temp_GNSS_civ_access_array
+			value = v
+			add_to_array = { array = GNSS_civ_access_array value = v }
+			var:v = {
+				add_to_array = { array = ROOT.GNSS_civ_access_system_idx_array value = var_GNSS_civ_system_idx }
+			}
+		}
+		clear_array = temp_GNSS_civ_access_array
+		set_temp_variable = { temp_GNSS_civ_access_system_highest_idx = 0 }
+		for_each_loop = {
+			array = GNSS_civ_access_system_idx_array
+			if = {
+				limit = {
+					check_variable = {
+						GNSS_civ_access_system_idx_array^i > temp_GNSS_civ_access_system_highest_idx
+					}
+				}
+				set_temp_variable = { temp_GNSS_civ_access_system_highest_idx = GNSS_civ_access_system_idx_array^i }
+			}
+		}
+		if = {
+			limit = {
+				check_variable = { var = ROOT.var_GNSS_civ_system_idx value = temp_GNSS_civ_access_system_highest_idx compare = less_than_or_equals }
+			}
+			for_each_scope_loop = {
+				array = GNSS_civ_access_array
+				if = {
+					limit = {
+						check_variable = { var = ROOT.var_GNSS_civ_system_idx value = THIS.var_GNSS_civ_system_idx compare = less_than_or_equals }
+					}
+					add_to_variable = { ROOT.var_GNSS_civ_production_speed_buildings_factor = THIS.var_GNSS_civ_production_speed_buildings_factor_base }
+					add_to_variable = { ROOT.var_GNSS_civ_production_speed_infrastructure_factor = THIS.var_GNSS_civ_production_speed_infrastructure_factor_base }
+					add_to_variable = { ROOT.var_GNSS_civ_local_resources_factor = THIS.var_GNSS_civ_local_resources_factor_base }
+				}
+			}
 
-		# Clamp variables for the GNSS satellites to the maximum value
-		if = { limit = { check_variable = { ROOT.GNSS_civ_access_array^num > 0 } }
-			subtract_from_temp_variable = { temp_GNSS_civ_access_system_highest_idx = @GNSS_sat_idx_base }
-			#production_speed_buildings_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_buildings_factor max = global.GNSS_civ_production_speed_buildings_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
-			#production_speed_infrastructure_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_infrastructure_factor max = global.GNSS_civ_production_speed_infrastructure_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
-			#local_resources_factor
-			clamp_variable = { var = ROOT.var_GNSS_civ_local_resources_factor max = global.GNSS_civ_local_resources_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
+			# Clamp variables for the GNSS satellites to the maximum value
+			if = { limit = { check_variable = { ROOT.GNSS_civ_access_array^num > 0 } }
+				subtract_from_temp_variable = { temp_GNSS_civ_access_system_highest_idx = @GNSS_sat_idx_base }
+				#production_speed_buildings_factor
+				clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_buildings_factor max = global.GNSS_civ_production_speed_buildings_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
+				#production_speed_infrastructure_factor
+				clamp_variable = { var = ROOT.var_GNSS_civ_production_speed_infrastructure_factor max = global.GNSS_civ_production_speed_infrastructure_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
+				#local_resources_factor
+				clamp_variable = { var = ROOT.var_GNSS_civ_local_resources_factor max = global.GNSS_civ_local_resources_factor_max_array^temp_GNSS_civ_access_system_highest_idx }
+			}
 		}
 	}
+	else = { clear_array = GNSS_civ_access_system_idx_array }
 }
 add_access_COM_mil_vars = {
 	set_temp_variable = { temp_COM_mil_access_system_highest_idx = 0 }
@@ -1757,27 +1730,13 @@ add_access_COM_mil_vars = {
 	}
 	if = {
 		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_COM_mil_system_idx < temp_COM_mil_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_COM_mil_system_idx = temp_COM_mil_access_system_highest_idx
-				}
-			}
+			check_variable = { var = ROOT.var_COM_mil_system_idx value = temp_COM_mil_access_system_highest_idx compare = less_than_or_equals }
 		}
 		for_each_scope_loop = {
 			array = COM_mil_access_array
 			if = {
 				limit = {
-					OR = {
-						check_variable = {
-							ROOT.var_COM_mil_system_idx < THIS.var_COM_mil_system_idx
-						}
-						check_variable = {
-							ROOT.var_COM_mil_system_idx = THIS.var_COM_mil_system_idx
-						}
-					}
+					check_variable = { var = ROOT.var_COM_mil_system_idx value = THIS.var_COM_mil_system_idx compare = less_than_or_equals }
 				}
 				add_to_variable = { ROOT.var_COM_mil_max_command_power = THIS.var_COM_mil_max_command_power_base }
 				add_to_variable = { ROOT.var_COM_mil_army_org_factor = THIS.var_COM_mil_army_org_factor_base }
@@ -1824,27 +1783,13 @@ add_access_COM_civ_vars = {
 	}
 	if = {
 		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_COM_civ_system_idx < temp_COM_civ_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_COM_civ_system_idx = temp_COM_civ_access_system_highest_idx
-				}
-			}
+			check_variable = { var = ROOT.var_COM_civ_system_idx value = temp_COM_civ_access_system_highest_idx compare = less_than_or_equals }
 		}
 		for_each_scope_loop = {
 			array = COM_civ_access_array
 			if = {
 				limit = {
-					OR = {
-						check_variable = {
-							ROOT.var_COM_civ_system_idx < THIS.var_COM_civ_system_idx
-						}
-						check_variable = {
-							ROOT.var_COM_civ_system_idx = THIS.var_COM_civ_system_idx
-						}
-					}
+					check_variable = { var = ROOT.var_COM_civ_system_idx value = THIS.var_COM_civ_system_idx compare = less_than_or_equals }
 				}
 				add_to_variable = { ROOT.var_COM_civ_political_power_factor = THIS.var_COM_civ_political_power_factor_base }
 				add_to_variable = { ROOT.var_COM_civ_decryption_factor = THIS.var_COM_civ_decryption_factor_base }
@@ -1894,27 +1839,13 @@ add_access_SPY_mil_vars = {
 	}
 	if = {
 		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_SPY_mil_system_idx < temp_SPY_mil_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_SPY_mil_system_idx = temp_SPY_mil_access_system_highest_idx
-				}
-			}
+			check_variable = { var = ROOT.var_SPY_mil_system_idx value = temp_SPY_mil_access_system_highest_idx compare = less_than_or_equals }
 		}
 		for_each_scope_loop = {
 			array = SPY_mil_access_array
 			if = {
 				limit = {
-					OR = {
-						check_variable = {
-							ROOT.var_SPY_mil_system_idx < THIS.var_SPY_mil_system_idx
-						}
-						check_variable = {
-							ROOT.var_SPY_mil_system_idx = THIS.var_SPY_mil_system_idx
-						}
-					}
+					check_variable = { var = ROOT.var_SPY_mil_system_idx value = THIS.var_SPY_mil_system_idx compare = less_than_or_equals }
 				}
 				add_to_variable = { ROOT.var_SPY_mil_max_planning_factor = THIS.var_SPY_mil_max_planning_factor_base }
 				add_to_variable = { ROOT.var_SPY_mil_recon_factor = THIS.var_SPY_mil_recon_factor_base }
@@ -1967,27 +1898,13 @@ add_access_SPY_civ_vars = {
 	}
 	if = {
 		limit = {
-			OR = {
-				check_variable = {
-					ROOT.var_SPY_civ_system_idx < temp_SPY_civ_access_system_highest_idx
-				}
-				check_variable = {
-					ROOT.var_SPY_civ_system_idx = temp_SPY_civ_access_system_highest_idx
-				}
-			}
+			check_variable = { var = ROOT.var_SPY_civ_system_idx value = temp_SPY_civ_access_system_highest_idx compare = less_than_or_equals }
 		}
 		for_each_scope_loop = {
 			array = SPY_civ_access_array
 			if = {
 				limit = {
-					OR = {
-						check_variable = {
-							ROOT.var_SPY_civ_system_idx < THIS.var_SPY_civ_system_idx
-						}
-						check_variable = {
-							ROOT.var_SPY_civ_system_idx = THIS.var_SPY_civ_system_idx
-						}
-					}
+					check_variable = { var = ROOT.var_SPY_civ_system_idx value = THIS.var_SPY_civ_system_idx compare = less_than_or_equals }
 				}
 				add_to_variable = { ROOT.var_SPY_civ_research_speed_factor = THIS.var_SPY_civ_research_speed_factor_base }
 				add_to_variable = { ROOT.var_SPY_civ_civilian_intel_factor = THIS.var_SPY_civ_civilian_intel_factor_base }
@@ -2272,12 +2189,7 @@ launch_OLV = {
 				max = 1
 			}
 			if = {
-				limit = {
-					OR = {
-						check_variable = { ROOT.var_OLV_reliability > ROOT.var_OLV_trajectory }
-						check_variable = { ROOT.var_OLV_reliability = ROOT.var_OLV_trajectory }
-					}
-				}
+				limit = { check_variable = { var = ROOT.var_OLV_reliability value = ROOT.var_OLV_trajectory compare = greater_than_or_equals } }
 				add_to_variable = { ROOT.var_orbital_launch_success = 1 }
 				for_each_loop = {
 					array = payload_types_array
