@@ -88,11 +88,11 @@ flowchart TD
     B5["Medevac Rapid Reconfig<br/>Large aircraft reliability +5%; build cost -4%"]
     B6["Flex Production Cells<br/>Production efficiency gain +10%; production capacity +6%"]
     B7["Executive Jet Aerodynamics<br/>Light aircraft maximum speed +5%; air range +4%"]
-    B8["UAV Data Relay Suite<br/>UAV air range +5%; reliability +4%"]
+    B8["UAV Data Relay Suite<br/>UAV air range +5%; air_defense +4%"]
     B9["Sovereign Multi-Role Fleet<br/>MIO task capacity +1; design-team assign cost -10%"]
     B10["Alliance Commercializer<br/>Large aircraft build cost -4%; production capacity +6%"]
-    B11["Portfolio Rebranding Engine<br/>Large aircraft reliability +5%; air range +4%"]
-    B12["Cross-Border Final Assembly<br/>Large aircraft build cost -5%; air range +4%"]
+    B11["Portfolio Rebranding Engine<br/>Large aircraft reliability +5%; fuel_consumption -2%"]
+    B12["Cross-Border Final Assembly<br/>Large aircraft build cost -5%;"]
     B13["Trade-Law Firebreak<br/>MIO research +3%; design-team change cost -10%"]
     B14["Program Governance Transition<br/>MIO task capacity +1; MIO research +3%"]
     B15["Precision Strike Package<br/>Light aircraft air attack +6%; air superiority +5%"]
@@ -188,26 +188,31 @@ Another Canadian giant. Probably the largest shipyards in Canada. Let's give it 
 
 ```mermaid
 flowchart TD
+    %% Industrial foundation branch
     I0["National Surface Combatant Yard<br/>Destroyer build cost -4%; reliability +4%"]
-    I1["Halifax Refit Discipline<br/>Destroyer max organisation +6%; reliability +5%"]
+    I1["Halifax Refit Discipline<br/>Frigate, and Destroyer max organisation +6%; reliability +5%"]
     I2["Modular Block Assembly<br/>Destroyer production capacity +8%; build cost -5%"]
+    I5["Cold Weather Deck Systems<br/>Destroyer naval speed +6%"]
     I3["Aegis Integration Line<br/>All ship types anti-air attack +4%; armor +4%"]
     I4["ASW Mission Bay Standards<br/>Destroyer sub attack +7%; sub detection +6%"]
-    I5["Cold Weather Deck Systems<br/>Destroyer naval speed +6%; fuel consumption -4%"]
     I6["Atlantic Fleet Sustainment<br/>Destroyer naval range +9%; reliability +4%"]
     I7["Continuous Build Cadence<br/>Production efficiency gain +10%; production efficiency cap +8%"]
     I8["Shiplift Launch Complex<br/>Capital ship naval speed +4%; production output +5%"]
+
+    %% National program and contracts branch
     I9["National Shipbuilding Strategy Monopoly<br/>Screen ship build cost -3%; MIO research +8%"]
     I10["AOPS Arctic Patrol Hull<br/>Corvette, frigate, and destroyer ship naval range +10%; armor +4%"]
     I11["River-class Destroyer Combat System<br/>Destroyer anti-air +7%; hg_attack +5%"]
     I12["Halifax Frigate Life Extension<br/>Frigate max organisation +6%; sub detection +5%"]
-    I13["Arctic Offshore Surveillance Suite<br/>Corvette, frigate, destroyer, and cruiser ship sub detection +12%; surface visibility -4%"]
     I14["Missile Deck expansion<br/>Frigate, and destroyer hg_attack +6%; anti-air +5%"]
+    I18["Destroyer Combat Systems Integration<br/>Destroyer anti-air +8%; surface detection +6%"]
     I15["MDA Drones<br/>Frigate surface detection +5%, sub detection +8%"]
     I16["Armed Helicopter drones<br/>Frigate sub_attack +6%"]
+    I13["Arctic Offshore Surveillance Suite<br/>Corvette, frigate, destroyer, and cruiser ship sub detection +12%; surface visibility -4%"]
     I17["Icebreaker hulls<br/>Destroyer, and cruiser ship armor +8%; max organisation +5%"]
-    I18["Destroyer Combat Systems Integration<br/>Destroyer anti-air +8%; surface detection +6%"]
-    I19["Fleet Readiness Maintenance Node<br/>All ships max organisation +4%; repair speed +12%"]
+
+    %% Fleet readiness branch
+    I19["Fleet Readiness Maintenance Node<br/>All ships max organisation +4%; refit speed +12%"]
     I20["NSS Contract Allocation<br/>Screen ship research +10%; production efficiency gain +10%"]
 
 
@@ -224,47 +229,48 @@ flowchart TD
 
     I9 --> I10
     I9 --> I11
-    I9 --> I19
-    I19 --> I20
+    I9 --> I12
     I10 --> I13
+    I11 --> I14
+    I14 --> I18
+    I12 --> I19
+    I18 --> I19
     I13 --> I17
-
     I13 --> I15
     I15 --> I16
+    I19 --> I20
 ```
 
 ### Davie Shipbuilding
 Shipyards, and another way to interact with the French hapiness by boosting investment into Quebec. Flavor-wise, I'd like to give them some bonuses towards negating weather impact on naval operations (naval detection, naval hit chance, naval speed, naval strike, positionning). This is due to their extensive work in the matter of building icebreakers and arctic capable warships.
 
-**IMPORTANT**: I'd remove "Marine Industries Limited". It becomes redundant with Davie Shipbuilding and Irving. Plus, it was actually merged into Davie in 1986.
-
 ```mermaid
 flowchart TD
+    %% Arctic escort capability branch
     D0["Arctic Shipyard Heritage<br/>Frigate reliability +4%; naval range +6%"]
     D1["Ice-Class Hull Geometry<br/>Frigate naval speed +6%; surface_visibility -8%"]
     D2["Winterized Sensor Masts<br/>Corvette, and Frigate surface detection +8%"]
     D3["Heavy Sea Stabilization<br/>Corvette, and Frigate lg attack +7%; anti-air attack +6%"]
     D4["Cold-Start Power Trains<br/>Corvette, and Frigate fuel consumption -5%; reliability +4%"]
-    D5["Quebec Refit Throughput<br/>Production capacity +8%; production efficiency gain +10%"]
     D6["Arctic Patrol Doctrine<br/>Frigate naval range +10%; max organisation +6%"]
     D7["Northern Escort Mastery<br/>Frigate sub attack +8%; anti-air attack +6%"]
 
-    
+    %% Program/contracts branch
     D8["Asterix Replenishment Conversion<br/>Support ship naval range +8%; build cost -5%"]
     D9["Combat Vessel Contracts<br/>Screen ship research speed +6%; task capacity +1"]
     D10["Frigate ASW Modernisation<br/>Frigate sub attack +8%; torpedo_attack +3%"]
     D11["Protecteur Class Contracts<br/>Repair ship naval range +8%; build cost -5%"]
+    D14["Halifax Frigate Maintenance Contract<br/>Frigate max organisation +2%; reliability +5%"]
+    D15["Polar Icebreaker Hull Engineering<br/>Support, and repair ship armor +6%"]
+    D18["Polar Max Steel Cutting<br/>Support, repair, corvette, and frigate ship build cost -5%; production efficiency gain +6%"]
 
+    %% Industrial yard modernization branch
+    D5["Quebec Refit Throughput<br/>Production capacity +8%; production efficiency gain +10%"]
     D12["Lévis Modular Berths<br/>Screen ship production efficiency +7%; task capacity +1"]
     D13["Champlain Dry Dock Repair<br/>Screen ship reliability +4%; build_cost -2%"]
-    D14["Halifax Frigate Maintenance Contract<br/>Frigate max organisation +2%; reliability +5%"]
     D16["NSS Inclusion Framework<br/>MIO funds gain +8%; research bonus +5%"]
     D17["Quebec Capacity Expansion<br/>Production efficiency cap +2%"]
 
-    D15["Polar Icebreaker Hull Engineering<br/>Support, and repair ship armor +6%"]
-    D18["Polar Max Steel Cutting<br/>Icebreaker build cost -5%; production efficiency gain +6%"]
-
-    
     D0 --> D1
     D0 --> D2
     D1 --> D3
@@ -272,7 +278,7 @@ flowchart TD
     D2 --> D6
     D3 --> D7
     D4 --> D7
-    D5 --> D6
+    D6 --> D14
 
     D8 --> D9
     D8 --> D11
@@ -280,11 +286,12 @@ flowchart TD
     D15 --> D18
     D9 --> D10
     D10 --> D14
-    D14 --> D16
-    D16 --> D17
 
     D5 --> D12
     D12 --> D13
+    D13 --> D16
+    D14 --> D16
+    D16 --> D17
 ```
 
 ### L3Harris
