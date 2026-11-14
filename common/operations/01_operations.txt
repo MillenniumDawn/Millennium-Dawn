@@ -10,16 +10,21 @@ operation_track_hvt = { ### 1 1/35
 	operatives = 1
 
 	visible = {
-		network_national_coverage = {
-			target = FROM
-			value > 0
-		}
-		NOT = {
-			FROM = {
-				has_country_flag = ct_hvt_target_found_by@ROOT
+		OR = {
+			AND = {
+				network_national_coverage = {
+					target = FROM
+					value > 0
+				}
+				NOT = {
+					FROM = {
+						has_country_flag = ct_hvt_target_found_by@ROOT
+					}
+				}
+				has_target_in_region_intel = yes
 			}
+			TOP_tracking_host_selected = yes
 		}
-		has_target_in_region_intel = yes
 	}
 
 	equipment = {
@@ -27,20 +32,29 @@ operation_track_hvt = { ### 1 1/35
 	}
 
 	available = {
-		set_temp_variable = { req_level = 24 }
-		custom_trigger_tooltip = {
-			tooltip = ct_required_intel_level_tt
-			check_variable = { international_terror_org_intel^selected_org > 24 }
+		OR = {
+			AND = {
+				set_temp_variable = { req_level = 24 }
+				custom_trigger_tooltip = {
+					tooltip = ct_required_intel_level_tt
+					check_variable = { international_terror_org_intel^selected_org > 24 }
+				}
+			}
+			TOP_tracking_host_selected = yes
 		}
 	}
 
 	on_start = {
-		FROM = {
-			capital_scope = {
-				set_temp_variable = { ct_raid_selected_slot = ROOT.selected_org }
-				set_variable = { target_raid_org_id = global.active_terror_orgs^ct_raid_selected_slot }
+		if = {
+			limit = { ROOT = { has_target_in_region_intel = yes } }
+			FROM = {
+				capital_scope = {
+					set_temp_variable = { ct_raid_selected_slot = ROOT.selected_org }
+					set_variable = { target_raid_org_id = global.active_terror_orgs^ct_raid_selected_slot }
+				}
 			}
 		}
+		ROOT = { set_temp_variable = { TOP_tracking_kind = 0 } TOP_tracking_started = yes }
 	}
 
 	risk_chance = 0.1
@@ -49,6 +63,7 @@ operation_track_hvt = { ### 1 1/35
 	outcome_modifiers = { operation_infiltrate_outcome operation_outcome }
 	cost_modifiers = { operation_infiltrate_cost operation_cost }
 	outcome_execute = {
+		ROOT = { TOP_tracking_completed = yes }
 		FROM = {
 			set_country_flag = ct_hvt_target_found_by@ROOT
 		}
@@ -223,6 +238,7 @@ operation_locate_arms_caches = { ### 1 1/35
 				set_variable = { target_raid_org_id = global.active_terror_orgs^ct_raid_selected_slot }
 			}
 		}
+		ROOT = { set_temp_variable = { TOP_tracking_kind = 3 } TOP_tracking_started = yes }
 	}
 
 	risk_chance = 0.1
@@ -236,6 +252,8 @@ operation_locate_arms_caches = { ### 1 1/35
 		}
 		ROOT = {
 			custom_effect_tooltip = ct_intel_raid_tt
+			set_temp_variable = { TOP_core_objective = 3 }
+			TOP_core_facility_located = yes
 		}
 	}
 	outcome_extra_execute = { # SCOPE_OPERATION
@@ -411,6 +429,7 @@ operation_locate_training_camps = { ### 1 1/35
 				set_variable = { target_raid_org_id = global.active_terror_orgs^ct_raid_selected_slot }
 			}
 		}
+		ROOT = { set_temp_variable = { TOP_tracking_kind = 2 } TOP_tracking_started = yes }
 	}
 
 	outcome_execute = {
@@ -419,6 +438,8 @@ operation_locate_training_camps = { ### 1 1/35
 		}
 		ROOT = {
 			custom_effect_tooltip = ct_intel_raid_tt
+			set_temp_variable = { TOP_core_objective = 2 }
+			TOP_core_facility_located = yes
 		}
 	}
 	outcome_extra_execute = { # SCOPE_OPERATION
@@ -582,6 +603,8 @@ operation_locate_regional_headquarters = { ### 1 1/35
 		}
 	}
 
+	on_start = { ROOT = { set_temp_variable = { TOP_tracking_kind = 1 } TOP_tracking_started = yes } }
+
 	risk_chance = 0.1
 	outcome_extra_chance = 0.25
 	risk_modifiers = { operation_infiltrate_risk operation_risk }
@@ -593,6 +616,8 @@ operation_locate_regional_headquarters = { ### 1 1/35
 		}
 		ROOT = {
 			custom_effect_tooltip = ct_intel_raid_tt
+			set_temp_variable = { TOP_core_objective = 1 }
+			TOP_core_facility_located = yes
 		}
 	}
 	outcome_extra_execute = { # SCOPE_OPERATION
