@@ -1,13 +1,14 @@
 calculate_expected_spending = {
 	resolve_gdp_c_deltas = yes
+	set_temp_variable = { expected_spending_at_war = 0 }
+	if = { limit = { has_war = yes }
+		set_temp_variable = { expected_spending_at_war = 1 }
+	}
 	calculate_expected_spending_totals = yes
-	calculate_expected_welfare_spending = yes
-	calculate_expected_healthcare_spending = yes
-	calculate_expected_education_spending = yes
-	calculate_expected_police_spending = yes
-	calculate_expected_adm_spending = yes
 	calculate_expected_military_spending = yes
-	md_check_spending_alerts = yes
+	if = { limit = { is_ai = no }
+		md_check_spending_alerts = yes
+	}
 	refresh_expected_spending_frames = yes
 	update_protest_dirty_var = yes
 }
@@ -117,173 +118,218 @@ calculate_expected_spending_frame = {
 	}
 }
 
+# One expression per category: the 24 party terms, then the war, modifier and offset tail, rounded and clamped.
+# Military is only summed here; calculate_expected_military_spending finishes it.
 calculate_expected_spending_totals = {
-	set_variable = { expected_welfare_spending = 0 }
-	set_variable = { expected_health_spending = 0 }
-	set_variable = { expected_edu_spending = 0 }
-	set_variable = { expected_police_spending = 0 }
-	set_variable = { expected_adm_spending = 0 }
-	set_variable = { expected_military_sp = 0 }
-
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = v
-
-		add_to_variable = {
-			expected_welfare_spending = {
-				value = global.expected_social_sp^v
-				add = gdp_c_delta
-				multiply = party_pop_array^v
-			}
-		}
-
-		add_to_variable = {
-			expected_health_spending = {
-				value = global.expected_med_sp^v
-				add = gdp_c_delta
-				multiply = party_pop_array^v
-			}
-		}
-
-		add_to_variable = {
-			expected_edu_spending = {
-				value = global.expected_ed_sp^v
-				add = gdp_c_delta_lvl5
-				multiply = party_pop_array^v
-			}
-		}
-
-		add_to_variable = {
-			expected_police_spending = {
-				value = global.expected_police_sp^v
-				add = gdp_c_delta_lvl5
-				multiply = party_pop_array^v
-			}
-		}
-
-		add_to_variable = {
-			expected_adm_spending = {
-				value = global.expected_adm_sp^v
-				add = gdp_c_delta_lvl5
-				multiply = party_pop_array^v
-			}
-		}
-
-		add_to_variable = {
-			expected_military_sp = {
-				value = global.expected_military_sp^v
-				add = gdp_c_delta_mil
-				multiply = party_pop_array^v
-			}
+	set_variable = {
+		expected_welfare_spending = {
+			value = 0
+			add = { value = global.expected_social_sp^0 add = gdp_c_delta multiply = party_pop_array^0 }
+			add = { value = global.expected_social_sp^1 add = gdp_c_delta multiply = party_pop_array^1 }
+			add = { value = global.expected_social_sp^2 add = gdp_c_delta multiply = party_pop_array^2 }
+			add = { value = global.expected_social_sp^3 add = gdp_c_delta multiply = party_pop_array^3 }
+			add = { value = global.expected_social_sp^4 add = gdp_c_delta multiply = party_pop_array^4 }
+			add = { value = global.expected_social_sp^5 add = gdp_c_delta multiply = party_pop_array^5 }
+			add = { value = global.expected_social_sp^6 add = gdp_c_delta multiply = party_pop_array^6 }
+			add = { value = global.expected_social_sp^7 add = gdp_c_delta multiply = party_pop_array^7 }
+			add = { value = global.expected_social_sp^8 add = gdp_c_delta multiply = party_pop_array^8 }
+			add = { value = global.expected_social_sp^9 add = gdp_c_delta multiply = party_pop_array^9 }
+			add = { value = global.expected_social_sp^10 add = gdp_c_delta multiply = party_pop_array^10 }
+			add = { value = global.expected_social_sp^11 add = gdp_c_delta multiply = party_pop_array^11 }
+			add = { value = global.expected_social_sp^12 add = gdp_c_delta multiply = party_pop_array^12 }
+			add = { value = global.expected_social_sp^13 add = gdp_c_delta multiply = party_pop_array^13 }
+			add = { value = global.expected_social_sp^14 add = gdp_c_delta multiply = party_pop_array^14 }
+			add = { value = global.expected_social_sp^15 add = gdp_c_delta multiply = party_pop_array^15 }
+			add = { value = global.expected_social_sp^16 add = gdp_c_delta multiply = party_pop_array^16 }
+			add = { value = global.expected_social_sp^17 add = gdp_c_delta multiply = party_pop_array^17 }
+			add = { value = global.expected_social_sp^18 add = gdp_c_delta multiply = party_pop_array^18 }
+			add = { value = global.expected_social_sp^19 add = gdp_c_delta multiply = party_pop_array^19 }
+			add = { value = global.expected_social_sp^20 add = gdp_c_delta multiply = party_pop_array^20 }
+			add = { value = global.expected_social_sp^21 add = gdp_c_delta multiply = party_pop_array^21 }
+			add = { value = global.expected_social_sp^22 add = gdp_c_delta multiply = party_pop_array^22 }
+			add = { value = global.expected_social_sp^23 add = gdp_c_delta multiply = party_pop_array^23 }
+			subtract = expected_spending_at_war
+			add = modifier@expected_welfare_modifier
+			add = social_desire_offset
+			round = yes
+			clamp = { min = 1 max = 6 }
 		}
 	}
-}
 
-calculate_expected_welfare_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		subtract_from_variable = { expected_welfare_spending = 1 }
-	}
-	add_to_variable = { expected_welfare_spending = modifier@expected_welfare_modifier }
-	add_to_variable = { expected_welfare_spending = social_desire_offset }
-	round_variable = expected_welfare_spending
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Expected welfare spending: [?THIS.expected_welfare_spending]"
-	}
-	clamp_variable = {
-		var = expected_welfare_spending
-		min = 1
-		max = 6
-	}
-}
-
-calculate_expected_healthcare_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		subtract_from_variable = { expected_health_spending = 1 }
-	}
-	add_to_variable = { expected_health_spending = modifier@expected_healthcare_modifier }
-	add_to_variable = { expected_health_spending = health_desire_offset }
-	round_variable = expected_health_spending
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Expected healthcare spending: [?THIS.expected_health_spending]"
-	}
-
-	clamp_variable = {
-		var = expected_health_spending
-		min = 1
-		max = 6
-	}
-}
-
-calculate_expected_education_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		subtract_from_variable = { expected_edu_spending = 1 }
-	}
-	add_to_variable = { expected_edu_spending = modifier@expected_education_modifier }
-	add_to_variable = { expected_edu_spending = education_desire_offset }
-	round_variable = expected_edu_spending
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Expected education spending: [?THIS.expected_edu_spending]"
+	set_variable = {
+		expected_health_spending = {
+			value = 0
+			add = { value = global.expected_med_sp^0 add = gdp_c_delta multiply = party_pop_array^0 }
+			add = { value = global.expected_med_sp^1 add = gdp_c_delta multiply = party_pop_array^1 }
+			add = { value = global.expected_med_sp^2 add = gdp_c_delta multiply = party_pop_array^2 }
+			add = { value = global.expected_med_sp^3 add = gdp_c_delta multiply = party_pop_array^3 }
+			add = { value = global.expected_med_sp^4 add = gdp_c_delta multiply = party_pop_array^4 }
+			add = { value = global.expected_med_sp^5 add = gdp_c_delta multiply = party_pop_array^5 }
+			add = { value = global.expected_med_sp^6 add = gdp_c_delta multiply = party_pop_array^6 }
+			add = { value = global.expected_med_sp^7 add = gdp_c_delta multiply = party_pop_array^7 }
+			add = { value = global.expected_med_sp^8 add = gdp_c_delta multiply = party_pop_array^8 }
+			add = { value = global.expected_med_sp^9 add = gdp_c_delta multiply = party_pop_array^9 }
+			add = { value = global.expected_med_sp^10 add = gdp_c_delta multiply = party_pop_array^10 }
+			add = { value = global.expected_med_sp^11 add = gdp_c_delta multiply = party_pop_array^11 }
+			add = { value = global.expected_med_sp^12 add = gdp_c_delta multiply = party_pop_array^12 }
+			add = { value = global.expected_med_sp^13 add = gdp_c_delta multiply = party_pop_array^13 }
+			add = { value = global.expected_med_sp^14 add = gdp_c_delta multiply = party_pop_array^14 }
+			add = { value = global.expected_med_sp^15 add = gdp_c_delta multiply = party_pop_array^15 }
+			add = { value = global.expected_med_sp^16 add = gdp_c_delta multiply = party_pop_array^16 }
+			add = { value = global.expected_med_sp^17 add = gdp_c_delta multiply = party_pop_array^17 }
+			add = { value = global.expected_med_sp^18 add = gdp_c_delta multiply = party_pop_array^18 }
+			add = { value = global.expected_med_sp^19 add = gdp_c_delta multiply = party_pop_array^19 }
+			add = { value = global.expected_med_sp^20 add = gdp_c_delta multiply = party_pop_array^20 }
+			add = { value = global.expected_med_sp^21 add = gdp_c_delta multiply = party_pop_array^21 }
+			add = { value = global.expected_med_sp^22 add = gdp_c_delta multiply = party_pop_array^22 }
+			add = { value = global.expected_med_sp^23 add = gdp_c_delta multiply = party_pop_array^23 }
+			subtract = expected_spending_at_war
+			add = modifier@expected_healthcare_modifier
+			add = health_desire_offset
+			round = yes
+			clamp = { min = 1 max = 6 }
+		}
 	}
 
-	clamp_variable = {
-		var = expected_edu_spending
-		min = 1
-		max = 5
-	}
-}
-
-calculate_expected_police_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		subtract_from_variable = { expected_police_spending = 1 }
-	}
-	add_to_variable = { expected_police_spending = modifier@expected_police_modifier }
-	add_to_variable = { expected_police_spending = police_desire_offset }
-	round_variable = expected_police_spending
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Expected police spending: [?THIS.expected_police_spending]"
-	}
-
-	clamp_variable = {
-		var = expected_police_spending
-		min = 1
-		max = 5
-	}
-}
-
-calculate_expected_adm_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		subtract_from_variable = { expected_adm_spending = 1 }
-	}
-	add_to_variable = { expected_adm_spending = modifier@expected_adm_modifier }
-	add_to_variable = { expected_adm_spending = bureau_desire_offset }
-	round_variable = expected_adm_spending
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Expected administrative spending: [?THIS.expected_adm_spending]"
+	set_variable = {
+		expected_edu_spending = {
+			value = 0
+			add = { value = global.expected_ed_sp^0 add = gdp_c_delta_lvl5 multiply = party_pop_array^0 }
+			add = { value = global.expected_ed_sp^1 add = gdp_c_delta_lvl5 multiply = party_pop_array^1 }
+			add = { value = global.expected_ed_sp^2 add = gdp_c_delta_lvl5 multiply = party_pop_array^2 }
+			add = { value = global.expected_ed_sp^3 add = gdp_c_delta_lvl5 multiply = party_pop_array^3 }
+			add = { value = global.expected_ed_sp^4 add = gdp_c_delta_lvl5 multiply = party_pop_array^4 }
+			add = { value = global.expected_ed_sp^5 add = gdp_c_delta_lvl5 multiply = party_pop_array^5 }
+			add = { value = global.expected_ed_sp^6 add = gdp_c_delta_lvl5 multiply = party_pop_array^6 }
+			add = { value = global.expected_ed_sp^7 add = gdp_c_delta_lvl5 multiply = party_pop_array^7 }
+			add = { value = global.expected_ed_sp^8 add = gdp_c_delta_lvl5 multiply = party_pop_array^8 }
+			add = { value = global.expected_ed_sp^9 add = gdp_c_delta_lvl5 multiply = party_pop_array^9 }
+			add = { value = global.expected_ed_sp^10 add = gdp_c_delta_lvl5 multiply = party_pop_array^10 }
+			add = { value = global.expected_ed_sp^11 add = gdp_c_delta_lvl5 multiply = party_pop_array^11 }
+			add = { value = global.expected_ed_sp^12 add = gdp_c_delta_lvl5 multiply = party_pop_array^12 }
+			add = { value = global.expected_ed_sp^13 add = gdp_c_delta_lvl5 multiply = party_pop_array^13 }
+			add = { value = global.expected_ed_sp^14 add = gdp_c_delta_lvl5 multiply = party_pop_array^14 }
+			add = { value = global.expected_ed_sp^15 add = gdp_c_delta_lvl5 multiply = party_pop_array^15 }
+			add = { value = global.expected_ed_sp^16 add = gdp_c_delta_lvl5 multiply = party_pop_array^16 }
+			add = { value = global.expected_ed_sp^17 add = gdp_c_delta_lvl5 multiply = party_pop_array^17 }
+			add = { value = global.expected_ed_sp^18 add = gdp_c_delta_lvl5 multiply = party_pop_array^18 }
+			add = { value = global.expected_ed_sp^19 add = gdp_c_delta_lvl5 multiply = party_pop_array^19 }
+			add = { value = global.expected_ed_sp^20 add = gdp_c_delta_lvl5 multiply = party_pop_array^20 }
+			add = { value = global.expected_ed_sp^21 add = gdp_c_delta_lvl5 multiply = party_pop_array^21 }
+			add = { value = global.expected_ed_sp^22 add = gdp_c_delta_lvl5 multiply = party_pop_array^22 }
+			add = { value = global.expected_ed_sp^23 add = gdp_c_delta_lvl5 multiply = party_pop_array^23 }
+			subtract = expected_spending_at_war
+			add = modifier@expected_education_modifier
+			add = education_desire_offset
+			round = yes
+			clamp = { min = 1 max = 5 }
+		}
 	}
 
-	clamp_variable = {
-		var = expected_adm_spending
-		min = 1
-		max = 5
+	set_variable = {
+		expected_police_spending = {
+			value = 0
+			add = { value = global.expected_police_sp^0 add = gdp_c_delta_lvl5 multiply = party_pop_array^0 }
+			add = { value = global.expected_police_sp^1 add = gdp_c_delta_lvl5 multiply = party_pop_array^1 }
+			add = { value = global.expected_police_sp^2 add = gdp_c_delta_lvl5 multiply = party_pop_array^2 }
+			add = { value = global.expected_police_sp^3 add = gdp_c_delta_lvl5 multiply = party_pop_array^3 }
+			add = { value = global.expected_police_sp^4 add = gdp_c_delta_lvl5 multiply = party_pop_array^4 }
+			add = { value = global.expected_police_sp^5 add = gdp_c_delta_lvl5 multiply = party_pop_array^5 }
+			add = { value = global.expected_police_sp^6 add = gdp_c_delta_lvl5 multiply = party_pop_array^6 }
+			add = { value = global.expected_police_sp^7 add = gdp_c_delta_lvl5 multiply = party_pop_array^7 }
+			add = { value = global.expected_police_sp^8 add = gdp_c_delta_lvl5 multiply = party_pop_array^8 }
+			add = { value = global.expected_police_sp^9 add = gdp_c_delta_lvl5 multiply = party_pop_array^9 }
+			add = { value = global.expected_police_sp^10 add = gdp_c_delta_lvl5 multiply = party_pop_array^10 }
+			add = { value = global.expected_police_sp^11 add = gdp_c_delta_lvl5 multiply = party_pop_array^11 }
+			add = { value = global.expected_police_sp^12 add = gdp_c_delta_lvl5 multiply = party_pop_array^12 }
+			add = { value = global.expected_police_sp^13 add = gdp_c_delta_lvl5 multiply = party_pop_array^13 }
+			add = { value = global.expected_police_sp^14 add = gdp_c_delta_lvl5 multiply = party_pop_array^14 }
+			add = { value = global.expected_police_sp^15 add = gdp_c_delta_lvl5 multiply = party_pop_array^15 }
+			add = { value = global.expected_police_sp^16 add = gdp_c_delta_lvl5 multiply = party_pop_array^16 }
+			add = { value = global.expected_police_sp^17 add = gdp_c_delta_lvl5 multiply = party_pop_array^17 }
+			add = { value = global.expected_police_sp^18 add = gdp_c_delta_lvl5 multiply = party_pop_array^18 }
+			add = { value = global.expected_police_sp^19 add = gdp_c_delta_lvl5 multiply = party_pop_array^19 }
+			add = { value = global.expected_police_sp^20 add = gdp_c_delta_lvl5 multiply = party_pop_array^20 }
+			add = { value = global.expected_police_sp^21 add = gdp_c_delta_lvl5 multiply = party_pop_array^21 }
+			add = { value = global.expected_police_sp^22 add = gdp_c_delta_lvl5 multiply = party_pop_array^22 }
+			add = { value = global.expected_police_sp^23 add = gdp_c_delta_lvl5 multiply = party_pop_array^23 }
+			subtract = expected_spending_at_war
+			add = modifier@expected_police_modifier
+			add = police_desire_offset
+			round = yes
+			clamp = { min = 1 max = 5 }
+		}
+	}
+
+	set_variable = {
+		expected_adm_spending = {
+			value = 0
+			add = { value = global.expected_adm_sp^0 add = gdp_c_delta_lvl5 multiply = party_pop_array^0 }
+			add = { value = global.expected_adm_sp^1 add = gdp_c_delta_lvl5 multiply = party_pop_array^1 }
+			add = { value = global.expected_adm_sp^2 add = gdp_c_delta_lvl5 multiply = party_pop_array^2 }
+			add = { value = global.expected_adm_sp^3 add = gdp_c_delta_lvl5 multiply = party_pop_array^3 }
+			add = { value = global.expected_adm_sp^4 add = gdp_c_delta_lvl5 multiply = party_pop_array^4 }
+			add = { value = global.expected_adm_sp^5 add = gdp_c_delta_lvl5 multiply = party_pop_array^5 }
+			add = { value = global.expected_adm_sp^6 add = gdp_c_delta_lvl5 multiply = party_pop_array^6 }
+			add = { value = global.expected_adm_sp^7 add = gdp_c_delta_lvl5 multiply = party_pop_array^7 }
+			add = { value = global.expected_adm_sp^8 add = gdp_c_delta_lvl5 multiply = party_pop_array^8 }
+			add = { value = global.expected_adm_sp^9 add = gdp_c_delta_lvl5 multiply = party_pop_array^9 }
+			add = { value = global.expected_adm_sp^10 add = gdp_c_delta_lvl5 multiply = party_pop_array^10 }
+			add = { value = global.expected_adm_sp^11 add = gdp_c_delta_lvl5 multiply = party_pop_array^11 }
+			add = { value = global.expected_adm_sp^12 add = gdp_c_delta_lvl5 multiply = party_pop_array^12 }
+			add = { value = global.expected_adm_sp^13 add = gdp_c_delta_lvl5 multiply = party_pop_array^13 }
+			add = { value = global.expected_adm_sp^14 add = gdp_c_delta_lvl5 multiply = party_pop_array^14 }
+			add = { value = global.expected_adm_sp^15 add = gdp_c_delta_lvl5 multiply = party_pop_array^15 }
+			add = { value = global.expected_adm_sp^16 add = gdp_c_delta_lvl5 multiply = party_pop_array^16 }
+			add = { value = global.expected_adm_sp^17 add = gdp_c_delta_lvl5 multiply = party_pop_array^17 }
+			add = { value = global.expected_adm_sp^18 add = gdp_c_delta_lvl5 multiply = party_pop_array^18 }
+			add = { value = global.expected_adm_sp^19 add = gdp_c_delta_lvl5 multiply = party_pop_array^19 }
+			add = { value = global.expected_adm_sp^20 add = gdp_c_delta_lvl5 multiply = party_pop_array^20 }
+			add = { value = global.expected_adm_sp^21 add = gdp_c_delta_lvl5 multiply = party_pop_array^21 }
+			add = { value = global.expected_adm_sp^22 add = gdp_c_delta_lvl5 multiply = party_pop_array^22 }
+			add = { value = global.expected_adm_sp^23 add = gdp_c_delta_lvl5 multiply = party_pop_array^23 }
+			subtract = expected_spending_at_war
+			add = modifier@expected_adm_modifier
+			add = bureau_desire_offset
+			round = yes
+			clamp = { min = 1 max = 5 }
+		}
+	}
+
+	set_variable = {
+		expected_military_sp = {
+			value = 0
+			add = { value = global.expected_military_sp^0 add = gdp_c_delta_mil multiply = party_pop_array^0 }
+			add = { value = global.expected_military_sp^1 add = gdp_c_delta_mil multiply = party_pop_array^1 }
+			add = { value = global.expected_military_sp^2 add = gdp_c_delta_mil multiply = party_pop_array^2 }
+			add = { value = global.expected_military_sp^3 add = gdp_c_delta_mil multiply = party_pop_array^3 }
+			add = { value = global.expected_military_sp^4 add = gdp_c_delta_mil multiply = party_pop_array^4 }
+			add = { value = global.expected_military_sp^5 add = gdp_c_delta_mil multiply = party_pop_array^5 }
+			add = { value = global.expected_military_sp^6 add = gdp_c_delta_mil multiply = party_pop_array^6 }
+			add = { value = global.expected_military_sp^7 add = gdp_c_delta_mil multiply = party_pop_array^7 }
+			add = { value = global.expected_military_sp^8 add = gdp_c_delta_mil multiply = party_pop_array^8 }
+			add = { value = global.expected_military_sp^9 add = gdp_c_delta_mil multiply = party_pop_array^9 }
+			add = { value = global.expected_military_sp^10 add = gdp_c_delta_mil multiply = party_pop_array^10 }
+			add = { value = global.expected_military_sp^11 add = gdp_c_delta_mil multiply = party_pop_array^11 }
+			add = { value = global.expected_military_sp^12 add = gdp_c_delta_mil multiply = party_pop_array^12 }
+			add = { value = global.expected_military_sp^13 add = gdp_c_delta_mil multiply = party_pop_array^13 }
+			add = { value = global.expected_military_sp^14 add = gdp_c_delta_mil multiply = party_pop_array^14 }
+			add = { value = global.expected_military_sp^15 add = gdp_c_delta_mil multiply = party_pop_array^15 }
+			add = { value = global.expected_military_sp^16 add = gdp_c_delta_mil multiply = party_pop_array^16 }
+			add = { value = global.expected_military_sp^17 add = gdp_c_delta_mil multiply = party_pop_array^17 }
+			add = { value = global.expected_military_sp^18 add = gdp_c_delta_mil multiply = party_pop_array^18 }
+			add = { value = global.expected_military_sp^19 add = gdp_c_delta_mil multiply = party_pop_array^19 }
+			add = { value = global.expected_military_sp^20 add = gdp_c_delta_mil multiply = party_pop_array^20 }
+			add = { value = global.expected_military_sp^21 add = gdp_c_delta_mil multiply = party_pop_array^21 }
+			add = { value = global.expected_military_sp^22 add = gdp_c_delta_mil multiply = party_pop_array^22 }
+			add = { value = global.expected_military_sp^23 add = gdp_c_delta_mil multiply = party_pop_array^23 }
+			add = { value = expected_spending_at_war multiply = 3 }
+			add = modifier@expected_mil_modifier
+		}
 	}
 }
 
 calculate_expected_military_spending = {
-	if = {
-		limit = { THIS = { has_war = yes } }
-		add_to_variable = { expected_military_sp = 3 }
-	}
-	add_to_variable = { expected_military_sp = modifier@expected_mil_modifier }
 	add_security_pressure_to_expected_military = yes
 	add_to_variable = { expected_military_sp = defence_desire_offset }
 	round_variable = expected_military_sp
@@ -303,7 +349,7 @@ calculate_expected_military_spending = {
 	}
 
 	if = {
-		limit = { THIS = { has_war = no } }
+		limit = { check_variable = { expected_spending_at_war = 0 } }
 		clamp_variable = {
 			var = expected_military_sp
 			min = 1
@@ -377,40 +423,18 @@ add_security_pressure_to_expected_military = {
 }
 
 resolve_gdp_c_deltas = {
-	if = {
-		limit = { check_variable = { gdp_per_capita < 1 } }
-		set_temp_variable = { gdp_c_tier = 0 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 2.5 } }
-		set_temp_variable = { gdp_c_tier = 1 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 5 } }
-		set_temp_variable = { gdp_c_tier = 2 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 10 } }
-		set_temp_variable = { gdp_c_tier = 3 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 15 } }
-		set_temp_variable = { gdp_c_tier = 4 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 20 } }
-		set_temp_variable = { gdp_c_tier = 5 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 30 } }
-		set_temp_variable = { gdp_c_tier = 6 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_per_capita < 40 } }
-		set_temp_variable = { gdp_c_tier = 7 }
-	}
-	else = {
-		set_temp_variable = { gdp_c_tier = 8 }
+	set_temp_variable = {
+		gdp_c_tier = {
+			value = 0
+			add = { value = gdp_per_capita greater_than_or_equals = 1 }
+			add = { value = gdp_per_capita greater_than_or_equals = 2.5 }
+			add = { value = gdp_per_capita greater_than_or_equals = 5 }
+			add = { value = gdp_per_capita greater_than_or_equals = 10 }
+			add = { value = gdp_per_capita greater_than_or_equals = 15 }
+			add = { value = gdp_per_capita greater_than_or_equals = 20 }
+			add = { value = gdp_per_capita greater_than_or_equals = 30 }
+			add = { value = gdp_per_capita greater_than_or_equals = 40 }
+		}
 	}
 	set_temp_variable = { gdp_c_delta = global.gdp_c_delta_table^gdp_c_tier }
 	set_temp_variable = { gdp_c_delta_lvl5 = global.gdp_c_delta_lvl5_table^gdp_c_tier }
@@ -430,28 +454,15 @@ resolve_gdp_c_deltas = {
 }
 
 resolve_gdp_scale_delta = {
-	if = {
-		limit = { check_variable = { gdp_total < 10 } }
-		set_temp_variable = { gdp_scale_delta = -0.2 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 50 } }
-		set_temp_variable = { gdp_scale_delta = 0 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 150 } }
-		set_temp_variable = { gdp_scale_delta = 0.1 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 500 } }
-		set_temp_variable = { gdp_scale_delta = 0.2 }
-	}
-	else_if = {
-		limit = { check_variable = { gdp_total < 1500 } }
-		set_temp_variable = { gdp_scale_delta = 0.3 }
-	}
-	else = {
-		set_temp_variable = { gdp_scale_delta = 0.4 }
+	set_temp_variable = {
+		gdp_scale_delta = {
+			value = -0.2
+			add = { value = gdp_total greater_than_or_equals = 10 multiply = 0.2 }
+			add = { value = gdp_total greater_than_or_equals = 50 multiply = 0.1 }
+			add = { value = gdp_total greater_than_or_equals = 150 multiply = 0.1 }
+			add = { value = gdp_total greater_than_or_equals = 500 multiply = 0.1 }
+			add = { value = gdp_total greater_than_or_equals = 1500 multiply = 0.1 }
+		}
 	}
 }
 
