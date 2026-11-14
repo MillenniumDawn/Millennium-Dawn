@@ -549,6 +549,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
+- `mesh-texture-name-clash` (WARNING): a name a rendered material uses that two or
+  more MD files under `gfx/` carry with different content, reported once per name.
+  Identical copies pass. MD files only, not vanilla. Any staged `gfx/` file runs the
+  hook, since a new icon can clash. WARNING while `black.dds` and `C7NLD.dds` (a tech
+  icon and a model texture each) are renamed in a backlog PR, then ERROR.
+
+## validate_asset_data.py
+
+- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
+  staged files only, so the existing model backlog blocks a commit only when one of
+  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
+  TGA or truncated data. Stdlib only, so it runs without numpy.
+- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
+  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
+  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
+  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
+  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
+  the texture format findings are WARNING, since the standards call them targets.
+  These need numpy and log a skip without it.
 
 ## validate_mio_icons.py
 
@@ -962,12 +982,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
   `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
   bare modifier skips the partner arrays.
-- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+- `indent-depth` (ERROR): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
   clears it. The scan strips comments, so comment-only lines are not checked. Four
-  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
-  tracked in #6248.
+  leading spaces stay the `indent-brackets` ERROR.
 
 ## validate_variables.py
 
@@ -1017,6 +1036,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   A reference with a directory must match a file by full path. A bare filename, as
   entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
   Without a HOI4 install, missing references are warnings and include vanilla art.
+- `unused-mesh`: a `.mesh` under `gfx/` that no `pdxmesh` `file =` in a mod or vanilla
+  `.gfx` or `.asset` names, matched case-insensitively. Only used meshes mark their
+  textures used. Without a HOI4 install, MD meshes that override a vanilla path read
+  as unused.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`

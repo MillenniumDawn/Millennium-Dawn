@@ -59,11 +59,11 @@ A bad export or a converted model can carry broken data that a 3D tool does not 
 - Every normal and tangent has length 1. None is zero or invalid.
 - No triangle has zero area.
 - On a skinned mesh, every vertex is weighted to a bone, its weights sum to 1, and every bone index exists in the skeleton.
-- Every rendered material names its diffuse, normal, and specular texture, and each name matches a file.
+- Every rendered material names its diffuse, normal, and specular texture, and each name matches one file. No other art under `gfx/` uses the same file name.
 
 ## Checking a Model
 
-Run the audit on the folder you worked in. It only reports: broken mesh data, triangle counts over the target, and textures that are uncompressed, lack mipmaps, are not power-of-two, or exceed 2048.
+Run the audit on the folder you worked in. It only reports: broken mesh data, triangle counts over the target, and textures that are uncompressed, lack mipmaps, are not power-of-two, or exceed 2048. The same checks run when you commit a `.mesh` or `.dds` under `gfx/models/`: broken mesh data blocks the commit, while triangle counts and texture formats only warn.
 
 ```bash
 python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV

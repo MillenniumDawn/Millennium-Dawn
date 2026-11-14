@@ -14,14 +14,9 @@ from shared_utils import iter_statements, read_script
 
 ROOT = Path(__file__).resolve().parents[3]
 MAP_MODE_DIR = ROOT / "common/map_modes"
-REFRESH_EFFECT_FILE = ROOT / "common/scripted_effects/00_map_mode_palette_effects.txt"
-REFRESH_EFFECT = "refresh_palette_map_modes"
 LEGEND_FILE = ROOT / "localisation/english/MD_map_modes_l_english.yml"
 # Text colors from interface/core.gfx that vanish on the dark tooltip background
 UNREADABLE_TEXT_CODES = {"Z", "b"}
-
-STANDARD, RED_GREEN, BLUE_YELLOW = 0, 1, 2
-PALETTES = (STANDARD, RED_GREEN, BLUE_YELLOW)
 
 # vision: matrix applied to linear sRGB
 MACHADO = {
@@ -43,17 +38,15 @@ MACHADO = {
     ),
 }
 
-# palette: {vision: smallest CIEDE2000 allowed between any two colors of one map mode}
-CATEGORICAL_RULES = {
-    STANDARD: {"normal": 10, "protan": 10, "deutan": 10, "tritan": 10},
-    RED_GREEN: {"protan": 15, "deutan": 15},
-    BLUE_YELLOW: {"tritan": 15},
+# kind: {vision: smallest CIEDE2000 allowed between any two colors of one map mode}
+MINIMUM = {
+    "categorical": {"normal": 10, "protan": 15, "deutan": 15, "tritan": 15},
+    "party": {"normal": 10, "protan": 10, "deutan": 10, "tritan": 10},
 }
 # Ramps are ordered worst to best: brightness rises and neighbors stay this far apart.
 RAMP_NEIGHBOR_MINIMUM = 10
 
-# mode: kind. "party" has 25 colors, too many to reach the colorblind options' bar, so it
-# keeps one palette that clears the Standard bar.
+# mode: kind. "party" has 25 colors, too many to reach the categorical bar.
 MAP_MODES = {
     "EU_map_mode": "categorical",
     "GCC_map_mode": "categorical",
@@ -68,7 +61,6 @@ MAP_MODES = {
     "renewable_energy_hotspot_map_mode": "ramp",
 }
 
-_PALETTE_CONDITION = re.compile(r"\bmap_mode_palette\s*=\s*(\d+)")
 _RGB = ("red", "green", "blue")
 
 
@@ -136,15 +128,9 @@ def _distance(rgb1, rgb2, vision):
     return _ciede2000(_lab(rgb1, vision), _lab(rgb2, vision))
 
 
-def _condition_palettes(limit):
-    match = _PALETTE_CONDITION.search(limit or "")
-    return {int(match.group(1))} if match else None
-
-
-def _leaves(body, palettes, out):
-    """Collect (palettes, rgb or partial channels) for every block that sets a color."""
+def _leaves(body, out):
+    """Collect the rgb channels of every block that sets a color."""
     channels = {}
-    chain_taken = set()
     for key, _, block in iter_statements(body):
         if block is None:
             continue
@@ -152,21 +138,10 @@ def _leaves(body, palettes, out):
             for name, value, _ in iter_statements(block):
                 if name in _RGB:
                     channels[name] = value
-            continue
-        if key == "if":
-            chain_taken = set()
-        branch = palettes - chain_taken
-        if key in ("if", "else_if"):
-            limit = next((b for k, _, b in iter_statements(block) if k == "limit"), "")
-            condition = _condition_palettes(limit)
-            if condition is not None:
-                branch &= condition
-                chain_taken |= condition
         else:
-            chain_taken = set()
-        _leaves(block, branch, out)
+            _leaves(block, out)
     if channels:
-        out.append((palettes, channels))
+        out.append(channels)
 
 
 def _parse_map_modes():
@@ -178,11 +153,8 @@ def _parse_map_modes():
                 leaves = []
                 for layer, _, layer_body in iter_statements(body or ""):
                     if layer in ("top", "bottom"):
-                        _leaves(layer_body or "", set(PALETTES), leaves)
-                modes[mode] = {
-                    "leaves": leaves,
-                    "palette_aware": "map_mode_palette" in (body or ""),
-                }
+                        _leaves(layer_body or "", leaves)
+                modes[mode] = leaves
     return modes
 
 
@@ -191,12 +163,8 @@ def map_modes():
     return _parse_map_modes()
 
 
-def _colors(mode_data, palette):
-    return [
-        tuple(float(channels[name]) for name in _RGB)
-        for palettes, channels in mode_data["leaves"]
-        if palette in palettes
-    ]
+def _colors(leaves):
+    return [tuple(float(channels[name]) for name in _RGB) for channels in leaves]
 
 
 def _closest_pair(colors, vision):
@@ -226,52 +194,59 @@ def test_every_map_mode_is_classified(map_modes):
 
 @pytest.mark.parametrize("mode", MAP_MODES)
 def test_every_color_sets_all_three_channels(map_modes, mode):
-    for _, channels in map_modes[mode]["leaves"]:
+    for channels in map_modes[mode]:
         assert set(channels) == set(_RGB), (mode, channels)
 
 
+# Legend categories, including fallbacks; distance checks alone miss deleted colors.
+_CATEGORY_COUNTS = {
+    "EU_map_mode": 7,
+    "GCC_map_mode": 2,
+    "SCO_map_mode": 4,
+    "influence_map_mode": 7,
+    "reserve_currency_map_mode": 11,
+    "subideology_map_mode": 25,
+    "gdp_c_map_mode": 6,
+    "productivity_map_mode": 8,
+    "energy_consumption_map_mode": 6,
+    "unemployment_rate_map_mode": 6,
+    "renewable_energy_hotspot_map_mode": 7,
+}
+
+
 @pytest.mark.parametrize("mode", MAP_MODES)
-def test_every_palette_colors_every_category(map_modes, mode):
-    counts = {p: len(_colors(map_modes[mode], p)) for p in PALETTES}
-    assert min(counts.values()) > 1 and len(set(counts.values())) == 1, (mode, counts)
+def test_every_map_mode_preserves_its_categories(map_modes, mode):
+    assert len(map_modes[mode]) == _CATEGORY_COUNTS[mode], mode
 
 
 _CATEGORICAL_CASES = [
-    (mode, palette, vision)
+    (mode, vision)
     for mode, kind in MAP_MODES.items()
-    for palette, rules in CATEGORICAL_RULES.items()
-    if kind == "categorical" or (kind == "party" and palette == STANDARD)
-    for vision in rules
+    if kind in MINIMUM
+    for vision in MINIMUM[kind]
 ]
 
 
-@pytest.mark.parametrize("mode,palette,vision", _CATEGORICAL_CASES)
-def test_categorical_colors_stay_apart(map_modes, mode, palette, vision):
-    distance, first, second = _closest_pair(_colors(map_modes[mode], palette), vision)
-    minimum = CATEGORICAL_RULES[palette][vision]
+@pytest.mark.parametrize("mode,vision", _CATEGORICAL_CASES)
+def test_categorical_colors_stay_apart(map_modes, mode, vision):
+    distance, first, second = _closest_pair(_colors(map_modes[mode]), vision)
+    minimum = MINIMUM[MAP_MODES[mode]][vision]
     assert distance >= minimum, f"{first} vs {second}: {distance:.1f} < {minimum}"
 
 
 _RAMPS = [mode for mode, kind in MAP_MODES.items() if kind == "ramp"]
 
 
-@pytest.mark.parametrize(
-    "mode", [m for m, kind in MAP_MODES.items() if kind != "categorical"]
-)
-def test_ramps_and_party_colors_have_one_palette(map_modes, mode):
-    assert not map_modes[mode]["palette_aware"], mode
-
-
 @pytest.mark.parametrize("mode", _RAMPS)
 def test_ramp_brightness_rises_from_worst_to_best(map_modes, mode):
-    lightness = [_lab(rgb, "normal")[0] for rgb in _colors(map_modes[mode], STANDARD)]
+    lightness = [_lab(rgb, "normal")[0] for rgb in _colors(map_modes[mode])]
     assert lightness == sorted(lightness) and len(set(lightness)) == len(lightness)
 
 
 @pytest.mark.parametrize("mode", _RAMPS)
 @pytest.mark.parametrize("vision", MACHADO)
 def test_ramp_neighbors_stay_apart(map_modes, mode, vision):
-    colors = _colors(map_modes[mode], STANDARD)
+    colors = _colors(map_modes[mode])
     for first, second in zip(colors, colors[1:]):
         distance = _distance(first, second, vision)
         assert distance >= RAMP_NEIGHBOR_MINIMUM, f"{first} vs {second}: {distance:.1f}"
@@ -282,13 +257,3 @@ def test_map_mode_legends_use_readable_text_colors():
         legends = [line for line in handle if "_map_mode_tooltip" in line]
     codes = {code for line in legends for code in re.findall(r"§(\w)", line)}
     assert legends and not codes & UNREADABLE_TEXT_CODES
-
-
-def test_palette_setting_refreshes_every_palette_aware_mode(map_modes):
-    effects = dict(
-        (key, body)
-        for key, _, body in iter_statements(read_script(str(REFRESH_EFFECT_FILE)))
-    )
-    refreshed = set(re.findall(r"\bmapmode\s*=\s*(\w+)", effects[REFRESH_EFFECT]))
-    aware = {mode for mode, data in map_modes.items() if data["palette_aware"]}
-    assert refreshed == aware
