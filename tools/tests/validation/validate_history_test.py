@@ -17,7 +17,6 @@ from shared.suite import write_under_str as _write
 
 _TECH_FILE = "common/technologies/test.txt"
 _PROJECT_FILE = "common/special_projects/projects/test.txt"
-_IDEAS_FILE = "common/ideas/test.txt"
 _COUNTRY_FILE = "history/countries/TST - Test.txt"
 _NSB = "No Step Back"
 _BBA = "By Blood Alone"
@@ -302,9 +301,6 @@ def test_project_files_yield_dlc_gates_claims_and_building_grants(tmp_path):
     assert V.parse_sp_allowed_dlc(mod) == {"sp_two_dlcs": [_BBA, _NSB]}
     assert V.parse_sp_always_yes(mod) == {"sp_open"}
     assert V.parse_sp_output_claims(mod) == {"sp_open": ["mbt_tech"]}
-    assert V.parse_project_granted_buildings(mod) == {
-        "microchip_plant": {"sp_open", "sp_bare"}
-    }
 
 
 _CLAIM = "sp:sp_a: project_output claims to unlock tech_y, but tech_y is gated by "
@@ -334,149 +330,20 @@ def test_project_output_must_claim_a_tech_the_project_gates(gated, findings):
     assert V.validate_sp_output_consistency(gated, {"sp_a": ["tech_y"]}) == findings
 
 
-# ---- nuclear_status ideas, state buildings and their owners ------------------
+# ---- state owners ------------------------------------------------------------
 
 
-def _status_group(*members):
-    return _text(_block("ideas", _block("nuclear_status", *members)))
-
-
-_NUCLEAR_ENERGY = _block("nuclear_energy", "cost = 300")
-
-# case: (ideas file, or None for an unreadable one; non-default members)
-_NUCLEAR_STATUS_CASES = {
-    # The default member is granted to every country. A nested block is not one.
-    "default member": (
-        _status_group(
-            "use_list_view = yes",
-            _block("non_nuclear_power", "default = yes", "cost = 300"),
-            _block(
-                "nuclear_energy", "cost = 300", "available = { has_tech = reactor_01 }"
-            ),
-            _block("nuclear_power_def", "cost = 300"),
-        ),
-        {"nuclear_energy", "nuclear_power_def"},
-    ),
-    "another group": (
-        _text(_block("ideas", _block("nuclear_stance", "foo = {}"))),
-        set(),
-    ),
-    "unreadable file": (None, set()),
-    "brace on the next line": (
-        _status_group("odd_member =", "{", "\tcost = 300", "}", _NUCLEAR_ENERGY),
-        {"nuclear_energy"},
-    ),
-    "member on the closing line": (
-        "ideas = {\n\tnuclear_status = {\n\t\tnuclear_energy = { cost = 300 } }\n}\n",
-        {"nuclear_energy"},
-    ),
-}
-
-
-@pytest.mark.parametrize(
-    ("text", "members"), _NUCLEAR_STATUS_CASES.values(), ids=_NUCLEAR_STATUS_CASES
-)
-def test_nuclear_status_members_exclude_the_default(tmp_path, text, members):
-    if text is None:
-        _undecodable(tmp_path, _IDEAS_FILE)
-    else:
-        _write(tmp_path, _IDEAS_FILE, text)
-
-    assert V.parse_nuclear_status_ideas(str(tmp_path)) == members
-
-
-def test_state_building_owners_count_top_level_levels_of_one_or_more(tmp_path):
-    _undecodable(tmp_path, "history/states/broken.txt")
+def test_state_owners_are_read_from_state_files(tmp_path):
     write_tree(
         tmp_path,
         {
-            # A level of zero and a building under a province do not count.
-            "history/states/1-Test.txt": _state(
-                "TST",
-                "nuclear_reactor = 1 # trailing comment",
-                "microchip_plant = 0",
-                _block("1234", "naval_base = 9"),
-            ),
-            "history/states/2-Unowned.txt": _state(None, "nuclear_reactor = 1"),
+            "history/states/1-Test.txt": _state("TST"),
+            "history/states/2-Unowned.txt": _state(None),
             "history/states/3-Other.txt": _state("OTH"),
         },
     )
-    tracked = {"nuclear_reactor", "microchip_plant", "naval_base"}
 
-    assert V.parse_state_building_owners(str(tmp_path), tracked) == {
-        "nuclear_reactor": {"TST"}
-    }
     assert V._get_state_owners(str(tmp_path)) == {"TST", "OTH"}
-
-
-def test_country_contents_are_read_by_tag_with_comments_stripped(tmp_path):
-    _country(tmp_path, "# complete_special_project = sp:sp_x\ncapital = 1\n")
-    _undecodable(tmp_path, "history/countries/BAD - Bad.txt")
-
-    tag_files = V._tag_country_file_map(str(tmp_path))
-    contents = V._load_country_contents(tag_files, {"TST", "BAD", "ZZZ"})
-
-    assert tag_files["TST"].endswith("TST - Test.txt")
-    assert set(contents) == {"TST"}
-    assert "capital" in contents["TST"] and "sp_x" not in contents["TST"]
-
-
-# case: (the owner's country file, or None when it has none; finding fragments)
-_REACTOR_CASES = {
-    "no nuclear_status idea": (
-        "add_ideas = { non_nuclear_power }",
-        [("TST", "grants no nuclear_status idea")],
-    ),
-    "idea granted": ("add_ideas = { nuclear_energy }", []),
-    "no country file": (None, [("TST", "no history/countries/")]),
-}
-
-
-@pytest.mark.parametrize(
-    ("content", "findings"), _REACTOR_CASES.values(), ids=_REACTOR_CASES
-)
-def test_reactor_owner_needs_a_nuclear_status_idea(content, findings):
-    contents = {} if content is None else {"TST": content}
-
-    assert_findings(
-        V._find_reactor_owners_without_nuclear_status(
-            {"TST"}, {"nuclear_energy", "nuclear_power_def"}, contents
-        ),
-        findings,
-    )
-
-
-# case: (projects granting the plant, the owner's country file or None,
-#        finding fragments)
-_GRANTED_BUILDING_CASES = {
-    "another project completed": (
-        {"sp_chips"},
-        _complete("sp_composites"),
-        [("SWE", "microchip_plant", "sp:sp_chips")],
-    ),
-    "one of two granting projects completed": (
-        {"sp_a", "sp_b"},
-        _complete("sp_b"),
-        [],
-    ),
-    "no country file": ({"sp_chips"}, None, [("SWE", "no history/countries/")]),
-}
-
-
-@pytest.mark.parametrize(
-    ("projects", "content", "findings"),
-    _GRANTED_BUILDING_CASES.values(),
-    ids=_GRANTED_BUILDING_CASES,
-)
-def test_project_granted_building_needs_its_project(projects, content, findings):
-    contents = {} if content is None else {"SWE": content}
-
-    assert_findings(
-        V._find_buildings_without_granting_project(
-            {"microchip_plant": {"SWE"}}, {"microchip_plant": projects}, contents
-        ),
-        findings,
-    )
 
 
 # ---- country file parsers ----------------------------------------------------
@@ -979,7 +846,6 @@ def test_start_politics_input_needs_a_ruling_party_after_it(tmp_path, text, labe
 _GOOD_COUNTRY = _text(
     "capital = 1",
     'oob = "TST_1990"',
-    "add_ideas = { nuclear_energy }",
     _complete("sp_microchip"),
     _complete("sp_open"),
     _START,
@@ -990,14 +856,11 @@ _GOOD_COUNTRY = _text(
 
 _BAD_COUNTRY = _text(
     'oob = "BAD_missing"',
-    "add_ideas = { non_nuclear_power }",
     _START,
     _techs("child_tech", "sp_tech"),
     _if(_dlc(_NSB), _complete("sp_open"), otherwise=[_techs("nsb_tech")]),
     _variant("Ghost", "engine_slot = engine_9"),
 )
-
-_BOTH_PLANTS = ("nuclear_reactor = 1", "microchip_plant = 1")
 
 _MOD = {
     "common/technologies/md.txt": _text(
@@ -1036,16 +899,13 @@ _MOD = {
         ),
         _block("sp_open", "allowed = { always = yes }"),
     ),
-    "common/ideas/md.txt": _status_group(
-        _block("non_nuclear_power", "default = yes"), _NUCLEAR_ENERGY
-    ),
     "history/units/TST_1990.txt": "units = {\n}\n",
-    "history/states/1-Test.txt": _state("TST", *_BOTH_PLANTS),
+    "history/states/1-Test.txt": _state("TST"),
     _COUNTRY_FILE: _GOOD_COUNTRY,
 }
 
 _BROKEN = {
-    "history/states/2-Bad.txt": _state("BAD", *_BOTH_PLANTS),
+    "history/states/2-Bad.txt": _state("BAD"),
     "history/countries/BAD - Bad.txt": _BAD_COUNTRY,
     "common/special_projects/projects/bad.txt": _text(
         _block(
@@ -1096,10 +956,6 @@ def test_each_check_reports_its_own_finding(tmp_path):
         "ruling_party (0-23) after it",
         'BAD - Bad.txt: variant "Ghost" uses engine_9 without enabling tech '
         "advanced_engines",
-        "BAD: owns a state starting with microchip_plant but never completes "
-        "the granting special project (sp:sp_microchip)",
-        "BAD: owns a state with a nuclear_reactor at game start but grants no "
-        "nuclear_status idea (nuclear_energy)",
         'oob references "BAD_missing" but no history/units/BAD_missing.txt file exists',
         "sp:sp_liar: project_output claims to unlock child_tech, but child_tech "
         "is gated by no project, and this project gates nothing",
@@ -1108,16 +964,6 @@ def test_each_check_reports_its_own_finding(tmp_path):
     assert validator.errors_found == len(messages)
     oob = next(issue for issue in validator._issues if "BAD_missing" in issue.message)
     assert (oob.file, oob.line) == ("BAD - Bad.txt", 1)
-
-
-def test_building_checks_skip_without_ideas_or_projects(tmp_path):
-    # No nuclear_status group and no building grant: skip, do not flag each owner.
-    skipped = ("common/ideas/md.txt", "common/special_projects/projects/md.txt")
-    files = {path: text for path, text in _MOD.items() if path not in skipped}
-
-    validator = run_validator(V.Validator, write_tree(tmp_path, files))
-
-    assert validator._issues == []
 
 
 # case: (MD_STAGED_FILES, country files the staged run checks)

@@ -58,7 +58,7 @@ _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
     "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
-    "building_guards_scan_v8": "validate_building_guards.py",
+    "building_guards_scan_v9": "validate_building_guards.py",
     "common_mistakes": "validate_common_mistakes.py",
     "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
@@ -103,7 +103,7 @@ _SPRITES = ("image_size.py", "sprite_index.py", "validate_gfx_references.py")
 _EQUIPMENT = ("equipment_module_slots.py", "equipment_variant_context.py")
 _HELPER_DEPENDENCIES = {
     "ai_weight_order_scan_v1": ("guard_scan.py", "validate_unused_scripted.py"),
-    "building_guards_scan_v8": ("guard_scan.py",),
+    "building_guards_scan_v9": ("guard_scan.py",),
     "common_mistakes": _CHECK_COMMON_MISTAKES,
     "decisions": (*_CHECK_COMMON_MISTAKES, *_SPRITES, "validate_events.py"),
     "dlc_guards_scan": (*_CHECK_COMMON_MISTAKES, *_EQUIPMENT, "validate_history.py"),
