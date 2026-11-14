@@ -9,80 +9,32 @@ update_bos_internal_factions_dirty_variable = {
 }
 
 BOS_refresh_internal_faction_modifiers_effect = {
-	set_variable = { BOS_internal_faction_stability_factor = 0 }
-	set_variable = { BOS_internal_faction_manpower_factor = 0 }
-
-	if = {
-		limit = { check_variable = { BOS_bosniak_trust < 25 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_bosniak_trust > 50 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
-		if = {
-			limit = { check_variable = { BOS_bosniak_trust > 74 } }
-			add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
+	set_variable = {
+		BOS_internal_faction_stability_factor = {
+			value = 0
+			add = { value = BOS_bosniak_trust less_than = 25 multiply = -0.15 }
+			add = { value = BOS_bosniak_trust greater_than = 50 multiply = 0.05 }
+			add = { value = BOS_bosniak_trust greater_than = 74 multiply = 0.05 }
+			add = { value = BOS_croat_trust less_than = 25 multiply = -0.15 }
+			add = { value = BOS_croat_trust greater_than = 50 multiply = 0.05 }
+			add = { value = BOS_croat_trust greater_than = 74 multiply = 0.05 }
+			add = { value = BOS_srpska_trust less_than = 25 multiply = -0.15 }
+			add = { value = BOS_srpska_trust greater_than = 50 multiply = 0.05 }
+			add = { value = BOS_srpska_trust greater_than = 74 multiply = 0.05 }
 		}
 	}
-	if = {
-		limit = { check_variable = { BOS_croat_trust < 25 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_croat_trust > 50 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
-		if = {
-			limit = { check_variable = { BOS_croat_trust > 74 } }
-			add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
-		}
-	}
-	if = {
-		limit = { check_variable = { BOS_srpska_trust < 25 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_srpska_trust > 50 } }
-		add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
-		if = {
-			limit = { check_variable = { BOS_srpska_trust > 74 } }
-			add_to_variable = { BOS_internal_faction_stability_factor = 0.05 }
-		}
-	}
-
-	if = {
-		limit = { check_variable = { BOS_bosniak_manpower < 25 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_bosniak_manpower > 50 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = 0.15 }
-		if = {
-			limit = { check_variable = { BOS_bosniak_manpower > 74 } }
-			add_to_variable = { BOS_internal_faction_manpower_factor = 0.05 }
-		}
-	}
-	if = {
-		limit = { check_variable = { BOS_croat_manpower < 25 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_croat_manpower > 50 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = 0.15 }
-		if = {
-			limit = { check_variable = { BOS_croat_manpower > 74 } }
-			add_to_variable = { BOS_internal_faction_manpower_factor = 0.05 }
-		}
-	}
-	if = {
-		limit = { check_variable = { BOS_srpska_manpower < 25 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = -0.15 }
-	}
-	else_if = {
-		limit = { check_variable = { BOS_srpska_manpower > 50 } }
-		add_to_variable = { BOS_internal_faction_manpower_factor = 0.15 }
-		if = {
-			limit = { check_variable = { BOS_srpska_manpower > 74 } }
-			add_to_variable = { BOS_internal_faction_manpower_factor = 0.05 }
+	set_variable = {
+		BOS_internal_faction_manpower_factor = {
+			value = 0
+			add = { value = BOS_bosniak_manpower less_than = 25 multiply = -0.15 }
+			add = { value = BOS_bosniak_manpower greater_than = 50 multiply = 0.15 }
+			add = { value = BOS_bosniak_manpower greater_than = 74 multiply = 0.05 }
+			add = { value = BOS_croat_manpower less_than = 25 multiply = -0.15 }
+			add = { value = BOS_croat_manpower greater_than = 50 multiply = 0.15 }
+			add = { value = BOS_croat_manpower greater_than = 74 multiply = 0.05 }
+			add = { value = BOS_srpska_manpower less_than = 25 multiply = -0.15 }
+			add = { value = BOS_srpska_manpower greater_than = 50 multiply = 0.15 }
+			add = { value = BOS_srpska_manpower greater_than = 74 multiply = 0.05 }
 		}
 	}
 
@@ -127,33 +79,33 @@ BOS_set_civil_war_internal_factions_effect = {
 BOS_bosniak_trust_apply_effect = {
 	add_to_variable = { var = BOS_bosniak_trust value = temp_trust_change }
 	clamp_variable = { var = BOS_bosniak_trust min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 BOS_croat_trust_apply_effect = {
 	add_to_variable = { var = BOS_croat_trust value = temp_trust_change }
 	clamp_variable = { var = BOS_croat_trust min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 BOS_srpska_trust_apply_effect = {
 	add_to_variable = { var = BOS_srpska_trust value = temp_trust_change }
 	clamp_variable = { var = BOS_srpska_trust min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 
 BOS_bosniak_manpower_apply_effect = {
 	add_to_variable = { var = BOS_bosniak_manpower value = temp_manpower_change }
 	clamp_variable = { var = BOS_bosniak_manpower min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 BOS_croat_manpower_apply_effect = {
 	add_to_variable = { var = BOS_croat_manpower value = temp_manpower_change }
 	clamp_variable = { var = BOS_croat_manpower min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 BOS_srpska_manpower_apply_effect = {
 	add_to_variable = { var = BOS_srpska_manpower value = temp_manpower_change }
 	clamp_variable = { var = BOS_srpska_manpower min = 0 max = 100 }
-	BOS_refresh_internal_faction_modifiers_effect = yes
+	if = { limit = { NOT = { check_variable = { BOS_skip_faction_refresh = 1 } } } BOS_refresh_internal_faction_modifiers_effect = yes }
 }
 
 BOS_bosniak_trust_add_effect = {
