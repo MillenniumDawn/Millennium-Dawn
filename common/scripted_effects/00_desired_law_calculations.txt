@@ -172,6 +172,11 @@ change_expected_defense_spending = {
 # Moves each AI spending law one level a month toward its expected level, with no political power cost.
 # The law ideas carry no AI weight, so this is the only way the AI changes them.
 ai_move_spending_laws_to_expected = {
+	# A focus, event or protest that just moved a law keeps it for 90 days before a cut
+	set_temp_variable = { law_changed_outside = 0 }
+	if = { limit = { has_country_flag = spending_law_changed_outside_ai_pass }
+		set_temp_variable = { law_changed_outside = 1 }
+	}
 	# Cuts: every law above its expected level
 	if = {
 		limit = { budget_law_parliament_change_allowed = yes }
@@ -179,6 +184,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { social_law > expected_welfare_spending }
 				social_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 				NOT = { has_country_flag = ai_deficit_trim_social } # on trim cooldown; an event may have raised it
 			}
 			decrease_social_spending = yes
@@ -187,6 +193,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { health_law > expected_health_spending }
 				health_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 				NOT = { has_country_flag = ai_deficit_trim_health }
 				# Nationalized healthcare cannot run on the lowest budgets
 				NOT = {
@@ -211,6 +218,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { education_law > expected_edu_spending }
 				edu_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 				NOT = { has_country_flag = ai_deficit_trim_education }
 			}
 			decrease_education_budget = yes
@@ -219,6 +227,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { police_law > expected_police_spending }
 				police_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 				GER_Grundgesetz_allows_budget_law_change = yes
 				NOT = { has_country_flag = ai_deficit_trim_police }
 			}
@@ -228,6 +237,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { bureau_law > expected_adm_spending }
 				bureau_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 				GER_Grundgesetz_allows_budget_law_change = yes
 				NOT = { has_country_flag = ai_deficit_trim_bureau }
 			}
@@ -310,6 +320,7 @@ ai_move_spending_laws_to_expected = {
 				check_variable = { military_law > 2 } # the step below 2 needs the no military spirit
 				check_variable = { military_law > expected_military_law }
 				defence_decrease_blocked = no
+				check_variable = { law_changed_outside = 0 }
 			}
 			decrease_military_spending = yes
 		}
@@ -317,6 +328,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { military_law < expected_military_law }
 				defence_increase_blocked = no
+				ai_has_major_economic_problems = no # the emergency cuts below would undo it
 				NOT = {
 					AND = {
 						original_tag = GER
@@ -392,10 +404,18 @@ ai_reduce_spending_on_deficit = {
 			}
 		}
 	}
+	# The AI's own changes this month do not start a hold
+	if = { limit = { check_variable = { law_changed_outside = 0 } }
+		clr_country_flag = spending_law_changed_outside_ai_pass
+	}
 }
 
 # Deficit twin of increase_spending_if_possible: trims one civil law a month with its expected level.
 ai_lower_expected_spending_on_deficit = {
+	set_temp_variable = { law_changed_before_trim = 0 }
+	if = { limit = { has_country_flag = spending_law_changed_outside_ai_pass }
+		set_temp_variable = { law_changed_before_trim = 1 }
+	}
 	if = {
 		limit = {
 			is_ai = yes
@@ -558,5 +578,9 @@ ai_lower_expected_spending_on_deficit = {
 				}
 			}
 		}
+	}
+	# The trim above is the AI's own change, not an outside one
+	if = { limit = { check_variable = { law_changed_before_trim = 0 } }
+		clr_country_flag = spending_law_changed_outside_ai_pass
 	}
 }
