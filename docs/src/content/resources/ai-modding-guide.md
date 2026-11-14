@@ -254,18 +254,18 @@ Include picture = sprite_name and allowed_civil_war = { always = yes }
 
 AI models frequently produce these errors. Always check for them:
 
-| Mistake                            | Why it's wrong                                                          | Fix                                           |
-| ---------------------------------- | ----------------------------------------------------------------------- | --------------------------------------------- |
-| Invented modifier names            | AI hallucinates modifiers that don't exist                              | Verify with `grep -r "modifier_name" common/` |
-| `tag` in idea `allowed` blocks     | `tag` changes for civil war countries                                   | Use `original_tag`                            |
-| Redundant `AND = { }`              | Implicit AND in triggers makes this unnecessary                         | Remove the wrapper                            |
-| `check_variable = { v >= 0 }`      | `>=` and `<=` are not valid inline                                      | Use `compare = greater_than_or_equals`        |
-| `NOR = { ... }` as logical NOR     | `NRY` is Norway's country tag, not a logic keyword                      | Use separate `NOT` blocks                     |
-| Missing `province` on `naval_base` | `add_building_construction` for naval bases requires `province = XXXXX` | Add the province ID                           |
-| `is_in_faction = TAG`              | `is_in_faction` is boolean, not a scope check                           | Use `is_in_faction_with = TAG`                |
-| `has_trade_agreement_with`         | Not a valid HOI4 trigger                                                | Use `has_country_flag = trade_agreement@TAG`  |
-| Empty `on_add = { log = "" }`      | Useless code                                                            | Remove it                                     |
-| `cancel = { always = no }`         | Default behavior, adds nothing                                          | Remove it                                     |
+| Mistake                            | Why it's wrong                                                          | Fix                                                    |
+| ---------------------------------- | ----------------------------------------------------------------------- | ------------------------------------------------------ |
+| Invented modifier names            | AI hallucinates modifiers that don't exist                              | Verify with `grep -r "modifier_name" common/`          |
+| `tag` in idea `allowed` blocks     | `tag` changes for civil war countries                                   | Use `original_tag`                                     |
+| Redundant `AND = { }`              | Implicit AND in triggers makes this unnecessary                         | Remove the wrapper                                     |
+| `check_variable = { v >= 0 }`      | `>=` and `<=` are not valid inline                                      | Use `compare = greater_than_or_equals`                 |
+| `NOR = { ... }` as logical NOR     | `NRY` is Norway's country tag, not a logic keyword                      | Use separate `NOT` blocks                              |
+| Missing `province` on `naval_base` | `add_building_construction` for naval bases requires `province = XXXXX` | Add the province ID                                    |
+| `is_in_faction = TAG`              | `is_in_faction` is boolean, not a scope check                           | Use `is_in_faction_with = TAG`                         |
+| `has_trade_agreement_with`         | Not a valid HOI4 trigger                                                | Use `is_in_array = { trade_agreement_partners = TAG }` |
+| Empty `on_add = { log = "" }`      | Useless code                                                            | Remove it                                              |
+| `cancel = { always = no }`         | Default behavior, adds nothing                                          | Remove it                                              |
 
 Run `/validate` or `pre-commit run --files <path>` to catch these automatically.
 

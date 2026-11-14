@@ -9,6 +9,7 @@ a guard and proves nothing.
 import re
 
 import validate_dynamic_modifier_guards as V
+from shared.suite import write_under
 
 REMOVE = "remove_dynamic_modifier = {{ modifier = {name} }}"
 GUARDED = (
@@ -192,20 +193,19 @@ def test_removal_without_a_modifier_field_is_ignored():
 # --- validator wiring -------------------------------------------------------
 
 
-def _validate(tmp_path, write_path, monkeypatch, script):
+def _validate(tmp_path, monkeypatch, script):
     import validator_common
 
     monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
-    write_path(tmp_path, "common/decisions/Italy.txt", script)
+    write_under(tmp_path, "common/decisions/Italy.txt", script)
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
     validator.run_validations()
     return validator
 
 
-def test_run_raises_an_error_per_unguarded_removal(tmp_path, write_path, monkeypatch):
+def test_run_raises_an_error_per_unguarded_removal(tmp_path, monkeypatch):
     validator = _validate(
         tmp_path,
-        write_path,
         monkeypatch,
         REMOVE.format(name="ITA_mafia_modifier") + "\n",
     )
@@ -224,12 +224,9 @@ def test_run_raises_an_error_per_unguarded_removal(tmp_path, write_path, monkeyp
     )
 
 
-def test_run_stays_quiet_when_every_removal_is_guarded(
-    tmp_path, write_path, monkeypatch
-):
+def test_run_stays_quiet_when_every_removal_is_guarded(tmp_path, monkeypatch):
     validator = _validate(
         tmp_path,
-        write_path,
         monkeypatch,
         GUARDED.format(name="ITA_mafia_modifier") + "\n",
     )

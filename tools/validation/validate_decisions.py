@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
     has_flat_is_ai,
@@ -61,12 +62,14 @@ from shared_utils import (
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validate_events import (
+    CostLookups,
+    EventPayments,
     ai_weight_cost_checks,
     building_payment_effects,
-    commits_money,
+    chooser_costs,
     effect_costs,
     load_cost_lookups,
-    possible_costs,
+    load_event_payments,
     unneeded_treasury_reason,
 )
 from validator_common import (
@@ -730,15 +733,7 @@ _COMMIT_SCAN_DIRS = (
 def _block_body(text: str, open_brace_end: int) -> str:
     """Return the text between a block's opening brace (already consumed at
     ``open_brace_end``) and its matching closing brace."""
-    depth = 1
-    i = open_brace_end
-    while i < len(text) and depth:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[open_brace_end : i - 1]
+    return text[open_brace_end : find_unquoted_block_end(text, open_brace_end)[0] - 1]
 
 
 def _strip_effect_tooltip_blocks(text: str) -> str:
@@ -1377,16 +1372,8 @@ class DecisionFactory:
         )
 
 
-# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
-
-
-def _set_cache_enabled(enabled: bool):
-    """Enable or disable the decision parsing cache."""
-    global _DECISION_CACHE
-    _DECISION_CACHE["enabled"] = enabled
-    if not enabled:
-        _DECISION_CACHE["data"].clear()
+# Per-run parse memo. --no-cache bypasses only the disk cache, not this.
+_DECISION_CACHE: Dict[str, Any] = {}
 
 
 def _invalidate_decision_cache():
@@ -1395,19 +1382,16 @@ def _invalidate_decision_cache():
     Call this after any ``--fix`` pass that rewrites decision files so later
     validators see the patched contents instead of stale factories.
     """
-    _DECISION_CACHE["data"].clear()
+    _DECISION_CACHE.clear()
     FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
     """Get cached result or compute and cache it."""
-    if not _DECISION_CACHE["enabled"]:
-        return factory_fn()
-
     cache_key = f"{mod_path}:{lowercase}:{key}"
-    if cache_key not in _DECISION_CACHE["data"]:
-        _DECISION_CACHE["data"][cache_key] = factory_fn()
-    return _DECISION_CACHE["data"][cache_key]
+    if cache_key not in _DECISION_CACHE:
+        _DECISION_CACHE[cache_key] = factory_fn()
+    return _DECISION_CACHE[cache_key]
 
 
 def parse_all_decisions(
@@ -1756,19 +1740,23 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
-        self._cost_lookups: Optional[
-            Tuple[Dict[str, str], Dict[str, int], Set[str]]
-        ] = None
+        self._cost_lookups: Optional[CostLookups] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
         self._building_payments: Optional[Set[str]] = None
-        if self.no_cache:
-            _set_cache_enabled(False)
+        _DECISION_CACHE.clear()
 
-    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int], Set[str]]:
+    def _get_cost_lookups(self) -> CostLookups:
         """load_cost_lookups, read once per run."""
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
         return self._cost_lookups
+
+    def _get_event_payments(self) -> EventPayments:
+        """load_event_payments, read once per run."""
+        return self.cached(
+            "event_payments",
+            lambda: load_event_payments(self, self._get_cost_lookups()),
+        )
 
     def _get_scripted_triggers(self) -> Dict[str, str]:
         """Body of every `common/scripted_triggers` definition, read once per run."""
@@ -3439,7 +3427,8 @@ class Validator(BaseValidator):
         """
 
         def scan():
-            effects, stored, commitments = self._get_cost_lookups()
+            lookups = self._get_cost_lookups()
+            effects, stored = lookups.effects, lookups.stored
             ignored_rows: List[Tuple[str, str, int]] = []
             unneeded_rows: List[Tuple[str, str, int]] = []
             for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
@@ -3470,12 +3459,18 @@ class Validator(BaseValidator):
 
                 if not lowering:
                     continue
-                costs = possible_costs(d.raw, effects, stored) | _custom_cost_claims(d)
-                if {d.cost, d.ai_hint_pp_cost} - {"", "0"}:
-                    costs.add("political power")
-                reason = unneeded_treasury_reason(
-                    lowering, costs, commits_money(d.raw, commitments), "decision"
+                kinds = chooser_costs(
+                    d.raw[d.raw.index("{") + 1 : d.raw.rindex("}")],
+                    lookups,
+                    self._get_event_payments(),
                 )
+                claims = _custom_cost_claims(d)
+                priced = {d.cost, d.ai_hint_pp_cost} - {"", "0"}
+                if "treasury" in claims:
+                    kinds.add("money")
+                if "political power" in claims or priced:
+                    kinds.add("political power")
+                reason = unneeded_treasury_reason(lowering, kinds, "decision")
                 if reason:
                     unneeded_rows.append(
                         (f"{d.token} - ai_will_do {reason}", d.source_path, d.line)
@@ -3506,9 +3501,9 @@ class Validator(BaseValidator):
         """Flag ai_will_do treasury checks for a cost the decision does not have.
 
         The inverse of validate_ai_will_do_ignores_cost, from the same pass.
-        Costs are what any effect block may charge (possible_costs), a custom
-        cost, and a `cost` or `ai_hint_pp_cost` price. The `modifier` block
-        counts toward commits_money. See validate_events.unneeded_treasury_reason.
+        Costs are what the decision may charge its own country
+        (validate_events.chooser_costs), a custom cost, and a `cost` or
+        `ai_hint_pp_cost` price. The `modifier` block can commit money.
         """
         self._log_section("Checking decisions for AI treasury checks with no cost...")
         self._report(
@@ -3532,7 +3527,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking custom costs are charged in complete_effect...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -3583,7 +3578,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for money charged after entry...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         buildings = self._get_building_payments()
         followed = {
             name: body for name, body in effects.items() if name not in buildings
@@ -3843,8 +3838,9 @@ class Validator(BaseValidator):
         """Flag a days_remove timer that nothing reads.
 
         A timer keeps the decision active. That matters only when a
-        remove_effect runs at the end, a modifier lasts while it is active, or a
-        has_decision trigger reads it. Missions are skipped.
+        remove_effect, war_with_on_remove, or war_with_target_on_remove runs at
+        the end, a modifier lasts while it is active, or a has_decision trigger
+        reads it. Missions are skipped.
         """
         self._log_section("Checking decisions with days_remove but no remove_effect...")
 
@@ -3860,7 +3856,12 @@ class Validator(BaseValidator):
                 or d.token in checked
                 or any(
                     _top_level_field_value(d.raw, field)
-                    for field in ("modifier", "targeted_modifier")
+                    for field in (
+                        "modifier",
+                        "targeted_modifier",
+                        "war_with_on_remove",
+                        "war_with_target_on_remove",
+                    )
                 )
             ):
                 continue

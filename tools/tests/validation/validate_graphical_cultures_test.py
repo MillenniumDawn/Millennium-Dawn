@@ -1,17 +1,17 @@
 """Tests for country graphical culture registration checks."""
 
 import validate_graphical_cultures as V
+from shared.suite import write_under
 
 
-def _write_inputs(tmp_path, write_path, country_text, registry_text):
-    write_path(tmp_path, "common/countries/Testland.txt", country_text)
-    write_path(tmp_path, "common/graphicalculturetype.txt", registry_text)
+def _write_inputs(tmp_path, country_text, registry_text):
+    write_under(tmp_path, "common/countries/Testland.txt", country_text)
+    write_under(tmp_path, "common/graphicalculturetype.txt", registry_text)
 
 
-def test_registered_country_culture_is_clean(tmp_path, write_path):
+def test_registered_country_culture_is_clean(tmp_path):
     _write_inputs(
         tmp_path,
-        write_path,
         "graphical_culture = test_gfx\n",
         "test_gfx\n",
     )
@@ -22,10 +22,9 @@ def test_registered_country_culture_is_clean(tmp_path, write_path):
     assert validator._issues == []
 
 
-def test_unregistered_country_culture_warns_with_file_and_line(tmp_path, write_path):
+def test_unregistered_country_culture_warns_with_file_and_line(tmp_path):
     _write_inputs(
         tmp_path,
-        write_path,
         "color = { 1 2 3 }\ngraphical_culture = missing_gfx\n",
         "test_gfx\n",
     )
@@ -53,20 +52,18 @@ graphical_culture = "quoted_value"
     assert V._country_cultures(country) == [("valid_gfx", 4)]
 
 
-def test_staged_mode_checks_all_countries_when_registry_changes(
-    tmp_path, write_path, monkeypatch
-):
-    write_path(
+def test_staged_mode_checks_all_countries_when_registry_changes(tmp_path, monkeypatch):
+    write_under(
         tmp_path,
         "common/countries/Testland.txt",
         "graphical_culture = removed_gfx\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/countries/Otherland.txt",
         "graphical_culture = removed_gfx\n",
     )
-    write_path(tmp_path, "common/graphicalculturetype.txt", "other_gfx\n")
+    write_under(tmp_path, "common/graphicalculturetype.txt", "other_gfx\n")
     monkeypatch.setenv("MD_STAGED_FILES", "common/graphicalculturetype.txt")
 
     validator = V.Validator(str(tmp_path), staged_only=True)
@@ -79,11 +76,10 @@ def test_staged_mode_checks_all_countries_when_registry_changes(
 
 
 def test_staged_mode_runs_for_country_changes_and_skips_unrelated_common(
-    tmp_path, write_path, monkeypatch
+    tmp_path, monkeypatch
 ):
     _write_inputs(
         tmp_path,
-        write_path,
         "graphical_culture = missing_gfx\n",
         "test_gfx\n",
     )
@@ -105,8 +101,8 @@ def test_registered_cultures_are_bare_identifiers_and_ignore_comments():
     ) == {"registered_gfx"}
 
 
-def test_missing_registry_is_reported(tmp_path, write_path):
-    write_path(
+def test_missing_registry_is_reported(tmp_path):
+    write_under(
         tmp_path,
         "common/countries/Testland.txt",
         "graphical_culture = test_gfx\n",
@@ -119,8 +115,8 @@ def test_missing_registry_is_reported(tmp_path, write_path):
     assert validator._issues[0].category == "graphical-culture-registry-missing"
 
 
-def test_staged_registry_deletion_is_reported(tmp_path, write_path, monkeypatch):
-    write_path(
+def test_staged_registry_deletion_is_reported(tmp_path, monkeypatch):
+    write_under(
         tmp_path,
         "common/countries/Testland.txt",
         "graphical_culture = test_gfx\n",

@@ -64,6 +64,7 @@ from check_common_mistakes import (
     _check_shadowed_branches,
     _check_stat_effect_magnitude,
     _check_tautological_or,
+    _check_trade_modifier_outside_shared_effects,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
     _check_wrong_stat_trigger,
@@ -1873,6 +1874,39 @@ _COUNT_CASES: dict[
             ],
         ),
     ],
+    _check_trade_modifier_outside_shared_effects: [
+        (
+            "every reserved modifier flagged in add, reverse, remove, and has forms",
+            4,
+            [
+                "\tadd_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                "\treverse_add_opinion_modifier = {\n",
+                "\t\tmodifier = mutual_trade_opinion\n",
+                "\t}\n",
+                "\tremove_opinion_modifier = { target = PRU modifier = mutual_investment_treaty_opinion }\n",
+                "\tUKR = { has_opinion_modifier = mutual_investment_treaty_trade_opinion }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+        (
+            "the shared effects file applies them",
+            0,
+            [
+                "\tadd_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }\n"
+            ],
+            "common\\scripted_effects\\00_economic_effects.txt",
+        ),
+        (
+            "comments, quoted strings, and other trade modifiers not flagged",
+            0,
+            [
+                "\t# add_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                '\tlog = "modifier = mutual_trade_opinion"\n',
+                "\tadd_opinion_modifier = { target = SER modifier = free_trade_agreement }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+    ],
     _check_wrong_stat_trigger: [
         (
             "bare stat names and has_command_power flagged",
@@ -2820,6 +2854,12 @@ _EXPECTED = {
             "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
         )
     ],
+    "investment treaty opinion outside its effect": [
+        (
+            1,
+            "mutual_investment_treaty_opinion belongs to the shared effects in common/scripted_effects/00_economic_effects.txt -- call set_mutual_investment_treaty instead",
+        )
+    ],
 }
 
 
@@ -3364,6 +3404,13 @@ _EXACT_CASES = [
         "war support 15",
         _check_stat_effect_magnitude,
         ["\tadd_war_support = 15\n"],
+    ),
+    _exact(
+        "investment treaty opinion outside its effect",
+        _check_trade_modifier_outside_shared_effects,
+        [
+            "\tadd_opinion_modifier = { target = SER modifier = mutual_investment_treaty_opinion }\n"
+        ],
     ),
 ]
 

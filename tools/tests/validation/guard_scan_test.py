@@ -19,10 +19,10 @@ _CASES = [
     (
         validate_influence_calls,
         "every_country = { change_influence_percentage = yes }",
-        "change_influence_percentage = yes runs inside every_country without a "
-        "per-iteration influence_target; temp variables persist across "
-        "iterations, so every pass after the first re-targets the first "
-        "iterated country",
+        "change_influence_percentage = yes runs inside every_country without "
+        "setting influence_target on every pass; a value left from before "
+        "the loop or an earlier pass carries into this one, so set it "
+        "inside the loop before the call",
         None,
     ),
     (

@@ -564,8 +564,11 @@ def test_only_a_placeholder_template_resolves_nothing(tmp_path):
     ],
     ids=["engine refs", "unused sprites"],
 )
-def test_missing_data_dirs_are_logged(tmp_path, gfx_notices, check, notices):
-    logged = gfx_notices(tmp_path, check)
+def test_missing_data_dirs_are_logged(tmp_path, monkeypatch, check, notices):
+    logged = []
+    validator = GfxReferenceValidator(str(tmp_path), use_colors=False)
+    monkeypatch.setattr(validator, "log", lambda msg, *a, **k: logged.append(msg))
+    check(validator)
     for expected in notices:
         assert any(expected in msg for msg in logged)
 
@@ -690,6 +693,14 @@ _GUI_REF_CASES = {
         'spriteType = "GFX_NV_btn_add"\n',
         [("GFX_NV_btn_add", 3)],
     ),
+    "commented-out ref": (
+        '# spriteType = "GFX_commented_out"\nspriteType = "GFX_real"\n',
+        [("GFX_real", 2)],
+    ),
+    "trailing comment": (
+        'spriteType = "GFX_real" # spriteType = "GFX_commented"\n',
+        [("GFX_real", 1)],
+    ),
 }
 
 
@@ -765,12 +776,23 @@ def test_parse_script_refs(tmp_path, rel, text, refs):
             [("GFX_trigger_no", 2), ("GFX_mission_icons", 2)],
         ),
         ('l_english:\n A:0 "£GFX_$KEY$ : Jump"\n', []),
+        (
+            'l_english:\n# disabled: "£GFX_commented"\n'
+            ' live: "£GFX_live" # £GFX_trailing\n',
+            [("GFX_live", 3)],
+        ),
+        (
+            ' a: "£GFX_CTC.5"\n b: "£GFX_Polizistin-Kiesewetter"\n',
+            [("GFX_CTC.5", 1), ("GFX_Polizistin-Kiesewetter", 2)],
+        ),
     ],
     ids=[
         "punctuation and repeats",
         "prefix already present",
         "closing pound sign",
         "parameter-built name",
+        "hash comments",
+        "dotted and hyphenated names",
     ],
 )
 def test_parse_loc_refs(tmp_path, text, refs):

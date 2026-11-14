@@ -89,8 +89,11 @@ send_pending_investment_offer = {
 }
 
 initialize_pending_investment_offer = {
+	# Fully funded offers (investor right-click) charge the investor 110% and the recipient nothing
+	set_variable = { pending_offer_fully_funded = FROM.investment_offer_fully_funded }
+	FROM = { clear_variable = investment_offer_fully_funded }
 	set_variable = { investor_cost = FROM.project_monetary_cost_effect }
-	multiply_variable = { investor_cost = 0.1 }
+	multiply_variable = { investor_cost = -0.1 }
 	set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
 	set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
 	set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
@@ -110,6 +113,9 @@ accept_pending_investment_offer = {
 	FROM = {
 		calculate_investment_spendable_treasury = yes
 		set_temp_variable = { investment_offer_cost = PREV.pending_offer_total_cost }
+		if = { limit = { check_variable = { PREV.pending_offer_fully_funded = 1 } }
+			multiply_temp_variable = { investment_offer_cost = 1.1 }
+		}
 		if = {
 			limit = { check_variable = { var = investment_spendable_treasury value = investment_offer_cost compare = greater_than_or_equals } }
 			set_variable = { project_building_type^-1 = PREV.pending_offer_type }
@@ -143,9 +149,13 @@ accept_pending_investment_offer = {
 					}
 				}
 
-				set_temp_variable = { treasury_change = PREV.project_monetary_cost_effect }
-				multiply_temp_variable = { treasury_change = 0.1 }
-				modify_treasury_effect = yes
+				set_temp_variable = { treasury_change = { value = PREV.project_monetary_cost_effect multiply = 0.1 } }
+				if = { limit = { check_variable = { pending_offer_fully_funded = 1 } }
+					PREV = { modify_treasury_effect = yes }
+				}
+				else = {
+					modify_treasury_effect = yes
+				}
 			}
 		}
 		else = {
@@ -154,6 +164,7 @@ accept_pending_investment_offer = {
 		clr_country_flag = this_investment_offer_pending@PREV
 		clr_country_flag = investments_ai_pending
 	}
+	clear_variable = pending_offer_fully_funded
 	clear_variable = investor_cost
 	clear_variable = pending_offer_total_cost
 	clear_variable = pending_offer_duration
@@ -223,7 +234,7 @@ project_monetary_cost_calculation = {
 			if = {
 				limit = {
 					PREV.PREV = {
-						has_country_flag = mutual_investment_treaty_@ROOT
+						is_in_array = { investment_treaty_partners = PREV }
 					}
 				}
 				add_to_temp_variable = { investments_cost_modifier = -0.05 }
@@ -297,11 +308,34 @@ get_building_construction_values = {
 
 # Find first available project slot (0..14), set new_project.
 get_available_project = {
+	# Own break name: the shared 'break' would stop the caller's next loop
 	for_each_loop = {
 		array = project_array
+		break = free_project_found
 		if = { limit = { check_variable = { v = 0 } }
 			set_variable = { new_project = i }
-			set_temp_variable = { break = 1 }
+			set_temp_variable = { free_project_found = 1 }
+		}
+	}
+	set_temp_variable = { free_project_found = 0 }
+}
+
+# Effect: get_project_slot_in_state
+# Purpose: find the slot of THIS investor's project in a state. An investor runs at most one project per state.
+# Parameters:
+# - project_state: the state's id, as start_project_two stores it in project_array
+# Sets temp project_slot to the slot index, or -1 when there is no project there.
+get_project_slot_in_state = {
+	set_temp_variable = { project_slot = -1 }
+	set_temp_variable = { project_slot_found = 0 }
+	for_each_loop = {
+		array = project_array
+		value = slot_state
+		index = slot_index
+		break = project_slot_found
+		if = { limit = { check_variable = { slot_state = project_state } }
+			set_temp_variable = { project_slot = slot_index }
+			set_temp_variable = { project_slot_found = 1 }
 		}
 	}
 }
@@ -423,7 +457,7 @@ precompute_state_construction_data = {
 		if = {
 			limit = {
 				PREV.PREV = {
-					has_country_flag = mutual_investment_treaty_@PREV
+					is_in_array = { investment_treaty_partners = PREV }
 				}
 			}
 			add_to_temp_variable = { receiving_investment_duration_temp = -0.05 }
@@ -441,30 +475,25 @@ precompute_state_construction_data = {
 calculate_project_duration = {
 	get_building_construction_values = yes
 
-	# local_state_modifier was pre-computed by precompute_state_construction_data
-	add_to_temp_variable = { construction_speed = local_state_modifier }
-
-	# receiving_investment_duration_temp was pre-computed by precompute_state_construction_data
-	add_to_temp_variable = { receiving_investment_duration_temp = modifier@investment_duration_modifier }
-	clamp_temp_variable = { var = receiving_investment_duration_temp min = -1 }
-	if = { limit = { check_variable = { receiving_investment_duration_temp > 0 } }
-		add_to_temp_variable = { construction_speed = receiving_investment_duration_temp }
-	}
-	else = {
-		subtract_from_temp_variable = { construction_speed = receiving_investment_duration_temp }
+	# Duration modifiers are bad when positive, so they slow construction
+	set_temp_variable = {
+		construction_speed = {
+			value = construction_speed
+			add = local_state_modifier
+			subtract = {
+				value = receiving_investment_duration_temp
+				add = modifier@investment_duration_modifier
+				max = -1
+			}
+			max = 0.05
+		}
 	}
 
 	set_variable = { displayable_construction_modifier = construction_speed }
 
 	# Assume 5 × 15 Civilian Industry devoted to a single construction line
 	multiply_temp_variable = { construction_speed = 75 }
-	if = { limit = { check_variable = { construction_speed > 0 } }
-		divide_temp_variable = { building_cost = construction_speed }
-	}
-	else = {
-		# construction_speed <= 0 means instant or broken; clamp to 1 day to avoid instant completion
-		set_temp_variable = { building_cost = 1 }
-	}
+	divide_temp_variable = { building_cost = construction_speed }
 
 	set_variable = {
 		project_construction_duration^project = {
@@ -525,7 +554,6 @@ start_project_two = {
 			add_to_array = { projects_in_state = PREV.id } # Should be FROM
 			# Create a new array for this
 			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
-			set_variable = { project_target_state_@PREV = PREV.project }
 			# Sets the starting nation
 			set_variable = { PREV.project_array^PREV.project = THIS.id }
 			CONTROLLER = {
@@ -611,7 +639,6 @@ end_project = {
 		if = { limit = { check_variable = { project_array^project < 0 } }
 			random_state = {
 				limit = { state = PREV.project_array^PREV.project }
-				clear_variable = project_target_state_@PREV
 				for_each_loop = {
 					value = v
 					index = i

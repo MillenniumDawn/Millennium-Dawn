@@ -743,6 +743,7 @@ CHI_bri_grant_project_reward = {
 			limit = {
 				is_coastal = yes
 				infrastructure < 5
+				free_building_slots = { building = infrastructure size > 0 }
 			}
 			add_dynamic_modifier = { modifier = CHI_bri_state_port }
 			add_building_construction = {
@@ -760,7 +761,10 @@ CHI_bri_grant_project_reward = {
 			CHI_bri_can_host_rail = yes
 		}
 		random_owned_controlled_state = {
-			limit = { infrastructure < 5 }
+			limit = {
+				infrastructure < 5
+				free_building_slots = { building = infrastructure size > 0 }
+			}
 			add_dynamic_modifier = { modifier = CHI_bri_state_rail }
 			add_building_construction = {
 				type = infrastructure
@@ -2683,4 +2687,34 @@ CHI_initialize_party_bans = {
 	add_to_temp_array = { ban_except_array = 7 }
 	add_to_temp_array = { ban_except_array = 18 }
 	ban_all_parties_except_array = yes
+}
+
+CHI_SAR_match_ruling_party = {
+	hidden_effect = {
+		set_temp_variable = { overlord_to_match = CHI.id }
+		effect_puppet_match_ruling_party_to_overlord = yes
+		if = {
+			limit = { has_elections = yes }
+			set_elections_60_months = yes
+		}
+	}
+}
+
+CHI_SAR_become_non_state_actor = {
+	if = {
+		limit = { has_idea = lacks_international_recognition }
+		swap_ideas = {
+			remove_idea = lacks_international_recognition
+			add_idea = non_state_actor
+		}
+	}
+	else_if = {
+		limit = { NOT = { has_idea = non_state_actor } }
+		add_ideas = non_state_actor
+	}
+	if = {
+		limit = { has_idea = Major_Non_NATO_Ally }
+		NATO_major_non_nato_ally_leave = yes
+	}
+	clear_array = recognised_by
 }

@@ -7,23 +7,23 @@ modify_urban_development_fund_effect = {
 DEN_modify_farmer_anger = {
 	add_to_variable = { DEN_farmer_anger = modify_farmer_anger }
 	clamp_variable = { var = DEN_farmer_anger min = 1 max = 100 }
-	custom_effect_tooltip = DEN_modify_Farmer_anger_tt
+	custom_effect_tooltip = DEN_modify_farmer_anger_tt
 }
 
 # set_temp_variable = { modify_Envirementalist_anger = +- }
 DEN_modify_environmentalist_anger = {
 	add_to_variable = { DEN_environmentalist_anger = modify_environmentalist_anger }
 	clamp_variable = { var = DEN_environmentalist_anger min = 1 max = 100 }
-	custom_effect_tooltip = DEN_modify_Envirementalist_anger_tt
+	custom_effect_tooltip = DEN_modify_envirementalist_anger_tt
 }
 
-DEN_Agrar_resolve = {
+DEN_agrar_resolve = {
 	set_temp_variable = { DEN_agrar_anger_input = DEN_environmentalist_anger }
 	set_temp_variable = { DEN_agrar_variant = 1 }
 	DEN_agrar_resolve_generic = yes
 }
 
-DEN_Agrar_resolve_II = {
+DEN_agrar_resolve_II = {
 	set_temp_variable = { DEN_agrar_anger_input = DEN_farmer_anger }
 	set_temp_variable = { DEN_agrar_variant = 2 }
 	DEN_agrar_resolve_generic = yes
@@ -39,16 +39,19 @@ DEN_agrar_resolve_generic = {
 	set_temp_variable = { DEN_agrar_offset = 0 }
 	# Polled monthly, so each band needs a no-protest bucket — without one the event is guaranteed every month.
 	if = {
-		limit = {
-			check_variable = { DEN_agrar_anger_input < 10 }
-			OR = {
-				check_variable = { DEN_agrar_anger_input > 1 }
-				NOT = { DEN_no_active_agri_policy = yes }
+		limit = { check_variable = { DEN_agrar_anger_input < 10 } }
+		# Anger at the floor with no active policy is the calm state
+		if = {
+			limit = {
+				OR = {
+					check_variable = { DEN_agrar_anger_input > 1 }
+					NOT = { DEN_no_active_agri_policy = yes }
+				}
 			}
-		}
-		random = {
-			chance = 10
-			set_temp_variable = { DEN_agrar_fire = 1 }
+			random = {
+				chance = 10
+				set_temp_variable = { DEN_agrar_fire = 1 }
+			}
 		}
 	}
 	else_if = {
@@ -261,6 +264,34 @@ DEN_conservation_policy_payout = {
 		}
 	}
 	recalculate_party = yes
+}
+
+DEN_logistics_partner_deals = {
+	custom_effect_tooltip = DEN_logistics_partner_deals_tt
+	hidden_effect = {
+		every_country = {
+			limit = {
+				OR = {
+					tag = CHI
+					tag = HKG
+					tag = JAP
+					tag = IND
+				}
+			}
+			set_temp_variable = { percent_change = 1.2 }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			set_temp_variable = { treasury_change = { value = ROOT.gdp_per_capita multiply = 0.01 } }
+			modify_treasury_effect = yes
+			set_temp_variable = { DEN_partner_gdp_per_capita = gdp_per_capita }
+			ROOT = {
+				set_temp_variable = { int_investment_change = { value = DEN_partner_gdp_per_capita multiply = 0.03 } }
+				modify_international_investment_effect = yes
+				set_temp_variable = { debt_change = { value = DEN_partner_gdp_per_capita multiply = 0.02 } }
+				modify_debt_effect = yes
+			}
+		}
+	}
 }
 
 # Novo Nordisk corporate history. Five milestones set the route; the closing milestone

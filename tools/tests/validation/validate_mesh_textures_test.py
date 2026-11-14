@@ -4,6 +4,7 @@ import struct
 
 import pytest
 import validate_mesh_textures as V
+from shared.suite import write_under
 
 ENTITY = "gfx/entities/test.gfx"
 MESH = "gfx/models/units/test.mesh"
@@ -55,16 +56,16 @@ def _setting(index, name=None, **textures):
 
 
 @pytest.fixture
-def run(tmp_path, write_path, monkeypatch):
+def run(tmp_path, monkeypatch):
     """Write a model and return the issues; `install` fakes a vanilla root."""
 
     def build(mesh, entity=None, textures=(), install=None):
         path = tmp_path / MESH
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(mesh)
-        write_path(tmp_path, ENTITY, entity or _pdxmesh())
+        write_under(tmp_path, ENTITY, entity or _pdxmesh())
         for texture in textures:
-            write_path(tmp_path, texture)
+            write_under(tmp_path, texture, "")
         monkeypatch.setattr(V, "find_hoi4_install", lambda: install)
         validator = V.Validator(str(tmp_path), use_colors=False)
         validator.run_validations()
@@ -167,11 +168,11 @@ def test_unreadable_mesh_is_reported(run):
     assert [i.category for i in issues] == ["mesh-read-error"]
 
 
-def test_staged_mode_runs_only_for_model_paths(tmp_path, write_path, monkeypatch):
+def test_staged_mode_runs_only_for_model_paths(tmp_path, monkeypatch):
     path = tmp_path / MESH
     path.parent.mkdir(parents=True)
     path.write_bytes(_mesh(("body", [("PdxMeshAdvanced", {"diff": ""})])))
-    write_path(tmp_path, ENTITY, _pdxmesh())
+    write_under(tmp_path, ENTITY, _pdxmesh())
     monkeypatch.setattr(V, "find_hoi4_install", lambda: None)
 
     monkeypatch.setenv("MD_STAGED_FILES", "gfx/interface/x.dds")
