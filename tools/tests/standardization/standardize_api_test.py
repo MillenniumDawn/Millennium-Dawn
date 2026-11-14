@@ -9,7 +9,12 @@ from typing import cast
 
 import pytest
 import standardize_api
-from standardize_api import kind_for_path, standardize_lines, standardize_text
+from standardize_api import (
+    focus_content_changes,
+    kind_for_path,
+    standardize_lines,
+    standardize_text,
+)
 
 _ROUTED = [
     ("common/national_focus/05_poland.txt", "focus"),
@@ -227,3 +232,153 @@ def test_indent_text_fixes_only_tabs_and_spacing():
         "}\n"
     )
     assert standardize_text("indent", once) == once
+
+
+def _focus(body, focus_id="TST_first", kind="focus"):
+    return f"{kind} = {{\n\tid = {focus_id}\n{body}\n}}\n"
+
+
+# case: original property bodies, rewritten bodies, changed property (None is safe)
+_FOCUS_CONTENT_CASES = {
+    "root order and whitespace": ("x = 0\ny = 1", "y=1\nx=0", None),
+    "touching delimiters": (
+        "available={NOT={has_war=yes}}",
+        "available = { NOT = { has_war = yes } }",
+        None,
+    ),
+    "root AI factor": (
+        "ai_will_do = { factor = 2 modifier = { factor = 0 always = yes } }",
+        "ai_will_do = { base = 2 modifier = { factor = 0 always = yes } }",
+        None,
+    ),
+    "existing base prevents factor rename": (
+        "ai_will_do = { base = 2 factor = 3 }",
+        "ai_will_do = { base = 2 base = 3 }",
+        "ai_will_do",
+    ),
+    "implicit AI default": ("", "ai_will_do = { base = 1 }", None),
+    "explicit defaults": (
+        "cancel_if_invalid = yes\ncontinue_if_invalid = no\navailable_if_capitulated = no",
+        "",
+        None,
+    ),
+    "nondefault retained": ("cancel_if_invalid = no", "", "cancel_if_invalid"),
+    "empty no-ops": (
+        "available = {}\nbypass = {}\ncancel = {}\nmutually_exclusive = {}",
+        "",
+        None,
+    ),
+    "log-only effects": (
+        'completion_reward = { log = "old" }\nselect_effect = {}\nbypass_effect = {}',
+        "",
+        None,
+    ),
+    "logging and comment braces": (
+        "completion_reward = { add_political_power = 5 } # }\n# focus = {",
+        'completion_reward = { log = "Focus TST_first }" add_political_power = 5 }',
+        None,
+    ),
+    "duplicate blocks merged": (
+        "available = { always = yes }\navailable = { has_war = no }",
+        "available = { always = yes has_war = no }",
+        None,
+    ),
+    "offset field order": (
+        "offset = { trigger = { always = yes } y = 2 x = 1 }",
+        "offset = { x = 1 y = 2 trigger = { always = yes } }",
+        None,
+    ),
+    "scalar changed": ("x = 1", "x = 2", "x"),
+    "reward value changed": (
+        "completion_reward = { add_political_power = 5 }",
+        "completion_reward = { add_political_power = 6 }",
+        "completion_reward",
+    ),
+    "effect order changed": (
+        "completion_reward = { set_temp_variable = { n = 5 } TST_effect = yes }",
+        "completion_reward = { TST_effect = yes set_temp_variable = { n = 5 } }",
+        "completion_reward",
+    ),
+    "scope changed": (
+        "completion_reward = { ROOT = { add_political_power = 5 } }",
+        "completion_reward = { FROM = { add_political_power = 5 } }",
+        "completion_reward",
+    ),
+    "nested AI factor changed": (
+        "ai_will_do = { base = 2 modifier = { factor = 0 always = yes } }",
+        "ai_will_do = { base = 2 modifier = { base = 0 always = yes } }",
+        "ai_will_do",
+    ),
+    "repeated prerequisite order changed": (
+        "prerequisite = { focus = TST_a }\nprerequisite = { focus = TST_b }",
+        "prerequisite = { focus = TST_b }\nprerequisite = { focus = TST_a }",
+        "prerequisite",
+    ),
+    "repeated property dropped": (
+        "icon = first\nicon = second",
+        "icon = first",
+        "icon",
+    ),
+    "quoted values preserved": (
+        'available = { has_country_flag = "name # { first" }',
+        'available = { has_country_flag = "name # { second" }',
+        "available",
+    ),
+    "operator changed": ("available = { x > 1 }", "available = { x < 1 }", "available"),
+    "math log retained": (
+        "completion_reward = { set_variable = { n = { value = 2 log = 3 } } }",
+        "completion_reward = { set_variable = { n = { value = 2 log = 4 } } }",
+        "completion_reward",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("before", "after", "changed"),
+    _FOCUS_CONTENT_CASES.values(),
+    ids=_FOCUS_CONTENT_CASES,
+)
+def test_focus_content_preservation(before, after, changed):
+    findings = focus_content_changes(_focus(before), _focus(after))
+
+    assert findings == (
+        [] if changed is None else [(1, f"TST_first: {changed} content changed")]
+    )
+
+
+_FOCUS_IDENTITY_CASES = {
+    "ID": (_focus(""), _focus("", focus_id="TST_other")),
+    "kind": (_focus(""), _focus("", kind="shared_focus")),
+    "missing focus": (_focus(""), ""),
+    "inline ID dropped": ("focus = { id = TST_first }", "focus = {}"),
+    "order": (
+        _focus("") + _focus("", focus_id="TST_second"),
+        _focus("", focus_id="TST_second") + _focus(""),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("before", "after"), _FOCUS_IDENTITY_CASES.values(), ids=_FOCUS_IDENTITY_CASES
+)
+def test_focus_identity_changes_are_reported(before, after):
+
+    assert focus_content_changes(before, after) == [
+        (0, "focus IDs, kinds, or order changed")
+    ]
+
+
+@pytest.mark.parametrize(
+    ("before", "after"),
+    [("focus = { id = TST_first", ""), ("", "focus = { id = TST_first")],
+    ids=["source", "rewrite"],
+)
+def test_unbalanced_focus_cannot_pass_preservation(before, after):
+    with pytest.raises(ValueError, match="unbalanced focus block"):
+        focus_content_changes(before, after)
+
+
+def test_focus_headers_inside_strings_do_not_define_focuses():
+    source = 'header = "focus = { id = TST_fake }"\n' + _focus("")
+
+    assert focus_content_changes(source, _focus("")) == []
