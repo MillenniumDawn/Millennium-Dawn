@@ -173,7 +173,7 @@ def run(paths, root=REPO_ROOT):
     files = collect(paths)
     for path in files:
         try:
-            rel_path = path.resolve().relative_to(Path(root).resolve()).as_posix()
+            rel_path = path.absolute().relative_to(Path(root).absolute()).as_posix()
         except ValueError:
             rel_path = path.as_posix()
         if path.suffix.lower() == ".mesh":

@@ -237,20 +237,49 @@ def test_game_file_scan_does_not_descend_into_hidden_directories(tmp_path):
 # --- .mesh references -------------------------------------------------------
 
 
-def test_mesh_blob_marks_its_textures_as_used(tmp_path):
-    _write(tmp_path / "gfx" / "models" / "unit_diffuse.dds")
+_PDXMESH = 'objectTypes = {{\n\tpdxmesh = {{\n\t\t{}file = "{}"\n\t}}\n}}\n'
+
+# case: (file naming the pdxmesh, mesh path it names, commented out, in vanilla)
+_MESH_REF_CASES = {
+    "entity asset": ("gfx/entities/u.asset", "gfx/models/unit.mesh", False, False),
+    "interface gfx": ("interface/u.gfx", "gfx/models/unit.mesh", False, False),
+    "other case": ("gfx/entities/u.gfx", "GFX/Models/Unit.mesh", False, False),
+    "vanilla entity": ("gfx/entities/u.asset", "gfx/models/unit.mesh", False, True),
+    "commented out": ("gfx/entities/u.asset", "gfx/models/unit.mesh", True, False),
+    "other mesh": ("gfx/entities/u.asset", "gfx/models/other.mesh", False, False),
+}
+
+
+@pytest.mark.parametrize(
+    "entity, mesh, commented, vanilla",
+    _MESH_REF_CASES.values(),
+    ids=_MESH_REF_CASES.keys(),
+)
+def test_mesh_counts_only_when_a_pdxmesh_uses_it(
+    tmp_path, entity, mesh, commented, vanilla
+):
+    mod, install = tmp_path / "mod", tmp_path / "vanilla"
+    _write(mod / "gfx" / "models" / "unit_diffuse.dds")
     _write(
-        tmp_path / "gfx" / "models" / "unit.mesh",
+        mod / "gfx" / "models" / "unit.mesh",
         binary=b"\x00\x01pdxmesh\x00unit_diffuse.dds\x00\xff",
     )
-    # A directory ending in .mesh is matched by the glob but cannot be read.
-    (tmp_path / "gfx" / "models" / "broken.mesh").mkdir()
+    _write(
+        (install if vanilla else mod) / entity,
+        _PDXMESH.format("# " if commented else "", mesh),
+    )
+    install.mkdir(exist_ok=True)
 
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator = Validator(
+        mod_path=str(mod), use_colors=False, workers=1, hoi4_path=str(install)
+    )
     validator.validate_unused_textures()
 
-    assert "gfx/models/unit_diffuse.dds" in validator.mesh_referenced_textures
-    assert validator._issues == []
+    used = not commented and mesh.lower() == "gfx/models/unit.mesh"
+    unused = sorted(issue.message for issue in validator._issues)
+    assert unused == (
+        [] if used else ["gfx/models/unit.mesh", "gfx/models/unit_diffuse.dds"]
+    )
 
 
 # --- loc text icons ---------------------------------------------------------
