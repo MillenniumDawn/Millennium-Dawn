@@ -237,16 +237,50 @@ def test_security_navigation_opens_the_security_overlay():
 
 def test_ukrainian_leader_rotation_preserves_target_removal_guard():
     text = source("common/scripted_effects/UKR_political_leaders.txt")
-    marker = re.search(
-        r"if\s*=\s*\{\s*limit\s*=\s*\{\s*OR\s*=\s*\{\s*TOP_enabled\s*=\s*no",
-        text,
-    )
-    assert marker
-    guard = _extract_block(text, marker.start())
-    assert "global.TOP_status^132 < 2" in _named_block(guard, "limit")
-    assert "kill_country_leader = yes" in guard
-    assert 'name = "Volodymyr Zelenskyy"' in guard
     assert text.count('name = "Volodymyr Zelenskyy"') == 1
+    rotation = _parse_race_script(_named_block(text, "set_leader_UKR"))[
+        "set_leader_UKR"
+    ]
+
+    def limit_of(body):
+        return next((value for key, _, value in body if key == "limit"), [])
+
+    party = next(
+        body
+        for key, _, body in rotation
+        if key in {"if", "else_if"}
+        and ("check_variable", "=", [("ruling_party", "=", "16")]) in limit_of(body)
+    )
+    branches = [(limit_of(body), body) for key, _, body in party if key == "if"]
+    guard = (
+        "OR",
+        "=",
+        [
+            ("TOP_enabled", "=", "no"),
+            ("check_variable", "=", [("global.TOP_status^132", "<", "2")]),
+        ],
+    )
+    selects_zelenskyy = ("set_temp_variable", "=", [("ukr_ldr_sel", "=", "3")])
+    selections = [limit for limit, body in branches if selects_zelenskyy in body]
+    assert len(selections) == 2
+    assert all(guard in limit for limit in selections)
+    created = [
+        limit
+        for limit, body in branches
+        if any(
+            key == "create_country_leader"
+            and ("name", "=", '"Volodymyr Zelenskyy"') in value
+            for key, _, value in body
+        )
+    ]
+    assert created == [[("check_variable", "=", [("ukr_ldr_sel", "=", "3")])]]
+    killed = [
+        limit
+        for limit, body in branches
+        if ("hidden_effect", "=", [("kill_country_leader", "=", "yes")]) in body
+    ]
+    assert killed == [[("check_variable", "=", [("ukr_ldr_sel", ">", "0")])]]
+    assert not any(key == "hidden_effect" for key, _, _ in party)
 
 
 def test_legacy_outcome_adapter_cannot_reenter_the_canonical_resolver():

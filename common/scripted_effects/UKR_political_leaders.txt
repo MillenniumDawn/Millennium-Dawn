@@ -1,12 +1,59 @@
 # Ukraine party leaders - custom slot layout.
-# Structure mirrors the original Millennium Dawn file.
+# Leader choice = per-ideology counter (<ideology>_leader) + date window.
+#  1) take the first leader, in list order, whose window matches today's date AND who has not been used yet
+#     (counter < slot number), then move the counter to that slot;
+#  2) if every matching leader was already used (repeat win), take the LAST leader whose window matches today.
+# The windows are copied 1:1 from the party-name windows in
+# common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt (UKR.<ideology>_<year> keys), so the
+# party shown in the politics view and its leader cannot drift apart. If a name window changes there, change it here too.
+# do_not_retire keeps the same leader on the next call (counter is stepped back), as in the original file.
 # Only portraits present in gfx/leaders/UKR/ are used.
 set_leader_UKR = {
 	if = { limit = { check_variable = { ruling_party = 0 } }
-		if = { limit = { check_variable = { Western_Autocracy_leader = 0 } }
-			add_to_variable = { Western_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Western_Autocracy_leader < 1 } NOT = { date > 2007.9.30 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Western_Autocracy_leader < 2 } date > 2007.9.30 NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Western_Autocracy_leader < 3 } date > 2014.9.10 NOT = { date > 2019.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Western_Autocracy_leader < 4 } date > 2014.9.10 NOT = { date > 2019.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Western_Autocracy_leader < 5 } date > 2019.3.31 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.3.31 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.9.10 NOT = { date > 2019.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.9.10 NOT = { date > 2019.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2007.9.30 NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2007.9.30 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Viktor Medvedchuk"
 				picture = "gfx/leaders/UKR/ukr_medvedchuk_sdpu.dds"
@@ -16,14 +63,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# SDPU(o)
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Western_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Western_Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Western_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Yuriy Karmazin"
 				picture = "gfx/leaders/UKR/yuri_karmazin.dds"
@@ -33,14 +74,19 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# Partiya Zakhysnykiv Vitchyzny
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Western_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Western_Autocracy_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Western_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Arseniy Yatsenyuk"
+				picture = "gfx/leaders/UKR/ukr_yatsenuk.dds"
+				ideology = Western_Autocracy
+				traits = {
+					western_Western_Autocracy
+					rational
+				}
+			}	# Narodnyi Front
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Oleksandr Turchynov"
 				picture = "gfx/leaders/UKR/ukr_turchinov.dds"
@@ -50,14 +96,8 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Narodnyi Front
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Western_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Western_Autocracy_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Western_Autocracy_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
 			create_country_leader = {
 				name = "Ihor Smeshko"
 				picture = "gfx/leaders/UKR/ukr_smeshko.dds"
@@ -67,16 +107,72 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Syla i Chest
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Western_Autocracy_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Western_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 1 } }
-		if = { limit = { check_variable = { conservatism_leader = 0 } }
-			add_to_variable = { conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 1 } NOT = { date > 2001.12.8 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 2 } date > 2001.12.8 NOT = { date > 2005.3.5 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 3 } date > 2005.3.5 NOT = { date > 2007.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 4 } date > 2007.3.31 NOT = { date > 2008.12.31 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 5 } date > 2008.12.31 NOT = { date > 2014.8.27 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 6 } date > 2014.8.27 NOT = { date > 2019.5.24 } }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+			set_temp_variable = { ukr_ldr_ctr = 6 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { conservatism_leader < 7 } date > 2019.5.24 }
+			set_temp_variable = { ukr_ldr_sel = 7 }
+			set_temp_variable = { ukr_ldr_ctr = 7 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.5.24 }
+			set_temp_variable = { ukr_ldr_sel = 7 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.8.27 NOT = { date > 2019.5.24 } }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2008.12.31 NOT = { date > 2014.8.27 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2007.3.31 NOT = { date > 2008.12.31 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2005.3.5 NOT = { date > 2007.3.31 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2001.12.8 NOT = { date > 2005.3.5 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2001.12.8 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Hennadiy Udovenko"
 				picture = "gfx/leaders/UKR/ukr_udovenko.dds"
@@ -86,14 +182,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Narodnyi Rukh
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { conservatism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Viktor Yushchenko"
 				picture = "gfx/leaders/UKR/Viktor_Yushchenko.dds"
@@ -102,15 +192,42 @@ set_leader_UKR = {
 					western_conservatism
 					inexperienced
 				}
-			}	# Nasha Ukrayina
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# Nasha Ukrayina (NU)
 		}
-		else_if = { limit = { check_variable = { conservatism_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Viktor Yushchenko"
+				picture = "gfx/leaders/UKR/Viktor_Yushchenko.dds"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+					inexperienced
+				}
+			}	# NSNU
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
+			create_country_leader = {
+				name = "Vyacheslav Kyrylenko"
+				picture = "gfx/leaders/UKR/ukr_kyrylenko.dds"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+					rational
+				}
+			}	# NSNU
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
+			create_country_leader = {
+				name = "Viktor Yushchenko"
+				picture = "gfx/leaders/UKR/Viktor_Yushchenko.dds"
+				ideology = conservatism
+				traits = {
+					western_conservatism
+					inexperienced
+				}
+			}	# NSNU
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 6 } }
 			create_country_leader = {
 				name = "Petro Poroshenko"
 				picture = "gfx/leaders/UKR/Petro_Poroshenko.dds"
@@ -120,14 +237,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# BPP
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { conservatism_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { conservatism_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 7 } }
 			create_country_leader = {
 				name = "Petro Poroshenko"
 				picture = "gfx/leaders/UKR/Petro_Poroshenko.dds"
@@ -137,16 +248,65 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Yevropeys'ka Solidarnist'
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { conservatism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 2 } }
-		if = { limit = { check_variable = { liberalism_leader = 0 } }
-			add_to_variable = { liberalism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 1 } NOT = { date > 2010.4.12 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 2 } date > 2010.4.12 NOT = { date > 2012.10.28 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 3 } date > 2012.10.28 NOT = { date > 2014.10.26 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 4 } date > 2014.10.26 NOT = { date > 2019.5.16 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 5 } date > 2019.5.16 NOT = { date > 2020.3.11 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { liberalism_leader < 6 } date > 2020.3.11 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+			set_temp_variable = { ukr_ldr_ctr = 6 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2020.3.11 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.5.16 NOT = { date > 2020.3.11 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.10.26 NOT = { date > 2019.5.16 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2012.10.28 NOT = { date > 2014.10.26 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2010.4.12 NOT = { date > 2012.10.28 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2010.4.12 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Viktor Pynzenyk"
 				picture = "gfx/leaders/UKR/ukr_pynzenyk.dds"
@@ -156,14 +316,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Reformy i Poryadok
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { liberalism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { liberalism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { liberalism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Arseniy Yatsenyuk"
 				picture = "gfx/leaders/UKR/ukr_yatsenyuk_fz.dds"
@@ -173,14 +327,19 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Front Zmin
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { liberalism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { liberalism_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { liberalism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Vitali Klitschko"
+				picture = "gfx/leaders/UKR/ukr_klichko.dds"
+				ideology = liberalism
+				traits = {
+					western_liberalism
+					inexperienced
+				}
+			}	# UDAR
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Andriy Sadovyi"
 				picture = "gfx/leaders/UKR/ukr_sadovyi.dds"
@@ -190,14 +349,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Samopomich
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { liberalism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { liberalism_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { liberalism_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
 			create_country_leader = {
 				name = "Sviatoslav Vakarchuk"
 				picture = "gfx/leaders/UKR/ukr_vakarchuk.dds"
@@ -207,16 +360,83 @@ set_leader_UKR = {
 					inexperienced
 				}
 			}	# HOLOS
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 6 } }
+			create_country_leader = {
+				name = "Kira Rudyk"
+				picture = "gfx/leaders/UKR/ukr_rudyk.dds"
+				ideology = liberalism
+				traits = {
+					western_liberalism
+					rational
+				}
+			}	# HOLOS
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { liberalism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { liberalism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 3 } }
-		if = { limit = { check_variable = { socialism_leader = 0 } }
-			add_to_variable = { socialism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 1 } NOT = { OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 1 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 1 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } date > 2014.9.10 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 2 } NOT = { OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 2 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 2 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } date > 2014.9.10 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { socialism_leader < 3 } date > 2011.11.17 }
+			set_temp_variable = { ukr_ldr_sel = 7 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2011.11.17 }
+			set_temp_variable = { ukr_ldr_sel = 7 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } date > 2014.9.10 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } date > 2014.9.10 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } NOT = { date > 2014.9.10 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { OR = { has_country_flag = UKRH_tymoshenko_arrest AND = { date > 2011.8.5 NOT = { date > 2014.2.22 } } } } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Yulia Tymoshenko"
 				picture = "gfx/leaders/UKR/Yulia_Tymoshenko.dds"
@@ -225,15 +445,9 @@ set_leader_UKR = {
 					western_socialism
 					ruthless
 				}
-			}	# BYuT
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { socialism_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# BAT / BYuT / Batkivshchyna
 		}
-		else_if = { limit = { check_variable = { socialism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { socialism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Oleksandr Turchynov"
 				picture = "gfx/leaders/UKR/ukr_civil_turchinov.dds"
@@ -242,15 +456,53 @@ set_leader_UKR = {
 					western_socialism
 					backroom_backstabber
 				}
-			}	# Batkivshchyna (acting)
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { socialism_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# Batkivshchyna (acting, Tymoshenko imprisoned)
 		}
-		else_if = { limit = { check_variable = { socialism_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { socialism_leader = 3 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Eugenia Tymoshenko"
+				picture = "gfx/leaders/UKR/Eugenia_Tymoshenko.dds"
+				ideology = socialism
+				traits = {
+					western_socialism
+					inexperienced
+				}
+			}	# Batkivshchyna (Tymoshenko imprisoned, Turchynov in NF)
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
+			create_country_leader = {
+				name = "Yulia Tymoshenko"
+				picture = "gfx/leaders/UKR/Yulia_Tymoshenko.dds"
+				ideology = socialism
+				traits = {
+					western_socialism
+					ruthless
+				}
+			}	# BAT / BYuT / Batkivshchyna
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
+			create_country_leader = {
+				name = "Oleksandr Turchynov"
+				picture = "gfx/leaders/UKR/ukr_civil_turchinov.dds"
+				ideology = socialism
+				traits = {
+					western_socialism
+					backroom_backstabber
+				}
+			}	# Batkivshchyna (acting, Tymoshenko imprisoned)
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 6 } }
+			create_country_leader = {
+				name = "Eugenia Tymoshenko"
+				picture = "gfx/leaders/UKR/Eugenia_Tymoshenko.dds"
+				ideology = socialism
+				traits = {
+					western_socialism
+					inexperienced
+				}
+			}	# Batkivshchyna (Tymoshenko imprisoned, Turchynov in NF)
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 7 } }
 			create_country_leader = {
 				name = "Eugenia Tymoshenko"
 				picture = "gfx/leaders/UKR/Eugenia_Tymoshenko.dds"
@@ -260,35 +512,58 @@ set_leader_UKR = {
 					inexperienced
 				}
 			}	# Batkivshchyna
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { socialism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { socialism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 4 } }
-		if = { limit = { check_variable = { communist_state_leader > -1 } }
-			set_variable = { communist_state_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_variable = { communist_state_leader = 1 }
+		hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Petro Symonenko"
-				picture = "gfx/leaders/UKR/petro_symonenko.dds"
-				ideology = communist_state
-				traits = {
-					emerging_communist_state
-					stubborn
-				}
-			}	# KPU
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { communist_state_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+		create_country_leader = {
+			name = "Petro Symonenko"
+			picture = "gfx/leaders/UKR/petro_symonenko.dds"
+			ideology = communist_state
+			traits = {
+				emerging_communist_state
+				stubborn
+			}
+		}	# KPU
 	}
 	else_if = { limit = { check_variable = { ruling_party = 5 } }
-		if = { limit = { check_variable = { anarchist_communism_leader = 0 } }
-			add_to_variable = { anarchist_communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { anarchist_communism_leader < 1 } NOT = { date > 2015.5.1 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { anarchist_communism_leader < 2 } NOT = { date > 2015.5.1 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { anarchist_communism_leader < 3 } date > 2015.5.1 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2015.5.1 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2015.5.1 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2015.5.1 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Vasyl Volha"
 				picture = "gfx/leaders/UKR/ukr_volha.dds"
@@ -297,15 +572,9 @@ set_leader_UKR = {
 					emerging_anarchist_communism
 					stubborn
 				}
-			}	# Soyuz Livykh Syl
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { anarchist_communism_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# SAU / Soyuz Livykh Syl
 		}
-		else_if = { limit = { check_variable = { anarchist_communism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { anarchist_communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Maksym Holdarb"
 				picture = "gfx/leaders/UKR/ukr_holdarb.dds"
@@ -315,14 +584,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Soyuz Livykh Syl
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { anarchist_communism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { anarchist_communism_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { anarchist_communism_leader = 3 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Vitaliy Dudin"
 				picture = "gfx/leaders/UKR/ukr_dudin.dds"
@@ -332,16 +595,65 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Sotsialnyi Rukh
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { anarchist_communism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { anarchist_communism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 6 } }
-		if = { limit = { check_variable = { reactionary_leader = 0 } }
-			add_to_variable = { reactionary_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 1 } NOT = { date > 2014.9.14 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 2 } date > 2010.3.3 NOT = { date > 2014.9.14 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 3 } date > 2014.9.14 NOT = { date > 2018.11.9 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 4 } date > 2014.9.14 NOT = { date > 2018.11.9 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 5 } date > 2018.11.9 NOT = { has_war_with = RUS } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { reactionary_leader < 6 } date > 2018.11.9 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+			set_temp_variable = { ukr_ldr_ctr = 6 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2018.11.9 }
+			set_temp_variable = { ukr_ldr_sel = 6 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2018.11.9 NOT = { has_war_with = RUS } }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.9.14 NOT = { date > 2018.11.9 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.9.14 NOT = { date > 2018.11.9 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2010.3.3 NOT = { date > 2014.9.14 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.9.14 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Viktor Yanukovych"
 				picture = "gfx/leaders/UKR/Viktor_Yanukovych_new.dds"
@@ -351,15 +663,20 @@ set_leader_UKR = {
 					inexperienced
 					stubborn
 				}
-			}	# Partiya Rehioniv
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { reactionary_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# Partiya Rehioniv / PRVU
 		}
-		else_if = { limit = { check_variable = { reactionary_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { reactionary_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
+			create_country_leader = {
+				name = "Mykola Azarov"
+				picture = "gfx/leaders/UKR/ukr_azarov.dds"
+				ideology = reactionary
+				traits = {
+					emerging_reactionary
+					backroom_backstabber
+				}
+			}	# Partiya Rehioniv
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Borys Kolesnikov"
 				picture = "gfx/leaders/UKR/ukr_kolesnikov.dds"
@@ -369,14 +686,19 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Opozytsiynyi Blok
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { reactionary_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { reactionary_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { reactionary_leader = 3 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
+			create_country_leader = {
+				name = "Yuriy Boyko"
+				picture = "gfx/leaders/UKR/Emerging_Yuriy_Boyko.dds"
+				ideology = reactionary
+				traits = {
+					emerging_reactionary
+					rational
+				}
+			}	# Opozytsiynyi Blok
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
 			create_country_leader = {
 				name = "Viktor Medvedchuk"
 				picture = "gfx/leaders/UKR/Viktor_Medvedchuk_new.dds"
@@ -386,16 +708,55 @@ set_leader_UKR = {
 					rational
 				}
 			}	# OPZZh
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 6 } }
+			create_country_leader = {
+				name = "Yuriy Boyko"
+				picture = "gfx/leaders/UKR/Emerging_Yuriy_Boyko.dds"
+				ideology = reactionary
+				traits = {
+					emerging_reactionary
+					rational
+				}
+			}	# OPZZh
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { reactionary_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { reactionary_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 7 } }
-		if = { limit = { check_variable = { Autocracy_leader = 0 } }
-			add_to_variable = { Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Autocracy_leader < 1 } NOT = { date > 2012.3.21 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Autocracy_leader < 2 } date > 2012.3.21 NOT = { date > 2019.6.6 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Autocracy_leader < 3 } date > 2019.6.6 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.6.6 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2012.3.21 NOT = { date > 2019.6.6 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2012.3.21 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Natalia Vitrenko"
 				picture = "gfx/leaders/UKR/Natalia_Vitrenko.dds"
@@ -405,14 +766,8 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# PSPU
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Viktor Medvedchuk"
 				picture = "gfx/leaders/UKR/Viktor_Medvedchuk_new.dds"
@@ -422,14 +777,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Ukrayins'kyi Vybir
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Autocracy_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Autocracy_leader = 3 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Anatoliy Shariy"
 				picture = "gfx/leaders/UKR/ukr_shariy_leader.dds"
@@ -439,16 +788,37 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Partiya Shariya
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Autocracy_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 12 } }
-		if = { limit = { check_variable = { Neutral_Muslim_Brotherhood_leader = 0 } }
-			add_to_variable = { Neutral_Muslim_Brotherhood_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Muslim_Brotherhood_leader < 1 } NOT = { date > 2014.3.18 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Muslim_Brotherhood_leader < 2 } date > 2014.3.18 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.3.18 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.3.18 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Vasvi Abduraimov"
 				picture = "gfx/leaders/UKR/ukr_abduraivov.dds"
@@ -458,14 +828,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Milliy Firqa
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Muslim_Brotherhood_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_Muslim_Brotherhood_leader > 0 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Neutral_Muslim_Brotherhood_leader = 2 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Refat Chubarov"
 				picture = "gfx/leaders/UKR/ukr_chubarov.dds"
@@ -475,16 +839,51 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# Mejlis
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Neutral_Muslim_Brotherhood_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Muslim_Brotherhood_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 13 } }
-		if = { limit = { check_variable = { Neutral_Autocracy_leader = 0 } }
-			add_to_variable = { Neutral_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Autocracy_leader < 1 } NOT = { date > 2009.11.28 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Autocracy_leader < 2 } date > 2009.11.28 NOT = { date > 2012.3.17 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Autocracy_leader < 3 } date > 2012.3.17 NOT = { date > 2020.10.25 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Autocracy_leader < 4 } date > 2020.10.25 }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2020.10.25 }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2012.3.17 NOT = { date > 2020.10.25 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2009.11.28 NOT = { date > 2012.3.17 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2009.11.28 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Oleksandr Volkov"
 				picture = "gfx/leaders/UKR/ukr_volkov.dds"
@@ -493,15 +892,9 @@ set_leader_UKR = {
 					neutrality_Neutral_Autocracy
 					backroom_backstabber
 				}
-			}	# Demokratychnyi Soyuz
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# Demokratychnyi Soyuz / PDN
 		}
-		else_if = { limit = { check_variable = { Neutral_Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Serhiy Tihipko"
 				picture = "gfx/leaders/UKR/ukr_tihipko.dds"
@@ -511,14 +904,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Sylna Ukraina
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_Autocracy_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Oleh Liashko"
 				picture = "gfx/leaders/UKR/ukr_liashko.dds"
@@ -528,14 +915,8 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Radykalna Partiya
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_Autocracy_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Neutral_Autocracy_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Oleksandr Soloviov"
 				picture = "gfx/leaders/UKR/ukr_soloviov.dds"
@@ -545,16 +926,69 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# Rozumna Syla
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Neutral_Autocracy_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 14 } }
-		if = { limit = { check_variable = { Neutral_conservatism_leader = 0 } }
-			add_to_variable = { Neutral_conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_conservatism_leader < 1 } NOT = { date > 2001.12.15 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_conservatism_leader < 2 } NOT = { date > 2005.2.11 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_conservatism_leader < 3 } date > 2005.2.11 NOT = { date > 2015.10.25 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_conservatism_leader < 4 } date > 2015.10.25 NOT = { date > 2020.6.19 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_conservatism_leader < 5 } date > 2020.6.19 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2020.6.19 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2015.10.25 NOT = { date > 2020.6.19 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2005.2.11 NOT = { date > 2015.10.25 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2005.2.11 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2001.12.15 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
+			create_country_leader = {
+				name = "Valeriy Pustovoitenko"
+				picture = "gfx/leaders/UKR/ukr_pustovoitenko.dds"
+				ideology = Neutral_conservatism
+				traits = {
+					neutrality_Neutral_conservatism
+					rational
+				}
+			}	# NDP
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Leonid Kuchma"
 				picture = "gfx/leaders/UKR/Leonid_Kuchma.dds"
@@ -565,14 +999,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# NDP / Za YedU!
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_conservatism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Volodymyr Lytvyn"
 				picture = "gfx/leaders/UKR/ukr_lytvyn_leader.dds"
@@ -582,14 +1010,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Narodna Partiya
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_conservatism_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_conservatism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Andriy Kornat"
 				picture = "gfx/leaders/UKR/andriy_kornat.dds"
@@ -599,14 +1021,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Nash Krai
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_conservatism_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Neutral_conservatism_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
 			create_country_leader = {
 				name = "Borys Filatov"
 				picture = "gfx/leaders/UKR/ukr_filatov.dds"
@@ -616,16 +1032,51 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Propozytsiya
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Neutral_conservatism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_conservatism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 15 } }
-		if = { limit = { check_variable = { oligarchism_leader = 0 } }
-			add_to_variable = { oligarchism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { oligarchism_leader < 1 } NOT = { date > 2008.3.20 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { oligarchism_leader < 2 } date > 2008.3.20 NOT = { date > 2015.6.5 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { oligarchism_leader < 3 } date > 2015.6.5 NOT = { date > 2019.8.29 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { oligarchism_leader < 4 } date > 2019.8.29 }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.8.29 }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2015.6.5 NOT = { date > 2019.8.29 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2008.3.20 NOT = { date > 2015.6.5 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2008.3.20 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Serhiy Tihipko"
 				picture = "gfx/leaders/UKR/ukr_tihipko_trudova.dds"
@@ -635,14 +1086,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Trudova Ukraina
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { oligarchism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { oligarchism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { oligarchism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Viktor Baloha"
 				picture = "gfx/leaders/UKR/ukr_baloha.dds"
@@ -652,14 +1097,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Yedynyi Tsentr
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { oligarchism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { oligarchism_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { oligarchism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Vitaliy Khomutynnik"
 				picture = "gfx/leaders/UKR/ukr_khomutynnik.dds"
@@ -669,14 +1108,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Vidrodzhennia
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { oligarchism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { oligarchism_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { oligarchism_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Ihor Palytsia"
 				picture = "gfx/leaders/UKR/ukr_palytsia.dds"
@@ -686,16 +1119,44 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# Za Maybutnie
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { oligarchism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { oligarchism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 16 } }
-		if = { limit = { check_variable = { Neutral_Libertarian_leader = 0 } }
-			add_to_variable = { Neutral_Libertarian_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Libertarian_leader < 1 } NOT = { date > 2014.3.20 } NOT = { has_country_flag = UKR_zelensky_formed } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Libertarian_leader < 2 } date > 2014.3.20 NOT = { date > 2017.12.2 } NOT = { has_country_flag = UKR_zelensky_formed } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_Libertarian_leader < 3 } OR = { date > 2017.12.2 has_country_flag = UKR_zelensky_formed } OR = { TOP_enabled = no check_variable = { global.TOP_status^132 < 2 } } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } OR = { date > 2017.12.2 has_country_flag = UKR_zelensky_formed } OR = { TOP_enabled = no check_variable = { global.TOP_status^132 < 2 } } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.3.20 NOT = { date > 2017.12.2 } NOT = { has_country_flag = UKR_zelensky_formed } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.3.20 } NOT = { has_country_flag = UKR_zelensky_formed } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		if = { limit = { check_variable = { ukr_ldr_sel > 0 } } hidden_effect = { kill_country_leader = yes } }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Mykhailo Brodskyi"
 				picture = "gfx/leaders/UKR/ukr_brodskyi.dds"
@@ -704,15 +1165,9 @@ set_leader_UKR = {
 					neutrality_Neutral_Libertarian
 					stubborn
 				}
-			}	# Yabluko
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-			set_temp_variable = { b = 1 }
+			}	# Yabluko / PVD
 		}
-		else_if = { limit = { check_variable = { Neutral_Libertarian_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Neutral_Libertarian_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Hennadiy Balashov"
 				picture = "gfx/leaders/UKR/ukr_balashov.dds"
@@ -722,36 +1177,55 @@ set_leader_UKR = {
 					inexperienced
 				}
 			}	# 5.10
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_Libertarian_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Neutral_Libertarian_leader = 3 }
-			if = {
-				limit = { OR = { TOP_enabled = no check_variable = { global.TOP_status^132 < 2 } } }
-				hidden_effect = { kill_country_leader = yes }
-
-				create_country_leader = {
-					name = "Volodymyr Zelenskyy"
-					picture = "gfx/leaders/UKR/Volodymyr_Zelensky.dds"
-					ideology = Neutral_Libertarian
-					traits = {
-						neutrality_Neutral_Libertarian
-						inexperienced
-					}
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Volodymyr Zelenskyy"
+				picture = "gfx/leaders/UKR/Volodymyr_Zelensky.dds"
+				ideology = Neutral_Libertarian
+				traits = {
+					neutrality_Neutral_Libertarian
+					inexperienced
 				}
+			}	# Sluha Narodu
+		}
 
-				if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
-				set_temp_variable = { b = 1 }
-			}
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Neutral_Libertarian_leader = ukr_ldr_ctr }
+			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Libertarian_leader = 1 } }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 17 } }
-		if = { limit = { check_variable = { Neutral_green_leader = 0 } }
-			add_to_variable = { Neutral_green_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_green_leader < 1 } NOT = { date > 2015.6.18 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_green_leader < 2 } date > 2015.6.18 NOT = { date > 2020.6.19 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Neutral_green_leader < 3 } date > 2020.6.19 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2020.6.19 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2015.6.18 NOT = { date > 2020.6.19 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2015.6.18 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Vitaliy Kononov"
 				picture = "gfx/leaders/UKR/vitaliy_kononov.dds"
@@ -761,14 +1235,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Partiya Zelenykh
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_green_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Neutral_green_leader > 0 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Neutral_green_leader = 2 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Hennadii Korban"
 				picture = "gfx/leaders/UKR/ukr_korban.dds"
@@ -778,16 +1246,48 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# UKROP
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
+			create_country_leader = {
+				name = "Vitaliy Kononov"
+				picture = "gfx/leaders/UKR/vitaliy_kononov.dds"
+				ideology = Neutral_green
+				traits = {
+					neutrality_Neutral_green
+					rational
+				}
+			}	# Partiya Zelenykh
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Neutral_green_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_green_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 18 } }
-		if = { limit = { check_variable = { neutral_Social_leader = 0 } }
-			add_to_variable = { neutral_Social_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { neutral_Social_leader < 1 } NOT = { date > 2019.5.20 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { neutral_Social_leader < 2 } date > 2019.5.20 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2019.5.20 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2019.5.20 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Oleksandr Moroz"
 				picture = "gfx/leaders/UKR/oleksandr_moroz.dds"
@@ -797,14 +1297,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# SPU
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { neutral_Social_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { neutral_Social_leader > 0 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { neutral_Social_leader = 2 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Serhiy Kaplin"
 				picture = "gfx/leaders/UKR/ukr_kaplin.dds"
@@ -814,35 +1308,58 @@ set_leader_UKR = {
 					inexperienced
 				}
 			}	# Partiya Prostykh Lyudei
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { neutral_Social_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { neutral_Social_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 19 } }
-		if = { limit = { check_variable = { Neutral_Communism_leader > -1 } }
-			set_variable = { Neutral_Communism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_variable = { Neutral_Communism_leader = 1 }
+		hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Tamila Yabrova"
-				picture = "gfx/leaders/UKR/ukr_tamila.dds"
-				ideology = Neutral_Communism
-				traits = {
-					neutrality_Neutral_Communism
-					stubborn
-				}
-			}	# Spilka Komunistiv
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Neutral_Communism_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+		create_country_leader = {
+			name = "Tamila Yabrova"
+			picture = "gfx/leaders/UKR/ukr_tamila.dds"
+			ideology = Neutral_Communism
+			traits = {
+				neutrality_Neutral_Communism
+				stubborn
+			}
+		}	# Spilka Komunistiv
 	}
 	else_if = { limit = { check_variable = { ruling_party = 20 } }
-		if = { limit = { check_variable = { Nat_Populism_leader = 0 } }
-			add_to_variable = { Nat_Populism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Populism_leader < 1 } NOT = { date > 2004.2.14 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Populism_leader < 2 } date > 2004.2.14 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Populism_leader < 3 } date > 2004.2.14 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2004.2.14 }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2004.2.14 }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2004.2.14 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Yaroslav Andrushkiv"
 				picture = "gfx/leaders/UKR/ukr_andrushkiv.dds"
@@ -852,14 +1369,8 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# SNPU
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Populism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Populism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Populism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Oleh Tyahnybok"
 				picture = "gfx/leaders/UKR/Nat_Oleh_Tyahnybok.dds"
@@ -869,14 +1380,8 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# Svoboda
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Populism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Populism_leader > 1 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Nat_Populism_leader = 3 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Ihor Miroshnychenko"
 				picture = "gfx/leaders/UKR/ukr_miroshnychenko.dds"
@@ -886,16 +1391,58 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Svoboda
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Nat_Populism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Populism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 21 } }
-		if = { limit = { check_variable = { Nat_Fascism_leader = 0 } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Fascism_leader < 1 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Fascism_leader < 2 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Fascism_leader < 3 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Fascism_leader < 4 } date > 2014.3.22 NOT = { date > 2016.10.14 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Fascism_leader < 5 } date > 2016.10.14 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+			set_temp_variable = { ukr_ldr_ctr = 5 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2016.10.14 }
+			set_temp_variable = { ukr_ldr_sel = 5 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } date > 2014.3.22 NOT = { date > 2016.10.14 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } NOT = { date > 2014.3.22 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Slava Stetsko"
 				picture = "gfx/leaders/UKR/ukr_stetsko.dds"
@@ -905,14 +1452,8 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# KUN
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Fascism_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Oleksiy Ivchenko"
 				picture = "gfx/leaders/UKR/ukr_ivchenko.dds"
@@ -922,14 +1463,8 @@ set_leader_UKR = {
 					backroom_backstabber
 				}
 			}	# KUN
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Fascism_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Stepan Bratsiun"
 				picture = "gfx/leaders/UKR/ukr_bratsiun.dds"
@@ -939,14 +1474,8 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# KUN
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Fascism_leader = 3 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Fascism_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Dmytro Yarosh"
 				picture = "gfx/leaders/UKR/ukr_yarosh.dds"
@@ -956,14 +1485,8 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Pravyi Sektor
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Fascism_leader > 3 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Nat_Fascism_leader = 5 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 5 } }
 			create_country_leader = {
 				name = "Andriy Biletskyi"
 				picture = "gfx/leaders/UKR/ukr_biletskyi.dds"
@@ -973,16 +1496,51 @@ set_leader_UKR = {
 					ruthless
 				}
 			}	# Natsionalnyi Korpus
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Nat_Fascism_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Fascism_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 22 } }
-		if = { limit = { check_variable = { Nat_Autocracy_leader = 0 } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_temp_variable = { ukr_ldr_sel = 0 }
+		set_temp_variable = { ukr_ldr_ctr = 0 }
 
+		# 1) first unused leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Autocracy_leader < 1 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+			set_temp_variable = { ukr_ldr_ctr = 1 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Autocracy_leader < 2 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+			set_temp_variable = { ukr_ldr_ctr = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Autocracy_leader < 3 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+			set_temp_variable = { ukr_ldr_ctr = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } check_variable = { Nat_Autocracy_leader < 4 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+			set_temp_variable = { ukr_ldr_ctr = 4 }
+		}
+		# 2) repeat win: last leader whose window matches
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } }
+			set_temp_variable = { ukr_ldr_sel = 4 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } }
+			set_temp_variable = { ukr_ldr_sel = 3 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } }
+			set_temp_variable = { ukr_ldr_sel = 2 }
+		}
+		if = { limit = { check_variable = { ukr_ldr_sel = 0 } }
+			set_temp_variable = { ukr_ldr_sel = 1 }
+		}
+
+		hidden_effect = { kill_country_leader = yes }
+
+		if = { limit = { check_variable = { ukr_ldr_sel = 1 } }
 			create_country_leader = {
 				name = "Viktor Muzhenko"
 				picture = "gfx/leaders/UKR/viktor_muzhenko.dds"
@@ -992,14 +1550,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Armed Forces
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Autocracy_leader = 1 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 2 } }
 			create_country_leader = {
 				name = "Ruslan Khomchak"
 				picture = "gfx/leaders/UKR/ruslan_khomchak.dds"
@@ -1009,14 +1561,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Armed Forces
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Autocracy_leader = 2 } NOT = { check_variable = { b = 1 } } }
-			add_to_variable = { Nat_Autocracy_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 3 } }
 			create_country_leader = {
 				name = "Valerii Zaluzhnyi"
 				picture = "gfx/leaders/UKR/valerii_zaluzhnyi.dds"
@@ -1026,14 +1572,8 @@ set_leader_UKR = {
 					rational
 				}
 			}	# Armed Forces
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
-		else_if = { limit = { check_variable = { Nat_Autocracy_leader > 2 } NOT = { check_variable = { b = 1 } } }
-			set_variable = { Nat_Autocracy_leader = 4 }
-			hidden_effect = { kill_country_leader = yes }
-
+		if = { limit = { check_variable = { ukr_ldr_sel = 4 } }
 			create_country_leader = {
 				name = "Oleksandr Syrskyi"
 				picture = "gfx/leaders/UKR/oleksandr_syrskyi.dds"
@@ -1043,28 +1583,25 @@ set_leader_UKR = {
 					stubborn
 				}
 			}	# Armed Forces (from 2024)
+		}
 
+		if = { limit = { check_variable = { ukr_ldr_ctr > 0 } }
+			set_variable = { Nat_Autocracy_leader = ukr_ldr_ctr }
 			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Nat_Autocracy_leader = 1 } }
-			set_temp_variable = { b = 1 }
 		}
 	}
 	else_if = { limit = { check_variable = { ruling_party = 23 } }
-		if = { limit = { check_variable = { Monarchist_leader > -1 } }
-			set_variable = { Monarchist_leader = 1 }
-			hidden_effect = { kill_country_leader = yes }
+		set_variable = { Monarchist_leader = 1 }
+		hidden_effect = { kill_country_leader = yes }
 
-			create_country_leader = {
-				name = "Yelena I"
-				picture = "gfx/leaders/UKR/UKR_skoropadskaya_Ott.dds"
-				ideology = Monarchist
-				traits = {
-					nationalist_Monarchist
-					inexperienced
-				}
-			}	# House of Skoropadskyi
-
-			if = { limit = { has_country_flag = do_not_retire } subtract_from_variable = { Monarchist_leader = 1 } }
-			set_temp_variable = { b = 1 }
-		}
+		create_country_leader = {
+			name = "Yelena I"
+			picture = "gfx/leaders/UKR/UKR_skoropadskaya_Ott.dds"
+			ideology = Monarchist
+			traits = {
+				nationalist_Monarchist
+				inexperienced
+			}
+		}	# House of Skoropadskyi
 	}
 }
