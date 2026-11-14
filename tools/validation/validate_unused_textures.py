@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Find textures in gfx/ that no .gfx file references, plus references that
-point at missing files. Vanilla HoI4 installs are auto-detected so vanilla
-sprite refs don't get flagged; pass --hoi4-path to override."""
+"""Find textures in gfx/ that no .gfx file references, .mesh files no pdxmesh
+uses, and references that point at missing files. A texture only an unused
+mesh names counts as unused. Vanilla HoI4 installs are auto-detected so vanilla
+sprite and mesh refs don't get flagged; pass --hoi4-path to override."""
 
 import os
 import re
@@ -50,6 +51,7 @@ _GFX_TEXTURE_REF = re.compile(
     r'(?:"([^"]*)"|([^\s#{}]+))',
     re.IGNORECASE,
 )
+_MESH_FILE_REF = re.compile(r'\bfile\s*=\s*"([^"]+\.mesh)"', re.IGNORECASE)
 
 
 def _normalize_texture_path(texture_path: str) -> str:
@@ -108,6 +110,24 @@ def find_texture_files(mod_path: str) -> Set[str]:
             texture_files.add(rel_path)
 
     return texture_files
+
+
+def find_mesh_references(root: str) -> Set[str]:
+    """Lower-cased .mesh paths named by the .gfx and .asset files under root."""
+    refs: Set[str] = set()
+    for folder in ("gfx", "interface"):
+        for filename in list_files(os.path.join(root, folder), ("*.gfx", "*.asset")):
+            # A game install's files are not all valid UTF-8, as in process_gfx_file.
+            try:
+                with open(filename, encoding="utf-8-sig", errors="replace") as fh:
+                    content = strip_comments(fh.read())
+            except OSError:
+                continue
+            refs.update(
+                _normalize_texture_path(ref).lower()
+                for ref in _MESH_FILE_REF.findall(content)
+            )
+    return refs
 
 
 # Worker globals for the texture index, set once per worker by _textures_init
@@ -229,6 +249,7 @@ class Validator(BaseValidator):
         self.game_file_textures = set()
         self.text_icon_referenced_textures = set()
         self.unused_count = 0
+        self.unused_mesh_count = 0
         self.missing_count = 0
         self.hoi4_path = hoi4_path
         self._detect_hoi4_installation()
@@ -358,8 +379,19 @@ class Validator(BaseValidator):
 
         return matched_textures
 
-    def _get_mesh_referenced_textures(self) -> Set[str]:
-        """Resolve textures named inside .mesh files to texture paths.
+    def _split_meshes(self) -> Tuple[List[str], List[str]]:
+        """(used, unused) .mesh files under gfx/. A used one is a pdxmesh `file`."""
+        refs = find_mesh_references(self.mod_path)
+        if self.hoi4_path:
+            refs |= find_mesh_references(self.hoi4_path)
+        used, unused = [], []
+        for filename in list_files(Path(self.mod_path) / "gfx", ("*.mesh",)):
+            rel_path = os.path.relpath(filename, self.mod_path).replace("\\", "/")
+            (used if rel_path.lower() in refs else unused).append(filename)
+        return used, unused
+
+    def _get_mesh_referenced_textures(self, mesh_files: List[str]) -> Set[str]:
+        """Resolve textures named inside the given .mesh files to texture paths.
 
         Unit model textures are bound by the .mesh, not by a .gfx entry. The
         files are binary but store texture filenames as plain ASCII, so a
@@ -367,9 +399,8 @@ class Validator(BaseValidator):
         """
         matched: Set[str] = set()
         pattern = re.compile(rb"[A-Za-z0-9_\-.]+\.(?:dds|tga)", re.IGNORECASE)
-        mesh_root = str(Path(self.mod_path) / "gfx")
         count = 0
-        for filename in list_files(mesh_root, ("*.mesh",)):
+        for filename in mesh_files:
             count += 1
             try:
                 with open(filename, "rb") as fh:
@@ -473,8 +504,9 @@ class Validator(BaseValidator):
             f"  Found {len(self.text_icon_referenced_textures)} textures referenced via loc text icons"
         )
 
-        self._log_section("Scanning .mesh files for model texture references...")
-        self.mesh_referenced_textures = self._get_mesh_referenced_textures()
+        self._log_section("Scanning used .mesh files for model texture references...")
+        used_meshes, unused_meshes = self._split_meshes()
+        self.mesh_referenced_textures = self._get_mesh_referenced_textures(used_meshes)
         self.log(
             f"  Found {len(self.mesh_referenced_textures)} textures referenced by .mesh files"
         )
@@ -498,6 +530,17 @@ class Validator(BaseValidator):
             unused_textures,
             "✓ All texture files are referenced in .gfx or game files",
             "Texture files not referenced in any .gfx or game files:",
+        )
+
+        self.unused_mesh_count = len(unused_meshes)
+        self._report(
+            sorted(
+                os.path.relpath(f, self.mod_path).replace("\\", "/")
+                for f in unused_meshes
+            ),
+            "✓ Every .mesh file is used by a pdxmesh",
+            "Mesh files no pdxmesh uses:",
+            category="unused-mesh",
         )
 
     def validate_missing_textures(self):
@@ -576,6 +619,7 @@ class Validator(BaseValidator):
                 "always",
             )
         self.log(f"  Unused texture files: {self.unused_count}", "always")
+        self.log(f"  Unused mesh files: {self.unused_mesh_count}", "always")
         self.log(f"  Missing texture references: {self.missing_count}", "always")
 
         if self.unused_count > 0:
