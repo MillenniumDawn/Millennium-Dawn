@@ -135,6 +135,7 @@ swap_coalition_outlook_idea = {
 }
 
 reset_democratic_coalition_ideas = {
+	set_temp_variable = { coalition_idea_slot = 0 }
 	set_temp_variable = { coalition_idea_share = coalition_democratic }
 	set_coalition_idea_level = yes
 	set_temp_variable = { coalition_idea_target_token = global.coalition_western_idea^coalition_idea_level }
@@ -142,6 +143,7 @@ reset_democratic_coalition_ideas = {
 }
 
 reset_communism_coalition_ideas = {
+	set_temp_variable = { coalition_idea_slot = 1 }
 	set_temp_variable = { coalition_idea_share = coalition_communism }
 	set_coalition_idea_level = yes
 	set_temp_variable = { coalition_idea_target_token = global.coalition_emerging_idea^coalition_idea_level }
@@ -149,6 +151,7 @@ reset_communism_coalition_ideas = {
 }
 
 reset_fascism_coalition_ideas = {
+	set_temp_variable = { coalition_idea_slot = 2 }
 	set_temp_variable = { coalition_idea_share = coalition_fascism }
 	set_coalition_idea_level = yes
 	set_temp_variable = { coalition_idea_target_token = global.coalition_salafist_idea^coalition_idea_level }
@@ -156,6 +159,7 @@ reset_fascism_coalition_ideas = {
 }
 
 reset_neutrality_coalition_ideas = {
+	set_temp_variable = { coalition_idea_slot = 3 }
 	set_temp_variable = { coalition_idea_share = coalition_neutrality }
 	set_coalition_idea_level = yes
 	set_temp_variable = { coalition_idea_target_token = global.coalition_non_alligned_idea^coalition_idea_level }
@@ -163,6 +167,7 @@ reset_neutrality_coalition_ideas = {
 }
 
 reset_nationalist_coalition_ideas = {
+	set_temp_variable = { coalition_idea_slot = 4 }
 	set_temp_variable = { coalition_idea_share = coalition_nationalist }
 	set_coalition_idea_level = yes
 	set_temp_variable = { coalition_idea_target_token = global.coalition_nationalist_idea^coalition_idea_level }
@@ -191,16 +196,21 @@ set_coalition_idea_level = {
 }
 
 # Effect: update_coalition_outlook_idea
-# Purpose: Adds the target coalition idea and records it so it can be cleared later
+# Purpose: Replaces the outlook's idea when the array is synced; otherwise adds the target and records it so it can be cleared later
 # Parameters:
+# - coalition_idea_slot: outlook id 0-4, the index in coalition_applied_tokens
 # - coalition_idea_target_token: Desired idea token, or 0 for none.
 update_coalition_outlook_idea = {
-	if = {
-		limit = { NOT = { check_variable = { coalition_idea_target_token = 0 } } }
-		add_ideas = var:coalition_idea_target_token
+	if = { limit = { check_variable = { coalition_ideas_synced = 1 } }
+		swap_coalition_outlook_idea = yes
 	}
-	add_to_array = { coalition_applied_tokens = coalition_idea_target_token }
-	set_variable = { coalition_ideas_synced = 0 }
+	else = {
+		if = {
+			limit = { NOT = { check_variable = { coalition_idea_target_token = 0 } } }
+			add_ideas = var:coalition_idea_target_token
+		}
+		add_to_array = { coalition_applied_tokens = coalition_idea_target_token }
+	}
 }
 
 clear_coalition_count_ideas = {
