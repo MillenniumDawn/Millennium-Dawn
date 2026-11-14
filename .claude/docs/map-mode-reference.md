@@ -22,8 +22,8 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 
 ## Layers
 
-- Draw each country in one layer only. The EU mode painted members in both layers and
-  they showed off-white instead of blue (Issue #6005). Exclude the top layer's
+- Draw each country in one layer only. Overlapping EU layers may explain the off-white
+  members in Issue #6005; the blending behavior is unverified. Exclude the top layer's
   countries from the bottom layer's color trigger.
 - Target each layer with the array its color trigger checks.
 

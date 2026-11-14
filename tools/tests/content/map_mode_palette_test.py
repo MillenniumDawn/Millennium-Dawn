@@ -198,6 +198,27 @@ def test_every_color_sets_all_three_channels(map_modes, mode):
         assert set(channels) == set(_RGB), (mode, channels)
 
 
+# Legend categories, including fallbacks; distance checks alone miss deleted colors.
+_CATEGORY_COUNTS = {
+    "EU_map_mode": 7,
+    "GCC_map_mode": 2,
+    "SCO_map_mode": 4,
+    "influence_map_mode": 7,
+    "reserve_currency_map_mode": 11,
+    "subideology_map_mode": 25,
+    "gdp_c_map_mode": 6,
+    "productivity_map_mode": 8,
+    "energy_consumption_map_mode": 6,
+    "unemployment_rate_map_mode": 6,
+    "renewable_energy_hotspot_map_mode": 7,
+}
+
+
+@pytest.mark.parametrize("mode", MAP_MODES)
+def test_every_map_mode_preserves_its_categories(map_modes, mode):
+    assert len(map_modes[mode]) == _CATEGORY_COUNTS[mode], mode
+
+
 _CATEGORICAL_CASES = [
     (mode, vision)
     for mode, kind in MAP_MODES.items()
