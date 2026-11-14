@@ -4364,6 +4364,7 @@ update_display = {
 	set_variable = { treasury_rate_with_interest = { value = display_income subtract = potential_expense } }
 
 	# The balance the AI budget checks judge. Cheap debt leaves room for a deficit: 3% of income per point of interest under 6%.
+	# Interest lags debt, so the room also closes as debt nears 60% of GDP: full room under 30%, none at 60%.
 	# Deficits feed inflation, so each point of inflation above 4% takes a point of room back.
 	set_temp_variable = {
 		ai_deficit_room = {
@@ -4371,6 +4372,7 @@ update_display = {
 			subtract = interest_rate
 			multiply = 0.03
 			clamp = { min = 0 max = 0.15 }
+			min = { value = 0.6 subtract = debt_ratio multiply = 0.5 }
 			subtract = { value = inflation_rate_var subtract = 0.04 clamp = { min = 0 max = 0.15 } }
 			clamp = { min = 0 max = 0.15 }
 		}
