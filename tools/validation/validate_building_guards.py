@@ -55,24 +55,32 @@ The advisory random-infrastructure check only covers direct construction effects
 in selected random-state iterators and randomly limited every-state iterators.
 It looks for a recognized slot check in the selector's own limit, not arbitrary
 guards.
+
+The advisory coastal check flags a coastal provincial building (`only_costal =
+yes`, the engine's spelling, with a `province_max` cap) placed in a province that
+`map/definition.csv` does not mark as coastal land. It reads province blocks in a
+state history `buildings = { 1234 = { ... } }` and `add_building_construction`
+with `province = 1234` or `province = { id = 1234 }`. Provinces picked at runtime
+are not checked.
 """
 
 import os
 import re
 import sys
-from typing import List, Set, Tuple
+from typing import FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from guard_scan import SKIP_BLOCKS as _SKIP_BLOCKS  # noqa: E402
 from guard_scan import Context, read_file, report_findings  # noqa: E402
 from guard_scan import sanitize as _sanitize  # noqa: E402
-from shared_utils import compute_line_offsets, line_for_offset
+from shared_utils import blank_quoted_strings, compute_line_offsets, line_for_offset
 from validator_common import (
     FACTOR_ZERO_RE,
     BaseValidator,
     _child_blocks,
     run_validator_main,
+    strip_comments,
 )
 
 _TYPE_RE = re.compile(r"\btype\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
@@ -140,6 +148,24 @@ _PROVINCE_BUILDINGS = frozenset(
         "supply_node",
     }
 )
+
+
+DEFINITION_FILE = "map/definition.csv"
+_BUILDINGS_GLOB = "common/buildings/*.txt"
+_SCAN_GLOBS = ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+_TOKEN_RE = re.compile(r"[^\s{}=]+|[{}=]")
+_IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
+_PROVINCE_ID_RE = re.compile(r"\d+\Z")
+
+# (coastal provincial buildings, coastal land province ids, every province id)
+CoastalReference = Tuple[FrozenSet[str], FrozenSet[int], FrozenSet[int]]
+# Set in each worker by _init_worker; None skips the coastal check.
+_COASTAL: Optional[CoastalReference] = None
+
+
+def _init_worker(coastal: Optional[CoastalReference]) -> None:
+    global _COASTAL
+    _COASTAL = coastal
 
 
 def _proves_present(operator: str, value: int) -> bool:
@@ -290,6 +316,134 @@ def _has_infrastructure_level_bound(text: str) -> bool:
     )
 
 
+def _assignments(text: str):
+    """Yield (enclosing block keys, key, value, line) for each `key = value`,
+    where value is "{" when the assignment opens a block."""
+    clean = blank_quoted_strings(strip_comments(text))
+    tokens = list(_TOKEN_RE.finditer(clean))
+    path: List[str] = []
+    line, last, index = 1, 0, 0
+    while index < len(tokens):
+        value = tokens[index].group()
+        if value == "}":
+            if path:
+                path.pop()
+            index += 1
+            continue
+        if (
+            value not in ("{", "=")
+            and index + 2 < len(tokens)
+            and tokens[index + 1].group() == "="
+        ):
+            line += clean.count("\n", last, tokens[index].start())
+            last = tokens[index].start()
+            rhs = tokens[index + 2].group()
+            yield tuple(path), value, rhs, line
+            if rhs == "{":
+                path.append(value)
+            index += 3
+            continue
+        if value == "{":
+            path.append("")
+        index += 1
+
+
+def coastal_provincial_buildings(text: str) -> Set[str]:
+    """Names of buildings with `only_costal = yes` and a `province_max` cap."""
+    coastal: Set[str] = set()
+    provincial: Set[str] = set()
+    for path, key, value, _line in _assignments(text):
+        if len(path) < 2 or path[0] != "buildings":
+            continue
+        if len(path) == 2 and key == "only_costal" and value == "yes":
+            coastal.add(path[1])
+        elif key == "province_max" and path[2:] == ("level_cap",):
+            provincial.add(path[1])
+    return coastal & provincial
+
+
+def coastal_land_provinces(text: str) -> Tuple[Set[int], Set[int]]:
+    """Return (every province id, coastal land province ids) from definition.csv."""
+    known: Set[int] = set()
+    coastal: Set[int] = set()
+    for row in text.splitlines():
+        fields = row.split(";")
+        if len(fields) < 6 or not fields[0].strip().isdigit():
+            continue
+        province = int(fields[0])
+        known.add(province)
+        if fields[4].strip() == "land" and fields[5].strip() == "true":
+            coastal.add(province)
+    return known, coastal
+
+
+def province_placements(text: str) -> List[Tuple[str, int, int]]:
+    """(building, province, line) for every building placed in a fixed province."""
+    placements: List[Tuple[str, int, int]] = []
+    building: Optional[str] = None
+    provinces: List[Tuple[int, int]] = []
+    depth = -1
+
+    def flush():
+        if building:
+            placements.extend(
+                (building, province, line) for province, line in provinces
+            )
+
+    for path, key, value, line in _assignments(text):
+        if depth >= 0 and (
+            len(path) <= depth or path[depth] != "add_building_construction"
+        ):
+            flush()
+            building, provinces, depth = None, [], -1
+
+        if key == "add_building_construction" and value == "{":
+            building, provinces, depth = None, [], len(path)
+            continue
+
+        if depth >= 0:
+            inner = path[depth + 1 :]
+            if not inner and key == "type" and _IDENTIFIER_RE.match(value):
+                building = value
+            elif _PROVINCE_ID_RE.match(value) and (
+                (not inner and key == "province")
+                or (inner == ("province",) and key == "id")
+            ):
+                provinces.append((int(value), line))
+            continue
+
+        if (
+            len(path) >= 2
+            and path[-2] == "buildings"
+            and _PROVINCE_ID_RE.match(path[-1])
+            and _IDENTIFIER_RE.match(key)
+            and value != "{"
+        ):
+            placements.append((key, int(path[-1]), line))
+
+    flush()
+    return placements
+
+
+def _coastal_rows(
+    relative: str, placements: List[Tuple[str, int, int]], coastal: CoastalReference
+) -> List[Tuple[str, str, int, str]]:
+    buildings, coastal_provinces, known = coastal
+    rows = []
+    for building, province, line in placements:
+        if building not in buildings or province in coastal_provinces:
+            continue
+        if province in known:
+            reason = f"which {DEFINITION_FILE} does not mark as coastal land"
+        else:
+            reason = f"which is not in {DEFINITION_FILE}"
+        message = (
+            f"coastal building '{building}' is placed in province {province}, {reason}"
+        )
+        rows.append(("coastal-building-not-coastal", relative, line, message))
+    return rows
+
+
 class Scanner:
     """Walks one file's script tree, tracking buildings proven present."""
 
@@ -424,7 +578,10 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
         and "infrastructure" in raw
         and any(name in raw for name in _CHECKED_RANDOM_SELECTORS)
     )
-    if not has_existing_checks and not has_random_infrastructure:
+    # Placements are cached whatever the coastal reference holds, so the
+    # cached entry depends on the file content alone.
+    has_placements = "add_building_construction" in raw or "buildings" in raw
+    if not (has_existing_checks or has_random_infrastructure or has_placements):
         return []
 
     def compute():
@@ -434,23 +591,57 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
             scanner.check_province_building_triggers()
         if has_random_infrastructure:
             scanner.check_random_infrastructure_slots(0, len(scanner.text))
-        return scanner.findings
+        placements = province_placements(raw) if has_placements else []
+        return scanner.findings, placements
 
-    findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan_v7", filepath, raw, compute
+    findings, placements = disk_cache.per_file_cached_by_content(
+        mod_path, "building_guards_scan_v8", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
-    return [(category, relative, line, message) for category, line, message in findings]
+    rows = [(category, relative, line, message) for category, line, message in findings]
+    if _COASTAL is not None:
+        rows.extend(_coastal_rows(relative, placements, _COASTAL))
+    return rows
 
 
 class Validator(BaseValidator):
     TITLE = "BUILDING GUARD VALIDATION"
-    STAGED_EXTENSIONS = [".txt"]
+    STAGED_EXTENSIONS = [".txt", ".csv"]
+
+    def _coastal_reference(self) -> Optional[CoastalReference]:
+        buildings: Set[str] = set()
+        for path in self._collect_files([_BUILDINGS_GLOB], ignore_staged=True):
+            buildings |= coastal_provincial_buildings(read_file(path))
+        if not buildings:
+            return None
+        try:
+            definition = read_file(os.path.join(self.mod_path, DEFINITION_FILE))
+        except ValueError:
+            self.add_warning(
+                "coastal-building-definition-missing",
+                f"cannot check coastal building placement because "
+                f"{DEFINITION_FILE} is missing",
+                DEFINITION_FILE,
+            )
+            return None
+        known, coastal_provinces = coastal_land_provinces(definition)
+        return frozenset(buildings), frozenset(coastal_provinces), frozenset(known)
 
     def validate_building_guards(self):
         self._log_section("damage_building / remove_building existence guards")
-        files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        results = self._pool_map(scan_file, [(f, self.mod_path) for f in files])
+        coastal = self._coastal_reference()
+        # A changed building or province definition can break any placement.
+        reference_changed = self.staged_only and (
+            self.staged_touches(("common/buildings",))
+            or any(
+                path.replace("\\", "/").endswith(DEFINITION_FILE)
+                for path in self.staged_files or []
+            )
+        )
+        files = self._collect_files(_SCAN_GLOBS, ignore_staged=reference_changed)
+        results = self._pool_map_init(
+            scan_file, [(f, self.mod_path) for f in files], _init_worker, (coastal,)
+        )
         rows = sorted(row for rows in results for row in rows)
 
         report_findings(
@@ -477,6 +668,15 @@ class Validator(BaseValidator):
             self.add_warning,
             "random infrastructure construction(s) without a recognized slot guard",
             "Checked random-state infrastructure constructions have recognized slot guards",
+        )
+
+        self._log_section("coastal buildings in fixed provinces")
+        report_findings(
+            self,
+            [row for row in rows if row[0] == "coastal-building-not-coastal"],
+            self.add_warning,
+            "coastal building(s) placed in a province that is not coastal land",
+            "Every fixed-province coastal building sits in coastal land",
         )
 
     def run_validations(self):
