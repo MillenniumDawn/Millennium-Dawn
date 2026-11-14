@@ -601,6 +601,34 @@ antarctica_transfer_research_stations_to_root = {
 				}
 			}
 			set_temp_variable = { station_transferred = 1 }
+
+			# Keep the station covered by the new controller's repair countdown.
+			set_temp_variable = { transfer_repair_days = global.antarctica_station_repair_days_remaining^transfer_station_id }
+			if = {
+				limit = {
+					NOT = { has_global_flag = antarctica_blizzard_active }
+					check_variable = { transfer_repair_days < 1 }
+					OR = {
+						check_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^transfer_station_id > 0 }
+						check_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^transfer_station_id > 0 }
+					}
+				}
+				set_temp_variable = { transfer_repair_days = 14 }
+			}
+			if = {
+				limit = { check_variable = { transfer_repair_days > 0 } }
+				ROOT = {
+					if = {
+						limit = { check_variable = { research_station_module_repair_days_remaining < transfer_repair_days } }
+						set_variable = { research_station_module_repair_days_remaining = transfer_repair_days }
+					}
+				}
+			}
 		}
 	}
 	if = {
@@ -3737,38 +3765,47 @@ antarctica_process_blizzard_repairs_daily = {
 		limit = { check_variable = { research_station_module_repair_days_remaining > 0 } }
 		subtract_from_variable = { research_station_module_repair_days_remaining = 1 }
 
-		antarctica_find_player_station = yes
-		set_temp_variable = { station_id = player_station_id }
+		for_each_loop = {
+			array = country_owned_station_ids
+			value = repair_station_id
 
-		# Mirror the countdown per station so observers read the viewed station, not their own.
-		if = {
-			limit = { check_variable = { station_id > 0 } }
-			set_variable = { global.antarctica_station_repair_days_remaining^station_id = research_station_module_repair_days_remaining }
 			if = {
-				limit = { check_variable = { selected_antarctica_station = station_id } }
-				set_variable = { selected_antarctica_station_repair_days_remaining = research_station_module_repair_days_remaining }
+				limit = {
+					check_variable = { repair_station_id > 0 }
+					check_variable = { global.antarctica_station_exists^repair_station_id > 0 }
+					check_variable = { global.antarctica_station_controller^repair_station_id = THIS.id }
+				}
+				set_temp_variable = { station_id = repair_station_id }
+
+				# Mirror the countdown per station so observers read the viewed station, not their own.
+				set_variable = { global.antarctica_station_repair_days_remaining^station_id = research_station_module_repair_days_remaining }
+				if = {
+					limit = { check_variable = { selected_antarctica_station = station_id } }
+					set_variable = { selected_antarctica_station_repair_days_remaining = research_station_module_repair_days_remaining }
+				}
+
+				if = {
+					limit = { check_variable = { research_station_module_repair_days_remaining < 1 } }
+					set_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id = 0 }
+					set_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id = 0 }
+
+					antarctica_recalculate_station_module_outputs = yes
+					if = {
+						limit = { check_variable = { selected_antarctica_station = station_id } }
+						antarctica_set_selected_station_controller = yes
+					}
+				}
 			}
 		}
 
 		if = {
 			limit = { check_variable = { research_station_module_repair_days_remaining < 1 } }
 			clear_variable = research_station_module_repair_days_remaining
-
-			# Clear all blizzard damage flags on this country's station.
-			set_variable = { global.antarctica_station_repair_days_remaining^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_2_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_6_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_7_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_8_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_9_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_11_blizzard_damaged^station_id = 0 }
-			set_variable = { global.antarctica_station_module_slot_13_blizzard_damaged^station_id = 0 }
-
-			antarctica_recalculate_station_module_outputs = yes
-			if = {
-				limit = { check_variable = { selected_antarctica_station = station_id } }
-				antarctica_set_selected_station_controller = yes
-			}
 		}
 		add_to_variable = { global.missile_ui_updated = 1 }
 	}
