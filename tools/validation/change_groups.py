@@ -94,6 +94,7 @@ GROUP_PATTERNS = {
     "mod": ["*.mod"],
     "docs": ["docs/**", "tools/docs_checks/**", ".github/workflows/docs-quality.yml"],
     "map-adjacency": ["map/adjacency_rules.txt"],
+    "map-definition": ["map/definition.csv"],
     "content": [
         "common/**",
         "events/**",
@@ -107,6 +108,7 @@ GROUP_PATTERNS = {
         "gfx/interface/equipmentdesigner/graphic_db/**",
         "music/**",
         "map/adjacency_rules.txt",
+        "map/definition.csv",
         "*.mod",
     ],
 }
