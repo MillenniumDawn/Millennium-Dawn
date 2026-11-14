@@ -286,7 +286,7 @@ ingame_update_setup = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Weekly Economic Update: Treasury: [?THIS.treasury] Treasury Rate: [?THIS.treasury_rate] Debt: [?THIS.debt] Interest Rate: [?THIS.interest_rate] Population Tax Rate: [?THIS.population_tax_rate] Corporate Tax Rate: [?THIS.corporate_tax_rate]"
 		log = "[GetDateText]: [THIS.GetName]: Economy Breakdown: GDP: [?THIS.gdp_total] Income: [?THIS.display_income] (Tax: [?THIS.tax_gain] Resources: [?THIS.resource_sale_rate] Investments: [?THIS.int_investments_collected_rate] Other: [?THIS.additional_income_rate]) Expense: [?THIS.potential_expense] (Bureaucracy: [?THIS.bureaucracy_gain] Defence: [?THIS.defence_gain] Security: [?THIS.security_gain] Education: [?THIS.education_gain] Health: [?THIS.health_gain] Welfare: [?THIS.welfare_gain] Infrastructure: [?THIS.infra_gain] Other: [?THIS.additional_expenses_rate] Border: [?THIS.border_control_gain] UN: [?THIS.united_nations_expenses] Debt Service: [?THIS.debt_rate]) Defence Law: [?THIS.military_law] Expected Defence Law: [?THIS.expected_military_law] Political Power: [?THIS.political_power]"
-		log = "[GetDateText]: [THIS.GetName]: Spending Laws (law/expected/offset): Bureaucracy: [?THIS.bureau_law]/[?THIS.expected_adm_spending]/[?THIS.bureau_desire_offset] Police: [?THIS.police_law]/[?THIS.expected_police_spending]/[?THIS.police_desire_offset] Education: [?THIS.education_law]/[?THIS.expected_edu_spending]/[?THIS.education_desire_offset] Health: [?THIS.health_law]/[?THIS.expected_health_spending]/[?THIS.health_desire_offset] Social: [?THIS.social_law]/[?THIS.expected_welfare_spending]/[?THIS.social_desire_offset] Defence: [?THIS.military_law]/[?THIS.expected_military_law]/[?THIS.defence_desire_offset] Balance Ratio: [?THIS.budget_balance_ratio]"
+		log = "[GetDateText]: [THIS.GetName]: Spending Laws (law/expected/offset): Bureaucracy: [?THIS.bureau_law]/[?THIS.expected_adm_spending]/[?THIS.bureau_desire_offset] Police: [?THIS.police_law]/[?THIS.expected_police_spending]/[?THIS.police_desire_offset] Education: [?THIS.education_law]/[?THIS.expected_edu_spending]/[?THIS.education_desire_offset] Health: [?THIS.health_law]/[?THIS.expected_health_spending]/[?THIS.health_desire_offset] Social: [?THIS.social_law]/[?THIS.expected_welfare_spending]/[?THIS.social_desire_offset] Defence: [?THIS.military_law]/[?THIS.expected_military_law]/[?THIS.defence_desire_offset] Balance Ratio: [?THIS.budget_balance_ratio] AI Balance: [?THIS.ai_budget_balance]"
 	}
 }
 
@@ -4360,12 +4360,24 @@ update_display = {
 		set_variable = { ai_race_finance_rate_component = ai_race_finance_expense_component }
 	}
 
-	# AI budget checks count paused debt service so a cheap loan does not read as a surplus.
+	# Counts paused debt service so a cheap loan does not read as a surplus.
 	set_variable = { treasury_rate_with_interest = { value = display_income subtract = potential_expense } }
 
-	# Lets AI deficit checks scale with the size of the economy.
+	# The balance the AI budget checks judge. Cheap debt leaves room for a deficit: 1% of income per point of interest under 6%.
+	set_temp_variable = { ai_deficit_room = { value = 6 subtract = interest_rate multiply = 0.01 clamp = { min = 0 max = 0.05 } } }
+	set_variable = { ai_budget_balance = { value = display_income multiply = ai_deficit_room add = treasury_rate_with_interest } }
+	# The fixed deficit tiers are sized for a budget of 50 a week, so a larger economy's deficit is sized down to match.
+	if = {
+		limit = {
+			check_variable = { ai_budget_balance < 0 }
+			check_variable = { display_income > 50 }
+		}
+		set_variable = { ai_budget_balance = { value = ai_budget_balance multiply = 50 divide = display_income } }
+	}
+
+	# The same judgment as a share of income, so it also fits small economies.
 	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = treasury_rate_with_interest divide = display_income } }
+		set_variable = { budget_balance_ratio = { value = treasury_rate_with_interest divide = display_income add = ai_deficit_room } }
 	}
 	else_if = { limit = { check_variable = { treasury_rate_with_interest < 0 } }
 		set_variable = { budget_balance_ratio = -1 }
@@ -6095,13 +6107,13 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate_with_interest< -1 }
+				check_variable = { ai_budget_balance< -1 }
 				check_variable = { budget_balance_ratio < -0.03 }
 			}
 			check_variable = { population_tax_rate < 40 }
 			OR = {
 				has_stability > 0.24
-				check_variable = { treasury_rate_with_interest< -5 }
+				check_variable = { ai_budget_balance< -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6113,13 +6125,13 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate_with_interest< -2 }
+				check_variable = { ai_budget_balance< -2 }
 				check_variable = { budget_balance_ratio < -0.06 }
 			}
 			check_variable = { corporate_tax_rate < 50 }
 			OR = {
 				check_variable = { population_tax_rate > 24 }
-				check_variable = { treasury_rate_with_interest< -5 }
+				check_variable = { ai_budget_balance< -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
@@ -6130,7 +6142,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			check_variable = { policy_transition_tax_stability < -0.1 }
-			check_variable = { treasury_rate_with_interest> -5 }
+			check_variable = { ai_budget_balance> -5 }
 			check_variable = { budget_balance_ratio > -0.15 }
 		}
 		if = {
@@ -6159,7 +6171,7 @@ calculate_tax_adjustments = {
 				check_variable = { interest_rate > 8 }
 				check_variable = { debt_ratio > 1.0 }
 			}
-			check_variable = { treasury_rate_with_interest< 0 }
+			check_variable = { ai_budget_balance< 0 }
 		}
 		if = {
 			limit = {
@@ -6184,7 +6196,7 @@ calculate_tax_adjustments = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { treasury_rate_with_interest> 2 }
+				check_variable = { ai_budget_balance> 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
 			check_variable = { budget_balance_ratio > 0.03 }
