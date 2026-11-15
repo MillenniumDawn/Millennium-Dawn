@@ -2005,17 +2005,17 @@ _GUARD_REPORT_CASES = {
     "spend at the threshold": (
         "",
         "",
-        _spend(-5),
+        _spend(-1),
         "",
         [
             (
                 "missing-bankruptcy-guard",
-                "1 focus(es) spending >= 5bn without the bankruptcy guard:"
+                "1 focus(es) spending >= 1bn without the bankruptcy guard:"
                 " TAG_focus_a (line 3)",
             )
         ],
     ),
-    "spend below the threshold": ("", "", _spend(-3), "", []),
+    "spend below the threshold": ("", "", _spend(-0.5), "", []),
     "spend with the guard": ("", "", _spend(-7), BANKRUPTCY_GUARD, []),
     "scripted spend without the guard": (
         _SPEND_EFFECT,
@@ -2231,7 +2231,7 @@ def test_bankruptcy_warnings_aggregate_per_file(tmp_path):
     v.validate_ai_will_do_guards()
 
     assert _messages(v) == [
-        "2 focus(es) spending >= 5bn without the bankruptcy guard:"
+        "2 focus(es) spending >= 1bn without the bankruptcy guard:"
         " TAG_focus_a (line 3), TAG_focus_b (line 12)"
     ]
 
