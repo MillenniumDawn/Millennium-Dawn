@@ -6115,6 +6115,11 @@ calculate_tax_adjustments = {
 	set_temp_variable = { pop_tax_change = 0 }
 	set_temp_variable = { corp_tax_change = 0 }
 
+	# Income from one point of each tax. Population tax pays most in large, rich nations; corporate tax also costs consumer goods and productivity.
+	set_temp_variable = { pop_point_income = { value = population_tax divide = { value = population_tax_rate clamp = { min = 1 max = 100 } } } }
+	set_temp_variable = { corp_point_income = { value = corporate_tax divide = { value = corporate_tax_rate clamp = { min = 1 max = 100 } } } }
+	set_temp_variable = { corp_point_income_three_quarters = { value = corp_point_income multiply = 0.75 } }
+
 	# --- TAX INCREASES (deficit response) ---
 
 	# Population tax: raise at mild deficit (< -1, or 3% of income)
@@ -6136,7 +6141,7 @@ calculate_tax_adjustments = {
 	}
 
 	# Corporate tax: raise at moderate deficit (< -2, or 6% of income)
-	# Only after population tax reaches a moderate level (> 24), or at severe deficit regardless
+	# Only once population tax cannot carry it (at 40, low stability, or a point earns under 3/4 of a corporate point), or at severe deficit regardless
 	if = {
 		limit = {
 			OR = {
@@ -6145,7 +6150,9 @@ calculate_tax_adjustments = {
 			}
 			check_variable = { corporate_tax_rate < 50 }
 			OR = {
-				check_variable = { population_tax_rate > 24 }
+				check_variable = { population_tax_rate > 39 }
+				has_stability < 0.25
+				check_variable = { pop_point_income < corp_point_income_three_quarters }
 				check_variable = { ai_budget_balance< -5 }
 				check_variable = { budget_balance_ratio < -0.15 }
 			}
@@ -6242,6 +6249,24 @@ calculate_tax_adjustments = {
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }
+	}
+
+	# Rebalance: shift a point from corporate to population tax while a population point pays at least as much,
+	# freeing consumer goods and productivity without losing income or stability it cannot spare
+	if = {
+		limit = {
+			check_variable = { pop_tax_change = 0 }
+			check_variable = { corp_tax_change = 0 }
+			check_variable = { corporate_tax_rate > 20 }
+			check_variable = { population_tax_rate < 40 }
+			has_stability > 0.40
+			check_variable = { pop_point_income > corp_point_income }
+			set_temp_variable = { tax_gap = { value = population_tax_rate subtract = corporate_tax_rate } }
+			check_variable = { tax_gap < 20 }
+			NOT = { check_variable = { policy_transition_tax_stability < -0.1 } }
+		}
+		set_temp_variable = { pop_tax_change = 1 }
+		set_temp_variable = { corp_tax_change = -1 }
 	}
 }
 
