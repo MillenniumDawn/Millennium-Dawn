@@ -352,11 +352,8 @@ _W_PAYMENTS = _NO_PAYMENTS
 _W_DIGEST = ""
 
 
-def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
-    global _W_LOOKUPS, _W_PAYMENTS, _W_DIGEST
-    _W_LOOKUPS = lookups
-    _W_PAYMENTS = payments
-    _W_DIGEST = hashlib.sha256(
+def _lookups_digest(lookups: CostLookups) -> str:
+    return hashlib.sha256(
         repr(
             (
                 sorted(lookups.effects.items()),
@@ -370,6 +367,13 @@ def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
             )
         ).encode("utf-8")
     ).hexdigest()
+
+
+def _init_cost_lookups(lookups: CostLookups, payments: EventPayments) -> None:
+    global _W_LOOKUPS, _W_PAYMENTS, _W_DIGEST
+    _W_LOOKUPS = lookups
+    _W_PAYMENTS = payments
+    _W_DIGEST = _lookups_digest(lookups)
 
 
 def _scan_stored_variable_signs(
@@ -408,25 +412,44 @@ def idea_callbacks(texts: Iterable[str]) -> Dict[str, str]:
     return callbacks
 
 
-def load_cost_lookups(validator: BaseValidator) -> CostLookups:
-    """CostLookups read from the whole mod."""
-    bodies = _effect_bodies(validator)
-    idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
-    ideas = idea_money_modifiers(idea_texts)
-    callbacks = idea_callbacks(idea_texts)
-    effects = _costly_effects(bodies)
-    commitments = money_commitment_effects(bodies, ideas)
-    stored: Dict[str, int] = {}
-    script_files = validator._collect_files(
+def _cost_input_files(validator: BaseValidator) -> List[str]:
+    """Every file the cost lookups and event payments read."""
+    return validator._collect_files(
         ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
         ignore_staged=True,
     )
-    for found in validator._pool_map(
-        partial(_scan_stored_variable_signs, mod_path=validator.mod_path), script_files
-    ):
-        for name, signs in found.items():
-            stored[name] = stored.get(name, 0) | signs
-    return CostLookups(effects, stored, commitments, ideas, callbacks)
+
+
+def load_cost_lookups(validator: BaseValidator) -> CostLookups:
+    """CostLookups read from the whole mod."""
+    script_files = _cost_input_files(validator)
+
+    def build() -> tuple:
+        bodies = _effect_bodies(validator)
+        idea_texts = list(_mod_texts(validator, "common/ideas/**/*.txt"))
+        ideas = idea_money_modifiers(idea_texts)
+        callbacks = idea_callbacks(idea_texts)
+        effects = _costly_effects(bodies)
+        commitments = money_commitment_effects(bodies, ideas)
+        stored: Dict[str, int] = {}
+        for found in validator._pool_map(
+            partial(_scan_stored_variable_signs, mod_path=validator.mod_path),
+            script_files,
+        ):
+            for name, signs in found.items():
+                stored[name] = stored.get(name, 0) | signs
+        # A plain tuple: a pickled CostLookups names __main__ when run as a script.
+        return (effects, stored, commitments, ideas, callbacks)
+
+    return CostLookups(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.cost_lookups",
+            script_files,
+            build,
+            namespace="events",
+        )
+    )
 
 
 def _scan_event_payment_nodes(
@@ -469,16 +492,31 @@ def load_event_payments(
     validator: BaseValidator, lookups: CostLookups
 ) -> EventPayments:
     """resolve_payments over every event and scripted effect in the mod."""
-    nodes: Dict[str, _EventNode] = {}
-    for found in validator._pool_map_init(
-        partial(_scan_event_payment_nodes, mod_path=validator.mod_path),
-        validator._collect_files(["events/**/*.txt"], ignore_staged=True),
-        _init_cost_lookups,
-        (lookups, _NO_PAYMENTS),
-    ):
-        nodes.update(found)
-    return resolve_payments(
-        nodes, effect_payment_nodes(_effect_bodies(validator), lookups)
+
+    def build() -> tuple:
+        nodes: Dict[str, _EventNode] = {}
+        for found in validator._pool_map_init(
+            partial(_scan_event_payment_nodes, mod_path=validator.mod_path),
+            validator._collect_files(["events/**/*.txt"], ignore_staged=True),
+            _init_cost_lookups,
+            (lookups, _NO_PAYMENTS),
+        ):
+            nodes.update(found)
+        return tuple(
+            resolve_payments(
+                nodes, effect_payment_nodes(_effect_bodies(validator), lookups)
+            )
+        )
+
+    return EventPayments(
+        *disk_cache.aggregate_cached(
+            validator.mod_path,
+            "events.event_payments",
+            _cost_input_files(validator),
+            build,
+            namespace="events",
+            salt=_lookups_digest(lookups),
+        )
     )
 
 
@@ -2374,14 +2412,28 @@ def _event_payers(
     return _frozen(charged), _frozen(picked)
 
 
+def _grown(
+    old: Dict[str, FrozenSet[str]], new: Dict[str, FrozenSet[str]]
+) -> Dict[str, FrozenSet[str]]:
+    return {
+        role: old.get(role, frozenset()) | new.get(role, frozenset())
+        for role in {*old, *new}
+    }
+
+
 def resolve_payments(
     event_nodes: Dict[str, _EventNode], effect_nodes: Dict[str, ItemFacts]
 ) -> EventPayments:
     """EventPayments for every node, to a fixed point.
 
-    Payments only grow as the maps fill, so cycles settle. A cycle that never
+    Payments grow as the maps fill, so cycles settle. A cycle that never
     charges anyone stays free. A node is redone only when an event or effect it
     starts changes.
+
+    A free pick trades its kinds for "uncertain" once a pick is unknown, which
+    takes a kind back from the events around it. Events that fire each other can
+    then pass that kind around forever, so an event that returns to a value it
+    already held keeps both values from then on.
     """
     payments = EventPayments({}, {}, frozenset(event_nodes))
     readers: Dict[Tuple[str, str], Set[Tuple[str, str]]] = defaultdict(set)
@@ -2400,6 +2452,7 @@ def resolve_payments(
             readers[("effect", effect)].add((kind, name))
     pending = deque(dict.fromkeys((kind, name) for kind, name, _facts in nodes))
     queued = set(pending)
+    held: Dict[str, Set[tuple]] = defaultdict(set)
     while pending:
         key = pending.popleft()
         queued.discard(key)
@@ -2411,10 +2464,20 @@ def resolve_payments(
             payments.effects[name] = paid
         else:
             event_paid = _event_payers(event_nodes[name], payments)
-            if event_paid == payments.events.get(name, ({}, {})):
+            old = payments.events.get(name, ({}, {}))
+            if event_paid == old:
                 continue
+            value = tuple(frozenset(costs.items()) for costs in event_paid)
+            if value in held[name]:
+                event_paid = (
+                    _grown(old[0], event_paid[0]),
+                    _grown(old[1], event_paid[1]),
+                )
+                if event_paid == old:
+                    continue
+            held[name].add(value)
             payments.events[name] = event_paid
-        for reader in readers[key] - queued:
+        for reader in sorted(readers[key] - queued):
             pending.append(reader)
             queued.add(reader)
     return payments

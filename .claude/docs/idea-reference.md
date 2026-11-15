@@ -22,7 +22,6 @@ BRA_idea_higher_minimum_wage_1 = {
 - In a category with no slot (`country`, `hidden_ideas`), drop `allowed` and `available`
   entirely. Nothing picks from those categories, and `add_idea` never consults either
   block. Use `cancel` if the idea should remove itself.
-  `tools/standardization/strip_idea_allowed_gates.py` removes them in bulk.
 - In a slotted category, keep `allowed = { always = no }` on ideas that must not appear
   in the picker (religion, other laws). `add_idea` still applies them.
 - A slotted idea whose `available` can turn false mid-game needs a `cancel` with the

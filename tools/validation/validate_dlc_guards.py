@@ -36,7 +36,7 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, FrozenSet, List, Sequence, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
@@ -276,14 +276,14 @@ class Scanner:
         tech_gates: Dict[str, Gates],
         category_gates: Dict[str, Gates],
         project_gates: Dict[str, Gates],
-        project_tech_gates: Dict[str, Gates] = {},
+        project_tech_gates: Optional[Dict[str, Gates]] = None,
         availability: FrozenSet[str] = frozenset(),
     ):
         self.text = text
         self.tech_gates = tech_gates
         self.category_gates = category_gates
         self.project_gates = project_gates
-        self.project_tech_gates = project_tech_gates
+        self.project_tech_gates = project_tech_gates or {}
         self.availability = availability
         self.offsets = compute_line_offsets(text)
         self.findings: List[Tuple[str, int, str]] = []

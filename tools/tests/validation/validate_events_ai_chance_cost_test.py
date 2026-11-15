@@ -301,6 +301,38 @@ def test_both_cost_checks_share_one_scan(tmp_path, monkeypatch):
     ]
 
 
+def test_cost_tables_are_cached_until_an_input_file_changes(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    builds = []
+    for name in ("_costly_effects", "resolve_payments"):
+        real = getattr(validate_events, name)
+        monkeypatch.setattr(
+            validate_events,
+            name,
+            lambda *args, real=real, name=name: builds.append(name) or real(*args),
+        )
+    _write(tmp_path, _BUDGET, _SCRIPTED_EFFECTS)
+    _write(tmp_path, "events/Ev.txt", _two_options(_PP_COST + _FLAT))
+
+    def load():
+        v = _validator(tmp_path)
+        lookups = validate_events.load_cost_lookups(v)
+        return lookups, validate_events.load_event_payments(v, lookups)
+
+    first = load()
+    assert load() == first
+    assert builds == ["_costly_effects", "resolve_payments"]
+
+    _write(
+        tmp_path, "history/countries/TAG.txt", "set_variable = { TAG_rail_cost = -4 }\n"
+    )
+    lookups, payments = load()
+
+    assert lookups.stored == {"TAG_rail_cost": 1}
+    assert payments == first[1]
+    assert builds == ["_costly_effects", "resolve_payments"] * 2
+
+
 # case: (files, (message, line) per finding in Ev.txt)
 _VALIDATOR_CASES = {
     "flat weight on a costed option": (
@@ -2029,3 +2061,97 @@ def test_event_cache_is_read_by_later_decision_cli(tmp_path, workers):
             == 0
         )
     assert all(b"ItemFacts" not in row[0] for row in rows)
+
+
+_FACTS = validate_events.ItemFacts
+_BOTH = frozenset({"money", "political power"})
+# arm_empire.14, .17 and .18 fire each other, and .15 turns uncertain late.
+_RING_EVENTS = {
+    "arm_empire.18": (
+        None,
+        None,
+        (
+            (_FACTS({}, (("ITA", "arm_empire.14"),), ()), True),
+            (_FACTS({}, (), (("ROOT", "ARM_italian_revoult_script"),)), True),
+        ),
+    ),
+    "arm_empire.17": (
+        None,
+        None,
+        (
+            (_FACTS({}, (("ITA", "arm_empire.18"),), ()), True),
+            (_FACTS({}, (), ()), True),
+        ),
+    ),
+    "arm_empire.14": (
+        None,
+        None,
+        (
+            (_FACTS({}, (("ARM", "arm_empire.15"),), ()), True),
+            (_FACTS({}, (("ARM", "arm_empire.17"),), ()), True),
+            (_FACTS({}, (("ARM", "arm_empire.16"),), ()), True),
+        ),
+    ),
+    "arm_empire.15": (
+        None,
+        None,
+        (
+            (
+                _FACTS(
+                    {"ROOT": _BOTH},
+                    (),
+                    (
+                        ("ROOT", "modify_treasury_effect"),
+                        ("ROOT", "change_relative_party_popularity"),
+                        ("ROOT", "ARM_italian_revoult_script"),
+                        ("?", "transfer_troops"),
+                    ),
+                ),
+                True,
+            ),
+        ),
+    ),
+}
+_RING_EFFECTS = {
+    "add_md_alert": _FACTS(
+        {"THIS": frozenset({"uncertain"})},
+        (),
+        (
+            ("THIS", "@idea:on_add:var:alert_id"),
+            ("THIS", "@idea:on_remove:var:alert_id"),
+            ("THIS", "md_alert_update_gui"),
+        ),
+        "THIS",
+    ),
+    "add_md_alert_unless_exists": _FACTS({}, (), (("THIS", "add_md_alert"),), "THIS"),
+    "md_check_research_slot_alert": _FACTS(
+        {},
+        (),
+        (("THIS", "add_md_alert_unless_exists"), ("THIS", "remove_md_alert")),
+        "THIS",
+    ),
+    "modify_treasury_effect": _FACTS(
+        {}, (), (("THIS", "update_money_dirty_variable"),), "THIS"
+    ),
+    "update_money_dirty_variable": _FACTS(
+        {}, (), (("THIS", "md_check_research_slot_alert"),), "THIS"
+    ),
+}
+
+
+def test_events_that_fire_each_other_settle(monkeypatch):
+    resolved = []
+    event_payers = validate_events._event_payers
+
+    def counted(node, payments):
+        resolved.append(node)
+        assert len(resolved) < 1000, "resolve_payments never settles"
+        return event_payers(node, payments)
+
+    monkeypatch.setattr(validate_events, "_event_payers", counted)
+
+    payments = resolve_payments(_RING_EVENTS, _RING_EFFECTS)
+
+    kinds = _BOTH | {"uncertain"}
+    for event_id in ("arm_empire.14", "arm_empire.17", "arm_empire.18"):
+        assert payments.events[event_id] == ({"ARM": kinds}, {})

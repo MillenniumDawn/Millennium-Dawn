@@ -1535,7 +1535,7 @@ def test_scripted_effect_facts_resolve_direct_and_wrapper_chains(tmp_path):
     validator = _validator(tmp_path)
 
     staffable = validator._staffable_effect_map()
-    money = validator._money_cost_effect_names()
+    money = validator._scripted_effect_data_for_guards().money
     assert staffable["direct_builder"] == frozenset({"arms_factory"})
     assert staffable["builder_outer"] == frozenset({"arms_factory"})
     assert {"direct_money", "money_wrapper", "money_outer"} <= money
@@ -1554,7 +1554,7 @@ def test_scripted_effect_sources_are_read_once_for_both_indexes(tmp_path, monkey
     monkeypatch.setattr(V, "_read_scripted_effect_file", read)
     validator = _validator(tmp_path)
     validator._staffable_effect_map()
-    validator._money_cost_effect_names()
+    validator._scripted_effect_data_for_guards()
 
     assert len(reads) == 1
 
@@ -2005,17 +2005,17 @@ _GUARD_REPORT_CASES = {
     "spend at the threshold": (
         "",
         "",
-        _spend(-5),
+        _spend(-1),
         "",
         [
             (
                 "missing-bankruptcy-guard",
-                "1 focus(es) spending >= 5bn without the bankruptcy guard:"
+                "1 focus(es) spending >= 1bn without the bankruptcy guard:"
                 " TAG_focus_a (line 3)",
             )
         ],
     ),
-    "spend below the threshold": ("", "", _spend(-3), "", []),
+    "spend below the threshold": ("", "", _spend(-0.5), "", []),
     "spend with the guard": ("", "", _spend(-7), BANKRUPTCY_GUARD, []),
     "scripted spend without the guard": (
         _SPEND_EFFECT,
@@ -2231,7 +2231,7 @@ def test_bankruptcy_warnings_aggregate_per_file(tmp_path):
     v.validate_ai_will_do_guards()
 
     assert _messages(v) == [
-        "2 focus(es) spending >= 5bn without the bankruptcy guard:"
+        "2 focus(es) spending >= 1bn without the bankruptcy guard:"
         " TAG_focus_a (line 3), TAG_focus_b (line 12)"
     ]
 

@@ -1,6 +1,7 @@
 """Behavior tests for unit leader trait role and advisor trait slot checks."""
 
 import pytest
+from shared.suite import write_under
 from validate_characters import (
     Validator,
     collect_advisor_uses,
@@ -212,8 +213,8 @@ def test_parse_trait_types_survives_an_unreadable_dir(tmp_path, monkeypatch):
     assert parse_trait_types(str(tmp_path)) == {}
 
 
-def test_parse_trait_types_reads_only_txt_and_typed_traits(tmp_path, write_path):
-    write_path(
+def test_parse_trait_types_reads_only_txt_and_typed_traits(tmp_path):
+    write_under(
         tmp_path,
         "common/unit_leader/01_traits.txt",
         "leader_traits = {\n"
@@ -221,7 +222,7 @@ def test_parse_trait_types_reads_only_txt_and_typed_traits(tmp_path, write_path)
         "\tuntyped = {\n\t\ttrait_type = personality_trait\n\t}\n"
         "}\n",
     )
-    write_path(
+    write_under(
         tmp_path,
         "common/unit_leader/notes.md",
         "leader_traits = {\n\tignored = {\n\t\ttype = land\n\t}\n}\n",
@@ -543,14 +544,12 @@ def test_validator_skips_when_neither_trait_pool_parses(tmp_path):
     assert categories == {"advisor-pool-file-missing"}
 
 
-def test_validator_runs_the_advisor_check_alone_when_no_unit_traits_exist(
-    tmp_path, write_path
-):
+def test_validator_runs_the_advisor_check_alone_when_no_unit_traits_exist(tmp_path):
     advisor_dir = tmp_path / "common" / "country_leader"
     advisor_dir.mkdir(parents=True)
     for fname, content in POOL_FILES.items():
         (advisor_dir / fname).write_text(content, encoding="utf-8")
-    write_path(
+    write_under(
         tmp_path,
         "common/characters/TAG.txt",
         _characters(_advisor("TAG_chief", "army_chief", "army_armored_2")),
@@ -564,11 +563,9 @@ def test_validator_runs_the_advisor_check_alone_when_no_unit_traits_exist(
     }
 
 
-def test_validator_runs_the_role_check_alone_when_no_advisor_traits_exist(
-    tmp_path, write_path
-):
-    write_path(tmp_path, "common/unit_leader/01_army_leader_traits.txt", TRAITS)
-    write_path(
+def test_validator_runs_the_role_check_alone_when_no_advisor_traits_exist(tmp_path):
+    write_under(tmp_path, "common/unit_leader/01_army_leader_traits.txt", TRAITS)
+    write_under(
         tmp_path,
         "common/characters/TAG.txt",
         "characters = {\n"

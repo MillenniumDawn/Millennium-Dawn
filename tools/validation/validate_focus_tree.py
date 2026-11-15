@@ -149,7 +149,7 @@ _STAFFABLE_TRIGGERS = {
 # from negative treasury_change literals applied via modify_treasury_effect)
 # needs the bankruptcy guard. Focus `cost` is completion time, not money, so
 # the actual money spend in the reward is what gates the guard.
-_MONEY_SPEND_THRESHOLD = 5.0
+_MONEY_SPEND_THRESHOLD = 1.0
 # Search filters that mark a focus as military/economic/research. A focus that
 # spends money or builds should carry one of these; a money/building focus
 # tagged with none of them is miscategorized (e.g. an economic focus tagged
@@ -2200,18 +2200,6 @@ class Validator(BaseValidator):
         variants are picked up without a hardcoded list.
         """
         return self._scripted_effect_data_for_guards().staffable
-
-    def _money_cost_effect_names(self) -> FrozenSet[str]:
-        """Scripted-effect names that (transitively) reduce the treasury or
-        raise debt, so a focus reward calling one counts as spending money.
-
-        Mirrors _staffable_effect_map: each effect's own body is scanned with
-        _body_money_cost, then call chains are resolved to a fixed point so a
-        money-spending wrapper of any depth stays visible. A computed
-        (non-literal) treasury_change is treated as a cost even though its sign
-        is unknown, so a handful of computed-income effects may be included.
-        """
-        return self._scripted_effect_data_for_guards().money
 
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
