@@ -125,9 +125,9 @@ ai_strategy = { type = conquer id = GER value = 200 }
 - `AI_construction_priorities` and `AI_wartime_construction_priorities` in
   `MD_econ_ai.txt` hold the generic building weights and the only
   `added_military_to_civilian_factory_ratio`. Tune them before adding a tier or per-tag
-  block. Civilian factories, microchip plants and composite plants come from the stepped
-  `AI_build_more_civilian_industry_*`, `AI_build_microchip_plants_*` and
-  `want_comp_factories_*` floors, and strategy plans carry no construction strategies.
+  block. Civilian factories, microchip and composite plants, offices, farms, fossil plants,
+  enrichment and defensive-war arms factories come from stepped `building_target` floors
+  named `<strategy>_<target>`, and strategy plans carry no construction strategies.
 - The AI fills `building_target` floors but mostly ignores `build_building` weights on MD
   buildings: in 8 headless years China built 2 chip plants under a +50 weight and 5
   reactors under a target of 5. To make the AI build an MD building, give it a floor one
