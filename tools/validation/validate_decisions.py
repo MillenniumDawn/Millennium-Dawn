@@ -3922,7 +3922,8 @@ class Validator(BaseValidator):
         targets_dynamic = yes makes the game check dynamic country variants
         (civil war split-offs). target_non_existing = yes allows targeting
         countries that don't exist. Both only work with an explicit
-        targets = { } list and are meaningless without one.
+        targets = { } list and are meaningless without one; target_non_existing
+        also works with target_array, as vanilla's instantiate_collaboration does.
         """
         self._log_section(
             "Checking decisions with targets_dynamic/target_non_existing but no targets..."
@@ -3935,7 +3936,7 @@ class Validator(BaseValidator):
             issues = []
             if d.targets_dynamic and not d.targets:
                 issues.append("targets_dynamic")
-            if d.target_non_existing and not d.targets:
+            if d.target_non_existing and not (d.targets or d.target_array):
                 issues.append("target_non_existing")
             if issues:
                 results.append(
