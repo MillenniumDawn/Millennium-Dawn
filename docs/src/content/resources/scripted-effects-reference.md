@@ -53,7 +53,7 @@ The four research facilities are random-scope only: they pick a state that passe
 
 ### Building Costs
 
-The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province.
+The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province, and bunkers, which are priced per level.
 
 | Building                            | Cost   |
 | ----------------------------------- | ------ |
@@ -76,6 +76,24 @@ The cost implies the INCLUSION of a building slot. A single building slot is $1.
 | Reinforced Electrical Grid          | $6.50  |
 | High Capacity Electrical Grid       | $6.50  |
 | Research Facility                   | $15.00 |
+| Bunker or Coastal Bunker, per level | $0.05  |
+
+### Bunkers
+
+Bunkers and coastal bunkers build into provinces, so build them with
+`add_building_construction` and charge them with `pay_bunker_levels`. Set
+`bunker_levels` to the levels built: each `add_building_construction` counts its
+`level` once, even when it covers several provinces. The effect skips the charge after
+`skip_payment = 1`.
+
+```hoiscript
+172 = {
+    add_building_construction = { type = bunker level = 3 instant_build = yes province = 6683 }
+    add_building_construction = { type = coastal_bunker level = 2 instant_build = yes province = 636 }
+}
+set_temp_variable = { bunker_levels = 5 }
+pay_bunker_levels = yes
+```
 
 ---
 
