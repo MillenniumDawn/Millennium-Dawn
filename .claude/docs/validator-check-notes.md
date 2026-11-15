@@ -70,6 +70,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_building_guards.py
 
+- Every building check runs here, in one walk over `common/`, `events/`, and
+  `history/`. Province buildings (`level_cap = { province_max = N }`) and coastal
+  buildings (`only_costal = yes`) are read from `common/buildings/`, so no list is
+  kept by hand. These checks run in CI only, not on commit.
 - `damage_building` or `remove_building` against a building the state lacks spams
   `error.log`. The guard must name the same building as the effect's `type`.
 - Accepted guards: a count comparison in an enclosing `limit` (also on `random_owned_state`
@@ -89,6 +93,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   does not establish slot availability. Nested effects and other buildings or selectors
   are not checked, and a guard for one slot does not prove that every level requested
   will fit. The backlog is tracked by #6390.
+- `building-missing-province` (ERROR): `add_building_construction` of a province
+  building with no `province` key. The engine rejects the effect.
+- `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
+  `add_building_construction`. The block takes a selector, so nothing is built.
+- `coastal-building-not-coastal` (ERROR): a coastal province building sits in a
+  province that `map/definition.csv` does not mark as coastal land, or that is not
+  listed there. It reads `history/states/` `buildings = { 1234 = { ... } }` blocks and
+  `add_building_construction` with a numeric `province` or `province = { id = ... }`.
+  Provinces picked at runtime (`all_provinces`, `limit_to_coastal`, variables) are not
+  checked. State-level coastal buildings such as `dockyard` have no province to check.
+- `reactor-owner-without-nuclear-status` (ERROR): a tag starting with a
+  `nuclear_reactor` grants no non-default `nuclear_status` idea in its
+  `history/countries/` file. Skipped when no `nuclear_status` group exists.
+- `granted-building-without-project` (ERROR): a tag starting with a building that a
+  special project's `set_building_level` grants never completes that project in its
+  country file.
+- `map/definition.csv` is in the CI workspace and selects the validator through the
+  `map-definition` group. A staged change to it or to `common/buildings/` rescans every
+  file. A staged run always reads the state, country, idea, and project files the
+  ownership checks join, and reports their findings.
 
 ## validate_characters.py
 
@@ -976,8 +1000,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and
   `add_relation_modifier`.
-- Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
-  and a `#` comment swallowed into a `log` string.
+- Structural checks: a `limit` directly under `else` and a `#` comment swallowed into a
+  `log` string. Building checks live in `validate_building_guards.py`.
 - The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
   `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
   `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
