@@ -1569,110 +1569,12 @@ reform_expectance_from_situation = {
 			multiply = 0.005
 		}
 	}
-	#laws effect
-	if = {
-		limit = {
-			has_idea = social_01
+	#laws effect: 0.03 at the most reformist level of social and health, 0.02 for education, falling 0.01 per level
+	set_temp_variable = {
+		reform_expectance_from_laws = {
+			value = 0.11
+			subtract = { value = social_law add = health_law add = education_law multiply = 0.01 }
 		}
-		set_temp_variable = { reform_expectance_from_laws = 0.03 }
-	}
-	else_if = {
-		limit = {
-			has_idea = social_02
-		}
-		set_temp_variable = { reform_expectance_from_laws = 0.02 }
-	}
-	else_if = {
-		limit = {
-			has_idea = social_03
-		}
-		set_temp_variable = { reform_expectance_from_laws = 0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = social_04
-		}
-		set_temp_variable = { reform_expectance_from_laws = 0 }
-	}
-	else_if = {
-		limit = {
-			has_idea = social_05
-		}
-		set_temp_variable = { reform_expectance_from_laws = -0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = social_06
-		}
-		set_temp_variable = { reform_expectance_from_laws = -0.02 }
-	}
-
-	if = {
-		limit = {
-			has_idea = health_01
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0.03 }
-	}
-	else_if = {
-		limit = {
-			has_idea = health_02
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0.02 }
-	}
-	else_if = {
-		limit = {
-			has_idea = health_03
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = health_04
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0 }
-	}
-	else_if = {
-		limit = {
-			has_idea = health_05
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = -0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = health_06
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = -0.02 }
-	}
-
-	if = {
-		limit = {
-			has_idea = edu_01
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0.02 }
-	}
-	else_if = {
-		limit = {
-			has_idea = edu_02
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = edu_03
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = 0 }
-	}
-	else_if = {
-		limit = {
-			has_idea = edu_04
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = -0.01 }
-	}
-	else_if = {
-		limit = {
-			has_idea = edu_05
-		}
-		add_to_temp_variable = { reform_expectance_from_laws = -0.02 }
 	}
 	#war effect
 	if = {
@@ -2086,36 +1988,17 @@ ITA_calculate_civil_war_size = {
 			add = party_pop_array^23
 		}
 	}
-	if = {
-		limit = {
-			check_variable = { ITA_civil_war_auth_party_strength < 0.1 }
+	set_temp_variable = {
+		ITA_civil_war_strength_multiplier = {
+			value = 1
+			add = { value = ITA_civil_war_auth_party_strength less_than = 0.8 multiply = 0.1 }
+			add = { value = ITA_civil_war_auth_party_strength less_than = 0.5 multiply = 0.15 }
+			add = { value = ITA_civil_war_auth_party_strength less_than = 0.3 multiply = 0.25 }
+			add = { value = ITA_civil_war_auth_party_strength less_than = 0.2 multiply = 0.25 }
+			add = { value = ITA_civil_war_auth_party_strength less_than = 0.1 multiply = 0.25 }
 		}
-		multiply_temp_variable = { ITA_civil_war_auth_party_strength = 2 }
 	}
-	else_if = {
-		limit = {
-			check_variable = { ITA_civil_war_auth_party_strength < 0.2 }
-		}
-		multiply_temp_variable = { ITA_civil_war_auth_party_strength = 1.75 }
-	}
-	else_if = {
-		limit = {
-			check_variable = { ITA_civil_war_auth_party_strength < 0.3 }
-		}
-		multiply_temp_variable = { ITA_civil_war_auth_party_strength = 1.5 }
-	}
-	else_if = {
-		limit = {
-			check_variable = { ITA_civil_war_auth_party_strength < 0.5 }
-		}
-		multiply_temp_variable = { ITA_civil_war_auth_party_strength = 1.25 }
-	}
-	else_if = {
-		limit = {
-			check_variable = { ITA_civil_war_auth_party_strength < 0.8 }
-		}
-		multiply_temp_variable = { ITA_civil_war_auth_party_strength = 1.1 }
-	}
+	multiply_temp_variable = { ITA_civil_war_auth_party_strength = ITA_civil_war_strength_multiplier }
 	set_temp_variable = { ITA_civil_war_size_var = { value = 1 subtract = ITA_civil_war_auth_party_strength } }
 	set_variable = {
 		ITA_civil_war_auth_party_strength_ai_factor = {

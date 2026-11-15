@@ -496,13 +496,14 @@ scripted_diplomatic_actions = {
 				}
 			}
 			custom_trigger_tooltip = {
+				tooltip = treasury_more_than_25_debt_tt
 				set_temp_variable = {
 					tmp = {
 						value = debt
 						multiply = 0.25
 					}
 				}
-				tooltip = treasury_more_than_25_debt_tt
+				check_variable = { tmp < ROOT.treasury }
 			}
 			embassy_with_root_closed = no
 			ERI_is_not_transitional_government = yes
@@ -529,6 +530,7 @@ scripted_diplomatic_actions = {
 			}
 		}
 		complete_effect = {
+			log = "[GetDateText]: [ROOT.GetName]: Assumed [?ROOT.assuming_debt_value] of [THIS.GetName]'s debt (Treasury: [?ROOT.treasury])"
 			ROOT = {
 				clear_variable = pending_assume_debt_offer
 				subtract_from_variable = { treasury = assuming_debt_value }
@@ -878,6 +880,14 @@ scripted_diplomatic_actions = {
 					multiply = 10
 					add = ROOT.modifier@interest_rate_multiplier_modifier
 					greater_than = { value = 7.99 }
+				}
+			}
+			# Only a payment of at most a quarter of the treasury, so the AI does not empty it
+			modifier = {
+				factor = 0
+				check_expr = {
+					value = debt
+					greater_than = { value = ROOT.treasury }
 				}
 			}
 			# Graduated economic gates
