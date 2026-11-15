@@ -169,5 +169,5 @@ These custom filters exist for other country trees, do not add them to Israel or
 
 1. Choose the **country-specific custom filter** matching the focus's branch.
 2. Choose the **generic filter** from the tables above (one or two, don't over-tag).
-3. For focuses whose reward spends real treasury, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`: AI-only, not in `available`. The gate is the reward's money cost (about 5bn or more, or any money-costing scripted or building effect), not the focus `cost` field, which is completion time.
+3. For focuses whose reward spends real treasury, add a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`: AI-only, not in `available`. The gate is the reward's money cost (1bn or more, or any money-costing scripted or building effect), not the focus `cost` field, which is completion time.
 4. Write `search_filters` as a single line: `search_filters = { CUSTOM_FILTER GENERIC_FILTER }`.
