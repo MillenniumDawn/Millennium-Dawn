@@ -477,7 +477,7 @@ def test_savings_financing_uses_strict_debt_and_nonnegative_weekly_boundaries(
     debt, weekly, expected_payment
 ):
     race, country = _planner()
-    country["vars"].update(debt=debt, treasury_rate=weekly)
+    country["vars"].update(debt=debt, ai_budget_balance=weekly)
     _capacity(race, country, 1, [0.75] * 6)
     _choose_target(race)
     race.run("ai_race_ai_calculate_savings", 1)
@@ -709,7 +709,7 @@ def test_investments_release_stale_reserves_under_the_live_expansion_brake(reaso
     if reason == "war":
         country["war"] = True
     elif reason == "deficit":
-        country["vars"]["treasury_rate"] = -3.001
+        country["vars"]["ai_budget_balance"] = -3.001
     elif reason == "bankruptcy":
         country["missions"].add("bankruptcy_incoming_collapse")
     elif reason == "human":
