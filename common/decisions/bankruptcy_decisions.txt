@@ -948,7 +948,13 @@ bankruptcy_decisions = {
 
 		available = {
 			is_subject = no
+			NOT = { has_active_mission = debt_default_main_mission }
 			interest_rate_higher_than_15 = yes
+			# Half of a smaller debt rounds to nothing owed, so the default would be free and repeatable
+			custom_trigger_tooltip = {
+				tooltip = debt_higher_than_2_tt
+				check_variable = { debt > 1.999 }
+			}
 			if = {
 				limit = { is_ai = no }
 				treasury_lower_than_5 = yes
@@ -956,7 +962,7 @@ bankruptcy_decisions = {
 		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_default_on_debts"
+			log = "[GetDateText]: [Root.GetName]: Decision bankruptcy_default_on_debts (Debt: [?debt]b, Interest Rate: [?interest_rate]%, GDP: [?gdp_total]b, Treasury: [?treasury]b)"
 			# Cartels
 			if = { limit = { has_dynamic_modifier = { modifier = cartel_penalties } }
 				set_temp_variable = { cart_strength_change = 10 }
@@ -975,6 +981,8 @@ bankruptcy_decisions = {
 			else = {
 				add_timed_idea = { idea = debt_default_credit_downgrade days = 730 }
 			}
+			# The weekly update is too late: the stale rate keeps the default open
+			calculate_interest_rate = yes
 			custom_effect_tooltip = bankruptcy_default_on_debts_tt
 			activate_mission = debt_default_main_mission
 			set_variable = { old_gdp = gdp_total }
