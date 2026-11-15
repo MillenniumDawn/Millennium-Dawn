@@ -643,27 +643,31 @@ SAU_salman_health_tick = {
 }
 
 SAU_salman_health_set_tier = {
-	SAU_salman_health_clear = yes
-
 	if = {
 		limit = { check_variable = { SAU_salman_health > 80 } }
-		add_ideas = SAU_salman_health_stable
+		if = { limit = { NOT = { has_idea = SAU_salman_health_stable } } add_ideas = SAU_salman_health_stable }
 	}
-	else_if = {
-		limit = { check_variable = { SAU_salman_health > 60 } }
-		add_ideas = SAU_salman_health_declining
+	else_if = { limit = { has_idea = SAU_salman_health_stable } remove_ideas = SAU_salman_health_stable }
+	if = {
+		limit = { check_variable = { SAU_salman_health > 60 } check_variable = { SAU_salman_health < 80.001 } }
+		if = { limit = { NOT = { has_idea = SAU_salman_health_declining } } add_ideas = SAU_salman_health_declining }
 	}
-	else_if = {
-		limit = { check_variable = { SAU_salman_health > 40 } }
-		add_ideas = SAU_salman_health_serious
+	else_if = { limit = { has_idea = SAU_salman_health_declining } remove_ideas = SAU_salman_health_declining }
+	if = {
+		limit = { check_variable = { SAU_salman_health > 40 } check_variable = { SAU_salman_health < 60.001 } }
+		if = { limit = { NOT = { has_idea = SAU_salman_health_serious } } add_ideas = SAU_salman_health_serious }
 	}
-	else_if = {
-		limit = { check_variable = { SAU_salman_health > 20 } }
-		add_ideas = SAU_salman_health_critical
+	else_if = { limit = { has_idea = SAU_salman_health_serious } remove_ideas = SAU_salman_health_serious }
+	if = {
+		limit = { check_variable = { SAU_salman_health > 20 } check_variable = { SAU_salman_health < 40.001 } }
+		if = { limit = { NOT = { has_idea = SAU_salman_health_critical } } add_ideas = SAU_salman_health_critical }
 	}
-	else = {
-		add_ideas = SAU_salman_health_near_death
+	else_if = { limit = { has_idea = SAU_salman_health_critical } remove_ideas = SAU_salman_health_critical }
+	if = {
+		limit = { check_variable = { SAU_salman_health < 20.001 } }
+		if = { limit = { NOT = { has_idea = SAU_salman_health_near_death } } add_ideas = SAU_salman_health_near_death }
 	}
+	else_if = { limit = { has_idea = SAU_salman_health_near_death } remove_ideas = SAU_salman_health_near_death }
 }
 
 SAU_salman_health_clear = {
