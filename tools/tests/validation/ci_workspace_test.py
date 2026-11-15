@@ -36,6 +36,7 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "gfx/interface/decisions/probe.dds",
         "gfx/interface/equipmentdesigner/graphic_db/probe.txt",
         "map/adjacency_rules.txt",
+        "map/definition.csv",
         "music/playlists/probe.txt",
         "resources/documentation/probe.md",
         ".claude/docs/typo-watchlist.md",
