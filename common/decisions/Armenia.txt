@@ -1372,6 +1372,80 @@ ARM_ministry_of_external_category = {
 }
 ###########SPECIAL SERVICES DECISIONS###########
 ARM_special_services_category = {
+	ARM_kob_fund_campaign = {
+		icon = generic_political_discourse
+		cost = 35
+		days_re_enable = 30
+
+		visible = {
+			has_country_flag = ARM_kob_campaign_active
+			SOV = { check_variable = { party_pop_array^22 < 0.45 } }
+		}
+		available = {
+			ARM_kob_campaign_valid = yes
+			treasury_higher_than_3 = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ARM_kob_fund_campaign"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			set_temp_variable = { percent_change = 0.5 }
+			set_temp_variable = { influence_target = SOV.id }
+			change_influence_percentage = yes
+			SOV = {
+				set_temp_variable = { party_index = 22 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.05 }
+				change_relative_party_popularity = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 SOV = { 35_percent_nationalist_nat_autocracy_popularity = yes } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 SOV = { has_opinion = { target = ARM value > 50 } } }
+		}
+	}
+
+	ARM_kob_launch_coup = {
+		icon = generic_operation
+		cost = 50
+
+		visible = { has_country_flag = ARM_kob_campaign_active }
+		available = {
+			ARM_kob_campaign_valid = yes
+			custom_trigger_tooltip = {
+				tooltip = ARM_kob_support_tt
+				SOV = { check_variable = { party_pop_array^22 > 0.199 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ARM_kob_launch_coup"
+			clr_country_flag = ARM_kob_campaign_active
+			custom_effect_tooltip = ARM_kob_go_tt
+			hidden_effect = { SOV = { country_event = { id = arm_empire.30 days = 1 } } }
+		}
+
+		ai_will_do = {
+			base = 11
+			modifier = { add = 5 SOV = { has_stability < 0.4 } }
+			modifier = { factor = 0.5 SOV = { has_completed_focus = SOV_second_slujba } }
+			modifier = { factor = 0.5 SOV = { has_completed_focus = SOV_omon } }
+			modifier = { factor = 0.5 SOV = { SOV_has_internal_troops = yes } }
+			modifier = { factor = 0.5 SOV = { has_completed_focus = SOV_rosguard_start_org } }
+			modifier = { factor = 0.5 SOV = { has_stability > 0.6 } }
+			modifier = { factor = 0 SOV = { NOT = { 35_percent_nationalist_nat_autocracy_popularity = yes } } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 has_war = yes }
+			modifier = { factor = 0 SOV = { has_opinion = { target = ARM value > 50 } } }
+		}
+	}
+
 	#DESTROY MULTIGROUP INFLUENCY
 	ARM_destroy_multigroup_infliuency = {
 		icon = GFX_decision_arm_fis_monarchy_button
