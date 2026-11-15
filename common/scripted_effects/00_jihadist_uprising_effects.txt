@@ -217,7 +217,7 @@ jihadist_regional_war_declarations = {
 # Apply terrorism opinion modifiers — consolidated from 4+ separate every_country loops
 # Scope: the jihadist country the world designates as a terrorist state
 apply_terrorism_opinion_to_world = {
-	set_country_flag = designated_terrorist_state
+	set_country_flag = jihadist_takeover_handled
 	every_country = {
 		limit = { jihadist_government = no }
 		add_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
@@ -242,6 +242,7 @@ clear_terrorism_opinion_of_jihadists = {
 
 # Scope: an existing country whose Salafist Caliphate party has just taken power
 jihadist_takeover_setup = {
+	set_country_flag = jihadist_takeover_handled
 	add_named_threat = {
 		threat = 5
 		name = terror.threat
@@ -259,16 +260,27 @@ jihadist_takeover_setup = {
 		leave_faction = yes
 	}
 	clear_terrorism_opinion_of_jihadists = yes
-	apply_terrorism_opinion_to_world = yes
+	# The world does not designate General Assembly members
+	if = {
+		limit = {
+			NOT = { has_dynamic_modifier = { modifier = united_nations_member } }
+		}
+		apply_terrorism_opinion_to_world = yes
+	}
 }
 
-# Scope: a country that has just left Salafist rule
-lift_terrorist_state_designation = {
-	clr_country_flag = designated_terrorist_state
+# Scope: a country the world stops designating as a terrorist state
+remove_terrorism_opinion_of_world = {
 	every_other_country = {
 		remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no }
 		remove_opinion_modifier = { target = PREV modifier = terrorism_is_no_no_trade }
 	}
+}
+
+# Scope: a country that has just left Salafist rule
+lift_terrorist_state_designation = {
+	clr_country_flag = jihadist_takeover_handled
+	remove_terrorism_opinion_of_world = yes
 	# Restores the starting opinions that clear_terrorism_opinion_of_jihadists removed
 	if = {
 		limit = {
