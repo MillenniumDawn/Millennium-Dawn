@@ -6223,7 +6223,15 @@ calculate_tax_adjustments = {
 			}
 			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { treasury_rate_with_interest > 0 } # deficit room is no reason to cut taxes
-			check_variable = { debt_ratio < 0.30 }
+			OR = {
+				check_variable = { debt_ratio < 0.30 }
+				# Cheap debt: a real surplus over 10% of income cuts taxes instead of paying down debt at under 3%
+				AND = {
+					check_variable = { interest_rate < 3 }
+					set_temp_variable = { cheap_debt_surplus_floor = { value = display_income multiply = 0.10 } }
+					check_variable = { treasury_rate_with_interest > cheap_debt_surplus_floor }
+				}
+			}
 			check_variable = { interest_rate < 5 }
 			check_variable = { inflation_rate_var < 0.06 }
 			check_variable = { pop_tax_change = 0 }
@@ -6259,7 +6267,7 @@ calculate_tax_adjustments = {
 			check_variable = { corp_tax_change = 0 }
 			check_variable = { corporate_tax_rate > 20 }
 			check_variable = { population_tax_rate < 40 }
-			has_stability > 0.40
+			has_stability > 0.30
 			check_variable = { pop_point_income > corp_point_income }
 			set_temp_variable = { tax_gap = { value = population_tax_rate subtract = corporate_tax_rate } }
 			check_variable = { tax_gap < 20 }
