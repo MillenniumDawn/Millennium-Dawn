@@ -867,7 +867,7 @@ def test_executed_autonomous_emergency_policy_boundaries(constraint):
     elif constraint == "debt":
         country["vars"]["debt"] = 600
     elif constraint == "weekly":
-        country["vars"]["treasury_rate"] = 550 / 520 - 0.001
+        country["vars"]["ai_budget_balance"] = 550 / 520 - 0.001
     elif constraint == "reserve":
         country["vars"]["treasury"] = 50 + (2 + 550 / 520) * 52 - 0.001
     race.run("ai_race_autonomous_purchase", 1)

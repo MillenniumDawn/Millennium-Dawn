@@ -129,6 +129,7 @@ class ScriptModel:
                 "gdp_total": 1000,
                 "display_expense": 2,
                 "treasury_rate": 10,
+                "ai_budget_balance": 10,
             },
             "flags": {},
             "techs": {"artificial_intelligence_7", "artificial_intelligence_8"},
