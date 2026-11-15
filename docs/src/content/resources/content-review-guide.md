@@ -244,8 +244,8 @@ A tree can be perfectly balanced and still feel formulaic. These questions catch
 - **Are any references to the tag capitalised?**
   All tags should be capitalised, including at the start of script IDs (e.g., `SPR_focus_name_here`).
 
-- **Do high-cost focuses have a bankruptcy guard in `ai_will_do`?**
-  Focuses with `cost ≥ 8`, or `cost ≥ 5` tagged with military, economy, or research `search_filters`, must include a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/) for which filters apply.
+- **Do focuses that spend treasury have a bankruptcy guard in `ai_will_do`?**
+  A focus whose reward spends real treasury needs a `factor = 0` modifier in `ai_will_do` conditioned on `has_active_mission = bankruptcy_incoming_collapse`, plus `FOCUS_FILTER_EXPENDITURE`. The gate is the reward's money cost, not the focus `cost` field, which is completion time. Focuses that spend nothing or raise revenue do not get the guard. This is an AI-only measure, placing the guard in `available` would incorrectly block the player as well. See [Search Filters](/dev-resources/search-filters/) for the spending thresholds.
 
 - **Are `custom_effect_tooltip` + `effect_tooltip` + `for_each_scope_loop` duplicated?**
   When a tooltip describes effects applied to every member of an array, use `tooltip = TT_ALL_*` inside the `for_each_scope_loop` instead. Duplicating the same logic in `effect_tooltip` and the loop causes double-evaluation and is a known performance anti-pattern. See the [Code Stylization Guide](/dev-resources/code-stylization-guide/) for the performance tip.
