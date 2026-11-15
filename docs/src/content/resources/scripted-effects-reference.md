@@ -78,22 +78,7 @@ The cost implies the INCLUSION of a building slot. A single building slot is $1.
 | Research Facility                   | $15.00 |
 | Bunker or Coastal Bunker, per level | $0.05  |
 
-### Bunkers
-
-Bunkers and coastal bunkers build into provinces, so build them with
-`add_building_construction` and charge them with `pay_bunker_levels`. Set
-`bunker_levels` to the levels built: each `add_building_construction` counts its
-`level` once, even when it covers several provinces. The effect skips the charge after
-`skip_payment = 1`.
-
-```hoiscript
-172 = {
-    add_building_construction = { type = bunker level = 3 instant_build = yes province = 6683 }
-    add_building_construction = { type = coastal_bunker level = 2 instant_build = yes province = 636 }
-}
-set_temp_variable = { bunker_levels = 5 }
-pay_bunker_levels = yes
-```
+Bunkers and coastal bunkers have no building effect. Build them with `add_building_construction` and add 0.05 per level of each build to the reward's `treasury_change`, folded into any other charge in the same block.
 
 ---
 

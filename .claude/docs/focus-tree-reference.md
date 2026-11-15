@@ -143,9 +143,4 @@ two_random_industrial_complex = yes
 | Nuclear reactor        | `one_random_nuclear_reactor`        | `one_state_nuclear_reactor`        |
 | Agriculture district   | `one_random_agriculture_district`   | `one_state_agriculture_district`   |
 
-Bunkers and coastal bunkers build into provinces, so they have no building effect.
-Build them with `add_building_construction`, then set `bunker_levels` to the levels
-built and call `pay_bunker_levels`. It charges 0.05 per level, counting each
-`add_building_construction` once.
-
 Full library: `docs/src/content/resources/scripted-effects-reference.md`.
