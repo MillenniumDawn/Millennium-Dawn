@@ -167,10 +167,17 @@ def test_github_action_edit_runs_full_suite():
     assert groups["tools"] is True
 
 
-def test_map_adjacency_is_a_content_group():
-    groups = change_groups.classify(["map/adjacency_rules.txt"])
+@pytest.mark.parametrize(
+    "path, group",
+    (
+        ("map/adjacency_rules.txt", "map-adjacency"),
+        ("map/definition.csv", "map-definition"),
+    ),
+)
+def test_map_inputs_are_content_groups(path, group):
+    groups = change_groups.classify([path])
 
-    assert groups["map-adjacency"] is True
+    assert groups[group] is True
     assert groups["content"] is True
     assert groups["file-paths"] is True
     assert groups["full_suite"] is False
