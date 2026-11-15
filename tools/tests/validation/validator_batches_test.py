@@ -61,7 +61,7 @@ def test_specs_carry_their_opt_in_checks():
     } == {
         "ai-equipment": (("--check-buildability",), (), True),
         "bonus-names": (("--name-not-owner-id",), (), True),
-        "decisions": (("--unannounced-categories",), (), True),
+        "decisions": (("--unannounced-categories", "--id-case"), (), True),
         "events": (("--check-ai-chance-costs",), (), True),
         "focus-tree": (("--missing-icons",), (), True),
         "ideas": (("--missing-name-loc",), (), True),
