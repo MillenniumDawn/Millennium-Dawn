@@ -815,6 +815,26 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
                 if name:
                     written.add(name)
             search_from = end
+    if "get_sorted_scored_countries" in text:
+        search_from = 0
+        while True:
+            match = _SORTED_COUNTRIES_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            names = dict(_SORTED_COUNTRY_DEFAULTS)
+            for key, scalar, block in iter_statements(body):
+                if (
+                    key in names
+                    and block is None
+                    and scalar
+                    and _BIND_NAME_RE.fullmatch(scalar)
+                ):
+                    names[key] = scalar
+            written.update(names.values())
+            search_from = end
     return written
 
 
@@ -869,6 +889,13 @@ _COLLECTION_BIND_OPEN_RE = re.compile(
     r"\b(?:for_each_loop|for_each_scope_loop|for_loop_effect|while_loop_effect|"
     r"find_highest_in_array|find_lowest_in_array|any_of|all_of)\s*=\s*\{"
 )
+_SORTED_COUNTRIES_OPEN_RE = re.compile(
+    r"\bget_sorted_scored_countries(?:_temp)?\s*=\s*\{"
+)
+_SORTED_COUNTRY_DEFAULTS = {
+    "array": "sorted_country_list",
+    "scores": "country_list_scores",
+}
 _CHECK_VARIABLE_OPEN_RE = re.compile(r"check_variable(?<!\wcheck_variable)\s*=\s*\{")
 _HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
 _CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
