@@ -69,6 +69,29 @@ def test_clean_defines_pass(tmp_path):
     assert validator._issues == []
 
 
+@pytest.mark.parametrize("level", ["", "=", "=="])
+def test_parse_md_defines_skips_lua_long_comments(tmp_path, level):
+    _write_md_defines(
+        tmp_path,
+        "-- a line comment mentioning --[[\n"
+        'NDefines.NIcons.LABEL = "--[=["\n'
+        f"--[{level}[\n"
+        "NDefines_Graphics.NIcons.OLD_SIZE = 1\n"
+        "]===]\n"
+        "NDefines_Graphics.NIcons.SIZE = 2\n"
+        f"]{level}] --[[ another comment ]] NDefines.NIcons.SIZE = 3\n"
+        "NDefines.NIcons.OTHER_SIZE = 4 --[[\n"
+        "NDefines.NIcons.IGNORED = 5\n"
+        "]]\n",
+    )
+    md_path = tmp_path / "common" / "defines" / "MD_defines.lua"
+    assert parse_md_defines(str(md_path)) == [
+        ("NDefines", "NIcons", "LABEL", 2),
+        ("NDefines", "NIcons", "SIZE", 7),
+        ("NDefines", "NIcons", "OTHER_SIZE", 8),
+    ]
+
+
 def test_dead_define_flagged_with_suggestion(tmp_path):
     validator = _run(tmp_path, "NDefines.NCountry.MAX_COMAND_POWER = 500\n")
     assert validator.errors_found == 1
@@ -266,6 +289,7 @@ def test_no_install_and_no_manifest_is_a_setup_error(tmp_path, monkeypatch):
 @pytest.mark.parametrize(
     ("staged_file", "expected_errors"),
     [
+        (None, 0),
         ("common/ideas/other.txt", 0),
         ("common/defines/MD_defines.lua", 1),
     ],
@@ -277,7 +301,7 @@ def test_staged_run_scopes_the_defines_check(tmp_path, staged_file, expected_err
         mod_path=str(tmp_path), use_colors=False, workers=1, vanilla_path=vanilla
     )
     validator.staged_only = True
-    validator.staged_files = [str(tmp_path / staged_file)]
+    validator.staged_files = [str(tmp_path / staged_file)] if staged_file else []
     validator.run_validations()
 
     assert validator.errors_found == expected_errors
@@ -348,7 +372,12 @@ def test_staged_graphics_file_uses_manifest(tmp_path, monkeypatch):
     manifest.write_bytes(b"NDefines_Graphics.NIcons.SIZE\n")
     monkeypatch.setattr(vd, "_DEFINES_MANIFEST", str(manifest))
     monkeypatch.setattr(vd, "find_vanilla_defines", lambda: None)
-    _write_md_defines(tmp_path, "NDefines.NIcons.UNSTAGED = 1")
+    _write_md_defines(
+        tmp_path,
+        "NDefines.NIcons.UNSTAGED = 1\n"
+        "NDefines_Graphics.SIZE = 2\n"
+        "NDefines_Graphics.OTHER.SIZE = 3\n",
+    )
     _write_md_defines(
         tmp_path,
         "NDefines_Graphics.NIcons.SIZE = 20\nNDefines.NIcons.OBSOLETE = 1\n",
@@ -362,3 +391,54 @@ def test_staged_graphics_file_uses_manifest(tmp_path, monkeypatch):
     assert "OBSOLETE does not exist" in validator._issues[0].message
     assert validator._issues[0].file == "common/defines/MD_graphics.lua"
     assert validator._issues[0].line == 2
+
+
+@pytest.mark.parametrize(
+    ("staged_file", "expected_keys"),
+    [
+        ("a.lua", ["SIZE"]),
+        ("z.lua", ["SIZE"]),
+        ("other.lua", []),
+        (None, ["LABEL_CUTOFF", "SIZE"]),
+    ],
+)
+def test_duplicate_graphics_overrides_across_files(
+    tmp_path, vanilla_graphics, staged_file, expected_keys
+):
+    _write_md_defines(tmp_path, "NDefines_Graphics.NIcons.SIZE = 20\n", "a.lua")
+    _write_md_defines(
+        tmp_path,
+        "NDefines.NIcons.LABEL_CUTOFF = {1, 2}\n"
+        "NDefines_Graphics.NIcons.LABEL_CUTOFF = {3, 4}\n",
+        "middle.lua",
+    )
+    _write_md_defines(tmp_path, "NDefines.NIcons.SIZE = 30\n", "z.lua")
+    _write_md_defines(
+        tmp_path, "NDefines.NCountry.MAX_COMMAND_POWER = 30\n", "other.lua"
+    )
+    validator = Validator(
+        mod_path=str(tmp_path),
+        use_colors=False,
+        workers=1,
+        vanilla_path=vanilla_graphics,
+    )
+    if staged_file:
+        validator.staged_only = True
+        validator.staged_files = [str(tmp_path / "common" / "defines" / staged_file)]
+    validator.run_validations()
+
+    duplicates = {
+        "LABEL_CUTOFF": (
+            "duplicate NIcons.LABEL_CUTOFF (first defined at line 1)",
+            "common/defines/middle.lua",
+            2,
+        ),
+        "SIZE": (
+            "duplicate NIcons.SIZE (first defined at common/defines/a.lua:1)",
+            "common/defines/z.lua",
+            1,
+        ),
+    }
+    assert [(issue.message, issue.file, issue.line) for issue in validator._issues] == [
+        duplicates[key] for key in expected_keys
+    ]

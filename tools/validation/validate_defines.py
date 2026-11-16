@@ -19,6 +19,12 @@ _GRAPHICS_PREFIX = f"{_GRAPHICS_TABLE}."
 _MD_DEFINES_DIR = Path("common/defines")
 
 MD_DEFINE_RE = re.compile(r"^(NDefines(?:_Graphics)?)\.(?:(\w+)\.)?(\w+)\s*=(?!=)")
+_LUA_COMMENT_OR_STRING_RE = re.compile(
+    r"(?P<long_comment>--)?\[(?P<level>=*)\[.*?(?:\](?P=level)\]|\Z)"
+    r"|(?P<line_comment>--[^\n]*)"
+    r"""|"(?:\\(?:z\s*|.)|[^"\\\n])*"|'(?:\\(?:z\s*|.)|[^'\\\n])*'""",
+    re.DOTALL,
+)
 
 # Pattern in vanilla: NAME = value (inside a namespace block)
 VANILLA_DEFINE_RE = re.compile(r"^\s+(\w+)\s*=")
@@ -152,17 +158,25 @@ def parse_vanilla_define_files(
     return vanilla
 
 
+def _mask_lua_comment_or_string(match: re.Match[str]) -> str:
+    """Remove comment and string contents without changing line numbers."""
+    padding = "\n" * match[0].count("\n")
+    if match["long_comment"] or match["line_comment"]:
+        return " " + padding
+    return '""' + padding
+
+
 def parse_md_defines(filepath: str) -> List[Tuple[str, Optional[str], str, int]]:
     """Read flat overrides as (table, namespace, name, line number)."""
     results = []
     try:
         with open(filepath, "r", encoding="utf-8-sig") as f:
-            for line_num, line in enumerate(f, start=1):
-                clean = line.partition("--")[0].strip()
-                match = MD_DEFINE_RE.match(clean)
-                if match:
-                    table, namespace, name = match.groups()
-                    results.append((table, namespace, name, line_num))
+            code = _LUA_COMMENT_OR_STRING_RE.sub(_mask_lua_comment_or_string, f.read())
+        for line_num, line in enumerate(code.split("\n"), start=1):
+            match = MD_DEFINE_RE.match(line.strip())
+            if match:
+                table, namespace, name = match.groups()
+                results.append((table, namespace, name, line_num))
     except (OSError, UnicodeDecodeError) as e:
         print(f"Error reading MD defines: {e}", file=sys.stderr)
 
@@ -183,10 +197,11 @@ class Validator(BaseValidator):
     def _validate_defines(self):
         defines_dir = Path(self.mod_path) / _MD_DEFINES_DIR
         paths = sorted(defines_dir.glob("*.lua"))
-        if self.staged_only and self.staged_files:
-            staged = {Path(path).resolve() for path in self.staged_files}
-            paths = [path for path in paths if path.resolve() in staged]
-            if not paths:
+        report_paths = set(paths)
+        if self.staged_only:
+            staged = {Path(path).resolve() for path in self.staged_files or []}
+            report_paths = {path for path in paths if path.resolve() in staged}
+            if not report_paths:
                 self.log("  No mod defines staged, skipping")
                 return
 
@@ -241,13 +256,15 @@ class Validator(BaseValidator):
         dead_results = []
         namespace_results = []
         duplicate_results = []
-        seen: Dict[Tuple[str, str], Tuple[str, int]] = {}
+        seen: Dict[Tuple[str, str], Tuple[str, int, bool]] = {}
         for path in paths:
             rel_path = (_MD_DEFINES_DIR / path.name).as_posix()
+            report_file = path in report_paths
             for table, namespace, name, line_num in parse_md_defines(str(path)):
                 if namespace is None:
-                    message = f"{table}.{name} is missing a namespace"
-                    namespace_results.append((message, rel_path, line_num))
+                    if report_file:
+                        message = f"{table}.{name} is missing a namespace"
+                        namespace_results.append((message, rel_path, line_num))
                     continue
 
                 key = f"{namespace}.{name}"
@@ -256,7 +273,7 @@ class Validator(BaseValidator):
                     if table == _GRAPHICS_TABLE
                     else vanilla_namespaces
                 )
-                if name not in all_vanilla_names:
+                if report_file and name not in all_vanilla_names:
                     matches = difflib.get_close_matches(
                         name, all_vanilla_names, n=1, cutoff=0.7
                     )
@@ -266,7 +283,7 @@ class Validator(BaseValidator):
                         suggestion = f" (did you mean '{matches[0]}' in {correct_ns}?)"
                     message = f"{key} does not exist in vanilla{suggestion}"
                     dead_results.append((message, rel_path, line_num))
-                elif name not in valid_namespaces.get(namespace, ()):
+                elif report_file and name not in valid_namespaces.get(namespace, ()):
                     correct_namespaces = ", ".join(all_vanilla_names[name])
                     message = (
                         f"{table}.{key} — wrong namespace or table, "
@@ -275,17 +292,20 @@ class Validator(BaseValidator):
                     namespace_results.append((message, rel_path, line_num))
 
                 pair = (namespace, name)
-                if pair in seen:
-                    prev_path, prev_line = seen[pair]
-                    location = (
-                        f"line {prev_line}"
-                        if prev_path == rel_path
-                        else f"{prev_path}:{prev_line}"
-                    )
-                    message = f"duplicate {key} (first defined at {location})"
-                    duplicate_results.append((message, rel_path, line_num))
-                else:
-                    seen[pair] = (rel_path, line_num)
+                previous = seen.get(pair)
+                if previous is None:
+                    seen[pair] = (rel_path, line_num, report_file)
+                    continue
+                prev_path, prev_line, report_previous = previous
+                if not (report_file or report_previous):
+                    continue
+                location = (
+                    f"line {prev_line}"
+                    if prev_path == rel_path
+                    else f"{prev_path}:{prev_line}"
+                )
+                message = f"duplicate {key} (first defined at {location})"
+                duplicate_results.append((message, rel_path, line_num))
 
         self._report(
             dead_results,
