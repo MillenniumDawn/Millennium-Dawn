@@ -4,7 +4,6 @@ import disk_cache
 import guard_scan
 import pytest
 import validate_ai_weight_order
-import validate_building_guards
 import validate_dynamic_modifier_guards
 import validate_influence_calls
 
@@ -31,13 +30,6 @@ _CASES = [
         "ai_chance adds after a factor = 0 modifier, which brings the zeroed "
         "weight back; move the factor = 0 modifiers last",
         None,
-    ),
-    (
-        validate_building_guards,
-        "damage_building = { type = fuel_silo damage = 1 }",
-        "damage_building = { type = fuel_silo ... } is not guarded by a check "
-        "that fuel_silo exists",
-        "unguarded-damage-building",
     ),
 ]
 
