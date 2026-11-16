@@ -1039,18 +1039,8 @@ change_arab_spring_strength = {
 # Effect: calculate_monthly_arab_spring_change
 # Purpose: Calculate the change in protest strength for the month
 calculate_monthly_arab_spring_change = {
-	set_variable = { arab_spring_change = 0 }
-	# Police Brutality Increases Arab Spring Likelihood
-	if = { limit = { has_idea = police_05 }
-		add_to_variable = { arab_spring_change = 3 }
-	}
-	else_if = {
-		limit = { has_idea = police_04 }
-		add_to_variable = { arab_spring_change = 2 }
-	}
-	else_if = { limit = { has_idea = police_03 }
-		add_to_variable = { arab_spring_change = 1 }
-	}
+	# Police Brutality Increases Arab Spring Likelihood: police_03 to police_05 give 1 to 3
+	set_variable = { arab_spring_change = { value = police_law subtract = 2 max = 0 } }
 
 	# Economic Situation Increases Arab Spring Likelihood
 	if = {
@@ -1092,19 +1082,8 @@ calculate_monthly_arab_spring_change = {
 		add_to_variable = { arab_spring_change = -3 }
 	}
 
-	# Healthcare Spending
-	if = {
-		limit = { has_idea = health_04 }
-		add_to_variable = { arab_spring_change = -1 }
-	}
-	else_if = {
-		limit = { has_idea = health_05 }
-		add_to_variable = { arab_spring_change = -2 }
-	}
-	else_if = {
-		limit = { has_idea = health_06 }
-		add_to_variable = { arab_spring_change = -3 }
-	}
+	# Healthcare Spending: health_04 to health_06 give -1 to -3
+	subtract_from_variable = { arab_spring_change = { value = health_law subtract = 3 max = 0 } }
 
 	# Corruption Increases Arab Spring Likelihood
 	if = { limit = { has_idea = corruption_level_10 }
@@ -1394,8 +1373,8 @@ on_weekly_gcc_dominant_member_check = {
 		if = {
 			limit = {
 				has_idea = idea_gcc_member_state
-				has_completed_focus = GCC_limited_unified_command
-				NOT = { has_completed_focus = GCC_a_robust_alliance }
+				has_global_flag = GCC_limited_unified_command_completed
+				NOT = { has_global_flag = GCC_a_robust_alliance_completed }
 				is_in_faction = no
 				has_defensive_war = yes
 				all_enemy_country = {
@@ -1417,7 +1396,7 @@ on_weekly_gcc_dominant_member_check = {
 						array = global.gcc_member_state
 						OR = {
 							has_war = yes
-							has_completed_focus = GCC_a_robust_alliance
+							has_global_flag = GCC_a_robust_alliance_completed
 						}
 					}
 				}
@@ -1433,7 +1412,7 @@ on_weekly_gcc_dominant_member_check = {
 			# Add to Faction
 			for_each_scope_loop = {
 				array = global.gcc_member_state
-				if = { limit = { has_completed_focus = GCC_joint_defense_agreement }
+				if = { limit = { has_global_flag = GCC_joint_defense_agreement_completed }
 					for_each_scope_loop = {
 						array = global.gcc_member_state
 						if = { limit = { NOT = { tag = ROOT } }

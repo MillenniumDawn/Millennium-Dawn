@@ -39,12 +39,17 @@ my_array^0                # array element, zero-indexed
 my_array^i                # element at a dynamic index
 var:my_var = { ... }      # scope into the country or state stored in my_var
 var:my_array^i = { ... }  # scope into the country stored at index i
+my_var@PREV               # targeted variable: one value per target country
 ```
 
 - Temp variables (`set_temp_variable`) exist only for the current scripted block and
   belong to no scope. Read, write, and check them by bare name from any scope. A `ROOT.`
   or `PREV.` prefix breaks the read, and a `ROOT = { check_variable = ... }` wrapper
   adds nothing.
+- A targeted variable keeps one value per target: `set_variable = { my_var@PREV = 1 }`,
+  `check_variable = { my_var@PREV > 0 }`, `clear_variable = my_var@PREV`. Vanilla La
+  Resistance uses this form. When code has to loop over the related countries, use a
+  partner array on the owner instead.
 - Arrays cap at 1000 elements. `add_to_array` past index 999 silently does nothing.
 - In a loop, `value = v` holds the scalar element, not an array reference. Scope with
   `var:v = { ... }` or `var:ARRAY^i = { ... }`. Never `var:v^i`.
@@ -129,7 +134,39 @@ since the engine silently zeroes what it cannot parse. Operands confirmed workin
 targeted game variables (`opinion@PREV`, `building_level@X`, `modifier@X`). Those are
 plain variables: use them directly, with no temp copy.
 
-`validate_math_expressions.py` warns in CI on the sibling form and on `FROM` reads.
+`validate_math_expressions.py` reports the sibling form and `FROM` reads in CI.
+
+### Math in weight blocks
+
+Keep temp-variable writes out of `ai_will_do`, `ai_chance`, and scorer `score` blocks,
+including the scripted triggers they call. Use `check_expr` to calculate and compare
+in one expression, or `check_variable` for a single existing variable. The cost is in
+the blocks the AI rechecks for every candidate: decision, focus, and scripted GUI
+`ai_will_do`, occupation laws, and scorers. Event `ai_chance` runs once per event.
+
+No MD or vanilla code passes an expression to `add` or `factor`, so express a computed
+weight as threshold steps:
+
+```
+modifier = {
+    check_expr = {
+        value = building_level@industrial_complex
+        add = building_level@arms_factory
+        greater_than = 1
+    }
+    add = 24000
+}
+```
+
+A scaled existing variable can stay exact with separate variable and literal factors:
+
+```
+modifier = { factor = domestic_influence_amount }
+modifier = { factor = 0.1 }
+```
+
+`validate_math_expressions.py` warns on direct and scripted-trigger temp writes in
+these weight blocks.
 
 ## Loops
 

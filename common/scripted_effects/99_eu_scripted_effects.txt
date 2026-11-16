@@ -110,8 +110,13 @@ EU_update_vars = {
 				round = yes
 			}
 		}
+	}
+	update_eu_dirty_variable = yes
+}
 
-		# Pre-Accession Assistance passive Europeanism drift
+# Pre-Accession Assistance passive Europeanism drift, monthly only
+EU_apply_europeanism_drift = {
+	hidden_effect = {
 		for_each_scope_loop = {
 			array = global.EU_potential
 			if = {
@@ -123,7 +128,6 @@ EU_update_vars = {
 			}
 		}
 	}
-	update_eu_dirty_variable = yes
 }
 
 ######################################
@@ -496,23 +500,7 @@ EU_resync_member_array = {
 ##########################
 #TODO: Set flags to allow people to see what their cause of the breach is
 check_breach_of_EU_value = {
-	set_variable = { THIS.breach_of_EU_value = 0 }
-	### Corruption Level Addition ###
-	if = { limit = { has_idea = corruption_level_10 }
-		add_to_variable = { THIS.breach_of_EU_value = 5 }
-	}
-	else_if = { limit = { has_idea = corruption_level_09 }
-		add_to_variable = { THIS.breach_of_EU_value = 4 }
-	}
-	else_if = { limit = { has_idea = corruption_level_08 }
-		add_to_variable = { THIS.breach_of_EU_value = 3 }
-	}
-	else_if = { limit = { has_idea = corruption_level_07 }
-		add_to_variable = { THIS.breach_of_EU_value = 2 }
-	}
-	else_if = { limit = { has_idea = corruption_level_06 }
-		add_to_variable = { THIS.breach_of_EU_value = 1 }
-	}
+	set_variable = { THIS.breach_of_EU_value = { value = corruption_level subtract = 5 max = 0 } }
 	### peace ###
 	if = {
 		limit = {
@@ -557,15 +545,14 @@ check_breach_of_EU_value = {
 	### elections ###
 	if = { limit = { has_elections = no }
 		add_to_variable = { THIS.breach_of_EU_value = 5 }
-	}
-	## Special Circumstance for HLS
-	if = {
-		limit = {
-			original_tag = HLS
-			has_elections = no
-			western_autocrats_are_in_power = yes
+		## Special Circumstance for HLS
+		if = {
+			limit = {
+				original_tag = HLS
+				western_autocrats_are_in_power = yes
+			}
+			add_to_variable = { THIS.breach_of_EU_value = -5 }
 		}
-		add_to_variable = { THIS.breach_of_EU_value = -5 }
 	}
 	### democracy ###
 	if = { limit = { has_idea = dictatorship }
@@ -1273,10 +1260,8 @@ POTEF_election = {
 	clear_POTEF_variables = yes
 	clear_array = POTEF_winner_array
 	clear_array = POTEF_pop_vote_array
-	clear_array = POTEF_pop_vote_ratio_array
 	resize_array = { POTEF_winner_array = 24 }
 	resize_array = { POTEF_pop_vote_array = 24 }
-	resize_array = { POTEF_pop_vote_ratio_array = 24 }
 	for_each_scope_loop = {
 		array = global.EU_member
 		tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
@@ -1333,9 +1318,8 @@ update_POTEF_arrays = {
 	}
 	clamp_variable = { var = global.POTEF_pop_vote_total min = 1 }
 	for_each_loop = {
-		array = POTEF_pop_vote_ratio_array
+		array = POTEF_pop_vote_array
 		set_variable = { var = global.POTEF_pop_vote_ratio^i value = { value = global.POTEF_pop_vote^i divide = global.POTEF_pop_vote_total } }
-		set_variable = { POTEF_pop_vote_ratio_array^i = global.POTEF_pop_vote_ratio^i }
 	}
 	update_eu_dirty_variable = yes
 }

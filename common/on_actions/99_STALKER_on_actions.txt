@@ -1,0 +1,95 @@
+on_actions = {
+	on_startup = {
+		effect = {
+			random_country = { STALKER_initialize_zone_registry = yes }
+		}
+	}
+
+	on_monthly = {
+		effect = {
+			STALKER_check_2022_aftermath = yes
+		}
+	}
+
+	on_state_control_changed = {
+		effect = {
+			if = {
+				limit = {
+					STALKER_scenario_enabled = yes
+					FROM.FROM = { has_state_flag = STALKER_zone_footprint }
+				}
+				FROM = {
+					if = {
+						limit = { exists = yes }
+						STALKER_refresh_zone_administration = yes
+					}
+				}
+				ROOT = {
+					if = {
+						limit = { exists = yes }
+						STALKER_refresh_zone_administration = yes
+					}
+				}
+			}
+			if = {
+				limit = {
+					STALKER_scenario_enabled = yes
+					FROM.FROM = { STALKER_is_active_zone_anchor = yes }
+				}
+				FROM = {
+					if = {
+						limit = { exists = yes }
+						STALKER_refresh_zone_administration = yes
+					}
+				}
+				ROOT = {
+					if = {
+						limit = { exists = yes }
+						STALKER_refresh_zone_administration = yes
+					}
+				}
+				FROM.FROM = {
+					if = {
+						limit = {
+							has_state_flag = STALKER_zone_policy_pending
+							controller = { exists = yes }
+						}
+						STALKER_target_zone = yes
+						controller = { country_event = STALKER.1 }
+					}
+					if = {
+						limit = {
+							STALKER_is_active_zone_anchor = yes
+							check_variable = { STALKER_zone_id = 1 }
+							has_state_flag = STALKER_perimeter_breach_active
+							controller = { exists = yes is_ai = no }
+						}
+						STALKER_target_zone = yes
+						controller = { country_event = STALKER.6 }
+					}
+					if = {
+						limit = {
+							STALKER_is_active_zone_anchor = yes
+							check_variable = { STALKER_zone_id = 1 }
+							has_global_flag = STALKER_battle_for_the_zone
+							NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+							NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
+							controller = { exists = yes }
+						}
+						STALKER_target_zone = yes
+						controller = { country_event = STALKER.30 }
+					}
+					if = {
+						limit = {
+							STALKER_is_active_zone_anchor = yes
+							check_variable = { STALKER_zone_id = 1 }
+							has_state_flag = STALKER_2022_aftermath_due
+							controller = { exists = yes }
+						}
+						controller = { country_event = STALKER.37 }
+					}
+				}
+			}
+		}
+	}
+}
