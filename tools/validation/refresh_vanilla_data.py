@@ -26,7 +26,7 @@ from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
 from shared_utils import find_hoi4_install, get_root_dir, list_files
 from sprite_index import _gfx_root
-from validate_defines import find_vanilla_defines, parse_vanilla_defines
+from validate_defines import find_vanilla_defines, parse_vanilla_define_files
 from validate_file_paths import collect_vanilla_paths
 from validate_gfx_references import (
     _read_raw,
@@ -74,13 +74,15 @@ def _refresh_defines() -> str:
     path = find_vanilla_defines()
     if not path:
         raise RefreshError("common/defines/00_defines.lua not found")
-    namespaces = parse_vanilla_defines(path)
+    namespaces = parse_vanilla_define_files(path)
+    if not namespaces:
+        raise RefreshError("cannot load vanilla 00_defines.lua and 00_graphics.lua")
     return _write_manifest(
         "vanilla_defines.txt",
         [
-            "# Vanilla Hearts of Iron IV define names (NAMESPACE.NAME, from",
-            "# common/defines/00_defines.lua). Used by validate_defines.py when no",
-            "# live install is present (CI) to catch dead or renamed defines.",
+            "# Vanilla Hearts of Iron IV define names from common/defines/00_defines.lua",
+            "# (NAMESPACE.NAME) and 00_graphics.lua (NDefines_Graphics.NAMESPACE.NAME).",
+            "# Used by validate_defines.py when no live install is present (CI).",
         ],
         (f"{ns}.{name}" for ns, names in namespaces.items() for name in names),
     )
