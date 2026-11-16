@@ -15,20 +15,8 @@ calculate_energy_use = {
 	# Add the Dynamic Modifiers for the System in case they are not present
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = energy_dynamic_modifier } } } add_dynamic_modifier = { modifier = energy_dynamic_modifier } }
 
-	set_variable = { energy_seasonal_population_demand_factor = 0 }
-	if = {
-		limit = {
-			OR = {
-				check_variable = { global.month = 12 }
-				check_variable = { global.month = 1 }
-				check_variable = { global.month = 2 }
-				check_variable = { global.month = 6 }
-				check_variable = { global.month = 7 }
-				check_variable = { global.month = 8 }
-			}
-		}
-		set_variable = { energy_seasonal_population_demand_factor = 0.2 }
-	}
+	# Months 12, 1, 2, 6, 7 and 8 are the ones where month mod 6 is below 3
+	set_variable = { energy_seasonal_population_demand_factor = { value = global.month mod = 6 less_than = 3 multiply = 0.2 } }
 
 	energy_calc_consumption = yes
 	energy_calc_generation = yes
@@ -594,10 +582,8 @@ energy_calc_balance = {
 	}
 
 	divide_temp_variable = { energy_fulfillment = energy_consumption }
-	set_variable = { energy_balance_value_display = energy_fulfillment }
-	clamp_variable = { var = energy_balance_value_display min = 0 }
-	clamp_temp_variable = { var = energy_fulfillment min = 0 max = 1 }
-	set_variable = { unfulfilled_energy_demand_var = { value = -1 add = energy_fulfillment } }
+	set_variable = { energy_balance_value_display = { value = energy_fulfillment max = 0 } }
+	set_variable = { unfulfilled_energy_demand_var = { value = energy_fulfillment clamp = { min = 0 max = 1 } subtract = 1 } }
 	add_to_variable = { energy_sum = energy_withdrawal_from_storage } #for display purposes
 
 	set_variable = { energy_difference_variable = { value = energy_sum subtract = energy_consumption } }
@@ -705,23 +691,16 @@ calculate_energy_load_sharing = {
 		# Calculate the Energy Shared
 		# Ensure you have enough energy to export
 		if = { limit = { NOT = { check_variable = { energy_balance < needed_energy_for_nations } } }
-			resize_array = { array = energy_load_sharing_nations_value size = energy_load_sharing_nations^num }
-
 			for_each_loop = {
 				array = energy_load_sharing_nations
 				var:v = {
 					# Only share if recipient has a deficit; ignore surplus
 					set_temp_variable = { energy_lack = { value = energy_difference_variable min = 0 } }
-					set_variable = { PREV.energy_load_sharing_nations_value^i = energy_lack }
 					set_variable = { energy_load_sharing_gain_var = { value = energy_lack multiply = -1 } }
 				}
 			}
-			set_temp_variable = { total_energy_required_to_share = 0 }
-			for_each_loop = {
-				array = energy_load_sharing_nations_value
-				add_to_temp_variable = { PREV.total_energy_required_to_share = v }
-			}
-			set_variable = { energy_load_sharing_use_var = { value = total_energy_required_to_share multiply = -1 } }
+			# Every recipient deficit was already summed by the pre-pass
+			set_variable = { energy_load_sharing_use_var = needed_energy_for_nations }
 		}
 		else = {
 			# Provider doesn't have enough energy to share
