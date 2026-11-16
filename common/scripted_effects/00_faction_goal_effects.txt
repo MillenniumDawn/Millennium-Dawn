@@ -1,31 +1,13 @@
 faction_goal_update_daily_condition_caches = {
 	faction_leader = {
-		set_variable = { faction_goal_aggressive_defense_condition_cache = 0 }
 		set_variable = { faction_goal_secure_europe_condition_cache = 0 }
 		set_variable = { faction_goal_nato_gdp_condition_cache = 0 }
 		set_variable = { faction_goal_crush_democracy_condition_cache = 0 }
 		set_variable = { faction_goal_secure_east_asia_condition_cache = 0 }
-		set_variable = { faction_goal_liberate_visible_cache = 0 }
-		set_variable = { faction_goal_liberate_completed_cache = 0 }
-		set_variable = { faction_goal_liberate_ai_4_cache = 0 }
-		set_variable = { faction_goal_liberate_ai_10_cache = 0 }
 		set_variable = { faction_goal_great_offensive_visible_cache = 0 }
 		set_variable = { faction_goal_great_offensive_completed_cache = 0 }
-		set_variable = { faction_goal_great_offensive_secure_cache = 0 }
-		set_variable = { faction_goal_no_communist_members_cache = 0 }
-		set_variable = { faction_goal_communist_states_available_cache = 0 }
-		set_variable = { faction_goal_communist_states_completed_cache = 0 }
-		set_variable = { faction_goal_no_fascist_members_cache = 0 }
-		set_variable = { faction_goal_fascist_states_available_cache = 0 }
-		set_variable = { faction_goal_fascist_states_completed_cache = 0 }
-		set_variable = { faction_goal_no_anti_communist_members_cache = 0 }
-		set_variable = { faction_goal_anti_communist_states_available_cache = 0 }
-		set_variable = { faction_goal_anti_communist_states_completed_cache = 0 }
 		set_variable = { faction_goal_long_live_revolution_cache = 0 }
 		set_variable = { faction_goal_democracy_in_europe_cache = 0 }
-		set_variable = { faction_goal_communist_controlled_states_count_cache = 0 }
-		set_variable = { faction_goal_fascist_controlled_states_count_cache = 0 }
-		set_variable = { faction_goal_anti_communist_controlled_states_count_cache = 0 }
 	}
 
 	if = {
@@ -42,12 +24,13 @@ faction_goal_update_daily_condition_caches = {
 		every_collection_element = {
 			input = collection:faction_owned_core_states_collection
 			if = {
-				limit = { is_controlled_by_ROOT_or_ally = no }
-				add_to_temp_variable = { faction_goal_core_states_not_controlled_count_cache_temp = 1 }
-			}
-			if = {
 				limit = { NOT = { is_fully_controlled_by = OWNER } }
 				add_to_temp_variable = { faction_goal_core_states_not_fully_controlled_count_cache_temp = 1 }
+				# The owner is a member, so a state it fully controls is always ally-controlled
+				if = {
+					limit = { is_controlled_by_ROOT_or_ally = no }
+					add_to_temp_variable = { faction_goal_core_states_not_controlled_count_cache_temp = 1 }
+				}
 			}
 		}
 		faction_leader = {
@@ -56,87 +39,15 @@ faction_goal_update_daily_condition_caches = {
 		}
 	}
 	faction_leader = {
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_core_states_not_controlled_count_cache
-					value = 0
-					compare = less_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_aggressive_defense_condition_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_core_states_not_fully_controlled_count_cache
-					value = 1
-					compare = greater_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_liberate_visible_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_core_states_not_fully_controlled_count_cache
-					value = 0
-					compare = less_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_liberate_completed_cache = 1 }
-			set_variable = { faction_goal_great_offensive_secure_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_core_states_not_fully_controlled_count_cache
-					value = 5
-					compare = greater_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_liberate_ai_4_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_core_states_not_fully_controlled_count_cache
-					value = 11
-					compare = greater_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_liberate_ai_10_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_communist_member_count_cache
-					value = 0
-					compare = less_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_no_communist_members_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_fascist_member_count_cache
-					value = 0
-					compare = less_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_no_fascist_members_cache = 1 }
-		}
-		if = {
-			limit = {
-				check_variable = {
-					var = faction_goal_anti_communist_member_count_cache
-					value = 0
-					compare = less_than_or_equals
-				}
-			}
-			set_variable = { faction_goal_no_anti_communist_members_cache = 1 }
-		}
+		set_variable = { faction_goal_aggressive_defense_condition_cache = { value = faction_goal_core_states_not_controlled_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_liberate_visible_cache = { value = faction_goal_core_states_not_fully_controlled_count_cache greater_than_or_equals = 1 } }
+		set_variable = { faction_goal_liberate_completed_cache = { value = faction_goal_core_states_not_fully_controlled_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_great_offensive_secure_cache = faction_goal_liberate_completed_cache }
+		set_variable = { faction_goal_liberate_ai_4_cache = { value = faction_goal_core_states_not_fully_controlled_count_cache greater_than_or_equals = 5 } }
+		set_variable = { faction_goal_liberate_ai_10_cache = { value = faction_goal_core_states_not_fully_controlled_count_cache greater_than_or_equals = 11 } }
+		set_variable = { faction_goal_no_communist_members_cache = { value = faction_goal_communist_member_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_no_fascist_members_cache = { value = faction_goal_fascist_member_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_no_anti_communist_members_cache = { value = faction_goal_anti_communist_member_count_cache less_than_or_equals = 0 } }
 	}
 
 	if = {
@@ -167,16 +78,7 @@ faction_goal_update_daily_condition_caches = {
 		}
 		faction_leader = {
 			set_variable = { faction_goal_secure_europe_count_cache = faction_goal_secure_europe_count_cache_temp }
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_secure_europe_count_cache
-						value = 17
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_secure_europe_condition_cache = 1 }
-			}
+			set_variable = { faction_goal_secure_europe_condition_cache = { value = faction_goal_secure_europe_count_cache greater_than_or_equals = 17 } }
 		}
 	}
 	if = {
@@ -207,16 +109,7 @@ faction_goal_update_daily_condition_caches = {
 		}
 		faction_leader = {
 			set_variable = { faction_goal_secure_east_asia_count_cache = faction_goal_secure_east_asia_count_cache_temp }
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_secure_east_asia_count_cache
-						value = 17
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_secure_east_asia_condition_cache = 1 }
-			}
+			set_variable = { faction_goal_secure_east_asia_condition_cache = { value = faction_goal_secure_east_asia_count_cache greater_than_or_equals = 17 } }
 		}
 	}
 	if = {
@@ -228,10 +121,7 @@ faction_goal_update_daily_condition_caches = {
 			}
 		}
 		faction_leader = {
-			if = {
-				limit = { check_variable = { faction_goal_nato_gdp_eligible_member_count_cache = faction_goal_member_count_cache } }
-				set_variable = { faction_goal_nato_gdp_condition_cache = 1 }
-			}
+			set_variable = { faction_goal_nato_gdp_condition_cache = { value = faction_goal_nato_gdp_eligible_member_count_cache equals = faction_goal_member_count_cache } }
 		}
 	}
 	if = {
@@ -243,16 +133,7 @@ faction_goal_update_daily_condition_caches = {
 			}
 		}
 		faction_leader = {
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_below_30_democracy_member_count_cache
-						value = 11
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_crush_democracy_condition_cache = 1 }
-			}
+			set_variable = { faction_goal_crush_democracy_condition_cache = { value = faction_goal_below_30_democracy_member_count_cache greater_than_or_equals = 11 } }
 		}
 	}
 
@@ -268,26 +149,8 @@ faction_goal_update_daily_condition_caches = {
 		}
 		faction_leader = {
 			set_variable = { faction_goal_enemy_core_states_controlled_count_cache = faction_goal_enemy_core_states_controlled_count_cache_temp }
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_enemy_core_states_controlled_count_cache
-						value = 0
-						compare = less_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_great_offensive_visible_cache = 1 }
-			}
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_enemy_core_states_controlled_count_cache
-						value = 1
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_great_offensive_completed_cache = 1 }
-			}
+			set_variable = { faction_goal_great_offensive_visible_cache = { value = faction_goal_enemy_core_states_controlled_count_cache less_than_or_equals = 0 } }
+			set_variable = { faction_goal_great_offensive_completed_cache = { value = faction_goal_enemy_core_states_controlled_count_cache greater_than_or_equals = 1 } }
 		}
 	}
 
@@ -308,54 +171,7 @@ faction_goal_update_daily_condition_caches = {
 				}
 			}
 		}
-		set_temp_variable = { faction_goal_communist_controlled_states_count_cache_temp = 0 }
-		set_temp_variable = { faction_goal_fascist_controlled_states_count_cache_temp = 0 }
-		set_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 0 }
-		every_collection_element = {
-			input = collection:states_on_my_continent_collection
-			if = {
-				limit = { controller = { has_government = communism } }
-				add_to_temp_variable = { faction_goal_communist_controlled_states_count_cache_temp = 1 }
-			}
-			if = {
-				limit = { controller = { has_government = fascism } }
-				add_to_temp_variable = { faction_goal_fascist_controlled_states_count_cache_temp = 1 }
-				add_to_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 1 }
-			}
-			if = {
-				limit = { controller = { has_government = democratic } }
-				add_to_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 1 }
-			}
-		}
-		faction_leader = {
-			set_variable = { faction_goal_communist_controlled_states_count_cache = faction_goal_communist_controlled_states_count_cache_temp }
-			set_variable = { faction_goal_fascist_controlled_states_count_cache = faction_goal_fascist_controlled_states_count_cache_temp }
-			set_variable = { faction_goal_anti_communist_controlled_states_count_cache = faction_goal_anti_communist_controlled_states_count_cache_temp }
-			if = {
-				limit = { check_variable = { var = faction_goal_communist_controlled_states_count_cache value = 1 compare = greater_than_or_equals } }
-				set_variable = { faction_goal_communist_states_available_cache = 1 }
-			}
-			if = {
-				limit = { check_variable = { var = faction_goal_communist_controlled_states_count_cache value = 0 compare = less_than_or_equals } }
-				set_variable = { faction_goal_communist_states_completed_cache = 1 }
-			}
-			if = {
-				limit = { check_variable = { var = faction_goal_fascist_controlled_states_count_cache value = 1 compare = greater_than_or_equals } }
-				set_variable = { faction_goal_fascist_states_available_cache = 1 }
-			}
-			if = {
-				limit = { check_variable = { var = faction_goal_fascist_controlled_states_count_cache value = 0 compare = less_than_or_equals } }
-				set_variable = { faction_goal_fascist_states_completed_cache = 1 }
-			}
-			if = {
-				limit = { check_variable = { var = faction_goal_anti_communist_controlled_states_count_cache value = 1 compare = greater_than_or_equals } }
-				set_variable = { faction_goal_anti_communist_states_available_cache = 1 }
-			}
-			if = {
-				limit = { check_variable = { var = faction_goal_anti_communist_controlled_states_count_cache value = 0 compare = less_than_or_equals } }
-				set_variable = { faction_goal_anti_communist_states_completed_cache = 1 }
-			}
-		}
+		faction_goal_update_continent_states_cache = yes
 	}
 
 	if = {
@@ -367,16 +183,7 @@ faction_goal_update_daily_condition_caches = {
 			}
 		}
 		faction_leader = {
-			if = {
-				limit = {
-					check_variable = {
-						var = faction_goal_above_75_communism_member_count_cache
-						value = 20
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { faction_goal_long_live_revolution_cache = 1 }
-			}
+			set_variable = { faction_goal_long_live_revolution_cache = { value = faction_goal_above_75_communism_member_count_cache greater_than_or_equals = 20 } }
 		}
 	}
 	if = {
@@ -402,33 +209,52 @@ faction_goal_update_daily_condition_caches = {
 	}
 }
 
+faction_goal_update_continent_states_cache = {
+	set_temp_variable = { faction_goal_communist_controlled_states_count_cache_temp = 0 }
+	set_temp_variable = { faction_goal_fascist_controlled_states_count_cache_temp = 0 }
+	set_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 0 }
+	every_collection_element = {
+		input = collection:states_on_my_continent_collection
+		controller = {
+			if = {
+				limit = { has_government = communism }
+				add_to_temp_variable = { faction_goal_communist_controlled_states_count_cache_temp = 1 }
+			}
+			else_if = {
+				limit = { has_government = fascism }
+				add_to_temp_variable = { faction_goal_fascist_controlled_states_count_cache_temp = 1 }
+				add_to_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 1 }
+			}
+			else_if = {
+				limit = { has_government = democratic }
+				add_to_temp_variable = { faction_goal_anti_communist_controlled_states_count_cache_temp = 1 }
+			}
+		}
+	}
+	faction_leader = {
+		set_variable = { faction_goal_communist_controlled_states_count_cache = faction_goal_communist_controlled_states_count_cache_temp }
+		set_variable = { faction_goal_fascist_controlled_states_count_cache = faction_goal_fascist_controlled_states_count_cache_temp }
+		set_variable = { faction_goal_anti_communist_controlled_states_count_cache = faction_goal_anti_communist_controlled_states_count_cache_temp }
+		set_variable = { faction_goal_communist_states_available_cache = { value = faction_goal_communist_controlled_states_count_cache greater_than_or_equals = 1 } }
+		set_variable = { faction_goal_communist_states_completed_cache = { value = faction_goal_communist_controlled_states_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_fascist_states_available_cache = { value = faction_goal_fascist_controlled_states_count_cache greater_than_or_equals = 1 } }
+		set_variable = { faction_goal_fascist_states_completed_cache = { value = faction_goal_fascist_controlled_states_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_anti_communist_states_available_cache = { value = faction_goal_anti_communist_controlled_states_count_cache greater_than_or_equals = 1 } }
+		set_variable = { faction_goal_anti_communist_states_completed_cache = { value = faction_goal_anti_communist_controlled_states_count_cache less_than_or_equals = 0 } }
+	}
+}
+
 faction_goal_update_weekly_condition_caches = {
-	if = { limit = { faction_goal_member_metrics_needed = yes }
-		faction_goal_update_member_metrics_cache = yes
-	}
-	else = {
-		faction_goal_clear_member_metrics_cache = yes
-		faction_goal_clear_member_metric_targets = yes
-	}
+	faction_goal_update_continent_states_cache = yes
 	faction_leader = {
 		set_variable = { faction_goal_resource_control_available_cache = 0 }
 		set_variable = { faction_goal_resource_control_completed_cache = 0 }
 		set_variable = { faction_goal_facilities_visible_cache = 0 }
 		set_variable = { faction_goal_facilities_completed_cache = 0 }
-		set_variable = { faction_goal_great_fortress_available_cache = 0 }
 		set_variable = { faction_goal_technology_sharing_cache = 0 }
-		set_variable = { faction_goal_semiconductor_visible_cache = 0 }
-		set_variable = { faction_goal_semiconductor_supremacy_cache = 0 }
 		set_variable = { faction_goal_strategic_resources_available_cache = 0 }
 		set_variable = { faction_goal_strategic_resources_completed_cache = 0 }
 		set_variable = { faction_goal_secure_oil_cache = 0 }
-		set_variable = { faction_goal_industrial_visible_cache = 0 }
-		set_variable = { faction_goal_industrial_completed_cache = 0 }
-		set_variable = { faction_goal_military_base_visible_cache = 0 }
-		set_variable = { faction_goal_military_base_completed_cache = 0 }
-		set_variable = { faction_goal_land_facility_states_count_cache = 0 }
-		set_variable = { faction_goal_naval_facility_states_count_cache = 0 }
-		set_variable = { faction_goal_air_facility_states_count_cache = 0 }
 	}
 
 	set_temp_variable = { faction_goal_civilian_factories_cache_temp = 0 }
@@ -519,34 +345,13 @@ faction_goal_update_weekly_condition_caches = {
 			}
 			set_variable = { faction_goal_facilities_completed_cache = 1 }
 		}
-		if = {
-			limit = { check_variable = { var = faction_goal_core_states_not_fully_controlled_count_cache value = 0 compare = less_than_or_equals } }
-			set_variable = { faction_goal_great_fortress_available_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_microchip_plant_cache > 0 } }
-			set_variable = { faction_goal_semiconductor_visible_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_microchip_plant_cache > 49 } }
-			set_variable = { faction_goal_semiconductor_supremacy_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_civilian_factories_cache > 49 } }
-			set_variable = { faction_goal_industrial_visible_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_civilian_factories_cache > 149 } }
-			set_variable = { faction_goal_industrial_completed_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_military_factory_buildings_cache > 49 } }
-			set_variable = { faction_goal_military_base_visible_cache = 1 }
-		}
-		if = {
-			limit = { check_variable = { faction_goal_military_factory_buildings_cache > 149 } }
-			set_variable = { faction_goal_military_base_completed_cache = 1 }
-		}
+		set_variable = { faction_goal_great_fortress_available_cache = { value = faction_goal_core_states_not_fully_controlled_count_cache less_than_or_equals = 0 } }
+		set_variable = { faction_goal_semiconductor_visible_cache = { value = faction_goal_microchip_plant_cache greater_than = 0 } }
+		set_variable = { faction_goal_semiconductor_supremacy_cache = { value = faction_goal_microchip_plant_cache greater_than = 49 } }
+		set_variable = { faction_goal_industrial_visible_cache = { value = faction_goal_civilian_factories_cache greater_than = 49 } }
+		set_variable = { faction_goal_industrial_completed_cache = { value = faction_goal_civilian_factories_cache greater_than = 149 } }
+		set_variable = { faction_goal_military_base_visible_cache = { value = faction_goal_military_factory_buildings_cache greater_than = 49 } }
+		set_variable = { faction_goal_military_base_completed_cache = { value = faction_goal_military_factory_buildings_cache greater_than = 149 } }
 	}
 
 	if = {
@@ -578,7 +383,6 @@ faction_goal_update_weekly_condition_caches = {
 }
 
 faction_goal_update_member_metrics_cache = {
-	faction_goal_clear_member_metrics_cache = yes
 	if = {
 		limit = {
 			has_faction_goal = faction_goal_unlock_research
@@ -593,57 +397,6 @@ faction_goal_update_member_metrics_cache = {
 	}
 	else = {
 		faction_goal_clear_member_metric_targets = yes
-	}
-	set_temp_variable = { faction_goal_member_metrics_land = 0 }
-	if = {
-		limit = {
-			OR = {
-				check_variable = { faction_goal_force_infantry_cache = 1 }
-				check_variable = { faction_goal_force_mechanized_cache = 1 }
-				check_variable = { faction_goal_force_tank_cache = 1 }
-				has_faction_goal = faction_goal_joint_military_exercises
-				has_faction_goal = faction_goal_an_infantry_army
-				has_faction_goal = faction_goal_transform_nato_forces
-				has_faction_goal = faction_goal_transform_eap_forces
-				has_faction_goal = faction_goal_an_armored_fist
-			}
-		}
-		set_temp_variable = { faction_goal_member_metrics_land = 1 }
-	}
-	set_temp_variable = { faction_goal_member_metrics_naval = 0 }
-	if = {
-		limit = {
-			OR = {
-				check_variable = { faction_goal_force_capital_ships_cache = 1 }
-				has_faction_goal = faction_goal_high_seas_fleet
-				has_faction_goal = faction_goal_marine_corps
-				has_faction_goal = faction_goal_submarine_force
-				has_faction_goal = faction_goal_convoy_escort_force
-			}
-		}
-		set_temp_variable = { faction_goal_member_metrics_naval = 1 }
-	}
-	set_temp_variable = { faction_goal_member_metrics_air = 0 }
-	if = {
-		limit = {
-			OR = {
-				has_faction_goal = faction_goal_airborne_corps
-				has_faction_goal = faction_goal_air_superiority
-			}
-		}
-		set_temp_variable = { faction_goal_member_metrics_air = 1 }
-	}
-	set_temp_variable = { faction_goal_member_metrics_research = 0 }
-	if = {
-		limit = {
-			OR = {
-				check_variable = { faction_goal_force_researched_technologies_cache = 1 }
-				check_variable = { faction_goal_force_armies_cache = 1 }
-				has_faction_goal = faction_goal_unlock_research
-				has_faction_goal = faction_goal_unlock_military
-			}
-		}
-		set_temp_variable = { faction_goal_member_metrics_research = 1 }
 	}
 	set_temp_variable = { faction_goal_infantry_battalions_cache_temp = 0 }
 	set_temp_variable = { faction_goal_mechanized_battalions_cache_temp = 0 }
@@ -680,7 +433,17 @@ faction_goal_update_member_metrics_cache = {
 			set_temp_variable = { faction_goal_suez_visible_cache_temp = 1 }
 			set_temp_variable = { faction_goal_mandeb_visible_cache_temp = 1 }
 		}
-		else = {
+		else_if = {
+			limit = {
+				check_expr = {
+					value = faction_goal_panama_visible_cache_temp
+					add = faction_goal_gibraltar_visible_cache_temp
+					add = faction_goal_bosporus_visible_cache_temp
+					add = faction_goal_suez_visible_cache_temp
+					add = faction_goal_mandeb_visible_cache_temp
+					less_than = 5
+				}
+			}
 			if = {
 				limit = {
 					capital_scope = {
@@ -740,83 +503,100 @@ faction_goal_update_member_metrics_cache = {
 				set_temp_variable = { faction_goal_mandeb_visible_cache_temp = 1 }
 			}
 		}
-		if = {
-			limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
-			add_to_temp_variable = {
-				var = faction_goal_infantry_battalions_cache_temp
-				value = {
-					value = num_battalions_with_type@Militia_Bat
-					add = num_battalions_with_type@L_Inf_Bat
-					add = num_battalions_with_type@L_Air_Inf_Bat
-					add = num_battalions_with_type@Mot_Air_Inf_Bat
-					add = num_battalions_with_type@Mech_Air_Inf_Bat
-					add = num_battalions_with_type@Arm_Air_Inf_Bat
-					add = num_battalions_with_type@L_Marine_Bat
-					add = num_battalions_with_type@L_Air_assault_Bat
-					add = num_battalions_with_type@L_Ranger_Bat
-					add = num_battalions_with_type@L_Marine_Cdo_Bat
-					add = num_battalions_with_type@Special_Forces
-					add = num_battalions_with_type@fake_intel_unit
-				}
+		add_to_temp_variable = {
+			var = faction_goal_infantry_battalions_cache_temp
+			value = {
+				value = num_battalions_with_type@Militia_Bat
+				add = num_battalions_with_type@L_Inf_Bat
+				add = num_battalions_with_type@L_Air_Inf_Bat
+				add = num_battalions_with_type@Mot_Air_Inf_Bat
+				add = num_battalions_with_type@Mech_Air_Inf_Bat
+				add = num_battalions_with_type@Arm_Air_Inf_Bat
+				add = num_battalions_with_type@L_Marine_Bat
+				add = num_battalions_with_type@L_Air_assault_Bat
+				add = num_battalions_with_type@L_Ranger_Bat
+				add = num_battalions_with_type@L_Marine_Cdo_Bat
+				add = num_battalions_with_type@Special_Forces
+				add = num_battalions_with_type@fake_intel_unit
 			}
 		}
-		if = {
-			limit = { check_variable = { faction_goal_member_metrics_naval = 1 } }
-			add_to_temp_variable = {
-				var = faction_goal_capital_ships_cache_temp
-				value = {
-					value = num_ships_with_type@battleship
-					add = num_ships_with_type@battle_cruiser
-					add = num_ships_with_type@cruiser
-					add = num_ships_with_type@stealth_destroyer
-					add = num_ships_with_type@destroyer
-					add = num_ships_with_type@heavy_frigate
-				}
-			}
-			add_to_temp_variable = {
-				var = faction_goal_submarines_cache_temp
-				value = {
-					value = num_ships_with_type@missile_submarine
-					add = num_ships_with_type@attack_submarine
-				}
-			}
-			add_to_temp_variable = {
-				var = faction_goal_screen_ships_cache_temp
-				value = {
-					value = num_ships_with_type@screen_destroyer
-					add = num_ships_with_type@stealth_frigate
-					add = num_ships_with_type@frigate
-					add = num_ships_with_type@corvette
-					add = num_ships_with_type@stealth_corvette
-					add = num_ships_with_type@patrol_boat
-				}
+		add_to_temp_variable = {
+			var = faction_goal_mechanized_battalions_cache_temp
+			value = {
+				value = num_battalions_with_type@Mech_Inf_Bat
+				add = num_battalions_with_type@Arm_Inf_Bat
+				add = num_battalions_with_type@Mech_Air_Inf_Bat
+				add = num_battalions_with_type@Arm_Air_Inf_Bat
+				add = num_battalions_with_type@Mech_Marine_Bat
+				add = num_battalions_with_type@Arm_Marine_Bat
 			}
 		}
-		if = {
-			limit = { check_variable = { faction_goal_member_metrics_air = 1 } }
-			add_to_temp_variable = {
-				var = faction_goal_airborne_battalions_cache_temp
-				value = {
-					value = num_battalions_with_type@Arm_Air_Inf_Bat
-					add = num_battalions_with_type@Mech_Air_Inf_Bat
-					add = num_battalions_with_type@Mot_Air_Inf_Bat
-					add = num_battalions_with_type@L_Air_Inf_Bat
-				}
+		add_to_temp_variable = {
+			var = faction_goal_tank_battalions_cache_temp
+			value = {
+				value = num_battalions_with_type@armor_Bat
+				add = num_battalions_with_type@L_arm_Bat
+				add = num_battalions_with_type@A_L_arm_Bat
 			}
-			add_to_temp_variable = {
-				var = faction_goal_fighters_cache_temp
-				value = {
-					value = num_deployed_planes_with_type@small_plane_airframe
-					add = num_deployed_planes_with_type@cv_small_plane_airframe
-				}
+		}
+		add_to_temp_variable = {
+			var = faction_goal_capital_ships_cache_temp
+			value = {
+				value = num_ships_with_type@battleship
+				add = num_ships_with_type@battle_cruiser
+				add = num_ships_with_type@cruiser
+				add = num_ships_with_type@stealth_destroyer
+				add = num_ships_with_type@destroyer
+				add = num_ships_with_type@heavy_frigate
 			}
-			add_to_temp_variable = { faction_goal_strategic_bombers_cache_temp = num_deployed_planes_with_type@large_plane_airframe }
 		}
-		if = {
-			limit = { check_variable = { faction_goal_member_metrics_research = 1 } }
-			add_to_temp_variable = { faction_goal_researched_technologies_cache_temp = num_researched_technologies }
-			add_to_temp_variable = { faction_goal_armies_cache_temp = num_armies }
+		add_to_temp_variable = {
+			var = faction_goal_marine_battalions_cache_temp
+			value = {
+				value = num_battalions_with_type@L_Marine_Bat
+				add = num_battalions_with_type@L_Marine_Cdo_Bat
+				add = num_battalions_with_type@Mot_Marine_Bat
+				add = num_battalions_with_type@Mech_Marine_Bat
+				add = num_battalions_with_type@Arm_Marine_Bat
+			}
 		}
+		add_to_temp_variable = {
+			var = faction_goal_submarines_cache_temp
+			value = {
+				value = num_ships_with_type@missile_submarine
+				add = num_ships_with_type@attack_submarine
+			}
+		}
+		add_to_temp_variable = {
+			var = faction_goal_screen_ships_cache_temp
+			value = {
+				value = num_ships_with_type@screen_destroyer
+				add = num_ships_with_type@stealth_frigate
+				add = num_ships_with_type@frigate
+				add = num_ships_with_type@corvette
+				add = num_ships_with_type@stealth_corvette
+				add = num_ships_with_type@patrol_boat
+			}
+		}
+		add_to_temp_variable = {
+			var = faction_goal_airborne_battalions_cache_temp
+			value = {
+				value = num_battalions_with_type@Arm_Air_Inf_Bat
+				add = num_battalions_with_type@Mech_Air_Inf_Bat
+				add = num_battalions_with_type@Mot_Air_Inf_Bat
+				add = num_battalions_with_type@L_Air_Inf_Bat
+			}
+		}
+		add_to_temp_variable = {
+			var = faction_goal_fighters_cache_temp
+			value = {
+				value = num_deployed_planes_with_type@small_plane_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_airframe
+			}
+		}
+		add_to_temp_variable = { faction_goal_strategic_bombers_cache_temp = num_deployed_planes_with_type@large_plane_airframe }
+		add_to_temp_variable = { faction_goal_researched_technologies_cache_temp = num_researched_technologies }
+		add_to_temp_variable = { faction_goal_armies_cache_temp = num_armies }
 		add_to_temp_variable = { faction_goal_military_factories_cache_temp = num_of_military_factories }
 		if = {
 			limit = { has_government = communism }
@@ -848,68 +628,19 @@ faction_goal_update_member_metrics_cache = {
 			add_to_temp_variable = { faction_goal_nato_gdp_eligible_member_count_cache_temp = 1 }
 		}
 	}
-	if = {
-		limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
-		every_collection_element = {
-			input = collection:faction_members_collection
-			add_to_temp_variable = {
-				var = faction_goal_mechanized_battalions_cache_temp
-				value = {
-					value = num_battalions_with_type@Mech_Inf_Bat
-					add = num_battalions_with_type@Arm_Inf_Bat
-					add = num_battalions_with_type@Mech_Air_Inf_Bat
-					add = num_battalions_with_type@Arm_Air_Inf_Bat
-					add = num_battalions_with_type@Mech_Marine_Bat
-					add = num_battalions_with_type@Arm_Marine_Bat
-				}
-			}
-			add_to_temp_variable = {
-				var = faction_goal_tank_battalions_cache_temp
-				value = {
-					value = num_battalions_with_type@armor_Bat
-					add = num_battalions_with_type@L_arm_Bat
-					add = num_battalions_with_type@A_L_arm_Bat
-				}
-			}
-		}
-	}
-	if = {
-		limit = { check_variable = { faction_goal_member_metrics_naval = 1 } }
-		every_collection_element = {
-			input = collection:faction_members_collection
-			add_to_temp_variable = {
-				var = faction_goal_marine_battalions_cache_temp
-				value = {
-					value = num_battalions_with_type@L_Marine_Bat
-					add = num_battalions_with_type@L_Marine_Cdo_Bat
-					add = num_battalions_with_type@Mot_Marine_Bat
-					add = num_battalions_with_type@Mech_Marine_Bat
-					add = num_battalions_with_type@Arm_Marine_Bat
-				}
-			}
-		}
-	}
 	faction_leader = {
-		if = { limit = { check_variable = { faction_goal_member_metrics_land = 1 } }
-			set_variable = { faction_goal_infantry_battalions_cache = faction_goal_infantry_battalions_cache_temp }
-			set_variable = { faction_goal_mechanized_battalions_cache = faction_goal_mechanized_battalions_cache_temp }
-			set_variable = { faction_goal_tank_battalions_cache = faction_goal_tank_battalions_cache_temp }
-		}
-		if = { limit = { check_variable = { faction_goal_member_metrics_naval = 1 } }
-			set_variable = { faction_goal_capital_ships_cache = faction_goal_capital_ships_cache_temp }
-			set_variable = { faction_goal_marine_battalions_cache = faction_goal_marine_battalions_cache_temp }
-			set_variable = { faction_goal_submarines_cache = faction_goal_submarines_cache_temp }
-			set_variable = { faction_goal_screen_ships_cache = faction_goal_screen_ships_cache_temp }
-		}
-		if = { limit = { check_variable = { faction_goal_member_metrics_air = 1 } }
-			set_variable = { faction_goal_airborne_battalions_cache = faction_goal_airborne_battalions_cache_temp }
-			set_variable = { faction_goal_fighters_cache = faction_goal_fighters_cache_temp }
-			set_variable = { faction_goal_strategic_bombers_cache = faction_goal_strategic_bombers_cache_temp }
-		}
-		if = { limit = { check_variable = { faction_goal_member_metrics_research = 1 } }
-			set_variable = { faction_goal_researched_technologies_cache = faction_goal_researched_technologies_cache_temp }
-			set_variable = { faction_goal_armies_cache = faction_goal_armies_cache_temp }
-		}
+		set_variable = { faction_goal_infantry_battalions_cache = faction_goal_infantry_battalions_cache_temp }
+		set_variable = { faction_goal_mechanized_battalions_cache = faction_goal_mechanized_battalions_cache_temp }
+		set_variable = { faction_goal_tank_battalions_cache = faction_goal_tank_battalions_cache_temp }
+		set_variable = { faction_goal_capital_ships_cache = faction_goal_capital_ships_cache_temp }
+		set_variable = { faction_goal_marine_battalions_cache = faction_goal_marine_battalions_cache_temp }
+		set_variable = { faction_goal_submarines_cache = faction_goal_submarines_cache_temp }
+		set_variable = { faction_goal_screen_ships_cache = faction_goal_screen_ships_cache_temp }
+		set_variable = { faction_goal_airborne_battalions_cache = faction_goal_airborne_battalions_cache_temp }
+		set_variable = { faction_goal_fighters_cache = faction_goal_fighters_cache_temp }
+		set_variable = { faction_goal_strategic_bombers_cache = faction_goal_strategic_bombers_cache_temp }
+		set_variable = { faction_goal_researched_technologies_cache = faction_goal_researched_technologies_cache_temp }
+		set_variable = { faction_goal_armies_cache = faction_goal_armies_cache_temp }
 		set_variable = { faction_goal_military_factories_cache = faction_goal_military_factories_cache_temp }
 		set_variable = { faction_goal_member_count_cache = faction_goal_member_count_cache_temp }
 		set_variable = { faction_goal_communist_member_count_cache = faction_goal_communist_member_count_cache_temp }
@@ -926,36 +657,6 @@ faction_goal_update_member_metrics_cache = {
 	}
 }
 
-faction_goal_clear_member_metrics_cache = {
-	faction_leader = {
-		clear_variable = faction_goal_infantry_battalions_cache
-		clear_variable = faction_goal_mechanized_battalions_cache
-		clear_variable = faction_goal_tank_battalions_cache
-		clear_variable = faction_goal_capital_ships_cache
-		clear_variable = faction_goal_marine_battalions_cache
-		clear_variable = faction_goal_airborne_battalions_cache
-		clear_variable = faction_goal_submarines_cache
-		clear_variable = faction_goal_screen_ships_cache
-		clear_variable = faction_goal_fighters_cache
-		clear_variable = faction_goal_strategic_bombers_cache
-		clear_variable = faction_goal_researched_technologies_cache
-		clear_variable = faction_goal_armies_cache
-		clear_variable = faction_goal_military_factories_cache
-		clear_variable = faction_goal_member_count_cache
-		clear_variable = faction_goal_communist_member_count_cache
-		clear_variable = faction_goal_fascist_member_count_cache
-		clear_variable = faction_goal_anti_communist_member_count_cache
-		clear_variable = faction_goal_below_30_democracy_member_count_cache
-		clear_variable = faction_goal_above_75_communism_member_count_cache
-		clear_variable = faction_goal_nato_gdp_eligible_member_count_cache
-		clear_variable = faction_goal_panama_visible_cache
-		clear_variable = faction_goal_gibraltar_visible_cache
-		clear_variable = faction_goal_bosporus_visible_cache
-		clear_variable = faction_goal_suez_visible_cache
-		clear_variable = faction_goal_mandeb_visible_cache
-	}
-}
-
 faction_goal_clear_member_metric_targets = {
 	faction_leader = {
 		clear_variable = unlock_military_techs_researched_target
@@ -964,7 +665,6 @@ faction_goal_clear_member_metric_targets = {
 }
 
 faction_goal_select_unlock_research = {
-	set_temp_variable = { faction_goal_force_researched_technologies_cache = 1 }
 	set_temp_variable = { faction_goal_unlock_research_target_temp = 0 }
 	every_faction_member = {
 		set_temp_variable = { faction_goal_research_factor = 0 }
@@ -991,17 +691,17 @@ faction_goal_select_unlock_research = {
 			}
 		}
 	}
+	# The metrics refresh can clear the target before the goal counts as selected
+	faction_goal_update_member_metrics_cache = yes
 	set_variable = {
 		unlock_military_techs_researched_target = {
 			value = faction_goal_unlock_research_target_temp
 			round = yes
 		}
 	}
-	faction_goal_update_member_metrics_cache = yes
 }
 
 faction_goal_select_unlock_military = {
-	set_temp_variable = { faction_goal_force_armies_cache = 1 }
 	faction_goal_update_member_metrics_cache = yes
 	faction_leader = {
 		set_variable = {
@@ -1052,14 +752,7 @@ faction_goal_refresh_all_caches = {
 faction_goal_update_daily_caches = {
 	if = {
 		limit = { is_faction_leader = yes }
-		if = {
-			limit = { faction_goal_member_metrics_needed = yes }
-			faction_goal_update_member_metrics_cache = yes
-		}
-		else = {
-			faction_goal_clear_member_metrics_cache = yes
-			faction_goal_clear_member_metric_targets = yes
-		}
+		faction_goal_update_member_metrics_cache = yes
 		faction_goal_update_daily_condition_caches = yes
 		if = {
 			limit = {
@@ -1074,11 +767,7 @@ faction_goal_update_daily_caches = {
 			faction_goal_update_strategic_bombing_campaign_cache = yes
 		}
 		if = {
-			limit = {
-				faction_leader = {
-					NOT = { has_variable = faction_goal_technology_sharing_cache }
-				}
-			}
+			limit = { NOT = { has_variable = faction_goal_technology_sharing_cache } }
 			faction_goal_update_weekly_condition_caches = yes
 		}
 	}
