@@ -37,7 +37,7 @@ TYPE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
 CATEGORY_RE = re.compile(r"^\s*category\s*=\s*(\w+)")
 GOAL_CATEGORIES = ("short_term", "medium_term", "long_term")
-MAX_TEMPLATE_GOALS_PER_CATEGORY = 2
+MAX_TEMPLATE_GOALS_PER_CATEGORY = 1
 
 # Trigger blocks that keep the enclosing scope. Any other opener ends the scope walk.
 SCOPE_KEEPING_BLOCKS = frozenset(

@@ -132,7 +132,7 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     goal_ids = [
         f"{category}_{index}"
         for category in ("short_term", "medium_term", "long_term")
-        for index in range(3)
+        for index in range(2)
     ]
     _write_text(
         faction_root / "templates" / "templates.txt",
@@ -151,7 +151,7 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     validator._validate_template_goal_limits()
 
     assert len(validator._issues) == 3
-    assert all("maximum 2" in issue.message for issue in validator._issues)
+    assert all("maximum 1" in issue.message for issue in validator._issues)
     assert {issue.message.split()[3] for issue in validator._issues} == {
         "short_term",
         "medium_term",
@@ -159,17 +159,17 @@ def test_template_goal_category_limit_is_reported(tmp_path):
     }
 
 
-def test_template_with_two_goals_per_category_passes_limit(tmp_path):
+def test_template_with_one_goal_per_category_passes_limit(tmp_path):
     _write_faction_fixture(tmp_path)
     faction_root = tmp_path / "common" / "factions"
     _write_text(
         faction_root / "templates" / "templates.txt",
-        "template_alpha = {\n\tgoals = { short_one short_two }\n}\n",
+        "template_alpha = {\n\tgoals = { short_one medium_one }\n}\n",
     )
     _write_text(
         faction_root / "goals" / "goals.txt",
         "short_one = { category = short_term }\n"
-        "short_two = { category = short_term }\n",
+        "medium_one = { category = medium_term }\n",
     )
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
     validator._collect_definitions()
