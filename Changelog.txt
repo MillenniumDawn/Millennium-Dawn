@@ -58,6 +58,7 @@ Content:
  - [UKR] Added Ukrainian intelligence characters (La Resistance): 14 real SBU, HUR and SZR officers as operatives available from the start, 11 more as faces in a new Ukrainian operative portrait pool, and 10 intelligence advisors recruited at start and revealed by date, focus or event. Andrii Naumov can be appointed head of SBU internal security under Zelensky; if he is the serving intelligence advisor when Russia attacks or after a year in office, he defects and weakens the agency for a year. Kyrylo Budanov becomes HUR chief from 2020 and, in a 2025-2026 war under Zelensky, can move to the Office of the President, strengthening intelligence at a higher internal security cost.
  - [UKR] Added a focus that leads to An-178 development, and two focuses that grant french Rafale and swedish Jas-39 Gripen aircraft.
 AI:
+ - A country that refuses a diplomatic offer, aid, or investment is now only more likely to refuse further offers from the country it refused, instead of every country (Issue #4039).
  - AI ceasefires no longer end wars that include a civil-war or other dynamic country, and AI nations being invaded or short on rifles no longer send military aid.
  - AI Antarctic stations now use the player resupply automation instead of buying a full tank every month and discarding most of it. Unlike players, the AI orders on credit when its treasury falls short, unless it is in a depression.
  - Made Italian mafia, internal faction, and STALKER event AI weigh costs while keeping fallback choices available (Issue #5106).
@@ -260,16 +261,20 @@ Balance:
  - [USA] Rebalanced fiscal and company policy, military and political-branch bonuses, socialist and anarchist tradeoffs, and financial crisis intervention and recovery; tied political support to economic choices, and made economic event AI weigh Wall Street strength, regulation, the ruling party, and costs.
 
 Bugfix:
+ - AI cost weights now follow the charge, influence checks no longer compare a country with itself, and Russia's Serbia reunification decision is taken by Russia like the other union-state reunifications.
  - Fixed the EU ambassador office not granting its permanent UNSC seat and made the United States of Europe inherit an existing member's permanent seat without retaining a rotating seat.
  - Fixed countries with several Antarctic stations, such as the United States of Europe, paying upkeep for only one of them and auto-resupplying only one.
+ - Fixed Antarctic blizzard repairs only covering a country's first station, and a damaged station that changes hands mid-repair never being repaired.
  - Fixed Antarctic auto-resupply letting stations run dry in April: it now uses the 30-day threshold from March, so winter's longer deliveries arrive in time.
  - Fixed CSTO offensive war calls, updated conversion AI and tension, and enabled Russia's NATO decisions.
  - Fixed Pre-Accession europeanism drift applying on every europeanism change instead of once a month, and the EU serious-breach decision checking council authority without a target.
+ - Fixed the EU council breach and suspension decisions showing, greyed out, to members without council authority and letting several members act on one target the same day; they are now hidden, and the EU voting and exit categories check membership once instead of in each decision.
  - Fixed country-specific missile icons never loading because their setup ran outside any country at game start.
  - Fixed stale spy satellite missions only being cleared every other entry.
  - Fixed the guarantee opinion modifier missing its base entry and removed an invalid nationalist acceptance modifier from the Salafist ideology group.
  - Fixed Iraq's American weariness never giving the USA its cause for invasion, Mutassim Gaddafi's family effects checking the wrong leader, Czech party modifiers skipping popularity of exactly 20% or 50%, and KDU permanently losing 15% agriculture productivity outside 2019-2020.
  - Fixed four top bar and naval battle backgrounds the game rejected for their compression.
+ - Fixed coalition decisions and election events stacking a second coalition spirit for the same outlook, and coalition spirits being granted for the ruling outlook after some government changes.
  - AI countries in deficit now trim one civil spending law in a fixed order (social, health, education, police, bureaucracy) and no longer log an error when nothing can be cut.
  - Fixed Turkey never paying its Turkey Stream and Blue Stream transit fees, Syrian development projects charging the counter-terror cost instead of their own, and research slots being counted twice in education cost.
  - Fixed missing icons for the Ukrainian Mi-24 and Baryer-S, the Evgeni Dannikov portrait, and the protests and manage exile buttons (Issue #6539).
@@ -758,15 +763,22 @@ Localization:
 
 Performance:
  - Simplified government outlook checks, replaced duplicate negative triggers with their positive counterparts, and inlined eastern-alignment checks without changing their party lists.
+ - Party popularity scaling now uses one math expression per party, and coalition spirits are only swapped when their level changes instead of being removed and re-added every month.
  - Moved startup tax overrides and small-economy debt relief before the first money update (Issue #5659).
+ - Antarctic station fuel, research progress, and auto-resupply now use math expressions, and blizzard reliability reads lookup tables.
  - Converted multiple math expressions in the money system for around 8% faster speed per ticket.
+ - Money system weekly update: workforce allocation now uses single math expressions, countries without country-specific income or expense streams skip those checks, and per-level spending tooltips are computed for players only.
  - Converted several dozen ownership and control checks into combined owned-and-controlled checks.
  - Inverted neighbor-at-war checks to enemy-is-neighbor checks.
+ - Expected spending, protest drift, and Arab Spring pressure now use single math expressions, spending alerts are only checked for players, and an unused volunteer list is no longer rebuilt monthly.
  - Reduced hourly checks when evaluating whether the AI should take Neo-Imperialism intervention laws.
+ - Satellite access and spy mission updates skip repeated work when a country has no access partners.
  - Reduced neighbor-country checks in French communist demand decisions for AI.
+ - Trimmed the weekly update: removed a repeated energy recalculation for players using energy automation, simplified AI debt repayment and counter-terror detection math, and skipped space production billing for countries with nothing to bill.
  - Power Status ideas now update at the start of February, May, August, and November instead of over the following weeks, and regional power selection no longer re-sorts the regional country lists.
  - Simplified recurring country scripts for ALG, BOS, CHI, EGY, ENG, HEZ, ISR, ITA, KOR, SAU, SIA, SOV, TAJ, TUR, and USA with math expressions and only swapping tier spirits when the tier changes.
  - African Union outlook, population, and GDP totals now use collection math expressions instead of a scripted loop.
+ - UN subsidy checks now only do their math for countries receiving subsidies, the weekly dead-member sweep exits early, and EU breach and vote scoring use math expressions.
  - Sped up the ledger: column sorting uses native array sorting instead of a scripted quicksort, faction and subject totals use collections, and one player's ledger clicks no longer refresh other players' ledgers.
  - Rebuilt the research slot screen rows as two data-driven lists, started research slot loss missions from the weekly update instead of engine polling, stopped AI treasury, debt, and investment changes from refreshing the screen, and cleared the slot alert as soon as an upgrade starts; a slot you still hold now shows Unlocked while its loss mission runs (Issue #3692, #4040, #6116).
 
