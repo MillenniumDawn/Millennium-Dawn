@@ -132,21 +132,18 @@ def test_main_returns_one_when_target_fails(monkeypatch, tmp_path, capsys):
 def test_refresh_defines_writes_manifest(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(
-        rvd_mod, "find_vanilla_defines", lambda: str(tmp_manifests / "defs.lua")
-    )
-    monkeypatch.setattr(
-        rvd_mod,
-        "parse_vanilla_defines",
-        lambda p: {"NGame": {"END_DATE"}, "NEconomy": {"GDP_DEFICIT_FACTOR"}},
-    )
+    gameplay = tmp_manifests / "00_defines.lua"
+    gameplay.write_bytes(b"NDefines = {\nNGame = {\n    END_DATE = 2000,\n},\n}\n")
+    graphics = tmp_manifests / "00_graphics.lua"
+    graphics.write_bytes(b"NDefines_Graphics = {\nNIcons = {\n    SIZE = 20,\n},\n}\n")
+    monkeypatch.setattr(rvd_mod, "find_vanilla_defines", lambda: str(gameplay))
 
     summary = rvd_mod._refresh_defines()
     assert summary.startswith("vanilla_defines.txt:")
 
     body = (tmp_manifests / "vanilla_defines.txt").read_text(encoding="utf-8")
-    assert "NEconomy.GDP_DEFICIT_FACTOR" in body
     assert "NGame.END_DATE" in body
+    assert "NDefines_Graphics.NIcons.SIZE" in body
 
 
 def test_refresh_defines_raises_when_missing(monkeypatch):
