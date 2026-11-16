@@ -5842,11 +5842,22 @@ calculate_gdp = {
 		}
 	}
 
+	# Poorer countries carry a large informal labor pool without unrest: 50% at no income, gone at $30k GDP/C
+	set_variable = {
+		unemployment_structural_allowance = {
+			value = gdp_per_capita
+			divide = -60
+			add = 0.5
+			clamp = { min = 0 max = 0.5 }
+		}
+	}
+
 	# Calculate Threshold
 	set_variable = {
 		unemployment_threshold_display_var = {
 			value = modifier@high_unemployment_threshold_modifier
 			add = 0.06
+			add = unemployment_structural_allowance
 			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
@@ -6606,6 +6617,8 @@ calculate_migration_mechanic_values = {
 			if = {
 				limit = { value = average_worker_fulfillment greater_than_or_equals = 1 }
 				add = total_unemployed_percentage_display
+				subtract = unemployment_structural_allowance
+				clamp = { min = 0 max = 1 }
 				multiply = 2
 			}
 			subtract = personal_war_refugees_display

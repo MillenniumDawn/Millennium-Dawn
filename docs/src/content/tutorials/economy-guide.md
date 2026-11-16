@@ -550,9 +550,11 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 Buildings require workers to function at full efficiency. Each facility has a required worker count, and you must allocate a portion of the national population to fill those positions. Allocation is automatic, but buildings without enough workers have reduced output.
 
-If all buildings are fully staffed and workers remain, those workers become unemployed. The unemployment rate is shown in the Economy window.
+If all buildings are fully staffed and workers remain, those workers form the **Available Workforce**. Its share of the total workforce is shown in the Economy window.
 
-If unemployment exceeds the **Unemployment Threshold** shown in the Economy window, debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as unemployment rises.
+If the Available Workforce exceeds the **Unemployment Threshold** shown in the Economy window, the excess counts as high unemployment and debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as the excess rises.
+
+The threshold is 6% plus an allowance for your level of development, plus any modifiers from laws and national spirits. The allowance is 50% minus one point for every $600 of GDP per capita, and it reaches zero at $30,000. A poor, populous country can hold a large informal labor pool without unrest, but that room shrinks as it grows richer, so it has to keep building jobs to stay ahead. Emigration from idle workers only counts the share above this allowance.
 
 Each building type has a **priority** from 1 to 10, set in the Employment Priority panel of the Economy window. When there are fewer workers than jobs, workers are shared out in proportion to priority and to the jobs each type offers, so a priority 10 job is filled ten times as readily as a priority 1 job. Workers a fully staffed type cannot use go to the others. When every job can be filled, priorities do nothing.
 
