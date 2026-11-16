@@ -13440,6 +13440,183 @@ UKR_modernize_sov_category = {
 			}
 		}
 	}
+
+	UKR_develop_domestic_atgm_barrier_s = {
+		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier_s
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = { date > 2019.01.01 }
+
+		available = {
+			date < 2022.01.01
+			controls_state = 698 #Kyiv
+			has_army_experience > 2
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.08 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = development_cost_0_08_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		modifier = {
+			research_speed_factor = -0.01
+			industrial_capacity_factory = -0.005
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_domestic_atgm_barrier_s"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.08 }
+				modify_treasury_effect = yes
+
+				add_political_power = -5
+				army_experience = -2
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_domestic_atgm_barrier_s"
+			UKR_count_domestic_development = yes
+
+			698 = { #Kyiv
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
+			}
+
+			country_event = ukraine_equipment_develop_domestic_atgm.7
+		}
+	}
+
+	UKR_equipment_develop_domestic_kombat_konus_atgm = {
+		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			date < 2000.07.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.15 }
+		}
+
+		custom_cost_text = development_cost_0_15
+
+		modifier = {
+			research_speed_factor = 0.01
+			industrial_capacity_factory = -0.002
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_equipment_develop_domestic_kombat_konus_atgm"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.15 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_develop_domestic_kombat_konus_atgm"
+			UKR_count_domestic_development = yes
+
+			if = {
+				limit = {
+					NOT = { has_tech = Heavy_Anti_tank_3 }
+				}
+				add_tech_bonus = {
+					name = UKR_equipment_develop_domestic_kombat_konus_atgm
+					bonus = 0.15
+					uses = 1
+					technology = Heavy_Anti_tank_3
+				}
+			}
+
+			set_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag
+		}
+	}
+
+	UKR_equipment_develop_domestic_kombat_konus_atgm_mission = {
+		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
+
+		activation = {
+			NOT = { has_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag }
+			NOT = { has_decision = UKR_equipment_develop_domestic_kombat_konus_atgm }
+			date > 2000.07.01
+			date < 2000.08.01
+		}
+
+		available = {
+			always = no
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+		}
+
+		days_mission_timeout = 92
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_equipment_develop_domestic_kombat_konus_atgm_mission"
+
+			set_temp_variable = { treasury_change = -0.15 }
+			modify_treasury_effect = yes
+
+			country_event = ukraine_equipment_develop_domestic_atgm.13
+		}
+	}
 }
 
 UKR_reactivate_sov_category = {
@@ -18537,7 +18714,7 @@ UKR_modernize_planes_category = {
 	}
 }
 
-UKR_develop_domestic_category = {
+UKR_develop_domestic_equipment_decision_category = {
 	ukr_light_transport_tender = {
 		fire_only_once = yes
 		icon = GFX_decision_ukrpom_button
@@ -20521,9 +20698,7 @@ UKR_develop_domestic_category = {
 			}
 		}
 	}
-}
 
-UKR_develop_domestic_atgm_category = {
 	UKR_develop_domestic_atgm_barrier = {
 		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
 		fire_only_once = yes
@@ -20620,74 +20795,6 @@ UKR_develop_domestic_atgm_category = {
 			set_country_flag = UKR_develop_domestic_atgm_barrier_flag
 
 			country_event = ukraine_equipment_develop_domestic_atgm.6
-		}
-	}
-
-	UKR_develop_domestic_atgm_barrier_s = {
-		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier_s
-		fire_only_once = yes
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		visible = { date > 2019.01.01 }
-
-		available = {
-			date < 2022.01.01
-			controls_state = 698 #Kyiv
-			has_army_experience > 2
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
-		}
-
-		custom_cost_trigger = {
-			check_variable = { treasury > 0.08 }
-			has_political_power > 5
-			has_army_experience > 2
-		}
-
-		custom_cost_text = development_cost_0_08_pp_5_army_2
-		ai_hint_pp_cost = 5
-
-		modifier = {
-			research_speed_factor = -0.01
-			industrial_capacity_factory = -0.005
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 698 #Kyiv
-			}
-			highlight_color_while_active = 3
-			highlight_color_before_active = 2
-		}
-
-		on_map_mode = map_and_decisions_view
-		days_remove = 120
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_domestic_atgm_barrier_s"
-
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.08 }
-				modify_treasury_effect = yes
-
-				add_political_power = -5
-				army_experience = -2
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_domestic_atgm_barrier_s"
-			UKR_count_domestic_development = yes
-
-			698 = { #Kyiv
-				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
-			}
-
-			country_event = ukraine_equipment_develop_domestic_atgm.7
 		}
 	}
 
@@ -21344,115 +21451,6 @@ UKR_develop_domestic_atgm_category = {
 					model = "TUR_bayraktartb2_entity"
 				}
 			}
-		}
-	}
-
-	UKR_equipment_develop_domestic_kombat_konus_atgm = {
-		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
-		fire_only_once = yes
-
-		ai_will_do = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		visible = {
-			date < 2000.07.01
-		}
-
-		available = {
-			controls_state = 698 #Kyiv
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
-		}
-
-		custom_cost_trigger = {
-			check_variable = { treasury > 0.15 }
-		}
-
-		custom_cost_text = development_cost_0_15
-
-		modifier = {
-			research_speed_factor = 0.01
-			industrial_capacity_factory = -0.002
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 698 #Kyiv
-			}
-			highlight_color_while_active = 3
-			highlight_color_before_active = 2
-		}
-
-		on_map_mode = map_and_decisions_view
-		days_remove = 60
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_equipment_develop_domestic_kombat_konus_atgm"
-
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.15 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_develop_domestic_kombat_konus_atgm"
-			UKR_count_domestic_development = yes
-
-			if = {
-				limit = {
-					NOT = { has_tech = Heavy_Anti_tank_3 }
-				}
-				add_tech_bonus = {
-					name = UKR_equipment_develop_domestic_kombat_konus_atgm
-					bonus = 0.15
-					uses = 1
-					technology = Heavy_Anti_tank_3
-				}
-			}
-
-			set_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag
-		}
-	}
-
-	UKR_equipment_develop_domestic_kombat_konus_atgm_mission = {
-		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
-
-		activation = {
-			NOT = { has_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag }
-			NOT = { has_decision = UKR_equipment_develop_domestic_kombat_konus_atgm }
-			date > 2000.07.01
-			date < 2000.08.01
-		}
-
-		available = {
-			always = no
-			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
-		}
-
-		days_mission_timeout = 92
-		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
-		is_good = yes
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 698 #Kyiv
-			}
-			highlight_color_while_active = 3
-			highlight_color_before_active = 2
-		}
-
-		on_map_mode = map_and_decisions_view
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_equipment_develop_domestic_kombat_konus_atgm_mission"
-
-			set_temp_variable = { treasury_change = -0.15 }
-			modify_treasury_effect = yes
-
-			country_event = ukraine_equipment_develop_domestic_atgm.13
 		}
 	}
 
