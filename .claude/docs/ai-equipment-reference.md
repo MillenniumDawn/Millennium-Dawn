@@ -93,6 +93,9 @@ nation without a custom file. They exclude covered nations with `blocked_for`.
   it needs. `validate_ai_equipment.py` checks this.
 - Shared files: `NATO_tank.txt`, `SOV_tank.txt` (SOV and BLR), `CHI_tank.txt`,
   `USA_tank.txt`. Most nation files cover the MBT only.
+- Naval templates used by more than one nation live in `zz_shared_<ships>.txt`. Add a
+  tag to a shared `available_for` list instead of copying a template. Give each tag
+  one template per role.
 
 | Role                        | Equipment                 | Used by                            |
 | --------------------------- | ------------------------- | ---------------------------------- |

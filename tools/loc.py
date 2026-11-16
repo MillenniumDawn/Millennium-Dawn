@@ -40,20 +40,10 @@ from shared_utils import atomic_write_text, read_text_strict
 #############################
 def readfile(name):
     print("Reading file " + name + "...")
-    lines = []
     try:
-        with open(name, "r") as f:
-            lines = f.read().splitlines()
-    except Exception:
-        try:
-            with open(name, "r", encoding="utf-8") as f:
-                lines = f.read().splitlines()
-        except Exception:
-            try:
-                with open(name, "r", encoding="utf-8-sig") as f:
-                    lines = f.read().splitlines()
-            except Exception:
-                print("Could not read file " + name + "!")
+        lines = read_text_strict(name).splitlines()
+    except (OSError, UnicodeError) as exc:
+        raise SystemExit(f"Could not read file {name}: {exc}") from exc
     tags = collections.OrderedDict()
 
     open_blocks = 0

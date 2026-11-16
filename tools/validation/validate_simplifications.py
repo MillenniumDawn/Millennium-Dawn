@@ -1137,33 +1137,17 @@ def _scan_composite(text: str, path: str):
     return findings
 
 
-def _scan_owner_scope_only(text: str, path: str):
-    """Run just the redundant owner-scope pass (focus trees + decisions)."""
-    src = _Script(text)
-    findings = []
-    if _matches_relative_pattern(path, _FOCUS_PATTERNS):
-        findings.extend(_scan_focus_file(src))
-    if _matches_relative_pattern(path, _DECISION_PATTERNS):
-        findings.extend(_scan_decision_file(src))
-    return findings
-
-
-_OWNER_SCOPE_PATTERNS = list(dict.fromkeys(_FOCUS_PATTERNS + _DECISION_PATTERNS))
-
-
-def _scan_path(args: tuple[str, str, bool]):
-    """Pool worker: content-cached findings for one file. The cache key must
-    differ per pass set, since the same content yields different findings
-    under --owner-scope-only."""
-    path, mod_path, owner_scope_only = args
+def _scan_path(args: tuple[str, str]):
+    """Pool worker: content-cached findings for one file."""
+    path, mod_path = args
     text = FileOpener.open_text_file(path, strip_comments_flag=True)
     rel = os.path.relpath(path, mod_path)
-    if owner_scope_only:
-        namespace, scan = "simplifications.owner-scope", _scan_owner_scope_only
-    else:
-        namespace, scan = "simplifications.composite", _scan_composite
     return disk_cache.per_file_cached_by_content(
-        mod_path, namespace, path, text, lambda: scan(text, rel)
+        mod_path,
+        "simplifications.composite",
+        path,
+        text,
+        lambda: _scan_composite(text, rel),
     )
 
 
@@ -1171,24 +1155,12 @@ class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, owner_scope_only: bool = False, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.owner_scope_only = owner_scope_only
-
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
         # All passes share one comment-stripped read per file.
-        if self.owner_scope_only:
-            self._log_section("Owner-scope pass only (--owner-scope-only).")
-            patterns = _OWNER_SCOPE_PATTERNS
-        else:
-            patterns = _ALL_SCAN_PATTERNS
         # A staged list can name one file twice; report it once.
-        files = list(dict.fromkeys(self._collect_files(patterns)))
-        parsed = self._pool_map(
-            _scan_path,
-            [(path, self.mod_path, self.owner_scope_only) for path in files],
-        )
+        files = list(dict.fromkeys(self._collect_files(_ALL_SCAN_PATTERNS)))
+        parsed = self._pool_map(_scan_path, [(path, self.mod_path) for path in files])
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
         self._log_section("Collecting and reporting results...")
@@ -1207,19 +1179,8 @@ class Validator(BaseValidator):
         )
 
 
-def _add_extra_args(parser):
-    parser.add_argument(
-        "--owner-scope-only",
-        action="store_true",
-        dest="owner_scope_only",
-        help="Only run the redundant owner-scope pass (focus trees and "
-        "decisions); skip the other simplification checks",
-    )
-
-
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Suggest merging consecutive same-scope blocks in Millennium Dawn mod",
-        extra_args_fn=_add_extra_args,
     )

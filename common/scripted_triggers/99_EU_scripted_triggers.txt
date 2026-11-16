@@ -382,46 +382,23 @@ EU_is_commission_caretaker = {
 	}
 }
 
-# Council enforcement authority (breach determination / voting-rights / subsidies suspension):
-# either the proposer and target hold the top-3-influencer consensus among unsuspended members,
-# or the proposer is the commission president. Shared verbatim by the three enforcement decisions.
+# Reads FROM, so call it from target_trigger. The proposer is the commission president, or in every
+# other unsuspended member the proposer is a top 3 influencer and the target is not.
 EU_council_has_breach_authority = {
 	OR = {
-		AND = {
-			custom_trigger_tooltip = {
-				tooltip = can_determine_a_breach_of_values_ROOT
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
-							}
-						}
-						is_top3_influencer = yes
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = can_determine_a_breach_of_values_FROM
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
-							}
-						}
-						NOT = { FROM_is_top3_influencer = yes }
-					}
+		has_idea = EU_commission_office_idea
+		all_of_scopes = {
+			array = global.EU_member
+			OR = {
+				tag = ROOT
+				tag = FROM
+				has_idea = EUU_voting_rights_suspended
+				AND = {
+					is_top3_influencer = yes
+					NOT = { FROM_is_top3_influencer = yes }
 				}
 			}
 		}
-		has_idea = EU_commission_office_idea
 	}
 }
 
@@ -459,7 +436,7 @@ gov_is_eurosceptical = {
 			check_variable = { var = THIS.europeanism value = 0.5 compare = less_than_or_equals }
 			OR = {
 				western_conservatism_are_in_power = yes ### conservatism
-				emerging_reactionaries_are_in_power = yes ### Conservative
+				emerging_reactionaries_are_in_power = yes ### reactionary
 				neutrality_neutral_conservatism_are_in_power = yes ### Neutral_conservatism
 			}
 		}
@@ -504,7 +481,7 @@ gov_is_eurosceptical = {
 			NOT = {
 				OR = {
 					western_conservatism_are_in_power = yes ### conservatism
-					emerging_reactionaries_are_in_power = yes ### Conservative
+					emerging_reactionaries_are_in_power = yes ### reactionary
 					neutrality_neutral_conservatism_are_in_power = yes ### Neutral_conservatism
 					western_liberals_are_in_power = yes ### liberalism
 					neutrality_neutral_libertarians_are_in_power = yes ### Neutral_Libertarian
@@ -532,7 +509,7 @@ gov_is_EUexiteer = {
 			check_variable = { var = THIS.europeanism value = 0.4 compare = less_than_or_equals }
 			OR = {
 				western_conservatism_are_in_power = yes ### conservatism
-				emerging_reactionaries_are_in_power = yes ### Conservative
+				emerging_reactionaries_are_in_power = yes ### reactionary
 				neutrality_neutral_conservatism_are_in_power = yes ### Neutral_conservatism
 			}
 		}
@@ -577,7 +554,7 @@ gov_is_EUexiteer = {
 			NOT = {
 				OR = {
 					western_conservatism_are_in_power = yes ### conservatism
-					emerging_reactionaries_are_in_power = yes ### Conservative
+					emerging_reactionaries_are_in_power = yes ### reactionary
 					neutrality_neutral_conservatism_are_in_power = yes ### Neutral_conservatism
 					western_liberals_are_in_power = yes ### liberalism
 					neutrality_neutral_libertarians_are_in_power = yes ### Neutral_Libertarian

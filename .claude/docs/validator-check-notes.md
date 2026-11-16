@@ -70,6 +70,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_building_guards.py
 
+- Every building check runs here, in one walk over `common/`, `events/`, and
+  `history/`. Province buildings (`level_cap = { province_max = N }`) and coastal
+  buildings (`only_costal = yes`) are read from `common/buildings/`, so no list is
+  kept by hand. These checks run in CI only, not on commit.
 - `damage_building` or `remove_building` against a building the state lacks spams
   `error.log`. The guard must name the same building as the effect's `type`.
 - Accepted guards: a count comparison in an enclosing `limit` (also on `random_owned_state`
@@ -79,6 +83,36 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
+- `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
+  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+  or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
+  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
+  `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
+  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
+  upper bound is noted in the warning, but does not suppress it: a level bound alone
+  does not establish slot availability. Nested effects and other buildings or selectors
+  are not checked, and a guard for one slot does not prove that every level requested
+  will fit. The backlog is tracked by #6390.
+- `building-missing-province` (ERROR): `add_building_construction` of a province
+  building with no `province` key. The engine rejects the effect.
+- `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
+  `add_building_construction`. The block takes a selector, so nothing is built.
+- `coastal-building-not-coastal` (ERROR): a coastal province building sits in a
+  province that `map/definition.csv` does not mark as coastal land, or that is not
+  listed there. It reads `history/states/` `buildings = { 1234 = { ... } }` blocks and
+  `add_building_construction` with a numeric `province` or `province = { id = ... }`.
+  Provinces picked at runtime (`all_provinces`, `limit_to_coastal`, variables) are not
+  checked. State-level coastal buildings such as `dockyard` have no province to check.
+- `reactor-owner-without-nuclear-status` (ERROR): a tag starting with a
+  `nuclear_reactor` grants no non-default `nuclear_status` idea in its
+  `history/countries/` file. Skipped when no `nuclear_status` group exists.
+- `granted-building-without-project` (ERROR): a tag starting with a building that a
+  special project's `set_building_level` grants never completes that project in its
+  country file.
+- `map/definition.csv` is in the CI workspace and selects the validator through the
+  `map-definition` group. A staged change to it or to `common/buildings/` rescans every
+  file. A staged run always reads the state, country, idea, and project files the
+  ownership checks join, and reports their findings.
 
 ## validate_characters.py
 
@@ -106,6 +140,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_decisions.py
 
 - `missing-decision-log` (ERROR): a `complete_effect` with effects but no `log =`.
+- `redundant-fire-only-once` (ERROR): `fire_only_once = no` is the engine default.
+  Delete the line.
 - `undefined-unlock-tooltip-target` (ERROR): `unlock_decision_tooltip` and
   `unlock_decision_category_tooltip` name a definition the engine looks up at render. A
   stale name leaves the tooltip empty while the unlock still happens. The category form
@@ -141,13 +177,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
-  CI): the case rule in the stylization guide, and a prefix-owner rule still under
-  review. Existing ids are never renamed, so
-  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
+  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
+  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
+  tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
   skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
-  `SIL_bund_*`), so review the owner rule before enforcing it.
+  `SIL_bund_*`), so most findings are intended. Run it by hand to spot copy-paste
+  prefixes such as `VOJ_*` on Serbian decisions.
+- A `Decision <id>` or `Mission <id>` log naming another decision is caught by
+  `_check_decision_log_id` in `check_common_mistakes.py`, not here.
+  `tools/linting/fix_log_ids.py` rewrites it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -168,9 +209,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   AI cannot miss, needs a reason in `ai_cost_exempt`. An exemption skips the whole
   decision, not one cost, so re-check its reason when the decision gains a new cost.
 - `decision-unneeded-treasury-guard` (WARNING): the decision twin of
-  `event-unneeded-treasury-guard`, read over the whole decision, with the same gaps.
-  `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost is
-  money, and a money modifier in the `modifier` block commits money.
+  `event-unneeded-treasury-guard`, read over the whole decision, with the "Who pays"
+  rules and gaps under `validate_events.py`. `cost` and `ai_hint_pp_cost` are political power prices, a treasury custom cost
+  is money, and the `modifier` block can commit money. FROM is the target.
 - AI reach: this check and the AI factor check skip a decision the AI cannot see. That
   is an unconditional `is_ai = no` or `always = no` in the decision's `visible` or
   `available`, or in its category's own `visible`, `available`, or `allowed`. The match
@@ -187,8 +228,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Amounts, equipment types, and dynamic branch coverage are not compared. Other custom
   resource variables and scripted cost triggers still need manual review.
 - `decision-days-remove-without-effect` (WARNING): a `days_remove` timer that nothing
-  reads. A `remove_effect`, a top-level `modifier` or `targeted_modifier`, or a
-  `has_decision` naming the decision anywhere in shipped script exempts it. Repeatable
+  reads. A `remove_effect`, a top-level `modifier`, `targeted_modifier`,
+  `war_with_on_remove`, or `war_with_target_on_remove`, or a `has_decision` naming the
+  decision anywhere in shipped script exempts it. Repeatable
   decisions that use the timer as a cooldown are reported too; `days_re_enable` is the
   cooldown. Missions are skipped, though some set `days_remove`. Known gap: a
   `has_decision` in the decision's own block also exempts it.
@@ -214,8 +256,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `decision-trigger-reads-temp-variable` (WARNING): `custom_cost_trigger`, `available`,
   or `visible` reads a name in a `check_variable` that the decision's effects set only
   with `*_temp_variable`. A name the trigger sets, or that any scripted trigger sets as
-  a temp variable, is exempt, since MD triggers such as `calculate_ai_interest` can set
-  one. Known gaps: a name set persistently elsewhere in the mod still counts as temp,
+  a temp variable, is exempt, since scripted triggers can calculate their own temps.
+  Known gaps: a name set persistently elsewhere in the mod still counts as temp,
   and a value read inside a math block is not seen.
 - `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
   reported by the same pass as `decision-log-not-first`.
@@ -312,19 +354,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     events. Review these manually.
 - `event-unneeded-treasury-guard` (WARNING, opt-in with `--check-ai-chance-costs`): an
   `ai_chance` modifier that lowers the weight on bankruptcy or a high deficit, on an
-  option with no money cost. Costs come from the whole option, nested scopes included,
-  so a charge back to ROOT from a state scope counts, and so does one to another
-  country. A political power cost justifies the bankruptcy check only. A war, a
-  spending law change, or a money modifier the script names commits money and
-  justifies both, directly or through a scripted effect (`MONEY_COMMITMENT_RE`).
-  A free build costs nothing here, even for a building with upkeep, matching the
-  `skip_payment` rule. Unconditional own-country event calls in the same file also
-  commit money when the follow-up charges in its immediate effects or every option
-  guarantees a money cost. Routing events are followed to a fixed point; a free exit,
-  conditional call or charge, a trigger beyond the receiver's tag, foreign scope, and
-  tooltip preview do not prove payment.
-  Known gaps: cross-file or cross-country reply-chain costs, scripted-effect event
-  dispatch, and money modifiers on an idea the option adds.
+  option that costs the choosing country no money. A political power cost justifies
+  the bankruptcy check only. The chooser's tag comes from the event or option
+  `trigger`. Payers and commitments follow "Who pays" below.
+- Who pays (all three unneeded-treasury-guard checks): only the chooser's costs count.
+  - Payers: ROOT is the chooser, and so is its own tag. FROM, country iterators, and other
+    tags are other payers. With no known tag, any literal tag may be the chooser. A state
+    scope charges its parent. Previews never execute, and `skip_payment = 1` waives a
+    later build, even inside a moved scope block.
+  - Commitments (`script_commits_money`): a war, which also costs its target; a money
+    modifier moved the costly way, which means cost or interest up, tax or income down,
+    matching `color_type`; a value that is not a literal; and idea changes whose net in
+    one block raises a money modifier or a spending law level (`spending_new_level` in
+    the idea's `on_add`). The `spending_law_scripted_change` flag alone commits nothing,
+    and `tax_rate_change_multiplier_modifier` prices political power, not money.
+  - Chains: fired events and called effects are followed to a fixed point. A fired
+    event's FROM is its sender, and an explicit ROOT in a scripted effect is the
+    caller's ROOT. Another country's choice charges the chooser if any option does. A
+    follow-up the chooser answers itself charges only when every free pick does (no
+    `trigger`, not `base = 0`). Branches and event triggers count as possible. A dynamic
+    event id counts as a cost, while an undefined id and a cycle with no charge are free.
+  - Known gaps: receiver identity from callers, partner-event branches gated on the
+    receiver's tag, income an idea earns through money-system script that reads
+    `has_idea`, and tax rate changes, which count in either direction.
 - `event-corruption-pp-cost` (WARNING, opt-in with
   `--check-corruption-pp-costs`): event options with a literal negative
   `add_political_power` and `decrease_corruption` in the choosing country, without a
@@ -393,6 +445,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `source-art-format` (ERROR): under `gfx/`, `.psd`, `.xcf`, and `.tif` cannot load, and
   `.png` and `.jpg` load uncompressed without mipmaps. Convert with
   `tools/assets/md_art_convert.py`. `map/` is out of scope.
+- `scripted-loc-file-prefix` (WARNING): tracked `.txt` files directly under
+  `common/scripted_localisation/` lack a two-digit `NN_` prefix. This is an initial
+  slice of #1572; it does not check tag ownership, suffixes, or other directories.
 
 ## validate_focus_tree.py
 
@@ -409,11 +464,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   completion time, never a price. A literal political power loss justifies the
   bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
   as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
-  block costs nothing. A charge another nation's event sends back to the sender,
-  directly or through a reply event, counts. Known gaps: partner-event branches gated
-  on the receiver's tag are not told apart, a partner-event charge never raises
-  `missing-bankruptcy-guard`, and costs that come from an idea's modifiers, such as
-  `personnel_cost_multiplier_modifier`, are not seen, so their guards read as unneeded.
+  block costs nothing. The owner's tags come from the tree's `country` block. Payers,
+  commitments, and chains follow "Who pays" under `validate_events.py`. Known gap: an
+  event chain charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 
@@ -506,6 +559,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `ai-weight-temp-variable` (WARNING): a temp-variable write inside `ai_will_do`,
+  `ai_chance`, or a scorer `score` block in `common/scorers/`. Follows scripted-trigger calls,
+  including nested and negated calls, and reports once per weight block. Does not
+  follow dynamically generated `meta_trigger` calls.
 - `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
   `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
   `max`. A bound that is a variable, an `@constant`, or an expression block is not
@@ -516,6 +573,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
+- `mesh-texture-name-clash` (WARNING): a name a rendered material uses that two or
+  more MD files under `gfx/` carry with different content, reported once per name.
+  Identical copies pass. MD files only, not vanilla. Any staged `gfx/` file runs the
+  hook, since a new icon can clash. WARNING while `black.dds` and `C7NLD.dds` (a tech
+  icon and a model texture each) are renamed in a backlog PR, then ERROR.
+
+## validate_asset_data.py
+
+- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
+  staged files only, so the existing model backlog blocks a commit only when one of
+  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
+  TGA or truncated data. Stdlib only, so it runs without numpy.
+- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
+  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
+  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
+  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
+  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
+  the texture format findings are WARNING, since the standards call them targets.
+  These need numpy and log a skip without it.
 
 ## validate_mio_icons.py
 
@@ -575,7 +652,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - No pre-commit hook, so `common/dynamic_modifiers/` edits get no local signal.
 - `redundant-enable-gate` (ERROR): a top-level `always = yes`, `original_tag`, or `tag` in
   a dynamic modifier's own `enable`. See `common/dynamic_modifiers/README.md`.
-  `tools/standardization/strip_dynmod_tag_gates.py` clears them in bulk.
 - `dynamic-modifier-name-loc` (ERROR): a dynamic modifier needs a bare-name English key.
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
@@ -591,6 +667,27 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
   The owner is the idea, trait, or modifier name that holds the bonus. Do not
   blanket-exempt existing bonuses; review and explain each one (Issue #6371).
+- `weekly-stability-war-support-over-cap` (WARNING, always on): `stability_weekly` or
+  `war_support_weekly` above `0.05`, or a `*_weekly_factor` with an absolute value above
+  `0.25`. Flat weekly penalties are not flagged (Issue #6494).
+- `excessive-modifier-over-30-percent` (WARNING, always on): one `*_factor` or
+  `*_modifier` literal above `0.30`. Keys containing `cost`, starting with `expected_`,
+  or listed in `_NEGATIVE_BONUS_KEYS` (plus `*_worker_requirement_modifier` and
+  `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
+  `ai_*`, income, and weekly keys are skipped because they are AI weights or have
+  their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
+  number, not a percent. Keys defined with `value_type = number` in
+  `common/modifier_definitions/` are also skipped, including flat renewable capacity
+  and expected-spending tier adjustments. `tax_rate_change_multiplier_modifier`
+  is cost-style: a positive value raises the policy-change cost, so only negative
+  values below `-0.30` warn. With `--unbalanced-modifiers`, productivity growth keys
+  are skipped too, because that check owns them (Issue #6494).
+- Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
+  skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
+  dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
+  untimed `add_dynamic_modifier` grant keeps the source in scope, as does no grant at
+  all (decisions, static modifiers). Grants are read from `common/`, `events/`, and
+  `history/`.
 
 ## validate_on_actions.py
 
@@ -653,7 +750,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     allowances. A dynamic pick or `allowed_modules` filler suspends the check only if
     it can touch the ammo: the ammo slot itself, or a module that widens it. Forbidden
     modules cannot widen other slots, including through a category selector.
-  - Regression source: `USA_APC_design/modern_APC_default` before
+  - Regression source: `USA_apc_design/modern_apc_default` before
     `aaa631c76f29834b10b967c75baf833a1fbed566`. Its autocannon/MG alternatives
     were paired with MG-only ammo. The union of both weapons' slot unlocks hid
     the autocannon mismatch. The historical pattern now warns; the corrected
@@ -801,6 +898,24 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
 
+## validate_special_projects.py
+
+- A project's `visible`, `available`, and `special_project_parent` decide what
+  unlocks it. `OR` branches and if/else branches are separate ways in; a lone `if`
+  body is required. `NOT`, `NOR`, `NAND`, `count_triggers`, and `limit` never are.
+  Tag, flag, and building checks are ignored, so a branch with only those does not
+  excuse the others.
+- `sp-unlock-tooltip-missing` (WARNING): no member of a way in shows
+  `SP_UNLOCK_PROJECT` for the project. One member is enough. A parent project's
+  `project_output` tooltip and a focus's `complete_special_project` count. Ways with
+  no tech or focus, such as parent-only or flag-only projects, are skipped.
+- `sp-unlock-tooltip-misplaced` (WARNING): the tooltip names a project its tech,
+  focus, or project does not unlock, or a project that does not exist. `PROJECT`
+  takes the bare id; `sp:` reads as unknown.
+- Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
+  tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
+  not checked.
+
 ## validate_scripted_params.py
 
 - Contracts come from the `# Parameters:` block above a scripted effect, plus the
@@ -818,6 +933,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
+- `influence-gain-over-cap` and `influence-gain-under-floor` (WARNING): a literal
+  `percent_change` above 20, or above 0 and below 0.25, visible at a
+  `change_influence_percentage` call. The base is the last
+  `set_temp_variable = { percent_change = N }` in scope within 20 lines of the call.
+  Losses, variables, and expressions are not checked. Known gaps: `add_to`,
+  `subtract_from`, `multiply`, and `divide` after the set are not applied to the base,
+  and the effect clamps the base times its influence modifiers, so a flagged literal can
+  still land in range and an unflagged one can land outside it.
+- `influence-self-default` (ERROR): a `change_influence_percentage` call whose nearest
+  scope block is `TAG = { }`, with `tag_index` set to that tag and no `influence_target`.
+  The target defaults to THIS, so the tag influences itself. Only a tag block counts;
+  any other scope change stops the check. `change_influence_percentage` restores the
+  caller's `tag_index` and `influence_target`, so a default never carries into the next
+  call, but an explicit value does.
 - `missing-required-param` (ERROR): a call with a required parameter not set first.
   `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
   `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
@@ -871,14 +1000,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and
   `add_relation_modifier`.
-- Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
-  and a `#` comment swallowed into a `log` string.
-- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+- Structural checks: a `limit` directly under `else` and a `#` comment swallowed into a
+  `log` string. Building checks live in `validate_building_guards.py`.
+- The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
+  `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
+  `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
+  bare modifier skips the partner arrays.
+- `indent-depth` (ERROR): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
   clears it. The scan strips comments, so comment-only lines are not checked. Four
-  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
-  tracked in #6248.
+  leading spaces stay the `indent-brackets` ERROR.
 
 ## validate_variables.py
 
@@ -918,8 +1050,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## Other tools
 
 - `validate_standardization.py` is manual. It runs the standardizers in memory and
-  reports files they would rewrite. Pass `--all --no-color` for a full pass.
+  reports rewrite drift as warnings at the first changed line, with file totals.
+  Pass `--all --kind focus --no-color` for all focus files. Failed standardizers,
+  unstable rewrites, and unexpected focus-content changes are errors. The content
+  check allows documented formatter normalizations and does not inspect properties
+  outside focus blocks or prove gameplay correctness. `--strict` fails on errors,
+  not the existing drift backlog.
 - `validate_unused_textures.py` is a manual-stage hook. CI cannot run it.
+  A reference with a directory must match a file by full path. A bare filename, as
+  entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
+  Without a HOI4 install, missing references are warnings and include vanilla art.
+- `unused-mesh`: a `.mesh` under `gfx/` that no `pdxmesh` `file =` in a mod or vanilla
+  `.gfx` or `.asset` names, matched case-insensitively. Only used meshes mark their
+  textures used. Without a HOI4 install, MD meshes that override a vanilla path read
+  as unused.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`

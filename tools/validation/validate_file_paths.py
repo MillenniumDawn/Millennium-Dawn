@@ -63,6 +63,8 @@ _WINDOWS_RESERVED = (
 _ART_ROOT = "gfx/"
 _WORKING_FILE_EXTENSIONS = frozenset({".psd", ".xcf", ".tif", ".tiff"})
 _UNCOMPRESSED_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
+_SCRIPTED_LOC_ROOT = "common/scripted_localisation/"
+_NUMBERED_PREFIX_RE = re.compile(r"^[0-9]{2}_")
 
 
 def parse_checksum_manifest(text: str) -> List[Tuple[str, str, bool]]:
@@ -257,6 +259,7 @@ class Validator(BaseValidator):
         self._check_internal_collisions(paths)
         self._check_windows_hostile_names(paths)
         self._check_source_art_formats(paths)
+        self._check_scripted_loc_prefixes(paths)
 
     def _check_vanilla_collisions(self, paths: List[str], vanilla: Set[str]):
         self._log_section("Checking mod paths against vanilla...")
@@ -353,6 +356,25 @@ class Validator(BaseValidator):
             "Source art shipped under gfx/ (convert it with "
             "tools/assets/md_art_convert.py and repoint the texturefile):",
             category="source-art-format",
+        )
+
+    def _check_scripted_loc_prefixes(self, paths: List[str]):
+        self._log_section("Checking scripted localisation file prefixes...")
+        results = []
+        for path in paths:
+            if not path.startswith(_SCRIPTED_LOC_ROOT):
+                continue
+            name = path[len(_SCRIPTED_LOC_ROOT) :]
+            if "/" in name or not name.endswith(".txt"):
+                continue
+            if not _NUMBERED_PREFIX_RE.match(name):
+                results.append(("filename lacks an NN_ prefix", path, 0))
+        self._report(
+            results,
+            "✓ Scripted localisation filenames have numbered prefixes",
+            "Scripted localisation filenames without numbered prefixes:",
+            severity=Severity.WARNING,
+            category="scripted-loc-file-prefix",
         )
 
 
