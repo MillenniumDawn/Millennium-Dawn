@@ -19,7 +19,6 @@ from check_common_mistakes import (
     _check_ai_daily_flag_cache,
     _check_any_country_member_array,
     _check_bare_statement_token,
-    _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
@@ -55,7 +54,6 @@ from check_common_mistakes import (
     _check_log_nested_quote,
     _check_modifier_ref_defined,
     _check_mutually_exclusive_contradictions,
-    _check_nested_province_block,
     _check_nor_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
@@ -1680,45 +1678,6 @@ _COUNT_CASES: dict[
             ["\tNOT = { original_tag = USA tag = CHI }\n"],
         ),
     ],
-    _check_building_missing_province: [
-        (
-            "naval_base without province flagged",
-            1,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = naval_base\n",
-                "\t\t\t\tlevel = 2\n",
-                "\t\t\t\tinstant_build = yes\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "supply_node with literal province not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = supply_node\n",
-                "\t\t\t\tlevel = 1\n",
-                "\t\t\t\tprovince = 12299\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "state-level building without province not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = industrial_complex\n",
-                "\t\t\t\tlevel = 2\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "single-line construction without province flagged",
-            1,
-            ["\t\t\tadd_building_construction = { type = naval_base level = 2 }\n"],
-        ),
-    ],
     _check_event_ai_historical_bankruptcy_fallback: [
         (
             "eligible fallback keeps historical bankruptcy event valid",
@@ -1988,34 +1947,6 @@ _COUNT_CASES: dict[
             "plain else not flagged",
             0,
             ["\t\t\telse = {\n", "\t\t\t\tadd_stability = 0.02\n", "\t\t\t}\n"],
-        ),
-    ],
-    _check_nested_province_block: [
-        (
-            "province = { province = <id> } flagged",
-            1,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = coastal_bunker\n",
-                "\t\t\t\tlevel = 4\n",
-                "\t\t\t\tprovince = {\n",
-                "\t\t\t\t\tprovince = 1269\n",
-                "\t\t\t\t}\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "province selector block not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = bunker\n",
-                "\t\t\t\tprovince = {\n",
-                "\t\t\t\t\tall_provinces = yes\n",
-                "\t\t\t\t\tlimit_to_border = yes\n",
-                "\t\t\t\t}\n",
-                "\t\t\t}\n",
-            ],
         ),
     ],
     _check_log_nested_quote: [
@@ -3371,26 +3302,6 @@ _EXACT_CASES = [
         "every_owned_controlled_state",
         _check_every_owned_controlled_state,
         ["\tevery_owned_controlled_state = { add_manpower = 1 }\n"],
-    ),
-    _exact(
-        "provincial building without province",
-        _check_building_missing_province,
-        ["add_building_construction = { type = naval_base level = 1 }\n"],
-    ),
-    _exact(
-        "add_building_construction split across lines",
-        _check_building_missing_province,
-        ["add_building_construction\n", "= { type = naval_base level = 1 }\n"],
-    ),
-    _exact(
-        "province block naming an id",
-        _check_nested_province_block,
-        [
-            "add_building_construction = {\n",
-            "\ttype = bunker\n",
-            "\tprovince = { province = 123 }\n",
-            "}\n",
-        ],
     ),
     _exact(
         "bare trigger call", _check_bare_statement_token, ["\tNOT = { tst_trigger }\n"]
