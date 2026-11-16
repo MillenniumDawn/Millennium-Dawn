@@ -2437,6 +2437,7 @@ ingame_startup_nations_effect = {
 			set_variable = { cyber_ongoing_operations = 0 }
 			cyber_nation_startup = yes #must precede ingame_update_setup so cyber_capability is set before update_military_rate checks it
 		}
+		set_money_stream_gate = yes
 		ingame_update_setup = yes	 #money system
 		if = { limit = { NOT = { has_variable = last_quarter_gdp_total } }
 			set_variable = { last_quarter_gdp_total = gdp_total }
@@ -3026,9 +3027,15 @@ update_canal_blockage_flags = {
 diplomatic_action_cached_array_resync = {
 	clear_array = guaranteeing_nations
 	clear_array = nations_with_military_access
-	clear_array = nations_who_sent_us_volunteers
 	clear_array = nations_we_sent_volunteers_to
 	every_country = {
+		limit = {
+			OR = {
+				has_guaranteed = PREV
+				has_military_access_to = PREV
+				has_volunteers_amount_from = { tag = PREV count > 0 }
+			}
+		}
 		if = {
 			limit = { has_guaranteed = PREV }
 			add_to_array = { PREV.guaranteeing_nations = THIS.id }
@@ -3036,10 +3043,6 @@ diplomatic_action_cached_array_resync = {
 		if = {
 			limit = { has_military_access_to = PREV }
 			add_to_array = { PREV.nations_with_military_access = THIS.id }
-		}
-		if = {
-			limit = { PREV = { has_volunteers_amount_from = { tag = PREV count > 0 } } }
-			add_to_array = { PREV.nations_who_sent_us_volunteers = THIS.id }
 		}
 		if = {
 			limit = { has_volunteers_amount_from = { tag = PREV count > 0 } }
