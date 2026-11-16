@@ -383,20 +383,20 @@ faction_goal_update_weekly_condition_caches = {
 }
 
 faction_goal_update_member_metrics_cache = {
-	if = {
-		limit = {
-			has_faction_goal = faction_goal_unlock_research
+	faction_leader = {
+		if = {
+			limit = { NOT = { has_faction_goal = faction_goal_unlock_military } }
+			clear_variable = unlock_target
 		}
-		faction_leader = { clear_variable = unlock_target }
-	}
-	else_if = {
-		limit = {
-			has_faction_goal = faction_goal_unlock_military
+		if = {
+			limit = { NOT = { has_faction_goal = faction_goal_unlock_research } }
+			clear_variable = unlock_military_techs_researched_target
 		}
-		faction_leader = { clear_variable = unlock_military_techs_researched_target }
-	}
-	else = {
-		faction_goal_clear_member_metric_targets = yes
+		# select_effect skips goals set at game start
+		else_if = {
+			limit = { NOT = { has_variable = unlock_military_techs_researched_target } }
+			faction_goal_set_unlock_research_target = yes
+		}
 	}
 	set_temp_variable = { faction_goal_infantry_battalions_cache_temp = 0 }
 	set_temp_variable = { faction_goal_mechanized_battalions_cache_temp = 0 }
@@ -657,14 +657,13 @@ faction_goal_update_member_metrics_cache = {
 	}
 }
 
-faction_goal_clear_member_metric_targets = {
-	faction_leader = {
-		clear_variable = unlock_military_techs_researched_target
-		clear_variable = unlock_target
-	}
+faction_goal_select_unlock_research = {
+	# The metrics refresh can clear the target before the goal counts as selected
+	faction_goal_update_member_metrics_cache = yes
+	faction_goal_set_unlock_research_target = yes
 }
 
-faction_goal_select_unlock_research = {
+faction_goal_set_unlock_research_target = {
 	set_temp_variable = { faction_goal_unlock_research_target_temp = 0 }
 	every_faction_member = {
 		set_temp_variable = { faction_goal_research_factor = 0 }
@@ -691,8 +690,6 @@ faction_goal_select_unlock_research = {
 			}
 		}
 	}
-	# The metrics refresh can clear the target before the goal counts as selected
-	faction_goal_update_member_metrics_cache = yes
 	set_variable = {
 		unlock_military_techs_researched_target = {
 			value = faction_goal_unlock_research_target_temp
