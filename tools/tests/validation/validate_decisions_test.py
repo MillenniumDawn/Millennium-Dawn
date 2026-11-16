@@ -1717,6 +1717,16 @@ _CATEGORY_GATE_CASES = {
         [],
     ),
     "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    # A state scope is one line, not the lines inside it.
+    "state scope": (
+        _CAT_WAR,
+        {
+            "dec1": _block("visible", "759 = { has_war = yes }"),
+            "dec2": _block("visible", "759 = {\n\thas_war = yes\n}"),
+        },
+        [],
+        [("cat: all 2 decisions", "`759 = { has_war = yes }`")],
+    ),
 }
 
 

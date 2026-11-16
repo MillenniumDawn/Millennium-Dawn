@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_matching_brace,
     find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
@@ -988,11 +989,29 @@ def _find_category_redundant_rows(
     return results
 
 
+_GATE_STATEMENT_RE = re.compile(
+    r'([^\s{}=<>"]+)\s*(>=|<=|=|>|<)\s*("[^"]*"|\{|[^\s{}]+)'
+)
+
+
 def _top_level_lines(block: str) -> Set[str]:
-    """Depth-0 statements of a trigger block, whitespace collapsed for comparison."""
+    """Depth-0 statements of a trigger block, whitespace collapsed for comparison.
+
+    A state scope such as ``759 = { ... }`` stays one statement.
+    """
     lines = set()
-    for key, operator, scalar, nested in iter_statement_ops(flat_block_text(block)):
-        value = scalar if nested is None else " ".join(["{", *nested.split(), "}"])
+    for inner, index in iter_flat_offsets(block):
+        if index and inner[index - 1] not in " \t\r\n{}":
+            continue
+        match = _GATE_STATEMENT_RE.match(inner, index)
+        if not match:
+            continue
+        key, operator, value = match.groups()
+        if value == "{":
+            close = find_matching_brace(inner, match.end() - 1)
+            if close == -1:
+                continue
+            value = " ".join(["{", *inner[match.end() : close].split(), "}"])
         lines.add(f"{key} {operator} {value}")
     return lines
 
