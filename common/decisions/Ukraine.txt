@@ -13235,7 +13235,7 @@ UKR_modernize_sov_category = {
 					}
 				}
 				AND = {
-					controls_province = 6429 #Khmelnytskyi
+					controls_province = 3511 #Shepetivka
 					1250 = { #Khmelnytskyi
 						is_owned_and_controlled_by = UKR
 					}
@@ -13250,7 +13250,7 @@ UKR_modernize_sov_category = {
 			has_army_experience > 4
 		}
 
-		custom_cost_text = development_cost_pp_10_army_4
+		custom_cost_text = decision_cost_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -13290,7 +13290,7 @@ UKR_modernize_sov_category = {
 					}
 				}
 				AND = {
-					controls_province = 6429 #Khmelnytskyi
+					controls_province = 3511 #Shepetivka
 					1250 = { #Khmelnytskyi
 						is_owned_and_controlled_by = UKR
 					}
@@ -13303,7 +13303,7 @@ UKR_modernize_sov_category = {
 			has_army_experience > 2
 		}
 
-		custom_cost_text = development_cost_pp_10_army_2
+		custom_cost_text = decision_cost_pp_10_army_2
 		ai_hint_pp_cost = 10
 		days_mission_timeout = 20
 		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
@@ -13511,6 +13511,7 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = { has_country_flag = UKR_mrls_stage1_kharkiv_flag }
 			has_country_flag = UKR_mrls_stage2_kharkiv_flag
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -13531,10 +13532,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 10
 			has_army_experience > 4
-			check_variable = { treasury > UKR_mrls_verba_cost }
+			check_variable = { treasury > 0.25 }
 		}
 
-		custom_cost_text = UKR_mrls_verba_price
+		custom_cost_text = development_cost_0_25_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -13542,14 +13543,97 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = UKR_mrls_verba_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.25 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_verba"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Verba"
+					type = medium_tank_rocket_chassis_0
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = thirty_two_missile_pack
+						ammunition_load_slot = artillery_light_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					icon = "GFX_VERBA"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Verba"
+					type = SP_R_arty_0
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_VERBA"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_verba_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_verba_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage1_kharkiv_flag
+			has_country_flag = UKR_mrls_stage2_kharkiv_flag
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_artillery_ammo_3
+			}
+			NOT = { has_country_flag = UKR_develop_mrls_verba_no_tech_taken_flag }
+		}
+
+		available = {
+			controls_province = 9556 #Kharkiv
+			696 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_verba_days
+
+		custom_cost_trigger = {
+			has_political_power > 10
+			has_army_experience > 4
+			check_variable = { treasury > 0.2 }
+		}
+
+		custom_cost_text = development_cost_0_20_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_verba_renewal"
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -0.2 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_verba_renewal"
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -13595,6 +13679,7 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = { has_country_flag = UKR_mrls_stage1_kharkiv_flag }
 			has_country_flag = UKR_mrls_stage2_kharkiv_flag
 			has_dlc = "No Step Back"
 			NOT = { has_tech = nsb_artillery_ammo_3 }
@@ -13612,10 +13697,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 20
 			has_army_experience > 6
-			check_variable = { treasury > UKR_mrls_verba_nt_cost }
+			check_variable = { treasury > 0.4 }
 		}
 
-		custom_cost_text = UKR_develop_mrls_verba_no_tech_cost
+		custom_cost_text = development_cost_0_40_pp_20_army_6
 		ai_hint_pp_cost = 20
 
 		complete_effect = {
@@ -13624,14 +13709,99 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -20
 				army_experience = -6
-				set_temp_variable = { treasury_change = UKR_mrls_verba_nt_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.4 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_verba_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Verba"
+					type = medium_tank_rocket_chassis_0
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = thirty_two_missile_pack
+						ammunition_load_slot = artillery_light_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					icon = "GFX_VERBA"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Verba"
+					type = SP_R_arty_0
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_VERBA"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_verba_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_verba_no_tech_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage1_kharkiv_flag
+			has_country_flag = UKR_mrls_stage2_kharkiv_flag
+			has_dlc = "No Step Back"
+			NOT = { has_tech = nsb_artillery_ammo_3 }
+		}
+
+		available = {
+			controls_province = 9556 #Kharkiv
+			696 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_verba_nt_days
+
+		custom_cost_trigger = {
+			has_political_power > 20
+			has_army_experience > 6
+			check_variable = { treasury > 0.3 }
+		}
+
+		custom_cost_text = development_cost_0_30_pp_20_army_6
+		ai_hint_pp_cost = 20
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_verba_no_tech_renewal"
+			set_country_flag = UKR_develop_mrls_verba_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -20
+				army_experience = -6
+				set_temp_variable = { treasury_change = -0.3 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_verba_no_tech_renewal"
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
@@ -13689,7 +13859,7 @@ UKR_modernize_sov_category = {
 		available = {
 			date > 2000.01.01
 			date < 2009.06.01
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = { #Khmelnytskyi
 				is_owned_and_controlled_by = UKR
 			}
@@ -13773,7 +13943,7 @@ UKR_modernize_sov_category = {
 		available = {
 			date > 2004.01.01
 			date < 2010.06.01
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -13848,6 +14018,7 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = { has_country_flag = UKR_mrls_stage1_shepetivka_flag }
 			has_country_flag = UKR_mrls_stage2_shepetivka_flag
 			if = {
 				limit = { NOT = { has_dlc = "No Step Back" } }
@@ -13857,7 +14028,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -13866,22 +14037,106 @@ UKR_modernize_sov_category = {
 		days_remove = var:UKR_mrls_bastion03_days
 
 		custom_cost_trigger = {
-			check_variable = { treasury > UKR_mrls_bastion03_cost }
+			check_variable = { treasury > 1 }
 		}
 
-		custom_cost_text = UKR_mrls_bastion03_price
+		custom_cost_text = development_cost_1_00
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion03"
 			hidden_effect = {
-				set_temp_variable = { treasury_change = UKR_mrls_bastion03_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -1 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion03"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bastion-03"
+					type = medium_tank_rocket_chassis_1
+					parent_version = 0 #Current Version: 0
+					modules = {
+						main_armament_slot = art_med_rocket_gen1
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_medium_ammo_1
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						armor_type_slot = empty
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = empty
+						special_type_slot_4 = tank_battlestation_2
+					}
+					upgrades = { tank_nsb_fire_upgrade = 1 }
+					icon = "GFX_BASTION_03_ON_KRAZ_6322RA"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bastion-03"
+					type = SP_R_arty_1
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BASTION_03_ON_KRAZ_6322RA"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_bastion03_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bastion03_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage1_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				has_tech = SP_R_arty_1
+			}
+			NOT = { has_country_flag = UKR_develop_mrls_bastion03_no_tech_taken_flag }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_bastion03_days
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.8 }
+		}
+
+		custom_cost_text = development_cost_0_80
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion03_renewal"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.8 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion03_renewal"
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -13933,13 +14188,14 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = { has_country_flag = UKR_mrls_stage1_shepetivka_flag }
 			has_country_flag = UKR_mrls_stage2_shepetivka_flag
 			NOT = { has_dlc = "No Step Back" }
 			NOT = { has_tech = SP_R_arty_1 }
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -13950,10 +14206,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 10
 			has_army_experience > 4
-			check_variable = { treasury > UKR_mrls_bastion03_nt_cost }
+			check_variable = { treasury > 1.5 }
 		}
 
-		custom_cost_text = UKR_develop_mrls_bastion03_no_tech_cost
+		custom_cost_text = development_cost_1_50_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -13962,14 +14218,105 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = UKR_mrls_bastion03_nt_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -1.5 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion03_no_tech"
+			if = {
+				limit = { NOT = { has_dlc = "No Step Back" } }
+				set_technology = { SP_R_arty_1 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bastion-03"
+					type = medium_tank_rocket_chassis_1
+					parent_version = 0 #Current Version: 0
+					modules = {
+						main_armament_slot = art_med_rocket_gen1
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_medium_ammo_1
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						armor_type_slot = empty
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = empty
+						special_type_slot_4 = tank_battlestation_2
+					}
+					upgrades = { tank_nsb_fire_upgrade = 1 }
+					icon = "GFX_BASTION_03_ON_KRAZ_6322RA"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bastion-03"
+					type = SP_R_arty_1
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BASTION_03_ON_KRAZ_6322RA"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_bastion03_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bastion03_no_tech_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage1_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			NOT = { has_dlc = "No Step Back" }
+			NOT = { has_tech = SP_R_arty_1 }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_bastion03_nt_days
+
+		custom_cost_trigger = {
+			has_political_power > 10
+			has_army_experience > 4
+			check_variable = { treasury > 1.2 }
+		}
+
+		custom_cost_text = development_cost_1_20_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion03_no_tech_renewal"
+			set_country_flag = UKR_develop_mrls_bastion03_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -1.2 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion03_no_tech_renewal"
 			if = {
 				limit = { NOT = { has_dlc = "No Step Back" } }
 				set_technology = { SP_R_arty_1 = 1 popup = no }
@@ -14025,6 +14372,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14037,7 +14390,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14046,22 +14399,104 @@ UKR_modernize_sov_category = {
 		days_remove = var:UKR_mrls_shepetivka_wartime_days
 
 		custom_cost_trigger = {
-			check_variable = { treasury > UKR_mrls_berest_cost }
+			check_variable = { treasury > 0.5 }
 		}
 
-		custom_cost_text = UKR_mrls_berest_price
+		custom_cost_text = development_cost_0_50
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bm21um"
 			hidden_effect = {
-				set_temp_variable = { treasury_change = UKR_mrls_berest_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.5 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bm21um"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "BM-21UM Berest"
+					type = medium_tank_rocket_chassis_0
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = thirty_two_missile_pack
+						ammunition_load_slot = artillery_light_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					icon = "GFX_BM_21UM_BEREST"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "BM-21UM Berest"
+					type = SP_R_arty_0
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BM_21UM_BEREST"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_berest_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bm21um_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_artillery_ammo_3
+			}
+			NOT = { has_country_flag = UKR_develop_mrls_bm21um_no_tech_taken_flag }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_days
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.4 }
+		}
+
+		custom_cost_text = development_cost_0_40
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bm21um_renewal"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.4 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bm21um_renewal"
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -14107,6 +14542,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14116,7 +14557,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14127,10 +14568,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 10
 			has_army_experience > 4
-			check_variable = { treasury > UKR_mrls_berest_nt_cost }
+			check_variable = { treasury > 0.75 }
 		}
 
-		custom_cost_text = UKR_develop_mrls_bm21um_no_tech_cost
+		custom_cost_text = development_cost_0_75_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -14139,14 +14580,103 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = UKR_mrls_berest_nt_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.75 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bm21um_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
+			}
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "BM-21UM Berest"
+					type = medium_tank_rocket_chassis_0
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = thirty_two_missile_pack
+						ammunition_load_slot = artillery_light_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					icon = "GFX_BM_21UM_BEREST"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "BM-21UM Berest"
+					type = SP_R_arty_0
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BM_21UM_BEREST"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_berest_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bm21um_no_tech_renewal = {
+		icon = GFX_decision_icon_UKR_modernize_sov_bm21
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			has_dlc = "No Step Back"
+			NOT = { has_tech = nsb_artillery_ammo_3 }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_nt_days
+
+		custom_cost_trigger = {
+			has_political_power > 10
+			has_army_experience > 4
+			check_variable = { treasury > 0.6 }
+		}
+
+		custom_cost_text = development_cost_0_60_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bm21um_no_tech_renewal"
+			set_country_flag = UKR_develop_mrls_bm21um_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -0.6 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bm21um_no_tech_renewal"
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
@@ -14196,6 +14726,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14210,7 +14746,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14219,22 +14755,114 @@ UKR_modernize_sov_category = {
 		days_remove = var:UKR_mrls_shepetivka_wartime_days
 
 		custom_cost_trigger = {
-			check_variable = { treasury > UKR_mrls_bureviy_cost }
+			check_variable = { treasury > 1 }
 		}
 
-		custom_cost_text = UKR_mrls_bureviy_price
+		custom_cost_text = development_cost_1_00
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bureviy"
 			hidden_effect = {
-				set_temp_variable = { treasury_change = UKR_mrls_bureviy_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -1 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bureviy"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bureviy"
+					type = medium_tank_rocket_chassis_1
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = sixteen_missile_pack
+						ammunition_load_slot = artillery_medium_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = afv_gasoline_engine_gen2
+						armor_type_slot = tank_steel_armor_gen1
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = laser_guided_ammo_2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					upgrades = { tank_nsb_fire_upgrade = 3 }
+					icon = "GFX_BUREVIY"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bureviy"
+					type = SP_R_arty_1
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BUREVIY"
+				}
+			}
+			set_country_flag = UKR_develop_mrls_bureviy_flag
+			set_country_flag = UKR_mrls_plant_bureviy_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bureviy_renewal = {
+		icon = GFX_decision_ukrpom_button
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_special_ammo_3
+				has_tech = nsb_artillery_ammo_3
+			}
+			else = { has_tech = SP_R_arty_1 }
+			NOT = { has_country_flag = UKR_develop_mrls_bureviy_no_tech_taken_flag }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_days
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.8 }
+		}
+
+		custom_cost_text = development_cost_0_80
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bureviy_renewal"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.8 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bureviy_renewal"
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -14288,6 +14916,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14300,7 +14934,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14311,10 +14945,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 10
 			has_army_experience > 4
-			check_variable = { treasury > UKR_mrls_bureviy_nt_cost }
+			check_variable = { treasury > 1.5 }
 		}
 
-		custom_cost_text = UKR_develop_mrls_bureviy_no_tech_cost
+		custom_cost_text = development_cost_1_50_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -14323,14 +14957,115 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = UKR_mrls_bureviy_nt_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -1.5 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bureviy_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { nsb_special_ammo_3 = 1 nsb_artillery_ammo_3 = 1 popup = no }
+			}
+			else = { set_technology = { SP_R_arty_1 = 1 popup = no } }
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bureviy"
+					type = medium_tank_rocket_chassis_1
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = sixteen_missile_pack
+						ammunition_load_slot = artillery_medium_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = afv_gasoline_engine_gen2
+						armor_type_slot = tank_steel_armor_gen1
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = laser_guided_ammo_2
+						special_type_slot_4 = tank_battlestation_3
+					}
+					upgrades = { tank_nsb_fire_upgrade = 3 }
+					icon = "GFX_BUREVIY"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bureviy"
+					type = SP_R_arty_1
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BUREVIY"
+				}
+			}
+			set_country_flag = UKR_develop_mrls_bureviy_flag
+			set_country_flag = UKR_mrls_plant_bureviy_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bureviy_no_tech_renewal = {
+		icon = GFX_decision_ukrpom_button
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				NOT = { AND = { has_tech = nsb_special_ammo_3 has_tech = nsb_artillery_ammo_3 } }
+			}
+			else = { NOT = { has_tech = SP_R_arty_1 } }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_nt_days
+
+		custom_cost_trigger = {
+			has_political_power > 10
+			has_army_experience > 4
+			check_variable = { treasury > 1.2 }
+		}
+
+		custom_cost_text = development_cost_1_20_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bureviy_no_tech_renewal"
+			set_country_flag = UKR_develop_mrls_bureviy_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -1.2 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bureviy_no_tech_renewal"
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				set_technology = { nsb_special_ammo_3 = 1 nsb_artillery_ammo_3 = 1 popup = no }
@@ -14791,6 +15526,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14805,7 +15546,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14819,22 +15560,118 @@ UKR_modernize_sov_category = {
 		days_remove = var:UKR_mrls_shepetivka_wartime_days
 
 		custom_cost_trigger = {
-			check_variable = { treasury > UKR_mrls_bastion04_cost }
+			check_variable = { treasury > 0.6 }
 		}
 
-		custom_cost_text = UKR_mrls_bastion04_price
+		custom_cost_text = development_cost_0_60
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion04"
 			hidden_effect = {
-				set_temp_variable = { treasury_change = UKR_mrls_bastion04_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.6 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion04"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bastion-04"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_2
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_2
+					}
+					upgrades = { tank_nsb_fire_upgrade = 2 }
+					icon = "GFX_BASTION_04"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bastion-04"
+					type = SP_R_arty_2
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BASTION_04"
+				}
+			}
+			set_country_flag = UKR_develop_mrls_bastion04_flag
+			set_country_flag = UKR_mrls_plant_bastion04_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bastion04_renewal = {
+		icon = GFX_decision_ukrpom_button
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			NOT = { has_country_flag = UKR_develop_mrls_vilkha_flag }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_artillery_ammo_3
+			}
+			else = { has_tech = SP_R_arty_2 }
+			NOT = { has_country_flag = UKR_develop_mrls_bastion04_no_tech_taken_flag }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+			custom_trigger_tooltip = {
+				tooltip = UKR_mrls_vilkha_not_chosen_tt
+				NOT = { has_decision = UKR_develop_mrls_vilkha }
+				NOT = { has_decision = UKR_develop_mrls_vilkha_no_tech }
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_days
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.5 }
+		}
+
+		custom_cost_text = development_cost_0_50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion04_renewal"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.5 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion04_renewal"
 			UKR_count_sov_modernization = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -14887,6 +15724,12 @@ UKR_modernize_sov_category = {
 		}
 
 		visible = {
+			NOT = {
+				AND = {
+					has_country_flag = UKR_mrls_stage3_shepetivka_flag
+					has_country_flag = UKR_mrls_stage2_shepetivka_flag
+				}
+			}
 			OR = {
 				has_country_flag = UKR_mrls_stage3_shepetivka_flag
 				has_country_flag = UKR_mrls_stage3_kyiv_flag
@@ -14900,7 +15743,7 @@ UKR_modernize_sov_category = {
 		}
 
 		available = {
-			controls_province = 6429 #Khmelnytskyi
+			controls_province = 3511 #Shepetivka
 			1250 = {
 				is_owned_and_controlled_by = UKR
 			}
@@ -14916,10 +15759,10 @@ UKR_modernize_sov_category = {
 		custom_cost_trigger = {
 			has_political_power > 10
 			has_army_experience > 4
-			check_variable = { treasury > UKR_mrls_bastion04_nt_cost }
+			check_variable = { treasury > 0.9 }
 		}
 
-		custom_cost_text = UKR_develop_mrls_bastion04_no_tech_cost
+		custom_cost_text = development_cost_0_90_pp_10_army_4
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -14928,14 +15771,120 @@ UKR_modernize_sov_category = {
 			hidden_effect = {
 				add_political_power = -10
 				army_experience = -4
-				set_temp_variable = { treasury_change = UKR_mrls_bastion04_nt_cost }
-				multiply_temp_variable = { treasury_change = -1 }
+				set_temp_variable = { treasury_change = -0.9 }
 				modify_treasury_effect = yes
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion04_no_tech"
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
+			}
+			else = { set_technology = { SP_R_arty_2 = 1 popup = no } }
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Bastion-04"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen2
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_2
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen2
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_2
+					}
+					upgrades = { tank_nsb_fire_upgrade = 2 }
+					icon = "GFX_BASTION_04"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Bastion-04"
+					type = SP_R_arty_2
+					upgrades = {
+						SP_arty_fire_control = 2
+						SP_arty_reliability = 1
+					}
+					icon = "GFX_BASTION_04"
+				}
+			}
+			set_country_flag = UKR_develop_mrls_bastion04_flag
+			set_country_flag = UKR_mrls_plant_bastion04_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.6 days = 30 random_days = 30 }
+		}
+	}
+
+	UKR_develop_mrls_bastion04_no_tech_renewal = {
+		icon = GFX_decision_ukrpom_button
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_mrls_stage3_shepetivka_flag
+			has_country_flag = UKR_mrls_stage2_shepetivka_flag
+			OR = {
+				has_country_flag = UKR_mrls_stage3_shepetivka_flag
+				has_country_flag = UKR_mrls_stage3_kyiv_flag
+			}
+			NOT = { has_country_flag = UKR_develop_mrls_vilkha_flag }
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				NOT = { has_tech = nsb_artillery_ammo_3 }
+			}
+			else = { NOT = { has_tech = SP_R_arty_2 } }
+		}
+
+		available = {
+			controls_province = 3511 #Shepetivka
+			1250 = {
+				is_owned_and_controlled_by = UKR
+			}
+			custom_trigger_tooltip = {
+				tooltip = UKR_mrls_vilkha_not_chosen_tt
+				NOT = { has_decision = UKR_develop_mrls_vilkha }
+				NOT = { has_decision = UKR_develop_mrls_vilkha_no_tech }
+			}
+		}
+
+		days_remove = var:UKR_mrls_shepetivka_wartime_nt_days
+
+		custom_cost_trigger = {
+			has_political_power > 10
+			has_army_experience > 4
+			check_variable = { treasury > 0.75 }
+		}
+
+		custom_cost_text = development_cost_0_75_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_mrls_bastion04_no_tech_renewal"
+			set_country_flag = UKR_develop_mrls_bastion04_no_tech_taken_flag
+			hidden_effect = {
+				add_political_power = -10
+				army_experience = -4
+				set_temp_variable = { treasury_change = -0.75 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_mrls_bastion04_no_tech_renewal"
 			if = {
 				limit = { has_dlc = "No Step Back" }
 				set_technology = { nsb_artillery_ammo_3 = 1 popup = no }
@@ -15016,6 +15965,8 @@ UKR_modernize_sov_category = {
 				tooltip = UKR_mrls_bastion04_not_chosen_tt
 				NOT = { has_decision = UKR_develop_mrls_bastion04 }
 				NOT = { has_decision = UKR_develop_mrls_bastion04_no_tech }
+				NOT = { has_decision = UKR_develop_mrls_bastion04_renewal }
+				NOT = { has_decision = UKR_develop_mrls_bastion04_no_tech_renewal }
 			}
 		}
 
@@ -15118,6 +16069,8 @@ UKR_modernize_sov_category = {
 				tooltip = UKR_mrls_bastion04_not_chosen_tt
 				NOT = { has_decision = UKR_develop_mrls_bastion04 }
 				NOT = { has_decision = UKR_develop_mrls_bastion04_no_tech }
+				NOT = { has_decision = UKR_develop_mrls_bastion04_renewal }
+				NOT = { has_decision = UKR_develop_mrls_bastion04_no_tech_renewal }
 			}
 		}
 
