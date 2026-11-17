@@ -611,6 +611,7 @@ CHI_sco_category = {
 	}
 
 	### SCO Mega-Projects ###
+	# Proposal state: 0 idle, 1 active. Timed global flags reserve pending proposals.
 	sco_megaproject_energy_grid_propose = {
 		icon = GFX_decision_sco_watch_button
 
@@ -619,12 +620,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Civilian_Technology_Sharing }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_energy_grid_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 2.0 } }
 		custom_cost_text = cost_2_0
 		cost = 100
@@ -632,18 +641,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_energy_grid_propose"
-			set_country_flag = sco_megaproject_energy_grid_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_energy_grid_active = 1 }
+				set_country_flag = sco_megaproject_energy_grid_initiator
 				set_country_flag = { flag = sco_megaproject_energy_grid_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.42 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			newline = yes
@@ -720,12 +736,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Exploit_Economic_Clout }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_railway_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_railway_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_railway_inactive_tt
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 3.0 } }
 		custom_cost_text = cost_3_0
 		cost = 150
@@ -733,18 +757,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_railway_propose"
-			set_country_flag = sco_megaproject_railway_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_railway_active = 1 }
+				set_country_flag = sco_megaproject_railway_initiator
 				set_country_flag = { flag = sco_megaproject_railway_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.41 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			newline = yes
@@ -821,12 +852,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Development_Assistance }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_dev_bank_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 5.0 } }
 		custom_cost_text = cost_5_0
 		cost = 200
@@ -834,18 +873,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_dev_bank_propose"
-			set_country_flag = sco_megaproject_dev_bank_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_dev_bank_active = 1 }
+				set_country_flag = sco_megaproject_dev_bank_initiator
 				set_country_flag = { flag = sco_megaproject_dev_bank_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.43 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			newline = yes
@@ -922,12 +968,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Strengthen_Security_Framework }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_air_defense_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 1.5 } }
 		custom_cost_text = cost_1_5
 		cost = 100
@@ -935,18 +989,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_air_defense_propose"
-			set_country_flag = sco_megaproject_air_defense_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_air_defense_active = 1 }
+				set_country_flag = sco_megaproject_air_defense_initiator
 				set_country_flag = { flag = sco_megaproject_air_defense_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.44 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			newline = yes
@@ -8633,7 +8694,6 @@ CHI_pacific_pla_training = {
 CHI_BRI_project_missions = {
 	CHI_bri_project_mission = {
 		icon = generic_construction
-		allowed = { NOT = { original_tag = CHI } }
 		activation = { always = no }
 		available = { hidden_trigger = { always = no } }
 		is_good = yes
@@ -9157,7 +9217,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9168,7 +9228,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_north_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9207,7 +9267,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9218,7 +9278,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_east_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9257,7 +9317,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9268,7 +9328,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_south_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9307,7 +9367,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9318,7 +9378,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_central_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9356,8 +9416,8 @@ CHI_railway_improvement = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				tooltip = CHI_railway_west_upgrade_treasury_tt
+				check_variable = { treasury > 22.5 }
 			}
 		}
 
@@ -9368,7 +9428,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_west_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -22.5 }
 			modify_treasury_effect = yes
 		}
 
@@ -11189,8 +11249,8 @@ CHI_megaprojects = {
 		}
 
 		available = { num_of_civilian_factories_available_for_projects > 5 }
-		custom_cost_trigger = { check_variable = { treasury > 10 } }
-		custom_cost_text = cost_10_0
+		custom_cost_trigger = { check_variable = { treasury > 9 } }
+		custom_cost_text = cost_9_0
 		cost = 0
 		days_remove = 365
 		days_re_enable = 30
@@ -11199,7 +11259,7 @@ CHI_megaprojects = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_mega_rail_hub in [FROM.GetName] executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
 		}
 
