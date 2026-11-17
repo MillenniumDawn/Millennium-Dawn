@@ -1003,7 +1003,7 @@ _GATE_STATEMENT_RE = re.compile(
 )
 
 
-def _top_level_lines(block: str) -> Set[str]:
+def _gate_statement_lines(block: str) -> Set[str]:
     """Depth-0 statements of a trigger block, whitespace collapsed for comparison.
 
     A state scope such as ``759 = { ... }`` stays one statement.
@@ -1030,7 +1030,7 @@ def _category_gate_lines(category_code: str) -> Dict[str, str]:
     gate: Dict[str, str] = {}
     for field in ("visible", "allowed"):
         block = extract_value_multi_line(category_code, field)
-        for line in _top_level_lines(block):
+        for line in _gate_statement_lines(block):
             gate.setdefault(line, field)
     return gate
 
@@ -1050,7 +1050,7 @@ def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
     return {
         field: {
             line
-            for line in _top_level_lines(getattr(d, field))
+            for line in _gate_statement_lines(getattr(d, field))
             if not _FROM_WORD_RE.search(line)
         }
         for field in fields
