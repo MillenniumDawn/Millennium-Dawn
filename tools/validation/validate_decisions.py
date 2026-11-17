@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
     has_flat_is_ai,
@@ -61,12 +62,14 @@ from shared_utils import (
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validate_events import (
+    CostLookups,
+    EventPayments,
     ai_weight_cost_checks,
     building_payment_effects,
-    commits_money,
+    chooser_costs,
     effect_costs,
     load_cost_lookups,
-    possible_costs,
+    load_event_payments,
     unneeded_treasury_reason,
 )
 from validator_common import (
@@ -730,15 +733,7 @@ _COMMIT_SCAN_DIRS = (
 def _block_body(text: str, open_brace_end: int) -> str:
     """Return the text between a block's opening brace (already consumed at
     ``open_brace_end``) and its matching closing brace."""
-    depth = 1
-    i = open_brace_end
-    while i < len(text) and depth:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return text[open_brace_end : i - 1]
+    return text[open_brace_end : find_unquoted_block_end(text, open_brace_end)[0] - 1]
 
 
 def _strip_effect_tooltip_blocks(text: str) -> str:
@@ -761,6 +756,15 @@ def _is_targeted_decision(d: "DecisionFactory") -> bool:
     return bool(
         d.targets or d.target_array or d.target_trigger or d.target_root_trigger
     )
+
+
+def _top_level_lines(block: str) -> List[str]:
+    """Each depth-0 statement of a trigger block, whitespace-normalized."""
+    lines = []
+    for key, operator, scalar, body in iter_statement_ops(flat_block_text(block)):
+        value = scalar if body is None else " ".join(["{", *body.split(), "}"])
+        lines.append(f"{key} {operator} {value}")
+    return lines
 
 
 def _extract_from_blocks(block: str) -> List[str]:
@@ -1302,6 +1306,9 @@ def extract_value_multi_line(obj: str, s: str) -> str:
     return matches[0][1] if matches else ""
 
 
+_FIRE_ONLY_ONCE_NO_RE = re.compile(r"^\s*fire_only_once\s*=\s*no\b", re.MULTILINE)
+
+
 class DecisionFactory:
     def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
         self.source_path = source_path
@@ -1343,6 +1350,7 @@ class DecisionFactory:
         self.has_random_list = bool(re.search(r"\brandom_list\s*=\s*\{", rolls))
         self.has_random_effect = bool(re.search(r"\brandom\s*=\s*\{", rolls))
         self.fire_only_once = "fire_only_once = yes" in dec
+        self.fire_only_once_no = bool(_FIRE_ONLY_ONCE_NO_RE.search(dec))
         self.fixed_random_seed_explicit = bool(
             re.search(r"\bfixed_random_seed\s*=\s*(yes|no)\b", dec)
         )
@@ -1377,16 +1385,8 @@ class DecisionFactory:
         )
 
 
-# Decisions parsing cache - enabled by default, disabled via BaseValidator.no_cache
-_DECISION_CACHE: Dict[str, Any] = {"enabled": True, "data": {}}
-
-
-def _set_cache_enabled(enabled: bool):
-    """Enable or disable the decision parsing cache."""
-    global _DECISION_CACHE
-    _DECISION_CACHE["enabled"] = enabled
-    if not enabled:
-        _DECISION_CACHE["data"].clear()
+# Per-run parse memo. --no-cache bypasses only the disk cache, not this.
+_DECISION_CACHE: Dict[str, Any] = {}
 
 
 def _invalidate_decision_cache():
@@ -1395,19 +1395,16 @@ def _invalidate_decision_cache():
     Call this after any ``--fix`` pass that rewrites decision files so later
     validators see the patched contents instead of stale factories.
     """
-    _DECISION_CACHE["data"].clear()
+    _DECISION_CACHE.clear()
     FileOpener.clear_cache()
 
 
 def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
     """Get cached result or compute and cache it."""
-    if not _DECISION_CACHE["enabled"]:
-        return factory_fn()
-
     cache_key = f"{mod_path}:{lowercase}:{key}"
-    if cache_key not in _DECISION_CACHE["data"]:
-        _DECISION_CACHE["data"][cache_key] = factory_fn()
-    return _DECISION_CACHE["data"][cache_key]
+    if cache_key not in _DECISION_CACHE:
+        _DECISION_CACHE[cache_key] = factory_fn()
+    return _DECISION_CACHE[cache_key]
 
 
 def parse_all_decisions(
@@ -1741,14 +1738,16 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
-        naming_style: bool = False,
+        id_case: bool = False,
+        prefix_owner: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
-        self.naming_style = naming_style
+        self.id_case = id_case
+        self.prefix_owner = prefix_owner
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -1756,19 +1755,23 @@ class Validator(BaseValidator):
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
-        self._cost_lookups: Optional[
-            Tuple[Dict[str, str], Dict[str, int], Set[str]]
-        ] = None
+        self._cost_lookups: Optional[CostLookups] = None
         self._scripted_triggers: Optional[Dict[str, str]] = None
         self._building_payments: Optional[Set[str]] = None
-        if self.no_cache:
-            _set_cache_enabled(False)
+        _DECISION_CACHE.clear()
 
-    def _get_cost_lookups(self) -> Tuple[Dict[str, str], Dict[str, int], Set[str]]:
+    def _get_cost_lookups(self) -> CostLookups:
         """load_cost_lookups, read once per run."""
         if self._cost_lookups is None:
             self._cost_lookups = load_cost_lookups(self)
         return self._cost_lookups
+
+    def _get_event_payments(self) -> EventPayments:
+        """load_event_payments, read once per run."""
+        return self.cached(
+            "event_payments",
+            lambda: load_event_payments(self, self._get_cost_lookups()),
+        )
 
     def _get_scripted_triggers(self) -> Dict[str, str]:
         """Body of every `common/scripted_triggers` definition, read once per run."""
@@ -2264,6 +2267,51 @@ class Validator(BaseValidator):
             results,
             "✓ No targeted decisions with a ROOT-only visible block",
             "Targeted decisions with a ROOT-only visible and no target_root_trigger (rename visible to target_root_trigger, evaluated daily instead of every tick per target):",
+        )
+
+    def validate_available_repeats_target_root_trigger(self):
+        """Flag ``available`` lines that repeat a ``target_root_trigger`` line.
+
+        ``target_root_trigger`` runs once a day; ``available`` runs every tick
+        for every target. A copy of ROOT state that cannot change mid-day never
+        fails while the decision is visible. If another country can change that
+        state mid-day, the copy is the guard for the rest of the day, so this
+        is advisory. Exact depth-0 matches only.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section(
+            "Checking targeted decisions for available lines repeating target_root_trigger (performance)..."
+        )
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.target_root_trigger or not d.available:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            root_lines = set(_top_level_lines(d.target_root_trigger))
+            repeats = [
+                line for line in _top_level_lines(d.available) if line in root_lines
+            ]
+            if repeats:
+                results.append(
+                    (
+                        f"{d.token} - available repeats target_root_trigger:"
+                        f" {'; '.join(repeats)}. The copy runs every tick per"
+                        " target; remove it unless another country can change"
+                        " that ROOT state mid-day",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decisions repeating target_root_trigger in available",
+            "Targeted decisions whose available repeats a target_root_trigger line:",
+            severity=Severity.WARNING,
+            category="decision-available-repeats-root-trigger",
         )
 
     def validate_from_checks_in_visible(self):
@@ -2958,12 +3006,50 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
-    def validate_naming_style(self):
-        """Flag decision and category ids that break the naming rules.
+    def validate_id_case(self):
+        """Flag decision and category ids with uppercase after the tag prefix.
 
-        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        Opt-in: hundreds of existing ids predate the rule and are not renamed, so CI
+        enables it as a warning and the baseline comparison reports only new ids.
         """
-        self._log_section("Checking decision and category naming style...")
+        self._log_section("Checking decision and category id case...")
+        results = [
+            (
+                f"Decision {d.token} is not lowercase after its prefix",
+                d.source_path,
+                d.line,
+            )
+            for d in parse_all_decision_factories(self.mod_path)
+            if _has_uppercase_after_prefix(d.token)
+        ]
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+
+    def validate_prefix_owner(self):
+        """Flag decisions whose tag prefix names a country their allowed does not admit.
+
+        Opt-in: shared systems prefix with the subject country on purpose.
+        """
+        self._log_section("Checking decision prefixes against their owners...")
         token_to_cat = {
             dec: cat
             for cat, decs in parse_categories_with_decisions(self.mod_path).items()
@@ -2980,17 +3066,8 @@ class Validator(BaseValidator):
                 )
             )
 
-        case_results = []
-        prefix_results = []
+        results = []
         for d in parse_all_decision_factories(self.mod_path):
-            if _has_uppercase_after_prefix(d.token):
-                case_results.append(
-                    (
-                        f"Decision {d.token} is not lowercase after its prefix",
-                        d.source_path,
-                        d.line,
-                    )
-                )
             prefix = _TAG_PREFIX_RE.match(d.token)
             if not prefix or prefix.group(1) not in country_tags:
                 continue
@@ -2998,7 +3075,7 @@ class Validator(BaseValidator):
                 tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
-                prefix_results.append(
+                results.append(
                     (
                         f"Decision {d.token} has the {prefix.group(1)} prefix but"
                         f" allowed admits {', '.join(sorted(pins))}",
@@ -3006,29 +3083,9 @@ class Validator(BaseValidator):
                         d.line,
                     )
                 )
-        for path in self._collect_files(
-            ["common/decisions/categories/**/*.txt"], ignore_staged=True
-        ):
-            text = FileOpener.open_text_file(path, strip_comments_flag=True)
-            for m in _LINE_OPENER_RE.finditer(text):
-                if _has_uppercase_after_prefix(m.group(1)):
-                    case_results.append(
-                        (
-                            f"Category {m.group(1)} is not lowercase after its prefix",
-                            os.path.relpath(path, self.mod_path),
-                            line_of(text, m.start()),
-                        )
-                    )
 
         self._report(
-            case_results,
-            "✓ Decision and category ids are lowercase after their prefix",
-            "Decision and category ids with uppercase after the tag prefix:",
-            Severity.WARNING,
-            category="decision-id-case",
-        )
-        self._report(
-            prefix_results,
+            results,
             "✓ Decision prefixes match the countries allowed to take them",
             "Decisions whose tag prefix names a country their allowed does not admit:",
             Severity.WARNING,
@@ -3148,6 +3205,24 @@ class Validator(BaseValidator):
             "Decision effect blocks with no log line:",
             Severity.ERROR,
             category="missing-decision-log",
+        )
+
+    def validate_redundant_fire_only_once(self):
+        """Flag `fire_only_once = no`, the engine default (Issue #6509)."""
+        self._log_section("Checking decisions for a redundant fire_only_once = no...")
+
+        results = [
+            f"{dec.token} - {dec.source_basename}: fire_only_once = no is the default"
+            for dec in parse_all_decision_factories(self.mod_path)
+            if dec.fire_only_once_no
+        ]
+
+        self._report(
+            results,
+            "✓ No decision sets fire_only_once = no",
+            "Decisions setting the default fire_only_once = no (remove the line):",
+            Severity.ERROR,
+            category="redundant-fire-only-once",
         )
 
     def validate_log_not_first(self):
@@ -3439,7 +3514,8 @@ class Validator(BaseValidator):
         """
 
         def scan():
-            effects, stored, commitments = self._get_cost_lookups()
+            lookups = self._get_cost_lookups()
+            effects, stored = lookups.effects, lookups.stored
             ignored_rows: List[Tuple[str, str, int]] = []
             unneeded_rows: List[Tuple[str, str, int]] = []
             for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
@@ -3470,12 +3546,18 @@ class Validator(BaseValidator):
 
                 if not lowering:
                     continue
-                costs = possible_costs(d.raw, effects, stored) | _custom_cost_claims(d)
-                if {d.cost, d.ai_hint_pp_cost} - {"", "0"}:
-                    costs.add("political power")
-                reason = unneeded_treasury_reason(
-                    lowering, costs, commits_money(d.raw, commitments), "decision"
+                kinds = chooser_costs(
+                    d.raw[d.raw.index("{") + 1 : d.raw.rindex("}")],
+                    lookups,
+                    self._get_event_payments(),
                 )
+                claims = _custom_cost_claims(d)
+                priced = {d.cost, d.ai_hint_pp_cost} - {"", "0"}
+                if "treasury" in claims:
+                    kinds.add("money")
+                if "political power" in claims or priced:
+                    kinds.add("political power")
+                reason = unneeded_treasury_reason(lowering, kinds, "decision")
                 if reason:
                     unneeded_rows.append(
                         (f"{d.token} - ai_will_do {reason}", d.source_path, d.line)
@@ -3506,9 +3588,9 @@ class Validator(BaseValidator):
         """Flag ai_will_do treasury checks for a cost the decision does not have.
 
         The inverse of validate_ai_will_do_ignores_cost, from the same pass.
-        Costs are what any effect block may charge (possible_costs), a custom
-        cost, and a `cost` or `ai_hint_pp_cost` price. The `modifier` block
-        counts toward commits_money. See validate_events.unneeded_treasury_reason.
+        Costs are what the decision may charge its own country
+        (validate_events.chooser_costs), a custom cost, and a `cost` or
+        `ai_hint_pp_cost` price. The `modifier` block can commit money.
         """
         self._log_section("Checking decisions for AI treasury checks with no cost...")
         self._report(
@@ -3532,7 +3614,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking custom costs are charged in complete_effect...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
@@ -3583,7 +3665,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decisions for money charged after entry...")
 
-        effects, stored, _ = self._get_cost_lookups()
+        effects, stored = self._get_cost_lookups()[:2]
         buildings = self._get_building_payments()
         followed = {
             name: body for name, body in effects.items() if name not in buildings
@@ -3843,8 +3925,9 @@ class Validator(BaseValidator):
         """Flag a days_remove timer that nothing reads.
 
         A timer keeps the decision active. That matters only when a
-        remove_effect runs at the end, a modifier lasts while it is active, or a
-        has_decision trigger reads it. Missions are skipped.
+        remove_effect, war_with_on_remove, or war_with_target_on_remove runs at
+        the end, a modifier lasts while it is active, or a has_decision trigger
+        reads it. Missions are skipped.
         """
         self._log_section("Checking decisions with days_remove but no remove_effect...")
 
@@ -3860,7 +3943,12 @@ class Validator(BaseValidator):
                 or d.token in checked
                 or any(
                     _top_level_field_value(d.raw, field)
-                    for field in ("modifier", "targeted_modifier")
+                    for field in (
+                        "modifier",
+                        "targeted_modifier",
+                        "war_with_on_remove",
+                        "war_with_target_on_remove",
+                    )
                 )
             ):
                 continue
@@ -3888,7 +3976,8 @@ class Validator(BaseValidator):
         targets_dynamic = yes makes the game check dynamic country variants
         (civil war split-offs). target_non_existing = yes allows targeting
         countries that don't exist. Both only work with an explicit
-        targets = { } list and are meaningless without one.
+        targets = { } list and are meaningless without one; target_non_existing
+        also works with target_array, as vanilla's instantiate_collaboration does.
         """
         self._log_section(
             "Checking decisions with targets_dynamic/target_non_existing but no targets..."
@@ -3901,7 +3990,7 @@ class Validator(BaseValidator):
             issues = []
             if d.targets_dynamic and not d.targets:
                 issues.append("targets_dynamic")
-            if d.target_non_existing and not d.targets:
+            if d.target_non_existing and not (d.targets or d.target_array):
                 issues.append("target_non_existing")
             if issues:
                 results.append(
@@ -4135,6 +4224,7 @@ class Validator(BaseValidator):
         self.validate_cosmetic_targeting()
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
+        self.validate_available_repeats_target_root_trigger()
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
@@ -4150,6 +4240,7 @@ class Validator(BaseValidator):
         self.validate_undefined_unlock_tooltips()
         self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
+        self.validate_redundant_fire_only_once()
         self.validate_log_not_first()
         self.validate_visible_in_missions()
         self.validate_war_with_targeted()
@@ -4186,11 +4277,18 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
-        if self.naming_style:
-            self.validate_naming_style()
+        if self.id_case:
+            self.validate_id_case()
         else:
             self._log_section(
-                "Skipping decision naming style check (pass --naming-style to enable)"
+                "Skipping decision id case check (pass --id-case to enable)"
+            )
+
+        if self.prefix_owner:
+            self.validate_prefix_owner()
+        else:
+            self._log_section(
+                "Skipping decision prefix owner check (pass --prefix-owner to enable)"
             )
 
 
@@ -4213,10 +4311,16 @@ def _add_extra_args(parser):
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
     )
     parser.add_argument(
-        "--naming-style",
+        "--id-case",
         action="store_true",
-        dest="naming_style",
-        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
+        dest="id_case",
+        help="Flag decision and category ids with uppercase after the tag prefix",
+    )
+    parser.add_argument(
+        "--prefix-owner",
+        action="store_true",
+        dest="prefix_owner",
+        help="Flag decisions whose tag prefix names a country their allowed does not admit",
     )
 
 

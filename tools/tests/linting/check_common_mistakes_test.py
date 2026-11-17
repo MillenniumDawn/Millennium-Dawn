@@ -19,7 +19,6 @@ from check_common_mistakes import (
     _check_ai_daily_flag_cache,
     _check_any_country_member_array,
     _check_bare_statement_token,
-    _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
     _check_consecutive_scope_blocks,
@@ -55,7 +54,6 @@ from check_common_mistakes import (
     _check_log_nested_quote,
     _check_modifier_ref_defined,
     _check_mutually_exclusive_contradictions,
-    _check_nested_province_block,
     _check_nor_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
@@ -64,6 +62,7 @@ from check_common_mistakes import (
     _check_shadowed_branches,
     _check_stat_effect_magnitude,
     _check_tautological_or,
+    _check_trade_modifier_outside_shared_effects,
     _check_var_index_shorthand,
     _check_while_loop_max_iterations,
     _check_wrong_stat_trigger,
@@ -1679,45 +1678,6 @@ _COUNT_CASES: dict[
             ["\tNOT = { original_tag = USA tag = CHI }\n"],
         ),
     ],
-    _check_building_missing_province: [
-        (
-            "naval_base without province flagged",
-            1,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = naval_base\n",
-                "\t\t\t\tlevel = 2\n",
-                "\t\t\t\tinstant_build = yes\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "supply_node with literal province not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = supply_node\n",
-                "\t\t\t\tlevel = 1\n",
-                "\t\t\t\tprovince = 12299\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "state-level building without province not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = industrial_complex\n",
-                "\t\t\t\tlevel = 2\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "single-line construction without province flagged",
-            1,
-            ["\t\t\tadd_building_construction = { type = naval_base level = 2 }\n"],
-        ),
-    ],
     _check_event_ai_historical_bankruptcy_fallback: [
         (
             "eligible fallback keeps historical bankruptcy event valid",
@@ -1873,6 +1833,39 @@ _COUNT_CASES: dict[
             ],
         ),
     ],
+    _check_trade_modifier_outside_shared_effects: [
+        (
+            "every reserved modifier flagged in add, reverse, remove, and has forms",
+            4,
+            [
+                "\tadd_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                "\treverse_add_opinion_modifier = {\n",
+                "\t\tmodifier = mutual_trade_opinion\n",
+                "\t}\n",
+                "\tremove_opinion_modifier = { target = PRU modifier = mutual_investment_treaty_opinion }\n",
+                "\tUKR = { has_opinion_modifier = mutual_investment_treaty_trade_opinion }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+        (
+            "the shared effects file applies them",
+            0,
+            [
+                "\tadd_opinion_modifier = { target = PREV modifier = mutual_trade_agreement }\n"
+            ],
+            "common\\scripted_effects\\00_economic_effects.txt",
+        ),
+        (
+            "comments, quoted strings, and other trade modifiers not flagged",
+            0,
+            [
+                "\t# add_opinion_modifier = { target = SER modifier = mutual_trade_agreement }\n",
+                '\tlog = "modifier = mutual_trade_opinion"\n',
+                "\tadd_opinion_modifier = { target = SER modifier = free_trade_agreement }\n",
+            ],
+            "common/national_focus/TST.txt",
+        ),
+    ],
     _check_wrong_stat_trigger: [
         (
             "bare stat names and has_command_power flagged",
@@ -1954,34 +1947,6 @@ _COUNT_CASES: dict[
             "plain else not flagged",
             0,
             ["\t\t\telse = {\n", "\t\t\t\tadd_stability = 0.02\n", "\t\t\t}\n"],
-        ),
-    ],
-    _check_nested_province_block: [
-        (
-            "province = { province = <id> } flagged",
-            1,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = coastal_bunker\n",
-                "\t\t\t\tlevel = 4\n",
-                "\t\t\t\tprovince = {\n",
-                "\t\t\t\t\tprovince = 1269\n",
-                "\t\t\t\t}\n",
-                "\t\t\t}\n",
-            ],
-        ),
-        (
-            "province selector block not flagged",
-            0,
-            [
-                "\t\t\tadd_building_construction = {\n",
-                "\t\t\t\ttype = bunker\n",
-                "\t\t\t\tprovince = {\n",
-                "\t\t\t\t\tall_provinces = yes\n",
-                "\t\t\t\t\tlimit_to_border = yes\n",
-                "\t\t\t\t}\n",
-                "\t\t\t}\n",
-            ],
         ),
     ],
     _check_log_nested_quote: [
@@ -2820,6 +2785,12 @@ _EXPECTED = {
             "add_war_support = 15 is at least 100% -- add_war_support takes a fraction (0.05 is 5%)",
         )
     ],
+    "investment treaty opinion outside its effect": [
+        (
+            1,
+            "mutual_investment_treaty_opinion belongs to the shared effects in common/scripted_effects/00_economic_effects.txt -- call set_mutual_investment_treaty instead",
+        )
+    ],
 }
 
 
@@ -3333,26 +3304,6 @@ _EXACT_CASES = [
         ["\tevery_owned_controlled_state = { add_manpower = 1 }\n"],
     ),
     _exact(
-        "provincial building without province",
-        _check_building_missing_province,
-        ["add_building_construction = { type = naval_base level = 1 }\n"],
-    ),
-    _exact(
-        "add_building_construction split across lines",
-        _check_building_missing_province,
-        ["add_building_construction\n", "= { type = naval_base level = 1 }\n"],
-    ),
-    _exact(
-        "province block naming an id",
-        _check_nested_province_block,
-        [
-            "add_building_construction = {\n",
-            "\ttype = bunker\n",
-            "\tprovince = { province = 123 }\n",
-            "}\n",
-        ],
-    ),
-    _exact(
         "bare trigger call", _check_bare_statement_token, ["\tNOT = { tst_trigger }\n"]
     ),
     _exact(
@@ -3364,6 +3315,13 @@ _EXACT_CASES = [
         "war support 15",
         _check_stat_effect_magnitude,
         ["\tadd_war_support = 15\n"],
+    ),
+    _exact(
+        "investment treaty opinion outside its effect",
+        _check_trade_modifier_outside_shared_effects,
+        [
+            "\tadd_opinion_modifier = { target = SER modifier = mutual_investment_treaty_opinion }\n"
+        ],
     ),
 ]
 

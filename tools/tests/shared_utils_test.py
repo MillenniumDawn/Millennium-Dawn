@@ -433,11 +433,23 @@ def test_branch_diff_asks_git_for_the_merge_base_range(tmp_path, monkeypatch):
     assert calls[0][-1] == "release...HEAD"
 
 
-def test_branch_diff_without_git_is_empty(tmp_path, monkeypatch):
+# git failure: {case: error subprocess.run raises}
+_GIT_DIFF_FAILURE_CASES = {
+    "git missing": OSError("no git"),
+    "not a repository": subprocess.CalledProcessError(128, "git"),
+    "git hangs": subprocess.TimeoutExpired("git", 15),
+}
+
+
+@pytest.mark.parametrize(
+    "error", _GIT_DIFF_FAILURE_CASES.values(), ids=_GIT_DIFF_FAILURE_CASES
+)
+def test_branch_diff_warns_when_git_fails(tmp_path, monkeypatch, capsys, error):
     monkeypatch.chdir(tmp_path)
     monkeypatch.delenv("MD_STAGED_FILES", raising=False)
-    monkeypatch.setattr(U.subprocess, "run", _raise(OSError()))
+    monkeypatch.setattr(U.subprocess, "run", _raise(error))
     assert U.get_git_diff_files() == []
+    assert "WARNING: git diff failed" in capsys.readouterr().err
 
 
 @pytest.mark.parametrize(

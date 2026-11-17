@@ -125,8 +125,13 @@ ai_strategy = { type = conquer id = GER value = 200 }
 - `AI_construction_priorities` and `AI_wartime_construction_priorities` in
   `MD_econ_ai.txt` hold the generic building weights and the only
   `added_military_to_civilian_factory_ratio`. Tune them before adding a tier or per-tag
-  block. Microchip plants come only from `AI_build_microchip_plants`, and strategy plans
-  carry no construction strategies.
+  block. Civilian factories, microchip and composite plants, offices, farms, fossil plants,
+  enrichment and defensive-war arms factories come from stepped `building_target` floors
+  named `<strategy>_<target>`, and strategy plans carry no construction strategies.
+- The AI fills `building_target` floors but mostly ignores `build_building` weights on MD
+  buildings: in 8 headless years China built 2 chip plants under a +50 weight and 5
+  reactors under a target of 5. To make the AI build an MD building, give it a floor one
+  step above the current count while the need holds.
 - `CONSTRUCTION_PRIO_*` and `BUILDING_TARGETS_BUILDING_PRIORITIES` in `MD_defines.lua`
   order the construction queue and competing `building_target` floors.
 - Gate on `num_of_civilian_factories`, never `num_of_available_civilian_factories`. AI
@@ -200,6 +205,28 @@ Zombie roles: `zombie_horde`, `zombie_horde_runner`, `zombie_horde_brute`.
 - `ai_will_do` (focuses, tech, decisions): the AI rolls a random number up to the value
   and picks the highest.
 - `ai_chance` (event options): proportional probability with a 1% floor.
+- Math in a weight block goes in `check_expr`. See "Math in weight blocks" in
+  `hoi4-data-structures.md`.
+
+## Intelligence (La Resistance)
+
+- Operations: `update_operation_ai` (`common/scripted_effects/99_operation_strat_effects.txt`)
+  runs weekly for AI countries with an agency. It holds one target and operation until
+  it ends or stalls. A stall times the target out for 180 days.
+  - To add an operation, give it a candidate block that copies its `operatives` and
+    `network_strength` from the operation file and its token, war, and resistance gates.
+  - Register its token in `common/synchronized_dynamic_tokens/MD_tokens.txt`.
+- Scorers: `common/scorers/country/` holds MD copies of vanilla's operation target,
+  mission, and decryption scorers. A file with the same name replaces vanilla's file.
+  Rivalries come from `antagonize`, `contain`, and `conquer` strategies, not tag checks.
+- Country operations: `TAG_operations_against_TAG` strategies use values 950 and 1000,
+  above the generic 900, and need more than 3 operatives so the generic pick keeps
+  enough.
+- Agency upgrades cost treasury, not factories. `ai_can_afford_agency_upgrade` paces
+  them. The `upgrade_intelligence_agency` strategy cancels the factory defines.
+- Occupation laws: each law adds weight only in the band of `resistance_target_without_law`
+  where it is the mildest law that keeps resistance under 0.5, the `resistance_50`
+  threshold. When a law's `resistance_target` changes, move its band to match.
 
 ## Pitfalls
 

@@ -1,30 +1,33 @@
 CSTO_management = {
 	SOV_convert_csto_to_offensive = {
 		icon = GFX_decision_faction
-
-
 		fire_only_once = yes
 		cost = 100
 		days_remove = 60
 
 		visible = {
-			is_faction_leader = yes
-			has_idea = CSTO_member
-			NOT = { has_country_flag = CSTO_is_offensive }
+			NOT = { has_global_flag = CSTO_member_offensive }
 		}
 
 		available = {
-			is_faction_leader = yes
 			has_war = no
-			custom_trigger_tooltip = {
-				tooltip = SOV_csto_has_at_least_one_member_tt
-				check_variable = { global.CSTO_member^num > 1 }
-			}
+			num_faction_members > 1
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SOV_convert_csto_to_offensive"
-			CSTO_convert_to_offensive = yes
+			set_global_flag = CSTO_member_offensive
+			if = {
+				limit = { has_dlc = "No Compromise, No Surrender" }
+				set_faction_rule = call_to_war_rule_independent_only
+			}
+			newline = yes
+			news_event = { id = CSTO.6 hours = 6 }
+			newline = yes
+			add_named_threat = {
+				threat = 2
+				name = SOV_convert_csto_to_offensive_threat
+			}
 		}
 
 		ai_will_do = {
@@ -40,6 +43,29 @@ CSTO_management = {
 						value < -50
 					}
 				}
+			}
+			modifier = {
+				add = 5
+				threat > 0.75
+				any_of_scopes = {
+					array = global.nato_members
+					is_neighbor_of = ROOT
+				}
+			}
+			modifier = {
+				factor = 0.05
+				any_of_scopes = {
+					array = global.nato_members
+					is_faction_leader = yes
+					strength_ratio = {
+						tag = ROOT
+						ratio > 1.05
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				SOV_ai_historical_path = yes
 			}
 		}
 	}

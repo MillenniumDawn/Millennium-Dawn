@@ -9,29 +9,68 @@ faction_goal_resource_control = {
 
 	}
 	available = {
-		faction_leader = {
-			custom_trigger_tooltip = {
-				tooltip = faction_goal_resource_control_available_tt
-				check_variable = { faction_goal_resource_control_available_cache = 1 }
-			}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = oil
+			amount < 500
+			extracted = yes
 		}
-	}
-	select_effect = {
-		faction_goal_update_weekly_condition_caches = yes
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = rubber
+			amount < 200
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = aluminium
+			amount < 200
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = chromium
+			amount < 200
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = tungsten
+			amount < 200
+			extracted = yes
+		}
 	}
 	completed = {
-		if = {
-			limit = { is_in_faction = yes }
-			faction_leader = {
-				check_variable = {
-					var = faction_goal_resource_control_completed_cache
-					value = 1
-					compare = greater_than_or_equals
-					tooltip = faction_goal_resource_control_completed_tt
-				}
-			}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = oil
+			amount > 499
+			extracted = yes
 		}
-		else = { always = no }
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = rubber
+			amount > 199
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = aluminium
+			amount > 199
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = chromium
+			amount > 199
+			extracted = yes
+		}
+		has_resources_in_collection = {
+			collection = collection:faction_members_collection
+			resource = tungsten
+			amount > 199
+			extracted = yes
+		}
 	}
 	complete_effect = {
 		add_faction_power_projection = 500
@@ -63,7 +102,7 @@ faction_goal_eastern_european_security = {
 	}
 	completed = {
 		count_triggers = {
-				amount = 6
+			amount = 6
 
 			POL = {
 				is_subject_of = ROOT
@@ -169,41 +208,53 @@ faction_goal_strategic_bombing_campaign = {
 		has_war = yes
 	}
 	available = {
-		faction_leader = {
-			OR = {
-				check_variable = {
-					var = faction_goal_strategic_bombers_cache
-					value = 200
-					compare = less_than
-					tooltip = faction_goal_strat_bombers_below_tt
-				}
-				check_variable = {
-					var = faction_goal_recently_bombed_states_cache
-					value = 3
-					compare = less_than
-					tooltip = faction_goal_recently_bombed_states_below_tt
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_strategic_bombers_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@large_plane_airframe
+					}
 				}
 			}
 		}
-	}
-	select_effect = {
-		faction_goal_update_member_metrics_cache = yes
-		faction_goal_update_strategic_bombing_campaign_cache = yes
+		OR = {
+			check_variable = {
+				var = num_strategic_bombers_faction
+				value = 200
+				compare = less_than
+				tooltip = faction_goal_strat_bombers_below_tt
+			}
+			collection_size = {
+				input = collection:faction_enemy_owned_core_states_recently_bombed_collection
+				value < 3
+			}
+		}
 	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_strategic_bombers_cache
-				value = 200
-				compare = greater_than_or_equals
-				tooltip = faction_goal_strat_bombers_at_least_tt
+		hidden_trigger = {
+			tooltip_evaluation = eval
+			set_temp_variable = {
+				num_strategic_bombers_faction = {
+					value = 0
+					every_collection = {
+						named_collection = faction_members_collection
+						add = num_deployed_planes_with_type@large_plane_airframe
+					}
+				}
 			}
-			check_variable = {
-				var = faction_goal_recently_bombed_states_cache
-				value = 3
-				compare = greater_than_or_equals
-				tooltip = faction_goal_recently_bombed_states_at_least_tt
-			}
+		}
+		check_variable = {
+			var = num_strategic_bombers_faction
+			value = 200
+			compare = greater_than_or_equals
+			tooltip = faction_goal_strat_bombers_at_least_tt
+		}
+		collection_size = {
+			input = collection:faction_enemy_owned_core_states_recently_bombed_collection
+			value > 2
 		}
 	}
 	complete_effect = {
@@ -239,8 +290,13 @@ faction_goal_strategic_bombing_campaign = {
 		}
 		modifier = {
 			add = 1 # Factions with decent number of military factories should probably start caring more about strat bombing - because they can
-			faction_leader = {
-				check_variable = { faction_goal_military_factories_cache > 149 }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_of_military_factories
+				}
+				greater_than = 149
 			}
 		}
 	}
@@ -255,21 +311,31 @@ faction_goal_liberate_territory = {
 	category = long_term
 	group = FOCUS_FILTER_ANNEXATION
 	visible = {
-		faction_leader = {
-			check_variable = { faction_goal_liberate_visible_cache = 1 }
+		collection_size = {
+			input = {
+				input = collection:faction_owned_core_states_collection
+				operators = {
+					limit = {
+						NOT = { is_fully_controlled_by = OWNER }
+					}
+				}
+				name = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+			}
+			value > 0
 		}
 	}
-	select_effect = {
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_liberate_completed_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+		collection_size = {
+			input = {
+				input = collection:faction_owned_core_states_collection
+				operators = {
+					limit = {
+						NOT = { is_fully_controlled_by = OWNER }
+					}
+				}
+				name = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
 			}
+			value < 1
 		}
 	}
 	complete_effect = {
@@ -287,14 +353,32 @@ faction_goal_liberate_territory = {
 		base = 1
 		modifier = {
 			add = 4 # If lots of territory, prioritize this
-			faction_leader = {
-				check_variable = { faction_goal_liberate_ai_4_cache = 1 }
+			collection_size = {
+				input = {
+					input = collection:faction_owned_core_states_collection
+					operators = {
+						limit = {
+							NOT = { is_fully_controlled_by = OWNER }
+						}
+					}
+					name = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+				}
+				value > 4
 			}
 		}
 		modifier = {
 			add = 5 # If even more territory, prioritize this A LOT
-			faction_leader = {
-				check_variable = { faction_goal_liberate_ai_10_cache = 1 }
+			collection_size = {
+				input = {
+					input = collection:faction_owned_core_states_collection
+					operators = {
+						limit = {
+							NOT = { is_fully_controlled_by = OWNER }
+						}
+					}
+					name = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+				}
+				value > 10
 			}
 		}
 	}
@@ -306,21 +390,28 @@ faction_goal_great_offensive = {
 	category = long_term
 	group = FOCUS_FILTER_ANNEXATION
 	visible = {
-		faction_leader = {
-			check_variable = { faction_goal_great_offensive_visible_cache = 1 }
+		FROM = { has_war = yes }
+		collection_size = {
+			input = {
+				input = collection:faction_enemy_owned_core_states_collection
+				operators = {
+					limit = { is_controlled_by_ROOT_or_ally = yes }
+				}
+				name = ENEMY_FACTION_CORE_STATES_CONTROLLED_BY_US
+			}
+			value < 1
 		}
 	}
-	select_effect = {
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_great_offensive_completed_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = ENEMY_FACTION_CORE_STATES_CONTROLLED_BY_US
+		collection_size = {
+			input = {
+				input = collection:faction_enemy_owned_core_states_collection
+				operators = {
+					limit = { is_controlled_by_ROOT_or_ally = yes }
+				}
+				name = ENEMY_FACTION_CORE_STATES_CONTROLLED_BY_US
 			}
+			value > 0
 		}
 	}
 	complete_effect = {
@@ -360,8 +451,17 @@ faction_goal_great_offensive = {
 		}
 		modifier = {
 			add = 1 # If we're in a secure position we can probably push
-			faction_leader = {
-				check_variable = { faction_goal_great_offensive_secure_cache = 1 }
+			collection_size = {
+				input = {
+					input = collection:faction_owned_core_states_collection
+					operators = {
+						limit = {
+							NOT = { is_fully_controlled_by = OWNER }
+						}
+					}
+					name = FACTION_CORE_STATES_NOT_FULLY_CONTROLLED
+				}
+				value < 1
 			}
 		}
 	}
@@ -411,26 +511,32 @@ faction_goal_defeat_of_communism = {
 	category = long_term
 	group = FOCUS_FILTER_CONSOLIDATION
 	visible = {
-		faction_leader = { check_variable = { faction_goal_no_communist_members_cache = 1 } }
+		collection_size = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_government = communism
+					}
+				}
+				name = FACTION
+			}
+			value < 1
+		}
 	}
 	available = {
 		custom_trigger_tooltip = {
 			tooltip = faction_goal_communist_states_available_tt
-			faction_leader = { check_variable = { faction_goal_communist_states_available_cache = 1 } }
+			collection_size = {
+				input = collection:communist_controlled_states_my_continent_collection
+				value > 0
+			}
 		}
 	}
-	select_effect = {
-		faction_goal_update_member_metrics_cache = yes
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_communist_states_completed_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = COLLECTION_AMOUNT_OF_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
-			}
+		collection_size = {
+			input = collection:communist_controlled_states_my_continent_collection
+			value < 1
 		}
 	}
 	complete_effect = {
@@ -457,26 +563,32 @@ faction_goal_defeat_of_fascism = {
 	category = long_term
 	group = FOCUS_FILTER_CONSOLIDATION
 	visible = {
-		faction_leader = { check_variable = { faction_goal_no_fascist_members_cache = 1 } }
+		collection_size = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						has_government = fascism
+					}
+				}
+				name = FACTION
+			}
+			value < 1
+		}
 	}
 	available = {
 		custom_trigger_tooltip = {
 			tooltip = faction_goal_fascist_states_available_tt
-			faction_leader = { check_variable = { faction_goal_fascist_states_available_cache = 1 } }
+			collection_size = {
+				input = collection:fascist_controlled_states_my_continent_collection
+				value > 0
+			}
 		}
 	}
-	select_effect = {
-		faction_goal_update_member_metrics_cache = yes
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_fascist_states_completed_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = COLLECTION_AMOUNT_OF_FASCIST_CONTROLLED_STATES_SAME_CONTINENT
-			}
+		collection_size = {
+			input = collection:fascist_controlled_states_my_continent_collection
+			value < 1
 		}
 	}
 	complete_effect = {
@@ -503,26 +615,35 @@ faction_goal_defeat_of_anti_communists = {
 	category = long_term
 	group = FOCUS_FILTER_CONSOLIDATION
 	visible = {
-		faction_leader = { check_variable = { faction_goal_no_anti_communist_members_cache = 1 } }
+		collection_size = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						OR = {
+							has_government = fascism
+							has_government = democratic
+						}
+					}
+				}
+				name = FACTION
+			}
+			value < 1
+		}
 	}
 	available = {
 		custom_trigger_tooltip = {
 			tooltip = faction_goal_anti_communist_states_available_tt
-			faction_leader = { check_variable = { faction_goal_anti_communist_states_available_cache = 1 } }
+			collection_size = {
+				input = collection:anti_communist_controlled_states_my_continent_collection
+				value > 0
+			}
 		}
 	}
-	select_effect = {
-		faction_goal_update_member_metrics_cache = yes
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_anti_communist_states_completed_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = COLLECTION_AMOUNT_OF_ANTI_COMMUNIST_CONTROLLED_STATES_SAME_CONTINENT
-			}
+		collection_size = {
+			input = collection:anti_communist_controlled_states_my_continent_collection
+			value < 1
 		}
 	}
 	complete_effect = {
@@ -559,18 +680,18 @@ faction_goal_long_live_the_revolution = {
 	visible = {
 		has_faction_template = faction_template_pol_rep
 	}
-	select_effect = {
-		faction_goal_update_member_metrics_cache = yes
-		faction_goal_update_daily_condition_caches = yes
-	}
 	completed = {
-		faction_leader = {
-			check_variable = {
-				var = faction_goal_long_live_revolution_cache
-				value = 1
-				compare = greater_than_or_equals
-				tooltip = FACTION_MEMBERS_ABOVE_75_COMMUNISM
+		collection_size = {
+			input = {
+				input = collection:faction_members_collection
+				operators = {
+					limit = {
+						communism > 0.75
+					}
+				}
+				name = FACTION_MEMBERS_ABOVE_75_COMMUNISM
 			}
+			value > 19
 		}
 	}
 	complete_effect = {
@@ -672,34 +793,34 @@ faction_goal_dominate_the_middle_east = {
 			capital_scope = {
 				is_on_continent = middle_east
 			}
-  	  	}
+		}
 	}
 	visible = {
 		ROOT = {
 			capital_scope = {
 				is_on_continent = middle_east
 			}
-  	  	}
+		}
 	}
 	completed = {
 		count_triggers = {
-				amount = 8
-				215 = { is_controlled_by_ROOT_or_ally = yes } #Cairo
-				207 = { is_controlled_by_ROOT_or_ally = yes } #Jerusalem
-				177 = { is_controlled_by_ROOT_or_ally = yes } #Hejaz
-				176 = { is_controlled_by_ROOT_or_ally = yes } #Riyadh
-				557 = { is_controlled_by_ROOT_or_ally = yes } #Baghdad
-				186 = { is_controlled_by_ROOT_or_ally = yes } #Damascus
-				179 = { is_controlled_by_ROOT_or_ally = yes } #Dubai
-				386 = { is_controlled_by_ROOT_or_ally = yes } #Algiers
-				202 = { is_controlled_by_ROOT_or_ally = yes } #Beirut
-				391 = { is_controlled_by_ROOT_or_ally = yes } #Tripoli
-				388 = { is_controlled_by_ROOT_or_ally = yes } #Tunis
-				195 = { is_controlled_by_ROOT_or_ally = yes } #Sanaa
-				182 = { is_controlled_by_ROOT_or_ally = yes } #Masqat
-				377 = { is_controlled_by_ROOT_or_ally = yes } #Casablanca
-				934 = { is_controlled_by_ROOT_or_ally = yes } #Istanbul
-				405 = { is_controlled_by_ROOT_or_ally = yes } #Tehran
+			amount = 8
+			215 = { is_controlled_by_ROOT_or_ally = yes } #Cairo
+			207 = { is_controlled_by_ROOT_or_ally = yes } #Jerusalem
+			177 = { is_controlled_by_ROOT_or_ally = yes } #Hejaz
+			176 = { is_controlled_by_ROOT_or_ally = yes } #Riyadh
+			557 = { is_controlled_by_ROOT_or_ally = yes } #Baghdad
+			186 = { is_controlled_by_ROOT_or_ally = yes } #Damascus
+			179 = { is_controlled_by_ROOT_or_ally = yes } #Dubai
+			386 = { is_controlled_by_ROOT_or_ally = yes } #Algiers
+			202 = { is_controlled_by_ROOT_or_ally = yes } #Beirut
+			391 = { is_controlled_by_ROOT_or_ally = yes } #Tripoli
+			388 = { is_controlled_by_ROOT_or_ally = yes } #Tunis
+			195 = { is_controlled_by_ROOT_or_ally = yes } #Sanaa
+			182 = { is_controlled_by_ROOT_or_ally = yes } #Masqat
+			377 = { is_controlled_by_ROOT_or_ally = yes } #Casablanca
+			934 = { is_controlled_by_ROOT_or_ally = yes } #Istanbul
+			405 = { is_controlled_by_ROOT_or_ally = yes } #Tehran
 
 
 		}
@@ -716,5 +837,5 @@ faction_goal_dominate_the_middle_east = {
 	}
 	ai_will_do = {
 		base = 0
-		}
 	}
+}

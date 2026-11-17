@@ -3,8 +3,10 @@
 Exercises:
 - the live parser/chain builder over a small industry.txt fixture,
 - the per-tech cumulative-power and cumulative-speed math,
-- the metric function with known inputs,
-- the CLI dry-run path that writes a PNG to a temp file.
+- the metric function with known inputs.
+
+The CLI run over the shipped industry.txt lives in
+tools/tests/content/renewable_power_per_cost_live_test.py.
 
 matplotlib is imported at module top, so tests skip cleanly when it is
 not installed.
@@ -14,19 +16,12 @@ from __future__ import annotations
 
 import importlib
 import importlib.util
-import subprocess
-import sys
-from pathlib import Path
 
 import pytest
-
-REPO_ROOT = Path(__file__).resolve().parents[3]
-SCRIPT = REPO_ROOT / "tools" / "analysis" / "renewable_power_per_cost.py"
 
 importlib_util = importlib.util
 MPL_AVAILABLE = importlib_util.find_spec("matplotlib") is not None
 NP_AVAILABLE = importlib_util.find_spec("numpy") is not None
-skip_no_mpl = pytest.mark.skipif(not MPL_AVAILABLE, reason="matplotlib required")
 
 # tools/analysis/ is on the pyproject pytest pythonpath, so we can import
 # the module by name — but only when both matplotlib and numpy are
@@ -162,29 +157,3 @@ def test_metric_state_factor_scales_power(industry_path):
     val_15 = rpp.metric("ren", chains["ren"], 2100, factor=1.5)
     # a higher state factor only scales the power numerator
     assert val_15 == pytest.approx(1.5 * val_1)
-
-
-# --- CLI path --------------------------------------------------------------
-
-
-@skip_no_mpl
-def test_cli_writes_png(tmp_path):
-    """`python tools/analysis/renewable_power_per_cost.py --out ...` writes a
-    PNG with the expected width/height."""
-    out = tmp_path / "chart.png"
-    result = subprocess.run(
-        [sys.executable, str(SCRIPT), "--out", str(out)],
-        capture_output=True,
-        text=True,
-        check=True,
-        cwd=str(REPO_ROOT),
-    )
-    assert out.exists() and out.stat().st_size > 0
-    # PNG signature
-    with open(out, "rb") as fh:
-        assert fh.read(8).startswith(b"\x89PNG\r\n\x1a\n")
-    # CLI prints chain lengths and crossover table
-    assert "ren:" in result.stdout
-    assert "nuc:" in result.stdout
-    assert "fos:" in result.stdout
-    assert "state" in result.stdout

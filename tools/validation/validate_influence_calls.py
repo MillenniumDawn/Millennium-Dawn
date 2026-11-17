@@ -3,11 +3,12 @@
 `change_influence_percentage` defaults its `tag_index` / `influence_target`
 parameters only when they are 0 (unset, `00_influence_scripted_effects.txt`).
 Temp variables persist across `every_*` / `for_each_loop` iterations within one
-effect execution, so a loop call that never sets `influence_target` locks onto
-the first iterated country: iteration one defaults it, and every later pass
-reuses the stale value. Issue #4592: Spain's `SPR_hispanidad` focus stacked ~20
-passes of +2 influence onto Mexico instead of granting +2 to each Spanish-speaking
-country.
+effect execution. Before the effect restored its inputs, a loop call that never
+set `influence_target` locked onto the first iterated country. Issue #4592:
+Spain's `SPR_hispanidad` focus stacked ~20 passes of +2 influence onto Mexico
+instead of granting +2 to each Spanish-speaking country. The effect now restores
+the caller's values, so this check keeps the explicit per-iteration target as
+house style.
 
 The fix at the call site is the house style China's SCO focus already uses
 (`05_china.txt`): `set_temp_variable = { influence_target = THIS }` inside the
@@ -130,7 +131,9 @@ class Scanner:
                 inherited = [(loop, covered or state) for loop, covered in loops]
                 self.walk(body_start, body_end, inherited + [(name, False)])
             else:
-                self.walk(body_start, body_end, loops, state)
+                child_state = self.walk(body_start, body_end, loops, state)
+                if name == "hidden_effect":
+                    state = child_state
             i += 1
         for line in self._own_call_lines(cursor, end, children):
             self._report(line, loops, state)
@@ -145,10 +148,10 @@ class Scanner:
         self.findings.append(
             (
                 line,
-                f"change_influence_percentage = yes runs inside {missing} without a "
-                f"per-iteration influence_target; temp variables persist across "
-                f"iterations, so every pass after the first re-targets the first "
-                f"iterated country",
+                f"change_influence_percentage = yes runs inside {missing} without "
+                f"setting influence_target on every pass; a value left from before "
+                f"the loop or an earlier pass carries into this one, so set it "
+                f"inside the loop before the call",
             )
         )
 
