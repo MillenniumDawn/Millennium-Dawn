@@ -502,6 +502,7 @@ Metrics, reference analysis, and review tools.
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
 | **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                          |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
+| **inspect_save.py**                 | Reports countries in a text save: politics, MD economy variables, ideas, construction queue, production lines, stockpile, market contracts, and building slots  |
 | **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                 |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
 | **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
