@@ -1,3 +1,58 @@
+# Hands THIS country's faction to a free, standing member, majors first. Does nothing when THIS is not the leader or no member qualifies.
+pass_faction_leadership = {
+	if = {
+		limit = {
+			is_faction_leader = yes
+			any_allied_country = {
+				is_subject = no
+				has_capitulated = no
+				NOT = { has_country_flag = collapsed_nation }
+			}
+		}
+		if = {
+			limit = {
+				any_allied_country = {
+					is_subject = no
+					has_capitulated = no
+					is_major = yes
+					NOT = { has_country_flag = collapsed_nation }
+				}
+			}
+			random_allied_country = {
+				limit = {
+					is_subject = no
+					has_capitulated = no
+					is_major = yes
+					NOT = { has_country_flag = collapsed_nation }
+				}
+				save_event_target_as = new_faction_leader
+			}
+		}
+		else = {
+			random_allied_country = {
+				limit = {
+					is_subject = no
+					has_capitulated = no
+					NOT = { has_country_flag = collapsed_nation }
+				}
+				save_event_target_as = new_faction_leader
+			}
+		}
+		event_target:new_faction_leader = {
+			set_faction_leader = yes
+			if = {
+				limit = { PREV = { has_country_flag = MER_unasul_faction_leader } }
+				PREV = { clr_country_flag = MER_unasul_faction_leader }
+				set_country_flag = MER_unasul_faction_leader
+			}
+			if = {
+				limit = { has_idea = NATO_member }
+				hidden_effect = { news_event = { id = NATO.20 hours = 6 } }
+			}
+		}
+	}
+}
+
 # CSTO Scripted Effects
 CSTO_join = {
 	add_ideas = CSTO_member
@@ -13,8 +68,8 @@ CSTO_join = {
 }
 
 CSTO_leave = {
+	pass_faction_leadership = yes
 	remove_ideas = CSTO_member
-	ROOT = { remove_from_tech_sharing_group = CSTO_Tech_Share }
 	leave_faction = yes
 	hidden_effect = { news_event = { id = CSTO.5 hours = 6 } }
 }
