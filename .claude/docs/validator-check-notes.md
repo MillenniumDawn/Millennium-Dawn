@@ -925,6 +925,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `simplification` (WARNING): a `THIS = { ... }` block runs in the scope it is
   already in, so unwrap it. A body that reads `PREV` is skipped, because the wrapper
   pushes a scope and `PREV` inside it is the current scope.
+- `simplification` (WARNING): three or more adjacent `if` blocks that each compare
+  one variable with a constant and add a constant to another fold into one math
+  expression with comparator terms. An `else_if` chain and a step that adds to the
+  variable it tests are skipped, because later steps would read the changed value.
+  The message keeps each step's own comparator: `>` is `greater_than`, `<` is
+  `less_than`.
+- `simplification` (WARNING): three or more adjacent `if` / `else_if` branches over
+  `has_idea` that only add or set a value, when every idea in the category sets the
+  same variable to a constant in `on_add`. Read the variable instead. Skipped:
+  - A ladder that writes that variable. It is the initializer.
+  - Values that are not numbers on one line through those levels, or that do not
+    use the same effect and variable in every branch. Ideas that all set one level
+    give no line. A named constant such as
+    `@gdp_health_01_factor`, a variable, a `tooltip =` form the parser cannot read,
+    or irregular steps would need a lookup table, which is not a simplification.
+  - Known gaps: other writers of the variable are not checked, so confirm the ideas
+    are its only writer. Coverage is not checked either. A trailing `else`, a level
+    the ladder skips, and a country that holds none of the ideas must give what the
+    line gives there. `set_law_vars` sets the law variables to 1 for a country that
+    holds none, while the ladder adds nothing.
 
 ## validate_special_projects.py
 

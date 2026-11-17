@@ -165,6 +165,26 @@ add_to_variable = {
   game and reading `error.log`. Fix the first `script_math.cpp` error in a file first.
   The rest are usually cascade.
 
+## Threshold ladders
+
+Three or more adjacent `if` blocks that each compare one variable with a constant and
+add a constant to another variable are one math expression. A comparator term is 1 or 0,
+so `multiply` turns it into the step.
+
+```
+set_temp_variable = {
+    score = {
+        value = score
+        add = { value = interest_rate greater_than = 10 multiply = 10 }
+        add = { value = interest_rate greater_than = 12 multiply = 10 }
+        add = { value = interest_rate greater_than = 14 multiply = 10 }
+    }
+}
+```
+
+A comparator sum reads every variable before any add. Do not fold when a step adds to
+the variable that another step tests.
+
 ## Splitting an `every_country` with `OR`
 
 When one loop over `OR = { A B }` becomes two loops, add exclusion limits so a country in
