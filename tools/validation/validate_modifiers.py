@@ -831,7 +831,7 @@ def _cap_text(row: Dict[str, Any], key: str, value: float) -> str:
 
 
 def _cap_search_row(spec: str) -> Dict[str, Any]:
-    """A --modifier-cap PATTERN=CAP row: either direction, variable-fed values included."""
+    """A --modifier-cap PATTERN=CAP row: either direction, variable-fed and timed included."""
     pattern, _sep, raw = spec.rpartition("=")
     cap = _parse_entry_value(raw)
     if not pattern or cap is None or cap < 0:
@@ -843,6 +843,7 @@ def _cap_search_row(spec: str) -> Dict[str, Any]:
         "category": "modifier-cap-search",
         "reason": "command-line search",
         "variables": True,
+        "timed": True,
     }
 
 

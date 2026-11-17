@@ -622,6 +622,14 @@ _ROW_CASES = {
         ["political_power_gain=0.5"],
         [(_SEARCH, "+60%", "±50%")],
     ),
+    "search keeps timed-only ideas": (
+        {
+            "common/ideas/test.txt": _idea("test_idea", "political_power_gain", "0.6"),
+            _FOCUS: _reward("add_timed_idea = { idea = test_idea days = 90 }"),
+        },
+        ["political_power_gain=0.5"],
+        [(_SEARCH, "+60%")],
+    ),
     "search row comes before config rows": (
         {
             "common/ideas/test.txt": _idea(

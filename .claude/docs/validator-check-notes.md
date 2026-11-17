@@ -683,8 +683,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
   bonuses; review and explain each one.
 - `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
-  direction, variable-fed values included, reported as `modifier-cap-search`. It takes
-  over the keys it matches for that run.
+  direction, variable-fed values and timed-only grants included, reported as
+  `modifier-cap-search`. It takes over the keys it matches for that run.
 
 ## validate_on_actions.py
 
