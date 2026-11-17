@@ -899,6 +899,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `simplification` (WARNING): a `THIS = { ... }` block runs in the scope it is
   already in, so unwrap it. A body that reads `PREV` is skipped, because the wrapper
   pushes a scope and `PREV` inside it is the current scope.
+- `simplification` (WARNING): three or more adjacent `if` blocks that each compare
+  one variable with a constant and add a constant to another fold into one math
+  expression with comparator terms. An `else_if` chain and a step that adds to the
+  variable it tests are skipped, because later steps would read the changed value.
+- `simplification` (WARNING): three or more adjacent `if` / `else_if` branches over
+  `has_idea` that only add or set a value, when every idea in the category sets the
+  same variable in `on_add`. Read the variable instead. A ladder that writes that
+  variable is its initializer and is skipped. Known gap: other writers of the
+  variable are not checked, so confirm the ideas are its only writer first.
 
 ## validate_special_projects.py
 
