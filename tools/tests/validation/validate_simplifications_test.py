@@ -23,6 +23,7 @@ from validate_simplifications import (
     _find_mergeable,
     _find_random_controlled_shortcut,
     _find_scope_expansion,
+    _find_this_wrappers,
     _find_two_bucket_random,
     _iter_direct_assignments,
     _scan_composite,
@@ -802,6 +803,35 @@ def test_composite_reports_a_duplicate_or_clause_outside_the_effect_dirs():
     findings = _scan_composite(text, "common/ai_strategy/test.txt")
     assert [line for _message, line in findings] == [2]
     assert "OR repeats the clause `tag = ITA`" in findings[0][0]
+
+
+# --- no-op THIS wrappers ---------------------------------------------------
+
+# case: (text, lines flagged)
+_THIS_WRAPPER_CASES = {
+    "plain wrapper": (
+        "FROM = {\n\tTHIS = { any_neighbor_country = { has_war = yes } }\n}\n",
+        [2],
+    ),
+    "body reads PREV": (
+        "FROM = {\n\tTHIS = { is_in_faction_with = PREV }\n}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _THIS_WRAPPER_CASES.values(), ids=_THIS_WRAPPER_CASES.keys()
+)
+def test_this_wrapper(text, expected):
+    assert _find_this_wrappers(_script(text)) == expected
+
+
+def test_composite_reports_a_this_wrapper_outside_the_effect_dirs():
+    text = "action = {\n\tcomplete_effect = { THIS = { add_stability = 0.1 } }\n}\n"
+    findings = _scan_composite(text, "common/scripted_diplomatic_actions/t.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "`THIS = { ... }` runs in the scope it is already in" in findings[0][0]
 
 
 # --- direct child iteration ------------------------------------------------

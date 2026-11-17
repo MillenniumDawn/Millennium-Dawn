@@ -758,6 +758,15 @@ def _is_targeted_decision(d: "DecisionFactory") -> bool:
     )
 
 
+def _top_level_lines(block: str) -> List[str]:
+    """Each depth-0 statement of a trigger block, whitespace-normalized."""
+    lines = []
+    for key, operator, scalar, body in iter_statement_ops(flat_block_text(block)):
+        value = scalar if body is None else " ".join(["{", *body.split(), "}"])
+        lines.append(f"{key} {operator} {value}")
+    return lines
+
+
 def _extract_from_blocks(block: str) -> List[str]:
     """Return the brace-balanced body text of every ``FROM = { ... }`` in *block*.
 
@@ -1729,14 +1738,16 @@ class Validator(BaseValidator):
         fix: bool = False,
         missing_icons: bool = False,
         unannounced_categories: bool = False,
-        naming_style: bool = False,
+        id_case: bool = False,
+        prefix_owner: bool = False,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.fix = fix
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
-        self.naming_style = naming_style
+        self.id_case = id_case
+        self.prefix_owner = prefix_owner
         self._activation_removal_cache: Optional[
             Tuple[
                 Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]], Set[str]
@@ -2256,6 +2267,51 @@ class Validator(BaseValidator):
             results,
             "✓ No targeted decisions with a ROOT-only visible block",
             "Targeted decisions with a ROOT-only visible and no target_root_trigger (rename visible to target_root_trigger, evaluated daily instead of every tick per target):",
+        )
+
+    def validate_available_repeats_target_root_trigger(self):
+        """Flag ``available`` lines that repeat a ``target_root_trigger`` line.
+
+        ``target_root_trigger`` runs once a day; ``available`` runs every tick
+        for every target. A copy of ROOT state that cannot change mid-day never
+        fails while the decision is visible. If another country can change that
+        state mid-day, the copy is the guard for the rest of the day, so this
+        is advisory. Exact depth-0 matches only.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section(
+            "Checking targeted decisions for available lines repeating target_root_trigger (performance)..."
+        )
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not d.target_root_trigger or not d.available:
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            root_lines = set(_top_level_lines(d.target_root_trigger))
+            repeats = [
+                line for line in _top_level_lines(d.available) if line in root_lines
+            ]
+            if repeats:
+                results.append(
+                    (
+                        f"{d.token} - available repeats target_root_trigger:"
+                        f" {'; '.join(repeats)}. The copy runs every tick per"
+                        " target; remove it unless another country can change"
+                        " that ROOT state mid-day",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decisions repeating target_root_trigger in available",
+            "Targeted decisions whose available repeats a target_root_trigger line:",
+            severity=Severity.WARNING,
+            category="decision-available-repeats-root-trigger",
         )
 
     def validate_from_checks_in_visible(self):
@@ -2950,12 +3006,50 @@ class Validator(BaseValidator):
             category="unannounced-decision-category",
         )
 
-    def validate_naming_style(self):
-        """Flag decision and category ids that break the naming rules.
+    def validate_id_case(self):
+        """Flag decision and category ids with uppercase after the tag prefix.
 
-        Opt-in: hundreds of existing ids predate the rules and are not renamed.
+        Opt-in: hundreds of existing ids predate the rule and are not renamed, so CI
+        enables it as a warning and the baseline comparison reports only new ids.
         """
-        self._log_section("Checking decision and category naming style...")
+        self._log_section("Checking decision and category id case...")
+        results = [
+            (
+                f"Decision {d.token} is not lowercase after its prefix",
+                d.source_path,
+                d.line,
+            )
+            for d in parse_all_decision_factories(self.mod_path)
+            if _has_uppercase_after_prefix(d.token)
+        ]
+        for path in self._collect_files(
+            ["common/decisions/categories/**/*.txt"], ignore_staged=True
+        ):
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            for m in _LINE_OPENER_RE.finditer(text):
+                if _has_uppercase_after_prefix(m.group(1)):
+                    results.append(
+                        (
+                            f"Category {m.group(1)} is not lowercase after its prefix",
+                            os.path.relpath(path, self.mod_path),
+                            line_of(text, m.start()),
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ Decision and category ids are lowercase after their prefix",
+            "Decision and category ids with uppercase after the tag prefix:",
+            Severity.WARNING,
+            category="decision-id-case",
+        )
+
+    def validate_prefix_owner(self):
+        """Flag decisions whose tag prefix names a country their allowed does not admit.
+
+        Opt-in: shared systems prefix with the subject country on purpose.
+        """
+        self._log_section("Checking decision prefixes against their owners...")
         token_to_cat = {
             dec: cat
             for cat, decs in parse_categories_with_decisions(self.mod_path).items()
@@ -2972,17 +3066,8 @@ class Validator(BaseValidator):
                 )
             )
 
-        case_results = []
-        prefix_results = []
+        results = []
         for d in parse_all_decision_factories(self.mod_path):
-            if _has_uppercase_after_prefix(d.token):
-                case_results.append(
-                    (
-                        f"Decision {d.token} is not lowercase after its prefix",
-                        d.source_path,
-                        d.line,
-                    )
-                )
             prefix = _TAG_PREFIX_RE.match(d.token)
             if not prefix or prefix.group(1) not in country_tags:
                 continue
@@ -2990,7 +3075,7 @@ class Validator(BaseValidator):
                 tag for _, tag in cat_pins.get(token_to_cat.get(d.token, ""), set())
             }
             if pins and prefix.group(1) not in pins:
-                prefix_results.append(
+                results.append(
                     (
                         f"Decision {d.token} has the {prefix.group(1)} prefix but"
                         f" allowed admits {', '.join(sorted(pins))}",
@@ -2998,29 +3083,9 @@ class Validator(BaseValidator):
                         d.line,
                     )
                 )
-        for path in self._collect_files(
-            ["common/decisions/categories/**/*.txt"], ignore_staged=True
-        ):
-            text = FileOpener.open_text_file(path, strip_comments_flag=True)
-            for m in _LINE_OPENER_RE.finditer(text):
-                if _has_uppercase_after_prefix(m.group(1)):
-                    case_results.append(
-                        (
-                            f"Category {m.group(1)} is not lowercase after its prefix",
-                            os.path.relpath(path, self.mod_path),
-                            line_of(text, m.start()),
-                        )
-                    )
 
         self._report(
-            case_results,
-            "✓ Decision and category ids are lowercase after their prefix",
-            "Decision and category ids with uppercase after the tag prefix:",
-            Severity.WARNING,
-            category="decision-id-case",
-        )
-        self._report(
-            prefix_results,
+            results,
             "✓ Decision prefixes match the countries allowed to take them",
             "Decisions whose tag prefix names a country their allowed does not admit:",
             Severity.WARNING,
@@ -3911,7 +3976,8 @@ class Validator(BaseValidator):
         targets_dynamic = yes makes the game check dynamic country variants
         (civil war split-offs). target_non_existing = yes allows targeting
         countries that don't exist. Both only work with an explicit
-        targets = { } list and are meaningless without one.
+        targets = { } list and are meaningless without one; target_non_existing
+        also works with target_array, as vanilla's instantiate_collaboration does.
         """
         self._log_section(
             "Checking decisions with targets_dynamic/target_non_existing but no targets..."
@@ -3924,7 +3990,7 @@ class Validator(BaseValidator):
             issues = []
             if d.targets_dynamic and not d.targets:
                 issues.append("targets_dynamic")
-            if d.target_non_existing and not d.targets:
+            if d.target_non_existing and not (d.targets or d.target_array):
                 issues.append("target_non_existing")
             if issues:
                 results.append(
@@ -4158,6 +4224,7 @@ class Validator(BaseValidator):
         self.validate_cosmetic_targeting()
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
+        self.validate_available_repeats_target_root_trigger()
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
@@ -4210,11 +4277,18 @@ class Validator(BaseValidator):
                 "(pass --unannounced-categories to enable)"
             )
 
-        if self.naming_style:
-            self.validate_naming_style()
+        if self.id_case:
+            self.validate_id_case()
         else:
             self._log_section(
-                "Skipping decision naming style check (pass --naming-style to enable)"
+                "Skipping decision id case check (pass --id-case to enable)"
+            )
+
+        if self.prefix_owner:
+            self.validate_prefix_owner()
+        else:
+            self._log_section(
+                "Skipping decision prefix owner check (pass --prefix-owner to enable)"
             )
 
 
@@ -4237,10 +4311,16 @@ def _add_extra_args(parser):
         help="Flag decision categories that become visible mid-game without any unlock_decision_category_tooltip telling the player",
     )
     parser.add_argument(
-        "--naming-style",
+        "--id-case",
         action="store_true",
-        dest="naming_style",
-        help="Flag decision and category ids with uppercase after the tag prefix, and decisions whose tag prefix names a country their allowed does not admit",
+        dest="id_case",
+        help="Flag decision and category ids with uppercase after the tag prefix",
+    )
+    parser.add_argument(
+        "--prefix-owner",
+        action="store_true",
+        dest="prefix_owner",
+        help="Flag decisions whose tag prefix names a country their allowed does not admit",
     )
 
 

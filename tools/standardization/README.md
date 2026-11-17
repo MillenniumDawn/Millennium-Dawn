@@ -273,7 +273,7 @@ Focus, event, decision, idea and technology blocks are reindented by brace
 depth, one tab per level, so a nested line written at the wrong depth is moved.
 Focus, history and `indent` files are reindented between blocks too, so section
 comments and top-level properties follow the same rule. `validate_style.py` reports lines off their
-brace depth as `indent-depth` warnings; `tools/linting/fix_styling.py --fix-indent`
+brace depth as `indent-depth` errors; `tools/linting/fix_styling.py --fix-indent`
 fixes them in any file the check reads.
 
 ### Focus Trees
@@ -404,7 +404,25 @@ Each finding names the command that fixes it:
 events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
 ```
 
-Drop `--all` (and add `--staged`) for the changed-file scope.
+Drop `--all` (and add `--staged`) for the changed-file scope. Use `--kind` to
+limit the scan to one standardizer:
+
+```bash
+python3 tools/validation/validate_standardization.py --all --kind focus --no-color --strict
+```
+
+The report counts unchanged, drifted, and failed files and points to the first
+changed line. It detects LF/CRLF and final-newline drift without writing files.
+Every proposed rewrite must settle after one pass. Focus rewrites must also
+preserve IDs, block kinds, focus order, repeated-property order, and property
+contents, including effect order and scopes. Normal property reordering,
+logging cleanup, default/no-op removal, duplicate-block merging, and root AI
+`factor` to `base` conversion are allowed. This check does not inspect properties
+outside focus blocks or prove gameplay correctness.
+
+Drift remains a warning. A failed standardizer, unstable rewrite, or unexpected
+focus-content change is an error; `--strict` makes those errors fail the command.
+The check remains manual and is not wired into CI or hooks.
 
 ### standardize_api.py
 
@@ -416,6 +434,8 @@ standardizer selection live in one place:
   `"technology"`, `"history"`, `"indent"`, or `None` when no standardizer owns the path.
 - `standardize_text(kind, text)` — the text the standardizer would write, or
   `None` when the file holds no block of that kind.
+- `focus_content_changes(before, after)`: unexpected changes to focus IDs,
+  kinds, order, or property contents, excluding the allowed normalizations above.
 
 Neither reads or writes the file, so a checker can compare against disk without
 the risk of a half-written file.

@@ -30,7 +30,8 @@ from validate_events import CostLookups, EventPayments, costly_scripted_effects
 _OPT_IN_CHECKS = {
     "validate_missing_icons",
     "validate_unannounced_categories",
-    "validate_naming_style",
+    "validate_id_case",
+    "validate_prefix_owner",
 }
 
 
@@ -65,6 +66,11 @@ _GAIN = "\t\tadd_political_power = 10\n"
 _SPEND = "\t\tadd_political_power = -75\n"
 _SPEND_50 = "\t\tadd_political_power = -50\n"
 _NO_LOG = "dec_one - X.txt: %s has no log line"
+_ROOT_REPEAT = (
+    "repeat - available repeats target_root_trigger: %s. The copy runs every tick"
+    " per target; remove it unless another country can change that ROOT state"
+    " mid-day"
+)
 _EFFECT_BLOCKS = ("complete_effect", "remove_effect", "timeout_effect", "cancel_effect")
 _RANDOM = "\t\trandom = {\n\t\t\tchance = 50\n\t\t\tadd_stability = 0.01\n\t\t}\n"
 _RANDOM_LIST = (
@@ -1007,6 +1013,57 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
                 _nested("daily_scan", _block("target_root_trigger", "always = yes")),
             ],
             [("daily_scan",)],
+        ),
+    },
+    "validate_available_repeats_target_root_trigger": {
+        "exact repeat": (
+            [
+                _nested(
+                    "repeat",
+                    _block(
+                        "target_root_trigger", "has_idea = A\nNOT = { has_idea = B }"
+                    )
+                    + _block(
+                        "available",
+                        "has_war = no\nhas_idea = A\nNOT = {\n\thas_idea = B\n}",
+                    ),
+                )
+            ],
+            [(_ROOT_REPEAT % "has_idea = A; NOT = { has_idea = B }", "X.txt", 0)],
+        ),
+        "near match": (
+            [
+                _nested(
+                    "near",
+                    _block("target_root_trigger", "has_idea = A")
+                    + _block(
+                        "available",
+                        "hidden_trigger = { has_idea = A }\nhas_idea = A_member",
+                    ),
+                )
+            ],
+            [],
+        ),
+        "no target_root_trigger": (
+            [
+                _nested(
+                    "untargeted",
+                    _block("visible", "has_idea = A")
+                    + _block("available", "has_idea = A"),
+                )
+            ],
+            [],
+        ),
+        "script activated": (
+            [
+                _nested(
+                    "scripted",
+                    _block("allowed", "always = no")
+                    + _block("target_root_trigger", "has_idea = A")
+                    + _block("available", "has_idea = A"),
+                )
+            ],
+            [],
         ),
     },
     "validate_targets_no_trigger": {
@@ -2772,7 +2829,12 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
     "flags",
     (
         {},
-        {"missing_icons": True, "unannounced_categories": True, "naming_style": True},
+        {
+            "missing_icons": True,
+            "unannounced_categories": True,
+            "id_case": True,
+            "prefix_owner": True,
+        },
     ),
     ids=("default", "opt-in checks"),
 )
@@ -2790,8 +2852,10 @@ def test_cli_exposes_the_opt_in_checks():
 
     assert parser.parse_args(["--unannounced-categories"]).unannounced_categories
     assert not parser.parse_args([]).unannounced_categories
-    assert parser.parse_args(["--naming-style"]).naming_style
-    assert not parser.parse_args([]).naming_style
+    assert parser.parse_args(["--id-case"]).id_case
+    assert not parser.parse_args([]).id_case
+    assert parser.parse_args(["--prefix-owner"]).prefix_owner
+    assert not parser.parse_args([]).prefix_owner
 
 
 _ICON = "\t\ticon = icon\n"
@@ -2811,6 +2875,9 @@ _FINDING_DECISIONS = {
     "cosmetic_targets": _block("targets", "GER FRA"),
     "from_no_trigger": _GER_TARGET + _block("visible", _FROM_WAR),
     "root_visible": _GER_TARGET + _block("visible", "has_war = yes"),
+    "root_repeat": _GER_TARGET
+    + _block("target_root_trigger", "has_war = yes")
+    + _block("available", "has_war = yes"),
     "from_duplicate": _GER_TARGET
     + _block("target_trigger", _FROM_WAR)
     + _block("visible", _FROM_WAR),
@@ -2896,8 +2963,9 @@ _FINDINGS_MOD = {
     + "".join(f'\tspriteType = {{ name = "GFX_filler_{i}" }}\n' for i in range(1000))
     + "}\n",
 }
-# WARNINGs held back until their backlog clears.
+# WARNINGs that must not gate CI: advisory, or held back until a backlog clears.
 _BACKLOG_WARNINGS = (
+    "decision-available-repeats-root-trigger",
     "decision-cosmetic-targeting",
     "decision-duplicate-log",
     "decision-treasury-gate-below-charge",
@@ -3155,6 +3223,33 @@ def test_timer_without_remove_effect(tmp_path, token, body, reported):
     assert validator.warnings_found == reported
 
 
+_NON_EXISTING = "\t\ttarget_non_existing = yes\n"
+# case: (decision body, reported)
+_NON_EXISTING_CASES = {
+    "no target list": (_NON_EXISTING, True),
+    "targets list": (_NON_EXISTING + _block("targets", "GER"), False),
+    "target_array": (_NON_EXISTING + "\t\ttarget_array = occupied_countries\n", False),
+}
+
+
+@pytest.mark.parametrize(
+    ("body", "reported"), _NON_EXISTING_CASES.values(), ids=_NON_EXISTING_CASES
+)
+def test_target_non_existing_needs_a_target_list(tmp_path, body, reported):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/targets.txt": "cat = {\n"
+            + _nested("target_dec", body)
+            + "}\n"
+        },
+    )
+
+    validator.validate_orphaned_target_modifiers()
+
+    assert bool(validator._issues) == reported
+
+
 _DECISIONS_FILE = "common/decisions/ser.txt"
 _VOJ_PREFIX_ROW = (
     "decision-prefix-owner",
@@ -3241,7 +3336,8 @@ def test_naming_style(tmp_path, category, category_allowed, token, allowed, rows
         },
     )
 
-    validator.validate_naming_style()
+    validator.validate_id_case()
+    validator.validate_prefix_owner()
 
     assert issue_rows(validator) == rows
     assert validator.warnings_found == len(rows)

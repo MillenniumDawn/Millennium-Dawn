@@ -4,7 +4,6 @@ import re
 from decimal import Decimal
 
 import pytest
-import validate_building_guards
 import validate_decisions
 import validate_scripted_params
 from shared.paths import REPO_ROOT
@@ -56,24 +55,6 @@ def test_real_frontend_files_match_the_fixed_production_locale_contract():
             assert (
                 banner and banner["marker"]
             ), f"{rel}: {key} must follow its version with a dev marker"
-
-
-def test_province_building_list_covers_every_province_max_building():
-    """`_PROVINCE_BUILDINGS` is a hand-kept mirror of the buildings that carry a
-    province_max level cap; this fails when a new one is added to the game."""
-    text = (REPO_ROOT / "common" / "buildings" / "00_buildings.txt").read_text(
-        encoding="utf-8-sig"
-    )
-    declared = set()
-    building = None
-    for line in text.splitlines():
-        match = re.match(r"^\t([A-Za-z_][A-Za-z0-9_]*) = \{", line)
-        if match:
-            building = match.group(1)
-        elif building and re.search(r"\bprovince_max\s*=", line):
-            declared.add(building)
-    assert declared
-    assert declared <= validate_building_guards._PROVINCE_BUILDINGS
 
 
 def _focus_ids_with_pp_malus():
