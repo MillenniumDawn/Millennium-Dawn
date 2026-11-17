@@ -164,6 +164,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   copy guards the rest of the day, as with `EUU_voting_rights_suspended` in the EU
   council decisions. Keep such a copy, for example as `hidden_trigger`. Script-only
   `allowed = { always = no }` decisions are skipped.
+- `decision-root-trigger-reads-from` (WARNING): `target_root_trigger` runs before a target
+  is bound, so a `FROM` read there checks nothing. Scripted triggers it calls are
+  followed. Move the condition into `target_trigger`. Script-only
+  `allowed = { always = no }` decisions are skipped.
+- `decision-target-state-not-in-available` (WARNING): a flag or idea that
+  `complete_effect` writes inside `FROM`, that `target_trigger` reads inside `FROM`, and
+  that `available` does not read. `target_trigger` runs once a day, so the decision can
+  be taken again on the same target until the next pass. Re-check the state in
+  `available`, inside `hidden_trigger` if it is not player-facing, as the EU council
+  decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
+  note: the same country cannot repeat it, so it matters only if a second country can
+  take it. Script-only `allowed = { always = no }` decisions are skipped. Known gaps:
+  variables and other state, and reads through scripted triggers.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or

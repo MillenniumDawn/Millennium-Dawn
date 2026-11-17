@@ -792,6 +792,65 @@ def _extract_from_blocks(block: str) -> List[str]:
     return bodies
 
 
+_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+
+
+def _called_triggers(block: str, names: AbstractSet[str]) -> List[str]:
+    """Scripted triggers from *names* that *block* calls as `name = yes` or `= no`."""
+    return [m[1] for m in _TRIGGER_CALL_RE.finditer(block) if m[1] in names]
+
+
+def _from_reading_triggers(triggers: Mapping[str, str]) -> Set[str]:
+    """Scripted triggers whose body reads FROM, directly or through the triggers it calls."""
+    reading = {name for name, body in triggers.items() if _FROM_WORD_RE.search(body)}
+    callees = {
+        name: _called_triggers(body, triggers.keys()) for name, body in triggers.items()
+    }
+    grew = True
+    while grew:
+        grew = False
+        for name, called in callees.items():
+            if name not in reading and reading.intersection(called):
+                reading.add(name)
+                grew = True
+    return reading
+
+
+# Flags and ideas are the target state a decision's own effect changes.
+_TARGET_STATE_WRITES = {
+    "set_country_flag": "flag",
+    "clr_country_flag": "flag",
+    "add_ideas": "idea",
+    "remove_ideas": "idea",
+}
+_TARGET_STATE_READS = {"has_country_flag": "flag", "has_idea": "idea"}
+_STATE_RE = re.compile(
+    r"\b("
+    + "|".join(_TARGET_STATE_WRITES | _TARGET_STATE_READS)
+    + r")\s*=\s*(?:\{([^{}]*)\}|([\w@.:]+))"
+)
+_FLAG_NAME_RE = re.compile(r"\bflag\s*=\s*([\w@.:]+)")
+_ONE_SHOT_NOTE = " (the same country cannot repeat it; verify another one can take it)"
+
+
+def _from_state(block: str, verbs: Mapping[str, str]) -> Set[Tuple[str, str]]:
+    """(kind, name) of each flag or idea the *verbs* statements touch inside a FROM scope."""
+    state: Set[Tuple[str, str]] = set()
+    for body in _extract_from_blocks(block):
+        for match in _STATE_RE.finditer(body):
+            kind = verbs.get(match[1])
+            if kind is None:
+                continue
+            if match[3] is not None:
+                names = [match[3]]
+            elif kind == "flag":
+                names = _FLAG_NAME_RE.findall(match[2])
+            else:
+                names = match[2].split()
+            state.update((kind, name) for name in names)
+    return state
+
+
 # Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
 _BARE_TRIGGERS = {
     "political_power": "has_political_power",
@@ -2373,6 +2432,102 @@ class Validator(BaseValidator):
             "Targeted decisions whose available repeats a target_root_trigger line:",
             severity=Severity.WARNING,
             category="decision-available-repeats-root-trigger",
+        )
+
+    def validate_root_trigger_reads_from(self):
+        """Flag a ``target_root_trigger`` that reads ``FROM``.
+
+        ``target_root_trigger`` runs before any target is bound, so a ``FROM``
+        read there checks nothing useful. Scripted triggers are followed, and
+        so are the triggers they call.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section("Checking target_root_trigger blocks that read FROM...")
+        triggers = self._get_scripted_triggers()
+        reading = _from_reading_triggers(triggers)
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            root = d.target_root_trigger
+            if not root or (d.allowed and "always = no" in d.allowed):
+                continue
+            if _FROM_WORD_RE.search(root):
+                reads = "reads FROM"
+            elif called := _called_triggers(root, reading):
+                reads = f"calls {called[0]}, which reads FROM"
+            else:
+                continue
+            results.append(
+                (
+                    f"{d.token} - target_root_trigger {reads}, but FROM is not"
+                    " bound there; move the condition into target_trigger",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No target_root_trigger reads FROM",
+            "Decisions whose target_root_trigger reads FROM:",
+            severity=Severity.WARNING,
+            category="decision-root-trigger-reads-from",
+        )
+
+    def validate_target_state_rechecked_in_available(self):
+        """Flag target state a decision changes that only ``target_trigger`` checks.
+
+        ``target_trigger`` runs once a day, so after one country completes the
+        decision, others can take it on the same target until the next pass.
+        Compares the flags and ideas ``complete_effect`` writes inside ``FROM``
+        with the ones ``target_trigger`` reads there, less those ``available``
+        reads there. ``effect_tooltip`` bodies never run, so they do not count.
+        A ``days_re_enable`` or ``fire_only_once`` decision gets a verify note:
+        the same country cannot repeat it, so only another country can.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section(
+            "Checking targeted decisions for target state only target_trigger checks..."
+        )
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not (d.target_trigger and d.complete_effect):
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            effect = _strip_effect_tooltip_blocks(d.complete_effect)
+            stale = (
+                _from_state(effect, _TARGET_STATE_WRITES)
+                & _from_state(d.target_trigger, _TARGET_STATE_READS)
+            ) - _from_state(d.available, _TARGET_STATE_READS)
+            if stale:
+                changed = ", ".join(f"{kind} {name}" for kind, name in sorted(stale))
+                note = (
+                    _ONE_SHOT_NOTE
+                    if d.fire_only_once or "days_re_enable" in d.raw
+                    else ""
+                )
+                results.append(
+                    (
+                        f"{d.token} - complete_effect changes {changed} on FROM, but"
+                        " only target_trigger checks it. target_trigger runs once a"
+                        " day, so the decision can be taken again on the same target"
+                        " until the next pass; re-check it in available, inside"
+                        f" hidden_trigger if it is not player-facing{note}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decision changes state only target_trigger checks",
+            "Targeted decisions whose effect changes target state that available does not check:",
+            severity=Severity.WARNING,
+            category="decision-target-state-not-in-available",
         )
 
     def validate_from_checks_in_visible(self):
@@ -4262,6 +4417,8 @@ class Validator(BaseValidator):
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_available_repeats_target_root_trigger()
+        self.validate_root_trigger_reads_from()
+        self.validate_target_state_rechecked_in_available()
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
