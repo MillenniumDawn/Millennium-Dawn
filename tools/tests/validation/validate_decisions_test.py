@@ -1756,6 +1756,24 @@ _ALLOWED_REPEAT_CASES = {
     ),
     "different value": ("original_tag = ITA", _GER_LOCK, False),
     "state scope key": ("123 = { has_war = yes }", "has_war = yes", False),
+    "conditional chain missing an else_if": (
+        "if = { limit = { is_ai = no } always = yes }\nelse = { has_war = yes }",
+        "if = { limit = { is_ai = no } always = yes }\n"
+        "else_if = { limit = { original_tag = GER } always = yes }\n"
+        "else = { has_war = yes }",
+        False,
+    ),
+    # Macros are file-local, so the same name can hold different values.
+    "file-local macro": (
+        "has_political_power > @minimum_pp",
+        "has_political_power > @minimum_pp",
+        False,
+    ),
+    "different arrays sharing an index name": (
+        "var:global.first_pool^slot = { has_war = yes }",
+        "var:global.second_pool^slot = { has_war = yes }",
+        False,
+    ),
     "no allowed": ("", _GER_LOCK, False),
 }
 

@@ -842,12 +842,16 @@ _STATE_SCOPE_RE = re.compile(r"(?<![\w.:@])\d+\s*=\s*\{")
 def _trigger_statements(block: str) -> Set[str]:
     """Depth-0 statements of a trigger block, whitespace-collapsed for comparison.
 
-    A block holding a state scope is kept whole, so it only matches an identical block.
+    Keep blocks with numeric or array-indexed scopes whole.
     """
-    if _STATE_SCOPE_RE.search(block):
+    if _STATE_SCOPE_RE.search(block) or re.search(
+        r"\bvar:[\w.:@]+\^\w+\s*=\s*\{", block
+    ):
         return {" ".join(flat_block_text(block).split())}
     statements = set()
     for key, operator, scalar, body in iter_statement_ops(flat_block_text(block)):
+        if key.lower() in {"if", "else_if", "else"}:
+            return {" ".join(flat_block_text(block).split())}
         value = scalar if body is None else "{ " + " ".join(body.split()) + " }"
         statements.add(f"{key} {operator} {value}")
     return statements
@@ -867,6 +871,8 @@ def _category_guarantees(category_allowed: str) -> Set[str]:
 
 def _repeats_category(allowed: str, guarantees: Set[str]) -> bool:
     """True when every condition of a decision's ``allowed`` is in ``guarantees``."""
+    if re.search(r"(?<![\w.])@\w+", allowed):
+        return False
     statements = _trigger_statements(allowed)
     return bool(statements) and statements <= guarantees
 
