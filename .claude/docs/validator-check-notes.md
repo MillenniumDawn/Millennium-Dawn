@@ -86,16 +86,21 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
-- `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
-  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+- `random-building-slot-guard` (WARNING): a direct `add_building_construction` in
+  `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
   or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
-  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
-  `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
-  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
-  upper bound is noted in the warning, but does not suppress it: a level bound alone
-  does not establish slot availability. Nested effects and other buildings or selectors
-  are not checked, and a guard for one slot does not prove that every level requested
-  will fit. The backlog is tracked by #6390.
+  `random_select_amount`, has no proven free slot. Proof is `free_building_slots` for
+  that building with `size > 0` or `size >= 1` in the selector's own `limit` (also
+  inside `AND`), or a scripted trigger whose body has one, read from
+  `common/scripted_triggers/` (`infrastructure_random_build_loc`,
+  `free_shared_building_slots`). An earlier `add_extra_state_shared_building_slots` or
+  `remove_building` in the same block also counts, the removal only when the `limit`
+  proves that building is present. Effects run in order, so one placed after the
+  construction does not, and the warning says so. Shared-slot buildings
+  (`level_cap = { shares_slots = yes }`) share one proof. A same-building upper bound
+  is noted but does not suppress the warning. Province buildings are skipped, since
+  `free_building_slots` checks them only with a fixed `province`. Nested effects and
+  other selectors are not checked, and one free slot does not prove every level fits.
 - `building-missing-province` (ERROR): `add_building_construction` of a province
   building with no `province` key. The engine rejects the effect.
 - `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
@@ -681,38 +686,36 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
   modifier. `unknown-modifier` (WARNING) has known false positives.
-- `income-over-25-percent` (WARNING, always on): one literal tax, healthcare,
-  building-tax, resource-export, or equipment-market income bonus above `0.25`
-  (+25%). Exactly +25%, penalties, variable-fed values, and stacked totals are not
-  flagged. Each warning names the owner, modifier, value, percentage, and source line.
-  This is a balance review prompt, not a hard cap or a claim that the value is a typo.
-  The check covers the same source files as the opt-in economy checks, without
-  requiring `--unbalanced-modifiers`. Document an intentional bonus as
-  `owner::key` with a reason in `validation_config.json`
-  `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
-  The owner is the idea, trait, or modifier name that holds the bonus. Do not
-  blanket-exempt existing bonuses; review and explain each one (Issue #6371).
-- `weekly-stability-war-support-over-cap` (WARNING, always on): `stability_weekly` or
-  `war_support_weekly` above `0.05`, or a `*_weekly_factor` with an absolute value above
-  `0.25`. Flat weekly penalties are not flagged (Issue #6494).
-- `excessive-modifier-over-30-percent` (WARNING, always on): one `*_factor` or
-  `*_modifier` literal above `0.30`. Keys containing `cost`, starting with `expected_`,
-  or listed in `_NEGATIVE_BONUS_KEYS` (plus `*_worker_requirement_modifier` and
-  `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
-  `ai_*`, income, and weekly keys are skipped because they are AI weights or have
-  their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
-  number, not a percent. Keys defined with `value_type = number` in
-  `common/modifier_definitions/` are also skipped, including flat renewable capacity
-  and expected-spending tier adjustments. `tax_rate_change_multiplier_modifier`
-  is cost-style: a positive value raises the policy-change cost, so only negative
-  values below `-0.30` warn. With `--unbalanced-modifiers`, productivity growth keys
-  are skipped too, because that check owns them (Issue #6494).
-- Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
-  skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
-  dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
-  untimed `add_dynamic_modifier` grant keeps the source in scope, as does no grant at
-  all (decisions, static modifiers). Grants are read from `common/`, `events/`, and
-  `history/`.
+- Single-source caps (WARNING) come from the ordered `modifier_caps` rows in
+  `validation_config.json`. The first row whose `match` glob covers a key decides it, so
+  a specific row goes above the general `*_factor` / `*_modifier` 30% row. `skip` rows
+  exempt AI weights and `interest_rate_multiplier_modifier`, a number of percentage points.
+  Each row keeps its own category: `weekly-stability-war-support-over-cap`,
+  `income-over-25-percent`, `worker-requirement-over-cap`,
+  `excessive-modifier-over-30-percent`, and the `--unbalanced-modifiers` rows
+  `unbalanced-roi` and `unbalanced-productivity`. These are balance review prompts, not
+  hard caps (Issues #6371, #6494, #4370).
+- A `bonus` row counts positive values, or negative ones for cost-style keys: keys
+  containing `cost`, starting with `expected_`, ending in `fuel_consumption_factor` or a
+  worker or workforce requirement suffix, or listed maluses such as `consumer_goods_factor`
+  and `tax_rate_change_multiplier_modifier`. An `either` row counts both directions; its
+  `bonus_cap` sets the bonus side apart, so worker requirement cuts still warn past 30%
+  while increases warn past 40%. The 30% row is `percent_only`: it skips keys
+  defined with `value_type = number`, including flat renewable capacity and
+  expected-spending tiers.
+- An idea only granted through `add_timed_idea`, or a dynamic modifier only added with
+  `days`, is skipped unless the row is `timed` (income, ROI, productivity). Any untimed
+  grant, or no grant at all, keeps the source in scope. Grants are read from `common/`,
+  `events/`, and `history/`.
+- A `variables` row (worker requirement) also checks literal `set_variable`,
+  `add_to_variable`, and `subtract_from_variable` changes to a variable that a dynamic
+  modifier reads for a matching key. Computed values and stacked totals are not checked.
+- Document an intentional bonus as `owner::key` with a reason in the row's `exceptions`
+  list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
+  bonuses; review and explain each one.
+- `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
+  direction, variable-fed values and timed-only grants included, reported as
+  `modifier-cap-search`. It takes over the keys it matches for that run.
 
 ## validate_on_actions.py
 
@@ -925,6 +928,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `simplification` (WARNING): a `THIS = { ... }` block runs in the scope it is
   already in, so unwrap it. A body that reads `PREV` is skipped, because the wrapper
   pushes a scope and `PREV` inside it is the current scope.
+- `simplification` (WARNING): three or more adjacent `if` blocks that each compare
+  one variable with a constant and add a constant to another fold into one math
+  expression with comparator terms. An `else_if` chain and a step that adds to the
+  variable it tests are skipped, because later steps would read the changed value.
+  The message keeps each step's own comparator: `>` is `greater_than`, `<` is
+  `less_than`.
+- `simplification` (WARNING): three or more adjacent `if` / `else_if` branches over
+  `has_idea` that only add or set a value, when every idea in the category sets the
+  same variable to a constant in `on_add`. Read the variable instead. Skipped:
+  - A ladder that writes that variable. It is the initializer.
+  - Values that are not numbers on one line through those levels, or that do not
+    use the same effect and variable in every branch. Ideas that all set one level
+    give no line. A named constant such as
+    `@gdp_health_01_factor`, a variable, a `tooltip =` form the parser cannot read,
+    or irregular steps would need a lookup table, which is not a simplification.
+  - Known gaps: other writers of the variable are not checked, so confirm the ideas
+    are its only writer. Coverage is not checked either. A trailing `else`, a level
+    the ladder skips, and a country that holds none of the ideas must give what the
+    line gives there. `set_law_vars` sets the law variables to 1 for a country that
+    holds none, while the ladder adds nothing.
 
 ## validate_special_projects.py
 
