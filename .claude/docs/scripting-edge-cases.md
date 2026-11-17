@@ -14,6 +14,9 @@ relevant to the effects and triggers you are changing.
 - `threat` uses a 0.0 to 1.0 scale. Write `threat > 0.40`, not `threat > 40`.
 - `is_in_faction` accepts `yes` or `no`. Membership with a country uses
   `is_in_faction_with = TAG`. `add_to_faction = TAG` takes a country, not a faction name.
+- `puppet` and `annex_country` destroy the target's faction when it is the leader. Call
+  `pass_faction_leadership = yes` in the target's scope first. See "Losing the leader"
+  in `faction-rules.md`.
 - MD trade agreements and mutual investment treaties are partner arrays on both
   countries: `is_in_array = { trade_agreement_partners = TAG }` and
   `investment_treaty_partners`. Add to both sides only when the partner is not there yet,
