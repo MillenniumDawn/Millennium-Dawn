@@ -9,6 +9,9 @@ variants for refs inherited from the specific vanilla file they copy.
 
 Also checks .gui `font = "x"` against the bitmapfonts declared in interface/*.gfx
 (mod plus vanilla) — an unresolved font silently falls back to the default face.
+
+Also reports vanilla sprites, windows and elements that an MD file at a vanilla
+interface path drops, from vanilla_ui_paths.txt.
 """
 
 import glob
@@ -29,6 +32,7 @@ from shared_utils import (
     list_files,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from validator_common import (
     BaseValidator,
@@ -191,6 +195,12 @@ _FONT_DEF = re.compile(r"\bbitmapfont\s*=\s*\{")
 _FONT_NAME = re.compile(r'\bname\s*=\s*"([^"]+)"')
 _FONT_REF = re.compile(r'\bfont\s*=\s*"([^"\[]+)"')
 
+_GUI_TYPES = re.compile(r"\bguiTypes\s*=\s*\{", re.IGNORECASE)
+_GUI_BLOCK = re.compile(r"\b\w+\s*=\s*\{")
+_GUI_NAME_OR_BRACE = re.compile(
+    r'[{}]|\bname\s*=\s*(?:"([^"]*)"|([^\s{}"]+))', re.IGNORECASE
+)
+
 # Localisation sprite reference: `£name` renders the sprite `GFX_name` (an
 # optional `|frame` suffix may follow). Party, idea and money icons are often
 # referenced this way and nowhere else, so skipping .yml mis-reports them as
@@ -267,6 +277,27 @@ def _load_vanilla_font_manifest() -> FrozenSet[str]:
             )
     except (OSError, UnicodeDecodeError):
         return frozenset()
+
+
+_VANILLA_UI_PATHS_MANIFEST = os.path.join(
+    os.path.dirname(__file__), "vanilla_ui_paths.txt"
+)
+
+
+def _load_vanilla_ui_paths() -> Dict[str, List[List[str]]]:
+    """Return vanilla interface path -> its manifest entries, split into fields."""
+    paths: Dict[str, List[List[str]]] = {}
+    entries: List[List[str]] = []
+    try:
+        with open(_VANILLA_UI_PATHS_MANIFEST, encoding="utf-8") as fh:
+            for line in fh:
+                if line.startswith("\t"):
+                    entries.append(line.split())
+                elif line.strip() and not line.startswith("#"):
+                    entries = paths.setdefault(line.strip(), [])
+    except (OSError, UnicodeDecodeError):
+        return {}
+    return paths
 
 
 _VANILLA_PREFIXES = (
@@ -820,6 +851,36 @@ def font_names_from_gfx_text(raw: str) -> Set[str]:
     return names
 
 
+def gui_windows_from_text(raw: str) -> Dict[str, Set[str]]:
+    """Return each top-level guiTypes window name -> every element name inside it.
+
+    Shared with refresh_vanilla_data.py so the manifest and mod files share one parse.
+    """
+    text = _strip_comments(raw)
+    windows: Dict[str, Set[str]] = {}
+    for gui_types in _GUI_TYPES.finditer(text):
+        body, _end = extract_block_from_text(text, gui_types.end() - 1)
+        pos = 0
+        while block := _GUI_BLOCK.search(body, pos):
+            inner, pos = extract_block_from_text(body, block.end() - 1)
+            if pos == -1:
+                break
+            own, depth, elements = None, 0, set()
+            for token in _GUI_NAME_OR_BRACE.finditer(inner):
+                mark = token.group(0)
+                if mark == "{":
+                    depth += 1
+                elif mark == "}":
+                    depth -= 1
+                elif depth or own is not None:
+                    elements.add(_quoted_or_bare(token))
+                else:
+                    own = _quoted_or_bare(token)
+            if own:
+                windows.setdefault(own, set()).update(elements)
+    return windows
+
+
 def sprite_names_from_gfx_text(raw: str) -> Set[str]:
     """Return the set of GFX sprite names defined in raw .gfx file content.
 
@@ -860,6 +921,21 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         filepath,
         raw,
         lambda: _sprite_refs(_strip_comments(raw), filepath, _GUI_REF),
+    )
+
+
+def _parse_gui_windows(args: Tuple[str, str]) -> Dict[str, Set[str]]:
+    """Return each top-level window in a .gui file -> its element names."""
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return {}
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "gfx_ref.gui_windows",
+        filepath,
+        raw,
+        lambda: gui_windows_from_text(raw),
     )
 
 
@@ -1170,8 +1246,8 @@ class Validator(BaseValidator):
         )
         return all_refs
 
-    def _collect_script_refs(self) -> Set[str]:
-        """Return every GFX sprite referenced from game script (events, common, history, gfx).
+    def _collect_script_refs(self) -> Dict[str, str]:
+        """Return every GFX sprite referenced from game script -> the first file naming it.
 
         Feeds the unused-sprite check so sprites used as event pictures, focus or
         decision icons, MIO/agency logos, portraits, etc. are not mis-reported as
@@ -1187,9 +1263,14 @@ class Validator(BaseValidator):
         # should_skip_file ignores gfx/ wholesale, so _collect_files can't reach
         # the equipment-designer graphic_db there — and it names sprites literally.
         files.extend(list_files(os.path.join(self.mod_path, "gfx")))
-        refs = set(
-            self._pool_flat_map(_parse_script_refs, [(f, self.mod_path) for f in files])
-        )
+        refs: Dict[str, str] = {}
+        for filepath, names in zip(
+            files,
+            self._pool_map(_parse_script_refs, [(f, self.mod_path) for f in files]),
+        ):
+            rel = os.path.relpath(filepath, self.mod_path)
+            for name in names:
+                refs.setdefault(name, rel)
         self.log(
             f"  Scanned {len(files)} script files; found {len(refs)} distinct GFX references"
         )
@@ -1622,6 +1703,115 @@ class Validator(BaseValidator):
             category="undefined-loc-sprite",
         )
 
+    def _check_dropped_vanilla_ui(
+        self, mod_defined: Set[str], ref_sites: Dict[str, str]
+    ) -> None:
+        """Report vanilla UI names that an MD file at a vanilla path drops.
+
+        The game loads one file per path, so vanilla's copy of an overridden path
+        defines nothing. A sprite no loaded file defines renders nothing where MD
+        uses it (ERROR). A sprite, window or element the game binary names is one
+        the engine looks up itself (WARNING). Findings sit on the override file.
+        Skipped under --staged: the refs and windows come from the whole repo.
+        """
+        self._log_section("Checking vanilla UI names dropped by interface overrides")
+        if self.staged_only:
+            self.log("  Skipping the override check in staged mode.")
+            return
+        manifest = _load_vanilla_ui_paths()
+        if not manifest:
+            self.log("  No vanilla_ui_paths.txt manifest — skipping the override check")
+            return
+        mod_files = self._collect_files(
+            ["interface/**/*.gfx", "interface/**/*.gui"], ignore_staged=True
+        )
+        mod_paths = {
+            os.path.relpath(f, self.mod_path).replace(os.sep, "/") for f in mod_files
+        }
+        overridden = sorted(p for p in manifest if p in mod_paths)
+        loaded = set(mod_defined)
+        for path, entries in manifest.items():
+            if path.endswith(".gfx") and path not in mod_paths:
+                loaded.update(entry[0] for entry in entries)
+
+        used, engine_sprites = [], []
+        for path in overridden:
+            if not path.endswith(".gfx"):
+                continue
+            for entry in manifest[path]:
+                name = entry[0]
+                if name in loaded:
+                    continue
+                loaded.add(name)
+                lost = (
+                    f"Sprite '{name}' is defined in no loaded file: this file"
+                    f" replaces vanilla's {path}, which defined it"
+                )
+                if name in ref_sites:
+                    used.append((f"{lost}, and {ref_sites[name]} uses it", path, 0))
+                elif len(entry) > 1:
+                    engine_sprites.append(
+                        (f"{lost}, and the game binary names it", path, 0)
+                    )
+
+        windows: Dict[str, Set[str]] = {}
+        gui_files = [f for f in mod_files if f.endswith(".gui")]
+        for parsed in self._pool_map(
+            _parse_gui_windows, [(f, self.mod_path) for f in gui_files]
+        ):
+            for window, elements in parsed.items():
+                windows.setdefault(window, set()).update(elements)
+        exempt = validation_config("validate_gfx_references", "dropped_gui_elements")
+        elements = []
+        for path in overridden:
+            if not path.endswith(".gui"):
+                continue
+            for entry in manifest[path]:
+                window = entry[0]
+                if " ".join(entry) in exempt:
+                    continue
+                if len(entry) == 1 and window not in windows:
+                    missing = f"Window '{window}' is missing"
+                elif (
+                    len(entry) > 1
+                    and window in windows
+                    and entry[1] not in windows[window]
+                ):
+                    missing = f"Window '{window}' has no element '{entry[1]}'"
+                else:
+                    continue
+                elements.append(
+                    (
+                        f"{missing}: this file replaces vanilla's {path},"
+                        " and the game binary names it",
+                        path,
+                        0,
+                    )
+                )
+
+        self.log(f"  {len(overridden)} MD interface files replace a vanilla path")
+        self._report(
+            used,
+            ok_msg="Every vanilla sprite MD uses is still defined.",
+            fail_msg="Vanilla sprites MD uses but an override drops:",
+            severity=Severity.ERROR,
+            category="dropped-vanilla-sprite",
+        )
+        self._report(
+            engine_sprites,
+            ok_msg="No override drops a sprite the game binary names.",
+            fail_msg="Engine-named vanilla sprites an override drops:",
+            severity=Severity.WARNING,
+            category="dropped-engine-sprite",
+        )
+        self._report(
+            elements,
+            ok_msg="No override drops a window or element the game binary names.",
+            fail_msg="Engine-named vanilla GUI windows and elements an override drops:",
+            severity=Severity.WARNING,
+            category="dropped-engine-gui-element",
+        )
+
     def _check_unused_sprites(
         self,
         defined: Set[str],
@@ -1859,15 +2049,28 @@ class Validator(BaseValidator):
         variant_files = self._collect_files(
             ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
         )
+        variant_refs = self._pool_flat_map(
+            _parse_variant_icon_sprites, [(f, self.mod_path) for f in variant_files]
+        )
         self._check_undefined_refs(
-            self._pool_flat_map(
-                _parse_variant_icon_sprites, [(f, self.mod_path) for f in variant_files]
-            ),
+            variant_refs,
             defined,
             source_label="create_equipment_variant icons",
             category="undefined-sprite",
             mod_defined_ci=mod_defined_ci,
         )
+
+        script_refs = {} if self.staged_only else self._collect_script_refs()
+        english_loc_refs = [r for r in loc_refs if os.sep + "english" + os.sep in r[1]]
+        ref_sites: Dict[str, str] = {}
+        for sprite, filepath, line in sorted(
+            gui_refs + sgui_refs + sloc_refs + english_loc_refs + variant_refs
+        ):
+            rel = os.path.relpath(filepath, self.mod_path)
+            ref_sites.setdefault(sprite, f"{rel}:{line}".replace(os.sep, "/"))
+        for sprite, rel in script_refs.items():
+            ref_sites.setdefault(sprite, rel.replace(os.sep, "/"))
+        self._check_dropped_vanilla_ui(mod_defined, ref_sites)
 
         if not self.report_unused:
             self._log_section(
@@ -1879,7 +2082,7 @@ class Validator(BaseValidator):
         # A sprite is "used" if referenced anywhere — interface/ or game script.
         all_referenced: Set[str] = {r[0] for r in gui_refs + sgui_refs + sloc_refs}
         if not self.staged_only:
-            all_referenced |= self._collect_script_refs()
+            all_referenced.update(script_refs)
             all_referenced |= {r[0] for r in loc_refs}
             all_referenced |= self._resolve_engine_refs(mod_defined)
         self._check_unused_sprites(mod_defined, all_referenced)

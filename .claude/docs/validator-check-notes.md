@@ -44,16 +44,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   THIS, the reverse of `influence_higher_*`. Contract tests read their definitions.
 - Tracks literal country scopes, ROOT, THIS, PREV/FROM chains, neutral wrappers,
   and calls through scripted effects and triggers. Focuses, achievements,
-  non-targeted decisions, country history, and country/news event definitions
-  supply country contexts. A positive local `tag` guard can bind a runtime tag;
+  decisions, country history, and country/news event definitions supply country
+  contexts. A positive local `tag` guard can bind a runtime tag;
   `original_tag` is only a label, not proof of a literal runtime tag.
 - Effect-fired events receive the firing block's ROOT as FROM, not its innermost
   selected country. Event pools, automatic firing, unsupported dispatches, and
   definitions without a known caller keep unknown contexts alongside known ones.
   Broadcast events also have an unspecified audience context.
-- Targeted decisions, unmodeled blocks, state/variable/event-target scopes, and
-  other entry points remain conservative. Templates and effect previews are
-  skipped. This is not a reachability solver or an audit of arbitrary array reads.
+- A decision's ROOT is its actor, targeted or not. In a targeted decision FROM
+  (the target) stays unknown, and so does THIS inside `target_trigger` and
+  `target_root_trigger`. Other unmodeled blocks, state/variable/event-target
+  scopes, and other entry points remain conservative. Templates and effect
+  previews are skipped. This is not a reachability solver or an audit of
+  arbitrary array reads.
   Each definition keeps at most 64 distinct contexts before adding an unknown
   context; recursive calls are deduplicated. Scope chains retain the depth used
   by the parsed sources.
@@ -268,6 +271,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   and a value read inside a math block is not seen.
 - `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
   reported by the same pass as `decision-log-not-first`.
+- `decision-check-covered-by-category` (WARNING): a depth-0 line in a decision's
+  `visible`, `target_root_trigger`, or `available` that its category's `visible` or
+  `allowed` also holds. A hidden category hides its decisions from players and the AI.
+  Lines match whole, with whitespace collapsed. Lines that read `FROM` are skipped, and
+  so are missions, which still tick in a hidden category. A state target reads `visible`
+  and `available` on the state, so only its `target_root_trigger` is compared. A tag pin
+  in `visible` or `available` that the category `allowed` holds is left to the tag
+  re-check. Known gap: the category `allowed` runs once at game start, so it covers only
+  lines that cannot change. A dynamic line there is its own bug.
+- `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
+  two or more, all hold the same line under the rules above. One category check can
+  replace them. Missions need not share the line. Review before moving it: a line from
+  `available` hides the decision instead of greying it out, and a `visible_when_empty`
+  category disappears with it.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -502,6 +519,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
   the texture and update `texturefile`, not the entry.
+- `dropped-vanilla-sprite` (ERROR), `dropped-engine-sprite` and
+  `dropped-engine-gui-element` (WARNING): an MD file at a vanilla interface path replaces
+  that file, so only `vanilla_ui_paths.txt` knows what it dropped. "Engine-named" means
+  the exact NUL-terminated string is in the game binary. Names the engine builds at run
+  time, and names stored only as the tail of a longer string, are missed. Non-`GFX_`
+  sprite names (`resource_item_background`) are not read. Sprites the engine resolves
+  from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
+  uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py
 
