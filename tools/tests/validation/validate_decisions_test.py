@@ -1907,6 +1907,103 @@ def test_category_lock_makes_a_decision_recheck_redundant(
     assert_findings(rows, expected)
 
 
+_WAR = "has_war = yes"
+_CAT_WAR = "\tvisible = { has_war = yes }\n"
+_STATE_TARGET = "\t\tstate_target = yes\n"
+
+# A hidden category hides its decisions, so its gate covers their checks.
+# case: (category body, {decision: body}, covered, candidates)
+_CATEGORY_GATE_CASES = {
+    "line the category visible checks": (
+        _CAT_WAR,
+        {"dec1": _block("visible", _WAR), "dec2": _block("available", _WAR)},
+        [("dec1: visible repeats", "category visible"), ("dec2: available",)],
+        [],
+    ),
+    "line the category allowed checks": (
+        "\tallowed = { has_dlc = x }\n",
+        {"dec1": _block("target_root_trigger", "has_dlc = x")},
+        [("dec1: target_root_trigger", "category allowed")],
+        [],
+    ),
+    # The target is FROM, which the category gate does not have.
+    "FROM line": (
+        "\tvisible = { FROM = { has_war = yes } }\n",
+        {"dec1": _block("visible", "FROM = { has_war = yes }")},
+        [],
+        [],
+    ),
+    # validate_tag_redundant_with_category reports the pin in visible.
+    "tag pin": (
+        "\tallowed = { original_tag = GER }\n",
+        {
+            "dec1": _block("visible", "original_tag = GER")
+            + _block("target_root_trigger", "original_tag = GER")
+        },
+        [("dec1: target_root_trigger",)],
+        [],
+    ),
+    "mission": (_CAT_WAR, {"dec1": _MISSION + _block("available", _WAR)}, [], []),
+    # A state target reads visible on the state.
+    "state target": (
+        _CAT_WAR,
+        {
+            "dec1": _STATE_TARGET
+            + _block("visible", _WAR)
+            + _block("target_root_trigger", _WAR)
+        },
+        [("dec1: target_root_trigger",)],
+        [],
+    ),
+    # A mission in a hidden category still ticks, so it need not share the line.
+    "line every decision checks": (
+        "",
+        {
+            "dec1": _block("visible", _WAR),
+            "dec2": _block("available", _WAR),
+            "mission": _MISSION,
+        },
+        [],
+        [("cat: all 2 decisions", _WAR)],
+    ),
+    "line only some decisions check": (
+        "",
+        {"dec1": _block("visible", _WAR), "dec2": ""},
+        [],
+        [],
+    ),
+    "one decision": ("", {"dec1": _block("visible", _WAR)}, [], []),
+    # A state scope is one line, not the lines inside it.
+    "state scope": (
+        _CAT_WAR,
+        {
+            "dec1": _block("visible", "759 = { has_war = yes }"),
+            "dec2": _block("visible", "759 = {\n\thas_war = yes\n}"),
+        },
+        [],
+        [("cat: all 2 decisions", "`759 = { has_war = yes }`")],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("category", "decisions", "covered", "candidates"),
+    _CATEGORY_GATE_CASES.values(),
+    ids=_CATEGORY_GATE_CASES,
+)
+def test_category_gate_covers_decision_checks(category, decisions, covered, candidates):
+    factories = [
+        decision_factory(_nested(token, body)) for token, body in decisions.items()
+    ]
+
+    covered_rows, candidate_rows = V._find_category_covered_checks(
+        factories, {"cat": "cat = {\n" + category + "}\n"}, {"cat": list(decisions)}
+    )
+
+    assert_findings([message for message, _file, _line in covered_rows], covered)
+    assert_findings(candidate_rows, candidates)
+
+
 # case: (decision allowed, category allowed, flagged)
 _ALLOWED_REPEAT_CASES = {
     "tag pin repeat": (_GER_LOCK, _GER_LOCK, True),
@@ -3204,7 +3301,8 @@ _FINDINGS_MOD = {
     "common/decisions/categories/categories.txt": "cat_allowed = {\n"
     "\tallowed = { original_tag = GER }\n}\n"
     "cat_unchecked = {\n}\ncat_empty = {\n}\ncat_orphan = {\n}\n"
-    "cat_ai_disabled = {\n\tallowed = { always = no }\n}\n",
+    "cat_ai_disabled = {\n\tallowed = { always = no }\n}\n"
+    "cat_gated = {\n\tvisible = { has_war = yes }\n}\n",
     "common/decisions/decisions.txt": "cat_allowed = {\n"
     + _nested(
         "decision_dup",
@@ -3228,6 +3326,11 @@ _FINDINGS_MOD = {
     )
     + "}\ncat_ai_disabled = {\n"
     + _nested("category_ai_skip", _ICON)
+    + "}\ncat_gated = {\n"
+    + "".join(
+        _nested(token, _ICON + _block("visible", "has_war = yes\nhas_capitulated = no"))
+        for token in ("gated_one", "gated_two")
+    )
     + "}\n",
     "events/activations.txt": "activate_targeted_decision = { decision = manual_used }\n",
     "common/bop/bop.txt": "decision_category = cat_empty\n",
@@ -3246,6 +3349,8 @@ _BACKLOG_WARNINGS = (
     "decision-target-state-not-in-available",
     "decision-treasury-gate-below-charge",
     "decision-trigger-reads-temp-variable",
+    "decision-check-covered-by-category",
+    "decision-category-gate-candidate",
 )
 _PROMOTED_ERRORS = (
     "missing-decision-log",

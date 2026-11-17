@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_matching_brace,
     find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
@@ -1115,6 +1116,126 @@ def _find_category_redundant_rows(
             )
 
     return results
+
+
+_GATE_STATEMENT_RE = re.compile(
+    r'([^\s{}=<>"]+)\s*(>=|<=|=|>|<)\s*("[^"]*"|\{|[^\s{}]+)'
+)
+
+
+def _gate_statement_lines(block: str) -> Set[str]:
+    """Depth-0 statements of a trigger block, whitespace collapsed for comparison.
+
+    A state scope such as ``759 = { ... }`` stays one statement.
+    """
+    lines = set()
+    for inner, index in iter_flat_offsets(block):
+        if index and inner[index - 1] not in " \t\r\n{}":
+            continue
+        match = _GATE_STATEMENT_RE.match(inner, index)
+        if not match:
+            continue
+        key, operator, value = match.groups()
+        if value == "{":
+            close = find_matching_brace(inner, match.end() - 1)
+            if close == -1:
+                continue
+            value = " ".join(["{", *inner[match.end() : close].split(), "}"])
+        lines.add(f"{key} {operator} {value}")
+    return lines
+
+
+def _category_gate_lines(category_code: str) -> Dict[str, str]:
+    """Map each depth-0 line of a category's visible and allowed to its block."""
+    gate: Dict[str, str] = {}
+    for field in ("visible", "allowed"):
+        block = extract_value_multi_line(category_code, field)
+        for line in _gate_statement_lines(block):
+            gate.setdefault(line, field)
+    return gate
+
+
+def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
+    """ROOT-scope depth-0 lines of a decision's gates, by block.
+
+    A state target reads visible and available on the state, so only its
+    target_root_trigger counts. FROM is the target, which a category gate does
+    not have.
+    """
+    fields = (
+        ("target_root_trigger",)
+        if d.state_target
+        else ("visible", "target_root_trigger", "available")
+    )
+    return {
+        field: {
+            line
+            for line in _gate_statement_lines(getattr(d, field))
+            if not _FROM_WORD_RE.search(line)
+        }
+        for field in fields
+    }
+
+
+def _find_category_covered_checks(
+    factories: List["DecisionFactory"],
+    categories: Dict[str, str],
+    cats_with_decs: Dict[str, List[str]],
+) -> Tuple[List[Tuple[str, str, int]], List[str]]:
+    """Pure detection for ``validate_checks_covered_by_category``.
+
+    Returns (covered, candidates). ``covered`` holds a decision's visible,
+    target_root_trigger, or available line that its category's visible or
+    allowed already holds at depth 0. A hidden category hides its decisions from
+    players and the AI. ``candidates`` holds categories whose decisions, two or
+    more, all repeat a line the category does not hold.
+
+    Missions are skipped: one in a hidden category still ticks.
+    """
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+    by_category: Dict[str, List["DecisionFactory"]] = {}
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name is not None and not d.mission_subtype:
+            by_category.setdefault(cat_name, []).append(d)
+
+    covered: List[Tuple[str, str, int]] = []
+    candidates: List[str] = []
+    for cat_name, decisions in by_category.items():
+        gate = _category_gate_lines(categories[cat_name])
+        shared: Set[str] | None = None
+        for d in decisions:
+            gate_lines = _decision_gate_lines(d)
+            for field, lines in gate_lines.items():
+                for line in sorted(lines & gate.keys()):
+                    if (
+                        gate[line] == "allowed"
+                        and field != "target_root_trigger"
+                        and line.startswith(("tag ", "original_tag "))
+                    ):
+                        continue  # validate_tag_redundant_with_category reports it.
+                    covered.append(
+                        (
+                            f"{d.token}: {field} repeats `{line}` from the "
+                            f"category {gate[line]}; remove it",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+            every_line = set().union(*gate_lines.values())
+            shared = every_line if shared is None else shared & every_line
+        repeated = sorted((shared or set()) - gate.keys())
+        if len(decisions) > 1 and repeated:
+            candidates.append(
+                f"{cat_name}: all {len(decisions)} decisions check "
+                f"{', '.join(f'`{line}`' for line in repeated)}; "
+                "check once in the category instead"
+            )
+
+    return covered, candidates
 
 
 def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
@@ -2873,6 +2994,35 @@ class Validator(BaseValidator):
             "Decisions with tag/original_tag re-checks redundant with the parent category's lock (remove the re-check):",
         )
 
+    def validate_checks_covered_by_category(self):
+        """Flag decision gate lines the category gate already checks, and
+        categories whose decisions all repeat one.
+
+        See ``_find_category_covered_checks`` for the rules.
+        """
+        self._log_section("Checking decision gates against their category gate...")
+
+        covered, candidates = _find_category_covered_checks(
+            parse_all_decision_factories(self.mod_path),
+            parse_decision_categories(self.mod_path),
+            parse_categories_with_decisions(self.mod_path),
+        )
+
+        self._report(
+            covered,
+            "✓ No decision repeats its category gate",
+            "Decision checks the category gate already makes:",
+            Severity.WARNING,
+            category="decision-check-covered-by-category",
+        )
+        self._report(
+            candidates,
+            "✓ No category whose decisions all repeat a check",
+            "Categories whose decisions all repeat a check:",
+            Severity.WARNING,
+            category="decision-category-gate-candidate",
+        )
+
     def validate_pp_charge_in_effect(self):
         """Flag decisions that charge political power via ``add_political_power = -N``
         in ``complete_effect``/``remove_effect`` instead of (or in addition to)
@@ -4435,6 +4585,7 @@ class Validator(BaseValidator):
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_tag_redundant_with_category()
+        self.validate_checks_covered_by_category()
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
