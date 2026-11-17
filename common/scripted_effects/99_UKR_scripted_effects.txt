@@ -10143,3 +10143,196 @@ UKR_varyag_run_combat_trials = {
 	}
 	else = { custom_effect_tooltip = UKR_varyag_trials_unavailable_tt }
 }
+
+# Stored equipment sales: the offer to a buyer is a mission (UKR_storage_sale_<TAG>_<equipment>), one per buyer country and equipment, so the same equipment can go to several countries at once.
+# Call with the buyer saved as event target ukr_storage_buyer and temp variable ukr_sale_item = the equipment
+# (1 = BTR-50, 2 = PT-76B, 3 = Tu-16, 4 = Tu-22, 5 = MiG-25, 6 = Su-17).
+UKR_storage_sale_start = {
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 1 }
+			event_target:ukr_storage_buyer = { tag = IND }
+			NOT = { has_active_mission = UKR_storage_sale_IND_btr50 }
+		}
+		activate_mission = UKR_storage_sale_IND_btr50
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 2 }
+			event_target:ukr_storage_buyer = { tag = IND }
+			NOT = { has_active_mission = UKR_storage_sale_IND_pt76 }
+		}
+		activate_mission = UKR_storage_sale_IND_pt76
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 1 }
+			event_target:ukr_storage_buyer = { tag = EGY }
+			NOT = { has_active_mission = UKR_storage_sale_EGY_btr50 }
+		}
+		activate_mission = UKR_storage_sale_EGY_btr50
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 1 }
+			event_target:ukr_storage_buyer = { tag = HUN }
+			NOT = { has_active_mission = UKR_storage_sale_HUN_btr50 }
+		}
+		activate_mission = UKR_storage_sale_HUN_btr50
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 1 }
+			event_target:ukr_storage_buyer = { tag = ROM }
+			NOT = { has_active_mission = UKR_storage_sale_ROM_btr50 }
+		}
+		activate_mission = UKR_storage_sale_ROM_btr50
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 1 }
+			event_target:ukr_storage_buyer = { tag = CRO }
+			NOT = { has_active_mission = UKR_storage_sale_CRO_btr50 }
+		}
+		activate_mission = UKR_storage_sale_CRO_btr50
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 2 }
+			event_target:ukr_storage_buyer = { tag = CRO }
+			NOT = { has_active_mission = UKR_storage_sale_CRO_pt76 }
+		}
+		activate_mission = UKR_storage_sale_CRO_pt76
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 2 }
+			event_target:ukr_storage_buyer = { tag = BOS }
+			NOT = { has_active_mission = UKR_storage_sale_BOS_pt76 }
+		}
+		activate_mission = UKR_storage_sale_BOS_pt76
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 3 }
+			event_target:ukr_storage_buyer = { tag = EGY }
+			NOT = { has_active_mission = UKR_storage_sale_EGY_tu16 }
+		}
+		activate_mission = UKR_storage_sale_EGY_tu16
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 3 }
+			event_target:ukr_storage_buyer = { tag = CHI }
+			NOT = { has_active_mission = UKR_storage_sale_CHI_tu16 }
+		}
+		activate_mission = UKR_storage_sale_CHI_tu16
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 4 }
+			event_target:ukr_storage_buyer = { tag = LBA }
+			NOT = { has_active_mission = UKR_storage_sale_LBA_tu22 }
+		}
+		activate_mission = UKR_storage_sale_LBA_tu22
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 5 }
+			event_target:ukr_storage_buyer = { tag = ARM }
+			NOT = { has_active_mission = UKR_storage_sale_ARM_mig25 }
+		}
+		activate_mission = UKR_storage_sale_ARM_mig25
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 5 }
+			event_target:ukr_storage_buyer = { tag = TRK }
+			NOT = { has_active_mission = UKR_storage_sale_TRK_mig25 }
+		}
+		activate_mission = UKR_storage_sale_TRK_mig25
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 5 }
+			event_target:ukr_storage_buyer = { tag = LBA }
+			NOT = { has_active_mission = UKR_storage_sale_LBA_mig25 }
+		}
+		activate_mission = UKR_storage_sale_LBA_mig25
+	}
+	if = {
+		limit = {
+			check_variable = { ukr_sale_item = 6 }
+			event_target:ukr_storage_buyer = { tag = POL }
+			NOT = { has_active_mission = UKR_storage_sale_POL_su17 }
+		}
+		activate_mission = UKR_storage_sale_POL_su17
+	}
+}
+
+# Send the offer event to the buyer once the mission or the smaller-order decision is done.
+# Same input as UKR_storage_sale_start; the caller first sets the buyer's variable UKR_storage_sale_tier_<equipment> (1 = smaller order only, 2 = every order).
+UKR_storage_sale_dispatch = {
+	if = {
+		limit = { check_variable = { ukr_sale_item = 1 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.1 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_sale_item = 2 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.3 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_sale_item = 3 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.12 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_sale_item = 4 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.13 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_sale_item = 6 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.20 }
+	}
+	else_if = {
+		limit = { check_variable = { ukr_sale_item = 5 } }
+		event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.18 }
+	}
+}
+
+# The mission ended without the required opinion: only a player-led buyer still gets the offer (and decides for itself); an AI buyer turns it down on the spot.
+# Same input as UKR_storage_sale_start.
+UKR_storage_sale_failed = {
+	if = {
+		limit = { event_target:ukr_storage_buyer = { is_ai = no } }
+		if = {
+			limit = { check_variable = { ukr_sale_item = 1 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_btr50 = 2 } }
+		}
+		if = {
+			limit = { check_variable = { ukr_sale_item = 2 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_pt76 = 2 } }
+		}
+		if = {
+			limit = { check_variable = { ukr_sale_item = 3 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_tu16 = 2 } }
+		}
+		if = {
+			limit = { check_variable = { ukr_sale_item = 4 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_tu22 = 2 } }
+		}
+		if = {
+			limit = { check_variable = { ukr_sale_item = 6 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_su17 = 2 } }
+		}
+		if = {
+			limit = { check_variable = { ukr_sale_item = 5 } }
+			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_mig25 = 2 } }
+		}
+		UKR_storage_sale_dispatch = yes
+	}
+	else = {
+		event_target:ukr_storage_buyer = {
+			ROOT = { country_event = ukr_modernize_sov_equipment_storage_sale.15 }
+		}
+	}
+}
