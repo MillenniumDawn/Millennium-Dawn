@@ -10,6 +10,7 @@ def no_vanilla_gfx(monkeypatch):
     monkeypatch.setattr(vg, "_vanilla_gfx_files", lambda: [])
     monkeypatch.setattr(vg, "_load_vanilla_sprite_manifest", lambda: frozenset())
     monkeypatch.setattr(vg, "_vanilla_gui_ref_index", lambda: {})
+    monkeypatch.setattr(vg, "_load_vanilla_ui_paths", lambda: {})
 
 
 @pytest.fixture
