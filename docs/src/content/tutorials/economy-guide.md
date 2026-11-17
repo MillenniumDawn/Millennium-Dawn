@@ -554,7 +554,7 @@ If all buildings are fully staffed and workers remain, those workers form the **
 
 If the Available Workforce exceeds the **Unemployment Threshold** shown in the Economy window, the excess counts as high unemployment and debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as the excess rises.
 
-The threshold is 6% plus an allowance for your level of development, plus any modifiers from laws and national spirits. The allowance is 55% up to about $11,700 of GDP per capita, then falls three points for every $1,000 and reaches zero at $30,000. A poor, populous country can hold a large informal labor pool without unrest, but that room shrinks once it reaches middle income, so it has to build jobs to stay ahead. Emigration from idle workers only counts the share above this allowance.
+The threshold is 6% plus an allowance for your level of development, plus any modifiers from laws and national spirits. The allowance is 55% up to about $11,700 of GDP per capita, then falls three points for every $1,000 and reaches zero at $30,000. A poor, populous country can hold a large informal labor pool without unrest, but that room shrinks once it reaches middle income, so it has to build jobs to stay ahead.
 
 Each building type has a **priority** from 1 to 10, set in the Employment Priority panel of the Economy window. When there are fewer workers than jobs, workers are shared out in proportion to priority and to the jobs each type offers, so a priority 10 job is filled ten times as readily as a priority 1 job. Workers a fully staffed type cannot use go to the others. When every job can be filled, priorities do nothing.
 
