@@ -74,7 +74,7 @@ All files below live in `.claude/docs/`.
 | `energy-power-balance.md`        | Power-per-cost + tech S-curves; read before energy edits     |
 | `entity-system.md`               | Mesh→entity→animation chain, pdxmesh naming, landmarks       |
 | `event-reference.md`             | Event types, TT*IF*\* tooltips, `random_events` dispatch     |
-| `faction-rules.md`               | `common/factions/rules/`: rule types and trigger scopes      |
+| `faction-rules.md`               | Faction rule types and scopes; handling a lost leader        |
 | `focus-tree-reference.md`        | Focus structure, property order, bankruptcy-guard examples   |
 | `formable-reference.md`          | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
 | `hoi4-data-structures.md`        | Variables, arrays, loops, collections, formatted loc         |

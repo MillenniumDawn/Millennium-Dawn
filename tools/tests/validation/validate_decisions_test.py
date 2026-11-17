@@ -66,6 +66,11 @@ _GAIN = "\t\tadd_political_power = 10\n"
 _SPEND = "\t\tadd_political_power = -75\n"
 _SPEND_50 = "\t\tadd_political_power = -50\n"
 _NO_LOG = "dec_one - X.txt: %s has no log line"
+_ROOT_REPEAT = (
+    "repeat - available repeats target_root_trigger: %s. The copy runs every tick"
+    " per target; remove it unless another country can change that ROOT state"
+    " mid-day"
+)
 _EFFECT_BLOCKS = ("complete_effect", "remove_effect", "timeout_effect", "cancel_effect")
 _RANDOM = "\t\trandom = {\n\t\t\tchance = 50\n\t\t\tadd_stability = 0.01\n\t\t}\n"
 _RANDOM_LIST = (
@@ -1008,6 +1013,57 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
                 _nested("daily_scan", _block("target_root_trigger", "always = yes")),
             ],
             [("daily_scan",)],
+        ),
+    },
+    "validate_available_repeats_target_root_trigger": {
+        "exact repeat": (
+            [
+                _nested(
+                    "repeat",
+                    _block(
+                        "target_root_trigger", "has_idea = A\nNOT = { has_idea = B }"
+                    )
+                    + _block(
+                        "available",
+                        "has_war = no\nhas_idea = A\nNOT = {\n\thas_idea = B\n}",
+                    ),
+                )
+            ],
+            [(_ROOT_REPEAT % "has_idea = A; NOT = { has_idea = B }", "X.txt", 0)],
+        ),
+        "near match": (
+            [
+                _nested(
+                    "near",
+                    _block("target_root_trigger", "has_idea = A")
+                    + _block(
+                        "available",
+                        "hidden_trigger = { has_idea = A }\nhas_idea = A_member",
+                    ),
+                )
+            ],
+            [],
+        ),
+        "no target_root_trigger": (
+            [
+                _nested(
+                    "untargeted",
+                    _block("visible", "has_idea = A")
+                    + _block("available", "has_idea = A"),
+                )
+            ],
+            [],
+        ),
+        "script activated": (
+            [
+                _nested(
+                    "scripted",
+                    _block("allowed", "always = no")
+                    + _block("target_root_trigger", "has_idea = A")
+                    + _block("available", "has_idea = A"),
+                )
+            ],
+            [],
         ),
     },
     "validate_targets_no_trigger": {
@@ -2819,6 +2875,9 @@ _FINDING_DECISIONS = {
     "cosmetic_targets": _block("targets", "GER FRA"),
     "from_no_trigger": _GER_TARGET + _block("visible", _FROM_WAR),
     "root_visible": _GER_TARGET + _block("visible", "has_war = yes"),
+    "root_repeat": _GER_TARGET
+    + _block("target_root_trigger", "has_war = yes")
+    + _block("available", "has_war = yes"),
     "from_duplicate": _GER_TARGET
     + _block("target_trigger", _FROM_WAR)
     + _block("visible", _FROM_WAR),
@@ -2904,8 +2963,9 @@ _FINDINGS_MOD = {
     + "".join(f'\tspriteType = {{ name = "GFX_filler_{i}" }}\n' for i in range(1000))
     + "}\n",
 }
-# WARNINGs held back until their backlog clears.
+# WARNINGs that must not gate CI: advisory, or held back until a backlog clears.
 _BACKLOG_WARNINGS = (
+    "decision-available-repeats-root-trigger",
     "decision-cosmetic-targeting",
     "decision-duplicate-log",
     "decision-treasury-gate-below-charge",
