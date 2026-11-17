@@ -16,12 +16,25 @@ from shared.suite import assert_findings, run_validator, write_tree, write_under
 _PROVINCE_BUILDINGS = frozenset(
     {"naval_base", "bunker", "supply_node", "rail_way", "naval_supply_hub"}
 )
+_SHARED_SLOTS = frozenset({"industrial_complex", "arms_factory", "offices"})
+_SLOT_TRIGGERS = {
+    "infrastructure_random_build_loc": frozenset({"infrastructure"}),
+    "free_shared_building_slots": frozenset({"industrial_complex"}),
+}
 
 
 @pytest.fixture(autouse=True)
 def _province_buildings():
-    """The province buildings a validator run reads from common/buildings/."""
-    V._init_worker(_PROVINCE_BUILDINGS, frozenset(), frozenset(), frozenset())
+    """The building classes and slot triggers a validator run reads from
+    common/buildings/ and common/scripted_triggers/."""
+    V._init_worker(
+        _PROVINCE_BUILDINGS,
+        frozenset(),
+        frozenset(),
+        frozenset(),
+        _SHARED_SLOTS,
+        _SLOT_TRIGGERS,
+    )
 
 
 def _scan(script):
@@ -40,7 +53,7 @@ def _scan_province(script):
     return scanner.findings
 
 
-_RANDOM_INFRASTRUCTURE_CASES = {
+_RANDOM_SLOT_CASES = {
     "unguarded random state": (
         "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
         1,
@@ -129,6 +142,48 @@ _RANDOM_INFRASTRUCTURE_CASES = {
     ),
     "other building": (
         "random_owned_state = { add_building_construction = { type = air_base level = 1 } }",
+        1,
+    ),
+    "matching other building": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = air_base size > 0 } } "
+        "add_building_construction = { type = air_base level = 1 } }",
+        0,
+    ),
+    "shared trigger covers another shared building": (
+        "random_owned_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "shared proof skips an unshared building": (
+        "random_owned_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = fossil_powerplant level = 1 } }",
+        1,
+    ),
+    "extra shared slots first": (
+        "random_owned_state = { add_extra_state_shared_building_slots = 1 "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "extra shared slots after": (
+        "random_owned_state = { add_building_construction = { type = arms_factory level = 1 } "
+        "add_extra_state_shared_building_slots = 1 }",
+        1,
+    ),
+    "zero extra shared slots": (
+        "random_owned_state = { add_extra_state_shared_building_slots = 0 "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        1,
+    ),
+    "removed building frees a shared slot": (
+        "every_owned_state = { random_select_amount = 1 limit = { industrial_complex > 0 } "
+        "remove_building = { type = industrial_complex level = 1 } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "province building skipped": (
+        "random_owned_state = { add_building_construction = { type = naval_base level = 1 "
+        "province = { all_provinces = yes } } }",
         0,
     ),
     "nested effect excluded": (
@@ -152,33 +207,89 @@ _RANDOM_INFRASTRUCTURE_CASES = {
 
 @pytest.mark.parametrize(
     "script,count",
-    _RANDOM_INFRASTRUCTURE_CASES.values(),
-    ids=_RANDOM_INFRASTRUCTURE_CASES,
+    _RANDOM_SLOT_CASES.values(),
+    ids=_RANDOM_SLOT_CASES,
 )
-def test_random_infrastructure_slots(script, count):
+def test_random_slot_guards(script, count):
     scanner = V.Scanner(V._sanitize(script))
-    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+    scanner.check_random_slot_guards(0, len(scanner.text))
     assert len(scanner.findings) == count
 
 
+# hints: {case: (selector body, hint, shown)}
+_SLOT_HINT_CASES = {
+    "level bound": (
+        "limit = { infrastructure < 5 } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        True,
+    ),
+    "level bound in AND": (
+        "limit = { AND = { infrastructure <= 4 } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        True,
+    ),
+    "level bound in OR": (
+        "limit = { OR = { infrastructure < 5 always = yes } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        False,
+    ),
+    "level bound in other state": (
+        "limit = { any_owned_state = { infrastructure < 5 } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        False,
+    ),
+    "late extra shared slots": (
+        "add_building_construction = { type = offices level = 1 } "
+        "add_extra_state_shared_building_slots = 1",
+        "only added after it",
+        True,
+    ),
+}
+
+
 @pytest.mark.parametrize(
-    "limit,has_bound",
-    [
-        ("infrastructure < 5", True),
-        ("AND = { infrastructure <= 4 }", True),
-        ("OR = { infrastructure < 5 always = yes }", False),
-        ("any_owned_state = { infrastructure < 5 }", False),
-    ],
+    "body,hint,shown", _SLOT_HINT_CASES.values(), ids=_SLOT_HINT_CASES
 )
-def test_level_bounds_are_reported_without_suppressing_warning(limit, has_bound):
-    script = (
-        f"random_owned_state = {{ limit = {{ {limit} }} "
-        "add_building_construction = { type = infrastructure level = 1 } }"
-    )
-    scanner = V.Scanner(V._sanitize(script))
-    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+def test_slot_guard_hints_do_not_suppress_the_warning(body, hint, shown):
+    scanner = V.Scanner(V._sanitize(f"random_owned_state = {{ {body} }}"))
+    scanner.check_random_slot_guards(0, len(scanner.text))
     assert len(scanner.findings) == 1
-    assert ("a level bound is present" in scanner.findings[0][2]) is has_bound
+    assert (hint in scanner.findings[0][2]) is shown
+
+
+# scripted trigger files: {case: (file text, trigger -> buildings)}
+_SLOT_TRIGGER_CASES = {
+    "single building": (
+        "air_base_loc = {\n\tis_owned_by = PREV\n"
+        "\tfree_building_slots = { building = air_base size > 0 }\n"
+        "\tOR = { is_in_home_area = yes }\n}\n",
+        {"air_base_loc": frozenset({"air_base"})},
+    ),
+    "inside AND": (
+        "both_loc = { AND = { free_building_slots = { building = dockyard size >= 1 } } }\n",
+        {"both_loc": frozenset({"dockyard"})},
+    ),
+    "only in another state": (
+        "other_loc = { owner = { any_owned_state = "
+        "{ free_building_slots = { building = air_base size > 0 } } } }\n",
+        {},
+    ),
+    "commented out": (
+        "# old_loc = { free_building_slots = { building = air_base size > 0 } }\n",
+        {},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text,expected", _SLOT_TRIGGER_CASES.values(), ids=_SLOT_TRIGGER_CASES
+)
+def test_slot_triggers(text, expected):
+    assert V.slot_triggers(text) == expected
 
 
 # --- unguarded effects --------------------------------------------------
@@ -716,6 +827,9 @@ def _run(tmp_path, monkeypatch, script):
         tmp_path,
         {
             "common/buildings/00_buildings.txt": _BUILDINGS,
+            "common/scripted_triggers/00_slots.txt": (
+                "dockyard_loc = { free_building_slots = { building = dockyard size > 0 } }\n"
+            ),
             "map/definition.csv": _DEFINITION,
             "events/test_events.txt": script,
         },
@@ -759,15 +873,25 @@ def test_run_reports_province_building_state_trigger_as_error(tmp_path, monkeypa
     ]
 
 
-def test_random_infrastructure_slot_guard_is_a_warning(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "guard,expected",
+    [
+        ("", [("warning", "random-building-slot-guard")]),
+        ("limit = { dockyard_loc = yes }", []),
+        ("add_extra_state_shared_building_slots = 1", []),
+    ],
+    ids=["unguarded", "trigger from scripted_triggers", "shared slot from buildings"],
+)
+def test_random_slot_guard_reads_triggers_and_shared_slots(
+    tmp_path, monkeypatch, guard, expected
+):
     validator = _run(
         tmp_path,
         monkeypatch,
-        "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        f"random_owned_state = {{ {guard} "
+        "add_building_construction = { type = dockyard level = 1 } }",
     )
-    assert [(i.severity, i.category) for i in validator._issues] == [
-        ("warning", "random-infrastructure-slot-guard")
-    ]
+    assert [(i.severity, i.category) for i in validator._issues] == expected
 
 
 def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
@@ -797,7 +921,7 @@ _BUILDINGS = """buildings = {
 	}
 	dockyard = {
 		only_costal = yes
-		level_cap = { state_max = 20 }
+		level_cap = { state_max = 20 shares_slots = yes }
 	}
 }
 """
@@ -822,18 +946,26 @@ def _construction(body):
     return f"effect = {{\n\tadd_building_construction = {{\n{body}\n\t}}\n}}\n"
 
 
-# building definitions: {case: (file text, (provincial, coastal provincial))}
+# building definitions: {case: (file text, (provincial, coastal provincial, shared))}
 _DEFINITION_CASES = {
-    "buildings file": (_BUILDINGS, ({"naval_base", "bunker"}, {"naval_base"})),
+    "buildings file": (
+        _BUILDINGS,
+        ({"naval_base", "bunker"}, {"naval_base"}, {"dockyard"}),
+    ),
     "commented flags": (
         "buildings = {\n\tnaval_base = {\n\t\t# only_costal = yes\n"
-        "\t\t# province_max = 10\n\t\tlevel_cap = { state_max = 10 }\n\t}\n}\n",
-        (set(), set()),
+        "\t\t# province_max = 10\n\t\tlevel_cap = { state_max = 10 # shares_slots = yes\n"
+        "\t\t}\n\t}\n}\n",
+        (set(), set(), set()),
     ),
     "province_max outside level_cap": (
         "buildings = {\n\tnaval_base = {\n\t\tonly_costal = yes\n"
         "\t\tprovince_max = 10\n\t}\n}\n",
-        (set(), set()),
+        (set(), set(), set()),
+    ),
+    "shares_slots = no": (
+        "buildings = {\n\tfuel_silo = {\n\t\tlevel_cap = { shares_slots = no }\n\t}\n}\n",
+        (set(), set(), set()),
     ),
 }
 
