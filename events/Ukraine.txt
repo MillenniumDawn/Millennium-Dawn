@@ -68,6 +68,11 @@ add_namespace = ukraine_develop_btr4
 add_namespace = ukraine_develop_2s22
 add_namespace = ukraine_equipment_develop_domestic_atgm
 add_namespace = ukraine_utility_vehicle_tender
+add_namespace = ukraine_kraz
+add_namespace = ukraine_kraz_mrap
+add_namespace = ukraine_mrap_tender
+add_namespace = ukraine_mrap_coop
+add_namespace = ukraine_mrap_nextgen
 add_namespace = ukraine_strat_bombers_problem
 add_namespace = ukraine_modernize_planes_restore_an_71
 add_namespace = UKR_an178_development
@@ -17818,7 +17823,7 @@ country_event = {
 
 	trigger = {
 		original_tag = UKR
-		has_war_with = SOV
+		UKR_at_war_with_russia_or_proxies = yes
 		check_variable = { ukraine_t62_russian_old_tanks > 400 }
 	}
 
@@ -17876,7 +17881,7 @@ country_event = {
 
 	trigger = {
 		original_tag = UKR
-		has_war_with = SOV
+		UKR_at_war_with_russia_or_proxies = yes
 	}
 
 	option = {
@@ -19964,32 +19969,19 @@ country_event = {
 			}
 		}
 
+		ai_chance = {
+			base = 20
+		}
+
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_option_image_manufacturer_name_tt
 			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
 			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz"
 		}
 
-		set_temp_variable = { treasury_change = -0.2 }
-		modify_treasury_effect = yes
+		set_country_flag = UKR_utility_vehicle_tender_luaz_chosen_flag
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_possible_models_from_2_manufacturers_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1110
-			PROVINCE_NAME = VICTORY_POINTS_513
-			EXTERNAL_MANUFACTURER_NAME_1 = MANUFACTURER_NAME
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = UKR_MANUFACTURER_LUAZ_1302_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = UKR_MANUFACTURER_LUAZ_1901_LOC
-			EXTERNAL_MANUFACTURER_NAME_2 = SOV_MANUFACTURER_UAZ_LOC
-			EXTERNAL_MANUFACTURER_2_MODEL_NAME_1 = SOV_MANUFACTURER_UAZ_31512_LOC
-			EXTERNAL_MANUFACTURER_2_MODEL_NAME_2 = SOV_MANUFACTURER_UAZ_31514_LOC
-		}
-
-		hidden_effect = {
-			country_event = ukraine_utility_vehicle_tender.2
-		}
+		country_event = ukraine_utility_vehicle_tender.2
 	}
 
 	option = {
@@ -19997,19 +19989,20 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.1.b"
 
 		trigger = {
-			controls_province = 6495 #Kremenchuk, Poltava
-			1089 = { #Poltava
-				is_owned_and_controlled_by = UKR
-			}
+			UKR_tender1_peace_with_russia = yes
 		}
 
 		ai_chance = {
-			base = 20
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			base = 25
 		}
 
-		country_event = ukraine_utility_vehicle_tender.4
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = SOV_MANUFACTURER_UAZ_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz"
+		}
+
+		country_event = ukraine_utility_vehicle_tender.5
 	}
 
 	option = {
@@ -20017,25 +20010,28 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.1.c"
 
 		trigger = {
-			controls_province = 9446 #Krasnodon, South Luhansk
-			1075 = { #South Luhansk
+			controls_province = 525 #Kyiv (Right Bank), Kyiv
+			698 = { #Kyiv
 				is_owned_and_controlled_by = UKR
 			}
 		}
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = UAZ_31514
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_uaz_31514"
-		}
-
 		ai_chance = {
 			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		country_event = ukraine_utility_vehicle_tender.3
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_TASCO_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_tasco"
+		}
+
+		set_temp_variable = { UKR_tata_influence = 1 }
+		UKR_tata_add_influence = yes
+		RAJ = { add_opinion_modifier = { target = UKR modifier = UKR_tata_goodwill_5 } }
+
+		activate_mission = UKR_tata_negotiations_mission
+		custom_effect_tooltip = UKR_tata_start_tt
 	}
 
 	option = {
@@ -20043,42 +20039,30 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.1.d"
 
 		trigger = {
-			controls_province = 525 #Kyiv (Right Bank), Kyiv
-			698 = { #Kyiv
-				is_owned_and_controlled_by = UKR
-			}
-			698 = { #Kyiv
-				arms_factory > 0
+			NOT = {
+				OR = {
+					AND = {
+						controls_province = 513 #Lutsk, Volyn
+						1110 = { #Volyn
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					UKR_tender1_peace_with_russia = yes
+					AND = {
+						controls_province = 525 #Kyiv (Right Bank), Kyiv
+						698 = { #Kyiv
+							is_owned_and_controlled_by = UKR
+						}
+					}
+				}
 			}
 		}
 
 		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			base = 100
 		}
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = Tata_Sumo_4x4
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_tata_sumo_4x4"
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		add_equipment_production = {
-			equipment = {
-				type = util_vehicle_2
-				creator = RAJ
-				version_name = "Tata Sumo 4x4"
-			}
-
-			requested_factories = 1
-			efficiency = 10
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_tasco_tata_sumo_4x4_flag
+		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
 	}
 }
 
@@ -20090,18 +20074,7 @@ country_event = {
 
 	is_triggered_only = yes
 
-	option = {
-		name = ukraine_utility_vehicle_tender.2.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.2.a"
-
-		ai_chance = { base = 60 }
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = LuAZ_1302
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_luaz_1302"
-		}
-
+	immediate = {
 		set_temp_variable = { percent_change = -0.25 }
 		set_temp_variable = { tag_index = SOV.id }
 		set_temp_variable = { influence_target = UKR.id }
@@ -20109,6 +20082,21 @@ country_event = {
 
 		set_temp_variable = { percent_change = 0.25 }
 		change_domestic_influence_percentage = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.2.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.2.a"
+
+		ai_chance = {
+			base = 60
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = LuAZ_1302
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz_1302"
+		}
 
 		UKR_count_domestic_development = yes
 		custom_effect_tooltip = universal_blank_line_tooltip
@@ -20145,66 +20133,33 @@ country_event = {
 		name = ukraine_utility_vehicle_tender.2.b
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.2.b"
 
-		trigger = {
-			1110 = { #Volyn
-				arms_factory > 0
-			}
+		ai_chance = {
+			base = 25
 		}
-
-		ai_chance = { base = 10 }
 
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_option_image_model_name_tt
 			MODEL_NAME = LuAZ_1901_Heoloh
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_luaz_1901"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz_1901"
 		}
 
-		set_temp_variable = { percent_change = -0.25 }
-		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = UKR.id }
-		change_influence_percentage = yes
-
-		set_temp_variable = { percent_change = 0.25 }
-		change_domestic_influence_percentage = yes
-
-		UKR_count_domestic_development = yes
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		add_equipment_to_stockpile = {
-			type = util_vehicle_3
-			variant_name = "LuAZ-1901 Heoloh"
-			amount = 30
-			producer = UKR
-		}
-
-		add_equipment_production = {
-			equipment = {
-				type = util_vehicle_3
-				version_name = "LuAZ-1901 Heoloh"
+		set_country_flag = UKR_tender1_model_luaz_1901_flag
+		custom_effect_tooltip = UKR_tender1_luaz_wait_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.3
+				days = 180
+				random_days = 30
 			}
-
-			requested_factories = 1
-			efficiency = 10
 		}
-
-		set_country_flag = UKR_utility_vehicle_tender_luaz_1901_heoloh_flag
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.2.c
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.2.c"
 
-		trigger = {
-			1110 = { #Volyn
-				arms_factory < 1
-			}
-		}
-
 		ai_chance = {
-			base = 5
+			base = 10
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
@@ -20212,64 +20167,53 @@ country_event = {
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_option_image_model_name_tt
 			MODEL_NAME = LuAZ_1901_Heoloh
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_luaz_1901"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz_1901"
 		}
 
-		set_temp_variable = { treasury_change = -0.2 }
+		set_country_flag = UKR_tender1_model_luaz_1901_flag
+
+		set_temp_variable = { treasury_change = -0.05 }
 		modify_treasury_effect = yes
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_military_factory_expansion_tt
-			PERIOD_FROM = "270"
-			PERIOD_TO = "300"
-			PERIOD_SIZE = DAYS_LOC
-			FACTORY_AMOUNT = "1"
-			MODEL_NAME = LuAZ_1901_Heoloh
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1110
-			PROVINCE_NAME = VICTORY_POINTS_513
-			MANUFACTURER = UKR_MANUFACTURER_LUAZ_LOC
-		}
-
+		custom_effect_tooltip = UKR_tender1_luaz_speed_tt
 		hidden_effect = {
 			country_event = {
 				id = ukraine_utility_vehicle_tender.3
-				days = 270
+				days = 120
 				random_days = 30
 			}
 		}
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.2.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.2.d"
-
-		ai_chance = { base = 25 }
-
-		trigger = {
-			country_exists = SOV
-
-			NOT = {
-				has_war_with = SOV
-			}
-		}
-
-		set_temp_variable = { percent_change = 0.25 }
-		set_temp_variable = { tag_index = SOV.id }
-		set_temp_variable = { influence_target = UKR.id }
-		change_influence_percentage = yes
-
-		set_temp_variable = { percent_change = -0.25 }
-		change_domestic_influence_percentage = yes
-
-		country_event = ukraine_utility_vehicle_tender.4
 	}
 }
 
 country_event = {
 	id = ukraine_utility_vehicle_tender.3
-	title = ukraine_utility_vehicle_tender.3.name
-	desc = ukraine_utility_vehicle_tender.3.desc
+	title = {
+		text = ukraine_utility_vehicle_tender.3.name
+		trigger = { UKR_tender1_site_controlled = yes }
+	}
+	title = {
+		text = ukraine_utility_vehicle_tender.3.failure.name
+		trigger = { NOT = { UKR_tender1_site_controlled = yes } }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.3.desc_factory
+		trigger = {
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
+		}
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.3.desc_expand
+		trigger = {
+			UKR_tender1_site_controlled = yes
+			NOT = { UKR_tender1_site_has_factory = yes }
+		}
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.3.failure.desc
+		trigger = { NOT = { UKR_tender1_site_controlled = yes } }
+	}
 	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
 
 	is_triggered_only = yes
@@ -20278,248 +20222,155 @@ country_event = {
 		name = ukraine_utility_vehicle_tender.3.a
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.a"
 
-		ai_chance = { base = 10 }
-
-		set_temp_variable = { treasury_change = -0.04 }
-		modify_treasury_effect = yes
-
-		add_equipment_to_stockpile = {
-			type = util_vehicle_3
-			variant_name = "UAZ-31512"
-			amount = 30
-			producer = SOV
+		trigger = {
+			has_country_flag = UKR_tender1_model_luaz_1901_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
 		}
 
-		set_country_flag = UKR_utility_vehicle_tender_uaz_31512_flag
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = LuAZ_1901_Heoloh
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz_1901"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.3.b
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.b"
 
-		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = UAZ_31514
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_uaz_31514"
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		add_equipment_to_stockpile = {
-			type = util_vehicle_3
-			variant_name = "UAZ-31514"
-			amount = 30
-			producer = SOV
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_uaz_31514_flag
-	}
-}
-
-country_event = {
-	id = ukraine_utility_vehicle_tender.4
-	title = ukraine_utility_vehicle_tender.4.name
-	desc = ukraine_utility_vehicle_tender.4.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
-
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_utility_vehicle_tender.4.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.a"
-
-		ai_chance = { base = 10 }
-
-		set_temp_variable = { treasury_change = -0.04 }
-		modify_treasury_effect = yes
-
-		add_equipment_to_stockpile = {
-			type = util_vehicle_3
-			variant_name = "UAZ-31519"
-			amount = 30
-			producer = SOV
-		}
-
-		if = {
-			limit = {
-				1089 = { #Poltava
-					arms_factory > 0
-				}
-			}
-
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_3
-					creator = SOV
-					version_name = "UAZ-31519"
-				}
-
-				requested_factories = 1
-				efficiency = 10
-			}
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_krasz_uaz_31519_flag
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.4.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.b"
-
-		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = UAZ_3153
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_uaz_3153"
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		add_equipment_to_stockpile = {
-			type = util_vehicle_3
-			variant_name = "UAZ-3153 Hussar"
-			amount = 30
-			producer = SOV
-		}
-
-		if = {
-			limit = {
-				1089 = { #Poltava
-					arms_factory > 0
-				}
-			}
-
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_3
-					creator = SOV
-					version_name = "UAZ-3153 Hussar"
-				}
-
-				requested_factories = 1
-				efficiency = 10
-			}
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_krasz_uaz_3153_flag
-	}
-}
-
-country_event = {
-	id = ukraine_utility_vehicle_tender.5
-	title = {
-		text = ukraine_utility_vehicle_tender.5.success.name
 		trigger = {
-			controls_province = 513 #Lutsk, Volyn
-			1110 = { #Volyn
-				is_owned_and_controlled_by = UKR
-			}
+			has_country_flag = UKR_tender1_model_uaz_31512_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
 		}
-	}
-	title = {
-		text = ukraine_utility_vehicle_tender.5.failure.name
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 513 #Lutsk, Volyn
-				}
-				NOT = {
-					1110 = { #Volyn
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.5.success.desc
-		trigger = {
-			controls_province = 513 #Lutsk, Volyn
-			1110 = { #Volyn
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.5.failure.desc
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 513 #Lutsk, Volyn
-				}
-				NOT = {
-					1110 = { #Volyn
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_LuAZ_1901_Heoloh
-
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_utility_vehicle_tender.5.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.5.a"
 
 		ai_chance = {
 			base = 20
 		}
 
-		trigger = {
-			controls_province = 513 #Lutsk, Volyn
-			1110 = { #Volyn
-				is_owned_and_controlled_by = UKR
-			}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_31512
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_31512"
 		}
 
-		UKR_count_domestic_development = yes
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		1110 = { #Volyn
-			add_extra_state_shared_building_slots = 1
-			add_building_construction = {
-				type = arms_factory
-				level = 1
-				instant_build = yes
-			}
-
-			add_state_modifier = {
-				modifier = {
-					state_productivity_growth_modifier = 0.02
-				}
-			}
-		}
-
-		add_equipment_production = {
-			equipment = {
-				type = util_vehicle_3
-				version_name = "LuAZ-1901 Heoloh"
-			}
-			requested_factories = 1
-			efficiency = 20
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_luaz_1901_heoloh_flag
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.5.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.5.b"
+		name = ukraine_utility_vehicle_tender.3.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.c"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3154_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3154
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3154"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.d"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3160_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3160
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3160"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.e
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.e"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_31519_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_31519
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_31519"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.f
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.f"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3153_flag
+			UKR_tender1_site_controlled = yes
+			UKR_tender1_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3153
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3153"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 1 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.g
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.g"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_luaz_1901_flag
+			UKR_tender1_site_controlled = yes
+			NOT = { UKR_tender1_site_has_factory = yes }
+		}
 
 		ai_chance = {
 			base = 10
@@ -20527,17 +20378,84 @@ country_event = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
+		UKR_tender1_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.h
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.h"
+
 		trigger = {
 			OR = {
-				NOT = {
-					controls_province = 513 #Lutsk, Volyn
-				}
-				NOT = {
-					1110 = { #Volyn
-						is_owned_and_controlled_by = UKR
-					}
-				}
+				has_country_flag = UKR_tender1_model_uaz_3154_flag
+				has_country_flag = UKR_tender1_model_uaz_3160_flag
 			}
+			UKR_tender1_site_controlled = yes
+			NOT = { UKR_tender1_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender1_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.i
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.i"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_31512_flag
+			UKR_tender1_site_controlled = yes
+			NOT = { UKR_tender1_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender1_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.j
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.j"
+
+		trigger = {
+			OR = {
+				has_country_flag = UKR_tender1_model_uaz_31519_flag
+				has_country_flag = UKR_tender1_model_uaz_3153_flag
+			}
+			UKR_tender1_site_controlled = yes
+			NOT = { UKR_tender1_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender1_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.k
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.k"
+
+		trigger = {
+			NOT = { UKR_tender1_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
 		add_political_power = -2
@@ -20545,25 +20463,343 @@ country_event = {
 		set_temp_variable = { treasury_change = -0.03 }
 		modify_treasury_effect = yes
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_military_factory_expansion_failure_tt
-			PERIOD_FROM = "300"
-			PERIOD_TO = "360"
-			PERIOD_SIZE = DAYS_LOC
-			FACTORY_AMOUNT = "1"
-			MODEL_NAME = LuAZ_1901_Heoloh
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1110
-			PROVINCE_NAME = VICTORY_POINTS_513
-			MANUFACTURER = UKR_MANUFACTURER_LUAZ_LOC
-		}
-
+		custom_effect_tooltip = UKR_tender1_retry_launch_tt
 		hidden_effect = {
 			country_event = {
-				id = ukraine_utility_vehicle_tender.5
+				id = ukraine_utility_vehicle_tender.3
+				days = 180
+				random_days = 60
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.3.l
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.3.l"
+
+		trigger = {
+			NOT = { UKR_tender1_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -5
+
+		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
+		UKR_tender1_clear_flags = yes
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.4
+	title = {
+		text = ukraine_utility_vehicle_tender.4.success.name
+		trigger = { UKR_tender1_site_controlled = yes }
+	}
+	title = {
+		text = ukraine_utility_vehicle_tender.4.failure.name
+		trigger = { NOT = { UKR_tender1_site_controlled = yes } }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.4.success.desc
+		trigger = { UKR_tender1_site_controlled = yes }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.4.failure.desc
+		trigger = { NOT = { UKR_tender1_site_controlled = yes } }
+	}
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_LuAZ_1901_Heoloh
+
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.a"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_luaz_1901_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = LuAZ_1901_Heoloh
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz_1901"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.b"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_31512_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_31512
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_31512"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.c"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3154_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3154
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3154"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.d"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3160_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3160
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3160"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.e
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.e"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_31519_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_31519
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_31519"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.f
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.f"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_uaz_3153_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3153
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3153"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.i
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.i"
+
+		trigger = {
+			has_country_flag = UKR_tender1_model_tata_flag
+			UKR_tender1_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Tata_Sumo_4x4
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_tata_sumo_4x4"
+		}
+
+		set_temp_variable = { UKR_tender1_stage = 2 }
+		UKR_tender1_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.g
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.g"
+
+		trigger = {
+			NOT = { UKR_tender1_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -2
+
+		set_temp_variable = { treasury_change = -0.03 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = UKR_tender1_retry_expansion_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.4
 				days = 300
 				random_days = 60
 			}
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.4.h
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.4.h"
+
+		trigger = {
+			NOT = { UKR_tender1_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -5
+
+		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
+		UKR_tender1_clear_flags = yes
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.5
+	title = ukraine_utility_vehicle_tender.5.name
+	desc = ukraine_utility_vehicle_tender.5.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
+
+	is_triggered_only = yes
+
+	immediate = {
+		set_temp_variable = { percent_change = 0.5 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = UKR.id }
+		change_influence_percentage = yes
+
+		set_temp_variable = { percent_change = -0.5 }
+		change_domestic_influence_percentage = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.5.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.5.a"
+
+		ai_chance = {
+			base = 30
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_AVTOAHREHAT_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_avtoahrehat"
+		}
+
+		set_country_flag = UKR_tender1_model_uaz_31512_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.3
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.5.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.5.b"
+
+		ai_chance = {
+			base = 15
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz"
+		}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_possible_models_from_1_manufacturers_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_1110
+			PROVINCE_NAME = VICTORY_POINTS_513
+			EXTERNAL_MANUFACTURER_NAME_1 = SOV_MANUFACTURER_UAZ_LOC
+			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = UAZ_3154
+			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = UAZ_3160
+		}
+
+		set_country_flag = UKR_tender1_choice_luaz_flag
+		set_country_flag = UKR_utility_vehicle_tender_luaz_chosen_flag
+
+		set_temp_variable = { treasury_change = -0.1 }
+		modify_treasury_effect = yes
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.6
 		}
 	}
 
@@ -20572,34 +20808,49 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.5.c"
 
 		ai_chance = {
-			base = 10
-			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+			base = 15
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 513 #Lutsk, Volyn
-				}
-				NOT = {
-					1110 = { #Volyn
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_KRASZ_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_krasz"
+		}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_possible_models_from_1_manufacturers_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_KRASZ_LOC
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_1089
+			PROVINCE_NAME = VICTORY_POINTS_6495
+			EXTERNAL_MANUFACTURER_NAME_1 = SOV_MANUFACTURER_UAZ_LOC
+			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = UAZ_31519
+			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = UAZ_3153
 		}
 
-		add_political_power = -5
+		set_country_flag = UKR_tender1_choice_krasz_flag
 
-		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
+		set_temp_variable = { treasury_change = -0.05 }
+		modify_treasury_effect = yes
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.6
+		}
 	}
 }
 
 country_event = {
 	id = ukraine_utility_vehicle_tender.6
 	title = ukraine_utility_vehicle_tender.6.name
-	desc = ukraine_utility_vehicle_tender.6.desc
+	desc = {
+		text = ukraine_utility_vehicle_tender.6.desc_luaz
+		trigger = { has_country_flag = UKR_tender1_choice_luaz_flag }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.6.desc_krasz
+		trigger = { has_country_flag = UKR_tender1_choice_krasz_flag }
+	}
 	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
 
 	is_triggered_only = yes
@@ -20608,44 +20859,108 @@ country_event = {
 		name = ukraine_utility_vehicle_tender.6.a
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.6.a"
 
+		trigger = {
+			has_country_flag = UKR_tender1_choice_luaz_flag
+			date < 2001.1.1
+		}
+
 		ai_chance = {
 			base = 20
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = D041_Step
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_d041_step"
+			MODEL_NAME = UAZ_3154
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3154"
 		}
 
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
+		clr_country_flag = UKR_tender1_choice_luaz_flag
+		set_country_flag = UKR_tender1_model_uaz_3154_flag
 
-		country_event = ukraine_utility_vehicle_tender.7
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.3
+		}
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.6.b
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.6.b"
 
+		trigger = {
+			has_country_flag = UKR_tender1_choice_luaz_flag
+			date > 2000.12.31
+		}
+
 		ai_chance = {
-			base = 40
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			base = 20
 		}
 
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_option_image_model_name_tt
-			MODEL_NAME = Dozor_A
-			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_light_utility_vehicle_tender_dozor_a"
+			MODEL_NAME = UAZ_3160
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3160"
 		}
 
-		set_temp_variable = { treasury_change = -0.08 }
-		modify_treasury_effect = yes
+		clr_country_flag = UKR_tender1_choice_luaz_flag
+		set_country_flag = UKR_tender1_model_uaz_3160_flag
 
-		country_event = ukraine_utility_vehicle_tender.9
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.3
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.6.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.6.c"
+
+		trigger = {
+			has_country_flag = UKR_tender1_choice_krasz_flag
+			date < 2000.7.1
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_31519
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_31519"
+		}
+
+		clr_country_flag = UKR_tender1_choice_krasz_flag
+		set_country_flag = UKR_tender1_model_uaz_31519_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.3
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.6.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.6.d"
+
+		trigger = {
+			has_country_flag = UKR_tender1_choice_krasz_flag
+			date > 2000.6.30
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UAZ_3153
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uaz_3153"
+		}
+
+		clr_country_flag = UKR_tender1_choice_krasz_flag
+		set_country_flag = UKR_tender1_model_uaz_3153_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.3
+		}
 	}
 }
 
@@ -20653,7 +20968,7 @@ country_event = {
 	id = ukraine_utility_vehicle_tender.7
 	title = ukraine_utility_vehicle_tender.7.name
 	desc = ukraine_utility_vehicle_tender.7.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_D041_Step
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
 
 	is_triggered_only = yes
 
@@ -20661,190 +20976,32 @@ country_event = {
 		name = ukraine_utility_vehicle_tender.7.a
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.7.a"
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "180"
-			PERIOD_TO = "210"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "D041 'Step Pickup'"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_700
-			PROVINCE_NAME = VICTORY_POINTS_11479
-			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
-		}
-
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.8 days = 180 random_days = 30 }
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.7.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.7.b"
-
 		ai_chance = {
-			base = 1
+			base = 40
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		set_temp_variable = { treasury_change = -0.02 }
+		set_temp_variable = { treasury_change = -0.3 }
 		modify_treasury_effect = yes
 
-		custom_effect_tooltip = universal_blank_line_tooltip
+		add_opinion_modifier = { target = RAJ modifier = UKR_tata_goodwill_5 }
+		RAJ = { add_opinion_modifier = { target = UKR modifier = UKR_tata_goodwill_5 } }
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "210"
-			PERIOD_TO = "240"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "D041 'Step Cab'"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_700
-			PROVINCE_NAME = VICTORY_POINTS_11479
-			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
-		}
+		set_country_flag = UKR_tender1_model_tata_flag
 
+		custom_effect_tooltip = UKR_tata_plant_tt
 		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.8 days = 210 random_days = 30 }
+			country_event = { id = ukraine_utility_vehicle_tender.8 days = 30 }
 		}
-
-		set_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.7.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.7.c"
-
-		ai_chance = {
-			base = 1
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "126"
-			PERIOD_TO = "147"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "D041 'Step Pickup'"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_700
-			PROVINCE_NAME = VICTORY_POINTS_11479
-			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
-		}
-
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.8 days = 126 random_days = 21 }
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.7.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.7.d"
-
-		ai_chance = {
-			base = 1
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		set_temp_variable = { treasury_change = -0.07 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "147"
-			PERIOD_TO = "168"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "D041 'Step Cab'"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_700
-			PROVINCE_NAME = VICTORY_POINTS_11479
-			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
-		}
-
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.8 days = 147 random_days = 21 }
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
 	}
 }
 
 country_event = {
 	id = ukraine_utility_vehicle_tender.8
-	title = {
-		text = ukraine_utility_vehicle_tender.8.name
-		trigger = {
-			controls_province = 11479 #Lviv, Lviv
-			700 = { #Lviv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	title = {
-		text = ukraine_utility_vehicle_tender.8.failure.name
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 11479 #Lviv, Lviv
-				}
-				NOT = {
-					700 = { #Lviv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.8.desc_pickup
-		trigger = {
-			has_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-			controls_province = 11479 #Lviv, Lviv
-			700 = { #Lviv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.8.desc_closed
-		trigger = {
-			has_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
-			controls_province = 11479 #Lviv, Lviv
-			700 = { #Lviv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.8.failure.desc
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 11479 #Lviv, Lviv
-				}
-				NOT = {
-					700 = { #Lviv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_D041_Step
+	title = ukraine_utility_vehicle_tender.8.name
+	desc = ukraine_utility_vehicle_tender.8.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
 
 	is_triggered_only = yes
 
@@ -20853,215 +21010,13 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.8.a"
 
 		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			base = 100
 		}
 
-		trigger = {
-			controls_province = 11479 #Lviv, Lviv
-			700 = { #Lviv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-
-		UKR_count_domestic_development = yes
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		if = {
-			limit = {
-				NOT = { has_tech = util_vehicle_4 }
-			}
-
-			set_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes
-
-			set_technology = { util_vehicle_4 = 1 }
-
-			custom_effect_tooltip = universal_blank_line_tooltip
-		}
-
-		if = {
-			limit = {
-				has_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-			}
-
-			create_equipment_variant = {
-				name = "D041 Step Pickup"
-				type = util_vehicle_4
-				parent_version = 0
-				allow_without_tech = yes
-
-				upgrades = {
-					util_mobility = 1
-					util_cutting_corners_upgrade = 1
-				}
-
-				icon = "GFX_UKR_LAND_Utility_Light_D041_Step_Pickup"
-				model = "USA_hummer_vehicle_entity"
-			}
-
-			add_equipment_to_stockpile = {
-				type = util_vehicle_4
-				variant_name = "D041 Step Pickup"
-				amount = 20
-				producer = UKR
-			}
-
-			if = {
-				limit = {
-					700 = { #Lviv
-						arms_factory > 1
-					}
-				}
-
-				add_equipment_production = {
-					equipment = {
-						type = util_vehicle_4
-						version_name = "D041 Step Pickup"
-					}
-
-					requested_factories = 1
-					efficiency = 10
-				}
-			}
-
-			clr_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-		}
-
-		if = {
-			limit = {
-				has_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
-			}
-
-			set_temp_variable = { treasury_change = -0.04 }
-			modify_treasury_effect = yes
-
-			custom_effect_tooltip = universal_blank_line_tooltip
-
-			create_equipment_variant = {
-				name = "D041 Step Cab"
-				type = util_vehicle_4
-				parent_version = 0
-				allow_without_tech = yes
-
-				upgrades = {
-					util_mobility = 1
-					util_infantry_help_upgrade = 1
-				}
-
-				icon = "GFX_UKR_LAND_Utility_Light_D041_Step_Base"
-				model = "USA_hummer_vehicle_entity"
-			}
-
-			add_equipment_to_stockpile = {
-				type = util_vehicle_4
-				variant_name = "D041 Step Cab"
-				amount = 20
-				producer = UKR
-			}
-
-			if = {
-				limit = {
-					700 = { #Lviv
-						arms_factory > 1
-					}
-				}
-
-				add_equipment_production = {
-					equipment = {
-						type = util_vehicle_4
-						version_name = "D041 Step Cab"
-					}
-
-					requested_factories = 1
-					efficiency = 10
-				}
-			}
-
-			clr_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_d041_step_flag
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.8.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.8.b"
-
-		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 11479 #Lviv, Lviv
-				}
-				NOT = {
-					700 = { #Lviv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-
-		add_political_power = -2
-
-		set_temp_variable = { treasury_change = -0.03 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_failure_tt
-			PERIOD_FROM = "300"
-			PERIOD_TO = "360"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = D041_Step
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_700
-			PROVINCE_NAME = VICTORY_POINTS_11479
-			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
-		}
-
+		custom_effect_tooltip = UKR_tata_construction_tt
 		hidden_effect = {
-			country_event = {
-				id = ukraine_utility_vehicle_tender.8
-				days = 300
-				random_days = 60
-			}
+			country_event = { id = ukraine_utility_vehicle_tender.4 days = 120 random_days = 60 }
 		}
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.8.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.8.c"
-
-		ai_chance = {
-			base = 10
-			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 5.0 ai_has_high_deficit = yes }
-		}
-
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 11479 #Lviv, Lviv
-				}
-				NOT = {
-					700 = { #Lviv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-
-		add_political_power = -5
-
-		clr_country_flag = UKR_utility_vehicle_tender_d041_step_pickup_flag
-		clr_country_flag = UKR_utility_vehicle_tender_d041_step_cab_flag
-		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
 	}
 }
 
@@ -21069,7 +21024,7 @@ country_event = {
 	id = ukraine_utility_vehicle_tender.9
 	title = ukraine_utility_vehicle_tender.9.name
 	desc = ukraine_utility_vehicle_tender.9.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_A
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
 
 	is_triggered_only = yes
 
@@ -21077,190 +21032,155 @@ country_event = {
 		name = ukraine_utility_vehicle_tender.9.a
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.9.a"
 
+		trigger = {
+			controls_province = 11479 #lviv
+			700 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 20
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
 		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "180"
-			PERIOD_TO = "210"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "Dozor-A"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_696
-			PROVINCE_NAME = VICTORY_POINTS_9556
-			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_AVTOBUSPROM_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_avtobusprom"
 		}
 
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.10 days = 180 random_days = 30 }
-		}
+		set_temp_variable = { treasury_change = -0.05 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
 
-		set_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
+		country_event = ukraine_utility_vehicle_tender.10
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.9.b
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.9.b"
 
+		trigger = {
+			controls_province = 9556 #kharkiv
+			696 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
 		ai_chance = {
-			base = 1
+			base = 40
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		set_temp_variable = { treasury_change = -0.02 }
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_KHKBM_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_khkbm"
+		}
+
+		set_temp_variable = { treasury_change = -0.08 }
+		UKR_tender2_apply_discount = yes
 		modify_treasury_effect = yes
 
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "210"
-			PERIOD_TO = "240"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "Dozor-A with PKM"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_696
-			PROVINCE_NAME = VICTORY_POINTS_9556
-			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
-		}
-
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.10 days = 210 random_days = 30 }
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
+		country_event = ukraine_utility_vehicle_tender.11
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.9.c
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.9.c"
 
+		trigger = {
+			controls_province = 6495 #kremenchuk
+			1089 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
 		ai_chance = {
-			base = 1
+			base = 25
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		set_temp_variable = { treasury_change = -0.05 }
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_manufacturer_name_tt
+			MANUFACTURER_NAME = UKR_MANUFACTURER_VEPR_LOC
+			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_vepr"
+		}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = VEPR_K
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_vepr_k"
+		}
+
+		set_temp_variable = { treasury_change = -0.06 }
+		UKR_tender2_apply_discount = yes
 		modify_treasury_effect = yes
 
-		custom_effect_tooltip = universal_blank_line_tooltip
+		set_country_flag = UKR_tender2_model_vepr_k_flag
 
 		custom_effect_tooltip = {
 			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "126"
-			PERIOD_TO = "147"
+			PERIOD_FROM = "180"
+			PERIOD_TO = "210"
 			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "Dozor-A"
+			MODEL_NAME = VEPR_K
 			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_696
-			PROVINCE_NAME = VICTORY_POINTS_9556
-			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+			STATE_NAME = STATE_1089
+			PROVINCE_NAME = VICTORY_POINTS_6495
+			MANUFACTURER = UKR_MANUFACTURER_VEPR_LOC
 		}
 
 		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.10 days = 126 random_days = 21 }
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 180 random_days = 30 }
 		}
-
-		set_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.9.d
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.9.d"
 
+		trigger = {
+			NOT = {
+				OR = {
+					AND = {
+						controls_province = 11479 #lviv
+						700 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					AND = {
+						controls_province = 9556 #kharkiv
+						696 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					AND = {
+						controls_province = 6495 #kremenchuk
+						1089 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+				}
+			}
+		}
+
 		ai_chance = {
-			base = 1
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			base = 100
 		}
 
-		set_temp_variable = { treasury_change = -0.07 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = universal_blank_line_tooltip
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_tt
-			PERIOD_FROM = "147"
-			PERIOD_TO = "168"
-			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = "Dozor-A with PKM"
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_696
-			PROVINCE_NAME = VICTORY_POINTS_9556
-			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
-		}
-
-		hidden_effect = {
-			country_event = { id = ukraine_utility_vehicle_tender.10 days = 147 random_days = 21 }
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
+		set_country_flag = UKR_utility_vehicle_tender_2_abort_flag
 	}
 }
 
 country_event = {
 	id = ukraine_utility_vehicle_tender.10
-	title = {
-		text = ukraine_utility_vehicle_tender.10.name
-		trigger = {
-			controls_province = 9556 #Kharkiv, Kharkiv
-			696 = { #Kharkiv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	title = {
-		text = ukraine_utility_vehicle_tender.10.failure.name
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 9556 #Kharkiv, Kharkiv
-				}
-				NOT = {
-					696 = { #Kharkiv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.10.desc_unarmed
-		trigger = {
-			has_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
-			controls_province = 9556 #Kharkiv, Kharkiv
-			696 = { #Kharkiv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.10.desc_pkm
-		trigger = {
-			has_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
-			controls_province = 9556 #Kharkiv, Kharkiv
-			696 = { #Kharkiv
-				is_owned_and_controlled_by = UKR
-			}
-		}
-	}
-	desc = {
-		text = ukraine_utility_vehicle_tender.10.failure.desc
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 9556 #Kharkiv, Kharkiv
-				}
-				NOT = {
-					696 = { #Kharkiv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-	}
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_A
+	title = ukraine_utility_vehicle_tender.10.name
+	desc = ukraine_utility_vehicle_tender.10.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_D041_Step
 
 	is_triggered_only = yes
 
@@ -21270,140 +21190,25 @@ country_event = {
 
 		ai_chance = {
 			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		trigger = {
-			controls_province = 9556 #Kharkiv, Kharkiv
-			696 = { #Kharkiv
-				is_owned_and_controlled_by = UKR
-			}
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "180"
+			PERIOD_TO = "210"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "D041 'Step Pickup'"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_700
+			PROVINCE_NAME = VICTORY_POINTS_11479
+			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
 		}
 
-		UKR_count_domestic_development = yes
-		custom_effect_tooltip = universal_blank_line_tooltip
+		set_country_flag = UKR_tender2_model_d041_pickup_flag
 
-		if = {
-			limit = {
-				NOT = { has_tech = util_vehicle_4 }
-			}
-
-			set_temp_variable = { treasury_change = -0.02 }
-			modify_treasury_effect = yes
-
-			set_technology = { util_vehicle_4 = 1 }
-
-			custom_effect_tooltip = universal_blank_line_tooltip
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 180 random_days = 30 }
 		}
-
-		if = {
-			limit = {
-				has_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
-			}
-
-			create_equipment_variant = {
-				name = "Dozor-A"
-				type = util_vehicle_4
-				design_team = mio:UKR_kmdb_tank_manufacturer
-				parent_version = 0
-				allow_without_tech = yes
-
-				upgrades = {
-					util_mobility = 1
-					util_cutting_corners_upgrade = 1
-				}
-
-				icon = "GFX_UKR_LAND_Utility_Light_Dozor_A"
-				model = "USA_hummer_vehicle_entity"
-			}
-
-			add_equipment_to_stockpile = {
-				type = util_vehicle_4
-				variant_name = "Dozor-A"
-				amount = 20
-				producer = UKR
-			}
-
-			if = {
-				limit = {
-					696 = { #Kharkiv
-						arms_factory > 1
-					}
-				}
-
-				add_equipment_production = {
-					equipment = {
-						type = util_vehicle_4
-						version_name = "Dozor-A"
-					}
-
-					industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
-
-					requested_factories = 1
-					efficiency = 25
-				}
-			}
-
-			clr_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
-		}
-
-		if = {
-			limit = {
-				has_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
-			}
-
-			set_temp_variable = { treasury_change = -0.04 }
-			modify_treasury_effect = yes
-
-			custom_effect_tooltip = universal_blank_line_tooltip
-
-			create_equipment_variant = {
-				name = "Dozor-A with PKM"
-				type = util_vehicle_4
-				design_team = mio:UKR_kmdb_tank_manufacturer
-				parent_version = 0
-				allow_without_tech = yes
-
-				upgrades = {
-					util_weapons = 1
-				}
-
-				icon = "GFX_UKR_LAND_Utility_Light_Dozor_A"
-				model = "USA_hummer_vehicle_entity"
-			}
-
-			add_equipment_to_stockpile = {
-				type = util_vehicle_4
-				variant_name = "Dozor-A with PKM"
-				amount = 20
-				producer = UKR
-			}
-
-			if = {
-				limit = {
-					696 = { #Kharkiv
-						arms_factory > 1
-					}
-				}
-
-				add_equipment_production = {
-					equipment = {
-						type = util_vehicle_4
-						version_name = "Dozor-A with PKM"
-					}
-
-					industrial_manufacturer = mio:UKR_kmdb_tank_manufacturer
-
-					requested_factories = 1
-					efficiency = 20
-				}
-			}
-
-			clr_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_dozor_a_flag
 	}
 
 	option = {
@@ -21411,47 +21216,33 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.10.b"
 
 		ai_chance = {
-			base = 10
+			base = 1
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 9556 #Kharkiv, Kharkiv
-				}
-				NOT = {
-					696 = { #Kharkiv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
-		}
-
-		add_political_power = -2
-
-		set_temp_variable = { treasury_change = -0.03 }
+		set_temp_variable = { treasury_change = -0.02 }
+		UKR_tender2_apply_discount = yes
 		modify_treasury_effect = yes
 
+		custom_effect_tooltip = universal_blank_line_tooltip
+
 		custom_effect_tooltip = {
-			localization_key = ukraine_events_development_finish_failure_tt
-			PERIOD_FROM = "300"
-			PERIOD_TO = "360"
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "210"
+			PERIOD_TO = "240"
 			PERIOD_SIZE = DAYS_LOC
-			MODEL_NAME = Dozor_A
+			MODEL_NAME = "D041 'Step Cab'"
 			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_696
-			PROVINCE_NAME = VICTORY_POINTS_9556
-			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+			STATE_NAME = STATE_700
+			PROVINCE_NAME = VICTORY_POINTS_11479
+			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
 		}
 
+		set_country_flag = UKR_tender2_model_d041_cab_flag
+
 		hidden_effect = {
-			country_event = {
-				id = ukraine_utility_vehicle_tender.10
-				days = 300
-				random_days = 60
-			}
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 210 random_days = 30 }
 		}
 	}
 
@@ -21460,29 +21251,69 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.10.c"
 
 		ai_chance = {
-			base = 10
-			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		trigger = {
-			OR = {
-				NOT = {
-					controls_province = 9556 #Kharkiv, Kharkiv
-				}
-				NOT = {
-					696 = { #Kharkiv
-						is_owned_and_controlled_by = UKR
-					}
-				}
-			}
+		set_temp_variable = { treasury_change = -0.05 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "130"
+			PERIOD_TO = "150"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "D041 'Step Pickup'"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_700
+			PROVINCE_NAME = VICTORY_POINTS_11479
+			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
 		}
 
-		add_political_power = -5
+		set_country_flag = UKR_tender2_model_d041_pickup_flag
 
-		clr_country_flag = UKR_utility_vehicle_tender_dozor_a_unarmed_flag
-		clr_country_flag = UKR_utility_vehicle_tender_dozor_a_pkm_flag
-		set_country_flag = UKR_utility_vehicle_tender_1_abort_flag
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 130 random_days = 20 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.10.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.10.d"
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.07 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "150"
+			PERIOD_TO = "170"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "D041 'Step Cab'"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_700
+			PROVINCE_NAME = VICTORY_POINTS_11479
+			MANUFACTURER = UKR_MANUFACTURER_AVTOBUSPROM_LOC
+		}
+
+		set_country_flag = UKR_tender2_model_d041_cab_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 150 random_days = 20 }
+		}
 	}
 }
 
@@ -21490,13 +21321,1462 @@ country_event = {
 	id = ukraine_utility_vehicle_tender.11
 	title = ukraine_utility_vehicle_tender.11.name
 	desc = ukraine_utility_vehicle_tender.11.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_A
+
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.11.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.a"
+
+		ai_chance = {
+			base = 10
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "180"
+			PERIOD_TO = "210"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "Dozor-A"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_696
+			PROVINCE_NAME = VICTORY_POINTS_9556
+			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+		}
+
+		set_country_flag = UKR_tender2_model_dozor_a_unarmed_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 180 random_days = 30 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.11.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.b"
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.02 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "210"
+			PERIOD_TO = "240"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "Dozor-A with PKM"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_696
+			PROVINCE_NAME = VICTORY_POINTS_9556
+			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+		}
+
+		set_country_flag = UKR_tender2_model_dozor_a_pkm_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 210 random_days = 30 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.11.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.c"
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.05 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "130"
+			PERIOD_TO = "150"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "Dozor-A"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_696
+			PROVINCE_NAME = VICTORY_POINTS_9556
+			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+		}
+
+		set_country_flag = UKR_tender2_model_dozor_a_unarmed_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 130 random_days = 20 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.11.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.d"
+
+		ai_chance = {
+			base = 1
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.07 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_development_finish_tt
+			PERIOD_FROM = "150"
+			PERIOD_TO = "170"
+			PERIOD_SIZE = DAYS_LOC
+			MODEL_NAME = "Dozor-A with PKM"
+			EQUIPMENT_TYPE = util_vehicle_type
+			STATE_NAME = STATE_696
+			PROVINCE_NAME = VICTORY_POINTS_9556
+			MANUFACTURER = UKR_MANUFACTURER_KHKBM_LOC
+		}
+
+		set_country_flag = UKR_tender2_model_dozor_a_pkm_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.12 days = 150 random_days = 20 }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.12
+	title = {
+		text = ukraine_utility_vehicle_tender.12.name
+		trigger = { UKR_tender2_site_controlled = yes }
+	}
+	title = {
+		text = ukraine_utility_vehicle_tender.12.failure.name
+		trigger = { NOT = { UKR_tender2_site_controlled = yes } }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.12.desc_factory
+		trigger = {
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.12.desc_expand
+		trigger = {
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.12.failure.desc
+		trigger = { NOT = { UKR_tender2_site_controlled = yes } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_D041_Step
+		trigger = { OR = { has_country_flag = UKR_tender2_model_d041_pickup_flag has_country_flag = UKR_tender2_model_d041_cab_flag has_country_flag = UKR_tender2_model_dozor_b_lviv_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_A
+		trigger = { OR = { has_country_flag = UKR_tender2_model_dozor_a_unarmed_flag has_country_flag = UKR_tender2_model_dozor_a_pkm_flag has_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_VEPR_K
+		trigger = { has_country_flag = UKR_tender2_model_vepr_k_flag }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+		trigger = { OR = { has_country_flag = UKR_tender2_model_varta_flag has_country_flag = UKR_tender2_model_shrek_flag has_country_flag = UKR_tender2_model_bars8_cherkasy_flag has_country_flag = UKR_tender2_model_bars8_lutsk_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+		trigger = { OR = { has_country_flag = UKR_tender2_model_bars6_cherkasy_flag has_country_flag = UKR_tender2_model_bars6_lutsk_flag has_country_flag = UKR_tender2_model_novator2_flag has_country_flag = UKR_tender2_model_varta2_flag has_country_flag = UKR_tender2_model_inguar3_flag has_country_flag = UKR_tender2_model_gyurza01_flag } }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.a"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_d041_pickup_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "D041 'Step Pickup'"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_d041_step"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.b"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_d041_cab_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "D041 'Step Cab'"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_d041_step"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.c"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_a_unarmed_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_A
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_a"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.d"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_a_pkm_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "Dozor-A with PKM"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_a"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.e
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.e"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_vepr_k_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = VEPR_K
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_vepr_k"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.f
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.f"
+
+		trigger = {
+			OR = {
+				has_country_flag = UKR_tender2_model_d041_pickup_flag
+				has_country_flag = UKR_tender2_model_d041_cab_flag
+				has_country_flag = UKR_tender2_model_dozor_b_lviv_flag
+			}
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.g
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.g"
+
+		trigger = {
+			OR = {
+				has_country_flag = UKR_tender2_model_dozor_a_unarmed_flag
+				has_country_flag = UKR_tender2_model_dozor_a_pkm_flag
+				has_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag
+			}
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.h
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.h"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_vepr_k_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.k
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.k"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_B
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_b"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.l
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.l"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_b_lviv_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_B
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_b"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.m
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.m"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Varta
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_varta"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.n
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.n"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_shrek_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = KrAZ_Shrek_One
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_kraz_shrek_one"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.o
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.o"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Bars_8
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_8"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.p
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.p"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_lutsk_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Bars_8
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_8"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.q
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.q"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.r
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.r"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_shrek_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.s
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.s"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.t
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.t"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_lutsk_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.bars6_cherkasy_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.bars6_cherkasy_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_bars_6
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_6"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.bars6_cherkasy_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.bars6_cherkasy_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.bars6_lutsk_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.bars6_lutsk_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_lutsk_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_bars_6
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_6"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.bars6_lutsk_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.bars6_lutsk_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_lutsk_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.novator2_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.novator2_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_novator2_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_novator_2
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_novator_2"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.novator2_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.novator2_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_novator2_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.varta2_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.varta2_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta2_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_varta_2
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_varta_2"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.varta2_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.varta2_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta2_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.inguar3_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.inguar3_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_inguar3_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_inguar_3
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_inguar_3"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.inguar3_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.inguar3_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_inguar3_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.gyurza01_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.gyurza01_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_gyurza01_flag
+			UKR_tender2_site_controlled = yes
+			UKR_tender2_site_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_gyurza_01
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uat_d_gyurza_01"
+		}
+
+		UKR_tender2_finish_development = yes
+
+		set_temp_variable = { UKR_tender2_stage = 1 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.gyurza01_expand
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.gyurza01_expand"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_gyurza01_flag
+			UKR_tender2_site_controlled = yes
+			NOT = { UKR_tender2_site_has_factory = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_tender2_finish_development = yes
+
+		UKR_tender2_expand_plant = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.i
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.i"
+
+		trigger = {
+			NOT = { UKR_tender2_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -2
+
+		set_temp_variable = { treasury_change = -0.03 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = UKR_tender2_retry_launch_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.12
+				days = 300
+				random_days = 60
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.12.j
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.j"
+
+		trigger = {
+			NOT = { UKR_tender2_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -5
+
+		set_country_flag = UKR_utility_vehicle_tender_2_abort_flag
+		UKR_tender2_clear_flags = yes
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.13
+	title = {
+		text = ukraine_utility_vehicle_tender.13.success.name
+		trigger = { UKR_tender2_site_controlled = yes }
+	}
+	title = {
+		text = ukraine_utility_vehicle_tender.13.failure.name
+		trigger = { NOT = { UKR_tender2_site_controlled = yes } }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.13.success.desc
+		trigger = { UKR_tender2_site_controlled = yes }
+	}
+	desc = {
+		text = ukraine_utility_vehicle_tender.13.failure.desc
+		trigger = { NOT = { UKR_tender2_site_controlled = yes } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_D041_Step
+		trigger = { OR = { has_country_flag = UKR_tender2_model_d041_pickup_flag has_country_flag = UKR_tender2_model_d041_cab_flag has_country_flag = UKR_tender2_model_dozor_b_lviv_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_A
+		trigger = { OR = { has_country_flag = UKR_tender2_model_dozor_a_unarmed_flag has_country_flag = UKR_tender2_model_dozor_a_pkm_flag has_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_VEPR_K
+		trigger = { has_country_flag = UKR_tender2_model_vepr_k_flag }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+		trigger = { OR = { has_country_flag = UKR_tender2_model_varta_flag has_country_flag = UKR_tender2_model_shrek_flag has_country_flag = UKR_tender2_model_bars8_cherkasy_flag has_country_flag = UKR_tender2_model_bars8_lutsk_flag } }
+	}
+	picture = {
+		picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+		trigger = { OR = { has_country_flag = UKR_tender2_model_bars6_cherkasy_flag has_country_flag = UKR_tender2_model_bars6_lutsk_flag has_country_flag = UKR_tender2_model_novator2_flag has_country_flag = UKR_tender2_model_varta2_flag has_country_flag = UKR_tender2_model_inguar3_flag has_country_flag = UKR_tender2_model_gyurza01_flag } }
+	}
+
+	is_triggered_only = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.a"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_d041_pickup_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "D041 'Step Pickup'"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_d041_step"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.b"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_d041_cab_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "D041 'Step Cab'"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_d041_step"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.c"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_a_unarmed_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_A
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_a"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.d"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_a_pkm_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = "Dozor-A with PKM"
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_a"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.e
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.e"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_vepr_k_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = VEPR_K
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_vepr_k"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.h
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.h"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_B
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_b"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.i
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.i"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_dozor_b_lviv_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Dozor_B
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_dozor_b"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.j
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.j"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Varta
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_varta"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.k
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.k"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_shrek_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = KrAZ_Shrek_One
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_kraz_shrek_one"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.l
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.l"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Bars_8
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_8"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.m
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.m"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars8_lutsk_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = Bars_8
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_8"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.bars6_cherkasy_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.bars6_cherkasy_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_cherkasy_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_bars_6
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_6"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.bars6_lutsk_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.bars6_lutsk_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_bars6_lutsk_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_bars_6
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_bars_6"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.novator2_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.novator2_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_novator2_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_novator_2
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_novator_2"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.varta2_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.varta2_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_varta2_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_varta_2
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_varta_2"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.inguar3_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.inguar3_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_inguar3_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_inguar_3
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_inguar_3"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.gyurza01_launch
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.gyurza01_launch"
+
+		trigger = {
+			has_country_flag = UKR_tender2_model_gyurza01_flag
+			UKR_tender2_site_controlled = yes
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = {
+			localization_key = ukraine_events_option_image_model_name_tt
+			MODEL_NAME = UKR_model_gyurza_01
+			MODEL_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_uat_d_gyurza_01"
+		}
+
+		set_temp_variable = { UKR_tender2_stage = 2 }
+		UKR_tender2_launch_production = yes
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.f
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.f"
+
+		trigger = {
+			NOT = { UKR_tender2_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -2
+
+		set_temp_variable = { treasury_change = -0.03 }
+		UKR_tender2_apply_discount = yes
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = UKR_tender2_retry_expansion_tt
+		hidden_effect = {
+			country_event = {
+				id = ukraine_utility_vehicle_tender.13
+				days = 300
+				random_days = 60
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.13.g
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.g"
+
+		trigger = {
+			NOT = { UKR_tender2_site_controlled = yes }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 2.5 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 5.0 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -5
+
+		set_country_flag = UKR_utility_vehicle_tender_2_abort_flag
+		UKR_tender2_clear_flags = yes
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.14
+	title = ukraine_utility_vehicle_tender.14.name
+	desc = ukraine_utility_vehicle_tender.14.desc
 	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2006
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = {
-		name = ukraine_utility_vehicle_tender.11.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.a"
+		name = ukraine_utility_vehicle_tender.14.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.14.a"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_dozor_b_tt
 		UKR_count_domestic_development = yes
 		ai_chance = { base = 1 }
@@ -21523,12 +22803,12 @@ country_event = {
 			amount = 20
 			producer = UKR
 		}
-		country_event = { id = ukraine_utility_vehicle_tender.7 days = 1 }
+		country_event = { id = ukraine_utility_vehicle_tender.15 days = 1 }
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.11.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.b"
+		name = ukraine_utility_vehicle_tender.14.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.14.b"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_kozak_1_tt
 		UKR_count_domestic_development = yes
 		ai_chance = { base = 1 }
@@ -21539,7 +22819,7 @@ country_event = {
 		}
 		create_equipment_variant = {
 			name = "SRM-1 Kozak"
-			type = util_vehicle_5
+			type = heavy_util_vehicle_5
 			design_team = mio:UKR_praktyka_utility_manufacturer
 			parent_version = 0
 			allow_without_tech = yes
@@ -21550,7 +22830,7 @@ country_event = {
 			icon = "GFX_UKR_LAND_Utility_Armoured_Kozak_1"
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_5
+			type = heavy_util_vehicle_5
 			variant_name = "SRM-1 Kozak"
 			amount = 20
 			producer = UKR
@@ -21564,7 +22844,7 @@ country_event = {
 			}
 			add_equipment_production = {
 				equipment = {
-					type = util_vehicle_5
+					type = heavy_util_vehicle_5
 					version_name = "SRM-1 Kozak"
 				}
 				requested_factories = 1
@@ -21572,76 +22852,212 @@ country_event = {
 			}
 		}
 	}
+}
+country_event = {
+	id = ukraine_utility_vehicle_tender.15
+	title = ukraine_utility_vehicle_tender.15.name
+	desc = ukraine_utility_vehicle_tender.15.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_B
+	is_triggered_only = yes
+	fire_only_once = yes
 
 	option = {
-		name = ukraine_utility_vehicle_tender.11.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.11.c"
-		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_vepr_k_tt
-		UKR_count_domestic_development = yes
-		set_country_flag = UKR_light_transport_vepr_k_flag
-		custom_effect_tooltip = UKR_vote_bonus_security_vehicle_tt
-		ai_chance = { base = 1 }
-		set_country_flag = UKR_utility_vehicle_tender_mid_selected
-		if = {
-			limit = { NOT = { has_tech = util_vehicle_5 } }
-			set_technology = { util_vehicle_5 = 1 }
-		}
-		create_equipment_variant = {
-			name = "VEPR-K"
-			type = util_vehicle_5
-			parent_version = 0
-			allow_without_tech = yes
-			upgrades = {
-				util_mobility = 2
+		name = ukraine_utility_vehicle_tender.15.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.15.a"
+
+		trigger = {
+			controls_province = 9556
+			696 = {
+				is_owned_and_controlled_by = UKR
 			}
-			icon = "GFX_UKR_LAND_Utility_Light_Vepr_K"
 		}
-		add_equipment_to_stockpile = {
-			type = util_vehicle_5
-			variant_name = "VEPR-K"
-			amount = 20
-			producer = UKR
+
+		ai_chance = {
+			base = 1
 		}
-		if = {
-			limit = {
-				1089 = { #Poltava, Kremenchuk
-					is_controlled_by = ROOT
-					arms_factory > 0
+
+		set_country_flag = UKR_tender2_model_dozor_b_kharkiv_flag
+		set_country_flag = UKR_tender2_finished_flag
+		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.15.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.15.b"
+
+		trigger = {
+			controls_province = 11479
+			700 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+
+		set_country_flag = UKR_tender2_model_dozor_b_lviv_flag
+		set_country_flag = UKR_tender2_finished_flag
+		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.15.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.15.c"
+
+		trigger = {
+			NOT = {
+				OR = {
+					AND = {
+						controls_province = 9556
+						696 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					AND = {
+						controls_province = 11479
+						700 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
 				}
 			}
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_5
-					version_name = "VEPR-K"
-				}
-				requested_factories = 1
-				efficiency = 10
-			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+
+		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.16
+	title = ukraine_utility_vehicle_tender.16.name
+	desc = ukraine_utility_vehicle_tender.16.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_B
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_utility_vehicle_tender.16.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.16.a"
+
+		ai_chance = {
+			base = 60
+		}
+
+		custom_effect_tooltip = UKR_dozorb_mod_wait_tt
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.17 days = 330 random_days = 60 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.16.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.16.b"
+
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.1 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = UKR_dozorb_mod_fund_tt
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.17 days = 200 random_days = 40 }
 		}
 	}
 }
 
 country_event = {
-	id = ukraine_utility_vehicle_tender.12
-	title = ukraine_utility_vehicle_tender.12.name
-	desc = ukraine_utility_vehicle_tender.12.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+	id = ukraine_utility_vehicle_tender.17
+	title = ukraine_utility_vehicle_tender.17.name
+	desc = ukraine_utility_vehicle_tender.17.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_B
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = {
-		name = ukraine_utility_vehicle_tender.12.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.a"
+		name = ukraine_utility_vehicle_tender.17.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.17.a"
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		create_equipment_variant = {
+			name = "Dozor-B Modernized"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kmdb_tank_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Dozor_B"
+		}
+
+		add_equipment_to_stockpile = {
+			type = util_vehicle_5
+			variant_name = "Dozor-B Modernized"
+			amount = 10
+			producer = UKR
+		}
+
+		set_country_flag = UKR_utility_vehicle_tender_dozor_bm_completed_flag
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.18
+	title = ukraine_utility_vehicle_tender.18.name
+	desc = ukraine_utility_vehicle_tender.18.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		set_country_flag = UKR_wartime_light_tender_done_flag
+
+		hidden_effect = {
+			country_event = { id = ukraine_mrap_tender.1 days = 60 random_days = 30 }
+		}
+	}
+
+	option = {
+		name = ukraine_utility_vehicle_tender.18.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.18.a"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_kozak_2_tt
 		UKR_count_domestic_development = yes
+		set_country_flag = UKR_mrap_kozak2_selected_flag
 		ai_chance = { base = 1 }
 		if = {
-			limit = { NOT = { has_tech = util_vehicle_6 } }
-			set_technology = { util_vehicle_6 = 1 }
+			limit = { NOT = { has_tech = IMV_6 } }
+			set_technology = { IMV_6 = 1 }
 		}
 		create_equipment_variant = {
 			name = "Kozak-2"
-			type = util_vehicle_6
+			type = heavy_util_vehicle_6
 			design_team = mio:UKR_praktyka_utility_manufacturer
 			parent_version = 0
 			allow_without_tech = yes
@@ -21652,7 +23068,7 @@ country_event = {
 			icon = "GFX_UKR_LAND_Utility_Armoured_Kozak_2"
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_6
+			type = heavy_util_vehicle_6
 			variant_name = "Kozak-2"
 			amount = 20
 			producer = UKR
@@ -21666,7 +23082,7 @@ country_event = {
 			}
 			add_equipment_production = {
 				equipment = {
-					type = util_vehicle_6
+					type = heavy_util_vehicle_6
 					version_name = "Kozak-2"
 				}
 				requested_factories = 1
@@ -21676,8 +23092,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.12.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.b"
+		name = ukraine_utility_vehicle_tender.18.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.18.b"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_tryton_tt
 		UKR_count_domestic_development = yes
 		ai_chance = { base = 1 }
@@ -21721,18 +23137,18 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.12.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.c"
+		name = ukraine_utility_vehicle_tender.18.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.18.c"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_bars_6_tt
 		UKR_count_domestic_development = yes
 		ai_chance = { base = 1 }
 		if = {
-			limit = { NOT = { has_tech = util_vehicle_6 } }
-			set_technology = { util_vehicle_6 = 1 }
+			limit = { NOT = { has_tech = util_vehicle_5 } }
+			set_technology = { util_vehicle_5 = 1 }
 		}
 		create_equipment_variant = {
 			name = "Bars-6"
-			type = util_vehicle_6
+			type = util_vehicle_5
 			parent_version = 0
 			allow_without_tech = yes
 			upgrades = {
@@ -21742,32 +23158,40 @@ country_event = {
 			icon = "GFX_UKR_LAND_Utility_Armoured_Bars6"
 		}
 		add_equipment_to_stockpile = {
-			type = util_vehicle_6
+			type = util_vehicle_5
 			variant_name = "Bars-6"
 			amount = 20
 			producer = UKR
 		}
 		if = {
-			limit = {
-				1091 = { #Cherkasy, Bogdan
-					is_controlled_by = ROOT
-					arms_factory > 0
-				}
+			limit = { has_country_flag = UKR_bars_cherkasy_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars6_cherkasy_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
 			}
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_6
-					version_name = "Bars-6"
-				}
-				requested_factories = 1
-				efficiency = 10
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_bars_lutsk_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars6_lutsk_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
+			}
+		}
+		else = {
+			hidden_effect = {
+				country_event = ukraine_mrap_tender.4
 			}
 		}
 	}
-
 	option = {
-		name = ukraine_utility_vehicle_tender.12.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.12.d"
+		name = ukraine_utility_vehicle_tender.18.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.18.d"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_kraz_cougar_tt
 		UKR_count_domestic_development = yes
 		ai_chance = { base = 1 }
@@ -21813,97 +23237,78 @@ country_event = {
 }
 
 country_event = {
-	id = ukraine_utility_vehicle_tender.13
-	title = ukraine_utility_vehicle_tender.13.name
-	desc = ukraine_utility_vehicle_tender.13.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Dozor_B
+	id = ukraine_utility_vehicle_tender.19
+	title = ukraine_utility_vehicle_tender.19.name
+	desc = ukraine_utility_vehicle_tender.19.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Oncilla
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	option = {
-		name = ukraine_utility_vehicle_tender.13.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.a"
-		ai_chance = { base = 1 }
+		name = ukraine_utility_vehicle_tender.19.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.19.a"
+
 		trigger = {
-			696 = {
-				is_controlled_by = ROOT
-				arms_factory > 0
-			}
+			check_variable = { treasury > 0.2 }
 		}
-		if = {
-			limit = {
-				696 = { #Kharkiv
-					is_controlled_by = ROOT
-					arms_factory > 0
-				}
-			}
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_5
-					version_name = "Dozor-B"
-				}
-				requested_factories = 1
-				efficiency = 10
-			}
+
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
+
+		set_temp_variable = { treasury_change = -0.2 }
+		modify_treasury_effect = yes
+
+		POL = {
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+		}
+
+		custom_effect_tooltip = UKR_oncilla_line_tt
+		hidden_effect = {
+			country_event = { id = ukraine_utility_vehicle_tender.20 days = 240 }
+		}
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.13.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.b"
-		ai_chance = { base = 1 }
-		trigger = {
-			700 = {
-				is_controlled_by = ROOT
-				arms_factory > 0
-			}
-		}
-		if = {
-			limit = {
-				700 = { #Lviv
-					is_controlled_by = ROOT
-					arms_factory > 0
-				}
-			}
-			add_equipment_production = {
-				equipment = {
-					type = util_vehicle_5
-					version_name = "Dozor-B"
-				}
-				requested_factories = 1
-				efficiency = 10
-			}
-		}
-		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
-	}
+		name = ukraine_utility_vehicle_tender.19.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.19.b"
 
-	option = {
-		name = ukraine_utility_vehicle_tender.13.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.13.c"
-		ai_chance = { base = 1 }
-		trigger = {
-			NOT = {
-				OR = {
-					696 = {
-						is_controlled_by = ROOT
-						arms_factory > 0
-					}
-					700 = {
-						is_controlled_by = ROOT
-						arms_factory > 0
-					}
-				}
-			}
+		ai_chance = {
+			base = 40
 		}
-		set_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag
+
+		add_political_power = -2
 	}
 }
 
 country_event = {
-	id = ukraine_utility_vehicle_tender.15
-	title = ukraine_utility_vehicle_tender.15.name
-	desc = ukraine_utility_vehicle_tender.15.desc
+	id = ukraine_utility_vehicle_tender.20
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		POL = {
+			1098 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			country_event = { id = ukraine_utility_vehicle_tender.21 days = 1 }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_utility_vehicle_tender.21
+	title = ukraine_utility_vehicle_tender.21.name
+	desc = ukraine_utility_vehicle_tender.21.desc
 	picture = GFX_UKR_Develop_Domestic_Utility_Tender_Oncilla
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -21914,8 +23319,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_utility_vehicle_tender.15.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.15.a"
+		name = ukraine_utility_vehicle_tender.21.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.21.a"
 		custom_effect_tooltip = ukraine_utility_vehicle_tender_image_oncilla_tt
 		ai_chance = {
 			base = 80
@@ -21947,152 +23352,31 @@ country_event = {
 				}
 				cost_factor = 1
 			}
+
+			set_country_flag = UKR_utility_vehicle_tender_oncilla_license_sold_flag
 		}
-	}
 
-	option = {
-		name = ukraine_utility_vehicle_tender.15.b
-		ai_chance = { base = 20 }
-	}
-}
-
-country_event = {
-	id = ukraine_utility_vehicle_tender.21
-	title = ukraine_utility_vehicle_tender.21.name
-	desc = ukraine_utility_vehicle_tender.21.desc
-	picture = GFX_UKR_Develop_Domestic_Utility_Tender_UAZ_469
-
-	is_triggered_only = yes
-
-	option = {
-		name = ukraine_utility_vehicle_tender.21.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.21.a"
-
-		trigger = {
-			controls_province = 513 #Lutsk, Volyn
-			1110 = { #Volyn
-				is_owned_and_controlled_by = UKR
+		if = {
+			limit = {
+				1098 = { arms_factory > 0 }
 			}
-		}
 
-		ai_chance = {
-			base = 10
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_5
+					creator = UKR
+					version_name = "Oncilla"
+				}
 
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_manufacturer_name_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
-			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_luaz"
-		}
-
-		set_temp_variable = { treasury_change = -0.2 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_possible_models_from_2_manufacturers_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_LUAZ_LOC
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1110
-			PROVINCE_NAME = VICTORY_POINTS_513
-			EXTERNAL_MANUFACTURER_NAME_1 = MANUFACTURER_NAME
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = UKR_MANUFACTURER_LUAZ_1302_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = UKR_MANUFACTURER_LUAZ_1901_LOC
-			EXTERNAL_MANUFACTURER_NAME_2 = SOV_MANUFACTURER_UAZ_LOC
-			EXTERNAL_MANUFACTURER_2_MODEL_NAME_1 = SOV_MANUFACTURER_UAZ_31512_LOC
-			EXTERNAL_MANUFACTURER_2_MODEL_NAME_2 = SOV_MANUFACTURER_UAZ_31514_LOC
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_1_luaz_flag
-
-		hidden_effect = {
-			country_event = ukraine_utility_vehicle_tender.22
+				requested_factories = 1
+				efficiency = 20
+			}
 		}
 	}
 
 	option = {
 		name = ukraine_utility_vehicle_tender.21.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.21.b"
-
-		trigger = {
-			controls_province = 9446 #Krasnodon, South Luhansk
-			1075 = { #South Luhansk
-				is_owned_and_controlled_by = UKR
-			}
-		}
-
-		ai_chance = { base = 25 }
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_manufacturer_name_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_AVTOAHREHAT_LOC
-			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_avtoahrehat"
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_possible_models_from_1_manufacturers_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_AVTOAHREHAT_LOC
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1089
-			PROVINCE_NAME = VICTORY_POINTS_9446
-			EXTERNAL_MANUFACTURER_NAME_1 = SOV_MANUFACTURER_UAZ_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = SOV_MANUFACTURER_UAZ_31512_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = SOV_MANUFACTURER_UAZ_31514_LOC
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_1_avtoahrehat_flag
-
-		hidden_effect = {
-			country_event = ukraine_utility_vehicle_tender.23
-		}
-	}
-
-	option = {
-		name = ukraine_utility_vehicle_tender.21.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_utility_vehicle_tender.21.c"
-
-		trigger = {
-			controls_province = 6495 #Kremenchuk, Poltava
-			1089 = { #Poltava
-				is_owned_and_controlled_by = UKR
-			}
-		}
-
-		ai_chance = {
-			base = 30
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_option_image_manufacturer_name_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_AVKORASZ_LOC
-			MANUFACTURER_IMAGE_NAME = "UKR_desctext_for_tooltip_utility_vehicle_tender_avtoahrehat"
-		}
-
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-
-		custom_effect_tooltip = {
-			localization_key = ukraine_events_possible_models_from_1_manufacturers_tt
-			MANUFACTURER_NAME = UKR_MANUFACTURER_AVKORASZ_LOC
-			EQUIPMENT_TYPE = util_vehicle_type
-			STATE_NAME = STATE_1089
-			PROVINCE_NAME = VICTORY_POINTS_9446
-			EXTERNAL_MANUFACTURER_NAME_1 = SOV_MANUFACTURER_UAZ_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_1 = SOV_MANUFACTURER_UAZ_31512_LOC
-			EXTERNAL_MANUFACTURER_1_MODEL_NAME_2 = SOV_MANUFACTURER_UAZ_31514_LOC
-		}
-
-		set_country_flag = UKR_utility_vehicle_tender_1_avtoahrehat_flag
-
-		hidden_effect = {
-			country_event = ukraine_utility_vehicle_tender.23
-		}
+		ai_chance = { base = 20 }
 	}
 }
 
@@ -28154,7 +29438,6 @@ country_event = {
 		}
 	}
 }
-
 
 country_event = {
 	id = ukraine_armed_forces_tragedy_event.1
@@ -37336,7 +38619,6 @@ country_event = {
 	option = { name = ukr_modernize_sov_equipment_storage_sale.37.a }
 }
 
-
 country_event = {
 	id = ukr_modernize_sov_equipment_storage_sale.38
 	title = ukr_modernize_sov_equipment_storage_sale.38.name
@@ -37966,7 +39248,7 @@ country_event = {
 
 	trigger = {
 		original_tag = UKR
-		has_war_with = SOV
+		UKR_at_war_with_russia_or_proxies = yes
 	}
 
 	option = { name = ukraine_wartime_decisions.1.a }
@@ -46981,4 +48263,1374 @@ country_event = {
 	minor_flavor = yes
 
 	option = { name = ukraine_varyag.35.a }
+}
+
+country_event = {
+	id = ukraine_kraz.1
+	title = ukraine_kraz.1.name
+	desc = ukraine_kraz.1.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2006
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_kraz.1.a
+
+		ai_chance = {
+			base = 60
+		}
+	}
+
+	option = {
+		name = ukraine_kraz.1.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz.1.b"
+
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.04 }
+		modify_treasury_effect = yes
+
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_4 }
+			}
+
+			set_technology = { util_vehicle_4 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-6135V6"
+			type = util_vehicle_4
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6322"
+			model = "SOV_ural_entity"
+		}
+
+		if = {
+			limit = {
+				has_country_flag = UKR_kraz_5233_developed_flag
+			}
+
+			create_equipment_variant = {
+				name = "KrAZ-5233VE"
+				type = util_vehicle_4
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_5233"
+				model = "SOV_ural_entity"
+			}
+		}
+
+		add_equipment_to_stockpile = {
+			type = util_vehicle_4
+			variant_name = "KrAZ-6135V6"
+			amount = 20
+			producer = UKR
+		}
+
+		set_country_flag = UKR_kraz_6135v6_adopted_flag
+	}
+}
+
+country_event = {
+	id = ukraine_kraz_mrap.1
+	title = ukraine_kraz_mrap.1.name
+	desc = ukraine_kraz_mrap.1.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2006
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_3 }
+			}
+
+			set_technology = { IMV_3 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-6322 HMPV-A"
+			type = heavy_util_vehicle_3
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 1
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_6322_HMPV_A"
+		}
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 150
+		}
+
+		set_country_flag = UKR_mrap_hmpv_a_completed_flag
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.1.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.1.a"
+
+		ai_chance = {
+			base = 30
+		}
+
+		add_political_power = 25
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.1.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.1.b"
+
+		ai_chance = {
+			base = 40
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_3
+			variant_name = "KrAZ-6322 HMPV-A"
+			amount = 10
+			producer = UKR
+		}
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.1.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.1.c"
+
+		ai_chance = {
+			base = 30
+		}
+
+		army_experience = 10
+	}
+}
+
+country_event = {
+	id = ukraine_kraz_mrap.2
+	title = ukraine_kraz_mrap.2.name
+	desc = ukraine_kraz_mrap.2.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2006
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_4 }
+			}
+
+			set_technology = { IMV_4 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-6322 Raptor"
+			type = heavy_util_vehicle_4
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_6322_Raptor"
+		}
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 150
+		}
+
+		set_country_flag = UKR_mrap_raptor_completed_flag
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.2.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.2.a"
+
+		ai_chance = {
+			base = 30
+		}
+
+		add_political_power = 25
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.2.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.2.b"
+
+		ai_chance = {
+			base = 40
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_4
+			variant_name = "KrAZ-6322 Raptor"
+			amount = 10
+			producer = UKR
+		}
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.2.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.2.c"
+
+		ai_chance = {
+			base = 30
+		}
+
+		army_experience = 10
+	}
+}
+
+country_event = {
+	id = ukraine_kraz_mrap.3
+	title = ukraine_kraz_mrap.3.name
+	desc = ukraine_kraz_mrap.3.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2006
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_4 }
+			}
+
+			set_technology = { IMV_4 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-01-1-11"
+			type = heavy_util_vehicle_4
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 3
+				util_cutting_corners_upgrade = 1
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_01_1_11"
+		}
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 150
+		}
+
+		set_country_flag = UKR_mrap_sldsl_completed_flag
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.3.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.3.a"
+
+		ai_chance = {
+			base = 30
+		}
+
+		add_political_power = 25
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.3.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.3.b"
+
+		ai_chance = {
+			base = 40
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_4
+			variant_name = "KrAZ-01-1-11"
+			amount = 10
+			producer = UKR
+		}
+	}
+
+	option = {
+		name = ukraine_kraz_mrap.3.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz_mrap.3.c"
+
+		ai_chance = {
+			base = 30
+		}
+
+		army_experience = 10
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_tender.1
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		set_country_flag = UKR_mrap_tender_ready_flag
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_tender.2
+	title = ukraine_mrap_tender.2.name
+	desc = ukraine_mrap_tender.2.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		set_country_flag = UKR_mrap_tender_done_flag
+	}
+
+	option = {
+		name = ukraine_mrap_tender.2.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.2.a"
+
+		ai_chance = {
+			base = 40
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_6 }
+			}
+
+			set_technology = { IMV_6 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Varta"
+			type = heavy_util_vehicle_6
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 1
+				util_infantry_help_upgrade = 2
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Varta"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_6
+			variant_name = "Varta"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_mrap_varta_selected_flag
+
+		set_country_flag = UKR_tender2_model_varta_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.2.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.2.b"
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_5 }
+			}
+
+			set_technology = { IMV_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ Shrek One"
+			type = heavy_util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Shrek-One"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_5
+			variant_name = "KrAZ Shrek One"
+			amount = 5
+			producer = UKR
+		}
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+
+		set_country_flag = UKR_mrap_shrek_selected_flag
+		set_country_flag = UKR_tender2_model_shrek_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.2.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.2.c"
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_5 }
+			}
+
+			set_technology = { util_vehicle_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Bars-8"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 1
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Bars6"
+		}
+
+		add_equipment_to_stockpile = {
+			type = util_vehicle_5
+			variant_name = "Bars-8"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_mrap_bars8_selected_flag
+
+		if = {
+			limit = { has_country_flag = UKR_bars_cherkasy_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_bars_lutsk_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars8_lutsk_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
+			}
+		}
+		else = {
+			hidden_effect = {
+				country_event = ukraine_mrap_tender.3
+			}
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_tender.3
+	title = ukraine_mrap_tender.3.name
+	desc = ukraine_mrap_tender.3.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_mrap_tender.3.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.3.a"
+
+		trigger = {
+			controls_province = 488
+			1091 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 70
+		}
+
+		set_country_flag = UKR_bars_cherkasy_site_flag
+		set_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.3.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.3.b"
+
+		trigger = {
+			controls_province = 513
+			1110 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 30
+		}
+
+		set_country_flag = UKR_bars_lutsk_site_flag
+		set_country_flag = UKR_tender2_model_bars8_lutsk_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.3.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.3.c"
+
+		trigger = {
+			NOT = {
+				OR = {
+					AND = {
+						controls_province = 488
+						1091 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					AND = {
+						controls_province = 513
+						1110 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+
+		add_political_power = -2
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_tender.4
+	title = ukraine_mrap_tender.4.name
+	desc = ukraine_mrap_tender.4.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_mrap_tender.4.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.4.a"
+
+		trigger = {
+			controls_province = 488
+			1091 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 70
+		}
+
+		set_country_flag = UKR_bars_cherkasy_site_flag
+		set_country_flag = UKR_tender2_model_bars6_cherkasy_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.4.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.4.b"
+
+		trigger = {
+			controls_province = 513
+			1110 = {
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		ai_chance = {
+			base = 30
+		}
+
+		set_country_flag = UKR_bars_lutsk_site_flag
+		set_country_flag = UKR_tender2_model_bars6_lutsk_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.4.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.4.c"
+
+		trigger = {
+			NOT = {
+				OR = {
+					AND = {
+						controls_province = 488
+						1091 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+					AND = {
+						controls_province = 513
+						1110 = {
+							is_owned_and_controlled_by = UKR
+						}
+					}
+				}
+			}
+		}
+
+		ai_chance = {
+			base = 1
+		}
+
+		add_political_power = -2
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_coop.1
+	title = ukraine_mrap_coop.1.name
+	desc = ukraine_mrap_coop.1.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		set_country_flag = UKR_mrap_international_cooperation_completed_flag
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_coop.1.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.1.a"
+		ai_chance = { base = 30 }
+		set_country_flag = UKR_mrap_light_programme_priority_flag
+	}
+
+	option = {
+		name = ukraine_mrap_coop.1.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.1.b"
+		ai_chance = { base = 30 }
+		set_country_flag = UKR_mrap_heavy_programme_priority_flag
+	}
+
+	option = {
+		name = ukraine_mrap_coop.1.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.1.c"
+		ai_chance = { base = 40 }
+		set_country_flag = UKR_mrap_dual_programme_priority_flag
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_coop.2
+	title = ukraine_mrap_coop.2.name
+	desc = ukraine_mrap_coop.2.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_5 }
+			}
+
+			set_technology = { IMV_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-ASV Panthera"
+			type = heavy_util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Panthera"
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_coop.2.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.2.a"
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_5
+			variant_name = "KrAZ-ASV Panthera"
+			amount = 5
+			producer = UKR
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_coop.3
+	title = ukraine_mrap_coop.3.name
+	desc = ukraine_mrap_coop.3.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_5 }
+			}
+
+			set_technology = { util_vehicle_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ Spartan"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Spartan"
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_coop.3.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.3.a"
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+
+		add_equipment_to_stockpile = {
+			type = util_vehicle_5
+			variant_name = "KrAZ Spartan"
+			amount = 5
+			producer = UKR
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_coop.4
+	title = ukraine_mrap_coop.4.name
+	desc = ukraine_mrap_coop.4.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_5 }
+			}
+
+			set_technology = { IMV_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ Fiona"
+			type = heavy_util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Fiona"
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_coop.4.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.4.a"
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_5
+			variant_name = "KrAZ Fiona"
+			amount = 5
+			producer = UKR
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_coop.5
+	title = ukraine_mrap_coop.5.name
+	desc = ukraine_mrap_coop.5.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	immediate = {
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_6 }
+			}
+
+			set_technology = { IMV_6 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ Hurricane"
+			type = heavy_util_vehicle_6
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Hurricane"
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_coop.5.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_coop.5.a"
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		mio:UKR_kraz_utility_manufacturer = {
+			add_mio_funds = 100
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_6
+			variant_name = "KrAZ Hurricane"
+			amount = 5
+			producer = UKR
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_nextgen.1
+	title = ukraine_mrap_nextgen.1.name
+	desc = ukraine_mrap_nextgen.1.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_mrap_nextgen.1.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_nextgen.1.a"
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_7 }
+			}
+
+			set_technology = { IMV_7 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Varta-2"
+			type = heavy_util_vehicle_7
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 3
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Varta"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_7
+			variant_name = "Varta-2"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_tender2_model_varta2_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_nextgen.1.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_nextgen.1.b"
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_7 }
+			}
+
+			set_technology = { IMV_7 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Novator-2"
+			type = heavy_util_vehicle_7
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 3
+				util_infantry_help_upgrade = 2
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Varta_Novator"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_7
+			variant_name = "Novator-2"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_tender2_model_novator2_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_nextgen.1.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_nextgen.1.c"
+
+		ai_chance = {
+			base = 20
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_7 }
+			}
+
+			set_technology = { IMV_7 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Inguar-3"
+			type = heavy_util_vehicle_7
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 3
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Varta"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_7
+			variant_name = "Inguar-3"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_tender2_model_inguar3_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_nextgen.1.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_nextgen.1.d"
+
+		ai_chance = {
+			base = 20
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_6 }
+			}
+
+			set_technology = { IMV_6 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "UAT-D GYURZA-01"
+			type = heavy_util_vehicle_6
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_UAT_Desna"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_6
+			variant_name = "UAT-D GYURZA-01"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_tender2_model_gyurza01_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_mrap_tender.5
+	title = ukraine_mrap_tender.5.name
+	desc = ukraine_mrap_tender.5.desc
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_2012
+
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	option = {
+		name = ukraine_mrap_tender.5.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.5.a"
+
+		trigger = {
+			NOT = { has_country_flag = UKR_mrap_varta_selected_flag }
+		}
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_6 }
+			}
+
+			set_technology = { IMV_6 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Varta"
+			type = heavy_util_vehicle_6
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 1
+				util_infantry_help_upgrade = 2
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Varta"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_6
+			variant_name = "Varta"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_mrap_varta_selected_flag
+
+		set_country_flag = UKR_tender2_model_varta_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.5.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.5.b"
+
+		trigger = {
+			NOT = { has_country_flag = UKR_mrap_shrek_selected_flag }
+		}
+
+		ai_chance = {
+			base = 40
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = IMV_5 }
+			}
+
+			set_technology = { IMV_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ Shrek One"
+			type = heavy_util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_KrAZ_Shrek-One"
+		}
+
+		add_equipment_to_stockpile = {
+			type = heavy_util_vehicle_5
+			variant_name = "KrAZ Shrek One"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_mrap_shrek_selected_flag
+
+		set_country_flag = UKR_tender2_model_shrek_flag
+		set_country_flag = UKR_tender2_finished_flag
+
+		hidden_effect = {
+			country_event = ukraine_utility_vehicle_tender.12
+		}
+	}
+
+	option = {
+		name = ukraine_mrap_tender.5.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_mrap_tender.5.c"
+
+		trigger = {
+			NOT = { has_country_flag = UKR_mrap_bars8_selected_flag }
+		}
+
+		ai_chance = {
+			base = 30
+		}
+
+		UKR_count_domestic_development = yes
+		custom_effect_tooltip = universal_blank_line_tooltip
+
+		if = {
+			limit = {
+				NOT = { has_tech = util_vehicle_5 }
+			}
+
+			set_technology = { util_vehicle_5 = 1 }
+		}
+
+		create_equipment_variant = {
+			name = "Bars-8"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 1
+			}
+
+			icon = "GFX_UKR_LAND_Utility_Armoured_Bars6"
+		}
+
+		add_equipment_to_stockpile = {
+			type = util_vehicle_5
+			variant_name = "Bars-8"
+			amount = 5
+			producer = UKR
+		}
+
+		set_country_flag = UKR_mrap_bars8_selected_flag
+		if = {
+			limit = { has_country_flag = UKR_bars_cherkasy_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars8_cherkasy_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_bars_lutsk_site_flag }
+
+			set_country_flag = UKR_tender2_model_bars8_lutsk_flag
+			set_country_flag = UKR_tender2_finished_flag
+
+			hidden_effect = {
+				country_event = ukraine_utility_vehicle_tender.12
+			}
+		}
+		else = {
+			hidden_effect = {
+				country_event = ukraine_mrap_tender.3
+			}
+		}
+	}
 }
