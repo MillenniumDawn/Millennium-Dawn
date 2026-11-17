@@ -4,7 +4,12 @@ on_actions = {
 			if = {
 				limit = {
 					country_exists = UKR
-					FROM.FROM = { has_state_flag = UKR_s75_regiment_flag }
+					FROM.FROM = {
+						OR = {
+							has_state_flag = UKR_s75_regiment_flag
+							check_variable = { UKR_s200_battalions > 0 }
+						}
+					}
 				}
 				UKR = { UKR_storage_refresh = yes }
 			}
@@ -16,6 +21,16 @@ on_actions = {
 			UKR_random_events_ukraine_parliament = yes
 			UKR_storage_refresh = yes
 			UKR_storage_update_development_costs = yes
+			if = {
+				limit = {
+					original_tag = UKR
+					date > 2000.1.31
+					date < 2000.4.1
+					NOT = { has_country_flag = UKR_yatahan_tender_opened }
+				}
+				set_country_flag = UKR_yatahan_tender_opened
+				country_event = ukraine_yatahan_tender.1
+			}
 
 			# Confederation idea — add/remove based on having subjects with influence
 			if = {
@@ -38,6 +53,17 @@ on_actions = {
 		effect = {
 			UKR = {
 				UKR_storage_update_development_costs = yes
+				# BMP-1U Shkval offer, 1 July 2000
+				if = {
+					limit = { date < 2000.07.01 }
+					country_event = { id = ukraine_bmp1.1 days = 181 }
+				}
+				# Independence Day parade, 24 August 2001
+				if = {
+					limit = { date < 2001.01.01 }
+					activate_mission = UKR_independence_parade_mission
+				}
+				UKR_storage_init_service_dates = yes
 				if = {
 					limit = { is_ai = yes }
 					set_country_flag = UKR_open_bureu_laws
@@ -74,6 +100,65 @@ on_actions = {
 	on_monthly_UKR = {
 		effect = {
 			UKR_start_workforce_update = yes
+			# Months left on each storage maintenance
+			UKR_storage_update_maintenance_dates = yes
+
+			UKR_check_mrls_followup_tenders = yes
+			if = {
+				limit = {
+					original_tag = UKR
+					date > 2008.06.01
+					date < 2014.01.01
+					has_country_flag = UKR_modernize_bmp1u_flag
+					NOT = { has_country_flag = UKR_bmp1_zhytomyr_offered_flag }
+				}
+				set_country_flag = UKR_bmp1_zhytomyr_offered_flag
+				country_event = ukraine_bmp1.2
+			}
+			if = {
+				limit = {
+					original_tag = UKR
+					date > 2014.01.01
+					date < 2025.01.01
+					has_war_with = SOV
+					NOT = { has_country_flag = UKR_bmp1_war_offered_flag }
+				}
+				set_country_flag = UKR_bmp1_war_offered_flag
+				country_event = { id = ukraine_bmp1.3 days = 30 }
+			}
+			if = {
+				limit = {
+					original_tag = UKR
+					has_country_flag = UKR_obolon_developed_flag
+				}
+				UKR_obolon_update = yes
+			}
+			if = {
+				limit = {
+					original_tag = UKR
+					date > 2012.01.01
+					date < 2017.01.01
+					has_war_with = SOV
+					NOT = { has_country_flag = UKR_varan_offered_flag }
+					OR = {
+						has_country_flag = UKR_modernize_btr_70t_flag
+						has_country_flag = UKR_btr_line_80_flag
+					}
+				}
+				set_country_flag = UKR_varan_offered_flag
+				country_event = ukraine_varan.1
+			}
+			if = {
+				limit = {
+					original_tag = UKR
+					date > 2012.01.01
+					date < 2017.01.01
+					has_war_with = SOV
+					NOT = { has_country_flag = UKR_wartime_decisions_event_sent }
+				}
+				set_country_flag = UKR_wartime_decisions_event_sent
+				country_event = { id = ukraine_wartime_decisions.1 days = 20 random_days = 30 }
+			}
 			if = {
 				limit = { date < 2010.1.1 }
 				set_variable = { UKR_bsf_lease_cp_cost = 2010 }
@@ -425,6 +510,21 @@ on_actions = {
 					}
 				}
 				UKR_record_rework_war = yes
+			}
+			if = {
+				limit = {
+					OR = {
+						AND = {
+							tag = UKR
+							FROM = { tag = SOV }
+						}
+						AND = {
+							tag = SOV
+							FROM = { tag = UKR }
+						}
+					}
+				}
+				UKR = { UKR_check_mrls_followup_tenders = yes }
 			}
 		}
 	}
