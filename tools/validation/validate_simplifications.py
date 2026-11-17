@@ -1204,9 +1204,9 @@ def _idea_variable_groups(src: _Script):
 
 def _linear_in_level(branches, levels):
     """True when every variable a branch writes is a number in every branch and
-    the values lie on one line through the branches' idea levels, so reading the
-    level variable gives the same value. Constants, variables, and irregular
-    steps need a lookup table, which is not a simplification."""
+    the values lie on one line through at least two distinct idea levels, so
+    reading the level variable gives the same value. Constants, variables, and
+    irregular steps need a lookup table, which is not a simplification."""
     points = {}
     for (_, values), level in zip(branches, levels):
         for key, value in values.items():
@@ -1214,9 +1214,12 @@ def _linear_in_level(branches, levels):
                 return False
             points.setdefault(key, []).append((Fraction(level), Fraction(value)))
     for found in points.values():
-        (x0, y0), (x1, y1) = found[0], found[-1]
-        if len(found) < len(branches) or any(
-            (y - y0) * (x1 - x0) != (y1 - y0) * (x - x0) for x, y in found
+        x0, y0 = found[0]
+        x1, y1 = next(((x, y) for x, y in found if x != x0), found[0])
+        if (
+            len(found) < len(branches)
+            or x1 == x0
+            or any((y - y0) * (x1 - x0) != (y1 - y0) * (x - x0) for x, y in found)
         ):
             return False
     return True

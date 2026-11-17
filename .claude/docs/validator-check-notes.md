@@ -910,7 +910,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   same variable to a constant in `on_add`. Read the variable instead. Skipped:
   - A ladder that writes that variable. It is the initializer.
   - Values that are not numbers on one line through those levels, or that do not
-    use the same effect and variable in every branch. A named constant such as
+    use the same effect and variable in every branch. Ideas that all set one level
+    give no line. A named constant such as
     `@gdp_health_01_factor`, a variable, a `tooltip =` form the parser cannot read,
     or irregular steps would need a lookup table, which is not a simplification.
   - Known gaps: other writers of the variable are not checked, so confirm the ideas

@@ -949,6 +949,18 @@ _IDEA_LADDER_CASES = {
         _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 4))),
         [],
     ),
+    "every idea sets the same level": (
+        _ideas(*[_SETS_TIER[0]] * 3),
+        _ladder(*_ADDS_BONUS),
+        [],
+    ),
+    "first and last ideas share a level": (
+        _ideas(
+            *(f"on_add = {{ set_variable = {{ tier = {n} }} }}" for n in (1, 2, 3, 1))
+        ),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 5, 7, 1))),
+        [],
+    ),
     "values from a named constant": (
         _ideas(*_SETS_TIER),
         _ladder(*(f"set_temp_variable = {{ rate = @factor_{n} }}" for n in (1, 2, 3))),
