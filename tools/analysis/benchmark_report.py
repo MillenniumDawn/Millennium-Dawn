@@ -32,6 +32,7 @@ import sys
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Iterator, Sequence
 from dataclasses import dataclass, field
+from io import TextIOWrapper
 from pathlib import Path
 from typing import NamedTuple
 
@@ -39,12 +40,10 @@ Date = tuple[int, int, int]
 Month = tuple[int, int]
 Fields = dict[str, float]
 
-# Dated game line: the last `[YYYY.MM.DD.H]:` before the clock, then a date or `src`
-# chunk without colons, then `who: message`. The clock holds a colon, so the pattern
-# starts at the bracket instead of splitting on colons. The older `0:0, src: TAG:`
-# prefix matches the same way.
+# Use the last game date before the clock; debug logs add a source location.
 _LINE = re.compile(
-    r"\[(\d{4})\.(\d{2})\.(\d{2})\.\d+\]:\s+\d+:\d+, [^:]*?: ([^:]+): (.*)$"
+    r"\[(\d{4})\.(\d{2})\.(\d{2})\.\d+\](?:\[[^\]\r\n]+:\d+\])?:"
+    r"\s+\d+:\d+, [^:]*?: ([^:]+): (.*)$"
 )
 _NUMBER = r"-?\d+(?:\.\d+)?(?:[eE][-+]?\d+)?"
 # Field names start with a capital and hold spaces. A number followed by `/` is part
@@ -101,8 +100,10 @@ DEFAULT_SKIP = "GRA"
 ERROR_NOISE = ("AI tried to post", "Sub-unit 'Light_", "context_type")
 
 _COUNT_KINDS = {
-    "decision": re.compile(r"Decision (\S+)"),
-    "option": re.compile(r"([A-Za-z_]\w*\.\d+\.[A-Za-z0-9]+)"),
+    "decision": re.compile(r"Decision (?:timeout )?(\S+)"),
+    "option": re.compile(
+        r"([A-Za-z_]\w*\.\d+\.[A-Za-z0-9]+)|Event ([A-Za-z_]\w*\.\d+) Option ([A-Za-z0-9]+)"
+    ),
     "focus": re.compile(r"Focus (\S+)"),
     "idea": re.compile(r"(Idea \S+ (?:added|removed)|add idea \S+)"),
     "investment": re.compile(r"Investment Succeeded"),
@@ -321,9 +322,11 @@ def split_csv(text: str) -> list[str]:
 
 
 def full_months(months: dict[Month, dict[str, Fields]]) -> list[Month]:
-    """Months where at least 90% of the busiest month's countries reported."""
-    peak = max(len(rows) for rows in months.values())
-    return [month for month in sorted(months) if len(months[month]) >= 0.9 * peak]
+    """Keep every month except a likely truncated final month."""
+    ordered = sorted(months)
+    if len(ordered) > 1 and len(months[ordered[-1]]) < 0.9 * len(months[ordered[-2]]):
+        ordered.pop()
+    return ordered
 
 
 def world(rows: dict[str, Fields]) -> dict[str, float]:
@@ -848,7 +851,7 @@ def cmd_series(args: argparse.Namespace) -> int:
     rows = []
     for who, points in series.items():
         if args.changes:
-            kept = []
+            kept: list[tuple[list[float | None], tuple[Date, Fields]]] = []
             for point in points:
                 key = [point[1].get(n) for n in names]
                 if not kept or key != kept[-1][0]:
@@ -889,7 +892,11 @@ def cmd_spread(args: argparse.Namespace) -> int:
         cells = []
         for values in runs.values():
             sample = values[month]
-            q = statistics.quantiles(sample, n=4) if len(sample) > 1 else sample * 3
+            q = (
+                statistics.quantiles(sample, n=4, method="inclusive")
+                if len(sample) > 1
+                else sample * 3
+            )
             cell = f"{q[0]:.1f}/{q[1]:.1f}/{q[2]:.1f} (n={len(sample)}"
             if args.below is not None:
                 cell += (
@@ -960,7 +967,11 @@ def count_item(kind: str, record: Record) -> str | None:
     match = _COUNT_KINDS[kind].match(record.message)
     if not match:
         return None
-    return record.who if kind == "investment" else match.group(1)
+    if kind == "investment":
+        return record.who
+    if kind == "option" and match[1] is None:
+        return f"{match[2]}.{match[3]}"
+    return match[1]
 
 
 def cmd_counts(args: argparse.Namespace) -> int:
@@ -1270,8 +1281,16 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main() -> int:
-    args = build_parser().parse_args()
+    parser = build_parser()
+    args = parser.parse_args()
+    labels: set[str] = set()
+    for label, _ in getattr(args, "runs", ()):
+        if label in labels:
+            parser.error(f"duplicate run label {label!r}; use distinct LABEL=LOG pairs")
+        labels.add(label)
     try:
+        if isinstance(sys.stdout, TextIOWrapper):
+            sys.stdout.reconfigure(errors="replace")
         return args.handler(args)
     except OSError as error:
         print(f"error: {error}", file=sys.stderr)

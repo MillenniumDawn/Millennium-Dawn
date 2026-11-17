@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import io
 import sys
 from pathlib import Path
 
@@ -186,7 +187,8 @@ def _run_a() -> list[str]:
         _line((2000, 2, 10), "Alpha Land", "T_ev.1.a"),
         _line((2000, 2, 10), "Alpha Land", "T_ev.2.b"),
         _line((2000, 2, 9), "Alpha Land", "Focus ZZ_first"),
-        _line((2000, 2, 10), "Alpha Land", "Focus ZZ_first"),
+        "[12:00:00][2000.02.10.01][effectbase.cpp:1783]:  "
+        "1:00, 10 February, 2000: Alpha Land: Focus ZZ_first",
         _line((2000, 2, 9), "Alpha Land", "Idea bureau_03 removed"),
         _line((2000, 2, 10), "Alpha Land", "Idea bureau_03 removed"),
         _line((2000, 2, 10), "Alpha Land", "add idea defence_03"),
@@ -388,7 +390,7 @@ _REPORT_CASES = {
     ),
     "spread: quartiles and count below": (
         ["spread", "x={a}", "GDP", "--below", "150"],
-        "| 2000-02 | 100.0/200.0/300.0 (n=3, 1 below 150) |",
+        "| 2000-02 | 150.0/200.0/250.0 (n=3, 1 below 150) |",
     ),
     "spread: one country in a month": (
         ["spread", "x={a}", "GDP", "--below", "150"],
@@ -396,7 +398,7 @@ _REPORT_CASES = {
     ),
     "spread: country without states is left out": (
         ["spread", "x={b}", "GDP"],
-        "| 2000-02 | 100.0/200.0/300.0 (n=3) |",
+        "| 2000-02 | 150.0/200.0/250.0 (n=3) |",
     ),
     "wars: spell from the first to the last war month, short spell dropped": (
         ["wars", "{a}"],
@@ -491,6 +493,56 @@ def test_report(tmp_path, monkeypatch, capsys, args, fragment):
     assert fragment.format(**paths) in out
 
 
+# case: (count kind, log message, item ID)
+_COUNT_ITEM_CASES = {
+    "decision timeout": ("decision", "Decision timeout test_decision", "test_decision"),
+    "verbose event option": (
+        "option",
+        "Event Test_event.10 Option b",
+        "Test_event.10.b",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "kind, message, item", _COUNT_ITEM_CASES.values(), ids=_COUNT_ITEM_CASES
+)
+def test_count_item(kind, message, item):
+    record = benchmark_report.Record((2000, 2, 1), "AAA", message)
+    assert benchmark_report.count_item(kind, record) == item
+
+
+def test_compare_keeps_later_months_after_annexations(tmp_path, monkeypatch, capsys):
+    log = tmp_path / "game.log"
+    _write(
+        log,
+        [
+            _monthly(month, tag, 10, 4, 100, 5.5)
+            for month, tags in [
+                (2, ["AAA", "BBB", "CCC"]),
+                (3, ["AAA", "BBB"]),
+                (4, ["AAA", "BBB"]),
+            ]
+            for tag in tags
+        ],
+    )
+    monkeypatch.setattr(sys, "argv", ["benchmark_report.py", "compare", f"run={log}"])
+    assert benchmark_report.main() == 0
+    assert "- run: reached 2000-04" in capsys.readouterr().out
+
+
+def test_spread_quartiles_stay_within_two_samples(tmp_path, monkeypatch, capsys):
+    log = tmp_path / "game.log"
+    _write(
+        log, [_monthly(2, "AAA", 10, 4, 100, 5.5), _monthly(2, "BBB", 5, 1, 200, 3.0)]
+    )
+    monkeypatch.setattr(
+        sys, "argv", ["benchmark_report.py", "spread", f"run={log}", "GDP"]
+    )
+    assert benchmark_report.main() == 0
+    assert "| 2000-02 | 125.0/150.0/175.0 (n=2) |" in capsys.readouterr().out
+
+
 def test_missing_log_is_reported(tmp_path, monkeypatch, capsys):
     code, _, err, _ = _run(
         tmp_path, monkeypatch, capsys, ["series", "{a}.missing", "AAA"]
@@ -531,6 +583,14 @@ def test_runs_without_a_shared_month(tmp_path, monkeypatch, capsys, args, messag
 _BAD_ARGUMENT_CASES = {
     "before needs a year": (["counts", "a={a}", "--before", "20x"], "expected YYYY"),
     "every must be positive": (["series", "{a}", "AAA", "--every", "0"], "1 or more"),
+    "inferred labels must be unique": (
+        ["counts", "r1/logs/game.log", "r2/logs/game.log"],
+        "duplicate run label 'logs'",
+    ),
+    "explicit labels must be unique": (
+        ["compare", "same={a}", "same={b}"],
+        "duplicate run label 'same'",
+    ),
 }
 
 
@@ -556,14 +616,12 @@ def test_script_runs_on_its_own(tmp_path):
 def test_invalid_utf8_is_decoded_and_reported(tmp_path, monkeypatch, capsys):
     bad = tmp_path / "bad.log"
     with open(bad, "wb") as handle:
-        handle.write(_monthly(2, "AAA", 10, 4, 100, 5.5).encode("utf-8") + b"\n")
-        handle.write(b"[12:00:00][no_game_date]: caf\xe9\n")
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["benchmark_report.py", "series", str(bad), "AAA", "--fields", "GDP"],
-    )
-    assert benchmark_report.main() == 0
-    captured = capsys.readouterr()
-    assert "| 2000-02-01 | 100 |" in captured.out
-    assert "1 lines had invalid UTF-8" in captured.err
+        handle.write(b"[12:00:00][no_game_date]: Bad byte \xe9\n")
+    monkeypatch.setattr(sys, "argv", ["benchmark_report.py", "errors", str(bad)])
+    with io.TextIOWrapper(io.BytesIO(), encoding="cp1252") as stdout:
+        with monkeypatch.context() as patch:
+            patch.setattr(sys, "stdout", stdout)
+            assert benchmark_report.main() == 0
+        stdout.seek(0)
+        assert "Bad byte ?" in stdout.read()
+    assert "1 lines had invalid UTF-8" in capsys.readouterr().err
