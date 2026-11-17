@@ -44,16 +44,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   THIS, the reverse of `influence_higher_*`. Contract tests read their definitions.
 - Tracks literal country scopes, ROOT, THIS, PREV/FROM chains, neutral wrappers,
   and calls through scripted effects and triggers. Focuses, achievements,
-  non-targeted decisions, country history, and country/news event definitions
-  supply country contexts. A positive local `tag` guard can bind a runtime tag;
+  decisions, country history, and country/news event definitions supply country
+  contexts. A positive local `tag` guard can bind a runtime tag;
   `original_tag` is only a label, not proof of a literal runtime tag.
 - Effect-fired events receive the firing block's ROOT as FROM, not its innermost
   selected country. Event pools, automatic firing, unsupported dispatches, and
   definitions without a known caller keep unknown contexts alongside known ones.
   Broadcast events also have an unspecified audience context.
-- Targeted decisions, unmodeled blocks, state/variable/event-target scopes, and
-  other entry points remain conservative. Templates and effect previews are
-  skipped. This is not a reachability solver or an audit of arbitrary array reads.
+- A decision's ROOT is its actor, targeted or not. In a targeted decision FROM
+  (the target) stays unknown, and so does THIS inside `target_trigger` and
+  `target_root_trigger`. Other unmodeled blocks, state/variable/event-target
+  scopes, and other entry points remain conservative. Templates and effect
+  previews are skipped. This is not a reachability solver or an audit of
+  arbitrary array reads.
   Each definition keeps at most 64 distinct contexts before adding an unknown
   context; recursive calls are deduplicated. Scope chains retain the depth used
   by the parsed sources.
