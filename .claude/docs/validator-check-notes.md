@@ -502,6 +502,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
   the texture and update `texturefile`, not the entry.
+- `dropped-vanilla-sprite` (ERROR), `dropped-engine-sprite` and
+  `dropped-engine-gui-element` (WARNING): an MD file at a vanilla interface path replaces
+  that file, so only `vanilla_ui_paths.txt` knows what it dropped. "Engine-named" means
+  the exact NUL-terminated string is in the game binary. Names the engine builds at run
+  time, and names stored only as the tail of a longer string, are missed. Non-`GFX_`
+  sprite names (`resource_item_background`) are not read. Sprites the engine resolves
+  from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
+  uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py
 
