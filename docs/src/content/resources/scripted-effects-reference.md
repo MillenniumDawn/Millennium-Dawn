@@ -44,6 +44,8 @@ random_controlled_state = {
 | Radar                  | `one_state_radar_station`          | `one_radar_station`                 |
 | Nuclear Reactor        | `one_state_nuclear_reactor`        | `one_random_nuclear_reactor`        |
 | Agriculture District   | `one_state_agriculture_district`   | `one_random_agriculture_district`   |
+| Rail Terminal          | `one_state_rail_terminal`          | n/a                                 |
+| Enrichment Facility    | n/a                                | `one_random_enrichment_facility`    |
 | Land Facility          | n/a                                | `one_random_land_facility`          |
 | Naval Facility         | n/a                                | `one_random_naval_facility`         |
 | Air Facility           | n/a                                | `one_random_air_facility`           |
@@ -53,29 +55,40 @@ The four research facilities are random-scope only: they pick a state that passe
 
 ### Building Costs
 
-The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province.
+The cost implies the INCLUSION of a building slot. A single building slot is $1.00 so if you want to give a **Civilian Industry** it's $6.50 without a building slot. Every entry below is state-level except the four research facilities, which build into a province, and the provincial buildings marked per level.
 
-| Building                            | Cost   |
-| ----------------------------------- | ------ |
-| Civilian/Military Factory, Dockyard | $7.50  |
-| Offices                             | $12.00 |
-| Commercialized Agriculture          | $3.75  |
-| Infrastructure                      | $3.50  |
-| Air Base                            | $2.50  |
-| SAM Site                            | $3.25  |
-| Renewable Infrastructure            | $8.50  |
-| Fuel Silo                           | $3.00  |
-| Radar                               | $1.75  |
-| Network Infrastructure              | $3.00  |
-| Missile Site                        | $3.00  |
-| Nuclear Reactor                     | $9.00  |
-| Fossil Powerplant                   | $3.25  |
-| Microchip Plant                     | $10.50 |
-| Composite Plant                     | $8.50  |
-| Synthetic Refinery                  | $6.00  |
-| Reinforced Electrical Grid          | $6.50  |
-| High Capacity Electrical Grid       | $6.50  |
-| Research Facility                   | $15.00 |
+| Building                            | Cost    |
+| ----------------------------------- | ------- |
+| Civilian/Military Factory, Dockyard | $7.50   |
+| Offices                             | $12.00  |
+| Commercialized Agriculture          | $3.75   |
+| Infrastructure                      | $3.50   |
+| Air Base                            | $2.50   |
+| SAM Site                            | $3.25   |
+| Renewable Infrastructure            | $8.50   |
+| Fuel Silo                           | $3.00   |
+| Radar                               | $1.75   |
+| Network Infrastructure              | $3.00   |
+| Missile Site                        | $3.00   |
+| Nuclear Reactor                     | $9.00   |
+| Fossil Powerplant                   | $3.25   |
+| Microchip Plant                     | $10.50  |
+| Composite Plant                     | $8.50   |
+| Synthetic Refinery                  | $6.00   |
+| Reinforced Electrical Grid          | $6.50   |
+| High Capacity Electrical Grid       | $6.50   |
+| Research Facility                   | $15.00  |
+| Enrichment Facility                 | $15.50  |
+| Rail Terminal                       | $2.50   |
+| Stronghold Network                  | $2.00   |
+| Supply Node, per level              | $1.00   |
+| Naval Supply Hub, per level         | $1.00   |
+| Naval Headquarters, per level       | $1.00   |
+| Naval Base, per level               | $0.05   |
+| Bunker or Coastal Bunker, per level | $0.05   |
+| Battery Park                        | $100.00 |
+
+Buildings without a building effect, such as bunkers, naval bases, and supply nodes, are built with `add_building_construction`. Add their price for each level of each build to the reward's `treasury_change`, folded into any other charge in the same block. Battery parks use `build_battery_park_effect`, which lowers the $100.00 by battery park construction cost modifiers.
 
 ---
 
@@ -255,13 +268,12 @@ every_country = {
 ## Energy Effects
 
 ```hoiscript
-# Build enrichment facilities (cost: 25.00 each)
-set_temp_variable = { build_count = 3 }
-build_enrichment_facilities = yes
+# Build one enrichment facility in a random valid state (cost: 15.50)
+one_random_enrichment_facility = yes
 
-# Build battery parks (cost: 100.00 each)
-set_temp_variable = { build_count = 2 }
-build_battery_parks = yes
+# Build battery parks (cost: 100.00 each, lowered by construction cost modifiers)
+set_temp_variable = { temp_change = 2 }
+build_battery_park_effect = yes
 ```
 
 ## Cartel Effects
@@ -355,10 +367,10 @@ If the country has scripted leader rotation, add the leader's `create_country_le
 | 3     | `socialism`                  | Pro-Western (democratic)  |
 | 4     | `communist_state`            | Emerging (communism)      |
 | 5     | `anarchist_communism`        | Emerging (communism)      |
-| 6     | `Conservative`               | Emerging (communism)      |
+| 6     | `reactionary`                | Emerging (communism)      |
 | 7     | `Autocracy`                  | Emerging (communism)      |
-| 8     | `Mod_Vilayat_e_Faqih`        | Emerging (communism)      |
-| 9     | `Vilayat_e_Faqih`            | Emerging (communism)      |
+| 8     | `moderate_shiite`            | Emerging (communism)      |
+| 9     | `hardline_shiite`            | Emerging (communism)      |
 | 10    | `Kingdom`                    | Salafist (fascism)        |
 | 11    | `Caliphate`                  | Salafist (fascism)        |
 | 12    | `Neutral_Muslim_Brotherhood` | Non-Aligned (neutrality)  |

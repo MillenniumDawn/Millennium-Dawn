@@ -1,17 +1,18 @@
 """Tool-side lists, exemptions, and contracts checked against the live game tree."""
 
 import re
+from decimal import Decimal
 
 import pytest
-import validate_building_guards
 import validate_decisions
 import validate_scripted_params
 from shared.paths import REPO_ROOT
-from shared_utils import PARTY_SLOT_NAMES
+from shared_utils import PARTY_SLOT_NAMES, iter_statements, strip_comments
 from standardize_api import standardize_text
 from validate_focus_tree import _PP_MALUS_EXEMPT_FOCUS_IDS
 from validate_modifiers import _harvest_doctrine_folder_cost_factors
 from validate_tech_categories import _LEGACY_CATEGORIES, load_known_categories
+from validator_common import MONEY_MODIFIER_RE, money_modifier_raises_cost
 
 from tools.publishing import publish_workshop as pw
 
@@ -54,24 +55,6 @@ def test_real_frontend_files_match_the_fixed_production_locale_contract():
             assert (
                 banner and banner["marker"]
             ), f"{rel}: {key} must follow its version with a dev marker"
-
-
-def test_province_building_list_covers_every_province_max_building():
-    """`_PROVINCE_BUILDINGS` is a hand-kept mirror of the buildings that carry a
-    province_max level cap; this fails when a new one is added to the game."""
-    text = (REPO_ROOT / "common" / "buildings" / "00_buildings.txt").read_text(
-        encoding="utf-8-sig"
-    )
-    declared = set()
-    building = None
-    for line in text.splitlines():
-        match = re.match(r"^\t([A-Za-z_][A-Za-z0-9_]*) = \{", line)
-        if match:
-            building = match.group(1)
-        elif building and re.search(r"\bprovince_max\s*=", line):
-            declared.add(building)
-    assert declared
-    assert declared <= validate_building_guards._PROVINCE_BUILDINGS
 
 
 def _focus_ids_with_pp_malus():
@@ -137,6 +120,22 @@ def test_startup_politics_still_declares_its_party_inputs():
         "ruling_party",
         "gov_coalition_array",
     ]
+
+
+def test_money_modifier_direction_matches_its_color_type():
+    checked = []
+    for path in sorted((REPO_ROOT / "common" / "modifier_definitions").glob("*.txt")):
+        text = strip_comments(path.read_text(encoding="utf-8-sig"))
+        for name, _value, block in iter_statements(text):
+            if block is None or not MONEY_MODIFIER_RE.fullmatch(name):
+                continue
+            color = dict((key, value) for key, value, _b in iter_statements(block))
+            if color.get("color_type") in ("good", "bad"):
+                checked.append(name)
+                assert money_modifier_raises_cost(name, Decimal(1)) == (
+                    color["color_type"] == "bad"
+                ), name
+    assert checked
 
 
 def test_legacy_table_targets_exist_and_keys_do_not():

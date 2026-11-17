@@ -463,7 +463,7 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 | Fast Growth   | +0.015               |
 | Economic Boom | +0.025               |
 
-5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
+5. **Budget balance**: A deficit above a threshold of about 5% of GDP (2% to 8% depending on currency strength, debt, and interest) adds inflationary pressure proportional to the excess. A surplus lowers the adjustment by 0.02 times the surplus as a share of GDP at any growth rate, so a 10% surplus gives -0.002. Surpluses above 25% of GDP count as 25%.
 6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
 
 A national spirit or difficulty setting with a **Positive Quarterly Inflation** value scales a positive quarterly result by that percentage. At -20%, a quarterly result of 5% becomes 4%. It does not change a quarter of deflation.
@@ -550,9 +550,11 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 Buildings require workers to function at full efficiency. Each facility has a required worker count, and you must allocate a portion of the national population to fill those positions. Allocation is automatic, but buildings without enough workers have reduced output.
 
-If all buildings are fully staffed and workers remain, those workers become unemployed. The unemployment rate is shown in the Economy window.
+If all buildings are fully staffed and workers remain, those workers form the **Available Workforce**. Its share of the total workforce is shown in the Economy window.
 
-If unemployment exceeds the **Unemployment Threshold** shown in the Economy window, debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as unemployment rises.
+If the Available Workforce exceeds the **Unemployment Threshold** shown in the Economy window, the excess counts as high unemployment and debuffs apply: a stability penalty and increased social spending. These debuffs grow stronger as the excess rises.
+
+The threshold is 6% plus an allowance for your level of development, plus any modifiers from laws and national spirits. The allowance is 55% up to about $11,700 of GDP per capita, then falls three points for every $1,000 and reaches zero at $30,000. A poor, populous country can hold a large informal labor pool without unrest, but that room shrinks once it reaches middle income, so it has to build jobs to stay ahead.
 
 Each building type has a **priority** from 1 to 10, set in the Employment Priority panel of the Economy window. When there are fewer workers than jobs, workers are shared out in proportion to priority and to the jobs each type offers, so a priority 10 job is filled ten times as readily as a priority 1 job. Workers a fully staffed type cannot use go to the others. When every job can be filled, priorities do nothing.
 

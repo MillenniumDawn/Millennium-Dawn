@@ -371,6 +371,110 @@ def dds_stub(width: int, height: int) -> bytes:
     return bytes(header)
 
 
+# A unit square of two triangles with normals, tangents and UVs, for mesh_bytes.
+MESH_QUAD = {
+    "p": [[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]],
+    "tri": [0, 1, 2, 0, 2, 3],
+    "n": [[0, 0, 1]] * 4,
+    "ta": [[1, 0, 0, 1]] * 4,
+    "u0": [[0, 0], [1, 0], [1, 1], [0, 1]],
+}
+
+
+def mesh_plate(cells=23, spike=True, offset=(0.0, 0.0, 0.0), **extra) -> dict:
+    """A mesh_bytes part: a flat plate of 2 * cells^2 triangles, optionally with a thin spike."""
+    import numpy as np
+
+    side = np.arange(cells + 1, dtype=float)
+    x, y = np.meshgrid(side, side)
+    points = np.c_[x.ravel(), y.ravel(), np.zeros(x.size)]
+    corner = np.arange(cells * (cells + 1)).reshape(cells, cells + 1)[:, :-1].ravel()
+    first = np.c_[corner, corner + 1, corner + cells + 2]
+    second = np.c_[corner, corner + cells + 2, corner + cells + 1]
+    triangles = np.vstack([first, second])
+    if spike:
+        tip = len(points)
+        points = np.vstack([points, [[5, 5, 0], [5.2, 5, 0], [5.1, 5, 12]]])
+        triangles = np.vstack([triangles, [[tip, tip + 1, tip + 2]]])
+    count = len(points)
+    part = {
+        "p": points + np.asarray(offset, float),
+        "tri": triangles,
+        "n": [[0, 0, 1]] * count,
+        "ta": [[1, 0, 0, 1]] * count,
+        "u0": points[:, :2] / cells,
+    }
+    return {**part, **extra}
+
+
+def mesh_bytes(*parts, joints: int = 0) -> bytes:
+    """A binary `.mesh` with one shape per part, for the model tool tests.
+
+    A part maps `p` and `tri` to arrays, and optionally `n`, `ta`, `u0`, `ix`,
+    `w` and `shader`. `joints` adds a skeleton of that size to every shape.
+    """
+    import numpy as np
+    import pdx_mesh
+
+    root = pdx_mesh.Node("", 0)
+    root.props["pdxasset"] = ("i", np.array([1, 0], "<i4"))
+    top = pdx_mesh.Node("object", 1)
+    root.children.append(top)
+    for number, part in enumerate(parts):
+        shape = pdx_mesh.Node(f"shape{number}", 2)
+        mesh = pdx_mesh.Node("mesh", 3)
+        for name in ("p", "n", "ta", "u0"):
+            if name in part:
+                mesh.props[name] = ("f", np.asarray(part[name], "<f4").ravel())
+        mesh.props["tri"] = ("i", np.asarray(part["tri"], "<i4").ravel())
+        material = pdx_mesh.Node("material", 4)
+        shader = part.get("shader", "PdxMeshAdvanced").encode() + b"\0"
+        material.props["shader"] = ("s", [shader])
+        mesh.children.append(material)
+        if "ix" in part:
+            skin = pdx_mesh.Node("skin", 4)
+            skin.props["bones"] = ("i", np.array([part.get("bones", 4)], "<i4"))
+            skin.props["ix"] = ("i", np.asarray(part["ix"], "<i4").ravel())
+            skin.props["w"] = ("f", np.asarray(part["w"], "<f4").ravel())
+            mesh.children.append(skin)
+        shape.children.append(mesh)
+        if joints:
+            skeleton = pdx_mesh.Node("skeleton", 3)
+            for joint in range(joints):
+                node = pdx_mesh.Node(f"joint{joint}", 4)
+                node.props["ix"] = ("i", np.array([joint], "<i4"))
+                if joint:
+                    node.props["pa"] = ("i", np.array([0], "<i4"))
+                skeleton.children.append(node)
+            shape.children.append(skeleton)
+        top.children.append(shape)
+    return pdx_mesh.write(root)
+
+
+def dds_texture(width, height, fourcc=b"DXT1", mipmaps=1, body=b"", bits=32) -> bytes:
+    """A DDS file: a legacy header for the size, format and level count, then `body`.
+
+    An empty `fourcc` makes an uncompressed texture of `bits` per texel.
+    """
+    head = bytearray(128)
+    head[0:4] = b"DDS "
+    flags = 0x1007 | (0x20000 if mipmaps > 1 else 0)
+    struct.pack_into("<II", head, 4, 124, flags)
+    struct.pack_into("<II", head, 12, height, width)
+    struct.pack_into("<I", head, 28, mipmaps if mipmaps > 1 else 0)
+    struct.pack_into("<I", head, 76, 32)
+    if fourcc:
+        struct.pack_into("<I", head, 80, 4)
+        head[84:88] = fourcc
+    else:
+        alpha = 0xFF000000 if bits == 32 else 0
+        struct.pack_into("<I", head, 80, 0x41 if alpha else 0x40)
+        struct.pack_into("<I", head, 88, bits)
+        struct.pack_into("<4I", head, 92, 0xFF0000, 0xFF00, 0xFF, alpha)
+    struct.pack_into("<I", head, 108, 0x1000 | (0x400008 if mipmaps > 1 else 0))
+    return bytes(head) + body
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:

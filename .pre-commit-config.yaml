@@ -9,7 +9,12 @@
 # your actual work. Always scope runs to specific files:
 #   pre-commit run --files path/to/file1 path/to/file2
 # The normal `git commit` flow already runs hooks against just the staged
-# files, which is what you want.
+# files, which is what you want. Exception: md-fix-styling and the
+# md-validate-{defines,descriptors,mesh-textures,asset-data} hooks read the
+# git index, so under --files they check what is staged, not the named files.
+#
+# `pre-commit install` installs both the pre-commit and pre-push hooks. Hooks
+# without `stages:` run at commit only; the tools pytest hooks run at push.
 #
 # md-fix-styling runs on commit and normalizes only staged-diff lines, so a
 # legacy file never becomes a whole-file whitespace rewrite. It writes the
@@ -29,6 +34,10 @@
 # inside resources/ by setting its own `files:` pattern explicitly.
 exclude: "^resources/"
 
+minimum_pre_commit_version: "3.2.0"
+default_install_hook_types: [pre-commit, pre-push]
+default_stages: [pre-commit]
+
 repos:
   - repo: local
     hooks:
@@ -38,29 +47,53 @@ repos:
         language: system
         types: [text]
         exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
+      # Localisation fixers run before check-yaml below.
+      - id: fix-localization-encoding
+        name: Validate and fix HOI4 localization UTF-8 BOM
+        entry: python3 tools/linting/validate_localization_encoding.py --fix
+        language: system
+        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
+        pass_filenames: true
+      - id: fix-loc-yaml
+        name: Fix localisation YAML issues (quotes, tabs, colon-space, key:0)
+        entry: python3 tools/linting/fix_loc_yaml.py --fix
+        language: system
+        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
+        pass_filenames: true
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
       # Asset-only directories (gfx/, map/, interface/, music/, sound/) are
       # excluded from the auto-fixers below — these files use significant
       # tab/whitespace alignment that the fixers shouldn't rewrite.
+      # Hooks with `stages: [pre-commit]` declare push stages upstream; pin
+      # them to commit so the pre-push hook only runs the pytest hooks.
       - id: end-of-file-fixer
         exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
+        stages: [pre-commit]
       - id: mixed-line-ending
         args: [--fix=lf]
         exclude: '\.mod$|^(gfx|map|interface|music|sound)/'
       - id: check-yaml
         files: 'localisation/english/.*\.yml$'
+      - id: check-yaml
+        name: check github yaml
+        files: '^\.github/.*\.ya?ml$'
+      - id: check-toml
       - id: check-json
         files: '\.json$'
       - id: check-merge-conflict
       - id: check-added-large-files
         args: ["--maxkb=100000"] # Prevent files larger than 100MB
+        stages: [pre-commit]
       - id: check-case-conflict
+      - id: check-illegal-windows-names
       - id: check-executables-have-shebangs
         files: "^tools/"
+        stages: [pre-commit]
       - id: check-shebang-scripts-are-executable
         files: "^tools/"
+        stages: [pre-commit]
       - id: fix-byte-order-marker
         exclude: 'localisation/.*\.yml$|^(gfx|map|interface|music|sound)/'
       - id: check-ast
@@ -101,7 +134,8 @@ repos:
         entry: mypy
         language: python
         additional_dependencies: [mypy==2.3.0]
-        files: '^tools/.*\.py$'
+        # Mirrors [tool.mypy] files in pyproject.toml.
+        files: '^(tools/report_lib/.*\.py|tools/shared_utils\.py|tools/validation/(validator_common|disk_cache)\.py|pyproject\.toml)$'
         pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
@@ -125,18 +159,6 @@ repos:
           - prettier-plugin-astro@0.14.1
   - repo: local
     hooks:
-      - id: fix-localization-encoding
-        name: Validate and fix HOI4 localization UTF-8 BOM
-        entry: python3 tools/linting/validate_localization_encoding.py --fix
-        language: system
-        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
-        pass_filenames: true
-      - id: fix-loc-yaml
-        name: Fix localisation YAML issues (quotes, tabs, colon-space, key:0)
-        entry: python3 tools/linting/fix_loc_yaml.py --fix
-        language: system
-        files: 'localisation/english/.*\.yml$|localisation/.*_l_english\.yml$'
-        pass_filenames: true
       - id: check-mod-file-encoding
         name: Check .mod file UTF-8 encoding
         entry: python3 tools/linting/validate_mod_encoding.py
@@ -155,8 +177,8 @@ repos:
         language: system
         files: '^Changelog\.txt$'
         pass_filenames: true
-      # Runs the full tools test suite before push (not on every commit).
-      # Enable with: pre-commit install --hook-type pre-push
+      # Runs the full tools test suite (about a minute) on push, only when
+      # tools or config files changed.
       - id: tools-pytest-config
         name: Verify tools pytest collection configuration
         entry: >-
@@ -164,7 +186,7 @@ repos:
           -o addopts= -q
         language: system
         files: >-
-          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+          ^(tools/|pyproject\.toml|\.pre-commit-config\.yaml|\.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
       - id: tools-pytest
@@ -174,7 +196,7 @@ repos:
           -o python_files=*_test.py -n auto
         language: system
         files: >-
-          ^(tools/|pyproject.toml|validation_config.json|.pre-commit-config.yaml|.(github|claude)/)
+          ^(tools/|pyproject\.toml|validation_config\.json|\.pre-commit-config\.yaml|\.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
       # --- MD-specific hooks ---
@@ -183,7 +205,7 @@ repos:
         entry: >-
           python3 tools/linting/fix_styling.py --mode staged --changed-lines
         language: system
-        files: '\.(txt)$'
+        files: '\.txt$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
       # - id: md-standardize
@@ -197,8 +219,8 @@ repos:
         # One process fans the run-on-commit validators out concurrently instead
         # of running ~8 separate hooks serially: ~3x faster on a content commit,
         # and the staged-file list is discovered once and shared via
-        # MD_STAGED_FILES so none of them shells out to git. The expensive
-        # cross-reference validators stay stages:[manual] below. Routing and the
+        # MD_STAGED_FILES so none of them shells out to git. The slower
+        # cross-reference validators run in CI only. Routing and the
         # per-validator --strict flags live in tools/precommit_validate.py;
         # tools/tests/precommit_validate_test.py pins coverage against drift.
         entry: python3 tools/precommit_validate.py --no-color
@@ -227,17 +249,30 @@ repos:
       - id: md-validate-mesh-textures
         name: MD Validate 3D model textures
         # Commit-stage only: the CI workspace ships no gfx/models or
-        # gfx/entities, so this hook is the gate.
+        # gfx/entities, so this hook is the gate. Any staged gfx/ texture can
+        # clash with a model's texture name, so all of gfx/ triggers it.
         entry: >-
           python3 tools/validation/validate_mesh_textures.py --staged --strict
           --no-color
         language: system
-        files: '^gfx/(models|entities)/'
+        files: '^gfx/'
         pass_filenames: false
+      - id: md-validate-asset-data
+        name: MD Validate 3D model meshes and texture data
+        # Commit-stage only, like md-validate-mesh-textures. Triangle counts
+        # and texture formats are warnings, so verbose shows them on a
+        # passing run.
+        entry: >-
+          python3 tools/validation/validate_asset_data.py --staged --strict
+          --no-color
+        language: system
+        files: '(?i)^((gfx|map)/.*\.dds|gfx/models/.*\.mesh)$'
+        pass_filenames: false
+        verbose: true
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
-        # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # Manual: full-repo scan is slow and reports legacy unreferenced
+        # textures and meshes. CI cannot run it. Run before mod-size cleanup
         # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color

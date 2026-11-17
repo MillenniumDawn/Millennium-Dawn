@@ -4,6 +4,7 @@ import pytest
 import run_validator_batch as rvb
 import validator_batches as vb
 from shared.paths import VALIDATION_DIR
+from shared.suite import write_under
 
 
 @pytest.fixture(scope="module")
@@ -60,7 +61,7 @@ def test_specs_carry_their_opt_in_checks():
     } == {
         "ai-equipment": (("--check-buildability",), (), True),
         "bonus-names": (("--name-not-owner-id",), (), True),
-        "decisions": (("--unannounced-categories",), (), True),
+        "decisions": (("--unannounced-categories", "--id-case"), (), True),
         "events": (("--check-ai-chance-costs",), (), True),
         "focus-tree": (("--missing-icons",), (), True),
         "ideas": (("--missing-name-loc",), (), True),
@@ -136,7 +137,7 @@ def test_shared_module_change_selects_its_transitive_consumers():
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
     # validate_common_mistakes, validate_decisions, validate_equipment_variants,
     # validate_oob_units, validate_history and its DLC-guard consumer also use the
-    # shared parser.
+    # shared parser. Focus trees and variables reach it through validate_events.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -146,10 +147,12 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "decisions",
         "equipment-variants",
         "events",
+        "focus-tree",
         "history",
         "dlc-guards",
         "influence-reads",
         "oob-units",
+        "variables",
     }
     assert adhoc == []
 
@@ -399,12 +402,12 @@ def test_import_graph_is_not_built_for_non_import_selections(monkeypatch):
 
 
 def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
-    tmp_path, monkeypatch, write_path
+    tmp_path, monkeypatch
 ):
     validation_dir = tmp_path / "validation"
     for name in ("validate_tech_categories", "validate_bonus_names", "equipment_stats"):
-        write_path(validation_dir, f"{name}.py")
-    write_path(validation_dir, "validate_ideas.py", "import equipment_stats\n")
+        write_under(validation_dir, f"{name}.py", "")
+    write_under(validation_dir, "validate_ideas.py", "import equipment_stats\n")
     monkeypatch.setattr(vb, "TOOLS_DIR", str(tmp_path))
     monkeypatch.setattr(vb, "VALIDATION_DIR", str(validation_dir))
     original = vb._build_import_graph
@@ -426,7 +429,7 @@ def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
     assert {spec.name for spec in first[0]} == {"tech-categories", "ideas"}
     assert first[1] == []
 
-    write_path(
+    write_under(
         validation_dir,
         "validate_bonus_names.py",
         "import validate_tech_categories\n",

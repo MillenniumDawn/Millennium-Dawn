@@ -8,6 +8,7 @@ a real multiprocessing Pool, so driving them through `run_validations` proves
 nothing about their branches.
 """
 
+import logging
 import re
 
 import pytest
@@ -99,25 +100,32 @@ def test_scripted_loc_names_are_harvested(tmp_path):
 
 _FALLBACK_COLOURS = list("WGRBYCMwgrbycm!")
 
-# case: (core.gfx body or None for no file, colours)
+# case: (core.gfx body or None for no file, colours, logged warning)
 _COLOUR_CASES = {
-    "no core.gfx": (None, _FALLBACK_COLOURS),
+    "no core.gfx": (None, _FALLBACK_COLOURS, "interface/core.gfx not found"),
     "textcolors block": (
         "guiTypes = {\n\ttextcolors = {\n\t\tY = { 255 200 0 }\n"
         "\t\tR = { 200 0 0 }\n\t}\n}\n",
         ["Y", "R"],
+        "",
     ),
-    "no textcolors block": ("guiTypes = {\n}\n", _FALLBACK_COLOURS),
+    "no textcolors block": (
+        "guiTypes = {\n}\n",
+        _FALLBACK_COLOURS,
+        "Failed to parse interface/core.gfx",
+    ),
 }
 
 
 @pytest.mark.parametrize(
-    ("body", "expected"), _COLOUR_CASES.values(), ids=_COLOUR_CASES
+    ("body", "expected", "warning"), _COLOUR_CASES.values(), ids=_COLOUR_CASES
 )
-def test_colours_come_from_core_gfx(tmp_path, body, expected):
+def test_colours_come_from_core_gfx(tmp_path, caplog, body, expected, warning):
     if body is not None:
         write_under_str(tmp_path, "interface/core.gfx", body)
-    assert VL.get_all_colors(str(tmp_path)) == expected
+    with caplog.at_level(logging.WARNING):
+        assert VL.get_all_colors(str(tmp_path)) == expected
+    assert warning in caplog.text and bool(caplog.text) == bool(warning)
 
 
 def test_duplicate_keys_from_skipped_files_are_not_reported(tmp_path):
