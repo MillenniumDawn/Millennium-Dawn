@@ -187,7 +187,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## Refreshing vanilla-derived data
 
-CI has no HOI4 install, so seven checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
+CI has no HOI4 install, so eight checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
 
 Files live under `tools/validation/` except the `docs` target.
 
@@ -200,9 +200,11 @@ Files live under `tools/validation/` except the `docs` target.
 | `gui`      | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
 | `paths`    | `vanilla_paths.txt`            | `validate_file_paths.py`     |
 | `sprites`  | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+| `ui-paths` | `vanilla_ui_paths.txt`         | `validate_gfx_references.py` |
 
 - `docs` files are verbatim copies of the game's own `documentation/`.
 - `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).
+- `ui-paths` groups vanilla interface files by the path the game loads them from, for the check on what an MD file at the same path drops. It also reads the game binary (`hoi4` or `hoi4.exe`) to mark the names the engine looks up. The validator reads only the manifest, even with an install present.
 - `sprites` is also read by `validate_ideas.py` (names) and `validate_decisions.py` (sizes). Lines are `GFX_name WxH`; the size is the texture's header dimensions and is absent when the sprite has no `texturefile` or the file is unreadable. Names come first so every reader that only wants names keeps working. The refresh reads ~30k texture headers and takes about a minute. Sprites from DLCs the refreshing machine does not own would drop out of the manifest; the ten music-pack sprites (`GFX_sabaton_album_art`, `GFX_*_comintern`, …) were kept by hand for that reason, so check the name diff before committing a refresh.
 
 ```bash
