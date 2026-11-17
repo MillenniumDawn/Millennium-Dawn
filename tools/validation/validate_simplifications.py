@@ -39,6 +39,9 @@ breakaways, so they only lose their always-true `original_tag` re-checks.
 An `OR` that lists the same clause twice is flagged as well. The repeat is
 dead weight, or a copy-paste where one copy was meant to differ.
 
+A `THIS = { ... }` wrapper runs in the scope it is already in, so it is flagged
+to be unwrapped. Bodies that read `PREV` are skipped (see _find_this_wrappers).
+
 Output is WARNING-only.
 """
 
@@ -588,6 +591,22 @@ def _find_duplicate_or_clauses(src: _Script):
     return results
 
 
+_THIS_BLOCK_RE = _keyword_block_re("THIS")
+_PREV_RE = re.compile(r"\bPREV\b")
+
+
+def _find_this_wrappers(src: _Script):
+    """Return the line of each `THIS = { ... }` block, which reopens the scope
+    it is already in. A body that reads PREV is skipped: the wrapper pushes a
+    scope, so PREV inside it is the current scope, and unwrapping would point
+    PREV one scope further back."""
+    return [
+        src.line(m.start())
+        for m, body in _iter_block_bodies(src, _THIS_BLOCK_RE)
+        if not _PREV_RE.search(body)
+    ]
+
+
 def _is_magic_chain(header: str) -> bool:
     return all(part in _MAGIC for part in header.split("."))
 
@@ -1058,11 +1077,11 @@ def _scan_file(src: _Script):
 
 
 def _scan_bare_not(src: _Script):
-    """Return [(message, line)] for the bare multi-child NOT and duplicate OR
-    clause checks. Separate from _scan_file: NOT and OR live in trigger
-    contexts across all of common/ (the founding bug was in an ai_strategy
-    allowed block), so these checks scan wider than the effect-bearing files
-    the other detectors target."""
+    """Return [(message, line)] for the bare multi-child NOT, duplicate OR
+    clause, and THIS wrapper checks. Separate from _scan_file: these blocks
+    live in trigger and effect contexts across all of common/ (the founding
+    bug was in an ai_strategy allowed block), so these checks scan wider than
+    the effect-bearing files the other detectors target."""
     findings = []
     for line, count in _find_bare_not(src):
         findings.append(
@@ -1079,6 +1098,14 @@ def _scan_bare_not(src: _Script):
             (
                 f"OR repeats the clause `{shown}`; remove the duplicate, or fix "
                 "it if one copy was meant to differ",
+                line,
+            )
+        )
+    for line in _find_this_wrappers(src):
+        findings.append(
+            (
+                "`THIS = { ... }` runs in the scope it is already in; unwrap it, "
+                "or use `AND = { ... }` to keep a group under OR or NOT",
                 line,
             )
         )
