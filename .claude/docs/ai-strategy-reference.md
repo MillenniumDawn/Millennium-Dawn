@@ -115,6 +115,13 @@ ai_strategy = { type = conquer id = GER value = 200 }
   units that use them. Tanks have no high block. `medium_tank_chassis` is a base type,
   and its subtypes inherit a factor set on it.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
+- AA, AT, artillery, and CNC carry `type = infantry` beside rifles, so `id = infantry`
+  on a category token covers the whole family. Name the archetype to target one item.
+- Zero rifle stock is normal for an AI that fields everything it makes. Compare
+  `num_equipment_in_armies_k@` with `num_target_equipment_in_armies_k@` to find a real
+  shortage.
+- Each production line gets one factory before any line gets a second, so a country with
+  more lines than factories builds small, steady piles of cheap AA and AT.
 - Shortage strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`) only raise
   production. A `role_ratio` or `build_army` on a shortage gate flips as stock moves, and
   each flip deletes or re-queues training lines.
