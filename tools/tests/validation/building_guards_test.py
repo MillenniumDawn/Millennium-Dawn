@@ -181,6 +181,11 @@ _RANDOM_SLOT_CASES = {
         "add_building_construction = { type = arms_factory level = 1 } }",
         0,
     ),
+    "removal without a presence proof": (
+        "random_owned_state = { remove_building = { type = industrial_complex level = 1 } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        1,
+    ),
     "province building skipped": (
         "random_owned_state = { add_building_construction = { type = naval_base level = 1 "
         "province = { all_provinces = yes } } }",

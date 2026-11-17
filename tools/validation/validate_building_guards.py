@@ -55,9 +55,10 @@ The advisory random-state slot check covers direct construction effects in
 selected random-state iterators and randomly limited every-state iterators. It
 looks for a free slot proven in the selector's own limit (`free_building_slots`
 or a scripted trigger built on it), or made earlier in the same block by
-`add_extra_state_shared_building_slots` or a `remove_building`. Shared-slot
-buildings share one proof. Province buildings are skipped: `free_building_slots`
-only checks them for a fixed province.
+`add_extra_state_shared_building_slots` or a `remove_building` of a building
+the limit proves present. Shared-slot buildings share one proof. Province
+buildings are skipped: `free_building_slots` only checks them for a fixed
+province.
 
 The same file walk also checks where buildings go and who owns them:
 
@@ -662,8 +663,10 @@ class Scanner:
     def _check_selected_constructions(self, start: int, end: int, blocks):
         limits = [self.text[s:e] for child, _, s, e in blocks if child == "limit"]
         guards: Set[str] = set()
+        present: Set[str] = set()
         for limit in limits:
             guards |= _slot_guards(limit, _SLOT_TRIGGERS)
+            present |= _extract_building_guards(limit)
         # Effects run in order, so an extra shared slot or a removed building
         # frees room only for the constructions after it.
         cursor = start
@@ -676,7 +679,8 @@ class Scanner:
                 continue
             building = match.group(1)
             if child == "remove_building":
-                guards.add(building)
+                if building in present:
+                    guards.add(building)
                 continue
             if child != "add_building_construction" or building in _PROVINCIAL:
                 continue

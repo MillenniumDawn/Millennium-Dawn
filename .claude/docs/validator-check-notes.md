@@ -91,8 +91,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   inside `AND`), or a scripted trigger whose body has one, read from
   `common/scripted_triggers/` (`infrastructure_random_build_loc`,
   `free_shared_building_slots`). An earlier `add_extra_state_shared_building_slots` or
-  `remove_building` in the same block also counts; effects run in order, so one placed
-  after the construction does not, and the warning says so. Shared-slot buildings
+  `remove_building` in the same block also counts, the removal only when the `limit`
+  proves that building is present. Effects run in order, so one placed after the
+  construction does not, and the warning says so. Shared-slot buildings
   (`level_cap = { shares_slots = yes }`) share one proof. A same-building upper bound
   is noted but does not suppress the warning. Province buildings are skipped, since
   `free_building_slots` checks them only with a fixed `province`. Nested effects and
