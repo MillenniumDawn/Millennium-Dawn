@@ -1696,10 +1696,15 @@ _CATEGORY_RECHECK_CASES = {
         _GER_LOCK,
         [("dec1", "allowed")],
     ),
-    # validate_allowed_redundant_with_category owns this one.
+    # validate_allowed_redundant_with_category owns these two.
     "allowed the category already holds": (
         {"dec1": _block("allowed", _GER_AT_WAR)},
         _GER_AT_WAR,
+        [],
+    ),
+    "allowed original_tag under a tag lock": (
+        {"dec1": _block("allowed", _GER_LOCK)},
+        "tag = GER",
         [],
     ),
 }
@@ -1739,6 +1744,18 @@ _ALLOWED_REPEAT_CASES = {
         "OR = { tag = GER tag = ITA }",
         True,
     ),
+    "different block contents": (
+        "OR = { tag = GER tag = FRA }",
+        "OR = { tag = GER tag = ITA }",
+        False,
+    ),
+    "different operator": (
+        "has_political_power > 50",
+        "has_political_power < 50",
+        False,
+    ),
+    "different value": ("original_tag = ITA", _GER_LOCK, False),
+    "state scope key": ("123 = { has_war = yes }", "has_war = yes", False),
     "no allowed": ("", _GER_LOCK, False),
 }
 

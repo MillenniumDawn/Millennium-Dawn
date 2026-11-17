@@ -835,8 +835,17 @@ def _flat_tag_pins(block: str) -> set:
     return {tag for _, tag in _flat_tag_pins_with_kind(block)}
 
 
+# iter_statement_ops reads no numeric key, so `123 = { ... }` would leak its body.
+_STATE_SCOPE_RE = re.compile(r"(?<![\w.:@])\d+\s*=\s*\{")
+
+
 def _trigger_statements(block: str) -> Set[str]:
-    """Depth-0 statements of a trigger block, whitespace-collapsed for comparison."""
+    """Depth-0 statements of a trigger block, whitespace-collapsed for comparison.
+
+    A block holding a state scope is kept whole, so it only matches an identical block.
+    """
+    if _STATE_SCOPE_RE.search(block):
+        return {" ".join(flat_block_text(block).split())}
     statements = set()
     for key, operator, scalar, body in iter_statement_ops(flat_block_text(block)):
         value = scalar if body is None else "{ " + " ".join(body.split()) + " }"
