@@ -514,7 +514,7 @@ def test_timed_only_dynamic_modifiers_are_skipped(tmp_path, path, grant, count):
         assert "'test_dm'" in validator._issues[0].message
 
 
-_WORKER = "worker-requirement-over-40-percent"
+_WORKER = "worker-requirement-over-cap"
 _SEARCH = "modifier-cap-search"
 _BINDING = "test_dm = {\n\toffices_worker_requirement_modifier = test_var\n}\n"
 _DM = "common/dynamic_modifiers/test.txt"
@@ -534,16 +534,16 @@ _ROW_CASES = {
             )
         },
         [],
-        [(_WORKER, "'test_idea'", "+41%", "±40%")],
+        [(_WORKER, "'test_idea'", "+41%", "past the +40% cap")],
     ),
-    "literal cut over cap": (
+    "literal cut past the 30% cut cap": (
         {
             "common/ideas/test.txt": _idea(
-                "test_idea", "civ_facs_worker_requirement_modifier", "-0.41"
+                "test_idea", "civ_facs_worker_requirement_modifier", "-0.35"
             )
         },
         [],
-        [(_WORKER, "-41%")],
+        [(_WORKER, "-35%", "past the -30% cap")],
     ),
     "literal at cap": (
         {

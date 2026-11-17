@@ -800,24 +800,34 @@ def _is_cost_style(key: str) -> bool:
         "cost" in key
         or key.startswith("expected_")
         or key in _NEGATIVE_BONUS_KEYS
-        or key.endswith("fuel_consumption_factor")
+        or key.endswith(
+            (
+                "_worker_requirement_modifier",
+                "_workforce_requirement_modifier",
+                "fuel_consumption_factor",
+            )
+        )
     )
 
 
+def _counted_cap(row: Dict[str, Any], key: str, value: float) -> Optional[float]:
+    """The cap value counts against, or None when the row ignores its direction."""
+    bonus = value < 0 if _is_cost_style(key) else value > 0
+    if bonus:
+        return row.get("bonus_cap", row["cap"])
+    return row["cap"] if row["direction"] == "either" else None
+
+
 def _past_cap(row: Dict[str, Any], key: str, value: float) -> bool:
-    """Whether value goes past the row's cap in the direction the row counts."""
-    if row["direction"] == "either":
-        return abs(value) > row["cap"]
-    if _is_cost_style(key):
-        return value < -row["cap"]
-    return value > row["cap"]
+    cap = _counted_cap(row, key, value)
+    return cap is not None and abs(value) > cap
 
 
-def _cap_text(row: Dict[str, Any], key: str) -> str:
-    percent = f"{row['cap'] * 100:g}%"
-    if row["direction"] == "either":
-        return f"±{percent}"
-    return f"-{percent}" if _is_cost_style(key) else f"+{percent}"
+def _cap_text(row: Dict[str, Any], key: str, value: float) -> str:
+    cap = _counted_cap(row, key, value)
+    if row["direction"] == "either" and "bonus_cap" not in row:
+        return f"±{cap * 100:g}%"
+    return f"{'-' if value < 0 else '+'}{cap * 100:g}%"
 
 
 def _cap_search_row(spec: str) -> Dict[str, Any]:
@@ -1317,7 +1327,7 @@ class Validator(BaseValidator):
                 continue
             message = (
                 f"'{owner}': {key} = {value:g} is a {value * 100:+g}% change from one "
-                f"source, past the {_cap_text(row, key)} cap; verify the balance and "
+                f"source, past the {_cap_text(row, key, value)} cap; verify the balance and "
                 "decimal placement"
             )
             if "exceptions" in row:
@@ -1386,7 +1396,7 @@ class Validator(BaseValidator):
                 message = (
                     f"{effect} {var} = {value:g} {verb.format(key)} "
                     f"{change * 100:+g}% from one source, past the "
-                    f"{_cap_text(row, key)} cap; verify the balance"
+                    f"{_cap_text(row, key, change)} cap; verify the balance"
                 )
                 hits.append((row["category"], message, rel, line))
         return hits

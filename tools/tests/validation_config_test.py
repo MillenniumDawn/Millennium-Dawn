@@ -26,6 +26,7 @@ def test_every_modifier_cap_row_is_complete():
         if row.get("skip"):
             continue
         assert row["cap"] >= 0 and row["direction"] in ("bonus", "either"), row
+        assert row.get("bonus_cap", 0) >= 0, row
         assert isinstance(row["category"], str), row
         if "exceptions" in row:
             assert row["exceptions"] in lists, row

@@ -660,14 +660,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   a specific row goes above the general `*_factor` / `*_modifier` 30% row. `skip` rows
   exempt AI weights and `interest_rate_multiplier_modifier`, a number of percentage points.
   Each row keeps its own category: `weekly-stability-war-support-over-cap`,
-  `income-over-25-percent`, `worker-requirement-over-40-percent`,
+  `income-over-25-percent`, `worker-requirement-over-cap`,
   `excessive-modifier-over-30-percent`, and the `--unbalanced-modifiers` rows
   `unbalanced-roi` and `unbalanced-productivity`. These are balance review prompts, not
   hard caps (Issues #6371, #6494, #4370).
 - A `bonus` row counts positive values, or negative ones for cost-style keys: keys
-  containing `cost`, starting with `expected_`, ending in `fuel_consumption_factor`, or
-  listed maluses such as `consumer_goods_factor` and `tax_rate_change_multiplier_modifier`.
-  An `either` row counts both directions. The 30% row is `percent_only`: it skips keys
+  containing `cost`, starting with `expected_`, ending in `fuel_consumption_factor` or a
+  worker or workforce requirement suffix, or listed maluses such as `consumer_goods_factor`
+  and `tax_rate_change_multiplier_modifier`. An `either` row counts both directions; its
+  `bonus_cap` sets the bonus side apart, so worker requirement cuts still warn past 30%
+  while increases warn past 40%. The 30% row is `percent_only`: it skips keys
   defined with `value_type = number`, including flat renewable capacity and
   expected-spending tiers.
 - An idea only granted through `add_timed_idea`, or a dynamic modifier only added with
