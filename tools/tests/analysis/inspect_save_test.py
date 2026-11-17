@@ -25,6 +25,16 @@ MOD_FILES = {
 \t}
 \theavy_tank_amphibious_chassis = {
 \t\tarchetype = heavy_tank_chassis
+\t\tfor_each = {
+\t\t}
+\t}
+}
+""",
+    "common/units/test.txt": """sub_units = {
+\tInf_Bat = {
+\t\tneed = {
+\t\t\tinfantry_weapons_type = 50
+\t\t}
 \t}
 }
 """,
@@ -61,6 +71,9 @@ equipments={
 \theavy_tank_amphibious_chassis_0={
 \t\tid={ id=2 type=70 }
 \t}
+\theavy_tank_amphibious_chassis={
+\t\tid={ id=3 type=70 }
+\t}
 }
 states={
 \t1={
@@ -82,6 +95,17 @@ states={
 \t\tcontroller="BBB"
 \t\tstate_category=city
 \t\textra_shared_slots=1
+\t}
+}
+division_templates={
+\tdivision_template={
+\t\tid={ id=10 type=52 }
+\t\tname="Rifle Brigade"
+\t\tcountry="AAA"
+\t\tregiments={
+\t\t\tInf_Bat={ x=0 y=0 }
+\t\t\tInf_Bat={ x=0 y=1 }
+\t\t}
 \t}
 }
 countries={
@@ -111,6 +135,10 @@ countries={
 \t\t\t\tequipment={
 \t\t\t\t\tid={ id=1 type=70 }
 \t\t\t\t\tamount=500
+\t\t\t\t}
+\t\t\t\tequipment={
+\t\t\t\t\tid={ id=3 type=70 }
+\t\t\t\t\tamount=7
 \t\t\t\t}
 \t\t\t}
 \t\t\tgeneral_lines={
@@ -165,8 +193,29 @@ countries={
 \t\t\t\tequipment_variant_index={ id=2 type=70 }
 \t\t\t}
 \t\t}
+\t\tunits={
+\t\t\tdivision={
+\t\t\t\tdivision_template_id={ id=10 type=52 }
+\t\t\t\torganisation=30
+\t\t\t\tstrength=80
+\t\t\t\tequipment={
+\t\t\t\t\tequipment={
+\t\t\t\t\t\tid={ id=1 type=70 }
+\t\t\t\t\t\tamount=80.5
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t\tarmy_manpower={
+\t\t\t\t\tarmy_manpower_value={
+\t\t\t\t\t\tvalue={ tag="AAA" value=900 }
+\t\t\t\t\t}
+\t\t\t\t}
+\t\t\t\texperience=12
+\t\t\t}
+\t\t}
 \t\tvariables={
 \t\t\ttreasury=10
+\t\t\tbureau_law=2
+\t\t\texpected_adm_spending=3
 \t\t}
 \t}
 }
@@ -219,7 +268,20 @@ _REPORT_CASES = {
     "stability from the country's own block": (["AAA"], "stability 0.5,"),
     "column-0 brace keeps the block": (["AAA"], "ruling party democratic"),
     "political power from politics": (["AAA"], "political power 12.5"),
-    "named variable": (["AAA"], "treasury 10"),
+    "economy variable": (
+        ["AAA"],
+        "budget: display_income None, display_expense None, treasury 10,",
+    ),
+    "extra variable": (["AAA", "--var", "bureau_law"], "variables: bureau_law 2"),
+    "spending law against expected": (["AAA"], "bureau 2/3"),
+    "division totals": (
+        ["AAA"],
+        "units: 1 divisions, strength 80% and organisation 30.0 on average, experience 12, manpower 900",
+    ),
+    "template name": (["AAA"], "templates: Rifle Brigade 1"),
+    "fielded against base need": (["AAA"], "80 /       100 ( 80%)"),
+    "frame key keeps its own group": (["AAA"], "heavy_tank_amphibious_chassis 7"),
+    "buildings in owned states": (["AAA"], "buildings in owned states: arms_factory 2"),
     "ideas": (["AAA"], "ideas: idea_a idea_b"),
     "type grouped by archetype": (
         ["AAA"],

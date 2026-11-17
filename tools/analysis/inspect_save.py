@@ -5,15 +5,18 @@
     python tools/analysis/inspect_save.py <save.hoi4> SAU PER --var gdp_total
     python tools/analysis/inspect_save.py <save.hoi4> --world
 
-Per country: stability, war support, political power, ruling party, MD economy
-variables, ideas, the construction queue, military production lines by equipment
-archetype, the stockpile, market contracts, and shared building slots over owned
-states. --world prints production shares and market totals for every country.
+Per country: stability, war support, political power, ruling party, MD budget, debt,
+tax, growth, and spending law variables, ideas, divisions with their templates and
+fielded equipment against the templates' base need, military production lines by
+equipment archetype, the construction queue, the stockpile, market contracts, and
+shared building slots and buildings over owned states. --world prints production
+shares and market totals for every country.
 
 Saves must be text (save_as_binary=no in settings.txt). The file is streamed once and
-each country is read from its own block. The save holds no reliable resource balance,
-fielded equipment, or helicopter stock under archetype names; read the benchmark
-log's resource lines, or log num_equipment@ and num_equipment_in_armies@ from a probe.
+each country is read from its own block. Base need leaves out need modifiers, so the
+engine's army target can be higher; log num_target_equipment_in_armies@ from a probe
+for that. The save holds no reliable resource balance; read the benchmark log's
+resource lines.
 """
 
 from __future__ import annotations
@@ -28,17 +31,45 @@ from dataclasses import dataclass, field
 
 REPO = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-DEFAULT_VARIABLES = (
-    "treasury",
-    "treasury_rate",
-    "debt",
-    "interest_rate",
-    "population_tax_rate",
-    "corporate_tax_rate",
-    "gdp_total",
-    "gdp_per_capita",
-    "inflation_rate_var",
-    "total_unemployed_percentage_display",
+# Country variables MD's economy keeps, by topic.
+ECONOMY = {
+    "budget": (
+        "display_income",
+        "display_expense",
+        "treasury",
+        "treasury_rate",
+        "budget_balance_ratio",
+        "ai_budget_balance",
+    ),
+    "debt": ("debt", "debt_ratio", "interest_rate", "debt_service_share"),
+    "taxes": (
+        "population_tax_rate",
+        "expected_population_tax_rate",
+        "corporate_tax_rate",
+        "expected_corporate_tax_rate",
+        "population_tax",
+        "corporate_tax",
+    ),
+    "growth": (
+        "gdp_total",
+        "gdp_per_capita",
+        "last_quarter_gdp_growth_rate",
+        "overall_productivity",
+        "inflation_rate_var",
+        "currency_strength",
+        "total_unemployed_percentage_display",
+        "population_total_m",
+        "actual_consumer_goods_percent_display",
+    ),
+}
+# Spending law variable and the expected level it is measured against.
+SPENDING_LAWS = (
+    ("bureau_law", "expected_adm_spending"),
+    ("police_law", "expected_police_spending"),
+    ("education_law", "expected_edu_spending"),
+    ("health_law", "expected_health_spending"),
+    ("social_law", "expected_welfare_spending"),
+    ("military_law", "expected_military_law"),
 )
 
 _SECTION_RE = re.compile(r"^(\w+)=\{\s*$")
@@ -48,7 +79,15 @@ _STRING_RE = re.compile(r'"[^"]*"')
 _FIELD_RE = re.compile(r"^\t+(\w+)=([^{\n]+)$", re.M)
 _LEVEL_RE = re.compile(r"^\t\t\t(\w+)=\{\n\t\t\t\tlevel=(\d+)", re.M)
 _SUFFIX_RE = re.compile(r"_\d+$")
-_WANTED_SECTIONS = ("equipments", "states", "countries", "equipment_market")
+_SLOT_RE = re.compile(r"^\t+(\w+)=\{ x=\d+ y=\d+ \}", re.M)
+_VARIANT_AMOUNT_RE = re.compile(r"id=\{ id=(\d+) type=70 \}\n\t+amount=(-?[\d.]+)")
+_WANTED_SECTIONS = (
+    "equipments",
+    "states",
+    "countries",
+    "equipment_market",
+    "division_templates",
+)
 
 
 def _depth_change(line: str) -> int:
@@ -81,11 +120,19 @@ class State:
 
 
 @dataclass
+class Template:
+    country: str
+    name: str
+    battalions: list[str]
+
+
+@dataclass
 class Save:
     date: str = ""
     equipment: dict[str, str] = field(default_factory=dict)
     states: dict[str, State] = field(default_factory=dict)
     countries: dict[str, str] = field(default_factory=dict)
+    templates: dict[str, Template] = field(default_factory=dict)
     market: str = ""
 
 
@@ -96,6 +143,7 @@ class Mod:
     shared_slots: set[str]
     category_slots: dict[str, int]
     province_state: dict[str, str]
+    unit_need: dict[str, dict[str, int]]
 
     def archetype_of(self, key: str) -> str:
         """Group a save equipment key by archetype, keeping sub-archetypes apart."""
@@ -124,7 +172,9 @@ def load_mod(root: str) -> Mod:
         os.path.join(root, "common/units/equipment/**/*.txt")
     ):
         found = re.search(r"^\t\tarchetype\s*=\s*(\w+)", body, re.M)
-        archetype[name] = found.group(1) if found else name
+        # A for_each frame such as heavy_tank_amphibious_chassis is its own group.
+        frame = re.search(r"^\t\tfor_each\s*=", body, re.M)
+        archetype[name] = found.group(1) if found and not frame else name
     provincial, shared = {"rail_way"}, set()
     for name, body in _top_blocks(os.path.join(root, "common/buildings/*.txt")):
         if re.search(r"^\t\tprovincial\s*=\s*yes", body, re.M):
@@ -144,7 +194,14 @@ def load_mod(root: str) -> Mod:
         if state_id and provinces:
             for province in provinces.group(1).split():
                 province_state[province] = state_id.group(1)
-    return Mod(archetype, provincial, shared, slots, province_state)
+    unit_need = {}
+    for name, body in _top_blocks(os.path.join(root, "common/units/*.txt")):
+        need = re.search(r"\bneed\s*=\s*\{([^}]*)\}", body)
+        if need:
+            unit_need[name] = {
+                a: int(n) for a, n in re.findall(r"(\w+)\s*=\s*(\d+)", need.group(1))
+            }
+    return Mod(archetype, provincial, shared, slots, province_state, unit_need)
 
 
 def _parse_state(body: str) -> State:
@@ -158,6 +215,17 @@ def _parse_state(body: str) -> State:
             b: int(n) for b, n in _LEVEL_RE.findall(_block(body, "buildings", 2))
         },
     )
+
+
+def _add_template(save: Save, body: str, tags: set[str]) -> None:
+    country = _value(body, "country", 2) or ""
+    template_id = re.search(r"\n\t\tid=\{ id=(\d+) type=52 \}", body)
+    if country in tags and template_id:
+        name = _value(body, "name", 2) or _value(body, "localization_key", 2) or "?"
+        battalions = _SLOT_RE.findall(
+            _block(body, "regiments", 2) + _block(body, "support", 2)
+        )
+        save.templates[template_id.group(1)] = Template(country, name, battalions)
 
 
 def read_save(path: str, tags: set[str], every_country: bool) -> Save:
@@ -184,14 +252,18 @@ def read_save(path: str, tags: set[str], every_country: bool) -> Save:
                     save.equipment[found.group(1)] = entry
             if section == "equipment_market":
                 save.market += line
-            elif depth >= 2 and section in ("states", "countries") and entry:
-                if section == "states" or every_country or entry in tags:
+            elif depth >= 2 and entry:
+                if section in ("states", "division_templates"):
+                    lines.append(line)
+                elif section == "countries" and (every_country or entry in tags):
                     lines.append(line)
             depth += _depth_change(line)
             if depth == 1 and entry and lines:
                 body = "\n" + "".join(lines)
                 if section == "states":
                     save.states[entry] = _parse_state(body)
+                elif section == "division_templates":
+                    _add_template(save, body, tags)
                 else:
                     save.countries[entry] = (
                         body if entry in tags else _block(body, "production", 2)
@@ -265,6 +337,52 @@ def stockpile(block: str, save: Save, mod: Mod) -> Counter[str]:
     return stock
 
 
+def units(block: str, save: Save, mod: Mod, top: int) -> list[str]:
+    """Division totals, templates in use, and fielded against needed equipment."""
+    divisions = re.findall(
+        r"^\t\t\tdivision=\{\n(.*?)^\t\t\t\}$", _block(block, "units", 2), re.S | re.M
+    )
+    if not divisions:
+        return ["units: none"]
+    fielded: Counter[str] = Counter()
+    needed: Counter[str] = Counter()
+    templates: Counter[str] = Counter()
+    strength = organisation = experience = manpower = 0.0
+    for body in divisions:
+        strength += float(_value(body, "strength", 4) or 0)
+        organisation += float(_value(body, "organisation", 4) or 0)
+        experience += float(_value(body, "experience", 4) or 0)
+        men = re.search(
+            r"army_manpower_value=\{\n\t+value=\{ tag=\"\w+\" value=(\d+)", body
+        )
+        manpower += int(men.group(1)) if men else 0
+        for variant, amount in _VARIANT_AMOUNT_RE.findall(_block(body, "equipment", 4)):
+            key = save.equipment.get(variant, "?" + variant)
+            fielded[mod.archetype_of(key)] += float(amount)
+        template_id = re.search(r"division_template_id=\{ id=(\d+)", body)
+        template = save.templates.get(template_id.group(1) if template_id else "")
+        templates[template.name if template else "?"] += 1
+        for battalion in template.battalions if template else []:
+            needed.update(mod.unit_need.get(battalion, {}))
+    count = len(divisions)
+    rows = [
+        f"units: {count} divisions, strength {strength / count:.0f}% and organisation "
+        f"{organisation / count:.1f} on average, experience {experience / count:.0f}, "
+        f"manpower {manpower:,.0f}",
+        "templates: "
+        + ", ".join(f"{name} {n}" for name, n in templates.most_common(top)),
+        "equipment fielded / template base need (before need modifiers):",
+    ]
+    for name in sorted(
+        needed, key=lambda a: fielded[a] / needed[a] if needed[a] else 1
+    ):
+        share = 100 * fielded[name] / needed[name] if needed[name] else 0
+        rows.append(
+            f"  {name:42} {fielded[name]:>9,.0f} / {needed[name]:>9,} ({share:3.0f}%)"
+        )
+    return rows
+
+
 def contracts(save: Save, mod: Mod) -> list[tuple[str, str, str, int]]:
     """Every purchase contract line as (seller, buyer, archetype, amount)."""
     rows = []
@@ -300,12 +418,25 @@ def print_country(
         f"political power {_value(politics, 'political_power', 3)}, ruling party {_value(politics, 'ruling_party', 3)}"
     )
     values = _block(block, "variables", 2)
+    for topic, names in ECONOMY.items():
+        print(f"{topic}: " + ", ".join(f"{n} {_value(values, n, 3)}" for n in names))
     print(
-        "variables: "
-        + ", ".join(f"{name} {_value(values, name, 3)}" for name in variables)
+        "spending laws (law/expected): "
+        + ", ".join(
+            f"{law.removesuffix('_law')} {_value(values, law, 3)}/{_value(values, expected, 3)}"
+            for law, expected in SPENDING_LAWS
+        )
     )
+    if variables:
+        print(
+            "variables: " + ", ".join(f"{n} {_value(values, n, 3)}" for n in variables)
+        )
     ideas = re.search(r"\n\t\t\tideas=\{\n\t+([^}]*)", politics)
     print("ideas: " + (" ".join(ideas.group(1).split()) if ideas else "none"))
+
+    print()
+    for row in units(block, save, mod, top):
+        print(row)
 
     lines = production_lines(block, save, mod)
     total = sum(row[0] for row in lines.values())
@@ -345,6 +476,13 @@ def print_country(
     print(
         f"\nstates: {len(owned)} owned ({occupied} occupied by others), shared slots used "
         f"{sum(used.values())} of {sum(caps.values())}, {len(free)} states with {sum(free.values())} free"
+    )
+    buildings: Counter[str] = Counter()
+    for state in owned.values():
+        buildings.update(state.buildings)
+    print(
+        "buildings in owned states: "
+        + ", ".join(f"{b} {n}" for b, n in buildings.most_common() if n)
     )
     print()
 
@@ -401,9 +539,7 @@ def main() -> int:
         print(error, file=sys.stderr)
         return 1
     for tag in args.tags:
-        print_country(
-            tag.upper(), save, mod, list(DEFAULT_VARIABLES) + args.var, args.top
-        )
+        print_country(tag.upper(), save, mod, args.var, args.top)
     if args.world:
         print_world(save, mod, args.top)
     return 0
