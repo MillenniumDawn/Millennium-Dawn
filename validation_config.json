@@ -286,7 +286,106 @@
   },
   "validate_modifiers": {
     "income_over_25_percent_exceptions": {},
-    "unbalanced_roi_exceptions": {}
+    "unbalanced_roi_exceptions": {},
+    "modifier_caps": [
+      {
+        "match": ["ai_*"],
+        "skip": true,
+        "reason": "AI weights, not game modifiers"
+      },
+      {
+        "match": ["interest_rate_multiplier_modifier"],
+        "skip": true,
+        "reason": "A number of percentage points, not a percent"
+      },
+      {
+        "match": ["stability_weekly", "war_support_weekly"],
+        "cap": 0.05,
+        "direction": "bonus",
+        "category": "weekly-stability-war-support-over-cap",
+        "reason": "Flat weekly gains add up fast; flat penalties are not flagged (Issue #6494)"
+      },
+      {
+        "match": ["stability_weekly_factor", "war_support_weekly_factor"],
+        "cap": 0.25,
+        "direction": "either",
+        "category": "weekly-stability-war-support-over-cap",
+        "reason": "Weekly factors scale every weekly gain or loss (Issue #6494)"
+      },
+      {
+        "match": [
+          "tax_gain_multiplier_modifier",
+          "corporate_tax_income_multiplier_modifier",
+          "population_tax_income_multiplier_modifier",
+          "healthcare_income_multiplier_modifier",
+          "infrastructure_tax_gain_multiplier_modifier",
+          "civilian_industry_tax_modifier",
+          "military_industry_tax_modifier",
+          "agriculture_tax_modifier",
+          "dockyard_income_tax_modifier",
+          "office_park_income_tax_modifier",
+          "agriculture_district_income_tax_modifier",
+          "microchip_plant_income_tax_modifier",
+          "composite_plant_income_tax_modifier",
+          "synthetic_refinery_income_tax_modifier",
+          "resource_export_multiplier_modifier",
+          "oil_export_multiplier_modifier",
+          "steel_export_multiplier_modifier",
+          "aluminium_export_multiplier_modifier",
+          "tungsten_export_multiplier_modifier",
+          "chromium_export_multiplier_modifier",
+          "rubber_export_multiplier_modifier",
+          "microchip_export_multiplier_modifier",
+          "composite_export_multiplier_modifier",
+          "international_market_income_modifier"
+        ],
+        "cap": 0.25,
+        "direction": "bonus",
+        "timed": true,
+        "category": "income-over-25-percent",
+        "exceptions": "income_over_25_percent_exceptions",
+        "reason": "One income source above +25% moves the whole budget (Issue #6371)"
+      },
+      {
+        "match": ["return_on_investment_modifier"],
+        "cap": 0.03,
+        "direction": "bonus",
+        "opt_in": true,
+        "timed": true,
+        "category": "unbalanced-roi",
+        "exceptions": "unbalanced_roi_exceptions",
+        "reason": "Single-reward investment return cap (Issue #4370)"
+      },
+      {
+        "match": [
+          "productivity_growth_modifier",
+          "country_productivity_growth_modifier",
+          "state_productivity_growth_modifier"
+        ],
+        "cap": 0.25,
+        "direction": "bonus",
+        "opt_in": true,
+        "timed": true,
+        "category": "unbalanced-productivity",
+        "reason": "Single-reward productivity growth cap (Issue #4370)"
+      },
+      {
+        "match": ["*_worker_requirement_modifier", "*_workforce_requirement_modifier"],
+        "cap": 0.40,
+        "direction": "either",
+        "variables": true,
+        "category": "worker-requirement-over-40-percent",
+        "reason": "One change above 40% either way moves millions of workers in or out of jobs"
+      },
+      {
+        "match": ["*_factor", "*_modifier"],
+        "cap": 0.30,
+        "direction": "bonus",
+        "percent_only": true,
+        "category": "excessive-modifier-over-30-percent",
+        "reason": "General single-source bonus cap; modifiers defined as numbers are skipped (Issue #6494)"
+      }
+    ]
   },
   "validate_on_actions": {
     "date_poll_exempt_ids": {
