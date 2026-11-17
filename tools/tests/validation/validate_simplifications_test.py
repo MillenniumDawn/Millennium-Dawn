@@ -903,6 +903,7 @@ def test_composite_reports_a_threshold_ladder_in_the_effect_dirs():
     )
     assert [line for _message, line in findings] == [2]
     assert "3 adjacent `if` blocks compare `score` with constants" in findings[0][0]
+    assert "value = score <comparator> = N multiply = V }`" in findings[0][0]
 
 
 # --- has_idea ladders over ideas that already set a variable -----------------
@@ -933,16 +934,34 @@ _ADDS_BONUS = tuple(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 
 _EVERY_EFFECT = (
     _ADDS_BONUS[0],
     "add_to_variable = { bonus = 2 }",
-    "set_temp_variable = { bonus = 4 } set_variable = { other = 1 }",
+    "set_temp_variable = { bonus = 3 } set_variable = { other = 1 }",
 )
 
 # case: (idea file, effect file, lines flagged)
 _IDEA_LADDER_CASES = {
     "ladder over ideas that set a variable": (
         _ideas(*_SETS_TIER),
-        _ladder(*_EVERY_EFFECT),
+        _ladder(*_ADDS_BONUS),
         [2],
     ),
+    "values on no line through the levels": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 4))),
+        [],
+    ),
+    "values from a named constant": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"set_temp_variable = {{ rate = @factor_{n} }}" for n in (1, 2, 3))),
+        [],
+    ),
+    "branch the parser cannot read": (
+        _ideas(*_SETS_TIER),
+        _ladder(
+            *(f"add_to_variable = {{ bonus = {n} tooltip = tt }}" for n in (1, 2, 3))
+        ),
+        [],
+    ),
+    "branches mix effect kinds": (_ideas(*_SETS_TIER), _ladder(*_EVERY_EFFECT), []),
     "ideas set no variable": (_ideas("", "", ""), _ladder(*_ADDS_BONUS), []),
     "one idea sets no variable": (
         _ideas(*_SETS_TIER[:2], ""),

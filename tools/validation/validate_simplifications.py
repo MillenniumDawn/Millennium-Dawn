@@ -48,7 +48,7 @@ Two ladder shapes are flagged as well:
     constant and add a constant to another -> one comparator-sum expression
   * three or more adjacent `if` / `else_if` branches over `has_idea` that only
     add or set a value, when every idea in that idea group already sets one
-    variable in `on_add` -> read the variable
+    variable in `on_add` and the values are linear in it -> read the variable
 
 Output is WARNING-only.
 """
@@ -58,6 +58,7 @@ import os
 import re
 import sys
 from bisect import bisect_left
+from fractions import Fraction
 from functools import cached_property, lru_cache
 from itertools import groupby
 
@@ -1130,38 +1131,38 @@ def _find_threshold_ladders(src: _Script):
 
 
 def _has_idea_branch(text: str, start: int, end: int):
-    """Return (idea, variables written) when an `if` / `else_if` body is
-    `limit = { has_idea = X }` plus only add or set effects, else None."""
+    """Return (idea, {(effect, variable): value}) when an `if` / `else_if` body
+    is `limit = { has_idea = X }` plus only add or set effects, else None. An
+    assignment `_variable_value` cannot read is kept as an empty variable and
+    value, which `_linear_in_level` rejects as a non-number."""
     limit = _IDEA_LIMIT_RE.match(text, start, end)
     if limit is None:
         return None
-    assigned = []
+    values = {}
     for name, value, is_block in _iter_direct_assignments(text[limit.end() : end]):
         if not is_block or name not in _VALUE_EFFECTS:
             return None
-        assigned.append(_variable_value(value))
-    if not assigned:
+        variable, assigned = _variable_value(value) or ("", "")
+        values[name, variable] = assigned
+    if not values:
         return None
-    return limit.group(1), frozenset(pair[0] for pair in assigned if pair)
+    return limit.group(1), values
 
 
 def _find_has_idea_chains(src: _Script):
-    """Return (line, ideas, variables written) for each run of 3+ adjacent
-    `if` / `else_if` branches over `has_idea` that only add or set a value.
-    Whether the ideas already set a variable is decided later, against the idea
-    files."""
+    """Return (line, [(idea, values)]) for each run of 3+ adjacent `if` /
+    `else_if` branches over `has_idea` that only add or set a value. Whether
+    the ideas already set a variable is decided later, against the idea files."""
     chains = []
     for run in _adjacent_runs(src, _BRANCH_BLOCK_RE, _has_idea_branch, chains=True):
         if len(run) >= _LADDER_MIN:
-            ideas = [idea for _, (idea, _) in run]
-            written = frozenset().union(*(names for _, (_, names) in run))
-            chains.append((run[0][0], ideas, written))
+            chains.append((run[0][0], [branch for _, branch in run]))
     return chains
 
 
-def _on_add_variable(src: _Script, start: int, end: int):
-    """Return the one variable an idea body sets to a constant in `on_add`, or
-    None when it sets none or several."""
+def _on_add_level(src: _Script, start: int, end: int):
+    """Return (variable, level) for the one variable an idea body sets to a
+    constant in `on_add`, or None when it sets none or several."""
     for _, on_add_start, on_add_end in _top_level_blocks(src, {"on_add"}, start, end):
         sets = [
             _variable_constant(value)
@@ -1170,48 +1171,79 @@ def _on_add_variable(src: _Script, start: int, end: int):
             )
             if is_block and name == "set_variable"
         ]
-        found = [entry[0] for entry in sets if entry is not None]
+        found = [entry for entry in sets if entry is not None]
         if len(found) == 1:
             return found[0]
     return None
 
 
 def _idea_variable_groups(src: _Script):
-    """Return {idea: (category, variable)} for each idea category in which every
-    idea sets the same single variable to a constant in `on_add`."""
+    """Return {idea: (category, variable, level)} for each idea category in which
+    every idea sets the same single variable to a constant in `on_add`."""
     groups = {}
     for _, start, end in _top_level_blocks(src, {"ideas"}):
         for category, cat_start, cat_end in _top_level_blocks(src, None, start, end):
-            variables = {
-                idea: _on_add_variable(src, idea_start, idea_end)
+            levels = {
+                idea: _on_add_level(src, idea_start, idea_end)
                 for idea, idea_start, idea_end in _top_level_blocks(
                     src, None, cat_start, cat_end
                 )
             }
-            if len(set(variables.values())) == 1 and None not in variables.values():
+            if (
+                None not in levels.values()
+                and len({v for v, _ in levels.values()}) == 1
+            ):
                 groups.update(
-                    {idea: (category, var) for idea, var in variables.items()}
+                    {
+                        idea: (category, var, level)
+                        for idea, (var, level) in levels.items()
+                    }
                 )
     return groups
 
 
+def _linear_in_level(branches, levels):
+    """True when every variable a branch writes is a number in every branch and
+    the values lie on one line through the branches' idea levels, so reading the
+    level variable gives the same value. Constants, variables, and irregular
+    steps need a lookup table, which is not a simplification."""
+    points = {}
+    for (_, values), level in zip(branches, levels):
+        for key, value in values.items():
+            if not _NUMBER_RE.fullmatch(value):
+                return False
+            points.setdefault(key, []).append((Fraction(level), Fraction(value)))
+    for found in points.values():
+        (x0, y0), (x1, y1) = found[0], found[-1]
+        if len(found) < len(branches) or any(
+            (y - y0) * (x1 - x0) != (y1 - y0) * (x - x0) for x, y in found
+        ):
+            return False
+    return True
+
+
 def _idea_ladder_findings(chains, groups):
     """Return [(message, line)] for each has_idea chain whose ideas all belong to
-    one group that already sets a variable. A chain that writes that variable is
-    its initializer, not a rebuild, and is skipped."""
+    one group that already sets a variable, with values linear in its level. A
+    chain that writes that variable is its initializer, not a rebuild, and is
+    skipped."""
     findings = []
-    for line, ideas, written in chains:
-        owners = {groups.get(idea) for idea in ideas}
+    for line, branches in chains:
+        entries = [groups.get(idea) for idea, _ in branches]
+        owners = {entry[:2] if entry else None for entry in entries}
         if len(owners) != 1 or None in owners:
             continue
         category, variable = next(iter(owners))
-        if variable in written:
+        written = {name for _, values in branches for _, name in values}
+        if variable in written or not _linear_in_level(
+            branches, [entry[2] for entry in entries]
+        ):
             continue
         findings.append(
             (
-                f"{len(ideas)} `has_idea` branches over `{category}` ideas only add "
-                f"or set a value, but each of those ideas already sets `{variable}` "
-                f"in `on_add`; read `{variable}` instead",
+                f"{len(branches)} `has_idea` branches over `{category}` ideas only "
+                f"add or set a value, but each of those ideas already sets "
+                f"`{variable}` in `on_add`; read `{variable}` instead",
                 line,
             )
         )
@@ -1268,8 +1300,9 @@ def _scan_file(src: _Script):
             (
                 f"{count} adjacent `if` blocks compare `{tested}` with constants and "
                 f"each add a constant to `{target}`; use one math expression with "
-                f"comparator terms, `add = {{ value = {tested} greater_than = N "
-                "multiply = V }`",
+                f"a comparator term per step, `add = {{ value = {tested} "
+                "<comparator> = N multiply = V }`, with each step's own comparator "
+                "(`greater_than`, `less_than`, ...)",
                 line,
             )
         )
