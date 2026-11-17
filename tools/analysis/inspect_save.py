@@ -6,17 +6,17 @@
     python tools/analysis/inspect_save.py <save.hoi4> --world
 
 Per country: stability, war support, political power, ruling party, MD budget, debt,
-tax, growth, and spending law variables, ideas, divisions with their templates and
-fielded equipment against the templates' base need, military production lines by
-equipment archetype, the construction queue, the stockpile, market contracts, and
-shared building slots and buildings over owned states. --world prints production
-shares and market totals for every country.
+tax, growth, and spending law variables, ideas, the resource balance, divisions with
+their templates and fielded equipment against the templates' base need, military
+production lines by equipment archetype, the construction queue, the stockpile, market
+contracts, and shared building slots and buildings over owned states. --world prints
+production shares, resource shortages, and market totals for every country.
 
 Saves must be text (save_as_binary=no in settings.txt). The file is streamed once and
 each country is read from its own block. Base need leaves out need modifiers, so the
 engine's army target can be higher; log num_target_equipment_in_armies@ from a probe
-for that. The save holds no reliable resource balance; read the benchmark log's
-resource lines.
+for that. The resource net is available minus demand, so a shortage shows even where
+the benchmark log's consumed-based net reads 0.
 """
 
 from __future__ import annotations
@@ -264,9 +264,13 @@ def read_save(path: str, tags: set[str], every_country: bool) -> Save:
                     save.states[entry] = _parse_state(body)
                 elif section == "division_templates":
                     _add_template(save, body, tags)
+                elif entry in tags:
+                    save.countries[entry] = body
                 else:
-                    save.countries[entry] = (
-                        body if entry in tags else _block(body, "production", 2)
+                    # World reports read only these two blocks; keep each one closed.
+                    save.countries[entry] = "".join(
+                        _block(body, key, 2) + "\n\t\t}"
+                        for key in ("production", "resources")
                     )
                 lines, entry = [], ""
     return save
@@ -383,6 +387,46 @@ def units(block: str, save: Save, mod: Mod, top: int) -> list[str]:
     return rows
 
 
+def _amounts(text: str) -> dict[str, float]:
+    return {name: float(n) for name, n in _FIELD_RE.findall(text)}
+
+
+def resource_balance(block: str) -> dict[str, dict[str, float]]:
+    """Resource to its produced, imported, export pool, exported, available, demand,
+    net, deposit and building figures, from the country's own resources block.
+
+    to_use holds three unnamed groups: what is available after the export pool, an
+    empty group, and demand as negative numbers.
+    """
+    res = _block(block, "resources", 2)
+    to_use = [
+        _amounts(group)
+        for group in re.findall(r"\{([^{}]*)\}", _block(res, "to_use", 3))
+    ]
+    figures = {
+        "produced": _amounts(_block(res, "produced", 3)),
+        "imported": _amounts(_block(res, "imported", 3)),
+        "export pool": _amounts(_block(res, "to_export", 3)),
+        "exported": _amounts(_block(res, "exported", 3)),
+        "available": to_use[0] if to_use else {},
+        "demand": {r: -n for r, n in (to_use[2] if len(to_use) > 2 else {}).items()},
+        "deposits": {},
+        "buildings": {},
+    }
+    for origin in re.findall(r"^\t\t\torigin=\{\n(.*?)^\t\t\t\}$", res, re.S | re.M):
+        for source in ("resources", "buildings"):
+            for name, amount in _amounts(_block(origin, source, 4)).items():
+                target = figures["deposits" if source == "resources" else "buildings"]
+                target[name] = target.get(name, 0) + amount
+    balance: dict[str, dict[str, float]] = defaultdict(dict)
+    for figure, values in figures.items():
+        for name, amount in values.items():
+            balance[name][figure] = amount
+    for row in balance.values():
+        row["net"] = row.get("available", 0) - row.get("demand", 0)
+    return dict(balance)
+
+
 def contracts(save: Save, mod: Mod) -> list[tuple[str, str, str, int]]:
     """Every purchase contract line as (seller, buyer, archetype, amount)."""
     rows = []
@@ -433,6 +477,17 @@ def print_country(
         )
     ideas = re.search(r"\n\t\t\tideas=\{\n\t+([^}]*)", politics)
     print("ideas: " + (" ".join(ideas.group(1).split()) if ideas else "none"))
+
+    print(
+        "\nresources: produced + imported - export pool = available, minus demand = net"
+    )
+    for name, row in sorted(resource_balance(block).items()):
+        g = row.get
+        print(
+            f"  {name:12} {g('produced', 0):>7g} + {g('imported', 0):>6g} - {g('export pool', 0):>6g} "
+            f"= {g('available', 0):>7g} - {g('demand', 0):>6g} = {g('net', 0):>+8.2f}"
+            f"  (deposits {g('deposits', 0):g}, buildings {g('buildings', 0):g}, sold {g('exported', 0):g})"
+        )
 
     print()
     for row in units(block, save, mod, top):
@@ -498,6 +553,21 @@ def print_world(save: Save, mod: Mod, top: int) -> None:
     )
     for name, active in world.most_common(top):
         print(f"  {name:42} {active:>5} ({100 * active / total:4.1f}%)")
+    short: Counter[str] = Counter()
+    shortfall: Counter[str] = Counter()
+    produced: Counter[str] = Counter()
+    for block in save.countries.values():
+        for name, row in resource_balance(block).items():
+            produced[name] += row.get("produced", 0)
+            if row["net"] < 0:
+                short[name] += 1
+                shortfall[name] -= row["net"]
+    print("\nresources: world produced, countries short, total shortfall")
+    for name in sorted(produced):
+        print(
+            f"  {name:12} {produced[name]:>9,.0f} {short[name]:>5} {shortfall[name]:>9,.1f}"
+        )
+
     deals = contracts(save, mod)
     units: Counter[str] = Counter()
     for _, _, name, amount in deals:

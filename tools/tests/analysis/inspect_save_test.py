@@ -193,6 +193,42 @@ countries={
 \t\t\t\tequipment_variant_index={ id=2 type=70 }
 \t\t\t}
 \t\t}
+\t\tresources={
+\t\t\tproduced={
+\t\t\t\tsteel=10
+\t\t\t}
+\t\t\timported={
+\t\t\t\tsteel=5
+\t\t\t}
+\t\t\tto_use={
+\t\t\t\t{
+\t\t\t\t\tsteel=12
+\t\t\t\t\tmicrochips=1
+\t\t\t\t}
+ {
+\t\t\t\t}
+ {
+\t\t\t\t\tsteel=-14
+\t\t\t\t\tmicrochips=-3
+\t\t\t\t}
+
+\t\t\t}
+\t\t\tto_export={
+\t\t\t\tsteel=3
+\t\t\t}
+\t\t\texported={
+\t\t\t\tsteel=2
+\t\t\t}
+\t\t\torigin={
+\t\t\t\tstate=1
+\t\t\t\tresources={
+\t\t\t\t\tsteel=8
+\t\t\t\t}
+\t\t\t\tbuildings={
+\t\t\t\t\tmicrochips=1
+\t\t\t\t}
+\t\t\t}
+\t\t}
 \t\tunits={
 \t\t\tdivision={
 \t\t\t\tdivision_template_id={ id=10 type=52 }
@@ -282,6 +318,19 @@ _REPORT_CASES = {
     "fielded against base need": (["AAA"], "80 /       100 ( 80%)"),
     "frame key keeps its own group": (["AAA"], "heavy_tank_amphibious_chassis 7"),
     "buildings in owned states": (["AAA"], "buildings in owned states: arms_factory 2"),
+    "resource balance from the export pool and demand": (
+        ["AAA"],
+        f"  {'steel':12} {10:>7g} + {5:>6g} - {3:>6g} = {12:>7g} - {14:>6g} = {-2:>+8.2f}"
+        "  (deposits 8, buildings 0, sold 2)",
+    ),
+    "building output and unnamed to_use groups": (
+        ["AAA"],
+        "=    -2.00  (deposits 0, buildings 1, sold 0)",
+    ),
+    "world resource shortage": (
+        ["--world"],
+        f"  {'steel':12} {10:>9,.0f} {1:>5} {2:>9,.1f}",
+    ),
     "ideas": (["AAA"], "ideas: idea_a idea_b"),
     "type grouped by archetype": (
         ["AAA"],
