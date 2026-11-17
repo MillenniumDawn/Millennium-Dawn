@@ -889,6 +889,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
+- `simplification` (WARNING): a `THIS = { ... }` block runs in the scope it is
+  already in, so unwrap it. A body that reads `PREV` is skipped, because the wrapper
+  pushes a scope and `PREV` inside it is the current scope.
 
 ## validate_special_projects.py
 
