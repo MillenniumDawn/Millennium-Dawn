@@ -104,6 +104,7 @@ are under `.claude/docs/`.
 - Map modes and their colorblind palettes: `map-mode-reference.md`.
 - UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
   UAR, union cosmetics: `formable-reference.md`.
+- Factions, faction rules, puppeting or annexing a faction leader: `faction-rules.md`.
 - Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
   Loading and menu art: `loading-screen-system.md`.
 - 3D models, entities, landmarks: `entity-system.md`. Power plants, energy techs,
