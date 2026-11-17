@@ -175,8 +175,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `available`, inside `hidden_trigger` if it is not player-facing, as the EU council
   decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
   note: the same country cannot repeat it, so it matters only if a second country can
-  take it. Script-only `allowed = { always = no }` decisions are skipped. Known gaps:
-  variables and other state, and reads through scripted triggers.
+  take it. When it is also locked to one tag (in `allowed`, `target_root_trigger`, or
+  the category `allowed`), nobody can and it is skipped. Script-only
+  `allowed = { always = no }` decisions are skipped. Known gaps: variables and other
+  state, reads through scripted triggers, and sibling decisions that share one flag.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or

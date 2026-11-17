@@ -1227,6 +1227,28 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             ],
             [],
         ),
+        "one-shot and one tag": (
+            [
+                _taker(
+                    "allowed_pin",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tdays_re_enable = 30\n"
+                    + _block("allowed", "original_tag = GER"),
+                ),
+                _taker(
+                    "root_pin",
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tfire_only_once = yes\n"
+                    + _block("target_root_trigger", "original_tag = GER"),
+                ),
+                _taker(
+                    "tag_only", _SET_TAKEN, _NOT_TAKEN, _block("allowed", "tag = GER")
+                ),
+            ],
+            [(_STALE_STATE % ("tag_only", "flag md_taken"), "X.txt", 0)],
+        ),
     },
     "validate_targets_no_trigger": {
         "FROM filter in available": (

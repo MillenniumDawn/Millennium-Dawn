@@ -2484,19 +2484,31 @@ class Validator(BaseValidator):
         with the ones ``target_trigger`` reads there, less those ``available``
         reads there. ``effect_tooltip`` bodies never run, so they do not count.
         A ``days_re_enable`` or ``fire_only_once`` decision gets a verify note:
-        the same country cannot repeat it, so only another country can.
+        the same country cannot repeat it, so only another country can. When it
+        is also locked to one tag, nobody can, and it is skipped.
 
         Exempts ``allowed = { always = no }`` (script-activated).
         """
         self._log_section(
             "Checking targeted decisions for target state only target_trigger checks..."
         )
+        token_to_cat = _category_of_decision(
+            parse_categories_with_decisions(self.mod_path)
+        )
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
         results = []
 
         for d in parse_all_decision_factories(self.mod_path):
             if not (d.target_trigger and d.complete_effect):
                 continue
             if d.allowed and "always = no" in d.allowed:
+                continue
+            one_shot = d.fire_only_once or "days_re_enable" in d.raw
+            if one_shot and (
+                _flat_tag_pins(d.allowed)
+                or _flat_tag_pins(d.target_root_trigger)
+                or cat_pins.get(token_to_cat.get(d.token, ""))
+            ):
                 continue
             effect = _strip_effect_tooltip_blocks(d.complete_effect)
             stale = (
@@ -2505,11 +2517,7 @@ class Validator(BaseValidator):
             ) - _from_state(d.available, _TARGET_STATE_READS)
             if stale:
                 changed = ", ".join(f"{kind} {name}" for kind, name in sorted(stale))
-                note = (
-                    _ONE_SHOT_NOTE
-                    if d.fire_only_once or "days_re_enable" in d.raw
-                    else ""
-                )
+                note = _ONE_SHOT_NOTE if one_shot else ""
                 results.append(
                     (
                         f"{d.token} - complete_effect changes {changed} on FROM, but"
