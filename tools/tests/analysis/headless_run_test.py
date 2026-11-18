@@ -22,7 +22,7 @@ _SETUP_CASES = {
         ["bench", "on"],
         0,
         headless_run.BENCH_FILE,
-        "set_variable = { global.md_benchmark_logging = 1 }",
+        "set_global_flag = GLOBAL_md_benchmark_logging",
     ),
     "bench off": (
         headless_run.BENCH_FILE,
