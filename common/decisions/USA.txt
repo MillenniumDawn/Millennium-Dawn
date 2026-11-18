@@ -1,5 +1,41 @@
 # Author(s): TheUnknownDroid, Luigi, AngriestBird
 USA_american_economic_decisions_category = {
+
+	USA_chips_act_diplomacy = {
+		icon = GFX_decision_generic_operation
+		cost = 25
+		fire_only_once = yes
+
+		available = {
+			OR = {
+				TAI = { USA_can_offer_foundry_partnership = yes }
+				KOR = { USA_can_offer_foundry_partnership = yes }
+				JAP = { USA_can_offer_foundry_partnership = yes }
+			}
+		}
+
+		visible = { has_completed_focus = USA_focus_trusted_foundry_partners }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_chips_act_diplomacy"
+			if = {
+				limit = { TAI = { USA_can_offer_foundry_partnership = yes } }
+				TAI = { country_event = { id = department_of_state.107 days = 1 } }
+			}
+			if = {
+				limit = { KOR = { USA_can_offer_foundry_partnership = yes } }
+				KOR = { country_event = { id = department_of_state.107 days = 1 } }
+			}
+			if = {
+				limit = { JAP = { USA_can_offer_foundry_partnership = yes } }
+				JAP = { country_event = { id = department_of_state.107 days = 1 } }
+			}
+			custom_effect_tooltip = USA_chips_act_TT
+		}
+
+		ai_will_do = { base = 45 }
+	}
+
 	USA_resource_steel_factories_decision = {
 		icon = steel
 		cost = 50
@@ -4005,7 +4041,10 @@ USA_foreign_policy = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_withdraw_from_afghanistan"
-			USA_withdraw_from_afghanistan_effect = yes
+			if = {
+				limit = { has_idea = USA_afghan_mission_cost }
+				USA_withdraw_from_afghanistan_effect = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5781,7 +5820,11 @@ USA_foreign_policy = {
 			country_exists = AST
 			country_exists = ENG
 			NOT = { has_global_flag = GLOBAL_aukus_formed }
-			date > 2021.1.19
+			date > 2021.9.14
+			OR = {
+				USA_biden_first_term = no
+				has_completed_focus = USA_focus_biden_indo_pacific_strategy
+			}
 			date < 2025.1.20
 			western_liberals_are_in_power = yes
 		}
@@ -5850,7 +5893,11 @@ USA_foreign_policy = {
 
 		visible = {
 			country_exists = CHI
-			date > 2021.1.19
+			date > 2022.5.22
+			OR = {
+				USA_biden_first_term = no
+				has_completed_focus = USA_focus_biden_indo_pacific_strategy
+			}
 			date < 2025.1.20
 			western_liberals_are_in_power = yes
 		}
@@ -6094,80 +6141,6 @@ USA_foreign_policy = {
 		}
 	}
 
-	USA_chips_act_diplomacy = {
-		icon = GFX_decision_generic_operation
-		cost = 50
-		fire_only_once = yes
-		days_remove = 365
-
-		available = {
-			NOT = { has_country_flag = USA_doing_decision }
-			CHI = { NOT = { has_government = democratic } }
-		}
-
-		visible = {
-			country_exists = TAI
-			country_exists = CHI
-			date > 2021.1.19
-			date < 2025.1.20
-			western_liberals_are_in_power = yes
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision USA_chips_act_diplomacy"
-			set_country_flag = USA_doing_decision
-			set_temp_variable = { treasury_change = -200 }
-			modify_treasury_effect = yes
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove USA_chips_act_diplomacy"
-			clr_country_flag = USA_doing_decision
-			806 = {
-				add_building_construction = {
-					type = microchip_plant
-					level = 1
-					instant_build = yes
-				}
-			}
-			newline = yes
-			if = { limit = { country_exists = TAI NOT = { has_war_with = TAI } } TAI = { country_event = { id = department_of_state.107 days = 1 } } }
-			if = { limit = { country_exists = KOR NOT = { has_war_with = KOR } } KOR = { country_event = { id = department_of_state.107 days = 1 } } }
-			if = { limit = { country_exists = JAP NOT = { has_war_with = JAP } } JAP = { country_event = { id = department_of_state.107 days = 1 } } }
-			newline = yes
-			set_temp_variable = { percent_change = -5.00 }
-			set_temp_variable = { tag_index = CHI }
-			set_temp_variable = { influence_target = TAI }
-			change_influence_percentage = yes
-			newline = yes
-			add_timed_idea = {
-				idea = USA_chips_act
-				days = 1825
-			}
-			news_event = { id = department_of_state.108 days = 2 }
-			newline = yes
-			custom_effect_tooltip = USA_chips_act_TT
-		}
-
-		ai_will_do = {
-			base = 55
-			modifier = {
-				USA_ai_historical_path = yes
-				add = 25
-			}
-			modifier = {
-				western_liberals_are_in_power = yes
-				add = 15
-			}
-			modifier = {
-				CHI = { has_government = communism }
-				add = 10
-			}
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
-		}
-	}
-
 	USA_return_to_paris_agreement = {
 		icon = GFX_decision_generic_operation
 		cost = 50
@@ -6182,6 +6155,7 @@ USA_foreign_policy = {
 		visible = {
 			date > 2021.1.19
 			date < 2025.1.20
+			USA_biden_first_term = no
 			western_liberals_are_in_power = yes
 		}
 
@@ -6193,21 +6167,7 @@ USA_foreign_policy = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_return_to_paris_agreement"
 			clr_country_flag = USA_doing_decision
-			set_country_flag = USA_paris_agreement_rejoined
-			news_event = department_of_state.109
-			newline = yes
-			add_stability = 0.02
-			newline = yes
-			for_each_scope_loop = {
-				array = global.EU_member
-				tooltip = TT_ALL_EU_MEMBER_NATIONS_GAIN
-				add_opinion_modifier = {
-					target = USA
-					modifier = usa_fp_diplomatic_cooperation
-				}
-			}
-			newline = yes
-			custom_effect_tooltip = USA_paris_agreement_TT
+			USA_rejoin_paris_agreement = yes
 		}
 
 		ai_will_do = {
@@ -8122,7 +8082,7 @@ USA_foreign_policy = {
 
 		visible = {
 			country_exists = CHI
-			date > 2021.1.19
+			date > 2022.10.6
 			date < 2025.1.20
 			western_liberals_are_in_power = yes
 		}
@@ -8135,14 +8095,14 @@ USA_foreign_policy = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_semiconductor_export_controls"
 			clr_country_flag = USA_doing_decision
-			CHI = {
-				country_event = {
-					id = department_of_state.217
-					days = 1
+			if = {
+				limit = {
+					country_exists = CHI
+					NOT = { has_war_with = CHI }
 				}
+				CHI = { country_event = { id = department_of_state.217 days = 1 } }
+				custom_effect_tooltip = USA_semiconductor_controls_TT
 			}
-			newline = yes
-			custom_effect_tooltip = USA_semiconductor_controls_TT
 		}
 
 		ai_will_do = {
