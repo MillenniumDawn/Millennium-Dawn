@@ -1111,40 +1111,23 @@ prevent_parties_disappearing = {
 		add_to_variable = { party_pop_array^21 = -0.003 }
 		add_to_variable = { party_pop_array^20 = 0.003 }
 	}
-	recalculate_party = yes
 }
 
 #drift scales by each party's own popularity, so small partners lose the same share as large ones
 ruling_subparty_drift_effect = {
+	#a week of the reform expectancy level at 0.07 per day
+	set_temp_variable = { coalition_subparty_drift_modified_var = { value = drift_switch_var_base multiply = 0.49 } }
 	if = {
-		limit = {
-			has_country_leader_with_trait = western_technocrat
-		}
-		set_temp_variable = { coalition_subparty_drift_modified_var = { value = ruling_subparty_drift_store multiply = 0.07 } }
+		limit = { has_country_leader_with_trait = western_technocrat }
 		if = {
 			limit = { check_variable = { gov_coalition_array^num > 0 } }
 			divide_temp_variable = { coalition_subparty_drift_modified_var = gov_coalition_array^num }
 		}
-		else = {
-			set_temp_variable = { coalition_subparty_drift_modified_var = 0 }
-		}
-		for_each_loop = {
-			array = gov_coalition_array
-			set_temp_variable = { coalition_subparty_drift_modified_multiplied_var = coalition_subparty_drift_modified_var }
-			multiply_temp_variable = { coalition_subparty_drift_modified_multiplied_var = party_pop_array^v }
-			add_to_variable = { party_pop_array^v = coalition_subparty_drift_modified_multiplied_var }
-		}
 	}
-	else_if = {
-		limit = {
-			NOT = {
-				has_country_leader_with_trait = western_technocrat
-			}
-		}
+	else = {
 		set_temp_variable = {
 			coalition_subparty_drift_modified_var = {
-				value = ruling_subparty_drift_store
-				multiply = 0.07
+				value = coalition_subparty_drift_modified_var
 				divide = { value = gov_coalition_array^num add = 1 }
 			}
 		}
@@ -1154,14 +1137,13 @@ ruling_subparty_drift_effect = {
 			multiply_temp_variable = { coalition_subparty_drift_modified_multiplied_var = party_pop_array^ruling_party }
 			add_to_variable = { party_pop_array^ruling_party = coalition_subparty_drift_modified_multiplied_var }
 		}
-		for_each_loop = {
-			array = gov_coalition_array
-			set_temp_variable = { coalition_subparty_drift_modified_multiplied_var = coalition_subparty_drift_modified_var }
-			multiply_temp_variable = { coalition_subparty_drift_modified_multiplied_var = party_pop_array^v }
-			add_to_variable = { party_pop_array^v = coalition_subparty_drift_modified_multiplied_var }
-		}
 	}
-	recalculate_party = yes
+	for_each_loop = {
+		array = gov_coalition_array
+		set_temp_variable = { coalition_subparty_drift_modified_multiplied_var = coalition_subparty_drift_modified_var }
+		multiply_temp_variable = { coalition_subparty_drift_modified_multiplied_var = party_pop_array^v }
+		add_to_variable = { party_pop_array^v = coalition_subparty_drift_modified_multiplied_var }
+	}
 }
 
 reforme_expectance_government_change_update = {
@@ -1186,309 +1168,13 @@ reforme_expectance_government_change_update = {
 			limit = { check_variable = { gov_coalition_array^num > 0 } }
 			divide_temp_variable = { coalition_drift_switch_var = gov_coalition_array^num }
 		}
-		else = {
-			set_temp_variable = { coalition_drift_switch_var = 0 }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 0 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 1 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 2 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 3 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 4 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 5 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 6 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 7 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 8 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 9 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 10 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 11 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 12 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 13 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 14 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 15 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 16 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 17 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 18 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 19 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 20 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 21 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 22 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 23 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
 	}
-	else_if = {
-		limit = {
-			NOT = {
-				has_country_leader_with_trait = western_technocrat
-			}
-		}
+	else = {
 		set_temp_variable = {
 			coalition_drift_switch_var = {
 				value = ITA_re_effective
 				divide = { value = gov_coalition_array^num add = 1 } #the ruling party
 			}
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 0 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 1 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 2 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 3 }
-			}
-			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 4 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 5 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 6 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 7 }
-			}
-			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 8 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 9 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 10 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 11 }
-			}
-			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 12 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 13 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 14 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 15 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 16 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 17 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 18 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 19 }
-			}
-			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 20 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 21 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 22 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
-		}
-		if = {
-			limit = {
-				is_in_array = { gov_coalition_array = 23 }
-			}
-			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 		}
 		if = {
 			limit = { has_government = fascism }
@@ -1508,6 +1194,31 @@ reforme_expectance_government_change_update = {
 		}
 		else_if = {
 			limit = { has_government = nationalist }
+			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
+		}
+	}
+	#party slots 0-3 democratic, 4-7 communism, 8-11 fascism, 12-19 neutrality, 20-23 nationalist
+	for_each_loop = {
+		array = gov_coalition_array
+		index = re_index
+		value = re_party
+		if = {
+			limit = { check_variable = { re_party < 4 } }
+			add_to_variable = { democratic_drift_var = coalition_drift_switch_var }
+		}
+		else_if = {
+			limit = { check_variable = { re_party < 8 } }
+			add_to_variable = { communism_drift_var = coalition_drift_switch_var }
+		}
+		else_if = {
+			limit = { check_variable = { re_party < 12 } }
+			add_to_variable = { fascism_drift_var = coalition_drift_switch_var }
+		}
+		else_if = {
+			limit = { check_variable = { re_party < 20 } }
+			add_to_variable = { neutrality_drift_var = coalition_drift_switch_var }
+		}
+		else = {
 			add_to_variable = { nationalist_drift_var = coalition_drift_switch_var }
 		}
 	}
