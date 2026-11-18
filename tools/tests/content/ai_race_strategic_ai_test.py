@@ -972,15 +972,17 @@ def test_support_research_respects_the_first_missing_year(year, expected):
 
 
 def test_research_chain_entries_check_one_existing_technology():
+    text = _race_text("common/scripted_effects")
     entries = re.findall(
         r"has_tech = (\w+) \} \}\s*\n\s*if = \{ limit = \{ can_research = (\w+) ",
-        _race_text("common/scripted_effects"),
+        text,
     )
     technologies = "\n".join(
         path.read_text(encoding="utf-8-sig")
         for path in (ROOT / "common/technologies").glob("*.txt")
     )
     assert entries
+    assert len(entries) == text.count("can_research = ")
     for owned, researched in entries:
         assert owned == researched
         assert re.search(rf"^\s*{owned}\s*=\s*\{{", technologies, re.MULTILINE), owned
@@ -992,6 +994,11 @@ def test_planning_sample_reuses_the_energy_monthly_work_refreshed_for_participan
     race.temps["ai_race_participants_sampled"] = 1
     race.run("ai_race_refresh_planning_sample", 1)
     assert ("calculate_energy_use", 1) not in race.owner_calls
+    race.temps.pop("ai_race_participants_sampled")
+    race.run("ai_race_refresh_planning_sample", 1)
+    assert ("calculate_energy_use", 1) in race.owner_calls
+    race.owner_calls.clear()
+    race.temps["ai_race_participants_sampled"] = 1
     race.globals["ai_race_participants"].remove(1)
     race.run("ai_race_refresh_planning_sample", 1)
     assert ("calculate_energy_use", 1) in race.owner_calls
