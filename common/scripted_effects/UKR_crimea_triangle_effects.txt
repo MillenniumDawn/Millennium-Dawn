@@ -6,7 +6,9 @@
 # Transfer request: set_temp_variable = { ct_delta = N }, then call a transfer.
 UKR_ct_init = {
 	if = { limit = { NOT = { has_country_flag = UKR_ct_initialized_flag } }
+		log = "[GetDateText]: [This.GetName]: Crimea Triangle initialized"
 		set_country_flag = UKR_ct_initialized_flag
+		unlock_decision_category_tooltip = UKR_ct_category_ukr
 		if = { limit = { 1112 = { NOT = { is_owned_by = UKR } } }
 			set_country_flag = UKR_ct_sevastopol_was_foreign_flag
 		}
@@ -84,7 +86,6 @@ UKR_ct_gui_recalculate = {
 	set_variable = { UKR_crimea_dot_y = UKR_ct_u }
 	multiply_variable = { UKR_crimea_dot_y = -1.69 }
 	add_to_variable = { UKR_crimea_dot_y = 211 }
-	add_to_variable = { UKR_crimea_gui_dirty_var = 1 }
 	UKR_ct_v1_forecast_recalculate = yes
 	UKR_ct_v1_publish_marker = yes
 }
@@ -364,7 +365,7 @@ UKR_ct_monthly = {
 			set_country_flag = { flag = UKR_ct_land_disputes_cooldown_flag days = 365 value = 1 }
 		}
 		if = { limit = { check_variable = { var = UKR_ct_u value = 35 compare = greater_than_or_equals } check_variable = { var = UKR_ct_t value = 25 compare = greater_than_or_equals } check_variable = { var = UKR_ct_r value = 25 compare = greater_than_or_equals } NOT = { has_active_mission = UKR_ct_m_joint_resistance } }
-			random_list = { 95 = { } 5 = { activate_mission = UKR_ct_m_joint_resistance } }
+			random = { chance = 5 activate_mission = UKR_ct_m_joint_resistance }
 		}
 		UKR_ct_outcome_check = yes
 	}
@@ -479,60 +480,6 @@ UKR_ct_v1_publish_marker = {
 	}
 }
 
-# ----- UKR_crimea_triangle_focus_hooks.txt -----
-# Optional hooks for existing Ukraine, Russia and Turkey focus completion_rewards.
-# These effects always operate on the UKR-owned shared Crimea Triangle balance.
-# They do nothing after the Crimean balance has resolved; no focus file is overwritten.
-UKR_ct_focus_reinforce_ukrainian_administration = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 3 }
-			UKR_ct_u_from_r = yes
-		}
-	}
-}
-UKR_ct_focus_support_crimean_tatars = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 4 }
-			UKR_ct_tatar_coalition_gain = yes
-		}
-	}
-}
-UKR_ct_focus_restrict_mejlis = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 3 }
-			UKR_ct_u_from_t = yes
-		}
-	}
-}
-UKR_ct_focus_extend_black_sea_fleet_agreements = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 4 }
-			UKR_ct_r_from_u = yes
-			set_country_flag = UKR_ct_russian_compromise_1_flag
-		}
-	}
-}
-SOV_ct_focus_extend_crimean_influence = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 4 }
-			UKR_ct_r_from_u = yes
-		}
-	}
-}
-TUR_ct_focus_support_tatar_communities = {
-	UKR = {
-		if = { limit = { has_country_flag = UKR_ct_initialized_flag has_country_flag = UKR_ct_turkey_cooperation_flag NOT = { has_country_flag = UKR_ct_resolved_flag } }
-			set_temp_variable = { ct_delta = 4 }
-			UKR_ct_tatar_coalition_gain = yes
-		}
-	}
-}
-
 # v0.8 additional focus hooks — source country is SOV.
 UKR_ct_sov_start_preparation = {
 	if = {
@@ -560,35 +507,35 @@ UKR_ct_sov_referendum_subject_effect = {
 UKR_ct_population_asia_l1 = {
 	# Expected population transfer: 5000 across all five consenting Central Asian countries.
 	UZB = {
-		if = { limit = { exists = yes capital_scope = { state_population > 3500 } }
+		if = { limit = { UKR_ct_uzb_repatriation_partner = yes capital_scope = { state_population > 3500 } }
 			capital_scope = { add_manpower = -3500 }
 			669 = { add_manpower = 3500 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 3500 } }
 		}
 	}
 	KAZ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 750 } }
+		if = { limit = { UKR_ct_kaz_repatriation_partner = yes capital_scope = { state_population > 750 } }
 			capital_scope = { add_manpower = -750 }
 			669 = { add_manpower = 750 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 750 } }
 		}
 	}
 	KYR = {
-		if = { limit = { exists = yes capital_scope = { state_population > 250 } }
+		if = { limit = { UKR_ct_kyr_repatriation_partner = yes capital_scope = { state_population > 250 } }
 			capital_scope = { add_manpower = -250 }
 			669 = { add_manpower = 250 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 250 } }
 		}
 	}
 	TAJ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 250 } }
+		if = { limit = { UKR_ct_taj_repatriation_partner = yes capital_scope = { state_population > 250 } }
 			capital_scope = { add_manpower = -250 }
 			669 = { add_manpower = 250 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 250 } }
 		}
 	}
 	TRK = {
-		if = { limit = { exists = yes capital_scope = { state_population > 250 } }
+		if = { limit = { UKR_ct_trk_repatriation_partner = yes capital_scope = { state_population > 250 } }
 			capital_scope = { add_manpower = -250 }
 			669 = { add_manpower = 250 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 250 } }
@@ -599,35 +546,35 @@ UKR_ct_population_asia_l1 = {
 UKR_ct_population_asia_l2 = {
 	# Expected population transfer: 7000 across all five consenting Central Asian countries.
 	UZB = {
-		if = { limit = { exists = yes capital_scope = { state_population > 4900 } }
+		if = { limit = { UKR_ct_uzb_repatriation_partner = yes capital_scope = { state_population > 4900 } }
 			capital_scope = { add_manpower = -4900 }
 			669 = { add_manpower = 4900 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 4900 } }
 		}
 	}
 	KAZ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 1050 } }
+		if = { limit = { UKR_ct_kaz_repatriation_partner = yes capital_scope = { state_population > 1050 } }
 			capital_scope = { add_manpower = -1050 }
 			669 = { add_manpower = 1050 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 1050 } }
 		}
 	}
 	KYR = {
-		if = { limit = { exists = yes capital_scope = { state_population > 350 } }
+		if = { limit = { UKR_ct_kyr_repatriation_partner = yes capital_scope = { state_population > 350 } }
 			capital_scope = { add_manpower = -350 }
 			669 = { add_manpower = 350 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 350 } }
 		}
 	}
 	TAJ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 350 } }
+		if = { limit = { UKR_ct_taj_repatriation_partner = yes capital_scope = { state_population > 350 } }
 			capital_scope = { add_manpower = -350 }
 			669 = { add_manpower = 350 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 350 } }
 		}
 	}
 	TRK = {
-		if = { limit = { exists = yes capital_scope = { state_population > 350 } }
+		if = { limit = { UKR_ct_trk_repatriation_partner = yes capital_scope = { state_population > 350 } }
 			capital_scope = { add_manpower = -350 }
 			669 = { add_manpower = 350 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 350 } }
@@ -638,35 +585,35 @@ UKR_ct_population_asia_l2 = {
 UKR_ct_population_asia_l3 = {
 	# Expected population transfer: 9000 across all five consenting Central Asian countries.
 	UZB = {
-		if = { limit = { exists = yes capital_scope = { state_population > 6300 } }
+		if = { limit = { UKR_ct_uzb_repatriation_partner = yes capital_scope = { state_population > 6300 } }
 			capital_scope = { add_manpower = -6300 }
 			669 = { add_manpower = 6300 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 6300 } }
 		}
 	}
 	KAZ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 1350 } }
+		if = { limit = { UKR_ct_kaz_repatriation_partner = yes capital_scope = { state_population > 1350 } }
 			capital_scope = { add_manpower = -1350 }
 			669 = { add_manpower = 1350 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 1350 } }
 		}
 	}
 	KYR = {
-		if = { limit = { exists = yes capital_scope = { state_population > 450 } }
+		if = { limit = { UKR_ct_kyr_repatriation_partner = yes capital_scope = { state_population > 450 } }
 			capital_scope = { add_manpower = -450 }
 			669 = { add_manpower = 450 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 450 } }
 		}
 	}
 	TAJ = {
-		if = { limit = { exists = yes capital_scope = { state_population > 450 } }
+		if = { limit = { UKR_ct_taj_repatriation_partner = yes capital_scope = { state_population > 450 } }
 			capital_scope = { add_manpower = -450 }
 			669 = { add_manpower = 450 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 450 } }
 		}
 	}
 	TRK = {
-		if = { limit = { exists = yes capital_scope = { state_population > 450 } }
+		if = { limit = { UKR_ct_trk_repatriation_partner = yes capital_scope = { state_population > 450 } }
 			capital_scope = { add_manpower = -450 }
 			669 = { add_manpower = 450 }
 			UKR = { add_to_variable = { UKR_ct_returnees_population = 450 } }
@@ -819,7 +766,7 @@ UKR_ct_crimea_ukr_russian_condominium = {
 	if = { limit = { country_exists = CRM }
 		669 = { transfer_state_to = CRM }
 		puppet = CRM
-		CRM = { drop_cosmetic_tag = yes set_country_flag = UKR_ct_condominium_crimea_flag }
+		CRM = { drop_cosmetic_tag = yes }
 		669 = {
 			add_core_of = CRM
 			remove_core_of = UKR
@@ -1229,19 +1176,25 @@ UKR_ct_v1_forecast_recalculate = {
 			set_temp_variable = { ct_v1_expected_delta = 4 }
 			UKR_ct_v1_forecast_t_from_r = yes
 		}
-		if = { limit = { has_active_mission = UKR_ct_asia_mission_l1 UKR_ct_all_five_eligible = yes has_country_flag = UKR_ct_UZB_consent_flag has_country_flag = UKR_ct_KAZ_consent_flag has_country_flag = UKR_ct_KYR_consent_flag has_country_flag = UKR_ct_TAJ_consent_flag has_country_flag = UKR_ct_TRK_consent_flag }
+		if = { limit = { has_active_mission = UKR_ct_asia_mission_l1 UKR_ct_asia_repatriation_available = yes }
 			add_to_variable = { UKR_ct_v1_pending_count = 1 }
-			set_temp_variable = { ct_v1_expected_delta = 5 }
+			UKR_ct_scale_asia_repatriation = yes
+			set_temp_variable = { ct_v1_expected_delta = ct_asia_returnees_share }
+			multiply_temp_variable = { ct_v1_expected_delta = 5 }
 			UKR_ct_v1_forecast_tatar_coalition_gain = yes
 		}
-		if = { limit = { has_active_mission = UKR_ct_asia_mission_l2 UKR_ct_all_five_eligible = yes has_country_flag = UKR_ct_UZB_consent_flag has_country_flag = UKR_ct_KAZ_consent_flag has_country_flag = UKR_ct_KYR_consent_flag has_country_flag = UKR_ct_TAJ_consent_flag has_country_flag = UKR_ct_TRK_consent_flag }
+		if = { limit = { has_active_mission = UKR_ct_asia_mission_l2 UKR_ct_asia_repatriation_available = yes }
 			add_to_variable = { UKR_ct_v1_pending_count = 1 }
-			set_temp_variable = { ct_v1_expected_delta = 7 }
+			UKR_ct_scale_asia_repatriation = yes
+			set_temp_variable = { ct_v1_expected_delta = ct_asia_returnees_share }
+			multiply_temp_variable = { ct_v1_expected_delta = 7 }
 			UKR_ct_v1_forecast_tatar_coalition_gain = yes
 		}
-		if = { limit = { has_active_mission = UKR_ct_asia_mission_l3 UKR_ct_all_five_eligible = yes has_country_flag = UKR_ct_UZB_consent_flag has_country_flag = UKR_ct_KAZ_consent_flag has_country_flag = UKR_ct_KYR_consent_flag has_country_flag = UKR_ct_TAJ_consent_flag has_country_flag = UKR_ct_TRK_consent_flag }
+		if = { limit = { has_active_mission = UKR_ct_asia_mission_l3 UKR_ct_asia_repatriation_available = yes }
 			add_to_variable = { UKR_ct_v1_pending_count = 1 }
-			set_temp_variable = { ct_v1_expected_delta = 9 }
+			UKR_ct_scale_asia_repatriation = yes
+			set_temp_variable = { ct_v1_expected_delta = ct_asia_returnees_share }
+			multiply_temp_variable = { ct_v1_expected_delta = 9 }
 			UKR_ct_v1_forecast_tatar_coalition_gain = yes
 		}
 	}
@@ -1281,4 +1234,28 @@ UKR_ct_v1_journal_record = {
 		set_variable = { UKR_ct_v1_history_count = 5 }
 	}
 	set_temp_variable = { ct_history_source = 0 }
+}
+
+UKR_ct_scale_asia_repatriation = {
+	set_temp_variable = { ct_asia_returnees_share = 0 }
+	if = {
+		limit = { UZB = { UKR_ct_uzb_repatriation_partner = yes } }
+		add_to_temp_variable = { ct_asia_returnees_share = 0.7 }
+	}
+	if = {
+		limit = { KAZ = { UKR_ct_kaz_repatriation_partner = yes } }
+		add_to_temp_variable = { ct_asia_returnees_share = 0.15 }
+	}
+	if = {
+		limit = { KYR = { UKR_ct_kyr_repatriation_partner = yes } }
+		add_to_temp_variable = { ct_asia_returnees_share = 0.05 }
+	}
+	if = {
+		limit = { TAJ = { UKR_ct_taj_repatriation_partner = yes } }
+		add_to_temp_variable = { ct_asia_returnees_share = 0.05 }
+	}
+	if = {
+		limit = { TRK = { UKR_ct_trk_repatriation_partner = yes } }
+		add_to_temp_variable = { ct_asia_returnees_share = 0.05 }
+	}
 }
