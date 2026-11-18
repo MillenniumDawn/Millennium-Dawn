@@ -63,7 +63,7 @@ A bad export or a converted model can carry broken data that a 3D tool does not 
 
 ## Checking a Model
 
-Run the audit on the folder you worked in. It only reports: broken mesh data, triangle counts over the target, and textures that are uncompressed, lack mipmaps, are not power-of-two, or exceed 2048. The same checks run when you commit a `.mesh` or `.dds` under `gfx/models/`: broken mesh data blocks the commit, while triangle counts and texture formats only warn.
+Run the audit on the folder you worked in. It reports broken mesh data, triangle counts over the target, and textures that are uncompressed, lack mipmaps, are not power-of-two, or exceed 2048. Broken mesh data blocks commits. Wrong DDS formats and missing mipmaps block commits and pull requests that change those textures. Triangle counts and texture sizes only warn at commit time.
 
 ```bash
 python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
