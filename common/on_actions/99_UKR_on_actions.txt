@@ -4,7 +4,12 @@ on_actions = {
 			if = {
 				limit = {
 					country_exists = UKR
-					FROM.FROM = { has_state_flag = UKR_s75_regiment_flag }
+					FROM.FROM = {
+						OR = {
+							has_state_flag = UKR_s75_regiment_flag
+							check_variable = { UKR_s200_battalions > 0 }
+						}
+					}
 				}
 				UKR = { UKR_storage_refresh = yes }
 			}
@@ -38,6 +43,7 @@ on_actions = {
 		effect = {
 			UKR = {
 				UKR_storage_update_development_costs = yes
+				UKR_storage_init_service_dates = yes
 				if = {
 					limit = { is_ai = yes }
 					set_country_flag = UKR_open_bureu_laws
@@ -71,9 +77,20 @@ on_actions = {
 			}
 		}
 	}
+	on_daily_UKR = {
+		effect = {
+			if = {
+				limit = { is_ai = no }
+				UKR_storage_count_decisions = yes
+			}
+		}
+	}
+
 	on_monthly_UKR = {
 		effect = {
 			UKR_start_workforce_update = yes
+			# Months left on each storage maintenance
+			UKR_storage_update_maintenance_dates = yes
 			if = {
 				limit = { date < 2010.1.1 }
 				set_variable = { UKR_bsf_lease_cp_cost = 2010 }
