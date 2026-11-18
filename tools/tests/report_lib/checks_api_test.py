@@ -379,16 +379,28 @@ def test_fallback_job_maps_batch_and_standalone_names():
     assert _fallback_job("tools-windows") == "Tools tests (Windows)"
 
 
-def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatch):
+_PATH_FAILURES = {
+    "file-paths": ("case-collision", "duplicate path", "common/example.txt"),
+    "dds": ("texture-art-standard", "use DXT5", "gfx/interface/example.dds"),
+}
+
+
+@pytest.mark.parametrize("slug", _PATH_FAILURES)
+def test_post_checks_keeps_path_failures_in_their_own_check(
+    tmp_path, monkeypatch, slug
+):
+    category, message, path = _PATH_FAILURES[slug]
     results_dir = make_results_tree(
         tmp_path,
         {
-            "file-paths": {
+            slug: {
                 "issues": [
                     {
                         "severity": "error",
-                        "category": "case-collision",
-                        "message": "duplicate path",
+                        "category": category,
+                        "message": message,
+                        "file": path,
+                        "line": 1,
                     }
                 ]
             },
@@ -396,7 +408,7 @@ def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatc
     )
 
     runs = load_all(str(results_dir))
-    assert [(run.name, run.status) for run in runs] == [("file-paths", "failed")]
+    assert [(run.name, run.status) for run in runs] == [(slug, "failed")]
     calls = _transport(
         monkeypatch,
         [
@@ -411,6 +423,7 @@ def test_post_checks_keeps_path_failures_in_their_own_check(tmp_path, monkeypatc
     assert calls[1][2]["name"] == "File path validation"
     assert calls[1][2]["conclusion"] == "failure"
     assert calls[1][2]["name"] != "Mod tests (core)"
+    assert calls[1][2]["output"]["annotations"][0]["path"] == path
 
 
 def test_run_job_field_wins_over_the_name_fallback(monkeypatch):
