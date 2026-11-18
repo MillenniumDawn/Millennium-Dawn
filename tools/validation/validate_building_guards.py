@@ -51,10 +51,14 @@ country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
 
-The advisory random-infrastructure check only covers direct construction effects
-in selected random-state iterators and randomly limited every-state iterators.
-It looks for a recognized slot check in the selector's own limit, not arbitrary
-guards.
+The advisory random-state slot check covers direct construction effects in
+selected random-state iterators and randomly limited every-state iterators. It
+looks for a free slot proven in the selector's own limit (`free_building_slots`
+or a scripted trigger built on it), or made earlier in the same block by
+`add_extra_state_shared_building_slots` or a `remove_building` of a building
+the limit proves present. Shared-slot buildings share one proof. Province
+buildings are skipped: `free_building_slots` only checks them for a fixed
+province.
 
 The same file walk also checks where buildings go and who owns them:
 
@@ -113,7 +117,10 @@ _RANDOM_STATE_SELECTORS = frozenset(
 )
 _RANDOM_SUBSET_SELECTORS = frozenset({"every_owned_state", "every_controlled_state"})
 _CHECKED_RANDOM_SELECTORS = _RANDOM_STATE_SELECTORS | _RANDOM_SUBSET_SELECTORS
-_INFRASTRUCTURE_GUARD_RE = re.compile(r"\binfrastructure_random_build_loc\s*=\s*yes\b")
+_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*yes\b")
+_EXTRA_SHARED_SLOTS_RE = re.compile(
+    r"\badd_extra_state_shared_building_slots\s*=\s*(?!-)(?!0(?![\w.]))[^\s{}]+"
+)
 _SLOT_BUILDING_RE = re.compile(r"\bbuilding\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _SLOT_COUNT_RE = re.compile(r"\bsize\s*(>=|==|>|<=|!=|<)\s*(-?\d+)(?![\w.])")
 
@@ -139,6 +146,7 @@ _STATE_ONLY_BUILDING_TRIGGERS = frozenset(
 )
 DEFINITION_FILE = "map/definition.csv"
 _BUILDINGS_GLOB = "common/buildings/*.txt"
+_SCRIPTED_TRIGGERS_GLOB = "common/scripted_triggers/*.txt"
 _SCAN_GLOBS = ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
 # Inputs of the cross-file ownership checks, scanned in full in staged mode too.
 _OWNERSHIP_GLOBS = [
@@ -152,11 +160,14 @@ _IDENTIFIER_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
 _PROVINCE_ID_RE = re.compile(r"\d+\Z")
 _PROJECT_PREFIX = "sp:"
 
-# Set in each worker by _init_worker from common/buildings/ and map/definition.csv.
+# Set in each worker by _init_worker from common/buildings/, map/definition.csv,
+# and common/scripted_triggers/.
 _PROVINCIAL: FrozenSet[str] = frozenset()
 _COASTAL_BUILDINGS: FrozenSet[str] = frozenset()
 _COASTAL_PROVINCES: FrozenSet[int] = frozenset()
 _KNOWN_PROVINCES: FrozenSet[int] = frozenset()
+_SHARED_SLOTS: FrozenSet[str] = frozenset()
+_SLOT_TRIGGERS: Dict[str, FrozenSet[str]] = {}
 _FINGERPRINT = ""
 
 
@@ -165,14 +176,25 @@ def _init_worker(
     coastal_buildings: FrozenSet[str],
     coastal_provinces: FrozenSet[int],
     known_provinces: FrozenSet[int],
+    shared_slots: FrozenSet[str],
+    triggers: Dict[str, FrozenSet[str]],
 ) -> None:
     global _PROVINCIAL, _COASTAL_BUILDINGS, _COASTAL_PROVINCES, _KNOWN_PROVINCES
-    global _FINGERPRINT
+    global _SHARED_SLOTS, _SLOT_TRIGGERS, _FINGERPRINT
     _PROVINCIAL = provincial
     _COASTAL_BUILDINGS = coastal_buildings
     _COASTAL_PROVINCES = coastal_provinces
     _KNOWN_PROVINCES = known_provinces
-    reference = (provincial, coastal_buildings, coastal_provinces, known_provinces)
+    _SHARED_SLOTS = shared_slots
+    _SLOT_TRIGGERS = triggers
+    reference = (
+        provincial,
+        coastal_buildings,
+        coastal_provinces,
+        known_provinces,
+        shared_slots,
+        [f"{name}={','.join(sorted(b))}" for name, b in triggers.items()],
+    )
     _FINGERPRINT = hashlib.sha256(
         repr([sorted(part) for part in reference]).encode("utf-8")
     ).hexdigest()
@@ -291,37 +313,45 @@ def _direct_text(text: str, start: int, end: int, blocks) -> str:
     return " ".join(parts)
 
 
-def _has_infrastructure_slot_guard(text: str) -> bool:
-    """Recognize guards in this state, without following alternate scopes."""
+def _slot_guards(text: str, triggers: Dict[str, FrozenSet[str]]) -> Set[str]:
+    """Buildings this state's triggers prove have a free slot, without following
+    alternate scopes or branches."""
     blocks = _child_blocks(text, 0, len(text))
-    cursor = 0
-    for name, name_start, body_start, body_end in blocks:
-        if _INFRASTRUCTURE_GUARD_RE.search(text, cursor, name_start):
-            return True
+    guards: Set[str] = set()
+    for call in _TRIGGER_CALL_RE.finditer(_direct_text(text, 0, len(text), blocks)):
+        guards |= triggers.get(call.group(1), frozenset())
+    for name, _, body_start, body_end in blocks:
         body = text[body_start:body_end]
         if name == "free_building_slots":
             fields = _direct_text(body, 0, len(body), _child_blocks(body, 0, len(body)))
             building = _SLOT_BUILDING_RE.search(fields)
-            if building and building.group(1) == "infrastructure":
-                if any(
-                    _proves_present(match.group(1), int(match.group(2)))
-                    for match in _SLOT_COUNT_RE.finditer(fields)
-                ):
-                    return True
-        elif name.lower() == "and" and _has_infrastructure_slot_guard(body):
-            return True
-        cursor = body_end + 1
-    return bool(_INFRASTRUCTURE_GUARD_RE.search(text, cursor))
+            if building and any(
+                _proves_present(match.group(1), int(match.group(2)))
+                for match in _SLOT_COUNT_RE.finditer(fields)
+            ):
+                guards.add(building.group(1))
+        elif name.lower() == "and":
+            guards |= _slot_guards(body, triggers)
+    return guards
 
 
-def _has_infrastructure_level_bound(text: str) -> bool:
+def slot_triggers(text: str) -> Dict[str, FrozenSet[str]]:
+    """Scripted triggers in one file that prove a free slot -> those buildings."""
+    clean = _sanitize(text)
+    found = {}
+    for name, _, body_start, body_end in _child_blocks(clean, 0, len(clean)):
+        guards = _slot_guards(clean[body_start:body_end], {})
+        if guards:
+            found[name] = frozenset(guards)
+    return found
+
+
+def _has_level_bound(text: str, building: str) -> bool:
     """Find a same-state upper bound without inferring that a slot is free."""
-    if "infrastructure" in _comparisons_outside_blocks(
-        text, lambda op, _: op in ("<", "<=")
-    ):
+    if building in _comparisons_outside_blocks(text, lambda op, _: op in ("<", "<=")):
         return True
     return any(
-        name.lower() == "and" and _has_infrastructure_level_bound(text[start:end])
+        name.lower() == "and" and _has_level_bound(text[start:end], building)
         for name, _, start, end in _child_blocks(text, 0, len(text))
     )
 
@@ -358,14 +388,17 @@ def _assignments(text: str):
         index += 1
 
 
-def building_classes(text: str) -> Tuple[Set[str], Set[str]]:
-    """(provincial, coastal provincial) building names from a buildings file.
+def building_classes(text: str) -> Tuple[Set[str], Set[str], Set[str]]:
+    """(provincial, coastal provincial, shared-slot) building names from a
+    buildings file.
 
-    A `level_cap = { province_max = N }` makes a building provincial, and
-    `only_costal = yes` makes it coastal.
+    A `level_cap = { province_max = N }` makes a building provincial,
+    `only_costal = yes` makes it coastal, and `level_cap = { shares_slots = yes }`
+    puts it in the shared state slots.
     """
     coastal: Set[str] = set()
     provincial: Set[str] = set()
+    shared: Set[str] = set()
     for path, key, value, _line in _assignments(text):
         if len(path) < 2 or path[0] != "buildings":
             continue
@@ -373,7 +406,9 @@ def building_classes(text: str) -> Tuple[Set[str], Set[str]]:
             coastal.add(path[1])
         elif key == "province_max" and path[2:] == ("level_cap",):
             provincial.add(path[1])
-    return provincial, coastal & provincial
+        elif (key, value) == ("shares_slots", "yes") and path[2:] == ("level_cap",):
+            shared.add(path[1])
+    return provincial, coastal & provincial, shared
 
 
 def coastal_land_provinces(text: str) -> Tuple[Set[int], Set[int]]:
@@ -606,12 +641,10 @@ class Scanner:
             )
             self.findings.append(("province-building-state-trigger", line, message))
 
-    def check_random_infrastructure_slots(self, start: int, end: int):
+    def check_random_slot_guards(self, start: int, end: int):
         text = self.text[start:end]
-        if (
-            "add_building_construction" not in text
-            or "infrastructure" not in text
-            or not any(name in text for name in _CHECKED_RANDOM_SELECTORS)
+        if "add_building_construction" not in text or not any(
+            name in text for name in _CHECKED_RANDOM_SELECTORS
         ):
             return
         for name, _, body_start, body_end in _child_blocks(self.text, start, end):
@@ -624,38 +657,51 @@ class Scanner:
                 direct = _direct_text(self.text, body_start, body_end, blocks)
                 selected = bool(_RANDOM_SELECT_RE.search(direct))
             if selected:
-                guarded = any(
-                    child == "limit"
-                    and _has_infrastructure_slot_guard(self.text[c_start:c_end])
-                    for child, _, c_start, c_end in blocks
+                self._check_selected_constructions(body_start, body_end, blocks)
+            self.check_random_slot_guards(body_start, body_end)
+
+    def _check_selected_constructions(self, start: int, end: int, blocks):
+        limits = [self.text[s:e] for child, _, s, e in blocks if child == "limit"]
+        guards: Set[str] = set()
+        present: Set[str] = set()
+        for limit in limits:
+            guards |= _slot_guards(limit, _SLOT_TRIGGERS)
+            present |= _extract_building_guards(limit)
+        # Effects run in order, so an extra shared slot or a removed building
+        # frees room only for the constructions after it.
+        cursor = start
+        for child, name_start, c_start, c_end in blocks:
+            if _EXTRA_SHARED_SLOTS_RE.search(self.text, cursor, name_start):
+                guards |= _SHARED_SLOTS
+            cursor = c_end + 1
+            match = _TYPE_RE.search(self.text[c_start:c_end])
+            if not match:
+                continue
+            building = match.group(1)
+            if child == "remove_building":
+                if building in present:
+                    guards.add(building)
+                continue
+            if child != "add_building_construction" or building in _PROVINCIAL:
+                continue
+            if building in guards or (
+                building in _SHARED_SLOTS and guards & _SHARED_SLOTS
+            ):
+                continue
+            message = (
+                f"randomly selected state builds {building} without a recognized "
+                "slot guard in its limit"
+            )
+            if any(_has_level_bound(limit, building) for limit in limits):
+                message += (
+                    "; a level bound is present but slot availability is not verified"
                 )
-                if not guarded:
-                    level_bound = any(
-                        child == "limit"
-                        and _has_infrastructure_level_bound(self.text[c_start:c_end])
-                        for child, _, c_start, c_end in blocks
-                    )
-                    for child, _, c_start, c_end in blocks:
-                        if child != "add_building_construction":
-                            continue
-                        building = _TYPE_RE.search(self.text[c_start:c_end])
-                        if building and building.group(1) == "infrastructure":
-                            line = line_for_offset(self.offsets, c_start)
-                            self.findings.append(
-                                (
-                                    "random-infrastructure-slot-guard",
-                                    line,
-                                    "randomly selected state builds infrastructure "
-                                    "without a recognized slot guard in its limit"
-                                    + (
-                                        "; a level bound is present but slot availability "
-                                        "is not verified"
-                                        if level_bound
-                                        else ""
-                                    ),
-                                )
-                            )
-            self.check_random_infrastructure_slots(body_start, body_end)
+            if building in _SHARED_SLOTS and _EXTRA_SHARED_SLOTS_RE.search(
+                self.text, c_end, end
+            ):
+                message += "; the extra shared slots are only added after it"
+            line = line_for_offset(self.offsets, c_start)
+            self.findings.append(("random-building-slot-guard", line, message))
 
     def _check_effect(
         self, effect: str, category: str, body_start: int, body_end: int, ctx: Context
@@ -719,10 +765,8 @@ def scan_file(args: Tuple[str, str]) -> Tuple[List[Tuple[str, str, int, str]], d
             *_STATE_ONLY_BUILDING_TRIGGERS,
         )
     )
-    has_random_infrastructure = (
-        "add_building_construction" in raw
-        and "infrastructure" in raw
-        and any(name in raw for name in _CHECKED_RANDOM_SELECTORS)
+    has_random_construction = "add_building_construction" in raw and any(
+        name in raw for name in _CHECKED_RANDOM_SELECTORS
     )
     is_state = relative.startswith("history/states/")
     is_country = relative.startswith("history/countries/")
@@ -734,7 +778,7 @@ def scan_file(args: Tuple[str, str]) -> Tuple[List[Tuple[str, str, int, str]], d
     has_placements = is_state or "add_building_construction" in raw
     if not (
         has_existing_checks
-        or has_random_infrastructure
+        or has_random_construction
         or has_placements
         or is_country
         or is_ideas
@@ -747,8 +791,8 @@ def scan_file(args: Tuple[str, str]) -> Tuple[List[Tuple[str, str, int, str]], d
         if has_existing_checks:
             scanner.walk(0, len(scanner.text), Context())
             scanner.check_province_building_triggers()
-        if has_random_infrastructure:
-            scanner.check_random_infrastructure_slots(0, len(scanner.text))
+        if has_random_construction:
+            scanner.check_random_slot_guards(0, len(scanner.text))
         findings = scanner.findings
         facts: dict = {}
         if has_placements:
@@ -783,13 +827,20 @@ class Validator(BaseValidator):
     def _relative(self, path: str) -> str:
         return os.path.relpath(path, self.mod_path).replace(os.sep, "/")
 
-    def _reference(self) -> Tuple[FrozenSet, FrozenSet, FrozenSet, FrozenSet]:
+    def _reference(self) -> tuple:
         provincial: Set[str] = set()
         coastal: Set[str] = set()
+        shared: Set[str] = set()
         for path in self._collect_files([_BUILDINGS_GLOB], ignore_staged=True):
-            file_provincial, file_coastal = building_classes(read_file(path))
+            file_provincial, file_coastal, file_shared = building_classes(
+                read_file(path)
+            )
             provincial |= file_provincial
             coastal |= file_coastal
+            shared |= file_shared
+        triggers: Dict[str, FrozenSet[str]] = {}
+        for path in self._collect_files([_SCRIPTED_TRIGGERS_GLOB], ignore_staged=True):
+            triggers.update(slot_triggers(read_file(path)))
         known: Set[int] = set()
         coastal_provinces: Set[int] = set()
         if coastal:
@@ -810,13 +861,15 @@ class Validator(BaseValidator):
             frozenset(coastal),
             frozenset(coastal_provinces),
             frozenset(known),
+            frozenset(shared),
+            triggers,
         )
 
     def _scan(self):
         """Walk every file once; return sorted rows and per-file ownership facts."""
-        # A changed building or province definition can break any placement.
+        # A changed building, province or slot trigger definition can break any site.
         reference_changed = self.staged_only and (
-            self.staged_touches(("common/buildings",))
+            self.staged_touches(("common/buildings", "common/scripted_triggers"))
             or any(
                 path.replace("\\", "/").endswith(DEFINITION_FILE)
                 for path in self.staged_files or []
@@ -878,11 +931,11 @@ class Validator(BaseValidator):
             "No province buildings named in state-only building triggers",
         )
         section(
-            "randomly selected infrastructure construction",
-            ("random-infrastructure-slot-guard",),
+            "randomly selected building construction",
+            ("random-building-slot-guard",),
             self.add_warning,
-            "random infrastructure construction(s) without a recognized slot guard",
-            "Checked random-state infrastructure constructions have recognized slot guards",
+            "random building construction(s) without a recognized slot guard",
+            "Checked random-state building constructions have recognized slot guards",
         )
         section(
             "add_building_construction province targets",
