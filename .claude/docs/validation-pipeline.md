@@ -27,7 +27,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   that directory and check out only the few game files named in the workflow.
 - `.jscpd.json` fails the quality job on one pasted block. Factor shared test setup into
   a helper.
-- The repository ruleset requires the `Test suite gate` check.
+- The `Test suite gate` check waits for validation jobs, not the baseline scan
+  or comparison report. Reporting failures stay visible in Actions but do not
+  fail the gate.
 
 ## Where a check runs
 
