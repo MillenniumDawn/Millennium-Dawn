@@ -31,6 +31,10 @@ A decision is targeted when it has `targets`, `target_array`, `target_trigger`, 
 - Conditions that read `FROM` stay in `target_trigger` or `visible`. That includes
   dynamic flags such as `has_country_flag = flag_@FROM`.
 - `hidden_trigger` and `always = yes` do nothing inside `target_root_trigger`.
+- `target_trigger` only re-runs once a day. When `complete_effect` sets or clears a flag
+  or idea on `FROM` that `target_trigger` reads, re-check it in `available`, inside
+  `hidden_trigger` unless the player should see it. Otherwise the decision can be taken
+  again on the same target until the next daily pass.
 - Do not restate what the target list guarantees. With an explicit `targets = { ... }`,
   `NOT = { tag = ROOT }` is a dead condition evaluated per target per day.
 - Do not repeat the category's `allowed` on each decision. Restrict the nation once on
