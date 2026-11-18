@@ -84,14 +84,17 @@ decrease_two_level_economic_growth = {
 	clr_country_flag = disable_cycle_costs
 }
 
-# Buys the AI's next economic cycle tier each month once it holds the political power, paying it and the 5% of GDP
-# charge like a player. The cycle ideas carry no AI weight, so this is the only way the AI moves up. Fast Growth and
-# Economic Boom also need peace and a treasury that covers the charge, since an overdraft turns into new debt.
+# Moves the AI up one economic cycle tier once its treasury covers the 5% of GDP charge, so no upgrade becomes new debt.
+# Like the spending-law pass it costs no political power. The cycle ideas carry no AI weight, so this is the only way the
+# AI moves up. It skips a fiscally stressed economy and holds 180 days after a move; Fast Growth and Economic Boom also
+# need peace, a balanced budget and inflation under 6%. The TUR, USA and BRA locks match the tiers' available blocks.
 ai_buy_economic_cycle_upgrade = {
-	set_temp_variable = { cycle_base_cost = 0 }
 	if = {
 		limit = {
+			check_variable = { treasury > econ_cycle_upg_cost }
+			NOT = { has_country_flag = ai_cycle_upgrade_hold }
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			ai_is_fiscally_stressed = no
 			NOT = {
 				AND = {
 					original_tag = BRA
@@ -101,68 +104,51 @@ ai_buy_economic_cycle_upgrade = {
 					}
 				}
 			}
-		}
-		if = {
-			limit = { has_idea = depression }
-			set_temp_variable = { cycle_base_cost = 150 }
-		}
-		else_if = {
-			limit = {
-				NOT = {
-					AND = {
-						original_tag = TUR
-						has_idea = TUR_no_economic_plan
-					}
-				}
-			}
-			if = {
-				limit = {
-					OR = {
-						has_idea = recession
-						has_idea = stagnation
-					}
+			OR = {
+				has_idea = depression
+				AND = {
 					NOT = {
 						AND = {
-							original_tag = USA
+							original_tag = TUR
+							has_idea = TUR_no_economic_plan
+						}
+					}
+					OR = {
+						AND = {
 							OR = {
-								has_idea = USA_economic_crisis_light_idea
-								has_idea = USA_economic_crisis_medium_idea
-								has_idea = USA_economic_crisis_severe_idea
+								has_idea = recession
+								has_idea = stagnation
 							}
+							NOT = {
+								AND = {
+									original_tag = USA
+									OR = {
+										has_idea = USA_economic_crisis_light_idea
+										has_idea = USA_economic_crisis_medium_idea
+										has_idea = USA_economic_crisis_severe_idea
+									}
+								}
+							}
+						}
+						AND = {
+							OR = {
+								has_idea = stable_growth
+								has_idea = fast_growth
+							}
+							has_war = no
+							ai_has_deficit = no
+							check_variable = { inflation_rate_var < 0.06 }
 						}
 					}
 				}
-				if = { limit = { has_idea = recession } set_temp_variable = { cycle_base_cost = 200 } }
-				else = { set_temp_variable = { cycle_base_cost = 250 } }
-			}
-			else_if = {
-				limit = {
-					OR = {
-						has_idea = stable_growth
-						has_idea = fast_growth
-					}
-					has_war = no
-					check_variable = { treasury > econ_cycle_upg_cost }
-				}
-				if = { limit = { has_idea = stable_growth } set_temp_variable = { cycle_base_cost = 300 } }
-				else = { set_temp_variable = { cycle_base_cost = 350 } }
 			}
 		}
-	}
-	if = {
-		limit = { check_variable = { cycle_base_cost > 0 } }
-		set_temp_variable = { cycle_pp_cost = { value = cycle_base_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor } } }
-		set_temp_variable = { cycle_pp_available = political_power }
-		if = {
-			limit = { check_variable = { var = cycle_pp_available value = cycle_pp_cost compare = greater_than_or_equals } }
-			multiply_temp_variable = { cycle_pp_cost = -1 }
-			add_political_power = cycle_pp_cost
-			set_temp_variable = { treasury_change = { value = econ_cycle_upg_cost multiply = -1 } }
-			modify_treasury_effect = yes
-			increase_economic_growth = yes
-			if = { limit = { OR = { is_debug = yes has_variable = global.md_benchmark_logging } }
-				log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Base Cost: [?cycle_base_cost] Treasury: [?treasury] Political Power: [?political_power]"
-			}
+		set_temp_variable = { treasury_change = { value = econ_cycle_upg_cost multiply = -1 } }
+		modify_treasury_effect = yes
+		increase_economic_growth = yes
+		set_country_flag = { flag = ai_cycle_upgrade_hold days = 180 value = 1 }
+		if = { limit = { OR = { is_debug = yes has_variable = global.md_benchmark_logging } }
+			log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Treasury: [?treasury] Charge: [?econ_cycle_upg_cost]"
 		}
 	}
 }
