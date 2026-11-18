@@ -85,7 +85,8 @@ decrease_two_level_economic_growth = {
 }
 
 # The AI's only way up a cycle tier (the ideas carry no AI weight). The charge scales by economic_cycles_cost_factor,
-# the players' political power price, and the 2x reserve keeps an upgrade from becoming debt. Locks mirror the tiers'
+# which sets the players' political power price. Recovery tiers may borrow what the treasury lacks, since AI debt
+# repayment keeps big treasuries near zero, unless the factor is +200% or more. The tag checks mirror the tiers'
 # available blocks.
 ai_buy_economic_cycle_upgrade = {
 	if = {
@@ -93,7 +94,17 @@ ai_buy_economic_cycle_upgrade = {
 			NOT = { has_country_flag = ai_cycle_upgrade_hold }
 			ai_has_deficit = no
 			set_temp_variable = { cycle_upgrade_reserve = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } multiply = 2 } }
-			check_variable = { treasury > cycle_upgrade_reserve }
+			OR = {
+				check_variable = { treasury > cycle_upgrade_reserve }
+				AND = {
+					check_variable = { modifier@economic_cycles_cost_factor < 2 }
+					OR = {
+						has_idea = depression
+						has_idea = recession
+						has_idea = stagnation
+					}
+				}
+			}
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			ai_is_fiscally_stressed = no
 			NOT = {
@@ -146,10 +157,19 @@ ai_buy_economic_cycle_upgrade = {
 		set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } } }
 		set_temp_variable = { treasury_change = { value = cycle_upgrade_charge multiply = -1 } }
 		modify_treasury_effect = yes
+		set_temp_variable = { cycle_upgrade_borrowed = 0 }
+		if = { limit = { check_variable = { treasury < 0 } }
+			# Manual and automatic borrowing both charge a 1% fee
+			set_temp_variable = { cycle_upgrade_borrowed = { value = treasury multiply = -1.01 } }
+			set_variable = { treasury = 0 }
+			set_temp_variable = { debt_change = cycle_upgrade_borrowed }
+			modify_debt_effect = yes
+			calculate_interest_rate = yes
+		}
 		increase_economic_growth = yes
 		set_country_flag = { flag = ai_cycle_upgrade_hold days = 180 value = 1 }
 		if = { limit = { OR = { is_debug = yes has_variable = global.md_benchmark_logging } }
-			log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Treasury: [?treasury] Charge: [?cycle_upgrade_charge]"
+			log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Treasury: [?treasury] Charge: [?cycle_upgrade_charge] Borrowed: [?cycle_upgrade_borrowed]"
 		}
 	}
 }
