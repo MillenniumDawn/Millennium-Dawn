@@ -627,18 +627,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_asset_data.py
 
-- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
-  staged files only, so the existing model backlog blocks a commit only when one of
-  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
-- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
-  TGA or truncated data. Stdlib only, so it runs without numpy.
-- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
-  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
-  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
-  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
-  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
-  the texture format findings are WARNING, since the standards call them targets.
-  These need numpy and log a skip without it.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` holding PNG, JPEG,
+  TGA or data too short for a DDS header.
+- `texture-art-standard`: legacy header, format and mipmaps from
+  `tools/assets/model_standards.py`. ERROR for staged and PR-changed DDS files,
+  WARNING in a full scan. Flat event pictures and large portraits can stay
+  uncompressed. Headers cannot prove alpha usage or compression quality. Use the
+  printed `dds_standardize.py` preview, or re-export from source when it cannot fix
+  the file. The DDS checks need neither numpy nor Pillow.
+- The commit hook also runs `tools/assets/audit_models.py` for files under
+  `gfx/models/`. Broken mesh data is an ERROR. Triangle count and texture size
+  findings are WARNINGs. These checks need numpy and log a skip without it.
+  Fix mesh data with `tools/assets/optimize_mesh.py --repair-only`.
 
 ## validate_mio_icons.py
 
