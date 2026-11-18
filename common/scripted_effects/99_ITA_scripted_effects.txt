@@ -1658,15 +1658,6 @@ small_parties_leave_coalition = {
 
 government_crisis_check = {
 	set_temp_variable = { government_failure_threshold = { value = majority_threshold multiply = 0.5 } }
-	if = {
-		limit = {
-			check_variable = { government_coalition_strength < government_failure_threshold }
-			NOT = {
-				has_country_flag = coalition_forming
-			}
-		}
-		country_event = italy_md.38
-	}
 	set_variable = { highest_popularity_party_var = 0 }
 	for_each_loop = {
 		array = gov_coalition_array
@@ -1686,13 +1677,15 @@ government_crisis_check = {
 	multiply_variable = { highest_popularity_party_var = 0.75 }
 	if = {
 		limit = {
-			check_variable = { ruling_party_popularity_var < highest_popularity_party_var }
-			NOT = {
-				has_country_flag = coalition_forming
+			NOT = { has_country_flag = coalition_forming }
+			OR = {
+				check_variable = { government_coalition_strength < government_failure_threshold }
+				AND = {
+					check_variable = { ruling_party_popularity_var < highest_popularity_party_var }
+					NOT = { has_country_leader_with_trait = western_technocrat }
+				}
 			}
-			NOT = { has_country_leader_with_trait = western_technocrat }
 		}
-		clear_array = gov_coalition_array
 		country_event = italy_md.38
 	}
 }
