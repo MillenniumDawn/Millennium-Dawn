@@ -587,7 +587,6 @@ def test_empty_report_requires_every_validation_job_to_be_skipped():
     conditions = [
         f"needs.{job}.result == '{'success' if job == 'detect-changes' else 'skipped'}'"
         for job in required
-        if job != "report"
     ]
     selector = workflow["jobs"]["report"]["env"]["NO_TESTS_SELECTED"]
     assert " ".join(selector.split()) == "${{ " + " && ".join(conditions) + " }}"
@@ -600,27 +599,34 @@ def test_suite_step_ids_are_unique():
         assert len(ids) == len(set(ids)), name
 
 
-# Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
-ADVISORY_JOBS = {"baseline-scan"}
-
-
 def test_suite_gate_requires_every_validation_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    gate = workflow["jobs"]["gate"]
+    jobs = workflow["jobs"]
+    gate = jobs["gate"]
     assert gate["name"] == "Test suite gate"
     assert gate["if"] == "${{ always() }}"
-    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"} - ADVISORY_JOBS
-    assert ADVISORY_JOBS <= set(workflow["jobs"]["report"]["needs"])
+    assert set(gate["needs"]) == set(jobs) - {"gate", "report", "baseline-scan"}
     failure_step = gate["steps"][0]
-    for job in gate["needs"]:
-        assert f"needs.{job}.result" in failure_step["if"]
+    conditions = ["needs.detect-changes.result != 'success'"] + [
+        f"(needs.{job}.result != 'success' && needs.{job}.result != 'skipped')"
+        for job in gate["needs"]
+        if job != "detect-changes"
+    ]
+    assert " ".join(failure_step["if"].split()) == " || ".join(conditions)
     assert failure_step["run"] == "exit 1"
+
+
+def test_advisory_report_waits_for_all_validation_results_and_baseline():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+    report = jobs["report"]
+    assert set(report["needs"]) == set(jobs["gate"]["needs"]) | {"baseline-scan"}
+    assert report["if"] == "${{ always() && !cancelled() }}"
 
 
 def test_gate_steps_cannot_be_switched_off():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    # The report job's downloads tolerate missing artifacts on purpose.
-    gated = set(workflow["jobs"]["gate"]["needs"]) - {"report"} | {"gate"}
+    gated = set(workflow["jobs"]["gate"]["needs"]) | {"gate"}
     for name in sorted(gated):
         job = workflow["jobs"][name]
         assert "continue-on-error" not in job, name
