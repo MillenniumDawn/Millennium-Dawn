@@ -45,16 +45,18 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, `validate_mesh_textures.py`
   on any staged `gfx/` path, and `validate_asset_data.py` on
-  staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. The
-  model checks never run in CI.
+  staged `.dds` files under `gfx/` or `map/` and `.mesh` files under `gfx/models/`. In CI,
+  the file-path job checks out only DDS additions, edits and rename destinations from
+  the pinned PR head. The shared workspace stays sparse, and mesh audits remain local.
   On a merge commit the dispatcher checks only the conflicted files pre-commit passes,
   plus staged deletions and rename origins.
 - Run a CI-only validator locally with
   `python3 tools/validation/validate_<topic>.py --staged --no-color`. Drop `--staged`
   for a full-repo scan.
 - `--strict` gates on ERROR only. A check with a standing backlog ships as WARNING until
-  the backlog is cleared. A new strict check needs a baseline audit first, see the
-  review checklist in `tools/README.md`.
+  the backlog is cleared. The DDS art-standard check gates only changed textures;
+  a manual scan reports existing art-standard violations as warnings. A new strict
+  check needs a baseline audit first, see the review checklist in `tools/README.md`.
 - The events batch enables `--check-ai-chance-costs` as WARNING while the existing
   backlog is reviewed. It checks relevant AI modifiers, not just their presence, and
   ignores display-only `effect_tooltip` costs. Commit hooks leave this cross-reference
