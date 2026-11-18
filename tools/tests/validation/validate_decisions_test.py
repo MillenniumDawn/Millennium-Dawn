@@ -1155,6 +1155,105 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
             [_taker("shared", _SET_TAKEN, _NOT_TAKEN)],
             [(_STALE_STATE % ("shared", "flag md_taken"), "X.txt", 0)],
         ),
+        "set preserves positive read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { set_country_flag = md_taken }",
+                    "FROM = { has_country_flag = md_taken }",
+                )
+            ],
+            [],
+        ),
+        "clear preserves negative read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { has_country_flag = md_taken } }",
+                )
+            ],
+            [],
+        ),
+        "add preserves positive idea": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { add_ideas = md_taken }",
+                    "FROM = { has_idea = md_taken }",
+                )
+            ],
+            [],
+        ),
+        "remove preserves negative idea": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { remove_ideas = { md_taken } }",
+                    "FROM = { NOT = { has_idea = md_taken } }",
+                )
+            ],
+            [],
+        ),
+        "timed set invalidates negative read": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { set_country_flag = { flag = md_taken days = 2 } }",
+                    "FROM = { NOT = { has_country_flag = md_taken } }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "double negation is positive": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { NOT = { has_country_flag = md_taken } } }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "negation does not leak to sibling": (
+            [
+                _taker(
+                    "polarity",
+                    "FROM = { clr_country_flag = md_taken }",
+                    "FROM = { NOT = { has_country_flag = md_other } has_country_flag = md_taken }",
+                )
+            ],
+            [(_STALE_STATE % ("polarity", "flag md_taken"), "X.txt", 0)],
+        ),
+        "negation outside FROM": (
+            [
+                _taker(
+                    "outer_not",
+                    _SET_TAKEN,
+                    "NOT = { FROM = { has_country_flag = md_taken } }",
+                )
+            ],
+            [(_STALE_STATE % ("outer_not", "flag md_taken"), "X.txt", 0)],
+        ),
+        "original tag admits another country": (
+            [
+                _taker(
+                    "pin_" + block,
+                    _SET_TAKEN,
+                    _NOT_TAKEN,
+                    "\t\tdays_re_enable = 30\n" + _block(block, "original_tag = GER"),
+                )
+                for block in ("allowed", "target_root_trigger")
+            ],
+            [
+                (
+                    _STALE_STATE % ("pin_" + block, "flag md_taken") + _ONE_SHOT,
+                    "X.txt",
+                    0,
+                )
+                for block in ("allowed", "target_root_trigger")
+            ],
+        ),
         "available re-checks it": (
             [
                 _taker(
@@ -1181,7 +1280,7 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
                     "mixed",
                     "FROM = { add_ideas = { md_a md_b } remove_ideas = md_c"
                     " clr_country_flag = md_cleared }",
-                    "FROM = { has_idea = md_b has_idea = md_c"
+                    "FROM = { NOT = { has_idea = md_b } has_idea = md_c"
                     " has_country_flag = { flag = md_cleared days > 1 } }",
                 )
             ],
@@ -1233,15 +1332,14 @@ _CHECK_CASES: Mapping[str, Mapping[str, tuple[Sequence[str], Sequence[object]]]]
                     "allowed_pin",
                     _SET_TAKEN,
                     _NOT_TAKEN,
-                    "\t\tdays_re_enable = 30\n"
-                    + _block("allowed", "original_tag = GER"),
+                    "\t\tdays_re_enable = 30\n" + _block("allowed", "tag = GER"),
                 ),
                 _taker(
                     "root_pin",
                     _SET_TAKEN,
                     _NOT_TAKEN,
                     "\t\tfire_only_once = yes\n"
-                    + _block("target_root_trigger", "original_tag = GER"),
+                    + _block("target_root_trigger", "tag = GER"),
                 ),
                 _taker(
                     "tag_only", _SET_TAKEN, _NOT_TAKEN, _block("allowed", "tag = GER")
@@ -1368,6 +1466,44 @@ def test_decision_check(monkeypatch, check, decisions, expected):
     factories = [decision_factory(text) for text in decisions]
 
     assert_findings(decisions_results_for(factories, monkeypatch, check), expected)
+
+
+# case: (category allowed, expected findings)
+_TARGET_STATE_CATEGORY_CASES = {
+    "runtime tag locks the taker": ("tag = GER", []),
+    "original tag admits split-offs": (
+        "original_tag = GER",
+        [(_STALE_STATE % ("category_pin", "flag md_taken") + _ONE_SHOT,)],
+    ),
+    "conditional tag is not a lock": (
+        "OR = { tag = GER tag = FRA }",
+        [(_STALE_STATE % ("category_pin", "flag md_taken") + _ONE_SHOT,)],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("allowed", "expected"),
+    _TARGET_STATE_CATEGORY_CASES.values(),
+    ids=_TARGET_STATE_CATEGORY_CASES,
+)
+def test_target_state_category_pin(tmp_path, allowed, expected):
+    validator = _mod(
+        tmp_path,
+        {
+            "common/decisions/categories/cat.txt": f"cat = {{\n\tallowed = {{ {allowed} }}\n}}\n",
+            "common/decisions/d.txt": "cat = {\n"
+            + _taker(
+                "category_pin", _SET_TAKEN, _NOT_TAKEN, "\t\tfire_only_once = yes\n"
+            )
+            + "}\n",
+        },
+    )
+
+    validator.validate_target_state_rechecked_in_available()
+
+    assert_findings([issue.message for issue in validator._issues], expected)
+    assert all(issue.severity == V.Severity.WARNING for issue in validator._issues)
 
 
 @pytest.mark.parametrize("no_cache", [False, True])

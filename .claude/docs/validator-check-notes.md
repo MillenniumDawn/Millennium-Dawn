@@ -177,14 +177,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   followed. Move the condition into `target_trigger`. Script-only
   `allowed = { always = no }` decisions are skipped.
 - `decision-target-state-not-in-available` (WARNING): a flag or idea that
-  `complete_effect` writes inside `FROM`, that `target_trigger` reads inside `FROM`, and
-  that `available` does not read. `target_trigger` runs once a day, so the decision can
-  be taken again on the same target until the next pass. Re-check the state in
-  `available`, inside `hidden_trigger` if it is not player-facing, as the EU council
-  decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
+  `complete_effect` writes inside `FROM`, making an opposite-polarity read in
+  `target_trigger` fail, and that `available` does not read. `target_trigger` runs once
+  a day, so the decision can be taken again on the same target until the next pass.
+  Re-check the state in `available`, inside `hidden_trigger` if it is not player-facing,
+  as the EU council decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
   note: the same country cannot repeat it, so it matters only if a second country can
-  take it. When it is also locked to one tag (in `allowed`, `target_root_trigger`, or
-  the category `allowed`), nobody can and it is skipped. Script-only
+  take it. When it is also locked to one runtime `tag` (in `allowed`,
+  `target_root_trigger`, or the category `allowed`), nobody can and it is skipped.
+  `original_tag` admits civil-war split-offs, so it keeps the verify note. Script-only
   `allowed = { always = no }` decisions are skipped. Known gaps: variables and other
   state, reads through scripted triggers, and sibling decisions that share one flag.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts

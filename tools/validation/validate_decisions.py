@@ -819,36 +819,37 @@ def _from_reading_triggers(triggers: Mapping[str, str]) -> Set[str]:
 
 # Flags and ideas are the target state a decision's own effect changes.
 _TARGET_STATE_WRITES = {
-    "set_country_flag": "flag",
-    "clr_country_flag": "flag",
-    "add_ideas": "idea",
-    "remove_ideas": "idea",
+    "set_country_flag": ("flag", True),
+    "clr_country_flag": ("flag", False),
+    "add_ideas": ("idea", True),
+    "remove_ideas": ("idea", False),
 }
-_TARGET_STATE_READS = {"has_country_flag": "flag", "has_idea": "idea"}
-_STATE_RE = re.compile(
-    r"\b("
-    + "|".join(_TARGET_STATE_WRITES | _TARGET_STATE_READS)
-    + r")\s*=\s*(?:\{([^{}]*)\}|([\w@.:]+))"
-)
+_TARGET_STATE_READS = {"has_country_flag": ("flag", True), "has_idea": ("idea", True)}
 _FLAG_NAME_RE = re.compile(r"\bflag\s*=\s*([\w@.:]+)")
 _ONE_SHOT_NOTE = " (the same country cannot repeat it; verify another one can take it)"
 
 
-def _from_state(block: str, verbs: Mapping[str, str]) -> Set[Tuple[str, str]]:
-    """(kind, name) of each flag or idea the *verbs* statements touch inside a FROM scope."""
-    state: Set[Tuple[str, str]] = set()
-    for body in _extract_from_blocks(block):
-        for match in _STATE_RE.finditer(body):
-            kind = verbs.get(match[1])
-            if kind is None:
-                continue
-            if match[3] is not None:
-                names = [match[3]]
-            elif kind == "flag":
-                names = _FLAG_NAME_RE.findall(match[2])
-            else:
-                names = match[2].split()
-            state.update((kind, name) for name in names)
+def _from_state(
+    block: str, verbs: Mapping[str, Tuple[str, bool]]
+) -> Set[Tuple[str, str, bool]]:
+    """(kind, name, present) of state written or required inside FROM, retaining NOTs."""
+    state: Set[Tuple[str, str, bool]] = set()
+
+    def visit(body: str, in_from: bool = False, negated: bool = False) -> None:
+        for key, scalar, child in iter_statements(flat_block_text(body)):
+            if in_from and key in verbs:
+                kind, present = verbs[key]
+                if scalar is not None:
+                    names = [scalar]
+                elif kind == "flag":
+                    names = _FLAG_NAME_RE.findall(child or "")
+                else:
+                    names = (child or "").split()
+                state.update((kind, name, present != negated) for name in names)
+            elif child is not None:
+                visit(child, in_from or key == "FROM", negated != (key == "NOT"))
+
+    visit(block)
     return state
 
 
@@ -2602,11 +2603,11 @@ class Validator(BaseValidator):
         ``target_trigger`` runs once a day, so after one country completes the
         decision, others can take it on the same target until the next pass.
         Compares the flags and ideas ``complete_effect`` writes inside ``FROM``
-        with the ones ``target_trigger`` reads there, less those ``available``
+        with opposite-polarity reads in ``target_trigger``, less those ``available``
         reads there. ``effect_tooltip`` bodies never run, so they do not count.
         A ``days_re_enable`` or ``fire_only_once`` decision gets a verify note:
         the same country cannot repeat it, so only another country can. When it
-        is also locked to one tag, nobody can, and it is skipped.
+        is also locked to one runtime ``tag``, nobody can, and it is skipped.
 
         Exempts ``allowed = { always = no }`` (script-activated).
         """
@@ -2625,17 +2626,26 @@ class Validator(BaseValidator):
             if d.allowed and "always = no" in d.allowed:
                 continue
             one_shot = d.fire_only_once or "days_re_enable" in d.raw
-            if one_shot and (
-                _flat_tag_pins(d.allowed)
-                or _flat_tag_pins(d.target_root_trigger)
-                or cat_pins.get(token_to_cat.get(d.token, ""))
+            if one_shot and any(
+                kind == "tag"
+                for kind, _tag in (
+                    _flat_tag_pins_with_kind(d.allowed)
+                    | _flat_tag_pins_with_kind(d.target_root_trigger)
+                    | cat_pins.get(token_to_cat.get(d.token, ""), set())
+                )
             ):
                 continue
             effect = _strip_effect_tooltip_blocks(d.complete_effect)
-            stale = (
-                _from_state(effect, _TARGET_STATE_WRITES)
-                & _from_state(d.target_trigger, _TARGET_STATE_READS)
-            ) - _from_state(d.available, _TARGET_STATE_READS)
+            invalidated = {
+                (kind, name, not present)
+                for kind, name, present in _from_state(effect, _TARGET_STATE_WRITES)
+            } & _from_state(d.target_trigger, _TARGET_STATE_READS)
+            stale = {(kind, name) for kind, name, _present in invalidated} - {
+                (kind, name)
+                for kind, name, _present in _from_state(
+                    d.available, _TARGET_STATE_READS
+                )
+            }
             if stale:
                 changed = ", ".join(f"{kind} {name}" for kind, name in sorted(stale))
                 note = _ONE_SHOT_NOTE if one_shot else ""
