@@ -84,29 +84,39 @@ decrease_two_level_economic_growth = {
 	clr_country_flag = disable_cycle_costs
 }
 
-# The AI's only way up a cycle tier (the ideas carry no AI weight). The charge scales by economic_cycles_cost_factor,
-# which sets the players' political power price. Recovery tiers may borrow what the treasury lacks, since AI debt
-# repayment keeps big treasuries near zero, unless the factor is +200% or more. The tag checks mirror the tiers'
+# The AI's only way out of the tiers that shrink productivity (the ideas carry no AI weight). It stops at Stable Growth;
+# Fast Growth and Economic Boom come only from content. The charge scales by economic_cycles_cost_factor, which sets
+# the players' political power price. Debt repayment keeps big treasuries near zero, so the AI may borrow the shortfall
+# when the factor is under +200% and the loan's interest fits in the weekly surplus. The tag checks mirror the tiers'
 # available blocks.
 ai_buy_economic_cycle_upgrade = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = ai_cycle_upgrade_hold }
-			ai_has_deficit = no
-			set_temp_variable = { cycle_upgrade_reserve = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } multiply = 2 } }
 			OR = {
-				check_variable = { treasury > cycle_upgrade_reserve }
+				has_idea = depression
 				AND = {
-					check_variable = { modifier@economic_cycles_cost_factor < 2 }
 					OR = {
-						has_idea = depression
 						has_idea = recession
 						has_idea = stagnation
 					}
+					NOT = {
+						AND = {
+							original_tag = TUR
+							has_idea = TUR_no_economic_plan
+						}
+					}
+					NOT = {
+						AND = {
+							original_tag = USA
+							OR = {
+								has_idea = USA_economic_crisis_light_idea
+								has_idea = USA_economic_crisis_medium_idea
+								has_idea = USA_economic_crisis_severe_idea
+							}
+						}
+					}
 				}
 			}
-			NOT = { has_active_mission = bankruptcy_incoming_collapse }
-			ai_is_fiscally_stressed = no
 			NOT = {
 				AND = {
 					original_tag = BRA
@@ -116,41 +126,19 @@ ai_buy_economic_cycle_upgrade = {
 					}
 				}
 			}
+			NOT = { has_country_flag = ai_cycle_upgrade_hold }
+			ai_has_deficit = no
+			NOT = { has_active_mission = bankruptcy_incoming_collapse }
+			ai_is_fiscally_stressed = no
+			set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } } }
+			set_temp_variable = { cycle_upgrade_reserve = { value = cycle_upgrade_charge multiply = 2 } }
 			OR = {
-				has_idea = depression
+				check_variable = { treasury > cycle_upgrade_reserve }
 				AND = {
-					NOT = {
-						AND = {
-							original_tag = TUR
-							has_idea = TUR_no_economic_plan
-						}
-					}
-					OR = {
-						AND = {
-							OR = {
-								has_idea = recession
-								has_idea = stagnation
-							}
-							NOT = {
-								AND = {
-									original_tag = USA
-									OR = {
-										has_idea = USA_economic_crisis_light_idea
-										has_idea = USA_economic_crisis_medium_idea
-										has_idea = USA_economic_crisis_severe_idea
-									}
-								}
-							}
-						}
-						AND = {
-							OR = {
-								has_idea = stable_growth
-								has_idea = fast_growth
-							}
-							has_war = no
-							check_variable = { inflation_rate_var < 0.06 }
-						}
-					}
+					check_variable = { modifier@economic_cycles_cost_factor < 2 }
+					# Weekly interest on the shortfall as calculate_interest_rate charges it, with the 1% fee
+					set_temp_variable = { cycle_upgrade_interest = { value = cycle_upgrade_charge subtract = treasury max = 0 multiply = 1.01 multiply = 0.00019 multiply = interest_rate } }
+					check_variable = { treasury_rate > cycle_upgrade_interest }
 				}
 			}
 		}
