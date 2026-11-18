@@ -23689,6 +23689,7 @@ UKR_develop_domestic_equipment_decision_category = {
 			has_country_flag = UKR_utility_vehicle_tender_dozor_bm_completed_flag
 
 			NOT = { has_country_flag = UKR_utility_vehicle_tender_oncilla_license_sold_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_oncilla_talks_flag } # an offer is still running
 		}
 
 		available = {
@@ -23706,6 +23707,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_decision_offer_oncilla_license"
+			set_country_flag = UKR_utility_vehicle_tender_oncilla_talks_flag
 
 			if = {
 				limit = {
@@ -23741,6 +23743,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			NOT = { has_country_flag = UKR_utility_vehicle_tender_dozor_b_selected_flag }
 			NOT = { has_country_flag = UKR_utility_vehicle_tender_oncilla_license_sold_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_oncilla_talks_flag } # an offer is still running
 		}
 
 		available = {
@@ -23756,6 +23759,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_decision_offer_oncilla_license_early"
+			set_country_flag = UKR_utility_vehicle_tender_oncilla_talks_flag
 
 			if = {
 				limit = {
@@ -25767,6 +25771,17 @@ UKR_develop_domestic_equipment_decision_category = {
 		}
 
 		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_mrap_localise_components_vehicle_tt
+				OR = {
+					has_country_flag = UKR_mrap_varta_selected_flag
+					has_country_flag = UKR_mrap_shrek_selected_flag
+					has_country_flag = UKR_mrap_panthera_started_flag
+					has_country_flag = UKR_mrap_fiona_started_flag
+					has_country_flag = UKR_mrap_hurricane_started_flag
+					has_country_flag = UKR_mrap_kozak2_selected_flag
+				}
+			}
 			controls_province = 6495 #Kremenchuk, Poltava
 			1089 = { #Poltava
 				is_owned_and_controlled_by = UKR
@@ -25800,7 +25815,28 @@ UKR_develop_domestic_equipment_decision_category = {
 				}
 			}
 
+			# One cost bonus, for the vehicle we rely on most: the MRAP tender winner first, then the KrAZ programmes, then the Kozak-2.
+			# The bonus names do not repeat the decision id on purpose (bonus-name-not-owner-id): the decision grants a different
+			# bonus depending on its triggers, and each name tells in the equipment tooltip whose parts got cheaper.
 			if = {
+				limit = { has_country_flag = UKR_mrap_varta_selected_flag }
+
+				add_equipment_bonus = {
+					name = UKR_mrap_localised_uba
+					bonus = {
+						heavy_util_vehicle_5 = {
+							build_cost_ic = -0.1
+						}
+						heavy_util_vehicle_6 = {
+							build_cost_ic = -0.1
+						}
+						heavy_util_vehicle_7 = {
+							build_cost_ic = -0.1
+						}
+					}
+				}
+			}
+			else_if = {
 				limit = {
 					OR = {
 						has_country_flag = UKR_mrap_shrek_selected_flag
@@ -25828,31 +25864,11 @@ UKR_develop_domestic_equipment_decision_category = {
 					}
 				}
 			}
-
-			if = {
+			else_if = {
 				limit = { has_country_flag = UKR_mrap_kozak2_selected_flag }
 
 				add_equipment_bonus = {
 					name = UKR_mrap_localised_praktyka
-					bonus = {
-						heavy_util_vehicle_5 = {
-							build_cost_ic = -0.1
-						}
-						heavy_util_vehicle_6 = {
-							build_cost_ic = -0.1
-						}
-						heavy_util_vehicle_7 = {
-							build_cost_ic = -0.1
-						}
-					}
-				}
-			}
-
-			if = {
-				limit = { has_country_flag = UKR_mrap_varta_selected_flag }
-
-				add_equipment_bonus = {
-					name = UKR_mrap_localised_uba
 					bonus = {
 						heavy_util_vehicle_5 = {
 							build_cost_ic = -0.1
