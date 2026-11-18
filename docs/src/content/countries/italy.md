@@ -162,7 +162,7 @@ Ruling-party popularity also influences stability. A coalition that collapses be
 
 ### Regional Development
 
-Italy is divided into northern, central, southern, island, and Roma-municipal focus subtrees. The south carries dedicated deficit ideas (`ITA_underdeveloped_south_1`, `ITA_outdated_education_1`, `ITA_wasted_foreign_funds`) that you peel back through targeted focuses. The Mezzogiorno is also where the four mafias operate, so southern development paths interlock with the mafia mechanic.
+Italy is divided into northern, central, southern, island, and Roma-municipal focus subtrees. The south carries dedicated deficit ideas (`ITA_underdeveloped_south_1`, `ITA_outdated_education_1`) that you peel back through targeted focuses. The Mezzogiorno is also where the four mafias operate, so southern development paths interlock with the mafia mechanic.
 
 ### Nuclear Ban
 

@@ -49,7 +49,11 @@ update_mafia_strength = {
 	set_variable = { mafia_strength_construction_var = { value = mafia_strength multiply = -0.5 } }
 	set_variable = { mafia_strength_investment_var = { value = mafia_strength multiply = 0.5 } }
 	set_variable = { mafia_strength_pp_var = { value = mafia_strength multiply = -0.5 } }
-	set_variable = { mafia_strength_lega_drift_var = { value = mafia_strength multiply = 0.1 } }
+	set_variable = { mafia_strength_lega_drift_var = 0 }
+	if = {
+		limit = { check_variable = { party_pop_array^14 < 0.1 } }
+		set_variable = { mafia_strength_lega_drift_var = { value = mafia_strength multiply = 0.1 } }
+	}
 	set_variable = {
 		mafia_strength_ai_factor_var = {
 			value = 1
@@ -1342,6 +1346,7 @@ calculate_abandon_coalition_threshold = {
 }
 
 small_parties_leave_coalition = {
+	set_temp_variable = { partner_left = 0 }
 	for_each_loop = {
 		array = abandon_coalition_threshold
 		index = i
@@ -1352,11 +1357,23 @@ small_parties_leave_coalition = {
 				check_variable = { party_pop_array^i < abandon_coalition_threshold^i }
 			}
 			remove_from_array = { gov_coalition_array = i }
+			set_temp_variable = { partner_left = 1 }
 			country_event = italy_md.47
 		}
 	}
 	reforme_expectance_government_change_update = yes
 	update_government_coalition_strength = yes
+	#a walkout that costs the government its seat majority brings it down
+	if = {
+		limit = {
+			check_variable = { partner_left = 1 }
+			check_variable = { government_coalition_strength_elect < majority_threshold }
+			has_elections = yes
+			NOT = { has_country_flag = elections_in_progress }
+			NOT = { has_country_flag = coalition_forming }
+		}
+		country_event = italy_md.38
+	}
 }
 
 government_crisis_check = {
