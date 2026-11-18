@@ -84,14 +84,17 @@ decrease_two_level_economic_growth = {
 	clr_country_flag = disable_cycle_costs
 }
 
-# Moves the AI up one economic cycle tier once its treasury covers the 5% of GDP charge, so no upgrade becomes new debt.
-# Like the spending-law pass it costs no political power. The cycle ideas carry no AI weight, so this is the only way the
-# AI moves up. It skips a fiscally stressed economy and holds 180 days after a move; Fast Growth and Economic Boom also
-# need peace, a balanced budget and inflation under 6%. The TUR, USA and BRA locks match the tiers' available blocks.
+# Moves the AI up one economic cycle tier once a balanced budget and a treasury of twice the 5% of GDP charge let it pay
+# and keep a reserve, so no upgrade becomes new debt. Like the spending-law pass it costs no political power. The cycle
+# ideas carry no AI weight, so this is the only way the AI moves up. It skips a fiscally stressed economy and holds 180
+# days after a move; Fast Growth and Economic Boom also need peace and inflation under 6%. The TUR, USA and BRA locks
+# match the tiers' available blocks.
 ai_buy_economic_cycle_upgrade = {
 	if = {
 		limit = {
-			check_variable = { treasury > econ_cycle_upg_cost }
+			set_temp_variable = { cycle_upgrade_reserve = { value = econ_cycle_upg_cost multiply = 2 } }
+			check_variable = { treasury > cycle_upgrade_reserve }
+			ai_has_deficit = no
 			NOT = { has_country_flag = ai_cycle_upgrade_hold }
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			ai_is_fiscally_stressed = no
@@ -136,7 +139,6 @@ ai_buy_economic_cycle_upgrade = {
 								has_idea = fast_growth
 							}
 							has_war = no
-							ai_has_deficit = no
 							check_variable = { inflation_rate_var < 0.06 }
 						}
 					}
