@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import shlex
 import sys
 import tomllib
 
@@ -14,6 +15,7 @@ from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
 from shared.suite import (
+    dds_texture,
     initialize_git_repository,
     run_bash_step,
     run_git,
@@ -394,6 +396,52 @@ def test_file_paths_run_in_a_lightweight_index_job():
     assert all(
         step.get("name") != "Record failed validation jobs" for step in report["steps"]
     )
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the steps run in bash on Linux")
+def test_pr_dds_step_checks_only_changed_destinations(tmp_path):
+    folder = "gfx/interface/ideas"
+    renamed = f"{folder}/new [icon].DDS"
+    backlog = f"{folder}/untouched.dds"
+    deleted = f"{folder}/deleted.dds"
+    for name in (backlog, deleted, "original.dds"):
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(dds_texture(16, 16))
+    write_under_str(tmp_path, "keep.txt", "sparse checkout anchor\n")
+    initialize_git_repository(tmp_path, ".")
+    base = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+    run_git(tmp_path, "mv", "original.dds", renamed)
+    run_git(tmp_path, "rm", deleted)
+    run_git(tmp_path, "commit", "-m", "change textures")
+    head = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+    run_git(tmp_path, "sparse-checkout", "set", "--no-cone", "/keep.txt")
+
+    derive = workflow_step("detect-changes", "Derive changed DDS paths")
+    assert derive["env"] == {
+        "MERGE_BASE": "${{ steps.changed.outputs.merge-base }}",
+        "HEAD_SHA": "${{ steps.resolve-ref.outputs.head-sha }}",
+    }
+    result = run_bash_step(
+        derive["run"], tmp_path, {"MERGE_BASE": base, "HEAD_SHA": head}
+    )
+    assert result.returncode == 0, result.stderr
+    out = tmp_path / "changed-files" / "changed-dds.nul"
+    out.parent.mkdir()
+    (tmp_path / out.name).rename(out)
+    assert out.read_bytes() == os.fsencode(renamed) + b"\0"
+
+    check = workflow_step("validate-paths", "Check changed DDS files")
+    script = check["run"].replace(
+        "python3 tools/validation/validate_asset_data.py",
+        f"{shlex.quote(sys.executable)} {shlex.quote(str(VALIDATION_DIR / 'validate_asset_data.py'))}",
+    )
+    result = run_bash_step(script, tmp_path)
+    assert result.returncode == 1, result.stderr
+    assert (tmp_path / renamed).is_file()
+    assert not (tmp_path / backlog).exists()
+    payload = json.loads((tmp_path / "validation-dds.json").read_text(encoding="utf-8"))
+    assert [issue["file"] for issue in payload] == [renamed]
 
 
 def test_detect_changes_uses_python_grouping():
