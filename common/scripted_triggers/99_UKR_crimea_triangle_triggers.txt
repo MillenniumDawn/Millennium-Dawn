@@ -28,13 +28,6 @@ UKR_ct_TRK_eligible = {
 	check_variable = { var = UKR_ct_sov_raw value = UKR_ct_russian_triple_limit compare = less_than_or_equals }
 }
 
-UKR_ct_all_five_eligible = {
-	UZB = { UKR_ct_UZB_eligible = yes }
-	KAZ = { UKR_ct_KAZ_eligible = yes }
-	KYR = { UKR_ct_KYR_eligible = yes }
-	TAJ = { UKR_ct_TAJ_eligible = yes }
-	TRK = { UKR_ct_TRK_eligible = yes }
-}
 
 # v0.6 compatibility guard. Call from UKR scope.
 # MD has its own 2004 Crimean release, a 2014 annexation chain, and Sevastopol lease events.
@@ -47,33 +40,13 @@ UKR_ct_md_crimea_available = {
 	NOT = { has_country_flag = UKR_crimea_2014_chain_active }
 }
 
-# Called in UKR scope by original ukraine_maidan.1 and Russian annexation focus.
-# Pre-v0.3 saves (not initialized) continue to use MD historical logic.
-UKR_ct_2014_invasion_pressure = {
-	NOT = { has_country_flag = UKR_ct_resolved_flag }
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		AND = {
-			check_variable = { var = UKR_ct_r value = 50 compare = greater_than_or_equals }
-			check_variable = { var = UKR_ct_u value = 40 compare = less_than_or_equals }
-			check_variable = { var = UKR_ct_t value = 25 compare = less_than_or_equals }
-		}
-	}
-}
-
 # v0.8: Every trigger below is evaluated in UKR country scope except
 # UKR_ct_sov_crm_subject_referendum (SOV) and CRM-status tests (CRM).
-# Pre-initialisation saves keep native MD historical behaviour.
 UKR_ct_2014_russian_dominance = {
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		AND = {
-			NOT = { has_country_flag = UKR_ct_resolved_flag }
-			check_variable = { var = UKR_ct_r value = 60 compare = greater_than_or_equals }
-			check_variable = { var = UKR_ct_u value = 30 compare = less_than_or_equals }
-			check_variable = { var = UKR_ct_t value = 20 compare = less_than_or_equals }
-		}
-	}
+	NOT = { has_country_flag = UKR_ct_resolved_flag }
+	check_variable = { var = UKR_ct_r value = 60 compare = greater_than_or_equals }
+	check_variable = { var = UKR_ct_u value = 30 compare = less_than_or_equals }
+	check_variable = { var = UKR_ct_t value = 20 compare = less_than_or_equals }
 }
 
 UKR_ct_2014_ukrainian_coalition = {
@@ -143,7 +116,6 @@ UKR_ct_sov_annex_uses_negotiations = {
 # survive a Crimean treaty. Crimea 669 gets its own threshold.
 UKR_ct_sov_nazbol_crimea_allowed = {
 	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
 		AND = {
 			NOT = { has_country_flag = UKR_ct_resolved_flag }
 			check_variable = { var = UKR_ct_r value = 50 compare = greater_than_or_equals }
@@ -160,7 +132,6 @@ UKR_ct_sov_nazbol_crimea_allowed = {
 
 UKR_ct_sov_revolution_crimea_allowed = {
 	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
 		AND = {
 			NOT = { has_country_flag = UKR_ct_resolved_flag }
 			check_variable = { var = UKR_ct_r value = 45 compare = greater_than_or_equals }
@@ -176,38 +147,75 @@ UKR_ct_sov_revolution_crimea_allowed = {
 }
 
 UKR_ct_crm_samooborona_allowed = {
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		AND = {
-			check_variable = { var = UKR_ct_r value = 45 compare = greater_than_or_equals }
-			NOT = { has_country_flag = UKR_ct_tatar_autonomy_flag }
-		}
-	}
+	check_variable = { var = UKR_ct_r value = 45 compare = greater_than_or_equals }
+	NOT = { has_country_flag = UKR_ct_tatar_autonomy_flag }
 }
 UKR_ct_crm_pro_russ_allowed = {
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		check_variable = { var = UKR_ct_r value = 55 compare = greater_than_or_equals }
-	}
+	check_variable = { var = UKR_ct_r value = 55 compare = greater_than_or_equals }
 }
 UKR_ct_crm_close_mejlis_allowed = {
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		AND = {
-			check_variable = { var = UKR_ct_t value = 20 compare = less_than_or_equals }
-			check_variable = { var = UKR_ct_r value = 45 compare = greater_than_or_equals }
-		}
-	}
+	check_variable = { var = UKR_ct_t value = 20 compare = less_than_or_equals }
+	check_variable = { var = UKR_ct_r value = 45 compare = greater_than_or_equals }
 }
 UKR_ct_crm_kazaki_allowed = {
-	OR = {
-		NOT = { has_country_flag = UKR_ct_initialized_flag }
-		check_variable = { var = UKR_ct_r value = 40 compare = greater_than_or_equals }
-	}
+	check_variable = { var = UKR_ct_r value = 40 compare = greater_than_or_equals }
 }
 
 # SOV country scope, for the named Russian subject referendum focus.
 UKR_ct_sov_crm_subject_referendum = {
 	country_exists = CRM
 	CRM = { is_subject_of = SOV owns_state = 669 }
+}
+
+UKR_ct_uzb_repatriation_partner = {
+	exists = yes
+	UKR_ct_UZB_eligible = yes
+	UKR = { has_country_flag = UKR_ct_UZB_consent_flag }
+}
+
+UKR_ct_kaz_repatriation_partner = {
+	exists = yes
+	UKR_ct_KAZ_eligible = yes
+	UKR = { has_country_flag = UKR_ct_KAZ_consent_flag }
+}
+
+UKR_ct_kyr_repatriation_partner = {
+	exists = yes
+	UKR_ct_KYR_eligible = yes
+	UKR = { has_country_flag = UKR_ct_KYR_consent_flag }
+}
+
+UKR_ct_taj_repatriation_partner = {
+	exists = yes
+	UKR_ct_TAJ_eligible = yes
+	UKR = { has_country_flag = UKR_ct_TAJ_consent_flag }
+}
+
+UKR_ct_trk_repatriation_partner = {
+	exists = yes
+	UKR_ct_TRK_eligible = yes
+	UKR = { has_country_flag = UKR_ct_TRK_consent_flag }
+}
+
+UKR_ct_asia_repatriation_available = {
+	OR = {
+		UZB = { UKR_ct_uzb_repatriation_partner = yes }
+		KAZ = { UKR_ct_kaz_repatriation_partner = yes }
+		KYR = { UKR_ct_kyr_repatriation_partner = yes }
+		TAJ = { UKR_ct_taj_repatriation_partner = yes }
+		TRK = { UKR_ct_trk_repatriation_partner = yes }
+	}
+}
+
+UKR_ct_ai_pro_russian_path = {
+	OR = {
+		has_global_flag = UKR_REGIONS_FOCUS_PATH
+		has_global_flag = UKR_COMMUNIST_FOCUS_PATH
+		has_global_flag = UKR_VITRENKO_FOCUS_PATH
+		AND = {
+			NOT = { UKR_ai_historical_path = yes }
+			NOT = { UKR_ai_alt_path = yes }
+			is_in_faction_with = SOV
+		}
+	}
 }
