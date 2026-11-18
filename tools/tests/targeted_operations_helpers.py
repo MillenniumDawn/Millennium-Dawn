@@ -21,6 +21,21 @@ from script_model import (
 """Shared manifest mutations for TOP generator contract checks."""
 
 
+def _unpooled_target(data: dict) -> dict:
+    pooled = {
+        ident for group in data["groups"] for ident in group.get("succession", [])
+    }
+    return next(
+        target
+        for target in data["targets"]
+        if target["successors"] and target["id"] not in pooled
+    )
+
+
+def _outsider(data: dict, group_id: int) -> int:
+    return next(t["id"] for t in data["targets"] if t["group"] != group_id)
+
+
 def mutate_manifest(data: dict, defect: str) -> None:
     if defect == "duplicate_id":
         data["targets"][1]["id"] = data["targets"][0]["id"]
@@ -31,17 +46,29 @@ def mutate_manifest(data: dict, defect: str) -> None:
     elif defect == "duplicate_ct_slot":
         data["groups"][1]["ct_id"] = data["groups"][0]["ct_id"]
     elif defect == "foreign_successor":
-        data["targets"][0]["successors"].append(64)
+        target = _unpooled_target(data)
+        target["successors"].append(_outsider(data, target["group"]))
     elif defect == "missing_successor":
         data["targets"][0]["successors"].append(999)
     elif defect == "foreign_group_successor":
-        data["groups"][0]["succession"].append(64)
+        group = data["groups"][0]
+        group["succession"].insert(0, _outsider(data, group["id"]))
     elif defect == "generated_overlap":
         data["targets"][-1]["id"] = 65
     elif defect == "generated_end":
-        data["generated_end"] = 130
+        data["generated_end"] += 1
+        data["targets"] = [
+            target
+            for target in data["targets"]
+            if target["id"] != data["generated_end"] - 1
+        ]
     elif defect == "capacity":
-        data["capacity"] += 1
+        data["capacity"] = data["generated_end"] - 1
+        data["targets"] = [
+            target
+            for target in data["targets"]
+            if target["id"] < data["generated_start"]
+        ]
     elif defect == "target_class":
         data["targets"][0]["target_class"] = "person"
     elif defect == "group_class":
@@ -82,7 +109,8 @@ def mutate_manifest(data: dict, defect: str) -> None:
     elif defect == "consequence_profile":
         data["targets"][0]["consequence_profile"] = "political_leader"
     elif defect == "duplicate_successor":
-        data["targets"][0]["successors"].append(data["targets"][0]["successors"][0])
+        target = _unpooled_target(data)
+        target["successors"].append(target["successors"][0])
     elif defect == "incomplete_successor":
         data["targets"][0]["successors"].pop()
     elif defect == "missing_authored_pool":
@@ -109,12 +137,12 @@ MANIFEST_DEFECT_ERRORS = {
     "duplicate_key": "Authored person keys must retain their stable IDs",
     "duplicate_group": "Organization identities must preserve slots 1-12",
     "duplicate_ct_slot": "Duplicate or out-of-range CT identity",
-    "foreign_successor": "Incomplete successor binding for 1",
+    "foreign_successor": "Person successor belongs to another organization",
     "missing_successor": "Invalid affiliation or successor for 1",
-    "foreign_group_successor": "Incomplete successor binding for 1",
+    "foreign_group_successor": "Organization successor belongs to another organization",
     "generated_overlap": "Authored IDs must preserve slots 1-64",
-    "generated_end": "Authored IDs must preserve slots 1-64",
-    "capacity": "Authored IDs must preserve slots 1-64",
+    "generated_end": "Invalid registry capacity",
+    "capacity": "Invalid registry capacity",
     "target_class": "Invalid target class for 1",
     "group_class": "Target class does not match group for 1",
     "location_policy": "Invalid location policy for 1",
@@ -130,7 +158,7 @@ MANIFEST_DEFECT_ERRORS = {
     "leader_role": "Invalid leader role for target 1",
     "leader_office": "Incomplete serving leader binding for 129",
     "consequence_profile": "Consequence profile does not match group for 1",
-    "duplicate_successor": "Incomplete successor binding for 1",
+    "duplicate_successor": "Duplicate or self successor for 3",
     "incomplete_successor": "Incomplete successor binding for 1",
     "missing_authored_pool": "Authored successor missing from group pool: 145",
     "activation_year": "Invalid authored opportunity year for 1",

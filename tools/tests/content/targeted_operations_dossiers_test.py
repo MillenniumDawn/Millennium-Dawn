@@ -737,7 +737,8 @@ def test_numeric_loop_selectors_write_results_to_chain_temps():
     assert "{ TOP_visit_open_candidate = top_visit_person }" in visit
     assert "TOP_visit_trigger_state = TOP_visit_open_state" in visit
     assert "{ TOP_liaison_pair_found = 1 }" in liaison
-    assert "PREV.TOP_liaison_pair_until^top_liaison_index" in liaison
+    assert "{ TOP_liaison_pair_until^top_liaison_index = {" in liaison
+    assert "PREV.TOP_liaison_pair_until" not in liaison
     assert "{ TOP_linked_first = top_linked_target }" in linked
     assert "{ TOP_linked_second = top_linked_target }" in linked
     assert linked.count("{ TOP_linked_best_score = TOP_linked_score }") == 2
