@@ -1,0 +1,253 @@
+# Effect: nuclear_strike_devastate_state
+# Purpose: Destroys a share of the economic buildings in the state in scope, cuts its productivity and wrecks its military sites
+# Parameters:
+# - nuclear_destroy_share: share of each building's levels to remove, 0-1
+nuclear_strike_devastate_state = {
+	custom_effect_tooltip = nuclear_strike_devastate_state_tt
+	hidden_effect = {
+		if = { limit = { industrial_complex > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@industrial_complex multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = industrial_complex level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { arms_factory > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@arms_factory multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = arms_factory level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { dockyard > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@dockyard multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = dockyard level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { offices > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@offices multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = offices level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { internet_station > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@internet_station multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = internet_station level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { microchip_plant > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@microchip_plant multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = microchip_plant level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { composite_plant > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@composite_plant multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = composite_plant level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { synthetic_refinery > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@synthetic_refinery multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = synthetic_refinery level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { fossil_powerplant > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@fossil_powerplant multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = fossil_powerplant level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { nuclear_reactor > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@nuclear_reactor multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = nuclear_reactor level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { renewable_energy_infra > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@renewable_energy_infra multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = renewable_energy_infra level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { battery_park > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@battery_park multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = battery_park level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+		if = { limit = { fuel_silo > 0 }
+			set_temp_variable = { nuclear_levels_lost = { value = building_level@fuel_silo multiply = nuclear_destroy_share round = yes max = 1 } }
+			meta_effect = {
+				text = { remove_building = { type = fuel_silo level = [LEVELS] } }
+				LEVELS = "[?nuclear_levels_lost|0]"
+			}
+		}
+
+		if = { limit = { air_base > 0 }
+			damage_building = { type = air_base damage = 10 }
+		}
+		if = { limit = { rocket_site > 0 }
+			damage_building = { type = rocket_site damage = 10 }
+		}
+		if = { limit = { radar_station > 0 }
+			damage_building = { type = radar_station damage = 10 }
+		}
+		if = { limit = { anti_air_building > 0 }
+			damage_building = { type = anti_air_building damage = 10 }
+		}
+
+		# The caller refreshes the owner's economy once, after every state is done
+		set_temp_variable = { nuclear_productivity_lost = { value = productivity_state_var multiply = nuclear_destroy_share } }
+		subtract_from_variable = { productivity_state_var = nuclear_productivity_lost }
+		clamp_variable = { var = productivity_state_var min = 100 }
+
+		add_dynamic_modifier = {
+			modifier = nuclear_fallout_severe
+			days = 365
+		}
+	}
+}
+
+# Effect: nuclear_strike_political_fallout
+# Purpose: Charges the country in scope the domestic and international cost of a nuclear strike it launched
+# Parameters:
+# - nuclear_strike_severity: 1 tactical, 3 state, 6 strategic
+nuclear_strike_political_fallout = {
+	# Every strike within 180 days of the last one costs half as much again, up to triple
+	set_temp_variable = { nuclear_days_since_strike = global.num_days }
+	subtract_from_temp_variable = { nuclear_days_since_strike = nuclear_last_strike_day }
+	set_temp_variable = { nuclear_strikes_before = nuclear_recent_strikes }
+	if = { limit = { check_variable = { nuclear_days_since_strike > 180 } }
+		set_temp_variable = { nuclear_strikes_before = 0 }
+	}
+	set_temp_variable = { nuclear_escalation = { value = nuclear_strikes_before multiply = 0.5 add = 1 min = 3 } }
+
+	# How much of the backlash the government has to answer for at home
+	set_temp_variable = { nuclear_domestic_share = 1 }
+	if = { limit = { has_totalitarian_government = yes }
+		set_temp_variable = { nuclear_domestic_share = 0.15 }
+	}
+	else_if = { limit = { has_autocratic_government = yes }
+		set_temp_variable = { nuclear_domestic_share = 0.35 }
+	}
+	else_if = { limit = { has_elections = no }
+		set_temp_variable = { nuclear_domestic_share = 0.65 }
+	}
+	if = { limit = { has_war_support > 0.7 }
+		multiply_temp_variable = { nuclear_domestic_share = 0.75 }
+	}
+	else_if = { limit = { has_war_support < 0.3 }
+		multiply_temp_variable = { nuclear_domestic_share = 1.25 }
+	}
+	if = { limit = { check_variable = { government_coalition_strength > 0.6 } }
+		multiply_temp_variable = { nuclear_domestic_share = 0.75 }
+	}
+	else_if = { limit = { check_variable = { government_coalition_strength < 0.4 } }
+		multiply_temp_variable = { nuclear_domestic_share = 1.25 }
+	}
+
+	# Answering a nuclear strike costs far less than starting one
+	set_temp_variable = { nuclear_pp_cost = { value = nuclear_strike_severity multiply = -50 } }
+	if = { limit = { has_country_flag = has_been_nuked }
+		multiply_temp_variable = { nuclear_domestic_share = 0.5 }
+		multiply_temp_variable = { nuclear_pp_cost = 0.5 }
+		if = {
+			limit = {
+				has_war_support > 0.5
+				check_variable = { government_coalition_strength > 0.5 }
+			}
+			multiply_temp_variable = { nuclear_domestic_share = 0.4 }
+		}
+	}
+
+	set_temp_variable = { nuclear_stability_loss = { value = nuclear_strike_severity multiply = -0.03 multiply = nuclear_domestic_share multiply = nuclear_escalation } }
+	set_temp_variable = { nuclear_war_support_loss = { value = nuclear_stability_loss multiply = 0.5 } }
+	set_temp_variable = { nuclear_protest_gain = { value = nuclear_strike_severity multiply = 5 multiply = nuclear_domestic_share multiply = nuclear_escalation } }
+	if = { limit = { check_variable = { police_law > 3 } }
+		multiply_temp_variable = { nuclear_protest_gain = 0.5 }
+	}
+
+	custom_effect_tooltip = nuclear_strike_political_fallout_tt
+	if = { limit = { has_country_flag = has_been_nuked }
+		custom_effect_tooltip = nuclear_strike_retaliation_tt
+	}
+	else = {
+		custom_effect_tooltip = nuclear_strike_first_use_tt
+	}
+	add_political_power = nuclear_pp_cost
+
+	hidden_effect = {
+		set_variable = { nuclear_recent_strikes = nuclear_strikes_before }
+		add_to_variable = { nuclear_recent_strikes = 1 }
+		set_variable = { nuclear_last_strike_day = global.num_days }
+
+		meta_effect = {
+			text = {
+				add_stability = [STABILITY]
+				add_war_support = [WAR_SUPPORT]
+			}
+			STABILITY = "[?nuclear_stability_loss|3]"
+			WAR_SUPPORT = "[?nuclear_war_support_loss|3]"
+		}
+		add_to_variable = { protest_strength = nuclear_protest_gain }
+		clamp_variable = { var = protest_strength min = 0 max = 100 }
+		set_temp_variable = { party_popularity_increase = nuclear_war_support_loss }
+		change_relative_party_popularity = yes
+
+		if = { limit = { has_country_flag = has_been_nuked }
+			every_other_country = {
+				add_opinion_modifier = { target = PREV modifier = nuclear_strike_retaliation }
+			}
+		}
+		else = {
+			if = { limit = { check_variable = { nuclear_strike_severity > 5 } }
+				every_other_country = {
+					add_opinion_modifier = { target = PREV modifier = nuclear_strike_strategic_first_use }
+				}
+			}
+			else_if = { limit = { check_variable = { nuclear_strike_severity > 2 } }
+				every_other_country = {
+					add_opinion_modifier = { target = PREV modifier = nuclear_strike_state_first_use }
+				}
+			}
+			else = {
+				every_other_country = {
+					add_opinion_modifier = { target = PREV modifier = nuclear_strike_tactical_first_use }
+				}
+			}
+
+			if = {
+				limit = {
+					check_variable = { nuclear_strike_severity > 2 }
+					OR = {
+						has_idea = Reduced_Western_Sanctions
+						has_idea = Western_Sanctions
+						has_idea = international_sanctions
+						has_idea = Massive_International_Sanctions
+					}
+				}
+				increase_sanctions = yes
+			}
+			else_if = { limit = { check_variable = { nuclear_strike_severity > 5 } }
+				add_timed_idea = { idea = international_sanctions days = 3650 }
+			}
+			else_if = { limit = { check_variable = { nuclear_strike_severity > 2 } }
+				add_timed_idea = { idea = international_sanctions days = 1825 }
+			}
+		}
+	}
+}
