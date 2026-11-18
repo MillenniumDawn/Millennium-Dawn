@@ -1127,7 +1127,7 @@ function tipText(node,ctx,share){
       '% of all recurring work.';
   }else if(node.kind==='hook'){
     const who=node.scope==='GLOBAL'
-      ? 'for <b>every country</b> (the engine spreads it out across the '+per+')'
+      ? 'for <b>every country</b> (all in the same game hour)'
       : 'only for <b>'+node.scope+'</b>';
     s='<b>'+node.name+'</b> — an on_action that runs each in-game '+per+', '+who+
       '.<br>About '+ops+' per '+per+' ('+self+
