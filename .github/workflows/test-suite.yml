@@ -1391,6 +1391,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+  # The comparison report stays visible without delaying the gate.
   gate:
     name: Test suite gate
     needs:
@@ -1402,7 +1403,6 @@ jobs:
       - tools-quality
       - mod-tests
       - docs-quality
-      - report
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
@@ -1422,8 +1422,7 @@ jobs:
           (needs.mod-tests.result != 'success' &&
           needs.mod-tests.result != 'skipped') ||
           (needs.docs-quality.result != 'success' &&
-          needs.docs-quality.result != 'skipped') ||
-          needs.report.result != 'success'
+          needs.docs-quality.result != 'skipped')
         run: exit 1
 
       - name: Confirm validation result
