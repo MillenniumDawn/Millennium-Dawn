@@ -84,15 +84,13 @@ decrease_two_level_economic_growth = {
 	clr_country_flag = disable_cycle_costs
 }
 
-# Moves the AI up one economic cycle tier once a balanced budget and a treasury of twice the 5% of GDP charge let it pay
-# and keep a reserve, so no upgrade becomes new debt. Like the spending-law pass it costs no political power. The cycle
-# ideas carry no AI weight, so this is the only way the AI moves up. It skips a fiscally stressed economy and holds 180
-# days after a move; Fast Growth and Economic Boom also need peace and inflation under 6%. The TUR, USA and BRA locks
-# match the tiers' available blocks.
+# The AI's only way up a cycle tier (the ideas carry no AI weight). The charge scales by economic_cycles_cost_factor,
+# the players' political power price, and the 2x reserve keeps an upgrade from becoming debt. Locks mirror the tiers'
+# available blocks.
 ai_buy_economic_cycle_upgrade = {
 	if = {
 		limit = {
-			set_temp_variable = { cycle_upgrade_reserve = { value = econ_cycle_upg_cost multiply = 2 } }
+			set_temp_variable = { cycle_upgrade_reserve = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } multiply = 2 } }
 			check_variable = { treasury > cycle_upgrade_reserve }
 			ai_has_deficit = no
 			NOT = { has_country_flag = ai_cycle_upgrade_hold }
@@ -145,12 +143,13 @@ ai_buy_economic_cycle_upgrade = {
 				}
 			}
 		}
-		set_temp_variable = { treasury_change = { value = econ_cycle_upg_cost multiply = -1 } }
+		set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } } }
+		set_temp_variable = { treasury_change = { value = cycle_upgrade_charge multiply = -1 } }
 		modify_treasury_effect = yes
 		increase_economic_growth = yes
 		set_country_flag = { flag = ai_cycle_upgrade_hold days = 180 value = 1 }
 		if = { limit = { OR = { is_debug = yes has_variable = global.md_benchmark_logging } }
-			log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Treasury: [?treasury] Charge: [?econ_cycle_upg_cost]"
+			log = "[GetDateText]: [THIS.GetTag]: AI Economic Cycle Upgrade: Treasury: [?treasury] Charge: [?cycle_upgrade_charge]"
 		}
 	}
 }
