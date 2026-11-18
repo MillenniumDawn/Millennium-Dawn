@@ -6,7 +6,7 @@ in-game day / week / month.
 HOI4 only auto-fires six recurring on_action hooks per country:
 
     on_daily   on_weekly   on_monthly            (GLOBAL — run for every country,
-    on_daily_<TAG>   on_weekly_<TAG>   on_monthly_<TAG>   staggered across the period)
+    on_daily_<TAG>   on_weekly_<TAG>   on_monthly_<TAG>   all in the same game hour)
 
 Everything that "runs daily/weekly/monthly" ultimately hangs off one of those
 hooks. This tool traces that graph and reports the cost, with one hard rule:
@@ -894,9 +894,9 @@ def render_text(report, top, cadence_filter, use_colors):
     out.append(
         _c(
             DIM,
-            "Notes: GLOBAL hooks fire once per country per period, "
-            "staggered by the engine across the period (they are not all "
-            "spent on the same day). 'ops' counts `key = ...` statements "
+            "Notes: GLOBAL hooks fire once per country per period, all in "
+            "the same game hour (on_monthly at 1:00 on the 1st), so a "
+            "period's work lands in one tick. 'ops' counts `key = ...` statements "
             "(effects + limit/trigger checks) in each hook plus every "
             "scripted_effect it reaches - a work proxy, not CPU time. "
             "`country_event ... days=N` is a one-shot delay unless the event "
@@ -1127,7 +1127,7 @@ function tipText(node,ctx,share){
       '% of all recurring work.';
   }else if(node.kind==='hook'){
     const who=node.scope==='GLOBAL'
-      ? 'for <b>every country</b> (the engine spreads it out across the '+per+')'
+      ? 'for <b>every country</b> (all in the same game hour)'
       : 'only for <b>'+node.scope+'</b>';
     s='<b>'+node.name+'</b> — an on_action that runs each in-game '+per+', '+who+
       '.<br>About '+ops+' per '+per+' ('+self+

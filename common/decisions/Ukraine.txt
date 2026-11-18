@@ -23295,18 +23295,25 @@ UKR_reactivate_sov_category = {
 			base = 5
 			modifier = { factor = 0 FROM = { NOT = { UKR_storage_sale_lacks_influence = yes } } } # every running sale to them has the influence it needs
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 check_variable = { UKR_storage_help_running > 0 } } # one bribe or meeting at a time across all buyers
+			modifier = { factor = 0 check_variable = { treasury < 0.5 } }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_help_bribe target: [From.GetName]"
 			custom_effect_tooltip = UKR_storage_help_bribe_tt
+			hidden_effect = { add_to_variable = { UKR_storage_help_running = 1 } }
 			set_temp_variable = { treasury_change = -0.05 }
 			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_help_bribe resolved, target: [From.GetName]"
+			hidden_effect = {
+				subtract_from_variable = { UKR_storage_help_running = 1 }
+				clamp_variable = { var = UKR_storage_help_running min = 0 }
+			}
 			random_list = {
 				50 = {
 					set_temp_variable = { percent_change = 1 }
@@ -23348,19 +23355,28 @@ UKR_reactivate_sov_category = {
 			base = 5
 			modifier = { factor = 0 FROM = { UKR_storage_influence_5 = yes has_opinion = { target = ROOT value > 9 } } }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 check_variable = { UKR_storage_help_running > 0 } } # one bribe or meeting at a time across all buyers
+			modifier = { factor = 0 check_variable = { treasury < 0.5 } }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_help_meeting target: [From.GetName]"
 			custom_effect_tooltip = UKR_storage_help_meeting_tt
-			hidden_effect = { set_country_flag = UKR_storage_meeting_done_@FROM }
+			hidden_effect = {
+				set_country_flag = UKR_storage_meeting_done_@FROM
+				add_to_variable = { UKR_storage_help_running = 1 }
+			}
 			set_temp_variable = { treasury_change = -0.02 }
 			modify_treasury_effect = yes
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_help_meeting finished, target: [From.GetName]"
+			hidden_effect = {
+				subtract_from_variable = { UKR_storage_help_running = 1 }
+				clamp_variable = { var = UKR_storage_help_running min = 0 }
+			}
 			set_temp_variable = { percent_change = 1 }
 			set_temp_variable = { influence_target = FROM.id }
 			change_influence_percentage = yes
