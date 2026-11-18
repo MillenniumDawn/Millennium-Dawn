@@ -6797,54 +6797,6 @@ update_population_growth_floor = {
 	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
 }
 
-# Effect: calculate_cost_pp_economic_cycles
-# Purpose: Computes political-point cost to unlock economic-cycle tiers
-calculate_cost_pp_economic_cycles = {
-	set_temp_variable = { tmp_tax_gain_multiplier_modifier = modifier@tax_gain_multiplier_modifier }
-	set_temp_variable = { tmp_production_speed_buildings_factor = modifier@production_speed_buildings_factor }
-	set_temp_variable = { tmp_stability_factor = modifier@stability_factor }
-	set_temp_variable = { tmp_political_power_gain = modifier@political_power_gain }
-
-	if = { limit = { has_idea = recession }
-		set_variable = { pp_cost_economic = 150 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.20 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.15 }
-		add_to_temp_variable = { tmp_stability_factor = 0.05 }
-	}
-	else_if = { limit = { has_idea = stagnation }
-		set_variable = { pp_cost_economic = 200 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.40 }
-		add_to_temp_variable = { tmp_stability_factor = 0.02 }
-	}
-	else_if = { limit = { has_idea = stable_growth }
-		set_variable = { pp_cost_economic = 250 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.65 }
-	}
-	else_if = { limit = { has_idea = fast_growth }
-		set_variable = { pp_cost_economic = 300 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.05 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 0.90 }
-		add_to_temp_variable = { tmp_stability_factor = 0.02 }
-	}
-	else_if = { limit = { has_idea = economic_boom }
-		set_variable = { pp_cost_economic = 350 }
-		add_to_temp_variable = { tmp_tax_gain_multiplier_modifier = 0.10 }
-		add_to_temp_variable = { tmp_production_speed_buildings_factor = 1.10 }
-		add_to_temp_variable = { tmp_stability_factor = 0.04 }
-	}
-
-	multiply_variable = { pp_cost_economic = tmp_tax_gain_multiplier_modifier }
-	multiply_variable = { pp_cost_economic = tmp_production_speed_buildings_factor }
-	multiply_variable = { pp_cost_economic = tmp_stability_factor }
-	clamp_temp_variable = { var = tmp_political_power_gain min = 0.001 }
-	divide_variable = { pp_cost_economic = tmp_political_power_gain }
-
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
-	}
-}
-
 # Effect: recalculate_resources_price
 # Purpose: Adjusts resource prices based on global supply and demand shifts
 recalculate_resources_price = {
