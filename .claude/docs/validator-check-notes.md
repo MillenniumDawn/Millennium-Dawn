@@ -172,6 +172,22 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   copy guards the rest of the day, as with `EUU_voting_rights_suspended` in the EU
   council decisions. Keep such a copy, for example as `hidden_trigger`. Script-only
   `allowed = { always = no }` decisions are skipped.
+- `decision-root-trigger-reads-from` (WARNING): `target_root_trigger` runs before a target
+  is bound, so a `FROM` read there checks nothing. Scripted triggers it calls are
+  followed. Move the condition into `target_trigger`. Script-only
+  `allowed = { always = no }` decisions are skipped.
+- `decision-target-state-not-in-available` (WARNING): a flag or idea that
+  `complete_effect` writes inside `FROM`, making an opposite-polarity read in
+  `target_trigger` fail, and that `available` does not read. `target_trigger` runs once
+  a day, so the decision can be taken again on the same target until the next pass.
+  Re-check the state in `available`, inside `hidden_trigger` if it is not player-facing,
+  as the EU council decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
+  note: the same country cannot repeat it, so it matters only if a second country can
+  take it. When it is also locked to one runtime `tag` (in `allowed`,
+  `target_root_trigger`, or the category `allowed`), nobody can and it is skipped.
+  `original_tag` admits civil-war split-offs, so it keeps the verify note. Script-only
+  `allowed = { always = no }` decisions are skipped. Known gaps: variables and other
+  state, reads through scripted triggers, and sibling decisions that share one flag.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
@@ -611,18 +627,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_asset_data.py
 
-- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
-  staged files only, so the existing model backlog blocks a commit only when one of
-  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
-- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
-  TGA or truncated data. Stdlib only, so it runs without numpy.
-- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
-  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
-  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
-  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
-  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
-  the texture format findings are WARNING, since the standards call them targets.
-  These need numpy and log a skip without it.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` holding PNG, JPEG,
+  TGA or data too short for a DDS header.
+- `texture-art-standard`: legacy header, format and mipmaps from
+  `tools/assets/model_standards.py`. ERROR for staged and PR-changed DDS files,
+  WARNING in a full scan. Flat event pictures and large portraits can stay
+  uncompressed. Headers cannot prove alpha usage or compression quality. Use the
+  printed `dds_standardize.py` preview, or re-export from source when it cannot fix
+  the file. The DDS checks need neither numpy nor Pillow.
+- The commit hook also runs `tools/assets/audit_models.py` for files under
+  `gfx/models/`. Broken mesh data is an ERROR. Triangle count and texture size
+  findings are WARNINGs. These checks need numpy and log a skip without it.
+  Fix mesh data with `tools/assets/optimize_mesh.py --repair-only`.
 
 ## validate_mio_icons.py
 
