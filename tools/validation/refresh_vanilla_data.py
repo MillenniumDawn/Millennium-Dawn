@@ -16,24 +16,27 @@ Requires the game installed (auto-detected, or set $HOI4_PATH).
 import argparse
 import glob
 import os
+import re
 import shutil
 import sys
 import zipfile
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from equipment_module_slots import entity_names_from_text
 from image_size import read_image_size
 from shared_utils import find_hoi4_install, get_root_dir, list_files
 from sprite_index import _gfx_root
-from validate_defines import find_vanilla_defines, parse_vanilla_defines
+from validate_defines import find_vanilla_defines, parse_vanilla_define_files
 from validate_file_paths import collect_vanilla_paths
 from validate_gfx_references import (
     _read_raw,
     _vanilla_gfx_files,
     _vanilla_gui_files,
     font_names_from_gfx_text,
+    gui_windows_from_text,
     sprite_defs_from_gfx_text,
+    sprite_names_from_gfx_text,
 )
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
@@ -74,13 +77,15 @@ def _refresh_defines() -> str:
     path = find_vanilla_defines()
     if not path:
         raise RefreshError("common/defines/00_defines.lua not found")
-    namespaces = parse_vanilla_defines(path)
+    namespaces = parse_vanilla_define_files(path)
+    if not namespaces:
+        raise RefreshError("cannot load vanilla 00_defines.lua and 00_graphics.lua")
     return _write_manifest(
         "vanilla_defines.txt",
         [
-            "# Vanilla Hearts of Iron IV define names (NAMESPACE.NAME, from",
-            "# common/defines/00_defines.lua). Used by validate_defines.py when no",
-            "# live install is present (CI) to catch dead or renamed defines.",
+            "# Vanilla Hearts of Iron IV define names from common/defines/00_defines.lua",
+            "# (NAMESPACE.NAME) and 00_graphics.lua (NDefines_Graphics.NAMESPACE.NAME).",
+            "# Used by validate_defines.py when no live install is present (CI).",
         ],
         (f"{ns}.{name}" for ns, names in namespaces.items() for name in names),
     )
@@ -172,6 +177,69 @@ def _refresh_sprites() -> str:
     )
 
 
+_ENGINE_BINARIES = ("hoi4", "hoi4.exe")
+_BINARY_NAME = re.compile(rb"\0([\w@.\-]+)(?=\0)")
+
+
+def _engine_names(install: str) -> Set[bytes]:
+    """Return the NUL-terminated identifier strings in the game binary."""
+    for name in _ENGINE_BINARIES:
+        path = os.path.join(install, name)
+        if os.path.isfile(path):
+            with open(path, "rb") as fh:
+                return set(_BINARY_NAME.findall(fh.read()))
+    raise RefreshError(f"no {' or '.join(_ENGINE_BINARIES)} binary in {install}")
+
+
+def _mount_path(path: str) -> str:
+    """Return a vanilla file's path as the game loads it (dlc/<x>/ stripped)."""
+    normalized = path.replace("\\", "/")
+    return normalized[len(_gfx_root(normalized)) + 1 :]
+
+
+def _refresh_ui_paths() -> str:
+    gfx_files = _vanilla_gfx_files()
+    gui_files = _vanilla_gui_files()
+    if not gfx_files or not gui_files:
+        raise RefreshError("no interface .gfx or .gui files found")
+    engine = _engine_names(_install())
+    groups: Dict[str, Set[str]] = {}
+    for path in gfx_files:
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        groups.setdefault(_mount_path(path), set()).update(
+            f"{name} engine" if name.encode() in engine else name
+            for name in sprite_names_from_gfx_text(raw)
+        )
+    for path in gui_files:
+        raw = _read_raw(path)
+        if raw is None:
+            continue
+        lines = groups.setdefault(_mount_path(path), set())
+        for window, elements in gui_windows_from_text(raw).items():
+            if window.encode() in engine:
+                lines.add(window)
+            lines.update(f"{window} {e}" for e in elements if e.encode() in engine)
+    return _write_manifest(
+        "vanilla_ui_paths.txt",
+        [
+            "# Vanilla Hearts of Iron IV interface files (base + DLC) by the path the",
+            "# game loads them from. An MD file at the same path replaces the file.",
+            "# Under a .gfx path: every sprite it defines; `engine` marks a name the",
+            "# game binary contains. Under a .gui path: each top-level window the",
+            "# binary names, then `window element` for each element inside a window",
+            "# that the binary names.",
+            "# Used by validate_gfx_references.py to find what an override drops.",
+        ],
+        (
+            "\n".join([path, *(f"\t{line}" for line in sorted(lines))])
+            for path, lines in groups.items()
+            if lines
+        ),
+    )
+
+
 def _vanilla_entity_files(base: str) -> List[str]:
     roots = [
         base,
@@ -245,6 +313,7 @@ _TARGETS: Dict[str, Callable[[], str]] = {
     "gui": _refresh_gui,
     "paths": _refresh_paths,
     "sprites": _refresh_sprites,
+    "ui-paths": _refresh_ui_paths,
 }
 
 
