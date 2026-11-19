@@ -262,7 +262,7 @@ def test_tools_tests_install_only_the_test_group():
 
 def test_python_version_declarations_agree():
     major, minor = dev_setup.MIN_PYTHON
-    assert (major, minor) == (3, 12)
+    assert (major, minor) == (3, 14)
     assert not hasattr(dev_setup, "REC_PYTHON")
     version = f"{major}.{minor}"
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
