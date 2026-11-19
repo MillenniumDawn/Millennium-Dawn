@@ -1,6 +1,6 @@
 add_namespace = IRE_metrolink
 
-# Railway Order hearing, fired when planning finishes
+# Route objections, fired during planning
 country_event = {
 	id = IRE_metrolink.1
 	title = IRE_metrolink.1.t
@@ -8,14 +8,19 @@ country_event = {
 	picture = GFX_IRE_railway_order_hearing
 	is_triggered_only = yes
 
-	immediate = { set_variable = { IRE_metrolink_stage = 2 } }
+	trigger = {
+		check_variable = { IRE_metrolink_stage = 1 }
+		NOT = { has_country_flag = IRE_metrolink_route_settled }
+	}
+
+	immediate = { set_country_flag = IRE_metrolink_route_settled }
 
 	option = {
 		name = IRE_metrolink.1.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.a executed"
-		set_temp_variable = { treasury_change = -0.3 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
 		modify_treasury_effect = yes
-		unlock_decision_tooltip = IRE_metrolink_construction
 		ai_chance = {
 			base = 5
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -26,9 +31,8 @@ country_event = {
 	option = {
 		name = IRE_metrolink.1.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.b executed"
-		set_country_flag = { flag = IRE_metrolink_hearing_delay days = 180 value = 1 }
+		set_country_flag = IRE_metrolink_route_delayed
 		custom_effect_tooltip = IRE_metrolink_hearing_delay_effect_tt
-		unlock_decision_tooltip = IRE_metrolink_construction
 		ai_chance = { base = 10 }
 	}
 
@@ -37,7 +41,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.1.c executed"
 		set_country_flag = IRE_metrolink_cut_scope
 		custom_effect_tooltip = IRE_metrolink_cut_scope_tt
-		unlock_decision_tooltip = IRE_metrolink_construction
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = -90 } }
 		ai_chance = {
 			base = 1
 			modifier = { add = 4 ai_is_fiscally_stressed = yes }
@@ -73,12 +77,12 @@ country_event = {
 		if = {
 			limit = { check_variable = { IRE_metrolink_stage = 3 } }
 			set_variable = { IRE_metrolink_resume_stage = 2 }
-			set_temp_variable = { treasury_change = 1.5 }
 		}
 		else = {
 			set_variable = { IRE_metrolink_resume_stage = 0 }
-			set_temp_variable = { treasury_change = 0.25 }
 		}
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.001 }
 		modify_treasury_effect = yes
 		set_variable = { IRE_metrolink_stage = 0 }
 		set_country_flag = IRE_metrolink_deferred
@@ -95,7 +99,8 @@ country_event = {
 		name = IRE_metrolink.2.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.2.b executed"
 		add_stability = -0.03
-		set_temp_variable = { treasury_change = -0.5 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.005 }
 		modify_treasury_effect = yes
 		ai_chance = {
 			base = 5
@@ -105,7 +110,7 @@ country_event = {
 	}
 }
 
-# Dublin Airport station
+# Dublin Airport station, fired during planning
 country_event = {
 	id = IRE_metrolink.3
 	title = IRE_metrolink.3.t
@@ -114,7 +119,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		check_variable = { IRE_metrolink_stage = 3 }
+		check_variable = { IRE_metrolink_stage = 1 }
 		NOT = { has_country_flag = IRE_metrolink_cut_scope }
 		NOT = { has_country_flag = IRE_metrolink_airport_decided }
 	}
@@ -124,10 +129,27 @@ country_event = {
 	option = {
 		name = IRE_metrolink.3.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.3.a executed"
-		set_temp_variable = { treasury_change = -1 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
 		modify_treasury_effect = yes
 		set_country_flag = IRE_metrolink_airport_integrated
-		custom_effect_tooltip = IRE_metrolink_airport_reward_tt
+		custom_effect_tooltip = IRE_metrolink_airport_bore_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 60 } }
+		custom_effect_tooltip = IRE_metrolink_reward_later
+		effect_tooltip = {
+			27 = {
+				add_building_construction = {
+					type = air_base
+					level = 1
+					instant_build = yes
+				}
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
 		ai_chance = {
 			base = 10
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -143,7 +165,7 @@ country_event = {
 	}
 }
 
-# City-centre interchange with DART Underground
+# City-centre interchange with DART Underground, fired during planning
 country_event = {
 	id = IRE_metrolink.4
 	title = IRE_metrolink.4.t
@@ -152,7 +174,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		check_variable = { IRE_metrolink_stage = 3 }
+		check_variable = { IRE_metrolink_stage = 1 }
 		NOT = { has_country_flag = IRE_metrolink_cut_scope }
 		NOT = { has_country_flag = IRE_metrolink_interchange_decided }
 	}
@@ -162,10 +184,19 @@ country_event = {
 	option = {
 		name = IRE_metrolink.4.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.4.a executed"
-		set_temp_variable = { treasury_change = -1.5 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.015 }
 		modify_treasury_effect = yes
 		set_country_flag = IRE_metrolink_interchange
-		custom_effect_tooltip = IRE_metrolink_interchange_reward_tt
+		custom_effect_tooltip = IRE_metrolink_interchange_bore_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 90 } }
+		custom_effect_tooltip = IRE_metrolink_reward_later
+		effect_tooltip = {
+			27 = {
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+				add_building_construction = { type = rail_terminal level = 1 instant_build = yes }
+			}
+		}
 		ai_chance = {
 			base = 3
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
@@ -181,7 +212,7 @@ country_event = {
 	}
 }
 
-# Southern terminus
+# Southern terminus, fired during planning
 country_event = {
 	id = IRE_metrolink.5
 	title = IRE_metrolink.5.t
@@ -190,7 +221,7 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		check_variable = { IRE_metrolink_stage = 3 }
+		check_variable = { IRE_metrolink_stage = 1 }
 		NOT = { has_country_flag = IRE_metrolink_cut_scope }
 		NOT = { has_country_flag = IRE_metrolink_terminus_decided }
 	}
@@ -207,10 +238,12 @@ country_event = {
 	option = {
 		name = IRE_metrolink.5.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.5.b executed"
-		set_temp_variable = { treasury_change = -1.2 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.012 }
 		modify_treasury_effect = yes
 		set_country_flag = IRE_metrolink_sandyford
 		custom_effect_tooltip = IRE_metrolink_sandyford_reward_tt
+		hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = 120 } }
 		hidden_effect = { country_event = { id = IRE_metrolink.6 days = 30 random_days = 15 } }
 		ai_chance = {
 			base = 3
@@ -229,7 +262,8 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		check_variable = { IRE_metrolink_stage = 3 }
+		check_variable = { IRE_metrolink_stage > 0 }
+		check_variable = { IRE_metrolink_stage < 4 }
 		has_country_flag = IRE_metrolink_sandyford
 	}
 
@@ -246,7 +280,8 @@ country_event = {
 	option = {
 		name = IRE_metrolink.6.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.6.b executed"
-		set_temp_variable = { treasury_change = -0.3 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.003 }
 		modify_treasury_effect = yes
 		ai_chance = {
 			base = 10
@@ -259,7 +294,13 @@ country_event = {
 		name = IRE_metrolink.6.c
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.6.c executed"
 		clr_country_flag = IRE_metrolink_sandyford
-		set_temp_variable = { treasury_change = 0.6 }
+		if = {
+			limit = { check_variable = { IRE_metrolink_stage < 3 } }
+			custom_effect_tooltip = IRE_metrolink_drop_extension_tt
+			hidden_effect = { add_to_variable = { IRE_metrolink_bore_days = -120 } }
+		}
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = 0.006 }
 		modify_treasury_effect = yes
 		custom_effect_tooltip = IRE_metrolink_charlemont_reward_tt
 		ai_chance = { base = 2 }
@@ -284,7 +325,8 @@ country_event = {
 	option = {
 		name = IRE_metrolink.7.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.a executed"
-		set_temp_variable = { treasury_change = -1 }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = -0.01 }
 		modify_treasury_effect = yes
 		ai_chance = {
 			base = 10
@@ -296,7 +338,8 @@ country_event = {
 	option = {
 		name = IRE_metrolink.7.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.b executed"
-		set_temp_variable = { debt_change = 1.5 }
+		set_temp_variable = { debt_change = gdp_total }
+		multiply_temp_variable = { debt_change = 0.015 }
 		modify_debt_effect = yes
 		ai_chance = {
 			base = 5
@@ -325,5 +368,6 @@ country_event = {
 	option = {
 		name = IRE_metrolink.8.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.8.a executed"
+		IRE_metrolink_opening_effect = yes
 	}
 }

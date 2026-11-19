@@ -7,13 +7,21 @@ generic_coalition_politics_decisions = {
 		days_mission_timeout = 365
 
 		activation = {
-			check_variable = { IRE_metrolink_stage = 0 }
-			check_variable = { IRE_gridlock_level > 0 }
-			check_variable = { IRE_gridlock_level < 4 }
+			check_variable = { IRE_metrolink_stage < 6 }
+			# -0.02 office productivity per congestion level, capped at level 4
+			27 = { check_variable = { IRE_gridlock_offices_productivity > -0.08 } }
 		}
 
-		available = { hidden_trigger = { always = no } }
-		cancel_trigger = { NOT = { check_variable = { IRE_metrolink_stage = 0 } } }
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IRE_metrolink_is_open_tt
+				check_variable = { IRE_metrolink_stage > 5 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IRE_dublin_traffic_worsens completed"
+		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_dublin_traffic_worsens"
@@ -33,25 +41,42 @@ generic_coalition_politics_decisions = {
 		}
 
 		available = { 27 = { is_owned_and_controlled_by = ROOT } }
-		custom_cost_trigger = { check_variable = { treasury > 0.5 } }
-		custom_cost_text = cost_0_5
+		custom_cost_trigger = {
+			check_expr = {
+				value = gdp_total
+				multiply = 0.002
+				less_than = { value = treasury }
+			}
+		}
+
+		custom_cost_text = cost_small_expenditure
 		days_remove = 180
 		cancel_trigger = { has_country_flag = IRE_metrolink_deferred }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_planning"
 			set_variable = { IRE_metrolink_stage = 1 }
-			set_temp_variable = { treasury_change = -0.5 }
-			modify_treasury_effect = yes
+			small_expenditure = yes
 			hidden_effect = {
-				country_event = { id = IRE_metrolink.2 days = 60 random_days = 90 }
+				set_variable = { IRE_metrolink_bore_days = 540 }
+				country_event = { id = IRE_metrolink.1 days = 20 random_days = 10 }
+				country_event = { id = IRE_metrolink.3 days = 60 random_days = 10 }
+				country_event = { id = IRE_metrolink.4 days = 100 random_days = 10 }
+				country_event = { id = IRE_metrolink.5 days = 140 random_days = 10 }
+				country_event = { id = IRE_metrolink.2 days = 40 random_days = 10 }
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_planning"
 			IRE_gridlock_ease = yes
-			country_event = { id = IRE_metrolink.1 days = 1 }
+			set_variable = { IRE_metrolink_stage = 2 }
+			if = {
+				limit = { has_country_flag = IRE_metrolink_route_delayed }
+				clr_country_flag = IRE_metrolink_route_delayed
+				set_country_flag = { flag = IRE_metrolink_hearing_delay days = 180 value = 1 }
+			}
+			unlock_decision_tooltip = IRE_metrolink_construction
 		}
 
 		cancel_effect = {
@@ -82,15 +107,27 @@ generic_coalition_politics_decisions = {
 			27 = { is_owned_and_controlled_by = ROOT }
 		}
 
-		custom_cost_trigger = { check_variable = { treasury > 0.3 } }
-		custom_cost_text = cost_0_3
+		custom_cost_trigger = {
+			check_expr = {
+				value = gdp_total
+				multiply = 0.002
+				less_than = { value = treasury }
+			}
+		}
+
+		custom_cost_text = cost_small_expenditure
 		days_remove = 120
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_revival"
 			set_variable = { IRE_metrolink_stage = 1 }
-			set_temp_variable = { treasury_change = -0.3 }
-			modify_treasury_effect = yes
+			small_expenditure = yes
+			hidden_effect = {
+				country_event = { id = IRE_metrolink.1 days = 10 random_days = 20 }
+				country_event = { id = IRE_metrolink.3 days = 40 random_days = 15 }
+				country_event = { id = IRE_metrolink.4 days = 65 random_days = 15 }
+				country_event = { id = IRE_metrolink.5 days = 90 random_days = 15 }
+			}
 		}
 
 		remove_effect = {
@@ -103,7 +140,13 @@ generic_coalition_politics_decisions = {
 			}
 			else = {
 				IRE_gridlock_ease = yes
-				country_event = { id = IRE_metrolink.1 days = 1 }
+				set_variable = { IRE_metrolink_stage = 2 }
+				if = {
+					limit = { has_country_flag = IRE_metrolink_route_delayed }
+					clr_country_flag = IRE_metrolink_route_delayed
+					set_country_flag = { flag = IRE_metrolink_hearing_delay days = 180 value = 1 }
+				}
+				unlock_decision_tooltip = IRE_metrolink_construction
 			}
 		}
 
@@ -126,24 +169,28 @@ generic_coalition_politics_decisions = {
 				NOT = { has_country_flag = IRE_metrolink_hearing_delay }
 			}
 			27 = { is_owned_and_controlled_by = ROOT }
+			num_of_civilian_factories_available_for_projects > 1
 		}
 
-		custom_cost_trigger = { check_variable = { treasury > 3 } }
-		custom_cost_text = cost_3_0
-		days_remove = 540
+		custom_cost_trigger = {
+			check_expr = {
+				value = gdp_total
+				multiply = 0.002
+				less_than = { value = treasury }
+			}
+		}
+
+		custom_cost_text = cost_small_expenditure
+		days_remove = var:IRE_metrolink_bore_days
 		modifier = { civilian_factory_use = 2 }
 		cancel_trigger = { has_country_flag = IRE_metrolink_deferred }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_construction"
 			set_variable = { IRE_metrolink_stage = 3 }
-			set_temp_variable = { treasury_change = -3 }
-			modify_treasury_effect = yes
+			small_expenditure = yes
 			hidden_effect = {
 				country_event = { id = IRE_metrolink.2 days = 90 random_days = 300 }
-				country_event = { id = IRE_metrolink.3 days = 60 random_days = 30 }
-				country_event = { id = IRE_metrolink.4 days = 150 random_days = 30 }
-				country_event = { id = IRE_metrolink.5 days = 240 random_days = 30 }
 				random = {
 					chance = 60
 					country_event = { id = IRE_metrolink.7 days = 360 random_days = 90 }
@@ -155,10 +202,6 @@ generic_coalition_politics_decisions = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_construction"
 			set_variable = { IRE_metrolink_stage = 4 }
 			IRE_gridlock_ease = yes
-			if = {
-				limit = { has_country_flag = IRE_metrolink_interchange }
-				set_country_flag = { flag = IRE_metrolink_interchange_works days = 90 value = 1 }
-			}
 			if = {
 				limit = { has_country_flag = IRE_metrolink_overrun_delayed }
 				set_country_flag = { flag = IRE_metrolink_overrun_delay days = 120 value = 1 }
@@ -188,26 +231,36 @@ generic_coalition_politics_decisions = {
 			custom_trigger_tooltip = {
 				tooltip = IRE_metrolink_final_works_tt
 				NOT = { has_country_flag = IRE_metrolink_overrun_delay }
-				NOT = { has_country_flag = IRE_metrolink_interchange_works }
 			}
 			27 = { is_owned_and_controlled_by = ROOT }
 		}
 
-		cost = 25
+		custom_cost_trigger = {
+			check_expr = {
+				value = gdp_total
+				multiply = 0.002
+				less_than = { value = treasury }
+			}
+		}
+
+		custom_cost_text = cost_small_expenditure
 		days_remove = 120
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_opening"
-			set_variable = { IRE_metrolink_stage = 5 }
+			small_expenditure = yes
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision IRE_metrolink_opening"
 			set_variable = { IRE_metrolink_stage = 6 }
-			IRE_metrolink_opening_effect = yes
-			hidden_effect = { country_event = { id = IRE_metrolink.8 days = 1 } }
+			country_event = { id = IRE_metrolink.8 days = 1 }
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 }
