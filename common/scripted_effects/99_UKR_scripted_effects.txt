@@ -15742,6 +15742,306 @@ UKR_tata_add_influence = {
 	change_influence_percentage = yes
 }
 
+UKR_queue_kraz_6316_offer = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_kraz_6316_offer_queued_flag } }
+		set_country_flag = UKR_kraz_6316_offer_queued_flag
+		country_event = { id = ukraine_kraz.6 days = 30 }
+	}
+}
+
+# Effect: UKR_kraz_6316_add_supplier_influence
+# Purpose: Gives a KrAZ supplier up to 0.25 percentage points of influence in Ukraine.
+# Parameters:
+# - UKR_kraz_6316_supplier: the foreign supplier's country ID
+UKR_kraz_6316_add_supplier_influence = {
+	set_temp_variable = { influencer_index = -1 }
+	for_each_loop = {
+		array = influence_array
+		value = UKR_kraz_6316_current_influencer
+		index = UKR_kraz_6316_current_index
+		if = {
+			limit = { check_variable = { UKR_kraz_6316_current_influencer = var:UKR_kraz_6316_supplier } }
+			set_temp_variable = { influencer_index = UKR_kraz_6316_current_index }
+		}
+	}
+
+	set_temp_variable = { percent_change = 0.25 }
+	if = {
+		limit = { check_variable = { influencer_index > -1 } }
+		set_temp_variable = {
+			percent_change = { value = 100 subtract = influence_array_val^influencer_index clamp = { min = 0 max = 0.25 } }
+		}
+	}
+	custom_effect_tooltip = UKR_kraz_6316_supplier_influence_tt
+
+	hidden_effect = {
+		if = {
+			limit = { check_variable = { influencer_index = -1 } }
+			set_temp_variable = { influencer_index = influence_array^num }
+			add_to_array = { influence_array = var:UKR_kraz_6316_supplier }
+			add_to_array = { influence_array_val = 0 }
+		}
+		change_current_influencer_index_percentage = yes
+	}
+}
+
+UKR_kraz_6316_return_to_suppliers = {
+	clr_country_flag = UKR_kraz_6316_tatra_talks_flag
+	clr_country_flag = UKR_kraz_6316_china_talks_flag
+	set_country_flag = UKR_kraz_6316_suppliers_on_hold_flag
+	custom_effect_tooltip = UKR_kraz_6316_reopen_suppliers_tt
+}
+
+UKR_kraz_6316_open_plant_event = {
+	if = {
+		limit = {
+			UKR_kraz_trucks_waiting = yes
+			NOT = {
+				OR = {
+					has_country_flag = UKR_kraz_6316_plant_event_open_flag
+					has_country_flag = UKR_kraz_6316_expansion_pending_flag
+				}
+			}
+		}
+		set_country_flag = UKR_kraz_6316_plant_event_open_flag
+		save_event_target_as = ukr_kraz_6316_plant_request
+		country_event = ukraine_utility_vehicle_tender.12
+	}
+}
+
+UKR_kraz_6316_finish_expansion = {
+	if = {
+		limit = { has_country_flag = UKR_kraz_6316_expansion_pending_flag }
+		clr_country_flag = UKR_kraz_6316_expansion_pending_flag
+
+		if = {
+			limit = {
+				UKR_kraz_6316_controls_plant = yes
+				UKR_kraz_trucks_needs_factory = yes
+			}
+			1089 = {
+				if = {
+					limit = { free_building_slots = { building = arms_factory size < 1 } }
+					add_extra_state_shared_building_slots = 1
+				}
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+		}
+		else = {
+			set_temp_variable = { treasury_change = 0.3 }
+			modify_treasury_effect = yes
+		}
+
+		if = {
+			limit = { UKR_kraz_6316_controls_plant = yes }
+			UKR_kraz_trucks_start_ready_lines = yes
+			UKR_kraz_6316_open_plant_event = yes
+		}
+	}
+}
+
+UKR_kraz_6316_start_line = {
+	if = {
+		limit = {
+			has_country_flag = UKR_kraz_6316_pending_production_flag
+			UKR_kraz_6316_controls_plant = yes
+			UKR_kraz_6316_has_factory_capacity = yes
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_kraz_6316_russian_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316 Sibir"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316 Sibir"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+			if = {
+				limit = { country_exists = SOV }
+				create_production_license = {
+					target = SOV
+					cost_factor = 0
+					equipment = {
+						type = util_vehicle_3
+						version_name = "KrAZ-6316 Sibir"
+					}
+				}
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_kraz_6316_tatra_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316T Tatra"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316T Tatra"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = UKR_kraz_6316_domestic_supply_flag }
+			create_equipment_variant = {
+				name = "KrAZ-6316U Khortytsia"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316U Khortytsia"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "KrAZ-6316K Gobi"
+				type = util_vehicle_3
+				parent_version = 0
+				allow_without_tech = yes
+
+				upgrades = {
+					util_mobility = 3
+					util_infantry_help_upgrade = 2
+				}
+
+				design_team = mio:UKR_kraz_utility_manufacturer
+				icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_6316"
+				model = "SOV_ural_entity"
+			}
+
+			add_equipment_production = {
+				equipment = {
+					type = util_vehicle_3
+					version_name = "KrAZ-6316K Gobi"
+				}
+				requested_factories = 1
+				efficiency = 20
+			}
+		}
+
+		clr_country_flag = UKR_kraz_6316_pending_production_flag
+	}
+}
+
+UKR_kraz_trucks_start_ready_lines = {
+	if = {
+		limit = { UKR_kraz_6316_controls_plant = yes }
+		UKR_kraz_6316_start_line = yes
+		UKR_kraz_followup_trucks_start_lines = yes
+	}
+}
+
+UKR_kraz_followup_trucks_start_lines = {
+	if = {
+		limit = {
+			has_country_flag = UKR_kraz_5401_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-5401"
+			type = util_vehicle_4
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 2
+				util_infantry_help_upgrade = 1
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_5401"
+			model = "SOV_ural_entity"
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_4 version_name = "KrAZ-5401" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_kraz_5401_pending_production_flag
+	}
+
+	if = {
+		limit = {
+			has_country_flag = UKR_kraz_v12_2_pending_production_flag
+			1089 = { arms_factory > 0 }
+		}
+
+		create_equipment_variant = {
+			name = "KrAZ-V12.2 Serzhant"
+			type = util_vehicle_5
+			parent_version = 0
+			allow_without_tech = yes
+
+			upgrades = {
+				util_mobility = 3
+				util_infantry_help_upgrade = 2
+			}
+
+			design_team = mio:UKR_kraz_utility_manufacturer
+			icon = "GFX_UKR_LAND_Utility_Trucks_KrAZ_V12_2"
+			model = "SOV_ural_entity"
+		}
+
+		add_equipment_production = {
+			equipment = { type = util_vehicle_5 version_name = "KrAZ-V12.2 Serzhant" }
+			requested_factories = 1
+			efficiency = 20
+		}
+		clr_country_flag = UKR_kraz_v12_2_pending_production_flag
+	}
+}
+
 # Light utility vehicle tender 2 (production site and model come from the UKR_tender2_model_* country flags)
 UKR_tender2_apply_discount = {
 	if = {

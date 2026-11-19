@@ -32681,6 +32681,188 @@ UKR_develop_domestic_equipment_decision_category = {
 			}
 
 			set_country_flag = UKR_kraz_6322_adopted_flag
+			UKR_queue_kraz_6316_offer = yes
+		}
+	}
+
+	UKR_kraz_6316_supplier_negotiations = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_cooperation
+		activation = { always = no }
+		available = { UKR_kraz_6316_partner_ready = yes }
+		days_mission_timeout = 180
+		days_remove = 1
+		selectable_mission = no
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_6316_supplier_negotiations"
+			country_event = ukraine_kraz.5
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_kraz_6316_supplier_negotiations"
+			UKR_kraz_6316_return_to_suppliers = yes
+		}
+	}
+
+	UKR_kraz_6316_bilateral_meeting = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_cooperation
+		targets = { CZE CHI }
+		target_trigger = {
+			OR = {
+				AND = {
+					ROOT = { has_country_flag = UKR_kraz_6316_tatra_talks_flag }
+					FROM = { tag = CZE }
+				}
+				AND = {
+					ROOT = { has_country_flag = UKR_kraz_6316_china_talks_flag }
+					FROM = { tag = CHI }
+				}
+			}
+		}
+
+		visible = { has_active_mission = UKR_kraz_6316_supplier_negotiations }
+
+		available = {
+			NOT = { has_war_with = FROM }
+			NOT = { has_country_flag = UKR_kraz_6316_meeting_@FROM }
+			FROM = { has_opinion = { target = ROOT value < 20 } }
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.05 } } }
+		custom_cost_text = cost_0_05
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_6316_bilateral_meeting"
+			hidden_effect = {
+				set_country_flag = { flag = UKR_kraz_6316_meeting_@FROM days = 365 }
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+			}
+			FROM = { add_opinion_modifier = { target = ROOT modifier = UKR_kraz_6316_delegation_goodwill } }
+		}
+	}
+
+	UKR_kraz_6316_trade_delegation = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_cooperation
+		days_re_enable = 15
+
+		visible = {
+			has_active_mission = UKR_kraz_6316_supplier_negotiations
+			has_country_flag = UKR_kraz_6316_china_talks_flag
+		}
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			NOT = { UKR_kraz_6316_has_influence_in_china = yes }
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.02 } } }
+		custom_cost_text = cost_0_02
+
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_6316_trade_delegation"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+			set_temp_variable = { percent_change = 1 }
+			set_temp_variable = { influence_target = CHI.id }
+			change_influence_percentage = yes
+		}
+	}
+
+	UKR_kraz_6316_review_suppliers = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_cooperation
+
+		visible = { has_country_flag = UKR_kraz_6316_suppliers_on_hold_flag }
+		available = { UKR_kraz_6316_can_choose_supplier = yes }
+		ai_will_do = { base = 20 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_6316_review_suppliers"
+			clr_country_flag = UKR_kraz_6316_suppliers_on_hold_flag
+			country_event = ukraine_kraz.3
+		}
+	}
+
+	UKR_kraz_reconsider_truck_development = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_truck
+
+		visible = {
+			OR = {
+				has_country_flag = UKR_kraz_5401_offer_on_hold_flag
+				has_country_flag = UKR_kraz_v12_2_offer_on_hold_flag
+			}
+		}
+
+		available = {
+			UKR_kraz_6316_controls_plant = yes
+			if = {
+				limit = { has_country_flag = UKR_kraz_5401_offer_on_hold_flag }
+				NOT = { check_variable = { treasury < 0.12 } }
+			}
+			else = {
+				NOT = { check_variable = { treasury < 0.18 } }
+			}
+		}
+
+		ai_will_do = { base = 25 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_reconsider_truck_development"
+			if = {
+				limit = { has_country_flag = UKR_kraz_5401_offer_on_hold_flag }
+				clr_country_flag = UKR_kraz_5401_offer_on_hold_flag
+				country_event = ukraine_kraz.7
+			}
+			else_if = {
+				limit = { has_country_flag = UKR_kraz_v12_2_offer_on_hold_flag }
+				clr_country_flag = UKR_kraz_v12_2_offer_on_hold_flag
+				country_event = ukraine_kraz.9
+			}
+		}
+	}
+
+	UKR_kraz_6316_review_plant = {
+		icon = GFX_decision_generic_factory
+
+		visible = {
+			UKR_kraz_trucks_waiting = yes
+			NOT = {
+				OR = {
+					has_country_flag = UKR_kraz_6316_plant_event_open_flag
+					has_country_flag = UKR_kraz_6316_expansion_pending_flag
+				}
+			}
+		}
+
+		available = {
+			UKR_kraz_6316_controls_plant = yes
+			OR = {
+				UKR_kraz_trucks_has_ready_lines = yes
+				NOT = { check_variable = { treasury < 0.3 } }
+			}
+		}
+
+		ai_will_do = { base = 25 }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_kraz_6316_review_plant"
+			UKR_kraz_6316_open_plant_event = yes
 		}
 	}
 
@@ -32752,6 +32934,10 @@ UKR_develop_domestic_equipment_decision_category = {
 			}
 
 			set_country_flag = UKR_kraz_5233_developed_flag
+			custom_effect_tooltip = UKR_kraz_5401_next_tt
+			hidden_effect = {
+				country_event = { id = ukraine_kraz.7 days = 1095 random_days = 365 }
+			}
 		}
 	}
 
