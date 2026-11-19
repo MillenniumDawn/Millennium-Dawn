@@ -1101,14 +1101,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
   focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
-  - `untooltipped-available-check`: a bare `check_variable` renders no line.
+  - `untooltipped-available-check`: a bare `check_variable` in `available`,
+    `cancel_trigger`, or `bypass` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
     loc key named after the flag. Also covers `cancel_trigger`, `bypass`, and flags
     inside called scripted triggers.
   - `unlocalised-negated-trigger-tooltip`: a tooltip under an odd number of `NOT` blocks
     looks up `not_tooltip`, or `KEY_NOT` when none is set. `= no` counts as a negation.
   - `untooltipped-available-scripted-trigger`: a bare call to a scripted trigger whose
-    body checks `has_global_flag` renders nothing.
+    body checks `has_global_flag`, or a `check_variable` with no inline `tooltip`,
+    outside a wrapper renders nothing. Fix the trigger definition.
   - Exempt: `custom_trigger_tooltip`, `custom_override_tooltip`, and `hidden_trigger`
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
