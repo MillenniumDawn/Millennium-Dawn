@@ -932,9 +932,10 @@ refund_government_coalition = {
 	set_temp_variable = { pol_dist_source_index = ruling_party }
 	for_each_loop = {
 		array = gov_coalition_array
-		value = pol_dist_target_index
+		value = coalition_refund_partner
+		set_temp_variable = { pol_dist_lookup_slot = coalition_refund_partner }
 		get_pol_distance = yes
-		add_to_temp_variable = { coalition_refund_basis = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index } }
+		add_to_temp_variable = { coalition_refund_basis = { value = pol_distance_current multiply = party_pop_elect_array^coalition_refund_partner } }
 	}
 	set_temp_variable = { coalition_refund = { value = coalition_refund_basis multiply = @coalition_refund_pp_multiplier } }
 	add_political_power = coalition_refund
@@ -1927,14 +1928,14 @@ init_pol_distance_matrix = {
 # Purpose: Reads the political distance between two party slots
 # Output: pol_distance_current (temp variable)
 # Parameters:
-# - pol_dist_target_index: party slot 0-23
-# - pol_dist_source_index: party slot 0-23
+# - pol_dist_lookup_slot: target party slot 0-23
+# - pol_dist_source_index: source party slot 0-23
 get_pol_distance = {
 	if = {
 		limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
 		init_pol_distance_matrix = yes
 	}
-	set_temp_variable = { _pd_idx = { value = pol_dist_target_index multiply = 24 add = pol_dist_source_index } }
+	set_temp_variable = { _pd_idx = { value = pol_dist_lookup_slot multiply = 24 add = pol_dist_source_index } }
 	set_temp_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
 }
 
@@ -1944,6 +1945,7 @@ get_pol_distance = {
 # - pol_dist_target_index: invited party slot 0-23.
 quote_coalition_invite_cost = {
 	set_temp_variable = { pol_dist_source_index = ruling_party }
+	set_temp_variable = { pol_dist_lookup_slot = pol_dist_target_index }
 	get_pol_distance = yes
 	set_variable = { pp_cost_to_invite = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_invite_pp_multiplier } }
 }
@@ -1954,6 +1956,7 @@ quote_coalition_invite_cost = {
 # - pol_dist_target_index: outgoing party slot 0-23.
 refund_coalition_partner = {
 	set_temp_variable = { pol_dist_source_index = ruling_party }
+	set_temp_variable = { pol_dist_lookup_slot = pol_dist_target_index }
 	get_pol_distance = yes
 	set_temp_variable = { coalition_refund = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_refund_pp_multiplier } }
 	add_political_power = coalition_refund
