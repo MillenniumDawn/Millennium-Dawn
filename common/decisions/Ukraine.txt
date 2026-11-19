@@ -34307,10 +34307,55 @@ UKR_develop_domestic_equipment_decision_category = {
 		}
 	}
 
-	UKR_decision_mrap_tender = {
+	UKR_decision_emergency_mrap_tender = {
 		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_mrap
 
-		fire_only_once = yes
+		ai_will_do = {
+			base = 10
+
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			UKR_emergency_mrap_wartime_window = yes
+			NOR = {
+				has_country_flag = UKR_emergency_mrap_offer_open_flag
+				has_country_flag = UKR_emergency_mrap_order_placed_flag
+				has_country_flag = UKR_emergency_mrap_declined_flag
+				has_country_flag = UKR_mrap_tender_started_flag
+			}
+		}
+
+		available = {
+			OR = {
+				UKR_kraz_6316_controls_plant = yes
+				UKR_mrls_site_kyiv_controlled = yes
+			}
+		}
+
+		custom_cost_trigger = {
+			OR = {
+				UKR_emergency_mrap_kraz_offer_available = yes
+				UKR_emergency_mrap_kyiv_offer_available = yes
+			}
+		}
+		custom_cost_text = UKR_emergency_mrap_order_cost
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decision_emergency_mrap_tender"
+
+			custom_effect_tooltip = UKR_emergency_mrap_invite_offers_tt
+
+			hidden_effect = {
+				set_country_flag = UKR_emergency_mrap_offer_open_flag
+				country_event = ukraine_mrap_tender.3
+			}
+		}
+	}
+
+	UKR_decision_mrap_tender = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_mrap
 
 		ai_will_do = {
 			base = 10
@@ -34325,39 +34370,29 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			has_country_flag = UKR_mrap_tender_ready_flag
 
-			NOT = { has_country_flag = UKR_mrap_tender_started_flag }
-
-			NOT = {
-				OR = {
-					has_tech = util_vehicle_5
-					has_tech = IMV_5
-				}
+			NOR = {
+				has_country_flag = UKR_mrap_tender_started_flag
+				has_country_flag = UKR_emergency_mrap_offer_open_flag
 			}
+
+			UKR_mrap_tender_has_tech = no
 		}
 
 		available = {
 			UKR_at_war_with_russia_or_proxies = yes
 		}
 
-		custom_cost_trigger = { check_variable = { treasury > 0.4 } }
-		custom_cost_text = cost_0_4
+		custom_cost_trigger = { UKR_mrap_tender_can_afford_offer = yes }
+		custom_cost_text = UKR_mrap_tender_offer_funding
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_decision_mrap_tender"
 
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.4 }
-				modify_treasury_effect = yes
-			}
+			custom_effect_tooltip = UKR_mrap_tender_select_offer_tt
 
-			set_country_flag = UKR_mrap_tender_started_flag
-
-			custom_effect_tooltip = {
-				localization_key = UKR_kraz_mrap_wait_tt
-				DAYS = 150
-			}
 			hidden_effect = {
-				country_event = { id = ukraine_mrap_tender.2 days = 150 random_days = 10 }
+				set_country_flag = UKR_mrap_tender_started_flag
+				country_event = ukraine_mrap_tender.6
 			}
 		}
 	}
@@ -34365,8 +34400,6 @@ UKR_develop_domestic_equipment_decision_category = {
 	UKR_decision_mrap_tender_tech = {
 		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_mrap
 
-		fire_only_once = yes
-
 		ai_will_do = {
 			base = 10
 
@@ -34380,37 +34413,29 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			has_country_flag = UKR_mrap_tender_ready_flag
 
-			NOT = { has_country_flag = UKR_mrap_tender_started_flag }
-
-			OR = {
-				has_tech = util_vehicle_5
-				has_tech = IMV_5
+			NOR = {
+				has_country_flag = UKR_mrap_tender_started_flag
+				has_country_flag = UKR_emergency_mrap_offer_open_flag
 			}
+
+			UKR_mrap_tender_has_tech = yes
 		}
 
 		available = {
 			UKR_at_war_with_russia_or_proxies = yes
 		}
 
-		custom_cost_trigger = { check_variable = { treasury > 0.3 } }
-		custom_cost_text = cost_0_3
+		custom_cost_trigger = { UKR_mrap_tender_can_afford_offer = yes }
+		custom_cost_text = UKR_mrap_tender_offer_funding
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_decision_mrap_tender_tech"
 
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.3 }
-				modify_treasury_effect = yes
-			}
+			custom_effect_tooltip = UKR_mrap_tender_select_offer_tt
 
-			set_country_flag = UKR_mrap_tender_started_flag
-
-			custom_effect_tooltip = {
-				localization_key = UKR_kraz_mrap_wait_tt
-				DAYS = 90
-			}
 			hidden_effect = {
-				country_event = { id = ukraine_mrap_tender.2 days = 90 random_days = 10 }
+				set_country_flag = UKR_mrap_tender_started_flag
+				country_event = ukraine_mrap_tender.6
 			}
 		}
 	}
@@ -34930,7 +34955,7 @@ UKR_develop_domestic_equipment_decision_category = {
 				DAYS = 180
 			}
 			hidden_effect = {
-				country_event = { id = ukraine_mrap_tender.5 days = 180 random_days = 10 }
+				country_event = { id = ukraine_mrap_tender.9 days = 180 random_days = 10 }
 			}
 		}
 	}
