@@ -90,8 +90,8 @@ def _load_validation_config() -> Dict[str, Any]:
     return config
 
 
-def validation_config(validator: str, key: str) -> Dict[str, str]:
-    """Return one validation_config.json suppression list as entry -> reason."""
+def validation_config(validator: str, key: str) -> Any:
+    """Return one validation_config.json list: entry -> reason, or modifier_caps rows."""
     return _load_validation_config()[validator][key]
 
 

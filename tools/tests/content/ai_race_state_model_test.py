@@ -204,7 +204,7 @@ def test_capability_rebuild_counts_every_ai_technology_tier():
         assert (
             len(
                 re.findall(
-                    rf"\bhas_tech\s*=\s*artificial_intelligence_{tier}\b", effects
+                    rf"\bhas_tech\s*=\s*artificial_intelligence_{tier}\b", ladder
                 )
             )
             == 1
