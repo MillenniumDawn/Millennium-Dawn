@@ -23785,6 +23785,7 @@ country_event = {
 
 		custom_effect_tooltip = UKR_kraz_6316_plant_review_tt
 		hidden_effect = {
+			set_country_flag = UKR_kraz_6316_developed_flag
 			set_country_flag = UKR_kraz_6316_pending_production_flag
 			UKR_kraz_6316_open_plant_event = yes
 		}
@@ -24040,6 +24041,192 @@ country_event = {
 			set_country_flag = UKR_kraz_v12_2_pending_production_flag
 			UKR_kraz_6316_open_plant_event = yes
 		}
+	}
+}
+
+country_event = {
+	id = ukraine_kraz.11
+	title = ukraine_kraz.11.t
+	desc = ukraine_kraz.11.d
+	picture = GFX_UKR_Develop_Domestic_Utility_Tender_KrAZ_7634NE
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = UKR_kraz_7634_project_open_flag }
+
+	option = {
+		name = ukraine_kraz.11.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz.11.a"
+
+		trigger = {
+			UKR_kraz_7634_can_start = yes
+		}
+
+		ai_chance = {
+			base = 65
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.3 }
+		modify_treasury_effect = yes
+		add_political_power = -10
+
+		custom_effect_tooltip = {
+			localization_key = UKR_kraz_7634_development_tt
+			DAYS = 150
+		}
+
+		hidden_effect = {
+			country_event = { id = ukraine_kraz.12 days = 150 }
+		}
+	}
+
+	option = {
+		name = ukraine_kraz.11.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz.11.b"
+
+		trigger = {
+			UKR_kraz_7634_can_start = yes
+			NOT = { check_variable = { treasury < 0.4 } }
+		}
+
+		ai_chance = {
+			base = 35
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		set_temp_variable = { treasury_change = -0.4 }
+		modify_treasury_effect = yes
+		add_political_power = -10
+
+		custom_effect_tooltip = {
+			localization_key = UKR_kraz_7634_development_tt
+			DAYS = 180
+		}
+		custom_effect_tooltip = UKR_kraz_7634_heavy_chassis_tt
+
+		hidden_effect = {
+			set_country_flag = UKR_kraz_7634_heavy_chassis_selected_flag
+			country_event = { id = ukraine_kraz.12 days = 180 }
+		}
+	}
+
+	option = {
+		name = ukraine_kraz.11.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz.11.c"
+
+		trigger = { UKR_kraz_7634_can_start = no }
+
+		ai_chance = { base = 1 }
+		hidden_effect = { clr_country_flag = UKR_kraz_7634_project_open_flag }
+	}
+}
+
+country_event = {
+	id = ukraine_kraz.12
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_country_flag = UKR_kraz_7634_project_open_flag
+		NOT = { has_country_flag = UKR_kraz_7634_developed_flag }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_kraz.12"
+
+		UKR_count_domestic_development = yes
+		set_country_flag = UKR_kraz_7634_developed_flag
+		set_country_flag = UKR_kraz_7634_pending_production_flag
+		clr_country_flag = UKR_kraz_7634_project_open_flag
+
+		if = {
+			limit = { has_country_flag = UKR_kraz_7634_heavy_chassis_selected_flag }
+			set_country_flag = UKR_kraz_7634_heavy_chassis_developed_flag
+			clr_country_flag = UKR_kraz_7634_heavy_chassis_selected_flag
+
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				if = {
+					limit = { NOT = { has_tech = TEL_7 } }
+					add_tech_bonus = {
+						name = ukraine_kraz.12
+						bonus = 0.2
+						uses = 1
+						technology = TEL_7
+					}
+				}
+				else_if = {
+					limit = { NOT = { has_tech = GLCM6 } }
+					add_tech_bonus = {
+						name = ukraine_kraz.12
+						bonus = 0.2
+						uses = 1
+						technology = GLCM6
+					}
+				}
+			}
+			else = {
+				if = {
+					limit = { NOT = { has_tech = TEL_7_non_got } }
+					add_tech_bonus = {
+						name = ukraine_kraz.12
+						bonus = 0.2
+						uses = 1
+						technology = TEL_7_non_got
+					}
+				}
+				else_if = {
+					limit = { NOT = { has_tech = GLCM6_non_got } }
+					add_tech_bonus = {
+						name = ukraine_kraz.12
+						bonus = 0.2
+						uses = 1
+						technology = GLCM6_non_got
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					has_dlc = "No Step Back"
+					NOT = { has_tech = nsb_SHORAD_missile_3 }
+				}
+				add_tech_bonus = {
+					name = ukraine_kraz.12
+					bonus = 0.1
+					uses = 1
+					technology = nsb_SHORAD_missile_3
+				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_dlc = "No Step Back" }
+					NOT = { has_tech = SP_Anti_Air_2 }
+				}
+				add_tech_bonus = {
+					name = ukraine_kraz.12
+					bonus = 0.1
+					uses = 1
+					technology = SP_Anti_Air_2
+				}
+			}
+			else_if = {
+				limit = {
+					has_dlc = "Gotterdammerung"
+					NOT = { has_tech = SAM5 }
+				}
+				add_tech_bonus = {
+					name = ukraine_kraz.12
+					bonus = 0.1
+					uses = 1
+					technology = SAM5
+				}
+			}
+		}
+
+		UKR_kraz_6316_open_plant_event = yes
 	}
 }
 
@@ -42856,222 +43043,303 @@ country_event = {
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Wartime
 	is_triggered_only = yes
 
-	trigger = { original_tag = UKR }
-
-	option = {
-		name = ukraine_develop_or_modernize_mrl_system.4.a
-		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.4.a executed"
-		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_image_vilkha_kraz_tt
-		ai_chance = { base = 10 }
-		UKR_count_domestic_development = yes
-		if = {
-			limit = { has_dlc = "No Step Back" }
-			create_equipment_variant = {
-				name = "Vilkha KrAZ"
-				type = medium_tank_rocket_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = art_med_rocket_gen3
-					turret_type_slot = tank_no_turret
-					reload_type_slot = eight_missile_pack
-					ammunition_load_slot = artillery_heavy_ammo_3
-					suspension_type_slot = tank_wheeled_suspension_medium
-					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = mine_ammo_1
-					special_type_slot_2 = cluster_ammo_1
-					special_type_slot_3 = heat_ammo_1
-					special_type_slot_4 = tank_battlestation_3
-					special_type_slot_5 = laser_guided_ammo_2
-				}
-				upgrades = {
-					tank_nsb_fire_upgrade = 3
-					tank_nsb_engine_upgrade = 2
-				}
-				icon = "GFX_VILKHA_KrAZ"
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-			}
-			create_equipment_variant = {
-				name = "Vilkha-M KrAZ"
-				type = medium_tank_rocket_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = art_med_rocket_gen4
-					turret_type_slot = tank_no_turret
-					reload_type_slot = eight_missile_pack
-					ammunition_load_slot = artillery_heavy_ammo_4
-					suspension_type_slot = tank_wheeled_suspension_medium
-					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = mine_ammo_1
-					special_type_slot_2 = cluster_ammo_1
-					special_type_slot_3 = heat_ammo_1
-					special_type_slot_4 = tank_battlestation_4
-					special_type_slot_5 = laser_guided_ammo_3
-				}
-				upgrades = {
-					tank_nsb_fire_upgrade = 3
-					tank_nsb_engine_upgrade = 2
-				}
-				icon = "GFX_VILKHA_KrAZ_Long"
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-			}
-		}
-		else = {
-			create_equipment_variant = {
-				name = "Vilkha KrAZ"
-				type = SP_R_arty_2
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-				upgrades = {
-					SP_arty_fire_control = 3
-					SP_arty_reliability = 1
-					SP_arty_engine_upgrade = 2
-				}
-				icon = "GFX_VILKHA_KrAZ"
-			}
-			create_equipment_variant = {
-				name = "Vilkha-M KrAZ"
-				type = SP_R_arty_3
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-				upgrades = {
-					SP_arty_fire_control = 3
-					SP_arty_warhead = 2
-					SP_arty_engine_upgrade = 2
-				}
-				icon = "GFX_VILKHA_KrAZ_Long"
-			}
-		}
-		set_country_flag = UKR_mrls_plant_vilkha_kraz_flag
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.8 days = 30 random_days = 30 }
+	trigger = {
+		original_tag = UKR
+		has_country_flag = UKR_develop_mrls_vilkha_chassis_started_flag
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.4.b
-		log = "[GetDateText]: [This.GetName]: ukraine_develop_or_modernize_mrl_system.4.b executed"
-		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_image_vilkha_tatra_tt
-		trigger = {
-			check_variable = { treasury > 0.05 }
-			country_exists = CZE
-			NOT = { has_war_with = CZE }
-			CZE = { has_opinion = { target = ROOT value > 29 } }
-		}
+		name = ukraine_develop_or_modernize_mrl_system.4.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.4.a"
+
+		trigger = { UKR_vilkha_chassis_can_start = yes }
+
 		ai_chance = {
 			base = 10
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
-		UKR_count_domestic_development = yes
-		set_temp_variable = { treasury_change = -0.05 }
-		modify_treasury_effect = yes
-		custom_effect_tooltip = UKR_develop_mrls_vilkha_tatra_purchase_tt
+
+		add_political_power = -10
+		army_experience = -4
 		if = {
-			limit = { has_dlc = "No Step Back" }
-			create_equipment_variant = {
-				name = "Vilkha Tatra"
-				type = medium_tank_rocket_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = art_med_rocket_gen3
-					turret_type_slot = tank_no_turret
-					reload_type_slot = eight_missile_pack
-					ammunition_load_slot = artillery_heavy_ammo_3
-					suspension_type_slot = tank_wheeled_suspension_medium
-					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = mine_ammo_1
-					special_type_slot_2 = cluster_ammo_1
-					special_type_slot_3 = heat_ammo_1
-					special_type_slot_4 = tank_battlestation_3
-					special_type_slot_5 = laser_guided_ammo_2
-				}
-				upgrades = {
-					tank_nsb_fire_upgrade = 3
-					tank_nsb_engine_upgrade = 3
-				}
-				icon = "GFX_VILKHA_NG"
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+			limit = { has_country_flag = UKR_kraz_7634_heavy_chassis_developed_flag }
+			set_temp_variable = { treasury_change = -0.2 }
+			modify_treasury_effect = yes
+
+			custom_effect_tooltip = {
+				localization_key = UKR_vilkha_chassis_deliver_tt
+				DAYS = 90
 			}
-			create_equipment_variant = {
-				name = "Vilkha-M Tatra"
-				type = medium_tank_rocket_chassis_2
-				parent_version = 0
-				allow_without_tech = yes
-				modules = {
-					main_armament_slot = art_med_rocket_gen4
-					turret_type_slot = tank_no_turret
-					reload_type_slot = eight_missile_pack
-					ammunition_load_slot = artillery_heavy_ammo_4
-					suspension_type_slot = tank_wheeled_suspension_medium
-					engine_type_slot = tank_diesel_engine_gen3
-					special_type_slot_1 = mine_ammo_1
-					special_type_slot_2 = cluster_ammo_1
-					special_type_slot_3 = heat_ammo_1
-					special_type_slot_4 = tank_battlestation_4
-					special_type_slot_5 = laser_guided_ammo_3
-				}
-				upgrades = {
-					tank_nsb_fire_upgrade = 3
-					tank_nsb_engine_upgrade = 3
-				}
-				icon = "GFX_VILKHA_NG"
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-			}
+			hidden_effect = { country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 90 } }
 		}
 		else = {
-			create_equipment_variant = {
-				name = "Vilkha Tatra"
-				type = SP_R_arty_2
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-				upgrades = {
-					SP_arty_fire_control = 3
-					SP_arty_reliability = 2
-					SP_arty_engine_upgrade = 3
-				}
-				icon = "GFX_VILKHA_NG"
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+
+			custom_effect_tooltip = {
+				localization_key = UKR_vilkha_chassis_deliver_tt
+				DAYS = 120
 			}
-			create_equipment_variant = {
-				name = "Vilkha-M Tatra"
-				type = SP_R_arty_3
-				design_team = mio:UKR_luch_aa_at_equipment_manufacturer
-				upgrades = {
-					SP_arty_fire_control = 3
-					SP_arty_warhead = 2
-					SP_arty_engine_upgrade = 2
-				}
-				icon = "GFX_VILKHA_NG"
-			}
+			hidden_effect = { country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 120 } }
 		}
-		set_country_flag = UKR_mrls_plant_vilkha_tatra_flag
-		country_event = { id = ukraine_develop_or_modernize_mrl_system.8 days = 30 random_days = 30 }
+		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_image_vilkha_kraz_tt
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.4.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.4.b"
+
+		trigger = {
+			UKR_vilkha_chassis_can_start = yes
+			NOT = { check_variable = { treasury < 0.3 } }
+			country_exists = CZE
+			NOT = { has_war_with = CZE }
+			CZE = { has_opinion = { target = ROOT value > 29 } }
+		}
+
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		add_political_power = -10
+		army_experience = -4
+		hidden_effect = { set_country_flag = UKR_mrls_vilkha_chassis_tatra_order_flag }
+		set_temp_variable = { treasury_change = -0.3 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = {
+			localization_key = UKR_vilkha_chassis_deliver_tt
+			DAYS = 120
+		}
+		hidden_effect = { country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 120 } }
+		custom_effect_tooltip = ukraine_develop_or_modernize_mrl_system_image_vilkha_tatra_tt
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.4.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.4.c"
+
+		trigger = { UKR_vilkha_chassis_can_start = no }
+
+		ai_chance = { base = 1 }
+		hidden_effect = { clr_country_flag = UKR_develop_mrls_vilkha_chassis_started_flag }
 	}
 }
 
 country_event = {
 	id = ukraine_develop_or_modernize_mrl_system.5
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		has_country_flag = UKR_develop_mrls_vilkha_chassis_started_flag
+		NOT = { has_country_flag = UKR_develop_mrls_vilkha_chassis_done_flag }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.5"
+
+		set_country_flag = UKR_develop_mrls_vilkha_chassis_done_flag
+		clr_country_flag = UKR_develop_mrls_vilkha_chassis_started_flag
+		UKR_count_domestic_development = yes
+
+		if = {
+			limit = { has_country_flag = UKR_mrls_vilkha_chassis_tatra_order_flag }
+			clr_country_flag = UKR_mrls_vilkha_chassis_tatra_order_flag
+
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Vilkha Tatra"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen3
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen3
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_3
+						special_type_slot_5 = laser_guided_ammo_2
+					}
+					upgrades = {
+						tank_nsb_fire_upgrade = 3
+						tank_nsb_engine_upgrade = 3
+					}
+					icon = "GFX_VILKHA_NG"
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+				}
+				create_equipment_variant = {
+					name = "Vilkha-M Tatra"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen4
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_4
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen3
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_4
+						special_type_slot_5 = laser_guided_ammo_3
+					}
+					upgrades = {
+						tank_nsb_fire_upgrade = 3
+						tank_nsb_engine_upgrade = 3
+					}
+					icon = "GFX_VILKHA_NG"
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Vilkha Tatra"
+					type = SP_R_arty_2
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_reliability = 2
+						SP_arty_engine_upgrade = 3
+					}
+					icon = "GFX_VILKHA_NG"
+				}
+				create_equipment_variant = {
+					name = "Vilkha-M Tatra"
+					type = SP_R_arty_3
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_warhead = 2
+						SP_arty_engine_upgrade = 2
+					}
+					icon = "GFX_VILKHA_NG"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_vilkha_tatra_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 30 random_days = 30 }
+		}
+		else = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Vilkha KrAZ"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen3
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_3
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen3
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_3
+						special_type_slot_5 = laser_guided_ammo_2
+					}
+					upgrades = {
+						tank_nsb_fire_upgrade = 3
+						tank_nsb_engine_upgrade = 2
+					}
+					icon = "GFX_VILKHA_KrAZ"
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+				}
+				create_equipment_variant = {
+					name = "Vilkha-M KrAZ"
+					type = medium_tank_rocket_chassis_2
+					parent_version = 0
+					allow_without_tech = yes
+					modules = {
+						main_armament_slot = art_med_rocket_gen4
+						turret_type_slot = tank_no_turret
+						reload_type_slot = eight_missile_pack
+						ammunition_load_slot = artillery_heavy_ammo_4
+						suspension_type_slot = tank_wheeled_suspension_medium
+						engine_type_slot = tank_diesel_engine_gen3
+						special_type_slot_1 = mine_ammo_1
+						special_type_slot_2 = cluster_ammo_1
+						special_type_slot_3 = heat_ammo_1
+						special_type_slot_4 = tank_battlestation_4
+						special_type_slot_5 = laser_guided_ammo_3
+					}
+					upgrades = {
+						tank_nsb_fire_upgrade = 3
+						tank_nsb_engine_upgrade = 2
+					}
+					icon = "GFX_VILKHA_KrAZ_Long"
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Vilkha KrAZ"
+					type = SP_R_arty_2
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_reliability = 1
+						SP_arty_engine_upgrade = 2
+					}
+					icon = "GFX_VILKHA_KrAZ"
+				}
+				create_equipment_variant = {
+					name = "Vilkha-M KrAZ"
+					type = SP_R_arty_3
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+					upgrades = {
+						SP_arty_fire_control = 3
+						SP_arty_warhead = 2
+						SP_arty_engine_upgrade = 2
+					}
+					icon = "GFX_VILKHA_KrAZ_Long"
+				}
+			}
+			set_country_flag = UKR_mrls_plant_vilkha_kraz_flag
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 30 random_days = 30 }
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_develop_or_modernize_mrl_system.6
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.5.name
+		text = ukraine_develop_or_modernize_mrl_system.6.name
 		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
 	}
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.5.failure.name
+		text = ukraine_develop_or_modernize_mrl_system.6.failure.name
 		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.5.desc_factory
+		text = ukraine_develop_or_modernize_mrl_system.6.desc_factory
 		trigger = {
 			UKR_mrls_site_kharkiv_controlled = yes
 			UKR_mrls_site_kharkiv_has_factory = yes
 		}
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.5.desc_expand
+		text = ukraine_develop_or_modernize_mrl_system.6.desc_expand
 		trigger = {
 			UKR_mrls_site_kharkiv_controlled = yes
 			NOT = { UKR_mrls_site_kharkiv_has_factory = yes }
 		}
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.5.failure.desc
+		text = ukraine_develop_or_modernize_mrl_system.6.failure.desc
 		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
 	}
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Kharkiv
@@ -43085,8 +43353,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.5.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.5.a"
+		name = ukraine_develop_or_modernize_mrl_system.6.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.6.a"
 
 		trigger = {
 			UKR_mrls_site_kharkiv_controlled = yes
@@ -43101,8 +43369,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.5.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.5.b"
+		name = ukraine_develop_or_modernize_mrl_system.6.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.6.b"
 
 		trigger = {
 			check_variable = { treasury > 0.3 }
@@ -43121,120 +43389,13 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.5.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.5.c"
-
-		trigger = {
-			OR = {
-				NOT = { UKR_mrls_site_kharkiv_controlled = yes }
-				NOT = { UKR_mrls_site_kharkiv_has_factory = yes }
-			}
-		}
-
-		ai_chance = {
-			base = 20
-		}
-
-		custom_effect_tooltip = UKR_mrls_retry_tt
-		hidden_effect = {
-			country_event = { id = ukraine_develop_or_modernize_mrl_system.5 days = 300 random_days = 60 }
-		}
-	}
-
-	option = {
-		name = ukraine_develop_or_modernize_mrl_system.5.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.5.d"
-
-		ai_chance = {
-			base = 5
-		}
-
-		UKR_mrls_clear_kharkiv = yes
-	}
-}
-
-country_event = {
-	id = ukraine_develop_or_modernize_mrl_system.6
-	title = {
-		text = ukraine_develop_or_modernize_mrl_system.6.name
-		trigger = { UKR_mrls_site_shepetivka_controlled = yes }
-	}
-	title = {
-		text = ukraine_develop_or_modernize_mrl_system.6.failure.name
-		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
-	}
-	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.6.desc_factory
-		trigger = {
-			UKR_mrls_site_shepetivka_controlled = yes
-			UKR_mrls_site_shepetivka_has_factory = yes
-		}
-	}
-	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.6.desc_expand
-		trigger = {
-			UKR_mrls_site_shepetivka_controlled = yes
-			NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
-		}
-	}
-	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.6.failure.desc
-		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
-	}
-	picture = GFX_UKR_Develop_or_Modernize_MRL_Shepetivka
-
-	is_triggered_only = yes
-
-	trigger = {
-		original_tag = UKR
-		UKR_mrls_site_shepetivka_pending = yes
-		NOT = { has_country_flag = UKR_mrls_expanding_shepetivka_flag }
-	}
-
-	option = {
-		name = ukraine_develop_or_modernize_mrl_system.6.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.6.a"
-
-		trigger = {
-			UKR_mrls_site_shepetivka_controlled = yes
-			UKR_mrls_site_shepetivka_has_factory = yes
-		}
-
-		ai_chance = {
-			base = 100
-		}
-
-		UKR_mrls_launch_shepetivka = yes
-	}
-
-	option = {
-		name = ukraine_develop_or_modernize_mrl_system.6.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.6.b"
-
-		trigger = {
-			check_variable = { treasury > 0.3 }
-			UKR_mrls_site_shepetivka_controlled = yes
-			NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
-			NOT = { has_country_flag = UKR_mrls_expanding_shepetivka_flag }
-		}
-
-		ai_chance = {
-			base = 50
-			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
-			modifier = { factor = 0.5 ai_has_high_deficit = yes }
-		}
-
-		UKR_mrls_expand_shepetivka = yes
-	}
-
-	option = {
 		name = ukraine_develop_or_modernize_mrl_system.6.c
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.6.c"
 
 		trigger = {
 			OR = {
-				NOT = { UKR_mrls_site_shepetivka_controlled = yes }
-				NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
+				NOT = { UKR_mrls_site_kharkiv_controlled = yes }
+				NOT = { UKR_mrls_site_kharkiv_has_factory = yes }
 			}
 		}
 
@@ -43256,7 +43417,7 @@ country_event = {
 			base = 5
 		}
 
-		UKR_mrls_clear_shepetivka = yes
+		UKR_mrls_clear_kharkiv = yes
 	}
 }
 
@@ -43264,38 +43425,38 @@ country_event = {
 	id = ukraine_develop_or_modernize_mrl_system.7
 	title = {
 		text = ukraine_develop_or_modernize_mrl_system.7.name
-		trigger = { UKR_mrls_site_dnipro_controlled = yes }
+		trigger = { UKR_mrls_site_shepetivka_controlled = yes }
 	}
 	title = {
 		text = ukraine_develop_or_modernize_mrl_system.7.failure.name
-		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
+		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.7.desc_factory
 		trigger = {
-			UKR_mrls_site_dnipro_controlled = yes
-			UKR_mrls_site_dnipro_has_factory = yes
+			UKR_mrls_site_shepetivka_controlled = yes
+			UKR_mrls_site_shepetivka_has_factory = yes
 		}
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.7.desc_expand
 		trigger = {
-			UKR_mrls_site_dnipro_controlled = yes
-			NOT = { UKR_mrls_site_dnipro_has_factory = yes }
+			UKR_mrls_site_shepetivka_controlled = yes
+			NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
 		}
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.7.failure.desc
-		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
+		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
 	}
-	picture = GFX_UKR_Develop_or_Modernize_MRL_Pivdenne
+	picture = GFX_UKR_Develop_or_Modernize_MRL_Shepetivka
 
 	is_triggered_only = yes
 
 	trigger = {
 		original_tag = UKR
-		UKR_mrls_site_dnipro_pending = yes
-		NOT = { has_country_flag = UKR_mrls_expanding_dnipro_flag }
+		UKR_mrls_site_shepetivka_pending = yes
+		NOT = { has_country_flag = UKR_mrls_expanding_shepetivka_flag }
 	}
 
 	option = {
@@ -43303,15 +43464,15 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.7.a"
 
 		trigger = {
-			UKR_mrls_site_dnipro_controlled = yes
-			UKR_mrls_site_dnipro_has_factory = yes
+			UKR_mrls_site_shepetivka_controlled = yes
+			UKR_mrls_site_shepetivka_has_factory = yes
 		}
 
 		ai_chance = {
 			base = 100
 		}
 
-		UKR_mrls_launch_dnipro = yes
+		UKR_mrls_launch_shepetivka = yes
 	}
 
 	option = {
@@ -43320,9 +43481,9 @@ country_event = {
 
 		trigger = {
 			check_variable = { treasury > 0.3 }
-			UKR_mrls_site_dnipro_controlled = yes
-			NOT = { UKR_mrls_site_dnipro_has_factory = yes }
-			NOT = { has_country_flag = UKR_mrls_expanding_dnipro_flag }
+			UKR_mrls_site_shepetivka_controlled = yes
+			NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
+			NOT = { has_country_flag = UKR_mrls_expanding_shepetivka_flag }
 		}
 
 		ai_chance = {
@@ -43331,7 +43492,7 @@ country_event = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		UKR_mrls_expand_dnipro = yes
+		UKR_mrls_expand_shepetivka = yes
 	}
 
 	option = {
@@ -43340,8 +43501,8 @@ country_event = {
 
 		trigger = {
 			OR = {
-				NOT = { UKR_mrls_site_dnipro_controlled = yes }
-				NOT = { UKR_mrls_site_dnipro_has_factory = yes }
+				NOT = { UKR_mrls_site_shepetivka_controlled = yes }
+				NOT = { UKR_mrls_site_shepetivka_has_factory = yes }
 			}
 		}
 
@@ -43363,7 +43524,7 @@ country_event = {
 			base = 5
 		}
 
-		UKR_mrls_clear_dnipro = yes
+		UKR_mrls_clear_shepetivka = yes
 	}
 }
 
@@ -43371,38 +43532,38 @@ country_event = {
 	id = ukraine_develop_or_modernize_mrl_system.8
 	title = {
 		text = ukraine_develop_or_modernize_mrl_system.8.name
-		trigger = { UKR_mrls_site_kyiv_controlled = yes }
+		trigger = { UKR_mrls_site_dnipro_controlled = yes }
 	}
 	title = {
 		text = ukraine_develop_or_modernize_mrl_system.8.failure.name
-		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
+		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.8.desc_factory
 		trigger = {
-			UKR_mrls_site_kyiv_controlled = yes
-			UKR_mrls_site_kyiv_has_factory = yes
+			UKR_mrls_site_dnipro_controlled = yes
+			UKR_mrls_site_dnipro_has_factory = yes
 		}
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.8.desc_expand
 		trigger = {
-			UKR_mrls_site_kyiv_controlled = yes
-			NOT = { UKR_mrls_site_kyiv_has_factory = yes }
+			UKR_mrls_site_dnipro_controlled = yes
+			NOT = { UKR_mrls_site_dnipro_has_factory = yes }
 		}
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.8.failure.desc
-		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
+		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
 	}
-	picture = GFX_UKR_Develop_or_Modernize_MRL_Luch
+	picture = GFX_UKR_Develop_or_Modernize_MRL_Pivdenne
 
 	is_triggered_only = yes
 
 	trigger = {
 		original_tag = UKR
-		UKR_mrls_site_kyiv_pending = yes
-		NOT = { has_country_flag = UKR_mrls_expanding_kyiv_flag }
+		UKR_mrls_site_dnipro_pending = yes
+		NOT = { has_country_flag = UKR_mrls_expanding_dnipro_flag }
 	}
 
 	option = {
@@ -43410,15 +43571,15 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.8.a"
 
 		trigger = {
-			UKR_mrls_site_kyiv_controlled = yes
-			UKR_mrls_site_kyiv_has_factory = yes
+			UKR_mrls_site_dnipro_controlled = yes
+			UKR_mrls_site_dnipro_has_factory = yes
 		}
 
 		ai_chance = {
 			base = 100
 		}
 
-		UKR_mrls_launch_kyiv = yes
+		UKR_mrls_launch_dnipro = yes
 	}
 
 	option = {
@@ -43427,9 +43588,9 @@ country_event = {
 
 		trigger = {
 			check_variable = { treasury > 0.3 }
-			UKR_mrls_site_kyiv_controlled = yes
-			NOT = { UKR_mrls_site_kyiv_has_factory = yes }
-			NOT = { has_country_flag = UKR_mrls_expanding_kyiv_flag }
+			UKR_mrls_site_dnipro_controlled = yes
+			NOT = { UKR_mrls_site_dnipro_has_factory = yes }
+			NOT = { has_country_flag = UKR_mrls_expanding_dnipro_flag }
 		}
 
 		ai_chance = {
@@ -43438,7 +43599,7 @@ country_event = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
-		UKR_mrls_expand_kyiv = yes
+		UKR_mrls_expand_dnipro = yes
 	}
 
 	option = {
@@ -43447,8 +43608,8 @@ country_event = {
 
 		trigger = {
 			OR = {
-				NOT = { UKR_mrls_site_kyiv_controlled = yes }
-				NOT = { UKR_mrls_site_kyiv_has_factory = yes }
+				NOT = { UKR_mrls_site_dnipro_controlled = yes }
+				NOT = { UKR_mrls_site_dnipro_has_factory = yes }
 			}
 		}
 
@@ -43470,26 +43631,133 @@ country_event = {
 			base = 5
 		}
 
-		UKR_mrls_clear_kyiv = yes
+		UKR_mrls_clear_dnipro = yes
 	}
 }
 
 country_event = {
 	id = ukraine_develop_or_modernize_mrl_system.9
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.9.success.name
-		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
+		text = ukraine_develop_or_modernize_mrl_system.9.name
+		trigger = { UKR_mrls_site_kyiv_controlled = yes }
 	}
 	title = {
 		text = ukraine_develop_or_modernize_mrl_system.9.failure.name
-		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
+		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.9.success.desc
-		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
+		text = ukraine_develop_or_modernize_mrl_system.9.desc_factory
+		trigger = {
+			UKR_mrls_site_kyiv_controlled = yes
+			UKR_mrls_site_kyiv_has_factory = yes
+		}
+	}
+	desc = {
+		text = ukraine_develop_or_modernize_mrl_system.9.desc_expand
+		trigger = {
+			UKR_mrls_site_kyiv_controlled = yes
+			NOT = { UKR_mrls_site_kyiv_has_factory = yes }
+		}
 	}
 	desc = {
 		text = ukraine_develop_or_modernize_mrl_system.9.failure.desc
+		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
+	}
+	picture = GFX_UKR_Develop_or_Modernize_MRL_Luch
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = UKR
+		UKR_mrls_site_kyiv_pending = yes
+		NOT = { has_country_flag = UKR_mrls_expanding_kyiv_flag }
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.9.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.a"
+
+		trigger = {
+			UKR_mrls_site_kyiv_controlled = yes
+			UKR_mrls_site_kyiv_has_factory = yes
+		}
+
+		ai_chance = {
+			base = 100
+		}
+
+		UKR_mrls_launch_kyiv = yes
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.9.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.b"
+
+		trigger = {
+			check_variable = { treasury > 0.3 }
+			UKR_mrls_site_kyiv_controlled = yes
+			NOT = { UKR_mrls_site_kyiv_has_factory = yes }
+			NOT = { has_country_flag = UKR_mrls_expanding_kyiv_flag }
+		}
+
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		UKR_mrls_expand_kyiv = yes
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.9.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.c"
+
+		trigger = {
+			OR = {
+				NOT = { UKR_mrls_site_kyiv_controlled = yes }
+				NOT = { UKR_mrls_site_kyiv_has_factory = yes }
+			}
+		}
+
+		ai_chance = {
+			base = 20
+		}
+
+		custom_effect_tooltip = UKR_mrls_retry_tt
+		hidden_effect = {
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 300 random_days = 60 }
+		}
+	}
+
+	option = {
+		name = ukraine_develop_or_modernize_mrl_system.9.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.d"
+
+		ai_chance = {
+			base = 5
+		}
+
+		UKR_mrls_clear_kyiv = yes
+	}
+}
+
+country_event = {
+	id = ukraine_develop_or_modernize_mrl_system.10
+	title = {
+		text = ukraine_develop_or_modernize_mrl_system.10.success.name
+		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
+	}
+	title = {
+		text = ukraine_develop_or_modernize_mrl_system.10.failure.name
+		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
+	}
+	desc = {
+		text = ukraine_develop_or_modernize_mrl_system.10.success.desc
+		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
+	}
+	desc = {
+		text = ukraine_develop_or_modernize_mrl_system.10.failure.desc
 		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
 	}
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Construction
@@ -43512,8 +43780,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.9.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.a"
+		name = ukraine_develop_or_modernize_mrl_system.10.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.a"
 
 		trigger = { UKR_mrls_site_kharkiv_controlled = yes }
 
@@ -43525,8 +43793,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.9.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.c"
+		name = ukraine_develop_or_modernize_mrl_system.10.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.c"
 
 		trigger = { NOT = { UKR_mrls_site_kharkiv_controlled = yes } }
 
@@ -43536,13 +43804,13 @@ country_event = {
 
 		custom_effect_tooltip = UKR_mrls_retry_tt
 		hidden_effect = {
-			country_event = { id = ukraine_develop_or_modernize_mrl_system.9 days = 300 random_days = 60 }
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.10 days = 300 random_days = 60 }
 		}
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.9.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.9.d"
+		name = ukraine_develop_or_modernize_mrl_system.10.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.d"
 
 		ai_chance = {
 			base = 5
@@ -43553,21 +43821,21 @@ country_event = {
 }
 
 country_event = {
-	id = ukraine_develop_or_modernize_mrl_system.10
+	id = ukraine_develop_or_modernize_mrl_system.11
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.10.success.name
+		text = ukraine_develop_or_modernize_mrl_system.11.success.name
 		trigger = { UKR_mrls_site_shepetivka_controlled = yes }
 	}
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.10.failure.name
+		text = ukraine_develop_or_modernize_mrl_system.11.failure.name
 		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.10.success.desc
+		text = ukraine_develop_or_modernize_mrl_system.11.success.desc
 		trigger = { UKR_mrls_site_shepetivka_controlled = yes }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.10.failure.desc
+		text = ukraine_develop_or_modernize_mrl_system.11.failure.desc
 		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
 	}
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Construction
@@ -43590,8 +43858,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.10.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.a"
+		name = ukraine_develop_or_modernize_mrl_system.11.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.a"
 
 		trigger = { UKR_mrls_site_shepetivka_controlled = yes }
 
@@ -43603,8 +43871,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.10.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.c"
+		name = ukraine_develop_or_modernize_mrl_system.11.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.c"
 
 		trigger = { NOT = { UKR_mrls_site_shepetivka_controlled = yes } }
 
@@ -43614,13 +43882,13 @@ country_event = {
 
 		custom_effect_tooltip = UKR_mrls_retry_tt
 		hidden_effect = {
-			country_event = { id = ukraine_develop_or_modernize_mrl_system.10 days = 300 random_days = 60 }
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.11 days = 300 random_days = 60 }
 		}
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.10.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.10.d"
+		name = ukraine_develop_or_modernize_mrl_system.11.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.d"
 
 		ai_chance = {
 			base = 5
@@ -43631,35 +43899,35 @@ country_event = {
 }
 
 country_event = {
-	id = ukraine_develop_or_modernize_mrl_system.11
+	id = ukraine_develop_or_modernize_mrl_system.12
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.11.noline.name
+		text = ukraine_develop_or_modernize_mrl_system.12.noline.name
 		trigger = {
 			UKR_mrls_site_dnipro_controlled = yes
 			NOT = { UKR_mrls_site_dnipro_pending = yes }
 		}
 	}
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.11.success.name
+		text = ukraine_develop_or_modernize_mrl_system.12.success.name
 		trigger = { UKR_mrls_site_dnipro_controlled = yes }
 	}
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.11.failure.name
+		text = ukraine_develop_or_modernize_mrl_system.12.failure.name
 		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.11.noline.desc
+		text = ukraine_develop_or_modernize_mrl_system.12.noline.desc
 		trigger = {
 			UKR_mrls_site_dnipro_controlled = yes
 			NOT = { UKR_mrls_site_dnipro_pending = yes }
 		}
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.11.success.desc
+		text = ukraine_develop_or_modernize_mrl_system.12.success.desc
 		trigger = { UKR_mrls_site_dnipro_controlled = yes }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.11.failure.desc
+		text = ukraine_develop_or_modernize_mrl_system.12.failure.desc
 		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
 	}
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Construction
@@ -43682,8 +43950,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.11.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.a"
+		name = ukraine_develop_or_modernize_mrl_system.12.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.a"
 
 		trigger = {
 			UKR_mrls_site_dnipro_controlled = yes
@@ -43698,8 +43966,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.11.b
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.b"
+		name = ukraine_develop_or_modernize_mrl_system.12.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.b"
 
 		trigger = {
 			UKR_mrls_site_dnipro_controlled = yes
@@ -43714,8 +43982,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.11.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.c"
+		name = ukraine_develop_or_modernize_mrl_system.12.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.c"
 
 		trigger = { NOT = { UKR_mrls_site_dnipro_controlled = yes } }
 
@@ -43725,13 +43993,13 @@ country_event = {
 
 		custom_effect_tooltip = UKR_mrls_retry_tt
 		hidden_effect = {
-			country_event = { id = ukraine_develop_or_modernize_mrl_system.11 days = 300 random_days = 60 }
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.12 days = 300 random_days = 60 }
 		}
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.11.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.11.d"
+		name = ukraine_develop_or_modernize_mrl_system.12.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.d"
 
 		ai_chance = {
 			base = 5
@@ -43742,21 +44010,21 @@ country_event = {
 }
 
 country_event = {
-	id = ukraine_develop_or_modernize_mrl_system.12
+	id = ukraine_develop_or_modernize_mrl_system.13
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.12.success.name
+		text = ukraine_develop_or_modernize_mrl_system.13.success.name
 		trigger = { UKR_mrls_site_kyiv_controlled = yes }
 	}
 	title = {
-		text = ukraine_develop_or_modernize_mrl_system.12.failure.name
+		text = ukraine_develop_or_modernize_mrl_system.13.failure.name
 		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.12.success.desc
+		text = ukraine_develop_or_modernize_mrl_system.13.success.desc
 		trigger = { UKR_mrls_site_kyiv_controlled = yes }
 	}
 	desc = {
-		text = ukraine_develop_or_modernize_mrl_system.12.failure.desc
+		text = ukraine_develop_or_modernize_mrl_system.13.failure.desc
 		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
 	}
 	picture = GFX_UKR_Develop_or_Modernize_MRL_Construction
@@ -43779,8 +44047,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.12.a
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.a"
+		name = ukraine_develop_or_modernize_mrl_system.13.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.13.a"
 
 		trigger = { UKR_mrls_site_kyiv_controlled = yes }
 
@@ -43792,8 +44060,8 @@ country_event = {
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.12.c
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.c"
+		name = ukraine_develop_or_modernize_mrl_system.13.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.13.c"
 
 		trigger = { NOT = { UKR_mrls_site_kyiv_controlled = yes } }
 
@@ -43803,13 +44071,13 @@ country_event = {
 
 		custom_effect_tooltip = UKR_mrls_retry_tt
 		hidden_effect = {
-			country_event = { id = ukraine_develop_or_modernize_mrl_system.12 days = 300 random_days = 60 }
+			country_event = { id = ukraine_develop_or_modernize_mrl_system.13 days = 300 random_days = 60 }
 		}
 	}
 
 	option = {
-		name = ukraine_develop_or_modernize_mrl_system.12.d
-		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.12.d"
+		name = ukraine_develop_or_modernize_mrl_system.13.d
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_develop_or_modernize_mrl_system.13.d"
 
 		ai_chance = {
 			base = 5
@@ -43818,3 +44086,4 @@ country_event = {
 		UKR_mrls_clear_kyiv = yes
 	}
 }
+
