@@ -757,7 +757,7 @@ mafia_event_counters = {
 mafia_utilize_extraordinary_funds_effect = {
 	add_to_variable = { extraordinary_police_funding_times_taken_var = 1 }
 	set_temp_variable = {
-		treasury_change = { value = extraordinary_police_funding_times_taken_var multiply = -0.25 }
+		treasury_change = { value = extraordinary_police_funding_times_taken_var clamp = { min = 0 max = 20 } multiply = -0.25 }
 	}
 	modify_treasury_effect = yes
 }
@@ -1372,6 +1372,7 @@ small_parties_leave_coalition = {
 			NOT = { has_country_flag = elections_in_progress }
 			NOT = { has_country_flag = coalition_forming }
 		}
+		clr_country_flag = ITA_crisis_partner_outgrew
 		country_event = italy_md.38
 	}
 }
@@ -1402,7 +1403,50 @@ government_crisis_check = {
 				}
 			}
 		}
+		clr_country_flag = ITA_crisis_partner_outgrew
+		if = {
+			limit = { check_variable = { government_coalition_strength > government_failure_threshold } }
+			set_country_flag = ITA_crisis_partner_outgrew
+		}
 		country_event = italy_md.38
+	}
+}
+
+#the most popular coalition partner takes the premiership and the old ruling party stays in the coalition
+ITA_hand_premiership_to_largest_partner = {
+	set_temp_variable = { new_premier_party = ruling_party }
+	set_temp_variable = { new_premier_popularity = party_pop_array^ruling_party }
+	for_each_loop = {
+		array = gov_coalition_array
+		value = premier_candidate
+		if = {
+			limit = { check_variable = { party_pop_array^premier_candidate > new_premier_popularity } }
+			set_temp_variable = { new_premier_party = premier_candidate }
+			set_temp_variable = { new_premier_popularity = party_pop_array^premier_candidate }
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { new_premier_party = ruling_party } } }
+		set_temp_variable = { col_one = ruling_party }
+		set_temp_variable = { coalition_slot = 1 }
+		for_each_loop = {
+			array = gov_coalition_array
+			value = premier_candidate
+			if = {
+				limit = { NOT = { check_variable = { premier_candidate = new_premier_party } } }
+				if = { limit = { check_variable = { coalition_slot = 1 } } set_temp_variable = { col_two = premier_candidate } }
+				else_if = { limit = { check_variable = { coalition_slot = 2 } } set_temp_variable = { col_three = premier_candidate } }
+				else_if = { limit = { check_variable = { coalition_slot = 3 } } set_temp_variable = { col_four = premier_candidate } }
+				else_if = { limit = { check_variable = { coalition_slot = 4 } } set_temp_variable = { col_five = premier_candidate } }
+				add_to_temp_variable = { coalition_slot = 1 }
+			}
+		}
+		set_temp_variable = { rul_party_temp = new_premier_party }
+		set_temp_variable = { disable_elections = 0 }
+		change_ruling_party_effect = yes
+		reforme_expectance_government_change_update = yes
+		calculate_abandon_coalition_threshold = yes
+		remove_gov_crisis_ai_flags = yes
 	}
 }
 
