@@ -30,43 +30,30 @@ collaboration_government_decisions = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 12
+			# Larger occupations first; every eligible occupation has at least two cores.
+			modifier = { add = 3 collection_size = { input = collection:collaboration_controlled_target_cores value > 5 } }
+			modifier = { add = 5 collection_size = { input = collection:collaboration_controlled_target_cores value > 10 } }
+			modifier = { add = 10 collection_size = { input = collection:collaboration_controlled_target_cores value > 20 } }
 			# Only in a war or once world tension is rising
 			modifier = {
 				has_war = no
 				threat < 0.35
 				factor = 0
 			}
-			# Larger occupations first
+			# Require half the target's cores and at least 1.5 + 0.7 per existing collaboration government.
 			modifier = {
-				set_temp_variable = { num_cores_we_control = 0 }
-				all_of_scopes = {
-					array = FROM.core_states
-					if = {
-						limit = { is_controlled_by = PREV }
-						add_to_temp_variable = { num_cores_we_control = 1 }
+				FROM = {
+					ROOT = {
+						check_expr = {
+							value = 1.5
+							every_collection = { named_collection = collaboration_direct_subjects add = 0.7 }
+							max = { value = PREV.num_core_states multiply = 0.5 }
+							every_collection = { named_collection = collaboration_controlled_target_cores subtract = 1 }
+							greater_than = 0
+						}
 					}
 				}
-				add = num_cores_we_control
-			}
-			# Each collaboration government already held raises the cores needed for the next
-			modifier = {
-				set_temp_variable = { num_min_cores = 1.5 }
-				all_of_scopes = {
-					array = subjects
-					if = {
-						limit = { has_autonomy_state = autonomy_collaboration_government }
-						add_to_temp_variable = { num_min_cores = 0.7 }
-					}
-				}
-				check_variable = { num_cores_we_control < num_min_cores }
-				factor = 0
-			}
-			# Needs at least half of the country, not a border state or an enclave
-			modifier = {
-				set_temp_variable = { target_core_count = FROM.core_states^num }
-				set_temp_variable = { cores_we_control_doubled = { value = num_cores_we_control multiply = 2 } }
-				check_variable = { cores_we_control_doubled < target_core_count }
 				factor = 0
 			}
 			modifier = {
