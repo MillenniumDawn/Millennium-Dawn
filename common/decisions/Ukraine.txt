@@ -1,3 +1,11 @@
+@ukr_verkhovna_foreign_influence_cooldown_days = 10
+@ukr_verkhovna_rada_status_cooldown_days = 14
+@ukr_verkhovna_spending_vote_cooldown_days = 20
+@ukr_verkhovna_lobby_deputies_cooldown_days = 90
+@ukr_verkhovna_western_loans_cooldown_days = 120
+@ukr_verkhovna_eastern_loans_cooldown_days = 180
+@ukr_verkhovna_privatization_and_debt_cooldown_days = 360
+
 UKR_fedrada_category = {
 	UKR_subsidies = {
 		icon = GFX_decision_ukraine_two
@@ -4522,7 +4530,10 @@ UKR_commies_decision_category = {
 UKR_verkhovna_rada = {
 	UKR_bureau_open = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { NOT = { has_country_flag = UKR_open_bureu_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_bureu_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_bureau_open"
@@ -4532,6 +4543,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_bureu_laws
 			UKR_parliament_vote_bonus_bureau_down = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_decrease_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_bureu_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4544,7 +4559,10 @@ UKR_verkhovna_rada = {
 
 	UKR_bureau_close = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { has_country_flag = UKR_open_bureu_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_bureu_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_bureau_close"
@@ -4552,6 +4570,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_bureau_close"
 			}
 			clr_country_flag = UKR_open_bureu_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_bureu_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4564,37 +4586,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_bureu = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { has_country_flag = UKR_open_bureu_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_bureu_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = bureau_05
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_bureu_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_bureu"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -4611,6 +4616,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.2
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_bureu_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4626,37 +4635,20 @@ UKR_verkhovna_rada = {
 
 	UKR_decrease_bureu = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { has_country_flag = UKR_open_bureu_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_bureu_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = bureau_01
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_decrease_bureu_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_bureu"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -4674,6 +4666,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.4
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_bureu_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4689,7 +4685,10 @@ UKR_verkhovna_rada = {
 
 	UKR_military_open = {
 		icon = GFX_decision_ISR_military_button
-		visible = { NOT = { has_country_flag = UKR_open_military_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_military_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_military_open"
@@ -4699,6 +4698,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_military_laws
 			UKR_parliament_vote_bonus_military_up = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_increase_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_military_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4711,7 +4714,10 @@ UKR_verkhovna_rada = {
 
 	UKR_military_close = {
 		icon = GFX_decision_ISR_military_button
-		visible = { has_country_flag = UKR_open_military_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_military_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_military_close"
@@ -4719,6 +4725,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_military_close"
 			}
 			clr_country_flag = UKR_open_military_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_military_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4731,37 +4741,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_military_spend = {
 		icon = GFX_decision_ISR_military_button
-		visible = { has_country_flag = UKR_open_military_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_military_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = defence_09
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_military_spend_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_military_spend"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -4779,6 +4772,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.7
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_military_spend_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4795,37 +4792,20 @@ UKR_verkhovna_rada = {
 
 	UKR_decrease_military_spend = {
 		icon = GFX_decision_ISR_military_button
-		visible = { has_country_flag = UKR_open_military_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_military_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = defence_00
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_decrease_military_spend_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_military_spend"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -4842,6 +4822,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.9
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_military_spend_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4857,7 +4841,10 @@ UKR_verkhovna_rada = {
 
 	UKR_police_open = {
 		icon = GFX_decision_ISR_police_button
-		visible = { NOT = { has_country_flag = UKR_open_police_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_police_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_police_open"
@@ -4867,6 +4854,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_police_laws
 			UKR_parliament_vote_bonus_security_up = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_increase_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_police_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4879,7 +4870,10 @@ UKR_verkhovna_rada = {
 
 	UKR_police_close = {
 		icon = GFX_decision_ISR_police_button
-		visible = { has_country_flag = UKR_open_police_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_police_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_police_close"
@@ -4887,6 +4881,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_police_close"
 			}
 			clr_country_flag = UKR_open_police_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_police_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4899,37 +4897,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_policing = {
 		icon = GFX_decision_ISR_police_button
-		visible = { has_country_flag = UKR_open_police_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_police_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = police_05
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_policing_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_policing"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -4947,6 +4928,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.11
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_policing_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -4962,37 +4947,20 @@ UKR_verkhovna_rada = {
 
 	UKR_decrease_policing = {
 		icon = GFX_decision_ISR_police_button
-		visible = { has_country_flag = UKR_open_police_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_police_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = police_01
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_decrease_policing_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_policing"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5009,6 +4977,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.14
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_policing_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5024,7 +4996,10 @@ UKR_verkhovna_rada = {
 
 	UKR_education_open = {
 		icon = GFX_decision_ISR_education_button
-		visible = { NOT = { has_country_flag = UKR_open_education_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_education_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_education_open"
@@ -5034,6 +5009,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_education_laws
 			UKR_parliament_vote_bonus_education_up = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_increase_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_education_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5046,7 +5025,10 @@ UKR_verkhovna_rada = {
 
 	UKR_education_close = {
 		icon = GFX_decision_ISR_education_button
-		visible = { has_country_flag = UKR_open_education_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_education_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_education_close"
@@ -5054,6 +5036,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_education_close"
 			}
 			clr_country_flag = UKR_open_education_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_education_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5066,37 +5052,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_education = {
 		icon = GFX_decision_ISR_education_button
-		visible = { has_country_flag = UKR_open_education_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_education_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = edu_05
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_education_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_education"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5114,6 +5083,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.16
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_education_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5129,37 +5102,20 @@ UKR_verkhovna_rada = {
 
 	UKR_decrease_education = {
 		icon = GFX_decision_ISR_education_button
-		visible = { has_country_flag = UKR_open_education_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_education_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = edu_01
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_decrease_education_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_education"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5176,6 +5132,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.18
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_education_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5191,7 +5151,10 @@ UKR_verkhovna_rada = {
 
 	UKR_medical_open = {
 		icon = GFX_decision_ISR_healthcare_button
-		visible = { NOT = { has_country_flag = UKR_open_medical_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_medical_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_medical_open"
@@ -5201,6 +5164,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_medical_laws
 			UKR_parliament_vote_bonus_health_up = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_increase_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_medical_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5213,7 +5180,10 @@ UKR_verkhovna_rada = {
 
 	UKR_medical_close = {
 		icon = GFX_decision_ISR_healthcare_button
-		visible = { has_country_flag = UKR_open_medical_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_medical_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_medical_close"
@@ -5221,6 +5191,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_medical_close"
 			}
 			clr_country_flag = UKR_open_medical_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_medical_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5233,37 +5207,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_health = {
 		icon = GFX_decision_ISR_healthcare_button
-		visible = { has_country_flag = UKR_open_medical_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_medical_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = health_06
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_health_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_health"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5281,6 +5238,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.20
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_health_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5296,37 +5257,20 @@ UKR_verkhovna_rada = {
 
 	UKR_decrease_health = {
 		icon = GFX_decision_ISR_healthcare_button
-		visible = { has_country_flag = UKR_open_medical_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_medical_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = health_01
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_increase_pension
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_decrease_health_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_health"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5343,6 +5287,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.22
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_health_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5358,7 +5306,10 @@ UKR_verkhovna_rada = {
 
 	UKR_pension_open = {
 		icon = GFX_decision_ISR_welfare_button
-		visible = { NOT = { has_country_flag = UKR_open_pension_laws } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_open_pension_laws }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_pension_open"
@@ -5368,6 +5319,10 @@ UKR_verkhovna_rada = {
 			set_country_flag = UKR_open_pension_laws
 			UKR_parliament_vote_bonus_pension_up = yes
 			custom_effect_tooltip = UKR_vote_bonus_now_increase_tt
+			hidden_effect = {
+				set_country_flag = UKR_verkhovna_pension_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5380,7 +5335,10 @@ UKR_verkhovna_rada = {
 
 	UKR_pension_close = {
 		icon = GFX_decision_ISR_welfare_button
-		visible = { has_country_flag = UKR_open_pension_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_pension_laws
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_pension_close"
@@ -5388,6 +5346,10 @@ UKR_verkhovna_rada = {
 				log = "[GetDateText]: [ROOT.GetName]: DEBUG: Decision UKR_pension_close"
 			}
 			clr_country_flag = UKR_open_pension_laws
+			hidden_effect = {
+				clr_country_flag = UKR_verkhovna_pension_decisions_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5400,37 +5362,20 @@ UKR_verkhovna_rada = {
 
 	UKR_increase_pension = {
 		icon = GFX_decision_ISR_welfare_button
-		visible = { has_country_flag = UKR_open_pension_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_pension_laws
+		}
 		cost = 50
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = social_06
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_decrease_pension
-					}
-				}
-			}
+		available = { UKR_increase_pension_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_increase_pension"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5448,6 +5393,10 @@ UKR_verkhovna_rada = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.24
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_increase_pension_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5464,36 +5413,19 @@ UKR_verkhovna_rada = {
 	UKR_decrease_pension = {
 		icon = GFX_decision_ISR_welfare_button
 		cost = 50
-		visible = { has_country_flag = UKR_open_pension_laws }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_open_pension_laws
+		}
 		days_remove = 30
 		fixed_random_seed = no
-		days_re_enable = 20
+		days_re_enable = @ukr_verkhovna_spending_vote_cooldown_days
 
-		available = {
-			NOT = {
-				OR = {
-					has_idea = social_01
-					has_country_flag = UKR_dissolved_verkhovna
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = {
-					OR = {
-						has_decision = UKR_increase_bureu
-						has_decision = UKR_decrease_bureu
-						has_decision = UKR_increase_military_spend
-						has_decision = UKR_decrease_military_spend
-						has_decision = UKR_increase_policing
-						has_decision = UKR_decrease_policing
-						has_decision = UKR_increase_education
-						has_decision = UKR_decrease_education
-						has_decision = UKR_increase_health
-						has_decision = UKR_decrease_health
-						has_decision = UKR_increase_pension
-					}
-				}
-			}
+		available = { UKR_decrease_pension_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_decrease_pension"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5509,6 +5441,10 @@ UKR_verkhovna_rada = {
 			if = {
 				limit = { check_variable = { UKR_vote_roll_result = 2 } }
 				country_event = ukraine_parliament.26
+			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_decrease_pension_cooldown days = @ukr_verkhovna_spending_vote_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
 			}
 		}
 
@@ -5526,24 +5462,15 @@ UKR_verkhovna_rada = {
 	UKR_lobby_the_deputies = {
 		icon = GFX_decision_ISR_centralisation_button
 		cost = 75
-		days_re_enable = 90
+		days_re_enable = @ukr_verkhovna_lobby_deputies_cooldown_days
 		fixed_random_seed = no
 
 		visible = {
-			OR = {
-				has_country_flag = UKR_open_bureu_laws
-				has_country_flag = UKR_open_military_laws
-				has_country_flag = UKR_open_police_laws
-				has_country_flag = UKR_open_education_laws
-				has_country_flag = UKR_open_medical_laws
-				has_country_flag = UKR_open_pension_laws
-			}
+			UKR_verkhovna_show_budget_decisions = yes
+			UKR_verkhovna_has_open_budget_debate = yes
 		}
 
-		available = {
-			NOT = { has_country_flag = UKR_dissolved_verkhovna }
-			NOT = { has_country_flag = UKR_rada_lobbied_flag }
-		}
+		available = { UKR_lobby_the_deputies_available = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_lobby_the_deputies"
@@ -5555,6 +5482,10 @@ UKR_verkhovna_rada = {
 				chance = 25
 				increase_corruption = yes
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_lobby_the_deputies_cooldown days = @ukr_verkhovna_lobby_deputies_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = { base = 0 }
@@ -5562,9 +5493,14 @@ UKR_verkhovna_rada = {
 
 	UKR_dissolve_rada = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { NOT = { has_country_flag = UKR_dissolved_verkhovna } }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			NOT = { has_country_flag = UKR_dissolved_verkhovna }
+		}
 		cost = 100
-		days_re_enable = 14
+		days_re_enable = @ukr_verkhovna_rada_status_cooldown_days
+
+		available = { UKR_verkhovna_can_change_rada_status = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_dissolve_rada"
@@ -5575,6 +5511,11 @@ UKR_verkhovna_rada = {
 			set_variable = { UKR_verkhovna_control_selected = 0 }
 			UKR_update_verkhovna_dirty_variable = yes
 			add_ideas = UKR_dissolved_parliament
+			hidden_effect = {
+				set_country_flag = { flag = UKR_dissolve_rada_cooldown days = @ukr_verkhovna_rada_status_cooldown_days }
+				set_country_flag = UKR_verkhovna_restore_decision_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5587,9 +5528,14 @@ UKR_verkhovna_rada = {
 
 	UKR_restore_rada = {
 		icon = GFX_decision_ISR_centralisation_button
-		visible = { has_country_flag = UKR_dissolved_verkhovna }
+		visible = {
+			UKR_verkhovna_show_budget_decisions = yes
+			has_country_flag = UKR_dissolved_verkhovna
+		}
 		cost = 100
-		days_re_enable = 14
+		days_re_enable = @ukr_verkhovna_rada_status_cooldown_days
+
+		available = { UKR_verkhovna_can_change_rada_status = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_restore_rada"
@@ -5600,6 +5546,11 @@ UKR_verkhovna_rada = {
 			set_variable = { UKR_verkhovna_control_selected = 1 }
 			UKR_update_verkhovna_dirty_variable = yes
 			remove_ideas = UKR_dissolved_parliament
+			hidden_effect = {
+				set_country_flag = { flag = UKR_restore_rada_cooldown days = @ukr_verkhovna_rada_status_cooldown_days }
+				clr_country_flag = UKR_verkhovna_restore_decision_new
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5609,11 +5560,16 @@ UKR_verkhovna_rada = {
 		}
 
 	}
-}
-UKR_foreign_finances_category = {
+
 	UKR_privatize_resource = {
 		icon = GFX_decision_bancru_ask_button
+		visible = { UKR_verkhovna_show_foreign_finance_decisions = yes }
 		available = { is_full_state = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_privatize_resource"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_privatize_resource"
@@ -5624,16 +5580,26 @@ UKR_foreign_finances_category = {
 			newline = yes
 			set_temp_variable = { treasury_change = 50 }
 			modify_treasury_effect = yes
+			hidden_effect = {
+				set_country_flag = { flag = UKR_privatize_resource_cooldown days = @ukr_verkhovna_privatization_and_debt_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		days_remove = 15
-		days_re_enable = 360
+		days_re_enable = @ukr_verkhovna_privatization_and_debt_cooldown_days
 		ai_will_do = { base = 100 }
 	}
 
 	UKR_restructure_debt = {
 		icon = GFX_decision_bancru_ask_button
+		visible = { UKR_verkhovna_show_foreign_finance_decisions = yes }
 		available = { is_full_state = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_restructure_debt"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
+		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_restructure_debt"
@@ -5641,19 +5607,26 @@ UKR_foreign_finances_category = {
 				idea = idea_generic_temporary_debt_refactoring
 				days = 180
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_restructure_debt_cooldown days = @ukr_verkhovna_privatization_and_debt_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		days_remove = 15
-		days_re_enable = 360
+		days_re_enable = @ukr_verkhovna_privatization_and_debt_cooldown_days
 		ai_will_do = { base = 100 }
 	}
 
 	UKR_ask_western_loans = {
 		icon = GFX_decision_bancru_ask_button
+		visible = { UKR_verkhovna_show_foreign_finance_decisions = yes }
 
-		available = {
-			is_full_state = yes
-			date < 2007.07.31
+		available = { UKR_ask_western_loans_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_ask_western_loans"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5719,19 +5692,26 @@ UKR_foreign_finances_category = {
 				set_temp_variable = { int_investment_change = 5 }
 				modify_international_investment_effect = yes
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_ask_western_loans_cooldown days = @ukr_verkhovna_western_loans_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		days_remove = 15
-		days_re_enable = 120
+		days_re_enable = @ukr_verkhovna_western_loans_cooldown_days
 		ai_will_do = { base = 100 }
 	}
 
 	UKR_ask_eastern_loans = {
 		icon = GFX_decision_bancru_ask_button
+		visible = { UKR_verkhovna_show_foreign_finance_decisions = yes }
 
-		available = {
-			is_full_state = yes
-			date < 2008.09.15
+		available = { UKR_ask_eastern_loans_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_ask_eastern_loans"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5767,10 +5747,14 @@ UKR_foreign_finances_category = {
 				set_temp_variable = { int_investment_change = 15 }
 				modify_international_investment_effect = yes
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_ask_eastern_loans_cooldown days = @ukr_verkhovna_eastern_loans_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		days_remove = 15
-		days_re_enable = 180
+		days_re_enable = @ukr_verkhovna_eastern_loans_cooldown_days
 		ai_will_do = { base = 100 }
 	}
 
@@ -5780,19 +5764,18 @@ UKR_foreign_finances_category = {
 		cost = 50
 
 		visible = {
-			country_exists = SOV
-			NOT = { has_war_with = SOV }
+			UKR_verkhovna_show_foreign_finance_decisions = yes
+			UKR_promote_russian_interests_shown = yes
 		}
 
 		days_remove = 30
-		days_re_enable = 10
+		days_re_enable = @ukr_verkhovna_foreign_influence_cooldown_days
 
-		available = {
-			NOT = { has_country_flag = UKR_dissolved_verkhovna }
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = { has_decision = UKR_promote_western_interests }
-			}
+		available = { UKR_promote_russian_interests_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_promote_russian_interests"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5823,6 +5806,10 @@ UKR_foreign_finances_category = {
 				set_temp_variable = { influence_target = UKR }
 				change_influence_percentage = yes
 			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_promote_russian_interests_cooldown days = @ukr_verkhovna_foreign_influence_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
+			}
 		}
 
 		ai_will_do = {
@@ -5837,19 +5824,18 @@ UKR_foreign_finances_category = {
 		cost = 50
 
 		visible = {
-			country_exists = USA
-			NOT = { has_war_with = USA }
+			UKR_verkhovna_show_foreign_finance_decisions = yes
+			UKR_promote_western_interests_shown = yes
 		}
 
 		days_remove = 30
-		days_re_enable = 10
+		days_re_enable = @ukr_verkhovna_foreign_influence_cooldown_days
 
-		available = {
-			NOT = { has_country_flag = UKR_dissolved_verkhovna }
-			custom_trigger_tooltip = {
-				tooltip = UKR_presidential_decisions_only_one_is_available_TT
-				NOT = { has_decision = UKR_promote_russian_interests }
-			}
+		available = { UKR_promote_western_interests_available = yes }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_promote_western_interests"
+			hidden_effect = { UKR_verkhovna_refresh_decision_counts = yes }
 		}
 
 		remove_effect = {
@@ -5879,6 +5865,10 @@ UKR_foreign_finances_category = {
 				set_temp_variable = { tag_index = SOV }
 				set_temp_variable = { influence_target = UKR }
 				change_influence_percentage = yes
+			}
+			hidden_effect = {
+				set_country_flag = { flag = UKR_promote_western_interests_cooldown days = @ukr_verkhovna_foreign_influence_cooldown_days }
+				UKR_verkhovna_refresh_decision_counts = yes
 			}
 		}
 
