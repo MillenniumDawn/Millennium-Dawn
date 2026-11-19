@@ -1,0 +1,113 @@
+add_namespace = subject_independence
+
+country_event = {
+	id = subject_independence.1
+	title = subject_independence.1.t
+	desc = subject_independence.1.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = subject_independence.1.a
+		ai_chance = { base = 65 }
+	}
+
+	option = {
+		name = subject_independence.1.b
+		trigger = {
+			has_dlc = "By Blood Alone"
+			event_target:autonomy_former_subject = {
+				exists = yes
+				is_subject = no
+				NOT = {
+					is_in_faction_with = ROOT
+					is_embargoed_by = ROOT
+				}
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: subject_independence.1.b executed"
+		send_embargo = event_target:autonomy_former_subject
+		hidden_effect = { country_event = subject_independence.2 }
+		ai_chance = {
+			base = 10
+			modifier = { add = 20 has_opinion = { target = event_target:autonomy_former_subject value < -50 } }
+			modifier = { factor = 0 NOT = { has_opinion = { target = event_target:autonomy_former_subject value < 0 } } }
+		}
+	}
+
+	option = {
+		name = subject_independence.1.c
+		trigger = {
+			event_target:autonomy_former_subject = {
+				exists = yes
+				is_subject = no
+				NOT = { is_in_faction_with = ROOT }
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: subject_independence.1.c executed"
+		add_opinion_modifier = { target = event_target:autonomy_former_subject modifier = sanctions }
+		hidden_effect = { country_event = subject_independence.2 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 15 has_opinion = { target = event_target:autonomy_former_subject value < -25 } }
+			modifier = {
+				factor = 0
+				NOT = { has_opinion = { target = event_target:autonomy_former_subject value < 50 } }
+			}
+			modifier = {
+				factor = 0
+				NOT = { has_opinion = { target = event_target:autonomy_former_subject value < 0 } }
+				event_target:autonomy_former_subject = { is_top3_thirty_influencer = yes }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = subject_independence.2
+	title = subject_independence.2.t
+	desc = subject_independence.2.d
+	picture = GFX_politics_negotiations
+	is_triggered_only = yes
+
+	option = {
+		name = subject_independence.2.a
+		ai_chance = { base = 85 }
+	}
+
+	option = {
+		name = subject_independence.2.b
+		trigger = {
+			is_subject = no
+			event_target:autonomy_former_subject = {
+				exists = yes
+				is_subject = no
+				NOT = {
+					is_in_faction_with = ROOT
+					has_war_with = ROOT
+					has_truce_with = ROOT
+					has_non_aggression_pact_with = ROOT
+				}
+			}
+			NOT = { has_wargoal_against = event_target:autonomy_former_subject }
+		}
+		log = "[GetDateText]: [This.GetName]: subject_independence.2.b executed"
+		set_temp_variable = { wargoal_on = event_target:autonomy_former_subject.id }
+		add_threat_from_wargoal_effect = yes
+		create_wargoal = { type = puppet_wargoal_focus target = event_target:autonomy_former_subject expire = 120 }
+		ai_chance = {
+			base = 15
+			modifier = {
+				factor = 0
+				OR = {
+					has_war = yes
+					has_active_mission = bankruptcy_incoming_collapse
+					ai_has_high_deficit = yes
+					event_target:autonomy_former_subject = { is_top3_thirty_influencer = yes }
+					NOT = { strength_ratio = { tag = event_target:autonomy_former_subject ratio > 1.5 } }
+					NOT = { has_opinion = { target = event_target:autonomy_former_subject value < -50 } }
+				}
+			}
+		}
+	}
+}
