@@ -1315,7 +1315,7 @@ UKR_mrap_tender_can_afford_offer = {
 		limit = { UKR_mrap_tender_has_tech = yes }
 		if = {
 			limit = { has_country_flag = UKR_emergency_mrap_kraz_order_flag }
-			NOT = { check_variable = { treasury < 0.255 } }
+			NOT = { check_variable = { treasury < 0.25 } }
 		}
 		else_if = {
 			limit = { has_country_flag = UKR_emergency_mrap_order_placed_flag }
@@ -1446,6 +1446,37 @@ UKR_kraz_6316_has_factory_capacity = {
 	}
 }
 
+UKR_kraz_7634_has_factory_capacity = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_kraz_6316_needs_two_factories_tt
+		1089 = { arms_factory > 1 }
+	}
+}
+
+UKR_kraz_7634_can_start = {
+	UKR_kraz_6316_controls_plant = yes
+	UKR_kraz_7634_has_factory_capacity = yes
+	NOT = { has_political_power < 10 }
+	NOT = { check_variable = { treasury < 0.3 } }
+}
+
+UKR_vilkha_chassis_kraz_funding = {
+	if = {
+		limit = { has_country_flag = UKR_kraz_7634_heavy_chassis_developed_flag }
+		NOT = { check_variable = { treasury < 0.2 } }
+	}
+	else = {
+		NOT = { check_variable = { treasury < 0.25 } }
+	}
+}
+
+UKR_vilkha_chassis_can_start = {
+	UKR_mrls_site_kyiv_controlled = yes
+	NOT = { has_political_power < 10 }
+	NOT = { has_army_experience < 4 }
+	UKR_vilkha_chassis_kraz_funding = yes
+}
+
 UKR_kraz_followup_truck_waiting = {
 	OR = {
 		has_country_flag = UKR_kraz_5401_pending_production_flag
@@ -1455,6 +1486,7 @@ UKR_kraz_followup_truck_waiting = {
 
 UKR_kraz_trucks_waiting = {
 	OR = {
+		has_country_flag = UKR_kraz_7634_pending_production_flag
 		has_country_flag = UKR_kraz_6316_pending_production_flag
 		UKR_kraz_followup_truck_waiting = yes
 	}
@@ -1462,6 +1494,10 @@ UKR_kraz_trucks_waiting = {
 
 UKR_kraz_trucks_has_ready_lines = {
 	OR = {
+		AND = {
+			has_country_flag = UKR_kraz_7634_pending_production_flag
+			UKR_kraz_7634_has_factory_capacity = yes
+		}
 		AND = {
 			has_country_flag = UKR_kraz_6316_pending_production_flag
 			UKR_kraz_6316_has_factory_capacity = yes
@@ -1475,6 +1511,10 @@ UKR_kraz_trucks_has_ready_lines = {
 
 UKR_kraz_trucks_needs_factory = {
 	OR = {
+		AND = {
+			has_country_flag = UKR_kraz_7634_pending_production_flag
+			NOT = { UKR_kraz_7634_has_factory_capacity = yes }
+		}
 		AND = {
 			has_country_flag = UKR_kraz_6316_pending_production_flag
 			NOT = { UKR_kraz_6316_has_factory_capacity = yes }
