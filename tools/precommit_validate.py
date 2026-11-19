@@ -57,6 +57,8 @@ from shared_utils import (  # noqa: E402 — needs the path tweak above
 TXT = ".txt"
 YML = ".yml"
 GFX = ".gfx"
+GUI = ".gui"
+CONTENT_EXTENSIONS = (TXT, YML, GFX, GUI)
 
 
 class _Spec:
@@ -179,6 +181,16 @@ _REGISTRY = [
         [("common/", TXT), ("events/", TXT), ("history/", TXT)],
     ),
     _Spec(
+        "validate_dynamic_tokens",
+        [
+            ("common/", TXT),
+            ("events/", TXT),
+            ("history/", TXT),
+            ("localisation/english/", YML),
+            ("interface/", GUI),
+        ],
+    ),
+    _Spec(
         "validate_mios",
         [
             ("common/military_industrial_organization/organizations/", TXT),
@@ -207,7 +219,9 @@ def _discover_staged(mod_path, argv_files):
 
     staged = (
         get_staged_files(
-            mod_path, extensions=[TXT, YML, GFX], include_missing=bool(argv_files)
+            mod_path,
+            extensions=list(CONTENT_EXTENSIONS),
+            include_missing=bool(argv_files),
         )
         or []
     )
@@ -229,7 +243,7 @@ def _discover_staged(mod_path, argv_files):
 def _run(spec, mod_path, env, no_color, inner_workers):
     cmd = [
         sys.executable,
-        os.path.join("tools", "validation", f"{spec.script}.py"),
+        os.path.join(_TOOLS_DIR, "validation", f"{spec.script}.py"),
         "--staged",
         "--workers",
         str(inner_workers),
@@ -285,9 +299,9 @@ def main():
 
     mod_path = os.path.abspath(args.path)
     rel_paths = [p.replace("\\", "/") for p in _discover_staged(mod_path, args.files)]
-    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML, GFX))]
+    rel_paths = [p for p in rel_paths if p.endswith(CONTENT_EXTENSIONS)]
     if not rel_paths:
-        print("No staged .txt/.yml/.gfx content files — nothing to validate.")
+        print("No staged .txt/.yml/.gfx/.gui content files — nothing to validate.")
         return 0
 
     selected = [spec for spec in _REGISTRY if spec.matches(rel_paths)]
