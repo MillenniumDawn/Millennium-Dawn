@@ -179,10 +179,13 @@ Their list, changed-group selection, and `--strict` gates live in
 The commit-stage validators (`validate_common_mistakes`, `validate_style`,
 `validate_oob_units`, `validate_ai_roles`, `validate_ai_navy`,
 `validate_characters`, `validate_ai_equipment`, `validate_agency_upgrades`,
-`validate_ideas`, `validate_events`, and
+`validate_ideas`, `validate_events`, `validate_dynamic_tokens`, and
 `validate_mios`) run through the
 `md-validate-content` pre-commit hook. It fans them out in parallel through
-`tools/precommit_validate.py`. `validate_defines` keeps its own commit-stage
+`tools/precommit_validate.py`. `validate_dynamic_tokens` checks staged script,
+English localization, and interface `.gui` files against `MD_tokens.txt`.
+CI runs the same token check as part of `validate_variables`.
+`validate_defines` keeps its own commit-stage
 hook. `validate_mesh_textures` also keeps its own commit-stage hook, keyed on
 `gfx/`, because the CI workspace ships no models, entities or textures.
 `validate_asset_data` has its own hook keyed on staged `.dds` files under
