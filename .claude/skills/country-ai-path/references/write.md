@@ -319,11 +319,14 @@ DEN_ai_path_category = {
 			has_global_flag = DEN_MONARCHIST_FOCUS_PATH
 			has_global_flag = DEN_NATIONALIST_FOCUS_PATH
 		}
+		has_civil_war = no
 	}
 }
 ```
 
 The icon must be a **category** sprite (52x40, `GFX_decisions_category_*`), not a decision one.
+Checks every ramp shares, such as `has_civil_war = no`, go in the category `visible` once, not in
+each decision.
 
 Raw flags are right only while every path in the `visible` is an **alt** path, as above. A ramp that
 also has to run for the **historical** party gates on the alt-guarded `DEN_ai_historical_path` (§4)
@@ -344,10 +347,7 @@ A ramp pair per path, in `common/decisions/<Country>.txt`:
 
 		visible = { has_global_flag = DEN_MONARCHIST_FOCUS_PATH }
 
-		available = {
-			has_civil_war = no
-			check_variable = { party_pop_array^23 < 0.55 }
-		}
+		available = { check_variable = { party_pop_array^23 < 0.55 } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_rally_the_monarchists"
@@ -371,7 +371,6 @@ A ramp pair per path, in `common/decisions/<Country>.txt`:
 		visible = { has_global_flag = DEN_MONARCHIST_FOCUS_PATH }
 
 		available = {
-			has_civil_war = no
 			nationalist_monarchists_are_in_power = no
 			check_variable = { party_pop_array^23 > 0.5 }
 		}
