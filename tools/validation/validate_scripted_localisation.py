@@ -9,7 +9,10 @@ from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from shared_utils import list_files, validation_config
-from validate_gfx_references import sprite_names_from_gfx_text
+from validate_gfx_references import (
+    _load_vanilla_sprite_manifest,
+    sprite_names_from_gfx_text,
+)
 from validator_common import (
     BaseValidator,
     Colors,
@@ -496,9 +499,9 @@ class Validator(BaseValidator):
             "Checking GFX_ icon references in scripted localisation against .gfx definitions..."
         )
 
-        # Collect all GFX_ names defined in interface/*.gfx
+        # Collect all GFX_ names defined in interface/*.gfx, plus vanilla sprites
         gfx_path = str(Path(self.mod_path) / "interface")
-        defined_gfx = set()
+        defined_gfx = set(_load_vanilla_sprite_manifest())
         for filename in list_files(gfx_path, ("*.gfx",)):
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=False
@@ -535,7 +538,7 @@ class Validator(BaseValidator):
         self._report(
             results,
             "✓ All GFX_ icons in scripted localisation are defined in .gfx files",
-            "GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx:",
+            "GFX_ icons referenced in scripted localisation but not defined in interface/*.gfx or vanilla:",
             Severity.ERROR,
             category="gfx-icon",
         )
