@@ -342,7 +342,7 @@ def test_variables_staged_decision_still_reads_every_repo_index(tmp_path):
         (
             "untooltipped-available-scripted-trigger",
             "TST_gate = yes in `available` resolves to a scripted trigger that"
-            " checks a flag directly - the player sees no requirement line at"
+            " checks a flag or variable directly - the player sees no requirement line at"
             " all; wrap it in custom_trigger_tooltip = { tooltip = KEY ... }",
             rel,
             7,
