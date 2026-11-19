@@ -1,0 +1,85 @@
+scripted_gui = {
+	opec_open_button_gui = {
+		context_type = player_context
+		window_name = "opec_open_button_window"
+
+		effects = {
+			opec_open_button_click = {
+				if = { limit = { has_country_flag = opec_gui_open }
+					clr_country_flag = opec_gui_open
+				}
+				else = {
+					set_country_flag = opec_gui_open
+				}
+				update_opec_dirty_variable = yes
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+
+	opec_main_gui = {
+		context_type = player_context
+		window_name = "opec_main_window"
+		dirty = global.opec_dirty_update_var
+
+		visible = {
+			has_country_flag = opec_gui_open
+		}
+
+		dynamic_lists = {
+			opec_members_gridbox = {
+				array = global.opec_members
+				entry_container = "opec_member_entry"
+			}
+			opec_top_proposals_gridbox = {
+				array = global.opec_top_proposals
+				entry_container = "opec_top_proposal_entry"
+			}
+			opec_proposals_gridbox = {
+				array = global.opec_stance_ids
+				entry_container = "opec_proposal_entry"
+			}
+		}
+
+		properties = {
+			opec_president_flag = {
+				image = "[?global.opec_conference_president.GetFlag]"
+			}
+			opec_member_flag = {
+				image = "[?global.opec_members^i.GetFlag]"
+			}
+			opec_proposal_vote = {
+				image = "[opec_vote_checkbox_icon]"
+			}
+		}
+
+		triggers = {
+			opec_proposal_vote_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = OPEC_VOTE_MEMBERS_ONLY_TT
+					is_in_array = { global.opec_members = THIS }
+				}
+			}
+		}
+
+		effects = {
+			opec_close_button_click = {
+				clr_country_flag = opec_gui_open
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_vote_click = {
+				if = { limit = { check_variable = { opec_vote = v } }
+					clear_variable = opec_vote
+				}
+				else = {
+					set_variable = { opec_vote = v }
+				}
+				opec_count_votes = yes
+				update_opec_dirty_variable = yes
+			}
+		}
+
+		ai_enabled = { always = no }
+	}
+}

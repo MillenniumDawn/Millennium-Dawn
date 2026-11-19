@@ -1,0 +1,168 @@
+update_opec_dirty_variable = {
+	if = { limit = { check_variable = { global.opec_dirty_update_var < 10000 } }
+		add_to_variable = { global.opec_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.opec_dirty_update_var = 1 }
+	}
+}
+
+# Stance ids: 1 Deep Cut, 2 Cut, 3 Hold, 4 Raise, 5 Price War
+opec_monthly_update = {
+	opec_remove_dead_members = yes
+
+	set_temp_variable = { opec_price_ratio = { value = global.oil_price divide = global.starting_oil_price } }
+	for_each_scope_loop = {
+		array = global.opec_members
+		if = { limit = { is_ai = yes }
+			if = { limit = { original_tag = SAU check_variable = { global.opec_cohesion < 35 } }
+				set_variable = { opec_vote = 5 }
+			}
+			else_if = { limit = { check_variable = { opec_price_ratio < 0.75 } }
+				set_variable = { opec_vote = 1 }
+			}
+			else_if = { limit = { check_variable = { opec_price_ratio < 0.95 } }
+				set_variable = { opec_vote = 2 }
+			}
+			else_if = { limit = { OR = { check_variable = { opec_price_ratio > 1.6 } has_war = yes } }
+				set_variable = { opec_vote = 4 }
+			}
+			else = {
+				set_variable = { opec_vote = 3 }
+			}
+		}
+	}
+	opec_count_votes = yes
+
+	set_temp_variable = { opec_cycle_month = global.month }
+	modulo_temp_variable = { opec_cycle_month = 6 }
+	set_variable = { global.opec_months_to_conference = { value = 6 subtract = opec_cycle_month } }
+	if = { limit = { check_variable = { opec_cycle_month = 0 } }
+		opec_hold_conference = yes
+	}
+
+	update_opec_dirty_variable = yes
+}
+
+opec_remove_dead_members = {
+	for_each_loop = {
+		array = global.opec_members
+		if = { limit = { var:v = { exists = no } }
+			add_to_temp_array = { opec_dead_members = v }
+		}
+	}
+	for_each_loop = {
+		array = opec_dead_members
+		remove_from_array = { global.opec_members = v }
+	}
+}
+
+# Tallies each stance's backing as a share of total member oil production, then ranks the top three
+opec_count_votes = {
+	clear_array = global.opec_vote_count
+	resize_array = { array = global.opec_vote_count value = 0 size = 6 }
+	clear_array = global.opec_vote_share
+	resize_array = { array = global.opec_vote_share value = 0 size = 6 }
+
+	set_temp_variable = { opec_total_production = 0 }
+	for_each_scope_loop = {
+		array = global.opec_members
+		add_to_temp_variable = { opec_total_production = resource_produced@oil }
+		if = { limit = { check_variable = { opec_vote > 0 } }
+			set_temp_variable = { opec_member_vote = opec_vote }
+			add_to_variable = { global.opec_vote_count^opec_member_vote = 1 }
+			add_to_variable = { global.opec_vote_share^opec_member_vote = resource_produced@oil }
+		}
+	}
+	if = { limit = { check_variable = { opec_total_production > 0 } }
+		for_loop_effect = {
+			start = 1
+			end = 6
+			value = stance
+			set_variable = { global.opec_vote_share^stance = { value = global.opec_vote_share^stance multiply = 100 divide = opec_total_production } }
+		}
+	}
+
+	clear_array = global.opec_top_proposals
+	for_loop_effect = {
+		start = 0
+		end = 3
+		set_temp_variable = { opec_best_stance = 0 }
+		set_temp_variable = { opec_best_share = 0 }
+		for_loop_effect = {
+			start = 1
+			end = 6
+			value = stance
+			if = {
+				limit = {
+					check_variable = { global.opec_vote_share^stance > opec_best_share }
+					NOT = { is_in_array = { global.opec_top_proposals = stance } }
+				}
+				set_temp_variable = { opec_best_stance = stance }
+				set_temp_variable = { opec_best_share = global.opec_vote_share^stance }
+			}
+		}
+		if = { limit = { check_variable = { opec_best_stance > 0 } }
+			add_to_array = { global.opec_top_proposals = opec_best_stance }
+		}
+	}
+}
+
+opec_hold_conference = {
+	if = { limit = { check_variable = { global.opec_top_proposals^num > 0 } }
+		set_variable = { global.opec_stance = global.opec_top_proposals^0 }
+		set_temp_variable = { opec_winning_stance = global.opec_stance }
+		add_to_variable = { global.opec_cohesion = { value = global.opec_vote_share^opec_winning_stance subtract = 50 divide = 5 } }
+	}
+
+	if = { limit = { check_variable = { global.opec_stance = 1 } }
+		add_to_variable = { global.opec_cohesion = -5 }
+		set_temp_variable = { opec_full_price_shift = 0.30 }
+		set_variable = { global.opec_member_oil_export_modifier = -0.20 }
+	}
+	else_if = { limit = { check_variable = { global.opec_stance = 2 } }
+		set_temp_variable = { opec_full_price_shift = 0.15 }
+		set_variable = { global.opec_member_oil_export_modifier = -0.10 }
+	}
+	else_if = { limit = { check_variable = { global.opec_stance = 4 } }
+		set_temp_variable = { opec_full_price_shift = -0.10 }
+		set_variable = { global.opec_member_oil_export_modifier = 0.05 }
+	}
+	else_if = { limit = { check_variable = { global.opec_stance = 5 } }
+		add_to_variable = { global.opec_cohesion = -10 }
+		set_temp_variable = { opec_full_price_shift = -0.30 }
+		set_variable = { global.opec_member_oil_export_modifier = 0.15 }
+	}
+	else = {
+		set_temp_variable = { opec_full_price_shift = 0 }
+		set_variable = { global.opec_member_oil_export_modifier = 0 }
+	}
+	clamp_variable = { var = global.opec_cohesion min = 0 max = 100 }
+	set_variable = { global.opec_price_shift = { value = opec_full_price_shift multiply = global.opec_cohesion divide = 100 } }
+
+	for_each_scope_loop = {
+		array = global.opec_members
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = opec_member_modifier } } }
+			add_dynamic_modifier = { modifier = opec_member_modifier }
+		}
+		force_update_dynamic_modifier = yes
+	}
+
+	if = { limit = { check_variable = { global.month = 12 } check_variable = { global.opec_members^num > 0 } }
+		opec_rotate_presidency = yes
+	}
+}
+
+opec_rotate_presidency = {
+	set_temp_variable = { opec_next_president_index = 0 }
+	for_each_loop = {
+		array = global.opec_members
+		if = { limit = { check_variable = { v = global.opec_conference_president } }
+			set_temp_variable = { opec_next_president_index = { value = i add = 1 } }
+			set_temp_variable = { break = 1 }
+		}
+	}
+	set_temp_variable = { opec_member_count = global.opec_members^num }
+	modulo_temp_variable = { opec_next_president_index = opec_member_count }
+	set_variable = { global.opec_conference_president = global.opec_members^opec_next_president_index }
+}
