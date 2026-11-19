@@ -1280,7 +1280,7 @@ focus_tree = {
 
 		prerequisite = { focus = ITA_industrial_focus }
 
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_encourage_micro_hydropower"
@@ -1311,7 +1311,7 @@ focus_tree = {
 
 		prerequisite = { focus = ITA_encourage_micro_hydropower }
 
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
+		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_develop_pumped_hydro"
@@ -1352,21 +1352,21 @@ focus_tree = {
 
 		prerequisite = { focus = ITA_develop_pumped_hydro }
 
-		search_filters = { FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_subsidize_rooftop_solar"
+			set_temp_variable = { mafia_industrial_focus_base_cost = 0 }
 			every_core_state = {
+				limit = { is_owned_and_controlled_by = ROOT }
 				add_building_construction = {
 					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
-				PREV = {
-					set_temp_variable = { mafia_industrial_focus_base_cost = -5 }
-					mafia_industrial_focus_north_effect = yes
-				}
+				PREV = { add_to_temp_variable = { mafia_industrial_focus_base_cost = -5 } }
 			}
+			mafia_industrial_focus_north_effect = yes
 			custom_effect_tooltip = ITA_subsidize_rooftop_solar_TT
 		}
 
@@ -1391,45 +1391,68 @@ focus_tree = {
 
 		prerequisite = { focus = ITA_subsidize_rooftop_solar }
 
-		search_filters = { FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_southern_wind_power"
-			set_temp_variable = { mafia_industrial_focus_base_cost = -25 }
-			mafia_industrial_focus_south_effect = yes
-			82 = {
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
+			if = {
+				limit = { controls_state = 82 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+				mafia_industrial_focus_south_effect = yes
+				82 = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			957 = {
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
+			if = {
+				limit = { controls_state = 957 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+				mafia_industrial_focus_south_effect = yes
+				957 = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			956 = {
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
+			if = {
+				limit = { controls_state = 956 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+				mafia_industrial_focus_south_effect = yes
+				956 = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			83 = {
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
+			if = {
+				limit = { controls_state = 83 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+				mafia_industrial_focus_south_effect = yes
+				83 = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
-			84 = {
-				add_building_construction = {
-					type = renewable_energy_infra
-					level = 1
-					instant_build = yes
+			if = {
+				limit = { controls_state = 84 }
+				set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+				mafia_industrial_focus_south_effect = yes
+				84 = {
+					add_building_construction = {
+						type = renewable_energy_infra
+						level = 1
+						instant_build = yes
+					}
 				}
 			}
 		}
@@ -1440,6 +1463,99 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+		}
+	}
+
+	focus = {
+		id = ITA_terna_storage_grid
+		icon = national_grid
+
+		x = -1
+		y = 1
+		relative_position_id = ITA_southern_wind_power
+
+		cost = 4
+
+		prerequisite = { focus = ITA_southern_wind_power }
+
+		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = { has_tech = utility_scale_battery_storage }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_terna_storage_grid"
+			add_timed_idea = {
+				idea = battery_park_expansion_idea
+				days = 730
+			}
+			set_temp_variable = { temp_change = 2 }
+			set_temp_variable = { skip_payment = 1 }
+			build_battery_park_effect = yes
+			one_random_energy_infrastructure = yes
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2019.1.1 }
+		}
+	}
+
+	focus = {
+		id = ITA_3sun_gigafactory
+		icon = generic_solar
+
+		x = 1
+		y = 1
+		relative_position_id = ITA_southern_wind_power
+
+		cost = 5
+
+		prerequisite = { focus = ITA_southern_wind_power }
+
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_RENEWABLE_ENERGY_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = { controls_state = 83 }
+
+		bypass = { NOT = { owns_state = 83 } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_3sun_gigafactory"
+			add_tech_bonus = {
+				name = ITA_3sun_gigafactory
+				bonus = 0.3
+				uses = 1
+				category = CAT_renewable_energy
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_renewable_energy_gain_multiplier_var = 0.05 tooltip = renewable_energy_gain_multiplier_tt }
+			set_temp_variable = { mafia_industrial_focus_base_cost = -8.5 }
+			mafia_industrial_focus_south_effect = yes
+			83 = {
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2022.6.1 }
 		}
 	}
 
@@ -2456,6 +2572,58 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_agrate_fab
+		icon = focus_chips
+
+		x = 0
+		y = 1
+		relative_position_id = ITA_north_dockyards
+
+		cost = 4
+
+		prerequisite = { focus = ITA_north_dockyards }
+
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		available = { controls_state = 80 }
+
+		bypass = { NOT = { owns_state = 80 } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_agrate_fab"
+			set_temp_variable = { mafia_industrial_focus_base_cost = -10.5 }
+			mafia_industrial_focus_north_effect = yes
+			80 = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = {
+					type = microchip_plant
+					level = 1
+					instant_build = yes
+				}
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_microchip_plant_productivity_modifier_var = 0.05 tooltip = microchip_plant_productivity_modifier_tt }
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_microchip_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2021.1.1 }
+		}
+	}
+
+	focus = {
 		id = ITA_islands_military
 		icon = industry_military
 
@@ -2529,6 +2697,62 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+		}
+	}
+
+	focus = {
+		id = ITA_etna_valley
+		icon = microschip_production
+
+		x = 0
+		y = 1
+		relative_position_id = ITA_islands_military
+
+		cost = 5
+
+		prerequisite = { focus = ITA_islands_military }
+
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
+
+		available = { controls_state = 83 }
+
+		bypass = { NOT = { owns_state = 83 } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_etna_valley"
+			set_temp_variable = { mafia_industrial_focus_base_cost = -10.5 }
+			mafia_industrial_focus_south_effect = yes
+			83 = {
+				add_extra_state_shared_building_slots = 2
+				add_building_construction = {
+					type = microchip_plant
+					level = 1
+					instant_build = yes
+				}
+			}
+			add_tech_bonus = {
+				name = ITA_etna_valley
+				bonus = 0.5
+				uses = 1
+				category = CAT_microchips
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_microchip_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2022.10.1 }
 		}
 	}
 
@@ -2623,6 +2847,54 @@ focus_tree = {
 	}
 
 	focus = {
+		id = ITA_milan_financial_center
+		icon = generic_banks
+
+		x = 0
+		y = 1
+		relative_position_id = ITA_north_miracle
+
+		cost = 4
+
+		prerequisite = { focus = ITA_north_miracle }
+
+		search_filters = { FOCUS_FILTER_ITA_MAFIA FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
+
+		available = { controls_state = 80 }
+
+		bypass = { NOT = { owns_state = 80 } }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_milan_financial_center"
+			set_temp_variable = { skip_payment = 1 }
+			80 = { two_state_office_construction = yes }
+			set_temp_variable = { mafia_industrial_focus_base_cost = -24 }
+			mafia_industrial_focus_north_effect = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
+			add_to_variable = { ITA_offices_productivity_var = 0.05 tooltip = offices_productivity_tt }
+			set_temp_variable = { temp_opinion = 5 }
+			change_international_bankers_opinion = yes
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = mafia_strength_ai_factor_var
+				has_idea = ITA_mafia
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_offices = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2021.5.1 }
+		}
+	}
+
+	focus = {
 		id = ITA_adriatic_gas_fields
 		icon = adriatic_sea
 
@@ -2684,6 +2956,41 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+		}
+	}
+
+	focus = {
+		id = ITA_piano_mattei
+		icon = african_investment
+
+		x = 0
+		y = 1
+		relative_position_id = ITA_adriatic_gas_fields
+
+		cost = 5
+
+		prerequisite = { focus = ITA_adriatic_gas_fields }
+
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			country_exists = AGL
+			NOT = { has_war_with = AGL }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_piano_mattei"
+			AGL = { random_owned_state = { invest_cic = yes } }
+			custom_effect_tooltip = ITA_piano_mattei_TT
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2024.1.1 }
 		}
 	}
 
@@ -9771,6 +10078,10 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_finmeccanica_restructuring"
 			custom_effect_tooltip = ITA_finmeccanica_restructuring_TT
 			hidden_effect = { ITA_finmeccanica_restructuring_carry_traits = yes }
+			if = {
+				limit = { has_dlc = "Arms Against Tyranny" }
+				mio:ITA_leonardo = { add_mio_funds = 500 }
+			}
 		}
 
 		ai_will_do = {
@@ -15081,7 +15392,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
-				mio:ITA_fincantieri = { add_mio_funds = 10000 }
+				mio:ITA_fincantieri = { add_mio_funds = 2000 }
 			}
 			else = {
 				custom_effect_tooltip = ITA_focus_fincantieri_surface_TT
@@ -15094,10 +15405,10 @@ focus_tree = {
 						}
 					}
 					if = {
-						limit = { has_idea = ITA_fincantieri_naval_manufacturer }
+						limit = { has_idea = ITA_fincantieri_naval_manufacturer2 }
 						swap_ideas = {
-							remove_idea = ITA_fincantieri_naval_manufacturer
-							add_idea = ITA_fincantieri_naval_manufacturer_unfocused
+							remove_idea = ITA_fincantieri_naval_manufacturer2
+							add_idea = ITA_fincantieri_naval_manufacturer_unfocused2
 						}
 					}
 				}
@@ -15198,7 +15509,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 			if = {
 				limit = { has_dlc = "Arms Against Tyranny" }
-				mio:ITA_fincantieri = { add_mio_funds = 10000 }
+				mio:ITA_fincantieri = { add_mio_funds = 2000 }
 			}
 			else = {
 				custom_effect_tooltip = ITA_focus_fincantieri_submarines_TT
@@ -15211,10 +15522,10 @@ focus_tree = {
 						}
 					}
 					if = {
-						limit = { has_idea = ITA_fincantieri_naval_manufacturer }
+						limit = { has_idea = ITA_fincantieri_naval_manufacturer2 }
 						swap_ideas = {
-							remove_idea = ITA_fincantieri_naval_manufacturer
-							add_idea = ITA_fincantieri_naval_manufacturer_improved
+							remove_idea = ITA_fincantieri_naval_manufacturer2
+							add_idea = ITA_fincantieri_naval_manufacturer_improved2
 						}
 					}
 				}
@@ -19798,7 +20109,10 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_RESEARCH }
 
-		available = { NOT = { has_idea = ITA_nuclear_power_banned } }
+		available = {
+			NOT = { has_idea = ITA_nuclear_power_banned }
+			has_tech = reactor_01
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_nuclear_energy_buildup"
@@ -19858,6 +20172,13 @@ focus_tree = {
 				}
 				add_to_temp_variable = { change_resource = 500 }
 			}
+			if = {
+				limit = { has_idea = non_nuclear_power }
+				swap_ideas = {
+					remove_idea = non_nuclear_power
+					add_idea = nuclear_energy
+				}
+			}
 			change_reactor_grade_material_effect = yes
 		}
 
@@ -19871,6 +20192,128 @@ focus_tree = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
+		}
+	}
+
+	focus = {
+		id = ITA_dtt_frascati
+		icon = fusion_science
+
+		x = 0
+		y = 1
+		relative_position_id = ITA_nuclear_energy_buildup
+
+		cost = 7
+
+		#fusion research went ahead under the fission ban, so the AI strategy also opens it
+		prerequisite = { focus = ITA_nuclear_energy_buildup focus = ITA_national_ai_strategy }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+		available = { has_tech = reactor_03 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_dtt_frascati"
+			if = {
+				limit = { NOT = { is_special_project_completed = sp:sp_fusion_reactors } }
+				sp:sp_fusion_reactors = { add_project_progress_ratio = 0.2 }
+			}
+			else = {
+				add_breakthrough_points = {
+					specialization = specialization_nuclear
+					value = 1
+				}
+			}
+			add_tech_bonus = {
+				name = ITA_dtt_frascati
+				bonus = 0.5
+				uses = 1
+				category = CAT_nuclear_reactors
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2022.1.1 }
+		}
+	}
+
+	focus = {
+		id = ITA_ultrabroadband_plan
+		icon = national_internet
+
+		x = 2
+		y = 1
+		relative_position_id = ITA_great_projects
+
+		cost = 5
+
+		prerequisite = { focus = ITA_great_projects }
+
+		search_filters = { FOCUS_FILTER_ADD_BUILDING FOCUS_FILTER_EXPENDITURE }
+
+		available = { has_tech = internet_1 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_ultrabroadband_plan"
+			two_random_network_infrastructure = yes
+			add_tech_bonus = {
+				name = ITA_ultrabroadband_plan
+				bonus = 0.5
+				uses = 1
+				category = CAT_internet
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2016.1.1 }
+		}
+	}
+
+	focus = {
+		id = ITA_national_ai_strategy
+		icon = computer
+
+		x = 1
+		y = 1
+		relative_position_id = ITA_ultrabroadband_plan
+
+		cost = 6
+
+		prerequisite = { focus = ITA_ultrabroadband_plan }
+
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_EXPENDITURE }
+
+		available = { has_tech = artificial_intelligence_5 }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus ITA_national_ai_strategy"
+			generic_research_buff = yes
+			add_tech_bonus = {
+				name = ITA_national_ai_strategy
+				bonus = 0.5
+				uses = 1
+				category = CAT_artificial_intelligence
+			}
+			one_random_network_infrastructure = yes
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 3
+				ai_race_enabled = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = { factor = 0 ITA_ai_historical_path = yes date < 2022.1.1 }
 		}
 	}
 
