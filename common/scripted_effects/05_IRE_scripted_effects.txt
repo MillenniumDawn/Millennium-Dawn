@@ -1,0 +1,96 @@
+IRE_setup_dublin_transport = {
+	set_variable = { IRE_metrolink_stage = 0 }
+	set_variable = { IRE_gridlock_offices_productivity = -0.02 }
+	set_variable = { IRE_gridlock_pop_energy_use = 0.01 }
+	set_variable = { IRE_gridlock_investment_cost = 0.025 }
+	add_dynamic_modifier = { modifier = IRE_dublin_gridlock }
+	27 = {
+		set_variable = { IRE_dublin_transport_productivity_growth = -0.015 }
+		add_dynamic_modifier = { modifier = IRE_dublin_transport }
+	}
+}
+
+IRE_gridlock_worsen = {
+	custom_effect_tooltip = {
+		localization_key = modifies_dynamic_modifier_tt
+		MODIFIER = IRE_dublin_gridlock
+	}
+	add_to_variable = { IRE_gridlock_offices_productivity = -0.02 tooltip = offices_productivity_tt }
+	add_to_variable = { IRE_gridlock_pop_energy_use = 0.01 tooltip = pop_energy_use_multiplier_tt }
+	add_to_variable = { IRE_gridlock_investment_cost = 0.025 tooltip = receiving_investment_cost_modifier_tt }
+	27 = {
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IRE_dublin_transport
+		}
+		add_to_variable = { IRE_dublin_transport_productivity_growth = -0.015 tooltip = state_productivity_growth_modifier_tt }
+	}
+}
+
+IRE_gridlock_ease = {
+	if = {
+		limit = { check_variable = { IRE_gridlock_offices_productivity < -0.02 } }
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IRE_dublin_gridlock
+		}
+		add_to_variable = { IRE_gridlock_offices_productivity = 0.02 tooltip = offices_productivity_tt }
+		add_to_variable = { IRE_gridlock_pop_energy_use = -0.01 tooltip = pop_energy_use_multiplier_tt }
+		add_to_variable = { IRE_gridlock_investment_cost = -0.025 tooltip = receiving_investment_cost_modifier_tt }
+		27 = {
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = IRE_dublin_transport
+			}
+			add_to_variable = { IRE_dublin_transport_productivity_growth = 0.015 tooltip = state_productivity_growth_modifier_tt }
+		}
+	}
+}
+
+IRE_metrolink_opening_effect = {
+	27 = {
+		if = {
+			limit = { is_owned_and_controlled_by = ROOT }
+			ROOT = {
+				set_variable = { IRE_metrolink_stage = 6 }
+				if = {
+					limit = { has_dynamic_modifier = { modifier = IRE_dublin_gridlock } }
+					remove_dynamic_modifier = { modifier = IRE_dublin_gridlock }
+				}
+				clear_variable = IRE_gridlock_offices_productivity
+				clear_variable = IRE_gridlock_pop_energy_use
+				clear_variable = IRE_gridlock_investment_cost
+			}
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_cut_scope } }
+				set_temp_variable = { temp_growth_change = 0.02 }
+			}
+			else_if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_sandyford } }
+				set_temp_variable = { temp_growth_change = 0.06 }
+			}
+			else = {
+				set_temp_variable = { temp_growth_change = 0.04 }
+			}
+			subtract_from_temp_variable = { temp_growth_change = IRE_dublin_transport_productivity_growth }
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = IRE_dublin_transport
+			}
+			add_to_variable = { var = IRE_dublin_transport_productivity_growth value = temp_growth_change tooltip = state_productivity_growth_modifier_tt }
+			set_temp_variable = { temp_productivity_change = 50 }
+			state_flat_productivity_change_effect = yes
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_airport_integrated } }
+				add_building_construction = { type = air_base level = 1 instant_build = yes }
+				add_building_construction = { type = rail_terminal level = 1 instant_build = yes }
+			}
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_interchange } }
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+				add_building_construction = { type = rail_terminal level = 1 instant_build = yes }
+			}
+		}
+	}
+}
