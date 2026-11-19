@@ -12,6 +12,7 @@ import validator_common
 from shared.suite import checks_called_by_run, variable_scan
 from shared.suite import issue_rows as _issue_rows
 from shared.suite import write_under as _write
+from validate_dynamic_tokens import scan_dynamic_tokens_text
 
 _SHARED_CHECKS = (
     "validate_clamp_range_conflicts",
@@ -847,7 +848,7 @@ _REGISTRY = "common/synchronized_dynamic_tokens/MD_tokens.txt"
 def _tokens(text, registered=()):
     return [
         (message.split(" ", 1)[0], line)
-        for message, _rel, line in V._scan_dynamic_tokens_text(
+        for message, _rel, line in scan_dynamic_tokens_text(
             text, "common/scripted_effects/x.txt", frozenset(registered)
         )
     ]
@@ -1650,7 +1651,7 @@ def _unreadable(tmp_path, name="src.txt"):
     return path
 
 
-_SHARED_SECTION_EMPTY = {
+_SHARED_SECTION_EMPTY: dict[str, list[object] | tuple[list[object], list[object]]] = {
     "math": [],
     "treasury": [],
     "clamp_checks": [],

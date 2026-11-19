@@ -1079,16 +1079,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clears it. The scan strips comments, so comment-only lines are not checked. Four
   leading spaces stay the `indent-brackets` ERROR.
 
+## validate_dynamic_tokens.py
+
+- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
+  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
+  the engine logs an OOS warning per use. `@` after any other name is a scope.
+  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
+  `_ENGINE_KNOWN_TOKENS`. This validator checks staged references at commit time;
+  `validate_variables.py` shares its scanner in CI.
+
 ## validate_variables.py
 
 - `clamp-range-conflict` (WARNING): a `check_variable` against a value outside a literal
   `clamp_variable` range, or a sub-1 value against a variable clamped to a wide integer
   range. Variables written only by `set_temp_variable` are excluded.
-- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
-  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
-  the engine logs an OOS warning per use. `@` after any other name is a scope.
-  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
-  `_ENGINE_KNOWN_TOKENS`.
 - `redundant-focus-flag` (WARNING): a country flag set once, unconditionally, in a focus
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
