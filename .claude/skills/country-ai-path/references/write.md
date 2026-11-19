@@ -306,13 +306,15 @@ Needed when the chosen path's party cannot reach power on its own. Category in
 
 ```
 DEN_ai_path_category = {
-	allowed = { original_tag = DEN }
+	allowed = {
+		is_ai = yes
+		original_tag = DEN
+	}
 
 	icon = GFX_decisions_category_political
 	priority = 100
 
 	visible = {
-		is_ai = yes
 		OR = {
 			has_global_flag = DEN_MONARCHIST_FOCUS_PATH
 			has_global_flag = DEN_NATIONALIST_FOCUS_PATH
@@ -323,8 +325,8 @@ DEN_ai_path_category = {
 ```
 
 The icon must be a **category** sprite (52x40, `GFX_decisions_category_*`), not a decision one.
-`is_ai = yes` goes in `visible`; in the category `allowed` it errors. Checks every ramp shares, such
-as `has_civil_war = no`, go in the category `visible` once, not in each decision.
+Checks every ramp shares, such as `has_civil_war = no`, go in the category `visible` once, not in
+each decision.
 
 Raw flags are right only while every path in the `visible` is an **alt** path, as above. A ramp that
 also has to run for the **historical** party gates on the alt-guarded `DEN_ai_historical_path` (§4)
