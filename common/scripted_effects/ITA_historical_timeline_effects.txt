@@ -1,0 +1,53 @@
+# Effect: ITA_shift_party_popularity
+# Purpose: Moves a share of one party slot's popularity to another slot, inside one outlook or across outlooks
+# Parameters:
+# - shift_from_index: party slot 0-23 that loses popularity
+# - shift_to_index: party slot 0-23 that gains popularity
+# - shift_fraction: share of the source slot's popularity that moves, 0.5 moves half
+ITA_shift_party_popularity = {
+	hidden_effect = {
+		set_temp_variable = { shift_amount = party_pop_array^shift_from_index }
+		multiply_temp_variable = { shift_amount = shift_fraction }
+		set_temp_variable = { outlook_party_index = shift_from_index }
+		set_outlook_from_party_index = yes
+		set_temp_variable = { shift_from_outlook = outlook_id }
+		set_temp_variable = { outlook_party_index = shift_to_index }
+		set_outlook_from_party_index = yes
+		set_temp_variable = { shift_to_outlook = outlook_id }
+		#add_popularity rescales every other outlook, so two plain legs overshoot. The first leg is sized so the second one lands both outlooks on the target and leaves the rest where they were.
+		if = {
+			limit = { NOT = { check_variable = { shift_from_outlook = shift_to_outlook } } }
+			set_temp_variable = { outlook_id = shift_from_outlook }
+			set_outlook_popularity_from_id = yes
+			set_temp_variable = { shift_from_popularity = outlook_popularity }
+			set_temp_variable = { outlook_id = shift_to_outlook }
+			set_outlook_popularity_from_id = yes
+			set_temp_variable = { shift_to_popularity = outlook_popularity }
+			set_temp_variable = { shift_scale = { value = 1 add = shift_amount } }
+			set_temp_variable = { shift_to_change = { value = 1 subtract = shift_to_popularity multiply = shift_amount divide = shift_scale } }
+			set_temp_variable = { shift_from_change = { value = shift_scale subtract = shift_from_popularity multiply = shift_amount divide = shift_scale multiply = -1 } }
+			set_temp_variable = { outlook_id = shift_to_outlook }
+			set_temp_variable = { outlook_popularity_change = shift_to_change }
+			change_outlook_popularity = yes
+			set_temp_variable = { outlook_id = shift_from_outlook }
+			set_temp_variable = { outlook_popularity_change = shift_from_change }
+			change_outlook_popularity = yes
+		}
+		add_to_variable = { party_pop_array^shift_to_index = shift_amount }
+		multiply_temp_variable = { shift_amount = -1 }
+		add_to_variable = { party_pop_array^shift_from_index = shift_amount }
+		recalculate_party = yes
+	}
+}
+
+#the monthly crisis check reads the coalition thresholds and the coalition_forming flag, so a forced government has to refresh them
+ITA_settle_forced_government = {
+	reforme_expectance_government_change_update = yes
+	calculate_abandon_coalition_threshold = yes
+	remove_gov_crisis_ai_flags = yes
+	clr_country_flag = coalition_forming
+	if = {
+		limit = { has_active_mission = coalition_countdown }
+		remove_mission = coalition_countdown
+	}
+}
