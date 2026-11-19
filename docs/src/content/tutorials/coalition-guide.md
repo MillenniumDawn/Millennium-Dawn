@@ -37,6 +37,10 @@ The game tracks **Government Coalition Strength**: the total share held by your 
 
 This matters most when public opinion shifts mid-term. If partners lose popularity, your governing position weakens even if no seats have changed.
 
+The ruling party and its coalition partners split government ideology drift, capped at +0.10 in total. Bigger parties get more drift based on current public support, not on seats won at the election. Parties in the same World Outlook contribute to the same drift.
+
+A World Outlook with more than 65% public support grants +30 diplomatic acceptance. Otherwise, elected seats held by coalition partners outside the ruling World Outlook can grant up to +30. Hover over Government Popularity to see both bonuses.
+
 ## The Ruling Party Can Change
 
 After each full election term, the system checks whether any coalition partner now holds more electoral share than the current ruling party. If so, that partner becomes the new ruling party and your former ruling party slides into the coalition instead. You keep the government but lose the top seat. Watch for growing partners if you want to stay in charge.
