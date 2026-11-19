@@ -4578,6 +4578,12 @@ country_event = {
 			set_temp_variable = { shift_to_index = 1 }
 			set_temp_variable = { shift_fraction = 0.9 }
 			ITA_shift_party_popularity = yes
+			#AN merged into the PdL, so it does not walk out of a coalition it no longer has the votes for
+			if = {
+				limit = { is_in_array = { gov_coalition_array = 20 } }
+				set_temp_variable = { remove_col_one = 20 }
+				remove_coalition_members_effect = yes
+			}
 		}
 		ai_chance = {
 			base = 10
@@ -5645,7 +5651,10 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
-		check_variable = { ruling_party = 1 }
+		OR = {
+			check_variable = { ruling_party = 1 }
+			AND = { is_ai = yes ITA_ai_historical_path = yes }
+		}
 		has_elections = yes
 		NOT = { has_country_flag = elections_in_progress }
 	}
@@ -5692,6 +5701,7 @@ country_event = {
 		OR = {
 			check_variable = { ruling_party = 2 }
 			check_variable = { ruling_party = 3 }
+			AND = { is_ai = yes ITA_ai_historical_path = yes }
 		}
 		has_elections = yes
 		NOT = { has_country_flag = elections_in_progress }
@@ -5722,6 +5732,53 @@ country_event = {
 
 	option = {
 		name = italy_md.97.o2
+		ai_chance = {
+			base = 10
+			modifier = { factor = 0 ITA_ai_historical_path = yes }
+		}
+	}
+}
+
+#Berlusconi IV government
+country_event = {
+	id = italy_md.98
+	title = italy_md.98.t
+	desc = italy_md.98.d
+	picture = GFX_report_event_tavolo_trattative_2
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			check_variable = { ruling_party = 1 }
+			AND = { is_ai = yes ITA_ai_historical_path = yes }
+		}
+		has_elections = yes
+		NOT = { has_country_flag = elections_in_progress }
+	}
+
+	option = {
+		name = italy_md.98.o1
+		log = "[GetDateText]: [This.GetName]: italy_md.98.o1 executed"
+		set_temp_variable = { rul_party_temp = 1 }
+		set_temp_variable = { disable_elections = 0 }
+		set_temp_variable = { col_one = 20 }
+		set_temp_variable = { col_two = 14 }
+		change_ruling_party_effect = yes
+		hidden_effect = {
+			set_temp_variable = { election_year_param = 2008 }
+			set_temp_variable = { election_month_param = 2 }
+			set_temp_variable = { election_freq = 60 }
+			set_elections_with_frequency = yes
+			ITA_settle_forced_government = yes
+		}
+		ai_chance = {
+			base = 10
+			modifier = { add = 190 ITA_ai_historical_path = yes }
+		}
+	}
+
+	option = {
+		name = italy_md.98.o2
 		ai_chance = {
 			base = 10
 			modifier = { factor = 0 ITA_ai_historical_path = yes }
