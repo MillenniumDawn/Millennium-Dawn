@@ -436,9 +436,6 @@ _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 # Trigger blocks the engine renders as requirement lines: `available`, a
 # decision's or mission's `cancel_trigger`, and a focus's `bypass`.
 _PLAYER_FACING_BLOCKS = frozenset({"available", "cancel_trigger", "bypass"})
-# The gating check_variable scan stays on `available`: widening it adds a
-# pre-existing ERROR backlog in `cancel_trigger` / `bypass`.
-_CHECK_VARIABLE_BLOCK = "available"
 # Column-0 blocks in a decisions file are the decision categories.
 # All player-facing trigger scans cover the same object types.
 _PLAYER_FACING_GLOBS = [
@@ -936,11 +933,11 @@ def _scan_available_text(
             for token in stack:
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
-                if token == _CHECK_VARIABLE_BLOCK:
+                if token in _PLAYER_FACING_BLOCKS:
                     line = src.line(pos)
                     untooltipped.append(
                         (
-                            "check_variable in `available` renders no tooltip line"
+                            f"check_variable in `{token}` renders no tooltip line"
                             " - the player sees a blank requirement; wrap it in"
                             " custom_trigger_tooltip = { tooltip = KEY ... }",
                             rel,
@@ -978,8 +975,9 @@ def _scan_available_text(
 # in `available` with no wrapper shows the player nothing at all where a
 # requirement line belongs. Wrappers inside the definition already supply that
 # line, so those triggers stay out of the index.
-# Global-flag bodies only: a repo-wide measurement including has_country_flag
-# produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
+# A bare check_variable in the body renders nothing either.
+# Of the flag checks, only has_global_flag counts: a repo-wide measurement
+# including has_country_flag produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
 # stable name that already reads as a requirement), against ~2 for the
 # unlocalised-flag sibling check. Narrowed here per the border-war plan
 # rather than shipping with `--strict` gating a backlog this size.
@@ -987,19 +985,27 @@ _HAS_FLAG_BODY_RE = re.compile(r"\bhas_global_flag\b")
 _BARE_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*+)\s*+=\s*+yes\b")
 
 
-def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
-    """True when a has_global_flag sits outside every tooltip wrapper.
+def _scripted_trigger_body_has_untooltipped_check(body: str) -> bool:
+    """True when a has_global_flag, or a check_variable with no inline
+    `tooltip`, sits outside every tooltip wrapper.
 
     A wrapper around the check inside the definition already supplies the
     requirement line (custom_trigger_tooltip / custom_override_tooltip) or
     hides it (hidden_trigger), so the call site does not need another one.
     """
-    if not _HAS_FLAG_BODY_RE.search(body):
+    checks = [m.start() for m in _HAS_FLAG_BODY_RE.finditer(body)]
+    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(body):
+        open_idx = m.end() - 1
+        if not _INLINE_TOOLTIP_RE.search(
+            body[open_idx : _matching_brace(body, open_idx)]
+        ):
+            checks.append(m.start())
+    if not checks:
         return False
     scopes = _ScopeIndex(body)
     return any(
-        not any(t in _TOOLTIP_WRAPPER_TOKENS for t in scopes.stack_at(m.start()))
-        for m in _HAS_FLAG_BODY_RE.finditer(body)
+        not any(t in _TOOLTIP_WRAPPER_TOKENS for t in scopes.stack_at(pos))
+        for pos in checks
     )
 
 
@@ -1018,7 +1024,7 @@ def _scan_scripted_trigger_text(
                 issues.append(
                     (
                         f"{name} = yes in `{token}` resolves to a scripted"
-                        " trigger that checks a flag directly - the player"
+                        " trigger that checks a flag or variable directly - the player"
                         " sees no requirement line at all; wrap it in"
                         " custom_trigger_tooltip = { tooltip = KEY ... }",
                         src.rel,
@@ -2000,7 +2006,8 @@ class Validator(BaseValidator):
         return empty
 
     def validate_untooltipped_available_checks(self):
-        """Flag bare check_variable inside `available` blocks (ERROR).
+        """Flag bare check_variable inside `available`, `cancel_trigger` and
+        `bypass` blocks (ERROR).
 
         `visible` is excluded: a failing visible hides the object outright, so
         there is no tooltip surface for the check to render into.
@@ -2010,13 +2017,13 @@ class Validator(BaseValidator):
         exempt, so a hit here is always a requirement a human player would read.
         """
         self._log_section(
-            "Checking for untooltipped check_variable in available blocks..."
+            "Checking for untooltipped check_variable in requirement blocks..."
         )
         issues = self._get_shared_scan()["avail_unt"]
         self._report(
             issues,
-            "✓ No untooltipped check_variable in available blocks",
-            "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
+            "✓ No untooltipped check_variable in requirement blocks",
+            "check_variable in `available`/`cancel_trigger`/`bypass` with no tooltip wrapper (the player sees a blank requirement line):",
             severity=Severity.ERROR,
             category="untooltipped-available-check",
         )
@@ -2126,8 +2133,9 @@ class Validator(BaseValidator):
         return bodies
 
     def _collect_scripted_trigger_flag_names(self) -> frozenset:
-        """Names of scripted triggers whose body checks a global flag that is
-        not already under a tooltip wrapper.
+        """Names of scripted triggers whose body checks a global flag, or a
+        variable with no inline tooltip, that is not already under a tooltip
+        wrapper.
 
         A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
         around the flag inside the definition already renders or hides the
@@ -2144,7 +2152,7 @@ class Validator(BaseValidator):
         self._scripted_trigger_flag_names_memo = frozenset(
             name
             for name, body in self._scripted_trigger_bodies().items()
-            if _scripted_trigger_body_has_unwrapped_global_flag(body)
+            if _scripted_trigger_body_has_untooltipped_check(body)
         )
         return self._scripted_trigger_flag_names_memo
 
@@ -2183,7 +2191,7 @@ class Validator(BaseValidator):
         self._report(
             issues,
             "✓ No untooltipped scripted-trigger calls in requirement blocks",
-            "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
+            "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag or variable directly, with no tooltip wrapper (the player sees no requirement line at all):",
             severity=Severity.ERROR,
             category="untooltipped-available-scripted-trigger",
         )
