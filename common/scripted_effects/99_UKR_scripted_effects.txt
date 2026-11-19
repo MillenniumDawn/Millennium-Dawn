@@ -5722,6 +5722,89 @@ UKR_count_sov_modernization = {
 	hidden_effect = { add_to_variable = { UKR_sov_modernization_count = 1 } }
 }
 
+UKR_mrap_tender_prepare_terms = {
+	if = {
+		limit = { UKR_mrap_tender_has_tech = yes }
+		set_variable = { UKR_mrap_tender_standard_price = 0.3 }
+		set_variable = { UKR_mrap_tender_standard_days = 90 }
+	}
+	else = {
+		set_variable = { UKR_mrap_tender_standard_price = 0.4 }
+		set_variable = { UKR_mrap_tender_standard_days = 150 }
+	}
+
+	set_variable = { UKR_mrap_tender_kraz_price = UKR_mrap_tender_standard_price }
+	set_variable = { UKR_mrap_tender_kraz_days = UKR_mrap_tender_standard_days }
+
+	if = {
+		limit = { has_country_flag = UKR_emergency_mrap_order_placed_flag }
+		multiply_variable = { UKR_mrap_tender_standard_price = 0.9 }
+		set_variable = {
+			UKR_mrap_tender_standard_days = { value = UKR_mrap_tender_standard_days multiply = 0.085 round = yes multiply = 10 }
+		}
+
+		if = {
+			limit = { has_country_flag = UKR_emergency_mrap_kraz_order_flag }
+			multiply_variable = { UKR_mrap_tender_kraz_price = 0.85 }
+			set_variable = {
+				UKR_mrap_tender_kraz_days = { value = UKR_mrap_tender_kraz_days multiply = 0.08 round = yes multiply = 10 }
+			}
+		}
+		else = {
+			set_variable = { UKR_mrap_tender_kraz_price = UKR_mrap_tender_standard_price }
+			set_variable = { UKR_mrap_tender_kraz_days = UKR_mrap_tender_standard_days }
+		}
+	}
+}
+
+UKR_mrap_tender_clear_terms = {
+	clear_variable = UKR_mrap_tender_standard_price
+	clear_variable = UKR_mrap_tender_standard_days
+	clear_variable = UKR_mrap_tender_kraz_price
+	clear_variable = UKR_mrap_tender_kraz_days
+}
+
+# UKR_mrap_tender_sign_contract
+# Purpose: Pays for the selected offer and schedules delivery.
+# Parameters:
+# - UKR_mrap_tender_order_price: price in billions
+# - UKR_mrap_tender_order_days: whole days from signing to delivery
+UKR_mrap_tender_sign_contract = {
+	custom_effect_tooltip = UKR_mrap_tender_order_tt
+
+	hidden_effect = {
+		set_temp_variable = { treasury_change = UKR_mrap_tender_order_price }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+
+		if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 70 } }
+			country_event = { id = ukraine_mrap_tender.7 days = 70 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 80 } }
+			country_event = { id = ukraine_mrap_tender.7 days = 80 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 90 } }
+			country_event = { id = ukraine_mrap_tender.7 days = 90 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 120 } }
+			country_event = { id = ukraine_mrap_tender.7 days = 120 }
+		}
+		else_if = {
+			limit = { check_variable = { UKR_mrap_tender_order_days = 130 } }
+			country_event = { id = ukraine_mrap_tender.7 days = 130 }
+		}
+		else = {
+			country_event = { id = ukraine_mrap_tender.7 days = 150 }
+		}
+
+		UKR_mrap_tender_clear_terms = yes
+	}
+}
+
 # Called by every new Ukrainian equipment design decision; counts toward UKR_parliament_vote_bonus_military_up
 UKR_count_domestic_development = {
 	custom_effect_tooltip = UKR_count_domestic_development_tt
