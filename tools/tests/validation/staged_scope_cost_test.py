@@ -8,12 +8,13 @@ file, line and message.
 
 import os
 
+import precommit_validate as dispatcher
 import pytest
 import validate_events as E
 import validate_scripted_localisation as SL
 import validate_variables as V
+from shared.suite import initialize_git_repository, run_git, write_under
 from shared.suite import issue_rows as _rows
-from shared.suite import write_under
 
 
 def _staged(validator, *paths):
@@ -183,6 +184,62 @@ def test_unrelated_staged_file_reads_no_loc_for_the_getter_check(tmp_path, monke
     validator.run_validations()
 
     assert _rows(validator) == []
+
+
+@pytest.mark.parametrize(
+    ("path", "content", "registration", "exit_code"),
+    [
+        pytest.param(
+            "common/scripted_effects/tokens.txt",
+            "TST_effect = {\n\tset_temp_variable = { x = modifier@TST_factor }\n}\n",
+            "TST_other\n",
+            1,
+            id="unregistered modifier blocks commit",
+        ),
+        pytest.param(
+            "common/scripted_effects/tokens.txt",
+            "TST_effect = {\n\tset_temp_variable = { x = modifier@TST_factor }\n}\n",
+            "TST_factor\n",
+            0,
+            id="unstaged registration allows commit",
+        ),
+        pytest.param(
+            "interface/tokens.gui",
+            'guiTypes = {\n\ttext = "[?modifier@TST_factor]"\n}\n',
+            "TST_other\n",
+            1,
+            id="gui-only commit reaches token check",
+        ),
+    ],
+)
+def test_commit_dispatcher_checks_staged_token_references(
+    tmp_path, monkeypatch, capsys, path, content, registration, exit_code
+):
+    registry = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+    write_under(tmp_path, registry, registration)
+    unstaged = "events/untouched.txt"
+    write_under(tmp_path, unstaged, "set_variable = { x = modifier@TST_untouched }\n")
+    initialize_git_repository(tmp_path, registry, unstaged)
+    staged = write_under(tmp_path, path, content)
+    run_git(tmp_path, "add", path)
+    monkeypatch.delenv("MD_SKIP_VALIDATE", raising=False)
+    monkeypatch.setattr(
+        dispatcher,
+        "_REGISTRY",
+        [s for s in dispatcher._REGISTRY if s.script == "validate_dynamic_tokens"],
+    )
+    monkeypatch.setattr(
+        "sys.argv", ["precommit_validate.py", "--path", str(tmp_path), str(staged)]
+    )
+
+    assert dispatcher.main() == exit_code
+    output = capsys.readouterr().out
+    if exit_code:
+        assert f"{path}:2" in output
+        assert "unregistered-dynamic-token  (1 error)" in output
+        assert "modifier@TST_factor" in output
+    else:
+        assert "[ok  ] validate_dynamic_tokens" in output
 
 
 # --- variables -------------------------------------------------------------

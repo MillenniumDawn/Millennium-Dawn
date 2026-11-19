@@ -33,19 +33,19 @@ from shared_utils import (
     validation_config,
     word_start_re,
 )
+from validate_dynamic_tokens import CATEGORY as DYNAMIC_TOKEN_CATEGORY
+from validate_dynamic_tokens import registered_dynamic_tokens, scan_dynamic_tokens_text
 
 # Focus block/reward walking is owned by the focus-tree validator — reuse it
 # rather than growing a second focus parser here.
 from validate_focus_tree import _iter_focus_blocks_with_id, _iter_reward_blocks
 from validator_common import (
-    DYNAMIC_TOKEN_FILE,
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     FileOpener,
     Severity,
     drop_partial_matches,
     find_line_number,
-    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -393,148 +393,6 @@ def _scan_math_precision_text(cleaned: str, rel: str) -> List[str]:
                 f"{rel}:{line} - math expression literal with >5 decimal places"
                 f" (engine truncates silently): {m.group(0).strip()}"
             )
-    return issues
-
-
-# A token the engine has not been told about logs "Token X is a dynamic token,
-# this can cause OOS" at load, once per use. Script, localisation and GUI text
-# name tokens two ways: a `token:X` literal, and the `@X` target of the game
-# variables below (the ones resources/documentation/dynamic_variables_documentation.md
-# gives a token target).
-_TOKEN_TARGET_GAME_VARS = (
-    "avg_units_acclimation",
-    "building_level",
-    "damaged_building_level",
-    "days_decision_timeout",
-    "days_mission_timeout",
-    "faction_resource_extracted",
-    "global_resource_extracted",
-    "leader_modifier",
-    "modifier",
-    "non_damaged_building_level",
-    "num_armies_with_type",
-    "num_battalions_with_type",
-    "num_deployed_planes_with_type",
-    "num_equipment",
-    "num_equipment_in_armies",
-    "num_equipment_in_armies_k",
-    "num_ships_with_type",
-    "num_target_equipment",
-    "num_target_equipment_in_armies",
-    "num_target_equipment_in_armies_k",
-    "num_units_defensive_combats_on",
-    "num_units_offensive_combats_against",
-    "num_units_on_climate",
-    "num_units_with_type",
-    "party_popularity",
-    "party_popularity_100",
-    "resource",
-    "resource_consumed",
-    "resource_exported",
-    "resource_imported",
-    "resource_produced",
-    "sum_unit_terrain_modifier",
-    "unit_modifier",
-)
-_TOKEN_REF_RE = re.compile(
-    r"\b(?:token:|(?:"
-    + "|".join(_TOKEN_TARGET_GAME_VARS)
-    + r")@)([A-Za-z0-9_]+(?:[.\-][A-Za-z0-9_]+)*)"
-)
-
-# Vanilla names the engine already knows, so they log nothing unregistered. This
-# is the set in use and absent from MD_tokens.txt when the check landed. A new
-# token belongs in MD_tokens.txt, not here.
-_ENGINE_KNOWN_TOKENS = frozenset(
-    {
-        # buildings
-        "air_base",
-        "arms_factory",
-        "dockyard",
-        "fuel_silo",
-        "industrial_complex",
-        "infrastructure",
-        "naval_base",
-        "nuclear_reactor",
-        "rail_way",
-        "rocket_site",
-        "supply_node",
-        "synthetic_refinery",
-        # modifiers
-        "agency_upgrade_time",
-        "commando_trait_chance_factor",
-        "conscription_factor",
-        "consumer_goods_expected_value",
-        "consumer_goods_factor",
-        "industrial_capacity_dockyard",
-        "industrial_capacity_factory",
-        "local_resources_factor",
-        "min_export",
-        "political_power_factor",
-        "political_power_gain",
-        "production_speed_buildings_factor",
-        "research_speed_factor",
-        "stability_factor",
-        "stability_weekly",
-        "war_support_factor",
-        # equipment and ship types
-        "artillery_equipment",
-        "capital",
-        "carrier",
-        "convoy",
-        "heavy_tank_chassis",
-        "medium_plane_airframe",
-        "medium_tank_chassis",
-        "small_plane_airframe",
-        "small_plane_cas_airframe",
-        "small_plane_naval_bomber_airframe",
-        "support_ship",
-        # ideologies
-        "communism",
-        "democratic",
-        "fascism",
-        "neutrality",
-        "ruling_party",
-        # terrain and climate
-        "cold_climate",
-        "fort",
-        # resources
-        "aluminium",
-        "chromium",
-        "oil",
-        "rubber",
-        "steel",
-        "tungsten",
-    }
-)
-
-
-def _scan_dynamic_tokens_text(
-    cleaned: str, rel: str, registered: AbstractSet[str]
-) -> List[Tuple[str, str, int]]:
-    issues: List[Tuple[str, str, int]] = []
-    if "token:" not in cleaned and "@" not in cleaned:
-        return issues
-    seen: Set[str] = set()
-    for m in _TOKEN_REF_RE.finditer(cleaned):
-        token = m.group(1)
-        # `token:prefix_[SCOPE]`, `token:prefix_$PARAM$` and
-        # `party_popularity@var:x` name no literal token.
-        if cleaned.startswith(("[", "$", ":"), m.end()):
-            continue
-        if token in registered or token in _ENGINE_KNOWN_TOKENS or token in seen:
-            continue
-        seen.add(token)
-        line = cleaned[: m.start()].count("\n") + 1
-        issues.append(
-            (
-                f"{m.group(0)} uses a token that is not registered in"
-                f" {DYNAMIC_TOKEN_FILE} (the engine logs a dynamic-token OOS"
-                " warning at load)",
-                rel,
-                line,
-            )
-        )
     return issues
 
 
@@ -1601,7 +1459,7 @@ def _scan_shared_file(args) -> Tuple:
 
     if mask & _F_TOKEN:
         # Unblanked: localisation, GUI text and log strings name tokens in quotes.
-        token_issues = _scan_dynamic_tokens_text(stripped, rel, registered_tokens)
+        token_issues = scan_dynamic_tokens_text(stripped, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
     src = _Source(blanked, rel)
@@ -1917,7 +1775,7 @@ class Validator(BaseValidator):
             "✓ No unregistered dynamic tokens found",
             "tokens missing from the synchronized dynamic token list (error.log spam and OOS risk):",
             severity=Severity.ERROR,
-            category="unregistered-dynamic-token",
+            category=DYNAMIC_TOKEN_CATEGORY,
         )
 
     def validate_treasury_state_scope(self):
@@ -2043,9 +1901,7 @@ class Validator(BaseValidator):
             flagged_names = self._collect_scripted_trigger_flag_names()
             requirements = self._collect_scripted_trigger_requirements()
         backing = self._collect_dynamic_modifier_vars() if clamp_files else {}
-        registered_tokens: frozenset = frozenset()
-        if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
-            registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
+        registered_tokens = registered_dynamic_tokens(self.mod_path)
 
         repo_ranges: Dict[str, Tuple[float, float]] = {}
         repo_temp: Set[str] = set()
