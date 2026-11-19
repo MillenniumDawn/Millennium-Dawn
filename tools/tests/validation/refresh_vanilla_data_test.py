@@ -66,7 +66,7 @@ def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
 
     importlib.reload(rvd_mod)
     monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
-    for name in ("defines", "docs", "entities", "fonts", "gui", "paths", "sprites"):
+    for name in rvd_mod._TARGETS:
         monkeypatch.setitem(rvd_mod._TARGETS, name, lambda n=name: f"{n}: ok")
 
     import sys as _sys
@@ -76,7 +76,7 @@ def test_main_dispatches_each_target(monkeypatch, tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert rc == 0
-    for name in ("defines", "docs", "fonts", "gui", "paths", "sprites"):
+    for name in rvd_mod._TARGETS:
         assert f"{name}: ok" in captured.out
 
 
@@ -132,21 +132,18 @@ def test_main_returns_one_when_target_fails(monkeypatch, tmp_path, capsys):
 def test_refresh_defines_writes_manifest(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(
-        rvd_mod, "find_vanilla_defines", lambda: str(tmp_manifests / "defs.lua")
-    )
-    monkeypatch.setattr(
-        rvd_mod,
-        "parse_vanilla_defines",
-        lambda p: {"NGame": {"END_DATE"}, "NEconomy": {"GDP_DEFICIT_FACTOR"}},
-    )
+    gameplay = tmp_manifests / "00_defines.lua"
+    gameplay.write_bytes(b"NDefines = {\nNGame = {\n    END_DATE = 2000,\n},\n}\n")
+    graphics = tmp_manifests / "00_graphics.lua"
+    graphics.write_bytes(b"NDefines_Graphics = {\nNIcons = {\n    SIZE = 20,\n},\n}\n")
+    monkeypatch.setattr(rvd_mod, "find_vanilla_defines", lambda: str(gameplay))
 
     summary = rvd_mod._refresh_defines()
     assert summary.startswith("vanilla_defines.txt:")
 
     body = (tmp_manifests / "vanilla_defines.txt").read_text(encoding="utf-8")
-    assert "NEconomy.GDP_DEFICIT_FACTOR" in body
     assert "NGame.END_DATE" in body
+    assert "NDefines_Graphics.NIcons.SIZE" in body
 
 
 def test_refresh_defines_raises_when_missing(monkeypatch):
@@ -356,7 +353,73 @@ def test_targets_dict_has_expected_keys():
         "gui",
         "paths",
         "sprites",
+        "ui-paths",
     }
+
+
+_UI_GUI = (
+    "guiTypes = {\n"
+    "\tcontainerWindowType = {\n"
+    '\t\tbackground = { name = "plain_bg" }\n'
+    '\t\tname = "main_window"\n'
+    "\t\tcontainerWindowType = {\n"
+    '\t\t\tname = "plain_inner"\n'
+    '\t\t\ticonType = { name = "engine_child" }\n'
+    "\t\t}\n"
+    "\t}\n"
+    "\tcontainerWindowType = {\n"
+    '\t\tname = "plain_window"\n'
+    '\t\t# name = "engine_child_commented"\n'
+    "\t\tbuttonType = { name = engine_child }\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+def test_refresh_ui_paths_round_trips_through_the_validator(monkeypatch, tmp_manifests):
+    import validate_gfx_references as vg
+    import validation.refresh_vanilla_data as rvd_mod
+
+    install = tmp_manifests / "install"
+    files = {
+        "hoi4": b"\0GFX_engine\0main_window\0engine_child\0engine_child_commented\0",
+        "interface/a.gfx": b'spriteTypes = {\n\tspriteType = { name = "GFX_engine" }\n'
+        b'\tspriteType = { name = "GFX_art" }\n}\n',
+        "dlc/d1/interface/a.gfx": b'spriteTypes = {\n\tspriteType = { name = "GFX_dlc" }\n}\n',
+        "interface/sub/b.gui": _UI_GUI.encode(),
+        "interface/empty.gui": b'guiTypes = {\n\twindowType = { name = "x" }\n}\n',
+    }
+    for relative, body in files.items():
+        (install / relative).parent.mkdir(parents=True, exist_ok=True)
+        (install / relative).write_bytes(body)
+    paths = [str(install / relative) for relative in files]
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(install))
+    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: paths[1:3])
+    monkeypatch.setattr(rvd_mod, "_vanilla_gui_files", lambda: paths[3:])
+
+    assert rvd_mod._refresh_ui_paths() == "vanilla_ui_paths.txt: 2 entries"
+
+    monkeypatch.setattr(
+        vg, "_VANILLA_UI_PATHS_MANIFEST", str(tmp_manifests / "vanilla_ui_paths.txt")
+    )
+    assert vg._load_vanilla_ui_paths() == {
+        "interface/a.gfx": [["GFX_art"], ["GFX_dlc"], ["GFX_engine", "engine"]],
+        "interface/sub/b.gui": [
+            ["main_window"],
+            ["main_window", "engine_child"],
+            ["plain_window", "engine_child"],
+        ],
+    }
+
+
+def test_refresh_ui_paths_raises_without_a_game_binary(monkeypatch, tmp_path):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    monkeypatch.setattr(rvd_mod, "find_hoi4_install", lambda: str(tmp_path))
+    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: ["/x/a.gfx"])
+    monkeypatch.setattr(rvd_mod, "_vanilla_gui_files", lambda: ["/x/a.gui"])
+    with pytest.raises(rvd_mod.RefreshError, match="binary"):
+        rvd_mod._refresh_ui_paths()
 
 
 def test_refresh_entities_writes_lowercased_names(monkeypatch, tmp_manifests):

@@ -1046,7 +1046,6 @@
 	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 8 -- 5
 	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 10 -- 7
 	NDefines.NAI.AI_OBJECTIVE_DEFAULT_TARGET_RECALC_DAYS = 8 -- 5
-	NDefines.NFactions.AI_DAYS_TO_SELECT_GOAL = 21 -- 14
 
 	-- Raid Interface — throttle per-hour/per-frame raid target evaluation to cut map-icon refresh cost
 	NDefines.NRaids.MAX_STATE_TARGETS_TO_EVALUATE_PER_HOUR = 15 -- 50
@@ -1241,13 +1240,9 @@
 	NDefines.NDiplomacy.FACTION_POWER_AIR_WEIGHT = 0.04				-- 0.02
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_CAPITAL_SHIP_WEIGHT = 5	--The weight of the capital ships on the faction's power projection
 	NDefines.NDiplomacy.FACTION_POWER_NAVAL_WEIGHT = 0.25				--The weight of the naval equipment except capital ships on the faction's power projection
-	NDefines.NDiplomacy.FACTION_POWER_EFFECTS_WEIGHT = 1			--The weight of the faction's goal status on the faction's power projection
 
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.65 --how much the country's industry affects its influence
 	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 250			-- How much influence we are giving a faction member for being the leader, vanilla 200
-	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
-	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 2						-- Maximum number of medium term goals a faction can have at any one time
-	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 2						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
 	NDefines.NFactions.FACTION_DOCTRINE_SHARING_UNLOCK_COST = 1               -- Cost of unlocking doctrine sharing for one folder
 	NDefines.NFactions.DOCTRINE_SHARING_BASE_MASTERY_GAIN_MONTHLY = 10        -- When doctrine sharing is enabled, this is the base amount of mastery gained monthly

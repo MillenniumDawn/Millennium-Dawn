@@ -1,5 +1,168 @@
 ####Author: Angriest Bird
 ####Ukrainian Trigger Conditions
+UKR_verkhovna_show_budget_decisions = {
+	OR = {
+		is_ai = yes
+		NOT = { check_variable = { UKR_verkhovna_tab = 1 } }
+	}
+}
+
+UKR_verkhovna_show_foreign_finance_decisions = {
+	OR = {
+		is_ai = yes
+		check_variable = { UKR_verkhovna_tab = 1 }
+	}
+}
+
+UKR_verkhovna_spending_vote_active = {
+	OR = {
+		has_decision = UKR_increase_bureu
+		has_decision = UKR_decrease_bureu
+		has_decision = UKR_increase_military_spend
+		has_decision = UKR_decrease_military_spend
+		has_decision = UKR_increase_policing
+		has_decision = UKR_decrease_policing
+		has_decision = UKR_increase_education
+		has_decision = UKR_decrease_education
+		has_decision = UKR_increase_health
+		has_decision = UKR_decrease_health
+		has_decision = UKR_increase_pension
+		has_decision = UKR_decrease_pension
+	}
+}
+
+UKR_verkhovna_spending_vote_available = {
+	NOT = { has_political_power < 50 }
+	NOT = { has_country_flag = UKR_dissolved_verkhovna }
+	custom_trigger_tooltip = {
+		tooltip = UKR_presidential_decisions_only_one_is_available_TT
+		UKR_verkhovna_spending_vote_active = no
+	}
+}
+
+UKR_verkhovna_has_open_budget_debate = {
+	OR = {
+		has_country_flag = UKR_open_bureu_laws
+		has_country_flag = UKR_open_military_laws
+		has_country_flag = UKR_open_police_laws
+		has_country_flag = UKR_open_education_laws
+		has_country_flag = UKR_open_medical_laws
+		has_country_flag = UKR_open_pension_laws
+	}
+}
+
+UKR_verkhovna_can_change_rada_status = {
+	NOT = { has_political_power < 100 }
+}
+
+UKR_increase_bureu_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = bureau_05 }
+}
+
+UKR_decrease_bureu_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = bureau_01 }
+}
+
+UKR_increase_military_spend_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = defence_09 }
+}
+
+UKR_decrease_military_spend_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = defence_00 }
+}
+
+UKR_increase_policing_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = police_05 }
+}
+
+UKR_decrease_policing_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = police_01 }
+}
+
+UKR_increase_education_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = edu_05 }
+}
+
+UKR_decrease_education_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = edu_01 }
+}
+
+UKR_increase_health_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = health_06 }
+}
+
+UKR_decrease_health_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = health_01 }
+}
+
+UKR_increase_pension_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = social_06 }
+}
+
+UKR_decrease_pension_available = {
+	UKR_verkhovna_spending_vote_available = yes
+	NOT = { has_idea = social_01 }
+}
+
+UKR_lobby_the_deputies_available = {
+	NOT = { has_political_power < 75 }
+	NOT = {
+		OR = {
+			has_country_flag = UKR_dissolved_verkhovna
+			has_country_flag = UKR_rada_lobbied_flag
+		}
+	}
+}
+
+UKR_ask_western_loans_available = {
+	is_full_state = yes
+	date < 2007.07.31
+}
+
+UKR_ask_eastern_loans_available = {
+	is_full_state = yes
+	date < 2008.09.15
+}
+
+UKR_promote_russian_interests_shown = {
+	country_exists = SOV
+	NOT = { has_war_with = SOV }
+}
+
+UKR_promote_russian_interests_available = {
+	NOT = { has_political_power < 50 }
+	NOT = { has_country_flag = UKR_dissolved_verkhovna }
+	custom_trigger_tooltip = {
+		tooltip = UKR_presidential_decisions_only_one_is_available_TT
+		NOT = { has_decision = UKR_promote_western_interests }
+	}
+}
+
+UKR_promote_western_interests_shown = {
+	country_exists = USA
+	NOT = { has_war_with = USA }
+}
+
+UKR_promote_western_interests_available = {
+	NOT = { has_political_power < 50 }
+	NOT = { has_country_flag = UKR_dissolved_verkhovna }
+	custom_trigger_tooltip = {
+		tooltip = UKR_presidential_decisions_only_one_is_available_TT
+		NOT = { has_decision = UKR_promote_russian_interests }
+	}
+}
+
 UKR_is_pro_west = {
 	custom_trigger_tooltip = {
 		tooltip = UKR_is_pro_west_TT
@@ -472,56 +635,105 @@ UKR_t55_tifon_techs = {
 	}
 }
 
-# Stored equipment sales (UKR_reactivate_sov_category): which orders can the buyer place? Checked in the buyer's answer event, where FROM is Ukraine.
-# Indonesia needs 10 less opinion for one deal after it bought the other (BTR-50 / PT-76B).
+# Stored equipment sales (UKR_reactivate_sov_category): can the buyer place this order? Checked in the buyer's scope from the Ukrainian sale missions
+# and decisions (UKR_storage_sale_*), so ROOT is Ukraine. The same thresholds apply to player and AI buyers.
+# Indonesia needs 5 less opinion for one deal after it bought the other (BTR-50 / PT-76B).
+# Influence: 2% for cheap equipment, 3% for fighters, the 2K11 and the S-125, 5% for the S-75, bombers and the MiG-25.
+# Smaller orders need none, except the smaller 2K11 order (1%).
+# Our influence over a buyer of stored equipment (buyer scope, ROOT = Ukraine). MD's generic checks start at 5%.
+# Each gate sits half a step below its nominal percent: change_influence_percentage scales a +1 step by Ukraine's influence
+# modifiers and the buyer's foreign_influence_defense_modifier, so one step can realize less than 1%.
+UKR_storage_influence_1 = {
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		var:v = { tag = ROOT }
+		check_variable = { influence_array_val^i > 0.499 }
+	}
+}
+UKR_storage_influence_2 = {
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		var:v = { tag = ROOT }
+		check_variable = { influence_array_val^i > 1.499 }
+	}
+}
+UKR_storage_influence_3 = {
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		var:v = { tag = ROOT }
+		check_variable = { influence_array_val^i > 2.499 }
+	}
+}
+UKR_storage_influence_5 = {
+	any_of = {
+		array = influence_array
+		value = v
+		index = i
+		var:v = { tag = ROOT }
+		check_variable = { influence_array_val^i > 4.499 }
+	}
+}
 UKR_storage_buyer_btr50_13 = {
 	OR = {
-		has_opinion = { target = FROM value > 9 }
+		has_opinion = { target = ROOT value > -1 }
 		AND = {
 			tag = IND
-			FROM = { has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_sold_flag }
-			has_opinion = { target = FROM value > -1 }
+			ROOT = { has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_sold_flag }
+			has_opinion = { target = ROOT value > -6 }
 		}
 	}
 }
 UKR_storage_buyer_btr50_40 = {
 	OR = {
-		has_opinion = { target = FROM value > 24 }
+		has_opinion = { target = ROOT value > 9 }
 		AND = {
 			tag = IND
-			FROM = { has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_sold_flag }
-			has_opinion = { target = FROM value > 14 }
+			ROOT = { has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_sold_flag }
+			has_opinion = { target = ROOT value > 4 }
 		}
 	}
+	UKR_storage_influence_2 = yes
 }
 UKR_storage_buyer_pt76_40 = {
 	OR = {
-		has_opinion = { target = FROM value > 19 }
+		has_opinion = { target = ROOT value > 4 }
 		AND = {
 			tag = IND
-			FROM = { has_country_flag = ukr_modernize_sov_equipment_btr50_indonesia_sold_flag }
-			has_opinion = { target = FROM value > 9 }
+			ROOT = { has_country_flag = ukr_modernize_sov_equipment_btr50_indonesia_sold_flag }
+			has_opinion = { target = ROOT value > -1 }
 		}
 	}
+	UKR_storage_influence_2 = yes
 }
 UKR_storage_buyer_2k11_27 = {
-	has_opinion = { target = FROM value > 9 }
+	has_opinion = { target = ROOT value > -1 }
+	UKR_storage_influence_1 = yes
 }
 UKR_storage_buyer_2k11_54 = {
-	has_opinion = { target = FROM value > 24 }
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
 }
 
 UKR_storage_buyer_9p148_9 = {
-	has_opinion = { target = FROM value > 9 }
+	has_opinion = { target = ROOT value > -1 }
 }
 UKR_storage_buyer_9p148_27 = {
-	has_opinion = { target = FROM value > 24 }
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_2 = yes
 }
 UKR_storage_buyer_tu16 = {
-	has_opinion = { target = FROM value > 14 }
+	has_opinion = { target = ROOT value > -1 }
+	UKR_storage_influence_5 = yes
 }
 UKR_storage_buyer_tu22 = {
-	has_opinion = { target = FROM value > 9 }
+	has_opinion = { target = ROOT value > 4 }
+	UKR_storage_influence_5 = yes
 }
 
 # Bulgarian BTR-60PB batches (ukraine_modernize_sov_equipment_btr_60_modernization.10): does Bulgaria still hold the batch? Checked in Bulgaria's scope.
@@ -551,43 +763,47 @@ UKR_bul_btr60_stock_40 = {
 	}
 }
 
-# MiG-23 orders, checked in the buyer's answer event (FROM = Ukraine)
+# MiG-23 orders, checked in the buyer's scope from the Ukrainian sale mission and decision (ROOT = Ukraine)
 UKR_storage_buyer_mig23_12 = {
-	has_opinion = { target = FROM value > 9 }
+	has_opinion = { target = ROOT value > -1 }
 }
 UKR_storage_buyer_mig23_36 = {
-	has_opinion = { target = FROM value > 24 }
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
 }
 
-# MiG-25 orders, checked in the buyer's answer event (FROM = Ukraine). Countries that bought from us before need 10 less opinion.
+# MiG-25 orders, checked in the buyer's scope from the Ukrainian sale mission (ROOT = Ukraine). Countries that bought from us before need 5 less opinion.
 UKR_storage_buyer_mig25_12 = {
 	OR = {
-		has_opinion = { target = FROM value > 9 }
+		has_opinion = { target = ROOT value > 9 }
 		AND = {
 			has_country_flag = UKR_storage_bought_from_ukraine_flag
-			has_opinion = { target = FROM value > -1 }
+			has_opinion = { target = ROOT value > 4 }
 		}
 	}
+	UKR_storage_influence_5 = yes
 }
 
-# Su-17 orders, checked in the buyer's answer event (FROM = Ukraine)
+# Su-17 orders, checked in the buyer's scope from the Ukrainian sale mission and decision (ROOT = Ukraine)
 UKR_storage_buyer_su17_12 = {
-	has_opinion = { target = FROM value > 9 }
+	has_opinion = { target = ROOT value > -1 }
 }
 UKR_storage_buyer_su17_36 = {
-	has_opinion = { target = FROM value > 24 }
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
 }
 
-# S-75 regiment orders, checked in the buyer's answer event (FROM = Ukraine). Earlier buyers need 10 less opinion.
+# S-75 regiment orders, checked in the buyer's scope from the Ukrainian sale mission (ROOT = Ukraine). Earlier buyers need 5 less opinion.
 UKR_storage_buyer_s75 = {
 	OR = {
-		has_opinion = { target = FROM value > 9 }
+		has_opinion = { target = ROOT value > 9 }
 		AND = {
 			has_country_flag = UKR_storage_bought_from_ukraine_flag
-			has_opinion = { target = FROM value > -1 }
+			has_opinion = { target = ROOT value > 4 }
 		}
 	}
-	any_controlled_state = { anti_air_random_build_loc = yes }
+	UKR_storage_influence_5 = yes
+	any_controlled_state = { anti_air_random_build_loc = yes } # room for the air defense site the regiment becomes
 }
 # Ukraine still has an S-75 regiment on duty. PREV is the owner: in a buyer's answer event ROOT is the buyer.
 UKR_s75_regiment_left = {
@@ -611,15 +827,16 @@ UKR_s125_site_state = {
 UKR_s125_site_free = {
 	any_owned_state = { UKR_s125_site_state = yes }
 }
-# S-125 orders, checked in the buyer's answer event (FROM = Ukraine). Earlier buyers need 10 less opinion.
+# S-125 orders, checked in the buyer's scope from the Ukrainian sale mission (ROOT = Ukraine). Earlier buyers need 10 less opinion.
 UKR_storage_buyer_s125 = {
 	OR = {
-		has_opinion = { target = FROM value > 9 }
+		has_opinion = { target = ROOT value > -1 }
 		AND = {
 			has_country_flag = UKR_storage_bought_from_ukraine_flag
-			has_opinion = { target = FROM value > -1 }
+			has_opinion = { target = ROOT value > -11 }
 		}
 	}
+	UKR_storage_influence_3 = yes
 }
 
 # Old gear groups left in storage
@@ -632,13 +849,106 @@ UKR_storage_has_old_artillery = {
 UKR_storage_has_old_small_arms = {
 	check_variable = { UKR_storage_total_8 > 0 }
 }
-# Old gear orders, checked in the buyer's answer event (FROM = Ukraine). Earlier buyers need 10 less opinion.
+# Old gear orders, checked in the buyer's scope from the Ukrainian sale mission (ROOT = Ukraine). Earlier buyers need 10 less opinion.
+# The USA pays for the Iraqi and Afghan packages; we have no real sway over it, so it needs no influence, but the country
+# that gets the package must still exist and be at peace with the USA when the mission completes.
 UKR_storage_buyer_old_gear = {
 	OR = {
-		has_opinion = { target = FROM value > 9 }
+		has_opinion = { target = ROOT value > -1 }
 		AND = {
 			has_country_flag = UKR_storage_bought_from_ukraine_flag
-			has_opinion = { target = FROM value > -1 }
+			has_opinion = { target = ROOT value > -11 }
+		}
+	}
+	OR = {
+		AND = {
+			tag = USA
+			ROOT = { UKR_storage_old_gear_recipient_ok = yes }
+		}
+		AND = {
+			NOT = { tag = USA }
+			UKR_storage_influence_2 = yes
+		}
+	}
+}
+# The country Ukraine picked for the USA-funded old gear package still exists and is at peace with the USA (Ukraine scope).
+# The same conditions as the Iraqi and Afghan options of the offer event .26.
+UKR_storage_old_gear_recipient_ok = {
+	has_variable = UKR_storage_old_gear_recipient
+	var:UKR_storage_old_gear_recipient = {
+		exists = yes
+		NOT = { has_war_with = USA }
+	}
+}
+# A running sale mission to this buyer still lacks its influence gate (buyer scope, ROOT = Ukraine). Each gate is the
+# influence check of the mission's UKR_storage_buyer_* trigger; the USA-funded old gear package has none. AI Ukraine bribes only
+# while this holds, so a sale that lacks only opinion does not risk an exposed bribe.
+UKR_storage_sale_lacks_influence = {
+	OR = {
+		AND = {
+			NOT = { UKR_storage_influence_5 = yes }
+			OR = {
+				AND = { tag = ALG ROOT = { has_active_mission = UKR_storage_sale_alg_mig25rb } }
+				AND = { tag = ARM ROOT = { has_active_mission = UKR_storage_sale_arm_mig25 } }
+				AND = { tag = ARM ROOT = { has_active_mission = UKR_storage_sale_arm_s75 } }
+				AND = { tag = AZE ROOT = { has_active_mission = UKR_storage_sale_aze_s75 } }
+				AND = { tag = CHI ROOT = { has_active_mission = UKR_storage_sale_chi_carrier } }
+				AND = { tag = CHI ROOT = { has_active_mission = UKR_storage_sale_chi_tu16 } }
+				AND = { tag = EGY ROOT = { has_active_mission = UKR_storage_sale_egy_s75 } }
+				AND = { tag = EGY ROOT = { has_active_mission = UKR_storage_sale_egy_tu16 } }
+				AND = { tag = GEO ROOT = { has_active_mission = UKR_storage_sale_geo_s75 } }
+				AND = { tag = LBA ROOT = { has_active_mission = UKR_storage_sale_lba_mig25 } }
+				AND = { tag = LBA ROOT = { has_active_mission = UKR_storage_sale_lba_s75 } }
+				AND = { tag = LBA ROOT = { has_active_mission = UKR_storage_sale_lba_tu22 } }
+				AND = { tag = POL ROOT = { has_active_mission = UKR_storage_sale_pol_s200 } }
+				AND = { tag = TRK ROOT = { has_active_mission = UKR_storage_sale_trk_mig25 } }
+			}
+		}
+		AND = {
+			NOT = { UKR_storage_influence_3 = yes }
+			OR = {
+				AND = { tag = AGL ROOT = { has_active_mission = UKR_storage_sale_agl_mig23mld } }
+				AND = { tag = ARM ROOT = { has_active_mission = UKR_storage_sale_arm_2k11 } }
+				AND = { tag = ARM ROOT = { has_active_mission = UKR_storage_sale_arm_s125 } }
+				AND = { tag = AZE ROOT = { has_active_mission = UKR_storage_sale_aze_2k11 } }
+				AND = { tag = AZE ROOT = { has_active_mission = UKR_storage_sale_aze_s125 } }
+				AND = { tag = EGY ROOT = { has_active_mission = UKR_storage_sale_egy_s125 } }
+				AND = { tag = GEO ROOT = { has_active_mission = UKR_storage_sale_geo_2k11 } }
+				AND = { tag = GEO ROOT = { has_active_mission = UKR_storage_sale_geo_s125 } }
+				AND = { tag = KAZ ROOT = { has_active_mission = UKR_storage_sale_kaz_2k11 } }
+				AND = { tag = KYR ROOT = { has_active_mission = UKR_storage_sale_kyr_2k11 } }
+				AND = { tag = LBA ROOT = { has_active_mission = UKR_storage_sale_lba_mig23 } }
+				AND = { tag = LBA ROOT = { has_active_mission = UKR_storage_sale_lba_s125 } }
+				AND = { tag = MOZ ROOT = { has_active_mission = UKR_storage_sale_moz_mig21 } }
+				AND = { tag = POL ROOT = { has_active_mission = UKR_storage_sale_pol_su17 } }
+				AND = { tag = SUD ROOT = { has_active_mission = UKR_storage_sale_sud_mig23 } }
+				AND = { tag = TRK ROOT = { has_active_mission = UKR_storage_sale_trk_2k11 } }
+				AND = { tag = VIE ROOT = { has_active_mission = UKR_storage_sale_vie_su17m4 } }
+				AND = { tag = YEM ROOT = { has_active_mission = UKR_storage_sale_yem_mig21 } }
+				AND = { tag = YEM ROOT = { has_active_mission = UKR_storage_sale_yem_su17m4 } }
+			}
+		}
+		AND = {
+			NOT = { UKR_storage_influence_2 = yes }
+			OR = {
+				AND = { tag = ARM ROOT = { has_active_mission = UKR_storage_sale_arm_9p148 } }
+				AND = { tag = AZE ROOT = { has_active_mission = UKR_storage_sale_aze_9p148 } }
+				AND = { tag = BOS ROOT = { has_active_mission = UKR_storage_sale_bos_pt76 } }
+				AND = { tag = CHA ROOT = { has_active_mission = UKR_storage_sale_cha_9p148 } }
+				AND = { tag = CRO ROOT = { has_active_mission = UKR_storage_sale_cro_btr50 } }
+				AND = { tag = CRO ROOT = { has_active_mission = UKR_storage_sale_cro_pt76 } }
+				AND = { tag = EGY ROOT = { has_active_mission = UKR_storage_sale_egy_btr50 } }
+				AND = { tag = ETH ROOT = { has_active_mission = UKR_storage_sale_eth_9p148 } }
+				AND = { tag = ETH ROOT = { has_active_mission = UKR_storage_sale_eth_old_gear } }
+				AND = { tag = GEO ROOT = { has_active_mission = UKR_storage_sale_geo_9p148 } }
+				AND = { tag = HUN ROOT = { has_active_mission = UKR_storage_sale_hun_btr50 } }
+				AND = { tag = IND ROOT = { has_active_mission = UKR_storage_sale_ind_btr50 } }
+				AND = { tag = IND ROOT = { has_active_mission = UKR_storage_sale_ind_pt76 } }
+				AND = { tag = ROM ROOT = { has_active_mission = UKR_storage_sale_rom_btr50 } }
+				AND = { tag = SUD ROOT = { has_active_mission = UKR_storage_sale_sud_9p148 } }
+				AND = { tag = SUD ROOT = { has_active_mission = UKR_storage_sale_sud_old_gear } }
+				AND = { tag = VIE ROOT = { has_active_mission = UKR_storage_sale_vie_zsu57 } }
+			}
 		}
 	}
 }
@@ -838,5 +1148,3201 @@ UKR_varyag_training_aircraft_available = {
 				}
 			}
 		}
+	}
+}
+
+# Storage list (UKR_reactivate_sov_category): new models, maintenance and the carrier aircraft
+UKR_storage_has_old_support_weapons = {
+	check_variable = { UKR_storage_total_9 > 0 }
+}
+
+# Every artillery model left in storage has current maintenance
+UKR_storage_old_artillery_kept = {
+	OR = {
+		check_variable = { ukraine_has_m46_stockpile < 1 }
+		has_country_flag = UKR_storage_m46_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_d1_stockpile < 1 }
+		has_country_flag = UKR_storage_d1_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_m30_stockpile < 1 }
+		has_country_flag = UKR_storage_m30_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_ml20_stockpile < 1 }
+		has_country_flag = UKR_storage_ml20_kept_flag
+	}
+}
+
+# Every small arms model left in storage has current maintenance
+UKR_storage_old_small_arms_kept = {
+	OR = {
+		check_variable = { ukraine_has_mosin_stockpile < 1 }
+		has_country_flag = UKR_storage_mosin_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_sks_stockpile < 1 }
+		has_country_flag = UKR_storage_sks_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_ak47_stockpile < 1 }
+		has_country_flag = UKR_storage_ak47_kept_flag
+	}
+}
+
+# Every support weapons model left in storage has current maintenance
+UKR_storage_old_support_weapons_kept = {
+	OR = {
+		check_variable = { ukraine_has_spg9_stockpile < 1 }
+		has_country_flag = UKR_storage_spg9_kept_flag
+	}
+	OR = {
+		check_variable = { ukraine_has_strela2_stockpile < 1 }
+		has_country_flag = UKR_storage_strela2_kept_flag
+	}
+}
+
+UKR_storage_can_sell_brdm1 = {
+	UKR_storage_has_old_vehicles = yes
+	has_country_flag = UKR_storage_brdm1_kept_flag
+}
+
+UKR_storage_can_sell_9p148 = {
+	check_variable = { ukraine_has_9p148_stockpile > 8 }
+	has_country_flag = UKR_storage_9p148_kept_flag
+}
+
+# Trigger: UKR_storage_upkeep_can_pay
+# Purpose: Checks the whole-million treasury payment due for a depot service order.
+# Parameters:
+# - ukr_storage_upkeep_bill: The current service price in thousands of dollars.
+UKR_storage_upkeep_can_pay = {
+	check_variable = { ukr_storage_upkeep_bill > 0 }
+	set_temp_variable = { ukr_storage_upkeep_balance = { value = UKR_storage_upkeep_due add = ukr_storage_upkeep_bill } }
+	set_temp_variable = { ukr_storage_upkeep_remainder = ukr_storage_upkeep_balance }
+	modulo_temp_variable = { var = ukr_storage_upkeep_remainder value = 1000 }
+	set_temp_variable = { ukr_storage_upkeep_charge = { value = ukr_storage_upkeep_balance subtract = ukr_storage_upkeep_remainder divide = 1000000 } }
+	check_variable = { var = treasury value = ukr_storage_upkeep_charge compare = greater_than_or_equals }
+}
+
+# A state where a reactivated S-200 battalion goes back on duty (its 2000 garrisons)
+UKR_s200_site_state = {
+	OR = {
+		state = 698
+		state = 700
+		state = 696
+		state = 695
+		state = 694
+		state = 669
+	}
+}
+
+UKR_storage_has_carrier_aircraft = {
+	check_variable = { ukraine_has_su25utg_stockpile > 1 }
+	check_variable = { ukraine_has_su33_stockpile > 0 }
+}
+
+UKR_storage_carrier_aircraft_chinese_buyer = {
+	CHI = {
+		OR = {
+			has_country_flag = CHI_varyag_hull_in_transit
+			has_country_flag = CHI_varyag_hull_acquired
+		}
+	}
+}
+
+UKR_storage_can_prepare_carrier_aircraft = {
+	OR = {
+		has_country_flag = varyag_hull_at_shipyard
+		has_country_flag = UKR_varyag_commissioned
+	}
+}
+
+UKR_storage_yak38_inspection_ready = {
+	has_country_flag = UKR_storage_yak38_program_in_progress_flag
+	OR = {
+		check_variable = { UKR_storage_yak38_total > 18 }
+		has_country_flag = UKR_storage_yak38_monuments_flag
+	}
+	NOT = { check_variable = { UKR_storage_yak38_repaired > 0 } }
+}
+
+# Ukraine is at war with Russia, its puppets or the separatist republics on its territory (wartime content)
+UKR_at_war_with_russia_or_proxies = {
+	OR = {
+		has_war_with = SOV
+		has_war_with = CRM
+		has_war_with = SEU
+		has_war_with = DPR
+		has_war_with = LPR
+		has_war_with = PMR
+		any_country = {
+			is_subject_of = SOV
+			has_war_with = UKR
+		}
+	}
+}
+
+# Buyers of the new stored-equipment sales (buyer scope, ROOT = Ukraine)
+UKR_storage_buyer_mig21 = {
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
+}
+UKR_storage_buyer_mig23mld = {
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
+}
+UKR_storage_buyer_su17m4 = {
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_3 = yes
+}
+UKR_storage_buyer_mig25rb = {
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_5 = yes
+}
+UKR_storage_buyer_zsu57 = {
+	has_opinion = { target = ROOT value > 9 }
+	UKR_storage_influence_2 = yes
+}
+UKR_storage_buyer_s200 = {
+	has_opinion = { target = ROOT value > 19 }
+	UKR_storage_influence_5 = yes
+}
+UKR_storage_buyer_carrier = {
+	has_opinion = { target = ROOT value > 29 }
+	UKR_storage_influence_5 = yes
+}
+
+# Storage list decisions: visible, available and cost conditions, shared by the decisions and the section counters
+ukr_modernize_sov_equipment_t55_upkeep_shown = {
+	check_variable = { ukraine_has_t55_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_t55_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_t55_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_t55_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_t55_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_t55_reactivation_program_shown = {
+	date < 2005.01.01
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_done_flag }
+}
+
+ukr_modernize_sov_equipment_t55_reactivation_program_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_t62_egypt_kmdb_free_tt
+		UKR_t55_kmdb_free = yes
+	}
+	controls_state = 696 # Kharkiv
+	has_political_power > 5
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_reactivation_program_cost = {
+	check_variable = { var = treasury value = UKR_storage_survey_cost compare = greater_than_or_equals }
+	has_political_power > 5
+}
+
+ukr_modernize_sov_equipment_t55_next_modernization_shown = {
+	# After the first survey, even if its project was cancelled before adopting a model
+	has_country_flag = ukr_modernize_sov_equipment_t55_reactivation_program_done_flag
+	OR = {
+		NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_5tdf_flag }
+		NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_64_flag }
+		NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55agm_flag }
+		NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_bmp55_flag }
+	}
+	NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_modernization_stop_flag }
+	UKR_t55_kmdb_free = yes
+}
+
+ukr_modernize_sov_equipment_t55_next_modernization_ready = {
+	controls_state = 696 # Kharkiv
+	has_political_power > 5
+	has_army_experience > 2
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_next_modernization_cost = {
+	check_variable = { var = treasury value = UKR_storage_survey_cost compare = greater_than_or_equals }
+	has_political_power > 5
+	has_army_experience > 2
+}
+
+ukr_modernize_sov_equipment_t55_development_cancel_shown = {
+	has_country_flag = ukr_modernize_sov_equipment_t55_development_ongoing_flag
+}
+
+ukr_modernize_sov_equipment_t55_procurement_program_shown = {
+	controls_state = 696 # Kharkiv
+	OR = {
+		has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_5tdf_flag
+		has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_64_flag
+		has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55agm_flag
+		has_country_flag = ukraine_modernize_sov_equipment_t55_developed_bmp55_flag
+	}
+	check_variable = { ukraine_has_t55_stockpile > 12 }
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag }
+}
+
+ukr_modernize_sov_equipment_t55_procurement_program_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_t62_program_idle_tt
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag }
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_no_export_contract_tt
+		UKR_t55_no_export_contract = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_procurement_program_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_t55_peru_tender_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_peru_tender_done_flag }
+	date > 2008.01.01
+	date < 2010.01.01
+	country_exists = PRU
+	has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55agm_flag
+}
+
+ukr_modernize_sov_equipment_t55_peru_tender_ready = {
+	controls_state = 696 # Kharkiv
+	has_army_experience > 4
+
+	PRU = {
+		has_opinion = {
+			target = UKR
+			value > 29
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t55_peru_tender_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_tifon_development_done_flag }
+	country_exists = PRU
+	OR = {
+		has_country_flag = ukr_modernize_sov_equipment_t55_peru_basic_requirements_flag
+		AND = {
+			has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag
+			UKR_t55_tifon_techs = yes
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_ready = {
+	controls_state = 696 # Kharkiv
+	has_army_experience > 4
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_cost = {
+	check_variable = { treasury > 0.03 }
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_own_tech_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_tifon_development_done_flag }
+	country_exists = PRU
+	has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag
+	NOT = { UKR_t55_tifon_techs = yes }
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_own_tech_ready = {
+	controls_state = 696 # Kharkiv
+	has_army_experience > 4
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_tifon_development_own_tech_cost = {
+	check_variable = { treasury > 0.05 }
+	has_political_power > 10
+	has_army_experience > 4
+}
+
+ukr_modernize_sov_equipment_t55_peru_contract_company_shown = {
+	country_exists = PRU
+	has_country_flag = ukr_modernize_sov_equipment_t55_peru_contract_company_flag
+}
+
+ukr_modernize_sov_equipment_t55_peru_contract_company_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukraine_t55_hulls_13_tt
+		check_variable = { ukraine_has_t55_stockpile > 12 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t55_peru_contract_battalion_shown = {
+	country_exists = PRU
+	has_country_flag = ukr_modernize_sov_equipment_t55_peru_contract_battalion_flag
+}
+
+ukr_modernize_sov_equipment_t55_peru_contract_battalion_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukraine_t55_hulls_40_tt
+		check_variable = { ukraine_has_t55_stockpile > 39 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t55_maintenance_required_tt
+		has_country_flag = UKR_storage_t55_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t62_upkeep_shown = {
+	check_variable = { ukraine_has_t62_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_t62_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t62_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_t62_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_t62_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_t62_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_t62_modernization_shown = {
+	has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_5tdf_flag
+	NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_modernization_stop_flag }
+	OR = {
+		NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag }
+		AND = {
+			has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55agm_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62ag_flag }
+		}
+		AND = {
+			has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62ag_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62agm_flag }
+		}
+	}
+	UKR_t55_kmdb_free = yes
+}
+
+ukr_modernize_sov_equipment_t62_modernization_ready = {
+	controls_state = 696 # Kharkiv
+	has_political_power > 5
+	has_army_experience > 2
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t62_maintenance_required_tt
+		has_country_flag = UKR_storage_t62_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t62_modernization_cost = {
+	check_variable = { var = treasury value = UKR_storage_survey_cost compare = greater_than_or_equals }
+	has_political_power > 5
+	has_army_experience > 2
+}
+
+ukr_modernize_sov_equipment_t62_procurement_program_shown = {
+	controls_state = 696 # Kharkiv
+	OR = {
+		has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+		has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62ag_flag
+		has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62agm_flag
+	}
+	check_variable = { ukraine_has_t62_stockpile > 12 }
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_procurement_program_active_flag }
+}
+
+ukr_modernize_sov_equipment_t62_procurement_program_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_t55_program_idle_tt
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_procurement_program_active_flag }
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_no_export_contract_tt
+		UKR_t55_no_export_contract = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t62_maintenance_required_tt
+		has_country_flag = UKR_storage_t62_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_t62_procurement_program_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+UKR_t62_egypt_independent_development_shown = {
+	date > 2004.01.01
+	country_exists = EGY
+	NOT = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_5tdf_flag }
+	NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag }
+	NOT = { has_country_flag = ukraine_modernize_sov_equipment_t62_modernization_stop_flag }
+	UKR_t55_kmdb_free = yes
+}
+
+UKR_t62_egypt_independent_development_ready = {
+	date > 2004.01.01
+	controls_state = 696 #Khakiv
+	custom_trigger_tooltip = {
+		tooltip = UKR_t62_egypt_kmdb_free_tt
+		NOT = { has_decision = ukr_modernize_sov_equipment_t55_reactivation_program }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_t62_maintenance_required_tt
+		has_country_flag = UKR_storage_t62_kept_flag
+	}
+}
+
+UKR_t62_egypt_independent_development_cost = {
+	check_variable = { var = treasury value = UKR_storage_t62_independent_development_cost compare = greater_than_or_equals }
+	has_political_power > 5
+	has_army_experience > 2
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_offer_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_5tdf_offer_done_flag }
+	country_exists = EGY
+	has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+	NOT = { has_global_flag = global_arab_spring_started }
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_offer_ready = {
+	controls_state = 696 # Kharkiv
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_egypt_5tdf_opinion_tt
+		EGY = {
+			OR = {
+				has_opinion = { target = UKR value > 14 }
+				AND = {
+					UKR = { has_country_flag = ukr_modernize_sov_equipment_btr50_egypt_offer_sold_flag }
+					has_opinion = { target = UKR value > 4 }
+				}
+			}
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_offer_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_company_shown = {
+	country_exists = EGY
+	has_country_flag = ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_company_flag
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_company_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_before_arab_spring_tt
+		NOT = { has_global_flag = global_arab_spring_started }
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_egypt_t62_13_tt
+		check_variable = { ukraine_egypt_t62_pool > 12 }
+		EGY = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_equipment = { medium_tank_chassis_0 > 12 }
+			}
+			else = { has_equipment = { MBT_1 > 12 } }
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_battalion_shown = {
+	country_exists = EGY
+	has_country_flag = ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_battalion_flag
+}
+
+ukr_modernize_sov_equipment_t62_egypt_5tdf_contract_battalion_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_before_arab_spring_tt
+		NOT = { has_global_flag = global_arab_spring_started }
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_egypt_t62_40_tt
+		check_variable = { ukraine_egypt_t62_pool > 39 }
+		EGY = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_equipment = { medium_tank_chassis_0 > 39 }
+			}
+			else = { has_equipment = { MBT_1 > 39 } }
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_offer_done_flag }
+	date > 2018.01.01
+	date < 2020.01.01
+	country_exists = EGY
+	has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+	UKR_t62_6td2_techs = yes
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_ready = {
+	controls_state = 696 # Kharkiv
+	has_army_experience > 4
+
+	EGY = {
+		has_opinion = {
+			target = UKR
+			value > 29
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_cost = {
+	check_variable = { treasury > 0.03 }
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_offer_done_flag }
+	date > 2018.01.01
+	date < 2020.01.01
+	country_exists = EGY
+	has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+	NOT = { UKR_t62_6td2_techs = yes }
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech_ready = {
+	controls_state = 696 # Kharkiv
+	has_army_experience > 4
+
+	EGY = {
+		has_opinion = {
+			target = UKR
+			value > 29
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech_cost = {
+	check_variable = { treasury > 0.05 }
+	has_political_power > 10
+	has_army_experience > 4
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_contract_company_shown = {
+	country_exists = EGY
+	has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_contract_company_flag
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_contract_company_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_egypt_hulls_13_tt
+		OR = {
+			AND = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_source_5tdf_flag
+				check_variable = { ukraine_egypt_t62_5tdf_delivered > 12 }
+			}
+			AND = {
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_source_5tdf_flag }
+				check_variable = { ukraine_egypt_t62_pool > 12 }
+			}
+		}
+		EGY = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_equipment = { medium_tank_chassis_0 > 12 }
+			}
+			else = { has_equipment = { MBT_1 > 12 } }
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_contract_battalion_shown = {
+	country_exists = EGY
+	has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_contract_battalion_flag
+}
+
+ukr_modernize_sov_equipment_t62_egypt_6td2_contract_battalion_ready = {
+	controls_state = 696 # Kharkiv
+
+	696 = { #Kharkiv
+		arms_factory > 1
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t62_egypt_hulls_40_tt
+		OR = {
+			AND = {
+				has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_source_5tdf_flag
+				check_variable = { ukraine_egypt_t62_5tdf_delivered > 39 }
+			}
+			AND = {
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_source_5tdf_flag }
+				check_variable = { ukraine_egypt_t62_pool > 39 }
+			}
+		}
+		EGY = {
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_equipment = { medium_tank_chassis_0 > 39 }
+			}
+			else = { has_equipment = { MBT_1 > 39 } }
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_upkeep_shown = {
+	check_variable = { ukraine_has_btr50_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_btr50_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_btr50_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_btr50_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_btr50_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_btr50_indonesia_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_btr50_indonesia_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_btr50_indonesia_flag
+	}
+	date < 2001.07.01
+	country_exists = IND
+	check_variable = { ukraine_has_btr50_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_btr50_indonesia_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_btr50_indonesia_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_maintenance_required_tt
+		has_country_flag = UKR_storage_btr50_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_stock_13_tt
+		check_variable = { ukraine_has_btr50_stockpile > 12 }
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_egypt_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_btr50_egypt_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_btr50_egypt_flag
+	}
+	date < 2003.01.01
+	country_exists = EGY
+	check_variable = { ukraine_has_btr50_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_btr50_egypt_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_btr50_egypt_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_maintenance_required_tt
+		has_country_flag = UKR_storage_btr50_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_stock_13_tt
+		check_variable = { ukraine_has_btr50_stockpile > 12 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_btr50_egypt_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_btr50_indonesia_offer_done_flag
+			date > 2001.07.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_europe_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_btr50_europe_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_btr50_europe_flag
+	}
+	date < 2005.01.01
+	OR = {
+		country_exists = HUN
+		country_exists = ROM
+		country_exists = CRO
+	}
+	check_variable = { ukraine_has_btr50_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_btr50_europe_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_btr50_europe_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_maintenance_required_tt
+		has_country_flag = UKR_storage_btr50_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_stock_13_tt
+		check_variable = { ukraine_has_btr50_stockpile > 12 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_btr50_europe_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_btr50_egypt_offer_done_flag
+			date > 2003.01.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_kmdb_modernization_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_btr50_kmdb_modernization_done_flag }
+	check_variable = { ukraine_has_btr50_stockpile > 12 }
+	OR = {
+		has_country_flag = ukr_modernize_sov_equipment_btr50_europe_offer_done_flag
+		date > 2005.01.01
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_kmdb_modernization_ready = {
+	controls_state = 696 # Kharkiv
+
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+		UKR_t55_kharkiv_plant_free = yes
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_btr50_maintenance_required_tt
+		has_country_flag = UKR_storage_btr50_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_btr50_kmdb_modernization_cost = {
+	check_variable = { var = treasury value = UKR_storage_btr50_order_cost compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_pt76_upkeep_shown = {
+	check_variable = { ukraine_has_pt76_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_pt76_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_pt76_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_pt76_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_pt76_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_pt76_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_pt76_indonesia_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_pt76_indonesia_flag
+	}
+	date < 2001.07.01
+	country_exists = IND
+	check_variable = { ukraine_has_pt76_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_pt76_indonesia_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_pt76_indonesia_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_pt76_maintenance_required_tt
+		has_country_flag = UKR_storage_pt76_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_pt76_stock_40_tt
+		check_variable = { ukraine_has_pt76_stockpile > 39 }
+	}
+}
+
+ukr_modernize_sov_equipment_pt76_europe_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_pt76_europe_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_pt76_europe_flag
+	}
+	date < 2009.01.01
+	OR = {
+		country_exists = CRO
+		country_exists = BOS
+	}
+	check_variable = { ukraine_has_pt76_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_pt76_europe_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_pt76_europe_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_pt76_maintenance_required_tt
+		has_country_flag = UKR_storage_pt76_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_pt76_stock_40_tt
+		check_variable = { ukraine_has_pt76_stockpile > 39 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_pt76_europe_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_pt76_indonesia_offer_done_flag
+			date > 2001.07.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_zsu57_upkeep_shown = {
+	check_variable = { ukraine_has_zsu57_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_zsu57_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_zsu57_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_zsu57_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_zsu57_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_zsu57_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_zsu57_scrap_shown = {
+	check_variable = { ukraine_has_zsu57_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_zsu57_scrap_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_zsu57_upkeep }
+	NOT = { has_decision = ukr_modernize_sov_equipment_zsu57_vietnam_offer }
+}
+
+ukr_modernize_sov_equipment_zsu57_scrap_cost = {
+	check_variable = { var = treasury value = 0.01 compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_zsu57_vietnam_offer_shown = {
+	check_variable = { ukraine_has_zsu57_stockpile > 0 }
+	country_exists = VIE
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_zsu57_vietnam_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_zsu57_vietnam_flag
+	}
+}
+
+ukr_modernize_sov_equipment_zsu57_vietnam_offer_ready = {
+	NOT = { has_war_with = VIE }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_zsu57_maintenance_required_tt
+		has_country_flag = UKR_storage_zsu57_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_zsu57_stock_20_tt
+		check_variable = { ukraine_has_zsu57_stockpile > 19 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_zsu57_vietnam_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_2k11_upkeep_shown = {
+	check_variable = { ukraine_has_2k11_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_2k11_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_2k11_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_2k11_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_2k11_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_2k11_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_2k11_caucasus_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_caucasus_offer_done_flag }
+		AND = {
+			has_country_flag = UKR_storage_sale_retry_2k11_caucasus_flag
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_central_asia_quota_flag }
+		}
+	}
+	date < 2009.01.01
+	OR = {
+		country_exists = GEO
+		country_exists = AZE
+		country_exists = ARM
+	}
+	check_variable = { ukraine_has_2k11_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_2k11_caucasus_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_2k11_caucasus_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_2k11_maintenance_required_tt
+		has_country_flag = UKR_storage_2k11_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_2k11_stock_27_tt
+		check_variable = { ukraine_has_2k11_stockpile > 26 }
+	}
+}
+
+ukr_modernize_sov_equipment_2k11_central_asia_offer_shown = {
+	date < 2009.01.01
+	OR = {
+		AND = {
+			country_exists = KAZ
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_KAZ_flag }
+		}
+		AND = {
+			country_exists = TRK
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_TRK_flag }
+		}
+		AND = {
+			country_exists = KYR
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_KYR_flag }
+		}
+	}
+	check_variable = { ukraine_has_2k11_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_2k11_central_asia_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		OR = {
+			AND = {
+				country_exists = KAZ
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_KAZ_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_KAZ_2k11_flag }
+			}
+			AND = {
+				country_exists = TRK
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_TRK_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_TRK_2k11_flag }
+			}
+			AND = {
+				country_exists = KYR
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_tried_KYR_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_KYR_2k11_flag }
+			}
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_2k11_maintenance_required_tt
+		has_country_flag = UKR_storage_2k11_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_2k11_stock_27_tt
+		check_variable = { ukraine_has_2k11_stockpile > 26 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_2k11_central_asia_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_2k11_caucasus_offer_done_flag
+			date > 2004.01.01
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_2k11_central_asia_offer_quota_tt
+		OR = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_central_asia_quota_flag }
+			check_variable = { ukraine_2k11_quota > 26 }
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_pt76_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_pt76_scrap_done_flag }
+	check_variable = { ukraine_has_pt76_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_pt76_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_pt76_upkeep }
+	date > 2009.01.01
+}
+
+ukr_modernize_sov_equipment_2k11_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_2k11_scrap_done_flag }
+	check_variable = { ukraine_has_2k11_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_2k11_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_2k11_upkeep }
+	date > 2009.01.01
+}
+
+ukr_modernize_sov_equipment_9p148_upkeep_shown = {
+	check_variable = { ukraine_has_9p148_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p148_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_9p148_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_9p148_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_9p148_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_9p148_caucasus_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_9p148_caucasus_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_9p148_caucasus_flag
+	}
+	date < 2009.01.01
+	OR = {
+		country_exists = GEO
+		country_exists = AZE
+		country_exists = ARM
+	}
+	check_variable = { ukraine_has_9p148_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p148_caucasus_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_9p148_caucasus_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_maintenance_required_tt
+		has_country_flag = UKR_storage_9p148_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_stock_9_tt
+		check_variable = { ukraine_has_9p148_stockpile > 8 }
+	}
+}
+
+ukr_modernize_sov_equipment_9p148_africa_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_9p148_africa_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_9p148_africa_flag
+	}
+	date < 2009.01.01
+	OR = {
+		country_exists = SUD
+		country_exists = ETH
+		country_exists = CHA
+	}
+	check_variable = { ukraine_has_9p148_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p148_africa_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_9p148_africa_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_maintenance_required_tt
+		has_country_flag = UKR_storage_9p148_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_stock_9_tt
+		check_variable = { ukraine_has_9p148_stockpile > 8 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_9p148_africa_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_9p148_caucasus_offer_done_flag
+			date > 2004.01.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_atgm_barrier_v_shown = {
+	check_variable = { ukraine_has_9p148_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_atgm_barrier_v_ready = {
+	has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+	controls_state = 698 #Kyiv
+	NOT = { has_decision = ukr_modernize_sov_equipment_9p122_barrier_v }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_maintenance_required_tt
+		has_country_flag = UKR_storage_9p148_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_atgm_barrier_v_cost = {
+	check_variable = { var = treasury value = UKR_storage_barrier_order_cost compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_malyutka_upkeep_shown = {
+	check_variable = { UKR_storage_malyutka_total > 0 }
+}
+
+ukr_modernize_sov_equipment_malyutka_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_malyutka_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_malyutka_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_malyutka_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_malyutka_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_malyutka_scrap_shown = {
+	check_variable = { UKR_storage_malyutka_total > 0 }
+}
+
+ukr_modernize_sov_equipment_malyutka_scrap_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_malyutka_upkeep }
+}
+
+ukr_modernize_sov_equipment_malyutka_scrap_cost = {
+	check_variable = { var = treasury value = 0.01 compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_9p110_barrier_v_shown = {
+	check_variable = { ukraine_has_malyutka_brdm1_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p110_barrier_v_ready = {
+	controls_state = 698
+	has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_malyutka_maintenance_required_tt
+		has_country_flag = UKR_storage_malyutka_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_9p110_barrier_v_cost = {
+	check_variable = { var = treasury value = UKR_storage_brdm1_barrier_order_cost compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_9p110_restore_brdm_shown = {
+	check_variable = { ukraine_has_malyutka_brdm1_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p110_restore_brdm_ready = {
+	controls_state = 696
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_malyutka_maintenance_required_tt
+		has_country_flag = UKR_storage_malyutka_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_9p110_restore_brdm_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_9p122_barrier_v_shown = {
+	check_variable = { ukraine_has_malyutka_brdm2_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p122_barrier_v_ready = {
+	controls_state = 698
+	has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_malyutka_maintenance_required_tt
+		has_country_flag = UKR_storage_malyutka_kept_flag
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_atgm_barrier_v }
+}
+
+ukr_modernize_sov_equipment_9p122_barrier_v_cost = {
+	check_variable = { var = treasury value = UKR_storage_barrier_order_cost compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_9p122_restore_brdm_shown = {
+	check_variable = { ukraine_has_malyutka_brdm2_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p122_restore_brdm_ready = {
+	controls_state = 696
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_malyutka_maintenance_required_tt
+		has_country_flag = UKR_storage_malyutka_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_9p122_restore_brdm_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_9p148_restore_brdm_shown = {
+	check_variable = { ukraine_has_9p148_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_9p148_restore_brdm_ready = {
+	controls_state = 696
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_9p148_maintenance_required_tt
+		has_country_flag = UKR_storage_9p148_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_9p148_restore_brdm_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_tu16_upkeep_shown = {
+	check_variable = { UKR_storage_tu16_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu16_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_tu16_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_tu16_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_tu16_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_tu16_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_tu16_egypt_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_egypt_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_tu16_egypt_flag
+	}
+	date < 2003.01.01
+	country_exists = EGY
+	check_variable = { UKR_storage_tu16_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu16_egypt_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_tu16_egypt_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_tu16_maintenance_required_tt
+		has_country_flag = UKR_storage_tu16_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_tu16_china_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_china_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_tu16_china_flag
+	}
+	date < 2006.01.01
+	country_exists = CHI
+	check_variable = { UKR_storage_tu16_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu16_china_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_tu16_china_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_tu16_maintenance_required_tt
+		has_country_flag = UKR_storage_tu16_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_tu16_china_offer_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_tu16_egypt_offer_done_flag
+			date > 2003.01.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_tu16_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_scrap_done_flag }
+	check_variable = { UKR_storage_tu16_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu16_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_tu16_upkeep }
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_tu16_scrap_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_tu16_china_offer_done_flag
+			date > 2006.01.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_tu22_upkeep_shown = {
+	check_variable = { UKR_storage_tu22_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu22_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_tu22_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_tu22_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_tu22_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_tu22_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_tu22_libya_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_tu22_libya_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_tu22_libya_flag
+	}
+	date < 2004.01.01
+	country_exists = LBA
+	check_variable = { UKR_storage_tu22_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu22_libya_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_tu22_libya_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_tu22_maintenance_required_tt
+		has_country_flag = UKR_storage_tu22_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_tu22_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_tu22_scrap_done_flag }
+	check_variable = { UKR_storage_tu22_total > 0 }
+}
+
+ukr_modernize_sov_equipment_tu22_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_tu22_upkeep }
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_tu22_scrap_after_tt
+		OR = {
+			has_country_flag = ukr_modernize_sov_equipment_tu22_libya_offer_done_flag
+			date > 2004.01.01
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_upkeep_shown = {
+	check_variable = { UKR_storage_mig21_total > 0 }
+}
+
+ukr_modernize_sov_equipment_mig21_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mig21_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mig21_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mig21_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mig21_yemen_offer_shown = {
+	date < 2008.1.1
+	country_exists = YEM
+	check_variable = { UKR_storage_mig21_total > 0 }
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig21_yemen_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig21_yemen_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_yemen_offer_ready = {
+	date > 2005.12.31
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_stock_12_tt
+		check_variable = { ukraine_has_mig21_stockpile > 11 }
+	}
+	NOT = { has_war_with = YEM }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_maintenance_required_tt
+		has_country_flag = UKR_storage_mig21_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig21_yemen_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_su17_upkeep_shown = {
+	check_variable = { ukraine_has_su17_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_su17_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_su17_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_su17_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_su17_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_su17_vietnam_offer_shown = {
+	check_variable = { ukraine_has_su17m4_stockpile > 0 }
+	date < 2008.1.1
+	country_exists = VIE
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_su17_vietnam_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_su17_vietnam_flag
+	}
+}
+
+ukr_modernize_sov_equipment_su17_vietnam_offer_ready = {
+	NOT = { has_war_with = VIE }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17_maintenance_required_tt
+		has_country_flag = UKR_storage_su17_kept_flag
+	}
+	date > 2001.12.31
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17m4_stock_8_tt
+		check_variable = { ukraine_has_su17m4_stockpile > 7 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_su17_vietnam_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_mig23_upkeep_shown = {
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig23_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mig23_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mig23_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mig23_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mig23_angola_offer_shown = {
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+	date < 2008.1.1
+	country_exists = AGL
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_angola_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig23_angola_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig23_angola_offer_ready = {
+	NOT = { has_war_with = AGL }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_maintenance_required_tt
+		has_country_flag = UKR_storage_mig23_kept_flag
+	}
+	date > 2003.12.31
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_stock_12_tt
+		check_variable = { ukraine_has_mig23_stockpile > 11 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig23_angola_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_su17_yemen_offer_shown = {
+	check_variable = { ukraine_has_su17m4_stockpile > 0 }
+	date < 2008.1.1
+	country_exists = YEM
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_su17_yemen_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_su17_yemen_flag
+	}
+}
+
+ukr_modernize_sov_equipment_su17_yemen_offer_ready = {
+	NOT = { has_war_with = YEM }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17_maintenance_required_tt
+		has_country_flag = UKR_storage_su17_kept_flag
+	}
+	date > 2005.12.31
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17m4_stock_6_tt
+		check_variable = { ukraine_has_su17m4_stockpile > 5 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_su17_yemen_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_mozambique_offer_shown = {
+	date < 2015.1.1
+	country_exists = MOZ
+	check_variable = { UKR_storage_mig21_total > 0 }
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig21_mozambique_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig21_mozambique_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_mozambique_offer_ready = {
+	date > 2011.12.31
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_stock_6_tt
+		check_variable = { ukraine_has_mig21_stockpile > 5 }
+	}
+	NOT = { has_war_with = MOZ }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_maintenance_required_tt
+		has_country_flag = UKR_storage_mig21_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig21_mozambique_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_mig25_upkeep_shown = {
+	check_variable = { UKR_storage_mig25_total > 0 }
+}
+
+ukr_modernize_sov_equipment_mig25_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig25_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mig25_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mig25_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mig25_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mig25rb_algeria_offer_shown = {
+	check_variable = { ukraine_has_mig25rb_stockpile > 0 }
+	date < 2010.1.1
+	country_exists = ALG
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25rb_algeria_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig25rb_algeria_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig25rb_algeria_offer_ready = {
+	NOT = { has_war_with = ALG }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig25_maintenance_required_tt
+		has_country_flag = UKR_storage_mig25_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig25rb_stock_4_tt
+		check_variable = { ukraine_has_mig25rb_stockpile > 3 }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig25rb_algeria_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_croatia_overhaul_shown = {
+	date < 2014.1.1
+	country_exists = CRO
+	check_variable = { UKR_storage_mig21_total > 0 }
+	NOT = { has_country_flag = UKR_mig21_croatia_completed_flag }
+}
+
+ukr_modernize_sov_equipment_mig21_croatia_overhaul_ready = {
+	date > 2013.4.1
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_stock_5_tt
+		check_variable = { ukraine_has_mig21_stockpile > 4 }
+	}
+	controls_state = 695
+	NOT = { has_war_with = CRO }
+	NOT = { has_country_flag = UKR_mig21_croatia_open_flag }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_maintenance_required_tt
+		has_country_flag = UKR_storage_mig21_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig21_croatia_upgrade_shown = {
+	date < 2014.1.1
+	country_exists = CRO
+	check_variable = { UKR_storage_mig21_total > 0 }
+	NOT = { has_country_flag = UKR_mig21_croatia_completed_flag }
+}
+
+ukr_modernize_sov_equipment_mig21_croatia_upgrade_ready = {
+	date > 2013.4.1
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_stock_5_tt
+		check_variable = { ukraine_has_mig21_stockpile > 4 }
+	}
+	controls_state = 695
+	NOT = { has_war_with = CRO }
+	NOT = { has_country_flag = UKR_mig21_croatia_open_flag }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig21_maintenance_required_tt
+		has_country_flag = UKR_storage_mig21_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig23_libya_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_libya_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig23_libya_flag
+	}
+	date < 2009.01.01
+	country_exists = LBA
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig23_libya_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig23_libya_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_maintenance_required_tt
+		has_country_flag = UKR_storage_mig23_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_stock_12_tt
+		check_variable = { ukraine_has_mig23_stockpile > 11 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig23_sudan_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_sudan_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_mig23_sudan_flag
+	}
+	date < 2009.01.01
+	country_exists = SUD
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig23_sudan_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_mig23_sudan_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_maintenance_required_tt
+		has_country_flag = UKR_storage_mig23_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig23_stock_12_tt
+		check_variable = { ukraine_has_mig23_stockpile > 11 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig23_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_scrap_done_flag }
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig23_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_mig23_upkeep }
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_mig23_scrap_after_tt
+		OR = {
+			date > 2005.01.01
+			AND = {
+				has_country_flag = ukr_modernize_sov_equipment_mig23_libya_offer_done_flag
+				has_country_flag = ukr_modernize_sov_equipment_mig23_sudan_offer_done_flag
+			}
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_mig25_offer_shown = {
+	date < 2006.01.01
+	OR = {
+		AND = {
+			country_exists = ARM
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_ARM_flag }
+		}
+		AND = {
+			country_exists = TRK
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_TRK_flag }
+		}
+		AND = {
+			country_exists = LBA
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_LBA_flag }
+		}
+	}
+	check_variable = { ukraine_has_mig25_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig25_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		OR = {
+			AND = {
+				country_exists = ARM
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_ARM_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_ARM_mig25_flag }
+			}
+			AND = {
+				country_exists = TRK
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_TRK_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_TRK_mig25_flag }
+			}
+			AND = {
+				country_exists = LBA
+				NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_LBA_flag }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_LBA_mig25_flag }
+			}
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig25_maintenance_required_tt
+		has_country_flag = UKR_storage_mig25_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig25pd_stock_12_tt
+		check_variable = { ukraine_has_mig25_stockpile > 11 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig25_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_scrap_done_flag }
+	check_variable = { UKR_storage_mig25_total > 0 }
+}
+
+ukr_modernize_sov_equipment_mig25_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_mig25_upkeep }
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_mig25_scrap_after_tt
+		OR = {
+			date > 2006.01.01
+			AND = {
+				OR = {
+					has_country_flag = ukr_modernize_sov_equipment_mig25_tried_ARM_flag
+					NOT = { country_exists = ARM }
+				}
+				OR = {
+					has_country_flag = ukr_modernize_sov_equipment_mig25_tried_TRK_flag
+					NOT = { country_exists = TRK }
+				}
+				OR = {
+					has_country_flag = ukr_modernize_sov_equipment_mig25_tried_LBA_flag
+					NOT = { country_exists = LBA }
+				}
+			}
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_su17_poland_offer_shown = {
+	OR = {
+		NOT = { has_country_flag = ukr_modernize_sov_equipment_su17_poland_offer_done_flag }
+		has_country_flag = UKR_storage_sale_retry_su17_poland_flag
+	}
+	date < 2009.01.01
+	country_exists = POL
+	check_variable = { ukraine_has_su17_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_su17_poland_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_su17_poland_flag }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17_maintenance_required_tt
+		has_country_flag = UKR_storage_su17_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_su17_stock_12_tt
+		check_variable = { ukraine_has_su17_stockpile > 11 }
+	}
+}
+
+ukr_modernize_sov_equipment_su17_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_su17_scrap_done_flag }
+	check_variable = { ukraine_has_su17_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_su17_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_su17_upkeep }
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_su17_scrap_after_tt
+		OR = {
+			date > 2009.01.01
+			has_country_flag = ukr_modernize_sov_equipment_su17_poland_offer_done_flag
+		}
+	}
+}
+
+UKR_varyag_restore_yak38_shown = {
+	OR = {
+		has_decision = UKR_varyag_restore_yak38
+		AND = {
+			UKR_storage_can_prepare_carrier_aircraft = yes
+			OR = {
+				check_variable = { UKR_storage_yak38_total > 18 }
+				has_country_flag = UKR_storage_yak38_monuments_flag
+			}
+		}
+	}
+}
+
+UKR_varyag_restore_yak38_ready = {
+	NOT = { has_country_flag = UKR_storage_yak38_program_in_progress_flag }
+}
+
+UKR_varyag_restore_yak38_cost = {
+	check_variable = { var = treasury value = UKR_storage_yak38_program_price compare = greater_than_or_equals }
+}
+
+UKR_storage_yak38_monuments_shown = {
+	check_variable = { UKR_storage_yak38_total > 0 }
+}
+
+UKR_storage_yak38_monuments_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_yak38_program_idle_tt
+		NOT = { has_country_flag = UKR_storage_yak38_program_in_progress_flag }
+	}
+}
+
+UKR_storage_yak38_monuments_cost = {
+	has_political_power > 9.99
+	check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals }
+}
+
+UKR_storage_yak38_scrap_shown = {
+	check_variable = { UKR_storage_yak38_total > 0 }
+}
+
+UKR_storage_yak38_scrap_ready = {
+	controls_state = 669
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_yak38_program_idle_tt
+		NOT = { has_country_flag = UKR_storage_yak38_program_in_progress_flag }
+	}
+}
+
+UKR_storage_scrap_carrier_aircraft_shown = {
+	UKR_storage_has_carrier_aircraft = yes
+}
+
+UKR_storage_scrap_carrier_aircraft_ready = {
+	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
+}
+
+UKR_storage_exchange_carrier_aircraft_shown = {
+	UKR_storage_has_carrier_aircraft = yes
+}
+
+UKR_storage_exchange_carrier_aircraft_ready = {
+	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
+	varyag_russian_supply_available = yes
+}
+
+UKR_storage_sell_carrier_aircraft_to_china_shown = {
+	UKR_storage_has_carrier_aircraft = yes
+	UKR_storage_carrier_aircraft_chinese_buyer = yes
+	OR = {
+		NOT = { has_country_flag = UKR_storage_sell_carrier_aircraft_to_china_done_flag }
+		has_country_flag = UKR_storage_sale_retry_carrier_china_flag
+	}
+}
+
+UKR_storage_sell_carrier_aircraft_to_china_ready = {
+	country_exists = CHI
+	NOT = { has_war_with = CHI }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_cooldown_tt
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_carrier_china_flag }
+	}
+}
+
+UKR_storage_prepare_carrier_aircraft_shown = {
+	OR = {
+		has_decision = UKR_storage_prepare_carrier_aircraft
+		AND = {
+			UKR_storage_has_carrier_aircraft = yes
+			UKR_storage_can_prepare_carrier_aircraft = yes
+		}
+	}
+}
+
+UKR_storage_prepare_carrier_aircraft_ready = {
+	UKR_storage_can_prepare_carrier_aircraft = yes
+	NOT = { has_active_mission = UKR_storage_sale_chi_carrier }
+}
+
+UKR_storage_prepare_carrier_aircraft_cost = {
+	check_variable = { var = treasury value = 0.02 compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_mig27_upkeep_shown = {
+	check_variable = { ukraine_has_mig27_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig27_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig27_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mig27_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mig27_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mig27_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_interest_shown = {
+	check_variable = { ukraine_has_mig27_stockpile > 0 }
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_done_flag }
+	date < 2008.01.01
+	country_exists = SRI
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_interest_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig27_stock_6_tt
+		check_variable = { ukraine_has_mig27_stockpile > 5 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_contract_shown = {
+	has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_done_flag
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_flag }
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_offer_pending_flag }
+	date < 2008.01.01
+	country_exists = SRI
+	check_variable = { ukraine_has_mig23_stockpile > 0 }
+	check_variable = { ukraine_has_mig27_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_contract_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_opinion_tt
+		SRI = { has_opinion = { target = ROOT value > 14 } }
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_influence_tt
+		SRI = { UKR_storage_influence_3 = yes }
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig27_stock_6_tt
+		check_variable = { ukraine_has_mig27_stockpile > 5 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_shown = {
+	has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_flag
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag }
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig27_maintenance_required_tt
+		has_country_flag = UKR_storage_mig27_kept_flag
+	}
+	controls_state = 700 # Lviv
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_stock_tt
+		check_variable = { ukraine_has_mig27_stockpile > 5 }
+		check_variable = { ukraine_has_mig23_stockpile > 0 }
+	}
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_cost = {
+	check_variable = { treasury > 0.05 }
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_shown = {
+	has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_done_flag }
+}
+
+ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_ready = {
+	country_exists = SRI
+	NOT = { has_war_with = SRI }
+}
+
+ukr_modernize_sov_equipment_mig27_restoration_shown = {
+	has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag
+	check_variable = { ukraine_has_mig27_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mig27_restoration_ready = {
+	controls_state = 700 # Lviv
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mig27_maintenance_required_tt
+		has_country_flag = UKR_storage_mig27_kept_flag
+	}
+}
+
+ukr_modernize_sov_equipment_mig27_restoration_cost = {
+	check_variable = { treasury > 0.1 }
+}
+
+ukr_modernize_sov_equipment_s75_offer_shown = {
+	date < 2009.01.01
+	UKR_s75_regiment_left = yes
+	OR = {
+		country_exists = EGY
+		country_exists = LBA
+		country_exists = ARM
+		country_exists = AZE
+		country_exists = GEO
+	}
+}
+
+ukr_modernize_sov_equipment_s75_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		OR = {
+			AND = {
+				country_exists = EGY
+				NOT = { has_active_mission = UKR_storage_sale_egy_s75 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_EGY_s75_flag }
+			}
+			AND = {
+				country_exists = LBA
+				NOT = { has_active_mission = UKR_storage_sale_lba_s75 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_LBA_s75_flag }
+			}
+			AND = {
+				country_exists = ARM
+				NOT = { has_active_mission = UKR_storage_sale_arm_s75 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_ARM_s75_flag }
+			}
+			AND = {
+				country_exists = AZE
+				NOT = { has_active_mission = UKR_storage_sale_aze_s75 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_AZE_s75_flag }
+			}
+			AND = {
+				country_exists = GEO
+				NOT = { has_active_mission = UKR_storage_sale_geo_s75 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_GEO_s75_flag }
+			}
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_s75_scrap_shown = {
+	UKR_s75_regiment_left = yes
+}
+
+ukr_modernize_sov_equipment_s75_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+}
+
+ukr_modernize_sov_equipment_s200_fate_shown = {
+	date < 2005.01.01
+	check_variable = { ukraine_s200_on_duty > 0 }
+	NOT = { has_country_flag = UKR_s200_fate_done_flag }
+}
+
+ukr_modernize_sov_equipment_s200_fate_ready = {
+	date > 2001.01.01
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_s200_upkeep_shown = {
+	check_variable = { ukraine_has_s200_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_s200_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s200_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_s200_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_s200_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_s200_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_s200_poland_offer_shown = {
+	date < 2012.01.01
+	check_variable = { ukraine_has_s200_stockpile > 0 }
+	country_exists = POL
+}
+
+ukr_modernize_sov_equipment_s200_poland_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s200_maintenance_required_tt
+		has_country_flag = UKR_storage_s200_kept_flag
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_s200_missiles_24_tt
+		check_variable = { UKR_s200_missiles > 23 }
+	}
+	has_war = no
+	POL = { NOT = { has_war_with = ROOT } }
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		NOT = { has_active_mission = UKR_storage_sale_pol_s200 }
+		NOT = { has_country_flag = UKR_storage_sale_cooldown_POL_s200_flag }
+	}
+}
+
+ukr_modernize_sov_equipment_s200_reactivate_shown = {
+	check_variable = { ukraine_has_s200_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_s200_reactivate_ready = {
+	UKR_at_war_with_russia_or_proxies = yes
+	custom_trigger_tooltip = {
+		tooltip = UKR_s200_missiles_24_tt
+		check_variable = { UKR_s200_missiles > 23 }
+	}
+}
+
+ukr_modernize_sov_equipment_s200_reactivate_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_s200_missiles_shown = {
+	check_variable = { UKR_s200_missiles > 0 }
+}
+
+ukr_modernize_sov_equipment_s200_missiles_ready = {
+	UKR_at_war_with_russia_or_proxies = yes
+	custom_trigger_tooltip = {
+		tooltip = UKR_s200_missiles_12_tt
+		check_variable = { UKR_s200_missiles > 11 }
+	}
+}
+
+ukr_modernize_sov_equipment_s200_missiles_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_s125_upkeep_shown = {
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_s125_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s125_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_s125_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_s125_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_s125_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+UKR_modernize_s125_spaa_shown = {
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+	date > 2010.01.01
+	date < 2020.06.01
+}
+
+UKR_modernize_s125_spaa_ready = {
+	date > 2010.01.01
+	date < 2015.06.01
+	controls_state = 698 #Kyiv
+	has_army_experience > 8
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s125_maintenance_required_tt
+		has_country_flag = UKR_storage_s125_kept_flag
+	}
+}
+
+UKR_modernize_s125_spaa_cost = {
+	check_variable = { var = treasury value = UKR_storage_s125_development_cost compare = greater_than_or_equals }
+}
+
+UKR_modernize_s125m_spaa_shown = {
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+	date > 2010.01.01
+	date < 2020.06.01
+}
+
+UKR_modernize_s125m_spaa_ready = {
+	date > 2010.01.01
+	date < 2015.06.01
+	controls_state = 698 #Kyiv
+	has_army_experience > 8
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s125_maintenance_required_tt
+		has_country_flag = UKR_storage_s125_kept_flag
+	}
+}
+
+UKR_modernize_s125m_spaa_cost = {
+	check_variable = { var = treasury value = UKR_storage_s125_development_cost compare = greater_than_or_equals }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_site_shown = {
+	UKR_at_war_with_russia_or_proxies = yes
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_site_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_battery_shown = {
+	UKR_at_war_with_russia_or_proxies = yes
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_battery_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_modernized_site_shown = {
+	UKR_at_war_with_russia_or_proxies = yes
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+	OR = {
+		has_country_flag = UKR_s125_pechora_2d_flag
+		has_country_flag = UKR_s125m_flag
+	}
+	has_country_flag = UKR_s125_form_chosen_flag
+	NOT = { has_country_flag = UKR_s125_form_mobile_flag }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_modernized_site_cost = {
+	check_variable = { treasury > 0.05 }
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_modernized_battery_shown = {
+	UKR_at_war_with_russia_or_proxies = yes
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+	OR = {
+		has_country_flag = UKR_s125_pechora_2d_flag
+		has_country_flag = UKR_s125m_flag
+	}
+	has_country_flag = UKR_s125_form_mobile_flag
+}
+
+ukr_modernize_sov_equipment_s125_reactivate_modernized_battery_cost = {
+	check_variable = { treasury > 0.05 }
+}
+
+ukr_modernize_sov_equipment_s125_offer_shown = {
+	date < 2012.01.01
+	check_variable = { ukraine_has_s125_stockpile > 0 }
+	OR = {
+		country_exists = EGY
+		country_exists = LBA
+		country_exists = ARM
+		country_exists = AZE
+		country_exists = GEO
+	}
+}
+
+ukr_modernize_sov_equipment_s125_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		OR = {
+			AND = {
+				country_exists = EGY
+				NOT = { has_active_mission = UKR_storage_sale_egy_s125 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_EGY_s125_flag }
+			}
+			AND = {
+				country_exists = LBA
+				NOT = { has_active_mission = UKR_storage_sale_lba_s125 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_LBA_s125_flag }
+			}
+			AND = {
+				country_exists = ARM
+				NOT = { has_active_mission = UKR_storage_sale_arm_s125 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_ARM_s125_flag }
+			}
+			AND = {
+				country_exists = AZE
+				NOT = { has_active_mission = UKR_storage_sale_aze_s125 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_AZE_s125_flag }
+			}
+			AND = {
+				country_exists = GEO
+				NOT = { has_active_mission = UKR_storage_sale_geo_s125 }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_GEO_s125_flag }
+			}
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_s125_maintenance_required_tt
+		has_country_flag = UKR_storage_s125_kept_flag
+	}
+	NOT = { has_war_with = SOV }
+}
+
+ukr_modernize_sov_equipment_old_gear_offer_shown = {
+	OR = {
+		UKR_storage_has_old_vehicles = yes
+		UKR_storage_has_old_artillery = yes
+		UKR_storage_has_old_small_arms = yes
+		UKR_storage_has_old_support_weapons = yes
+	}
+	OR = {
+		country_exists = SUD
+		country_exists = ETH
+		AND = {
+			date > 2003.01.01
+			country_exists = USA
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_old_gear_offer_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_buyer_free_tt
+		OR = {
+			AND = {
+				country_exists = USA
+				NOT = { has_active_mission = UKR_storage_sale_usa_old_gear }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_USA_old_gear_flag }
+				OR = {
+					AND = {
+						date > 2004.01.01
+						country_exists = IRQ
+						IRQ = { NOT = { has_war_with = USA } }
+					}
+					AND = {
+						date > 2003.01.01
+						country_exists = AFG
+						AFG = { NOT = { has_war_with = USA } }
+					}
+				}
+			}
+			AND = {
+				country_exists = SUD
+				NOT = { has_active_mission = UKR_storage_sale_sud_old_gear }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_SUD_old_gear_flag }
+			}
+			AND = {
+				country_exists = ETH
+				NOT = { has_active_mission = UKR_storage_sale_eth_old_gear }
+				NOT = { has_country_flag = UKR_storage_sale_cooldown_ETH_old_gear_flag }
+			}
+		}
+	}
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_old_gear_offer_ready_tt
+		OR = {
+			UKR_storage_can_sell_brdm1 = yes
+			AND = {
+				UKR_storage_has_old_artillery = yes
+				UKR_storage_old_artillery_kept = yes
+			}
+			AND = {
+				UKR_storage_has_old_small_arms = yes
+				UKR_storage_old_small_arms_kept = yes
+			}
+			AND = {
+				UKR_storage_has_old_support_weapons = yes
+				UKR_storage_old_support_weapons_kept = yes
+			}
+		}
+	}
+}
+
+ukr_modernize_sov_equipment_brdm1_upkeep_shown = {
+	check_variable = { ukraine_has_brdm1_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_brdm1_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_brdm1_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_brdm1_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_brdm1_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_brdm1_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mtlb_upkeep_shown = {
+	check_variable = { ukraine_has_mtlb_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mtlb_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mtlb_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mtlb_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mtlb_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mtlb_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_mtlbu_upkeep_shown = {
+	check_variable = { ukraine_has_mtlbu_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mtlbu_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mtlbu_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mtlbu_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mtlbu_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mtlbu_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_brdm1_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_brdm1_scrap_done_flag }
+	check_variable = { ukraine_has_brdm1_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_brdm1_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+	NOT = { has_decision = ukr_modernize_sov_equipment_brdm1_upkeep }
+}
+
+ukr_modernize_sov_equipment_m46_upkeep_shown = {
+	check_variable = { ukraine_has_m46_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_m46_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_m46_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_m46_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_m46_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_m46_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_d1_upkeep_shown = {
+	check_variable = { ukraine_has_d1_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_d1_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_d1_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_d1_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_d1_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_d1_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_m30_upkeep_shown = {
+	check_variable = { ukraine_has_m30_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_m30_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_m30_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_m30_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_m30_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_m30_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_ml20_upkeep_shown = {
+	check_variable = { ukraine_has_ml20_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_ml20_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_ml20_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_ml20_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_ml20_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_ml20_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_shown = {
+	has_war = yes
+	UKR_storage_has_old_artillery = yes
+	UKR_storage_old_artillery_kept = yes
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_artillery_reactivation_neglected }
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_cost = {
+	check_variable = { treasury > 0.01 }
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_neglected_shown = {
+	has_war = yes
+	UKR_storage_has_old_artillery = yes
+	NOT = { UKR_storage_old_artillery_kept = yes }
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_neglected_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_artillery_reactivation }
+}
+
+ukr_modernize_sov_equipment_old_artillery_reactivation_neglected_cost = {
+	check_variable = { treasury > 0.02 }
+}
+
+ukr_modernize_sov_equipment_mosin_upkeep_shown = {
+	check_variable = { ukraine_has_mosin_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_mosin_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_mosin_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_mosin_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_mosin_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_mosin_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_sks_upkeep_shown = {
+	check_variable = { ukraine_has_sks_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_sks_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sks_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_sks_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_sks_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_sks_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_ak47_upkeep_shown = {
+	check_variable = { ukraine_has_ak47_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_ak47_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_ak47_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_ak47_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_ak47_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_ak47_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_old_small_arms_issue_shown = {
+	has_war = yes
+	UKR_storage_has_old_small_arms = yes
+	UKR_storage_old_small_arms_kept = yes
+}
+
+ukr_modernize_sov_equipment_old_small_arms_issue_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_small_arms_issue_neglected }
+}
+
+ukr_modernize_sov_equipment_old_small_arms_issue_neglected_shown = {
+	has_war = yes
+	UKR_storage_has_old_small_arms = yes
+	NOT = { UKR_storage_old_small_arms_kept = yes }
+}
+
+ukr_modernize_sov_equipment_old_small_arms_issue_neglected_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_small_arms_issue }
+}
+
+ukr_modernize_sov_equipment_spg9_upkeep_shown = {
+	check_variable = { ukraine_has_spg9_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_spg9_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_spg9_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_spg9_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_spg9_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_spg9_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_strela2_upkeep_shown = {
+	check_variable = { ukraine_has_strela2_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_strela2_upkeep_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_strela2_maintenance_due_tt
+		NOT = { has_country_flag = UKR_storage_strela2_kept_flag }
+	}
+	has_war = no
+}
+
+ukr_modernize_sov_equipment_strela2_upkeep_cost = {
+	set_temp_variable = { ukr_storage_upkeep_bill = UKR_storage_strela2_upkeep_price }
+	UKR_storage_upkeep_can_pay = yes
+}
+
+ukr_modernize_sov_equipment_old_support_weapons_issue_shown = {
+	has_war = yes
+	UKR_storage_has_old_support_weapons = yes
+	UKR_storage_old_support_weapons_kept = yes
+}
+
+ukr_modernize_sov_equipment_old_support_weapons_issue_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_support_weapons_issue_neglected }
+}
+
+ukr_modernize_sov_equipment_old_support_weapons_issue_neglected_shown = {
+	has_war = yes
+	UKR_storage_has_old_support_weapons = yes
+	NOT = { UKR_storage_old_support_weapons_kept = yes }
+}
+
+ukr_modernize_sov_equipment_old_support_weapons_issue_neglected_ready = {
+	NOT = { has_decision = ukr_modernize_sov_equipment_old_support_weapons_issue }
+}
+
+ukr_modernize_sov_equipment_gtmu_tractors_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_gtmu_tractors_done_flag }
+	check_variable = { ukraine_has_gtmu_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_gtmu_tractors_ready = {
+	controls_state = 696 # Kharkiv
+}
+
+ukr_modernize_sov_equipment_gtmu_tractors_cost = {
+	check_variable = { treasury > 0.06 }
+}
+
+ukr_modernize_sov_equipment_gtmu_scrap_shown = {
+	NOT = { has_country_flag = ukr_modernize_sov_equipment_gtmu_scrap_done_flag }
+	check_variable = { ukraine_has_gtmu_stockpile > 0 }
+}
+
+ukr_modernize_sov_equipment_gtmu_scrap_ready = {
+	custom_trigger_tooltip = {
+		tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+		check_variable = { treasury > 0.02 }
+	}
+}
+
+UKR_storage_sale_lite_ind_btr50_shown = {
+	has_active_mission = UKR_storage_sale_ind_btr50
+}
+
+UKR_storage_sale_lite_ind_btr50_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_btr50_small_ind_tt
+		IND = { UKR_storage_buyer_btr50_13 = yes }
+	}
+}
+
+UKR_storage_sale_lite_egy_btr50_shown = {
+	has_active_mission = UKR_storage_sale_egy_btr50
+}
+
+UKR_storage_sale_lite_egy_btr50_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_btr50_small_tt
+		EGY = { UKR_storage_buyer_btr50_13 = yes }
+	}
+}
+
+UKR_storage_sale_lite_hun_btr50_shown = {
+	has_active_mission = UKR_storage_sale_hun_btr50
+}
+
+UKR_storage_sale_lite_hun_btr50_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_btr50_small_tt
+		HUN = { UKR_storage_buyer_btr50_13 = yes }
+	}
+}
+
+UKR_storage_sale_lite_rom_btr50_shown = {
+	has_active_mission = UKR_storage_sale_rom_btr50
+}
+
+UKR_storage_sale_lite_rom_btr50_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_btr50_small_tt
+		ROM = { UKR_storage_buyer_btr50_13 = yes }
+	}
+}
+
+UKR_storage_sale_lite_cro_btr50_shown = {
+	has_active_mission = UKR_storage_sale_cro_btr50
+}
+
+UKR_storage_sale_lite_cro_btr50_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_btr50_small_tt
+		CRO = { UKR_storage_buyer_btr50_13 = yes }
+	}
+}
+
+UKR_storage_sale_lite_pol_su17_shown = {
+	has_active_mission = UKR_storage_sale_pol_su17
+}
+
+UKR_storage_sale_lite_pol_su17_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_su17_small_tt
+		POL = { UKR_storage_buyer_su17_12 = yes }
+	}
+}
+
+UKR_storage_sale_lite_geo_2k11_shown = {
+	has_active_mission = UKR_storage_sale_geo_2k11
+}
+
+UKR_storage_sale_lite_geo_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		GEO = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_aze_2k11_shown = {
+	has_active_mission = UKR_storage_sale_aze_2k11
+}
+
+UKR_storage_sale_lite_aze_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		AZE = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_arm_2k11_shown = {
+	has_active_mission = UKR_storage_sale_arm_2k11
+}
+
+UKR_storage_sale_lite_arm_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		ARM = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_kaz_2k11_shown = {
+	has_active_mission = UKR_storage_sale_kaz_2k11
+}
+
+UKR_storage_sale_lite_kaz_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		KAZ = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_trk_2k11_shown = {
+	has_active_mission = UKR_storage_sale_trk_2k11
+}
+
+UKR_storage_sale_lite_trk_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		TRK = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_kyr_2k11_shown = {
+	has_active_mission = UKR_storage_sale_kyr_2k11
+}
+
+UKR_storage_sale_lite_kyr_2k11_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_2k11_small_tt
+		KYR = { UKR_storage_buyer_2k11_27 = yes }
+	}
+}
+
+UKR_storage_sale_lite_geo_9p148_shown = {
+	has_active_mission = UKR_storage_sale_geo_9p148
+}
+
+UKR_storage_sale_lite_geo_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		GEO = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_aze_9p148_shown = {
+	has_active_mission = UKR_storage_sale_aze_9p148
+}
+
+UKR_storage_sale_lite_aze_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		AZE = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_arm_9p148_shown = {
+	has_active_mission = UKR_storage_sale_arm_9p148
+}
+
+UKR_storage_sale_lite_arm_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		ARM = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_sud_9p148_shown = {
+	has_active_mission = UKR_storage_sale_sud_9p148
+}
+
+UKR_storage_sale_lite_sud_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		SUD = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_eth_9p148_shown = {
+	has_active_mission = UKR_storage_sale_eth_9p148
+}
+
+UKR_storage_sale_lite_eth_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		ETH = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_cha_9p148_shown = {
+	has_active_mission = UKR_storage_sale_cha_9p148
+}
+
+UKR_storage_sale_lite_cha_9p148_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_9p148_small_tt
+		CHA = { UKR_storage_buyer_9p148_9 = yes }
+	}
+}
+
+UKR_storage_sale_lite_lba_mig23_shown = {
+	has_active_mission = UKR_storage_sale_lba_mig23
+}
+
+UKR_storage_sale_lite_lba_mig23_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_mig23_small_tt
+		LBA = { UKR_storage_buyer_mig23_12 = yes }
+	}
+}
+
+UKR_storage_sale_lite_sud_mig23_shown = {
+	has_active_mission = UKR_storage_sale_sud_mig23
+}
+
+UKR_storage_sale_lite_sud_mig23_ready = {
+	custom_trigger_tooltip = {
+		tooltip = UKR_storage_sale_req_mig23_small_tt
+		SUD = { UKR_storage_buyer_mig23_12 = yes }
+	}
+}
+
+# Rocket artillery plants: control of the city and the state, enough military factories, designs waiting for a production line
+UKR_mrls_site_kharkiv_controlled = {
+	controls_province = 9556 #Kharkiv
+	696 = {
+		is_owned_and_controlled_by = UKR
+	}
+}
+
+UKR_mrls_site_kharkiv_has_factory = {
+	696 = {
+		arms_factory > 1
+	}
+}
+
+UKR_mrls_site_kharkiv_pending = {
+	OR = {
+		has_country_flag = UKR_mrls_plant_bm21k_flag
+		has_country_flag = UKR_mrls_plant_bm21u_flag
+		has_country_flag = UKR_mrls_plant_verba_flag
+	}
+}
+
+UKR_mrls_site_shepetivka_controlled = {
+	controls_province = 3511 #Shepetivka
+	1250 = {
+		is_owned_and_controlled_by = UKR
+	}
+}
+
+UKR_mrls_site_shepetivka_has_factory = {
+	1250 = {
+		arms_factory > 0
+	}
+}
+
+UKR_mrls_site_shepetivka_pending = {
+	OR = {
+		has_country_flag = UKR_mrls_plant_bastion01_flag
+		has_country_flag = UKR_mrls_plant_bastion02_flag
+		has_country_flag = UKR_mrls_plant_bastion03_flag
+		has_country_flag = UKR_mrls_plant_berest_flag
+		has_country_flag = UKR_mrls_plant_bureviy_flag
+		has_country_flag = UKR_mrls_plant_bastion04_flag
+	}
+}
+
+UKR_mrls_site_dnipro_controlled = {
+	controls_province = 11437 #Dnipro
+	1087 = {
+		is_owned_and_controlled_by = UKR
+	}
+}
+
+UKR_mrls_site_dnipro_has_factory = {
+	1087 = {
+		arms_factory > 1
+	}
+}
+
+UKR_mrls_site_dnipro_pending = {
+	has_country_flag = UKR_mrls_plant_typhoon4_flag
+}
+
+UKR_mrls_site_kyiv_controlled = {
+	controls_province = 525 #Kyiv
+	698 = {
+		is_owned_and_controlled_by = UKR
+	}
+}
+
+UKR_mrls_site_kyiv_has_factory = {
+	698 = {
+		arms_factory > 2
+	}
+}
+
+UKR_mrls_site_kyiv_pending = {
+	OR = {
+		has_country_flag = UKR_mrls_plant_vilkha_flag
+		has_country_flag = UKR_mrls_plant_vilkha_m_flag
+		has_country_flag = UKR_mrls_plant_vilkha_kraz_flag
+		has_country_flag = UKR_mrls_plant_vilkha_tatra_flag
 	}
 }
