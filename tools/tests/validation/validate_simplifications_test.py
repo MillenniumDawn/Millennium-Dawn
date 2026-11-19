@@ -20,10 +20,15 @@ from validate_simplifications import (
     _find_duplicate_or_clauses,
     _find_empty_trigger_blocks,
     _find_government_match,
+    _find_has_idea_chains,
     _find_mergeable,
     _find_random_controlled_shortcut,
     _find_scope_expansion,
+    _find_this_wrappers,
+    _find_threshold_ladders,
     _find_two_bucket_random,
+    _idea_ladder_findings,
+    _idea_variable_groups,
     _iter_direct_assignments,
     _scan_composite,
     _scan_decision_file,
@@ -802,6 +807,218 @@ def test_composite_reports_a_duplicate_or_clause_outside_the_effect_dirs():
     findings = _scan_composite(text, "common/ai_strategy/test.txt")
     assert [line for _message, line in findings] == [2]
     assert "OR repeats the clause `tag = ITA`" in findings[0][0]
+
+
+# --- no-op THIS wrappers ---------------------------------------------------
+
+# case: (text, lines flagged)
+_THIS_WRAPPER_CASES = {
+    "plain wrapper": (
+        "FROM = {\n\tTHIS = { any_neighbor_country = { has_war = yes } }\n}\n",
+        [2],
+    ),
+    "body reads PREV": (
+        "FROM = {\n\tTHIS = { is_in_faction_with = PREV }\n}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _THIS_WRAPPER_CASES.values(), ids=_THIS_WRAPPER_CASES.keys()
+)
+def test_this_wrapper(text, expected):
+    assert _find_this_wrappers(_script(text)) == expected
+
+
+def test_composite_reports_a_this_wrapper_outside_the_effect_dirs():
+    text = "action = {\n\tcomplete_effect = { THIS = { add_stability = 0.1 } }\n}\n"
+    findings = _scan_composite(text, "common/scripted_diplomatic_actions/t.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "`THIS = { ... }` runs in the scope it is already in" in findings[0][0]
+
+
+# --- threshold if-ladders --------------------------------------------------
+
+
+def _step(test, add="total = 1", effect="add_to_temp_variable"):
+    return (
+        f"if = {{ limit = {{ check_variable = {{ {test} }} }} "
+        f"{effect} = {{ {add} }} }}\n"
+    )
+
+
+# case: (text, (line, steps, tested variable, target) of each ladder flagged)
+_THRESHOLD_LADDER_CASES = {
+    "three steps in both syntaxes": (
+        _step("score > 10")
+        + _step("var = score value = 20 compare = greater_than_or_equals")
+        + _step("score > 30", "var = total value = 2"),
+        [(1, 3, "score", "total")],
+    ),
+    "persistent variable": (
+        "".join(_step(f"score > {n}", effect="add_to_variable") for n in (10, 20, 30)),
+        [(1, 3, "score", "total")],
+    ),
+    "two steps": (_step("score > 10") + _step("score > 20"), []),
+    "mixed variables": (
+        _step("score > 10") + _step("score > 20") + _step("other > 30"),
+        [],
+    ),
+    "else_if chain": (
+        _step("score > 10")
+        + _step("score > 20")
+        + _step("score > 30")
+        + "else_if = { }",
+        [],
+    ),
+    "else after the last step": (
+        _step("score > 10") + _step("score > 20") + _step("score > 30") + "else = { }",
+        [],
+    ),
+    "adds to the tested variable": (
+        "".join(_step(f"score > {n}", "score = 1") for n in (10, 20, 30)),
+        [],
+    ),
+    "compared with a variable": (
+        "".join(_step(f"score > limit_{n}") for n in (1, 2, 3)),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    _THRESHOLD_LADDER_CASES.values(),
+    ids=_THRESHOLD_LADDER_CASES.keys(),
+)
+def test_threshold_ladder(text, expected):
+    assert _find_threshold_ladders(_script(text)) == expected
+
+
+def test_composite_reports_a_threshold_ladder_in_the_effect_dirs():
+    steps = "".join(_step(f"score > {n}") for n in (10, 20, 30))
+    findings = _scan_composite(
+        f"my_effect = {{\n{steps}}}\n", "common/scripted_effects/t.txt"
+    )
+    assert [line for _message, line in findings] == [2]
+    assert "3 adjacent `if` blocks compare `score` with constants" in findings[0][0]
+    assert "value = score <comparator> = N multiply = V }`" in findings[0][0]
+
+
+# --- has_idea ladders over ideas that already set a variable -----------------
+
+
+def _ideas(*on_adds):
+    ideas = "".join(
+        f"\t\tlevel_{n} = {{ {on_add} }}\n" for n, on_add in enumerate(on_adds, 1)
+    )
+    return f"ideas = {{\n\tlevel_law = {{\n\t\tlaw = yes\n{ideas}\t}}\n}}\n"
+
+
+def _ladder(*bodies):
+    branches = "".join(
+        f"{'if' if n == 1 else 'else_if'} = "
+        f"{{ limit = {{ has_idea = level_{n} }} {body} }}\n"
+        for n, body in enumerate(bodies, 1)
+    )
+    return f"my_effect = {{\n{branches}}}\n"
+
+
+_SETS_TIER = (
+    "on_add = { set_variable = { tier = 1 } }",
+    "on_add = { custom_effect_tooltip = TT set_variable = { var = tier value = 2 } }",
+    "on_add = { set_variable = { tier = 3 } }",
+)
+_ADDS_BONUS = tuple(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 3))
+_EVERY_EFFECT = (
+    _ADDS_BONUS[0],
+    "add_to_variable = { bonus = 2 }",
+    "set_temp_variable = { bonus = 3 } set_variable = { other = 1 }",
+)
+
+# case: (idea file, effect file, lines flagged)
+_IDEA_LADDER_CASES = {
+    "ladder over ideas that set a variable": (
+        _ideas(*_SETS_TIER),
+        _ladder(*_ADDS_BONUS),
+        [2],
+    ),
+    "values on no line through the levels": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 2, 4))),
+        [],
+    ),
+    "every idea sets the same level": (
+        _ideas(*[_SETS_TIER[0]] * 3),
+        _ladder(*_ADDS_BONUS),
+        [],
+    ),
+    "first and last ideas share a level": (
+        _ideas(
+            *(f"on_add = {{ set_variable = {{ tier = {n} }} }}" for n in (1, 2, 3, 1))
+        ),
+        _ladder(*(f"add_to_temp_variable = {{ bonus = {n} }}" for n in (1, 5, 7, 1))),
+        [],
+    ),
+    "values from a named constant": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"set_temp_variable = {{ rate = @factor_{n} }}" for n in (1, 2, 3))),
+        [],
+    ),
+    "branch the parser cannot read": (
+        _ideas(*_SETS_TIER),
+        _ladder(
+            *(f"add_to_variable = {{ bonus = {n} tooltip = tt }}" for n in (1, 2, 3))
+        ),
+        [],
+    ),
+    "branches mix effect kinds": (_ideas(*_SETS_TIER), _ladder(*_EVERY_EFFECT), []),
+    "ideas set no variable": (_ideas("", "", ""), _ladder(*_ADDS_BONUS), []),
+    "one idea sets no variable": (
+        _ideas(*_SETS_TIER[:2], ""),
+        _ladder(*_ADDS_BONUS),
+        [],
+    ),
+    "ladder writes that variable": (
+        _ideas(*_SETS_TIER),
+        _ladder(*(f"set_variable = {{ tier = {n} }}" for n in (1, 2, 3))),
+        [],
+    ),
+    "branch does more than set a value": (
+        _ideas(*_SETS_TIER),
+        _ladder(_ADDS_BONUS[0], "add_stability = 0.1", _ADDS_BONUS[2]),
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "ideas, effect, expected",
+    _IDEA_LADDER_CASES.values(),
+    ids=_IDEA_LADDER_CASES.keys(),
+)
+def test_idea_ladder(ideas, effect, expected):
+    chains = _find_has_idea_chains(_script(effect))
+    groups = _idea_variable_groups(_script(ideas))
+    findings = _idea_ladder_findings(chains, groups)
+    assert [line for _message, line in findings] == expected
+
+
+def test_validator_reports_a_has_idea_ladder_against_the_idea_files(tmp_path):
+    write_under(tmp_path, "common/ideas/t.txt", _ideas(*_SETS_TIER))
+    write_under(tmp_path, "common/scripted_effects/t.txt", _ladder(*_ADDS_BONUS))
+
+    validator = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [(i.file, i.line, i.severity) for i in validator._issues] == [
+        ("common/scripted_effects/t.txt", 2, "warning")
+    ]
+    assert (
+        "3 `has_idea` branches over `level_law` ideas only add or set a value, but "
+        "each of those ideas already sets `tier` in `on_add`; read `tier` instead"
+    ) == validator._issues[0].message
 
 
 # --- direct child iteration ------------------------------------------------

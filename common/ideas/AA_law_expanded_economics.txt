@@ -13,31 +13,17 @@ ideas = {
 			cost = 100
 			removal_cost = -1
 			level = 1
+			# AI moves one level at a time: a three-level jump overshot into the opposite problem every year
 			ai_will_do = {
 				base = 0
 				modifier = {
-					# Severe unemployment — expanding worker demand absorbs the surplus
-					add = 12
-					check_variable = { total_unemployed_percentage_display > 0.15 }
+					add = 5
+					has_idea = comprehensive_regulations
 				}
 				modifier = {
-					# High unemployment — additional incentive stacks with the severe bonus
-					add = 8
-					check_variable = { total_unemployed_percentage_display > 0.10 }
-				}
-				modifier = {
-					# Worker-protective ideologies are more willing at moderate unemployment
-					add = 3
-					OR = {
-						has_government = communism
-						has_government = neutrality
-					}
-				}
-				modifier = {
-					# Wealthy democracies can afford the worker-requirement burden
-					add = 2
-					has_government = democratic
-					check_variable = { gdp_per_capita > 30.000 }
+					add = 20
+					has_idea = strong_regulations
+					check_variable = { total_unemployed_percentage_display > labor_law_tighten_unemployment }
 				}
 				modifier = {
 					# Nationalist and autocratic regimes resist heavy employment mandates
@@ -46,11 +32,6 @@ ideas = {
 						has_government = nationalist
 						has_autocratic_government = yes
 					}
-				}
-				modifier = {
-					# Tight labor market — forcing higher worker counts would be counterproductive
-					factor = 0
-					check_variable = { total_unemployed_percentage_display < 0.04 }
 				}
 			}
 		}
@@ -65,36 +46,24 @@ ideas = {
 			removal_cost = -1
 			level = 2
 			ai_will_do = {
-				base = 1
+				base = 0
 				modifier = {
-					# Elevated unemployment — moderate regulation helps without over-committing
-					add = 8
-					check_variable = { total_unemployed_percentage_display > 0.08 }
+					add = 5
+					has_idea = strong_regulations
 				}
 				modifier = {
-					# Above-threshold unemployment — additional nudge
-					add = 4
-					check_variable = { total_unemployed_percentage_display > 0.06 }
+					add = 20
+					has_idea = standard_regulations
+					check_variable = { total_unemployed_percentage_display > labor_law_tighten_unemployment }
 				}
 				modifier = {
-					add = 3
-					has_government = democratic
-				}
-				modifier = {
-					add = 2
-					OR = {
-						has_government = communism
-						has_government = neutrality
-					}
+					add = 20
+					has_idea = comprehensive_regulations
+					check_variable = { total_unemployed_percentage_display < 0.001 }
 				}
 				modifier = {
 					factor = 0.3
 					has_autocratic_government = yes
-				}
-				modifier = {
-					# Near full employment — no reason to increase worker requirements
-					factor = 0
-					check_variable = { total_unemployed_percentage_display < 0.03 }
 				}
 			}
 		}
@@ -103,7 +72,23 @@ ideas = {
 			cost = 50
 			removal_cost = -1
 			level = 3
-			ai_will_do = { base = 5 }
+			ai_will_do = {
+				base = 0
+				modifier = {
+					add = 5
+					has_idea = standard_regulations
+				}
+				modifier = {
+					add = 20
+					has_idea = light_regulations
+					check_variable = { total_unemployed_percentage_display > labor_law_tighten_unemployment }
+				}
+				modifier = {
+					add = 20
+					has_idea = strong_regulations
+					check_variable = { total_unemployed_percentage_display < 0.001 }
+				}
+			}
 		}
 
 		light_regulations = {
@@ -117,33 +102,29 @@ ideas = {
 			removal_cost = -1
 			level = 4
 			ai_will_do = {
-				base = 1
+				base = 0
 				modifier = {
-					# Worker shortage — easing requirements lets industry fill open slots
-					add = 10
-					check_variable = { total_unemployed_percentage_display < 0.02 }
+					add = 5
+					has_idea = light_regulations
 				}
 				modifier = {
-					# Near full employment — additional nudge
-					add = 6
-					check_variable = { total_unemployed_percentage_display < 0.04 }
+					add = 20
+					has_idea = minimal_regulations
+					check_variable = { total_unemployed_percentage_display > labor_law_tighten_unemployment }
 				}
 				modifier = {
-					add = 2
-					has_government = nationalist
+					add = 20
+					has_idea = standard_regulations
+					check_variable = { total_unemployed_percentage_display < 0.001 }
 				}
 				modifier = {
-					# Worker-protective ideologies resist reducing employment requirements
+					# Worker-protective ideologies resist reducing employment requirements, but may tighten up from Minimal
 					factor = 0
+					has_idea = standard_regulations
 					OR = {
 						has_government = communism
 						has_government = neutrality
 					}
-				}
-				modifier = {
-					# High unemployment — reducing worker requirements would worsen joblessness
-					factor = 0
-					check_variable = { total_unemployed_percentage_display > 0.10 }
 				}
 			}
 		}
@@ -161,20 +142,13 @@ ideas = {
 			ai_will_do = {
 				base = 0
 				modifier = {
-					# Severe worker shortage — maximum deregulation to fill every open position
-					add = 12
-					check_variable = { total_unemployed_percentage_display < 0.01 }
-				}
-				modifier = {
-					# Tight labor — stacks with the shortage bonus
-					add = 8
-					check_variable = { total_unemployed_percentage_display < 0.02 }
-				}
-				modifier = {
-					# Wartime mobilization demands every available worker
 					add = 5
-					has_war = yes
-					check_variable = { total_unemployed_percentage_display < 0.04 }
+					has_idea = minimal_regulations
+				}
+				modifier = {
+					add = 20
+					has_idea = light_regulations
+					check_variable = { total_unemployed_percentage_display < 0.001 }
 				}
 				modifier = {
 					# Democracies and neutrality governments maintain worker protections
@@ -183,11 +157,6 @@ ideas = {
 						has_government = democratic
 						has_government = neutrality
 					}
-				}
-				modifier = {
-					# Never slash worker protections while unemployment is already high
-					factor = 0
-					check_variable = { total_unemployed_percentage_display > 0.06 }
 				}
 			}
 		}

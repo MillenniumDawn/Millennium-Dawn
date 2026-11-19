@@ -484,10 +484,20 @@ ai_race_capture_power_sample = {
 	}
 }
 
-# Prospective countries can sample owners without enrollment or operating demand.
+# Prospective countries can sample owners without enrollment or operating demand. A participant's
+# energy was already refreshed by this month's work. Only its load sharing, which the planner does
+# not read, can be a pass older.
 ai_race_refresh_planning_sample = {
 	if = {
-		limit = { has_country_flag = energy_state_bases_initialized }
+		limit = {
+			has_country_flag = energy_state_bases_initialized
+			NOT = {
+				AND = {
+					check_variable = { ai_race_participants_sampled = 1 }
+					is_in_array = { global.ai_race_participants = THIS }
+				}
+			}
+		}
 		calculate_energy_use = yes
 	}
 	ai_race_refresh_capacity_sample = yes
@@ -1317,6 +1327,7 @@ ai_race_run_monthly_work = {
 			ai_race_refresh_gui = yes
 		}
 	}
+	set_temp_variable = { ai_race_participants_sampled = 1 }
 	ai_race_ai_refresh_plans = yes
 	if = {
 		limit = { ai_race_full_mode = yes }
@@ -1615,43 +1626,72 @@ ai_race_ai_cache_construction = {
 	set_variable = { ai_race_ai_slots_composites = 0 }
 	set_variable = { ai_race_ai_slots_refinery = 0 }
 	set_variable = { ai_race_ai_slots_facility = 0 }
+	# Each slot query stops once a state has shown one; the flag is all the planner reads.
 	for_each_scope_loop = {
 		array = owned_controlled_states
 		if = {
-			limit = { free_building_slots = { building = industrial_complex size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_civs = 0 }
+				free_building_slots = { building = industrial_complex size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_civs = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = internet_station size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_network = 0 }
+				free_building_slots = { building = internet_station size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_network = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = fossil_powerplant size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_fossil = 0 }
+				free_building_slots = { building = fossil_powerplant size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_fossil = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_renewable = 0 }
+				free_building_slots = { building = renewable_energy_infra size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_renewable = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = nuclear_reactor size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_nuclear = 0 }
+				free_building_slots = { building = nuclear_reactor size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_nuclear = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = microchip_plant size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_microchips = 0 }
+				free_building_slots = { building = microchip_plant size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_microchips = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = composite_plant size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_composites = 0 }
+				free_building_slots = { building = composite_plant size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_composites = 1 }
 		}
 		if = {
-			limit = { free_building_slots = { building = synthetic_refinery size > 0 } }
+			limit = {
+				check_variable = { PREV.ai_race_ai_slots_refinery = 0 }
+				free_building_slots = { building = synthetic_refinery size > 0 }
+			}
 			set_variable = { PREV.ai_race_ai_slots_refinery = 1 }
 		}
 	}
-	# The native facility query requires the planning country as ROOT.
-	country_event = ai_race.12
+	# The native facility query requires the planning country as ROOT. Only a country without a
+	# facility reads the result (ai_race_ai_facility_needed).
+	if = {
+		limit = { check_variable = { ai_race_ai_facilities = 0 } }
+		country_event = ai_race.12
+	}
 	set_variable = { ai_race_ai_network_workers = { value = 12 multiply = { value = 1 add = modifier@buildings_worker_requirement_modifier add = modifier@infrastructure_workforce_requirement_modifier max = 0.1 } } }
 	set_variable = { ai_race_ai_fossil_workers = { value = 7.5 multiply = { value = 1 add = modifier@buildings_worker_requirement_modifier add = modifier@infrastructure_workforce_requirement_modifier max = 0.1 } } }
 	set_variable = { ai_race_ai_renewable_workers = { value = 22.5 multiply = { value = 1 add = modifier@buildings_worker_requirement_modifier add = modifier@infrastructure_workforce_requirement_modifier max = 0.1 } } }
@@ -1844,51 +1884,31 @@ ai_race_ai_choose_construction = {
 }
 
 
-# Research tokens need runtime substitution; numeric selectors remain temporary inputs.
-ai_race_ai_consider_support_tech = {
-	if = {
-		limit = { check_variable = { ai_race_ai_support_checked = 0 } }
-		meta_effect = {
-			text = {
-				if = {
-					limit = { NOT = { has_tech = [TECH] } }
-					set_temp_variable = { ai_race_ai_support_checked = 1 }
-					if = {
-						limit = {
-							can_research = [TECH]
-							check_variable = { var = global.year value = ai_race_ai_considered_year compare = greater_than_or_equals }
-						}
-						set_variable = { ai_race_ai_support_tech = ai_race_ai_considered_code }
-					}
-				}
-			}
-			TECH = "[?ai_race_ai_considered_tech.GetTokenKey]"
-		}
+# Each chooser targets its chain's first unresearched technology, once researchable and in its year.
+ai_race_ai_choose_ai_tech = {
+	if = { limit = { NOT = { has_tech = artificial_intelligence_1 } }
+		if = { limit = { can_research = artificial_intelligence_1 check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 1 } }
 	}
-}
-
-ai_race_ai_consider_ai_tech = {
-	if = {
-		limit = {
-			check_variable = { ai_race_ai_research_checked = 0 }
-			check_variable = { var = ai_race_ai_required_tech value = ai_race_ai_considered_code compare = greater_than_or_equals }
-		}
-		meta_effect = {
-			text = {
-				if = {
-					limit = { NOT = { has_tech = [TECH] } }
-					set_temp_variable = { ai_race_ai_research_checked = 1 }
-					if = {
-						limit = {
-							can_research = [TECH]
-							check_variable = { var = global.year value = ai_race_ai_considered_year compare = greater_than_or_equals }
-						}
-						set_variable = { ai_race_ai_research_target = ai_race_ai_considered_code }
-					}
-				}
-			}
-			TECH = "[?ai_race_ai_considered_tech.GetTokenKey]"
-		}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_2 } }
+		if = { limit = { can_research = artificial_intelligence_2 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 2 } }
+	}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_3 } }
+		if = { limit = { can_research = artificial_intelligence_3 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 3 } }
+	}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_4 } }
+		if = { limit = { can_research = artificial_intelligence_4 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 4 } }
+	}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_5 } }
+		if = { limit = { can_research = artificial_intelligence_5 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 5 } }
+	}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_6 } }
+		if = { limit = { can_research = artificial_intelligence_6 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 6 } }
+	}
+	else_if = { limit = { NOT = { has_tech = artificial_intelligence_7 } }
+		if = { limit = { can_research = artificial_intelligence_7 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 7 } }
+	}
+	else_if = { limit = { check_variable = { ai_race_ai_required_tech > 7 } NOT = { has_tech = artificial_intelligence_8 } }
+		if = { limit = { can_research = artificial_intelligence_8 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_research_target = 8 } }
 	}
 }
 
@@ -1903,39 +1923,7 @@ ai_race_ai_choose_research = {
 			limit = { check_variable = { ai_race_ai_target_stage > 2 } }
 			set_temp_variable = { ai_race_ai_required_tech = 8 }
 		}
-		set_temp_variable = { ai_race_ai_research_checked = 0 }
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_1 }
-		set_temp_variable = { ai_race_ai_considered_code = 1 }
-		set_temp_variable = { ai_race_ai_considered_year = 1984 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_2 }
-		set_temp_variable = { ai_race_ai_considered_code = 2 }
-		set_temp_variable = { ai_race_ai_considered_year = 1989 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_3 }
-		set_temp_variable = { ai_race_ai_considered_code = 3 }
-		set_temp_variable = { ai_race_ai_considered_year = 1994 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_4 }
-		set_temp_variable = { ai_race_ai_considered_code = 4 }
-		set_temp_variable = { ai_race_ai_considered_year = 1999 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_5 }
-		set_temp_variable = { ai_race_ai_considered_code = 5 }
-		set_temp_variable = { ai_race_ai_considered_year = 2004 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_6 }
-		set_temp_variable = { ai_race_ai_considered_code = 6 }
-		set_temp_variable = { ai_race_ai_considered_year = 2009 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_7 }
-		set_temp_variable = { ai_race_ai_considered_code = 7 }
-		set_temp_variable = { ai_race_ai_considered_year = 2014 }
-		ai_race_ai_consider_ai_tech = yes
-		set_temp_variable = { ai_race_ai_considered_tech = token:artificial_intelligence_8 }
-		set_temp_variable = { ai_race_ai_considered_code = 8 }
-		set_temp_variable = { ai_race_ai_considered_year = 2019 }
-		ai_race_ai_consider_ai_tech = yes
+		ai_race_ai_choose_ai_tech = yes
 	}
 	if = {
 		limit = { ai_race_ai_support_permitted = yes }
@@ -2026,463 +2014,348 @@ ai_race_ai_choose_research = {
 }
 
 ai_race_ai_choose_construction_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction1 }
-	set_temp_variable = { ai_race_ai_considered_code = 101 }
-	set_temp_variable = { ai_race_ai_considered_year = 1984 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction2 }
-	set_temp_variable = { ai_race_ai_considered_code = 102 }
-	set_temp_variable = { ai_race_ai_considered_year = 1994 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction3 }
-	set_temp_variable = { ai_race_ai_considered_code = 103 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction4 }
-	set_temp_variable = { ai_race_ai_considered_code = 104 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction5 }
-	set_temp_variable = { ai_race_ai_considered_code = 105 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction6 }
-	set_temp_variable = { ai_race_ai_considered_code = 106 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction7 }
-	set_temp_variable = { ai_race_ai_considered_code = 107 }
-	set_temp_variable = { ai_race_ai_considered_year = 2024 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction8 }
-	set_temp_variable = { ai_race_ai_considered_code = 108 }
-	set_temp_variable = { ai_race_ai_considered_year = 2034 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction9 }
-	set_temp_variable = { ai_race_ai_considered_code = 109 }
-	set_temp_variable = { ai_race_ai_considered_year = 2044 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction10 }
-	set_temp_variable = { ai_race_ai_considered_code = 110 }
-	set_temp_variable = { ai_race_ai_considered_year = 2054 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction11 }
-	set_temp_variable = { ai_race_ai_considered_code = 111 }
-	set_temp_variable = { ai_race_ai_considered_year = 2064 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:construction12 }
-	set_temp_variable = { ai_race_ai_considered_code = 112 }
-	set_temp_variable = { ai_race_ai_considered_year = 2074 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = construction1 } }
+		if = { limit = { can_research = construction1 check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 101 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction2 } }
+		if = { limit = { can_research = construction2 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 102 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction3 } }
+		if = { limit = { can_research = construction3 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 103 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction4 } }
+		if = { limit = { can_research = construction4 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 104 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction5 } }
+		if = { limit = { can_research = construction5 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 105 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction6 } }
+		if = { limit = { can_research = construction6 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 106 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction7 } }
+		if = { limit = { can_research = construction7 check_variable = { var = global.year value = 2024 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 107 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction8 } }
+		if = { limit = { can_research = construction8 check_variable = { var = global.year value = 2034 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 108 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction9 } }
+		if = { limit = { can_research = construction9 check_variable = { var = global.year value = 2044 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 109 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction10 } }
+		if = { limit = { can_research = construction10 check_variable = { var = global.year value = 2054 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 110 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction11 } }
+		if = { limit = { can_research = construction11 check_variable = { var = global.year value = 2064 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 111 } }
+	}
+	else_if = { limit = { NOT = { has_tech = construction12 } }
+		if = { limit = { can_research = construction12 check_variable = { var = global.year value = 2074 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 112 } }
+	}
 }
 
 ai_race_ai_choose_network_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_1 }
-	set_temp_variable = { ai_race_ai_considered_code = 121 }
-	set_temp_variable = { ai_race_ai_considered_year = 1974 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_2 }
-	set_temp_variable = { ai_race_ai_considered_code = 122 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_3 }
-	set_temp_variable = { ai_race_ai_considered_code = 123 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_4 }
-	set_temp_variable = { ai_race_ai_considered_code = 124 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_5 }
-	set_temp_variable = { ai_race_ai_considered_code = 125 }
-	set_temp_variable = { ai_race_ai_considered_year = 2019 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_6 }
-	set_temp_variable = { ai_race_ai_considered_code = 126 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_7 }
-	set_temp_variable = { ai_race_ai_considered_code = 127 }
-	set_temp_variable = { ai_race_ai_considered_year = 2039 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_8 }
-	set_temp_variable = { ai_race_ai_considered_code = 128 }
-	set_temp_variable = { ai_race_ai_considered_year = 2049 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_9 }
-	set_temp_variable = { ai_race_ai_considered_code = 129 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 130 }
-	set_temp_variable = { ai_race_ai_considered_year = 2069 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:internet_11 }
-	set_temp_variable = { ai_race_ai_considered_code = 131 }
-	set_temp_variable = { ai_race_ai_considered_year = 2079 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = internet_1 } }
+		if = { limit = { can_research = internet_1 check_variable = { var = global.year value = 1974 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 121 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_2 } }
+		if = { limit = { can_research = internet_2 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 122 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_3 } }
+		if = { limit = { can_research = internet_3 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 123 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_4 } }
+		if = { limit = { can_research = internet_4 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 124 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_5 } }
+		if = { limit = { can_research = internet_5 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 125 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_6 } }
+		if = { limit = { can_research = internet_6 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 126 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_7 } }
+		if = { limit = { can_research = internet_7 check_variable = { var = global.year value = 2039 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 127 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_8 } }
+		if = { limit = { can_research = internet_8 check_variable = { var = global.year value = 2049 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 128 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_9 } }
+		if = { limit = { can_research = internet_9 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 129 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_10 } }
+		if = { limit = { can_research = internet_10 check_variable = { var = global.year value = 2069 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 130 } }
+	}
+	else_if = { limit = { NOT = { has_tech = internet_11 } }
+		if = { limit = { can_research = internet_11 check_variable = { var = global.year value = 2079 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 131 } }
+	}
 }
 
 ai_race_ai_choose_microchips_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:basic_computing }
-	set_temp_variable = { ai_race_ai_considered_code = 201 }
-	set_temp_variable = { ai_race_ai_considered_year = 1944 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:computing_1 }
-	set_temp_variable = { ai_race_ai_considered_code = 202 }
-	set_temp_variable = { ai_race_ai_considered_year = 1964 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microprocessors }
-	set_temp_variable = { ai_race_ai_considered_code = 203 }
-	set_temp_variable = { ai_race_ai_considered_year = 1974 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_1 }
-	set_temp_variable = { ai_race_ai_considered_code = 204 }
-	set_temp_variable = { ai_race_ai_considered_year = 1974 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_2 }
-	set_temp_variable = { ai_race_ai_considered_code = 205 }
-	set_temp_variable = { ai_race_ai_considered_year = 1994 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_3 }
-	set_temp_variable = { ai_race_ai_considered_code = 206 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_4 }
-	set_temp_variable = { ai_race_ai_considered_code = 207 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_5 }
-	set_temp_variable = { ai_race_ai_considered_code = 208 }
-	set_temp_variable = { ai_race_ai_considered_year = 2024 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_6 }
-	set_temp_variable = { ai_race_ai_considered_code = 209 }
-	set_temp_variable = { ai_race_ai_considered_year = 2034 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_7 }
-	set_temp_variable = { ai_race_ai_considered_code = 210 }
-	set_temp_variable = { ai_race_ai_considered_year = 2044 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_8 }
-	set_temp_variable = { ai_race_ai_considered_code = 211 }
-	set_temp_variable = { ai_race_ai_considered_year = 2054 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_9 }
-	set_temp_variable = { ai_race_ai_considered_code = 212 }
-	set_temp_variable = { ai_race_ai_considered_year = 2064 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:microchip_production_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 213 }
-	set_temp_variable = { ai_race_ai_considered_year = 2074 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = basic_computing } }
+		if = { limit = { can_research = basic_computing check_variable = { var = global.year value = 1944 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 201 } }
+	}
+	else_if = { limit = { NOT = { has_tech = computing_1 } }
+		if = { limit = { can_research = computing_1 check_variable = { var = global.year value = 1964 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 202 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microprocessors } }
+		if = { limit = { can_research = microprocessors check_variable = { var = global.year value = 1974 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 203 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_1 } }
+		if = { limit = { can_research = microchip_production_1 check_variable = { var = global.year value = 1974 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 204 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_2 } }
+		if = { limit = { can_research = microchip_production_2 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 205 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_3 } }
+		if = { limit = { can_research = microchip_production_3 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 206 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_4 } }
+		if = { limit = { can_research = microchip_production_4 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 207 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_5 } }
+		if = { limit = { can_research = microchip_production_5 check_variable = { var = global.year value = 2024 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 208 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_6 } }
+		if = { limit = { can_research = microchip_production_6 check_variable = { var = global.year value = 2034 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 209 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_7 } }
+		if = { limit = { can_research = microchip_production_7 check_variable = { var = global.year value = 2044 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 210 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_8 } }
+		if = { limit = { can_research = microchip_production_8 check_variable = { var = global.year value = 2054 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 211 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_9 } }
+		if = { limit = { can_research = microchip_production_9 check_variable = { var = global.year value = 2064 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 212 } }
+	}
+	else_if = { limit = { NOT = { has_tech = microchip_production_10 } }
+		if = { limit = { can_research = microchip_production_10 check_variable = { var = global.year value = 2074 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 213 } }
+	}
 }
 
 ai_race_ai_choose_composites_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_1 }
-	set_temp_variable = { ai_race_ai_considered_code = 221 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_2 }
-	set_temp_variable = { ai_race_ai_considered_code = 222 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_3 }
-	set_temp_variable = { ai_race_ai_considered_code = 223 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_4 }
-	set_temp_variable = { ai_race_ai_considered_code = 224 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_5 }
-	set_temp_variable = { ai_race_ai_considered_code = 225 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_6 }
-	set_temp_variable = { ai_race_ai_considered_code = 226 }
-	set_temp_variable = { ai_race_ai_considered_year = 2044 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_7 }
-	set_temp_variable = { ai_race_ai_considered_code = 227 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:composite_production_8 }
-	set_temp_variable = { ai_race_ai_considered_code = 228 }
-	set_temp_variable = { ai_race_ai_considered_year = 2074 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = composite_production_1 } }
+		if = { limit = { can_research = composite_production_1 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 221 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_2 } }
+		if = { limit = { can_research = composite_production_2 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 222 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_3 } }
+		if = { limit = { can_research = composite_production_3 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 223 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_4 } }
+		if = { limit = { can_research = composite_production_4 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 224 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_5 } }
+		if = { limit = { can_research = composite_production_5 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 225 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_6 } }
+		if = { limit = { can_research = composite_production_6 check_variable = { var = global.year value = 2044 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 226 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_7 } }
+		if = { limit = { can_research = composite_production_7 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 227 } }
+	}
+	else_if = { limit = { NOT = { has_tech = composite_production_8 } }
+		if = { limit = { can_research = composite_production_8 check_variable = { var = global.year value = 2074 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 228 } }
+	}
 }
 
 ai_race_ai_choose_renewable_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
-	set_temp_variable = { ai_race_ai_considered_code = 301 }
-	set_temp_variable = { ai_race_ai_considered_year = 1984 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_01 }
-	set_temp_variable = { ai_race_ai_considered_code = 302 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_02 }
-	set_temp_variable = { ai_race_ai_considered_code = 303 }
-	set_temp_variable = { ai_race_ai_considered_year = 1994 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_03 }
-	set_temp_variable = { ai_race_ai_considered_code = 304 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_04 }
-	set_temp_variable = { ai_race_ai_considered_code = 305 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_05 }
-	set_temp_variable = { ai_race_ai_considered_code = 306 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_06 }
-	set_temp_variable = { ai_race_ai_considered_code = 307 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_07 }
-	set_temp_variable = { ai_race_ai_considered_code = 308 }
-	set_temp_variable = { ai_race_ai_considered_year = 2019 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_08 }
-	set_temp_variable = { ai_race_ai_considered_code = 309 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_09 }
-	set_temp_variable = { ai_race_ai_considered_code = 310 }
-	set_temp_variable = { ai_race_ai_considered_year = 2039 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 311 }
-	set_temp_variable = { ai_race_ai_considered_year = 2049 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_11 }
-	set_temp_variable = { ai_race_ai_considered_code = 312 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_12 }
-	set_temp_variable = { ai_race_ai_considered_code = 313 }
-	set_temp_variable = { ai_race_ai_considered_year = 2069 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:renewable_13 }
-	set_temp_variable = { ai_race_ai_considered_code = 314 }
-	set_temp_variable = { ai_race_ai_considered_year = 2079 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = fuel_silos } }
+		if = { limit = { can_research = fuel_silos check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 301 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_01 } }
+		if = { limit = { can_research = renewable_01 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 302 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_02 } }
+		if = { limit = { can_research = renewable_02 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 303 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_03 } }
+		if = { limit = { can_research = renewable_03 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 304 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_04 } }
+		if = { limit = { can_research = renewable_04 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 305 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_05 } }
+		if = { limit = { can_research = renewable_05 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 306 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_06 } }
+		if = { limit = { can_research = renewable_06 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 307 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_07 } }
+		if = { limit = { can_research = renewable_07 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 308 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_08 } }
+		if = { limit = { can_research = renewable_08 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 309 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_09 } }
+		if = { limit = { can_research = renewable_09 check_variable = { var = global.year value = 2039 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 310 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_10 } }
+		if = { limit = { can_research = renewable_10 check_variable = { var = global.year value = 2049 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 311 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_11 } }
+		if = { limit = { can_research = renewable_11 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 312 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_12 } }
+		if = { limit = { can_research = renewable_12 check_variable = { var = global.year value = 2069 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 313 } }
+	}
+	else_if = { limit = { NOT = { has_tech = renewable_13 } }
+		if = { limit = { can_research = renewable_13 check_variable = { var = global.year value = 2079 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 314 } }
+	}
 }
 
 ai_race_ai_choose_fossil_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
-	set_temp_variable = { ai_race_ai_considered_code = 301 }
-	set_temp_variable = { ai_race_ai_considered_year = 1984 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_01 }
-	set_temp_variable = { ai_race_ai_considered_code = 321 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_02 }
-	set_temp_variable = { ai_race_ai_considered_code = 322 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_03 }
-	set_temp_variable = { ai_race_ai_considered_code = 323 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_04 }
-	set_temp_variable = { ai_race_ai_considered_code = 324 }
-	set_temp_variable = { ai_race_ai_considered_year = 2019 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_05 }
-	set_temp_variable = { ai_race_ai_considered_code = 325 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_06 }
-	set_temp_variable = { ai_race_ai_considered_code = 326 }
-	set_temp_variable = { ai_race_ai_considered_year = 2039 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_07 }
-	set_temp_variable = { ai_race_ai_considered_code = 327 }
-	set_temp_variable = { ai_race_ai_considered_year = 2049 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_08 }
-	set_temp_variable = { ai_race_ai_considered_code = 328 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_09 }
-	set_temp_variable = { ai_race_ai_considered_code = 329 }
-	set_temp_variable = { ai_race_ai_considered_year = 2069 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_efficiency_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 330 }
-	set_temp_variable = { ai_race_ai_considered_year = 2079 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = fuel_silos } }
+		if = { limit = { can_research = fuel_silos check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 301 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_01 } }
+		if = { limit = { can_research = fuel_efficiency_01 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 321 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_02 } }
+		if = { limit = { can_research = fuel_efficiency_02 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 322 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_03 } }
+		if = { limit = { can_research = fuel_efficiency_03 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 323 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_04 } }
+		if = { limit = { can_research = fuel_efficiency_04 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 324 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_05 } }
+		if = { limit = { can_research = fuel_efficiency_05 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 325 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_06 } }
+		if = { limit = { can_research = fuel_efficiency_06 check_variable = { var = global.year value = 2039 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 326 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_07 } }
+		if = { limit = { can_research = fuel_efficiency_07 check_variable = { var = global.year value = 2049 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 327 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_08 } }
+		if = { limit = { can_research = fuel_efficiency_08 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 328 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_09 } }
+		if = { limit = { can_research = fuel_efficiency_09 check_variable = { var = global.year value = 2069 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 329 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_efficiency_10 } }
+		if = { limit = { can_research = fuel_efficiency_10 check_variable = { var = global.year value = 2079 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 330 } }
+	}
 }
 
 ai_race_ai_choose_refining_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
-	set_temp_variable = { ai_race_ai_considered_code = 301 }
-	set_temp_variable = { ai_race_ai_considered_year = 1984 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining }
-	set_temp_variable = { ai_race_ai_considered_code = 381 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining2 }
-	set_temp_variable = { ai_race_ai_considered_code = 382 }
-	set_temp_variable = { ai_race_ai_considered_year = 1994 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining3 }
-	set_temp_variable = { ai_race_ai_considered_code = 383 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining4 }
-	set_temp_variable = { ai_race_ai_considered_code = 384 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining5 }
-	set_temp_variable = { ai_race_ai_considered_code = 385 }
-	set_temp_variable = { ai_race_ai_considered_year = 2019 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining6 }
-	set_temp_variable = { ai_race_ai_considered_code = 386 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining7 }
-	set_temp_variable = { ai_race_ai_considered_code = 387 }
-	set_temp_variable = { ai_race_ai_considered_year = 2039 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining8 }
-	set_temp_variable = { ai_race_ai_considered_code = 388 }
-	set_temp_variable = { ai_race_ai_considered_year = 2049 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining9 }
-	set_temp_variable = { ai_race_ai_considered_code = 389 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining10 }
-	set_temp_variable = { ai_race_ai_considered_code = 390 }
-	set_temp_variable = { ai_race_ai_considered_year = 2069 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_refining11 }
-	set_temp_variable = { ai_race_ai_considered_code = 391 }
-	set_temp_variable = { ai_race_ai_considered_year = 2079 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = fuel_silos } }
+		if = { limit = { can_research = fuel_silos check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 301 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining } }
+		if = { limit = { can_research = fuel_refining check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 381 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining2 } }
+		if = { limit = { can_research = fuel_refining2 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 382 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining3 } }
+		if = { limit = { can_research = fuel_refining3 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 383 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining4 } }
+		if = { limit = { can_research = fuel_refining4 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 384 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining5 } }
+		if = { limit = { can_research = fuel_refining5 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 385 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining6 } }
+		if = { limit = { can_research = fuel_refining6 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 386 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining7 } }
+		if = { limit = { can_research = fuel_refining7 check_variable = { var = global.year value = 2039 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 387 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining8 } }
+		if = { limit = { can_research = fuel_refining8 check_variable = { var = global.year value = 2049 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 388 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining9 } }
+		if = { limit = { can_research = fuel_refining9 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 389 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining10 } }
+		if = { limit = { can_research = fuel_refining10 check_variable = { var = global.year value = 2069 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 390 } }
+	}
+	else_if = { limit = { NOT = { has_tech = fuel_refining11 } }
+		if = { limit = { can_research = fuel_refining11 check_variable = { var = global.year value = 2079 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 391 } }
+	}
 }
 
 ai_race_ai_choose_nuclear_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_01 }
-	set_temp_variable = { ai_race_ai_considered_code = 341 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_02 }
-	set_temp_variable = { ai_race_ai_considered_code = 342 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_03 }
-	set_temp_variable = { ai_race_ai_considered_code = 343 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_04 }
-	set_temp_variable = { ai_race_ai_considered_code = 344 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_05 }
-	set_temp_variable = { ai_race_ai_considered_code = 345 }
-	set_temp_variable = { ai_race_ai_considered_year = 2019 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_06 }
-	set_temp_variable = { ai_race_ai_considered_code = 346 }
-	set_temp_variable = { ai_race_ai_considered_year = 2029 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_07 }
-	set_temp_variable = { ai_race_ai_considered_code = 347 }
-	set_temp_variable = { ai_race_ai_considered_year = 2039 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_08 }
-	set_temp_variable = { ai_race_ai_considered_code = 348 }
-	set_temp_variable = { ai_race_ai_considered_year = 2044 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_09 }
-	set_temp_variable = { ai_race_ai_considered_code = 349 }
-	set_temp_variable = { ai_race_ai_considered_year = 2054 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 350 }
-	set_temp_variable = { ai_race_ai_considered_year = 2059 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_11 }
-	set_temp_variable = { ai_race_ai_considered_code = 351 }
-	set_temp_variable = { ai_race_ai_considered_year = 2069 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:reactor_12 }
-	set_temp_variable = { ai_race_ai_considered_code = 352 }
-	set_temp_variable = { ai_race_ai_considered_year = 2079 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = reactor_01 } }
+		if = { limit = { can_research = reactor_01 check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 341 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_02 } }
+		if = { limit = { can_research = reactor_02 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 342 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_03 } }
+		if = { limit = { can_research = reactor_03 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 343 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_04 } }
+		if = { limit = { can_research = reactor_04 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 344 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_05 } }
+		if = { limit = { can_research = reactor_05 check_variable = { var = global.year value = 2019 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 345 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_06 } }
+		if = { limit = { can_research = reactor_06 check_variable = { var = global.year value = 2029 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 346 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_07 } }
+		if = { limit = { can_research = reactor_07 check_variable = { var = global.year value = 2039 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 347 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_08 } }
+		if = { limit = { can_research = reactor_08 check_variable = { var = global.year value = 2044 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 348 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_09 } }
+		if = { limit = { can_research = reactor_09 check_variable = { var = global.year value = 2054 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 349 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_10 } }
+		if = { limit = { can_research = reactor_10 check_variable = { var = global.year value = 2059 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 350 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_11 } }
+		if = { limit = { can_research = reactor_11 check_variable = { var = global.year value = 2069 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 351 } }
+	}
+	else_if = { limit = { NOT = { has_tech = reactor_12 } }
+		if = { limit = { can_research = reactor_12 check_variable = { var = global.year value = 2079 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 352 } }
+	}
 }
 
 ai_race_ai_choose_efficiency_tech = {
-	set_temp_variable = { ai_race_ai_support_checked = 0 }
-	set_temp_variable = { ai_race_ai_considered_tech = token:fuel_silos }
-	set_temp_variable = { ai_race_ai_considered_code = 301 }
-	set_temp_variable = { ai_race_ai_considered_year = 1984 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency }
-	set_temp_variable = { ai_race_ai_considered_code = 361 }
-	set_temp_variable = { ai_race_ai_considered_year = 1989 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency2 }
-	set_temp_variable = { ai_race_ai_considered_code = 362 }
-	set_temp_variable = { ai_race_ai_considered_year = 1994 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency3 }
-	set_temp_variable = { ai_race_ai_considered_code = 363 }
-	set_temp_variable = { ai_race_ai_considered_year = 1999 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency4 }
-	set_temp_variable = { ai_race_ai_considered_code = 364 }
-	set_temp_variable = { ai_race_ai_considered_year = 2004 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency5 }
-	set_temp_variable = { ai_race_ai_considered_code = 365 }
-	set_temp_variable = { ai_race_ai_considered_year = 2009 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency6 }
-	set_temp_variable = { ai_race_ai_considered_code = 366 }
-	set_temp_variable = { ai_race_ai_considered_year = 2014 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency7 }
-	set_temp_variable = { ai_race_ai_considered_code = 367 }
-	set_temp_variable = { ai_race_ai_considered_year = 2024 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency8 }
-	set_temp_variable = { ai_race_ai_considered_code = 368 }
-	set_temp_variable = { ai_race_ai_considered_year = 2034 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_9 }
-	set_temp_variable = { ai_race_ai_considered_code = 369 }
-	set_temp_variable = { ai_race_ai_considered_year = 2044 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_10 }
-	set_temp_variable = { ai_race_ai_considered_code = 370 }
-	set_temp_variable = { ai_race_ai_considered_year = 2054 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_11 }
-	set_temp_variable = { ai_race_ai_considered_code = 371 }
-	set_temp_variable = { ai_race_ai_considered_year = 2064 }
-	ai_race_ai_consider_support_tech = yes
-	set_temp_variable = { ai_race_ai_considered_tech = token:energy_efficiency_12 }
-	set_temp_variable = { ai_race_ai_considered_code = 372 }
-	set_temp_variable = { ai_race_ai_considered_year = 2074 }
-	ai_race_ai_consider_support_tech = yes
+	if = { limit = { NOT = { has_tech = fuel_silos } }
+		if = { limit = { can_research = fuel_silos check_variable = { var = global.year value = 1984 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 301 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency } }
+		if = { limit = { can_research = energy_efficiency check_variable = { var = global.year value = 1989 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 361 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency2 } }
+		if = { limit = { can_research = energy_efficiency2 check_variable = { var = global.year value = 1994 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 362 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency3 } }
+		if = { limit = { can_research = energy_efficiency3 check_variable = { var = global.year value = 1999 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 363 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency4 } }
+		if = { limit = { can_research = energy_efficiency4 check_variable = { var = global.year value = 2004 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 364 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency5 } }
+		if = { limit = { can_research = energy_efficiency5 check_variable = { var = global.year value = 2009 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 365 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency6 } }
+		if = { limit = { can_research = energy_efficiency6 check_variable = { var = global.year value = 2014 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 366 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency7 } }
+		if = { limit = { can_research = energy_efficiency7 check_variable = { var = global.year value = 2024 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 367 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency8 } }
+		if = { limit = { can_research = energy_efficiency8 check_variable = { var = global.year value = 2034 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 368 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency_9 } }
+		if = { limit = { can_research = energy_efficiency_9 check_variable = { var = global.year value = 2044 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 369 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency_10 } }
+		if = { limit = { can_research = energy_efficiency_10 check_variable = { var = global.year value = 2054 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 370 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency_11 } }
+		if = { limit = { can_research = energy_efficiency_11 check_variable = { var = global.year value = 2064 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 371 } }
+	}
+	else_if = { limit = { NOT = { has_tech = energy_efficiency_12 } }
+		if = { limit = { can_research = energy_efficiency_12 check_variable = { var = global.year value = 2074 compare = greater_than_or_equals } } set_variable = { ai_race_ai_support_tech = 372 } }
+	}
 }
 
 
