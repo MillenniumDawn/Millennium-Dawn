@@ -1,0 +1,91 @@
+IRE_setup_dublin_gridlock = {
+	set_variable = { IRE_gridlock_level = 1 }
+	set_variable = { IRE_metrolink_stage = 0 }
+	add_dynamic_modifier = { modifier = IRE_dublin_gridlock_national }
+	27 = { add_dynamic_modifier = { modifier = IRE_dublin_gridlock } }
+	IRE_update_gridlock = yes
+}
+
+IRE_update_gridlock = {
+	if = {
+		limit = { check_variable = { IRE_gridlock_level < 1 } }
+		if = { limit = { has_dynamic_modifier = { modifier = IRE_dublin_gridlock_national } } remove_dynamic_modifier = { modifier = IRE_dublin_gridlock_national } }
+		27 = {
+			if = { limit = { has_dynamic_modifier = { modifier = IRE_dublin_gridlock } } remove_dynamic_modifier = { modifier = IRE_dublin_gridlock } }
+		}
+	}
+	else = {
+		set_variable = { IRE_gridlock_offices_productivity = IRE_gridlock_level }
+		multiply_variable = { IRE_gridlock_offices_productivity = -0.02 }
+		set_variable = { IRE_gridlock_pop_energy_use = IRE_gridlock_level }
+		multiply_variable = { IRE_gridlock_pop_energy_use = 0.01 }
+		set_variable = { IRE_gridlock_investment_cost = IRE_gridlock_level }
+		multiply_variable = { IRE_gridlock_investment_cost = 0.025 }
+		27 = {
+			set_variable = { IRE_gridlock_state_productivity_growth = ROOT.IRE_gridlock_level }
+			multiply_variable = { IRE_gridlock_state_productivity_growth = -0.015 }
+		}
+		force_update_dynamic_modifier = yes
+	}
+}
+
+IRE_gridlock_worsen = {
+	custom_effect_tooltip = IRE_gridlock_worsens_tt
+	add_to_variable = { IRE_gridlock_level = 1 }
+	clamp_variable = { var = IRE_gridlock_level min = 0 max = 4 }
+	IRE_update_gridlock = yes
+}
+
+IRE_gridlock_ease = {
+	custom_effect_tooltip = IRE_gridlock_eases_tt
+	add_to_variable = { IRE_gridlock_level = -1 }
+	clamp_variable = { var = IRE_gridlock_level min = 0 max = 4 }
+	IRE_update_gridlock = yes
+}
+
+IRE_metrolink_opening_effect = {
+	custom_effect_tooltip = IRE_gridlock_cleared_tt
+	set_variable = { IRE_gridlock_level = 0 }
+	IRE_update_gridlock = yes
+	27 = {
+		if = {
+			limit = { is_owned_by = ROOT }
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_cut_scope } }
+				set_variable = { IRE_metrolink_state_productivity_growth = 0.02 }
+			}
+			else_if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_sandyford } }
+				set_variable = { IRE_metrolink_state_productivity_growth = 0.06 }
+			}
+			else = {
+				set_variable = { IRE_metrolink_state_productivity_growth = 0.04 }
+			}
+			add_dynamic_modifier = { modifier = IRE_metrolink }
+			custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = IRE_metrolink }
+			set_temp_variable = { temp_productivity_change = 50 }
+			state_flat_productivity_change_effect = yes
+			add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_airport_integrated } }
+				add_building_construction = { type = air_base level = 1 instant_build = yes }
+			}
+			if = {
+				limit = { ROOT = { has_country_flag = IRE_metrolink_interchange } }
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+			}
+		}
+	}
+	if = {
+		limit = {
+			has_country_flag = IRE_metrolink_interchange
+			has_dlc = "No Step Back"
+		}
+		build_railway = {
+			level = 1
+			fallback = yes
+			start_state = 27
+			target_state = 28
+		}
+	}
+}
