@@ -182,16 +182,10 @@ The italy_md.69 event chain can trigger a civil war from sustained low stability
 
 ### Political and Ideology Branches
 
-The `ITA_what_we_are` focus chooses your political ideology branch. Major sub-branches:
+Party leaders no longer come from focuses. Each party's leader follows its historical era, and party names change with it: the Democrats of the Left become the Democratic Party, National Alliance becomes Brothers of Italy, and the liberals become Più Europa, then Italia Viva and Azione. Outside the historical AI path, a party that returns to power brings in its next leader.
 
-- **Centre-left (Democratic Party / Olive Tree)** — historical default. Stability, EU integration, gradual reform.
-- **Centre-right (Forza Italia / National Alliance)** — historical alternative. Pro-business, deregulation, atlanticist defence.
-- **Liberals (Social Liberalism / Radical Party)** — civil-rights focus, EU federalism.
-- **Left-wing Populism (M5S)** — anti-establishment, basic income, EU sceptical.
-- **Right-wing Populism (Lega / National Alliance)** — anti-immigration, EU sceptical, regional autonomy.
-- **Greens / LEU** — environmental and social-democratic alternatives to the main centre-left.
-- **Italian Communist Party (PCI restoration)** — far-left, eastern alignment.
-- **Non-Aligned Communism (PRC)** — democratic socialist, EU sceptical.
+`ITA_ideology_focus` opens the authoritarian branch through `ITA_our_past`:
+
 - **Fascism** — authoritarian restoration via MSI legacy.
 - **Monarchy** — Savoy house restoration.
 
