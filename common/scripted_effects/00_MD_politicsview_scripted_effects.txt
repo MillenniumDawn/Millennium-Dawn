@@ -1,3 +1,6 @@
+@coalition_invite_pp_multiplier = -2000
+@coalition_refund_pp_multiplier = 1500
+
 # Effect: steal_from_party
 # Purpose: Steals 1% popularity from the given party and gives it to the ruling party
 # Parameters:
@@ -925,27 +928,16 @@ update_coalition_leader = {
 }
 
 refund_government_coalition = {
-	set_temp_variable = { sum_factor = 0 }
+	set_temp_variable = { coalition_refund_basis = 0 }
+	set_temp_variable = { pol_dist_source_index = ruling_party }
 	for_each_loop = {
 		array = gov_coalition_array
-		value = v
-		index = i
-
-		set_temp_variable = { pol_dist_target_index = v }
-		set_temp_variable = { pol_dist_source_index = ruling_party }
+		value = pol_dist_target_index
 		get_pol_distance = yes
-		add_to_temp_variable = {
-			var = sum_factor
-			value = {
-				value = party_pop_elect_array^v
-				multiply = pol_distance_current
-			}
-		}
+		add_to_temp_variable = { coalition_refund_basis = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index } }
 	}
-
-	set_temp_variable = { pp_cost_to_invite = sum_factor }
-	multiply_temp_variable = { pp_cost_to_invite = 1500 }
-	add_political_power = pp_cost_to_invite
+	set_temp_variable = { coalition_refund = { value = coalition_refund_basis multiply = @coalition_refund_pp_multiplier } }
+	add_political_power = coalition_refund
 }
 
 store_election_values = {
@@ -993,8 +985,7 @@ update_majority_threshold = {
 		array = party_pop_elect_array
 		add_to_temp_variable = { sum = v }
 	}
-	set_variable = { majority_threshold = sum }
-	multiply_variable = { majority_threshold = 0.5 }
+	set_variable = { majority_threshold = { value = sum multiply = 0.5 } }
 }
 
 campaign_spending_initial = {
@@ -1022,18 +1013,8 @@ AI_setup_government = {
 		limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: AI started setup government [?political_power]"
 	}
-	# hold_elections = yes #add values to election array etc
 	clear_array = gov_coalition_array
-
-	set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
-	subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
-
-	set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
-	subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
-
-	make_affinity_arrays = yes
-	reduce_affinity_array_party_1 = yes
-	reduce_affinity_array_party_2 = yes
+	prepare_ai_coalition_candidates = yes
 
 	if = {
 		limit = {
@@ -1205,15 +1186,24 @@ AI_setup_government = {
 	}
 }
 
+prepare_ai_coalition_candidates = {
+	set_temp_variable = { majority_threshold_1 = { value = majority_threshold subtract = party_pop_elect_array^max_index_1 } }
+	set_temp_variable = { majority_threshold_2 = { value = majority_threshold subtract = party_pop_elect_array^max_index_2 } }
+	make_affinity_arrays = yes
+	reduce_affinity_array_party_1 = yes
+	reduce_affinity_array_party_2 = yes
+}
+
 make_affinity_arrays = {
-	resize_temp_array = {
-		array = party_1_affinity_array
-		size = party_pop_array^num
+	if = { limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
+		init_pol_distance_matrix = yes
 	}
-	resize_temp_array = {
-		array = party_2_affinity_array
-		size = party_pop_array^num
-	}
+	clear_temp_array = party_1_affinity_array
+	clear_temp_array = party_2_affinity_array
+	resize_temp_array = { array = party_1_affinity_array size = party_pop_array^num }
+	resize_temp_array = { array = party_2_affinity_array size = party_pop_array^num }
+	set_temp_variable = { sum_coalition_1 = 0 }
+	set_temp_variable = { sum_coalition_2 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = v
@@ -1238,58 +1228,46 @@ make_affinity_arrays = {
 				limit = {
 					check_variable = { party_pop_elect_array^v > 0 }
 				}
-				set_temp_variable = { pol_dist_target_index = v }
-				set_temp_variable = { pol_dist_source_index = max_index_1 }
-				get_pol_distance = yes
-				set_temp_variable = { party_1_affinity_array^v = pol_distance_current }
-				set_temp_variable = { pol_dist_source_index = max_index_2 }
-				get_pol_distance = yes
-				set_temp_variable = { party_2_affinity_array^v = pol_distance_current }
+				set_temp_variable = { coalition_matrix_row = { value = v multiply = 24 } }
+				set_temp_variable = { coalition_matrix_index = { value = coalition_matrix_row add = max_index_1 } }
+				set_temp_variable = { party_1_affinity_array^v = global.pol_dist_matrix^coalition_matrix_index }
+				set_temp_variable = { coalition_matrix_index = { value = coalition_matrix_row add = max_index_2 } }
+				set_temp_variable = { party_2_affinity_array^v = global.pol_dist_matrix^coalition_matrix_index }
+				if = { limit = { check_variable = { party_1_affinity_array^v > 0 } }
+					add_to_temp_variable = { sum_coalition_1 = party_pop_elect_array^v }
+				}
+				if = { limit = { check_variable = { party_2_affinity_array^v > 0 } }
+					add_to_temp_variable = { sum_coalition_2 = party_pop_elect_array^v }
+				}
 			}
 		}
 	}
 }
 
-
+# Effect: reduce_affinity_array_party_1
+# Purpose: Drops the most distant partner while the coalition can keep its majority.
+# Parameters:
+# - party_1_affinity_array and sum_coalition_1: affinities and initial seat total from make_affinity_arrays.
+# - majority_threshold_1: seats needed beyond the first candidate's own seats.
 reduce_affinity_array_party_1 = {
-
+	set_temp_variable = { break_1 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a1
 		break = break_1
-		set_temp_variable = { sum_coalition_1 = 0 }
-
-		#current temp coalition1 strength
-		for_each_loop = {
-			array = party_pop_elect_array
-			value = b1
-			index = e1
-			if = {
-				limit = {
-					check_variable = { party_1_affinity_array^e1 > 0 }
-				}
-				add_to_temp_variable = { sum_coalition_1 = b1 }
-			}
-		}
-		if = {
-			limit = {
-				check_variable = { sum_coalition_1 > majority_threshold_1 }
-			}
-			find_highest_in_array = {
-				array = party_1_affinity_array
-				value = max1
-				index = max1_index
-			}
-			subtract_from_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
-			set_temp_variable = { party_1_affinity_array^max1_index = 0 }
-			if = {
-				limit = {
-					check_variable = { sum_coalition_1 < majority_threshold_1 }
-				}
-				set_temp_variable = { party_1_affinity_array^max1_index = max1 }
-				add_to_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
+		if = { limit = { check_variable = { sum_coalition_1 > majority_threshold_1 } }
+			find_highest_in_array = { array = party_1_affinity_array value = max1 index = max1_index }
+			set_temp_variable = { coalition_remaining_1 = { value = sum_coalition_1 subtract = party_pop_elect_array^max1_index } }
+			if = { limit = { check_variable = { coalition_remaining_1 < majority_threshold_1 } }
 				set_temp_variable = { break_1 = 1 }
 			}
+			else = {
+				set_temp_variable = { sum_coalition_1 = coalition_remaining_1 }
+				set_temp_variable = { party_1_affinity_array^max1_index = 0 }
+			}
+		}
+		else = {
+			set_temp_variable = { break_1 = 1 }
 		}
 	}
 	#find total cost1
@@ -1313,45 +1291,30 @@ reduce_affinity_array_party_1 = {
 	}
 }
 
+# Effect: reduce_affinity_array_party_2
+# Purpose: Drops the most distant partner while the coalition can keep its majority.
+# Parameters:
+# - party_2_affinity_array and sum_coalition_2: affinities and initial seat total from make_affinity_arrays.
+# - majority_threshold_2: seats needed beyond the second candidate's own seats.
 reduce_affinity_array_party_2 = {
-
+	set_temp_variable = { break_2 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a2
 		break = break_2
-		set_temp_variable = { sum_coalition_2 = 0 }
-
-		#current temp coalition2 strength
-		for_each_loop = {
-			array = party_pop_elect_array
-			value = b2
-			index = e2
-			if = {
-				limit = {
-					check_variable = { party_2_affinity_array^e2 > 0 }
-				}
-				add_to_temp_variable = { sum_coalition_2 = b2 }
-			}
-		}
-		if = {
-			limit = {
-				check_variable = { sum_coalition_2 > majority_threshold_2 }
-			}
-			find_highest_in_array = {
-				array = party_2_affinity_array
-				value = max2
-				index = max2_index
-			}
-			subtract_from_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
-			set_temp_variable = { party_2_affinity_array^max2_index = 0 }
-			if = {
-				limit = {
-					check_variable = { sum_coalition_2 < majority_threshold_2 }
-				}
-				set_temp_variable = { party_2_affinity_array^max2_index = max2 }
-				add_to_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
+		if = { limit = { check_variable = { sum_coalition_2 > majority_threshold_2 } }
+			find_highest_in_array = { array = party_2_affinity_array value = max2 index = max2_index }
+			set_temp_variable = { coalition_remaining_2 = { value = sum_coalition_2 subtract = party_pop_elect_array^max2_index } }
+			if = { limit = { check_variable = { coalition_remaining_2 < majority_threshold_2 } }
 				set_temp_variable = { break_2 = 1 }
 			}
+			else = {
+				set_temp_variable = { sum_coalition_2 = coalition_remaining_2 }
+				set_temp_variable = { party_2_affinity_array^max2_index = 0 }
+			}
+		}
+		else = {
+			set_temp_variable = { break_2 = 1 }
 		}
 	}
 	#find total cost2
@@ -1962,7 +1925,7 @@ init_pol_distance_matrix = {
 
 # Effect: get_pol_distance
 # Purpose: Reads the political distance between two party slots
-# Output: pol_distance_current
+# Output: pol_distance_current (temp variable)
 # Parameters:
 # - pol_dist_target_index: party slot 0-23
 # - pol_dist_source_index: party slot 0-23
@@ -1972,9 +1935,29 @@ get_pol_distance = {
 		init_pol_distance_matrix = yes
 	}
 	set_temp_variable = { _pd_idx = { value = pol_dist_target_index multiply = 24 add = pol_dist_source_index } }
-	set_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
+	set_temp_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
 }
 
+# Effect: quote_coalition_invite_cost
+# Purpose: Saves the Political Power charge for the pending invitation event.
+# Parameters:
+# - pol_dist_target_index: invited party slot 0-23.
+quote_coalition_invite_cost = {
+	set_temp_variable = { pol_dist_source_index = ruling_party }
+	get_pol_distance = yes
+	set_variable = { pp_cost_to_invite = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_invite_pp_multiplier } }
+}
+
+# Effect: refund_coalition_partner
+# Purpose: Immediately returns 75% of a party's invitation cost at current seat share.
+# Parameters:
+# - pol_dist_target_index: outgoing party slot 0-23.
+refund_coalition_partner = {
+	set_temp_variable = { pol_dist_source_index = ruling_party }
+	get_pol_distance = yes
+	set_temp_variable = { coalition_refund = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_refund_pp_multiplier } }
+	add_political_power = coalition_refund
+}
 
 # Add Coalition Member
 # set_temp_variable = { add_col_one = 0-23 } -- Required
