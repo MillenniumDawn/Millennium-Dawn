@@ -146,6 +146,8 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
+    # CI runs the same token scanner within the variables batch.
+    "validate_dynamic_tokens.py",
     # The CI workspace ships entity definitions but no meshes or textures.
     "validate_mesh_textures.py",
     "validate_asset_data.py",
@@ -1328,6 +1330,11 @@ def test_pytest_collection_gate_cannot_self_exclude():
 def test_precommit_hook_run_settings(hook_id, key, expected):
     hook = _precommit_hooks()[hook_id]
     assert hook.get(key) is expected
+
+
+def test_gui_files_trigger_the_content_hook():
+    hook = _precommit_hooks()["md-validate-content"]
+    assert re.search(hook["files"], "interface/example.gui")
 
 
 def test_ci_strict_gate_lives_in_batch_specs():
