@@ -37,7 +37,9 @@ The game tracks **Government Coalition Strength**: the total share held by your 
 
 This matters most when public opinion shifts mid-term. If partners lose popularity, your governing position weakens even if no seats have changed.
 
-The ruling party and its coalition partners also split a fixed amount of government ideology drift. Bigger parties get a larger share based on current public support, not on seats won at the election. Parties in the same World Outlook contribute to the same drift. Diplomatic acceptance works differently: it still uses the elected seat share of partners outside the ruling World Outlook. Hover over Government Popularity to see both.
+The ruling party and its coalition partners split government ideology drift, capped at +0.10 in total. Bigger parties get more drift based on current public support, not on seats won at the election. Parties in the same World Outlook contribute to the same drift.
+
+A World Outlook with more than 65% public support grants +30 diplomatic acceptance. Otherwise, elected seats held by coalition partners outside the ruling World Outlook can grant up to +30. Hover over Government Popularity to see both bonuses.
 
 ## The Ruling Party Can Change
 

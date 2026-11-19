@@ -1,9 +1,13 @@
 # Written by Killerrabbit
 
 @government_ideology_drift_pool = 0.02
+@government_ideology_drift_cap = 0.10
+@dominant_outlook_support = 0.65
+@dominant_outlook_acceptance = 30
 
 update_coalition_diplomatic_acceptance = {
 	set_current_outlook_id = yes
+	set_outlook_popularity_array = yes
 	clear_temp_array = coalition_seats_by_outlook
 	resize_temp_array = { array = coalition_seats_by_outlook size = 5 }
 	for_each_loop = {
@@ -22,7 +26,10 @@ update_coalition_diplomatic_acceptance = {
 		end = 5
 		value = coalition_outlook_slot
 		set_temp_variable = { coalition_seat_share = coalition_seats_by_outlook^coalition_outlook_slot }
-		if = { limit = { check_variable = { coalition_seat_share > 0.01 } }
+		if = { limit = { check_variable = { outlook_popularity_by_id^coalition_outlook_slot > @dominant_outlook_support } }
+			set_temp_variable = { coalition_acceptance_by_outlook^coalition_outlook_slot = @dominant_outlook_acceptance }
+		}
+		else_if = { limit = { check_variable = { coalition_seat_share > 0.01 } }
 			set_temp_variable = {
 				coalition_acceptance_by_outlook^coalition_outlook_slot = {
 					value = 1
@@ -31,9 +38,6 @@ update_coalition_diplomatic_acceptance = {
 					add = { value = coalition_seat_share greater_than = 0.15 }
 					add = { value = coalition_seat_share greater_than = 0.20 }
 					add = { value = coalition_seat_share greater_than = 0.25 }
-					add = { value = coalition_seat_share greater_than = 0.30 }
-					add = { value = coalition_seat_share greater_than = 0.35 }
-					add = { value = coalition_seat_share greater_than = 0.40 }
 					multiply = 5
 				}
 			}
@@ -82,11 +86,12 @@ update_government_ideology_drift = {
 		}
 	}
 	clamp_temp_variable = { var = gov_drift_total_support min = 0.00001 }
-	set_variable = { gov_pop_democratic_drift = { value = gov_drift_support^0 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
-	set_variable = { gov_pop_communism_drift = { value = gov_drift_support^1 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
-	set_variable = { gov_pop_fascism_drift = { value = gov_drift_support^2 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
-	set_variable = { gov_pop_neutrality_drift = { value = gov_drift_support^3 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
-	set_variable = { gov_pop_nationalist_drift = { value = gov_drift_support^4 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	set_temp_variable = { gov_drift_pool = { value = @government_ideology_drift_pool min = @government_ideology_drift_cap } }
+	set_variable = { gov_pop_democratic_drift = { value = gov_drift_support^0 divide = gov_drift_total_support multiply = gov_drift_pool } }
+	set_variable = { gov_pop_communism_drift = { value = gov_drift_support^1 divide = gov_drift_total_support multiply = gov_drift_pool } }
+	set_variable = { gov_pop_fascism_drift = { value = gov_drift_support^2 divide = gov_drift_total_support multiply = gov_drift_pool } }
+	set_variable = { gov_pop_neutrality_drift = { value = gov_drift_support^3 divide = gov_drift_total_support multiply = gov_drift_pool } }
+	set_variable = { gov_pop_nationalist_drift = { value = gov_drift_support^4 divide = gov_drift_total_support multiply = gov_drift_pool } }
 	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
 		add_dynamic_modifier = { modifier = government_popularity_modifier }
 	}
