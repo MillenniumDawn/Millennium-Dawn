@@ -236,66 +236,51 @@ clear_coalition_count_ideas = {
 	set_variable = { coalition_ideas_synced = 0 }
 }
 
-setup_ruling_party_idea_tokens = {
-	clear_array = global.ruling_party_idea
-	add_to_array = { global.ruling_party_idea = token:ruling_party_western }
-	add_to_array = { global.ruling_party_idea = token:ruling_party_emerging }
-	add_to_array = { global.ruling_party_idea = token:ruling_party_salafist }
-	add_to_array = { global.ruling_party_idea = token:ruling_party_non_alligned }
-	add_to_array = { global.ruling_party_idea = token:ruling_party_nationalist }
+@government_ideology_drift_pool = 0.02
 
-	clear_array = global.major_ruling_party_idea
-	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_western }
-	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_emerging }
-	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_salafist }
-	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_non_alligned }
-	add_to_array = { global.major_ruling_party_idea = token:major_ruling_party_nationalist }
-}
-
-clear_own_ideology_drift = {
-	if = {
-		limit = { has_variable = ruling_party_drift_applied_token }
-		remove_ideas = var:ruling_party_drift_applied_token
-		clear_variable = ruling_party_drift_applied_token
-	}
-}
-
-add_own_ideology_drift = {
+update_government_ideology_drift = {
+	clear_temp_array = gov_drift_support
+	resize_temp_array = { array = gov_drift_support size = 5 }
+	set_temp_variable = { gov_drift_total_support = 0 }
+	set_temp_variable = { gov_drift_ruler = -1 }
 	set_current_outlook_id = yes
 	if = {
 		limit = { check_variable = { current_outlook_id > -1 } }
 		if = {
-			limit = { is_major = yes }
-			set_temp_variable = { ruling_party_drift_target_token = global.major_ruling_party_idea^current_outlook_id }
+			limit = { has_variable = ruling_party }
+			set_temp_variable = { gov_drift_ruler = ruling_party }
+			set_temp_variable = { gov_drift_total_support = { value = party_pop_array^gov_drift_ruler max = 0 } }
+			set_temp_variable = { gov_drift_support^current_outlook_id = gov_drift_total_support }
 		}
-		else = {
-			set_temp_variable = { ruling_party_drift_target_token = global.ruling_party_idea^current_outlook_id }
-		}
-		if = {
-			limit = {
-				has_variable = ruling_party_drift_applied_token
-				NOT = { check_variable = { ruling_party_drift_applied_token = ruling_party_drift_target_token } }
+		for_each_loop = {
+			array = gov_coalition_array
+			value = gov_drift_partner
+			if = {
+				limit = {
+					NOT = { check_variable = { gov_drift_partner = gov_drift_ruler } }
+					check_variable = { party_pop_array^gov_drift_partner > 0 }
+				}
+				set_temp_variable = { outlook_party_index = gov_drift_partner }
+				set_outlook_from_party_index = yes
+				add_to_temp_variable = { gov_drift_support^outlook_id = party_pop_array^gov_drift_partner }
+				add_to_temp_variable = { gov_drift_total_support = party_pop_array^gov_drift_partner }
 			}
-			clear_own_ideology_drift = yes
 		}
+		# Without polling data, keep all drift with the sitting government.
 		if = {
-			limit = { NOT = { has_idea = var:ruling_party_drift_target_token } }
-			add_ideas = var:ruling_party_drift_target_token
+			limit = { check_variable = { gov_drift_total_support = 0 } }
+			set_temp_variable = { gov_drift_support^current_outlook_id = 1 }
+			set_temp_variable = { gov_drift_total_support = 1 }
 		}
-		set_variable = { ruling_party_drift_applied_token = ruling_party_drift_target_token }
 	}
-	else = {
-		clear_own_ideology_drift = yes
-	}
-
-	if = {
-		limit = {
-			has_government = fascism
-			is_major = no
-			NOT = { original_tag = NIG }
-			NOT = { has_idea = sunni }
-		}
-		add_ideas = sunni
+	clamp_temp_variable = { var = gov_drift_total_support min = 0.00001 }
+	set_variable = { gov_pop_democratic_drift = { value = gov_drift_support^0 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	set_variable = { gov_pop_communism_drift = { value = gov_drift_support^1 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	set_variable = { gov_pop_fascism_drift = { value = gov_drift_support^2 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	set_variable = { gov_pop_neutrality_drift = { value = gov_drift_support^3 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	set_variable = { gov_pop_nationalist_drift = { value = gov_drift_support^4 divide = gov_drift_total_support multiply = @government_ideology_drift_pool } }
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
+		add_dynamic_modifier = { modifier = government_popularity_modifier }
 	}
 }
 

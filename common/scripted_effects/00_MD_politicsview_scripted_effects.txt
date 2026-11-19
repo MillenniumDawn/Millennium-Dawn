@@ -786,9 +786,6 @@ update_party_name = {
 # from -100% to 100% of their current popularity
 # How-to Adjust: Adjust the penalty by changing line 1904 from 0.002 to 0.005
 gov_pop_calculation = {
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
-		add_dynamic_modifier = { modifier = government_popularity_modifier }
-	}
 	set_variable = {
 		gov_pop_stability_factor = {
 			value = government_coalition_differential
@@ -818,7 +815,9 @@ gov_pop_calculation = {
 }
 
 set_coalition_drift = {
-	#Each coalition partner popularity gets added to their own Outlook
+	update_government_ideology_drift = yes
+
+	# Diplomatic acceptance still uses elected seats, not current support.
 	clear_temp_array = coalition_count_temp
 	resize_temp_array = { array = coalition_count_temp size = 5 }
 	for_each_loop = {
@@ -829,8 +828,7 @@ set_coalition_drift = {
 		add_to_temp_variable = { coalition_count_temp^outlook_id = party_pop_elect_array^v }
 	}
 
-	#Don't get bonuses to ruling Outlook
-	set_current_outlook_id = yes
+	# The ruling outlook does not get an acceptance bonus.
 	if = {
 		limit = { check_variable = { current_outlook_id > -1 } }
 		set_temp_variable = { coalition_count_temp^current_outlook_id = 0 }
