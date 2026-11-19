@@ -45,6 +45,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_matching_brace,
     find_unquoted_block_end,
     first_flat_match,
     flat_block_text,
@@ -792,6 +793,66 @@ def _extract_from_blocks(block: str) -> List[str]:
     return bodies
 
 
+_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*(?:yes|no)\b")
+
+
+def _called_triggers(block: str, names: AbstractSet[str]) -> List[str]:
+    """Scripted triggers from *names* that *block* calls as `name = yes` or `= no`."""
+    return [m[1] for m in _TRIGGER_CALL_RE.finditer(block) if m[1] in names]
+
+
+def _from_reading_triggers(triggers: Mapping[str, str]) -> Set[str]:
+    """Scripted triggers whose body reads FROM, directly or through the triggers it calls."""
+    reading = {name for name, body in triggers.items() if _FROM_WORD_RE.search(body)}
+    callees = {
+        name: _called_triggers(body, triggers.keys()) for name, body in triggers.items()
+    }
+    grew = True
+    while grew:
+        grew = False
+        for name, called in callees.items():
+            if name not in reading and reading.intersection(called):
+                reading.add(name)
+                grew = True
+    return reading
+
+
+# Flags and ideas are the target state a decision's own effect changes.
+_TARGET_STATE_WRITES = {
+    "set_country_flag": ("flag", True),
+    "clr_country_flag": ("flag", False),
+    "add_ideas": ("idea", True),
+    "remove_ideas": ("idea", False),
+}
+_TARGET_STATE_READS = {"has_country_flag": ("flag", True), "has_idea": ("idea", True)}
+_FLAG_NAME_RE = re.compile(r"\bflag\s*=\s*([\w@.:]+)")
+_ONE_SHOT_NOTE = " (the same country cannot repeat it; verify another one can take it)"
+
+
+def _from_state(
+    block: str, verbs: Mapping[str, Tuple[str, bool]]
+) -> Set[Tuple[str, str, bool]]:
+    """(kind, name, present) of state written or required inside FROM, retaining NOTs."""
+    state: Set[Tuple[str, str, bool]] = set()
+
+    def visit(body: str, in_from: bool = False, negated: bool = False) -> None:
+        for key, scalar, child in iter_statements(flat_block_text(body)):
+            if in_from and key in verbs:
+                kind, present = verbs[key]
+                if scalar is not None:
+                    names = [scalar]
+                elif kind == "flag":
+                    names = _FLAG_NAME_RE.findall(child or "")
+                else:
+                    names = (child or "").split()
+                state.update((kind, name, present != negated) for name in names)
+            elif child is not None:
+                visit(child, in_from or key == "FROM", negated != (key == "NOT"))
+
+    visit(block)
+    return state
+
+
 # Bare trigger names needing a has_ prefix (hoisted from validate_bare_trigger_names).
 _BARE_TRIGGERS = {
     "political_power": "has_political_power",
@@ -1056,6 +1117,126 @@ def _find_category_redundant_rows(
             )
 
     return results
+
+
+_GATE_STATEMENT_RE = re.compile(
+    r'([^\s{}=<>"]+)\s*(>=|<=|=|>|<)\s*("[^"]*"|\{|[^\s{}]+)'
+)
+
+
+def _gate_statement_lines(block: str) -> Set[str]:
+    """Depth-0 statements of a trigger block, whitespace collapsed for comparison.
+
+    A state scope such as ``759 = { ... }`` stays one statement.
+    """
+    lines = set()
+    for inner, index in iter_flat_offsets(block):
+        if index and inner[index - 1] not in " \t\r\n{}":
+            continue
+        match = _GATE_STATEMENT_RE.match(inner, index)
+        if not match:
+            continue
+        key, operator, value = match.groups()
+        if value == "{":
+            close = find_matching_brace(inner, match.end() - 1)
+            if close == -1:
+                continue
+            value = " ".join(["{", *inner[match.end() : close].split(), "}"])
+        lines.add(f"{key} {operator} {value}")
+    return lines
+
+
+def _category_gate_lines(category_code: str) -> Dict[str, str]:
+    """Map each depth-0 line of a category's visible and allowed to its block."""
+    gate: Dict[str, str] = {}
+    for field in ("visible", "allowed"):
+        block = extract_value_multi_line(category_code, field)
+        for line in _gate_statement_lines(block):
+            gate.setdefault(line, field)
+    return gate
+
+
+def _decision_gate_lines(d: "DecisionFactory") -> Dict[str, Set[str]]:
+    """ROOT-scope depth-0 lines of a decision's gates, by block.
+
+    A state target reads visible and available on the state, so only its
+    target_root_trigger counts. FROM is the target, which a category gate does
+    not have.
+    """
+    fields = (
+        ("target_root_trigger",)
+        if d.state_target
+        else ("visible", "target_root_trigger", "available")
+    )
+    return {
+        field: {
+            line
+            for line in _gate_statement_lines(getattr(d, field))
+            if not _FROM_WORD_RE.search(line)
+        }
+        for field in fields
+    }
+
+
+def _find_category_covered_checks(
+    factories: List["DecisionFactory"],
+    categories: Dict[str, str],
+    cats_with_decs: Dict[str, List[str]],
+) -> Tuple[List[Tuple[str, str, int]], List[str]]:
+    """Pure detection for ``validate_checks_covered_by_category``.
+
+    Returns (covered, candidates). ``covered`` holds a decision's visible,
+    target_root_trigger, or available line that its category's visible or
+    allowed already holds at depth 0. A hidden category hides its decisions from
+    players and the AI. ``candidates`` holds categories whose decisions, two or
+    more, all repeat a line the category does not hold.
+
+    Missions are skipped: one in a hidden category still ticks.
+    """
+    token_to_cat: Dict[str, str] = {}
+    for cat, dec_tokens in cats_with_decs.items():
+        for tok in dec_tokens:
+            token_to_cat.setdefault(tok, cat)
+    by_category: Dict[str, List["DecisionFactory"]] = {}
+    for d in factories:
+        cat_name = token_to_cat.get(d.token)
+        if cat_name is not None and not d.mission_subtype:
+            by_category.setdefault(cat_name, []).append(d)
+
+    covered: List[Tuple[str, str, int]] = []
+    candidates: List[str] = []
+    for cat_name, decisions in by_category.items():
+        gate = _category_gate_lines(categories[cat_name])
+        shared: Set[str] | None = None
+        for d in decisions:
+            gate_lines = _decision_gate_lines(d)
+            for field, lines in gate_lines.items():
+                for line in sorted(lines & gate.keys()):
+                    if (
+                        gate[line] == "allowed"
+                        and field != "target_root_trigger"
+                        and line.startswith(("tag ", "original_tag "))
+                    ):
+                        continue  # validate_tag_redundant_with_category reports it.
+                    covered.append(
+                        (
+                            f"{d.token}: {field} repeats `{line}` from the "
+                            f"category {gate[line]}; remove it",
+                            d.source_path,
+                            d.line,
+                        )
+                    )
+            every_line = set().union(*gate_lines.values())
+            shared = every_line if shared is None else shared & every_line
+        repeated = sorted((shared or set()) - gate.keys())
+        if len(decisions) > 1 and repeated:
+            candidates.append(
+                f"{cat_name}: all {len(decisions)} decisions check "
+                f"{', '.join(f'`{line}`' for line in repeated)}; "
+                "check once in the category instead"
+            )
+
+    return covered, candidates
 
 
 def _group_fixes_by_basename(fixes: list) -> Dict[str, List[str]]:
@@ -2375,6 +2556,119 @@ class Validator(BaseValidator):
             category="decision-available-repeats-root-trigger",
         )
 
+    def validate_root_trigger_reads_from(self):
+        """Flag a ``target_root_trigger`` that reads ``FROM``.
+
+        ``target_root_trigger`` runs before any target is bound, so a ``FROM``
+        read there checks nothing useful. Scripted triggers are followed, and
+        so are the triggers they call.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section("Checking target_root_trigger blocks that read FROM...")
+        triggers = self._get_scripted_triggers()
+        reading = _from_reading_triggers(triggers)
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            root = d.target_root_trigger
+            if not root or (d.allowed and "always = no" in d.allowed):
+                continue
+            if _FROM_WORD_RE.search(root):
+                reads = "reads FROM"
+            elif called := _called_triggers(root, reading):
+                reads = f"calls {called[0]}, which reads FROM"
+            else:
+                continue
+            results.append(
+                (
+                    f"{d.token} - target_root_trigger {reads}, but FROM is not"
+                    " bound there; move the condition into target_trigger",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No target_root_trigger reads FROM",
+            "Decisions whose target_root_trigger reads FROM:",
+            severity=Severity.WARNING,
+            category="decision-root-trigger-reads-from",
+        )
+
+    def validate_target_state_rechecked_in_available(self):
+        """Flag target state a decision changes that only ``target_trigger`` checks.
+
+        ``target_trigger`` runs once a day, so after one country completes the
+        decision, others can take it on the same target until the next pass.
+        Compares the flags and ideas ``complete_effect`` writes inside ``FROM``
+        with opposite-polarity reads in ``target_trigger``, less those ``available``
+        reads there. ``effect_tooltip`` bodies never run, so they do not count.
+        A ``days_re_enable`` or ``fire_only_once`` decision gets a verify note:
+        the same country cannot repeat it, so only another country can. When it
+        is also locked to one runtime ``tag``, nobody can, and it is skipped.
+
+        Exempts ``allowed = { always = no }`` (script-activated).
+        """
+        self._log_section(
+            "Checking targeted decisions for target state only target_trigger checks..."
+        )
+        token_to_cat = _category_of_decision(
+            parse_categories_with_decisions(self.mod_path)
+        )
+        cat_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        results = []
+
+        for d in parse_all_decision_factories(self.mod_path):
+            if not (d.target_trigger and d.complete_effect):
+                continue
+            if d.allowed and "always = no" in d.allowed:
+                continue
+            one_shot = d.fire_only_once or "days_re_enable" in d.raw
+            if one_shot and any(
+                kind == "tag"
+                for kind, _tag in (
+                    _flat_tag_pins_with_kind(d.allowed)
+                    | _flat_tag_pins_with_kind(d.target_root_trigger)
+                    | cat_pins.get(token_to_cat.get(d.token, ""), set())
+                )
+            ):
+                continue
+            effect = _strip_effect_tooltip_blocks(d.complete_effect)
+            invalidated = {
+                (kind, name, not present)
+                for kind, name, present in _from_state(effect, _TARGET_STATE_WRITES)
+            } & _from_state(d.target_trigger, _TARGET_STATE_READS)
+            stale = {(kind, name) for kind, name, _present in invalidated} - {
+                (kind, name)
+                for kind, name, _present in _from_state(
+                    d.available, _TARGET_STATE_READS
+                )
+            }
+            if stale:
+                changed = ", ".join(f"{kind} {name}" for kind, name in sorted(stale))
+                note = _ONE_SHOT_NOTE if one_shot else ""
+                results.append(
+                    (
+                        f"{d.token} - complete_effect changes {changed} on FROM, but"
+                        " only target_trigger checks it. target_trigger runs once a"
+                        " day, so the decision can be taken again on the same target"
+                        " until the next pass; re-check it in available, inside"
+                        f" hidden_trigger if it is not player-facing{note}",
+                        d.source_path,
+                        d.line,
+                    )
+                )
+
+        self._report(
+            results,
+            "✓ No targeted decision changes state only target_trigger checks",
+            "Targeted decisions whose effect changes target state that available does not check:",
+            severity=Severity.WARNING,
+            category="decision-target-state-not-in-available",
+        )
+
     def validate_from_checks_in_visible(self):
         """Flag targeted decisions with FROM checks in visible when a
         target_trigger already exists.
@@ -2708,6 +3002,35 @@ class Validator(BaseValidator):
             results,
             "✓ No decisions with tag checks redundant with category lock",
             "Decisions with tag/original_tag re-checks redundant with the parent category's lock (remove the re-check):",
+        )
+
+    def validate_checks_covered_by_category(self):
+        """Flag decision gate lines the category gate already checks, and
+        categories whose decisions all repeat one.
+
+        See ``_find_category_covered_checks`` for the rules.
+        """
+        self._log_section("Checking decision gates against their category gate...")
+
+        covered, candidates = _find_category_covered_checks(
+            parse_all_decision_factories(self.mod_path),
+            parse_decision_categories(self.mod_path),
+            parse_categories_with_decisions(self.mod_path),
+        )
+
+        self._report(
+            covered,
+            "✓ No decision repeats its category gate",
+            "Decision checks the category gate already makes:",
+            Severity.WARNING,
+            category="decision-check-covered-by-category",
+        )
+        self._report(
+            candidates,
+            "✓ No category whose decisions all repeat a check",
+            "Categories whose decisions all repeat a check:",
+            Severity.WARNING,
+            category="decision-category-gate-candidate",
         )
 
     def validate_pp_charge_in_effect(self):
@@ -4262,6 +4585,8 @@ class Validator(BaseValidator):
         self.validate_targets_no_trigger()
         self.validate_root_only_visible_on_targeted()
         self.validate_available_repeats_target_root_trigger()
+        self.validate_root_trigger_reads_from()
+        self.validate_target_state_rechecked_in_available()
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
@@ -4270,6 +4595,7 @@ class Validator(BaseValidator):
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
         self.validate_tag_redundant_with_category()
+        self.validate_checks_covered_by_category()
         self.validate_pp_charge_in_effect()
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
