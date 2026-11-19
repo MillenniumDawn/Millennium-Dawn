@@ -6,6 +6,7 @@ import pickle
 import sqlite3
 import subprocess
 import sys
+from contextlib import closing
 from multiprocessing import get_context
 from pathlib import Path
 
@@ -2018,7 +2019,7 @@ def test_event_cache_is_read_by_later_decision_cli(tmp_path, workers):
         check=True,
     )
     db = next((tmp_path / ".validation_cache").glob("v*/cache.db"))
-    with sqlite3.connect(db) as con:
+    with closing(sqlite3.connect(db)) as con, con:
         rows = con.execute(
             "SELECT value FROM entries WHERE namespace LIKE 'events.payment_nodes%'"
         ).fetchall()
@@ -2055,7 +2056,7 @@ def test_event_cache_is_read_by_later_decision_cli(tmp_path, workers):
     )
     assert result.returncode == 0, result.stderr
     assert "bill_decision - ai_will_do lowers the weight on bankruptcy" in result.stderr
-    with sqlite3.connect(db) as con:
+    with closing(sqlite3.connect(db)) as con:
         assert (
             con.execute("SELECT COUNT(*) FROM payment_cache_rewrites").fetchone()[0]
             == 0

@@ -6,7 +6,7 @@ they never change files, remove credit, rewrite history, or block a commit.
 A failed or incomplete scan exits **2**, while a completed report exits **0**, even
 when it contains findings. There is no enforcement flag or automatic hook/CI wiring.
 
-Run from the repository root with Python 3.12+:
+Run from the repository root with Python 3.14+:
 
 ```bash
 # A proposed commit message, including its body and trailers:
