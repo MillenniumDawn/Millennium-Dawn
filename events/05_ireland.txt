@@ -69,11 +69,10 @@ country_event = {
 		}
 	}
 
-	immediate = { set_country_flag = IRE_metrolink_deferral_done }
-
 	option = {
 		name = IRE_metrolink.2.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.2.a executed"
+		set_country_flag = IRE_metrolink_deferral_done
 		if = {
 			limit = { check_variable = { IRE_metrolink_stage = 3 } }
 			set_variable = { IRE_metrolink_resume_stage = 2 }
@@ -320,11 +319,15 @@ country_event = {
 		NOT = { has_country_flag = IRE_metrolink_overrun_done }
 	}
 
-	immediate = { set_country_flag = IRE_metrolink_overrun_done }
+	immediate = {
+		set_country_flag = IRE_metrolink_overrun_done
+		set_country_flag = IRE_metrolink_overrun_pending
+	}
 
 	option = {
 		name = IRE_metrolink.7.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.a executed"
+		clr_country_flag = IRE_metrolink_overrun_pending
 		set_temp_variable = { treasury_change = gdp_total }
 		multiply_temp_variable = { treasury_change = -0.01 }
 		modify_treasury_effect = yes
@@ -338,6 +341,7 @@ country_event = {
 	option = {
 		name = IRE_metrolink.7.b
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.b executed"
+		clr_country_flag = IRE_metrolink_overrun_pending
 		set_temp_variable = { debt_change = gdp_total }
 		multiply_temp_variable = { debt_change = 0.015 }
 		modify_debt_effect = yes
@@ -351,7 +355,14 @@ country_event = {
 	option = {
 		name = IRE_metrolink.7.c
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.7.c executed"
-		set_country_flag = IRE_metrolink_overrun_delayed
+		clr_country_flag = IRE_metrolink_overrun_pending
+		if = {
+			limit = { check_variable = { IRE_metrolink_stage > 3 } }
+			set_country_flag = { flag = IRE_metrolink_overrun_delay days = 120 value = 1 }
+		}
+		else = {
+			set_country_flag = IRE_metrolink_overrun_delayed
+		}
 		custom_effect_tooltip = IRE_metrolink_overrun_delay_tt
 		ai_chance = { base = 5 }
 	}
@@ -368,6 +379,13 @@ country_event = {
 	option = {
 		name = IRE_metrolink.8.a
 		log = "[GetDateText]: [This.GetName]: IRE_metrolink.8.a executed"
-		IRE_metrolink_opening_effect = yes
+		if = {
+			limit = { 27 = { is_owned_and_controlled_by = ROOT } }
+			IRE_metrolink_opening_effect = yes
+		}
+		else = {
+			set_variable = { IRE_metrolink_stage = 4 }
+			custom_effect_tooltip = IRE_metrolink_opening_postponed_tt
+		}
 	}
 }
