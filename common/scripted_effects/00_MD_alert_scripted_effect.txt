@@ -111,6 +111,16 @@ md_alert_click = {
 		}
 	}
 
+	if = {
+		limit = {
+			check_variable = { md_alerts^alert_idx = token:md_eu_council_vote }
+		}
+		eu_screen_selection = yes
+		set_country_flag = new_EU_open
+		set_country_flag = show_eu_council
+		update_eu_dirty_variable = yes
+	}
+
 	md_alert_update_gui = yes
 }
 
@@ -239,6 +249,96 @@ md_check_research_slot_alert = {
 		limit = { is_in_array = { md_alerts = alert_id } }
 		remove_md_alert = yes
 	}
+}
+
+# Shows the EU Council vote alert while this member has an uncast ballot.
+md_check_eu_council_vote_alert = {
+	set_temp_variable = { alert_id = token:md_eu_council_vote }
+	if = {
+		limit = { md_can_cast_eu_council_vote = yes }
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { is_in_array = { md_alerts = alert_id } }
+		remove_md_alert = yes
+	}
+}
+
+# Call after a Council vote opens or closes.
+md_refresh_eu_council_vote_alerts = {
+	every_country = {
+		limit = { is_ai = no }
+		md_check_eu_council_vote_alert = yes
+	}
+}
+
+# The MD_<prefix>_action_available flags drive the launcher button shine, so the GUI reads a flag instead of the full trigger every frame.
+md_check_atc_action_alert = {
+	set_temp_variable = { alert_id = token:md_atc_action_available }
+	if = {
+		limit = { MD_atc_has_action_available = yes }
+		set_country_flag = MD_atc_action_available
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { has_country_flag = MD_atc_action_available }
+		clr_country_flag = MD_atc_action_available
+		remove_md_alert = yes
+	}
+}
+
+md_check_artc_action_alert = {
+	set_temp_variable = { alert_id = token:md_artc_action_available }
+	if = {
+		limit = { MD_artc_has_action_available = yes }
+		set_country_flag = MD_artc_action_available
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { has_country_flag = MD_artc_action_available }
+		clr_country_flag = MD_artc_action_available
+		remove_md_alert = yes
+	}
+}
+
+md_check_ftc_action_alert = {
+	set_temp_variable = { alert_id = token:md_ftc_action_available }
+	if = {
+		limit = { MD_ftc_has_action_available = yes }
+		set_country_flag = MD_ftc_action_available
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { has_country_flag = MD_ftc_action_available }
+		clr_country_flag = MD_ftc_action_available
+		remove_md_alert = yes
+	}
+}
+
+md_check_sftc_action_alert = {
+	set_temp_variable = { alert_id = token:md_sftc_action_available }
+	if = {
+		limit = { MD_sftc_has_action_available = yes }
+		set_country_flag = MD_sftc_action_available
+		set_temp_variable = { alert_color = 1 }
+		add_md_alert_unless_exists = yes
+	}
+	else_if = {
+		limit = { has_country_flag = MD_sftc_action_available }
+		clr_country_flag = MD_sftc_action_available
+		remove_md_alert = yes
+	}
+}
+
+md_check_training_command_alerts = {
+	md_check_atc_action_alert = yes
+	md_check_artc_action_alert = yes
+	md_check_ftc_action_alert = yes
+	md_check_sftc_action_alert = yes
 }
 
 # Shift-click: clears suppression list so dismissed alerts can surface again.
