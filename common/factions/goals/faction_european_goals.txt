@@ -258,70 +258,38 @@ faction_goal_eng_atlantic_escorts = {
 	completed = {
 		custom_override_tooltip = {
 			tooltip = faction_goal_eng_atlantic_escorts_desc
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { aso_escort_total = 0 }
-				set_temp_variable = { aso_escort_members = 0 }
-				add_to_temp_variable = {
-					aso_escort_total = {
-						value = 0
-						add = num_ships_with_type@stealth_destroyer
-						add = num_ships_with_type@destroyer
-						add = num_ships_with_type@screen_destroyer
-						add = num_ships_with_type@stealth_frigate
-						add = num_ships_with_type@frigate
-						add = num_ships_with_type@heavy_frigate
-					}
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_ships_with_type@stealth_destroyer
+					add = num_ships_with_type@destroyer
+					add = num_ships_with_type@screen_destroyer
+					add = num_ships_with_type@stealth_frigate
+					add = num_ships_with_type@frigate
+					add = num_ships_with_type@heavy_frigate
 				}
-				if = {
-					limit = {
-						OR = {
-							check_variable = { num_ships_with_type@stealth_destroyer > 0 }
-							check_variable = { num_ships_with_type@destroyer > 0 }
-							check_variable = { num_ships_with_type@screen_destroyer > 0 }
-							check_variable = { num_ships_with_type@stealth_frigate > 0 }
-							check_variable = { num_ships_with_type@frigate > 0 }
-							check_variable = { num_ships_with_type@heavy_frigate > 0 }
-						}
-					}
-					add_to_temp_variable = { aso_escort_members = 1 }
-				}
-				all_of_scopes = {
-					array = faction_members
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-						}
-						add_to_temp_variable = {
-							aso_escort_total = {
-								value = 0
-								add = num_ships_with_type@stealth_destroyer
-								add = num_ships_with_type@destroyer
-								add = num_ships_with_type@screen_destroyer
-								add = num_ships_with_type@stealth_frigate
-								add = num_ships_with_type@frigate
-								add = num_ships_with_type@heavy_frigate
-							}
-						}
-					}
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							OR = {
-								check_variable = { num_ships_with_type@stealth_destroyer > 0 }
-								check_variable = { num_ships_with_type@destroyer > 0 }
-								check_variable = { num_ships_with_type@screen_destroyer > 0 }
-								check_variable = { num_ships_with_type@stealth_frigate > 0 }
-								check_variable = { num_ships_with_type@frigate > 0 }
-								check_variable = { num_ships_with_type@heavy_frigate > 0 }
-							}
-						}
-						add_to_temp_variable = { aso_escort_members = 1 }
-					}
-				}
+				greater_than = 19
 			}
-			check_variable = { aso_escort_total > 19 }
-			check_variable = { aso_escort_members > 1 }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					if = {
+						limit = {
+							value = num_ships_with_type@stealth_destroyer
+							add = num_ships_with_type@destroyer
+							add = num_ships_with_type@screen_destroyer
+							add = num_ships_with_type@stealth_frigate
+							add = num_ships_with_type@frigate
+							add = num_ships_with_type@heavy_frigate
+							greater_than = 0
+						}
+						add = 1
+					}
+				}
+				greater_than = 1
+			}
 		}
 	}
 	complete_effect = {
@@ -530,29 +498,17 @@ faction_goal_fra_european_defense_industry = {
 	completed = {
 		custom_override_tooltip = {
 			tooltip = faction_goal_fra_european_defense_industry_desc
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { paris_defense_industry_members = 0 }
-				if = {
-					limit = {
-						has_country_flag = european_nation_flag
-						num_of_military_factories > 11
-					}
-					add_to_temp_variable = { paris_defense_industry_members = 1 }
-				}
-				all_of_scopes = {
-					array = faction_members
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = european_faction_members_collection
 					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							has_country_flag = european_nation_flag
-							num_of_military_factories > 11
-						}
-						add_to_temp_variable = { paris_defense_industry_members = 1 }
+						limit = { value = num_of_military_factories greater_than = 11 }
+						add = 1
 					}
 				}
+				greater_than = 2
 			}
-			check_variable = { paris_defense_industry_members > 2 }
 		}
 	}
 	complete_effect = {
@@ -573,49 +529,14 @@ faction_goal_fra_strategic_autonomy = {
 	completed = {
 		custom_override_tooltip = {
 			tooltip = faction_goal_fra_strategic_autonomy_desc
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { paris_autonomous_members = 0 }
-				if = {
-					limit = {
-						OR = {
-							has_tech = MBT_4
-							has_tech = mbt_tech_2
-						}
-						OR = {
-							has_tech = Anti_Air_2
-							has_tech = nsb_Anti_Air_2
-						}
-						OR = {
-							has_tech = MR_Fighter4
-							has_tech = gen_5_medium
-						}
-					}
-					add_to_temp_variable = { paris_autonomous_members = 1 }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = paris_modern_arms_members_collection
+					add = 1
 				}
-				all_of_scopes = {
-					array = faction_members
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							OR = {
-								has_tech = MBT_4
-								has_tech = mbt_tech_2
-							}
-							OR = {
-								has_tech = Anti_Air_2
-								has_tech = nsb_Anti_Air_2
-							}
-							OR = {
-								has_tech = MR_Fighter4
-								has_tech = gen_5_medium
-							}
-						}
-						add_to_temp_variable = { paris_autonomous_members = 1 }
-					}
-				}
+				greater_than = 2
 			}
-			check_variable = { paris_autonomous_members > 2 }
 		}
 	}
 	complete_effect = {
@@ -775,41 +696,14 @@ faction_goal_ger_third_power = {
 					is_subject = no
 				}
 			}
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { imperial_bloc_military_factories = 0 }
-				if = {
-					limit = {
-						OR = {
-							original_tag = GER
-							original_tag = AUS
-							original_tag = HUN
-							original_tag = CZE
-							original_tag = SLO
-						}
-						is_subject = no
-					}
-					add_to_temp_variable = { imperial_bloc_military_factories = num_of_military_factories }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = imperial_bloc_core_members_collection
+					add = num_of_military_factories
 				}
-				all_of_scopes = {
-					array = faction_members
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							OR = {
-								original_tag = GER
-								original_tag = AUS
-								original_tag = HUN
-								original_tag = CZE
-								original_tag = SLO
-							}
-							is_subject = no
-						}
-						add_to_temp_variable = { imperial_bloc_military_factories = num_of_military_factories }
-					}
-				}
+				greater_than = 79
 			}
-			check_variable = { imperial_bloc_military_factories > 79 }
 		}
 	}
 	complete_effect = {
@@ -1354,8 +1248,7 @@ faction_goal_pol_shield_between_seas = {
 						has_tech = Anti_Air_2
 						has_tech = nsb_Anti_Air_2
 					}
-					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
-					check_variable = { pol_air_defense > 14 }
+					check_expr = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment greater_than = 14 }
 				}
 				LAT = {
 					OR = {
@@ -1367,8 +1260,7 @@ faction_goal_pol_shield_between_seas = {
 						has_tech = Anti_Air_2
 						has_tech = nsb_Anti_Air_2
 					}
-					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
-					check_variable = { pol_air_defense > 14 }
+					check_expr = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment greater_than = 14 }
 				}
 				LIT = {
 					OR = {
@@ -1380,8 +1272,7 @@ faction_goal_pol_shield_between_seas = {
 						has_tech = Anti_Air_2
 						has_tech = nsb_Anti_Air_2
 					}
-					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
-					check_variable = { pol_air_defense > 14 }
+					check_expr = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment greater_than = 14 }
 				}
 			}
 			OR = {
@@ -1395,8 +1286,7 @@ faction_goal_pol_shield_between_seas = {
 						has_tech = Anti_Air_2
 						has_tech = nsb_Anti_Air_2
 					}
-					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
-					check_variable = { pol_air_defense > 14 }
+					check_expr = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment greater_than = 14 }
 				}
 				UKR = {
 					OR = {
@@ -1408,8 +1298,7 @@ faction_goal_pol_shield_between_seas = {
 						has_tech = Anti_Air_2
 						has_tech = nsb_Anti_Air_2
 					}
-					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
-					check_variable = { pol_air_defense > 14 }
+					check_expr = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment greater_than = 14 }
 				}
 			}
 		}

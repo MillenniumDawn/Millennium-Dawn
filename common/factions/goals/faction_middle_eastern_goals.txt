@@ -228,20 +228,14 @@ faction_goal_irq_outfit_the_iraqi_army = {
 			country_exists = IRQ
 			IRQ = {
 				check_variable = { num_target_equipment_in_armies@infantry_weapons_type > 0 }
-				set_temp_variable = {
-					irq_infantry_weapons_gap = {
-						value = num_equipment_in_armies@infantry_weapons_type
-						subtract = { value = num_target_equipment_in_armies@infantry_weapons_type multiply = 0.95 }
-					}
+				check_expr = {
+					value = num_equipment_in_armies@infantry_weapons_type
+					greater_than_or_equals = { value = num_target_equipment_in_armies@infantry_weapons_type multiply = 0.95 }
 				}
-				set_temp_variable = {
-					irq_cnc_gap = {
-						value = num_equipment_in_armies@cnc_equipment_type
-						subtract = { value = num_target_equipment_in_armies@cnc_equipment_type multiply = 0.95 }
-					}
+				check_expr = {
+					value = num_equipment_in_armies@cnc_equipment_type
+					greater_than_or_equals = { value = num_target_equipment_in_armies@cnc_equipment_type multiply = 0.95 }
 				}
-				check_variable = { irq_infantry_weapons_gap > -1 }
-				check_variable = { irq_cnc_gap > -1 }
 			}
 		}
 	}
@@ -300,63 +294,17 @@ faction_goal_irq_regions_shield = {
 				is_subject = no
 			}
 			171 = { is_controlled_by = IRQ }
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { fao_equipped_regional_members = 0 }
-				if = {
-					limit = {
-						OR = {
-							original_tag = BHR
-							original_tag = EGY
-							original_tag = ISR
-							original_tag = JOR
-							original_tag = KUW
-							original_tag = LEB
-							original_tag = OMA
-							original_tag = PAL
-							original_tag = PER
-							original_tag = QAT
-							original_tag = SAU
-							original_tag = SYR
-							original_tag = TUR
-							original_tag = UAE
-							original_tag = YEM
-						}
-						is_subject = no
-						has_equipment = { infantry_weapons_type > 999 }
-					}
-					add_to_temp_variable = { fao_equipped_regional_members = 1 }
-				}
-				all_of_scopes = {
-					array = faction_members
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = fao_regional_members_collection
 					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							OR = {
-								original_tag = BHR
-								original_tag = EGY
-								original_tag = ISR
-								original_tag = JOR
-								original_tag = KUW
-								original_tag = LEB
-								original_tag = OMA
-								original_tag = PAL
-								original_tag = PER
-								original_tag = QAT
-								original_tag = SAU
-								original_tag = SYR
-								original_tag = TUR
-								original_tag = UAE
-								original_tag = YEM
-							}
-							is_subject = no
-							has_equipment = { infantry_weapons_type > 999 }
-						}
-						add_to_temp_variable = { fao_equipped_regional_members = 1 }
+						limit = { value = num_equipment@infantry_weapons_type greater_than = 999 }
+						add = 1
 					}
 				}
+				greater_than = 1
 			}
-			check_variable = { fao_equipped_regional_members > 1 }
 		}
 	}
 	complete_effect = {
@@ -1523,110 +1471,58 @@ faction_goal_mto_regional_security_provider = {
 					}
 				}
 			}
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { mto_warship_total = 0 }
-				set_temp_variable = { mto_naval_members = 0 }
-				add_to_temp_variable = {
-					mto_warship_total = {
-						value = 0
-						add = num_ships_with_type@carrier
-						add = num_ships_with_type@helicopter_operator
-						add = num_ships_with_type@battleship
-						add = num_ships_with_type@battle_cruiser
-						add = num_ships_with_type@cruiser
-						add = num_ships_with_type@stealth_destroyer
-						add = num_ships_with_type@destroyer
-						add = num_ships_with_type@screen_destroyer
-						add = num_ships_with_type@stealth_frigate
-						add = num_ships_with_type@frigate
-						add = num_ships_with_type@heavy_frigate
-						add = num_ships_with_type@corvette
-						add = num_ships_with_type@stealth_corvette
-						add = num_ships_with_type@patrol_boat
-						add = num_ships_with_type@missile_submarine
-						add = num_ships_with_type@attack_submarine
-					}
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_ships_with_type@carrier
+					add = num_ships_with_type@helicopter_operator
+					add = num_ships_with_type@battleship
+					add = num_ships_with_type@battle_cruiser
+					add = num_ships_with_type@cruiser
+					add = num_ships_with_type@stealth_destroyer
+					add = num_ships_with_type@destroyer
+					add = num_ships_with_type@screen_destroyer
+					add = num_ships_with_type@stealth_frigate
+					add = num_ships_with_type@frigate
+					add = num_ships_with_type@heavy_frigate
+					add = num_ships_with_type@corvette
+					add = num_ships_with_type@stealth_corvette
+					add = num_ships_with_type@patrol_boat
+					add = num_ships_with_type@missile_submarine
+					add = num_ships_with_type@attack_submarine
 				}
-				if = {
-					limit = {
-						OR = {
-							check_variable = { num_ships_with_type@carrier > 0 }
-							check_variable = { num_ships_with_type@helicopter_operator > 0 }
-							check_variable = { num_ships_with_type@battleship > 0 }
-							check_variable = { num_ships_with_type@battle_cruiser > 0 }
-							check_variable = { num_ships_with_type@cruiser > 0 }
-							check_variable = { num_ships_with_type@stealth_destroyer > 0 }
-							check_variable = { num_ships_with_type@destroyer > 0 }
-							check_variable = { num_ships_with_type@screen_destroyer > 0 }
-							check_variable = { num_ships_with_type@stealth_frigate > 0 }
-							check_variable = { num_ships_with_type@frigate > 0 }
-							check_variable = { num_ships_with_type@heavy_frigate > 0 }
-							check_variable = { num_ships_with_type@corvette > 0 }
-							check_variable = { num_ships_with_type@stealth_corvette > 0 }
-							check_variable = { num_ships_with_type@patrol_boat > 0 }
-							check_variable = { num_ships_with_type@missile_submarine > 0 }
-							check_variable = { num_ships_with_type@attack_submarine > 0 }
-						}
-					}
-					add_to_temp_variable = { mto_naval_members = 1 }
-				}
-				all_of_scopes = {
-					array = faction_members
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-						}
-						add_to_temp_variable = {
-							mto_warship_total = {
-								value = 0
-								add = num_ships_with_type@carrier
-								add = num_ships_with_type@helicopter_operator
-								add = num_ships_with_type@battleship
-								add = num_ships_with_type@battle_cruiser
-								add = num_ships_with_type@cruiser
-								add = num_ships_with_type@stealth_destroyer
-								add = num_ships_with_type@destroyer
-								add = num_ships_with_type@screen_destroyer
-								add = num_ships_with_type@stealth_frigate
-								add = num_ships_with_type@frigate
-								add = num_ships_with_type@heavy_frigate
-								add = num_ships_with_type@corvette
-								add = num_ships_with_type@stealth_corvette
-								add = num_ships_with_type@patrol_boat
-								add = num_ships_with_type@missile_submarine
-								add = num_ships_with_type@attack_submarine
-							}
-						}
-					}
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							OR = {
-								check_variable = { num_ships_with_type@carrier > 0 }
-								check_variable = { num_ships_with_type@helicopter_operator > 0 }
-								check_variable = { num_ships_with_type@battleship > 0 }
-								check_variable = { num_ships_with_type@battle_cruiser > 0 }
-								check_variable = { num_ships_with_type@cruiser > 0 }
-								check_variable = { num_ships_with_type@stealth_destroyer > 0 }
-								check_variable = { num_ships_with_type@destroyer > 0 }
-								check_variable = { num_ships_with_type@screen_destroyer > 0 }
-								check_variable = { num_ships_with_type@stealth_frigate > 0 }
-								check_variable = { num_ships_with_type@frigate > 0 }
-								check_variable = { num_ships_with_type@heavy_frigate > 0 }
-								check_variable = { num_ships_with_type@corvette > 0 }
-								check_variable = { num_ships_with_type@stealth_corvette > 0 }
-								check_variable = { num_ships_with_type@patrol_boat > 0 }
-								check_variable = { num_ships_with_type@missile_submarine > 0 }
-								check_variable = { num_ships_with_type@attack_submarine > 0 }
-							}
-						}
-						add_to_temp_variable = { mto_naval_members = 1 }
-					}
-				}
+				greater_than = 29
 			}
-			check_variable = { mto_warship_total > 29 }
-			check_variable = { mto_naval_members > 1 }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					if = {
+						limit = {
+							value = num_ships_with_type@carrier
+							add = num_ships_with_type@helicopter_operator
+							add = num_ships_with_type@battleship
+							add = num_ships_with_type@battle_cruiser
+							add = num_ships_with_type@cruiser
+							add = num_ships_with_type@stealth_destroyer
+							add = num_ships_with_type@destroyer
+							add = num_ships_with_type@screen_destroyer
+							add = num_ships_with_type@stealth_frigate
+							add = num_ships_with_type@frigate
+							add = num_ships_with_type@heavy_frigate
+							add = num_ships_with_type@corvette
+							add = num_ships_with_type@stealth_corvette
+							add = num_ships_with_type@patrol_boat
+							add = num_ships_with_type@missile_submarine
+							add = num_ships_with_type@attack_submarine
+							greater_than = 0
+						}
+						add = 1
+					}
+				}
+				greater_than = 1
+			}
 		}
 	}
 	complete_effect = {
@@ -1648,29 +1544,14 @@ faction_goal_uar_coalition_of_sovereign_states = {
 		custom_override_tooltip = {
 			tooltip = faction_goal_uar_coalition_of_sovereign_states_desc
 			any_arabic_country_formed_the_uar = yes
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { alf_independent_arab_members = 0 }
-				if = {
-					limit = {
-						has_country_flag = arabic_nation_flag
-						is_subject = no
-					}
-					add_to_temp_variable = { alf_independent_arab_members = 1 }
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = independent_arab_faction_members_collection
+					add = 1
 				}
-				all_of_scopes = {
-					array = faction_members
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							has_country_flag = arabic_nation_flag
-							is_subject = no
-						}
-						add_to_temp_variable = { alf_independent_arab_members = 1 }
-					}
-				}
+				greater_than = 2
 			}
-			check_variable = { alf_independent_arab_members > 2 }
 		}
 	}
 	complete_effect = {
@@ -1692,31 +1573,21 @@ faction_goal_uar_prepare_common_defense = {
 		custom_override_tooltip = {
 			tooltip = faction_goal_uar_prepare_common_defense_desc
 			any_arabic_country_formed_the_uar = yes
-			hidden_trigger = {
-				tooltip_evaluation = eval
-				set_temp_variable = { alf_defense_ready_members = 0 }
-				if = {
-					limit = {
-						is_subject = no
-						has_equipment = { infantry_weapons_type > 1999 }
-						has_manpower > 19999
-					}
-					add_to_temp_variable = { alf_defense_ready_members = 1 }
-				}
-				all_of_scopes = {
-					array = faction_members
+			check_expr = {
+				value = 0
+				every_collection = {
+					named_collection = independent_faction_members_collection
 					if = {
 						limit = {
-							NOT = { tag = ROOT }
-							is_subject = no
-							has_equipment = { infantry_weapons_type > 1999 }
-							has_manpower > 19999
+							value = num_equipment@infantry_weapons_type
+							greater_than = 1999
+							and = { value = manpower_k greater_than_or_equals = 20 }
 						}
-						add_to_temp_variable = { alf_defense_ready_members = 1 }
+						add = 1
 					}
 				}
+				greater_than = 1
 			}
-			check_variable = { alf_defense_ready_members > 1 }
 		}
 	}
 	complete_effect = {
