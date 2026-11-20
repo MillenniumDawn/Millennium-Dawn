@@ -14,43 +14,40 @@ AI_record_score = {
 	}
 }
 
-# Scope: the state to build in. ROOT is the investor, whose offer reads investments_state_target.
+# THIS is the recipient country and ROOT is the investor.
 invest_cic = {
-	set_variable = { ROOT.investments_state_target = THIS.id }
-	ROOT = {
-		set_variable = { project_building_type^-1 = 1 }
-		set_variable = { project_build_amount^-1 = 1 }
-		update_gui = yes
-		PREV = {
-			CONTROLLER = { send_pending_investment_offer = yes }
+	if = { limit = { ROOT = { investment_project_slot_available = yes } scripted_investment_recipient_available = yes }
+		set_temp_variable = { investment_donor = ROOT.id }
+		random_owned_controlled_state = {
+			limit = { scripted_civilian_investment_state_available = yes }
+			set_temp_variable = { scripted_investment_type = 1 }
+			send_scripted_investment = yes
 		}
 	}
 }
 
 invest_mic = {
-	set_variable = { ROOT.investments_state_target = THIS.id }
-	ROOT = {
-		set_variable = { project_building_type^-1 = 2 }
-		set_variable = { project_build_amount^-1 = 1 }
-		update_gui = yes
-		PREV = {
-			CONTROLLER = { send_pending_investment_offer = yes }
+	if = { limit = { ROOT = { investment_project_slot_available = yes } scripted_investment_recipient_available = yes }
+		random_owned_controlled_state = {
+			limit = {
+				NOT = { is_in_array = { projects_in_state = ROOT } }
+				investment_military_slot_available = yes
+			}
+			set_temp_variable = { scripted_investment_type = 2 }
+			send_scripted_investment = yes
 		}
 	}
 }
 
-invest_infra = {
-	set_temp_variable = { skip_payment = 1 }
-	one_random_infrastructure = yes
-	set_temp_variable = { percent_change = 2 }
-	set_temp_variable = { tag_index = ROOT }
-	set_temp_variable = { influence_target = THIS }
-	change_influence_percentage = yes
+# Parameters: scripted_investment_type = project type ID; THIS is the state, ROOT the investor.
+send_scripted_investment = {
+	set_variable = { ROOT.investments_state_target = THIS.id }
+	CONTROLLER = { set_variable = { ROOT.investments_nation_target = THIS.id } }
 	ROOT = {
-		set_temp_variable = { treasury_change = -3.5 }
-		modify_treasury_effect = yes
-		set_temp_variable = { int_investment_change = 3.5 }
-		modify_international_investment_effect = yes
+		set_variable = { project_building_type^-1 = scripted_investment_type }
+		set_variable = { project_build_amount^-1 = 1 }
+		update_gui = yes
+		country_event = investments_event.3
 	}
 }
 
