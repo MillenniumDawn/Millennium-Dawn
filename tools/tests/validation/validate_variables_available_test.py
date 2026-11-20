@@ -96,7 +96,7 @@ def test_scripted_trigger_index_survives_an_unreadable_definition_file(tmp_path)
 
 
 def test_scripted_trigger_body_with_a_stray_close_brace():
-    assert V._scripted_trigger_body_has_unwrapped_global_flag("} has_global_flag = x")
+    assert V._scripted_trigger_body_has_untooltipped_check("} has_global_flag = x")
 
 
 @pytest.mark.parametrize(
@@ -511,6 +511,31 @@ def test_flag_in_other_player_facing_blocks(tmp_path, text, flag, block):
     assert out[0][4] == block
 
 
+@pytest.mark.parametrize(
+    ("text", "block", "line"),
+    [
+        (
+            "my_decision = {\n"
+            "\tcancel_trigger = { NOT = { check_variable = { my_var > 0 } } }\n"
+            "}\n",
+            "cancel_trigger",
+            2,
+        ),
+        (
+            "focus = {\n\tid = MY_focus\n\tbypass = { check_variable = { my_var > 0 } }\n}\n",
+            "bypass",
+            3,
+        ),
+    ],
+    ids=["cancel_trigger", "bypass"],
+)
+def test_check_variable_in_other_player_facing_blocks(tmp_path, text, block, line):
+    out = _available_scan(tmp_path, "available", text)
+    assert [(finding[2], f"`{block}`" in finding[0]) for finding in out] == [
+        (line, True)
+    ]
+
+
 def test_only_unlocalised_flags_reported(tmp_path):
     _write(
         tmp_path,
@@ -573,6 +598,20 @@ _WRAPPED_AU_TRIGGER = (
             "mixed_trigger",
             True,
             id="mixed_wrapped_and_bare",
+        ),
+        pytest.param(
+            "var_trigger = {\n\tcheck_variable = { my_var > 0 }\n}\n",
+            "var_trigger",
+            True,
+            id="bare_check_variable",
+        ),
+        pytest.param(
+            "var_trigger = {\n"
+            "\tcheck_variable = { var = my_var value = 0 compare = greater_than tooltip = my_tt }\n"
+            "}\n",
+            "var_trigger",
+            False,
+            id="check_variable_inline_tooltip",
         ),
         pytest.param(
             # A builtin block name at depth 0 of a scripted_triggers file must

@@ -72,17 +72,22 @@ def test_coalition_partner_scope(tag, ai, historical, party, allowed):
 
 
 def test_both_ai_formation_paths_use_filtered_affinities():
+    prepare = _block(EFFECTS, "prepare_ai_coalition_candidates")
+    calls = [key for key, value, _ in iter_statements(prepare) if value == "yes"]
+    assert calls == [
+        "make_affinity_arrays",
+        "reduce_affinity_array_party_1",
+        "reduce_affinity_array_party_2",
+    ]
+
     normal = _block(EFFECTS, "AI_setup_government")
     timeout = _block(_block(DECISIONS, "coalition_decisions"), "coalition_countdown")
+    call = "prepare_ai_coalition_candidates = yes"
     for path in (normal, timeout):
-        calls = [(key, value) for key, value, _ in _walk(path)]
-        assert calls.count(("make_affinity_arrays", "yes")) == 1
-        assert ("reduce_affinity_array_party_1", "yes") in calls
-        assert ("reduce_affinity_array_party_2", "yes") in calls
-        assert path.index("make_affinity_arrays = yes") < path.index(
-            "party_1_affinity_array^i1 > 0"
-        )
-        assert "party_2_affinity_array^i2 > 0" in path
+        assert path.count(call) == 1
+        for candidate in (1, 2):
+            affinity = f"party_{candidate}_affinity_array^i{candidate} > 0"
+            assert path.index(call) < path.index(affinity)
 
 
 def test_player_caliphate_invitation_remains_available():
@@ -90,7 +95,9 @@ def test_player_caliphate_invitation_remains_available():
     assert ("country_event", "coalition.11", None) in list(_walk(invite))
     assert ("base", "0", None) in list(_walk(_block(invite, "ai_will_do")))
     events = [
-        body for key, _, body in iter_statements(ELECTIONS) if key == "country_event"
+        body
+        for key, _, body in iter_statements(ELECTIONS)
+        if key == "country_event" and body is not None
     ]
     invitation = next(
         body
@@ -102,7 +109,9 @@ def test_player_caliphate_invitation_remains_available():
 
 def test_re_election_promotes_only_an_existing_coalition_member():
     events = [
-        body for key, _, body in iter_statements(ELECTIONS) if key == "country_event"
+        body
+        for key, _, body in iter_statements(ELECTIONS)
+        if key == "country_event" and body is not None
     ]
     re_election = next(
         body

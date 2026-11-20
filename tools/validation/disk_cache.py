@@ -140,6 +140,7 @@ _HELPER_DEPENDENCIES = {
         *_CHECK_COMMON_MISTAKES,
         *_SPRITES,
         "focus_geometry.py",
+        "validate_dynamic_tokens.py",
         "validate_events.py",
         "validate_focus_tree.py",
     ),
