@@ -5114,6 +5114,10 @@ country_event = {
 	trigger = {
 		NOT = { has_country_flag = UKR_kharkiv_pact_signed }
 		NOT = { has_country_flag = UKR_kharkiv_pact_refused }
+		NOT = { has_idea = NATO_member }
+		NOT = { has_country_flag = UKR_sevastopol_early_demand_pending_flag }
+		SOV = { owns_state = 1112 }
+		UKR_at_war_with_russia_or_proxies = no
 	}
 
 	option = {
@@ -32547,6 +32551,7 @@ country_event = {
 		text = ukraine_sevastopol.1.desc_nato_prep
 		trigger = {
 			date > 2016.12.31
+			date < 2042.1.1
 			UKR = {
 				NOT = { has_idea = NATO_member }
 				has_country_flag = UKR_kharkiv_pact_signed
@@ -32559,7 +32564,10 @@ country_event = {
 			date > 2016.12.31
 			UKR = {
 				NOT = { has_idea = NATO_member }
-				NOT = { has_country_flag = UKR_kharkiv_pact_signed }
+				OR = {
+					NOT = { has_country_flag = UKR_kharkiv_pact_signed }
+					date > 2041.12.31
+				}
 			}
 		}
 	}
@@ -32580,7 +32588,10 @@ country_event = {
 			modifier = recent_actions_negative
 		}
 		hidden_effect = {
-			UKR = { country_event = { id = ukraine_sevastopol.2 days = 1 } }
+			UKR = {
+				clr_country_flag = UKR_sevastopol_early_demand_pending_flag
+				country_event = { id = ukraine_sevastopol.2 days = 1 }
+			}
 		}
 		# Each Ukrainian deterrent shifts weight from war to withdrawal; all six cap withdrawal at about 67%
 		ai_chance = {
@@ -32637,7 +32648,10 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			UKR = { country_event = { id = ukraine_sevastopol.3 days = 1 } }
+			UKR = {
+				clr_country_flag = UKR_sevastopol_early_demand_pending_flag
+				country_event = { id = ukraine_sevastopol.3 days = 1 }
+			}
 		}
 		ai_chance = {
 			base = 15
@@ -32660,6 +32674,9 @@ country_event = {
 			UKR = {
 				NOT = { has_idea = NATO_member }
 				NOT = { UKR_army_deters_crimea_demand = yes }
+				UKR_at_war_with_russia_or_proxies = no
+				NOT = { is_subject_of = SOV }
+				NOT = { is_in_faction_with = SOV }
 			}
 		}
 
@@ -32675,7 +32692,10 @@ country_event = {
 			generator = { 669 }
 		}
 		hidden_effect = {
-			UKR = { country_event = { id = ukraine_sevastopol.4 days = 1 } }
+			UKR = {
+				clr_country_flag = UKR_sevastopol_early_demand_pending_flag
+				country_event = { id = ukraine_sevastopol.4 days = 1 }
+			}
 		}
 		ai_chance = {
 			base = 48
@@ -32747,13 +32767,45 @@ country_event = {
 country_event = {
 	id = ukraine_sevastopol.3
 	title = ukraine_sevastopol.3.name
-	desc = ukraine_sevastopol.3.desc
+	desc = {
+		text = ukraine_sevastopol.3.desc_expiry
+		trigger = { UKR_sevastopol_can_enforce_lease_expiry = yes }
+	}
+	desc = {
+		text = ukraine_sevastopol.3.desc
+		trigger = { UKR_sevastopol_can_enforce_lease_expiry = no }
+	}
 	picture = GFX_UKR_Sevastopol_Base_Refused
 	is_triggered_only = yes
-	minor_flavor = yes
+
+	immediate = {
+		if = {
+			limit = { UKR_sevastopol_can_enforce_lease_expiry = yes }
+			create_wargoal = {
+				type = take_state_focus
+				target = SOV
+				generator = { 1112 }
+			}
+		}
+	}
 
 	option = {
 		name = ukraine_sevastopol.3.a
+	}
+
+	option = {
+		name = ukraine_sevastopol.3.b
+		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.3.b executed"
+		trigger = {
+			is_ai = no
+			UKR_sevastopol_can_enforce_lease_expiry = yes
+			NOT = { has_non_aggression_pact_with = SOV }
+		}
+		declare_war_on = {
+			type = take_state_focus
+			target = SOV
+			generator = { 1112 }
+		}
 	}
 }
 
