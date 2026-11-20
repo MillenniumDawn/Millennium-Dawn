@@ -24,10 +24,11 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 
 ## Branch naming
 
-Before your first commit, rename the session branch to
-`<agent>/<type>-<short-kebab-slug>-<session-id>`, where `<agent>` is `claude` or
-`codex`, `<type>` is `feat`, `fix`, `docs` or `chore`, the slug is 2–5 words describing
-the task, and the session-id suffix stays as it is. Use `git branch -m`.
+Use a task-based branch name before your first commit. For work on a specific
+issue, use `issue/<number>-<slug>` (e.g. `issue/123489-fix-the-issue`). Otherwise
+use `fix/<slug>`, `feat/<slug>`, `docs/<slug>`, or `chore/<slug>`. The slug is a
+short kebab-case description of the task (2–5 words). Do not include agent
+prefixes or session IDs.
 
 ## KISS: Keep It Simple
 
