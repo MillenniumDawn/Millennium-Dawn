@@ -1796,7 +1796,6 @@ UKR_interlegion_decision_category = {
 		icon = GFX_decision_legion_georgia2_button
 
 		available = {
-			has_war_with = SOV
 			NOT = { has_war_with = GEO }
 		}
 
@@ -1823,7 +1822,6 @@ UKR_interlegion_decision_category = {
 		icon = GFX_decision_legion_georgia_button
 
 		available = {
-			has_war_with = SOV
 			NOT = { has_war_with = GEO }
 		}
 
@@ -1848,7 +1846,6 @@ UKR_interlegion_decision_category = {
 	UKR_interlegion_5 = {
 		fire_only_once = yes
 		icon = GFX_decision_legion_ichkeria_button
-		available = { has_war_with = SOV }
 		days_remove = 25
 		cost = 50
 
@@ -1870,7 +1867,6 @@ UKR_interlegion_decision_category = {
 	UKR_interlegion_7 = {
 		fire_only_once = yes
 		icon = GFX_decision_legion_dagestan_button
-		available = { has_war_with = SOV }
 		days_remove = 25
 		cost = 50
 
@@ -1892,7 +1888,6 @@ UKR_interlegion_decision_category = {
 	UKR_interlegion_8 = {
 		fire_only_once = yes
 		icon = GFX_decision_legion_canada_button
-		available = { has_war_with = SOV }
 		days_remove = 25
 		cost = 50
 
@@ -1914,7 +1909,6 @@ UKR_interlegion_decision_category = {
 	UKR_interlegion_11 = {
 		fire_only_once = yes
 		icon = GFX_decision_legion_norman_button
-		available = { has_war_with = SOV }
 		days_remove = 25
 		cost = 50
 
@@ -1938,7 +1932,6 @@ UKR_interlegion_decision_category = {
 		icon = GFX_decision_legion_pdr_button
 
 		available = {
-			has_war_with = SOV
 			NOT = { country_exists = POL }
 		}
 
@@ -1965,7 +1958,6 @@ UKR_interlegion_decision_category = {
 		icon = GFX_decision_legion_krym_button
 
 		available = {
-			has_war_with = SOV
 			SOV = { owns_state = 669 }
 		}
 
@@ -5882,7 +5874,6 @@ UKR_verkhovna_rada = {
 UKR_economy = {
 	UKR_boost_economy = {
 		icon = GFX_decision_gre_investment_decisions
-		available = { is_full_state = yes }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_boost_economy"
@@ -5901,7 +5892,6 @@ UKR_economy = {
 	UKR_boost_research = {
 		icon = GFX_decision_generic_research
 		cost = 25
-		available = { is_full_state = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_boost_research"
@@ -5929,7 +5919,6 @@ UKR_economy = {
 	UKR_boost_resource = {
 		icon = GFX_decision_generic_construction
 		cost = 25
-		available = { is_full_state = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_boost_resource"
@@ -5957,7 +5946,6 @@ UKR_economy = {
 	UKR_add_resource = {
 		icon = GFX_decision_generic_construction
 		cost = 25
-		available = { is_full_state = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_add_resource"
@@ -7325,8 +7313,9 @@ UKR_sevastopol_naval_base_category = {
 		available = {
 			NOT = { UKR_is_pro_east = yes }
 			owns_state = 669
-			NOT = { has_war_with = SOV }
 			NOT = { is_subject_of = SOV }
+			NOT = { is_in_faction_with = SOV }
+			NOT = { has_country_flag = UKR_sevastopol_demand_sent }
 		}
 
 		complete_effect = {
@@ -7341,6 +7330,8 @@ UKR_sevastopol_naval_base_category = {
 				multiply_temp_variable = { cp_change = -1 }
 				add_command_power = cp_change
 
+				# Cover the 3-day dispatch and the default 13-day event response window.
+				set_country_flag = { flag = UKR_sevastopol_early_demand_pending_flag days = 17 value = 1 }
 				SOV = { country_event = { id = ukraine_sevastopol.1 days = 3 } }
 			}
 
@@ -7388,10 +7379,6 @@ UKR_sevastopol_naval_base_category = {
 				has_political_power > 500
 			}
 			modifier = {
-				factor = 2
-				has_war_with = SOV
-			}
-			modifier = {
 				factor = 0.5
 				ai_has_high_deficit = yes
 			}
@@ -7411,9 +7398,8 @@ UKR_sevastopol_naval_base_category = {
 			date > 2009.12.31
 			NOT = { has_country_flag = UKR_kharkiv_pact_signed }
 			NOT = { has_country_flag = UKR_kharkiv_pact_refused }
+			NOT = { has_country_flag = UKR_sevastopol_early_demand_pending_flag }
 		}
-
-		available = { NOT = { has_war_with = SOV } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_sevastopol_naval_base_prepare_kharkiv_pact"
@@ -17904,7 +17890,12 @@ UKR_reactivate_sov_category = {
 		}
 
 		on_map_mode = map_and_decisions_view
-		cancel_trigger = { NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 13 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_egypt_t62_contract_hulls_released_tt
+				NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 13 } }
+			}
+		}
 		days_remove = 120
 
 		complete_effect = {
@@ -18003,7 +17994,12 @@ UKR_reactivate_sov_category = {
 		}
 
 		on_map_mode = map_and_decisions_view
-		cancel_trigger = { NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 40 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_egypt_t62_contract_hulls_released_tt
+				NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 40 } }
+			}
+		}
 		days_remove = 360
 
 		complete_effect = {
@@ -18283,7 +18279,12 @@ UKR_reactivate_sov_category = {
 		}
 
 		on_map_mode = map_and_decisions_view
-		cancel_trigger = { NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 13 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_egypt_t62_contract_hulls_released_tt
+				NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 13 } }
+			}
+		}
 		days_remove = 180
 
 		complete_effect = {
@@ -18388,7 +18389,12 @@ UKR_reactivate_sov_category = {
 		}
 
 		on_map_mode = map_and_decisions_view
-		cancel_trigger = { NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 40 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_egypt_t62_contract_hulls_released_tt
+				NOT = { check_variable = { UKR_egypt_t62_contract_hulls = 40 } }
+			}
+		}
 		days_remove = 540
 
 		complete_effect = {
@@ -27312,7 +27318,7 @@ UKR_modernize_planes_category = {
 
 				design_team = mio:UKR_antonov_aircraft_manufacturer
 
-				icon = "GFX_SOV_AIR_Su_57"
+				icon = "GFX_UKR_AIR_An_BFV"
 				model = "eastern_european_gfx_medium_plane_airframe_3_entity"
 			}
 		}
@@ -30357,7 +30363,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
 
-					icon = "GFX_UKR_LAND_SPAT_Novator_with_Stuhna"
+					icon = "GFX_UKR_LAND_SPAT_Kozak_2_with_Stuhna"
 				}
 			}
 		}
@@ -31737,7 +31743,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.12.1
-			has_civil_war = no
 			check_variable = { party_pop_array^1 < 0.55 }
 		}
 
@@ -31764,7 +31769,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.12.1
-			has_civil_war = no
 			western_conservatism_are_in_power = no
 			check_variable = { party_pop_array^1 > 0.5 }
 		}
@@ -31791,7 +31795,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.11.1
-			has_civil_war = no
 			check_variable = { party_pop_array^6 < 0.55 }
 		}
 
@@ -31818,7 +31821,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.11.1
-			has_civil_war = no
 			emerging_reactionaries_are_in_power = no
 			check_variable = { party_pop_array^6 > 0.5 }
 		}
@@ -31848,7 +31850,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2003.1.1
-			has_civil_war = no
 			check_variable = { party_pop_array^4 < 0.55 }
 		}
 
@@ -31875,7 +31876,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.10.31
-			has_civil_war = no
 			emerging_communist_state_are_in_power = no
 			check_variable = { party_pop_array^4 > 0.5 }
 		}
@@ -31902,7 +31902,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2003.1.1
-			has_civil_war = no
 			check_variable = { party_pop_array^18 < 0.35 }
 		}
 
@@ -31928,7 +31927,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.10.31
-			has_civil_war = no
 			neutrality_neutral_social_are_in_power = no
 			check_variable = { party_pop_array^18 > 0.3 }
 		}
@@ -31955,7 +31953,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2003.1.1
-			has_civil_war = no
 			check_variable = { party_pop_array^21 < 0.55 }
 		}
 
@@ -31982,7 +31979,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.10.31
-			has_civil_war = no
 			nationalist_fascist_are_in_power = no
 			check_variable = { party_pop_array^21 > 0.5 }
 		}
@@ -32012,7 +32008,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2003.1.1
-			has_civil_war = no
 			check_variable = { party_pop_array^7 < 0.55 }
 		}
 
@@ -32042,7 +32037,6 @@ UKR_ai_path_category = {
 
 		available = {
 			date > 2004.10.31
-			has_civil_war = no
 			emerging_autocracy_are_in_power = no
 			check_variable = { party_pop_array^7 > 0.5 }
 		}

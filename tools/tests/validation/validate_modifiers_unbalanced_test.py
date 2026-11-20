@@ -86,6 +86,39 @@ def test_roi_end_to_end(tmp_path, monkeypatch):
     assert "unbalanced-roi" not in _categories(validator)
 
 
+@pytest.mark.parametrize(
+    ("value", "reported"),
+    [(0.05, False), (-0.05, False), (0.051, True), (-0.051, True)],
+)
+def test_investment_sale_recovery_cap(tmp_path, value, reported):
+    key = "investment_sale_recovery_modifier"
+    _write(
+        tmp_path,
+        "common/ideas/test.txt",
+        f"test = {{ modifier = {{ {key} = {value} }} }}",
+    )
+    _write(
+        tmp_path,
+        "common/dynamic_modifiers/test.txt",
+        f"test = {{\n\t{key} = recovery_value\n}}\n",
+    )
+    _write(
+        tmp_path,
+        "common/scripted_effects/test.txt",
+        f"test = {{ add_to_variable = {{ recovery_value = {value} }} }}",
+    )
+
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_modifier_caps()
+    findings = [
+        issue
+        for issue in validator._issues
+        if issue.category == "investment-sale-recovery-over-cap"
+    ]
+    assert len(findings) == (2 if reported else 0)
+    assert all("±5%" in issue.message for issue in findings)
+
+
 def test_productivity_variants_end_to_end(tmp_path):
     _write(
         tmp_path,
