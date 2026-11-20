@@ -10,6 +10,7 @@ scripted_gui = {
 				}
 				else = {
 					set_country_flag = opec_gui_open
+					set_variable = { opec_pending_vote = opec_vote }
 				}
 				update_opec_dirty_variable = yes
 			}
@@ -36,10 +37,6 @@ scripted_gui = {
 				array = global.opec_top_proposals
 				entry_container = "opec_top_proposal_entry"
 			}
-			opec_proposals_gridbox = {
-				array = global.opec_stance_ids
-				entry_container = "opec_proposal_entry"
-			}
 		}
 
 		properties = {
@@ -49,17 +46,55 @@ scripted_gui = {
 			opec_member_flag = {
 				image = "[?global.opec_members^i.GetFlag]"
 			}
-			opec_proposal_vote = {
-				image = "[opec_vote_checkbox_icon]"
-			}
+			opec_top_proposal_icon = { image = "[opec_stance_icon]" }
+			opec_proposal_deep_cut_vote = { image = "[opec_vote_checkbox_icon_1]" }
+			opec_proposal_cut_vote = { image = "[opec_vote_checkbox_icon_2]" }
+			opec_proposal_hold_vote = { image = "[opec_vote_checkbox_icon_3]" }
+			opec_proposal_raise_vote = { image = "[opec_vote_checkbox_icon_4]" }
+			opec_proposal_price_war_vote = { image = "[opec_vote_checkbox_icon_5]" }
 		}
 
 		triggers = {
-			opec_proposal_vote_click_enabled = {
+			opec_proposal_deep_cut_vote_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_cut_vote_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_hold_vote_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_raise_vote_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_price_war_vote_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_deep_cut_button_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_cut_button_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_hold_button_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_raise_button_click_enabled = { opec_can_select_proposal = yes }
+			opec_proposal_price_war_button_click_enabled = { opec_can_select_proposal = yes }
+			opec_confirm_proposal_button_click_enabled = {
 				custom_trigger_tooltip = {
-					tooltip = OPEC_VOTE_MEMBERS_ONLY_TT
+					tooltip = OPEC_IS_MEMBER_TT
 					is_in_array = { global.opec_members = THIS }
 				}
+				custom_trigger_tooltip = {
+					tooltip = OPEC_PROPOSAL_SELECTED_TT
+					check_variable = { opec_pending_vote > 0 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = OPEC_NOT_CONFIRMED_TT
+					NOT = { check_variable = { opec_vote > 0 } }
+				}
+				custom_trigger_tooltip = {
+					tooltip = OPEC_NOT_IN_SESSION_TT
+					NOT = { has_global_flag = opec_conference_in_session }
+				}
+			}
+			opec_leave_button_visible = {
+				is_in_array = { global.opec_members = THIS }
+			}
+			opec_withdraw_button_visible = {
+				is_in_array = { global.opec_applicants = THIS }
+			}
+			opec_apply_button_visible = {
+				NOT = { is_in_array = { global.opec_members = THIS } }
+				NOT = { is_in_array = { global.opec_applicants = THIS } }
+			}
+			opec_apply_button_click_enabled = {
+				opec_can_apply = yes
 			}
 		}
 
@@ -68,14 +103,75 @@ scripted_gui = {
 				clr_country_flag = opec_gui_open
 				update_opec_dirty_variable = yes
 			}
-			opec_proposal_vote_click = {
-				if = { limit = { check_variable = { opec_vote = v } }
-					clear_variable = opec_vote
-				}
-				else = {
-					set_variable = { opec_vote = v }
-				}
+			opec_proposal_deep_cut_vote_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 1 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 1 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_cut_vote_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 2 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 2 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_hold_vote_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 3 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 3 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_raise_vote_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 4 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 4 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_price_war_vote_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 5 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 5 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_deep_cut_button_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 1 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 1 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_cut_button_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 2 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 2 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_hold_button_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 3 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 3 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_raise_button_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 4 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 4 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_proposal_price_war_button_click = {
+				if = { limit = { check_variable = { opec_pending_vote = 5 } } set_variable = { opec_pending_vote = 0 } }
+				else = { set_variable = { opec_pending_vote = 5 } }
+				update_opec_dirty_variable = yes
+			}
+			opec_confirm_proposal_button_click = {
+				log = "[GetDateText]: [Root.GetName]: OPEC proposal confirmed"
+				set_variable = { opec_vote = opec_pending_vote }
 				opec_count_votes = yes
+				update_opec_dirty_variable = yes
+			}
+			opec_leave_button_click = {
+				log = "[GetDateText]: [Root.GetName]: left OPEC"
+				opec_leave = yes
+				update_opec_dirty_variable = yes
+			}
+			opec_apply_button_click = {
+				log = "[GetDateText]: [Root.GetName]: applied to OPEC"
+				add_to_array = { global.opec_applicants = THIS }
+				update_opec_dirty_variable = yes
+			}
+			opec_withdraw_button_click = {
+				log = "[GetDateText]: [Root.GetName]: withdrew OPEC application"
+				remove_from_array = { global.opec_applicants = THIS }
 				update_opec_dirty_variable = yes
 			}
 		}

@@ -9,16 +9,17 @@ update_opec_dirty_variable = {
 
 # Stance ids: 1 Deep Cut, 2 Cut, 3 Hold, 4 Raise, 5 Price War
 opec_monthly_update = {
-	opec_remove_dead_members = yes
+	opec_remove_dead_countries = yes
 
 	set_temp_variable = { opec_price_ratio = { value = global.oil_price divide = global.starting_oil_price } }
 	for_each_scope_loop = {
 		array = global.opec_members
-		if = { limit = { is_ai = yes }
-			if = { limit = { original_tag = SAU check_variable = { global.opec_cohesion < 35 } }
-				set_variable = { opec_vote = 5 }
+		if = {
+			limit = {
+				is_ai = yes
+				NOT = { check_variable = { opec_vote > 0 } }
 			}
-			else_if = { limit = { check_variable = { opec_price_ratio < 0.75 } }
+			if = { limit = { check_variable = { opec_price_ratio < 0.75 } }
 				set_variable = { opec_vote = 1 }
 			}
 			else_if = { limit = { check_variable = { opec_price_ratio < 0.95 } }
@@ -38,13 +39,13 @@ opec_monthly_update = {
 	modulo_temp_variable = { opec_cycle_month = 6 }
 	set_variable = { global.opec_months_to_conference = { value = 6 subtract = opec_cycle_month } }
 	if = { limit = { check_variable = { opec_cycle_month = 0 } }
-		opec_hold_conference = yes
+		opec_open_conference = yes
 	}
 
 	update_opec_dirty_variable = yes
 }
 
-opec_remove_dead_members = {
+opec_remove_dead_countries = {
 	for_each_loop = {
 		array = global.opec_members
 		if = { limit = { var:v = { exists = no } }
@@ -54,6 +55,16 @@ opec_remove_dead_members = {
 	for_each_loop = {
 		array = opec_dead_members
 		remove_from_array = { global.opec_members = v }
+	}
+	for_each_loop = {
+		array = global.opec_applicants
+		if = { limit = { var:v = { exists = no } }
+			add_to_temp_array = { opec_dead_applicants = v }
+		}
+	}
+	for_each_loop = {
+		array = opec_dead_applicants
+		remove_from_array = { global.opec_applicants = v }
 	}
 }
 
@@ -108,37 +119,98 @@ opec_count_votes = {
 	}
 }
 
-opec_hold_conference = {
-	if = { limit = { check_variable = { global.opec_top_proposals^num > 0 } }
-		set_variable = { global.opec_stance = global.opec_top_proposals^0 }
-		set_temp_variable = { opec_winning_stance = global.opec_stance }
-		add_to_variable = { global.opec_cohesion = { value = global.opec_vote_share^opec_winning_stance subtract = 50 divide = 5 } }
+# Freezes the top three proposals into the ballot and asks every member to vote
+opec_open_conference = {
+	clear_array = global.opec_ballot
+	clear_array = global.opec_ballot_shares
+	for_each_loop = {
+		array = global.opec_top_proposals
+		add_to_array = { global.opec_ballot = v }
+		add_to_array = { global.opec_ballot_shares = global.opec_vote_share^v }
+	}
+	if = { limit = { check_variable = { global.opec_ballot^num = 0 } }
+		add_to_array = { global.opec_ballot = global.opec_stance }
+		add_to_array = { global.opec_ballot_shares = 0 }
 	}
 
+	set_global_flag = opec_conference_in_session
+	for_each_scope_loop = {
+		array = global.opec_members
+		clear_variable = opec_conference_vote
+		country_event = { id = opec.1 }
+	}
+	country_event = { id = opec.2 days = 7 }
+}
+
+# Adopts the ballot entry with the most member oil production behind it
+opec_resolve_conference = {
+	set_temp_variable = { opec_total_production = 0 }
+	clear_temp_array = opec_ballot_weight
+	resize_temp_array = { array = opec_ballot_weight size = 6 }
+	for_each_scope_loop = {
+		array = global.opec_members
+		add_to_temp_variable = { opec_total_production = resource_produced@oil }
+		if = { limit = { check_variable = { opec_conference_vote > 0 } }
+			set_temp_variable = { opec_member_vote = opec_conference_vote }
+			add_to_temp_variable = { opec_ballot_weight^opec_member_vote = resource_produced@oil }
+		}
+	}
+
+	set_temp_variable = { opec_winning_stance = global.opec_ballot^0 }
+	set_temp_variable = { opec_winning_weight = opec_ballot_weight^opec_winning_stance }
+	for_each_loop = {
+		array = global.opec_ballot
+		if = { limit = { check_variable = { opec_ballot_weight^v > opec_winning_weight } }
+			set_temp_variable = { opec_winning_stance = v }
+			set_temp_variable = { opec_winning_weight = opec_ballot_weight^v }
+		}
+	}
+	set_variable = { global.opec_stance = opec_winning_stance }
+	set_variable = { global.opec_result_share = 0 }
+	if = { limit = { check_variable = { opec_total_production > 0 } }
+		set_variable = { global.opec_result_share = { value = opec_winning_weight multiply = 100 divide = opec_total_production } }
+	}
+
+	opec_review_applications = yes
+	opec_apply_stance = yes
+	recalculate_resources_price = yes
+	if = { limit = { check_variable = { global.month = 12 } check_variable = { global.opec_members^num > 0 } }
+		opec_rotate_presidency = yes
+	}
+
+	clr_global_flag = opec_conference_in_session
+	for_each_scope_loop = {
+		array = global.opec_members
+		clear_variable = opec_vote
+		clear_variable = opec_pending_vote
+		clear_variable = opec_conference_vote
+		country_event = { id = opec.3 }
+	}
+	opec_count_votes = yes
+	update_opec_dirty_variable = yes
+}
+
+opec_apply_stance = {
 	if = { limit = { check_variable = { global.opec_stance = 1 } }
-		add_to_variable = { global.opec_cohesion = -5 }
-		set_temp_variable = { opec_full_price_shift = 0.30 }
+		set_variable = { global.opec_price_shift = 0.30 }
 		set_variable = { global.opec_member_oil_export_modifier = -0.20 }
 	}
 	else_if = { limit = { check_variable = { global.opec_stance = 2 } }
-		set_temp_variable = { opec_full_price_shift = 0.15 }
+		set_variable = { global.opec_price_shift = 0.15 }
 		set_variable = { global.opec_member_oil_export_modifier = -0.10 }
 	}
 	else_if = { limit = { check_variable = { global.opec_stance = 4 } }
-		set_temp_variable = { opec_full_price_shift = -0.10 }
+		set_variable = { global.opec_price_shift = -0.10 }
 		set_variable = { global.opec_member_oil_export_modifier = 0.05 }
 	}
 	else_if = { limit = { check_variable = { global.opec_stance = 5 } }
-		add_to_variable = { global.opec_cohesion = -10 }
-		set_temp_variable = { opec_full_price_shift = -0.30 }
+		set_variable = { global.opec_price_shift = -0.30 }
 		set_variable = { global.opec_member_oil_export_modifier = 0.15 }
 	}
 	else = {
-		set_temp_variable = { opec_full_price_shift = 0 }
+		set_variable = { global.opec_price_shift = 0 }
 		set_variable = { global.opec_member_oil_export_modifier = 0 }
 	}
-	clamp_variable = { var = global.opec_cohesion min = 0 max = 100 }
-	set_variable = { global.opec_price_shift = { value = opec_full_price_shift multiply = global.opec_cohesion divide = 100 } }
 
 	for_each_scope_loop = {
 		array = global.opec_members
@@ -147,9 +219,37 @@ opec_hold_conference = {
 		}
 		force_update_dynamic_modifier = yes
 	}
+}
 
-	if = { limit = { check_variable = { global.month = 12 } check_variable = { global.opec_members^num > 0 } }
-		opec_rotate_presidency = yes
+# Members approve unless at war with the applicant or holding a poor opinion of it. Admission needs 75% of member oil production.
+opec_review_applications = {
+	for_each_scope_loop = {
+		array = global.opec_applicants
+		set_temp_variable = { opec_total_production = 0 }
+		set_temp_variable = { opec_approving_production = 0 }
+		for_each_scope_loop = {
+			array = global.opec_members
+			add_to_temp_variable = { opec_total_production = resource_produced@oil }
+			if = {
+				limit = {
+					NOT = { has_war_with = PREV }
+					has_opinion = { target = PREV value > -25 }
+				}
+				add_to_temp_variable = { opec_approving_production = resource_produced@oil }
+			}
+		}
+		set_temp_variable = { opec_required_production = { value = opec_total_production multiply = 0.75 } }
+		if = {
+			limit = {
+				check_variable = { var = opec_approving_production value = opec_required_production compare = greater_than_or_equals }
+			}
+			add_to_temp_array = { opec_admitted = THIS }
+		}
+	}
+	clear_array = global.opec_applicants
+	for_each_loop = {
+		array = opec_admitted
+		add_to_array = { global.opec_members = v }
 	}
 }
 
@@ -165,4 +265,25 @@ opec_rotate_presidency = {
 	set_temp_variable = { opec_member_count = global.opec_members^num }
 	modulo_temp_variable = { opec_next_president_index = opec_member_count }
 	set_variable = { global.opec_conference_president = global.opec_members^opec_next_president_index }
+}
+
+# Country scope: the leaving member
+opec_leave = {
+	set_temp_variable = { opec_leaver = THIS.id }
+	if = {
+		limit = {
+			check_variable = { global.opec_conference_president = opec_leaver }
+			check_variable = { global.opec_members^num > 1 }
+		}
+		opec_rotate_presidency = yes
+	}
+	remove_from_array = { global.opec_members = THIS }
+	clear_variable = opec_vote
+	clear_variable = opec_pending_vote
+	clear_variable = opec_conference_vote
+	if = { limit = { has_dynamic_modifier = { modifier = opec_member_modifier } }
+		remove_dynamic_modifier = { modifier = opec_member_modifier }
+	}
+	set_country_flag = { flag = opec_left_recently days = 365 value = 1 }
+	opec_count_votes = yes
 }
