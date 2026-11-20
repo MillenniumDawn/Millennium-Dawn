@@ -191,21 +191,38 @@ class InvestmentOfferScript(StrategicRaceScript):
         self.effects["change_influence_percentage"] = None
         self.event_root = None
         self.event_from = None
+        self.offer_can_start = True
+        self.allocator_succeeds = True
         self.started_projects = []
         self.influence_changes = []
 
     def value(self, name, identifier):
         if name == "PREV.id":
             return self.scope_stack[-1]
+        if name == "ROOT.pending_offer_state":
+            return self.countries[self.event_root]["vars"]["pending_offer_state"]
         return super().value(name, identifier)
+
+    def condition(self, statements, identifier):
+        for key, comparison, operand in statements:
+            if key == "ROOT":
+                assert operand == [("pending_investment_can_start", "=", "yes")]
+                if not self.offer_can_start:
+                    return False
+            elif not super().condition([(key, comparison, operand)], identifier):
+                return False
+        return True
 
     def execute(self, statements, identifier):
         for statement in self._active_statements(statements, identifier):
             key, _comparison, operand = statement
             if key in {"if", "else_if", "else"}:
                 self.execute(operand, identifier)
-            elif key in {"FROM", "ROOT"}:
-                target = self.event_from if key == "FROM" else self.event_root
+            elif key in {"FROM", "ROOT", "PREV"}:
+                if key == "PREV":
+                    target = self.scope_stack[-1]
+                else:
+                    target = self.event_from if key == "FROM" else self.event_root
                 self.scope_stack.append(identifier)
                 try:
                     self.execute(operand, target)
@@ -218,6 +235,9 @@ class InvestmentOfferScript(StrategicRaceScript):
 
     def run(self, name, identifier):
         if name == "start_project_two":
+            if not self.allocator_succeeds:
+                return
+            self.temps["investment_project_started"] = 1
             cost = self.countries[identifier]["vars"]["project_monetary_cost_effect"]
             self.countries[identifier]["vars"]["treasury"] += cost
             self.started_projects.append((identifier, -cost))
@@ -642,7 +662,12 @@ def test_investment_offer_and_acceptance_use_the_calculated_and_saved_project_co
         "set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }"
     ) < acceptance.index("start_project_two = yes")
     assert "investment_offer_accepted" not in acceptance
-    assert acceptance.index("start_project_two = yes") < acceptance.index("ROOT = {")
+    assert (
+        acceptance.index("pending_investment_can_start = yes")
+        < acceptance.index("start_project_two = yes")
+        < acceptance.index("check_variable = { investment_project_started = 1 }")
+        < acceptance.index("change_influence_percentage = yes")
+    )
 
 
 @pytest.mark.parametrize(
@@ -681,7 +706,7 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
         pending_offer_duration=90,
         pending_offer_amount=1,
         pending_offer_type=1,
-        pending_offer_state=101,
+        pending_offer_state=-101,
     )
     race.globals["investment_percent_change_value"] = 1
 
@@ -695,6 +720,35 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
     assert race.events == ([] if expected_started else [(1, "investments_event.13")])
     assert "investments_ai_pending" not in investor["flags"]
     assert "this_investment_offer_pending@PREV" not in investor["flags"]
+    assert not any(name.startswith("pending_offer_") for name in recipient["vars"])
+
+
+@pytest.mark.parametrize("failure", ["capacity", "allocation"])
+@pytest.mark.parametrize("fully_funded", [0, 1])
+def test_unstartable_offer_leaves_both_treasuries_and_influence_unchanged(
+    failure, fully_funded
+):
+    race = InvestmentOfferScript()
+    investor = race.country(1)
+    recipient = race.country(2)
+    investor["vars"]["treasury"] = 100
+    recipient["vars"].update(
+        pending_offer_total_cost=10,
+        pending_offer_duration=90,
+        pending_offer_amount=2,
+        pending_offer_type=1,
+        pending_offer_state=-101,
+        pending_offer_fully_funded=fully_funded,
+    )
+    race.offer_can_start = failure != "capacity"
+    race.allocator_succeeds = failure != "allocation"
+
+    race.accept_offer(1, 2)
+
+    assert race.started_projects == race.influence_changes == race.charges == []
+    assert investor["vars"]["treasury"] == 100
+    assert recipient["vars"]["treasury"] == 100000
+    assert race.events == [(1, "investments_event.13")]
     assert not any(name.startswith("pending_offer_") for name in recipient["vars"])
 
 

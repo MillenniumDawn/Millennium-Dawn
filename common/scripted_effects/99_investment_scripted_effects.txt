@@ -110,6 +110,7 @@ calculate_investment_spendable_treasury = {
 }
 
 accept_pending_investment_offer = {
+	set_temp_variable = { investment_project_started = 0 }
 	FROM = {
 		calculate_investment_spendable_treasury = yes
 		set_temp_variable = { investment_offer_cost = PREV.pending_offer_total_cost }
@@ -117,7 +118,10 @@ accept_pending_investment_offer = {
 			multiply_temp_variable = { investment_offer_cost = 1.1 }
 		}
 		if = {
-			limit = { check_variable = { var = investment_spendable_treasury value = investment_offer_cost compare = greater_than_or_equals } }
+			limit = {
+				check_variable = { var = investment_spendable_treasury value = investment_offer_cost compare = greater_than_or_equals }
+				ROOT = { pending_investment_can_start = yes }
+			}
 			set_variable = { project_building_type^-1 = PREV.pending_offer_type }
 			set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
 			set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
@@ -131,6 +135,8 @@ accept_pending_investment_offer = {
 			}
 
 			start_project_two = yes
+		}
+		if = { limit = { check_variable = { investment_project_started = 1 } }
 			ROOT = {
 				if = {
 					limit = { NOT = { has_country_flag = influence_gained_@PREV } }
@@ -161,7 +167,7 @@ accept_pending_investment_offer = {
 		else = {
 			country_event = investments_event.13
 		}
-		clr_country_flag = this_investment_offer_pending@PREV
+		var:ROOT.pending_offer_state = { PREV = { clr_country_flag = this_investment_offer_pending@PREV } }
 		clr_country_flag = investments_ai_pending
 	}
 	clear_variable = pending_offer_fully_funded
@@ -548,10 +554,8 @@ start_project_two = {
 		set_variable = { project_building_type^project = project_building_type^-1 }
 		set_variable = { project_monetary_cost^project = project_monetary_cost^-1 }
 
-		random_state = {
-			limit = { state = PREV.investments_state_target }
-
-			add_to_array = { projects_in_state = PREV.id } # Should be FROM
+		var:investments_state_target = {
+			add_to_array = { projects_in_state = PREV.id }
 			# Create a new array for this
 			add_to_array = { project_type_in_state = PREV.project_building_type^-1 }
 			# Sets the starting nation
@@ -571,6 +575,7 @@ start_project_two = {
 
 		# Initializes the target decisions for the investment project
 		initialize_start_project_decisions = yes
+		set_temp_variable = { investment_project_started = 1 }
 
 		if = { limit = { is_debug = yes }
 			log = "[GetDateText]: [THIS.GetName]: DEBUG: start_project_two - project started at slot [?new_project], cost = [?project_monetary_cost^-1], duration = [?project_construction_duration^new_project] days"
