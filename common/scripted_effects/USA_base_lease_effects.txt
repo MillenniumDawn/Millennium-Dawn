@@ -1,0 +1,96 @@
+USA_close_base_lease_if_transferred = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					is_owned_by = USA
+					has_state_flag = USA_base_lease_ended
+				}
+			}
+		}
+		set_state_flag = USA_base_lease_ended
+	}
+}
+
+USA_update_base_lease_rent = {
+	488 = { USA_close_base_lease_if_transferred = yes }
+	827 = { USA_close_base_lease_if_transferred = yes }
+
+	set_variable = { global.USA_kuwait_base_weekly_rent = 0 }
+	set_variable = { global.USA_okinawa_base_weekly_rent = 0 }
+
+	if = {
+		limit = {
+			country_exists = USA
+			USA = {
+				has_capitulated = no
+				NOT = { has_country_flag = disabled_economic_system }
+			}
+		}
+		if = {
+			limit = {
+				USA_kuwait_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 488
+					NOT = { has_war_with = KUW }
+				}
+				KUW = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_kuwait_base_weekly_rent = 0.025 }
+		}
+		if = {
+			limit = {
+				USA_okinawa_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 827
+					NOT = { has_war_with = JAP }
+				}
+				JAP = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_okinawa_base_weekly_rent = 0.050 }
+		}
+	}
+}
+
+USA_transfer_kuwait_base_to_host = {
+	if = {
+		limit = {
+			country_exists = KUW
+			USA = {
+				owns_state = 488
+				has_full_control_of_state = 488
+			}
+		}
+		488 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = KUW
+		}
+	}
+}
+
+USA_transfer_okinawa_base_to_host = {
+	if = {
+		limit = {
+			country_exists = JAP
+			USA = {
+				owns_state = 827
+				has_full_control_of_state = 827
+			}
+		}
+		827 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = JAP
+		}
+		USA = {
+			remove_state_core = 827
+			remove_opinion_modifier = { target = JAP modifier = minor_border_dispute }
+		}
+		JAP = { remove_opinion_modifier = { target = USA modifier = minor_border_dispute } }
+	}
+}
