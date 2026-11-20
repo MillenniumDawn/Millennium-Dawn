@@ -175,21 +175,12 @@ faction_goal_bul_balkan_mutual_defense = {
 					is_subject = no
 				}
 			}
-			OR = {
-				GRE = {
-					OR = {
-						tag = ROOT
-						is_in_faction_with = ROOT
-					}
-					is_subject = no
+			GRE = {
+				OR = {
+					tag = ROOT
+					is_in_faction_with = ROOT
 				}
-				TUR = {
-					OR = {
-						tag = ROOT
-						is_in_faction_with = ROOT
-					}
-					is_subject = no
-				}
+				is_subject = no
 			}
 			OR = {
 				BUL = {
@@ -200,20 +191,6 @@ faction_goal_bul_balkan_mutual_defense = {
 					is_subject = no
 				}
 				ROM = {
-					OR = {
-						tag = ROOT
-						is_in_faction_with = ROOT
-					}
-					is_subject = no
-				}
-				TUR = {
-					OR = {
-						tag = ROOT
-						is_in_faction_with = ROOT
-					}
-					is_subject = no
-				}
-				UKR = {
 					OR = {
 						tag = ROOT
 						is_in_faction_with = ROOT
@@ -489,9 +466,11 @@ faction_goal_eng_atlantic_order = {
 				}
 			}
 			NOT = {
-				BLR = { has_faction_template = faction_template_csto }
-				UKR = { has_faction_template = faction_template_csto }
-				MLV = { has_faction_template = faction_template_csto }
+				OR = {
+					BLR = { has_faction_template = faction_template_csto }
+					UKR = { has_faction_template = faction_template_csto }
+					MLV = { has_faction_template = faction_template_csto }
+				}
 			}
 		}
 	}
@@ -518,12 +497,18 @@ faction_goal_fra_joint_procurement = {
 					tag = ROOT
 					is_in_faction_with = ROOT
 				}
-				has_tech = IFV_4
+				OR = {
+					has_tech = IFV_4
+					has_tech = mbt_tech_2
+				}
 			}
 			any_allied_country = {
 				is_in_faction_with = ROOT
 				NOT = { original_tag = FRA }
-				has_tech = IFV_4
+				OR = {
+					has_tech = IFV_4
+					has_tech = mbt_tech_2
+				}
 			}
 		}
 	}
@@ -590,91 +575,47 @@ faction_goal_fra_strategic_autonomy = {
 			tooltip = faction_goal_fra_strategic_autonomy_desc
 			hidden_trigger = {
 				tooltip_evaluation = eval
-				set_temp_variable = { paris_fighter_reserve = 0 }
-				set_temp_variable = { paris_tank_reserve = 0 }
-				set_temp_variable = { paris_air_defense_reserve = 0 }
-				add_to_temp_variable = {
-					paris_fighter_reserve = {
-						value = 0
-						add = num_equipment@MR_Fighter4
-						add = num_equipment@MR_Fighter5
-						add = num_equipment@MR_Fighter6
-						add = num_equipment@MR_Fighter7
+				set_temp_variable = { paris_autonomous_members = 0 }
+				if = {
+					limit = {
+						OR = {
+							has_tech = MBT_4
+							has_tech = mbt_tech_2
+						}
+						OR = {
+							has_tech = Anti_Air_2
+							has_tech = nsb_Anti_Air_2
+						}
+						OR = {
+							has_tech = MR_Fighter4
+							has_tech = gen_5_medium
+						}
 					}
-				}
-				add_to_temp_variable = {
-					paris_tank_reserve = {
-						value = 0
-						add = num_equipment@MBT_4
-						add = num_equipment@MBT_5
-						add = num_equipment@MBT_7
-						add = num_equipment@MBT_8
-					}
-				}
-				add_to_temp_variable = {
-					paris_air_defense_reserve = {
-						value = 0
-						add = num_equipment@Anti_Air_2
-						add = num_equipment@Anti_Air_3
-						add = num_equipment@Anti_Air_4
-						add = num_equipment@Anti_Air_5
-						add = num_equipment@Anti_Air_6
-						add = num_equipment@Anti_Air_7
-						add = num_equipment@Anti_Air_8
-					}
+					add_to_temp_variable = { paris_autonomous_members = 1 }
 				}
 				all_of_scopes = {
 					array = faction_members
 					if = {
 						limit = {
 							NOT = { tag = ROOT }
-						}
-						add_to_temp_variable = {
-							paris_fighter_reserve = {
-								value = 0
-								add = num_equipment@MR_Fighter4
-								add = num_equipment@MR_Fighter5
-								add = num_equipment@MR_Fighter6
-								add = num_equipment@MR_Fighter7
+							OR = {
+								has_tech = MBT_4
+								has_tech = mbt_tech_2
+							}
+							OR = {
+								has_tech = Anti_Air_2
+								has_tech = nsb_Anti_Air_2
+							}
+							OR = {
+								has_tech = MR_Fighter4
+								has_tech = gen_5_medium
 							}
 						}
-					}
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-						}
-						add_to_temp_variable = {
-							paris_tank_reserve = {
-								value = 0
-								add = num_equipment@MBT_4
-								add = num_equipment@MBT_5
-								add = num_equipment@MBT_7
-								add = num_equipment@MBT_8
-							}
-						}
-					}
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-						}
-						add_to_temp_variable = {
-							paris_air_defense_reserve = {
-								value = 0
-								add = num_equipment@Anti_Air_2
-								add = num_equipment@Anti_Air_3
-								add = num_equipment@Anti_Air_4
-								add = num_equipment@Anti_Air_5
-								add = num_equipment@Anti_Air_6
-								add = num_equipment@Anti_Air_7
-								add = num_equipment@Anti_Air_8
-							}
-						}
+						add_to_temp_variable = { paris_autonomous_members = 1 }
 					}
 				}
 			}
-			check_variable = { paris_fighter_reserve > 47 }
-			check_variable = { paris_tank_reserve > 119 }
-			check_variable = { paris_air_defense_reserve > 59 }
+			check_variable = { paris_autonomous_members > 2 }
 		}
 	}
 	complete_effect = {
@@ -736,7 +677,10 @@ faction_goal_ger_danube_arsenal = {
 						tag = ROOT
 						is_in_faction_with = ROOT
 					}
-					has_tech = MBT_4
+					OR = {
+						has_tech = MBT_4
+						has_tech = mbt_tech_2
+					}
 					check_variable = { num_battalions_with_type@armor_Bat > 3 }
 				}
 				HUN = {
@@ -744,7 +688,10 @@ faction_goal_ger_danube_arsenal = {
 						tag = ROOT
 						is_in_faction_with = ROOT
 					}
-					has_tech = MBT_4
+					OR = {
+						has_tech = MBT_4
+						has_tech = mbt_tech_2
+					}
 					check_variable = { num_battalions_with_type@armor_Bat > 3 }
 				}
 				CZE = {
@@ -752,7 +699,10 @@ faction_goal_ger_danube_arsenal = {
 						tag = ROOT
 						is_in_faction_with = ROOT
 					}
-					has_tech = MBT_4
+					OR = {
+						has_tech = MBT_4
+						has_tech = mbt_tech_2
+					}
 					check_variable = { num_battalions_with_type@armor_Bat > 3 }
 				}
 				SLO = {
@@ -760,7 +710,10 @@ faction_goal_ger_danube_arsenal = {
 						tag = ROOT
 						is_in_faction_with = ROOT
 					}
-					has_tech = MBT_4
+					OR = {
+						has_tech = MBT_4
+						has_tech = mbt_tech_2
+					}
 					check_variable = { num_battalions_with_type@armor_Bat > 3 }
 				}
 			}
@@ -1398,14 +1351,11 @@ faction_goal_pol_shield_between_seas = {
 					}
 					is_subject = no
 					OR = {
-						has_equipment = { Anti_Air_2 > 14 }
-						has_equipment = { Anti_Air_3 > 14 }
-						has_equipment = { Anti_Air_4 > 14 }
-						has_equipment = { Anti_Air_5 > 14 }
-						has_equipment = { Anti_Air_6 > 14 }
-						has_equipment = { Anti_Air_7 > 14 }
-						has_equipment = { Anti_Air_8 > 14 }
+						has_tech = Anti_Air_2
+						has_tech = nsb_Anti_Air_2
 					}
+					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
+					check_variable = { pol_air_defense > 14 }
 				}
 				LAT = {
 					OR = {
@@ -1414,14 +1364,11 @@ faction_goal_pol_shield_between_seas = {
 					}
 					is_subject = no
 					OR = {
-						has_equipment = { Anti_Air_2 > 14 }
-						has_equipment = { Anti_Air_3 > 14 }
-						has_equipment = { Anti_Air_4 > 14 }
-						has_equipment = { Anti_Air_5 > 14 }
-						has_equipment = { Anti_Air_6 > 14 }
-						has_equipment = { Anti_Air_7 > 14 }
-						has_equipment = { Anti_Air_8 > 14 }
+						has_tech = Anti_Air_2
+						has_tech = nsb_Anti_Air_2
 					}
+					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
+					check_variable = { pol_air_defense > 14 }
 				}
 				LIT = {
 					OR = {
@@ -1430,14 +1377,11 @@ faction_goal_pol_shield_between_seas = {
 					}
 					is_subject = no
 					OR = {
-						has_equipment = { Anti_Air_2 > 14 }
-						has_equipment = { Anti_Air_3 > 14 }
-						has_equipment = { Anti_Air_4 > 14 }
-						has_equipment = { Anti_Air_5 > 14 }
-						has_equipment = { Anti_Air_6 > 14 }
-						has_equipment = { Anti_Air_7 > 14 }
-						has_equipment = { Anti_Air_8 > 14 }
+						has_tech = Anti_Air_2
+						has_tech = nsb_Anti_Air_2
 					}
+					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
+					check_variable = { pol_air_defense > 14 }
 				}
 			}
 			OR = {
@@ -1448,14 +1392,11 @@ faction_goal_pol_shield_between_seas = {
 					}
 					is_subject = no
 					OR = {
-						has_equipment = { Anti_Air_2 > 14 }
-						has_equipment = { Anti_Air_3 > 14 }
-						has_equipment = { Anti_Air_4 > 14 }
-						has_equipment = { Anti_Air_5 > 14 }
-						has_equipment = { Anti_Air_6 > 14 }
-						has_equipment = { Anti_Air_7 > 14 }
-						has_equipment = { Anti_Air_8 > 14 }
+						has_tech = Anti_Air_2
+						has_tech = nsb_Anti_Air_2
 					}
+					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
+					check_variable = { pol_air_defense > 14 }
 				}
 				UKR = {
 					OR = {
@@ -1464,14 +1405,11 @@ faction_goal_pol_shield_between_seas = {
 					}
 					is_subject = no
 					OR = {
-						has_equipment = { Anti_Air_2 > 14 }
-						has_equipment = { Anti_Air_3 > 14 }
-						has_equipment = { Anti_Air_4 > 14 }
-						has_equipment = { Anti_Air_5 > 14 }
-						has_equipment = { Anti_Air_6 > 14 }
-						has_equipment = { Anti_Air_7 > 14 }
-						has_equipment = { Anti_Air_8 > 14 }
+						has_tech = Anti_Air_2
+						has_tech = nsb_Anti_Air_2
 					}
+					set_temp_variable = { pol_air_defense = { value = num_equipment@AA_Equipment add = num_equipment_in_armies@AA_Equipment } }
+					check_variable = { pol_air_defense > 14 }
 				}
 			}
 		}

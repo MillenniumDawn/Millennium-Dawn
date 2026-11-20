@@ -158,7 +158,7 @@ faction_goal_egy_reliable_nile_corridor = {
 				is_controlled_by = EGY
 				infrastructure > 3
 			}
-			220 = {
+			221 = {
 				is_controlled_by = SUD
 				infrastructure > 3
 			}
@@ -227,8 +227,21 @@ faction_goal_irq_outfit_the_iraqi_army = {
 			tooltip = faction_goal_irq_outfit_the_iraqi_army_desc
 			country_exists = IRQ
 			IRQ = {
-				has_equipment = { infantry_weapons_type > 1999 }
-				has_equipment = { cnc_equipment_type > 199 }
+				check_variable = { num_target_equipment_in_armies@infantry_weapons_type > 0 }
+				set_temp_variable = {
+					irq_infantry_weapons_gap = {
+						value = num_equipment_in_armies@infantry_weapons_type
+						subtract = { value = num_target_equipment_in_armies@infantry_weapons_type multiply = 0.95 }
+					}
+				}
+				set_temp_variable = {
+					irq_cnc_gap = {
+						value = num_equipment_in_armies@cnc_equipment_type
+						subtract = { value = num_target_equipment_in_armies@cnc_equipment_type multiply = 0.95 }
+					}
+				}
+				check_variable = { irq_infantry_weapons_gap > -1 }
+				check_variable = { irq_cnc_gap > -1 }
 			}
 		}
 	}
@@ -253,7 +266,10 @@ faction_goal_irq_iraqs_own_arsenal = {
 			country_exists = IRQ
 			IRQ = {
 				has_tech = infantry_weapons_4
-				has_tech = Anti_Air_2
+				OR = {
+					has_tech = Anti_Air_2
+					has_tech = nsb_Anti_Air_2
+				}
 				num_of_military_factories > 11
 			}
 		}
