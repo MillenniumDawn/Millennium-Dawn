@@ -33,19 +33,19 @@ from shared_utils import (
     validation_config,
     word_start_re,
 )
+from validate_dynamic_tokens import CATEGORY as DYNAMIC_TOKEN_CATEGORY
+from validate_dynamic_tokens import registered_dynamic_tokens, scan_dynamic_tokens_text
 
 # Focus block/reward walking is owned by the focus-tree validator — reuse it
 # rather than growing a second focus parser here.
 from validate_focus_tree import _iter_focus_blocks_with_id, _iter_reward_blocks
 from validator_common import (
-    DYNAMIC_TOKEN_FILE,
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     FileOpener,
     Severity,
     drop_partial_matches,
     find_line_number,
-    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -396,148 +396,6 @@ def _scan_math_precision_text(cleaned: str, rel: str) -> List[str]:
     return issues
 
 
-# A token the engine has not been told about logs "Token X is a dynamic token,
-# this can cause OOS" at load, once per use. Script, localisation and GUI text
-# name tokens two ways: a `token:X` literal, and the `@X` target of the game
-# variables below (the ones resources/documentation/dynamic_variables_documentation.md
-# gives a token target).
-_TOKEN_TARGET_GAME_VARS = (
-    "avg_units_acclimation",
-    "building_level",
-    "damaged_building_level",
-    "days_decision_timeout",
-    "days_mission_timeout",
-    "faction_resource_extracted",
-    "global_resource_extracted",
-    "leader_modifier",
-    "modifier",
-    "non_damaged_building_level",
-    "num_armies_with_type",
-    "num_battalions_with_type",
-    "num_deployed_planes_with_type",
-    "num_equipment",
-    "num_equipment_in_armies",
-    "num_equipment_in_armies_k",
-    "num_ships_with_type",
-    "num_target_equipment",
-    "num_target_equipment_in_armies",
-    "num_target_equipment_in_armies_k",
-    "num_units_defensive_combats_on",
-    "num_units_offensive_combats_against",
-    "num_units_on_climate",
-    "num_units_with_type",
-    "party_popularity",
-    "party_popularity_100",
-    "resource",
-    "resource_consumed",
-    "resource_exported",
-    "resource_imported",
-    "resource_produced",
-    "sum_unit_terrain_modifier",
-    "unit_modifier",
-)
-_TOKEN_REF_RE = re.compile(
-    r"\b(?:token:|(?:"
-    + "|".join(_TOKEN_TARGET_GAME_VARS)
-    + r")@)([A-Za-z0-9_]+(?:[.\-][A-Za-z0-9_]+)*)"
-)
-
-# Vanilla names the engine already knows, so they log nothing unregistered. This
-# is the set in use and absent from MD_tokens.txt when the check landed. A new
-# token belongs in MD_tokens.txt, not here.
-_ENGINE_KNOWN_TOKENS = frozenset(
-    {
-        # buildings
-        "air_base",
-        "arms_factory",
-        "dockyard",
-        "fuel_silo",
-        "industrial_complex",
-        "infrastructure",
-        "naval_base",
-        "nuclear_reactor",
-        "rail_way",
-        "rocket_site",
-        "supply_node",
-        "synthetic_refinery",
-        # modifiers
-        "agency_upgrade_time",
-        "commando_trait_chance_factor",
-        "conscription_factor",
-        "consumer_goods_expected_value",
-        "consumer_goods_factor",
-        "industrial_capacity_dockyard",
-        "industrial_capacity_factory",
-        "local_resources_factor",
-        "min_export",
-        "political_power_factor",
-        "political_power_gain",
-        "production_speed_buildings_factor",
-        "research_speed_factor",
-        "stability_factor",
-        "stability_weekly",
-        "war_support_factor",
-        # equipment and ship types
-        "artillery_equipment",
-        "capital",
-        "carrier",
-        "convoy",
-        "heavy_tank_chassis",
-        "medium_plane_airframe",
-        "medium_tank_chassis",
-        "small_plane_airframe",
-        "small_plane_cas_airframe",
-        "small_plane_naval_bomber_airframe",
-        "support_ship",
-        # ideologies
-        "communism",
-        "democratic",
-        "fascism",
-        "neutrality",
-        "ruling_party",
-        # terrain and climate
-        "cold_climate",
-        "fort",
-        # resources
-        "aluminium",
-        "chromium",
-        "oil",
-        "rubber",
-        "steel",
-        "tungsten",
-    }
-)
-
-
-def _scan_dynamic_tokens_text(
-    cleaned: str, rel: str, registered: AbstractSet[str]
-) -> List[Tuple[str, str, int]]:
-    issues: List[Tuple[str, str, int]] = []
-    if "token:" not in cleaned and "@" not in cleaned:
-        return issues
-    seen: Set[str] = set()
-    for m in _TOKEN_REF_RE.finditer(cleaned):
-        token = m.group(1)
-        # `token:prefix_[SCOPE]`, `token:prefix_$PARAM$` and
-        # `party_popularity@var:x` name no literal token.
-        if cleaned.startswith(("[", "$", ":"), m.end()):
-            continue
-        if token in registered or token in _ENGINE_KNOWN_TOKENS or token in seen:
-            continue
-        seen.add(token)
-        line = cleaned[: m.start()].count("\n") + 1
-        issues.append(
-            (
-                f"{m.group(0)} uses a token that is not registered in"
-                f" {DYNAMIC_TOKEN_FILE} (the engine logs a dynamic-token OOS"
-                " warning at load)",
-                rel,
-                line,
-            )
-        )
-    return issues
-
-
 # A variable clamped to a literal range can never hold a value outside it, so a
 # check_variable comparing against one is dead logic — always true or always false.
 # The sub-1 case is the same bug seen from the other side: a 0-1 scale value written
@@ -578,9 +436,6 @@ _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
 # Trigger blocks the engine renders as requirement lines: `available`, a
 # decision's or mission's `cancel_trigger`, and a focus's `bypass`.
 _PLAYER_FACING_BLOCKS = frozenset({"available", "cancel_trigger", "bypass"})
-# The gating check_variable scan stays on `available`: widening it adds a
-# pre-existing ERROR backlog in `cancel_trigger` / `bypass`.
-_CHECK_VARIABLE_BLOCK = "available"
 # Column-0 blocks in a decisions file are the decision categories.
 # All player-facing trigger scans cover the same object types.
 _PLAYER_FACING_GLOBS = [
@@ -1078,11 +933,11 @@ def _scan_available_text(
             for token in stack:
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
-                if token == _CHECK_VARIABLE_BLOCK:
+                if token in _PLAYER_FACING_BLOCKS:
                     line = src.line(pos)
                     untooltipped.append(
                         (
-                            "check_variable in `available` renders no tooltip line"
+                            f"check_variable in `{token}` renders no tooltip line"
                             " - the player sees a blank requirement; wrap it in"
                             " custom_trigger_tooltip = { tooltip = KEY ... }",
                             rel,
@@ -1120,8 +975,9 @@ def _scan_available_text(
 # in `available` with no wrapper shows the player nothing at all where a
 # requirement line belongs. Wrappers inside the definition already supply that
 # line, so those triggers stay out of the index.
-# Global-flag bodies only: a repo-wide measurement including has_country_flag
-# produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
+# A bare check_variable in the body renders nothing either.
+# Of the flag checks, only has_global_flag counts: a repo-wide measurement
+# including has_country_flag produced 270 pre-existing hits (mostly cooldown/eligibility helpers with a
 # stable name that already reads as a requirement), against ~2 for the
 # unlocalised-flag sibling check. Narrowed here per the border-war plan
 # rather than shipping with `--strict` gating a backlog this size.
@@ -1129,19 +985,27 @@ _HAS_FLAG_BODY_RE = re.compile(r"\bhas_global_flag\b")
 _BARE_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*+)\s*+=\s*+yes\b")
 
 
-def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
-    """True when a has_global_flag sits outside every tooltip wrapper.
+def _scripted_trigger_body_has_untooltipped_check(body: str) -> bool:
+    """True when a has_global_flag, or a check_variable with no inline
+    `tooltip`, sits outside every tooltip wrapper.
 
     A wrapper around the check inside the definition already supplies the
     requirement line (custom_trigger_tooltip / custom_override_tooltip) or
     hides it (hidden_trigger), so the call site does not need another one.
     """
-    if not _HAS_FLAG_BODY_RE.search(body):
+    checks = [m.start() for m in _HAS_FLAG_BODY_RE.finditer(body)]
+    for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(body):
+        open_idx = m.end() - 1
+        if not _INLINE_TOOLTIP_RE.search(
+            body[open_idx : _matching_brace(body, open_idx)]
+        ):
+            checks.append(m.start())
+    if not checks:
         return False
     scopes = _ScopeIndex(body)
     return any(
-        not any(t in _TOOLTIP_WRAPPER_TOKENS for t in scopes.stack_at(m.start()))
-        for m in _HAS_FLAG_BODY_RE.finditer(body)
+        not any(t in _TOOLTIP_WRAPPER_TOKENS for t in scopes.stack_at(pos))
+        for pos in checks
     )
 
 
@@ -1160,7 +1024,7 @@ def _scan_scripted_trigger_text(
                 issues.append(
                     (
                         f"{name} = yes in `{token}` resolves to a scripted"
-                        " trigger that checks a flag directly - the player"
+                        " trigger that checks a flag or variable directly - the player"
                         " sees no requirement line at all; wrap it in"
                         " custom_trigger_tooltip = { tooltip = KEY ... }",
                         src.rel,
@@ -1595,7 +1459,7 @@ def _scan_shared_file(args) -> Tuple:
 
     if mask & _F_TOKEN:
         # Unblanked: localisation, GUI text and log strings name tokens in quotes.
-        token_issues = _scan_dynamic_tokens_text(stripped, rel, registered_tokens)
+        token_issues = scan_dynamic_tokens_text(stripped, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
     src = _Source(blanked, rel)
@@ -1911,7 +1775,7 @@ class Validator(BaseValidator):
             "✓ No unregistered dynamic tokens found",
             "tokens missing from the synchronized dynamic token list (error.log spam and OOS risk):",
             severity=Severity.ERROR,
-            category="unregistered-dynamic-token",
+            category=DYNAMIC_TOKEN_CATEGORY,
         )
 
     def validate_treasury_state_scope(self):
@@ -2037,9 +1901,7 @@ class Validator(BaseValidator):
             flagged_names = self._collect_scripted_trigger_flag_names()
             requirements = self._collect_scripted_trigger_requirements()
         backing = self._collect_dynamic_modifier_vars() if clamp_files else {}
-        registered_tokens: frozenset = frozenset()
-        if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
-            registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
+        registered_tokens = registered_dynamic_tokens(self.mod_path)
 
         repo_ranges: Dict[str, Tuple[float, float]] = {}
         repo_temp: Set[str] = set()
@@ -2144,7 +2006,8 @@ class Validator(BaseValidator):
         return empty
 
     def validate_untooltipped_available_checks(self):
-        """Flag bare check_variable inside `available` blocks (ERROR).
+        """Flag bare check_variable inside `available`, `cancel_trigger` and
+        `bypass` blocks (ERROR).
 
         `visible` is excluded: a failing visible hides the object outright, so
         there is no tooltip surface for the check to render into.
@@ -2154,13 +2017,13 @@ class Validator(BaseValidator):
         exempt, so a hit here is always a requirement a human player would read.
         """
         self._log_section(
-            "Checking for untooltipped check_variable in available blocks..."
+            "Checking for untooltipped check_variable in requirement blocks..."
         )
         issues = self._get_shared_scan()["avail_unt"]
         self._report(
             issues,
-            "✓ No untooltipped check_variable in available blocks",
-            "check_variable in `available` with no tooltip wrapper (the player sees a blank requirement line):",
+            "✓ No untooltipped check_variable in requirement blocks",
+            "check_variable in `available`/`cancel_trigger`/`bypass` with no tooltip wrapper (the player sees a blank requirement line):",
             severity=Severity.ERROR,
             category="untooltipped-available-check",
         )
@@ -2270,8 +2133,9 @@ class Validator(BaseValidator):
         return bodies
 
     def _collect_scripted_trigger_flag_names(self) -> frozenset:
-        """Names of scripted triggers whose body checks a global flag that is
-        not already under a tooltip wrapper.
+        """Names of scripted triggers whose body checks a global flag, or a
+        variable with no inline tooltip, that is not already under a tooltip
+        wrapper.
 
         A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
         around the flag inside the definition already renders or hides the
@@ -2288,7 +2152,7 @@ class Validator(BaseValidator):
         self._scripted_trigger_flag_names_memo = frozenset(
             name
             for name, body in self._scripted_trigger_bodies().items()
-            if _scripted_trigger_body_has_unwrapped_global_flag(body)
+            if _scripted_trigger_body_has_untooltipped_check(body)
         )
         return self._scripted_trigger_flag_names_memo
 
@@ -2327,7 +2191,7 @@ class Validator(BaseValidator):
         self._report(
             issues,
             "✓ No untooltipped scripted-trigger calls in requirement blocks",
-            "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
+            "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag or variable directly, with no tooltip wrapper (the player sees no requirement line at all):",
             severity=Severity.ERROR,
             category="untooltipped-available-scripted-trigger",
         )

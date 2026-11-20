@@ -82,7 +82,7 @@ HARDCODED_CONTRACTS: Dict[str, Dict[str, List[str]]] = {
         "optional": [],
     },
     "get_pol_distance": {
-        "required": ["pol_dist_target_index", "pol_dist_source_index"],
+        "required": ["pol_dist_lookup_slot", "pol_dist_source_index"],
         "optional": [],
     },
     "configure_religious_setup": {
