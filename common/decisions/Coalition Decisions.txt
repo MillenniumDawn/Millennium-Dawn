@@ -30,13 +30,21 @@ coalition_decisions = {
 			if = {
 				limit = { has_country_leader_with_trait = western_technocrat }
 				if = {
-					limit = { is_ai = yes }
-					#the AI never sends invites, so the two largest parties back the technocrat until the next election
+					limit = {
+						is_ai = yes
+						tag = ITA
+					}
+					#the AI never sends invites, so the two largest parties back Italy's technocrat until the next election
+					find_two_highest_parties = yes
 					set_temp_variable = { add_col_one = max_index_1 }
 					add_coalition_members_effect = yes
 					set_temp_variable = { add_col_one = max_index_2 }
 					add_coalition_members_effect = yes
-					if = { limit = { tag = ITA } calculate_abandon_coalition_threshold = yes }
+					calculate_abandon_coalition_threshold = yes
+					if = {
+						limit = { check_variable = { government_coalition_strength_elect < majority_threshold } }
+						country_event = MD4_election_campaign.0
+					}
 				}
 				else = { country_event = MD4_election_campaign.0 }
 			}
@@ -56,7 +64,12 @@ coalition_decisions = {
 			if = {
 				limit = {
 					is_ai = yes
-					NOT = { has_country_leader_with_trait = western_technocrat }
+					NOT = {
+						AND = {
+							tag = ITA
+							has_country_leader_with_trait = western_technocrat
+						}
+					}
 				}
 				custom_effect_tooltip = AI_form_government_TT
 				hidden_effect = {

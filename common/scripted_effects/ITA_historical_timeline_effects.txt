@@ -14,24 +14,36 @@ ITA_shift_party_popularity = {
 		set_temp_variable = { outlook_party_index = shift_to_index }
 		set_outlook_from_party_index = yes
 		set_temp_variable = { shift_to_outlook = outlook_id }
-		#add_popularity rescales every other outlook, so two plain legs overshoot. The first leg is sized so the second one lands both outlooks on the target and leaves the rest where they were.
+		#a negative add_popularity hands the freed share to every other outlook in equal parts, so set all five at once
 		if = {
 			limit = { NOT = { check_variable = { shift_from_outlook = shift_to_outlook } } }
-			set_temp_variable = { outlook_id = shift_from_outlook }
-			set_outlook_popularity_from_id = yes
-			set_temp_variable = { shift_from_popularity = outlook_popularity }
-			set_temp_variable = { outlook_id = shift_to_outlook }
-			set_outlook_popularity_from_id = yes
-			set_temp_variable = { shift_to_popularity = outlook_popularity }
-			set_temp_variable = { shift_scale = { value = 1 add = shift_amount } }
-			set_temp_variable = { shift_to_change = { value = 1 subtract = shift_to_popularity multiply = shift_amount divide = shift_scale } }
-			set_temp_variable = { shift_from_change = { value = shift_scale subtract = shift_from_popularity multiply = shift_amount divide = shift_scale multiply = -1 } }
-			set_temp_variable = { outlook_id = shift_to_outlook }
-			set_temp_variable = { outlook_popularity_change = shift_to_change }
-			change_outlook_popularity = yes
-			set_temp_variable = { outlook_id = shift_from_outlook }
-			set_temp_variable = { outlook_popularity_change = shift_from_change }
-			change_outlook_popularity = yes
+			set_outlook_popularity_array = yes
+			add_to_temp_variable = { outlook_popularity_by_id^shift_to_outlook = shift_amount }
+			subtract_from_temp_variable = { outlook_popularity_by_id^shift_from_outlook = shift_amount }
+			#set_popularities needs the five to sum to 100
+			set_temp_variable = {
+				shift_remainder = {
+					value = 1
+					subtract = outlook_popularity_by_id^0
+					subtract = outlook_popularity_by_id^1
+					subtract = outlook_popularity_by_id^2
+					subtract = outlook_popularity_by_id^3
+					subtract = outlook_popularity_by_id^4
+				}
+			}
+			add_to_temp_variable = { outlook_popularity_by_id^shift_to_outlook = shift_remainder }
+			set_temp_variable = { shift_democratic = { value = outlook_popularity_by_id^0 multiply = 100 } }
+			set_temp_variable = { shift_communism = { value = outlook_popularity_by_id^1 multiply = 100 } }
+			set_temp_variable = { shift_fascism = { value = outlook_popularity_by_id^2 multiply = 100 } }
+			set_temp_variable = { shift_neutrality = { value = outlook_popularity_by_id^3 multiply = 100 } }
+			set_temp_variable = { shift_nationalist = { value = outlook_popularity_by_id^4 multiply = 100 } }
+			set_popularities = {
+				democratic = shift_democratic
+				communism = shift_communism
+				fascism = shift_fascism
+				neutrality = shift_neutrality
+				nationalist = shift_nationalist
+			}
 		}
 		add_to_variable = { party_pop_array^shift_to_index = shift_amount }
 		multiply_temp_variable = { shift_amount = -1 }
