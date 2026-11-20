@@ -15,6 +15,9 @@ AI_STRATEGIES = ROOT / "common/ai_strategy/MD_ai_race_ai.txt"
 ECONOMIC_EFFECTS = ROOT / "common/scripted_effects/00_economic_system_utilities.txt"
 ECONOMIC_TRIGGERS = ROOT / "common/scripted_triggers/00_economic_triggers.txt"
 INVESTMENT_EFFECTS = ROOT / "common/scripted_effects/99_investment_scripted_effects.txt"
+INVESTMENT_TRIGGERS = (
+    ROOT / "common/scripted_triggers/00_investment_scripted_triggers.txt"
+)
 INVESTMENT_EVENTS = ROOT / "events/investments_events.txt"
 
 
@@ -199,8 +202,6 @@ class InvestmentOfferScript(StrategicRaceScript):
     def value(self, name, identifier):
         if name == "PREV.id":
             return self.scope_stack[-1]
-        if name == "ROOT.pending_offer_state":
-            return self.countries[self.event_root]["vars"]["pending_offer_state"]
         return super().value(name, identifier)
 
     def condition(self, statements, identifier):
@@ -250,6 +251,102 @@ class InvestmentOfferScript(StrategicRaceScript):
         self.event_root = recipient
         self.event_from = investor
         self.run("accept_pending_investment_offer", recipient)
+
+
+class InvestmentCapacityScript(RaceScript):
+    """Run the live capacity triggers with a synthetic state and construction queue."""
+
+    def __init__(self):
+        super().__init__()
+        self.triggers.update(
+            _parse_race_script(INVESTMENT_TRIGGERS.read_text(encoding="utf-8"))
+        )
+        self.recipient = self.country(1)
+        self.donor = self.country(2)
+        self.donor["vars"]["project_array"] = [0]
+        self.state = self.country(-1)
+        self.state["free_slots"] = {}
+        self.state["vars"]["projects_in_state"] = []
+        self.queued = 0
+
+    def condition(self, statements, identifier):
+        for key, comparison, operand in self._active_statements(statements, identifier):
+            if not self._capacity_statement(key, comparison, operand, identifier):
+                return False
+        return True
+
+    def _capacity_statement(self, key, comparison, operand, identifier):
+        if key in {"if", "else_if", "else"}:
+            return self.condition(operand, identifier)
+        if key == "set_temp_variable":
+            name, _, value = operand[0]
+            self.temps[name] = self.value(value, identifier)
+            return True
+        if key in {"CONTROLLER", "ROOT"}:
+            return self.condition(operand, 1)
+        if key == "has_war_with":
+            return False
+        if key == "is_controlled_by":
+            return identifier == -1 and operand == "PREV"
+        if key == "any_owned_state":
+            return self.condition(operand, -1)
+        if key == "custom_trigger_tooltip":
+            return self.condition(
+                [entry for entry in operand if entry[0] != "tooltip"], identifier
+            )
+        if key == "meta_trigger":
+            data = {name: value for name, _, value in operand}
+            assert data["MIN_FREE"] == '"[?minimum_infrastructure_slots|.0]"'
+            return self.condition(data["text"], identifier)
+        if key == "free_building_slots":
+            data = {name: value for name, _, value in operand}
+            _, op, size = next(entry for entry in operand if entry[0] == "size")
+            if size == "[MIN_FREE]":
+                size = "minimum_infrastructure_slots"
+            free = self.state["free_slots"][data["building"]]
+            if data.get("include_constructions") == "yes":
+                free -= self.queued
+            return self.comparisons[op](free, self.value(size, identifier))
+        return super().condition([(key, comparison, operand)], identifier)
+
+
+@pytest.mark.parametrize(
+    "projects,queued,expected", [([2], 0, False), ([3], 1, False), ([3], 0, True)]
+)
+def test_civilian_investment_focus_checks_the_prospective_donors_state(
+    projects, queued, expected
+):
+    investment = InvestmentCapacityScript()
+    investment.state["free_slots"]["industrial_complex"] = 1
+    investment.state["vars"]["projects_in_state"] = projects
+    investment.recipient["vars"]["pending_offer_state"] = -5
+    investment.queued = queued
+    check = [("can_offer_scripted_civilian_investment_to_root", "=", "yes")]
+    assert investment.condition(check, 2) is expected
+
+
+@pytest.mark.parametrize(
+    "built,physical_room,queued,requested,expected",
+    [
+        (2, 4, 0, 1, False),
+        (1, 5, 1, 1, False),
+        (1, 1, 1, 1, False),
+        (1, 5, 0, 1, True),
+        (0, 6, 1, 2, False),
+        (0, 6, 0, 2, True),
+    ],
+)
+def test_infrastructure_investment_counts_queues_below_the_technology_cap(
+    built, physical_room, queued, requested, expected
+):
+    investment = InvestmentCapacityScript()
+    investment.recipient["techs"].add("railway_system_02")
+    investment.state["vars"]["building_level@infrastructure"] = built
+    investment.state["free_slots"]["infrastructure"] = physical_room
+    investment.temps["investment_slots_needed"] = requested
+    investment.queued = queued
+    check = [("investment_infrastructure_slots_available", "=", "yes")]
+    assert investment.condition(check, -1) is expected
 
 
 def _planner(*, stage=0, year=2013, month=1):
@@ -697,10 +794,7 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
         ai_race_ai_target_stage=1,
         ai_race_ai_savings_target=savings,
     )
-    investor["flags"].update(
-        investments_ai_pending=None,
-        **{"this_investment_offer_pending@PREV": None},
-    )
+    investor["flags"]["investments_ai_pending"] = None
     recipient["vars"].update(
         pending_offer_total_cost=10,
         pending_offer_duration=90,
@@ -719,7 +813,6 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
     assert race.charges == ([(2, -1)] if expected_started else [])
     assert race.events == ([] if expected_started else [(1, "investments_event.13")])
     assert "investments_ai_pending" not in investor["flags"]
-    assert "this_investment_offer_pending@PREV" not in investor["flags"]
     assert not any(name.startswith("pending_offer_") for name in recipient["vars"])
 
 

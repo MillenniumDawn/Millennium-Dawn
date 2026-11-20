@@ -6,33 +6,51 @@ country_can_build_nuclear_reactors = {
 }
 
 # Parameters: investment_slots_needed = infrastructure levels to build in THIS state.
-investment_infrastructure_unlocked = {
-	set_temp_variable = { required_infrastructure_level = { value = building_level@infrastructure add = investment_slots_needed } }
-	# The controller's research can cap infrastructure below the state's physical cap.
+investment_infrastructure_slots_available = {
+	check_variable = { investment_slots_needed > 0 }
+	set_temp_variable = { infrastructure_tech_cap = 0 }
 	CONTROLLER = {
-		if = { limit = { check_variable = { required_infrastructure_level > 5 } }
-			has_tech = special_project_tech_smart_grid
+		if = { limit = { has_tech = special_project_tech_smart_grid } set_temp_variable = { infrastructure_tech_cap = 6 } }
+		else_if = { limit = { has_tech = railway_system_06 } set_temp_variable = { infrastructure_tech_cap = 5 } }
+		else_if = { limit = { has_tech = railway_system_05 } set_temp_variable = { infrastructure_tech_cap = 4 } }
+		else_if = { limit = { has_tech = railway_system_04 } set_temp_variable = { infrastructure_tech_cap = 3 } }
+		else_if = { limit = { has_tech = railway_system_02 } set_temp_variable = { infrastructure_tech_cap = 2 } }
+		else_if = { limit = { has_tech = railway_system_01 } set_temp_variable = { infrastructure_tech_cap = 1 } }
+	}
+	set_temp_variable = { infrastructure_tech_room = { value = infrastructure_tech_cap subtract = building_level@infrastructure } }
+	check_variable = { var = infrastructure_tech_room value = investment_slots_needed compare = greater_than_or_equals }
+
+	# Subtract any room reported above the research limit before counting queued levels.
+	set_temp_variable = { infrastructure_room = 0 }
+	if = { limit = { free_building_slots = { building = infrastructure size > 5 include_constructions = no } } set_temp_variable = { infrastructure_room = 6 } }
+	else_if = { limit = { free_building_slots = { building = infrastructure size > 4 include_constructions = no } } set_temp_variable = { infrastructure_room = 5 } }
+	else_if = { limit = { free_building_slots = { building = infrastructure size > 3 include_constructions = no } } set_temp_variable = { infrastructure_room = 4 } }
+	else_if = { limit = { free_building_slots = { building = infrastructure size > 2 include_constructions = no } } set_temp_variable = { infrastructure_room = 3 } }
+	else_if = { limit = { free_building_slots = { building = infrastructure size > 1 include_constructions = no } } set_temp_variable = { infrastructure_room = 2 } }
+	else_if = { limit = { free_building_slots = { building = infrastructure size > 0 include_constructions = no } } set_temp_variable = { infrastructure_room = 1 } }
+	set_temp_variable = {
+		minimum_infrastructure_slots = {
+			value = infrastructure_room
+			subtract = infrastructure_tech_room
+			max = 0
+			add = investment_slots_needed
+			subtract = 1
 		}
-		else_if = { limit = { check_variable = { required_infrastructure_level > 4 } }
-			has_tech = railway_system_06
+	}
+	if = { limit = { check_variable = { minimum_infrastructure_slots = 0 } }
+		free_building_slots = { building = infrastructure size > 0 include_constructions = yes }
+	}
+	else = {
+		meta_trigger = {
+			text = { free_building_slots = { building = infrastructure size > [MIN_FREE] include_constructions = yes } }
+			MIN_FREE = "[?minimum_infrastructure_slots|.0]"
 		}
-		else_if = { limit = { check_variable = { required_infrastructure_level > 3 } }
-			has_tech = railway_system_05
-		}
-		else_if = { limit = { check_variable = { required_infrastructure_level > 2 } }
-			has_tech = railway_system_04
-		}
-		else_if = { limit = { check_variable = { required_infrastructure_level > 1 } }
-			has_tech = railway_system_02
-		}
-		else = { has_tech = railway_system_01 }
 	}
 }
 
 eu_infrastructure_grant_state_available = {
-	free_building_slots = { building = infrastructure size > 0 }
 	set_temp_variable = { investment_slots_needed = 1 }
-	investment_infrastructure_unlocked = yes
+	investment_infrastructure_slots_available = yes
 }
 
 eu_infrastructure_grant_available = {
@@ -44,8 +62,7 @@ eu_infrastructure_grant_available = {
 
 investments_building_infra_available = {
 	set_temp_variable = { investment_slots_needed = ROOT.project_build_amount^-1 }
-	set_temp_variable = { investment_slot_building = 4 }
-	investment_building_slots_available = yes
+	investment_infrastructure_slots_available = yes
 }
 
 # Airbase slot availability (requires defense_industry or the_military idea).
@@ -546,61 +563,113 @@ selected_investment_building_available = {
 # Parameters: ROOT is the investor; ROOT.project is the slot being checked for its next level.
 investment_building_slot_available = {
 	set_temp_variable = { investment_slot_building = ROOT.project_building_type^ROOT.project }
-	set_temp_variable = { investment_slots_needed = 1 }
-	investment_building_slots_available = yes
+	investment_single_building_slot_available = yes
+}
+
+# Parameters: investment_slot_building = project type ID; THIS is the state.
+investment_single_building_slot_available = {
+	if = { limit = { check_variable = { investment_slot_building = 1 } }
+		investment_civilian_slot_available = yes
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 2 } }
+		investment_military_slot_available = yes
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 3 } }
+		free_building_slots = { building = dockyard size > 0 include_locked = no include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 4 } }
+		set_temp_variable = { investment_slots_needed = 1 }
+		investment_infrastructure_slots_available = yes
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 5 } }
+		free_building_slots = { building = offices size > 0 include_locked = no include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 6 } }
+		free_building_slots = { building = anti_air_building size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 7 } }
+		free_building_slots = { building = radar_station size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 8 } }
+		free_building_slots = { building = air_base size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 9 } }
+		free_building_slots = { building = fuel_silo size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 10 } }
+		free_building_slots = { building = internet_station size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 11 } }
+		free_building_slots = { building = renewable_energy_infra size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 12 } }
+		free_building_slots = { building = fossil_powerplant size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 13 } }
+		free_building_slots = { building = nuclear_reactor size > 0 include_constructions = yes }
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 14 } }
+		free_building_slots = { building = agriculture_district size > 0 include_locked = no include_constructions = yes }
+	}
+	else = { always = no }
 }
 
 # Parameters: investment_slot_building = project type ID; investment_slots_needed = levels in THIS state.
 investment_building_slots_available = {
-	check_variable = { investment_slots_needed > 0 }
-	meta_trigger = {
-		text = {
-			if = { limit = { check_variable = { investment_slot_building = 1 } }
-				free_building_slots = { building = industrial_complex size >= [LEVELS] include_locked = no }
+	if = { limit = { check_variable = { investment_slots_needed = 1 } }
+		investment_single_building_slot_available = yes
+	}
+	else_if = { limit = { check_variable = { investment_slot_building = 4 } }
+		investment_infrastructure_slots_available = yes
+	}
+	else = {
+		check_variable = { investment_slots_needed > 1 }
+		set_temp_variable = { investment_min_free = { value = investment_slots_needed subtract = 1 } }
+		meta_trigger = {
+			text = {
+				if = { limit = { check_variable = { investment_slot_building = 1 } }
+					free_building_slots = { building = industrial_complex size > [MIN_FREE] include_locked = no include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 2 } }
+					free_building_slots = { building = arms_factory size > [MIN_FREE] include_locked = no include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 3 } }
+					free_building_slots = { building = dockyard size > [MIN_FREE] include_locked = no include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 5 } }
+					free_building_slots = { building = offices size > [MIN_FREE] include_locked = no include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 6 } }
+					free_building_slots = { building = anti_air_building size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 7 } }
+					free_building_slots = { building = radar_station size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 8 } }
+					free_building_slots = { building = air_base size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 9 } }
+					free_building_slots = { building = fuel_silo size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 10 } }
+					free_building_slots = { building = internet_station size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 11 } }
+					free_building_slots = { building = renewable_energy_infra size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 12 } }
+					free_building_slots = { building = fossil_powerplant size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 13 } }
+					free_building_slots = { building = nuclear_reactor size > [MIN_FREE] include_constructions = yes }
+				}
+				else_if = { limit = { check_variable = { investment_slot_building = 14 } }
+					free_building_slots = { building = agriculture_district size > [MIN_FREE] include_locked = no include_constructions = yes }
+				}
+				else = { always = no }
 			}
-			else_if = { limit = { check_variable = { investment_slot_building = 2 } }
-				free_building_slots = { building = arms_factory size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 3 } }
-				free_building_slots = { building = dockyard size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 4 } }
-				free_building_slots = { building = infrastructure size >= [LEVELS] }
-				investment_infrastructure_unlocked = yes
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 5 } }
-				free_building_slots = { building = offices size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 6 } }
-				free_building_slots = { building = anti_air_building size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 7 } }
-				free_building_slots = { building = radar_station size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 8 } }
-				free_building_slots = { building = air_base size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 9 } }
-				free_building_slots = { building = fuel_silo size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 10 } }
-				free_building_slots = { building = internet_station size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 11 } }
-				free_building_slots = { building = renewable_energy_infra size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 12 } }
-				free_building_slots = { building = fossil_powerplant size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 13 } }
-				free_building_slots = { building = nuclear_reactor size >= [LEVELS] include_locked = no }
-			}
-			else_if = { limit = { check_variable = { investment_slot_building = 14 } }
-				free_building_slots = { building = agriculture_district size >= [LEVELS] include_locked = no }
-			}
-			else = { always = no }
+			MIN_FREE = "[?investment_min_free|.0]"
 		}
-		LEVELS = "[?investment_slots_needed|.0]"
 	}
 }
 
@@ -611,50 +680,55 @@ investment_project_slot_available = {
 	}
 }
 
-# THIS is a prospective state for a scripted offer from ROOT.
-scripted_investment_state_available = {
-	NOT = { is_in_array = { projects_in_state = ROOT } }
-	CONTROLLER = { NOT = { tag = ROOT } }
+investment_civilian_slot_available = {
+	free_building_slots = { building = industrial_complex size > 0 include_locked = no include_constructions = yes }
 }
 
+investment_military_slot_available = {
+	free_building_slots = { building = arms_factory size > 0 include_locked = no include_constructions = yes }
+}
+
+# Parameters: investment_donor = prospective investor ID; THIS is the state.
 scripted_civilian_investment_state_available = {
-	scripted_investment_state_available = yes
-	free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+	NOT = { is_in_array = { projects_in_state = investment_donor } }
+	investment_civilian_slot_available = yes
 }
 
-scripted_military_investment_state_available = {
-	scripted_investment_state_available = yes
-	free_building_slots = { building = arms_factory size > 0 include_locked = no }
-}
-
-# THIS is the recipient of a scripted offer from ROOT.
+# THIS is the recipient of a scripted offer from ROOT. Only use at dispatch.
 scripted_investment_recipient_available = {
 	NOT = {
-		tag = ROOT
-		has_war_with = ROOT
-		has_country_flag = int_auto_reject_investment_flag
-		has_country_flag = not_investment_target
-		has_variable = pending_offer_state
-	}
-}
-
-can_receive_scripted_civilian_investment = {
-	scripted_investment_recipient_available = yes
-	custom_trigger_tooltip = {
-		tooltip = civilian_investment_capacity_tt
-		any_owned_state = {
-			is_controlled_by = PREV
-			scripted_civilian_investment_state_available = yes
+		OR = {
+			tag = ROOT
+			has_war_with = ROOT
+			has_country_flag = int_auto_reject_investment_flag
+			has_country_flag = not_investment_target
+			has_variable = pending_offer_state
 		}
 	}
 }
 
+# THIS is the recipient; ROOT is the prospective investor.
+can_receive_scripted_civilian_investment = {
+	set_temp_variable = { investment_donor = ROOT.id }
+	has_civilian_investment_capacity = yes
+}
+
+# THIS is the prospective investor; ROOT is the recipient.
+can_offer_scripted_civilian_investment_to_root = {
+	exists = yes
+	NOT = { has_war_with = ROOT }
+	investment_project_slot_available = yes
+	set_temp_variable = { investment_donor = THIS.id }
+	ROOT = { has_civilian_investment_capacity = yes }
+}
+
+# Parameters: investment_donor = prospective investor ID; THIS is the recipient.
 has_civilian_investment_capacity = {
 	custom_trigger_tooltip = {
 		tooltip = civilian_investment_capacity_tt
 		any_owned_state = {
 			is_controlled_by = PREV
-			free_building_slots = { building = industrial_complex size > 0 include_locked = no }
+			scripted_civilian_investment_state_available = yes
 		}
 	}
 }
@@ -667,19 +741,17 @@ pending_investment_can_start = {
 	check_variable = { pending_offer_state < 0 }
 	var:pending_offer_state = {
 		is_controlled_by = ROOT
-		NOT = {
-			is_controlled_by = FROM
-			is_in_array = { projects_in_state = FROM }
-		}
+		NOT = { is_controlled_by = FROM }
+		NOT = { is_in_array = { projects_in_state = FROM } }
 		investment_building_slots_available = yes
 	}
 }
 
-# AI Related STuff
+# THIS is the selected state. The recipient can handle only one pending offer.
 currently_is_considering_a_project = {
 	custom_trigger_tooltip = {
-		tooltip = this_investment_offer_pending_tt
-		ROOT = { NOT = { has_country_flag = this_investment_offer_pending@PREV } }
+		tooltip = investment_recipient_has_pending_offer_tt
+		CONTROLLER = { NOT = { has_variable = pending_offer_state } }
 	}
 }
 
@@ -705,11 +777,6 @@ investment_new_project_ready = {
 		NOT = { is_justifying_wargoal_against = PREV.CONTROLLER }
 	}
 	selected_investment_building_available = yes
-	# The recipient holds one pending offer at a time; a second one would overwrite it
-	custom_trigger_tooltip = {
-		tooltip = investment_recipient_has_pending_offer_tt
-		CONTROLLER = { NOT = { has_variable = pending_offer_state } }
-	}
 }
 
 # Gates every press of the Build button, offer or cancel
