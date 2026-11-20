@@ -7416,6 +7416,54 @@ UKR_sevastopol_naval_base_category = {
 }
 
 UKR_modernize_sov_category = {
+	UKR_develop_light_helicopters_restore_mi34 = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = { base = 10 }
+
+		visible = { country_exists = SOV }
+
+		available = { UKR_develop_light_helicopters_restore_mi34_site_available = yes }
+
+		highlight_states = {
+			highlight_states_trigger = { state = 701 }
+		}
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_restore_mi34"
+			activate_mission = UKR_develop_light_helicopters_restore_mi34_license_mission
+		}
+	}
+
+	UKR_develop_light_helicopters_restore_mi34_license_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		activation = { always = no }
+
+		available = {
+			UKR_develop_light_helicopters_restore_mi34_site_available = yes
+			SOV = {
+				NOT = { has_opinion = { target = UKR value < 40 } }
+				influence_higher_10 = yes
+			}
+		}
+
+		days_mission_timeout = 180
+		days_remove = 1
+		is_good = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision complete UKR_develop_light_helicopters_restore_mi34_license_mission"
+			SOV = { country_event = ukraine_develop_light_helicopters.3 }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_develop_light_helicopters_restore_mi34_license_mission"
+			country_event = ukraine_develop_light_helicopters.6
+		}
+	}
+
 	UKR_modernize_bmp1u = {
 		icon = GFX_decision_icon_UKR_modernize_sov_bmp1
 		fire_only_once = yes
@@ -29592,6 +29640,286 @@ UKR_modernize_planes_category = {
 }
 
 UKR_develop_domestic_equipment_decision_category = {
+
+	UKR_develop_light_helicopters_kt112ud = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_develop_light_helicopters_kt112_funded_flag
+		}
+
+		available = {
+			UKR_develop_light_helicopters_kyiv_site = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				has_tech = nsb_attack_helicopter_tech_1
+				has_tech = nsb_engine_tech_1
+				has_tech = nsb_light_nose_gun_tech_1
+				has_tech = nsb_atgm_tech_1
+			}
+			else = { has_tech = attack_helicopter_1 }
+		}
+
+		days_remove = 120
+
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < 0.5 } }
+			NOT = { has_political_power < 10 }
+			NOT = { has_army_experience < 4 }
+		}
+		custom_cost_text = development_cost_0_50_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_kt112ud"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.5 }
+				modify_treasury_effect = yes
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_light_helicopters_kt112ud"
+			UKR_count_domestic_development = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "KT-112UD"
+					type = heavy_tank_chassis_0
+					parent_version = 0
+					modules = {
+						chassis_type_slot = helicopter_light_chassis
+						helicopter_body_layout = light_gunship_layout
+						engine_type_slot = helicopter_piston_engine_gen1
+						sensor_and_avionics_slot = sensors_and_avionics_gen_1
+						nose_gun_type_slot = helicopter_light_nose_gun_gen1
+						helicopter_body_mount_1 = helicopter_atgm_gen1
+					}
+					icon = "GFX_UKR_HELI_KT112K"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "KT-112UD"
+					type = attack_helicopter_1
+					icon = "GFX_UKR_HELI_KT112K"
+				}
+			}
+		}
+	}
+
+	UKR_develop_light_helicopters_wartime_gunship_lev1 = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_develop_light_helicopters_lev1_funded_flag
+			NOT = { has_country_flag = UKR_develop_light_helicopters_kt112_funded_flag }
+		}
+
+		available = { UKR_develop_light_helicopters_gunship_requirements = yes }
+
+		days_remove = 120
+
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < 0.60 } }
+			NOT = { has_political_power < 10 }
+			NOT = { has_army_experience < 4 }
+		}
+		custom_cost_text = development_cost_0_60_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_wartime_gunship_lev1"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.60 }
+				modify_treasury_effect = yes
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_light_helicopters_wartime_gunship_lev1"
+			UKR_develop_light_helicopters_create_lev1_gunship = yes
+		}
+	}
+
+	UKR_develop_light_helicopters_wartime_gunship_lev1_discounted = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_develop_light_helicopters_lev1_funded_flag
+			has_country_flag = UKR_develop_light_helicopters_kt112_funded_flag
+		}
+
+		available = { UKR_develop_light_helicopters_gunship_requirements = yes }
+
+		days_remove = 110
+
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < 0.54 } }
+			NOT = { has_political_power < 10 }
+			NOT = { has_army_experience < 4 }
+		}
+		custom_cost_text = development_cost_0_54_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_wartime_gunship_lev1_discounted"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.54 }
+				modify_treasury_effect = yes
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_light_helicopters_wartime_gunship_lev1_discounted"
+			UKR_develop_light_helicopters_create_lev1_gunship = yes
+		}
+	}
+
+	UKR_develop_light_helicopters_wartime_gunship_vm4 = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_develop_light_helicopters_vm4_funded_flag
+			NOT = { has_country_flag = UKR_develop_light_helicopters_kt112_funded_flag }
+		}
+
+		available = { UKR_develop_light_helicopters_gunship_requirements = yes }
+
+		days_remove = 120
+
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < 0.70 } }
+			NOT = { has_political_power < 10 }
+			NOT = { has_army_experience < 4 }
+		}
+		custom_cost_text = development_cost_0_70_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_wartime_gunship_vm4"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.70 }
+				modify_treasury_effect = yes
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_light_helicopters_wartime_gunship_vm4"
+			UKR_develop_light_helicopters_create_vm4_gunship = yes
+		}
+	}
+
+	UKR_develop_light_helicopters_wartime_gunship_vm4_discounted = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = UKR_develop_light_helicopters_vm4_funded_flag
+			has_country_flag = UKR_develop_light_helicopters_kt112_funded_flag
+		}
+
+		available = { UKR_develop_light_helicopters_gunship_requirements = yes }
+
+		days_remove = 100
+
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < 0.56 } }
+			NOT = { has_political_power < 10 }
+			NOT = { has_army_experience < 4 }
+		}
+		custom_cost_text = development_cost_0_56_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_wartime_gunship_vm4_discounted"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.56 }
+				modify_treasury_effect = yes
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_light_helicopters_wartime_gunship_vm4_discounted"
+			UKR_develop_light_helicopters_create_vm4_gunship = yes
+		}
+	}
+
+	UKR_develop_light_helicopters_wartime_proposals = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+
+		ai_will_do = { base = 10 }
+
+		visible = {
+			date > 2011.12.31
+			date < 2019.1.1
+			UKR_at_war_with_russia_or_proxies = yes
+		}
+
+		available = {
+			has_capitulated = no
+			OR = {
+				UKR_develop_light_helicopters_can_fund_lev1 = yes
+				UKR_develop_light_helicopters_can_fund_vv2 = yes
+			}
+			hidden_trigger = {
+				if = {
+					limit = { is_ai = yes }
+					NOT = { has_active_mission = bankruptcy_incoming_collapse }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_light_helicopters_wartime_proposals"
+			country_event = ukraine_develop_light_helicopters.2
+		}
+	}
 	ukr_light_transport_tender = {
 		fire_only_once = yes
 		icon = GFX_decision_ukrpom_button
