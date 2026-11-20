@@ -1042,6 +1042,7 @@
 	-- AI Periodic Recalc — slowed past vanilla; periodic re-evaluation that barely changes between ticks
 	NDefines.NAI.EQUIPMENT_MARKET_UPDATE_FREQUENCY_DAYS = 16 -- 11
 	NDefines.NAI.AIFC_UPDATE_FREQUENCY_DAYS = 8 -- 5; force-concentration logic, perf-sensitive
+	NDefines.NAI.AI_CONVOY_COUNT_CACHE_REBUILD_INTERVAL_HOURS = 28 -- 20
 	NDefines.NAI.CONVOY_RAIDING_TARGET_RECALC_DAYS = 22 -- 15
 	NDefines.NAI.STRIKE_FORCE_TARGET_RECALC_DAYS = 8 -- 5
 	NDefines.NAI.AI_NAVAL_GOALS_UPDATE_FREQUENCY_DAYS = 10 -- 7
