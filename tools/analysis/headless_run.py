@@ -58,7 +58,7 @@ def _remove(path: str) -> None:
 def bench(root: str, state: str) -> int:
     path = os.path.join(root, BENCH_FILE)
     if state == "on":
-        _write(path, ["set_variable = { global.md_benchmark_logging = 1 }"])
+        _write(path, ["set_global_flag = GLOBAL_md_benchmark_logging"])
     else:
         _remove(path)
     return 0

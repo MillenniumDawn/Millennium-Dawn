@@ -23,7 +23,7 @@ Usage:
     python summarize_game_log.py game.log --top 20 --since 2003.1.1
     python summarize_game_log.py game.log --json > summary.json
 
-No third-party dependencies. Python 3.12+.
+No third-party dependencies. Python 3.14+.
 """
 
 import argparse
@@ -35,10 +35,11 @@ from collections import Counter, defaultdict
 # HOI4 writes game.log as UTF-8. Force UTF-8 stdout regardless of the host console
 # code page so accented country names (Côte d'Ivoire) print instead of crashing on
 # a cp1252 Windows console.
-try:
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except (AttributeError, ValueError):
-    pass
+if callable(reconfigure_stdout := getattr(sys.stdout, "reconfigure", None)):
+    try:
+        reconfigure_stdout(encoding="utf-8", errors="replace")
+    except ValueError:
+        pass
 
 LOG_ENCODING = "utf-8"
 
@@ -260,7 +261,7 @@ def parse(path, since=None, until=None):
                 if info["first"] is None:
                     info["first"] = (dk, ymd)
                 info["last"] = (dk, ymd)
-                lower = (ns + " " + message).lower()
+                lower = f"{ns} {message}".lower()
                 if any(k in lower for k in CONFLICT_KW):
                     conflicts.append((dk, ymd, country, ns, "conflict"))
                     country_events[country].append((dk, ymd, "conflict", ns))

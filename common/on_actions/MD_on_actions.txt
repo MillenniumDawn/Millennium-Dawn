@@ -93,6 +93,8 @@ on_actions = {
 					}
 					automation_economy_weekly = yes
 				}
+				md_check_training_command_alerts = yes
+				md_check_eu_council_vote_alert = yes
 			}
 
 			add_to_variable = { int_investments = int_investments_reinvest_rate }
@@ -211,6 +213,32 @@ on_actions = {
 						has_intelligence_agency = yes
 					}
 					update_operation_ai = yes
+				}
+
+				# AI had no fuel purchase; buy three weeks of population use, which the empty-tank killswitch zeroes in energy_calc_fuel
+				if = {
+					limit = { fuel_ratio < 0.2 }
+					set_temp_variable = {
+						ai_fuel_purchases = {
+							value = gdp_per_capita
+							multiply = 0.02
+							add = 0.1
+							multiply = population_total_m
+							multiply = 19
+							multiply = 504
+							divide = 100000
+							round = yes
+							clamp = { min = 1 max = 20 }
+						}
+					}
+					for_loop_effect = {
+						end = ai_fuel_purchases
+						value = ai_fuel_purchase_index
+						buy_fuel_from_the_market_effect = yes
+					}
+					if = { limit = { OR = { is_debug = yes has_global_flag = GLOBAL_md_benchmark_logging } }
+						log = "[GetDateText]: [THIS.GetTag]: AI Fuel Purchase: Purchases: [?ai_fuel_purchases] Fuel: [?fuel_k]"
+					}
 				}
 			}
 
@@ -992,8 +1020,9 @@ on_actions = {
 					ai_lower_expected_spending_on_deficit = yes
 					recalculate_law_desires = yes
 					apply_protest_effects = yes
+					if = { limit = { is_ai = yes } ai_buy_economic_cycle_upgrade = yes }
 
-					if = { limit = { OR = { is_debug = yes has_variable = global.md_benchmark_logging } }
+					if = { limit = { OR = { is_debug = yes has_global_flag = GLOBAL_md_benchmark_logging } }
 						set_temp_variable = { bench_civilian = num_of_civilian_factories }
 						set_temp_variable = { bench_military = num_of_military_factories }
 						set_temp_variable = { bench_stability = stability }

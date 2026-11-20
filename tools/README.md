@@ -4,8 +4,10 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
-Python 3.12 or newer is required. CI installs 3.12 on Linux, macOS, and Windows.
-Ruff, mypy, pylint, and pyright target 3.12 in `pyproject.toml`.
+Python 3.14 or newer is required. CI installs 3.14 on Linux, macOS, and Windows.
+Ruff, mypy, pylint, and pyright target 3.14 in `pyproject.toml`.
+If your `.venv` uses an older Python, recreate it with Python 3.14 before
+running `tools/dev_setup.py`. Setup reuses an existing `.venv`.
 
 Some scripts rely on non-native packages for Python. The dependency lists live
 in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root

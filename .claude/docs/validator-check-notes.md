@@ -172,6 +172,22 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   copy guards the rest of the day, as with `EUU_voting_rights_suspended` in the EU
   council decisions. Keep such a copy, for example as `hidden_trigger`. Script-only
   `allowed = { always = no }` decisions are skipped.
+- `decision-root-trigger-reads-from` (WARNING): `target_root_trigger` runs before a target
+  is bound, so a `FROM` read there checks nothing. Scripted triggers it calls are
+  followed. Move the condition into `target_trigger`. Script-only
+  `allowed = { always = no }` decisions are skipped.
+- `decision-target-state-not-in-available` (WARNING): a flag or idea that
+  `complete_effect` writes inside `FROM`, making an opposite-polarity read in
+  `target_trigger` fail, and that `available` does not read. `target_trigger` runs once
+  a day, so the decision can be taken again on the same target until the next pass.
+  Re-check the state in `available`, inside `hidden_trigger` if it is not player-facing,
+  as the EU council decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
+  note: the same country cannot repeat it, so it matters only if a second country can
+  take it. When it is also locked to one runtime `tag` (in `allowed`,
+  `target_root_trigger`, or the category `allowed`), nobody can and it is skipped.
+  `original_tag` admits civil-war split-offs, so it keeps the verify note. Script-only
+  `allowed = { always = no }` decisions are skipped. Known gaps: variables and other
+  state, reads through scripted triggers, and sibling decisions that share one flag.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
@@ -611,18 +627,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_asset_data.py
 
-- Commit-stage only, since the CI workspace ships no meshes or textures. Checks the
-  staged files only, so the existing model backlog blocks a commit only when one of
-  those files is staged. Fix it with `tools/assets/optimize_mesh.py --repair-only`.
-- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` that holds PNG, JPEG,
-  TGA or truncated data. Stdlib only, so it runs without numpy.
-- `mesh-<finding>` and `texture-<finding>` carry the `tools/assets/audit_models.py`
-  finding names for `.mesh` and `.dds` files under `gfx/models/`. Broken mesh data is an
-  ERROR: invalid values, zero-length or non-unit normals and tangents, zero-area
-  triangles, out-of-range triangle indices, unweighted or unnormalized skin weights,
-  and bones outside the skeleton. `mesh-triangles` (over the art-standard target) and
-  the texture format findings are WARNING, since the standards call them targets.
-  These need numpy and log a skip without it.
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` holding PNG, JPEG,
+  TGA or data too short for a DDS header.
+- `texture-art-standard`: legacy header, format and mipmaps from
+  `tools/assets/model_standards.py`. ERROR for staged and PR-changed DDS files,
+  WARNING in a full scan. Flat event pictures and large portraits can stay
+  uncompressed. Headers cannot prove alpha usage or compression quality. Use the
+  printed `dds_standardize.py` preview, or re-export from source when it cannot fix
+  the file. The DDS checks need neither numpy nor Pillow.
+- The commit hook also runs `tools/assets/audit_models.py` for files under
+  `gfx/models/`. Broken mesh data is an ERROR. Triangle count and texture size
+  findings are WARNINGs. These checks need numpy and log a skip without it.
+  Fix mesh data with `tools/assets/optimize_mesh.py --repair-only`.
 
 ## validate_mio_icons.py
 
@@ -1063,16 +1079,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clears it. The scan strips comments, so comment-only lines are not checked. Four
   leading spaces stay the `indent-brackets` ERROR.
 
+## validate_dynamic_tokens.py
+
+- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
+  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
+  the engine logs an OOS warning per use. `@` after any other name is a scope.
+  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
+  `_ENGINE_KNOWN_TOKENS`. This validator checks staged references at commit time;
+  `validate_variables.py` shares its scanner in CI.
+
 ## validate_variables.py
 
 - `clamp-range-conflict` (WARNING): a `check_variable` against a value outside a literal
   `clamp_variable` range, or a sub-1 value against a variable clamped to a wide integer
   range. Variables written only by `set_temp_variable` are excluded.
-- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
-  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
-  the engine logs an OOS warning per use. `@` after any other name is a scope.
-  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
-  `_ENGINE_KNOWN_TOKENS`.
 - `redundant-focus-flag` (WARNING): a country flag set once, unconditionally, in a focus
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
@@ -1081,14 +1101,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
   focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
-  - `untooltipped-available-check`: a bare `check_variable` renders no line.
+  - `untooltipped-available-check`: a bare `check_variable` in `available`,
+    `cancel_trigger`, or `bypass` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
     loc key named after the flag. Also covers `cancel_trigger`, `bypass`, and flags
     inside called scripted triggers.
   - `unlocalised-negated-trigger-tooltip`: a tooltip under an odd number of `NOT` blocks
     looks up `not_tooltip`, or `KEY_NOT` when none is set. `= no` counts as a negation.
   - `untooltipped-available-scripted-trigger`: a bare call to a scripted trigger whose
-    body checks `has_global_flag` renders nothing.
+    body checks `has_global_flag`, or a `check_variable` with no inline `tooltip`,
+    outside a wrapper renders nothing. Fix the trigger definition.
   - Exempt: `custom_trigger_tooltip`, `custom_override_tooltip`, and `hidden_trigger`
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
