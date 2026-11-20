@@ -1,3 +1,6 @@
+@coalition_invite_pp_multiplier = -2000
+@coalition_refund_pp_multiplier = 1500
+
 # Effect: steal_from_party
 # Purpose: Steals 1% popularity from the given party and gives it to the ruling party
 # Parameters:
@@ -463,7 +466,6 @@ startup_politics = {
 	update_government_coalition_strength = yes
 	gov_pop_calculation = yes
 	update_party_name = yes
-	reset_coalition_ideas = yes
 	find_two_highest_parties = yes
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [This.GetName]: startup_politics executed"
@@ -561,37 +563,94 @@ recalculate_party_strength = {
 }
 
 add_up_party_totals = {
-
-	clear_temp_array = pop_total_temp
-	resize_temp_array = { array = pop_total_temp size = 5 }
-
-	#Outlook popularity based on party popularities
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = current_id
-		set_temp_variable = { outlook_party_index = current_id }
-		set_outlook_from_party_index = yes
-		add_to_temp_variable = { pop_total_temp^outlook_id = party_pop_array^current_id }
+	# Outlook slices by party slot: democratic 0-3, communism 4-9, fascism 10-11, neutrality 12-19, nationalist 20-23.
+	# Each party is scaled to its outlook's real popularity as x1000, divide, multiply, x0.001, clamp, in that order.
+	set_temp_variable = { outlook_total_0 = { value = party_pop_array^0 add = party_pop_array^1 add = party_pop_array^2 add = party_pop_array^3 } }
+	if = {
+		limit = { check_variable = { outlook_total_0 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@democratic }
+		set_variable = { party_pop_array^0 = { value = party_pop_array^0 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^1 = { value = party_pop_array^1 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^2 = { value = party_pop_array^2 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^3 = { value = party_pop_array^3 multiply = 1000 divide = outlook_total_0 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
 	}
-	set_outlook_popularity_array = yes
+	else = {
+		set_variable = { party_pop_array^0 = 0 }
+		set_variable = { party_pop_array^1 = 0 }
+		set_variable = { party_pop_array^2 = 0 }
+		set_variable = { party_pop_array^3 = 0 }
+	}
 
-	#Scale party popularity totals to match actual Outlook popularity
-	for_loop_effect = {
-		end = party_pop_array^num
-		value = current_id
-		multiply_variable = { party_pop_array^current_id = 1000 }
-		set_temp_variable = { outlook_party_index = current_id }
-		set_outlook_from_party_index = yes
-		if = {
-			limit = { check_variable = { pop_total_temp^outlook_id > 0 } }
-			divide_variable = { party_pop_array^current_id = pop_total_temp^outlook_id }
-			multiply_variable = { party_pop_array^current_id = outlook_popularity_by_id^outlook_id }
-		}
-		else = {
-			set_variable = { party_pop_array^current_id = 0 }
-		}
-		multiply_variable = { party_pop_array^current_id = 0.001 }
-		clamp_variable = { var = party_pop_array^current_id min = 0 max = 1 }
+	set_temp_variable = { outlook_total_1 = { value = party_pop_array^4 add = party_pop_array^5 add = party_pop_array^6 add = party_pop_array^7 add = party_pop_array^8 add = party_pop_array^9 } }
+	if = {
+		limit = { check_variable = { outlook_total_1 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@communism }
+		set_variable = { party_pop_array^4 = { value = party_pop_array^4 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^5 = { value = party_pop_array^5 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^6 = { value = party_pop_array^6 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^7 = { value = party_pop_array^7 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^8 = { value = party_pop_array^8 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^9 = { value = party_pop_array^9 multiply = 1000 divide = outlook_total_1 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^4 = 0 }
+		set_variable = { party_pop_array^5 = 0 }
+		set_variable = { party_pop_array^6 = 0 }
+		set_variable = { party_pop_array^7 = 0 }
+		set_variable = { party_pop_array^8 = 0 }
+		set_variable = { party_pop_array^9 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_2 = { value = party_pop_array^10 add = party_pop_array^11 } }
+	if = {
+		limit = { check_variable = { outlook_total_2 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@fascism }
+		set_variable = { party_pop_array^10 = { value = party_pop_array^10 multiply = 1000 divide = outlook_total_2 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^11 = { value = party_pop_array^11 multiply = 1000 divide = outlook_total_2 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^10 = 0 }
+		set_variable = { party_pop_array^11 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_3 = { value = party_pop_array^12 add = party_pop_array^13 add = party_pop_array^14 add = party_pop_array^15 add = party_pop_array^16 add = party_pop_array^17 add = party_pop_array^18 add = party_pop_array^19 } }
+	if = {
+		limit = { check_variable = { outlook_total_3 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@neutrality }
+		set_variable = { party_pop_array^12 = { value = party_pop_array^12 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^13 = { value = party_pop_array^13 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^14 = { value = party_pop_array^14 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^15 = { value = party_pop_array^15 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^16 = { value = party_pop_array^16 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^17 = { value = party_pop_array^17 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^18 = { value = party_pop_array^18 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^19 = { value = party_pop_array^19 multiply = 1000 divide = outlook_total_3 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^12 = 0 }
+		set_variable = { party_pop_array^13 = 0 }
+		set_variable = { party_pop_array^14 = 0 }
+		set_variable = { party_pop_array^15 = 0 }
+		set_variable = { party_pop_array^16 = 0 }
+		set_variable = { party_pop_array^17 = 0 }
+		set_variable = { party_pop_array^18 = 0 }
+		set_variable = { party_pop_array^19 = 0 }
+	}
+
+	set_temp_variable = { outlook_total_4 = { value = party_pop_array^20 add = party_pop_array^21 add = party_pop_array^22 add = party_pop_array^23 } }
+	if = {
+		limit = { check_variable = { outlook_total_4 > 0 } }
+		set_temp_variable = { outlook_scale = party_popularity@nationalist }
+		set_variable = { party_pop_array^20 = { value = party_pop_array^20 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^21 = { value = party_pop_array^21 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^22 = { value = party_pop_array^22 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+		set_variable = { party_pop_array^23 = { value = party_pop_array^23 multiply = 1000 divide = outlook_total_4 multiply = outlook_scale multiply = 0.001 clamp = { min = 0 max = 1 } } }
+	}
+	else = {
+		set_variable = { party_pop_array^20 = 0 }
+		set_variable = { party_pop_array^21 = 0 }
+		set_variable = { party_pop_array^22 = 0 }
+		set_variable = { party_pop_array^23 = 0 }
 	}
 
 	#Make sure there are no Outlooks with popularity without any party popularities
@@ -599,7 +658,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			democratic > 0.01
-			check_variable = { pop_total_temp^0 < 0.01 }
+			check_variable = { outlook_total_0 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^0 = 0.01 } }
@@ -611,7 +670,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			communism > 0.01
-			check_variable = { pop_total_temp^1 < 0.01 }
+			check_variable = { outlook_total_1 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^4 = 0.01 } }
@@ -625,7 +684,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			fascism > 0.01
-			check_variable = { pop_total_temp^2 < 0.01 }
+			check_variable = { outlook_total_2 < 0.01 }
 		}
 		if = {
 			limit = { Is_Muslim_Country = yes }
@@ -638,7 +697,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			neutrality > 0.01
-			check_variable = { pop_total_temp^3 < 0.01 }
+			check_variable = { outlook_total_3 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^12 = 0.01 } }
@@ -654,7 +713,7 @@ add_up_party_totals = {
 	if = {
 		limit = {
 			nationalist > 0.01
-			check_variable = { pop_total_temp^4 < 0.01 }
+			check_variable = { outlook_total_4 < 0.01 }
 		}
 		random_list = {
 			10 = { add_to_variable = { party_pop_array^20 = 0.01 } }
@@ -729,9 +788,6 @@ update_party_name = {
 # from -100% to 100% of their current popularity
 # How-to Adjust: Adjust the penalty by changing line 1904 from 0.002 to 0.005
 gov_pop_calculation = {
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = government_popularity_modifier } } }
-		add_dynamic_modifier = { modifier = government_popularity_modifier }
-	}
 	set_variable = {
 		gov_pop_stability_factor = {
 			value = government_coalition_differential
@@ -761,31 +817,8 @@ gov_pop_calculation = {
 }
 
 set_coalition_drift = {
-	#Each coalition partner popularity gets added to their own Outlook
-	clear_temp_array = coalition_count_temp
-	resize_temp_array = { array = coalition_count_temp size = 5 }
-	for_each_loop = {
-		array = gov_coalition_array
-		value = v
-		set_temp_variable = { outlook_party_index = v }
-		set_outlook_from_party_index = yes
-		add_to_temp_variable = { coalition_count_temp^outlook_id = party_pop_elect_array^v }
-	}
-
-	#Don't get bonuses to ruling Outlook
-	set_current_outlook_id = yes
-	if = {
-		limit = { check_variable = { current_outlook_id > -1 } }
-		set_temp_variable = { coalition_count_temp^current_outlook_id = 0 }
-	}
-
-	set_variable = { coalition_democratic = coalition_count_temp^0 }
-	set_variable = { coalition_communism = coalition_count_temp^1 }
-	set_variable = { coalition_fascism = coalition_count_temp^2 }
-	set_variable = { coalition_neutrality = coalition_count_temp^3 }
-	set_variable = { coalition_nationalist = coalition_count_temp^4 }
-
-	reset_coalition_ideas = yes
+	update_government_ideology_drift = yes
+	update_coalition_diplomatic_acceptance = yes
 }
 
 update_government_coalition_strength = {
@@ -801,27 +834,21 @@ update_government_coalition_strength = {
 		add_to_temp_variable = { sum = party_pop_array^v }
 		add_to_temp_variable = { sum_elect = party_pop_elect_array^v }
 	}
-	set_variable = { government_coalition_strength = sum }
-	set_variable = { government_coalition_strength_elect = sum_elect }
 
-	#strength of ruling_party is separate
-	set_temp_variable = { sum = 0 }
-	set_temp_variable = { sum_elect = 0 }
+	#strength of ruling_party is added on top of the coalition
 	if = { limit = { has_variable = ruling_party }
 		add_to_temp_variable = { sum = party_pop_array^ruling_party }
 		add_to_temp_variable = { sum_elect = party_pop_elect_array^ruling_party }
 	}
-	add_to_variable = { government_coalition_strength = sum }
-	add_to_variable = { government_coalition_strength_elect = sum_elect }
+	set_variable = { government_coalition_strength = sum }
+	set_variable = { government_coalition_strength_elect = sum_elect }
 
 	#find the differentials
-	set_variable = { government_coalition_differential = government_coalition_strength }
-	subtract_from_variable = { government_coalition_differential = government_coalition_strength_elect }
+	set_variable = { government_coalition_differential = { value = government_coalition_strength subtract = government_coalition_strength_elect } }
 	set_coalition_drift = yes
 
 	# opposition strenght
-	set_variable = { opposition_strength = 1 }
-	subtract_from_variable = { opposition_strength = government_coalition_strength }
+	set_variable = { opposition_strength = { value = 1 subtract = government_coalition_strength } }
 
 	if = { limit = { original_tag = HOL } HOL_evaluate_coalition_focus_loops = yes }
 }
@@ -901,27 +928,17 @@ update_coalition_leader = {
 }
 
 refund_government_coalition = {
-	set_temp_variable = { sum_factor = 0 }
+	set_temp_variable = { coalition_refund_basis = 0 }
+	set_temp_variable = { pol_dist_source_index = ruling_party }
 	for_each_loop = {
 		array = gov_coalition_array
-		value = v
-		index = i
-
-		set_temp_variable = { pol_dist_target_index = v }
-		set_temp_variable = { pol_dist_source_index = ruling_party }
+		value = coalition_refund_partner
+		set_temp_variable = { pol_dist_lookup_slot = coalition_refund_partner }
 		get_pol_distance = yes
-		add_to_temp_variable = {
-			var = sum_factor
-			value = {
-				value = party_pop_elect_array^v
-				multiply = pol_distance_current
-			}
-		}
+		add_to_temp_variable = { coalition_refund_basis = { value = pol_distance_current multiply = party_pop_elect_array^coalition_refund_partner } }
 	}
-
-	set_temp_variable = { pp_cost_to_invite = sum_factor }
-	multiply_temp_variable = { pp_cost_to_invite = 1500 }
-	add_political_power = pp_cost_to_invite
+	set_temp_variable = { coalition_refund = { value = coalition_refund_basis multiply = @coalition_refund_pp_multiplier } }
+	add_political_power = coalition_refund
 }
 
 store_election_values = {
@@ -969,8 +986,7 @@ update_majority_threshold = {
 		array = party_pop_elect_array
 		add_to_temp_variable = { sum = v }
 	}
-	set_variable = { majority_threshold = sum }
-	multiply_variable = { majority_threshold = 0.5 }
+	set_variable = { majority_threshold = { value = sum multiply = 0.5 } }
 }
 
 campaign_spending_initial = {
@@ -998,18 +1014,8 @@ AI_setup_government = {
 		limit = { is_debug = yes }
 		log = "[GetDateText]: [Root.GetName]: AI started setup government [?political_power]"
 	}
-	# hold_elections = yes #add values to election array etc
 	clear_array = gov_coalition_array
-
-	set_temp_variable = { majority_threshold_1 = majority_threshold } #need one that does not include biggest party
-	subtract_from_temp_variable = { majority_threshold_1 = party_pop_elect_array^max_index_1 }
-
-	set_temp_variable = { majority_threshold_2 = majority_threshold } #need one that does not include second biggest party
-	subtract_from_temp_variable = { majority_threshold_2 = party_pop_elect_array^max_index_2 }
-
-	make_affinity_arrays = yes
-	reduce_affinity_array_party_1 = yes
-	reduce_affinity_array_party_2 = yes
+	prepare_ai_coalition_candidates = yes
 
 	if = {
 		limit = {
@@ -1173,6 +1179,7 @@ AI_setup_government = {
 			set_leader = yes
 		}
 	}
+	IP_idea_configuration = yes
 	# Logs the AI Setup_government
 	if = {
 		limit = { is_debug = yes }
@@ -1180,15 +1187,24 @@ AI_setup_government = {
 	}
 }
 
+prepare_ai_coalition_candidates = {
+	set_temp_variable = { majority_threshold_1 = { value = majority_threshold subtract = party_pop_elect_array^max_index_1 } }
+	set_temp_variable = { majority_threshold_2 = { value = majority_threshold subtract = party_pop_elect_array^max_index_2 } }
+	make_affinity_arrays = yes
+	reduce_affinity_array_party_1 = yes
+	reduce_affinity_array_party_2 = yes
+}
+
 make_affinity_arrays = {
-	resize_temp_array = {
-		array = party_1_affinity_array
-		size = party_pop_array^num
+	if = { limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
+		init_pol_distance_matrix = yes
 	}
-	resize_temp_array = {
-		array = party_2_affinity_array
-		size = party_pop_array^num
-	}
+	clear_temp_array = party_1_affinity_array
+	clear_temp_array = party_2_affinity_array
+	resize_temp_array = { array = party_1_affinity_array size = party_pop_array^num }
+	resize_temp_array = { array = party_2_affinity_array size = party_pop_array^num }
+	set_temp_variable = { sum_coalition_1 = 0 }
+	set_temp_variable = { sum_coalition_2 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = v
@@ -1213,58 +1229,46 @@ make_affinity_arrays = {
 				limit = {
 					check_variable = { party_pop_elect_array^v > 0 }
 				}
-				set_temp_variable = { pol_dist_target_index = v }
-				set_temp_variable = { pol_dist_source_index = max_index_1 }
-				get_pol_distance = yes
-				set_temp_variable = { party_1_affinity_array^v = pol_distance_current }
-				set_temp_variable = { pol_dist_source_index = max_index_2 }
-				get_pol_distance = yes
-				set_temp_variable = { party_2_affinity_array^v = pol_distance_current }
+				set_temp_variable = { coalition_matrix_row = { value = v multiply = 24 } }
+				set_temp_variable = { coalition_matrix_index = { value = coalition_matrix_row add = max_index_1 } }
+				set_temp_variable = { party_1_affinity_array^v = global.pol_dist_matrix^coalition_matrix_index }
+				set_temp_variable = { coalition_matrix_index = { value = coalition_matrix_row add = max_index_2 } }
+				set_temp_variable = { party_2_affinity_array^v = global.pol_dist_matrix^coalition_matrix_index }
+				if = { limit = { check_variable = { party_1_affinity_array^v > 0 } }
+					add_to_temp_variable = { sum_coalition_1 = party_pop_elect_array^v }
+				}
+				if = { limit = { check_variable = { party_2_affinity_array^v > 0 } }
+					add_to_temp_variable = { sum_coalition_2 = party_pop_elect_array^v }
+				}
 			}
 		}
 	}
 }
 
-
+# Effect: reduce_affinity_array_party_1
+# Purpose: Drops the most distant partner while the coalition can keep its majority.
+# Parameters:
+# - party_1_affinity_array and sum_coalition_1: affinities and initial seat total from make_affinity_arrays.
+# - majority_threshold_1: seats needed beyond the first candidate's own seats.
 reduce_affinity_array_party_1 = {
-
+	set_temp_variable = { break_1 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a1
 		break = break_1
-		set_temp_variable = { sum_coalition_1 = 0 }
-
-		#current temp coalition1 strength
-		for_each_loop = {
-			array = party_pop_elect_array
-			value = b1
-			index = e1
-			if = {
-				limit = {
-					check_variable = { party_1_affinity_array^e1 > 0 }
-				}
-				add_to_temp_variable = { sum_coalition_1 = b1 }
-			}
-		}
-		if = {
-			limit = {
-				check_variable = { sum_coalition_1 > majority_threshold_1 }
-			}
-			find_highest_in_array = {
-				array = party_1_affinity_array
-				value = max1
-				index = max1_index
-			}
-			subtract_from_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
-			set_temp_variable = { party_1_affinity_array^max1_index = 0 }
-			if = {
-				limit = {
-					check_variable = { sum_coalition_1 < majority_threshold_1 }
-				}
-				set_temp_variable = { party_1_affinity_array^max1_index = max1 }
-				add_to_temp_variable = { sum_coalition_1 = party_pop_elect_array^max1_index }
+		if = { limit = { check_variable = { sum_coalition_1 > majority_threshold_1 } }
+			find_highest_in_array = { array = party_1_affinity_array value = max1 index = max1_index }
+			set_temp_variable = { coalition_remaining_1 = { value = sum_coalition_1 subtract = party_pop_elect_array^max1_index } }
+			if = { limit = { check_variable = { coalition_remaining_1 < majority_threshold_1 } }
 				set_temp_variable = { break_1 = 1 }
 			}
+			else = {
+				set_temp_variable = { sum_coalition_1 = coalition_remaining_1 }
+				set_temp_variable = { party_1_affinity_array^max1_index = 0 }
+			}
+		}
+		else = {
+			set_temp_variable = { break_1 = 1 }
 		}
 	}
 	#find total cost1
@@ -1288,45 +1292,30 @@ reduce_affinity_array_party_1 = {
 	}
 }
 
+# Effect: reduce_affinity_array_party_2
+# Purpose: Drops the most distant partner while the coalition can keep its majority.
+# Parameters:
+# - party_2_affinity_array and sum_coalition_2: affinities and initial seat total from make_affinity_arrays.
+# - majority_threshold_2: seats needed beyond the second candidate's own seats.
 reduce_affinity_array_party_2 = {
-
+	set_temp_variable = { break_2 = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
 		value = a2
 		break = break_2
-		set_temp_variable = { sum_coalition_2 = 0 }
-
-		#current temp coalition2 strength
-		for_each_loop = {
-			array = party_pop_elect_array
-			value = b2
-			index = e2
-			if = {
-				limit = {
-					check_variable = { party_2_affinity_array^e2 > 0 }
-				}
-				add_to_temp_variable = { sum_coalition_2 = b2 }
-			}
-		}
-		if = {
-			limit = {
-				check_variable = { sum_coalition_2 > majority_threshold_2 }
-			}
-			find_highest_in_array = {
-				array = party_2_affinity_array
-				value = max2
-				index = max2_index
-			}
-			subtract_from_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
-			set_temp_variable = { party_2_affinity_array^max2_index = 0 }
-			if = {
-				limit = {
-					check_variable = { sum_coalition_2 < majority_threshold_2 }
-				}
-				set_temp_variable = { party_2_affinity_array^max2_index = max2 }
-				add_to_temp_variable = { sum_coalition_2 = party_pop_elect_array^max2_index }
+		if = { limit = { check_variable = { sum_coalition_2 > majority_threshold_2 } }
+			find_highest_in_array = { array = party_2_affinity_array value = max2 index = max2_index }
+			set_temp_variable = { coalition_remaining_2 = { value = sum_coalition_2 subtract = party_pop_elect_array^max2_index } }
+			if = { limit = { check_variable = { coalition_remaining_2 < majority_threshold_2 } }
 				set_temp_variable = { break_2 = 1 }
 			}
+			else = {
+				set_temp_variable = { sum_coalition_2 = coalition_remaining_2 }
+				set_temp_variable = { party_2_affinity_array^max2_index = 0 }
+			}
+		}
+		else = {
+			set_temp_variable = { break_2 = 1 }
 		}
 	}
 	#find total cost2
@@ -1937,19 +1926,41 @@ init_pol_distance_matrix = {
 
 # Effect: get_pol_distance
 # Purpose: Reads the political distance between two party slots
-# Output: pol_distance_current
+# Output: pol_distance_current (temp variable)
 # Parameters:
-# - pol_dist_target_index: party slot 0-23
-# - pol_dist_source_index: party slot 0-23
+# - pol_dist_lookup_slot: target party slot 0-23
+# - pol_dist_source_index: source party slot 0-23
 get_pol_distance = {
 	if = {
 		limit = { NOT = { check_variable = { global.pol_dist_initialized = 1 } } }
 		init_pol_distance_matrix = yes
 	}
-	set_temp_variable = { _pd_idx = { value = pol_dist_target_index multiply = 24 add = pol_dist_source_index } }
-	set_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
+	set_temp_variable = { _pd_idx = { value = pol_dist_lookup_slot multiply = 24 add = pol_dist_source_index } }
+	set_temp_variable = { pol_distance_current = global.pol_dist_matrix^_pd_idx }
 }
 
+# Effect: quote_coalition_invite_cost
+# Purpose: Saves the Political Power charge for the pending invitation event.
+# Parameters:
+# - pol_dist_target_index: invited party slot 0-23.
+quote_coalition_invite_cost = {
+	set_temp_variable = { pol_dist_source_index = ruling_party }
+	set_temp_variable = { pol_dist_lookup_slot = pol_dist_target_index }
+	get_pol_distance = yes
+	set_variable = { pp_cost_to_invite = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_invite_pp_multiplier } }
+}
+
+# Effect: refund_coalition_partner
+# Purpose: Immediately returns 75% of a party's invitation cost at current seat share.
+# Parameters:
+# - pol_dist_target_index: outgoing party slot 0-23.
+refund_coalition_partner = {
+	set_temp_variable = { pol_dist_source_index = ruling_party }
+	set_temp_variable = { pol_dist_lookup_slot = pol_dist_target_index }
+	get_pol_distance = yes
+	set_temp_variable = { coalition_refund = { value = pol_distance_current multiply = party_pop_elect_array^pol_dist_target_index multiply = @coalition_refund_pp_multiplier } }
+	add_political_power = coalition_refund
+}
 
 # Add Coalition Member
 # set_temp_variable = { add_col_one = 0-23 } -- Required
@@ -1991,7 +2002,7 @@ remove_coalition_members_effect = {
 # - col_four (optional): party slot 0-23, a coalition partner
 # - col_five (optional): party slot 0-23, a coalition partner
 # - change_leader_temp (optional): 1 keeps the current leader from retiring
-# - disable_elections (optional): 1 turns elections off, 0 or unset allows them
+# - disable_elections: 1 turns elections off, 0 allows them
 change_ruling_party_effect = {
 	# Do Not Retire Section
 	if = { limit = { check_variable = { change_leader_temp = 1 } }
@@ -2499,6 +2510,7 @@ replicate_configure_politics = {
 	add_up_party_totals = yes
 	set_party_positions = yes
 	startup_politics = yes
+	IP_idea_configuration = yes
 }
 
 generete_politics_pie_chart = {

@@ -4,9 +4,11 @@ Caps apply per direct `key = number` assignment: ROI over 3%, productivity
 growth over 25%, game-start policy rate over 30, game-start inflation over 50%.
 """
 
+import argparse
+
 import pytest
 import validate_modifiers as vm
-from shared.suite import checks_called_by_run
+from shared.suite import assert_findings, checks_called_by_run
 from shared.suite import write_under as _write
 from validate_modifiers import Validator, _scan_numeric_modifier_entries
 from validator_common import Severity
@@ -69,19 +71,52 @@ def test_roi_end_to_end(tmp_path, monkeypatch):
         "\t\t\t}\n\t\t}\n\t}\n}\n",
     )
     validator = _validator(tmp_path)
-    validator.validate_unbalanced_modifiers()
+    validator.validate_modifier_caps()
     roi = [i for i in validator._issues if i.category == "unbalanced-roi"]
     assert len(roi) == 1
     assert "0.1" in roi[0].message
 
-    monkeypatch.setattr(
-        vm,
-        "_UNBALANCED_ROI_EXCEPTIONS",
-        frozenset({"modifier::return_on_investment_modifier"}),
+    monkeypatch.setitem(
+        vm._CAP_EXCEPTIONS,
+        "unbalanced_roi_exceptions",
+        frozenset({"big::return_on_investment_modifier"}),
     )
     validator = _validator(tmp_path)
-    validator.validate_unbalanced_modifiers()
+    validator.validate_modifier_caps()
     assert "unbalanced-roi" not in _categories(validator)
+
+
+@pytest.mark.parametrize(
+    ("value", "reported"),
+    [(0.05, False), (-0.05, False), (0.051, True), (-0.051, True)],
+)
+def test_investment_sale_recovery_cap(tmp_path, value, reported):
+    key = "investment_sale_recovery_modifier"
+    _write(
+        tmp_path,
+        "common/ideas/test.txt",
+        f"test = {{ modifier = {{ {key} = {value} }} }}",
+    )
+    _write(
+        tmp_path,
+        "common/dynamic_modifiers/test.txt",
+        f"test = {{\n\t{key} = recovery_value\n}}\n",
+    )
+    _write(
+        tmp_path,
+        "common/scripted_effects/test.txt",
+        f"test = {{ add_to_variable = {{ recovery_value = {value} }} }}",
+    )
+
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_modifier_caps()
+    findings = [
+        issue
+        for issue in validator._issues
+        if issue.category == "investment-sale-recovery-over-cap"
+    ]
+    assert len(findings) == (2 if reported else 0)
+    assert all("±5%" in issue.message for issue in findings)
 
 
 def test_productivity_variants_end_to_end(tmp_path):
@@ -94,11 +129,9 @@ def test_productivity_variants_end_to_end(tmp_path):
         "penalty = {\n\tstate_productivity_growth_modifier = -0.25\n}\n",
     )
     validator = _validator(tmp_path)
-    validator.validate_unbalanced_modifiers()
+    validator.validate_modifier_caps()
     prod = [i for i in validator._issues if i.category == "unbalanced-productivity"]
     assert len(prod) == 2
-
-    validator.validate_excessive_modifiers()
     assert "excessive-modifier-over-30-percent" not in _categories(validator)
 
 
@@ -154,6 +187,7 @@ def test_flag_off_reports_nothing(tmp_path):
         "set_variable = { inflation_rate_var = 2.5 }\n",
     )
     validator = _validator(tmp_path, enabled=False)
+    validator.validate_modifier_caps()
     validator.validate_unbalanced_modifiers()
     assert [c for c in _categories(validator) if c.startswith("unbalanced")] == []
 
@@ -194,7 +228,7 @@ def test_income_modifier_families_warn_without_the_opt_in_flag(tmp_path, key):
         f"idea = {{ modifier = {{ {key} = 0.5 }} }}\n",
     )
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_income_modifiers()
+    validator.validate_modifier_caps()
     assert [(i.category, i.severity, i.line) for i in validator._issues] == [
         ("income-over-25-percent", Severity.WARNING, 1)
     ]
@@ -312,22 +346,27 @@ _INCOME_CASES = {
 def test_income_modifier_warnings(tmp_path, source, path, lines):
     _write(tmp_path, path, source)
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_income_modifiers()
-    assert [(i.file.replace("\\", "/"), i.line) for i in validator._issues] == [
+    validator.validate_modifier_caps()
+    income = [i for i in validator._issues if i.category == "income-over-25-percent"]
+    assert [(i.file.replace("\\", "/"), i.line) for i in income] == [
         (path, line) for line in lines
     ]
-    assert all(i.severity == Severity.WARNING for i in validator._issues)
+    assert all(i.severity == Severity.WARNING for i in income)
 
 
 def test_income_exception_skips_only_its_owner(tmp_path, monkeypatch):
-    monkeypatch.setattr(vm, "_INCOME_EXCEPTIONS", frozenset({f"a::{_TAX}"}))
+    monkeypatch.setitem(
+        vm._CAP_EXCEPTIONS,
+        "income_over_25_percent_exceptions",
+        frozenset({f"a::{_TAX}"}),
+    )
     _write(
         tmp_path,
         "common/ideas/test.txt",
         f"a = {{ modifier = {{ {_TAX} = 0.5 }} }}\nb = {{ modifier = {{ {_TAX} = 0.5 }} }}",
     )
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_income_modifiers()
+    validator.validate_modifier_caps()
     assert [i.line for i in validator._issues] == [2]
 
 
@@ -356,7 +395,7 @@ _WEEKLY_CASES = {
 def test_weekly_stability_war_support_caps(tmp_path, key, value, count):
     _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", key, value))
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_weekly_stability_war_support()
+    validator.validate_modifier_caps()
     assert [(i.category, i.severity) for i in validator._issues] == [
         ("weekly-stability-war-support-over-cap", Severity.WARNING)
     ] * count
@@ -379,8 +418,6 @@ _EXCESSIVE_CASES = {
     "listed malus key bonus": ("consumer_goods_factor", "-0.4", 1),
     "fuel suffix penalty": ("army_fuel_consumption_factor", "0.4", 0),
     "fuel suffix bonus": ("army_fuel_consumption_factor", "-0.4", 1),
-    "worker requirement penalty": ("civ_facs_worker_requirement_modifier", "0.4", 0),
-    "worker requirement bonus": ("civ_facs_worker_requirement_modifier", "-0.4", 1),
     "number-typed key": ("interest_rate_multiplier_modifier", "5", 0),
     "ai weight": ("ai_focus_aggressive_factor", "5", 0),
     "income key": (_TAX, "0.5", 0),
@@ -395,10 +432,11 @@ _EXCESSIVE_CASES = {
 def test_excessive_modifiers(tmp_path, key, value, count):
     _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", key, value))
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_excessive_modifiers()
-    assert [(i.category, i.severity) for i in validator._issues] == [
-        ("excessive-modifier-over-30-percent", Severity.WARNING)
-    ] * count
+    validator.validate_modifier_caps()
+    excessive = "excessive-modifier-over-30-percent"
+    assert [
+        (i.category, i.severity) for i in validator._issues if i.category == excessive
+    ] == [(excessive, Severity.WARNING)] * count
 
 
 @pytest.mark.parametrize(
@@ -431,7 +469,7 @@ def test_excessive_modifiers_respect_definition_units(
             "} } } }\n",
         )
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_excessive_modifiers()
+    validator.validate_modifier_caps()
     assert _categories(validator) == ["excessive-modifier-over-30-percent"] * count
 
 
@@ -463,8 +501,20 @@ def test_timed_only_ideas_are_skipped(tmp_path, grant, count):
         f"focus = {{ completion_reward = {{ {grant} }} }}\n",
     )
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_excessive_modifiers()
+    validator.validate_modifier_caps()
     assert len(validator._issues) == count
+
+
+def test_timed_rows_keep_timed_only_ideas(tmp_path):
+    _write(tmp_path, "common/ideas/test.txt", _idea("test_idea", _TAX, "0.5"))
+    _write(
+        tmp_path,
+        "common/national_focus/test.txt",
+        "focus = { completion_reward = { add_timed_idea = { idea = test_idea days = 90 } } }\n",
+    )
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_modifier_caps()
+    assert _categories(validator) == ["income-over-25-percent"]
 
 
 _TIMED_DM = "add_dynamic_modifier = { modifier = test_dm days = 30 }"
@@ -491,7 +541,155 @@ def test_timed_only_dynamic_modifiers_are_skipped(tmp_path, path, grant, count):
     )
     _write(tmp_path, path, f"immediate = {{ {grant} }}\n")
     validator = _validator(tmp_path, enabled=False)
-    validator.validate_weekly_stability_war_support()
+    validator.validate_modifier_caps()
     assert len(validator._issues) == count
     if count:
         assert "'test_dm'" in validator._issues[0].message
+
+
+_WORKER = "worker-requirement-over-cap"
+_SEARCH = "modifier-cap-search"
+_BINDING = "test_dm = {\n\toffices_worker_requirement_modifier = test_var\n}\n"
+_DM = "common/dynamic_modifiers/test.txt"
+_FOCUS = "common/national_focus/test.txt"
+
+
+def _reward(effect):
+    return f"focus = {{ completion_reward = {{ {effect} }} }}\n"
+
+
+# rows: {case: (files, --modifier-cap specs, findings as fragments)}
+_ROW_CASES = {
+    "literal increase over cap": (
+        {
+            "common/ideas/test.txt": _idea(
+                "test_idea", "civ_facs_worker_requirement_modifier", "0.41"
+            )
+        },
+        [],
+        [(_WORKER, "'test_idea'", "+41%", "past the +40% cap")],
+    ),
+    "literal cut past the 30% cut cap": (
+        {
+            "common/ideas/test.txt": _idea(
+                "test_idea", "civ_facs_worker_requirement_modifier", "-0.35"
+            )
+        },
+        [],
+        [(_WORKER, "-35%", "past the -30% cap")],
+    ),
+    "literal at cap": (
+        {
+            "common/ideas/test.txt": _idea(
+                "test_idea", "civ_facs_worker_requirement_modifier", "0.40"
+            )
+        },
+        [],
+        [],
+    ),
+    "workforce suffix": (
+        {
+            "common/ideas/test.txt": _idea(
+                "test_idea", "infrastructure_workforce_requirement_modifier", "0.5"
+            )
+        },
+        [],
+        [(_WORKER, "infrastructure_workforce_requirement_modifier")],
+    ),
+    "bound variable add": (
+        {_DM: _BINDING, _FOCUS: _reward("add_to_variable = { test_var = 0.75 }")},
+        [],
+        [
+            (
+                _WORKER,
+                "add_to_variable test_var = 0.75 changes offices_worker_requirement_modifier by +75%",
+            )
+        ],
+    ),
+    "var and value form": (
+        {
+            _DM: _BINDING,
+            _FOCUS: _reward("add_to_variable = { var = test_var value = 0.5 }"),
+        },
+        [],
+        [(_WORKER, "+50%")],
+    ),
+    "subtract flips the sign": (
+        {_DM: _BINDING, _FOCUS: _reward("subtract_from_variable = { test_var = 0.5 }")},
+        [],
+        [(_WORKER, "-50%")],
+    ),
+    "set in history": (
+        {
+            _DM: _BINDING,
+            "history/countries/ABC - Test.txt": "set_variable = { test_var = 0.5 }\n",
+        },
+        [],
+        [(_WORKER, "sets offices_worker_requirement_modifier to +50%")],
+    ),
+    "unbound variable": (
+        {_DM: _BINDING, _FOCUS: _reward("add_to_variable = { other_var = 0.75 }")},
+        [],
+        [],
+    ),
+    "variable reference": (
+        {_DM: _BINDING, _FOCUS: _reward("add_to_variable = { test_var = other_var }")},
+        [],
+        [],
+    ),
+    "commented change": (
+        {_DM: _BINDING, _FOCUS: "# add_to_variable = { test_var = 0.75 }\n"},
+        [],
+        [],
+    ),
+    "bound to a row without variables": (
+        {
+            _DM: "test_dm = {\n\tstability_factor = test_var\n}\n",
+            _FOCUS: _reward("add_to_variable = { test_var = 0.75 }"),
+        },
+        [],
+        [],
+    ),
+    "search a key without a modifier suffix": (
+        {"common/ideas/test.txt": _idea("test_idea", "political_power_gain", "0.6")},
+        ["political_power_gain=0.5"],
+        [(_SEARCH, "+60%", "±50%")],
+    ),
+    "search keeps timed-only ideas": (
+        {
+            "common/ideas/test.txt": _idea("test_idea", "political_power_gain", "0.6"),
+            _FOCUS: _reward("add_timed_idea = { idea = test_idea days = 90 }"),
+        },
+        ["political_power_gain=0.5"],
+        [(_SEARCH, "+60%")],
+    ),
+    "search row comes before config rows": (
+        {
+            "common/ideas/test.txt": _idea(
+                "test_idea", "civ_facs_worker_requirement_modifier", "0.5"
+            )
+        },
+        ["*_worker_requirement_modifier=0.75"],
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize("files,specs,expected", _ROW_CASES.values(), ids=_ROW_CASES)
+def test_modifier_cap_rows(tmp_path, files, specs, expected):
+    for path, content in files.items():
+        _write(tmp_path, path, content)
+    validator = Validator(
+        str(tmp_path),
+        use_colors=False,
+        workers=1,
+        modifier_cap=[vm._cap_search_row(spec) for spec in specs],
+    )
+    validator.validate_modifier_caps()
+    assert_findings([f"{i.category}: {i.message}" for i in validator._issues], expected)
+
+
+@pytest.mark.parametrize("spec", ["political_power_gain", "x=abc", "x=-1"])
+def test_cap_search_row_rejects_bad_specs(spec):
+    with pytest.raises(argparse.ArgumentTypeError):
+        vm._cap_search_row(spec)

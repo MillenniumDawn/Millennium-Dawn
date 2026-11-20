@@ -183,6 +183,7 @@ def test_golden_selection():
             token in path for token in ("Changelog.txt", "AUTHORS.txt", "/descriptions")
         ):
             expected.add("validate_common_mistakes")
+        expected.add("validate_dynamic_tokens")
         assert _selected(path) == expected, path
 
 
@@ -243,7 +244,12 @@ def test_ai_equipment_is_warning_only():
 
 
 def test_strict_validators_are_strict():
-    for script in ("validate_events", "validate_ideas", "validate_oob_units"):
+    for script in (
+        "validate_dynamic_tokens",
+        "validate_events",
+        "validate_ideas",
+        "validate_oob_units",
+    ):
         assert _BY_SCRIPT[script].strict
 
 
@@ -425,8 +431,10 @@ def test_dispatcher_takes_passed_files_and_staged_deletions(tmp_path, monkeypatc
     assert paths == ["events/passed.txt", "events/deleted.txt"]
 
 
+def test_gui_changes_only_run_token_validation():
+    assert _selected("interface/x.gui") == {"validate_dynamic_tokens"}
+
+
 def test_no_match_outside_scope():
-    # A .lua define, a gui file, a texture — none are owned by this dispatcher.
     assert _selected("common/defines/00_defines.lua") == set()
-    assert _selected("interface/x.gui") == set()
     assert _selected("gfx/x.dds") == set()

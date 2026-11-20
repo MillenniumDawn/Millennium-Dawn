@@ -204,7 +204,7 @@ def test_capability_rebuild_counts_every_ai_technology_tier():
         assert (
             len(
                 re.findall(
-                    rf"\bhas_tech\s*=\s*artificial_intelligence_{tier}\b", effects
+                    rf"\bhas_tech\s*=\s*artificial_intelligence_{tier}\b", ladder
                 )
             )
             == 1
@@ -465,6 +465,7 @@ class RaceScript:
                 "gdp_total": 1000,
                 "display_expense": 2,
                 "treasury_rate": 10,
+                "ai_budget_balance": 10,
             },
             "flags": {},
             "techs": {"artificial_intelligence_7", "artificial_intelligence_8"},
@@ -1476,7 +1477,7 @@ def test_executed_autonomous_emergency_policy_boundaries(constraint):
     elif constraint == "debt":
         country["vars"]["debt"] = 600
     elif constraint == "weekly":
-        country["vars"]["treasury_rate"] = 550 / 520 - 0.001
+        country["vars"]["ai_budget_balance"] = 550 / 520 - 0.001
     elif constraint == "reserve":
         country["vars"]["treasury"] = 50 + (2 + 550 / 520) * 52 - 0.001
     race.run("ai_race_autonomous_purchase", 1)

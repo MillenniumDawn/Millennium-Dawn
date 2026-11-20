@@ -2786,33 +2786,42 @@ country_event = {
 	picture = GFX_report_event_Money_ITA_1
 	is_triggered_only = yes
 
+	trigger = {
+		investment_project_slot_available = yes
+		ITA = {
+			scripted_investment_recipient_available = yes
+			can_receive_scripted_civilian_investment = yes
+		}
+	}
+
 	option = {
 		name = italy_md.34.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.34.o1 executed"
 		if = {
-			limit = { tag = CHI }
-			set_country_flag = italy_china_trade_deal
-			ITA = {
-				set_country_flag = italy_china_trade_deal
-				random_owned_controlled_state = { invest_cic = yes }
-				country_event = italy_md.35
-				add_opinion_modifier = {
-					target = CHI
-					modifier = accepted_investment_request
-				}
-				reverse_add_opinion_modifier = {
-					target = CHI
-					modifier = accepted_investment_request
+			limit = {
+				investment_project_slot_available = yes
+				ITA = {
+					scripted_investment_recipient_available = yes
+					can_receive_scripted_civilian_investment = yes
 				}
 			}
-		}
-		else_if = {
-			limit = { NOT = { tag = CHI } }
-			set_temp_variable = { modify_europeanism = 0.05 }
-			set_temp_variable = { modify_europeanism_target = ITA }
-			europeanism_change = yes
+			if = { limit = { tag = CHI }
+				set_country_flag = italy_china_trade_deal
+				ITA = {
+					set_country_flag = italy_china_trade_deal
+					reverse_add_opinion_modifier = {
+						target = CHI
+						modifier = accepted_investment_request
+					}
+				}
+			}
+			else = {
+				set_temp_variable = { modify_europeanism = 0.05 }
+				set_temp_variable = { modify_europeanism_target = ITA }
+				europeanism_change = yes
+			}
 			ITA = {
-				random_owned_controlled_state = { invest_cic = yes }
+				invest_cic = yes
 				country_event = italy_md.35
 				add_opinion_modifier = {
 					target = ROOT
@@ -4199,6 +4208,7 @@ country_event = {
 		name = italy_md.67.o1
 		log = "[GetDateText]: [This.GetName]: italy_md.67.o1 executed"
 		set_temp_variable = { rul_party_temp = 0 }
+		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
 		create_country_leader = {
 			name = "Mario Monti"
@@ -4221,6 +4231,7 @@ country_event = {
 		name = italy_md.67.o2
 		log = "[GetDateText]: [This.GetName]: italy_md.67.o2 executed"
 		set_temp_variable = { rul_party_temp = 0 }
+		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
 		create_country_leader = {
 			name = "Mario Draghi"
@@ -4243,6 +4254,7 @@ country_event = {
 		name = italy_md.67.o3
 		log = "[GetDateText]: [This.GetName]: italy_md.67.o3 executed"
 		set_temp_variable = { rul_party_temp = 0 }
+		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
 		create_country_leader = {
 			name = "Carlo Cottarelli"
@@ -4313,11 +4325,13 @@ country_event = {
 				limit = { ROOT = { has_variable = ruling_party } }
 				set_variable = { ruling_party = ROOT.ruling_party }
 			}
-			for_each_loop = {
-				array = gov_coalition_array
-				value = v
-				index = i
-				set_variable = { gov_coalition_array^i = ROOT.gov_coalition_array^i }
+			clear_array = gov_coalition_array
+			ROOT = {
+				for_each_loop = {
+					array = gov_coalition_array
+					value = v
+					add_to_array = { PREV.gov_coalition_array = v }
+				}
 			}
 		}
 		transfer_units_fraction = {
@@ -4377,11 +4391,13 @@ country_event = {
 					limit = { SCL = { has_variable = ruling_party } }
 					set_variable = { ruling_party = SCL.ruling_party }
 				}
-				for_each_loop = {
-					array = gov_coalition_array
-					value = v
-					index = i
-					set_variable = { gov_coalition_array^i = SCL.gov_coalition_array^i }
+				clear_array = gov_coalition_array
+				SCL = {
+					for_each_loop = {
+						array = gov_coalition_array
+						value = v
+						add_to_array = { PREV.gov_coalition_array = v }
+					}
 				}
 			}
 			SCL = {

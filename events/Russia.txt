@@ -432,6 +432,8 @@ country_event = {
 			add_state_core = 672
 			CHE = {
 				set_temp_variable = { rul_party_temp = 6 }
+				set_temp_variable = { disable_elections = 1 }
+				if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 				set_temp_variable = { change_leader_temp = 1 }
 				change_ruling_party_effect = yes
 				if = { limit = { is_ai = yes }
@@ -470,6 +472,8 @@ country_event = {
 			add_state_core = 672
 			CHE = {
 				set_temp_variable = { rul_party_temp = 6 }
+				set_temp_variable = { disable_elections = 1 }
+				if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 				set_temp_variable = { change_leader_temp = 1 }
 				change_ruling_party_effect = yes
 				add_ideas = SUB_small_taxes
@@ -2481,6 +2485,7 @@ country_event = {
 			if = {
 				limit = { NOT = { check_variable = { ruling_party = 23 } } }
 				set_temp_variable = { rul_party_temp = 23 }
+				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
 			set_temp_variable = { party_index = 23 }
@@ -3391,9 +3396,11 @@ country_event = {
 	option = {
 		name = sov_vybory.1.a
 		log = "[GetDateText]: [This.GetName]: sov_vybory.1.a executed"
-		set_variable = { ruling_party = 6 }
-		update_set_politics = yes
-		update_government_coalition_strength = yes
+		set_temp_variable = { rul_party_temp = 6 }
+		set_temp_variable = { disable_elections = 1 }
+		if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
+		set_temp_variable = { change_leader_temp = 1 }
+		change_ruling_party_effect = yes
 		create_country_leader = {
 			name = "Dmitriy Medvedev"
 			picture = "Dimitry_Medvedev.dds"
@@ -3439,6 +3446,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_vybory.2.a executed"
 		retire_country_leader = yes
 		set_temp_variable = { rul_party_temp = 6 }
+		set_temp_variable = { disable_elections = 0 }
 		set_temp_variable = { col_one = 0 }
 		set_temp_variable = { col_two = 15 }
 		change_ruling_party_effect = yes
@@ -4147,6 +4155,7 @@ country_event = {
 			set_temp_variable = { temp_outlook_increase = 0.25 }
 			change_relative_party_popularity = yes
 			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
 			change_ruling_party_effect = yes
 			clr_country_flag = SOV_did_not_allow_duma_to_speak
 			mark_focus_tree_layout_dirty = yes
@@ -6883,6 +6892,7 @@ country_event = {
 					producer = SOV
 				}
 				set_temp_variable = { rul_party_temp = 4 }
+				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
 			GER = { set_capital = { state = 966 } }
@@ -7358,6 +7368,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: sov_medvedev.8.a"
 		hidden_effect = {
 			set_temp_variable = { rul_party_temp = 0 }
+			set_temp_variable = { disable_elections = 1 }
+			if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 			set_temp_variable = { col_one = 1 }
 			change_ruling_party_effect = yes
 			recalculate_party = yes
@@ -7393,6 +7405,8 @@ country_event = {
 			set_temp_variable = { party_popularity_increase = party_pop_array^21 }
 			change_relative_party_popularity = yes
 			set_temp_variable = { rul_party_temp = 15 }
+			set_temp_variable = { disable_elections = 1 }
+			if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 			set_temp_variable = { col_one = 16 }
 			# Must precede the party change: SOV_update_political_modifiers reads this flag to decide
 			# that Putinism is over and the oligarch modifier is earned.
@@ -11977,4 +11991,65 @@ country_event = {
 			modifier = { add = 25 is_in_faction_with = UKR }
 		}
 	}
+}
+
+country_event = {
+	id = russia_varyag.2
+	title = russia_varyag.2.t
+	desc = russia_varyag.2.desc
+	picture = GFX_UKR_varyag_negotiations
+	is_triggered_only = yes
+	trigger = { FROM = { exists = yes } }
+
+	option = {
+		name = russia_varyag.2.a
+		log = "[GetDateText]: [This.GetName]: russia_varyag.2.a executed"
+		if = {
+			limit = {
+				FROM = {
+					UKR_storage_has_carrier_aircraft = yes
+					has_country_flag = UKR_storage_carrier_aircraft_offer_pending_flag
+					varyag_russian_supply_available = yes
+				}
+			}
+			UKR_storage_deliver_carrier_aircraft = yes
+			FROM = {
+				clr_country_flag = UKR_storage_carrier_aircraft_offer_pending_flag
+				UKR_storage_clear_carrier_aircraft = yes
+				UKR_storage_deliver_exchange_aircraft = yes
+				country_event = ukraine_varyag.30
+			}
+		}
+		else = {
+			FROM = {
+				clr_country_flag = UKR_storage_carrier_aircraft_offer_pending_flag
+				country_event = ukraine_varyag.31
+			}
+		}
+		ai_chance = {
+			base = 75
+			modifier = { add = 25 is_in_faction_with = FROM }
+		}
+	}
+
+	option = {
+		name = russia_varyag.2.b
+		log = "[GetDateText]: [This.GetName]: russia_varyag.2.b executed"
+		FROM = {
+			clr_country_flag = UKR_storage_carrier_aircraft_offer_pending_flag
+			country_event = ukraine_varyag.31
+		}
+		ai_chance = { base = 25 }
+	}
+}
+
+country_event = {
+	id = russia_varyag.3
+	title = russia_varyag.3.t
+	desc = russia_varyag.3.desc
+	picture = GFX_UKR_varyag_negotiations
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	option = { name = russia_varyag.3.a }
 }

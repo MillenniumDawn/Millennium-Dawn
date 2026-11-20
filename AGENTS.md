@@ -24,10 +24,11 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 
 ## Branch naming
 
-Before your first commit, rename the session branch to
-`<agent>/<type>-<short-kebab-slug>-<session-id>`, where `<agent>` is `claude` or
-`codex`, `<type>` is `feat`, `fix`, `docs` or `chore`, the slug is 2–5 words describing
-the task, and the session-id suffix stays as it is. Use `git branch -m`.
+Use a task-based branch name before your first commit. For work on a specific
+issue, use `issue/<number>-<slug>` (e.g. `issue/123489-fix-the-issue`). Otherwise
+use `fix/<slug>`, `feat/<slug>`, `docs/<slug>`, or `chore/<slug>`. The slug is a
+short kebab-case description of the task (2–5 words). Do not include agent
+prefixes or session IDs.
 
 ## KISS: Keep It Simple
 
@@ -104,6 +105,7 @@ are under `.claude/docs/`.
 - Map modes and their colorblind palettes: `map-mode-reference.md`.
 - UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
   UAR, union cosmetics: `formable-reference.md`.
+- Factions, faction rules, puppeting or annexing a faction leader: `faction-rules.md`.
 - Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
   Loading and menu art: `loading-screen-system.md`.
 - 3D models, entities, landmarks: `entity-system.md`. Power plants, energy techs,
