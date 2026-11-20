@@ -32097,7 +32097,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			UKR_count_domestic_development = yes
 
-			country_event = ukraine_utility_vehicle_tender.9
+			country_event = ukraine_utility_vehicle_tender.10
 		}
 	}
 
@@ -32170,7 +32170,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			UKR_count_domestic_development = yes
 
-			country_event = ukraine_utility_vehicle_tender.9
+			country_event = ukraine_utility_vehicle_tender.10
 		}
 	}
 
@@ -32264,7 +32264,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			UKR_count_domestic_development = yes
 
-			country_event = { id = ukraine_utility_vehicle_tender.14 days = 150 random_days = 20 }
+			country_event = { id = ukraine_utility_vehicle_tender.15 days = 150 random_days = 20 }
 		}
 	}
 
@@ -32356,7 +32356,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			UKR_count_domestic_development = yes
 
-			country_event = { id = ukraine_utility_vehicle_tender.14 days = 90 random_days = 20 }
+			country_event = { id = ukraine_utility_vehicle_tender.15 days = 90 random_days = 20 }
 		}
 	}
 
@@ -32424,7 +32424,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			UKR_count_domestic_development = yes
 
-			country_event = ukraine_utility_vehicle_tender.18
+			country_event = ukraine_utility_vehicle_tender.19
 		}
 	}
 
@@ -32473,11 +32473,11 @@ UKR_develop_domestic_equipment_decision_category = {
 				}
 
 				POL = {
-					country_event = { id = ukraine_utility_vehicle_tender.21 days = 60 }
+					country_event = { id = ukraine_utility_vehicle_tender.22 days = 60 }
 				}
 			}
 			else = {
-				country_event = ukraine_utility_vehicle_tender.19
+				country_event = ukraine_utility_vehicle_tender.20
 			}
 		}
 	}
@@ -32525,11 +32525,11 @@ UKR_develop_domestic_equipment_decision_category = {
 				}
 
 				POL = {
-					country_event = { id = ukraine_utility_vehicle_tender.21 days = 30 }
+					country_event = { id = ukraine_utility_vehicle_tender.22 days = 30 }
 				}
 			}
 			else = {
-				country_event = ukraine_utility_vehicle_tender.19
+				country_event = ukraine_utility_vehicle_tender.20
 			}
 		}
 	}
@@ -32595,25 +32595,9 @@ UKR_develop_domestic_equipment_decision_category = {
 				producer = UKR
 			}
 
-			if = {
-				limit = {
-					1089 = { #Poltava
-						arms_factory > 0
-					}
-				}
-
-				add_equipment_production = {
-					equipment = {
-						type = util_vehicle_3
-						version_name = "KrAZ-6322"
-					}
-
-					requested_factories = 1
-					efficiency = 20
-				}
-			}
-
+			hidden_effect = { set_country_flag = UKR_utility_vehicle_tender_kraz_6322_pending_production_flag }
 			set_country_flag = UKR_utility_vehicle_tender_kraz_6322_adopted_flag
+			country_event = ukraine_utility_vehicle_tender_kraz.1
 			UKR_queue_kraz_6316_offer = yes
 		}
 	}
@@ -32629,7 +32613,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_6316_supplier_negotiations_mission"
-			country_event = ukraine_utility_vehicle_tender_kraz.5
+			country_event = ukraine_utility_vehicle_tender_kraz.6
 		}
 
 		timeout_effect = {
@@ -32722,50 +32706,89 @@ UKR_develop_domestic_equipment_decision_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_6316_review_suppliers"
 			clr_country_flag = UKR_utility_vehicle_tender_kraz_6316_suppliers_on_hold_flag
-			country_event = ukraine_utility_vehicle_tender_kraz.3
+			country_event = ukraine_utility_vehicle_tender_kraz.5
 		}
 	}
 
-	UKR_utility_vehicle_tender_kraz_reconsider_truck_development = {
+	UKR_utility_vehicle_tender_kraz_5401_develop = {
 		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_truck
 
-		visible = {
-			OR = {
-				has_country_flag = UKR_utility_vehicle_tender_kraz_5401_offer_on_hold_flag
-				has_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_offer_on_hold_flag
-			}
-		}
+		fire_only_once = yes
+		days_remove = 150
 
-		available = {
-			UKR_kraz_6316_controls_plant = yes
-			if = {
-				limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_5401_offer_on_hold_flag }
-				custom_trigger_tooltip = {
-					tooltip = UKR_utility_vehicle_tender_kraz_5401_reconsider_treasury_tt
-					NOT = { check_variable = { treasury < 0.12 } }
-				}
-			}
-			else = {
-				custom_trigger_tooltip = {
-					tooltip = UKR_utility_vehicle_tender_kraz_v12_2_reconsider_treasury_tt
-					NOT = { check_variable = { treasury < 0.18 } }
-				}
-			}
-		}
+		visible = { has_country_flag = UKR_utility_vehicle_tender_kraz_5401_development_available_flag }
+		available = { UKR_kraz_6316_controls_plant = yes }
 
-		ai_will_do = { base = 25 }
+		cost = 5
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.12 } } }
+		custom_cost_text = cost_0_12
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_reconsider_truck_development"
-			if = {
-				limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_5401_offer_on_hold_flag }
-				clr_country_flag = UKR_utility_vehicle_tender_kraz_5401_offer_on_hold_flag
-				country_event = ukraine_utility_vehicle_tender_kraz.7
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_5401_develop"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.12 }
+				modify_treasury_effect = yes
 			}
-			else_if = {
-				limit = { has_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_offer_on_hold_flag }
-				clr_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_offer_on_hold_flag
-				country_event = ukraine_utility_vehicle_tender_kraz.9
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_utility_vehicle_tender_kraz_5401_develop"
+
+			UKR_count_domestic_development = yes
+			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_6316_plant_review_tt
+			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_v12_2_next_tt
+			hidden_effect = {
+				set_country_flag = UKR_utility_vehicle_tender_kraz_5401_developed_flag
+				country_event = { id = ukraine_utility_vehicle_tender_kraz.9 days = 1825 }
+				set_country_flag = UKR_utility_vehicle_tender_kraz_5401_pending_production_flag
+				UKR_kraz_6316_open_plant_event = yes
+			}
+		}
+	}
+
+	UKR_utility_vehicle_tender_kraz_v12_2_develop = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_truck
+
+		fire_only_once = yes
+		days_remove = 180
+
+		visible = { has_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_development_available_flag }
+		available = { UKR_kraz_6316_controls_plant = yes }
+
+		cost = 5
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.18 } } }
+		custom_cost_text = cost_0_18
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_v12_2_develop"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.18 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_utility_vehicle_tender_kraz_v12_2_develop"
+
+			UKR_count_domestic_development = yes
+			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_6316_plant_review_tt
+			hidden_effect = {
+				set_country_flag = UKR_utility_vehicle_tender_kraz_v12_2_pending_production_flag
+				UKR_kraz_6316_open_plant_event = yes
 			}
 		}
 	}
@@ -32794,11 +32817,8 @@ UKR_develop_domestic_equipment_decision_category = {
 			UKR_kraz_7634_has_factory_capacity = yes
 		}
 
-		custom_cost_trigger = {
-			NOT = { has_political_power < 10 }
-			NOT = { check_variable = { treasury < 0.3 } }
-		}
-		custom_cost_text = development_cost_0_30_to_0_40_pp_10
+		custom_cost_trigger = { UKR_kraz_7634_has_project_funding = yes }
+		custom_cost_text = decision_cost_treasury_offer
 		ai_hint_pp_cost = 10
 
 		complete_effect = {
@@ -32807,7 +32827,7 @@ UKR_develop_domestic_equipment_decision_category = {
 			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_7634_choose_project_tt
 			hidden_effect = {
 				set_country_flag = UKR_utility_vehicle_tender_kraz_7634_project_open_flag
-				country_event = ukraine_utility_vehicle_tender_kraz.11
+				country_event = ukraine_utility_vehicle_tender_kraz.10
 			}
 		}
 	}
@@ -32913,8 +32933,11 @@ UKR_develop_domestic_equipment_decision_category = {
 
 			set_country_flag = UKR_utility_vehicle_tender_kraz_5233_developed_flag
 			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_5401_next_tt
+			custom_effect_tooltip = UKR_utility_vehicle_tender_kraz_6316_plant_review_tt
 			hidden_effect = {
-				country_event = { id = ukraine_utility_vehicle_tender_kraz.7 days = 1095 random_days = 365 }
+				country_event = { id = ukraine_utility_vehicle_tender_kraz.8 days = 1095 random_days = 365 }
+				set_country_flag = UKR_utility_vehicle_tender_kraz_5233_pending_production_flag
+				UKR_kraz_6316_open_plant_event = yes
 			}
 		}
 	}
@@ -32940,7 +32963,7 @@ UKR_develop_domestic_equipment_decision_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_tata_negotiations_mission"
-			country_event = ukraine_utility_vehicle_tender.7
+			country_event = ukraine_utility_vehicle_tender.8
 		}
 
 		timeout_effect = {
@@ -33582,6 +33605,7 @@ UKR_develop_domestic_equipment_decision_category = {
 			has_country_flag = UKR_utility_vehicle_tender_mrap_international_cooperation_completed_flag
 
 			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag }
 
 			NOT = {
 				OR = {
@@ -33652,6 +33676,7 @@ UKR_develop_domestic_equipment_decision_category = {
 			has_country_flag = UKR_utility_vehicle_tender_mrap_international_cooperation_completed_flag
 
 			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag }
 
 			OR = {
 				has_tech = util_vehicle_5
@@ -33697,6 +33722,148 @@ UKR_develop_domestic_equipment_decision_category = {
 				}
 				hidden_effect = {
 					country_event = { id = ukraine_utility_vehicle_tender_mrap_coop.4 days = 110 random_days = 10 }
+				}
+			}
+		}
+	}
+
+	UKR_utility_vehicle_tender_kraz_hulk_develop = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_mrap
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			date > 2016.10.09
+			has_completed_focus = UKR_kraz
+
+			has_country_flag = UKR_utility_vehicle_tender_mrap_international_cooperation_completed_flag
+
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag }
+
+			NOT = {
+				OR = {
+					has_tech = util_vehicle_5
+					has_tech = IMV_5
+				}
+			}
+		}
+
+		available = {
+			controls_province = 6495 #Kremenchuk, Poltava
+			1089 = { #Poltava
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.12 } }
+		custom_cost_text = cost_0_12
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_hulk_develop"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.12 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag
+
+			if = {
+				limit = { OR = { has_country_flag = UKR_utility_vehicle_tender_mrap_heavy_programme_priority_flag has_country_flag = UKR_utility_vehicle_tender_mrap_dual_programme_priority_flag } }
+
+				custom_effect_tooltip = {
+					localization_key = UKR_utility_vehicle_tender_kraz_mrap_wait_tt
+					DAYS = 110
+				}
+				hidden_effect = {
+					country_event = { id = ukraine_utility_vehicle_tender_mrap_coop.6 days = 110 random_days = 10 }
+				}
+			}
+			else = {
+				custom_effect_tooltip = {
+					localization_key = UKR_utility_vehicle_tender_kraz_mrap_wait_tt
+					DAYS = 150
+				}
+				hidden_effect = {
+					country_event = { id = ukraine_utility_vehicle_tender_mrap_coop.6 days = 150 random_days = 10 }
+				}
+			}
+		}
+	}
+
+	UKR_utility_vehicle_tender_kraz_hulk_develop_tech = {
+		icon = GFX_UKR_decision_icon_utility_vehicle_tender_kraz_mrap
+
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			date > 2016.10.09
+			has_completed_focus = UKR_kraz
+
+			has_country_flag = UKR_utility_vehicle_tender_mrap_international_cooperation_completed_flag
+
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag }
+			NOT = { has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag }
+
+			OR = {
+				has_tech = util_vehicle_5
+				has_tech = IMV_5
+			}
+		}
+
+		available = {
+			controls_province = 6495 #Kremenchuk, Poltava
+			1089 = { #Poltava
+				is_owned_and_controlled_by = UKR
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.1 } }
+		custom_cost_text = cost_0_1
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_utility_vehicle_tender_kraz_hulk_develop_tech"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.1 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag
+
+			if = {
+				limit = { OR = { has_country_flag = UKR_utility_vehicle_tender_mrap_heavy_programme_priority_flag has_country_flag = UKR_utility_vehicle_tender_mrap_dual_programme_priority_flag } }
+
+				custom_effect_tooltip = {
+					localization_key = UKR_utility_vehicle_tender_kraz_mrap_wait_tt
+					DAYS = 70
+				}
+				hidden_effect = {
+					country_event = { id = ukraine_utility_vehicle_tender_mrap_coop.6 days = 70 random_days = 10 }
+				}
+			}
+			else = {
+				custom_effect_tooltip = {
+					localization_key = UKR_utility_vehicle_tender_kraz_mrap_wait_tt
+					DAYS = 90
+				}
+				hidden_effect = {
+					country_event = { id = ukraine_utility_vehicle_tender_mrap_coop.6 days = 90 random_days = 10 }
 				}
 			}
 		}
@@ -34784,6 +34951,7 @@ UKR_develop_domestic_equipment_decision_category = {
 					has_country_flag = UKR_utility_vehicle_tender_mrap_shrek_selected_flag
 					has_country_flag = UKR_utility_vehicle_tender_mrap_panthera_started_flag
 					has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag
+					has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag
 					has_country_flag = UKR_utility_vehicle_tender_mrap_hurricane_started_flag
 					has_country_flag = UKR_utility_vehicle_tender_mrap_kozak2_selected_flag
 				}
@@ -34848,6 +35016,7 @@ UKR_develop_domestic_equipment_decision_category = {
 						has_country_flag = UKR_utility_vehicle_tender_mrap_shrek_selected_flag
 						has_country_flag = UKR_utility_vehicle_tender_mrap_panthera_started_flag
 						has_country_flag = UKR_utility_vehicle_tender_mrap_fiona_started_flag
+						has_country_flag = UKR_utility_vehicle_tender_mrap_hulk_started_flag
 						has_country_flag = UKR_utility_vehicle_tender_mrap_hurricane_started_flag
 					}
 				}
