@@ -1295,14 +1295,34 @@ add_namespace = governor_general_sacked
 news_event = {
 	id = governor_general_sacked.1
 	title = governor_general_sacked.1.t
-	desc = governor_general_sacked.1.d
 	picture = GFX_news_crime_fighting
 	is_triggered_only = yes
+
+	desc = {
+		text = governor_general_sacked.1.d.a
+		trigger = {
+			ENG = { has_country_flag = ENG_elizabeth_ruling_monarch }
+		}
+	}
+
+	desc = {
+		text = governor_general_sacked.1.d.b
+		trigger = {
+			NOT = {
+				ENG = { has_country_flag = ENG_elizabeth_ruling_monarch }
+			}	
+		}
+	}
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: governor_general_sacked.1.a executed"
 		name = governor_general_sacked.1.a
-		add_political_power = 90
+		ENG = {
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = hostile_to_our_tradition
+				}
+			}
 	}
 }
 
@@ -7612,6 +7632,10 @@ country_event = {
 country_event = {
 	id = legislation_rudd_blocked.2
 	title = legislation_rudd_blocked.2.t
+	picture = GFX_aus_parliament
+	is_triggered_only = yes
+	fire_only_once = yes
+
 	desc = {
 		text = legislation_rudd_blocked.2.d.a
 		trigger = { NOT = { has_country_flag = greens_support_rudd } }
@@ -7620,9 +7644,6 @@ country_event = {
 		text = legislation_rudd_blocked.2.d.b
 		trigger = { has_country_flag = greens_support_rudd }
 	}
-	picture = GFX_aus_parliament
-	is_triggered_only = yes
-	fire_only_once = yes
 
 	immediate = { set_country_flag = legislation_blocked_ast }
 
@@ -7668,6 +7689,23 @@ country_event = {
 	desc = legislation_rudd_blocked.3.d
 	picture = GFX_rudd_abbott
 	is_triggered_only = yes
+
+	desc = {
+		text = legislation_rudd_blocked.3.d.a
+		trigger = {
+			NOT = {
+				has_completed_focus = AST_one_last_push
+			}
+		}
+	}
+
+	desc = {
+		text = legislation_rudd_blocked.3.d.b
+		trigger = {
+			has_completed_focus = AST_one_last_push
+
+		}
+	}
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: legislation_rudd_blocked.3.a executed"
@@ -9668,6 +9706,22 @@ country_event = {
 }
 
 #one nation events
+add_namespace = AST_one_nation_info_events
+
+country_event = {
+	id = AST_one_nation_info_events.1
+	title = AST_one_nation_info_events.1.t
+	desc = AST_one_nation_info_events.1.d
+	picture = GFX_AST_one_nation_generic
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_one_nation_info_events.1.a executed"
+		name = AST_one_nation_info_events.1.a
+		add_ideas = political_outsiders_ast
+	}
+}
+
 add_namespace = AST_logging_story
 
 country_event = {
@@ -9883,7 +9937,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: AST_broken_system_events.4.a executed"
 		name = AST_broken_system_events.4.a
-		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_index = 5 }
         set_temp_variable = { party_popularity_increase = 0.005 }
         change_relative_party_popularity = yes
 	}
@@ -9899,7 +9953,7 @@ news_event = { #protests
 	option = {
 		log = "[GetDateText]: [This.GetName]: AST_broken_system_events.5.a executed"
 		name = AST_broken_system_events.5.a
-		set_temp_variable = { party_index = 4 }
+		set_temp_variable = { party_index = 5 }
         set_temp_variable = { party_popularity_increase = 0.025 }
         change_relative_party_popularity = yes
 	}
@@ -9934,7 +9988,86 @@ country_event = {
 				target = ENG
 				modifier = revoked_intelligence_access
 			}
+			country_event = {
+				id = AST_broken_system_events.7
+				days = 8
+			}
 		}
+	}
+}
+
+country_event = { #all quiet
+	id = AST_broken_system_events.7
+	title = AST_broken_system_events.7.t
+	desc = AST_broken_system_events.7.d
+	picture = GFX_aus_adf
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_broken_system_events.7.a executed"
+		name = AST_broken_system_events.7.a
+		add_stability = -0.015
+		hidden_effect = {
+			news_event = {
+				id = AST_broken_system_events.8
+				days = 5
+			}
+		}
+	}
+}
+
+news_event = { #party fractures
+	id = AST_broken_system_events.8
+	title = AST_broken_system_events.8.t
+	picture = GFX_AST_parliament_walkout
+	is_triggered_only = yes
+
+	desc = {
+		text = AST_broken_system_events.8.d.a
+		trigger = {
+			has_completed_focus = AST_mingle_with_the_activists
+		}
+	}
+
+	desc = {
+		text = AST_broken_system_events.8.d.b
+		trigger = {
+			has_completed_focus = AST_invite_the_black_sheep
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_broken_system_events.8.a executed"
+		name = AST_broken_system_events.8.a
+		if = {
+			limit = { has_completed_focus = AST_mingle_with_the_activists }
+			add_popularity = {
+				ideology = nationalist
+				popularity = -0.25
+			}
+		}
+		else_if = {
+			limit = { has_completed_focus = AST_invite_the_black_sheep }
+			set_temp_variable = { party_index = 20 }
+			set_temp_variable = { party_popularity_increase = -0.20 }
+			change_relative_party_popularity = yes	
+		}
+		complete_national_focus = AST_one_nation_divisible
+	}
+}
+
+country_event = {
+	id = AST_broken_system_events.9
+	title = AST_broken_system_events.9.t
+	desc = AST_broken_system_events.9.d
+	picture = GFX_AST_left_protests_1
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_broken_system_events.9.a executed"
+		name = AST_broken_system_events.9.a
+		add_political_power = -50
+		add_stability = -0.03
 	}
 }
 
@@ -9960,6 +10093,46 @@ country_event = {
 
 }
 
+country_event = {
+	id = AST_brownshirt_events.2
+	title = AST_brownshirt_events.2.t
+	desc = AST_brownshirt_events.2.d
+	picture = GFX_AST_neonazi_crowd
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_brownshirt_events.2.a executed"
+		name = AST_brownshirt_events.2.a
+		hidden_effect = {
+                add_popularity = {
+                    ideology = nationalist
+                    popularity = 0.02
+                }
+            }
+        set_temp_variable = { party_index = 21 }
+        set_temp_variable = { party_popularity_increase = 0.02 }
+		change_relative_party_popularity = yes	
+		add_stability = -0.02
+	}
+}
+
+country_event = {
+	id = AST_brownshirt_events.3
+	title = AST_brownshirt_events.3.t
+	desc = AST_brownshirt_events.3.d
+	picture = GFX_AST_stockade_flag_dark
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_brownshirt_events.3.a executed"
+		name = AST_brownshirt_events.3.a
+        set_temp_variable = { party_index = 21 }
+        set_temp_variable = { party_popularity_increase = 0.005 }
+		change_relative_party_popularity = yes	
+		add_political_power = 50
+	}
+}
+
 add_namespace = AST_one_coalition_events
 
 news_event = {
@@ -9983,6 +10156,79 @@ news_event = {
 		change_relative_party_popularity = yes
 		newline = yes
 		decrease_corruption = yes
+	}
+}
+
+country_event = {
+	id = AST_one_coalition_events.2
+	title = AST_one_coalition_events.2.t
+	desc = AST_one_coalition_events.2.d
+	picture = GFX_aus_parliament
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_one_coalition_events.2.a executed"
+		name = AST_one_coalition_events.2.a
+		add_political_power = -100
+		set_temp_variable = { party_index = 21 }
+		set_temp_variable = { party_popularity_increase = -0.02 }
+		change_relative_party_popularity = yes
+	}
+}
+
+add_namespace = AST_national_response_events
+
+country_event = {
+	id = AST_national_response_events.1
+	title = AST_national_response_events.1.t
+	desc = AST_national_response_events.1.d
+	picture = GFX_stock_market
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_national_response_events.1.a executed"
+		name = AST_national_response_events.1.a
+		add_timed_idea = {
+			idea = nat_good_act_ast
+			days = 270
+		}
+		add_stability = 0.02
+		newline = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_landowners_opinion = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_fossil_fuel_industry_opinion = yes
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_national_response_events.1.b executed"
+		name = AST_national_response_events.1.b
+		set_temp_variable = { temp_opinion = -10 }
+		change_landowners_opinion = yes
+		set_temp_variable = { temp_opinion = 10 }
+		change_fossil_fuel_industry_opinion = yes
+	}
+}
+
+country_event = {
+	id = AST_national_response_events.2
+	title = AST_national_response_events.2.t
+	desc = AST_national_response_events.2.d
+	picture = GFX_jury
+	is_triggered_only = yes
+	fire_only_once = yes
+	
+	trigger = {
+		NOT = {
+			has_completed_focus = AST_one_last_push
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_national_response_events.2.a executed"
+		name = AST_national_response_events.2.a
+		add_political_power = -50
+		add_ideas = english_interference_ast
 	}
 }
 
