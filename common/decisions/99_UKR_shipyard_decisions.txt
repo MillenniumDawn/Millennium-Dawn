@@ -231,12 +231,19 @@ UKR_reorganize_navy_category = {
 				tooltip = ukr_yard_needs_merger_tt
 				check_variable = { shipyard_consolidation_stage > 0 }
 			}
+			custom_trigger_tooltip = {
+				tooltip = ukr_yard_owns_mykolaiv_tt
+				owns_state = 1086
+				controls_state = 1086
+			}
 		}
 
 		custom_cost_trigger = { check_variable = { treasury > ukr_cost_large } }
 		custom_cost_text = ukr_cost_large_tt
 
 		days_remove = 540
+
+		cancel_trigger = { NOT = { AND = { owns_state = 1086 controls_state = 1086 } } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_large_slipways"
@@ -250,17 +257,20 @@ UKR_reorganize_navy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_yard_restore_large_slipways"
 			hidden_effect = {
 				if = {
-					limit = { 1086 = { is_owned_and_controlled_by = ROOT } }
+					limit = { owns_state = 1086 controls_state = 1086 }
 					1086 = {
-						add_extra_state_shared_building_slots = 1
-						add_building_construction = {
-							type = large_slipway
-							level = 1
-							instant_build = yes
+						if = {
+							limit = { check_variable = { building_level@large_slipway = 0 } }
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = large_slipway
+								level = 1
+								instant_build = yes
+							}
 						}
 					}
+					UKR_yard_tier_up = yes
 				}
-				UKR_yard_tier_up = yes
 			}
 		}
 
@@ -303,6 +313,14 @@ UKR_reorganize_navy_category = {
 		ai_will_do = {
 			base = 6
 			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 25 } }
+			modifier = {
+				factor = 0
+				OR = {
+					has_idea = corruption_level_08
+					has_idea = corruption_level_09
+					has_idea = corruption_level_10
+				}
+			}
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
 		}
