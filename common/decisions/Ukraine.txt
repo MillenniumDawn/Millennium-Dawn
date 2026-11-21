@@ -26341,7 +26341,7 @@ UKR_reactivate_sov_category = {
 	UKR_storage_help_bribe = {
 		icon = GFX_decision_icon_UKR_modernize_sov_btr60
 		targets = { AGL ALG ARM AZE BOS CHA CHI CRO EGY ETH GEO HUN IND KAZ KYR LBA MOZ POL ROM SUD TRK VIE YEM }
-		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks > 0 } } }
+		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks^num > 0 } } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -26395,7 +26395,7 @@ UKR_reactivate_sov_category = {
 	UKR_storage_help_meeting = {
 		icon = GFX_decision_icon_UKR_modernize_sov_btr60
 		targets = { AGL ALG ARM AZE BOS CHA CHI CRO EGY ETH GEO HUN IND KAZ KYR LBA MOZ POL ROM SUD TRK USA VIE YEM }
-		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks > 0 } } }
+		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks^num > 0 } } }
 
 		visible = {
 			OR = {
@@ -26450,7 +26450,7 @@ UKR_reactivate_sov_category = {
 	UKR_storage_help_deal = {
 		icon = GFX_decision_icon_UKR_modernize_sov_btr60
 		targets = { AGL ALG ARM AZE BOS CHA CHI CRO EGY ETH GEO HUN IND KAZ KYR LBA MOZ POL ROM SUD TRK USA VIE YEM }
-		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks > 0 } } }
+		target_trigger = { FROM = { check_variable = { UKR_storage_sale_talks^num > 0 } } }
 
 		visible = {
 			NOT = { has_country_flag = UKR_storage_deal_done_@FROM }
@@ -26468,7 +26468,12 @@ UKR_reactivate_sov_category = {
 			}
 			custom_trigger_tooltip = {
 				tooltip = UKR_storage_help_deal_declined_tt
-				NOT = { has_country_flag = UKR_storage_deal_declined_@FROM }
+				FROM = {
+					OR = {
+						NOT = { has_country_flag = UKR_storage_deal_declined }
+						has_country_flag = { flag = UKR_storage_deal_declined days > 179 }
+					}
+				}
 			}
 		}
 
@@ -26483,7 +26488,16 @@ UKR_reactivate_sov_category = {
 			custom_effect_tooltip = UKR_storage_help_deal_tt
 			hidden_effect = {
 				set_country_flag = UKR_storage_deal_pending_@FROM
-				FROM = { country_event = ukr_modernize_sov_equipment_storage_sale.41 }
+				FROM = {
+					clr_country_flag = UKR_storage_deal_declined
+					clear_array = UKR_storage_deal_sales
+					for_each_loop = {
+						array = UKR_storage_sale_talks
+						value = ukr_deal_sale_item
+						add_to_array = { UKR_storage_deal_sales = ukr_deal_sale_item }
+					}
+					country_event = ukr_modernize_sov_equipment_storage_sale.41
+				}
 			}
 		}
 	}
