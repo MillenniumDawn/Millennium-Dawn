@@ -4505,14 +4505,19 @@ focus_tree = {
 
 		prerequisite = { focus = KUB_revive_black_sea_rep }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MANPOWER }
+		search_filters = { FOCUS_FILTER_MANPOWER FOCUS_FILTER_EXPENDITURE }
 
-		available = { emerging_communist_state_are_in_power = yes }
+		available = {
+			emerging_communist_state_are_in_power = yes
+			has_manpower > 799
+			any_owned_state = { ROOT = { has_full_control_of_state = PREV } }
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus KUB_new_batalions"
 			URA_idea_ural_army_reforms = yes
-			effect_tooltip = {
+			if = {
+				limit = { NOT = { has_template = "National Battalion" } }
 				division_template = {
 					name = "National Battalion"
 					regiments = {
@@ -4531,21 +4536,27 @@ focus_tree = {
 						L_Engi_Comp = { x = 0 y = 0 }
 					}
 				}
-				add_manpower = -800
-				set_temp_variable = { treasury_change = -3 }
-				modify_treasury_effect = yes
-				random_owned_controlled_state = {
-					limit = { ROOT = { has_full_control_of_state = PREV } }
-					prioritize = { 668 }
-					create_unit = {
-						division = "name = \"Terek Batalion\" division_template = \"National Battalion\" start_experience_factor = 0.1"
-						owner = KUB
-					}
+			}
+			add_manpower = -800
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			random_owned_controlled_state = {
+				limit = { ROOT = { has_full_control_of_state = PREV } }
+				prioritize = { 668 }
+				create_unit = {
+					division = "name = \"Terek Batalion\" division_template = \"National Battalion\" start_experience_factor = 0.1"
+					owner = KUB
 				}
 			}
 		}
 
-		ai_will_do = { base = 355 }
+		ai_will_do = {
+			base = 355
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
