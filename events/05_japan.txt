@@ -3539,7 +3539,10 @@ country_event = {
 	option = {
 		name = JAP_diplomacy.01.a
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.01.a executed"
-		USA = { country_event = JAP_diplomacy.02 }
+		if = {
+			limit = { USA_can_return_okinawa_base = yes }
+			USA = { country_event = JAP_diplomacy.02 }
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -3553,25 +3556,14 @@ country_event = {
 
 	option = {
 		name = JAP_diplomacy.02.a
+		trigger = { USA_can_return_okinawa_base = yes }
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.02.a executed"
-		827 = {
-			transfer_state_to = JAP
-		}
-		USA = {
-			remove_state_core = 827
-			remove_opinion_modifier = {
-				target = JAP
-				modifier = minor_border_dispute
-			}
-		}
-		JAP = {
-			remove_opinion_modifier = {
-				target = USA
-				modifier = minor_border_dispute
-			}
-			country_event = {
-				id = JAP_diplomacy.03
-				days = 5
+		if = {
+			limit = { USA_can_return_okinawa_base = yes }
+			custom_effect_tooltip = USA_return_okinawa_base_tt
+			hidden_effect = {
+				USA_transfer_okinawa_base_to_host = yes
+				JAP = { country_event = { id = JAP_diplomacy.03 days = 5 } }
 			}
 		}
 		ai_chance = {
@@ -3637,23 +3629,31 @@ country_event = {
 
 	option = {
 		name = JAP_diplomacy.02.b
+		trigger = { USA_can_return_okinawa_base = yes }
 		log = "[GetDateText]: [This.GetName]: JAP_diplomacy.02.b executed"
-		JAP = {
-			country_event = {
-				id = JAP_diplomacy.04
-				days = 5
-			}
+		if = {
+			limit = { USA_can_return_okinawa_base = yes }
+			JAP = { country_event = { id = JAP_diplomacy.04 days = 5 } }
 		}
 		ai_chance = {
 			base = 10
 			modifier = {
 				factor = 3
-				power_balance_value = {
-					id = JAP_article_nine
-					value < 0.20
+				JAP = {
+					has_power_balance = { id = JAP_article_nine }
+					power_balance_value = {
+						id = JAP_article_nine
+						value < 0.20
+					}
 				}
 			}
 		}
+	}
+
+	option = {
+		name = JAP_diplomacy.02.c
+		trigger = { USA_can_return_okinawa_base = no }
+		ai_chance = { base = 1 }
 	}
 }
 
@@ -9350,7 +9350,15 @@ country_event = {
 				transfer_state = 823
 				transfer_state = 822
 				transfer_state = 825
-				transfer_state = 827
+			}
+			if = {
+				limit = {
+					USA = {
+						owns_state = 827
+						has_full_control_of_state = 827
+					}
+				}
+				JAP = { transfer_state = 827 }
 			}
 		}
 		ai_chance = {
@@ -9411,7 +9419,7 @@ country_event = {
 		transfer_state = 823
 		transfer_state = 822
 		transfer_state = 825
-		transfer_state = 827
+		USA_transfer_okinawa_base_to_host = yes
 		ai_chance = { base = 10 }
 	}
 }
