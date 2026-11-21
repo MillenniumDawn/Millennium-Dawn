@@ -3,6 +3,7 @@
 import json
 import os
 import re
+import shlex
 import sys
 import tomllib
 
@@ -14,6 +15,7 @@ from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
 from shared.suite import (
+    dds_texture,
     initialize_git_repository,
     run_bash_step,
     run_git,
@@ -144,8 +146,11 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
+    # CI runs the same token scanner within the variables batch.
+    "validate_dynamic_tokens.py",
     # The CI workspace ships entity definitions but no meshes or textures.
     "validate_mesh_textures.py",
+    "validate_asset_data.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
@@ -259,7 +264,7 @@ def test_tools_tests_install_only_the_test_group():
 
 def test_python_version_declarations_agree():
     major, minor = dev_setup.MIN_PYTHON
-    assert (major, minor) == (3, 12)
+    assert (major, minor) == (3, 14)
     assert not hasattr(dev_setup, "REC_PYTHON")
     version = f"{major}.{minor}"
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
@@ -393,6 +398,52 @@ def test_file_paths_run_in_a_lightweight_index_job():
     assert all(
         step.get("name") != "Record failed validation jobs" for step in report["steps"]
     )
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the steps run in bash on Linux")
+def test_pr_dds_step_checks_only_changed_destinations(tmp_path):
+    folder = "gfx/interface/ideas"
+    renamed = f"{folder}/new [icon].DDS"
+    backlog = f"{folder}/untouched.dds"
+    deleted = f"{folder}/deleted.dds"
+    for name in (backlog, deleted, "original.dds"):
+        path = tmp_path / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(dds_texture(16, 16))
+    write_under_str(tmp_path, "keep.txt", "sparse checkout anchor\n")
+    initialize_git_repository(tmp_path, ".")
+    base = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+    run_git(tmp_path, "mv", "original.dds", renamed)
+    run_git(tmp_path, "rm", deleted)
+    run_git(tmp_path, "commit", "-m", "change textures")
+    head = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+    run_git(tmp_path, "sparse-checkout", "set", "--no-cone", "/keep.txt")
+
+    derive = workflow_step("detect-changes", "Derive changed DDS paths")
+    assert derive["env"] == {
+        "MERGE_BASE": "${{ steps.changed.outputs.merge-base }}",
+        "HEAD_SHA": "${{ steps.resolve-ref.outputs.head-sha }}",
+    }
+    result = run_bash_step(
+        derive["run"], tmp_path, {"MERGE_BASE": base, "HEAD_SHA": head}
+    )
+    assert result.returncode == 0, result.stderr
+    out = tmp_path / "changed-files" / "changed-dds.nul"
+    out.parent.mkdir()
+    (tmp_path / out.name).rename(out)
+    assert out.read_bytes() == os.fsencode(renamed) + b"\0"
+
+    check = workflow_step("validate-paths", "Check changed DDS files")
+    script = check["run"].replace(
+        "python3 tools/validation/validate_asset_data.py",
+        f"{shlex.quote(sys.executable)} {shlex.quote(str(VALIDATION_DIR / 'validate_asset_data.py'))}",
+    )
+    result = run_bash_step(script, tmp_path)
+    assert result.returncode == 1, result.stderr
+    assert (tmp_path / renamed).is_file()
+    assert not (tmp_path / backlog).exists()
+    payload = json.loads((tmp_path / "validation-dds.json").read_text(encoding="utf-8"))
+    assert [issue["file"] for issue in payload] == [renamed]
 
 
 def test_detect_changes_uses_python_grouping():
@@ -586,7 +637,6 @@ def test_empty_report_requires_every_validation_job_to_be_skipped():
     conditions = [
         f"needs.{job}.result == '{'success' if job == 'detect-changes' else 'skipped'}'"
         for job in required
-        if job != "report"
     ]
     selector = workflow["jobs"]["report"]["env"]["NO_TESTS_SELECTED"]
     assert " ".join(selector.split()) == "${{ " + " && ".join(conditions) + " }}"
@@ -599,27 +649,34 @@ def test_suite_step_ids_are_unique():
         assert len(ids) == len(set(ids)), name
 
 
-# Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
-ADVISORY_JOBS = {"baseline-scan"}
-
-
 def test_suite_gate_requires_every_validation_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    gate = workflow["jobs"]["gate"]
+    jobs = workflow["jobs"]
+    gate = jobs["gate"]
     assert gate["name"] == "Test suite gate"
     assert gate["if"] == "${{ always() }}"
-    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"} - ADVISORY_JOBS
-    assert ADVISORY_JOBS <= set(workflow["jobs"]["report"]["needs"])
+    assert set(gate["needs"]) == set(jobs) - {"gate", "report", "baseline-scan"}
     failure_step = gate["steps"][0]
-    for job in gate["needs"]:
-        assert f"needs.{job}.result" in failure_step["if"]
+    conditions = ["needs.detect-changes.result != 'success'"] + [
+        f"(needs.{job}.result != 'success' && needs.{job}.result != 'skipped')"
+        for job in gate["needs"]
+        if job != "detect-changes"
+    ]
+    assert " ".join(failure_step["if"].split()) == " || ".join(conditions)
     assert failure_step["run"] == "exit 1"
+
+
+def test_advisory_report_waits_for_all_validation_results_and_baseline():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    jobs = workflow["jobs"]
+    report = jobs["report"]
+    assert set(report["needs"]) == set(jobs["gate"]["needs"]) | {"baseline-scan"}
+    assert report["if"] == "${{ always() && !cancelled() }}"
 
 
 def test_gate_steps_cannot_be_switched_off():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    # The report job's downloads tolerate missing artifacts on purpose.
-    gated = set(workflow["jobs"]["gate"]["needs"]) - {"report"} | {"gate"}
+    gated = set(workflow["jobs"]["gate"]["needs"]) | {"gate"}
     for name in sorted(gated):
         job = workflow["jobs"][name]
         assert "continue-on-error" not in job, name
@@ -1264,6 +1321,8 @@ def test_pytest_collection_gate_cannot_self_exclude():
     [
         ("md-validate-unused-textures", "always_run", True),
         ("md-validate-unused-textures", "pass_filenames", False),
+        # Its warnings show on a passing commit only when pre-commit is verbose.
+        ("md-validate-asset-data", "verbose", True),
         # The dispatcher validates the whole staged set on every run.
         ("md-validate-content", "require_serial", True),
     ],
@@ -1271,6 +1330,11 @@ def test_pytest_collection_gate_cannot_self_exclude():
 def test_precommit_hook_run_settings(hook_id, key, expected):
     hook = _precommit_hooks()[hook_id]
     assert hook.get(key) is expected
+
+
+def test_gui_files_trigger_the_content_hook():
+    hook = _precommit_hooks()["md-validate-content"]
+    assert re.search(hook["files"], "interface/example.gui")
 
 
 def test_ci_strict_gate_lives_in_batch_specs():

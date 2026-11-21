@@ -6,9 +6,10 @@
 # Effect: install_influence_coup_rebel_party
 # Purpose: copy influence_coup_party onto a civil-war rebel
 install_influence_coup_rebel_party = {
-	set_variable = { ruling_party = FROM.influence_coup_party }
-	set_temp_variable = { _coup_slot = FROM.influence_coup_party }
-	set_variable = { party_pop_array^_coup_slot = 0.7 }
+	set_temp_variable = { rul_party_temp = FROM.influence_coup_party }
+	set_variable = { party_pop_array^rul_party_temp = 0.7 }
+	set_temp_variable = { disable_elections = 1 }
+	change_ruling_party_effect = yes
 }
 
 # Effect: init_influence
@@ -49,9 +50,9 @@ sort_influence = {
 		}
 		set_temp_variable = { current_tag = influence_array^max_index }
 		if = { limit = {
-			NOT = { check_variable = { max < 0.01 } }
-			country_exists = var:current_tag
-		}
+				NOT = { check_variable = { max < 0.01 } }
+				country_exists = var:current_tag
+			}
 			set_temp_variable = { influence_array_val_temp^v = max }
 			set_temp_variable = { influence_array_temp^v = current_tag }
 		}
@@ -188,7 +189,7 @@ influence_coup_effect = {
 }
 
 # Effect: make_puppet_action
-# Purpose: make THIS a loose associated state of ROOT, close to independence
+# Purpose: make THIS a loose associated state of ROOT, close to independence, or a Mintaqah under a Caliphate ROOT
 make_puppet_action = {
 	# Remove exploitation ideas so they do not double up with the subject relationship
 	for_loop_effect = {
@@ -204,12 +205,23 @@ make_puppet_action = {
 	}
 
 	ROOT = {
-		set_autonomy = {
-			target = PREV
-			autonomy_state = autonomy_associated_state
-			freedom_level = 0.95
-			end_wars = no
-			end_civil_wars = no
+		if = {
+			limit = { salafist_caliphate_are_in_power = yes }
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_terrorist_mintaqah
+				end_wars = no
+				end_civil_wars = no
+			}
+		}
+		else = {
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_associated_state
+				freedom_level = 0.95
+				end_wars = no
+				end_civil_wars = no
+			}
 		}
 		add_named_threat = { threat = 3 name = created_puppet_loc }
 		PREV = {
@@ -274,13 +286,14 @@ manipulate_politics_action = {
 	# Base PP cost; special cases refund 50.
 	set_temp_variable = { manipulate_politics_pp_cost = -100 }
 
-	# Scale var_pop by the influencer's foreign influence mod.
+	# Scale var_pop by the influencer's foreign influence modifier less the target's defense.
 	multiply_temp_variable = {
 		var = var_pop
 		value = {
 			value = 1
 			add = ROOT.modifier@foreign_influence_modifier
-			clamp = { min = 0.01 max = 0.15 }
+			subtract = modifier@foreign_influence_defense_modifier
+			clamp = { min = 0.5 max = 1.5 }
 		}
 	}
 
@@ -318,7 +331,7 @@ manipulate_politics_action = {
 			change_influence_percentage = yes
 		}
 		else_if = {
-			limit = { THIS = { original_tag = AFG } }
+			limit = { original_tag = AFG }
 			add_to_temp_variable = { manipulate_politics_pp_cost = 50 }
 			add_to_temp_variable = { var_pop = -0.05 }
 			set_temp_variable = { party_index = 8 }
@@ -680,45 +693,45 @@ apply_influence_special_modifiers = {
 
 	if = {
 		limit = {
-			NOT = { uses_own_reserve_currency = yes }
 			OR = {
 				AND = {
-					has_idea = us_dollar
 					check_variable = { tag_index = global.usd_issuer }
+					has_idea = us_dollar
 				}
 				AND = {
-					has_idea = euro
 					check_variable = { tag_index = global.eur_issuer }
+					has_idea = euro
 				}
 				AND = {
-					OR = { has_idea = chinese_yuan has_idea = chinese_yuan_2 has_idea = chinese_yuan_3 }
 					check_variable = { tag_index = global.cny_issuer }
+					OR = { has_idea = chinese_yuan has_idea = chinese_yuan_2 has_idea = chinese_yuan_3 }
 				}
 				AND = {
-					has_idea = russia_rouble
 					check_variable = { tag_index = global.rub_issuer }
+					has_idea = russia_rouble
 				}
 				AND = {
-					has_idea = japanese_yen
 					check_variable = { tag_index = global.jpy_issuer }
+					has_idea = japanese_yen
 				}
 				AND = {
-					has_idea = british_pound
 					check_variable = { tag_index = global.gbp_issuer }
+					has_idea = british_pound
 				}
 				AND = {
-					has_idea = swiss_frank
 					check_variable = { tag_index = global.chf_issuer }
+					has_idea = swiss_frank
 				}
 				AND = {
-					has_idea = gulden
 					check_variable = { tag_index = global.nlg_issuer }
+					has_idea = gulden
 				}
 				AND = {
-					has_idea = brazilian_real
 					check_variable = { tag_index = global.brl_issuer }
+					has_idea = brazilian_real
 				}
 			}
+			NOT = { uses_own_reserve_currency = yes }
 		}
 		add_to_temp_variable = { influence_change = 0.03 }
 	}
@@ -793,15 +806,15 @@ apply_influence_special_modifiers = {
 	# -- Multi-influencer / influencer-property (independent, always checked) --
 	if = {
 		limit = {
-			has_idea = IRQ_expulsion_of_foreigners_idea
 			OR = { check_variable = { tag_index = PER } check_variable = { tag_index = USA } }
+			has_idea = IRQ_expulsion_of_foreigners_idea
 		}
 		add_to_temp_variable = { influence_change = -0.25 }
 	}
 	if = {
 		limit = {
-			has_idea = PER_strength_of_our_lobby
 			OR = { check_variable = { tag_index = ISR } check_variable = { tag_index = USA } }
+			has_idea = PER_strength_of_our_lobby
 		}
 		add_to_temp_variable = { influence_change = -0.25 }
 	}

@@ -7,7 +7,6 @@ CHI_sco_category = {
 		icon = GFX_decision_sco_watch_button
 
 		visible = {
-			CHI = { has_completed_focus = CHI_Form_the_SCO }
 			NOT = { CHI_sco_is_any = yes }
 		}
 
@@ -611,6 +610,7 @@ CHI_sco_category = {
 	}
 
 	### SCO Mega-Projects ###
+	# Proposal state: 0 idle, 1 active. Timed global flags reserve pending proposals.
 	sco_megaproject_energy_grid_propose = {
 		icon = GFX_decision_sco_watch_button
 
@@ -619,12 +619,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Civilian_Technology_Sharing }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_energy_grid_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_energy_grid_inactive_tt
+				check_variable = { var = global.sco_megaproject_energy_grid_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_energy_grid_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 2.0 } }
 		custom_cost_text = cost_2_0
 		cost = 100
@@ -632,18 +640,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_energy_grid_propose"
-			set_country_flag = sco_megaproject_energy_grid_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_energy_grid_active = 1 }
+				set_country_flag = sco_megaproject_energy_grid_initiator
 				set_country_flag = { flag = sco_megaproject_energy_grid_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.42 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_energy_grid_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_energy_grid_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.30 days = 3 } }
 			}
 			newline = yes
@@ -720,12 +735,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Exploit_Economic_Clout }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_railway_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_railway_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_railway_inactive_tt
+				check_variable = { var = global.sco_megaproject_railway_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_railway_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 3.0 } }
 		custom_cost_text = cost_3_0
 		cost = 150
@@ -733,18 +756,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_railway_propose"
-			set_country_flag = sco_megaproject_railway_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_railway_active = 1 }
+				set_country_flag = sco_megaproject_railway_initiator
 				set_country_flag = { flag = sco_megaproject_railway_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.41 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_railway_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_railway_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.31 days = 3 } }
 			}
 			newline = yes
@@ -821,12 +851,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Development_Assistance }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_dev_bank_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_dev_bank_inactive_tt
+				check_variable = { var = global.sco_megaproject_dev_bank_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_dev_bank_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 5.0 } }
 		custom_cost_text = cost_5_0
 		cost = 200
@@ -834,18 +872,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_dev_bank_propose"
-			set_country_flag = sco_megaproject_dev_bank_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_dev_bank_active = 1 }
+				set_country_flag = sco_megaproject_dev_bank_initiator
 				set_country_flag = { flag = sco_megaproject_dev_bank_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.43 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_dev_bank_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_dev_bank_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.32 days = 3 } }
 			}
 			newline = yes
@@ -922,12 +967,20 @@ CHI_sco_category = {
 			CHI = { has_completed_focus = CHI_Strengthen_Security_Framework }
 			custom_trigger_tooltip = {
 				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
-				NOT = { check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = greater_than } }
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
 			}
 			NOT = { has_global_flag = sco_megaproject_air_defense_completed }
 		}
 
-		available = { NOT = { has_war_with = CHI } }
+		available = {
+			NOT = { has_war_with = CHI }
+			custom_trigger_tooltip = {
+				tooltip = CHI_sco_megaproject_air_defense_inactive_tt
+				check_variable = { var = global.sco_megaproject_air_defense_active value = 0 compare = equals }
+				NOT = { has_global_flag = sco_megaproject_air_defense_pending }
+			}
+		}
 		custom_cost_trigger = { check_variable = { treasury > 1.5 } }
 		custom_cost_text = cost_1_5
 		cost = 100
@@ -935,18 +988,25 @@ CHI_sco_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision sco_megaproject_air_defense_propose"
-			set_country_flag = sco_megaproject_air_defense_initiator
 			if = {
 				limit = { CHI = { check_variable = { CHI_sco_balance > 5 } } }
 				set_variable = { global.sco_megaproject_air_defense_active = 1 }
+				set_country_flag = sco_megaproject_air_defense_initiator
 				set_country_flag = { flag = sco_megaproject_air_defense_window value = 1 days = 180 }
 				CHI = { country_event = { id = CHI_sco.44 days = 180 } }
 			}
 			else_if = {
-				limit = { CHI = { check_variable = { CHI_sco_balance < -5 } } }
+				limit = {
+					CHI = { check_variable = { CHI_sco_balance < -5 } }
+					country_exists = SOV
+				}
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				SOV = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			else = {
+				set_country_flag = { flag = sco_megaproject_air_defense_initiator value = 1 days = 30 }
+				set_global_flag = { flag = sco_megaproject_air_defense_pending value = 1 days = 30 }
 				CHI = { country_event = { id = CHI_sco.33 days = 3 } }
 			}
 			newline = yes
@@ -2770,12 +2830,8 @@ CHI_SAR_decisions_category = {
 			}
 		}
 
-		visible = {
-			has_completed_focus = CHI_TAI_one_china_enforcement
-			country_exists = TAI
-		}
+		visible = { country_exists = TAI }
 
-		available = { has_completed_focus = CHI_TAI_one_china_enforcement }
 		cost = 50
 		days_remove = 90
 		days_re_enable = 365
@@ -3651,7 +3707,6 @@ CHI_SAR_decisions_category = {
 		icon = generic_brainwash
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 		}
 
@@ -3893,7 +3948,6 @@ CHI_SAR_decisions_category = {
 		icon = generic_political_discourse
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 		}
 
@@ -3919,7 +3973,6 @@ CHI_SAR_decisions_category = {
 		icon = generic_intelligence_operation
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 		}
 
@@ -3947,7 +4000,6 @@ CHI_SAR_decisions_category = {
 		icon = generic_welfare
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 		}
 
@@ -3986,7 +4038,6 @@ CHI_SAR_decisions_category = {
 		icon = eng_trade_unions_support
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 		}
 
@@ -4024,7 +4075,6 @@ CHI_SAR_decisions_category = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_SAR_one_china_framework
 			country_exists = TAI
 			TAI = { has_country_flag = TAI_CSSTA_signed }
 		}
@@ -4960,7 +5010,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Cabbage_Strategy }
 
 		available = {
-			has_war = no
 			NOT = { has_idea = CHI_militia_deployed }
 		}
 
@@ -4995,7 +5044,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
 				check_variable = { treasury > 5 }
@@ -5040,7 +5088,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
 				check_variable = { treasury > 5 }
@@ -5085,7 +5132,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
 				check_variable = { treasury > 5 }
@@ -5130,7 +5176,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Sansha_Administrative_Upgrade }
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_island_construction_treasury_tt
 				check_variable = { treasury > 5 }
@@ -5180,7 +5225,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = PHI }
 		}
 
@@ -5254,7 +5298,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = VIE }
 		}
 
@@ -5328,7 +5371,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = MAY }
 		}
 
@@ -5401,7 +5443,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = IND }
 		}
 
@@ -5438,7 +5479,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			NOT = { has_war_with = IND }
 		}
 
@@ -5467,7 +5507,6 @@ CHI_south_china_sea_category = {
 		icon = generic_political_discourse
 		fire_only_once = yes
 		visible = { has_completed_focus = CHI_The_Spirit_Of_Zheng_He }
-		available = { has_war = no }
 		cost = 50
 
 		complete_effect = {
@@ -5494,7 +5533,6 @@ CHI_south_china_sea_category = {
 		visible = { has_completed_focus = CHI_The_Maritime_Silk_Road_Initiative }
 
 		available = {
-			has_war = no
 			country_exists = CBD
 			country_exists = LAO
 			CBD = { has_opinion = { target = ROOT value > 25 } }
@@ -5534,7 +5572,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			VIE = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5580,7 +5617,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			PHI = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5627,7 +5663,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			MAY = { has_opinion = { target = ROOT value > 0 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_0_tt
@@ -5672,7 +5707,6 @@ CHI_south_china_sea_category = {
 			country_exists = VIE
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5712,7 +5746,6 @@ CHI_south_china_sea_category = {
 			country_exists = PHI
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5752,7 +5785,6 @@ CHI_south_china_sea_category = {
 			country_exists = MAY
 		}
 
-		available = { has_war = no }
 		cost = 100
 		days_re_enable = 1095
 		fixed_random_seed = no
@@ -5794,7 +5826,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			VIE = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5834,7 +5865,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			PHI = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5874,7 +5904,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			MAY = { has_opinion = { target = ROOT value > 25 } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_framework_gt_20_tt
@@ -5906,7 +5935,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_first_island_chain_exercise = {
 		icon = generic_naval
 		visible = { has_completed_focus = CHI_Liu_Huaqing_Doctrine }
-		available = { has_war = no }
 		cost = 75
 		days_remove = 120
 		days_re_enable = 365
@@ -5927,7 +5955,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_carrier_strike_group_deployment = {
 		icon = HOL_air_carrier
 		visible = { has_completed_focus = CHI_The_PLAN_Expeditionary_Buildup }
-		available = { has_war = no }
 		cost = 100
 		days_remove = 90
 		days_re_enable = 180
@@ -5959,7 +5986,6 @@ CHI_south_china_sea_category = {
 			country_exists = VIE
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6017,7 +6043,6 @@ CHI_south_china_sea_category = {
 			country_exists = PHI
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6075,7 +6100,6 @@ CHI_south_china_sea_category = {
 			country_exists = MAY
 		}
 
-		available = { has_war = no }
 		cost = 80
 		days_re_enable = 90
 
@@ -6135,7 +6159,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_VIE_req_tt
 				check_variable = { CHI_scs_clash_counter_VIE > 2 }
@@ -6175,7 +6198,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_PHI_req_tt
 				check_variable = { CHI_scs_clash_counter_PHI > 2 }
@@ -6215,7 +6237,6 @@ CHI_south_china_sea_category = {
 		}
 
 		available = {
-			has_war = no
 			custom_trigger_tooltip = {
 				tooltip = CHI_scs_clash_counter_MAY_req_tt
 				check_variable = { CHI_scs_clash_counter_MAY > 2 }
@@ -6247,7 +6268,6 @@ CHI_south_china_sea_category = {
 	CHI_scs_summon_dragon_king_blessing = {
 		icon = eng_abdication_crisis
 		visible = { has_completed_focus = CHI_The_Mandate_Of_The_Seas }
-		available = { has_war = no }
 		cost = 25
 		days_re_enable = 1095
 
@@ -6271,7 +6291,6 @@ CHI_south_china_sea_category = {
 			controls_state = 943
 		}
 
-		available = { has_war = no }
 		cost = 300
 
 		complete_effect = {
@@ -7816,6 +7835,7 @@ CHI_BRI_management = {
 		}
 
 		available = {
+			hidden_trigger = { FROM = { NOT = { has_idea = chinese_surveillance_systems } } }
 			custom_trigger_tooltip = {
 				tooltip = CHI_bri_dual_treasury_80_tt
 				check_variable = { var = CHI_bri_treasury value = 80 compare = greater_than_or_equals }
@@ -8397,7 +8417,7 @@ CHI_BRI_recipient_finance = {
 CHI_VEN_petrocaribe_program = {
 	CHI_VEN_oil_processing_aid = {
 		icon = oil
-		visible = { country_exists = VEN VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
+		visible = { VEN = { has_opinion_modifier = CHI_loans_for_oil_partner } }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -8428,7 +8448,6 @@ CHI_VEN_petrocaribe_program = {
 
 	CHI_VEN_emergency_food_aid = {
 		icon = SWI_support_humanitarian_efforts
-		visible = { country_exists = VEN }
 
 		available = {
 			custom_trigger_tooltip = {
@@ -8460,7 +8479,6 @@ CHI_VEN_petrocaribe_program = {
 		icon = sovfed_money_button
 
 		visible = {
-			country_exists = VEN
 			date > 2017.1.1
 		}
 
@@ -8633,7 +8651,6 @@ CHI_pacific_pla_training = {
 CHI_BRI_project_missions = {
 	CHI_bri_project_mission = {
 		icon = generic_construction
-		allowed = { NOT = { original_tag = CHI } }
 		activation = { always = no }
 		available = { hidden_trigger = { always = no } }
 		is_good = yes
@@ -8674,7 +8691,6 @@ CHI_olympic_preparations = {
 
 	CHI_olympic_venue_construction = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 15 } }
 		custom_cost_text = cost_15_0
 		cost = 0
@@ -8715,7 +8731,6 @@ CHI_olympic_preparations = {
 
 	CHI_olympic_athlete_village = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 10 } }
 		custom_cost_text = cost_10_0
 		cost = 0
@@ -8751,7 +8766,6 @@ CHI_olympic_preparations = {
 
 	CHI_olympic_transport_links = {
 		icon = generic_construction
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 10 } }
 		custom_cost_text = cost_10_0
 		cost = 0
@@ -8794,7 +8808,6 @@ CHI_olympic_preparations = {
 
 	CHI_olympic_environmental_program = {
 		icon = generic_forestry
-		visible = { has_completed_focus = CHI_beijing_action_plan_green_olympics }
 		custom_cost_trigger = { check_variable = { treasury > 8 } }
 		custom_cost_text = cost_8_0
 		cost = 0
@@ -9157,7 +9170,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9168,7 +9181,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_north_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9207,7 +9220,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9218,7 +9231,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_east_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9257,7 +9270,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9268,7 +9281,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_south_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9307,7 +9320,7 @@ CHI_railway_improvement = {
 		available = {
 			custom_trigger_tooltip = {
 				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				check_variable = { treasury > 18 }
 			}
 		}
 
@@ -9318,7 +9331,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_central_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -18 }
 			modify_treasury_effect = yes
 		}
 
@@ -9356,8 +9369,8 @@ CHI_railway_improvement = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = CHI_railway_upgrade_treasury_tt
-				check_variable = { treasury > 12.5 }
+				tooltip = CHI_railway_west_upgrade_treasury_tt
+				check_variable = { treasury > 22.5 }
 			}
 		}
 
@@ -9368,7 +9381,7 @@ CHI_railway_improvement = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_railway_west_upgrade executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -12.5 }
+			set_temp_variable = { treasury_change = -22.5 }
 			modify_treasury_effect = yes
 		}
 
@@ -9446,7 +9459,12 @@ CHI_local_debt_category = {
 
 		available = { always = no }
 
-		cancel_trigger = { NOT = { check_variable = { CHI_local_debt_pressure < 1 } } }
+		cancel_trigger = {
+			custom_trigger_tooltip = {
+				tooltip = CHI_local_debt_pressure_gt_0_tt
+				NOT = { check_variable = { CHI_local_debt_pressure < 1 } }
+			}
+		}
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission CHI_local_debt_resolution_mission completed"
@@ -10377,6 +10395,36 @@ CHI_industrial_investment_category = {
 }
 
 CHI_military_decisions_category = {
+	CHI_varyag_negotiate_transit = {
+		icon = varyag_transit
+		fire_only_once = yes
+		cost = 15
+
+		visible = { has_global_flag = varyag_dispute_open }
+
+		available = {
+			varyag_transit_possible = yes
+			custom_trigger_tooltip = {
+				tooltip = varyag_chinese_funds_tt
+				check_variable = { var = treasury value = 2.0 compare = greater_than_or_equals }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision CHI_varyag_negotiate_transit"
+			custom_effect_tooltip = varyag_transit_offer_tt
+			hidden_effect = { TUR = { country_event = ukraine_varyag.4 } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = { add = 5 has_opinion = { target = TUR value > 25 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 is_historical_focus_on = yes }
+		}
+	}
+
 	CHI_eastern_theatre_command = {
 		icon = generic_army_support
 		visible = { has_completed_focus = CHI_joint_operations_command }
@@ -10700,7 +10748,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_eastern_done }
 		}
 
@@ -10752,7 +10799,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_central_done }
 		}
 
@@ -10804,7 +10850,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_snwt_western_done }
 		}
 
@@ -10855,7 +10900,6 @@ CHI_megaprojects = {
 		icon = generic_electricity
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_uhv_west_done }
 		}
 
@@ -10957,7 +11001,6 @@ CHI_megaprojects = {
 		icon = decision_generic_electricity
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_fusion_program_done }
 		}
 
@@ -11011,7 +11054,6 @@ CHI_megaprojects = {
 		icon = generic_forestry
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_green_wall_done }
 		}
 
@@ -11063,7 +11105,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_sichuan_tibet_done }
 			589 = { is_owned_by = CHI }
 		}
@@ -11151,7 +11192,6 @@ CHI_megaprojects = {
 		}
 
 		target_root_trigger = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			custom_trigger_tooltip = {
 				tooltip = CHI_mega_rail_hub_cap_tt
 				check_variable = { CHI_mega_rail_hub_count < 5 }
@@ -11159,8 +11199,8 @@ CHI_megaprojects = {
 		}
 
 		available = { num_of_civilian_factories_available_for_projects > 5 }
-		custom_cost_trigger = { check_variable = { treasury > 10 } }
-		custom_cost_text = cost_10_0
+		custom_cost_trigger = { check_variable = { treasury > 9 } }
+		custom_cost_text = cost_9_0
 		cost = 0
 		days_remove = 365
 		days_re_enable = 30
@@ -11169,7 +11209,7 @@ CHI_megaprojects = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision CHI_build_mega_rail_hub in [FROM.GetName] executed"
 			newline = yes
-			set_temp_variable = { treasury_change = -10 }
+			set_temp_variable = { treasury_change = -9 }
 			modify_treasury_effect = yes
 		}
 
@@ -11199,7 +11239,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_hainan_ftp_done }
 			531 = { is_owned_by = CHI }
 		}
@@ -11313,7 +11352,6 @@ CHI_megaprojects = {
 		icon = generic_construction
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_kra_underwritten }
 			SIA = { has_completed_focus = SIA_kra_patron_china }
 		}
@@ -11367,7 +11405,6 @@ CHI_megaprojects = {
 		icon = generic_naval
 
 		visible = {
-			has_completed_focus = CHI_four_trillion_stimulus
 			NOT = { has_country_flag = CHI_kra_transit_done }
 			SIA = {
 				OR = {
