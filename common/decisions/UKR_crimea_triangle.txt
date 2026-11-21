@@ -1,4 +1,94 @@
 UKR_crimean_bop_category = {
+	UKR_crimean_bop_improve_crimean_roads = {
+		icon = road_construction_ast
+		fire_only_once = yes
+		visible = {
+			UKR_crimean_bop_show_ukrainian_influence = yes
+			NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+			UKR_crimean_bop_can_negotiate_settlement = yes
+			669 = { infrastructure < 6 }
+		}
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.3 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_3
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_crimean_bop_improve_crimean_roads"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.3 }
+				modify_treasury_effect = yes
+			}
+			activate_mission = UKR_crimean_bop_crimean_roadworks_mission
+			hidden_effect = {
+				if = {
+					limit = { SOV = { exists = yes is_ai = no } }
+					SOV = { country_event = { id = ukraine_crimea_balance.403 } }
+				}
+				set_temp_variable = { UKR_crimean_bop_completed_decision_token = token:UKR_crimean_bop_improve_crimean_roads }
+				UKR_crimean_bop_record_ukrainian_decision = yes
+			}
+		}
+		ai_will_do = {
+			base = 0.5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_crimean_bop_replace_crimean_road_funding = {
+		icon = road_construction_ast
+		fire_only_once = yes
+		visible = { UKR_crimean_bop_can_rescue_crimean_roadworks = yes }
+		available = { UKR_crimean_bop_can_rescue_crimean_roadworks = yes }
+		custom_cost_trigger = { check_variable = { var = treasury value = 0.2 compare = greater_than_or_equals } }
+		custom_cost_text = cost_0_2
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_crimean_bop_replace_crimean_road_funding"
+			custom_effect_tooltip = UKR_crimean_bop_resume_crimean_roadworks_tt
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.2 }
+				modify_treasury_effect = yes
+				clr_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+				set_temp_variable = { UKR_crimean_bop_completed_decision_token = token:UKR_crimean_bop_replace_crimean_road_funding }
+				UKR_crimean_bop_record_ukrainian_decision = yes
+			}
+		}
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0 UKR_crimean_bop_can_audit_crimean_roadworks = yes NOT = { has_political_power < 35 } }
+		}
+	}
+
+	UKR_crimean_bop_audit_crimean_roadworks = {
+		icon = ukr_crimea_corruption
+		fire_only_once = yes
+		visible = { UKR_crimean_bop_can_rescue_crimean_roadworks = yes }
+		available = {
+			UKR_crimean_bop_can_rescue_crimean_roadworks = yes
+			custom_trigger_tooltip = {
+				tooltip = UKR_crimean_bop_corruption_below_5_tt
+				UKR_crimean_bop_can_audit_crimean_roadworks = yes
+			}
+		}
+		cost = 35
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_crimean_bop_audit_crimean_roadworks"
+			custom_effect_tooltip = UKR_crimean_bop_audit_crimean_roadworks_tt
+			if = {
+				limit = { country_exists = SOV }
+				add_opinion_modifier = { target = SOV modifier = recent_actions_negative }
+				SOV = { add_opinion_modifier = { target = UKR modifier = recent_actions_negative } }
+			}
+			hidden_effect = {
+				clr_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+				set_country_flag = UKR_crimean_bop_road_audit_flag
+				set_temp_variable = { UKR_crimean_bop_completed_decision_token = token:UKR_crimean_bop_audit_crimean_roadworks }
+				UKR_crimean_bop_record_ukrainian_decision = yes
+			}
+		}
+		ai_will_do = { base = 8 }
+	}
+
 	UKR_crimean_bop_expand_administration_stage_1 = {
 		icon = ukr_crimea_administration
 		visible = {
@@ -1663,6 +1753,51 @@ UKR_crimean_bop_category = {
 		}
 		ai_will_do = { base = 0.1 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
 	}
+	UKR_crimean_bop_crimean_roadworks_mission = {
+		icon = road_construction_ast
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		is_good = yes
+		cancel_trigger = {
+			OR = {
+				has_country_flag = UKR_crimean_bop_settlement_resolved_flag
+				669 = { NOT = { is_owned_by = UKR } }
+			}
+		}
+		cancel_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_crimean_bop_crimean_roadworks_mission canceled"
+			clr_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+			clr_country_flag = UKR_crimean_bop_road_audit_flag
+		}
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_crimean_bop_crimean_roadworks_mission completed"
+			if = {
+				limit = { UKR_crimean_bop_crimean_roadworks_can_finish = yes }
+				669 = {
+					if = {
+						limit = { infrastructure < 6 }
+						add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+					}
+				}
+				set_temp_variable = { crimea_requested_influence_change = 3 }
+				set_temp_variable = { crimea_influence_history_source = 1 }
+				if = {
+					limit = { has_country_flag = UKR_crimean_bop_road_audit_flag }
+					set_temp_variable = { crimea_requested_influence_change = 5 }
+					set_temp_variable = { crimea_influence_history_source = 2 }
+				}
+				UKR_crimean_bop_transfer_influence_from_russia_to_ukraine = yes
+			}
+			else_if = {
+				limit = { is_ai = no has_country_flag = UKR_crimean_bop_road_funds_diverted_flag }
+				country_event = { id = ukraine_crimea_balance.405 }
+			}
+			clr_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+			clr_country_flag = UKR_crimean_bop_road_audit_flag
+		}
+	}
+
 	UKR_crimean_bop_expand_administration_stage_1_mission = {
 		icon = ukr_crimea_administration
 		activation = { always = no }
@@ -2612,15 +2747,25 @@ UKR_crimean_bop_category = {
 		activation = { always = no }
 		available = { always = no }
 		days_mission_timeout = 180
-		is_good = yes
-		cancel_trigger = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+		is_good = no
+		cancel_trigger = { UKR_crimean_bop_can_expand_sevastopol_base = no }
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission UKR_crimean_bop_fleet_expansion_mission completed"
-			if = { limit = {  NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag } }
+			if = {
+				limit = { UKR_crimean_bop_can_expand_sevastopol_base = yes }
+				1112 = {
+					if = {
+						limit = { free_building_slots = { building = naval_base size > 0 province = 3468 } }
+						add_building_construction = { type = naval_base level = 1 instant_build = yes province = 3468 }
+					}
+					else_if = {
+						limit = { infrastructure < 6 }
+						add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+					}
+				}
 				set_temp_variable = { crimea_requested_influence_change = 3 }
 				set_temp_variable = { crimea_influence_history_source = 10 }
 				UKR_crimean_bop_transfer_influence_from_ukraine_to_russia = yes
-
 			}
 		}
 	}
@@ -2945,11 +3090,44 @@ UKR_crimean_bop_category = {
 		available = { always = no }
 		days_mission_timeout = 90
 		is_good = no
+		cancel_trigger = { UKR_crimean_bop_can_expand_sevastopol_base = no }
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission UKR_crimean_bop_fleet_deal_mission completed"
-			set_temp_variable = { crimea_requested_influence_change = 5 }
-			UKR_crimean_bop_transfer_influence_from_ukraine_to_russia = yes
-			if = { limit = { NOT = { has_active_mission = UKR_crimean_bop_fleet_expansion_mission } } activate_mission = UKR_crimean_bop_fleet_expansion_mission }
+			if = {
+				limit = { UKR_crimean_bop_can_expand_sevastopol_base = yes }
+				set_temp_variable = { crimea_requested_influence_change = 5 }
+				set_temp_variable = { crimea_influence_history_source = 10 }
+				UKR_crimean_bop_transfer_influence_from_ukraine_to_russia = yes
+				if = {
+					limit = {
+						UKR_crimean_bop_can_expand_sevastopol_base = yes
+						NOT = { has_active_mission = UKR_crimean_bop_fleet_expansion_mission }
+					}
+					activate_mission = UKR_crimean_bop_fleet_expansion_mission
+				}
+			}
+		}
+	}
+
+	UKR_crimean_bop_kerch_bridge_mission = {
+		icon = road_construction_ast
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		is_good = no
+		cancel_trigger = { UKR_crimean_bop_can_build_kerch_bridge = no }
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission UKR_crimean_bop_kerch_bridge_mission completed"
+			if = {
+				limit = {
+					UKR_crimean_bop_can_build_kerch_bridge = yes
+					can_build_railway = { path = { 9680 6741 11729 3734 } }
+				}
+				build_railway = { path = { 9680 6741 11729 3734 } level = 1 }
+				set_temp_variable = { crimea_requested_influence_change = 6 }
+				set_temp_variable = { crimea_influence_history_source = 7 }
+				UKR_crimean_bop_transfer_influence_from_ukraine_to_russia = yes
+			}
 		}
 	}
 	UKR_crimean_bop_repatriation_from_russia_mission = {
@@ -3455,6 +3633,41 @@ SOV_crimea_russian_influence_decisions = {
 		}
 	}
 
+	SOV_crimea_local_corruption = {
+		icon = ukr_crimea_corruption
+		fire_only_once = yes
+		visible = {
+			UKR = {
+				has_active_mission = UKR_crimean_bop_crimean_roadworks_mission
+				UKR_crimean_bop_crimean_roadworks_can_finish = yes
+			}
+		}
+		cost = 30
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_crimea_local_corruption"
+			custom_effect_tooltip = SOV_crimea_local_corruption_tt
+			UKR = {
+				hidden_effect = {
+					set_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+					add_days_mission_timeout = { mission = UKR_crimean_bop_crimean_roadworks_mission days = 60 }
+					if = {
+						limit = { is_ai = no }
+						country_event = { id = ukraine_crimea_balance.404 }
+					}
+				}
+			}
+			hidden_effect = {
+				set_temp_variable = { UKR_crimean_bop_completed_decision_token = token:SOV_crimea_local_corruption }
+				UKR_crimean_bop_record_russian_decision = yes
+			}
+		}
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 0.25 UKR = { UKR_crimean_bop_can_audit_crimean_roadworks = yes } }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
 	SOV_crimea_request_fleet_privileges = {
 		icon = ukr_crimea_fleet
 		visible = {
@@ -3474,6 +3687,33 @@ SOV_crimea_russian_influence_decisions = {
 			}
 		}
 		ai_will_do = { base = 0.35 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }
+	}
+
+	SOV_crimea_demand_kerch_bridge = {
+		icon = road_construction_ast
+		fire_only_once = yes
+		visible = { SOV_crimea_demand_kerch_bridge_is_visible = yes }
+		available = { can_build_railway = { path = { 9680 6741 11729 3734 } } }
+		custom_cost_trigger = { check_variable = { var = treasury value = 1.0 compare = greater_than_or_equals } }
+		custom_cost_text = cost_1_0
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_crimea_demand_kerch_bridge"
+			custom_effect_tooltip = SOV_crimea_demand_kerch_bridge_tt
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -1.0 }
+				modify_treasury_effect = yes
+				set_country_flag = SOV_crimea_kerch_bridge_requested_flag
+				UKR = { country_event = { id = ukraine_crimea_balance.406 } }
+				set_temp_variable = { UKR_crimean_bop_completed_decision_token = token:SOV_crimea_demand_kerch_bridge }
+				UKR_crimean_bop_record_russian_decision = yes
+			}
+		}
+		ai_will_do = {
+			base = 0.45
+			modifier = { factor = 2 UKR = { UKR_crimean_bop_ai_pro_russian_path = yes } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
 	}
 
 	# Russian political preparation and diplomatic escalation
