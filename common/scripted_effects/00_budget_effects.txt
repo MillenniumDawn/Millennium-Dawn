@@ -8,6 +8,12 @@
 # Recession - Level 2
 # Depression - Level 1
 
+# Cap on the AI's economic cycle loan as a share of GDP; the rest of the charge must be cash
+@ai_cycle_loan_max_gdp_share = 0.10
+@ai_cycle_loan_fee_multiplier = 1.01
+# Cap on economic_cycles_cost_factor inside the cycle charge, so stacking cannot inflate it
+@economic_cycles_cost_factor_cap = 2
+
 # Increase Economic Growth - Rewritten
 increase_economic_growth = {
 	set_country_flag = disable_cycle_costs
@@ -85,10 +91,10 @@ decrease_two_level_economic_growth = {
 }
 
 # The AI's only way out of the tiers that shrink productivity (the ideas carry no AI weight). It stops at Stable Growth;
-# Fast Growth and Economic Boom come only from content. The charge scales by economic_cycles_cost_factor, which sets
-# the players' political power price. Debt repayment keeps big treasuries near zero, so the AI may borrow the shortfall
-# when the factor is under +200% and the loan's interest fits in the weekly surplus. The tag checks mirror the tiers'
-# available blocks.
+# Fast Growth and Economic Boom come only from content. The charge scales by economic_cycles_cost_factor, capped at
+# @economic_cycles_cost_factor_cap, which sets the players' political power price. Debt repayment keeps big treasuries
+# near zero, so the AI may borrow the shortfall — at most @ai_cycle_loan_max_gdp_share of GDP — when the factor is under
+# +200% and the loan's interest fits in the weekly surplus. The tag checks mirror the tiers' available blocks.
 ai_buy_economic_cycle_upgrade = {
 	if = {
 		limit = {
@@ -130,26 +136,30 @@ ai_buy_economic_cycle_upgrade = {
 			ai_has_deficit = no
 			NOT = { has_active_mission = bankruptcy_incoming_collapse }
 			ai_is_fiscally_stressed = no
-			set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } } }
+			set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = { value = modifier@economic_cycles_cost_factor min = @economic_cycles_cost_factor_cap } max = 0 } } }
 			set_temp_variable = { cycle_upgrade_reserve = { value = cycle_upgrade_charge multiply = 2 } }
 			OR = {
 				check_variable = { treasury > cycle_upgrade_reserve }
 				AND = {
 					check_variable = { modifier@economic_cycles_cost_factor < 2 }
-					# Weekly interest on the shortfall as calculate_interest_rate charges it, with the 1% fee; a debt-free
-					# country reads 0 but pays at least the 0.8% floor once it borrows
-					set_temp_variable = { cycle_upgrade_interest = { value = cycle_upgrade_charge subtract = treasury max = 0 multiply = 1.01 multiply = 0.00019 multiply = { value = interest_rate max = 0.8 } } }
+					set_temp_variable = { cycle_upgrade_loan = { value = cycle_upgrade_charge subtract = treasury max = 0 multiply = @ai_cycle_loan_fee_multiplier } }
+					# Estimate weekly interest on the loan including the fee. A debt-free country has a current rate of 0
+					# and pays at least 0.8% once it borrows.
+					set_temp_variable = { cycle_upgrade_interest = { value = cycle_upgrade_loan multiply = 0.00019 multiply = { value = interest_rate max = 0.8 } } }
 					check_variable = { treasury_rate > cycle_upgrade_interest }
+					# The loan including the fee is capped at 10% of GDP.
+					set_temp_variable = { cycle_upgrade_loan_cap = { value = gdp_total multiply = @ai_cycle_loan_max_gdp_share } }
+					check_variable = { var = cycle_upgrade_loan value = cycle_upgrade_loan_cap compare = less_than_or_equals }
 				}
 			}
 		}
-		set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = modifier@economic_cycles_cost_factor max = 0 } } }
+		set_temp_variable = { cycle_upgrade_charge = { value = econ_cycle_upg_cost multiply = { value = 1 add = { value = modifier@economic_cycles_cost_factor min = @economic_cycles_cost_factor_cap } max = 0 } } }
 		set_temp_variable = { treasury_change = { value = cycle_upgrade_charge multiply = -1 } }
 		modify_treasury_effect = yes
 		set_temp_variable = { cycle_upgrade_borrowed = 0 }
 		if = { limit = { check_variable = { treasury < 0 } }
 			# Manual and automatic borrowing both charge a 1% fee
-			set_temp_variable = { cycle_upgrade_borrowed = { value = treasury multiply = -1.01 } }
+			set_temp_variable = { cycle_upgrade_borrowed = { value = 0 subtract = treasury multiply = @ai_cycle_loan_fee_multiplier } }
 			set_variable = { treasury = 0 }
 			set_temp_variable = { debt_change = cycle_upgrade_borrowed }
 			modify_debt_effect = yes
