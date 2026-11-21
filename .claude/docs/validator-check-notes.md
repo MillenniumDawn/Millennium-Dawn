@@ -502,8 +502,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
   as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
   block costs nothing. The owner's tags come from the tree's `country` block. Payers,
-  commitments, and chains follow "Who pays" under `validate_events.py`. Known gap: an
-  event chain charge never raises `missing-bankruptcy-guard`.
+  commitments, and chains follow "Who pays" under `validate_events.py`; a treasury
+  check scoped to a foreign payer is matched only to costs in that payer's scope.
+  Known gap: an event chain charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 
