@@ -21922,6 +21922,230 @@ UKR_reactivate_sov_category = {
 		}
 	}
 
+	UKR_modernize_mi2msb = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 180
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 70 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 11 }
+					has_decision = UKR_modernize_mi2msb
+				}
+			}
+			has_completed_focus = UKR_motor_sich
+			date > 2010.12.31
+			NOT = { has_country_flag = UKR_modernize_mi2msb_flag }
+		}
+
+		available = { UKR_modernize_mi2msb_ready = yes }
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.05 } } }
+		custom_cost_text = cost_0_05
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_modernize_mi2msb"
+			custom_effect_tooltip = UKR_modernize_mi2msb_consume_tt
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+				add_to_variable = { ukraine_has_mi2_stockpile = -10 }
+				UKR_storage_refresh = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_modernize_mi2msb"
+			UKR_count_sov_modernization = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "Mi-2MSB"
+					type = heavy_tank_amphibious_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						chassis_type_slot = helicopter_medium_chassis
+						helicopter_body_layout = unarmed_transport_layout
+						engine_type_slot = helicopter_turbine_engine_gen2
+						sensor_and_avionics_slot = sensors_and_avionics_gen_2
+					}
+					icon = "GFX_UKR_HELI_Mi_2MSB"
+				}
+				add_equipment_to_stockpile = {
+					type = heavy_tank_amphibious_chassis_0
+					producer = UKR
+					variant_name = "Mi-2MSB"
+					amount = 10
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "Mi-2MSB"
+					type = transport_helicopter_1
+					allow_without_tech = yes
+					upgrades = { transport_helo_engine_upgrade = 2 }
+					icon = "GFX_UKR_HELI_Mi_2MSB"
+				}
+				add_equipment_to_stockpile = {
+					type = transport_helicopter_1
+					producer = UKR
+					variant_name = "Mi-2MSB"
+					amount = 10
+				}
+			}
+			set_country_flag = UKR_modernize_mi2msb_flag
+			country_event = { id = ukraine_develop_light_helicopters.8 days = 30 }
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_storage_ka25_sell_to_bulgaria = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 11 }
+					has_decision = UKR_storage_ka25_sell_to_bulgaria
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+			country_exists = BUL
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+			custom_trigger_tooltip = {
+				tooltip = UKR_storage_ka25_bulgarian_buyer_tt
+				UKR_storage_ka25_bulgaria_can_buy = yes
+				NOT = { has_country_flag = UKR_storage_ka25_offer_cooldown_flag }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_sell_to_bulgaria"
+			custom_effect_tooltip = UKR_storage_ka25_sell_to_bulgaria_tt
+			hidden_effect = {
+				set_country_flag = { flag = UKR_storage_ka25_offer_pending_flag days = 60 }
+				set_country_flag = { flag = UKR_storage_ka25_offer_cooldown_flag days = 180 }
+				BUL = { country_event = ukraine_develop_light_helicopters.9 }
+				UKR_storage_refresh = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_storage_ka25_museum = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 60
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 11 }
+					has_decision = UKR_storage_ka25_museum
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.02 } } NOT = { has_political_power < 10 } }
+		custom_cost_text = cost_0_02_pp_10
+		ai_hint_pp_cost = 10
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_museum"
+			custom_effect_tooltip = UKR_storage_ka25_museum_tt
+			hidden_effect = {
+				add_political_power = -10
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+				UKR_storage_consume_ka25_airframes = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_ka25_museum"
+			set_country_flag = { flag = UKR_storage_ka25_museum_active_flag days = 365 }
+			UKR_storage_update_naval_aviation_museum = yes
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_storage_ka25_scrap = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 30
+
+		visible = {
+			OR = {
+				is_ai = yes
+				check_variable = { UKR_storage_selected_row = 10 }
+				check_variable = { UKR_storage_selected_row = 75 }
+				AND = {
+					check_variable = { UKR_storage_selected_row < 11 }
+					has_decision = UKR_storage_ka25_scrap
+				}
+			}
+			check_variable = { UKR_storage_ka25_total > 0 }
+		}
+
+		available = {
+			UKR_storage_ka25_ready = yes
+			controls_state = 669
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_storage_ka25_scrap"
+			custom_effect_tooltip = UKR_storage_ka25_scrap_tt
+			hidden_effect = {
+				UKR_storage_consume_ka25_airframes = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_ka25_scrap"
+			669 = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_dynamic_modifier = { modifier = UKR_ka25_scrap_aluminium days = 180 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
 	UKR_storage_yak38_monuments = {
 		icon = varyag_yak38
 		fire_only_once = yes
@@ -21965,9 +22189,10 @@ UKR_reactivate_sov_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_storage_yak38_monuments"
 			random_list = {
-				50 = { add_timed_idea = { idea = UKR_yak38_new_pilots days = 365 } }
-				50 = { add_timed_idea = { idea = UKR_yak38_new_pilots days = 730 } }
+				50 = { set_country_flag = { flag = UKR_storage_yak38_museum_active_flag days = 365 } }
+				50 = { set_country_flag = { flag = UKR_storage_yak38_museum_active_flag days = 730 } }
 			}
+			UKR_storage_update_naval_aviation_museum = yes
 		}
 
 		ai_will_do = {
@@ -29654,6 +29879,76 @@ UKR_modernize_planes_category = {
 }
 
 UKR_develop_domestic_equipment_decision_category = {
+
+	UKR_develop_msb2_nadiya = {
+		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
+		fire_only_once = yes
+		days_remove = 240
+
+		visible = { has_country_flag = UKR_modernize_mi2msb_flag }
+		available = {
+			date > 2017.12.31
+			controls_state = 694
+		}
+
+		custom_cost_trigger = { NOT = { check_variable = { treasury < 0.1 } } }
+		custom_cost_text = cost_0_1
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_msb2_nadiya"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.1 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_msb2_nadiya"
+			UKR_count_domestic_development = yes
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "MSB-2 Nadiya"
+					type = heavy_tank_amphibious_chassis_0
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						chassis_type_slot = helicopter_medium_chassis
+						helicopter_body_layout = unarmed_transport_layout
+						engine_type_slot = helicopter_turbine_engine_gen2
+						sensor_and_avionics_slot = sensors_and_avionics_gen_2
+					}
+					icon = "GFX_UKR_HELI_MSB_2_Nadiya"
+				}
+				add_equipment_to_stockpile = {
+					type = heavy_tank_amphibious_chassis_0
+					producer = UKR
+					variant_name = "MSB-2 Nadiya"
+					amount = 1
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "MSB-2 Nadiya"
+					type = transport_helicopter_1
+					allow_without_tech = yes
+					upgrades = { transport_helo_engine_upgrade = 3 }
+					icon = "GFX_UKR_HELI_MSB_2_Nadiya"
+				}
+				add_equipment_to_stockpile = {
+					type = transport_helicopter_1
+					producer = UKR
+					variant_name = "MSB-2 Nadiya"
+					amount = 1
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
 
 	UKR_develop_light_helicopters_kt112ud = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mi24pu1
