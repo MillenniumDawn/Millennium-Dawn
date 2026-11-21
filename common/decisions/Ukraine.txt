@@ -6440,6 +6440,7 @@ UKR_reorganize_navy_category = {
 				amount = 1
 			}
 			set_country_flag = UKR_reorganize_navy_finish_ternopil_construction_flag
+			hidden_effect = { add_to_variable = { UKR_navy_rebuilt_projects = 1 } }
 		}
 	}
 
@@ -6660,7 +6661,7 @@ UKR_reorganize_navy_category = {
 		}
 
 		visible = {
-			date > 2012.01.01
+			date > 2007.12.31
 			OR = {
 				has_country_flag = UKR_reorganize_navy_funded_project_58250_corvette_development_flag
 				has_country_flag = UKR_reorganize_navy_not_funded_project_58250_corvette_development_flag
@@ -6674,32 +6675,37 @@ UKR_reorganize_navy_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { var = treasury value = 1.5 compare = greater_than_or_equals }
-			NOT = { has_political_power < 30 }
-			NOT = { has_navy_experience < 5 }
+			NOT = { check_variable = { treasury < UKR_navy_58250_money } }
+			NOT = { check_variable = { political_power < UKR_navy_58250_pp } }
+			NOT = { check_variable = { navy_experience < UKR_navy_58250_xp } }
 		}
-		custom_cost_text = cost_1_50_pp_30_navy_5
+		custom_cost_text = UKR_navy_58250_cost
 		ai_hint_pp_cost = 30
 
 		available = {
 			UKR_navy_mykolaiv_site = yes
 			1086 = { dockyard > 0 }
-			date > 2012.01.01
+			date > 2007.12.31
 			OR = {
 				has_country_flag = UKR_reorganize_navy_funded_project_58250_corvette_development_flag
 				has_country_flag = UKR_reorganize_navy_developed_project_58250_corvette_development_flag
 			}
 		}
 
-		days_remove = 365
+		days_remove = var:UKR_navy_58250_days
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_build_project_58250_corvette"
 			hidden_effect = {
-				add_political_power = -30
-				navy_experience = -5
-				set_temp_variable = { treasury_change = -1.5 }
+				meta_effect = {
+					text = { add_political_power = -[PP] navy_experience = -[XP] }
+					PP = "[?UKR_navy_58250_pp|0]"
+					XP = "[?UKR_navy_58250_xp|0]"
+				}
+				set_temp_variable = { treasury_change = { value = UKR_navy_58250_money multiply = -1 } }
 				modify_treasury_effect = yes
+				set_country_flag = UKR_navy_58250_funded_flag
+				UKR_navy_refresh_program_costs = yes
 			}
 		}
 
@@ -6722,7 +6728,7 @@ UKR_reorganize_navy_category = {
 		}
 
 		visible = {
-			date > 2013.01.01
+			date > 2008.12.31
 			OR = {
 				has_country_flag = UKR_reorganize_navy_funded_project_58250_corvette_development_flag
 				has_country_flag = UKR_reorganize_navy_not_funded_project_58250_corvette_development_flag
@@ -6732,33 +6738,38 @@ UKR_reorganize_navy_category = {
 		}
 
 		custom_cost_trigger = {
-			check_variable = { var = treasury value = 2.25 compare = greater_than_or_equals }
-			NOT = { has_political_power < 45 }
-			NOT = { has_navy_experience < 8 }
+			NOT = { check_variable = { treasury < UKR_navy_58250_research_money } }
+			NOT = { check_variable = { political_power < UKR_navy_58250_research_pp } }
+			NOT = { check_variable = { navy_experience < UKR_navy_58250_research_xp } }
 		}
-		custom_cost_text = cost_2_25_pp_45_navy_8
+		custom_cost_text = UKR_navy_58250_research_cost
 		ai_hint_pp_cost = 45
 
 		available = {
 			UKR_navy_mykolaiv_site = yes
 			1086 = { dockyard > 0 }
-			date > 2013.01.01
+			date > 2008.12.31
 			OR = {
 				has_country_flag = UKR_reorganize_navy_funded_project_58250_corvette_development_flag
 				has_country_flag = UKR_reorganize_navy_developed_project_58250_corvette_development_flag
 			}
 		}
 
-		days_remove = 550
+		days_remove = var:UKR_navy_58250_research_days
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_build_project_58250_corvette_no_tech"
 			hidden_effect = {
 				set_country_flag = UKR_reorganize_navy_build_project_58250_corvette_no_tech_taken_flag
-				add_political_power = -45
-				navy_experience = -8
-				set_temp_variable = { treasury_change = -2.25 }
+				meta_effect = {
+					text = { add_political_power = -[PP] navy_experience = -[XP] }
+					PP = "[?UKR_navy_58250_research_pp|0]"
+					XP = "[?UKR_navy_58250_research_xp|0]"
+				}
+				set_temp_variable = { treasury_change = { value = UKR_navy_58250_research_money multiply = -1 } }
 				modify_treasury_effect = yes
+				set_country_flag = UKR_navy_58250_funded_flag
+				UKR_navy_refresh_program_costs = yes
 			}
 		}
 
@@ -7265,7 +7276,7 @@ UKR_reorganize_navy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_finish_ukrayina_no_tech removed"
 			hidden_effect = { set_technology = { cruiser_hull_1 = 1 cruiser_hull_2 = 1 popup = no } }
 			custom_effect_tooltip = UKR_vote_bonus_military_up_10_tt
-			set_country_flag = UKR_reorganize_navy_finish_ukrayina_no_tech_flag
+			set_country_flag = UKR_reorganize_navy_finish_ukrayina_flag
 			navy_experience = 2
 			country_event = ukraine_reorganize_navy_finish_ukrayina.1
 		}
@@ -7575,6 +7586,221 @@ UKR_reorganize_navy_category = {
 			navy_experience = 5
 			country_event = ukraine_reorganize_navy_build_simferopol_recon_ship.1
 		}
+	}
+
+	UKR_navy_khadzhybey = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+		fire_only_once = yes
+		days_remove = var:UKR_navy_khadzhybey_days
+		ai_hint_pp_cost = 30
+
+		visible = {
+			date < 2010.01.01
+			NOT = { has_country_flag = UKR_navy_khadzhybey_started_flag }
+			has_tech = destroyer_hull_2
+		}
+		available = {
+			date < 2010.01.01
+			UKR_navy_khadzhybey_eligible = yes
+			UKR_navy_mykolaiv_site = yes
+			1086 = { dockyard > 0 }
+		}
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < UKR_navy_khadzhybey_money } }
+			NOT = { check_variable = { political_power < UKR_navy_khadzhybey_pp } }
+			NOT = { check_variable = { navy_experience < UKR_navy_khadzhybey_xp } }
+		}
+		custom_cost_text = UKR_navy_khadzhybey_cost
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_khadzhybey"
+			hidden_effect = {
+				set_country_flag = UKR_navy_khadzhybey_started_flag
+				meta_effect = {
+					text = { add_political_power = -[PP] navy_experience = -[XP] }
+					PP = "[?UKR_navy_khadzhybey_pp|0]"
+					XP = "[?UKR_navy_khadzhybey_xp|0]"
+				}
+				set_temp_variable = { treasury_change = { value = UKR_navy_khadzhybey_money multiply = -1 } }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_khadzhybey completed"
+			country_event = ukraine_khadzhybey.1
+		}
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_navy_khadzhybey_research = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+		fire_only_once = yes
+		days_remove = var:UKR_navy_khadzhybey_research_days
+		ai_hint_pp_cost = 45
+
+		visible = {
+			date < 2010.01.01
+			NOT = { has_country_flag = UKR_navy_khadzhybey_started_flag }
+			NOT = { has_tech = destroyer_hull_2 }
+		}
+		available = {
+			date < 2010.01.01
+			UKR_navy_khadzhybey_eligible = yes
+			UKR_navy_mykolaiv_site = yes
+			1086 = { dockyard > 0 }
+		}
+		custom_cost_trigger = {
+			NOT = { check_variable = { treasury < UKR_navy_khadzhybey_research_money } }
+			NOT = { check_variable = { political_power < UKR_navy_khadzhybey_research_pp } }
+			NOT = { check_variable = { navy_experience < UKR_navy_khadzhybey_research_xp } }
+		}
+		custom_cost_text = UKR_navy_khadzhybey_research_cost
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_khadzhybey_research"
+			hidden_effect = {
+				set_country_flag = UKR_navy_khadzhybey_started_flag
+				meta_effect = {
+					text = { add_political_power = -[PP] navy_experience = -[XP] }
+					PP = "[?UKR_navy_khadzhybey_research_pp|0]"
+					XP = "[?UKR_navy_khadzhybey_research_xp|0]"
+				}
+				set_temp_variable = { treasury_change = { value = UKR_navy_khadzhybey_research_money multiply = -1 } }
+				modify_treasury_effect = yes
+			}
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_khadzhybey_research completed"
+			hidden_effect = { set_technology = { destroyer_hull_2 = 1 popup = no } }
+			country_event = ukraine_khadzhybey.1
+		}
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_navy_khadzhybey_resume_production = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+
+		visible = { has_country_flag = UKR_navy_khadzhybey_production_pending_flag NOT = { has_country_flag = UKR_navy_khadzhybey_expanding_flag } }
+
+		available = {
+			OR = {
+				UKR_navy_khadzhybey_can_produce = yes
+				UKR_navy_khadzhybey_can_expand = yes
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_khadzhybey_resume_production"
+			if = {
+				limit = { UKR_navy_khadzhybey_can_produce = yes }
+				UKR_navy_khadzhybey_launch = yes
+			}
+			else = { UKR_navy_khadzhybey_expand = yes }
+		}
+
+		ai_will_do = {
+			base = 15
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+				UKR_navy_khadzhybey_can_produce = no
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+				UKR_navy_khadzhybey_can_produce = no
+			}
+		}
+	}
+
+	UKR_navy_lan = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+		fire_only_once = yes
+		days_remove = 180
+		ai_hint_pp_cost = 15
+
+		visible = {
+			date > 2011.12.31
+			date < 2019.01.01
+			UKR_at_war_with_russia_or_proxies = yes
+		}
+
+		available = {
+			UKR_at_war_with_russia_or_proxies = yes
+			UKR_navy_mykolaiv_site = yes
+			1086 = { dockyard > 0 }
+			has_tech = corvette_hull_3
+		}
+
+		custom_cost_trigger = {
+			check_variable = { var = treasury value = 0.30 compare = greater_than_or_equals }
+			NOT = { has_political_power < 15 }
+			NOT = { has_navy_experience < 5 }
+		}
+		custom_cost_text = cost_0_30_pp_15_navy_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_lan"
+			hidden_effect = {
+				add_political_power = -15
+				navy_experience = -5
+				set_temp_variable = { treasury_change = -0.30 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_lan completed"
+			create_equipment_variant = {
+				name = "Lan Class"
+				type = corvette_hull_3
+				modules = {
+					fixed_ship_engine_slot = module_light_surface_jet_turbine_power2
+					fixed_ship_fire_control_system_slot = module_analog_fire_control
+					fixed_ship_radar_slot = module_radar_3
+					fixed_ship_auxillary_slot = module_naval_missile_mount_quad
+					fixed_ship_battery_slot = module_76mm_gun_2
+					fixed_ship_missile_ammo_slot = module_naval_ammo_anti_ship_2
+				}
+				design_team = mio:UKR_nikolayev_shipyard_naval_manufacturer
+			}
+			set_country_flag = UKR_navy_lan_production_pending_flag
+			set_country_flag = UKR_navy_lan_offer_open_flag
+			country_event = ukraine_navy_lan.1
+		}
+
+		ai_will_do = {
+			base = 12
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	UKR_navy_lan_resume_production = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_ships
+
+		visible = { has_country_flag = UKR_navy_lan_production_pending_flag NOT = { has_country_flag = UKR_navy_lan_offer_open_flag } }
+
+		available = {
+			UKR_navy_mykolaiv_site = yes
+			1086 = { dockyard > 0 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_navy_lan_resume_production"
+			set_country_flag = UKR_navy_lan_offer_open_flag
+			country_event = ukraine_navy_lan.1
+		}
+
+		ai_will_do = { base = 15 }
 	}
 
 	UKR_varyag_buy_back_hull = {
