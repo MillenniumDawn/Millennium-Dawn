@@ -1535,9 +1535,9 @@ mb_apply_crackdown_opinions_effect = {
 					is_muslim_brotherhood = yes
 				}
 				event_target:mb_origin = {
-					add_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
+					add_opinion_modifier = { target = PREV modifier = is_muslim_brotherhood_negative }
 				}
-				add_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
+				add_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood }
 			}
 		}
 	}
@@ -1554,7 +1554,10 @@ mb_apply_crackdown_opinions_effect = {
 			}
 		}
 	}
-	event_target:mb_origin = { add_to_array = { global.crackdown_countries = THIS.id } }
+	event_target:mb_origin = {
+		add_to_array = { global.crackdown_countries = THIS.id }
+		set_country_flag = mb_crackdown_opinions_corrected
+	}
 }
 
 # Entry scope (saved as mb_origin) = country removing the crackdown idea
@@ -1571,13 +1574,23 @@ mb_remove_crackdown_opinions_effect = {
 		var:v = {
 			if = {
 				limit = { NOT = { tag = event_target:mb_origin } }
-				event_target:mb_origin = {
-					remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
+				if = {
+					limit = { event_target:mb_origin = { has_country_flag = mb_crackdown_opinions_corrected } }
+					event_target:mb_origin = {
+						remove_opinion_modifier = { target = PREV modifier = is_muslim_brotherhood_negative }
+					}
+					remove_opinion_modifier = { target = event_target:mb_origin modifier = is_cracking_down_on_muslim_brotherhood }
 				}
-				remove_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
+				else = {
+					event_target:mb_origin = {
+						remove_opinion_modifier = { target = PREV modifier = is_cracking_down_on_muslim_brotherhood }
+					}
+					remove_opinion_modifier = { target = event_target:mb_origin modifier = is_muslim_brotherhood_negative }
+				}
 			}
 		}
 	}
+	event_target:mb_origin = { clr_country_flag = mb_crackdown_opinions_corrected }
 	for_each_loop = {
 		array = global.crackdown_countries
 		value = v
