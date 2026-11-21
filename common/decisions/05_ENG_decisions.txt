@@ -856,16 +856,18 @@ decisions_ENG = {
 			add_to_variable = { ENG_global_building_slots_factor = 0.025 tooltip = global_building_slots_factor_tt }
 			if = {
 				limit = { has_active_mission = ENG_northen_powerhouse_mission }
+				newline = yes
 				add_days_mission_timeout = {
 					mission = ENG_northen_powerhouse_mission
-					days = -50
+					days = -150
 				}
 			}
 			else_if = {
 				limit = { has_active_mission = ENG_hs2_mission }
+				newline = yes
 				add_days_mission_timeout = {
 					mission = ENG_hs2_mission
-					days = -50
+					days = -150
 				}
 			}
 			clr_country_flag = ENG_active_productivity_project
@@ -991,23 +993,61 @@ decisions_ENG = {
 
 		activation = {
 			has_completed_focus = ENG_hs2
-			13 = { is_owned_by = ROOT }
-			14 = { is_owned_by = ROOT }
-			12 = { is_owned_by = ROOT }
+			OR = {
+				13 = { is_owned_by = ROOT }
+				14 = { is_owned_by = ROOT }
+				12 = { is_owned_by = ROOT }
+			}
+			
 		}
 
 		available = { hidden_trigger = { always = no } }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_hs2_mission"
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = ENG_economy_modifier
-			}
+			hidden_effect = { set_country_flag = ENG_rail_project_completed }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ENG_economy_modifier }
 			add_to_variable = { ENG_offices_productivity = 0.20 tooltip = offices_productivity_tt }
-			13 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
-			14 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
-			12 = { add_dynamic_modifier = { modifier = ENG_hs2_idea } }
+			newline = yes
+			if = {
+				limit = { owns_state = 12 }
+				12 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+				
+			}
+			if = {
+				limit = { owns_state = 13 }
+				13 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 14 }
+				14 = {
+					add_dynamic_modifier = { modifier = ENG_hs2_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
 			newline = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -1039,15 +1079,49 @@ decisions_ENG = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision ENG_northen_powerhouse_mission"
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = ENG_economy_modifier
-			}
+			hidden_effect = { set_country_flag = ENG_rail_project_completed }
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ENG_economy_modifier }
 			add_to_variable = { ENG_civilian_factories_productivity = 0.10 tooltip = civilian_factories_productivity_tt }
 			add_to_variable = { ENG_military_factories_productivity = 0.10 tooltip = military_factories_productivity_tt }
-			11 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
-			10 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
-			1191 = { add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea } }
+			newline = yes
+			if = {
+				limit = { owns_state = 10 }
+				10 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 11 }
+				11 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+				newline = yes
+			}
+			if = {
+				limit = { owns_state = 1191 }
+				1191 = {
+					add_dynamic_modifier = { modifier = ENG_northern_powerhouse_rail_idea }
+					newline = yes
+					add_building_construction = {
+						type = rail_terminal
+						level = 1
+						instant_build = yes
+					}
+				}
+			}
 			newline = yes
 			if = {
 				limit = { has_dlc = "No Step Back" }
@@ -3838,7 +3912,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			NOT = { country_exists = SCO }
 			ENG_holds_scotland = yes
@@ -3890,7 +3963,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			NOT = { country_exists = NIR }
 			ENG_holds_north_ireland = yes
@@ -3931,7 +4003,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_discourse
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			NOT = { country_exists = WAS }
 			ENG_holds_wales = yes
@@ -3981,7 +4052,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			NOT = { has_country_flag = ENG_constitutional_convention }
 			OR = {
 				ENG_holds_scotland = yes
@@ -4022,7 +4092,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			NOT = { check_variable = { ENG_scottish_referendum_success = 3 } }
@@ -4095,7 +4164,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			NOT = { check_variable = { ENG_north_irish_referendum_success = 3 } }
@@ -4163,7 +4231,6 @@ ENG_devolved_matters = {
 		icon = GFX_decision_generic_political_rally
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			NOT = { check_variable = { ENG_welsh_referendum_success = 3 } }
@@ -4232,7 +4299,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_scottish_integrated }
 			check_variable = { ENG_scottish_referendum_success = 3 }
@@ -4262,7 +4328,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_north_irish_integrated }
 			check_variable = { ENG_north_irish_referendum_success = 3 }
@@ -4292,7 +4357,6 @@ ENG_devolved_matters = {
 		fire_only_once = yes
 
 		visible = {
-			NOT = { has_country_flag = ENG_devolution_purged }
 			has_country_flag = ENG_constitutional_convention
 			NOT = { has_country_flag = ENG_welsh_integrated }
 			check_variable = { ENG_welsh_referendum_success = 3 }
@@ -4353,7 +4417,12 @@ ENG_devolved_matters = {
 
 		cancel_trigger = {
 			OR = {
-				check_variable = { ENG_north_irish_agitation > 24 }
+				check_variable = {
+					tooltip = ENG_decommission_tension_cancel_tt
+					var = ENG_north_irish_agitation
+					value = 24
+					compare = greater_than
+				}
 				NOT = { 17 = { is_owned_and_controlled_by = ROOT } }
 			}
 		}

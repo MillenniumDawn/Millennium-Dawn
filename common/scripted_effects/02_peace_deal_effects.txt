@@ -536,6 +536,7 @@ CPD_sign_peace_deal = {
 			array = owned_states
 			remove_from_array = { ROOT.CPD_puppet_in_state_DEMANDS = v }
 		}
+		pass_faction_leadership = yes
 		var:CPD_taker = { puppet = PREV }
 	}
 	# MAKE PUPPET IN STATE - DEMANDED BY ROOT
@@ -593,6 +594,7 @@ CPD_sign_peace_deal = {
 			array = owned_states
 			remove_from_array = { ROOT.CPD_puppet_in_state_CONCESSIONS = v }
 		}
+		pass_faction_leadership = yes
 		var:CPD_taker = { puppet = PREV }
 	}
 	# MAKE PUPPET IN STATE - CONCEDED BY ROOT
@@ -663,22 +665,14 @@ CPD_sign_peace_deal = {
 	}
 
 	# FULL COUNTRY PUPPET
-	# A faction leader who becomes a puppet would leave members in a stale
-	# leadership state; dissolve their faction first so members are released.
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_full_puppet_demand } }
-		if = {
-			limit = { THIS = { is_faction_leader = yes } }
-			THIS = { dismantle_faction = yes }
-		}
+		pass_faction_leadership = yes
 		ROOT = { puppet = THIS }
 	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_full_puppet_concession } }
-		if = {
-			limit = { ROOT = { is_faction_leader = yes } }
-			ROOT = { dismantle_faction = yes }
-		}
+		ROOT = { pass_faction_leadership = yes }
 		THIS = { puppet = ROOT }
 	}
 
@@ -686,14 +680,26 @@ CPD_sign_peace_deal = {
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_forced_neutrality_demand } }
 		THIS = {
-			leave_faction = yes
+			if = {
+				limit = { has_faction_template = faction_template_nato }
+				NATO_leave = yes
+			}
+			else = {
+				leave_faction = yes
+			}
 			add_timed_idea = { idea = CPD_forced_neutrality_spirit days = 1800 }
 		}
 	}
 	if = {
 		limit = { ROOT = { has_country_flag = CPD_forced_neutrality_concession } }
 		ROOT = {
-			leave_faction = yes
+			if = {
+				limit = { has_faction_template = faction_template_nato }
+				NATO_leave = yes
+			}
+			else = {
+				leave_faction = yes
+			}
 			add_timed_idea = { idea = CPD_forced_neutrality_spirit days = 1800 }
 		}
 	}

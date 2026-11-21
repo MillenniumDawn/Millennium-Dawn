@@ -134,31 +134,24 @@ world_non_communist_countries_collection = {
 }
 
 post_soviet_states_collection = {
-	input = game:all_countries
+	input = constant:country_groups.post_soviet_states
 	name = COLLECTION_POST_SOVIET_STATES
+	operators = {
+		limit = { exists = yes }
+	}
+}
+
+post_soviet_faction_members_collection = {
+	input = constant:country_groups.post_soviet_states
 	operators = {
 		limit = {
 			OR = {
-				original_tag = SOV
-				original_tag = BLR
-				original_tag = UKR
-				original_tag = EST
-				original_tag = LIT
-				original_tag = LAT
-				original_tag = GEO
-				original_tag = SOO
-				original_tag = ABK
-				original_tag = KAZ
-				original_tag = UZB
-				original_tag = TRK
-				original_tag = TAJ
-				original_tag = KYR
-				original_tag = AZE
-				original_tag = ARM
-				original_tag = NKR
+				tag = ROOT
+				is_in_faction_with = ROOT
 			}
 		}
 	}
+	name = collection_post_soviet_faction_members
 }
 
 # CFA franc zone nations whose GDP the French custodian draws income from
@@ -185,6 +178,14 @@ faction_owned_core_states_collection = {
 		}
 	}
 	name = COLLECTION_FACTION_OWNED_CORE_STATES
+}
+
+faction_fully_controlled_core_states_collection = {
+	input = collection:faction_owned_core_states_collection
+	operators = {
+		limit = { is_fully_controlled_by = OWNER }
+	}
+	name = collection_faction_fully_controlled_core_states
 }
 
 faction_controlled_non_core_states_collection = {
@@ -470,4 +471,157 @@ asean_faction_members_collection = {
 		}
 	}
 	name = COLLECTION_ASEAN_FACTION_MEMBERS
+}
+
+nile_security_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = {
+			OR = {
+				original_tag = EGY
+				original_tag = SUD
+			}
+		}
+	}
+	name = collection_nile_security_members
+}
+
+imperial_bloc_core_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = {
+			OR = {
+				original_tag = GER
+				original_tag = AUS
+				original_tag = HUN
+				original_tag = CZE
+				original_tag = SLO
+			}
+			is_subject = no
+		}
+	}
+}
+
+european_faction_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = { has_country_flag = european_nation_flag }
+	}
+}
+
+paris_modern_arms_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = {
+			OR = {
+				has_tech = MBT_4
+				has_tech = mbt_tech_2
+			}
+			OR = {
+				has_tech = Anti_Air_2
+				has_tech = nsb_Anti_Air_2
+			}
+			OR = {
+				has_tech = MR_Fighter4
+				has_tech = gen_5_medium
+			}
+		}
+	}
+}
+
+independent_faction_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = { is_subject = no }
+	}
+}
+
+fao_regional_members_collection = {
+	input = collection:independent_faction_members_collection
+	operators = {
+		limit = {
+			OR = {
+				original_tag = BHR
+				original_tag = EGY
+				original_tag = ISR
+				original_tag = JOR
+				original_tag = KUW
+				original_tag = LEB
+				original_tag = OMA
+				original_tag = PAL
+				original_tag = PER
+				original_tag = QAT
+				original_tag = SAU
+				original_tag = SYR
+				original_tag = TUR
+				original_tag = UAE
+				original_tag = YEM
+			}
+		}
+	}
+}
+
+arab_nations_collection = {
+	input = game:all_countries
+	operators = {
+		limit = { has_country_flag = arabic_nation_flag }
+	}
+	name = collection_arab_nations
+}
+
+independent_arab_faction_members_collection = {
+	input = collection:faction_members_collection
+	operators = {
+		limit = {
+			has_country_flag = arabic_nation_flag
+			is_subject = no
+		}
+	}
+	name = collection_independent_arab_faction_members
+}
+
+balkan_pact_countries_collection = {
+	input = constant:country_groups.balkan_pact_countries
+	operators = {
+		limit = { exists = yes }
+	}
+	name = collection_balkan_pact_countries
+}
+
+balkan_socialist_faction_members_collection = {
+	input = collection:balkan_pact_countries_collection
+	operators = {
+		limit = {
+			OR = {
+				has_government = communism
+				neutrality_neutral_communism_are_in_power = yes
+			}
+			OR = {
+				tag = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+	name = collection_balkan_socialist_faction_members
+}
+
+eastern_european_pact_countries_collection = {
+	input = constant:country_groups.eastern_european_pact_countries
+	operators = {
+		limit = { exists = yes }
+	}
+	name = collection_eastern_european_pact_countries
+}
+
+eastern_european_pact_members_collection = {
+	input = collection:eastern_european_pact_countries_collection
+	operators = {
+		limit = {
+			OR = {
+				tag = ROOT
+				is_in_faction_with = ROOT
+			}
+		}
+	}
+	name = collection_eastern_european_pact_members
 }

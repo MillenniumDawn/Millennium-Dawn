@@ -254,11 +254,14 @@ _CASES = {
         },
         [("ROOT[decision]", "ROOT[decision]", "self")],
     ),
-    "targeted decision caller stays unknown": (
+    "targeted decision actor is ROOT, target stays unknown": (
         {
-            "common/decisions/test.txt": "category = { decision = { target_array = subjects available = { is_top3_influencer = yes } } }"
+            "common/decisions/test.txt": "category = { decision = { target_array = subjects available = { is_top3_influencer = yes FROM = { influence_higher_5 = yes } } } }"
         },
-        [("unknown", "unknown", "unresolved")],
+        [
+            ("ROOT[decision]", "ROOT[decision]", "self"),
+            ("ROOT[decision]", "unknown", "unresolved"),
+        ],
     ),
     "unsupported root context stays unknown": (
         {
