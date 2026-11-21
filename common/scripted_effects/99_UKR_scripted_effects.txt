@@ -13654,6 +13654,14 @@ UKR_storage_sell_mig23mld = {
 UKR_storage_sell_mig25rb_donors = {
 	subtract_from_variable = { ukraine_has_mig25rb_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig25rb_sold_tt }
 	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = {
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			add_ideas = ALG_mig25rb_spare_parts
+		}
+		else = { add_ideas = ALG_mig25rb_spare_parts_legacy }
+		add_timed_idea = { idea = ALG_mig25rb_air_readiness days = 365 }
+	}
 }
 
 UKR_storage_vietnam_sale_backlash = {
@@ -13757,22 +13765,17 @@ UKR_old_gear_deliver_ml20 = {
 }
 
 UKR_storage_sell_support_weapons = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_support_weapons_price }
 	if = {
 		limit = { check_variable = { ukraine_has_spg9_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_spg9_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 15 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_spg9_stockpile = ukr_sov_amount tooltip = ukraine_storage_spg9_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_spg9 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_strela2_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_strela2_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 150 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_strela2_stockpile = ukr_sov_amount tooltip = ukraine_storage_strela2_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_strela2 = yes }
 	}
@@ -14654,14 +14657,50 @@ UKR_old_gear_deliver_strela2 = {
 		add_equipment_to_stockpile = { type = Anti_Air_0 amount = ukr_sov_amount producer = SOV }
 	}
 }
+# Prices in thousands of dollars so the sale and buyer quote use the same totals.
+UKR_storage_old_gear_prices = {
+	set_temp_variable = { ukr_old_gear_brdm1_price = { value = ukraine_has_brdm1_stockpile multiply = 150 } }
+	set_temp_variable = { ukr_old_gear_artillery_price = {
+			value = ukraine_has_m46_stockpile
+			multiply = 200
+			add = { value = ukraine_has_d1_stockpile multiply = 100 }
+			add = { value = ukraine_has_m30_stockpile multiply = 80 }
+			add = { value = ukraine_has_ml20_stockpile multiply = 120 }
+		} }
+	set_temp_variable = { ukr_old_gear_small_arms_price = {
+			value = ukraine_has_mosin_stockpile
+			multiply = 1
+			add = { value = ukraine_has_sks_stockpile multiply = 1 }
+			add = { value = ukraine_has_ak47_stockpile multiply = 1 }
+		} }
+	set_temp_variable = { ukr_old_gear_support_weapons_price = {
+			value = ukraine_has_spg9_stockpile
+			multiply = 15
+			add = { value = ukraine_has_strela2_stockpile multiply = 150 }
+		} }
+}
+
+# The receiving country is ROOT and the seller is FROM.
+UKR_storage_old_gear_buyer_quote = {
+	FROM = {
+		UKR_storage_old_gear_prices = yes
+	}
+	set_variable = { UKR_storage_quote_brdm1_count = FROM.ukraine_has_brdm1_stockpile }
+	set_variable = { UKR_storage_quote_brdm1_price = { value = ukr_old_gear_brdm1_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_artillery_count = FROM.UKR_storage_total_7 }
+	set_variable = { UKR_storage_quote_artillery_price = { value = ukr_old_gear_artillery_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_small_arms_count = FROM.UKR_storage_total_8 }
+	set_variable = { UKR_storage_quote_small_arms_price = { value = ukr_old_gear_small_arms_price divide = 1000 } }
+	set_variable = { UKR_storage_quote_support_weapons_count = FROM.UKR_storage_total_9 }
+	set_variable = { UKR_storage_quote_support_weapons_price = { value = ukr_old_gear_support_weapons_price divide = 1000 } }
+}
+
 UKR_storage_sell_vehicles = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_brdm1_price }
 	if = {
 		limit = { check_variable = { ukraine_has_brdm1_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_brdm1_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 150 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_brdm1_stockpile = ukr_sov_amount tooltip = ukraine_storage_brdm1_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_brdm1 = yes }
 	}
@@ -14670,40 +14709,29 @@ UKR_storage_sell_vehicles = {
 	UKR_storage_sanctioned_sale_backlash = yes
 }
 UKR_storage_sell_artillery = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_artillery_price }
 	if = {
 		limit = { check_variable = { ukraine_has_m46_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_m46_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 200 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_m46_stockpile = ukr_sov_amount tooltip = ukraine_storage_m46_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m46 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_d1_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_d1_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 100 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_d1_stockpile = ukr_sov_amount tooltip = ukraine_storage_d1_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_d1 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_m30_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_m30_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 80 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_m30_stockpile = ukr_sov_amount tooltip = ukraine_storage_m30_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_m30 = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_ml20_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_ml20_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 120 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_ml20_stockpile = ukr_sov_amount tooltip = ukraine_storage_ml20_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ml20 = yes }
 	}
@@ -14712,31 +14740,23 @@ UKR_storage_sell_artillery = {
 	UKR_storage_sanctioned_sale_backlash = yes
 }
 UKR_storage_sell_small_arms = {
-	set_temp_variable = { ukr_sale_price = 0 }
+	UKR_storage_old_gear_prices = yes
+	set_temp_variable = { ukr_sale_price = ukr_old_gear_small_arms_price }
 	if = {
 		limit = { check_variable = { ukraine_has_mosin_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_mosin_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_mosin_stockpile = ukr_sov_amount tooltip = ukraine_storage_mosin_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_mosin = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_sks_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_sks_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_sks_stockpile = ukr_sov_amount tooltip = ukraine_storage_sks_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_sks = yes }
 	}
 	if = {
 		limit = { check_variable = { ukraine_has_ak47_stockpile > 0 } }
 		set_temp_variable = { ukr_sov_amount = ukraine_has_ak47_stockpile }
-		set_temp_variable = { ukr_item_price = ukr_sov_amount }
-		multiply_temp_variable = { ukr_item_price = 1 }
-		add_to_temp_variable = { ukr_sale_price = ukr_item_price }
 		subtract_from_variable = { ukraine_has_ak47_stockpile = ukr_sov_amount tooltip = ukraine_storage_ak47_sold_tt }
 		event_target:ukr_storage_recipient = { UKR_old_gear_deliver_ak47 = yes }
 	}
@@ -17445,7 +17465,7 @@ UKR_varyag_run_combat_trials = {
 # can go to several countries at once. Every effect below takes the buyer saved as event target ukr_storage_buyer and temp variable ukr_sale_item:
 # 1 = BTR-50, 2 = PT-76B, 3 = Tu-16, 4 = Tu-22, 5 = MiG-25, 6 = Su-17, 7 = 2K11 Krug, 8 = 9P148 Konkurs, 9 = MiG-23, 10 = S-75, 11 = S-125, 12 = old equipment, 13 = MiG-21, 14 = MiG-23MLD (Angola), 15 = Su-17M4, 16 = MiG-25RB,
 # 17 = ZSU-57-2, 18 = S-200, 19 = carrier aircraft.
-# The buyer's variable UKR_storage_sale_talks counts its running missions; the help decisions (UKR_storage_help_*) target countries where it is above 0.
+# The buyer's UKR_storage_sale_talks array contains one item ID per active sale mission.
 UKR_storage_sale_start = {
 	if = {
 		limit = { check_variable = { ukr_sale_item = 1 } }
@@ -17455,7 +17475,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_ind_btr50 } }
 				activate_mission = UKR_storage_sale_ind_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_ind_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17464,7 +17484,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_btr50 } }
 				activate_mission = UKR_storage_sale_egy_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_egy_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17473,7 +17493,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_hun_btr50 } }
 				activate_mission = UKR_storage_sale_hun_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_hun_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17482,7 +17502,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_rom_btr50 } }
 				activate_mission = UKR_storage_sale_rom_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_rom_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17491,7 +17511,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cro_btr50 } }
 				activate_mission = UKR_storage_sale_cro_btr50
 				set_country_flag = { flag = UKR_storage_sale_wait_cro_btr50_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17502,7 +17522,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_ind_pt76 } }
 				activate_mission = UKR_storage_sale_ind_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17510,7 +17530,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cro_pt76 } }
 				activate_mission = UKR_storage_sale_cro_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17518,7 +17538,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_bos_pt76 } }
 				activate_mission = UKR_storage_sale_bos_pt76
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17529,7 +17549,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_tu16 } }
 				activate_mission = UKR_storage_sale_egy_tu16
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17537,7 +17557,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_chi_tu16 } }
 				activate_mission = UKR_storage_sale_chi_tu16
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17548,7 +17568,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_tu22 } }
 				activate_mission = UKR_storage_sale_lba_tu22
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17559,7 +17579,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_mig25 } }
 				activate_mission = UKR_storage_sale_arm_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17567,7 +17587,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_trk_mig25 } }
 				activate_mission = UKR_storage_sale_trk_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17575,7 +17595,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_mig25 } }
 				activate_mission = UKR_storage_sale_lba_mig25
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17587,7 +17607,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_pol_su17 } }
 				activate_mission = UKR_storage_sale_pol_su17
 				set_country_flag = { flag = UKR_storage_sale_wait_pol_su17_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17599,7 +17619,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_2k11 } }
 				activate_mission = UKR_storage_sale_geo_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_geo_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17608,7 +17628,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_2k11 } }
 				activate_mission = UKR_storage_sale_aze_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_aze_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17617,7 +17637,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_2k11 } }
 				activate_mission = UKR_storage_sale_arm_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_arm_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17626,7 +17646,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_kaz_2k11 } }
 				activate_mission = UKR_storage_sale_kaz_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_kaz_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17635,7 +17655,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_trk_2k11 } }
 				activate_mission = UKR_storage_sale_trk_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_trk_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17644,7 +17664,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_kyr_2k11 } }
 				activate_mission = UKR_storage_sale_kyr_2k11
 				set_country_flag = { flag = UKR_storage_sale_wait_kyr_2k11_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17656,7 +17676,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_9p148 } }
 				activate_mission = UKR_storage_sale_geo_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_geo_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17665,7 +17685,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_9p148 } }
 				activate_mission = UKR_storage_sale_aze_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_aze_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17674,7 +17694,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_9p148 } }
 				activate_mission = UKR_storage_sale_arm_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_arm_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17683,7 +17703,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_9p148 } }
 				activate_mission = UKR_storage_sale_sud_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_sud_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17692,7 +17712,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_eth_9p148 } }
 				activate_mission = UKR_storage_sale_eth_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_eth_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17701,7 +17721,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_cha_9p148 } }
 				activate_mission = UKR_storage_sale_cha_9p148
 				set_country_flag = { flag = UKR_storage_sale_wait_cha_9p148_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17713,7 +17733,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_mig23 } }
 				activate_mission = UKR_storage_sale_lba_mig23
 				set_country_flag = { flag = UKR_storage_sale_wait_lba_mig23_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17722,7 +17742,7 @@ UKR_storage_sale_start = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_mig23 } }
 				activate_mission = UKR_storage_sale_sud_mig23
 				set_country_flag = { flag = UKR_storage_sale_wait_sud_mig23_flag value = 1 days = 150 } # the AI does not settle for the smaller order before this
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17733,7 +17753,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_s75 } }
 				activate_mission = UKR_storage_sale_egy_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17741,7 +17761,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_s75 } }
 				activate_mission = UKR_storage_sale_lba_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17749,7 +17769,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_s75 } }
 				activate_mission = UKR_storage_sale_arm_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17757,7 +17777,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_s75 } }
 				activate_mission = UKR_storage_sale_aze_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17765,7 +17785,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_s75 } }
 				activate_mission = UKR_storage_sale_geo_s75
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17776,7 +17796,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_egy_s125 } }
 				activate_mission = UKR_storage_sale_egy_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17784,7 +17804,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_lba_s125 } }
 				activate_mission = UKR_storage_sale_lba_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17792,7 +17812,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_arm_s125 } }
 				activate_mission = UKR_storage_sale_arm_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17800,7 +17820,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_aze_s125 } }
 				activate_mission = UKR_storage_sale_aze_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17808,7 +17828,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_geo_s125 } }
 				activate_mission = UKR_storage_sale_geo_s125
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17819,7 +17839,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_usa_old_gear } }
 				activate_mission = UKR_storage_sale_usa_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17827,7 +17847,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_sud_old_gear } }
 				activate_mission = UKR_storage_sale_sud_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17835,7 +17855,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_eth_old_gear } }
 				activate_mission = UKR_storage_sale_eth_old_gear
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17846,7 +17866,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_yem_mig21 } }
 				activate_mission = UKR_storage_sale_yem_mig21
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17854,7 +17874,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_moz_mig21 } }
 				activate_mission = UKR_storage_sale_moz_mig21
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17865,7 +17885,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_agl_mig23mld } }
 				activate_mission = UKR_storage_sale_agl_mig23mld
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17876,7 +17896,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_vie_su17m4 } }
 				activate_mission = UKR_storage_sale_vie_su17m4
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 		else_if = {
@@ -17884,7 +17904,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_yem_su17m4 } }
 				activate_mission = UKR_storage_sale_yem_su17m4
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17895,7 +17915,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_alg_mig25rb } }
 				activate_mission = UKR_storage_sale_alg_mig25rb
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17906,7 +17926,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_vie_zsu57 } }
 				activate_mission = UKR_storage_sale_vie_zsu57
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17917,7 +17937,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_pol_s200 } }
 				activate_mission = UKR_storage_sale_pol_s200
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17928,7 +17948,7 @@ UKR_storage_sale_start = {
 			if = {
 				limit = { NOT = { has_active_mission = UKR_storage_sale_chi_carrier } }
 				activate_mission = UKR_storage_sale_chi_carrier
-				hidden_effect = { event_target:ukr_storage_buyer = { add_to_variable = { UKR_storage_sale_talks = 1 } } }
+				hidden_effect = { event_target:ukr_storage_buyer = { add_to_array = { UKR_storage_sale_talks = ukr_sale_item } } }
 			}
 		}
 	}
@@ -17937,8 +17957,7 @@ UKR_storage_sale_start = {
 # A mission or smaller-order decision has ended: one negotiation fewer with the buyer.
 UKR_storage_sale_close = {
 	event_target:ukr_storage_buyer = {
-		subtract_from_variable = { UKR_storage_sale_talks = 1 }
-		clamp_variable = { var = UKR_storage_sale_talks min = 0 }
+		remove_from_array = { array = UKR_storage_sale_talks value = ukr_sale_item }
 	}
 }
 
@@ -18052,10 +18071,18 @@ UKR_storage_sale_dispatch = {
 	}
 }
 
-# The mission ended without the requirement: only a player-led buyer still gets the offer (and decides for itself); an AI buyer turns it down on the spot.
+# A player-led buyer gets a fallback offer unless it declined an agreement covering this sale.
 UKR_storage_sale_failed = {
 	if = {
-		limit = { event_target:ukr_storage_buyer = { is_ai = no } }
+		limit = {
+			event_target:ukr_storage_buyer = {
+				is_ai = no
+				OR = {
+					NOT = { has_country_flag = UKR_storage_deal_declined }
+					NOT = { is_in_array = { UKR_storage_deal_sales = ukr_sale_item } }
+				}
+			}
+		}
 		if = {
 			limit = { check_variable = { ukr_sale_item = 1 } }
 			event_target:ukr_storage_buyer = { set_variable = { UKR_storage_sale_tier_btr50 = 2 } }
@@ -18395,6 +18422,13 @@ UKR_storage_sale_reopen = {
 				limit = { event_target:ukr_storage_buyer = { tag = CHI } }
 				set_country_flag = UKR_storage_sale_retry_carrier_china_flag
 				set_country_flag = { flag = UKR_storage_sale_cooldown_carrier_china_flag value = 1 days = 180 }
+			}
+		}
+
+		event_target:ukr_storage_buyer = {
+			if = {
+				limit = { is_in_array = { UKR_storage_deal_sales = ukr_sale_item } }
+				remove_from_array = { array = UKR_storage_deal_sales value = ukr_sale_item }
 			}
 		}
 	}
