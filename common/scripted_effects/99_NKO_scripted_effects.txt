@@ -403,16 +403,14 @@ NKO_arms_export_rebuild_targets = {
 
 NKO_arms_export_register_deal = {
 	add_to_variable = { var = NKO_arms_export_deals  value = 1 }
-	event_target:NKO_arms_client = { add_to_variable = { var = NKO_deals_received_count  value = 1 } }
+	var:NKO_arms_client_id = { add_to_variable = { var = NKO_deals_received_count  value = 1 } }
 	add_to_variable = { var = NKO_arms_export_heat   value = NKO_arms_export_deal_heat }
 	if = {
 		limit = { NOT = { is_in_array = { array = NKO_arms_export_supplied_array  value = NKO_arms_client_id } } }
 		add_to_array = { NKO_arms_export_supplied_array = NKO_arms_client_id }
 		add_to_variable = { var = NKO_arms_export_clients     value = 1 }
 		if = { limit = { NOT = { check_variable = { NKO_arms_export_output_tier > 0 } } } set_temp_variable = { NKO_arms_export_output_tier = 1 } }
-		set_temp_variable = { NKO_arms_export_output_gain = NKO_arms_export_output_tier }
-		multiply_temp_variable = { NKO_arms_export_output_gain = 0.01 }
-		add_to_variable = { var = NKO_arms_export_output_var  value = NKO_arms_export_output_gain }
+		add_to_variable = { var = NKO_arms_export_output_var value = { value = NKO_arms_export_output_tier multiply = 0.01 } }
 		clamp_variable = { var = NKO_arms_export_output_var  min = 0  max = 0.20 }
 	}
 	NKO_arms_export_check_sanctions = yes
@@ -463,133 +461,124 @@ NKO_arms_export_credit_payment = {
 }
 
 NKO_export_transfer_inf_weapons = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = infantry_weapons_10 } add_equipment_to_stockpile = { type = infantry_weapons_10 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_10 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_9 } add_equipment_to_stockpile = { type = infantry_weapons_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_9 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_8 } add_equipment_to_stockpile = { type = infantry_weapons_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_7 } add_equipment_to_stockpile = { type = infantry_weapons_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_6 } add_equipment_to_stockpile = { type = infantry_weapons_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_5 } add_equipment_to_stockpile = { type = infantry_weapons_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_4 } add_equipment_to_stockpile = { type = infantry_weapons_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_3 } add_equipment_to_stockpile = { type = infantry_weapons_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_3 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = infantry_weapons_2 } add_equipment_to_stockpile = { type = infantry_weapons_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = infantry_weapons_10 } add_equipment_to_stockpile = { type = infantry_weapons_10 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_10 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_9 } add_equipment_to_stockpile = { type = infantry_weapons_9 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_8 } add_equipment_to_stockpile = { type = infantry_weapons_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_7 } add_equipment_to_stockpile = { type = infantry_weapons_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_6 } add_equipment_to_stockpile = { type = infantry_weapons_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_5 } add_equipment_to_stockpile = { type = infantry_weapons_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_4 } add_equipment_to_stockpile = { type = infantry_weapons_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_3 } add_equipment_to_stockpile = { type = infantry_weapons_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = infantry_weapons_2 } add_equipment_to_stockpile = { type = infantry_weapons_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 NKO_export_transfer_arty = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = SP_arty_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = SP_arty_3 } add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = SP_arty_2 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = SP_arty_1 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
-	else = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = SP_arty_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_3 } add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_2 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = SP_arty_1 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest main-battle-tank chassis NKO has researched (mbt_tech tiers).
 NKO_export_transfer_tank = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = mbt_tech_6 } add_equipment_to_stockpile = { type = medium_tank_chassis_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_5 } add_equipment_to_stockpile = { type = medium_tank_chassis_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = medium_tank_chassis_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = medium_tank_chassis_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_3 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = medium_tank_chassis_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_1 } add_equipment_to_stockpile = { type = medium_tank_chassis_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_1 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech }   add_equipment_to_stockpile = { type = medium_tank_chassis_0 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = medium_tank_chassis_0 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = MBT_8 } add_equipment_to_stockpile = { type = MBT_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = MBT_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = MBT_7 } add_equipment_to_stockpile = { type = MBT_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = MBT_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = MBT_5 } add_equipment_to_stockpile = { type = MBT_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = MBT_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = MBT_4 } add_equipment_to_stockpile = { type = MBT_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = MBT_4 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = mbt_tech_6 } add_equipment_to_stockpile = { type = medium_tank_chassis_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_5 } add_equipment_to_stockpile = { type = medium_tank_chassis_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = medium_tank_chassis_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = medium_tank_chassis_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = medium_tank_chassis_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_1 } add_equipment_to_stockpile = { type = medium_tank_chassis_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech }   add_equipment_to_stockpile = { type = medium_tank_chassis_0 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = medium_tank_chassis_0 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = MBT_8 } add_equipment_to_stockpile = { type = MBT_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = MBT_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = MBT_7 } add_equipment_to_stockpile = { type = MBT_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = MBT_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = MBT_5 } add_equipment_to_stockpile = { type = MBT_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = MBT_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = MBT_4 } add_equipment_to_stockpile = { type = MBT_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = MBT_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest utility vehicle (floor 1995 / util_vehicle_4).
 NKO_export_transfer_util = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = util_vehicle_9 } add_equipment_to_stockpile = { type = util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_8 } add_equipment_to_stockpile = { type = util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_7 } add_equipment_to_stockpile = { type = util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_6 } add_equipment_to_stockpile = { type = util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_5 } add_equipment_to_stockpile = { type = util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_4 } add_equipment_to_stockpile = { type = util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = util_vehicle_9 } add_equipment_to_stockpile = { type = util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = util_vehicle_8 } add_equipment_to_stockpile = { type = util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = util_vehicle_7 } add_equipment_to_stockpile = { type = util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = util_vehicle_6 } add_equipment_to_stockpile = { type = util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = util_vehicle_5 } add_equipment_to_stockpile = { type = util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = util_vehicle_4 } add_equipment_to_stockpile = { type = util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest heavy utility vehicle (enabled by the util_vehicle techs; floor 1995).
 NKO_export_transfer_heavy_util = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = IMV_9 } add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IMV_8 } add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IMV_7 } add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IMV_6 } add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IMV_5 } add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IMV_4 } add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = IMV_9 } add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_8 } add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_7 } add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_6 } add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_5 } add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_4 } add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest command & control equipment (floor 1995 / cnc_equipment_3).
 NKO_export_transfer_cnc = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = cnc_equipment_9 } add_equipment_to_stockpile = { type = cnc_equipment_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_9 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_8 } add_equipment_to_stockpile = { type = cnc_equipment_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_7 } add_equipment_to_stockpile = { type = cnc_equipment_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_6 } add_equipment_to_stockpile = { type = cnc_equipment_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_5 } add_equipment_to_stockpile = { type = cnc_equipment_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_4 } add_equipment_to_stockpile = { type = cnc_equipment_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = cnc_equipment_3 } add_equipment_to_stockpile = { type = cnc_equipment_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = cnc_equipment_3 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = cnc_equipment_9 } add_equipment_to_stockpile = { type = cnc_equipment_9 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_8 } add_equipment_to_stockpile = { type = cnc_equipment_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_7 } add_equipment_to_stockpile = { type = cnc_equipment_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_6 } add_equipment_to_stockpile = { type = cnc_equipment_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_5 } add_equipment_to_stockpile = { type = cnc_equipment_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_4 } add_equipment_to_stockpile = { type = cnc_equipment_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = cnc_equipment_3 } add_equipment_to_stockpile = { type = cnc_equipment_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = cnc_equipment_3 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest APC (floor 1995 / APC_4).
 NKO_export_transfer_apc = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = APC_8 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = APC_7 } add_equipment_to_stockpile = { type = APC_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = APC_6 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = APC_5 } add_equipment_to_stockpile = { type = APC_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = APC_4 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = APC_8 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = APC_7 } add_equipment_to_stockpile = { type = APC_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = APC_6 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = APC_5 } add_equipment_to_stockpile = { type = APC_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = APC_4 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = APC_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest IFV (floor 1995 / IFV_4).
 NKO_export_transfer_ifv = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = IFV_8 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IFV_7 } add_equipment_to_stockpile = { type = IFV_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IFV_6 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IFV_5 } add_equipment_to_stockpile = { type = IFV_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = IFV_4 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = IFV_8 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IFV_7 } add_equipment_to_stockpile = { type = IFV_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IFV_6 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IFV_5 } add_equipment_to_stockpile = { type = IFV_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IFV_4 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = IFV_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest attack helicopter (heavy_tank_chassis tiers, via nsb_attack_helicopter techs).
 NKO_export_transfer_helo = {
-	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
-	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = nsb_attack_helicopter_tech_7 } add_equipment_to_stockpile = { type = heavy_tank_chassis_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_6 } add_equipment_to_stockpile = { type = heavy_tank_chassis_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_5 } add_equipment_to_stockpile = { type = heavy_tank_chassis_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_4 } add_equipment_to_stockpile = { type = heavy_tank_chassis_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_3 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_3 } add_equipment_to_stockpile = { type = heavy_tank_chassis_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_2 } add_equipment_to_stockpile = { type = heavy_tank_chassis_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_1 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_1 } add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_7 } add_equipment_to_stockpile = { type = attack_helicopter_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_6 } add_equipment_to_stockpile = { type = attack_helicopter_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_5 } add_equipment_to_stockpile = { type = attack_helicopter_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_4 } add_equipment_to_stockpile = { type = attack_helicopter_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_4 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_3 } add_equipment_to_stockpile = { type = attack_helicopter_3 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_3 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_2 } add_equipment_to_stockpile = { type = attack_helicopter_2 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_2 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = attack_helicopter_1 } add_equipment_to_stockpile = { type = attack_helicopter_1 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = attack_helicopter_1 amount = NKO_export_eq_amount producer = NKO } } }
+	set_temp_variable = { NKO_export_eq_amount_neg = { value = NKO_export_eq_amount multiply = -1 } }
+	if = { limit = { has_tech = nsb_attack_helicopter_tech_7 } add_equipment_to_stockpile = { type = heavy_tank_chassis_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_6 } add_equipment_to_stockpile = { type = heavy_tank_chassis_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_5 } add_equipment_to_stockpile = { type = heavy_tank_chassis_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_4 } add_equipment_to_stockpile = { type = heavy_tank_chassis_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_3 } add_equipment_to_stockpile = { type = heavy_tank_chassis_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_2 } add_equipment_to_stockpile = { type = heavy_tank_chassis_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_1 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = nsb_attack_helicopter_tech_1 } add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = heavy_tank_chassis_0 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_7 } add_equipment_to_stockpile = { type = attack_helicopter_7 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_6 } add_equipment_to_stockpile = { type = attack_helicopter_6 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_5 } add_equipment_to_stockpile = { type = attack_helicopter_5 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_4 } add_equipment_to_stockpile = { type = attack_helicopter_4 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_4 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_3 } add_equipment_to_stockpile = { type = attack_helicopter_3 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_3 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_2 } add_equipment_to_stockpile = { type = attack_helicopter_2 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_2 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = attack_helicopter_1 } add_equipment_to_stockpile = { type = attack_helicopter_1 amount = NKO_export_eq_amount_neg producer = NKO } var:NKO_arms_client_id = { add_equipment_to_stockpile = { type = attack_helicopter_1 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Delivers the package the client chose in NKO_export.10 (NKO_arms_request_type on
@@ -598,14 +587,14 @@ NKO_export_transfer_helo = {
 # An unset request type (0) falls through to the legacy full package (SOV NKO_export.1).
 NKO_export_do_munitions = {
 	if = {
-		limit = { event_target:NKO_arms_client = { check_variable = { NKO_arms_request_type = 1 } } }
+		limit = { var:NKO_arms_client_id = { check_variable = { NKO_arms_request_type = 1 } } }
 		# Light Infantry Division — 3x L_Inf_Bat need (rifles 200, C&C 20).
 		if = { limit = { has_tech = infantry_weapons_4 } set_temp_variable = { NKO_export_eq_amount = 600 } NKO_export_transfer_inf_weapons = yes }
 		if = { limit = { has_tech = cnc_equipment_3 }    set_temp_variable = { NKO_export_eq_amount = 60 }  NKO_export_transfer_cnc = yes }
 		set_temp_variable = { NKO_arms_export_output_tier = 1 }
 	}
 	else_if = {
-		limit = { event_target:NKO_arms_client = { check_variable = { NKO_arms_request_type = 2 } } }
+		limit = { var:NKO_arms_client_id = { check_variable = { NKO_arms_request_type = 2 } } }
 		# Motorized Infantry Division — 3x Mot_Inf_Bat need (rifles 200, util 20, C&C 20).
 		if = { limit = { has_tech = infantry_weapons_4 } set_temp_variable = { NKO_export_eq_amount = 600 } NKO_export_transfer_inf_weapons = yes }
 		if = { limit = { has_tech = IMV_4 }     set_temp_variable = { NKO_export_eq_amount = 60 }  NKO_export_transfer_util = yes  NKO_export_transfer_heavy_util = yes }
@@ -613,7 +602,7 @@ NKO_export_do_munitions = {
 		set_temp_variable = { NKO_arms_export_output_tier = 2 }
 	}
 	else_if = {
-		limit = { event_target:NKO_arms_client = { check_variable = { NKO_arms_request_type = 3 } } }
+		limit = { var:NKO_arms_client_id = { check_variable = { NKO_arms_request_type = 3 } } }
 		# Armored Division — 3x armor_Bat need (tank 20, C&C 20).
 		if = {
 			limit = { NKO_can_export_tank = yes }
@@ -624,7 +613,7 @@ NKO_export_do_munitions = {
 		set_temp_variable = { NKO_arms_export_output_tier = 3 }
 	}
 	else_if = {
-		limit = { event_target:NKO_arms_client = { check_variable = { NKO_arms_request_type = 4 } } }
+		limit = { var:NKO_arms_client_id = { check_variable = { NKO_arms_request_type = 4 } } }
 		# Mechanized Infantry Division — 3x Mech_Inf_Bat need (rifles 160, transport 20, C&C 20).
 		if = { limit = { NKO_can_export_ifv = yes } set_temp_variable = { NKO_export_eq_amount = 60 } NKO_export_transfer_ifv = yes }
 		if = { limit = { NKO_can_export_apc = yes } set_temp_variable = { NKO_export_eq_amount = 60 } NKO_export_transfer_apc = yes }
@@ -655,7 +644,7 @@ NKO_export_do_munitions = {
 		}
 		# Artillery — no tech floor; only if the client fields artillery.
 		if = {
-			limit = { event_target:NKO_arms_client = { has_template_containing_unit = Arty_Bat } }
+			limit = { var:NKO_arms_client_id = { has_template_containing_unit = Arty_Bat } }
 			set_temp_variable = { NKO_export_eq_amount = 120 }
 			NKO_export_transfer_arty = yes
 		}
@@ -663,7 +652,7 @@ NKO_export_do_munitions = {
 		if = {
 			limit = {
 				NKO_can_export_tank = yes
-				event_target:NKO_arms_client = {
+				var:NKO_arms_client_id = {
 					OR = {
 						has_template_containing_unit = armor_Bat
 						has_template_containing_unit = L_arm_Bat
@@ -677,7 +666,7 @@ NKO_export_do_munitions = {
 		if = {
 			limit = {
 				NKO_can_export_apc = yes
-				event_target:NKO_arms_client = {
+				var:NKO_arms_client_id = {
 					OR = {
 						has_template_containing_unit = Mech_Inf_Bat
 						has_template_containing_unit = Mot_Inf_Bat
@@ -691,46 +680,45 @@ NKO_export_do_munitions = {
 		if = {
 			limit = {
 				NKO_can_export_ifv = yes
-				event_target:NKO_arms_client = { has_template_containing_unit = Mech_Inf_Bat }
+				var:NKO_arms_client_id = { has_template_containing_unit = Mech_Inf_Bat }
 			}
 			set_temp_variable = { NKO_export_eq_amount = 40 }
 			NKO_export_transfer_ifv = yes
 		}
 		# Attack helicopters — no jets ever; only if the client fields attack helicopters.
 		if = {
-			limit = { event_target:NKO_arms_client = { has_template_containing_unit = attack_helo_bat } }
+			limit = { var:NKO_arms_client_id = { has_template_containing_unit = attack_helo_bat } }
 			set_temp_variable = { NKO_export_eq_amount = 20 }
 			NKO_export_transfer_helo = yes
 		}
 		set_temp_variable = { NKO_arms_export_output_tier = 1 }
 	}
-	event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_munitions days = 365 } }
+	var:NKO_arms_client_id = { add_timed_idea = { idea = NKO_arms_client_munitions days = 365 } }
 	set_temp_variable = { NKO_arms_export_payment = 0.5 }
 	NKO_arms_export_credit_payment = yes
 	set_temp_variable = { NKO_arms_export_deal_heat = 1 }
 	NKO_arms_export_register_deal = yes
-	event_target:NKO_arms_client = { set_variable = { NKO_arms_request_type = 0 } }
 }
 
 NKO_export_do_troops = {
 	custom_effect_tooltip = NKO_export_troops_effect_tt
-	event_target:NKO_arms_client = { country_event = { id = NKO_export.22 days = 1 } }
+	FROM = { country_event = { id = NKO_export.22 days = 1 } }
 	custom_effect_tooltip = TT_IF_THEY_ACCEPT
 	effect_tooltip = {
-		event_target:NKO_arms_client = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
+		FROM = { add_timed_idea = { idea = NKO_arms_client_troops days = 365 } }
 		add_timed_idea = { idea = NKO_storm_corps_abroad days = 365 }
 		set_rule = { can_send_volunteers = yes }
 		add_political_power = 50
 		add_war_support = 0.02
 		if = {
-			limit = { event_target:NKO_arms_client = { OR = { original_tag = SOV  original_tag = CHI } } }
+			limit = { FROM = { OR = { original_tag = SOV  original_tag = CHI } } }
 			custom_effect_tooltip = NKO_storm_corps_permanent_income_tt
 		}
 	}
 }
 
 NKO_export_finalize_troops = {
-	event_target:NKO_arms_client = {
+	FROM = {
 		set_country_flag = { flag = NKO_storm_corps_host value = 1 days = 365 }
 		add_timed_idea = { idea = NKO_arms_client_troops days = 365 }
 	}
@@ -738,25 +726,25 @@ NKO_export_finalize_troops = {
 	add_timed_idea = { idea = NKO_storm_corps_abroad days = 365 }
 
 	save_event_target_as = NKO_storm_corps_patron
-	event_target:NKO_arms_client = { country_event = { id = NKO_export.21 days = 30 } }
+	FROM = { country_event = { id = NKO_export.21 days = 30 } }
 	add_political_power = 50
 	add_war_support = 0.02
-	event_target:NKO_arms_client = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
-	add_opinion_modifier = { target = event_target:NKO_arms_client modifier = trade_mission }
+	FROM = { add_opinion_modifier = { target = NKO modifier = trade_mission } }
+	add_opinion_modifier = { target = FROM modifier = trade_mission }
 	set_temp_variable = { NKO_arms_export_payment = 1 }
 	NKO_arms_export_credit_payment = yes
 	set_temp_variable = { NKO_arms_export_deal_heat = 2 }
 	NKO_arms_export_register_deal = yes
 
 	if = {
-		limit = { event_target:NKO_arms_client = { original_tag = SOV } }
+		limit = { FROM = { original_tag = SOV } }
 		set_country_flag = NKO_storm_corps_income_sov
-		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
+		FROM = { set_country_flag = NKO_storm_corps_subsidy }
 	}
 	else_if = {
-		limit = { event_target:NKO_arms_client = { original_tag = CHI } }
+		limit = { FROM = { original_tag = CHI } }
 		set_country_flag = NKO_storm_corps_income_chi
-		event_target:NKO_arms_client = { set_country_flag = NKO_storm_corps_subsidy }
+		FROM = { set_country_flag = NKO_storm_corps_subsidy }
 	}
 }
 

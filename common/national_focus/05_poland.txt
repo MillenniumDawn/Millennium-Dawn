@@ -2092,6 +2092,10 @@ focus_tree = {
 			unlock_decision_category_tooltip = POL_department_of_foreign_influence_category
 			add_war_support = 0.1
 			if = {
+				limit = { has_faction_template = faction_template_nato }
+				NATO_leave = yes
+			}
+			else_if = {
 				limit = { is_faction_leader = yes }
 				dismantle_faction = yes
 			}
@@ -3115,6 +3119,7 @@ focus_tree = {
 				add_ideas = POL_second_red_revolution1_idea
 				set_country_flag = POL_revolt_country_flag
 				set_temp_variable = { rul_party_temp = 4 }
+				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 				hidden_effect = {
 					set_temp_variable = { party_index = 4 }
@@ -6250,7 +6255,7 @@ focus_tree = {
 
 	focus = {
 		id = POL_invite_microsoft
-		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS }
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_EXPENDITURE }
 		icon = usa_investments
 
 		x = -1
@@ -6304,6 +6309,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -6456,6 +6465,10 @@ focus_tree = {
 		ai_will_do = {
 			base = 15
 			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 
 	}
@@ -6542,6 +6555,10 @@ focus_tree = {
 		ai_will_do = {
 			base = 25
 			modifier = { factor = 0 is_historical_focus_on = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -7753,6 +7770,10 @@ focus_tree = {
 		}
 		ai_will_do = {
 			base = 25
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -16800,7 +16821,7 @@ focus_tree = {
 		prerequisite = { focus = POL_continue_transition }
 		prerequisite = { focus = POL_poland_our_home }
 
-		search_filters = { FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_finish_social_program"
@@ -16816,6 +16837,10 @@ focus_tree = {
 			base = 50
 			modifier = { factor = 25 POL_ai_democratic_path = yes }
 			modifier = { factor = 0 POL_ai_not_democratic_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -19693,7 +19718,7 @@ focus_tree = {
 
 		prerequisite = { focus = POL_english_lessons }
 
-		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			OR = {
@@ -19719,6 +19744,10 @@ focus_tree = {
 			base = 10
 			modifier = { factor = 25 has_global_flag = POL_CIVIC_PLATFORM_FOCUS_PATH }
 			modifier = { factor = 0 POL_ai_not_civic_platform_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -21844,7 +21873,12 @@ focus_tree = {
 			}
 		}
 
-		bypass = { check_variable = { party_pop_array^3 < 0.1 } }
+		bypass = {
+			custom_trigger_tooltip = {
+				tooltip = party_3_popularity_below_10_tt
+				check_variable = { party_pop_array^3 < 0.1 }
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_question_of_socialism"
@@ -22002,7 +22036,7 @@ focus_tree = {
 
 		prerequisite = { focus = POL_focus_on_general_knowledge }
 
-		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS }
+		search_filters = { FOCUS_FILTER_INTERNAL_AFFAIRS FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			OR = {
@@ -22028,6 +22062,10 @@ focus_tree = {
 			base = 10
 			modifier = { factor = 25 POL_ai_historical_path = yes }
 			modifier = { factor = 0 POL_ai_not_historical_path = yes }
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -24561,6 +24599,7 @@ focus_tree = {
 				limit = { NOT = { check_variable = { ruling_party = 20 } } }
 				hidden_effect = {
 					set_temp_variable = { rul_party_temp = 20 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}
 				set_temp_variable = { party_index = 20 }
@@ -26133,6 +26172,7 @@ focus_tree = {
 			}
 			else = {
 				set_temp_variable = { rul_party_temp = 23 }
+				set_temp_variable = { disable_elections = 0 }
 				change_ruling_party_effect = yes
 				hidden_effect = {
 					set_country_flag = POL_korwin_wins
@@ -26243,6 +26283,7 @@ focus_tree = {
 			}
 			else = {
 				set_temp_variable = { rul_party_temp = 14 }
+				set_temp_variable = { disable_elections = 0 }
 				change_ruling_party_effect = yes
 				hidden_effect = {
 					set_politics = {
@@ -28476,9 +28517,7 @@ focus_tree = {
 		bypass = {
 			OR = {
 				is_in_faction_with = SOV
-				NOT = {
-					has_idea = NATO_member
-				}
+				is_in_faction = no
 			}
 		}
 
@@ -28486,8 +28525,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus POL_leave_nato"
-			leave_faction = yes
-			remove_ideas = NATO_member
+			if = {
+				limit = { has_faction_template = faction_template_nato }
+				NATO_leave = yes
+			}
+			else_if = {
+				limit = { is_in_faction = yes }
+				leave_faction = yes
+			}
 			add_power_balance_value = {
 				id = POL_korwin_win_bop
 				value = -0.75

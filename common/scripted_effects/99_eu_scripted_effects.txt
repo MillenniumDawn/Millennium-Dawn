@@ -230,20 +230,38 @@ EU_init_default_europeanism = {
 	}
 }
 
-### Inventment in the single market
-### use in country scope
-### TAG is investee
+# THIS is the recipient country and ROOT is the EU donor. This is an instant grant.
 invest_in_EU_single_market_infra = {
-	if = {
+	random_owned_controlled_state = {
 		limit = {
-			any_owned_state = {
-				free_building_slots = { building = infrastructure size > 0 include_locked = no }
+			eu_infrastructure_grant_state_available = yes
+			OR = {
+				is_in_home_area = yes
+				PREV = {
+					NOT = {
+						any_owned_state = {
+							is_controlled_by = PREV
+							is_in_home_area = yes
+							eu_infrastructure_grant_state_available = yes
+						}
+					}
+				}
 			}
 		}
-		invest_infra = yes
-		set_temp_variable = { modify_europeanism = 0.03 }
-		europeanism_change_this_and_root = yes
-		update_eu_dirty_variable = yes
+		add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+		PREV = {
+			set_temp_variable = { percent_change = 2 }
+			change_influence_percentage = yes
+			set_temp_variable = { modify_europeanism = 0.03 }
+			europeanism_change_this_and_root = yes
+			update_eu_dirty_variable = yes
+		}
+		ROOT = {
+			set_temp_variable = { treasury_change = -3.5 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 3.5 }
+			modify_international_investment_effect = yes
+		}
 	}
 }
 
@@ -419,6 +437,9 @@ leaving_EU = {
 	remove_ideas = euro
 	custom_effect_tooltip = tooltip_EU_remove_laws_and_offices
 	hidden_effect = {
+		set_temp_variable = { alert_id = token:md_eu_council_vote }
+		remove_md_alert = yes
+
 		for_each_scope_loop = {
 			array = global.EU_member
 			PREV = { remove_opinion_modifier = { target = PREV modifier = EU_member_opinion } }

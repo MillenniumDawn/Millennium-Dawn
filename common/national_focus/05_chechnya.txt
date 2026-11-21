@@ -1278,7 +1278,7 @@ focus_tree = {
 
 		prerequisite = { focus = CHE_economic_autonomy }
 
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INDUSTRY }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			is_subject_of = SOV
@@ -1313,6 +1313,10 @@ focus_tree = {
 			modifier = {
 				factor = 0
 				can_staff_an_industrial_complex = no
+			}
+			modifier = {
+				factor = 0
+				SOV = { has_active_mission = bankruptcy_incoming_collapse }
 			}
 			modifier = { factor = 25 CHE_ai_historical_path = yes }
 			modifier = { factor = 0 CHE_ai_not_historical_path = yes }
@@ -1861,6 +1865,7 @@ focus_tree = {
 			hidden_effect = {
 				if = { limit = { NOT = { check_variable = { ruling_party = 4 } } }
 					set_temp_variable = { rul_party_temp = 4 }
+					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
 				}
 				retire_country_leader = yes
@@ -3650,7 +3655,7 @@ focus_tree = {
 
 		prerequisite = { focus = CHE_arms_rebuild }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			is_subject_of = SOV
@@ -5172,6 +5177,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_caucasian_federalism"
 			if = { limit = { NOT = { check_variable = { ruling_party = 21 } } }
 				set_temp_variable = { rul_party_temp = 21 }
+				set_temp_variable = { disable_elections = 1 }
 				change_ruling_party_effect = yes
 			}
 			add_popularity = {
@@ -5244,6 +5250,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus CHE_western_democracy"
 			if = { limit = { NOT = { western_autocrats_are_in_power = yes } }
 				set_temp_variable = { rul_party_temp = 0 }
+				set_temp_variable = { disable_elections = 0 }
 				change_ruling_party_effect = yes
 			}
 			add_popularity = {
@@ -5368,6 +5375,8 @@ focus_tree = {
 			change_relative_party_popularity = yes
 			if = { limit = { NOT = { check_variable = { ruling_party = 19 } } }
 				set_temp_variable = { rul_party_temp = 19 }
+				set_temp_variable = { disable_elections = 1 }
+				if = { limit = { has_elections = yes } set_temp_variable = { disable_elections = 0 } }
 				change_ruling_party_effect = yes
 			}
 			add_popularity = {
@@ -6094,30 +6103,51 @@ focus_tree = {
 				regiments = {
 					Special_Forces = { x = 0 y = 0 }
 					Special_Forces = { x = 0 y = 1 }
+
 					Special_Forces = { x = 1 y = 0 }
 					Special_Forces = { x = 1 y = 1 }
 				}
-				support = { L_Recce_Comp = { x = 0 y = 0 } }
+				regimental_support = {
+					L_Recce_Comp = { x = 0 y = 0 }
+
+					L_Recce_Comp = { x = 1 y = 0 }
+				}
 				priority = 2
 			}
 			division_template = {
-				name = "Brigada Natsionalnoi Gvardiy"
+				name = "Brigada Natsionalnoi Gvardii"
 				regiments = {
 					Militia_Bat = { x = 0 y = 0 }
 					Militia_Bat = { x = 0 y = 1 }
 					Militia_Bat = { x = 0 y = 2 }
+
+					Militia_Bat = { x = 1 y = 0 }
+					Militia_Bat = { x = 1 y = 1 }
+					Militia_Bat = { x = 1 y = 2 }
+
+					Militia_Bat = { x = 2 y = 0 }
+					Militia_Bat = { x = 2 y = 1 }
+					Militia_Bat = { x = 2 y = 2 }
+				}
+				regimental_support = {
+					Militia_Recce_Comp = { x = 0 y = 0 }
+					Arty_Battery = { x = 0 y = 1 }
+
+					Militia_Recce_Comp = { x = 1 y = 0 }
+					Arty_Battery = { x = 1 y = 1 }
+
+					Militia_Recce_Comp = { x = 2 y = 0 }
+					Arty_Battery = { x = 2 y = 1 }
 				}
 				support = {
-					L_Recce_Comp = { x = 0 y = 0 }
-					Arty_Battery = { x = 0 y = 1 }
-					L_Engi_Comp = { x = 0 y = 2 }
+					L_Engi_Comp = { x = 0 y = 0 }
 				}
 			}
 			random_owned_controlled_state = {
 				limit = { ROOT = { has_full_control_of_state = PREV } }
 				prioritize = { 672 }
 				create_unit = {
-					division = "name = \"Brigada Nachionalnoi Gvardiy\" division_template = \"Brigada Natsionalnoi Gvardiy\" start_experience_factor = 0.1"
+					division = "name = \"Brigada Natsionalnoi Gvardii\" division_template = \"Brigada Natsionalnoi Gvardii\" start_experience_factor = 0.1"
 					owner = CHE
 				}
 			}
@@ -6368,6 +6398,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -2 }
 			modify_treasury_effect = yes
 			random_core_state = {
+				limit = { free_building_slots = { building = fuel_silo size > 0 include_constructions = yes } }
 				add_building_construction = {
 					type = fuel_silo
 					level = 1
@@ -6745,7 +6776,7 @@ focus_tree = {
 		prerequisite = { focus = CHE_reviving_red_hammer }
 		prerequisite = { focus = CHE_reviving_himzavod }
 
-		search_filters = { FOCUS_FILTER_RESOURCE }
+		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_EXPENDITURE }
 
 		available = { is_subject_of = SOV }
 
@@ -6938,6 +6969,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
 			random_core_state = {
+				limit = { free_building_slots = { building = fuel_silo size > 0 include_constructions = yes } }
 				add_resource = {
 					type = oil
 					amount = 2
@@ -7168,7 +7200,7 @@ focus_tree = {
 
 		prerequisite = { focus = CHE_quwait_friend }
 
-		search_filters = { FOCUS_FILTER_POLITICAL }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_EXPENDITURE }
 
 		available = {
 			UAE = {
