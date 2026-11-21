@@ -21,8 +21,9 @@ Settled. Do not ask about them.
 - No TAG given: run `gh issue view 3895 --json body -q .body`, take the first `- [ ]`
   tag, and work that tag only.
 - Branch: `git fetch origin main`, then
-  `git switch -c 3895-party-loc-batch-N origin/main`, with N one above the highest
-  existing local or remote batch branch. Never reuse an old batch branch.
+  `git switch -c issue/3895-party-loc-batch-N origin/main`, with N one above the highest
+  batch number across existing local and remote batch branches. Never reuse an old
+  batch branch.
 - Research, then re-verify: one research agent per tag, then a fresh agent re-verifies
   every party, slot fit, and gate date against sources. Only then present the mapping.
 - Style: the `ENG` block for shape (header, `\n\n`, two paragraphs) and the `HOL` block

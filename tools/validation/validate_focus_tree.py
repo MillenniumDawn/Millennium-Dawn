@@ -50,6 +50,9 @@ from validate_events import (
 )
 from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
+    DEFICIT_GUARD_RE as _DEFICIT_GUARD_RE,
+)
+from validator_common import (
     FACTOR_ZERO_RE,
     BaseValidator,
     Severity,
@@ -149,7 +152,7 @@ _STAFFABLE_TRIGGERS = {
 # from negative treasury_change literals applied via modify_treasury_effect)
 # needs the bankruptcy guard. Focus `cost` is completion time, not money, so
 # the actual money spend in the reward is what gates the guard.
-_MONEY_SPEND_THRESHOLD = 5.0
+_MONEY_SPEND_THRESHOLD = 1.0
 # Search filters that mark a focus as military/economic/research. A focus that
 # spends money or builds should carry one of these; a money/building focus
 # tagged with none of them is miscategorized (e.g. an economic focus tagged
@@ -352,6 +355,22 @@ def _is_conjunctive_guard(body: str, pos: int, *, negated: bool = False) -> bool
         labels.append(label)
         pos = opener
     return "OR" not in labels and (negated or "NOT" not in labels)
+
+
+def _country_scope_at(body: str, pos: int, own_tags: Optional[FrozenSet[str]]) -> str:
+    """Return the payer role enclosing a treasury check in an AI modifier."""
+    label, opener = _enclosing_block_label(body, pos)
+    while label is not None:
+        if label == "FROM":
+            return "FROM"
+        if label in {"ROOT", "THIS", "PREV", "OWNER", "CONTROLLER", "CAPITAL"}:
+            return "ROOT"
+        if _LITERAL_TAG_RE.fullmatch(label) and label not in _NON_TAG_KEYWORDS:
+            return "ROOT" if own_tags and label in own_tags else label
+        if _COUNTRY_ITERATOR_RE.match(label):
+            return "_OTHER"
+        label, opener = _enclosing_block_label(body, opener)
+    return "ROOT"
 
 
 def _effect_tooltip_spans(text: str, start: int, end: int) -> List[Tuple[int, int]]:
@@ -1148,6 +1167,7 @@ def _scan_ai_guards(
 
         buildings: Set[str] = set()
         spend = 0.0
+        money_cost_roles: Set[str] = set()
         has_cost = False
         unknown_cost = False
         previewed_cost = False
@@ -1203,6 +1223,11 @@ def _scan_ai_guards(
             texts, reward_fires, reward_calls = split_roles(
                 blank_quoted_strings(rbody), own
             )
+            money_cost_roles.update(
+                role
+                for role, text in texts.items()
+                if role != "ROOT" and _body_money_cost(text, called_money, waivable)[1]
+            )
             fires += reward_fires
             calls += reward_calls
             owner_text = " ".join(
@@ -1231,6 +1256,7 @@ def _scan_ai_guards(
 
         guards: Set[str] = set()
         treasury_checks: Set[str] = set()
+        treasury_checks_by_role: Dict[str, Set[str]] = defaultdict(set)
         am = _AI_WILL_DO_START.search(fbody)
         if am:
             abody, _ = _extract_block(fbody, am.start())
@@ -1258,7 +1284,18 @@ def _scan_ai_guards(
                         for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
                             if _is_conjunctive_guard(mbody, gm.start()):
                                 guards.add("bankruptcy_incoming_collapse")
-                    treasury_checks |= lowering_treasury_checks(mbody)
+                    lowered_checks = lowering_treasury_checks(mbody)
+                    treasury_checks |= lowered_checks
+                    for check, pattern in (
+                        ("bankruptcy", _BANKRUPTCY_GUARD_RE),
+                        ("deficit", _DEFICIT_GUARD_RE),
+                    ):
+                        if check not in lowered_checks:
+                            continue
+                        for gm in pattern.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start()):
+                                role = _country_scope_at(mbody, gm.start(), own)
+                                treasury_checks_by_role[role].add(check)
                     mpos = mend
 
         out.append(
@@ -1270,6 +1307,7 @@ def _scan_ai_guards(
                 "buildings": buildings,
                 "guards": guards,
                 "spend": spend,
+                "money_cost_roles": money_cost_roles,
                 "has_cost": has_cost,
                 "unknown": unknown_cost,
                 "previewed_cost": previewed_cost,
@@ -1279,6 +1317,7 @@ def _scan_ai_guards(
                 "calls": tuple(calls),
                 "owner_tags": own,
                 "treasury_checks": treasury_checks,
+                "treasury_checks_by_role": treasury_checks_by_role,
             }
         )
     return out
@@ -2277,8 +2316,11 @@ class Validator(BaseValidator):
                     ),
                     bool(d["owner_tags"]),
                 )
+                payer_checks = set()
+                for role in d["money_cost_roles"]:
+                    payer_checks.update(d["treasury_checks_by_role"].get(role, set()))
                 if unneeded_treasury_checks(
-                    d["treasury_checks"],
+                    d["treasury_checks"] - payer_checks,
                     d["has_cost"]
                     or d["previewed_cost"]
                     or d["commits_money"]

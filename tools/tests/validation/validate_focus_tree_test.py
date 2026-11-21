@@ -2005,17 +2005,17 @@ _GUARD_REPORT_CASES = {
     "spend at the threshold": (
         "",
         "",
-        _spend(-5),
+        _spend(-1),
         "",
         [
             (
                 "missing-bankruptcy-guard",
-                "1 focus(es) spending >= 5bn without the bankruptcy guard:"
+                "1 focus(es) spending >= 1bn without the bankruptcy guard:"
                 " TAG_focus_a (line 3)",
             )
         ],
     ),
-    "spend below the threshold": ("", "", _spend(-3), "", []),
+    "spend below the threshold": ("", "", _spend(-0.5), "", []),
     "spend with the guard": ("", "", _spend(-7), BANKRUPTCY_GUARD, []),
     "scripted spend without the guard": (
         _SPEND_EFFECT,
@@ -2186,6 +2186,41 @@ def test_ai_will_do_guards(tmp_path, effects, extra, reward, modifiers, expected
 
 
 @pytest.mark.parametrize(
+    ("modifier", "unneeded"),
+    [
+        (
+            "modifier = { factor = 0 SOV = { has_active_mission = "
+            "bankruptcy_incoming_collapse } }",
+            False,
+        ),
+        (
+            "modifier = { factor = 0 has_active_mission = "
+            "bankruptcy_incoming_collapse }",
+            True,
+        ),
+    ],
+    ids=["guard matches foreign payer", "guard checks another payer"],
+)
+def test_foreign_treasury_guard_matches_its_payer(tmp_path, modifier, unneeded):
+    _write_effects_file(tmp_path)
+    text = FOCUS_TEMPLATE.format(
+        extra="",
+        reward=f"SOV = {{ {_spend(-3)} }}",
+        modifiers=modifier,
+    ).replace("id = test_tree", "id = test_tree\n\tcountry = { tag = CHE }")
+    _focus_file(tmp_path, text)
+    validator = _validator(tmp_path)
+    validator.validate_ai_will_do_guards()
+
+    warnings = [
+        issue
+        for issue in validator._issues
+        if issue.category == "unneeded-treasury-guard"
+    ]
+    assert bool(warnings) is unneeded
+
+
+@pytest.mark.parametrize(
     ("reward", "unneeded"),
     [
         ("GER = { declare_war_on = { target = ROOT type = annex_everything } }", False),
@@ -2231,7 +2266,7 @@ def test_bankruptcy_warnings_aggregate_per_file(tmp_path):
     v.validate_ai_will_do_guards()
 
     assert _messages(v) == [
-        "2 focus(es) spending >= 5bn without the bankruptcy guard:"
+        "2 focus(es) spending >= 1bn without the bankruptcy guard:"
         " TAG_focus_a (line 3), TAG_focus_b (line 12)"
     ]
 

@@ -452,24 +452,18 @@ def test_political_leaders_duplicate_branch_is_reported_once(tmp_path, scoped_re
     assert _matching(messages, "duplicate set_")
 
 
-def test_provincial_building_checks_only_run_for_common_and_events(
-    tmp_path, scoped_refs
-):
+def test_scope_checks_only_run_for_common_and_events(tmp_path, scoped_refs):
     body = (
         "test_effect = {",
-        "\tadd_building_construction = {",
-        "\t\ttype = naval_base",
-        "\t\tlevel = 1",
-        "\t\tinstant_build = yes",
-        "\t}",
+        "\tevery_owned_controlled_state = { add_manpower = 1 }",
         "}",
     )
 
     inside = _messages(tmp_path, "common/scripted_effects/MD_test.txt", *body)
     outside = _messages(tmp_path, "history/countries/TAG - Test.txt", *body)
 
-    assert _matching(inside, "it is a provincial building")
-    assert not _matching(outside, "it is a provincial building")
+    assert _matching(inside, "every_owned_controlled_state does not exist")
+    assert not _matching(outside, "every_owned_controlled_state does not exist")
 
 
 def test_windows_separators_classify_like_forward_slashes():
@@ -679,69 +673,6 @@ def test_worker_initialiser_publishes_the_reference_sets(scoped_refs):
 # ---------------------------------------------------------------------------
 # Definition lookups under common/
 # ---------------------------------------------------------------------------
-
-
-_NAVAL_BASE = [
-    "\t\t\tadd_building_construction = {\n",
-    "\t\t\t\ttype = naval_base\n",
-    "\t\t\t\tlevel = 2\n",
-    "\t\t\t}\n",
-]
-
-
-def test_provincial_building_types_read_only_the_txt_files_it_can_open(tmp_path):
-    buildings = tmp_path / "common" / "buildings"
-    _write(
-        buildings / "00_buildings.txt",
-        _script(
-            "buildings = {",
-            "\tnaval_base = {",
-            "\t\tlevel_cap = { province_max = 5 }",
-            "\t}",
-            "\tinfrastructure = {",
-            "\t\tlevel_cap = { state_max = 5 }",
-            "\t}",
-            "}",
-        ),
-    )
-    _write(buildings / "notes.md", "not a buildings file\n")
-    (buildings / "a_directory.txt").mkdir()
-
-    assert checker._provincial_building_types(str(tmp_path)) == frozenset(
-        {"naval_base"}
-    )
-
-
-def test_commented_province_max_does_not_make_a_building_provincial(tmp_path):
-    write_under_str(
-        tmp_path,
-        "common/buildings/00_buildings.txt",
-        _script(
-            "buildings = {",
-            "\tindustrial_complex = {",
-            "\t\tbase_cost = 100",
-            "\t\t# province_max = 5 would make this provincial",
-            "\t\tlevel_cap = { state_max = 25 }",
-            "\t}",
-            "\tnaval_base = {",
-            "\t\tlevel_cap = { province_max = 10 }",
-            "\t}",
-            "}",
-        ),
-    )
-    lines = [line.replace("naval_base", "industrial_complex") for line in _NAVAL_BASE]
-
-    assert checker._provincial_building_types(str(tmp_path)) == frozenset(
-        {"naval_base"}
-    )
-    assert checker._check_building_missing_province(lines, str(tmp_path)) == []
-
-
-def test_missing_buildings_file_falls_back_to_the_known_list(tmp_path):
-    missing = str(tmp_path / "does-not-exist")
-
-    assert "naval_base" in checker._provincial_building_types(missing)
-    assert len(checker._check_building_missing_province(_NAVAL_BASE, missing)) == 1
 
 
 def test_missing_common_directories_disable_the_definition_checks(fake_mod_root):

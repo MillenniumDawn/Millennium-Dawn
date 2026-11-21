@@ -10,8 +10,8 @@
 #   pre-commit run --files path/to/file1 path/to/file2
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want. Exception: md-fix-styling and the
-# md-validate-{defines,descriptors,mesh-textures} hooks read the git index, so
-# under --files they check what is staged, not the named files.
+# md-validate-{defines,descriptors,mesh-textures,asset-data} hooks read the
+# git index, so under --files they check what is staged, not the named files.
 #
 # `pre-commit install` installs both the pre-commit and pre-push hooks. Hooks
 # without `stages:` run at commit only; the tools pytest hooks run at push.
@@ -105,7 +105,7 @@ repos:
   # Ruff owns lint (E/F) and import order (I). Config (select, ignores,
   # per-file-ignores, and isort) lives in pyproject.toml.
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.17
+    rev: v0.17.5
     hooks:
       - id: ruff
         name: Lint Python (ruff)
@@ -119,23 +119,25 @@ repos:
         name: Format Python (black)
         entry: black
         language: python
-        additional_dependencies: [black==26.5.1]
+        additional_dependencies: [black==26.10.1]
         files: '^tools/.*\.py$'
       - id: pylint-tools
         name: Check Python correctness (pylint)
         # Staged files only. CI's tools-quality job lints the whole tree.
         entry: pylint -j 0 --reports=no --score=no
         language: python
-        additional_dependencies: [pylint==4.0.6]
+        additional_dependencies: [pylint==4.1.4]
         files: '^tools/.*\.py$'
         require_serial: true
       - id: mypy-tools
         name: Type-check typed tools (mypy)
         entry: mypy
         language: python
-        additional_dependencies: [mypy==2.3.0]
+        additional_dependencies: [mypy==2.4.1]
         # Mirrors [tool.mypy] files in pyproject.toml.
-        files: '^(tools/report_lib/.*\.py|tools/shared_utils\.py|tools/validation/(validator_common|disk_cache)\.py|pyproject\.toml)$'
+        files: >-
+          (?x)^(tools/report_lib/.*\.py|tools/shared_utils\.py|
+          tools/validation/(validator_common|disk_cache)\.py|pyproject\.toml)$
         pass_filenames: false
   # pre-commit/mirrors-prettier was archived upstream — using rbubley's
   # maintained fork. Same prettier binary; current pin tracks prettier 3.8.x.
@@ -225,7 +227,7 @@ repos:
         # tools/tests/precommit_validate_test.py pins coverage against drift.
         entry: python3 tools/precommit_validate.py --no-color
         language: system
-        files: '\.(txt|yml|gfx)$'
+        files: '\.(txt|yml|gfx|gui)$'
         pass_filenames: true
         # Each run validates the whole staged set, so pre-commit must not
         # split the file list across parallel copies.
@@ -249,17 +251,29 @@ repos:
       - id: md-validate-mesh-textures
         name: MD Validate 3D model textures
         # Commit-stage only: the CI workspace ships no gfx/models or
-        # gfx/entities, so this hook is the gate.
+        # gfx/entities, so this hook is the gate. Any staged gfx/ texture can
+        # clash with a model's texture name, so all of gfx/ triggers it.
         entry: >-
           python3 tools/validation/validate_mesh_textures.py --staged --strict
           --no-color
         language: system
-        files: '^gfx/(models|entities)/'
+        files: '^gfx/'
         pass_filenames: false
+      - id: md-validate-asset-data
+        name: MD Validate 3D model meshes and texture data
+        # CI checks changed DDS headers only. Here verbose also shows the
+        # triangle count and model texture size warnings.
+        entry: >-
+          python3 tools/validation/validate_asset_data.py --staged --strict
+          --no-color
+        language: system
+        files: '(?i)^((gfx|map)/.*\.dds|gfx/models/.*\.mesh)$'
+        pass_filenames: false
+        verbose: true
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)
-        # Manual: full-repo scan is slow and currently reports ~22k legacy
-        # unreferenced textures. CI cannot run it. Run before mod-size cleanup
+        # Manual: full-repo scan is slow and reports legacy unreferenced
+        # textures and meshes. CI cannot run it. Run before mod-size cleanup
         # passes:
         #   pre-commit run md-validate-unused-textures --hook-stage manual
         entry: python3 tools/validation/validate_unused_textures.py --no-color

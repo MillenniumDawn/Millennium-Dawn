@@ -139,10 +139,10 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
     (
         (
             "ALG - Algeria",
-            "SHARED_corvettes_1",
-            "SHARED_corvettes_1_corvette_hull_2",
-            "module_torpedoes_2",
-            "tech_torpedoes_2",
+            "ALG_frigates",
+            "ALG_frigate_1965",
+            "module_light_surface_diesel_power_1",
+            "tech_diesel_power_systems_1",
         ),
         (
             "ARG - Argentina",
@@ -155,8 +155,8 @@ def test_naval_regression_sources(tmp_path, live_naval_sources):
             "AST - Australia",
             "SHARED_frigates_2",
             "SHARED_frigates_2_frigate_hull_3",
-            "module_light_surface_diesel_power_1",
-            "tech_diesel_power_systems_1",
+            "module_analog_fire_control",
+            "tech_fire_control_1",
         ),
     ),
 )
