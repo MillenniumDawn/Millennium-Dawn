@@ -502,8 +502,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
   as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
   block costs nothing. The owner's tags come from the tree's `country` block. Payers,
-  commitments, and chains follow "Who pays" under `validate_events.py`. Known gap: an
-  event chain charge never raises `missing-bankruptcy-guard`.
+  commitments, and chains follow "Who pays" under `validate_events.py`; a treasury
+  check scoped to a foreign payer is matched only to costs in that payer's scope.
+  Known gap: an event chain charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 
@@ -1090,16 +1091,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clears it. The scan strips comments, so comment-only lines are not checked. Four
   leading spaces stay the `indent-brackets` ERROR.
 
+## validate_dynamic_tokens.py
+
+- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
+  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
+  the engine logs an OOS warning per use. `@` after any other name is a scope.
+  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
+  `_ENGINE_KNOWN_TOKENS`. This validator checks staged references at commit time;
+  `validate_variables.py` shares its scanner in CI.
+
 ## validate_variables.py
 
 - `clamp-range-conflict` (WARNING): a `check_variable` against a value outside a literal
   `clamp_variable` range, or a sub-1 value against a variable clamped to a wide integer
   range. Variables written only by `set_temp_variable` are excluded.
-- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
-  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
-  the engine logs an OOS warning per use. `@` after any other name is a scope.
-  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
-  `_ENGINE_KNOWN_TOKENS`.
 - `redundant-focus-flag` (WARNING): a country flag set once, unconditionally, in a focus
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
@@ -1108,14 +1113,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
   focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
-  - `untooltipped-available-check`: a bare `check_variable` renders no line.
+  - `untooltipped-available-check`: a bare `check_variable` in `available`,
+    `cancel_trigger`, or `bypass` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
     loc key named after the flag. Also covers `cancel_trigger`, `bypass`, and flags
     inside called scripted triggers.
   - `unlocalised-negated-trigger-tooltip`: a tooltip under an odd number of `NOT` blocks
     looks up `not_tooltip`, or `KEY_NOT` when none is set. `= no` counts as a negation.
   - `untooltipped-available-scripted-trigger`: a bare call to a scripted trigger whose
-    body checks `has_global_flag` renders nothing.
+    body checks `has_global_flag`, or a `check_variable` with no inline `tooltip`,
+    outside a wrapper renders nothing. Fix the trigger definition.
   - Exempt: `custom_trigger_tooltip`, `custom_override_tooltip`, and `hidden_trigger`
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
