@@ -177,7 +177,32 @@ change_expected_defense_spending = {
 	}
 }
 
-# Moves each AI spending law one level a month toward its expected level, with no political power cost.
+ai_increase_centralization = {
+	if = {
+		limit = { bureau_increase_needs_three_step_recovery = yes }
+		increase_centralization_3 = yes
+	}
+	else_if = {
+		limit = { bureau_increase_needs_two_step_recovery = yes }
+		increase_centralization_2 = yes
+	}
+	else = {
+		increase_centralization = yes
+	}
+}
+
+ai_decrease_centralization = {
+	if = {
+		limit = { bureau_decrease_needs_two_step_recovery = yes }
+		decrease_centralization_2 = yes
+	}
+	else = {
+		decrease_centralization = yes
+	}
+}
+
+# Moves AI spending laws toward their expected levels without a political power cost.
+# Bureaucracy recovery can skip forbidden levels. Other moves take one step.
 # The law ideas carry no AI weight, so this is the only way the AI changes them.
 ai_move_spending_laws_to_expected = {
 	# Civil laws move only when the unrounded expected level is 0.75 away, so a level near x.5 does not flip them monthly
@@ -195,6 +220,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { social_gap < -0.75 }
 				social_decrease_blocked = no
+				national_spirits_allow_social_decrease = yes
 				NOT = { has_country_flag = social_law_changed_outside_ai_pass }
 				NOT = { has_country_flag = ai_deficit_trim_social } # on trim cooldown; an event may have raised it
 			}
@@ -229,6 +255,7 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { edu_gap < -1.25 }
 				edu_decrease_blocked = no
+				national_spirits_allow_education_decrease = yes
 				NOT = { has_country_flag = edu_law_changed_outside_ai_pass }
 				NOT = { has_country_flag = ai_deficit_trim_education }
 			}
@@ -250,11 +277,12 @@ ai_move_spending_laws_to_expected = {
 			limit = {
 				check_variable = { bureau_gap < -0.75 }
 				bureau_decrease_blocked = no
+				national_spirits_allow_ai_bureau_decrease = yes
 				NOT = { has_country_flag = bureau_law_changed_outside_ai_pass }
 				GER_Grundgesetz_allows_budget_law_change = yes
 				NOT = { has_country_flag = ai_deficit_trim_bureau }
 			}
-			decrease_centralization = yes
+			ai_decrease_centralization = yes
 		}
 
 		# Raises: one civil law a month, only from a balanced budget
@@ -329,11 +357,12 @@ ai_move_spending_laws_to_expected = {
 				limit = {
 					check_variable = { bureau_gap > 0.75 }
 					bureau_increase_blocked = no
+					national_spirits_allow_ai_bureau_increase = yes
 					NOT = { has_country_flag = ai_deficit_trim_bureau }
 					GER_Grundgesetz_allows_budget_law_change = yes
 					NOT = { check_variable = { policy_transition_bureau_cost > 0.05 } }
 				}
-				increase_centralization = yes
+				ai_increase_centralization = yes
 			}
 		}
 	}
@@ -399,6 +428,7 @@ ai_reduce_spending_on_deficit = {
 					check_variable = { social_law > 1 }
 					check_variable = { social_law > police_law }
 					check_variable = { social_law > education_law }
+					national_spirits_allow_social_decrease = yes
 				}
 				decrease_social_spending = yes
 				set_country_flag = { flag = ai_deficit_trim_social days = 180 value = 1 } # the pass would raise it straight back
@@ -421,13 +451,19 @@ ai_reduce_spending_on_deficit = {
 				set_country_flag = { flag = ai_deficit_trim_police days = 180 value = 1 }
 			}
 			else_if = {
-				limit = { check_variable = { bureau_law > 1 } }
-				decrease_centralization = yes
+				limit = {
+					check_variable = { bureau_law > 1 }
+					national_spirits_allow_ai_bureau_decrease = yes
+				}
+				ai_decrease_centralization = yes
 				set_country_flag = { flag = ai_deficit_trim_bureau days = 180 value = 1 }
 			}
 			# Education goes last: it is the one law the AI does not reverse
 			else_if = {
-				limit = { check_variable = { education_law > 1 } }
+				limit = {
+					check_variable = { education_law > 1 }
+					national_spirits_allow_education_decrease = yes
+				}
 				decrease_education_budget = yes
 				set_country_flag = { flag = ai_deficit_trim_education days = 180 value = 1 }
 			}
@@ -465,6 +501,7 @@ ai_lower_expected_spending_on_deficit = {
 			if = {
 				limit = {
 					check_variable = { social_law > 1 }
+					national_spirits_allow_social_decrease = yes
 					NOT = { has_country_flag = ai_deficit_trim_social }
 					NOT = { has_country_flag = ai_deficit_cut_social }
 					NOT = { check_variable = { social_law < expected_welfare_spending } }
@@ -517,6 +554,7 @@ ai_lower_expected_spending_on_deficit = {
 			else_if = {
 				limit = {
 					check_variable = { bureau_law > 1 }
+					national_spirits_allow_ai_bureau_decrease = yes
 					NOT = { has_country_flag = ai_deficit_trim_bureau }
 					NOT = { has_country_flag = ai_deficit_cut_bureau }
 					NOT = { check_variable = { bureau_law < expected_adm_spending } }
@@ -528,7 +566,7 @@ ai_lower_expected_spending_on_deficit = {
 					set_country_flag = ai_deficit_cut_bureau
 					set_country_flag = { flag = ai_deficit_trim_bureau days = 180 value = 1 }
 				}
-				decrease_centralization = yes
+				ai_decrease_centralization = yes
 				calculate_expected_spending = yes
 			}
 		}
@@ -581,8 +619,12 @@ ai_lower_expected_spending_on_deficit = {
 					set_country_flag = { flag = ai_deficit_trim_bureau days = 180 value = 1 }
 					change_expected_bureaucracy_spending = yes
 					calculate_expected_spending = yes
-					if = { limit = { check_variable = { bureau_law < expected_adm_spending } }
-						increase_centralization = yes
+					if = {
+						limit = {
+							check_variable = { bureau_law < expected_adm_spending }
+							national_spirits_allow_ai_bureau_increase = yes
+						}
+						ai_increase_centralization = yes
 					}
 				}
 			}
