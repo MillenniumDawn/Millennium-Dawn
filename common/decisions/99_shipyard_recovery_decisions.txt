@@ -1,0 +1,141 @@
+shipyard_recovery_category = {
+
+	shipyard_recovery_modernize = {
+		icon = GFX_decision_dockyard_dec
+
+		cost = 75
+
+		visible = { shipyard_is_recovering = yes }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = shipyard_recovery_work_remaining_tt
+				check_variable = { shipyard_crisis_level > 0 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = shipyard_drydock_stages_tt
+				check_variable = { shipyard_drydock_stage < 5 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { var = treasury value = shipyard_cost_drydock compare = greater_than_or_equals } }
+		custom_cost_text = shipyard_cost_drydock_tt
+
+		days_remove = 360
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision shipyard_recovery_modernize"
+			shipyard_pay_drydock = yes
+			custom_effect_tooltip = shipyard_recovery_drydock_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision shipyard_recovery_modernize"
+			hidden_effect = {
+				add_to_variable = { shipyard_drydock_stage = 1 }
+				shipyard_recalc = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 10 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	shipyard_recovery_train = {
+		icon = GFX_decision_generic_civil_support
+
+		cost = 50
+
+		visible = { shipyard_is_recovering = yes }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = shipyard_recovery_work_remaining_tt
+				check_variable = { shipyard_crisis_level > 0 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = shipyard_workforce_stages_tt
+				check_variable = { shipyard_workforce_stage < 3 }
+			}
+		}
+
+		days_remove = 180
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision shipyard_recovery_train"
+			add_stability = -0.01
+			custom_effect_tooltip = shipyard_recovery_training_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision shipyard_recovery_train"
+			hidden_effect = {
+				add_to_variable = { shipyard_workforce_stage = 1 }
+				shipyard_recalc = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 4
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 10 } }
+		}
+	}
+
+	TUR_shipyard_rebuild_golcuk = {
+		icon = GFX_decision_generic_construction
+
+		cost = 60
+		fire_only_once = yes
+
+		visible = {
+			original_tag = TUR
+			check_variable = { shipyard_crisis_level > 0 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TUR_shipyard_golcuk_control_tt
+				owns_state = 155
+				controls_state = 155
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { var = treasury value = 3 compare = greater_than_or_equals } }
+		custom_cost_text = cost_3_0
+
+		days_remove = 540
+
+		cancel_trigger = { NOT = { AND = { owns_state = 155 controls_state = 155 } } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_shipyard_rebuild_golcuk"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = TUR_shipyard_golcuk_effect_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TUR_shipyard_rebuild_golcuk"
+			hidden_effect = {
+				if = {
+					limit = { owns_state = 155 controls_state = 155 }
+					add_to_variable = { shipyard_crisis_level = -5 }
+					clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
+					shipyard_recalc = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 check_variable = { shipyard_crisis_level < 5 } }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
