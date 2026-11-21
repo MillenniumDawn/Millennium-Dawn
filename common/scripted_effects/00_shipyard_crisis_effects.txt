@@ -1,10 +1,14 @@
 # Country scope. Needs the setup variables of the TAG_shipyard_setup effect.
 # Refreshes cost, drift and modifier variables from shipyard_crisis_level.
 shipyard_recalc = {
-	set_temp_variable = { shipyard_years_late = global.year }
-	subtract_from_temp_variable = { shipyard_years_late = shipyard_late_year }
-	clamp_temp_variable = { var = shipyard_years_late min = 0 max = 10 }
-	multiply_temp_variable = { shipyard_years_late = 0.15 }
+	set_temp_variable = { shipyard_years_late = 0 }
+	if = {
+		limit = { shipyard_is_late_phase = yes }
+		set_temp_variable = { shipyard_years_late = global.year }
+		subtract_from_temp_variable = { shipyard_years_late = shipyard_late_year }
+		clamp_temp_variable = { var = shipyard_years_late min = 0 max = 10 }
+		multiply_temp_variable = { shipyard_years_late = 0.15 }
+	}
 	set_temp_variable = { shipyard_severity = shipyard_crisis_level }
 	divide_temp_variable = { shipyard_severity = 100 }
 	set_temp_variable = { shipyard_level_part = shipyard_severity }
@@ -33,13 +37,33 @@ shipyard_recalc = {
 	set_temp_variable = { shipyard_relief_part = shipyard_consolidation_stage }
 	multiply_temp_variable = { shipyard_relief_part = 0.1 }
 	subtract_from_temp_variable = { shipyard_relief = shipyard_relief_part }
-	# Every stage completed slows the drift. Fully invested freezes it, never reverses it.
 	clamp_temp_variable = { var = shipyard_relief min = 0 max = 1 }
+	if = {
+		limit = { shipyard_is_recovering = yes }
+		multiply_temp_variable = { shipyard_relief = -1 }
+		add_to_temp_variable = { shipyard_relief = 2 }
+	}
 	multiply_variable = { shipyard_drift = shipyard_relief }
+	if = {
+		limit = {
+			shipyard_is_recovering = yes
+			check_variable = { shipyard_crisis_level = 0 }
+		}
+		set_variable = { shipyard_drift = 0 }
+	}
 
 	set_variable = { shipyard_mod_output = shipyard_cap_output }
 	multiply_variable = { shipyard_mod_output = shipyard_severity }
 	multiply_variable = { shipyard_mod_output = -1 }
+	if = {
+		limit = { shipyard_is_recovering = yes }
+		set_variable = { shipyard_growth_output = shipyard_growth_start }
+		subtract_from_variable = { shipyard_growth_output = shipyard_crisis_level }
+		clamp_variable = { var = shipyard_growth_output min = 0 max = 100 }
+		divide_variable = { shipyard_growth_output = shipyard_growth_start }
+		multiply_variable = { shipyard_growth_output = shipyard_growth_cap }
+		add_to_variable = { shipyard_mod_output = shipyard_growth_output }
+	}
 	set_variable = { shipyard_mod_repair = shipyard_cap_repair }
 	multiply_variable = { shipyard_mod_repair = shipyard_severity }
 	multiply_variable = { shipyard_mod_repair = -1 }
@@ -79,7 +103,10 @@ shipyard_monthly = {
 	shipyard_recalc = yes
 
 	if = {
-		limit = { is_ai = no }
+		limit = {
+			is_ai = no
+			shipyard_uses_overload = yes
+		}
 		shipyard_overload_check = yes
 	}
 }
@@ -170,10 +197,6 @@ shipyard_sync_equipment = {
 
 shipyard_equipment_step_up = {
 	if = {
-		limit = { original_tag = USA }
-		USA_shipyard_equipment_step_up = yes
-	}
-	else_if = {
 		limit = { original_tag = UKR }
 		UKR_shipyard_equipment_step_up = yes
 	}
@@ -181,20 +204,22 @@ shipyard_equipment_step_up = {
 		limit = { original_tag = SOV }
 		SOV_shipyard_equipment_step_up = yes
 	}
+	else = {
+		USA_shipyard_equipment_step_up = yes
+	}
 }
 
 shipyard_equipment_step_down = {
 	if = {
-		limit = { original_tag = USA }
-		USA_shipyard_equipment_step_down = yes
-	}
-	else_if = {
 		limit = { original_tag = UKR }
 		UKR_shipyard_equipment_step_down = yes
 	}
 	else_if = {
 		limit = { original_tag = SOV }
 		SOV_shipyard_equipment_step_down = yes
+	}
+	else = {
+		USA_shipyard_equipment_step_down = yes
 	}
 }
 
@@ -205,6 +230,10 @@ shipyard_country_recalc = {
 	}
 	else = {
 		shipyard_effective_from_crisis = yes
+	}
+	if = {
+		limit = { original_tag = POL }
+		POL_shipyard_sync_destroyers = yes
 	}
 }
 
@@ -256,19 +285,31 @@ shipyard_capital_lock_on = {
 			}
 			battle_cruiser = {
 				instant = yes
-				build_cost_ic = 2.0
+				build_cost_ic = 3.0
 			}
 			battleship = {
 				instant = yes
-				build_cost_ic = 2.0
+				build_cost_ic = 3.0
 			}
 			carrier = {
 				instant = yes
-				build_cost_ic = 2.0
+				build_cost_ic = 3.0
 			}
 			helicopter_operator = {
 				instant = yes
 				build_cost_ic = 2.0
+			}
+		}
+	}
+	if = {
+		limit = { original_tag = POL }
+		add_equipment_bonus = {
+			name = shipyard_yard_class_equipment
+			bonus = {
+				helicopter_operator = {
+					instant = yes
+					build_cost_ic = -1.5
+				}
 			}
 		}
 	}
@@ -284,19 +325,31 @@ shipyard_capital_lock_off = {
 			}
 			battle_cruiser = {
 				instant = yes
-				build_cost_ic = -2.0
+				build_cost_ic = -3.0
 			}
 			battleship = {
 				instant = yes
-				build_cost_ic = -2.0
+				build_cost_ic = -3.0
 			}
 			carrier = {
 				instant = yes
-				build_cost_ic = -2.0
+				build_cost_ic = -3.0
 			}
 			helicopter_operator = {
 				instant = yes
 				build_cost_ic = -2.0
+			}
+		}
+	}
+	if = {
+		limit = { original_tag = POL }
+		add_equipment_bonus = {
+			name = shipyard_yard_class_equipment
+			bonus = {
+				helicopter_operator = {
+					instant = yes
+					build_cost_ic = 1.5
+				}
 			}
 		}
 	}
@@ -312,7 +365,7 @@ shipyard_submarine_lock_on = {
 			}
 			missile_submarine = {
 				instant = yes
-				build_cost_ic = 2.0
+				build_cost_ic = 3.0
 			}
 		}
 	}
@@ -328,7 +381,7 @@ shipyard_submarine_lock_off = {
 			}
 			missile_submarine = {
 				instant = yes
-				build_cost_ic = -2.0
+				build_cost_ic = -3.0
 			}
 		}
 	}
