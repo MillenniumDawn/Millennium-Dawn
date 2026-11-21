@@ -1355,16 +1355,15 @@ country_event = {
 ##Annexation of Crimea if the Russian Player doesn't already Own the Crimea
 country_event = {
 	id = ukraine_maidan.1
-	title = ukraine_maidan.1.t
-	desc = ukraine_maidan.1.d
+	title = ukraine_maidan.1.name
+	desc = ukraine_maidan.1.desc
 	picture = GFX_russia_crimea_troops
 	is_triggered_only = yes
 
 	trigger = {
 		UKR = {
 			country_exists = UKR
-			NOT = { country_exists = CRM }
-			owns_state = 669
+			UKR_crimean_bop_2014_chain_eligible = yes
 			NOT = { has_country_flag = UKR_crimea_2004_departed }
 		}
 	}
@@ -1373,7 +1372,7 @@ country_event = {
 		name = ukraine_maidan.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.a executed"
 		trigger = {
-			UKR = { UKR_crimea_annexation_available = yes }
+			UKR = { UKR_crimea_annexation_available = yes UKR_crimean_bop_2014_russian_dominance = yes }
 		}
 		UKR = { set_country_flag = UKR_crimea_2014_chain_active }
 		add_named_threat = { threat = 5 name = threat_SOV_annexiation_of_crimea }
@@ -1453,16 +1452,39 @@ country_event = {
 			}
 		}
 	}
+
+	option = {
+		name = ukraine_maidan.1.c
+		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.c executed"
+		trigger = { UKR = { UKR_crimean_bop_2014_contested = yes } }
+		UKR = { clr_country_flag = UKR_crimea_2014_chain_active }
+		SOV_start_crimea_political_preparation = yes
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = ukraine_maidan.1.d
+		log = "[GetDateText]: [This.GetName]: ukraine_maidan.1.d executed"
+		trigger = { UKR = { UKR_crimean_bop_2014_ukrainian_coalition = yes } }
+		UKR = { clr_country_flag = UKR_crimea_2014_chain_active }
+		SOV_open_crimea_status_negotiations = yes
+		ai_chance = { base = 100 }
+	}
 }
 #Russia Annexes Crimea
 country_event = {
 	id = ukraine_maidan.2
-	title = ukraine_maidan.2.t
-	desc = ukraine_maidan.2.d
+	title = ukraine_maidan.2.name
+	desc = ukraine_maidan.2.desc
 	picture = GFX_russia_crimea_troops
 	is_triggered_only = yes
 
-	trigger = { UKR = { has_country_flag = UKR_crimea_2014_chain_active } }
+	trigger = {
+		UKR = {
+			NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+			has_country_flag = UKR_crimea_2014_chain_active
+		}
+	}
 
 	option = {
 		name = ukraine_maidan.2.a
@@ -1496,12 +1518,17 @@ country_event = {
 #Ukrainian answer to Crimea Annexation
 country_event = {
 	id = ukraine_maidan_crm_annex.1
-	title = ukraine_maidan_crm_annex.1.t
-	desc = ukraine_maidan_crm_annex.1.d
+	title = ukraine_maidan_crm_annex.1.name
+	desc = ukraine_maidan_crm_annex.1.desc
 	picture = GFX_russia_crimea_troops
 	is_triggered_only = yes
 
-	trigger = { has_country_flag = UKR_crimea_2014_chain_active }
+	trigger = {
+		UKR = {
+			NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+			has_country_flag = UKR_crimea_2014_chain_active
+		}
+	}
 
 	option = {
 		name = ukraine_maidan_crm_annex.1.a
@@ -3874,13 +3901,17 @@ country_event = {
 #2004 Crimean status referendum
 country_event = {
 	id = ukraine_revolution.30
-	title = ukraine_revolution.30.t
-	desc = ukraine_revolution.30.d
+	title = ukraine_revolution.30.name
+	desc = ukraine_revolution.30.desc
 	picture = GFX_negotiations
 	is_triggered_only = yes
 	fire_only_once = yes
 
 	trigger = {
+		UKR = {
+			NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+		}
+
 		tag = UKR
 		country_exists = UKR
 		owns_state = 669
@@ -3934,8 +3965,8 @@ country_event = {
 #Soviet response to the 2004 Crimean referendum
 country_event = {
 	id = ukraine_revolution.31
-	title = ukraine_revolution.31.t
-	desc = ukraine_revolution.31.d
+	title = ukraine_revolution.31.name
+	desc = ukraine_revolution.31.desc
 	picture = GFX_negotiations
 	is_triggered_only = yes
 	fire_only_once = yes
@@ -3943,7 +3974,10 @@ country_event = {
 	trigger = {
 		tag = SOV
 		country_exists = UKR
-		UKR = { has_country_flag = UKR_crimea_2004_pending }
+		UKR = {
+			NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+			has_country_flag = UKR_crimea_2004_pending
+		}
 	}
 
 	option = {
@@ -21840,6 +21874,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
 		set_temp_variable = { influence_target = UKR.id }
@@ -21870,6 +21906,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
 		set_temp_variable = { influence_target = UKR.id }
@@ -22220,6 +22258,8 @@ country_event = {
 			requested_factories = 1
 			amount = 4
 		}
+		set_temp_variable = { crimea_requested_influence_change = 4 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		1086 = { #Mykolayiv
 			add_state_modifier = {
@@ -22292,6 +22332,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 3 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		1086 = { #Mykolayiv
 			add_state_modifier = {
@@ -22339,6 +22381,8 @@ country_event = {
 			requested_factories = 1
 			amount = 4
 		}
+		set_temp_variable = { crimea_requested_influence_change = 2 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		1086 = { #Mykolayiv
 			add_state_modifier = {
@@ -22407,6 +22451,8 @@ country_event = {
 			requested_factories = 1
 			amount = 4
 		}
+		set_temp_variable = { crimea_requested_influence_change = 4 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		695 = { #Odesa
 			add_state_modifier = {
@@ -22479,6 +22525,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 3 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		1085 = { #Kherson
 			add_state_modifier = {
@@ -22526,6 +22574,8 @@ country_event = {
 			requested_factories = 1
 			amount = 4
 		}
+		set_temp_variable = { crimea_requested_influence_change = 2 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		1086 = { #Mykolayiv
 			add_state_modifier = {
@@ -22712,6 +22762,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 3 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		698 = { #Kyiv
 			add_state_modifier = {
 				modifier = {
@@ -22775,6 +22827,8 @@ country_event = {
 			requested_factories = 1
 			amount = 2
 		}
+		set_temp_variable = { crimea_requested_influence_change = 2 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		698 = { #Kyiv
 			add_state_modifier = {
 				modifier = {
@@ -22820,6 +22874,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 1.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		698 = { #Kyiv
 			add_state_modifier = {
 				modifier = {
@@ -22893,6 +22949,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 3 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -22955,6 +23013,8 @@ country_event = {
 			requested_factories = 1
 			amount = 2
 		}
+		set_temp_variable = { crimea_requested_influence_change = 2 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -22999,6 +23059,8 @@ country_event = {
 			requested_factories = 1
 			amount = 3
 		}
+		set_temp_variable = { crimea_requested_influence_change = 1.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -23145,15 +23207,61 @@ country_event = {
 			requested_factories = 1
 			amount = 5
 		}
-		add_equipment_production = {
-			equipment = {
-				type = corvette_hull_4
-				version_name = "Volodymyr Velykyi Class"
+		if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Noman Çelebicihan"
+				requested_factories = 1
+				amount = 1
 			}
-			name = "Yaroslav Mudryi"
-			requested_factories = 1
-			amount = 5
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 4
+			}
 		}
+		else_if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "İsmail Gaspıralı"
+				requested_factories = 1
+				amount = 1
+			}
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 4
+			}
+		}
+		else = {
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 5
+			}
+		}
+		set_temp_variable = { crimea_requested_influence_change = 2.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		1086 = { #Mykolayiv
 			add_state_modifier = {
 				modifier = {
@@ -23242,15 +23350,61 @@ country_event = {
 			requested_factories = 1
 			amount = 4
 		}
-		add_equipment_production = {
-			equipment = {
-				type = corvette_hull_4
-				version_name = "Volodymyr Velykyi Class"
+		if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Noman Çelebicihan"
+				requested_factories = 1
+				amount = 1
 			}
-			name = "Yaroslav Mudryi"
-			requested_factories = 1
-			amount = 4
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 3
+			}
 		}
+		else_if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "İsmail Gaspıralı"
+				requested_factories = 1
+				amount = 1
+			}
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 3
+			}
+		}
+		else = {
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 4
+			}
+		}
+		set_temp_variable = { crimea_requested_influence_change = 2 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		1086 = { #Mykolayiv
 			add_state_modifier = {
 				modifier = {
@@ -23337,15 +23491,61 @@ country_event = {
 			requested_factories = 1
 			amount = 2
 		}
-		add_equipment_production = {
-			equipment = {
-				type = corvette_hull_4
-				version_name = "Volodymyr Velykyi Class"
+		if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Noman Çelebicihan"
+				requested_factories = 1
+				amount = 1
 			}
-			name = "Yaroslav Mudryi"
-			requested_factories = 1
-			amount = 2
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 1
+			}
 		}
+		else_if = {
+			limit = { has_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag }
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "İsmail Gaspıralı"
+				requested_factories = 1
+				amount = 1
+			}
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 1
+			}
+		}
+		else = {
+			add_equipment_production = {
+				equipment = {
+					type = corvette_hull_4
+					version_name = "Volodymyr Velykyi Class"
+				}
+				name = "Yaroslav Mudryi"
+				requested_factories = 1
+				amount = 2
+			}
+		}
+		set_temp_variable = { crimea_requested_influence_change = 1 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		1086 = { #Mykolayiv
 			add_state_modifier = {
 				modifier = {
@@ -23353,6 +23553,40 @@ country_event = {
 				}
 			}
 		}
+	}
+}
+
+country_event = {
+	id = ukraine_reorganize_navy_choose_future_corvette.10
+	title = ukraine_reorganize_navy_choose_future_corvette.10.name
+	desc = ukraine_reorganize_navy_choose_future_corvette.10.desc
+	picture = GFX_UKR_Reorganize_Navy_Project_58250_Corvette
+	is_triggered_only = yes
+	trigger = { tag = UKR }
+
+	option = {
+		name = ukraine_reorganize_navy_choose_future_corvette.10.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_reorganize_navy_choose_future_corvette.10.a"
+		ai_chance = { base = 25 }
+		clr_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag
+		set_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag
+		country_event = ukraine_reorganize_navy_choose_future_corvette.9
+	}
+	option = {
+		name = ukraine_reorganize_navy_choose_future_corvette.10.b
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_reorganize_navy_choose_future_corvette.10.b"
+		ai_chance = { base = 25 }
+		clr_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag
+		set_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag
+		country_event = ukraine_reorganize_navy_choose_future_corvette.9
+	}
+	option = {
+		name = ukraine_reorganize_navy_choose_future_corvette.10.c
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_reorganize_navy_choose_future_corvette.10.c"
+		ai_chance = { base = 50 }
+		clr_country_flag = UKR_reorganize_navy_project_58250_name_noman_celebicihan_flag
+		clr_country_flag = UKR_reorganize_navy_project_58250_name_ismail_gaspirali_flag
+		country_event = ukraine_reorganize_navy_choose_future_corvette.9
 	}
 }
 
@@ -23763,6 +23997,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -23799,6 +24035,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -23885,6 +24123,8 @@ country_event = {
 			progress = 0.2
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.75 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
@@ -23939,6 +24179,8 @@ country_event = {
 			progress = 0.35
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
@@ -23970,6 +24212,8 @@ country_event = {
 			progress = 0.4
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
@@ -24088,6 +24332,8 @@ country_event = {
 			creator = SOV
 			name = "U156 Kremenchuk"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 
 		set_temp_variable = { percent_change = 0.25 }
 		set_temp_variable = { tag_index = SOV.id }
@@ -24132,6 +24378,8 @@ country_event = {
 			creator = SOV
 			name = "U207 Uzhhorod"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		set_temp_variable = { treasury_change = -0.06 }
 		modify_treasury_effect = yes
 		set_temp_variable = { percent_change = 0.25 }
@@ -24176,6 +24424,8 @@ country_event = {
 			creator = SOV
 			name = "U208 Khmelnytskyi"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		set_temp_variable = { treasury_change = -0.02 }
 		modify_treasury_effect = yes
 		set_temp_variable = { percent_change = 0.25 }
@@ -24223,6 +24473,8 @@ country_event = {
 			creator = SOV
 			name = "U208 Khmelnytskyi"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_building_construction = {
 				type = dockyard
@@ -24314,6 +24566,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -24387,6 +24641,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_more_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = {
 			add_state_modifier = {
 				modifier = {
@@ -24692,6 +24948,8 @@ news_event = {
 			creator = SOV
 			name = "U01 Zaporizhzhia"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.75 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		669 = { #Crimea
 			add_state_modifier = {
 				modifier = {
@@ -24893,6 +25151,8 @@ country_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_nikolayev_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 1 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		1086 = { #Mykolayiv
 			add_state_modifier = {
 				modifier = {
@@ -25407,6 +25667,8 @@ news_event = {
 			amount = 1
 			industrial_manufacturer = mio:UKR_nikolayev_shipyard_naval_manufacturer
 		}
+		set_temp_variable = { crimea_requested_influence_change = 1 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		1086 = { #Mykolayiv
 			add_state_modifier = {
 				modifier = {
@@ -25488,6 +25750,8 @@ country_event = {
 			creator = SOV
 			name = "U402 Rivne"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25514,6 +25778,8 @@ country_event = {
 			equipment_variant = "Pr. 1171T"
 			name = "U762 Rivne"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25734,6 +26000,8 @@ country_event = {
 			progress = 0.40
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.75 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25822,6 +26090,8 @@ country_event = {
 			progress = 0.40
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25889,6 +26159,8 @@ country_event = {
 			progress = 0.80
 			amount = 1
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25927,6 +26199,8 @@ country_event = {
 			creator = SOV
 			name = "U802 Olviya"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.75 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25955,6 +26229,8 @@ country_event = {
 			equipment_variant = "Pr. 300"
 			name = "U802 Olviya"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.5 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -25978,6 +26254,8 @@ country_event = {
 			equipment_variant = "Dubna"
 			name = "U758 Kerch"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 	}
 }
 
@@ -26167,6 +26445,8 @@ country_event = {
 			creator = UKR
 			name = "A505 Simferopol"
 		}
+		set_temp_variable = { crimea_requested_influence_change = 0.25 }
+		UKR_crimean_bop_apply_naval_reorganization_influence = yes
 		if = {
 			limit = {
 				UKR = {
@@ -32539,18 +32819,18 @@ country_event = {
 	id = ukraine_sevastopol.1
 	title = ukraine_sevastopol.1.name
 	desc = {
-		text = ukraine_sevastopol.1.desc_nato
+		text = ukraine_sevastopol.1.nato.desc
 		trigger = { UKR = { has_idea = NATO_member } }
 	}
 	desc = {
-		text = ukraine_sevastopol.1.desc_early
+		text = ukraine_sevastopol.1.early.desc
 		trigger = {
 			date < 2017.1.1
 			UKR = { NOT = { has_idea = NATO_member } }
 		}
 	}
 	desc = {
-		text = ukraine_sevastopol.1.desc_nato_prep
+		text = ukraine_sevastopol.1.nato_prep.desc
 		trigger = {
 			date > 2016.12.31
 			date < 2042.1.1
@@ -32561,7 +32841,7 @@ country_event = {
 		}
 	}
 	desc = {
-		text = ukraine_sevastopol.1.desc_expiry
+		text = ukraine_sevastopol.1.desc
 		trigger = {
 			date > 2016.12.31
 			UKR = {
@@ -32584,7 +32864,10 @@ country_event = {
 	option = {
 		name = ukraine_sevastopol.1.a
 		log = "[GetDateText]: [This.GetName]: ukraine_sevastopol.1.a executed"
-		UKR = { transfer_state = 1112 }
+		UKR = {
+			transfer_state = 1112
+			UKR_crimean_bop_sevastopol_return_bonus = yes
+		}
 		add_opinion_modifier = {
 			target = UKR
 			modifier = recent_actions_negative
@@ -32762,6 +33045,12 @@ country_event = {
 
 	option = {
 		name = ukraine_sevastopol.2.a
+		log = "[GetDateText]: [Root.GetName]: Event ukraine_sevastopol.2.a"
+		if = {
+			limit = { UKR = { has_country_flag = UKR_crimean_bop_initialized_flag NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag } } }
+			custom_effect_tooltip = UKR_crimean_bop_sevastopol_return_bonus_tt
+		}
+		hidden_effect = { UKR = { UKR_crimean_bop_sevastopol_return_bonus = yes } }
 	}
 }
 
