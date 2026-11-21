@@ -594,7 +594,7 @@ def test_savings_financing_uses_strict_debt_and_nonnegative_weekly_boundaries(
     debt, weekly, expected_payment
 ):
     race, country = _planner()
-    country["vars"].update(debt=debt, ai_budget_balance=weekly)
+    country["vars"].update(debt=debt, treasury_rate_with_interest=weekly)
     _capacity(race, country, 1, [0.75] * 6)
     _choose_target(race)
     race.run("ai_race_ai_calculate_savings", 1)
