@@ -1,0 +1,104 @@
+SOV_stribog_category = {
+	SOV_stribog_commission = {
+		icon = generic_decision
+		days_remove = 90
+		fire_only_once = yes
+		custom_cost_trigger = { check_variable = { var = treasury value = 12 compare = greater_than_or_equals } }
+		custom_cost_text = cost_12_0
+		visible = { check_variable = { SOV_stribog_disposition = 0 } }
+		available = {
+			date > 2029.12.31
+			custom_trigger_tooltip = {
+				tooltip = SOV_stribog_facility_tt
+				SOV_stribog_has_facility = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_commission"
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+			set_variable = { SOV_stribog_disposition = -1 }
+		}
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_commission"
+			if = {
+				limit = { SOV_stribog_enabled = yes check_variable = { SOV_stribog_disposition = -1 } }
+				set_variable = { SOV_stribog_disposition = 1 }
+				custom_effect_tooltip = { localization_key = SP_UNLOCK_PROJECT PROJECT = SOV_stribog_testbed }
+			}
+		}
+		ai_will_do = {
+			base = 20
+			modifier = { factor = 0 ai_for_units_is_not_disabled = no }
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_stribog_review_results = {
+		icon = generic_decision
+		fire_only_once = yes
+		visible = {
+			check_variable = { SOV_stribog_disposition = 1 }
+			is_special_project_completed = sp:SOV_stribog_testbed
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_review_results"
+			country_event = sov_stribog.1
+		}
+		ai_will_do = { base = 50 }
+	}
+
+	SOV_stribog_accept_interceptor = {
+		icon = generic_decision
+		fire_only_once = yes
+		custom_cost_trigger = { check_variable = { var = treasury value = 15 compare = greater_than_or_equals } }
+		custom_cost_text = cost_15_0
+		visible = {
+			check_variable = { SOV_stribog_disposition = 2 }
+			is_special_project_completed = sp:SOV_stribog_interceptor
+			NOT = { has_tech = SOV_stribog_production_authorized }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = SOV_stribog_acceptance_available_tt
+				SOV_stribog_ready_for_acceptance = yes
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_accept_interceptor"
+			if = {
+				limit = { SOV_stribog_ready_for_acceptance = yes check_variable = { var = treasury value = 15 compare = greater_than_or_equals } }
+				set_temp_variable = { treasury_change = -15 }
+				modify_treasury_effect = yes
+				hidden_effect = {
+					set_technology = { SOV_stribog_production_authorized = 1 }
+					country_event = sov_stribog.3
+				}
+				custom_effect_tooltip = SOV_stribog_production_tt
+			}
+		}
+		ai_will_do = {
+			base = 25
+			modifier = { factor = 0 ai_for_units_is_not_disabled = no }
+			modifier = { factor = 0 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	SOV_stribog_close_program = {
+		icon = generic_decision
+		fire_only_once = yes
+		visible = {
+			check_variable = { SOV_stribog_disposition = 2 }
+			NOT = { has_tech = SOV_stribog_production_authorized }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_stribog_close_program"
+			set_variable = { SOV_stribog_disposition = 3 }
+			clr_country_flag = SOV_stribog_review_hold
+			custom_effect_tooltip = SOV_stribog_closure_tt
+		}
+		ai_will_do = { base = 0 }
+	}
+}
