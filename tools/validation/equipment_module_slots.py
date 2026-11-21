@@ -43,6 +43,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
+from itertools import product
 from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -56,6 +57,9 @@ _SHIP_HULL_MARKERS = ("screen_ship", "capital_ship", "= submarine", "= carrier")
 _NAME_BLOCK_RE = re.compile(r"([A-Za-z_][\w.]*)\s*=\s*\{")
 _ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)\s*[=<>]\s*")
 _CATEGORY_TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
+_META_PLACEHOLDER_RE = re.compile(r"\[(\w+)\]")
+_META_TOKEN_BINDING_RE = re.compile(r'\b(\w+)\s*=\s*"\[\?(\w+)\.GetTokenKey\]"')
+_TOKEN_GUARD_RE = re.compile(r"check_variable\s*=\s*\{\s*(\w+)\s*=\s*token:(\w+)\s*\}")
 
 
 def _iter_blocks(text: str, lo: int, hi: int):
@@ -606,7 +610,7 @@ def _refs_from_block(text: str, lo: int, hi: int) -> List[str]:
 
 
 def _parse_module_assignments(
-    text: str, lo: int, hi: int
+    text: str, lo: int, hi: int, substitutions: Optional[Dict[str, str]] = None
 ) -> List[Tuple[str, List[str], int]]:
     """(slot, [referenced tokens], header_offset) for each assignment in a
     ``modules = { ... }`` span."""
@@ -632,7 +636,16 @@ def _parse_module_assignments(
                 out.append((slot, [tok.group(1)], m.start()))
                 pos = j + tok.end()
             else:
-                pos = j
+                placeholder = _META_PLACEHOLDER_RE.match(text, j, hi)
+                if (
+                    placeholder
+                    and substitutions is not None
+                    and placeholder[1] in substitutions
+                ):
+                    out.append((slot, [substitutions[placeholder[1]]], m.start()))
+                    pos = placeholder.end()
+                else:
+                    pos = j
     return out
 
 
@@ -874,6 +887,7 @@ def _check_variant(
     vhi: int,
     index: EquipmentIndex,
     findings: List[Finding],
+    substitutions: Optional[Dict[str, str]] = None,
 ) -> None:
     """Validate one variant body's ``type`` and ``modules`` against its hull.
 
@@ -913,7 +927,9 @@ def _check_variant(
                 hull,
             )
         )
-    assignments = _parse_module_assignments(text, *mods_span) if mods_span else []
+    assignments = (
+        _parse_module_assignments(text, *mods_span, substitutions) if mods_span else []
+    )
     if assignments and hull in index.non_modular_hulls:
         findings.append(
             Finding(
@@ -1072,6 +1088,64 @@ def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
     return _check_all(text, _target_variant_spans(text), index)
 
 
+def _guarded_token_choices(text: str, lo: int, hi: int) -> Dict[str, Tuple[str, ...]]:
+    """A direct OR of token equalities limits one variable to those exact tokens."""
+    choices: Dict[str, Tuple[str, ...]] = {}
+    for key, start, end, _ in _iter_blocks(text, lo, hi):
+        if key != "OR":
+            continue
+        body = text[start:end]
+        matches = _TOKEN_GUARD_RE.findall(body)
+        if not matches or _TOKEN_GUARD_RE.sub("", body).strip():
+            continue
+        name = matches[0][0]
+        if any(variable != name for variable, _ in matches):
+            continue
+        allowed = {value for _, value in matches}
+        if name in choices:
+            allowed.intersection_update(choices[name])
+        choices[name] = tuple(sorted(allowed))
+    return choices
+
+
+def _guarded_meta_variants(variants: CreatedVariants):
+    """Find meta-effect arguments bounded by direct guards in their enclosing if."""
+    text = variants.text
+    if not variants.spans or not _META_TOKEN_BINDING_RE.search(text):
+        return
+    for lo, hi in _iter_named_blocks(text, 0, len(text), "if"):
+        if "meta_effect" not in text[lo:hi]:
+            continue
+        children = iter(_iter_blocks(text, lo, hi))
+        limit = next(children, None)
+        meta = next(children, None)
+        if not limit or not meta or limit[0] != "limit" or meta[0] != "meta_effect":
+            continue
+        _, limit_lo, limit_hi, _ = limit
+        _, mlo, mhi, header = meta
+        if text[limit_hi + 1 : header].strip():
+            continue
+        choices = _guarded_token_choices(text, limit_lo, limit_hi)
+        if not choices:
+            continue
+        bindings = dict(_META_TOKEN_BINDING_RE.findall(_depth0_text(text, mlo, mhi)))
+        if not bindings:
+            continue
+        for key, tlo, thi, _ in _iter_blocks(text, mlo, mhi):
+            if key != "text":
+                continue
+            for vlo, vhi in variants.spans:
+                if not tlo <= vlo <= vhi <= thi:
+                    continue
+                parameters = {
+                    name: bindings.get(name, "")
+                    for name in sorted(set(_META_PLACEHOLDER_RE.findall(text[vlo:vhi])))
+                }
+                guarded = {name: choices.get(name, ()) for name in parameters.values()}
+                if guarded and all(guarded.values()):
+                    yield (vlo, vhi), (parameters, guarded)
+
+
 def check_created_variants(
     variants: CreatedVariants, index: EquipmentIndex
 ) -> List[Finding]:
@@ -1085,7 +1159,31 @@ def check_created_variants(
     required modules'), so every required slot of a resolvable hull must be
     filled, including when the block carries no ``modules`` at all.
     """
-    return _check_all(variants.text, variants.spans, index)
+    guarded = dict(_guarded_meta_variants(variants))
+    if not guarded:
+        return _check_all(variants.text, variants.spans, index)
+
+    text = variants.text
+    findings = []
+    for span in variants.spans:
+        inputs = guarded.get(span)
+        if inputs is None:
+            _check_variant(text, *span, index, findings)
+            continue
+
+        parameters, choices = inputs
+        unique = {}
+        for values in product(*choices.values()):
+            selected = dict(zip(choices, values, strict=True))
+            substitutions = {param: selected[var] for param, var in parameters.items()}
+            result: List[Finding] = []
+            _check_variant(text, *span, index, result, substitutions)
+            for finding in result:
+                key = (finding.line, finding.kind, finding.message, finding.hull)
+                unique[key] = finding
+        findings.extend(unique.values())
+    findings.sort(key=lambda f: f.line)
+    return findings
 
 
 _UPGRADE_ENTRY_RE = re.compile(r"([A-Za-z_]\w*)\s*=\s*(\{|-?\d+)?")

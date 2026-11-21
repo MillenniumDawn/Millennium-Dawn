@@ -466,6 +466,76 @@ def _created_kinds(content):
     ]
 
 
+@pytest.mark.parametrize(
+    ("other_module", "expected"),
+    [
+        ("module_test_gun", []),
+        ("module_test_banned", ["category_mismatch"]),
+        ("empty", ["category_mismatch", "missing_required_module"]),
+    ],
+)
+def test_guarded_meta_variant_checks_each_module_choice(other_module, expected):
+    content = f"""
+if = {{
+    limit = {{
+        OR = {{
+            check_variable = {{ chosen_gun = token:module_test_gun }}
+            check_variable = {{ chosen_gun = token:{other_module} }}
+        }}
+    }}
+    meta_effect = {{
+        text = {{
+            create_equipment_variant = {{
+                type = req_ship_hull_1
+                modules = {{
+                    fixed_ship_battery_slot = [GUN]
+                    fixed_ship_ammo_slot = module_test_gun_ammo
+                }}
+            }}
+        }}
+        GUN = "[?chosen_gun.GetTokenKey]"
+    }}
+}}
+"""
+    assert sorted(_created_kinds(content)) == expected
+
+
+@pytest.mark.parametrize("intervening_effect", [False, True])
+def test_meta_module_needs_an_unconditional_guard_at_call(intervening_effect):
+    content = """
+if = {
+    limit = {
+        OR = {
+            check_variable = { chosen_gun = token:module_test_gun }
+            always = yes
+        }
+    }
+    meta_effect = {
+        text = {
+            create_equipment_variant = {
+                type = req_ship_hull_1
+                modules = {
+                    fixed_ship_battery_slot = [GUN]
+                    fixed_ship_ammo_slot = module_test_gun_ammo
+                }
+            }
+        }
+        GUN = "[?chosen_gun.GetTokenKey]"
+    }
+}
+"""
+    if intervening_effect:
+        content = content.replace("            always = yes\n", "").replace(
+            "    meta_effect = {",
+            "    set_variable = { chosen_gun = token:module_test_banned }\n"
+            "    meta_effect = {",
+        )
+    assert sorted(_created_kinds(content)) == [
+        "category_mismatch",
+        "missing_required_module",
+    ]
+
+
 def test_created_variant_correct_passes():
     content = _created(
         "test_ship_hull_1",
