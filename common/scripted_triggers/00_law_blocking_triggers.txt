@@ -67,6 +67,133 @@ bureau_decrease_blocked = {
 	}
 }
 
+# Match the current law idea used by the scripted swaps.
+bureau_increase_needs_three_step_recovery = {
+	original_tag = DEN
+	has_idea = bureau_01
+	has_idea = DEN_direct_governance_idea
+}
+
+bureau_increase_needs_two_step_recovery = {
+	OR = {
+		AND = {
+			original_tag = DEN
+			has_idea = bureau_02
+			has_idea = DEN_direct_governance_idea
+		}
+		AND = {
+			original_tag = FRA
+			has_idea = bureau_01
+			OR = {
+				has_idea = FRA_administrative_reforms_2
+				has_idea = FRA_idea_central
+			}
+		}
+	}
+}
+
+bureau_decrease_needs_two_step_recovery = {
+	has_idea = bureau_05
+	OR = {
+		AND = {
+			original_tag = FRA
+			has_idea = FRA_idea_decentral
+		}
+		AND = {
+			original_tag = SIN
+			has_idea = SIN_decentralize_the_government_idea
+		}
+	}
+}
+
+# National spirits that forbid law levels; mirrors the available blocks in AA_law_budget.txt for scripted AI moves
+national_spirits_allow_bureau_increase = {
+	bureau_increase_needs_three_step_recovery = no
+	bureau_increase_needs_two_step_recovery = no
+	if = {
+		limit = {
+			original_tag = SIN
+			check_variable = { bureau_law > 2 }
+		}
+		NOT = { has_idea = SIN_decentralize_the_government_idea }
+	}
+	if = {
+		limit = {
+			original_tag = FRA
+			check_variable = { bureau_law > 2 }
+		}
+		NOT = { has_idea = FRA_idea_decentral }
+	}
+}
+
+national_spirits_allow_bureau_decrease = {
+	bureau_decrease_needs_two_step_recovery = no
+	if = {
+		limit = {
+			original_tag = DEN
+			check_variable = { bureau_law < 5 }
+		}
+		NOT = { has_idea = DEN_direct_governance_idea }
+	}
+	if = {
+		limit = {
+			original_tag = FRA
+			check_variable = { bureau_law < 4 }
+		}
+		NOT = { has_idea = FRA_administrative_reforms_2 }
+		NOT = { has_idea = FRA_idea_central }
+	}
+	if = {
+		limit = {
+			original_tag = DEN
+			check_variable = { bureau_law < 3 }
+		}
+		NOT = { has_idea = DEN_special_municipal_districts_idea }
+	}
+	if = {
+		limit = {
+			original_tag = FRA
+			check_variable = { bureau_law < 3 }
+		}
+		NOT = { has_idea = FRA_administrative_reforms_1 }
+	}
+}
+
+national_spirits_allow_ai_bureau_increase = {
+	OR = {
+		national_spirits_allow_bureau_increase = yes
+		bureau_increase_needs_three_step_recovery = yes
+		bureau_increase_needs_two_step_recovery = yes
+	}
+}
+
+national_spirits_allow_ai_bureau_decrease = {
+	OR = {
+		national_spirits_allow_bureau_decrease = yes
+		bureau_decrease_needs_two_step_recovery = yes
+	}
+}
+
+national_spirits_allow_education_decrease = {
+	if = {
+		limit = {
+			original_tag = SIN
+			check_variable = { education_law < 4 }
+		}
+		NOT = { has_idea = SIN_centralized_education_idea }
+	}
+}
+
+national_spirits_allow_social_decrease = {
+	if = {
+		limit = {
+			original_tag = DEN
+			check_variable = { social_law < 3 }
+		}
+		NOT = { has_idea = DEN_intensify_the_flexicurity_idea }
+	}
+}
+
 bureau_change_blocked = {
 	bureau_increase_blocked = yes
 	bureau_decrease_blocked = yes
