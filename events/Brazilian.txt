@@ -665,6 +665,7 @@ country_event = {
 			change_ruling_party_effect = yes
 			set_country_flag = BRA_psl_win
 		}
+		hidden_effect = { news_event = { id = brazil_news.8 days = 1 } }
 		add_popularity = {
 			ideology = nationalist
 			popularity = 0.10
@@ -791,6 +792,7 @@ country_event = {
 		name = brazil.19.a
 		log = "[GetDateText]: [This.GetName]: brazil.19.a executed"
 		add_ideas = BRA_idea_car_wash1
+		hidden_effect = { country_event = { id = brazil.68 days = 2520 } }
 	}
 }
 country_event = {
@@ -876,6 +878,112 @@ country_event = {
 		add_stability = -0.02
 		ai_chance = {
 			base = 2
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+}
+
+# The Car Wash task force's mandate runs out
+country_event = {
+	id = brazil.68
+	title = brazil.68.t
+	desc = brazil.68.d
+	picture = GFX_court
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		BRA_car_wash_is_open = yes
+	}
+
+	# Disband the task force
+	option = {
+		name = brazil.68.a
+		log = "[GetDateText]: [This.GetName]: brazil.68.a executed"
+		if = { limit = { has_idea = BRA_idea_car_wash1 } remove_ideas = BRA_idea_car_wash1 }
+		else_if = { limit = { has_idea = BRA_idea_car_wash2 } remove_ideas = BRA_idea_car_wash2 }
+		else_if = { limit = { has_idea = BRA_idea_car_wash3 } remove_ideas = BRA_idea_car_wash3 }
+		else_if = { limit = { has_idea = BRA_idea_car_wash4 } remove_ideas = BRA_idea_car_wash4 }
+		add_stability = 0.02
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 2
+				has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+				date > 2020.12.31
+			}
+			modifier = { factor = 0.25 date < 2018.5.1 }
+		}
+	}
+
+	# Fold it into a permanent anti-corruption unit
+	option = {
+		name = brazil.68.b
+		log = "[GetDateText]: [This.GetName]: brazil.68.b executed"
+		add_political_power = -75
+		custom_effect_tooltip = BRA_car_wash_permanent_tt
+		if = {
+			limit = { has_idea = BRA_idea_car_wash2 }
+			swap_ideas = { remove_idea = BRA_idea_car_wash2 add_idea = BRA_idea_car_wash1 }
+		}
+		else_if = {
+			limit = { has_idea = BRA_idea_car_wash3 }
+			swap_ideas = { remove_idea = BRA_idea_car_wash3 add_idea = BRA_idea_car_wash1 }
+		}
+		else_if = {
+			limit = { has_idea = BRA_idea_car_wash4 }
+			swap_ideas = { remove_idea = BRA_idea_car_wash4 add_idea = BRA_idea_car_wash1 }
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.5
+				OR = {
+					has_idea = BRA_idea_car_wash3
+					has_idea = BRA_idea_car_wash4
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	# Extend the mandate
+	option = {
+		name = brazil.68.c
+		log = "[GetDateText]: [This.GetName]: brazil.68.c executed"
+		add_political_power = -35
+		add_stability = -0.02
+		hidden_effect = { country_event = { id = brazil.68 days = 1460 } }
+		ai_chance = {
+			base = 3
+			modifier = { factor = 2 date < 2018.5.1 }
+			modifier = { factor = 2 has_global_flag = BRA_HISTORICAL_FOCUS_PATH date < 2021.1.1 }
+			modifier = { factor = 1.5 has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 			modifier = { factor = 0.5 has_stability < 0.4 }
 		}
 	}
@@ -1377,6 +1485,7 @@ country_event = {
 				emerging_anarchist_communism
 			}
 		}
+		hidden_effect = { news_event = { id = brazil_news.6 days = 1 } }
 	}
 }
 
@@ -1400,6 +1509,7 @@ country_event = {
 		add_ideas = BRA_idea_lula_in_custody
 		add_stability = -0.03
 		country_event = { id = brazil.47 days = 580 }
+		hidden_effect = { news_event = { id = brazil_news.7 days = 1 } }
 	}
 }
 
@@ -2287,6 +2397,347 @@ country_event = {
 	}
 }
 
+# Rio awarded the 2016 Olympic Games
+country_event = {
+	id = brazil.69
+	title = brazil.69.t
+	desc = brazil.69.d
+	picture = GFX_event_olympics
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 883
+	}
+
+	# Fund the full Olympic program
+	option = {
+		name = brazil.69.a
+		log = "[GetDateText]: [This.GetName]: brazil.69.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.004 } }
+		modify_treasury_effect = yes
+		883 = { one_state_infrastructure = yes }
+		add_stability = 0.02
+		set_country_flag = BRA_olympics_host
+		set_country_flag = BRA_olympics_full_program
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.3 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Hold a lean Games
+	option = {
+		name = brazil.69.b
+		log = "[GetDateText]: [This.GetName]: brazil.69.b executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.0015 } }
+		modify_treasury_effect = yes
+		set_country_flag = BRA_olympics_host
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Leave the bill to Rio's city hall
+	option = {
+		name = brazil.69.c
+		log = "[GetDateText]: [This.GetName]: brazil.69.c executed"
+		add_stability = -0.02
+		set_country_flag = BRA_olympics_host
+		ai_chance = {
+			base = 1
+			modifier = { factor = 2 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = { factor = 3 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
+# The Rio Olympics open
+country_event = {
+	id = brazil.70
+	title = brazil.70.t
+	desc = {
+		text = brazil.70.d_full
+		trigger = { has_country_flag = BRA_olympics_full_program }
+	}
+	desc = {
+		text = brazil.70.d
+		trigger = { NOT = { has_country_flag = BRA_olympics_full_program } }
+	}
+	picture = GFX_event_olympics
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 883
+		has_country_flag = BRA_olympics_host
+	}
+
+	# Bail out Rio's security budget
+	option = {
+		name = brazil.70.a
+		log = "[GetDateText]: [This.GetName]: brazil.70.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+		modify_treasury_effect = yes
+		add_stability = 0.03
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 2 has_stability < 0.5 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Sell sponsorship and broadcast rights
+	option = {
+		name = brazil.70.b
+		log = "[GetDateText]: [This.GetName]: brazil.70.b executed"
+		if = {
+			limit = { has_country_flag = BRA_olympics_full_program }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.003 } }
+		}
+		else = {
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.0015 } }
+		}
+		modify_treasury_effect = yes
+		add_stability = -0.01
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+			modifier = { factor = 0.5 has_stability < 0.4 }
+		}
+	}
+}
+
+# Rio hosts the G20 summit
+country_event = {
+	id = brazil.71
+	title = brazil.71.t
+	desc = brazil.71.d
+	picture = GFX_political_deal
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 883
+	}
+
+	# Launch the Global Alliance Against Hunger and Poverty
+	option = {
+		name = brazil.71.a
+		log = "[GetDateText]: [This.GetName]: brazil.71.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+		modify_treasury_effect = yes
+		add_stability = 0.03
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		ai_chance = {
+			base = 3
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Court investors on the summit sidelines
+	option = {
+		name = brazil.71.b
+		log = "[GetDateText]: [This.GetName]: brazil.71.b executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.002 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_labour_unions_opinion = yes
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Press for reform of the Security Council and the IMF
+	option = {
+		name = brazil.71.c
+		log = "[GetDateText]: [This.GetName]: brazil.71.c executed"
+		add_political_power = -50
+		add_stability = 0.02
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 2
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 2 has_stability < 0.5 }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+}
+
+# Belém hosts the COP30 climate summit
+country_event = {
+	id = brazil.72
+	title = brazil.72.t
+	desc = brazil.72.d
+	picture = GFX_BRA_amazon_conservation
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = BRA
+		has_full_control_of_state = 891
+		check_variable = { BRA_acres_wild > 50 }
+	}
+
+	# Launch a Tropical Forest Forever fund
+	option = {
+		name = brazil.72.a
+		log = "[GetDateText]: [This.GetName]: brazil.72.a executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.002 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_change = -40 }
+		BRA_wild_acreage_effect = yes
+		set_temp_variable = { temp_change = 40 }
+		BRA_conserv_acreage_effect = yes
+		set_temp_variable = { temp_opinion = -5 }
+		change_fossil_fuel_industry_opinion = yes
+		add_stability = 0.02
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Sell carbon credits and green bonds
+	option = {
+		name = brazil.72.b
+		log = "[GetDateText]: [This.GetName]: brazil.72.b executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.002 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_change = -20 }
+		BRA_wild_acreage_effect = yes
+		set_temp_variable = { temp_change = 20 }
+		BRA_conserv_acreage_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_international_bankers_opinion = yes
+		ai_chance = {
+			base = 2
+			modifier = { factor = 2 has_global_flag = BRA_LIBERALS_FOCUS_PATH }
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+		}
+	}
+
+	# Auction Amazon oil and mining licenses
+	option = {
+		name = brazil.72.c
+		log = "[GetDateText]: [This.GetName]: brazil.72.c executed"
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.004 } }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_change = -30 }
+		BRA_wild_acreage_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_fossil_fuel_industry_opinion = yes
+		add_stability = -0.03
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				OR = {
+					has_global_flag = BRA_LIBERALS_FOCUS_PATH
+					has_global_flag = BRA_MILITARY_RULE_FOCUS_PATH
+					has_global_flag = BRA_MONARCHY_FOCUS_PATH
+				}
+			}
+			modifier = {
+				factor = 0.3
+				OR = {
+					has_global_flag = BRA_HISTORICAL_FOCUS_PATH
+					has_global_flag = BRA_BROAD_FRONT_FOCUS_PATH
+					has_global_flag = BRA_SOCIALIST_REPUBLIC_FOCUS_PATH
+					has_global_flag = BRA_SOCIAL_DEMOCRATS_FOCUS_PATH
+				}
+			}
+			modifier = { factor = 2 ai_has_high_deficit = yes }
+			modifier = { factor = 0.25 has_stability < 0.4 }
+		}
+	}
+}
+
 country_event = {
 	id = brazil.39
 	title = brazil.39.t
@@ -2379,6 +2830,7 @@ country_event = {
 		add_political_power = 150
 		# Unlocks the custom mechanic for Lula and co.
 		unlock_decision_category_tooltip = BRA_workers_party_alignment_decision_category
+		hidden_effect = { news_event = { id = brazil_news.4 days = 1 } }
 		clr_country_flag = generic_election_killswitch
 		ai_chance = {
 			base = 5
@@ -3958,7 +4410,7 @@ country_event = {
 		trigger = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
 		set_temp_variable = { temp_change = -5 }
 		BRA_wild_acreage_effect = yes
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.001 } }
 		modify_treasury_effect = yes
 		hidden_effect = {
 			random = {
@@ -3969,11 +4421,7 @@ country_event = {
 		ai_chance = {
 			base = 5
 			modifier = {
-				factor = 0.25
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0.5
+				factor = 2
 				ai_has_high_deficit = yes
 			}
 		}
@@ -4477,16 +4925,12 @@ country_event = {
 		trigger = { has_dynamic_modifier = { modifier = narco_state_bonuses } }
 		set_temp_variable = { temp_change = -30 }
 		BRA_wild_acreage_effect = yes
-		set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.03 } }
+		set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.006 } }
 		modify_treasury_effect = yes
 		ai_chance = {
 			base = 1
 			modifier = {
-				factor = 0.25
-				has_active_mission = bankruptcy_incoming_collapse
-			}
-			modifier = {
-				factor = 0.5
+				factor = 2
 				ai_has_high_deficit = yes
 			}
 		}
@@ -5088,7 +5532,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: brazil_amazon.21.a executed"
 		set_global_flag = BRA_amazon_rainforest_fully_devastated
 		add_stability = -0.05
-		news_event = brazil_news.5
+		hidden_effect = { news_event = { id = brazil_news.5 days = 1 } }
 		ai_chance = { base = 1 }
 	}
 }
@@ -5888,6 +6332,95 @@ news_event = {
 	desc = brazil_news.5.d
 	picture = GFX_BRA_amazon_devastated_news
 	is_triggered_only = yes
+	major = yes
 
-	option = { name = brazil_news.5.a }
+	option = {
+		name = brazil_news.5.a
+		trigger = { original_tag = BRA }
+	}
+
+	option = {
+		name = brazil_news.5.b
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Lula Wins the 2002 Election
+news_event = {
+	id = brazil_news.4
+	title = brazil_news.4.t
+	desc = brazil_news.4.d
+	picture = GFX_news_election_rally
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.4.a
+		trigger = { original_tag = BRA }
+	}
+
+	option = {
+		name = brazil_news.4.b
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Dilma's Impeachment
+news_event = {
+	id = brazil_news.6
+	title = brazil_news.6.t
+	desc = brazil_news.6.d
+	picture = GFX_news_press_conference
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.6.a
+		trigger = { original_tag = BRA }
+	}
+
+	option = {
+		name = brazil_news.6.b
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Lula Enters Custody
+news_event = {
+	id = brazil_news.7
+	title = brazil_news.7.t
+	desc = brazil_news.7.d
+	picture = GFX_news_crime_fighting
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.7.a
+		trigger = { original_tag = BRA }
+	}
+
+	option = {
+		name = brazil_news.7.b
+		trigger = { NOT = { original_tag = BRA } }
+	}
+}
+
+# Bolsonaro Wins the Three-Way Election
+news_event = {
+	id = brazil_news.8
+	title = brazil_news.8.t
+	desc = brazil_news.8.d
+	picture = GFX_news_election_rally
+	is_triggered_only = yes
+	major = yes
+
+	option = {
+		name = brazil_news.8.a
+		trigger = { original_tag = BRA }
+	}
+
+	option = {
+		name = brazil_news.8.b
+		trigger = { NOT = { original_tag = BRA } }
+	}
 }
