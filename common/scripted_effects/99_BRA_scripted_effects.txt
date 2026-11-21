@@ -91,12 +91,7 @@ BRA_update_brazil_energy_idea = {
 # --- Worker's Party Alignment --- #
 BRA_worker_party_alignment_effect = {
 	custom_effect_tooltip = BRA_worker_party_alignment_effect_tt
-	add_to_variable = { BRA_brazilian_party_alignment = temp_change }
-	clamp_variable = {
-		var = BRA_brazilian_party_alignment
-		min = 0
-		max = 100
-	}
+	set_variable = { BRA_brazilian_party_alignment = { value = BRA_brazilian_party_alignment add = temp_change clamp = { min = 0 max = 100 } } }
 }
 
 
@@ -105,11 +100,7 @@ BRA_worker_party_alignment_effect = {
 # Purpose: Change the total amount of conserved acreage
 BRA_conserv_acreage_effect = {
 	custom_effect_tooltip = BRA_conserv_acreage_effect_tt
-	add_to_variable = { BRA_acres_conserved = temp_change }
-	clamp_variable = {
-		var = BRA_acres_conserved
-		min = 0
-	}
+	set_variable = { BRA_acres_conserved = { value = BRA_acres_conserved add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
 }
@@ -118,11 +109,7 @@ BRA_conserv_acreage_effect = {
 # Purpose: Change the total amount of wild acreage
 BRA_wild_acreage_effect = {
 	custom_effect_tooltip = BRA_wild_acreage_effect_tt
-	add_to_variable = { BRA_acres_wild = temp_change }
-	clamp_variable = {
-		var = BRA_acres_wild
-		min = 0
-	}
+	set_variable = { BRA_acres_wild = { value = BRA_acres_wild add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
 }
@@ -131,37 +118,25 @@ BRA_wild_acreage_effect = {
 # Purpose: Adjust the targeted total number of acreage
 BRA_target_acreage_effect = {
 	custom_effect_tooltip = BRA_target_acreage_effect_tt
-	add_to_variable = { BRA_acres_target = temp_change }
-	clamp_variable = {
-		var = BRA_acres_target
-		min = 250
-	}
+	set_variable = { BRA_acres_target = { value = BRA_acres_target add = temp_change max = 250 } }
 
 	BRA_calculate_amazon_system = yes
 }
 
 # Effect: BRA_acre_rate_gain_effect
-# Purpose: Change the total amount of wild acreage gained each year
+# Purpose: Change the total amount of wild acreage gained each month
 BRA_acre_rate_gain_effect = {
 	custom_effect_tooltip = BRA_acre_rate_gain_effect_tt
-	add_to_variable = { BRA_acre_rate_gain = temp_change }
-	clamp_variable = {
-		var = BRA_acre_rate_gain
-		min = 0
-	}
+	set_variable = { BRA_acre_rate_gain = { value = BRA_acre_rate_gain add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
 }
 
 # Effect: BRA_acre_rate_loss_effect
-# Purpose: Change the total amount of wild acreage lost each year
+# Purpose: Change the total amount of wild acreage lost each month
 BRA_acre_rate_loss_effect = {
 	custom_effect_tooltip = BRA_acre_rate_loss_effect_tt
-	add_to_variable = { BRA_acre_rate_loss = temp_change }
-	clamp_variable = {
-		var = BRA_acre_rate_loss
-		min = 0
-	}
+	set_variable = { BRA_acre_rate_loss = { value = BRA_acre_rate_loss add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
 }
@@ -170,11 +145,7 @@ BRA_acre_rate_loss_effect = {
 # Purpose: Changes the amount of wild acreage that is converted to conserved acreage
 BRA_acres_conserved_change_effect = {
 	custom_effect_tooltip = BRA_acres_conserved_change_effect_tt
-	add_to_variable = { BRA_acres_conserved_change = temp_change }
-	clamp_variable = {
-		var = BRA_acres_conserved_change
-		min = 0
-	}
+	set_variable = { BRA_acres_conserved_change = { value = BRA_acres_conserved_change add = temp_change max = 0 } }
 
 	BRA_calculate_amazon_system = yes
 }
@@ -189,100 +160,55 @@ BRA_acres_conserved_change_effect = {
 # BRA_current_target_ratio - The ratio of total acreage we want
 # BRA_current_target - The total number of acres we want to have for the amazon
 # BRA_acres_conserved_change - The rate at which wild acres are converted to conserved acres
-# BRA_acre_rate_loss - The number of wild acres lost each year
-# BRA_acre_rate_gain - The number of wild acres gained each year
-# BRA_net_acreage - The total number of wild acreage change each year
+# BRA_acre_rate_loss - The number of wild acres lost each month
+# BRA_acre_rate_gain - The number of wild acres gained each month
+# BRA_net_acreage - The net change in wild acreage each month, before conversion
 BRA_calculate_amazon_system = {
-	set_variable = { BRA_acres_current = 0 }
-	add_to_variable = { var = BRA_acres_current value = BRA_acres_conserved }
-	add_to_variable = { var = BRA_acres_current value = BRA_acres_wild }
+	set_variable = { BRA_acres_current = { value = BRA_acres_conserved add = BRA_acres_wild } }
 
-	# Calculate Wild Percentage
-	set_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_wild }
-	set_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_conserved }
 	if = {
 		limit = { check_variable = { BRA_acres_current > 0 } }
-		divide_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_current }
-		divide_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_current }
+		set_variable = { BRA_wild_acreage_ratio = { value = BRA_acres_wild divide = BRA_acres_current } }
+		set_variable = { BRA_conserved_acreage_ratio = { value = BRA_acres_conserved divide = BRA_acres_current } }
 	}
 	else = {
-		set_variable = { var = BRA_wild_acreage_ratio value = 0 }
-		set_variable = { var = BRA_conserved_acreage_ratio value = 0 }
+		set_variable = { BRA_wild_acreage_ratio = 0 }
+		set_variable = { BRA_conserved_acreage_ratio = 0 }
 	}
 
-	# Calculate Target Ratio
-	set_variable = { var = BRA_current_target_ratio value = BRA_acres_current }
-	set_temp_variable = { var = temp_penalties value = BRA_acres_current }
 	if = {
 		limit = { check_variable = { BRA_acres_target > 0 } }
-		divide_variable = { var = BRA_current_target_ratio value = BRA_acres_target }
-		divide_temp_variable = { var = temp_penalties value = BRA_acres_target }
+		set_variable = { BRA_current_target_ratio = { value = BRA_acres_current divide = BRA_acres_target } }
 	}
 	else = {
-		set_variable = { var = BRA_current_target_ratio value = 0 }
-		set_temp_variable = { var = temp_penalties value = 0 }
+		set_variable = { BRA_current_target_ratio = 0 }
 	}
 
-	# Wild Acreage Causes the Most Penalties
-	set_temp_variable = { temp_ratio_penalties = BRA_wild_acreage_ratio }
-	multiply_temp_variable = { temp_ratio_penalties = -1 }
-	set_variable = { BRA.BRA_amazon_penalties = temp_ratio_penalties }
-	set_variable = { BRA.BRA_building_slots_factor = temp_ratio_penalties }
-
-	clamp_variable = { var = BRA.BRA_building_slots_factor min = -1 max = 0 }
-	clamp_variable = { var = BRA.BRA_amazon_penalties min = -0.50 max = 0 }
-
-	# Calculate Country Penalties
-	if = { limit = { check_variable = { BRA_current_target_ratio < 1.0 } }
-		set_temp_variable = { tmp_stability = BRA_current_target_ratio }
-		multiply_temp_variable = { tmp_stability = 100 }
-		multiply_temp_variable = { tmp_stability = -0.001 }
-
-		set_temp_variable = { tmp_neutral_drift = 0.10 }
-		multiply_temp_variable = { tmp_neutral_drift = BRA_current_target_ratio }
-		multiply_temp_variable = { tmp_neutral_drift = 0.5 }
-	}
-	else = {
-		set_temp_variable = { tmp_stability = 0 }
-		set_temp_variable = { tmp_neutral_drift = 0 }
-	}
-
-	# Clamp Variables
-	clamp_variable = { var = BRA_acres_conserved min = 0 }
-	clamp_variable = { var = BRA_acres_wild min = 0 }
-	clamp_variable = { var = BRA_wild_acreage_ratio min = 0 }
-	clamp_variable = { var = BRA_conserved_acreage_ratio min = 0 }
-	clamp_variable = { var = BRA_current_target_ratio min = 0 }
-
-	# Update State Dynamic Modifiers
+	# Wild acreage drives the state penalties
+	set_temp_variable = { temp_ratio_penalties = { value = BRA_wild_acreage_ratio multiply = -1 } }
 	for_each_scope_loop = {
 		array = BRA.amazon_states
 		if = {
 			limit = { has_state_flag = improve_local_conservation_efforts }
-			set_temp_variable = { temp_ratio_penalties2 = temp_ratio_penalties }
-
-			multiply_temp_variable = { temp_ratio_penalties2 = 0.75 }
-
-			set_variable = { BRA_amazon_penalties = temp_ratio_penalties2 }
-			set_variable = { BRA_building_slots_factor = temp_ratio_penalties2 }
+			set_variable = { BRA_amazon_penalties = { value = temp_ratio_penalties multiply = 0.75 } }
 		}
 		else = {
 			set_variable = { BRA_amazon_penalties = temp_ratio_penalties }
-			set_variable = { BRA_building_slots_factor = temp_ratio_penalties }
 		}
+		set_variable = { BRA_building_slots_factor = BRA_amazon_penalties }
 	}
 }
 
 # Effect: BRA_monthly_amazon_acreage_change
-# Purpose: Changes the total number of acreage depending on the scale of the conservative
+# Purpose: Applies the monthly wild acreage change, then converts wild acreage to conserved acreage
 BRA_monthly_amazon_acreage_change = {
-	set_variable = { BRA_net_acreage = BRA_acre_rate_gain }
-	subtract_from_variable = { BRA_net_acreage = BRA_acre_rate_loss }
+	set_variable = { BRA_net_acreage = { value = BRA_acre_rate_gain subtract = BRA_acre_rate_loss } }
+	set_variable = { BRA_acres_wild = { value = BRA_acres_wild add = BRA_net_acreage max = 0 } }
 
-	add_to_variable = { BRA_acres_wild = BRA_net_acreage }
-
-	subtract_from_variable = { BRA_acres_wild = BRA_acres_conserved_change }
-	add_to_variable = { BRA_acres_conserved = BRA_acres_conserved_change }
+	# Convert no more wild acreage than exists
+	set_temp_variable = { acres_converted = { value = BRA_acres_conserved_change min = BRA_acres_wild } }
+	subtract_from_variable = { BRA_acres_wild = acres_converted }
+	add_to_variable = { BRA_acres_conserved = acres_converted }
 
 	BRA_calculate_amazon_system = yes
 }
