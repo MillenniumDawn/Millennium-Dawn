@@ -40,6 +40,28 @@ UKR_crimean_bop_can_negotiate_settlement = {
 	NOT = { has_country_flag = UKR_crimea_2014_chain_active }
 }
 
+UKR_crimean_bop_crimean_roadworks_can_finish = {
+	NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+	NOT = { has_country_flag = UKR_crimean_bop_road_funds_diverted_flag }
+	669 = { is_owned_by = UKR }
+}
+
+UKR_crimean_bop_can_rescue_crimean_roadworks = {
+	has_active_mission = UKR_crimean_bop_crimean_roadworks_mission
+	has_country_flag = UKR_crimean_bop_road_funds_diverted_flag
+	NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+	669 = { is_owned_by = UKR }
+}
+
+UKR_crimean_bop_can_audit_crimean_roadworks = {
+	OR = {
+		has_idea = corruption_level_01
+		has_idea = corruption_level_02
+		has_idea = corruption_level_03
+		has_idea = corruption_level_04
+	}
+}
+
 # Every trigger below is evaluated in UKR country scope except
 # SOV_can_review_crimean_subject_status (SOV) and CRM-status tests (CRM).
 UKR_crimean_bop_2014_russian_dominance = {
@@ -781,8 +803,24 @@ UKR_crimean_bop_renegotiate_turkmenistan_repatriation_is_visible = {
 	check_variable = { var = UKR_crimean_bop_asia_phase value = 3 compare = less_than }
 }
 
+UKR_crimean_bop_can_expand_sevastopol_base = {
+	NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+	NOT = { has_war_with = SOV }
+	669 = { is_owned_by = UKR }
+	1112 = { is_owned_by = SOV is_controlled_by = SOV }
+}
+
+UKR_crimean_bop_can_build_kerch_bridge = {
+	NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag }
+	NOT = { has_war_with = SOV }
+	669 = { is_owned_by = UKR is_controlled_by = UKR }
+	668 = { is_owned_by = SOV is_controlled_by = SOV }
+}
+
 UKR_crimean_bop_voluntary_fleet_concessions_is_visible = {
-	NOT = { has_country_flag = UKR_crimean_bop_fleet_negotiation_flag } NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag } check_variable = { var = UKR_crimean_bop_russian_influence value = 35 compare = greater_than_or_equals }
+	UKR_crimean_bop_can_expand_sevastopol_base = yes
+	NOT = { has_country_flag = UKR_crimean_bop_fleet_negotiation_flag }
+	check_variable = { var = UKR_crimean_bop_russian_influence value = 35 compare = greater_than_or_equals }
 }
 
 UKR_crimean_bop_request_repatriation_from_russia_is_visible = {
@@ -907,7 +945,20 @@ SOV_crimea_russian_investment_stage_3_is_visible = {
 }
 
 SOV_crimea_request_fleet_privileges_is_visible = {
-	UKR = { has_country_flag = UKR_crimean_bop_initialized_flag NOT = { has_country_flag = UKR_crimean_bop_settlement_resolved_flag } NOT = { has_country_flag = UKR_crimean_bop_fleet_negotiation_flag } check_variable = { var = UKR_crimean_bop_russian_influence value = 35 compare = greater_than_or_equals } }
+	UKR = {
+		has_country_flag = UKR_crimean_bop_initialized_flag
+		UKR_crimean_bop_voluntary_fleet_concessions_is_visible = yes
+	}
+}
+
+SOV_crimea_demand_kerch_bridge_is_visible = {
+	NOT = { has_country_flag = SOV_crimea_kerch_bridge_requested_flag }
+	NOT = { has_railway_connection = { path = { 9680 6741 } } }
+	UKR = {
+		has_country_flag = UKR_crimean_bop_initialized_flag
+		UKR_crimean_bop_can_build_kerch_bridge = yes
+		check_variable = { var = UKR_crimean_bop_russian_influence value = 40 compare = greater_than_or_equals }
+	}
 }
 
 SOV_crimea_prepare_pressure_is_visible = {
