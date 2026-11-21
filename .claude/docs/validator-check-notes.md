@@ -44,16 +44,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   THIS, the reverse of `influence_higher_*`. Contract tests read their definitions.
 - Tracks literal country scopes, ROOT, THIS, PREV/FROM chains, neutral wrappers,
   and calls through scripted effects and triggers. Focuses, achievements,
-  non-targeted decisions, country history, and country/news event definitions
-  supply country contexts. A positive local `tag` guard can bind a runtime tag;
+  decisions, country history, and country/news event definitions supply country
+  contexts. A positive local `tag` guard can bind a runtime tag;
   `original_tag` is only a label, not proof of a literal runtime tag.
 - Effect-fired events receive the firing block's ROOT as FROM, not its innermost
   selected country. Event pools, automatic firing, unsupported dispatches, and
   definitions without a known caller keep unknown contexts alongside known ones.
   Broadcast events also have an unspecified audience context.
-- Targeted decisions, unmodeled blocks, state/variable/event-target scopes, and
-  other entry points remain conservative. Templates and effect previews are
-  skipped. This is not a reachability solver or an audit of arbitrary array reads.
+- A decision's ROOT is its actor, targeted or not. In a targeted decision FROM
+  (the target) stays unknown, and so does THIS inside `target_trigger` and
+  `target_root_trigger`. Other unmodeled blocks, state/variable/event-target
+  scopes, and other entry points remain conservative. Templates and effect
+  previews are skipped. This is not a reachability solver or an audit of
+  arbitrary array reads.
   Each definition keeps at most 64 distinct contexts before adding an unknown
   context; recursive calls are deduplicated. Scope chains retain the depth used
   by the parsed sources.
@@ -70,6 +73,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_building_guards.py
 
+- Every building check runs here, in one walk over `common/`, `events/`, and
+  `history/`. Province buildings (`level_cap = { province_max = N }`) and coastal
+  buildings (`only_costal = yes`) are read from `common/buildings/`, so no list is
+  kept by hand. These checks run in CI only, not on commit.
 - `damage_building` or `remove_building` against a building the state lacks spams
   `error.log`. The guard must name the same building as the effect's `type`.
 - Accepted guards: a count comparison in an enclosing `limit` (also on `random_owned_state`
@@ -79,16 +86,41 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   pre-selection.
 - Not guards: a `limit` on something else (an idea, a flag), and `trigger`, `available`,
   `visible`, `allowed`. `effect_tooltip` subtrees are skipped.
-- `random-infrastructure-slot-guard` (WARNING): direct infrastructure construction
-  in `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
+- `random-building-slot-guard` (WARNING): a direct `add_building_construction` in
+  `random_owned_state`, `random_controlled_state`, `random_owned_controlled_state`,
   or `random_core_state`, or in `every_owned_state` or `every_controlled_state` with
-  `random_select_amount`, has no recognized slot guard in the selector's own `limit`. It recognizes
-  `infrastructure_random_build_loc = yes` and `free_building_slots` for infrastructure
-  with `size > 0` or `size >= 1`, including inside `AND`. A same-state infrastructure
-  upper bound is noted in the warning, but does not suppress it: a level bound alone
-  does not establish slot availability. Nested effects and other buildings or selectors
-  are not checked, and a guard for one slot does not prove that every level requested
-  will fit. The backlog is tracked by #6390.
+  `random_select_amount`, has no proven free slot. Proof is `free_building_slots` for
+  that building with `size > 0` or `size >= 1` in the selector's own `limit` (also
+  inside `AND`), or a scripted trigger whose body has one, read from
+  `common/scripted_triggers/` (`infrastructure_random_build_loc`,
+  `free_shared_building_slots`). An earlier `add_extra_state_shared_building_slots` or
+  `remove_building` in the same block also counts, the removal only when the `limit`
+  proves that building is present. Effects run in order, so one placed after the
+  construction does not, and the warning says so. Shared-slot buildings
+  (`level_cap = { shares_slots = yes }`) share one proof. A same-building upper bound
+  is noted but does not suppress the warning. Province buildings are skipped, since
+  `free_building_slots` checks them only with a fixed `province`. Nested effects and
+  other selectors are not checked, and one free slot does not prove every level fits.
+- `building-missing-province` (ERROR): `add_building_construction` of a province
+  building with no `province` key. The engine rejects the effect.
+- `province-id-in-selector-block` (ERROR): `province = { province = <id> }` inside
+  `add_building_construction`. The block takes a selector, so nothing is built.
+- `coastal-building-not-coastal` (ERROR): a coastal province building sits in a
+  province that `map/definition.csv` does not mark as coastal land, or that is not
+  listed there. It reads `history/states/` `buildings = { 1234 = { ... } }` blocks and
+  `add_building_construction` with a numeric `province` or `province = { id = ... }`.
+  Provinces picked at runtime (`all_provinces`, `limit_to_coastal`, variables) are not
+  checked. State-level coastal buildings such as `dockyard` have no province to check.
+- `reactor-owner-without-nuclear-status` (ERROR): a tag starting with a
+  `nuclear_reactor` grants no non-default `nuclear_status` idea in its
+  `history/countries/` file. Skipped when no `nuclear_status` group exists.
+- `granted-building-without-project` (ERROR): a tag starting with a building that a
+  special project's `set_building_level` grants never completes that project in its
+  country file.
+- `map/definition.csv` is in the CI workspace and selects the validator through the
+  `map-definition` group. A staged change to it or to `common/buildings/` rescans every
+  file. A staged run always reads the state, country, idea, and project files the
+  ownership checks join, and reports their findings.
 
 ## validate_characters.py
 
@@ -133,6 +165,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   scripts may consume `FROM`, and a single-target decision may depend on it too.
   Verify those dependencies and visibility before removing targeting. The check
   neither follows those references nor rewrites decisions or creates icons.
+- `decision-available-repeats-root-trigger` (WARNING): a depth-0 `available` line that
+  exactly matches a depth-0 `target_root_trigger` line, after whitespace is collapsed.
+  `target_root_trigger` runs once a day, and `available` runs every tick for every
+  target. This is advisory. If another country can change that ROOT state mid-day, the
+  copy guards the rest of the day, as with `EUU_voting_rights_suspended` in the EU
+  council decisions. Keep such a copy, for example as `hidden_trigger`. Script-only
+  `allowed = { always = no }` decisions are skipped.
+- `decision-root-trigger-reads-from` (WARNING): `target_root_trigger` runs before a target
+  is bound, so a `FROM` read there checks nothing. Scripted triggers it calls are
+  followed. Move the condition into `target_trigger`. Script-only
+  `allowed = { always = no }` decisions are skipped.
+- `decision-target-state-not-in-available` (WARNING): a flag or idea that
+  `complete_effect` writes inside `FROM`, making an opposite-polarity read in
+  `target_trigger` fail, and that `available` does not read. `target_trigger` runs once
+  a day, so the decision can be taken again on the same target until the next pass.
+  Re-check the state in `available`, inside `hidden_trigger` if it is not player-facing,
+  as the EU council decisions do. A `days_re_enable` or `fire_only_once = yes` decision carries a verify
+  note: the same country cannot repeat it, so it matters only if a second country can
+  take it. When it is also locked to one runtime `tag` (in `allowed`,
+  `target_root_trigger`, or the category `allowed`), nobody can and it is skipped.
+  `original_tag` admits civil-war split-offs, so it keeps the verify note. Script-only
+  `allowed = { always = no }` decisions are skipped. Known gaps: variables and other
+  state, reads through scripted triggers, and sibling decisions that share one flag.
 - `validate_random_seed` (ERROR): covers `random_list` and bare `random`. Exempts
   `fire_only_once = yes`. Only an absent `fixed_random_seed` is a finding.
 - `missing-decision-localisation` (WARNING): a name key, `name`/`desc` override, or
@@ -153,13 +208,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `unannounced_category_exempt` in the config records each exception and its reason:
   startup gates, shared state with no single owning-country unlock effect, and balance
   of power categories that have no name key to render.
-- `decision-id-case`, `decision-prefix-owner` (WARNING, opt-in `--naming-style`, not in
-  CI): the case rule in the stylization guide, and a prefix-owner rule still under
-  review. Existing ids are never renamed, so
-  the flag stays off until the backlog is reviewed (#6239). The owner is the decision's
+- `decision-id-case` (WARNING, `--id-case`, on in CI): the case rule in the stylization
+  guide. Existing ids are never renamed, so the main baseline holds them and a PR report
+  marks only ids the PR adds as NEW. It stays a warning while that backlog stands.
+- `decision-prefix-owner` (WARNING, opt-in `--prefix-owner`, not in CI): a decision whose
+  tag prefix names a country its `allowed` does not admit. The owner is the decision's
   flat `allowed` pin, else its category's. Prefixes that are not country tags are
   skipped. Shared systems often prefix with the subject country (`CHI_jap_*`,
-  `SIL_bund_*`), so review the owner rule before enforcing it.
+  `SIL_bund_*`), so most findings are intended. Run it by hand to spot copy-paste
+  prefixes such as `VOJ_*` on Serbian decisions.
+- A `Decision <id>` or `Mission <id>` log naming another decision is caught by
+  `_check_decision_log_id` in `check_common_mistakes.py`, not here.
+  `tools/linting/fix_log_ids.py` rewrites it.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -232,6 +292,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   and a value read inside a math block is not seen.
 - `decision-duplicate-log` (WARNING): more than one `log` at an effect block's own level,
   reported by the same pass as `decision-log-not-first`.
+- `decision-check-covered-by-category` (WARNING): a depth-0 line in a decision's
+  `visible`, `target_root_trigger`, or `available` that its category's `visible` or
+  `allowed` also holds. A hidden category hides its decisions from players and the AI.
+  Lines match whole, with whitespace collapsed. Lines that read `FROM` are skipped, and
+  so are missions, which still tick in a hidden category. A state target reads `visible`
+  and `available` on the state, so only its `target_root_trigger` is compared. A tag pin
+  in `visible` or `available` that the category `allowed` holds is left to the tag
+  re-check. Known gap: the category `allowed` runs once at game start, so it covers only
+  lines that cannot change. A dynamic line there is its own bug.
+- `decision-category-gate-candidate` (WARNING, report-only): a category whose decisions,
+  two or more, all hold the same line under the rules above. One category check can
+  replace them. Missions need not share the line. Review before moving it: a line from
+  `available` hides the decision instead of greying it out, and a `visible_when_empty`
+  category disappears with it.
 - Decision staffing guards are not checked. A money guard does not prove that
   the target state can staff a building; scripted building chains need a separate
   target-state analysis.
@@ -395,14 +469,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `placeholder-event-picture` (ERROR). Only pictures at depth 0 of the event body count,
   so leader portraits inside `immediate` do not.
 
-## validate_factions.py
-
-- `faction-goal-cache-scope` (ERROR): a goal file reads a `*_cache` variable with
-  `check_variable` or `has_variable` under `scope:faction`. The cache effects write on
-  the faction leader, so the read finds nothing and the goal never shows or completes.
-  Only the nearest scope-changing block counts, so `faction_leader` inside
-  `scope:faction` is fine. A name with a scope prefix (`ROOT.x_cache`) is skipped.
-
 ## validate_file_paths.py
 
 - Windows resolves paths case-insensitively and Linux does not. A mod path that differs
@@ -436,8 +502,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   bankruptcy check. A literal `debt_change` cut is free, and a tax rate effect counts
   as a cost. A building effect after `skip_payment = 1` in the same or an enclosing
   block costs nothing. The owner's tags come from the tree's `country` block. Payers,
-  commitments, and chains follow "Who pays" under `validate_events.py`. Known gap: an
-  event chain charge never raises `missing-bankruptcy-guard`.
+  commitments, and chains follow "Who pays" under `validate_events.py`; a treasury
+  check scoped to a foreign payer is matched only to costs in that payer's scope.
+  Known gap: an event chain charge never raises `missing-bankruptcy-guard`.
 
 ## validate_ai_path_rules.py
 
@@ -474,6 +541,15 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
   the texture and update `texturefile`, not the entry.
+- `dropped-vanilla-sprite` (ERROR), `dropped-engine-sprite` and
+  `dropped-engine-gui-element` (WARNING): an MD file at a vanilla interface path replaces
+  that file, so only `vanilla_ui_paths.txt` knows what it dropped. "Engine-named" means
+  the exact NUL-terminated string is in the game binary. Names the engine builds at run
+  time, and names stored only as the tail of a longer string, are missed. Non-`GFX_`
+  sprite names (`resource_item_background`) are not read. Sprites the engine resolves
+  from MD declarations (equipment, tech, `GFX_EMI_`, focus-filter icons) do not count as
+  uses. A window counts as kept when any MD `.gui` defines it. Skipped under `--staged`.
+  Deliberate drops go in `dropped_gui_elements`.
 
 ## validate_ideas.py
 
@@ -544,6 +620,26 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Commit-stage only, since the CI workspace ships no meshes. `mesh-texture-empty`,
   `mesh-texture-missing` (ERROR). Lookup rules: `entity-system.md`. The missing-name
   check needs a HoI4 install and logs a skip without one.
+- `mesh-texture-name-clash` (WARNING): a name a rendered material uses that two or
+  more MD files under `gfx/` carry with different content, reported once per name.
+  Identical copies pass. MD files only, not vanilla. Any staged `gfx/` file runs the
+  hook, since a new icon can clash. WARNING while `black.dds` and `C7NLD.dds` (a tech
+  icon and a model texture each) are renamed in a backlog PR, then ERROR.
+
+## validate_asset_data.py
+
+- `texture-not-dds-data` (ERROR): a `.dds` under `gfx/` or `map/` holding PNG, JPEG,
+  TGA or data too short for a DDS header.
+- `texture-art-standard`: legacy header, format and mipmaps from
+  `tools/assets/model_standards.py`. ERROR for staged and PR-changed DDS files,
+  WARNING in a full scan. Flat event pictures and large portraits can stay
+  uncompressed. Headers cannot prove alpha usage or compression quality. Use the
+  printed `dds_standardize.py` preview, or re-export from source when it cannot fix
+  the file. The DDS checks need neither numpy nor Pillow.
+- The commit hook also runs `tools/assets/audit_models.py` for files under
+  `gfx/models/`. Broken mesh data is an ERROR. Triangle count and texture size
+  findings are WARNINGs. These checks need numpy and log a skip without it.
+  Fix mesh data with `tools/assets/optimize_mesh.py --repair-only`.
 
 ## validate_mio_icons.py
 
@@ -607,34 +703,36 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `dynamic-modifier-enable-block` (WARNING): the whole `enable` block is re-evaluated per
   tick per holder. The state usually belongs in the effect that adds or removes the
   modifier. `unknown-modifier` (WARNING) has known false positives.
-- `income-over-25-percent` (WARNING, always on): one literal tax, healthcare,
-  building-tax, resource-export, or equipment-market income bonus above `0.25`
-  (+25%). Exactly +25%, penalties, variable-fed values, and stacked totals are not
-  flagged. Each warning names the owner, modifier, value, percentage, and source line.
-  This is a balance review prompt, not a hard cap or a claim that the value is a typo.
-  The check covers the same source files as the opt-in economy checks, without
-  requiring `--unbalanced-modifiers`. Document an intentional bonus as
-  `owner::key` with a reason in `validation_config.json`
-  `income_over_25_percent_exceptions`, the same form as `unbalanced_roi_exceptions`.
-  The owner is the idea, trait, or modifier name that holds the bonus. Do not
-  blanket-exempt existing bonuses; review and explain each one (Issue #6371).
-- `weekly-stability-war-support-over-cap` (WARNING, always on): `stability_weekly` or
-  `war_support_weekly` above `0.05`, or a `*_weekly_factor` with an absolute value above
-  `0.25`. Flat weekly penalties are not flagged (Issue #6494).
-- `excessive-modifier-over-30-percent` (WARNING, always on): one `*_factor` or
-  `*_modifier` literal above `0.30`. Keys containing `cost`, starting with `expected_`,
-  or listed in `_NEGATIVE_BONUS_KEYS` (plus `*_worker_requirement_modifier` and
-  `*fuel_consumption_factor`) are bonuses when negative, so they warn below `-0.30`.
-  `ai_*`, income, and weekly keys are skipped because they are AI weights or have
-  their own caps. `interest_rate_multiplier_modifier` is skipped because it is a
-  number, not a percent. With `--unbalanced-modifiers`, productivity growth keys are skipped
-  too, because that check owns them (Issue #6494).
-- Both checks scan the same files as `income-over-25-percent`. Variable-fed values are
-  skipped. They skip an idea that is only ever granted through `add_timed_idea`, and a
-  dynamic modifier that is only added with `days`. Any `add_ideas`, `add_idea`, or
-  untimed `add_dynamic_modifier` grant keeps the source in scope, as does no grant at
-  all (decisions, static modifiers). Grants are read from `common/`, `events/`, and
-  `history/`.
+- Single-source caps (WARNING) come from the ordered `modifier_caps` rows in
+  `validation_config.json`. The first row whose `match` glob covers a key decides it, so
+  a specific row goes above the general `*_factor` / `*_modifier` 30% row. `skip` rows
+  exempt AI weights and `interest_rate_multiplier_modifier`, a number of percentage points.
+  Each row keeps its own category: `weekly-stability-war-support-over-cap`,
+  `income-over-25-percent`, `worker-requirement-over-cap`,
+  `excessive-modifier-over-30-percent`, and the `--unbalanced-modifiers` rows
+  `unbalanced-roi` and `unbalanced-productivity`. These are balance review prompts, not
+  hard caps (Issues #6371, #6494, #4370).
+- A `bonus` row counts positive values, or negative ones for cost-style keys: keys
+  containing `cost`, starting with `expected_`, ending in `fuel_consumption_factor` or a
+  worker or workforce requirement suffix, or listed maluses such as `consumer_goods_factor`
+  and `tax_rate_change_multiplier_modifier`. An `either` row counts both directions; its
+  `bonus_cap` sets the bonus side apart, so worker requirement cuts still warn past 30%
+  while increases warn past 40%. The 30% row is `percent_only`: it skips keys
+  defined with `value_type = number`, including flat renewable capacity and
+  expected-spending tiers.
+- An idea only granted through `add_timed_idea`, or a dynamic modifier only added with
+  `days`, is skipped unless the row is `timed` (income, ROI, productivity). Any untimed
+  grant, or no grant at all, keeps the source in scope. Grants are read from `common/`,
+  `events/`, and `history/`.
+- A `variables` row (worker requirement) also checks literal `set_variable`,
+  `add_to_variable`, and `subtract_from_variable` changes to a variable that a dynamic
+  modifier reads for a matching key. Computed values and stacked totals are not checked.
+- Document an intentional bonus as `owner::key` with a reason in the row's `exceptions`
+  list. The owner is the idea, trait, or modifier name. Do not blanket-exempt existing
+  bonuses; review and explain each one.
+- `--modifier-cap PATTERN=CAP` adds a search row ahead of the config rows: either
+  direction, variable-fed values and timed-only grants included, reported as
+  `modifier-cap-search`. It takes over the keys it matches for that run.
 
 ## validate_on_actions.py
 
@@ -844,6 +942,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `simplification` (WARNING): a repeated clause in `OR` is dead weight or a
   copy-paste where one copy was meant to differ.
+- `simplification` (WARNING): a `THIS = { ... }` block runs in the scope it is
+  already in, so unwrap it. A body that reads `PREV` is skipped, because the wrapper
+  pushes a scope and `PREV` inside it is the current scope.
+- `simplification` (WARNING): three or more adjacent `if` blocks that each compare
+  one variable with a constant and add a constant to another fold into one math
+  expression with comparator terms. An `else_if` chain and a step that adds to the
+  variable it tests are skipped, because later steps would read the changed value.
+  The message keeps each step's own comparator: `>` is `greater_than`, `<` is
+  `less_than`.
+- `simplification` (WARNING): three or more adjacent `if` / `else_if` branches over
+  `has_idea` that only add or set a value, when every idea in the category sets the
+  same variable to a constant in `on_add`. Read the variable instead. Skipped:
+  - A ladder that writes that variable. It is the initializer.
+  - Values that are not numbers on one line through those levels, or that do not
+    use the same effect and variable in every branch. Ideas that all set one level
+    give no line. A named constant such as
+    `@gdp_health_01_factor`, a variable, a `tooltip =` form the parser cannot read,
+    or irregular steps would need a lookup table, which is not a simplification.
+  - Known gaps: other writers of the variable are not checked, so confirm the ideas
+    are its only writer. Coverage is not checked either. A trailing `else`, a level
+    the ladder skips, and a country that holds none of the ideas must give what the
+    line gives there. `set_law_vars` sets the law variables to 1 for a country that
+    holds none, while the ladder adds nothing.
 
 ## validate_special_projects.py
 
@@ -862,6 +983,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Known gaps: tooltips in events, decisions, and scripted effects are not read, and a
   tooltip inside a conditional `if` counts as shown. The DLC guard of a tooltip is
   not checked.
+- `sp-inherit-missing` (ERROR): a project any country can research has no line in
+  `inherit_special_projects_from_prev`
+  (`common/scripted_effects/00_special_project_effects.txt`). Add the line when adding
+  a project. A project is open when its `allowed` holds only `always = yes`, `has_dlc`,
+  and `has_game_rule`, alone or under `NOT`, `OR`, and `AND`. Any other trigger, a
+  comparison, or `always = no` anywhere, even under `NOT`, ties it to a country or
+  scenario.
+- `sp-inherit-locked` (ERROR): the effect names a project that is not open.
+- `sp-inherit-unknown` (ERROR): the effect names a project that does not exist.
+- `sp-inherit-effect-missing` (ERROR): the effect or its file is gone.
+- Known gap: a project id defined in two files is checked once per definition.
 
 ## validate_scripted_params.py
 
@@ -947,29 +1079,32 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   clones expanded across numbered variants), `equipment_bonus` types,
   `has_active_mission` and `has_active_decision`, `add_opinion_modifier`, and
   `add_relation_modifier`.
-- Structural checks: a `limit` directly under `else`, `province = { province = <id> }`,
-  and a `#` comment swallowed into a `log` string.
+- Structural checks: a `limit` directly under `else` and a `#` comment swallowed into a
+  `log` string. Building checks live in `validate_building_guards.py`.
 - The four `mutual_*` trade agreement and investment treaty opinion modifiers belong to
   `set_improved_trade_agreement` and `set_mutual_investment_treaty` in
   `00_economic_effects.txt`. Applying or checking them anywhere else is an ERROR, since a
   bare modifier skips the partner arrays.
-- `indent-depth` (WARNING): a line whose leading tabs differ from its brace depth, one
+- `indent-depth` (ERROR): a line whose leading tabs differ from its brace depth, one
   finding per run of lines off by the same amount. It uses the `reindent_by_brace_depth`
   rule, so `tools/linting/fix_styling.py --fix-indent <files>` or a standardizer run
   clears it. The scan strips comments, so comment-only lines are not checked. Four
-  leading spaces stay the `indent-brackets` ERROR. Ships as WARNING for its backlog,
-  tracked in #6248.
+  leading spaces stay the `indent-brackets` ERROR.
+
+## validate_dynamic_tokens.py
+
+- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
+  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
+  the engine logs an OOS warning per use. `@` after any other name is a scope.
+  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
+  `_ENGINE_KNOWN_TOKENS`. This validator checks staged references at commit time;
+  `validate_variables.py` shares its scanner in CI.
 
 ## validate_variables.py
 
 - `clamp-range-conflict` (WARNING): a `check_variable` against a value outside a literal
   `clamp_variable` range, or a sub-1 value against a variable clamped to a wide integer
   range. Variables written only by `set_temp_variable` are excluded.
-- `unregistered-dynamic-token` (ERROR): every `token:X` literal and every `@X` target of a
-  token game variable must be in `common/synchronized_dynamic_tokens/MD_tokens.txt`, or
-  the engine logs an OOS warning per use. `@` after any other name is a scope.
-  Runtime-built names are ignored. New tokens go in `MD_tokens.txt`, not
-  `_ENGINE_KNOWN_TOKENS`.
 - `redundant-focus-flag` (WARNING): a country flag set once, unconditionally, in a focus
   `completion_reward`, never cleared, and read only by short-form `has_country_flag`.
   `has_completed_focus` replaces it. Not reported: a second setter, a conditional or
@@ -978,14 +1113,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   tree or defines one that `load_focus_tree` loads. `keep_completed = yes` only keeps
   focuses the new tree also has, so the flag outlives a swapped-out focus.
 - `available`-block checks (ERROR), each protecting a requirement line the player reads:
-  - `untooltipped-available-check`: a bare `check_variable` renders no line.
+  - `untooltipped-available-check`: a bare `check_variable` in `available`,
+    `cancel_trigger`, or `bypass` renders no line.
   - `unlocalised-available-flag`: `has_country_flag` and `has_global_flag` render from a
     loc key named after the flag. Also covers `cancel_trigger`, `bypass`, and flags
     inside called scripted triggers.
   - `unlocalised-negated-trigger-tooltip`: a tooltip under an odd number of `NOT` blocks
     looks up `not_tooltip`, or `KEY_NOT` when none is set. `= no` counts as a negation.
   - `untooltipped-available-scripted-trigger`: a bare call to a scripted trigger whose
-    body checks `has_global_flag` renders nothing.
+    body checks `has_global_flag`, or a `check_variable` with no inline `tooltip`,
+    outside a wrapper renders nothing. Fix the trigger definition.
   - Exempt: `custom_trigger_tooltip`, `custom_override_tooltip`, and `hidden_trigger`
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
@@ -998,8 +1135,20 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## Other tools
 
 - `validate_standardization.py` is manual. It runs the standardizers in memory and
-  reports files they would rewrite. Pass `--all --no-color` for a full pass.
+  reports rewrite drift as warnings at the first changed line, with file totals.
+  Pass `--all --kind focus --no-color` for all focus files. Failed standardizers,
+  unstable rewrites, and unexpected focus-content changes are errors. The content
+  check allows documented formatter normalizations and does not inspect properties
+  outside focus blocks or prove gameplay correctness. `--strict` fails on errors,
+  not the existing drift backlog.
 - `validate_unused_textures.py` is a manual-stage hook. CI cannot run it.
+  A reference with a directory must match a file by full path. A bare filename, as
+  entity `.gfx` files and meshes write, matches any file of that name under `gfx/`.
+  Without a HOI4 install, missing references are warnings and include vanilla art.
+- `unused-mesh`: a `.mesh` under `gfx/` that no `pdxmesh` `file =` in a mod or vanilla
+  `.gfx` or `.asset` names, matched case-insensitively. Only used meshes mark their
+  textures used. Without a HOI4 install, MD meshes that override a vanilla path read
+  as unused.
 - `validate_set_variables.py` and `validate_scripted_localisation.py` are CI-only and
   strict. Run them directly for a local check.
 - `sprite_index.py` indexes mod `.gfx` plus a live install. It reads `vanilla_sprites.txt`

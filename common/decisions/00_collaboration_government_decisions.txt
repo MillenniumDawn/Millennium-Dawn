@@ -3,10 +3,10 @@ collaboration_government_decisions = {
 		icon = generic_political_discourse
 
 		target_root_trigger = {
-			has_rule = can_create_collaboration_government
 			is_subject = no
 		}
 		target_array = occupied_countries
+		target_non_existing = yes
 
 		visible = {
 			is_available_to_collaboration_government = yes
@@ -30,16 +30,30 @@ collaboration_government_decisions = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 12
+			# Larger occupations first; every eligible occupation has at least two cores.
+			modifier = { add = 3 collection_size = { input = collection:collaboration_controlled_target_cores value > 5 } }
+			modifier = { add = 5 collection_size = { input = collection:collaboration_controlled_target_cores value > 10 } }
+			modifier = { add = 10 collection_size = { input = collection:collaboration_controlled_target_cores value > 20 } }
+			# Only in a war or once world tension is rising
 			modifier = {
-				any_of_scopes = {
-					array = subjects
-					has_autonomy_state = autonomy_collaboration_government
-				}
-				factor = 0.5
+				has_war = no
+				threat < 0.35
+				factor = 0
 			}
+			# Require half the target's cores and at least 1.5 + 0.7 per existing collaboration government.
 			modifier = {
-				NOT = { any_controlled_state = { is_core_of = FROM } }
+				FROM = {
+					ROOT = {
+						check_expr = {
+							value = 1.5
+							every_collection = { named_collection = collaboration_direct_subjects add = 0.7 }
+							max = { value = PREV.num_core_states multiply = 0.5 }
+							every_collection = { named_collection = collaboration_controlled_target_cores subtract = 1 }
+							greater_than = 0
+						}
+					}
+				}
 				factor = 0
 			}
 			modifier = {

@@ -4,7 +4,7 @@ description: How to use gfx_entry_generator.py for goals
 ---
 
 <h1>How to use gfx_entry_generator.py for goals</h1>
-<h2>For whoever on gfx-input branch using this script:</h2>
+<h2>For whoever is using this script:</h2>
 
 1. Open powershell/cmd
 
@@ -39,7 +39,7 @@ Python is an interpreted, object-oriented, high-level programming language with 
 
 "python command dont work / I dont have python installed, how do I download it?"<br>
 
-In order to install python you can access Windows Store and search for "Python 3.12", once it is installed you are good to go, enter Step 3) again. <br>
+In order to install python you can access Windows Store and search for "Python 3.14", once it is installed you are good to go, enter Step 3) again. <br>
 
 "I dont use windows, how can I get python?" <br>
 

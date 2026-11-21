@@ -4,7 +4,7 @@ import struct
 
 import pytest
 import validate_mesh_textures as V
-from shared.suite import write_under
+from shared.suite import initialize_git_repository, run_git, write_under
 
 ENTITY = "gfx/entities/test.gfx"
 MESH = "gfx/models/units/test.mesh"
@@ -162,28 +162,88 @@ def test_unresolved_names_are_skipped_without_an_install(run):
     assert run(_mesh(("body", [("PdxMeshAdvanced", FULL)]))) == []
 
 
+# case: (texture files and their bytes, expected categories)
+_CLASH_CASES = {
+    "one file": ({"gfx/models/a_diffuse.dds": b"model"}, []),
+    "same name, different content": (
+        {"gfx/models/a_diffuse.dds": b"model", "gfx/interface/A_DIFFUSE.dds": b"icon"},
+        ["mesh-texture-name-clash"],
+    ),
+    "same name, same content": (
+        {"gfx/models/a_diffuse.dds": b"same", "gfx/interface/a_diffuse.dds": b"same"},
+        [],
+    ),
+    "name no model uses": (
+        {"gfx/models/z.dds": b"model", "gfx/interface/z.dds": b"icon"},
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "textures, expected", _CLASH_CASES.values(), ids=_CLASH_CASES.keys()
+)
+def test_texture_name_clash(run, tmp_path, textures, expected):
+    for rel_path, data in textures.items():
+        write_under(tmp_path, rel_path, "").write_bytes(data)
+    mesh = _mesh(("body", [("PdxMeshAdvanced", {"diff": "a_diffuse.dds"})]))
+
+    issues = run(mesh)
+
+    assert [i.category for i in issues] == expected
+    assert all(i.severity == "warning" for i in issues)
+
+
 def test_unreadable_mesh_is_reported(run):
     issues = run(b"@@b@?")
 
     assert [i.category for i in issues] == ["mesh-read-error"]
 
 
-def test_staged_mode_runs_only_for_model_paths(tmp_path, monkeypatch):
+# case: (staged path, expected categories)
+_STAGED_CASES = {
+    "outside gfx": ("interface/x.dds", []),
+    "mesh": (MESH, ["mesh-texture-empty"]),
+    "texture": ("gfx/interface/x.dds", ["mesh-texture-empty"]),
+    "mixed-case texture": ("gfx/interface/x.Dds", ["mesh-texture-empty"]),
+    "other gfx file": ("gfx/interface/x.txt", ["mesh-texture-empty"]),
+}
+
+
+@pytest.mark.parametrize(
+    "staged, expected", _STAGED_CASES.values(), ids=_STAGED_CASES.keys()
+)
+def test_staged_mode_runs_only_for_gfx_paths(tmp_path, monkeypatch, staged, expected):
     path = tmp_path / MESH
     path.parent.mkdir(parents=True)
     path.write_bytes(_mesh(("body", [("PdxMeshAdvanced", {"diff": ""})])))
     write_under(tmp_path, ENTITY, _pdxmesh())
     monkeypatch.setattr(V, "find_hoi4_install", lambda: None)
 
-    monkeypatch.setenv("MD_STAGED_FILES", "gfx/interface/x.dds")
-    untouched = V.Validator(str(tmp_path), staged_only=True)
-    untouched.run_validations()
-    monkeypatch.setenv("MD_STAGED_FILES", MESH)
-    touched = V.Validator(str(tmp_path), staged_only=True)
-    touched.run_validations()
+    if staged != MESH:
+        write_under(tmp_path, staged, "")
+    monkeypatch.setenv("MD_STAGED_FILES", staged)
+    validator = V.Validator(str(tmp_path), staged_only=True)
+    validator.run_validations()
+    assert [i.category for i in validator._issues] == expected
 
-    assert untouched._issues == []
-    assert [i.category for i in touched._issues] == ["mesh-texture-empty"]
+
+def test_staged_rename_checks_texture_clashes(run, tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    run(
+        _mesh(("body", [("PdxMeshAdvanced", {"diff": "a_diffuse.dds"})])),
+        textures=["gfx/models/a_diffuse.dds"],
+    )
+    write_under(tmp_path, "source.dds", "different content")
+    initialize_git_repository(tmp_path, ".")
+    (tmp_path / "gfx/interface").mkdir()
+    run_git(tmp_path, "mv", "source.dds", "gfx/interface/a_diffuse.DDS")
+
+    validator = V.Validator(str(tmp_path), staged_only=True)
+    validator.run_validations()
+
+    assert [i.category for i in validator._issues] == ["mesh-texture-name-clash"]
+    assert validator._issues[0].severity == "warning"
 
 
 def test_empty_tree_is_clean(tmp_path):

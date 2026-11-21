@@ -382,46 +382,23 @@ EU_is_commission_caretaker = {
 	}
 }
 
-# Council enforcement authority (breach determination / voting-rights / subsidies suspension):
-# either the proposer and target hold the top-3-influencer consensus among unsuspended members,
-# or the proposer is the commission president. Shared verbatim by the three enforcement decisions.
+# Reads FROM, so call it from target_trigger. The proposer is the commission president, or in every
+# other unsuspended member the proposer is a top 3 influencer and the target is not.
 EU_council_has_breach_authority = {
 	OR = {
-		AND = {
-			custom_trigger_tooltip = {
-				tooltip = can_determine_a_breach_of_values_ROOT
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
-							}
-						}
-						is_top3_influencer = yes
-					}
-				}
-			}
-			custom_trigger_tooltip = {
-				tooltip = can_determine_a_breach_of_values_FROM
-				all_of_scopes = {
-					array = global.EU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { tag = FROM }
-							NOT = {
-								has_idea = EUU_voting_rights_suspended
-							}
-						}
-						NOT = { FROM_is_top3_influencer = yes }
-					}
+		has_idea = EU_commission_office_idea
+		all_of_scopes = {
+			array = global.EU_member
+			OR = {
+				tag = ROOT
+				tag = FROM
+				has_idea = EUU_voting_rights_suspended
+				AND = {
+					is_top3_influencer = yes
+					NOT = { FROM_is_top3_influencer = yes }
 				}
 			}
 		}
-		has_idea = EU_commission_office_idea
 	}
 }
 
@@ -491,12 +468,12 @@ gov_is_eurosceptical = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_nats_are_eurosceptical
-				OR = {
-					nationalist_right_wing_populists_are_in_power = yes ### Nat_Populism
-					nationalist_fascist_are_in_power = yes ### Nat_Fascism
-					nationalist_military_junta_are_in_power = yes ### Nat_Autocracy
-					nationalist_monarchists_are_in_power = yes ### Monarchist
-				}
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes ### Nat_Populism
+				nationalist_fascist_are_in_power = yes ### Nat_Fascism
+				nationalist_military_junta_are_in_power = yes ### Nat_Autocracy
+				nationalist_monarchists_are_in_power = yes ### Monarchist
+			}
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_other_are_eurosceptical
@@ -564,12 +541,12 @@ gov_is_EUexiteer = {
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_nats_are_eurosceptical
-				OR = {
-					nationalist_right_wing_populists_are_in_power = yes ### Nat_Populism
-					nationalist_fascist_are_in_power = yes ### Nat_Fascism
-					nationalist_military_junta_are_in_power = yes ### Nat_Autocracy
-					nationalist_monarchists_are_in_power = yes ### Monarchist
-				}
+			OR = {
+				nationalist_right_wing_populists_are_in_power = yes ### Nat_Populism
+				nationalist_fascist_are_in_power = yes ### Nat_Fascism
+				nationalist_military_junta_are_in_power = yes ### Nat_Autocracy
+				nationalist_monarchists_are_in_power = yes ### Monarchist
+			}
 		}
 		custom_trigger_tooltip = {
 			tooltip = tooltip_other_are_eurosceptical
@@ -864,6 +841,11 @@ EU_european_union_council_voting_trigger = {
 		}
 		is_ai = yes
 	}
+}
+
+EU_can_vote_in_council = {
+	has_idea = EU_member
+	NOT = { has_idea = EUU_voting_rights_suspended }
 }
 
 EU_european_union_euro_fiscal_trigger = {

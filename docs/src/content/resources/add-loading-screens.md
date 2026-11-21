@@ -7,7 +7,7 @@ Loading screens double as main-menu backgrounds. The rotation shows every `.dds`
 
 ## Add a loading screen
 
-1. On the `gfx-input` branch, save the image as `gfx/loadingscreens/load_<N>.dds` - 1920x1440, DXT1 (BC1), no mipmaps, `<N>` one above the highest existing number. Never renumber existing files; players' saved selections are stored by path.
+1. Save the image as `gfx/loadingscreens/load_<N>.dds` - 1920x1440, DXT1 (BC1), no mipmaps, `<N>` one above the highest existing number. Never renumber existing files; players' saved selections are stored by path.
 2. Add `load_<N> = { }` to `common/frontend/backgrounds/base_backgrounds.txt`.
 3. Run `python3 tools/assets/generate_background_thumbnails.py`. It writes `load_<N>_small.dds` and regenerates `interface/small_background.gfx` - never edit either by hand.
 4. Optional quote: add the next `LOADING_TIP_<n>` key to `localisation/english/loading_tips_l_english.yml`.

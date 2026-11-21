@@ -8,9 +8,33 @@ an `if`/`limit` guarding something else entirely (an idea, a flag) must still
 flag the effect inside it.
 """
 
+import disk_cache
 import pytest
 import validate_building_guards as V
-from shared.suite import write_under
+from shared.suite import assert_findings, run_validator, write_tree, write_under
+
+_PROVINCE_BUILDINGS = frozenset(
+    {"naval_base", "bunker", "supply_node", "rail_way", "naval_supply_hub"}
+)
+_SHARED_SLOTS = frozenset({"industrial_complex", "arms_factory", "offices"})
+_SLOT_TRIGGERS = {
+    "infrastructure_random_build_loc": frozenset({"infrastructure"}),
+    "free_shared_building_slots": frozenset({"industrial_complex"}),
+}
+
+
+@pytest.fixture(autouse=True)
+def _province_buildings():
+    """The building classes and slot triggers a validator run reads from
+    common/buildings/ and common/scripted_triggers/."""
+    V._init_worker(
+        _PROVINCE_BUILDINGS,
+        frozenset(),
+        frozenset(),
+        frozenset(),
+        _SHARED_SLOTS,
+        _SLOT_TRIGGERS,
+    )
 
 
 def _scan(script):
@@ -29,9 +53,22 @@ def _scan_province(script):
     return scanner.findings
 
 
-_RANDOM_INFRASTRUCTURE_CASES = {
+_RANDOM_SLOT_CASES = {
     "unguarded random state": (
         "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        1,
+    ),
+    "negative level does not consume a slot": (
+        "random_owned_state = { add_building_construction = "
+        "{ type = offices level = -1 instant_build = yes } }",
+        0,
+    ),
+    "zero levels do not consume a slot": (
+        "random_owned_state = { add_building_construction = { type = offices level = 0 } }",
+        0,
+    ),
+    "unknown level still requires a guard": (
+        "random_owned_state = { add_building_construction = { type = offices level = var:amount } }",
         1,
     ),
     "scripted guard": (
@@ -118,6 +155,53 @@ _RANDOM_INFRASTRUCTURE_CASES = {
     ),
     "other building": (
         "random_owned_state = { add_building_construction = { type = air_base level = 1 } }",
+        1,
+    ),
+    "matching other building": (
+        "random_owned_state = { limit = { free_building_slots = "
+        "{ building = air_base size > 0 } } "
+        "add_building_construction = { type = air_base level = 1 } }",
+        0,
+    ),
+    "shared trigger covers another shared building": (
+        "random_owned_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "shared proof skips an unshared building": (
+        "random_owned_state = { limit = { free_shared_building_slots = yes } "
+        "add_building_construction = { type = fossil_powerplant level = 1 } }",
+        1,
+    ),
+    "extra shared slots first": (
+        "random_owned_state = { add_extra_state_shared_building_slots = 1 "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "extra shared slots after": (
+        "random_owned_state = { add_building_construction = { type = arms_factory level = 1 } "
+        "add_extra_state_shared_building_slots = 1 }",
+        1,
+    ),
+    "zero extra shared slots": (
+        "random_owned_state = { add_extra_state_shared_building_slots = 0 "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        1,
+    ),
+    "removed building frees a shared slot": (
+        "every_owned_state = { random_select_amount = 1 limit = { industrial_complex > 0 } "
+        "remove_building = { type = industrial_complex level = 1 } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        0,
+    ),
+    "removal without a presence proof": (
+        "random_owned_state = { remove_building = { type = industrial_complex level = 1 } "
+        "add_building_construction = { type = arms_factory level = 1 } }",
+        1,
+    ),
+    "province building skipped": (
+        "random_owned_state = { add_building_construction = { type = naval_base level = 1 "
+        "province = { all_provinces = yes } } }",
         0,
     ),
     "nested effect excluded": (
@@ -141,33 +225,89 @@ _RANDOM_INFRASTRUCTURE_CASES = {
 
 @pytest.mark.parametrize(
     "script,count",
-    _RANDOM_INFRASTRUCTURE_CASES.values(),
-    ids=_RANDOM_INFRASTRUCTURE_CASES,
+    _RANDOM_SLOT_CASES.values(),
+    ids=_RANDOM_SLOT_CASES,
 )
-def test_random_infrastructure_slots(script, count):
+def test_random_slot_guards(script, count):
     scanner = V.Scanner(V._sanitize(script))
-    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+    scanner.check_random_slot_guards(0, len(scanner.text))
     assert len(scanner.findings) == count
 
 
+# hints: {case: (selector body, hint, shown)}
+_SLOT_HINT_CASES = {
+    "level bound": (
+        "limit = { infrastructure < 5 } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        True,
+    ),
+    "level bound in AND": (
+        "limit = { AND = { infrastructure <= 4 } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        True,
+    ),
+    "level bound in OR": (
+        "limit = { OR = { infrastructure < 5 always = yes } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        False,
+    ),
+    "level bound in other state": (
+        "limit = { any_owned_state = { infrastructure < 5 } } "
+        "add_building_construction = { type = infrastructure level = 1 }",
+        "a level bound is present",
+        False,
+    ),
+    "late extra shared slots": (
+        "add_building_construction = { type = offices level = 1 } "
+        "add_extra_state_shared_building_slots = 1",
+        "only added after it",
+        True,
+    ),
+}
+
+
 @pytest.mark.parametrize(
-    "limit,has_bound",
-    [
-        ("infrastructure < 5", True),
-        ("AND = { infrastructure <= 4 }", True),
-        ("OR = { infrastructure < 5 always = yes }", False),
-        ("any_owned_state = { infrastructure < 5 }", False),
-    ],
+    "body,hint,shown", _SLOT_HINT_CASES.values(), ids=_SLOT_HINT_CASES
 )
-def test_level_bounds_are_reported_without_suppressing_warning(limit, has_bound):
-    script = (
-        f"random_owned_state = {{ limit = {{ {limit} }} "
-        "add_building_construction = { type = infrastructure level = 1 } }"
-    )
-    scanner = V.Scanner(V._sanitize(script))
-    scanner.check_random_infrastructure_slots(0, len(scanner.text))
+def test_slot_guard_hints_do_not_suppress_the_warning(body, hint, shown):
+    scanner = V.Scanner(V._sanitize(f"random_owned_state = {{ {body} }}"))
+    scanner.check_random_slot_guards(0, len(scanner.text))
     assert len(scanner.findings) == 1
-    assert ("a level bound is present" in scanner.findings[0][2]) is has_bound
+    assert (hint in scanner.findings[0][2]) is shown
+
+
+# scripted trigger files: {case: (file text, trigger -> buildings)}
+_SLOT_TRIGGER_CASES = {
+    "single building": (
+        "air_base_loc = {\n\tis_owned_by = PREV\n"
+        "\tfree_building_slots = { building = air_base size > 0 }\n"
+        "\tOR = { is_in_home_area = yes }\n}\n",
+        {"air_base_loc": frozenset({"air_base"})},
+    ),
+    "inside AND": (
+        "both_loc = { AND = { free_building_slots = { building = dockyard size >= 1 } } }\n",
+        {"both_loc": frozenset({"dockyard"})},
+    ),
+    "only in another state": (
+        "other_loc = { owner = { any_owned_state = "
+        "{ free_building_slots = { building = air_base size > 0 } } } }\n",
+        {},
+    ),
+    "commented out": (
+        "# old_loc = { free_building_slots = { building = air_base size > 0 } }\n",
+        {},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text,expected", _SLOT_TRIGGER_CASES.values(), ids=_SLOT_TRIGGER_CASES
+)
+def test_slot_triggers(text, expected):
+    assert V.slot_triggers(text) == expected
 
 
 # --- unguarded effects --------------------------------------------------
@@ -701,7 +841,17 @@ def _run(tmp_path, monkeypatch, script):
     import validator_common
 
     monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
-    write_under(tmp_path, "events/test_events.txt", script)
+    write_tree(
+        tmp_path,
+        {
+            "common/buildings/00_buildings.txt": _BUILDINGS,
+            "common/scripted_triggers/00_slots.txt": (
+                "dockyard_loc = { free_building_slots = { building = dockyard size > 0 } }\n"
+            ),
+            "map/definition.csv": _DEFINITION,
+            "events/test_events.txt": script,
+        },
+    )
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
     validator.run_validations()
     return validator
@@ -741,15 +891,25 @@ def test_run_reports_province_building_state_trigger_as_error(tmp_path, monkeypa
     ]
 
 
-def test_random_infrastructure_slot_guard_is_a_warning(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "guard,expected",
+    [
+        ("", [("warning", "random-building-slot-guard")]),
+        ("limit = { dockyard_loc = yes }", []),
+        ("add_extra_state_shared_building_slots = 1", []),
+    ],
+    ids=["unguarded", "trigger from scripted_triggers", "shared slot from buildings"],
+)
+def test_random_slot_guard_reads_triggers_and_shared_slots(
+    tmp_path, monkeypatch, guard, expected
+):
     validator = _run(
         tmp_path,
         monkeypatch,
-        "random_owned_state = { add_building_construction = { type = infrastructure level = 1 } }",
+        f"random_owned_state = {{ {guard} "
+        "add_building_construction = { type = dockyard level = 1 } }",
     )
-    assert [(i.severity, i.category) for i in validator._issues] == [
-        ("warning", "random-infrastructure-slot-guard")
-    ]
+    assert [(i.severity, i.category) for i in validator._issues] == expected
 
 
 def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
@@ -765,3 +925,469 @@ def test_run_stays_quiet_when_every_effect_is_guarded(tmp_path, monkeypatch):
 
     assert validator._issues == []
     assert any("All damage_building" in line for line in validator.output_lines)
+
+
+# --- building placement and starting owners --------------------------------
+
+_BUILDINGS = """buildings = {
+	naval_base = {
+		only_costal = yes
+		level_cap = { province_max = 10 }
+	}
+	bunker = {
+		level_cap = { province_max = 7 }
+	}
+	dockyard = {
+		only_costal = yes
+		level_cap = { state_max = 20 shares_slots = yes }
+	}
+}
+"""
+
+_DEFINITION = """0;0;0;0;land;false;unknown;0
+1;1;1;1;land;true;plains;1
+2;2;2;2;land;false;plains;1
+3;3;3;3;sea;true;ocean;0
+"""
+
+_INLAND = "province 2, which map/definition.csv does not mark as coastal land"
+_NO_PROVINCE = "add_building_construction type = bunker has no province"
+_ID_SELECTOR = "province = { province = <id> } is not a valid selector"
+
+
+def _state(body, owner="TST"):
+    owner_line = f"\towner = {owner}\n" if owner else ""
+    return f"state = {{\n\tid = 1\n\thistory = {{\n{owner_line}{body}\n\t}}\n}}\n"
+
+
+def _construction(body):
+    return f"effect = {{\n\tadd_building_construction = {{\n{body}\n\t}}\n}}\n"
+
+
+# building definitions: {case: (file text, (provincial, coastal provincial, shared))}
+_DEFINITION_CASES = {
+    "buildings file": (
+        _BUILDINGS,
+        ({"naval_base", "bunker"}, {"naval_base"}, {"dockyard"}),
+    ),
+    "commented flags": (
+        "buildings = {\n\tnaval_base = {\n\t\t# only_costal = yes\n"
+        "\t\t# province_max = 10\n\t\tlevel_cap = { state_max = 10 # shares_slots = yes\n"
+        "\t\t}\n\t}\n}\n",
+        (set(), set(), set()),
+    ),
+    "province_max outside level_cap": (
+        "buildings = {\n\tnaval_base = {\n\t\tonly_costal = yes\n"
+        "\t\tprovince_max = 10\n\t}\n}\n",
+        (set(), set(), set()),
+    ),
+    "shares_slots = no": (
+        "buildings = {\n\tfuel_silo = {\n\t\tlevel_cap = { shares_slots = no }\n\t}\n}\n",
+        (set(), set(), set()),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _DEFINITION_CASES.values(), ids=_DEFINITION_CASES
+)
+def test_building_classes(text, expected):
+    assert V.building_classes(text) == expected
+
+
+# definition.csv: {case: (row, coastal land ids)}
+_PROVINCE_CASES = {
+    "coastal land": ("1;1;1;1;land;true;plains;1", {1}),
+    "inland": ("2;2;2;2;land;false;plains;1", set()),
+    "coastal sea": ("3;3;3;3;sea;true;ocean;0", set()),
+    "header": ("province;red;green;blue;type;coastal;terrain;continent", set()),
+}
+
+
+@pytest.mark.parametrize("row, expected", _PROVINCE_CASES.values(), ids=_PROVINCE_CASES)
+def test_coastal_land_provinces(row, expected):
+    assert V.coastal_land_provinces(row)[1] == expected
+
+
+# placement: {case: (file path, file text, expected findings)}
+_PLACEMENT_CASES = {
+    "history coastal province": (
+        "history/states/1-Test.txt",
+        _state("\t\tbuildings = {\n\t\t\t1 = { naval_base = 1 }\n\t\t}"),
+        [],
+    ),
+    "history inland province": (
+        "history/states/1-Test.txt",
+        _state("\t\tbuildings = {\n\t\t\t2 = { naval_base = 1 }\n\t\t}"),
+        [("'naval_base'", _INLAND)],
+    ),
+    "history date block": (
+        "history/states/1-Test.txt",
+        _state(
+            "\t\t2017.1.1 = {\n\t\t\tbuildings = {\n"
+            "\t\t\t\t2 = { naval_base = 1 }\n\t\t\t}\n\t\t}"
+        ),
+        [("'naval_base'", _INLAND)],
+    ),
+    "history province block outside a state file": (
+        "common/scripted_effects/test.txt",
+        _state("\t\tbuildings = {\n\t\t\t2 = { naval_base = 1 }\n\t\t}"),
+        [],
+    ),
+    "history non-coastal building": (
+        "history/states/1-Test.txt",
+        _state("\t\tbuildings = {\n\t\t\t2 = { bunker = 1 }\n\t\t}"),
+        [],
+    ),
+    "construction scalar province": (
+        "events/test.txt",
+        _construction("\t\ttype = naval_base\n\t\tprovince = 2"),
+        [("'naval_base'", _INLAND)],
+    ),
+    "construction province ids": (
+        "common/national_focus/test.txt",
+        _construction("\t\ttype = naval_base\n\t\tprovince = { id = 1 id = 2 }"),
+        [("'naval_base'", _INLAND)],
+    ),
+    "construction runtime provinces": (
+        "events/test.txt",
+        _construction(
+            "\t\ttype = naval_base\n"
+            "\t\tprovince = { all_provinces = yes limit_to_coastal = yes }"
+        ),
+        [],
+    ),
+    "construction state building": (
+        "events/test.txt",
+        _construction("\t\ttype = dockyard\n\t\tprovince = 2"),
+        [],
+    ),
+    "sea province": (
+        "events/test.txt",
+        _construction("\t\ttype = naval_base\n\t\tprovince = 3"),
+        [("province 3, which map/definition.csv does not mark as coastal land",)],
+    ),
+    "unknown province": (
+        "events/test.txt",
+        _construction("\t\ttype = naval_base\n\t\tprovince = 99"),
+        [("province 99, which is not in map/definition.csv",)],
+    ),
+    "provincial building without province": (
+        "events/test.txt",
+        _construction("\t\ttype = bunker\n\t\tlevel = 1"),
+        [(_NO_PROVINCE,)],
+    ),
+    "state building without province": (
+        "events/test.txt",
+        _construction("\t\ttype = dockyard\n\t\tlevel = 1"),
+        [],
+    ),
+    "province id in a selector block": (
+        "events/test.txt",
+        _construction("\t\ttype = bunker\n\t\tprovince = { province = 2 }"),
+        [(_ID_SELECTOR,)],
+    ),
+    "consecutive constructions": (
+        "events/test.txt",
+        "effect = {\n"
+        "\tadd_building_construction = { type = bunker province = 1 }\n"
+        "\tadd_building_construction = { type = bunker level = 1 }\n}\n",
+        [(_NO_PROVINCE,)],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "path, text, expected", _PLACEMENT_CASES.values(), ids=_PLACEMENT_CASES
+)
+def test_placement(tmp_path, path, text, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/buildings/00_buildings.txt": _BUILDINGS,
+            "map/definition.csv": _DEFINITION,
+            path: text,
+        },
+    )
+
+    validator = run_validator(V.Validator, tmp_path)
+
+    assert_findings([issue.message for issue in validator._issues], expected)
+
+
+# finding position: {case: (file text, (category, line))}
+_POSITION_CASES = {
+    "coastal": (
+        _construction("\t\ttype = naval_base\n\t\tprovince = 2"),
+        ("coastal-building-not-coastal", 4),
+    ),
+    "missing province": (
+        _construction("\t\ttype = bunker"),
+        ("building-missing-province", 2),
+    ),
+    "id selector": (
+        _construction("\t\ttype = bunker\n\t\tprovince = { province = 2 }"),
+        ("province-id-in-selector-block", 4),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _POSITION_CASES.values(), ids=_POSITION_CASES
+)
+def test_placement_finding_is_an_error_with_file_and_line(tmp_path, text, expected):
+    write_tree(
+        tmp_path,
+        {
+            "common/buildings/00_buildings.txt": _BUILDINGS,
+            "map/definition.csv": _DEFINITION,
+            "events/test.txt": text,
+        },
+    )
+
+    (issue,) = run_validator(V.Validator, tmp_path)._issues
+
+    assert (issue.severity, issue.file, (issue.category, issue.line)) == (
+        "error",
+        "events/test.txt",
+        expected,
+    )
+
+
+def test_missing_definition_is_reported(tmp_path):
+    write_tree(tmp_path, {"common/buildings/00_buildings.txt": _BUILDINGS})
+
+    validator = run_validator(V.Validator, tmp_path)
+
+    assert [issue.category for issue in validator._issues] == [
+        "coastal-building-definition-missing"
+    ]
+
+
+# state facts: {case: (state file text, (owner, state-level buildings))}
+_STATE_FACT_CASES = {
+    "levels of one or more": (
+        _state(
+            "\t\tbuildings = {\n\t\t\tnuclear_reactor = 1 # comment\n"
+            "\t\t\tmicrochip_plant = 0\n\t\t\t1 = { naval_base = 9 }\n\t\t}"
+        ),
+        ("TST", {"nuclear_reactor"}),
+    ),
+    "unowned": (
+        _state("\t\tbuildings = { nuclear_reactor = 1 }", owner=None),
+        (None, {"nuclear_reactor"}),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _STATE_FACT_CASES.values(), ids=_STATE_FACT_CASES
+)
+def test_state_facts(text, expected):
+    assert V.placement_findings(text, True)[1:] == expected
+
+
+def _status_group(*members):
+    return "ideas = {\n\tnuclear_status = {\n" + "\n".join(members) + "\n\t}\n}\n"
+
+
+# nuclear_status: {case: (ideas file, non-default members)}
+_NUCLEAR_STATUS_CASES = {
+    "default member": (
+        _status_group(
+            "use_list_view = yes",
+            "non_nuclear_power = { default = yes cost = 300 }",
+            "nuclear_energy = { cost = 300 available = { has_tech = reactor_01 } }",
+            "nuclear_power_def = { cost = 300 }",
+        ),
+        {"nuclear_energy", "nuclear_power_def"},
+    ),
+    "another group": ("ideas = { nuclear_stance = { foo = {} } }\n", set()),
+    "brace on the next line": (
+        _status_group("odd_member =", "{", "cost = 300", "}"),
+        {"odd_member"},
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "text, expected", _NUCLEAR_STATUS_CASES.values(), ids=_NUCLEAR_STATUS_CASES
+)
+def test_nuclear_status_ideas(text, expected):
+    assert V.nuclear_status_ideas(text) == expected
+
+
+def test_project_building_grants_name_the_top_level_project():
+    text = (
+        "sp_chips = {\n\tproject_output = { facility_state_effects = {\n"
+        "\t\tset_building_level = { type = microchip_plant level = 1 }\n\t} }\n}\n"
+        "sp_other = { allowed = { always = yes } }\n"
+    )
+
+    assert V.project_building_grants(text) == {("microchip_plant", "sp_chips")}
+
+
+def test_country_facts_read_tokens_and_completed_projects():
+    tokens, completed = V.country_facts(
+        "add_ideas = { nuclear_energy }\n"
+        "complete_special_project = sp:sp_chips\n"
+        "complete_special_project = sp_bare\n"
+        "# complete_special_project = sp:sp_commented\n"
+    )
+
+    assert "nuclear_energy" in tokens
+    assert completed == {"sp_chips"}
+
+
+_COUNTRY = "history/countries/TST - Test.txt"
+_IDEAS = {"common/ideas/md.txt": {"nuclear_ideas": {"nuclear_energy"}}}
+_GRANT = {"common/special_projects/projects/md.txt": {"granted": {("chips", "sp_a")}}}
+
+
+def _owner(*buildings):
+    return {"history/states/1-Test.txt": {"owner": "TST", "buildings": set(buildings)}}
+
+
+def _country(tokens=(), completed=()):
+    return {_COUNTRY: {"tokens": set(tokens), "completed": set(completed)}}
+
+
+# ownership join: {case: (per-file facts, expected findings)}
+_OWNERSHIP_CASES = {
+    "reactor owner grants an idea": (
+        {**_IDEAS, **_owner("nuclear_reactor"), **_country({"nuclear_energy"})},
+        [],
+    ),
+    "reactor owner without an idea": (
+        {**_IDEAS, **_owner("nuclear_reactor"), **_country({"non_nuclear_power"})},
+        [("TST", "grants no nuclear_status idea (nuclear_energy)")],
+    ),
+    "reactor owner without a country file": (
+        {**_IDEAS, **_owner("nuclear_reactor")},
+        [("TST", "nuclear_reactor", "no history/countries/")],
+    ),
+    "no nuclear_status group": ({**_owner("nuclear_reactor"), **_country()}, []),
+    "granted building with its project": (
+        {**_GRANT, **_owner("chips"), **_country(completed={"sp_a"})},
+        [],
+    ),
+    "granted building without its project": (
+        {**_GRANT, **_owner("chips"), **_country(completed={"sp_b"})},
+        [("TST", "chips", "(sp:sp_a)")],
+    ),
+    "granted building without a country file": (
+        {**_GRANT, **_owner("chips")},
+        [("TST", "chips", "no history/countries/")],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "facts, expected", _OWNERSHIP_CASES.values(), ids=_OWNERSHIP_CASES
+)
+def test_ownership_findings(facts, expected):
+    rows = V.ownership_findings(facts)
+
+    assert_findings([message for _category, _file, _line, message in rows], expected)
+
+
+_OWNERSHIP_TREE = {
+    "common/ideas/md.txt": _status_group("nuclear_energy = { cost = 300 }"),
+    "history/states/1-Test.txt": _state("\t\tbuildings = { nuclear_reactor = 1 }"),
+    _COUNTRY: "add_ideas = { non_nuclear_power }\n",
+    "events/unrelated.txt": "effect = { add_stability = 0.1 }\n",
+}
+
+
+def test_ownership_finding_is_an_error_on_the_country_file(tmp_path):
+    validator = run_validator(V.Validator, write_tree(tmp_path, _OWNERSHIP_TREE))
+
+    (issue,) = validator._issues
+
+    assert (issue.severity, issue.category, issue.file) == (
+        "error",
+        "reactor-owner-without-nuclear-status",
+        _COUNTRY,
+    )
+
+
+def test_staged_run_joins_unstaged_ownership_inputs(tmp_path, monkeypatch):
+    write_tree(tmp_path, _OWNERSHIP_TREE)
+    monkeypatch.setenv("MD_STAGED_FILES", "events/unrelated.txt")
+
+    validator = run_validator(V.Validator, tmp_path, staged_only=True)
+
+    assert [issue.file for issue in validator._issues] == [_COUNTRY]
+
+
+# staged: {case: (staged paths, files with findings)}
+_STAGED_CASES = {
+    "placement file": ("events/a.txt", {"events/a.txt"}),
+    "definition change": ("map/definition.csv", {"events/a.txt", "events/b.txt"}),
+    "buildings change": (
+        "common/buildings/00_buildings.txt",
+        {"events/a.txt", "events/b.txt"},
+    ),
+}
+
+
+@pytest.mark.parametrize("staged, expected", _STAGED_CASES.values(), ids=_STAGED_CASES)
+def test_staged_scope(tmp_path, monkeypatch, staged, expected):
+    inland = _construction("\t\ttype = naval_base\n\t\tprovince = 2")
+    write_tree(
+        tmp_path,
+        {
+            "common/buildings/00_buildings.txt": _BUILDINGS,
+            "map/definition.csv": _DEFINITION,
+            "events/a.txt": inland,
+            "events/b.txt": inland,
+        },
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", staged)
+
+    validator = run_validator(V.Validator, tmp_path, staged_only=True)
+
+    assert {issue.file for issue in validator._issues} == expected
+
+
+# --- scan_file input contract -----------------------------------------------
+
+
+def test_scan_file_reads_and_relativizes_path(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    path = write_under(
+        tmp_path,
+        "events/Test.txt",
+        "wrapper = {\n\tdamage_building = { type = fuel_silo damage = 1 }\n}\n",
+    )
+    args = (str(path), str(tmp_path) + "/")
+    expected = (
+        [
+            (
+                "unguarded-damage-building",
+                "events/Test.txt",
+                2,
+                "damage_building = { type = fuel_silo ... } is not guarded by a "
+                "check that fuel_silo exists",
+            )
+        ],
+        {},
+    )
+
+    assert V.scan_file(args) == expected
+    assert V.scan_file(args) == expected
+
+
+def test_scan_file_skips_files_without_building_content(tmp_path, monkeypatch):
+    def scanned(*_args):
+        raise AssertionError("a file without building content reached the scan")
+
+    monkeypatch.setattr(disk_cache, "per_file_cached_by_content", scanned)
+    path = write_under(tmp_path, "quiet.txt", "focus = { id = TST_focus }\n")
+
+    assert V.scan_file((str(path), str(tmp_path) + "/")) == ([], {})
+
+
+def test_scan_file_reports_unreadable_input(tmp_path):
+    with pytest.raises(ValueError, match="Cannot scan"):
+        V.scan_file((str(tmp_path / "missing.txt"), str(tmp_path)))
