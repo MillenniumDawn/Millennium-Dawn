@@ -8224,3 +8224,180 @@ USA_rejoin_paris_agreement = {
 		}
 	}
 }
+
+USA_close_base_lease_if_transferred = {
+	if = {
+		limit = { NOT = { is_owned_by = USA } }
+		if = {
+			limit = { NOT = { has_state_flag = USA_base_lease_ended } }
+			set_state_flag = USA_base_lease_ended
+		}
+		if = {
+			limit = {
+				state = 424
+				USA = { has_idea = USA_guantanamo_bay }
+			}
+			USA = { remove_ideas = USA_guantanamo_bay }
+		}
+	}
+}
+
+USA_reconcile_overseas_base_ownership = {
+	488 = { USA_close_base_lease_if_transferred = yes }
+	827 = { USA_close_base_lease_if_transferred = yes }
+	624 = { USA_close_base_lease_if_transferred = yes }
+	824 = { USA_close_base_lease_if_transferred = yes }
+	# Guantanamo is rent-free; ownership loss closes its agreement and detention center.
+	424 = { USA_close_base_lease_if_transferred = yes }
+}
+
+USA_update_base_lease_rent = {
+	set_variable = { global.USA_kuwait_base_weekly_rent = 0 }
+	set_variable = { global.USA_okinawa_base_weekly_rent = 0 }
+	set_variable = { global.USA_bahrain_base_weekly_rent = 0 }
+	set_variable = { global.USA_diego_garcia_base_weekly_rent = 0 }
+
+	if = {
+		limit = {
+			country_exists = USA
+			USA = {
+				has_capitulated = no
+				NOT = { has_country_flag = disabled_economic_system }
+			}
+		}
+		if = {
+			limit = {
+				USA_kuwait_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 488
+					NOT = { has_war_with = KUW }
+				}
+				KUW = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_kuwait_base_weekly_rent = 0.025 }
+		}
+		if = {
+			limit = {
+				USA_okinawa_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 827
+					NOT = { has_war_with = JAP }
+				}
+				JAP = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_okinawa_base_weekly_rent = 0.050 }
+		}
+		if = {
+			limit = {
+				USA_bahrain_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 624
+					NOT = { has_war_with = BHR }
+				}
+				BHR = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_bahrain_base_weekly_rent = 0.015 }
+		}
+		if = {
+			limit = {
+				USA_diego_garcia_base_lease_open = yes
+				USA = {
+					has_full_control_of_state = 824
+					NOT = { has_war_with = ENG }
+				}
+				ENG = {
+					has_capitulated = no
+					NOT = { has_country_flag = disabled_economic_system }
+				}
+			}
+			set_variable = { global.USA_diego_garcia_base_weekly_rent = 0.020 }
+		}
+	}
+}
+
+USA_transfer_kuwait_base_to_host = {
+	if = {
+		limit = {
+			country_exists = KUW
+			USA = {
+				owns_state = 488
+				has_full_control_of_state = 488
+			}
+		}
+		488 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = KUW
+		}
+	}
+}
+
+USA_transfer_okinawa_base_to_host = {
+	if = {
+		limit = {
+			country_exists = JAP
+			USA = {
+				owns_state = 827
+				has_full_control_of_state = 827
+			}
+		}
+		827 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = JAP
+		}
+		USA = {
+			remove_state_core = 827
+			remove_opinion_modifier = { target = JAP modifier = minor_border_dispute }
+		}
+		JAP = { remove_opinion_modifier = { target = USA modifier = minor_border_dispute } }
+	}
+}
+
+USA_transfer_bahrain_base_to_host = {
+	if = {
+		limit = {
+			country_exists = BHR
+			624 = { is_owned_and_controlled_by = USA }
+		}
+		624 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = BHR
+		}
+	}
+}
+
+USA_transfer_diego_garcia_base_to_host = {
+	if = {
+		limit = {
+			country_exists = ENG
+			824 = { is_owned_and_controlled_by = USA }
+		}
+		824 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = ENG
+		}
+	}
+}
+
+USA_transfer_guantanamo_base_to_host = {
+	if = {
+		limit = {
+			country_exists = CUB
+			424 = { is_owned_and_controlled_by = USA }
+		}
+		424 = {
+			set_state_flag = USA_base_lease_ended
+			transfer_state_to = CUB
+		}
+		CUB = { add_state_core = 424 }
+		USA = { remove_ideas = USA_guantanamo_bay }
+	}
+}
