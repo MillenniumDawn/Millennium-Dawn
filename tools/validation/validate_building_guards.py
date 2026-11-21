@@ -51,8 +51,9 @@ country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
 
-The advisory random-state slot check covers direct construction effects in
-selected random-state iterators and randomly limited every-state iterators. It
+The advisory random-state slot check covers direct construction effects with
+positive or unknown levels in selected random-state iterators and randomly
+limited every-state iterators. It
 looks for a free slot proven in the selector's own limit (`free_building_slots`
 or a scripted trigger built on it), or made earlier in the same block by
 `add_extra_state_shared_building_slots` or a `remove_building` of a building
@@ -97,6 +98,7 @@ from validator_common import (
 )
 
 _TYPE_RE = re.compile(r"\btype\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_CONSTRUCTION_LEVEL_RE = re.compile(r"\blevel\s*=\s*([+-]?\d+)(?=\s|$)")
 _COMPARISON_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*(>=|<=|==|!=|>|<)\s*(-?\d+)")
 _BUILDING_FIELD_RE = re.compile(r"\b(?:building|type)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 # A comparison inside any of these cannot stand on its own: the branch that
@@ -684,6 +686,12 @@ class Scanner:
                 continue
             if child != "add_building_construction" or building in _PROVINCIAL:
                 continue
+            fields = _direct_text(
+                self.text, c_start, c_end, _child_blocks(self.text, c_start, c_end)
+            )
+            level = _CONSTRUCTION_LEVEL_RE.search(fields)
+            if level and int(level.group(1)) <= 0:
+                continue
             if building in guards or (
                 building in _SHARED_SLOTS and guards & _SHARED_SLOTS
             ):
@@ -811,7 +819,7 @@ def scan_file(args: Tuple[str, str]) -> Tuple[List[Tuple[str, str, int, str]], d
 
     findings, facts = disk_cache.per_file_cached_by_content(
         mod_path,
-        "building_guards_scan_v9",
+        "building_guards_scan_v10",
         filepath,
         raw + "\x00" + _FINGERPRINT,
         compute,
