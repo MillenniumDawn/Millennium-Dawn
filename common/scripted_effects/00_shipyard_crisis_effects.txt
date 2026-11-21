@@ -54,19 +54,16 @@ shipyard_recalc = {
 	set_variable = { shipyard_dockyards_in_use = num_of_naval_factories }
 	subtract_from_variable = { shipyard_dockyards_in_use = num_of_available_naval_factories }
 
-
-	# Hull classes a country can lay down at all come from real yards on the map.
 	set_variable = { shipyard_capital_yard = 0 }
+	if = {
+		limit = { any_owned_state = { non_damaged_building_level = { building = large_slipway level > 0 } } }
+		set_variable = { shipyard_capital_yard = 1 }
+	}
+
 	set_variable = { shipyard_submarine_yard = 0 }
-	every_owned_state = {
-		if = {
-			limit = { check_variable = { building_level@large_slipway > 0 } }
-			ROOT = { set_variable = { shipyard_capital_yard = 1 } }
-		}
-		if = {
-			limit = { check_variable = { building_level@submarine_hall > 0 } }
-			ROOT = { set_variable = { shipyard_submarine_yard = 1 } }
-		}
+	if = {
+		limit = { any_owned_state = { non_damaged_building_level = { building = submarine_hall level > 0 } } }
+		set_variable = { shipyard_submarine_yard = 1 }
 	}
 
 	shipyard_country_recalc = yes
@@ -80,7 +77,11 @@ shipyard_monthly = {
 	add_to_variable = { shipyard_crisis_level = shipyard_drift }
 	clamp_variable = { var = shipyard_crisis_level min = 0 max = 100 }
 	shipyard_recalc = yes
-	shipyard_overload_check = yes
+
+	if = {
+		limit = { is_ai = no }
+		shipyard_overload_check = yes
+	}
 }
 
 # Each completed stage also slows the monthly drift in shipyard_recalc.
@@ -104,8 +105,7 @@ shipyard_pay_drydock = {
 	modify_treasury_effect = yes
 }
 
-# Running more dockyards than the yards can staff warns once, then bites every month until
-# the player frees one.
+# Warn once, then penalize the player each month that dockyards in use exceed capacity.
 shipyard_overload_check = {
 	if = {
 		limit = { check_variable = { shipyard_dockyards_in_use > shipyard_effective_dockyards } }
