@@ -2186,6 +2186,41 @@ def test_ai_will_do_guards(tmp_path, effects, extra, reward, modifiers, expected
 
 
 @pytest.mark.parametrize(
+    ("modifier", "unneeded"),
+    [
+        (
+            "modifier = { factor = 0 SOV = { has_active_mission = "
+            "bankruptcy_incoming_collapse } }",
+            False,
+        ),
+        (
+            "modifier = { factor = 0 has_active_mission = "
+            "bankruptcy_incoming_collapse }",
+            True,
+        ),
+    ],
+    ids=["guard matches foreign payer", "guard checks another payer"],
+)
+def test_foreign_treasury_guard_matches_its_payer(tmp_path, modifier, unneeded):
+    _write_effects_file(tmp_path)
+    text = FOCUS_TEMPLATE.format(
+        extra="",
+        reward=f"SOV = {{ {_spend(-3)} }}",
+        modifiers=modifier,
+    ).replace("id = test_tree", "id = test_tree\n\tcountry = { tag = CHE }")
+    _focus_file(tmp_path, text)
+    validator = _validator(tmp_path)
+    validator.validate_ai_will_do_guards()
+
+    warnings = [
+        issue
+        for issue in validator._issues
+        if issue.category == "unneeded-treasury-guard"
+    ]
+    assert bool(warnings) is unneeded
+
+
+@pytest.mark.parametrize(
     ("reward", "unneeded"),
     [
         ("GER = { declare_war_on = { target = ROOT type = annex_everything } }", False),
