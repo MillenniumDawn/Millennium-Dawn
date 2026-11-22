@@ -4,8 +4,10 @@ Development tools and scripts used by the Millennium Dawn team for quality assur
 
 ## Requirements
 
-Python 3.12 or newer is required. CI installs 3.12 on Linux, macOS, and Windows.
-Ruff, mypy, pylint, and pyright target 3.12 in `pyproject.toml`.
+Python 3.14 or newer is required. CI installs 3.14 on Linux, macOS, and Windows.
+Ruff, mypy, pylint, and pyright target 3.14 in `pyproject.toml`.
+If your `.venv` uses an older Python, recreate it with Python 3.14 before
+running `tools/dev_setup.py`. Setup reuses an existing `.venv`.
 
 Some scripts rely on non-native packages for Python. The dependency lists live
 in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
@@ -439,31 +441,78 @@ DDS conversion, GFX entry generation, texture and flag tools.
 
 | Script                         | Description                                                                       |
 | ------------------------------ | --------------------------------------------------------------------------------- |
+| **audit_models.py**            | Read-only report of broken mesh data, triangle budgets and model texture formats  |
 | **batchdds-2.py**              | Self-contained Python DDS converter (DXT1/DXT5, no external dependencies)         |
 | **convert_to_legacy_dds.py**   | Converts DX10/sRGB DDS files to legacy ARGB8888 for HOI4 compatibility            |
+| **dds_mipmaps.py**             | Reports, adds or drops DDS mipmaps by folder rule; tints levels for game checks   |
+| **dds_standardize.py**         | Rewrites DDS files in their folder's art-standard format, with a quality gate     |
 | **duplicate_icon.py**          | Detects duplicate icon files in a focus tree file                                 |
 | **find_duplicate_textures.py** | Finds duplicate texture files in the mod                                          |
 | **flag-reference-checker.py**  | Validates flag references across the mod                                          |
 | **gfx_entry_generator_gui.py** | GFX sprite entry generator with GUI, calls into the root `gfx_entry_generator.py` |
+| **mesh_cap.py**                | Hard triangle cap behind `optimize_mesh.py --max-triangles`, part by part         |
+| **model_standards.py**         | Triangle targets, error limits and texture rules shared by the model tools        |
+| **optimize_mesh.py**           | Repairs and simplifies the mesh files you name, guarding thin parts               |
+| **pdx_mesh.py**                | Reader and writer for Paradox binary `.mesh` files                                |
 | **resize_decision_icons.py**   | Resizes wrong-slot decision icon art in place or as a sibling sprite              |
 | **state_gfx.py**               | Extracts province colors from state files and renders them on the map             |
+
+The model tools read their limits from `model_standards.py`, which mirrors the
+[3D Model Performance Guidelines](../docs/src/content/resources/3d-model-performance-guidelines.md).
+`audit_models.py` only reports. `optimize_mesh.py` takes mesh files, never folders, and
+prints what would change unless you pass `--write`. Do not run it over the whole model
+tree: check each changed model in game before committing it. Both need the `analysis`
+group; simplification also needs `pip install meshoptimizer==0.2.30a0`.
+
+`optimize_mesh.py --max-triangles N` goes further for models the guarded pass leaves over
+N. It cuts every connected part in proportion and may merge across hard edges and texture
+seams, so boxy models lose detail and textures can stretch. Use it one model at a time.
+
+`dds_mipmaps.py` follows the folder rule in `model_standards.py`: textures drawn on the
+3D map need mipmaps, GUI art should have none, and terrain, fonts and map arrows are
+left alone. `--fix` adds or drops the chain and never re-encodes the full-size image.
+`--tint` writes a debug copy with coloured levels, to see in game which level is drawn.
+
+`dds_standardize.py` applies the per-folder formats in `model_standards.py`, taken from the
+Art Standards. It replaces what the game's loader was not written for (DX10 headers, 16-
+and 24-bit texels, PNG or JPEG data under a `.dds` name), compresses the folders the
+standards list as compressed, and compresses other GUI art only when it passes the quality
+gate. Tech, focus and idea icons are never compressed. The texture of a sprite with
+`transparencecheck = yes` is never compressed either, and a DXT1 or DXT5 one is rewritten
+as A8R8G8B8, because the game logs "forbidden compression" for those. Mipmaps then follow the
+`dds_mipmaps.py` rule. It only prints unless you pass `--fix --write`. `--max-size N` also
+halves model textures until their longer side fits.
+
+```bash
+python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
+python3 tools/assets/optimize_mesh.py gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/optimize_mesh.py --write gfx/models/units/tanks/SOV/T72A.mesh
+python3 tools/assets/dds_mipmaps.py gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --fix --write gfx/models/units/tanks
+python3 tools/assets/dds_mipmaps.py --tint in.dds out.dds
+python3 tools/assets/dds_standardize.py gfx/interface/technologies
+python3 tools/assets/dds_standardize.py --fix --write gfx/interface/technologies
+```
 
 ### Analysis (`analysis/`)
 
 Metrics, reference analysis, and review tools.
 
-| Script                              | Description                                                                                                                                                     |
-| ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)    |
-| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
-| **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                          |
-| **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
-| **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                 |
-| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
-| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                              |
-| **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup. |
-| **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                          |
-| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                           |
+| Script                              | Description                                                                                                                                                      |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)     |
+| **benchmark_report.py**             | Reports headless runs from game.log and error.log: run comparisons, country series, spreads, wars, decision and option counts, law churn, error shapes           |
+| **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                        |
+| **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                           |
+| **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                                |
+| **headless_run.py**                 | Turns benchmark logging on without -debug, adds test wars, and saves a run's logs and newest save, using untracked on_actions files                              |
+| **inspect_save.py**                 | Reports countries in a text save: economy, spending laws, resources, divisions and fielded against needed equipment, production, construction, market, buildings |
+| **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                  |
+| **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                           |
+| **find_scripted_loc_references.py** | Checks whether scripted localisation names are actually referenced                                                                                               |
+| **pre_place_power_plants.py**       | Bakes fossil_powerplant + composite_plant counts into `history/states/` to skip startup loops. Re-run after edits to the energy formula or country/state setup.  |
+| **review_branch.py**                | Generates a diff summary of the current branch vs main                                                                                                           |
+| **search_add_ideas.py**             | Searches for `add_ideas` / `add_timed_idea` usage across the codebase                                                                                            |
 
 ### Generators (`generators/`)
 

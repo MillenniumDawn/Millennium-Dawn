@@ -8,7 +8,9 @@ the way it does.
 Only six `on_action` hooks run on a clock:
 
 - `on_daily`, `on_weekly`, `on_monthly` are global. They run once per country per
-  period, and the engine staggers them across the period.
+  period, all in the same game hour: every country's `on_monthly` fires at 1:00 on the
+  1st. Moving work from a single-fire `every_country` into the per-country hook does not
+  spread it out.
 - `on_daily_<TAG>`, `on_weekly_<TAG>`, `on_monthly_<TAG>` run for that country only.
 
 `on_monthly` is native. The tool finds hooks by parsing `common/on_actions/` and scopes

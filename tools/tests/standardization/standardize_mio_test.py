@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import standardize_mio
+from standardize_api import standardize_text
 from standardize_mio import MIOStandardizer
 
 # A realistic organization block with a trait whose `parent` wraps a nested
@@ -361,6 +362,35 @@ def test_every_field_survives_and_a_second_run_changes_nothing(tmp_path):
         assert fragment in once, fragment
     assert standardizer.standardize_file(str(source), str(source))
     assert source.read_text(encoding="utf-8") == once
+
+
+_PROPERTY_SPACING_CASES = {
+    "organization field": (
+        "research_categories = { armor }",
+        "research_categories  = {armor}",
+    ),
+    "trait field and inner assignment": (
+        "equipment_bonus = { reliability = 0.1 }",
+        "equipment_bonus  = {reliability=0.1}",
+    ),
+    "tabbed assignment": (
+        "equipment_bonus = { reliability = 0.1 }",
+        "equipment_bonus\t=\t{ reliability = 0.1 }",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("original", "messy"), _PROPERTY_SPACING_CASES.values(), ids=_PROPERTY_SPACING_CASES
+)
+def test_property_spacing_is_normalized_before_parsing(original, messy):
+    source = _FULL_MIO.replace(original, messy)
+
+    once = standardize_text("mio", source)
+
+    assert once is not None
+    assert standardize_text("mio", once) == once
+    assert once == standardize_text("mio", _FULL_MIO)
 
 
 def test_a_lone_pick_grant_becomes_the_upgrade_expenditure():

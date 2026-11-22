@@ -44,15 +44,32 @@ For a missing normal or specular map, reuse a shared one: `basic_normal.dds` and
 
 ## Checking your work
 
-The `md-validate-mesh-textures` pre-commit hook runs when you stage anything under `gfx/models/` or `gfx/entities/`. To run it by hand:
+The `md-validate-mesh-textures` pre-commit hook runs when you stage anything under `gfx/`. To run it by hand:
 
 ```bash
 python3 tools/validation/validate_mesh_textures.py --no-color
 ```
 
-It reports two things, both as errors:
+It reports two errors and a warning:
 
 - `mesh-texture-empty`: a rendered material still has an empty texture name after `meshsettings`.
 - `mesh-texture-missing`: a texture name matches no file in mod or vanilla `gfx/`. This check needs a local HoI4 install (set `HOI4_PATH` if it isn't found) and is skipped without one.
+- `mesh-texture-name-clash`: a texture name the model uses is carried by several files under `gfx/` with different content, so the game may load the wrong one. Give every model texture a name no other art under `gfx/` uses.
 
 CI doesn't check out model files, so the pre-commit hook is the only check. Don't skip it on model commits.
+
+The `md-validate-asset-data` hook runs when you stage a `.mesh` or `.dds`. It blocks the commit on broken mesh data (bad normals, tangents, triangles or bone weights) and on a `.dds` that holds PNG, JPEG or TGA data. It only warns about triangle counts over the target and texture formats. The mesh checks need numpy (`pip install --group analysis`) and skip with a notice without it. Repair a blocked mesh with `tools/assets/optimize_mesh.py --repair-only`.
+
+To check a whole model folder against the art standard, run the read-only audit on it:
+
+```bash
+python3 tools/assets/audit_models.py gfx/models/units/tanks/SOV
+```
+
+`tools/assets/optimize_mesh.py` can repair and simplify single mesh files. See the Assets section of [tools/README.md](../../tools/README.md).
+
+To list meshes no `pdxmesh` uses, and textures nothing uses, run the slow manual report:
+
+```bash
+pre-commit run md-validate-unused-textures --hook-stage manual
+```
