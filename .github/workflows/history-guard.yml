@@ -18,13 +18,14 @@ jobs:
           OLD_MARKER: 56b0cfc609b39d4d0d4666ec20b9fe0fb3008069
           TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
-          PR: ${{ github.event.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           url="https://x-access-token:${TOKEN}@github.com/${REPO}"
           git init -q guard
-          git -C guard fetch -q --filter=tree:0 "$url" "refs/pull/${PR}/head"
-          # Fresh repo, so a present commit is an ancestor.
-          if git -C guard rev-parse -q --verify "$OLD_MARKER" >/dev/null; then
+          git -C guard fetch -q --filter=tree:0 "$url" "$SHA"
+          # Object lookups can lazy-fetch the marker, so only walk ancestry.
+          git -C guard rev-list "$SHA" > commits
+          if grep -qxF "$OLD_MARKER" commits; then
             echo "::error::This branch predates the history cut."
             echo "Re-clone and move work with git format-patch and git am."
             exit 1
