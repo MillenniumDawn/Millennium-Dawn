@@ -10,7 +10,7 @@ for root, dirs, files in os.walk(os.path.join(base, "history", "countries")):
         if not f.endswith(".txt"):
             continue
         path = os.path.join(root, f)
-        with open(path, "r") as fh:
+        with open(path, "r", encoding="utf-8") as fh:
             content = fh.read()
         new_content = re.sub(
             r"\tadd_opinion_modifier = \{ target = \w+ modifier = African_Union_Relations \}\n",
@@ -18,7 +18,7 @@ for root, dirs, files in os.walk(os.path.join(base, "history", "countries")):
             content,
         )
         if new_content != content:
-            with open(path, "w") as fh:
+            with open(path, "w", encoding="utf-8", newline="") as fh:
                 fh.write(new_content)
             print(f"Updated: {path}")
             count += 1
