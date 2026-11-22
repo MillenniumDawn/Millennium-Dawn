@@ -1155,6 +1155,70 @@ _TITLE_DESC_INLINE_RE = {
 _LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
 
 
+_OPTION_LABEL_RE = re.compile(r'name\s*=\s*("[^"]*"|[^\s{}"]+)')
+
+
+def find_untriggered_duplicate_option_names(
+    text: str,
+) -> List[Tuple[str, int]]:
+    """(message, 1-based option line) for an option reusing a sibling's name unguarded.
+
+    Options with mutually exclusive triggers may share one name on purpose, so
+    the label adapts to the receiver. An option with no trigger always displays,
+    so its twin's label appears beside it.
+    """
+    source = strip_comments(text)
+    code = blank_quoted_strings(source)
+    line = _line_lookup(code)
+    out: List[Tuple[str, int]] = []
+    for event_id, body, start in _iter_event_bodies(code):
+        base = code.index("{", start) + 1
+        by_name: Dict[str, List[Tuple[bool, int]]] = defaultdict(list)
+        for match in _OPTION_OPEN_RE.finditer(body):
+            end = find_unquoted_brace_close(body, match.end() - 1)
+            if end == -1:
+                continue
+            option = body[match.end() - 1 : end + 1]
+            name_match = first_flat_match(option, _OPTION_LABEL_RE)
+            if name_match is None:
+                continue
+            offset = base + match.end()
+            # Match on masked text, then recover the entire scripted label at its span.
+            left, right = name_match.span(1)
+            name = source[offset + left : offset + right].strip('"')
+            gated = any(
+                key == "trigger" and block is not None
+                for key, _value, block in iter_statements(option[1:-1])
+            )
+            by_name[name].append((gated, line(offset + name_match.start())))
+        for name, options in by_name.items():
+            if len(options) < 2:
+                continue
+            out.extend(
+                (
+                    f"event {event_id}: option {name} has no trigger but reuses"
+                    " a sibling option's name",
+                    option_line,
+                )
+                for gated, option_line in options
+                if not gated
+            )
+    return out
+
+
+def _extract_untriggered_duplicate_option_names(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, filename, line) for untriggered duplicate option names."""
+    text = _read_cleaned_text(filename, mod_path=mod_path)
+    if not text:
+        return []
+    return [
+        (message, filename, line)
+        for message, line in find_untriggered_duplicate_option_names(text)
+    ]
+
+
 def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
     """(option name, 1-based log line) for every `log` in an effect-free option.
 
@@ -4346,6 +4410,38 @@ class Validator(BaseValidator):
             category="event-option-log-id",
         )
 
+    def validate_duplicate_option_names(self):
+        """Flag options that reuse a sibling's name while running unconditionally.
+
+        Mutually exclusive option triggers may share a name on purpose, so one
+        label fits each receiver. An option with no trigger always displays, so
+        its twin's label shows beside it.
+        """
+        self._log_section("Checking event options for duplicated names...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[Tuple[str, str, int]] = []
+        for sub in self._pool_map(
+            partial(
+                _extract_untriggered_duplicate_option_names, mod_path=self.mod_path
+            ),
+            files,
+        ):
+            results.extend(
+                (message, self._rel_posix(filename), line)
+                for message, filename, line in sub
+            )
+        self._report(
+            sorted(results, key=lambda r: (r[1], r[2])),
+            "✓ No untriggered event options reuse a sibling's name",
+            "Event options with no trigger that reuse a sibling's name"
+            " (both labels display at once — give the option its own name):",
+            Severity.ERROR,
+            category="event-option-duplicate-name",
+        )
+
     def _option_cost_weight_rows(
         self,
     ) -> Optional[Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int]]]]:
@@ -4473,6 +4569,7 @@ class Validator(BaseValidator):
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
         self.validate_option_log_id()
+        self.validate_duplicate_option_names()
         self.validate_corruption_pp_cost()
         self.validate_ai_chance_ignores_cost()
         self.validate_unneeded_treasury_checks()
